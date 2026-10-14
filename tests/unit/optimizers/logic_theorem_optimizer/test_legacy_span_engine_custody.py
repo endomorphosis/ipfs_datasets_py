@@ -633,3 +633,246 @@ def test_ready_wait_refuses_invalid_parent_or_receipt_before_polling(tmp_path, k
         assert ready_path.read_bytes() == b"{not-json"
     elif kind == "missing_parent":
         assert not directory.exists()
+
+
+LOCK_WAIT_CHILD = r'''import json,sys
+from ipfs_datasets_py.logic.autoformal import span_ingest_runtime as metadata
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_engine_custody as c
+# One tiny actual private producer file exercises a source change without
+# editing canonical modules. This is metadata-only, never source admission.
+c.PRODUCER_FILES = (*c.PRODUCER_FILES, sys.argv[1])
+launch=c.read_engine_launch(sys.stdin.buffer)
+actual_ledger=metadata._ledger
+actual_flock=metadata.resources.fcntl.flock
+budget=None
+reported=False
+def ledger(path, *, lock_timeout_seconds=5):
+    global budget
+    budget=lock_timeout_seconds
+    return actual_ledger(path,lock_timeout_seconds=lock_timeout_seconds)
+def observed_flock(fd,operation):
+    global reported
+    try:
+        return actual_flock(fd,operation)
+    except BlockingIOError:
+        if not reported and budget is not None:
+            reported=True
+            print(json.dumps({'event':'actual_disk_lock_blocked','lock_timeout_seconds':budget,
+                'model_executed':False,'admitted':False}),flush=True)
+        raise
+metadata._ledger=ledger
+metadata.resources.fcntl.flock=observed_flock
+try:
+    c.LegacySpanEngineVerifier(launch,dict(launch['spec']))
+except Exception as error:
+    print(json.dumps({'verified':False,'error_type':type(error).__name__,
+        'error':str(error),'model_executed':False,'admitted':False}),flush=True)
+    raise SystemExit(2)
+print(json.dumps({'verified':True,'model_executed':False,'admitted':False}),flush=True)
+'''
+
+
+def _private_child_line(process, timeout=15):
+    import select
+    assert select.select([process.stdout], [], [], timeout)[0], "private child observation timed out"
+    line = process.stdout.readline()
+    assert line, "private child exited before its observation"
+    return json.loads(line)
+
+
+@pytest.mark.parametrize("change", ["none", "expire_lease", "release_lease", "cancel_lease", "source", "bytecode"])
+def test_actual_native_engine_refreshes_custody_after_held_disk_lock(private, monkeypatch, change):
+    """Actual lease/birth/row and flock; no cache, CUDA, model or legal result."""
+    import time
+    path, policy, initial, runtime, ledger = private
+    preserved = deepcopy(json.loads(ledger.read_bytes())["reservations"]["preserved"])
+    source_observation = runtime.parent / "private-producer-observation.py"
+    source_observation.write_bytes(b"# actual private initial source observation\n")
+    monkeypatch.setattr(custody, "PRODUCER_FILES", (*custody.PRODUCER_FILES, str(source_observation)))
+    args = arguments(private)
+    resource = resources.LegacySpanCampaignResources(runtime, ledger, storage_bytes=100000,
+        memory_mb=1024, cpu_slots=3, child_process_slots=5,
+        scheduler_state_path=path, expected_scheduler_policy_sha256=policy)
+    child = None
+    descriptor = None
+    with resource:
+        try:
+            bytecode = resource.prepare_engine_bytecode()
+            environment = dict(os.environ, PYTHONPATH=str(ROOT), PYTHONDONTWRITEBYTECODE="1",
+                PYTHONPYCACHEPREFIX=str(bytecode), IPFS_DATASETS_AUTO_INSTALL="false",
+                IPFS_AUTO_INSTALL="false", OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1")
+            started = time.monotonic()
+            child = subprocess.Popen([sys.executable, "-B", "-c", LOCK_WAIT_CHILD, str(source_observation)],
+                cwd=ROOT, env=environment, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, start_new_session=True)
+            launch = resource.bind_engine_launch(child.pid, custody.invocation_sha256(args), bytecode_directory=bytecode)
+            descriptor = os.open(ledger.with_name(ledger.name + ".lock"), os.O_RDWR | os.O_NOFOLLOW)
+            host.fcntl.flock(descriptor, host.fcntl.LOCK_EX | host.fcntl.LOCK_NB)
+            child.stdin.write(json.dumps(launch, sort_keys=True, separators=(",", ":")).encode() + b"\n")
+            child.stdin.close()
+            child.stdin = None
+            blocked = _private_child_line(child)
+            assert blocked == dict(event="actual_disk_lock_blocked", lock_timeout_seconds=60,
+                model_executed=False, admitted=False)
+            assert child.poll() is None
+            if change == "none":
+                # Real elapsed contention exceeds the historical five-second
+                # read budget. No clock, flock result or authority is mocked.
+                time.sleep(5.2)
+                assert child.poll() is None
+            elif change == "expire_lease":
+                with resource.reservation._lease._scheduler._locked_state() as state:
+                    state["leases"][launch["lease_id"]]["expires_at"] = time.time() - 1
+            elif change == "release_lease":
+                assert resource.reservation._lease.release()
+            elif change == "cancel_lease":
+                assert resource.reservation._lease.cancel()
+            elif change == "source":
+                source_observation.write_bytes(b"# actual private changed source observation\n")
+            else:
+                (bytecode / "unexpected.pyc").write_bytes(b"retained bytecode refusal fixture")
+            host.fcntl.flock(descriptor, host.fcntl.LOCK_UN)
+            os.close(descriptor)
+            descriptor = None
+            output, error = child.communicate(timeout=15)
+            assert child.returncode == (0 if change == "none" else 2), error.decode()
+            result = json.loads(output)
+            assert result["verified"] is (change == "none")
+            assert result["model_executed"] is result["admitted"] is False
+            if change == "source":
+                assert "source generation changed while reading disk metadata" in result["error"]
+            elif change == "bytecode":
+                assert "bytecode directory is not empty" in result["error"]
+            elif change != "none":
+                assert "lease" in result["error"]
+            custody.verify_startup_deadline(started)
+            resource.close(artifacts_durable=True)
+        finally:
+            if descriptor is not None:
+                host.fcntl.flock(descriptor, host.fcntl.LOCK_UN)
+                os.close(descriptor)
+            if child is not None and child.poll() is None:
+                child.kill()
+                child.wait(timeout=10)
+            if child is not None:
+                for stream in (child.stdin, child.stdout, child.stderr):
+                    if stream is not None:
+                        stream.close()
+    final = json.loads(path.read_bytes())
+    assert final["config"] == initial["config"]
+    assert final["retained_campaign_history"] == initial["retained_campaign_history"]
+    assert json.loads(ledger.read_bytes())["reservations"]["preserved"] == preserved
+    assert json.loads(ledger.read_bytes())["reservations"][resource.reservation.reservation_id]["status"] == "released"
+
+
+LOCK_WAIT_OWNER = r'''import hashlib,json,os,subprocess,sys,time
+from pathlib import Path
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import existing_resource_scheduler as existing
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as native
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_campaign_resources as resources
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_engine_custody as c
+request=json.loads(sys.stdin.readline())
+actual_factory=existing.open_existing_scheduler
+def private_factory(*args):
+    facade=actual_factory(*args)
+    facade.config.proof_resource_sampler=lambda:native.ProofHostResources(
+        8,32768,32768,pid_task_limit=500,available_pid_tasks=400)
+    facade.config.auto_renew_leases=False
+    return facade
+existing.open_existing_scheduler=private_factory
+c.PRODUCER_FILES=(*c.PRODUCER_FILES,request['source_observation'])
+resource=resources.LegacySpanCampaignResources(request['runtime'],request['ledger'],
+    storage_bytes=100000,memory_mb=1024,cpu_slots=3,child_process_slots=5,
+    scheduler_state_path=request['scheduler'],expected_scheduler_policy_sha256=request['policy'])
+with resource:
+    bytecode=resource.prepare_engine_bytecode()
+    environment=dict(os.environ,PYTHONPATH=request['root'],PYTHONDONTWRITEBYTECODE='1',
+        PYTHONPYCACHEPREFIX=str(bytecode),IPFS_DATASETS_AUTO_INSTALL='false',IPFS_AUTO_INSTALL='false',
+        OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1',MKL_NUM_THREADS='1')
+    child=subprocess.Popen([sys.executable,'-B','-c',request['child_source'],request['source_observation']],
+        cwd=request['root'],env=environment,stdin=subprocess.PIPE,stdout=sys.stdout,stderr=sys.stderr,
+        start_new_session=True)
+    launch=resource.bind_engine_launch(child.pid,hashlib.sha256(json.dumps(request,sort_keys=True).encode()).hexdigest(),
+        bytecode_directory=bytecode)
+    print(json.dumps({'event':'bound','owner':launch['owner'],'child':launch['child'],
+        'reservation_id':launch['reservation_id'],'lease_id':launch['lease_id']}),flush=True)
+    assert sys.stdin.readline()=='G\n'
+    child.stdin.write(json.dumps(launch,sort_keys=True,separators=(',',':')).encode()+b'\n')
+    child.stdin.close()
+    child.wait(timeout=30)
+    resource.close(artifacts_durable=True)
+'''
+
+
+def test_actual_native_engine_cannot_accept_owner_exit_during_disk_lock_wait(private):
+    """A real isolated owner dies; its actual child must refuse after unlock."""
+    import signal
+    import time
+    path, policy, initial, runtime, ledger = private
+    preserved = deepcopy(json.loads(ledger.read_bytes())["reservations"]["preserved"])
+    source_observation = runtime.parent / "owner-exit-producer-observation.py"
+    source_observation.write_bytes(b"# actual private source observation\n")
+    request = dict(runtime=str(runtime), ledger=str(ledger), scheduler=str(path), policy=policy,
+        root=str(ROOT), source_observation=str(source_observation), child_source=LOCK_WAIT_CHILD)
+    environment = dict(os.environ, PYTHONPATH=str(ROOT), PYTHONDONTWRITEBYTECODE="1",
+        IPFS_DATASETS_AUTO_INSTALL="false", IPFS_AUTO_INSTALL="false", OMP_NUM_THREADS="1",
+        OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1")
+    owner = subprocess.Popen([sys.executable, "-B", "-c", LOCK_WAIT_OWNER], cwd=ROOT,
+        env=environment, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        start_new_session=True)
+    descriptor = None
+    child_identity = None
+    try:
+        owner.stdin.write(json.dumps(request).encode() + b"\n")
+        owner.stdin.flush()
+        bound = _private_child_line(owner)
+        assert bound["event"] == "bound" and bound["owner"]["pid"] == owner.pid
+        actual_owner = host._process(owner.pid)
+        assert bound["owner"] == {key: actual_owner[key] for key in ("pid", "birth")}
+        child_identity = bound["child"]
+        row = json.loads(ledger.read_bytes())["reservations"][bound["reservation_id"]]
+        assert row["status"] == "active" and row["owner_pid"] == owner.pid and row["child"] == child_identity
+        descriptor = os.open(ledger.with_name(ledger.name + ".lock"), os.O_RDWR | os.O_NOFOLLOW)
+        host.fcntl.flock(descriptor, host.fcntl.LOCK_EX | host.fcntl.LOCK_NB)
+        owner.stdin.write(b"G\n")
+        owner.stdin.flush()
+        blocked = _private_child_line(owner)
+        assert blocked == dict(event="actual_disk_lock_blocked", lock_timeout_seconds=60,
+            model_executed=False, admitted=False)
+        owner.terminate()
+        owner.wait(timeout=10)
+        assert host._process(owner.pid) is None
+        host.fcntl.flock(descriptor, host.fcntl.LOCK_UN)
+        os.close(descriptor)
+        descriptor = None
+        result = _private_child_line(owner)
+        assert result["verified"] is False and result["model_executed"] is result["admitted"] is False
+        assert "actual isolated direct child" in result["error"] or "owner birth or liveness" in result["error"]
+        deadline = time.monotonic() + 5
+        while host._group_usage(child_identity)["live_processes"] and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert host._group_usage(child_identity)["live_processes"] == 0
+        after = json.loads(ledger.read_bytes())["reservations"]
+        assert after["preserved"] == preserved
+        assert after[bound["reservation_id"]]["status"] != "released"
+        assert after[bound["reservation_id"]]["storage_bytes"] == 100000
+        final = json.loads(path.read_bytes())
+        assert final["config"] == initial["config"]
+        assert final["retained_campaign_history"] == initial["retained_campaign_history"]
+    finally:
+        if descriptor is not None:
+            host.fcntl.flock(descriptor, host.fcntl.LOCK_UN)
+            os.close(descriptor)
+        if owner.poll() is None:
+            owner.kill()
+            owner.wait(timeout=10)
+        if child_identity is not None:
+            observed = host._process(child_identity["pid"])
+            if observed is not None and observed["birth"] == child_identity["birth"]:
+                try:
+                    os.killpg(child_identity["pid"], signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+        for stream in (owner.stdin, owner.stdout, owner.stderr):
+            if stream is not None:
+                stream.close()
