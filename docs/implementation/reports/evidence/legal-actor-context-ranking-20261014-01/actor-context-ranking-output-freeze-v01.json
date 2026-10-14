@@ -1,0 +1,286 @@
+{
+  "actual_returned_optimizer_updates": 32,
+  "all_outputs_frozen": true,
+  "authorizes_authored_eval_scoring": true,
+  "checkpoint_JSON_parses": 0,
+  "default_promotion": false,
+  "evaluation_contract": {
+    "bytes": 18389,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/evaluation-contract-v01.json",
+    "sha256": "26284be9473a9265659982067bf80a3d60ade49dd504b627d7866f7f09bb418d"
+  },
+  "guardian_terminal": {
+    "bytes": 522,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/guardian-exit.json",
+    "sha256": "68b8b7c93fe324c43bb686aa4be97be2b107625a47ec5934b77ebb77c65677ff"
+  },
+  "model_or_encoder_calls": 0,
+  "plan": {
+    "bytes": 71091,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-plan-v01.json",
+    "sha256": "71b65a145c0f666e0b58b26a5510e205d351a80ef149bcb0d3c26dd55b1317ee"
+  },
+  "results": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-authored_dev-joint.json": {
+      "bytes": 1027835,
+      "sha256": "5fe234556b17338cc662fc2bcf5ab44478096c03e25bc13e030ff725bfae10bf"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-authored_dev-raw.json": {
+      "bytes": 1442149,
+      "sha256": "aea2840b4d9ead4b1e901b2861e42794f9846f4d5374131c248577e0db782dcd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-authored_eval-joint.json": {
+      "bytes": 1025381,
+      "sha256": "cb68141169a3a098982d943f07a039c6f1590b1bf7467c1a6c5e588650074477"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-authored_eval-raw.json": {
+      "bytes": 1437603,
+      "sha256": "b39d49d746c3cba02051773c2ef42b18a47cb8afef8832abc2d19cffc296fe1c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526664,
+      "sha256": "0d7770edb4ce7268d71f91009a804f71e4fbdffcf6109f40d28861a0ac4ee129"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 682587,
+      "sha256": "7bb4e24f04b1428819dbf7428cbffc99c08dee60432bf02c37d58a4467ce8e68"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-fresh_dev-joint.json": {
+      "bytes": 520935,
+      "sha256": "3dbf6822c54f98c05de100eb7493dd55d11aac68c72bcc876c65d2b58ea314e9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-fresh_dev-raw.json": {
+      "bytes": 811010,
+      "sha256": "abdc1266a1718d6af3ff40befb166dd68764cd9213d99c362f2f584c44c4392f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-fresh_test-joint.json": {
+      "bytes": 463109,
+      "sha256": "77167fc0e4404579207329b4421354189ec8734fd60345b93d050a01e096fd8c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-fresh_test-raw.json": {
+      "bytes": 809943,
+      "sha256": "72d09c9fa49a42bbc8df380157ca282be761b9ab678815606750fd3bc6629112"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509079,
+      "sha256": "b0c643ac4bbb3f64be8de73ad363238ead5fc6395f47e2c9fa802cd335fe00d6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-fresh_tune-raw.json": {
+      "bytes": 630397,
+      "sha256": "a9f46ecdae614778cc7d97d0650e1097d0737aac2005da44480ab73a3012a8b0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-law-joint.json": {
+      "bytes": 107592,
+      "sha256": "c6da07b7683d69a7ffb3912085697033cf014b07e4a17ac40e02ef4643e93550"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-law-raw.json": {
+      "bytes": 285969,
+      "sha256": "7ff4c73f9bd7961e8ae4fd1184922b1e70cb235592029a769c87615c5560a815"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1046211,
+      "sha256": "941fe7d808d714827eb7ab74248a04b4ca8e76142594d7bb995225d08704d8bd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1457117,
+      "sha256": "bac4aee5c907b6bd8d8af5e45606c8cded2b49e963bec4393632cf2b60150989"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-old_tune-joint.json": {
+      "bytes": 1456848,
+      "sha256": "9f0de8b170e1bc3370e3a0b2f2632eeeef4417660f807e614635847da0661104"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/baseline-old_tune-raw.json": {
+      "bytes": 2290884,
+      "sha256": "c4af910598ee0e163c0a61032baf10d0aa8ae4b21e2b3f873df5aac766098bf5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/cell-checkpoint.json": {
+      "bytes": 15143581,
+      "sha256": "5bb6425888b4cffe5c9875b5d262b2895c8c02e4745acd231f33c4a79908ff84"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/cell-training.json": {
+      "bytes": 1451473,
+      "sha256": "ea5546b5e91ccf125094a77a794c1cfb342d70b1b3a6163c96a265d777212c44"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/initial-parent-head-parity.json": {
+      "bytes": 170294,
+      "sha256": "28106494da1c938128471f48b38fd0dfbc8462452ca4e0c0dc51552b90688c8e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 23478,
+      "sha256": "91c782a9299ca2259863b8b9a16ae2e55d9c826f559c1a7ad312ecb67e6a331e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/initial-parity-disabled.json": {
+      "bytes": 23482,
+      "sha256": "a596fbf203b651062a5d37b17daa465278a6e80d86545cf71dacbf0511f7f074"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 23480,
+      "sha256": "e3ebf3cc77daba03698bad675b6630b9f55d4de8a423e4bf54ed65a453b2ba42"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/initial-parity-zeros.json": {
+      "bytes": 23478,
+      "sha256": "06638f738354c22a77d590a1743b097f5e39971e83cbd7bb9e5a1fa9ed328115"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/initial-parity.json": {
+      "bytes": 2133,
+      "sha256": "f785a4a7b1ed1c60c0526675e48a4a09d21119d854a9218f67126ba1ceb7cde5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/initial-training168-joint.json": {
+      "bytes": 2491271,
+      "sha256": "187ca54970d762a0e4da1fa66ce1bcfac5f5209c5bf3351f282f9147d4ea4027"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/initial-training168-raw.json": {
+      "bytes": 3594351,
+      "sha256": "f0bc4b13ad67c500b8cf7d502d8805fc7aa766318f391e82a6373375133ed540"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/parent-fresh_dev-joint.json": {
+      "bytes": 520930,
+      "sha256": "1a01c5e1a5f232158d9be36ab2161da388813de5ea839ab1eb2ff21d41164731"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/parent-fresh_dev-raw.json": {
+      "bytes": 810987,
+      "sha256": "e0159c1fe23727b35c05beb19a865e461fdcd7044a013eb348a64b72baca5142"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/parent-fresh_test-joint.json": {
+      "bytes": 463104,
+      "sha256": "90ad0302a6f9aeab5de1010463daf8eae32935e3778866dbc63d8f8db38f991f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/parent-fresh_test-raw.json": {
+      "bytes": 809920,
+      "sha256": "c6ca5030b434513fc25baeeb1cea608a3ba535fa4ce88adf948bd39d6672477c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/parent-training168-joint.json": {
+      "bytes": 2491266,
+      "sha256": "fddf85a2de46c8ac622a1f620d9db2de9f80d27bfe8524fd6d9b8c66c3f9492a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/parent-training168-raw.json": {
+      "bytes": 3594328,
+      "sha256": "221fa2ec37fc41298f787d4dfef1d4daf60b07c4c565a1194d2097e7c538fff1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/summary.json": {
+      "bytes": 64386,
+      "sha256": "a042058dd924a0f7bec62608d8b4bc43cf6be62d50827b4597eecbb812532634"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-authored_dev-joint.json": {
+      "bytes": 1029582,
+      "sha256": "019214e25c2ec637bad5d32d810aeeb0c641dded7a1bfd420b430d34a203d58d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-authored_dev-raw.json": {
+      "bytes": 1443252,
+      "sha256": "a8703df96dc4678d08c62d14b377e376b9359aaa68dacb49e8fe85852a6cc6b9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-authored_eval-joint.json": {
+      "bytes": 1023335,
+      "sha256": "1955506e0f1746154776ea0624ab97aed692593ebaa56a39eba60132ac94634e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1436282,
+      "sha256": "777ac8496fc3b5bac673e4b979378342196108b9196de39f18113ec4bf4b55fe"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526660,
+      "sha256": "feb8f0f4e99a0fd268b4e1d3ebd0944324c0f5d6245c07c59000f02da03247e8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-fresh_challenge-raw.json": {
+      "bytes": 682638,
+      "sha256": "c01461f2775a11bd8a4692a36e5eb9ba431f9f7c3460b8fef3c1d5d91e7e1b4c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-fresh_dev-joint.json": {
+      "bytes": 520924,
+      "sha256": "a2fbcfa798c0728fed82387498709e9229629579ca156b5d73b794bee44b424c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-fresh_dev-raw.json": {
+      "bytes": 811069,
+      "sha256": "fc25b184b3f05f1dd710fcdcaca1e9ab67fddcd8a3060c1791e42aa0be6339df"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-fresh_test-joint.json": {
+      "bytes": 464277,
+      "sha256": "c51dd62f3adc32d4dd1bc5d05c9649c949f6d90f3a856ab8fb0b5d5a1aba6f65"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-fresh_test-raw.json": {
+      "bytes": 810680,
+      "sha256": "0463a0fd6d4563cba390ade7033d0e2aa8b68bf3462aec9d887a3ed8ec1958af"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-fresh_tune-joint.json": {
+      "bytes": 509123,
+      "sha256": "3d64210415ab3e6067f4cca0a6ab47db206955297c8a46ea85f43c8c51ddf1aa"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-fresh_tune-raw.json": {
+      "bytes": 630418,
+      "sha256": "da1676bb4e4f7c18cac361ad52000e3417a25dcaea0c325cdd4b0fe5aae8086a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-frozen-head-retention.json": {
+      "bytes": 170480,
+      "sha256": "050629523da35396abc5b6079c127e2abcf222becf8756ffbc20262ea30d8c04"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-law-joint.json": {
+      "bytes": 107534,
+      "sha256": "ac715e3ef944f5882377ba9a40cc6882410c94d5dae3fa4cae16a38396c69dff"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-law-raw.json": {
+      "bytes": 285934,
+      "sha256": "5abefb05770685ad2e49dfd7a906b631dbe410890866efb06427d72fc525a676"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1046606,
+      "sha256": "bf909500987068ff49fac980a4023b2d7ea87889335b51b6d2e93b41180c8cce"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1457343,
+      "sha256": "e6f8c35918086a2afd37b02518bcccde1b6f4a5f7dff50bcb02245502a8b727d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-old_tune-joint.json": {
+      "bytes": 1456920,
+      "sha256": "8f6f1ed5eb8315e77ea31e0ee9a8c64e6a31581e0a6c9ed11548a5d2d2f6878b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-old_tune-raw.json": {
+      "bytes": 2290945,
+      "sha256": "b92e8cafcf6172277981e4d549114bf8db43ae913e7b253fb0a4e7c641008fe7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 23472,
+      "sha256": "2053ca102d41f73a4c61cc5ffee159efa0435be305cfda82c6702f5b26281f35"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-parity-disabled.json": {
+      "bytes": 23476,
+      "sha256": "505fb654148cb5b71099b0a79909ace749ad0fd00c839434f0dcf5084aa452e7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 23474,
+      "sha256": "2e092cad5ceb484b906134ec3a664a42a154e8adbbf4574be24b0482ec9ac280"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-parity-zeros.json": {
+      "bytes": 23472,
+      "sha256": "10111e616183965f5db1ffdb370685bdb385a93355fbb2dbedf48d9fa4c8f611"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-parity.json": {
+      "bytes": 2133,
+      "sha256": "f0e8f5d554d1a5aa17fdca10dd6141d1a24ded035e1355a42845a191e049f27e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-training168-joint.json": {
+      "bytes": 2492347,
+      "sha256": "cc67684c41b865044b11122cdd6311ff58fa70faab1918d0fe10c2a99d964a7a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/trained-training168-raw.json": {
+      "bytes": 3595174,
+      "sha256": "0a012492b35dd867d4aeee9f8195c11332a99ce2beec61a00dadc3a32b072f1f"
+    }
+  },
+  "runtime_review": {
+    "bytes": 87180,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-runtime-review-v01.json",
+    "sha256": "7addc2135ff36c553183f0a8818280b044f694fb592aca152826db8922d3d5a5"
+  },
+  "schema": "actor-context-ranking-output-freeze/v1",
+  "semantic_accuracy": null,
+  "statutory_reference_scoring_authorized": false,
+  "summary": {
+    "bytes": 64386,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/summary.json",
+    "sha256": "a042058dd924a0f7bec62608d8b4bc43cf6be62d50827b4597eecbb812532634"
+  }
+}

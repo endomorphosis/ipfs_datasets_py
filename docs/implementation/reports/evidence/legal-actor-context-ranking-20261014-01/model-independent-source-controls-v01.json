@@ -1,0 +1,113 @@
+{
+  "SDK_calls": 0,
+  "actual_training_updates": 0,
+  "checkpoint_JSON_parses": 0,
+  "claims": 0,
+  "control_source": {
+    "bytes": 15068,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_independent_controls_v01.py",
+    "sha256": "843901b1a05d05fffd4d19dfa66ce5c3fbf79e2ca9e487d8f290ec48df289e70"
+  },
+  "controls": [
+    {
+      "name": "present_gold_facets_padding_exactgold_excluded_stable_ties_and_both_score_gradients",
+      "passed": true
+    },
+    {
+      "name": "absent_nonactor_role_does_not_filter",
+      "passed": true
+    },
+    {
+      "name": "shared_boundary_derivative_cancels_without_detaching_other_boundary",
+      "passed": true
+    },
+    {
+      "name": "empty_domain_connected_zero_no_empty_argmax",
+      "passed": true
+    },
+    {
+      "name": "retained_kernel_connects_nonzero_trained_query_gate_through_point25_hinge",
+      "passed": true
+    },
+    {
+      "name": "inactive_hinge_has_zero_ranking_gradient",
+      "passed": true
+    },
+    {
+      "name": "six_sizes_match_independent_set_intersection_domain_oracle",
+      "passed": true
+    },
+    {
+      "name": "overlapping_gold_facets_refused",
+      "passed": true
+    },
+    {
+      "name": "teacher_record_token_text_mismatch_refused",
+      "passed": true
+    },
+    {
+      "name": "legacy_main_expression_and_actor_facet_scale_preserved",
+      "passed": true
+    },
+    {
+      "name": "policy_mutation_actor_hinge_coefficient",
+      "passed": true
+    },
+    {
+      "name": "policy_mutation_actor_hinge_margin",
+      "passed": true
+    },
+    {
+      "name": "policy_mutation_actor_ranking_enabled",
+      "passed": true
+    },
+    {
+      "name": "policy_mutation_normalization_denominator",
+      "passed": true
+    },
+    {
+      "name": "candidate_policy_exact_ranking_and_legacy_main",
+      "passed": true
+    },
+    {
+      "name": "row_training_index_type_bool",
+      "passed": true
+    },
+    {
+      "name": "row_training_index_type_float",
+      "passed": true
+    },
+    {
+      "name": "trained_first_query_nonzero_gradient_change_moments_accepted",
+      "passed": true
+    },
+    {
+      "name": "candidate_donor_and_frozen36_match_public_F15_metadata",
+      "passed": true
+    }
+  ],
+  "count": 19,
+  "findings": [],
+  "limits": [
+    "Scalar graph is a stdlib synthetic control of the actual retained ranking kernel, not PyTorch or model numerical qualification.",
+    "Simple synthetic tokenization stub; no actual training or evaluation rows read.",
+    "No complete training-time argmax replay from recorded selected scores is claimed."
+  ],
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "private_resource_body_reads": 0,
+  "reference_packet_body_reads": 0,
+  "retained_ranking_source": {
+    "bytes": 49658,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+    "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+  },
+  "saved_head_body_reads": 0,
+  "schema": "actor-context-ranking-independent-source-controls/v1",
+  "source": {
+    "bytes": 57479,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py",
+    "sha256": "6f37e5295ab09fe5f61215ab0445e6348d2972551c6bee1719e1c3c2ce2bd1aa"
+  }
+}

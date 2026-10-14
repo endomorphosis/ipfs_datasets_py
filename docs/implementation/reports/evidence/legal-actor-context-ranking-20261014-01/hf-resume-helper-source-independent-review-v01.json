@@ -1,0 +1,117 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hf-resume-author-controls-v01.json": {
+      "bytes": 5367,
+      "sha256": "baaf732715599a8612b478f83b5c5d387053c1d893355467fdbc3d2fcd07da08"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/archive_actor_context_ranking_hf_v01.py": {
+      "bytes": 30925,
+      "sha256": "e6c383eed91d6cee2405ce401fb0ab6692b714e0a2d3e99c09dbf4abe9f6a1ee"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-helper-port-source-independent-review-v01.json": {
+      "bytes": 13022,
+      "sha256": "c091c17dc00b8a7d7a25d1e6343de14ec9637abe5f29e1ea9c6fec6a9d0274d9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-partial-observer-source-independent-review-v01.json": {
+      "bytes": 19029,
+      "sha256": "468425fa9bed4cdd0abe2db10d2b20272f1a0b8be9279141bd1cb2d75e01d214"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-interruption-v01.json": {
+      "bytes": 4683,
+      "sha256": "ee29856ded7d1b19fae1a4655263ee5696cbf6f9aed08c922a57ec55c86073c8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-partial-discrepancy-independent-v01.json": {
+      "bytes": 16981,
+      "sha256": "e847a88b2371359634540e280c0fb42db1a2dd4073d4d6bf9e17d9d4cc61e9b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-partial-observation-v01.json": {
+      "bytes": 18259,
+      "sha256": "91973346270feadc1d3c6c1d9a9f2dbd9f82780a433a61d692b7fc3288b33b4b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-independent-detached-controls-v01.json": {
+      "bytes": 5902,
+      "sha256": "1f473bebf9e9517ccef9fc86456f362242ac7d044458e3e7b1d1d1f5bcb10fad"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/observe_actor_context_ranking_hf_partial_v01.py": {
+      "bytes": 14203,
+      "sha256": "bab0f43229cb26aa8e7b472463308d773617c21ea4ad1a718a42467694a1002d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resume_actor_context_ranking_hf_v01.py": {
+      "bytes": 26577,
+      "sha256": "ad2cceb8472371c613c852241df9858711cfd1d0da1eaf6e1925ae20e7b495ff"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_hf_resume_detached_v01.py": {
+      "bytes": 9839,
+      "sha256": "aa39216f5b60a3c7119c666a6f47427d4576b3d1e542df1024ff991d4e17fef8"
+    }
+  },
+  "author_controls": {
+    "bytes": 5367,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hf-resume-author-controls-v01.json",
+    "sha256": "baaf732715599a8612b478f83b5c5d387053c1d893355467fdbc3d2fcd07da08"
+  },
+  "checks": {
+    "Git_LFS_clone_and_numerical_reload_qualification_false": true,
+    "actual_case_consumes_observed_schema_fields": true,
+    "all201_forced_immutable_downloads_required": true,
+    "all5646_prior_and20_created_identities_restored_after_correction": true,
+    "concurrent_main_progress_fails_closed": true,
+    "corrective_parent_all5666_identities_checked": true,
+    "exact5646_baseline_plus20_created_paths": true,
+    "exclusive_new_output_names_no_restart": true,
+    "final5847_identity_map_required": true,
+    "immutable_prior_and_new_identity_checks_after_every_commit": true,
+    "negative_science_and_no_default_promotion_retained": true,
+    "no_delete_operations": true,
+    "only_exact142_byte_attributes_append_case_permitted": true,
+    "only_original_chunks4_through9_allowed": true,
+    "original_chunks1_through3_never_reuploaded": true,
+    "original_helper_raw_source_pinned_before_compile": true,
+    "original_interruption_and_strict_failure_preserved": true,
+    "original_source_spec_payload_and_reviews_fenced": true,
+    "overall_protocol_additions_only_false_disclosed": true,
+    "remaining181_files49758944_bytes": true,
+    "single_exact_attributes_restoration_CAS": true,
+    "unknown_outcome_preserved_without_automatic_retry": true
+  },
+  "findings": [],
+  "helper": {
+    "bytes": 30925,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/archive_actor_context_ranking_hf_v01.py",
+    "sha256": "e6c383eed91d6cee2405ce401fb0ab6692b714e0a2d3e99c09dbf4abe9f6a1ee"
+  },
+  "independent_controls": {
+    "bytes": 5902,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-independent-detached-controls-v01.json",
+    "sha256": "1f473bebf9e9517ccef9fc86456f362242ac7d044458e3e7b1d1d1f5bcb10fad"
+  },
+  "limitations": [
+    "Detached predicate/control replay does not execute the actual producer, SDK, network or corrective commit.",
+    "Actual remote correction and remaining uploads require the exact separate concrete gate and root trigger.",
+    "Forced immutable byte retrieval does not qualify automatic Git LFS clone materialization or numerical reload."
+  ],
+  "passed": true,
+  "producer": {
+    "bytes": 26577,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resume_actor_context_ranking_hf_v01.py",
+    "sha256": "ad2cceb8472371c613c852241df9858711cfd1d0da1eaf6e1925ae20e7b495ff"
+  },
+  "reviewer_actions": {
+    "SDK_imports": 0,
+    "checkpoint_JSON_parses": 0,
+    "checkpoint_opens": 0,
+    "model_calls": 0,
+    "network_calls": 0,
+    "private_body_reads": 0,
+    "producer_main_calls": 0,
+    "resource_API_calls": 0,
+    "uploads": 0
+  },
+  "schema": "actor-context-ranking-Hub-resume-helper-source-independent-review/v1",
+  "source_scope": "Full sealed producer source review;40 exact detached author controls replayed independently and3 additional actual immutable-attributes interface/refusal cases. This source qualification grants no mutation without separate concrete case approval.",
+  "tests": {
+    "bytes": 9839,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_hf_resume_detached_v01.py",
+    "sha256": "aa39216f5b60a3c7119c666a6f47427d4576b3d1e542df1024ff991d4e17fef8"
+  }
+}

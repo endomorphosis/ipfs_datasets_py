@@ -1,0 +1,29 @@
+{
+  "actual_package_imports": 0,
+  "checkpoint_JSON_parses": 0,
+  "claims_acquired": 0,
+  "controls_source": {
+    "bytes": 11804,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_harness_detached_v02.py",
+    "sha256": "b7e2e6edfd17c6b72bc1a3b6ba0b9a174e10ab3354e290f211f36f6a47aff318"
+  },
+  "errors": 0,
+  "failures": 0,
+  "findings": [],
+  "independent_qualification": false,
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-14T12:19:00.688820+00:00",
+  "optimizer_updates": 0,
+  "passed": true,
+  "private_resource_reads": 0,
+  "reference_or_saved_head_body_reads": 0,
+  "runner": {
+    "bytes": 40869,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_v04.py",
+    "sha256": "8229b72d469405dd996319010dac2c5500b6c6b19d56f1c243d9b5a56213e63e"
+  },
+  "schema": "actor-context-ranking-harness-author-controls/v1",
+  "synthetic_only": true,
+  "tests_run": 11
+}

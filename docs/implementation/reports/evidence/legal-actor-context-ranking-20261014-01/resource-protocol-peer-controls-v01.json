@@ -1,0 +1,127 @@
+{
+  "actual_censuses": 0,
+  "claims": 0,
+  "collector": {
+    "bytes": 9580,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/collect_actor_context_ranking_opening_v01.py",
+    "sha256": "9d7ed2f231b5bee4958eefe2129ca12c1f61a8702f938895400b8fb96d738215"
+  },
+  "control_count": 18,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "nonidle sample retains true occupancy",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "ledger byte identity mismatch rejected",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "scheduler byte identity mismatch rejected",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "false idle declaration rejected",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "same path forged producer identity rejected",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "all active reserved retained full claims charged",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "foreign historical release rejected",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "historical omission rejected",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "floating point claim rejected",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "reservation map identity mismatch rejected",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "future output charged beyond native admission",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "physical shortfall counts all claims and both bounds",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "collector requires both endpoints exact",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "matching ledger cannot hide changed scheduler",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "retained qualified bridge exact run_scope_guardian_v02.py",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "retained qualified bridge exact adopt_shared_scheduler_actor_ranking_v02.py",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "retained qualified bridge exact owned_lease_watchdog_actor_ranking_v02.py",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "sampler exact phase and cell-only port",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "independent_of_resource_source_author": true,
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-14T11:36:37.446929+00:00",
+  "passed": true,
+  "policy": {
+    "bytes": 7532,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json",
+    "sha256": "d9056253244e653c544b4fee5ac371a3d86a538fa8c67f6330512ec2cd9a90ac"
+  },
+  "private_body_reads": 0,
+  "protocol": {
+    "bytes": 20230,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v01.py",
+    "sha256": "4edb0362eced0670740dc973e921cc09ee6e3e939c1d092fe81626a2a75aa39b"
+  },
+  "resource_API_calls": 0,
+  "schema": "actor-context-ranking-resource-protocol-peer-controls/v1",
+  "source": {
+    "bytes": 6885,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource_protocol_peer_controls_v01.py",
+    "sha256": "93672d83c38b5c52a3d7e4c2614e940a7846c4f774413d924cf2ca006ba6a6d7"
+  },
+  "synthetic_only": true
+}

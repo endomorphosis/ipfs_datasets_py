@@ -1,0 +1,31 @@
+{
+  "change": "Require exact int type for returned objective row training_index before comparing its authenticated batch index; reject Boolean and floating point aliases.",
+  "current": {
+    "bytes": 57479,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py",
+    "sha256": "6f37e5295ab09fe5f61215ab0445e6348d2972551c6bee1719e1c3c2ce2bd1aa"
+  },
+  "hardening_is_separate_reviewed_change": true,
+  "independent_model_review": {
+    "bytes": 30082,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/model-source-independent-review-v01.json",
+    "sha256": "1feab43bb59a12d457f3f0363fa4539495b7a0ea7ef11495c2d0cead701d142a"
+  },
+  "initial_derivation_reproduces_preserved_draft": true,
+  "model_calls": 0,
+  "observed_at_utc": "2026-10-14T11:50:21.607972+00:00",
+  "original": {
+    "bytes": 57440,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/legal_span_actor_context_ranking_draft_v01.py",
+    "sha256": "061d12c63581aa91631903097d8c5d581fc679ee5bc0080c1a568c94ec6092f0"
+  },
+  "prior_draft_preserved_in_Git": "b25e0bf7d03b4e29eed2d0cacce85aa629c9b158",
+  "schema": "actor-context-ranking-source-hardening/v1",
+  "trainer_source_gate": {
+    "bytes": 4061,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/trainer-source-independent-review-v01.json",
+    "sha256": "257800d1a3ce2e471165ac2e64dfcbb4251106a859386086f36d9cb4ff7930a6"
+  },
+  "training_affected": false,
+  "training_started": false
+}

@@ -1,0 +1,155 @@
+{
+  "actual_mains": 0,
+  "actual_runtime_or_plan_reads": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/audit_actor_context_ranking_terminal_resources_v04.py": {
+      "bytes": 18940,
+      "sha256": "c29556a0bdd304933b8de5ba26d7162fdcae750e8e30009df5b6a134bf892aca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/freeze_actor_context_ranking_outputs_v04.py": {
+      "bytes": 20862,
+      "sha256": "d44331aa0dc7377a0cddcdd4eabfb060c1594b2e3c84e93463fbdebd2732c927"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_training_plan_v03.py": {
+      "bytes": 9570,
+      "sha256": "7de92b9619ea87738efdb3db9724f023a36fb27fb5ea8c1f4f3a5dbe8b4d50ea"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "control_count": 24,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "exact current V04 guarded command and review custody",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong plan schema",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong plan runner_path",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong plan attempt_name",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong concrete review schema",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong concrete review runner_sha256",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong concrete review guardian_sha256",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "old runner command cannot pass terminal custody",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "dynamic baseline plus own released claim and all concurrent fullcharges",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong own status",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong own storage_bytes",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "changed dynamic baseline body refuses",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "review_actor_context_ranking_training_plan_v03.py exact helper source passes preexec pin",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "review_actor_context_ranking_training_plan_v03.py changed helper rejected before execution",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "review_actor_context_ranking_training_plan_v03.py no SourceFileLoader route",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "review_actor_context_ranking_training_plan_v03.py exact raw compile",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "audit_actor_context_ranking_terminal_resources_v04.py exact helper source passes preexec pin",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "audit_actor_context_ranking_terminal_resources_v04.py changed helper rejected before execution",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "audit_actor_context_ranking_terminal_resources_v04.py no SourceFileLoader route",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "audit_actor_context_ranking_terminal_resources_v04.py exact raw compile",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "freeze_actor_context_ranking_outputs_v04.py exact helper source passes preexec pin",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "freeze_actor_context_ranking_outputs_v04.py changed helper rejected before execution",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "freeze_actor_context_ranking_outputs_v04.py no SourceFileLoader route",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "freeze_actor_context_ranking_outputs_v04.py exact raw compile",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "model_calls": 0,
+  "network_calls": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "pure_AST_only": true,
+  "resource_API_calls": 0,
+  "schema": "actor-context-ranking-current-runtime-consumers-independent-controls/v1",
+  "source": {
+    "bytes": 8018,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current_runtime_consumers_independent_controls_v01.py",
+    "sha256": "a5f92afd02ac8e7a88c8fdc9cfbed8875830388f9ac16a3f626559fa0865cd66"
+  }
+}

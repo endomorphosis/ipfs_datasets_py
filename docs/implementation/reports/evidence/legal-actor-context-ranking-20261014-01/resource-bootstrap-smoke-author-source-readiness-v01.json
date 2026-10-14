@@ -1,0 +1,64 @@
+{
+  "actual_receipt_created": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/bootstrap_actor_context_ranking_resources_v02.py": {
+      "bytes": 6599,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/bootstrap_actor_context_ranking_resources_v02.py",
+      "sha256": "e1847c2723216b4f2a06ee9da80adfeb8121e94e0b2442da0d2f95e2288d7be1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/capture_actor_context_ranking_resource_import_smoke_v01.py": {
+      "bytes": 24004,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/capture_actor_context_ranking_resource_import_smoke_v01.py",
+      "sha256": "6b2da968b047405a4821b0fc59a87738f36db67f73e174977a90a0c9249b71a6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-source-independent-review-v02.json": {
+      "bytes": 25630,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-source-independent-review-v02.json",
+      "sha256": "7aa5d74d7e805d122f74c6ac1941736636ad0f9a59409c7777a6d60845c59ebd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-snapshot-v01.json": {
+      "bytes": 4678,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-snapshot-v01.json",
+      "sha256": "fbbbc82c791998e4498a30226cc8f61a17bd7ce46f57229629710631af9761b2"
+    }
+  },
+  "author_syntax_AST_check_only": true,
+  "exactly_one_authored_bootstrap_callsite": true,
+  "fixed_output": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-import-smoke-v01.json",
+  "future_source_gate": {
+    "descriptor_not_invented": true,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-source-independent-review-v01.json",
+    "required_fields": [
+      "passed=True",
+      "findings=[]",
+      "producer=actual script descriptor",
+      "bootstrap=actual V02 helper descriptor",
+      "bootstrap_source_review=actual V02 source review descriptor",
+      "snapshot_manifest=actual snapshot manifest descriptor",
+      "artifacts=all bound source descriptors from producer/helper/review/manifest+six origins+six snapshot files"
+    ],
+    "schema": "actor-context-ranking-resource-bootstrap-smoke-source-independent-review/v1"
+  },
+  "guard_design": [
+    "Fresh isolated/no-site/no-pyc-write/unoptimized interpreter and no preloaded nonstdlib/model/SDK namespace.",
+    "Strict stdlib/three-resource-module finder plus broad numerical/SDK roots refused.",
+    "Audit denies unknown/private/proc/sys reads before resolution, directory census, network/process actions and writes except exclusive final receipt.",
+    "Profile compares exact compiled module/class-body code objects; all other native resource function/method frames denied. Stdlib dataclasses._create_fn may call only its method-definition factory; native generated methods remain denied.",
+    "Actual module/class frames, active-profile identity, two audit probes, six canonical namespaces/specs/parent links/report types and unchanged sys.path are checked.",
+    "Exact helper/source-gate/manifest/script/six-origin/six-snapshot rawpins fenced before/after.",
+    "One exclusive public receipt is fsynced, chmod444, directory-fsynced and raw-readback verified. Failure metrics become unknown rather than false zeros."
+  ],
+  "independent_source_qualification": false,
+  "output_schema": "actor-context-ranking-resource-bootstrap-import-smoke/v1",
+  "producer": {
+    "bytes": 24004,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/capture_actor_context_ranking_resource_import_smoke_v01.py",
+    "sha256": "6b2da968b047405a4821b0fc59a87738f36db67f73e174977a90a0c9249b71a6"
+  },
+  "required_invocation": "python -I -S -B /home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/capture_actor_context_ranking_resource_import_smoke_v01.py",
+  "schema": "actor-context-ranking-resource-import-smoke-author-source-readiness/v1",
+  "scope": "Exactly one direct-byte helper load and bootstrap; no owner/adoption/watchdog. Three initializer files are custody pins only; three exact resource modules execute under guard. No native package-init-equivalence claim.",
+  "script_or_resource_imports_executed": false,
+  "source_only": true,
+  "tests_or_smoke_executed": false
+}

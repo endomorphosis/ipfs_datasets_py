@@ -1,0 +1,74 @@
+{
+  "actual_censuses": 0,
+  "admission_calls": 0,
+  "automatic_retry": false,
+  "child_invocations": 1,
+  "classification": {
+    "exact_allowlisted_message": true,
+    "exception_class": "ValueError",
+    "message": "exact complete persisted scheduler configuration required; unknown/missing keys refused"
+  },
+  "diagnostic_completed": true,
+  "diagnostic_endpoint_body_parses": 0,
+  "fixed_argv": [
+    "/home/barberb/.local/bin/python",
+    "-B",
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_scope_guardian_v02.py",
+    "--check"
+  ],
+  "global_state_writes": 0,
+  "guardian": {
+    "bytes": 38449,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_scope_guardian_v02.py",
+    "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+  },
+  "guardian_check_succeeded": false,
+  "launch_error_class": null,
+  "model_calls": 0,
+  "new_claims": 0,
+  "observed_at_utc": "2026-10-14T11:47:23.748259+00:00",
+  "observer_calls": 0,
+  "output_streams_within_bound": true,
+  "policy": {
+    "bytes": 7532,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json",
+    "sha256": "d9056253244e653c544b4fee5ac371a3d86a538fa8c67f6330512ec2cd9a90ac"
+  },
+  "previous_missing_stderr_recovered": false,
+  "prior_failed_collection": {
+    "bytes": 2165,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-collection-v01.json",
+    "sha256": "f62adf64c67c0dc7384616f979e3ec6140f42f03ebf3111b1e5b917b576aa38e"
+  },
+  "private_streams": {
+    "stderr": {
+      "bytes": 1283,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/private-resource-diagnostics/guardian-check-v01/stderr.bin",
+      "sha256": "51ca139e9007be9d130b753b8b192493ec32a75d28e6b6fe2672b9586342313e"
+    },
+    "stdout": {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/private-resource-diagnostics/guardian-check-v01/stdout.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "producer": {
+    "bytes": 11178,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/diagnose_actor_context_ranking_guardian_check_v01.py",
+    "sha256": "154babc6d327d5d4fd79aa046d8d58c644b3a63769742288b2b9ea7ef3db9f9d"
+  },
+  "public_endpoint_bodies": false,
+  "raw_streams_mode": "0600",
+  "resource_API_calls": 0,
+  "returncode": 1,
+  "sampler_calls": 0,
+  "schema": "actor-context-ranking-guardian-check-diagnostic/v1",
+  "source_qualification": {
+    "bytes": 9094,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-check-diagnostic-source-independent-review-v01.json",
+    "sha256": "be8f733e44995c86c1da30a4a0b0f337cf1feaf30638f0f98217ae6e96456deb"
+  },
+  "timed_out": false,
+  "training_authorized": false,
+  "usable_as_baseline_or_compatibility_receipt": false
+}

@@ -1,0 +1,62 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-plan-v01.json": {
+      "bytes": 71091,
+      "sha256": "71b65a145c0f666e0b58b26a5510e205d351a80ef149bcb0d3c26dd55b1317ee"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 111009,
+      "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/main-intake-independent-review-v01.json": {
+      "bytes": 115779,
+      "sha256": "53eeea167ef229c80823754b94a1daa4c83f6eff7449e5171ac02df99e852502"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/pre-run-upstream-intake-v01.json": {
+      "bytes": 14798,
+      "sha256": "600ef51584d9ee2391381edaab48996cdf53fc5f40eea8db2b713359ec3d052c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 111009,
+      "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/scheduler-current-source-independent-review-v01.json": {
+      "bytes": 26402,
+      "sha256": "96332c871cc022326d94e4addd584a49cbf1afdc139c9c35e83c9b2483278d94"
+    }
+  },
+  "findings": [],
+  "frozen_training_review_paths_repointed": false,
+  "incoming_scheduler_Git_blob_pin": {
+    "bytes": 121503,
+    "sha256": "7c889bc858ff092e18bd2e97ff5a6407973e226eae33cddc9e5eef1d21f35986"
+  },
+  "limitations": [
+    "The proposed integration clone and merges had not been audited as concrete objects at this review.",
+    "Current upstream scheduler bytes were read from the pinned Git object only. No runtime compatibility, new model run or resource behavior is inferred.",
+    "No canonical Git command, private worktree inspection, numerical execution, resource call, network or Git mutation occurred."
+  ],
+  "merge_approval": false,
+  "new_scheduler_runtime_compatibility_qualified": false,
+  "old_scheduler_pin": {
+    "bytes": 111009,
+    "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+  },
+  "original_training_HEAD_observed": "54aae1d13faea237eddde301754db85afd1e127a",
+  "original_training_clone": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets",
+  "original_training_clone_mutated_by_reviewer": false,
+  "passed": true,
+  "pending_concrete_checks": [
+    "Bind actual integration clone root and own Git metadata explicitly; existing scientific package_root stays the original datasets path.",
+    "Inspect the no-ff integration commit parents and exact changed tree against the named actual incoming main; preserve the newer upstream scheduler and all other incoming entries outside closed owned additions.",
+    "Compare the final closed staged inventory, index objects, working bytes and source/raw evidence pins before any publication decision.",
+    "For final actual main merge, use its actual first parent and preserve all later incoming source/root progress and other root gitlinks.",
+    "Retain32selected historical commit identities,5divergent recovery objects and4approvedcanonical raw anchors under the existing limited observation scope."
+  ],
+  "pinned_incoming_main": "904f885c180eb9dfcdef80199f708125428d3859",
+  "proposed_custody": "A separate owned .git with object alternates may reuse immutable commit objects while the original training clone and frozen runtime artifact paths retain their exact bytes.",
+  "proposed_integration_clone": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets-integration",
+  "scheduler_is_outside_retained_model39_plus_attention_roster": true,
+  "schema": "actor-context-ranking-integration-preservation-approach-review/v1",
+  "scope": "Read-only review of the proposed separate integration clone and exact scheduler byte difference; no concrete new clone, stage or merge is qualified yet."
+}

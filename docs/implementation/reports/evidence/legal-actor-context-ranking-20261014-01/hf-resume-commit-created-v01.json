@@ -1,0 +1,70 @@
+{
+  "corrective_commit": {
+    "attributes_restored_to_baseline": true,
+    "original_files": 5646,
+    "parent_revision": "246e7793db1399341387fabbb740781ea23251c8",
+    "paths": [
+      ".gitattributes"
+    ],
+    "preserved_payload_files": 20,
+    "revision": "3ce3a10dec49e5c12d3eb65ec616e90924be19fb"
+  },
+  "default_promotion": false,
+  "interrupted_parent": "246e7793db1399341387fabbb740781ea23251c8",
+  "new_files": 201,
+  "old_files_preserved": 5646,
+  "parent_revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4",
+  "release_prefix": "releases/20261014-actor-context-ranking-v1",
+  "repo": "Publicus/legal-ir-autoencoder",
+  "resumed_chunks": [
+    {
+      "chunk": 4,
+      "new_byte_identities_exact": true,
+      "new_files": 15,
+      "old_identities_exact": true,
+      "parent_revision": "3ce3a10dec49e5c12d3eb65ec616e90924be19fb",
+      "revision": "8441564083804f070b36c84cdd3ae26a376defd0"
+    },
+    {
+      "chunk": 5,
+      "new_byte_identities_exact": true,
+      "new_files": 18,
+      "old_identities_exact": true,
+      "parent_revision": "8441564083804f070b36c84cdd3ae26a376defd0",
+      "revision": "eb8c51eef5687cc0c7eb7249e78ac8f0aba57cd0"
+    },
+    {
+      "chunk": 6,
+      "new_byte_identities_exact": true,
+      "new_files": 37,
+      "old_identities_exact": true,
+      "parent_revision": "eb8c51eef5687cc0c7eb7249e78ac8f0aba57cd0",
+      "revision": "a3e25dac54581b38f156356d1c4de4f59188d7aa"
+    },
+    {
+      "chunk": 7,
+      "new_byte_identities_exact": true,
+      "new_files": 48,
+      "old_identities_exact": true,
+      "parent_revision": "a3e25dac54581b38f156356d1c4de4f59188d7aa",
+      "revision": "e8a0f661eb98b5cbb02d051d9065406e7ce72941"
+    },
+    {
+      "chunk": 8,
+      "new_byte_identities_exact": true,
+      "new_files": 48,
+      "old_identities_exact": true,
+      "parent_revision": "e8a0f661eb98b5cbb02d051d9065406e7ce72941",
+      "revision": "1855386ffcc02d8bdff084d2b88be9ad5899b31a"
+    },
+    {
+      "chunk": 9,
+      "new_byte_identities_exact": true,
+      "new_files": 15,
+      "old_identities_exact": true,
+      "parent_revision": "1855386ffcc02d8bdff084d2b88be9ad5899b31a",
+      "revision": "f5bebab6d6a75c2e4cd1ed1fa09eb3481e1dcd14"
+    }
+  ],
+  "revision": "f5bebab6d6a75c2e4cd1ed1fa09eb3481e1dcd14"
+}

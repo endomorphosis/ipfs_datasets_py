@@ -1,0 +1,113 @@
+{
+  "HF_correction_not_performed": true,
+  "HF_created_checkpoint_file_count": 1,
+  "HF_original_files": 5646,
+  "HF_original_publisher_not_retried": true,
+  "HF_partial_revision": "246e7793db1399341387fabbb740781ea23251c8",
+  "HF_planned_new_files": 201,
+  "HF_publication_complete": false,
+  "HF_required_next": "Independently source-qualified immutable partial observer; then actual case review and finite correction/resume4..9 only if exact single attributes change is established.",
+  "HF_verified_first_files": 19,
+  "actual_updates": 32,
+  "authored_dev_gain_each_view": 2,
+  "canonical_Git_commands": 0,
+  "checkpoint_parse_or_model_calls_by_handoff_writer": 0,
+  "default_promotion": false,
+  "evidence": {
+    "actor-context-ranking-hinge-runtime-review-v01.json": {
+      "bytes": 87180,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-runtime-review-v01.json",
+      "sha256": "7addc2135ff36c553183f0a8818280b044f694fb592aca152826db8922d3d5a5"
+    },
+    "actor-context-ranking-output-freeze-v01.json": {
+      "bytes": 22324,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-output-freeze-v01.json",
+      "sha256": "f5140b6c3c9a6c32ec3e012444f873bfc79c4f6936d0b2d76296748fa5ceda30"
+    },
+    "actor-context-ranking-result-independent-review-v01.json": {
+      "bytes": 14788,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-independent-review-v01.json",
+      "sha256": "d12ab3444109c957ddf6710d084babe73fd4354fa39336c5b6839abaa885268a"
+    },
+    "draft-publication-handoff-v02.json": {
+      "bytes": 3758,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/draft-publication-handoff-v02.json",
+      "sha256": "72772ffc4aa13ab63c4816b547d5af870ef9892432cbc4a9a72a8bc494e2fdc0"
+    },
+    "hf-preparation-receipt-v01.json": {
+      "bytes": 109799,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-preparation-receipt-v01.json",
+      "sha256": "45cae121d94a6527940f7cebba88f278c573723c4de5a69d7c14d4c9fac24140"
+    },
+    "hf-publication-independent-review-v01.json": {
+      "bytes": 151803,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-independent-review-v01.json",
+      "sha256": "2bcafc080c2e444e738a3488f8a403c70bd3046e8cddb77974b2855a7cb027e0"
+    },
+    "hf-publication-interruption-v01.json": {
+      "bytes": 4683,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-interruption-v01.json",
+      "sha256": "ee29856ded7d1b19fae1a4655263ee5696cbf6f9aed08c922a57ec55c86073c8"
+    },
+    "hf-release-spec-v01.json": {
+      "bytes": 94501,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-release-spec-v01.json",
+      "sha256": "bc36cad30b42c66d87d2224aa681569dccd50eca2635c1ba137f504909d9717b"
+    },
+    "main-intake-independent-review-v01.json": {
+      "bytes": 115779,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/main-intake-independent-review-v01.json",
+      "sha256": "53eeea167ef229c80823754b94a1daa4c83f6eff7449e5171ac02df99e852502"
+    },
+    "postfreeze-next-training-design-v01.json": {
+      "bytes": 17180,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/postfreeze-next-training-design-v01.json",
+      "sha256": "0b8bc269f028a75ccdaf8f0c320c83b8de5d643d562a462cb08be1486638b7fe"
+    },
+    "pre-run-upstream-intake-v01.json": {
+      "bytes": 14798,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/pre-run-upstream-intake-v01.json",
+      "sha256": "600ef51584d9ee2391381edaab48996cdf53fc5f40eea8db2b713359ec3d052c"
+    },
+    "public-capsule-builder-source-independent-review-v04.json": {
+      "bytes": 36161,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-capsule-builder-source-independent-review-v04.json",
+      "sha256": "8c59c13ad020ec05bfff4add1963551856ea25f6c3dc9cb2d524128e938e8864"
+    },
+    "public-result-summary-v01.json": {
+      "bytes": 9283,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-result-summary-v01.json",
+      "sha256": "6ebcace6fd13bc112eff52e9d2cce04dfcf4db5a461153df6cefda7ecc23c9e2"
+    },
+    "public-summary-card-independent-review-v01.json": {
+      "bytes": 9730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-summary-card-independent-review-v01.json",
+      "sha256": "0f4de1c459f95c03562e18e544404938be8bf910aa0b00fd76c9d94152461b28"
+    }
+  },
+  "experiment_complete": true,
+  "frozen_outputs": 62,
+  "limitations": "Experiment and current interruption checkpoint only. Partial HF checkpoint is not a verified completed release; no new default or statutory/latent/family/Lean qualification.",
+  "new_model_runs": 1,
+  "no_new_training_after_scoring": true,
+  "observed_at_utc": "2026-10-14T13:24:10.186221+00:00",
+  "old_tune_complete_IR_loss_each_view": 1,
+  "private_body_reads": 0,
+  "published_related_heads": {
+    "remaining_source_head_is_own_draft": true,
+    "root_integrated": 29,
+    "root_total": 29,
+    "source_integrated": 37,
+    "source_total": 38
+  },
+  "root_incoming_main": "dd528f888484f47b9665c2a5d1477d2a4dec7e0b",
+  "schema": "actor-context-ranking-posttraining-handoff/v1",
+  "scientific_success": false,
+  "source_PR": "https://github.com/endomorphosis/ipfs_datasets_py/pull/1304",
+  "source_and_root_final_integration_pending": true,
+  "source_incoming_main": "904f885c180eb9dfcdef80199f708125428d3859",
+  "source_published_draft": "54aae1d13faea237eddde301754db85afd1e127a",
+  "technical_checks_passed": true,
+  "training_full_IR_raw_and_joint": 154,
+  "training_rows": 168
+}

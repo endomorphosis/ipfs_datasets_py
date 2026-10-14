@@ -1,0 +1,471 @@
+{
+  "actor_training_before_after": {
+    "joint": [
+      156,
+      158
+    ],
+    "raw": [
+      156,
+      158
+    ]
+  },
+  "all32_permissions_retained_in_all_four_states": true,
+  "all32_training_trace_structural_source_and_scalar_hinge_recount_passed": true,
+  "all_40_panel_and_36_scored_metric_summaries_match": true,
+  "all_nine_scope_full_IR_counts": {
+    "authored_dev": {
+      "frozen_N11": {
+        "joint": 46,
+        "raw": 45
+      },
+      "initial": {
+        "joint": 46,
+        "raw": 45
+      },
+      "parent": {
+        "joint": 46,
+        "raw": 45
+      },
+      "rows": 72,
+      "trained": {
+        "joint": 48,
+        "raw": 47
+      }
+    },
+    "authored_eval": {
+      "frozen_N11": {
+        "joint": 33,
+        "raw": 27
+      },
+      "initial": {
+        "joint": 34,
+        "raw": 27
+      },
+      "parent": {
+        "joint": 34,
+        "raw": 27
+      },
+      "rows": 72,
+      "trained": {
+        "joint": 34,
+        "raw": 27
+      }
+    },
+    "fresh_challenge": {
+      "frozen_N11": {
+        "joint": 25,
+        "raw": 25
+      },
+      "initial": {
+        "joint": 25,
+        "raw": 25
+      },
+      "parent": {
+        "joint": 25,
+        "raw": 25
+      },
+      "rows": 36,
+      "trained": {
+        "joint": 25,
+        "raw": 25
+      }
+    },
+    "fresh_dev": {
+      "frozen_N11": {
+        "joint": 0,
+        "raw": 0
+      },
+      "initial": {
+        "joint": 0,
+        "raw": 0
+      },
+      "parent": {
+        "joint": 0,
+        "raw": 0
+      },
+      "rows": 36,
+      "trained": {
+        "joint": 0,
+        "raw": 0
+      }
+    },
+    "fresh_test": {
+      "frozen_N11": {
+        "joint": 0,
+        "raw": 0
+      },
+      "initial": {
+        "joint": 0,
+        "raw": 0
+      },
+      "parent": {
+        "joint": 0,
+        "raw": 0
+      },
+      "rows": 36,
+      "trained": {
+        "joint": 0,
+        "raw": 0
+      }
+    },
+    "fresh_tune": {
+      "frozen_N11": {
+        "joint": 19,
+        "raw": 8
+      },
+      "initial": {
+        "joint": 19,
+        "raw": 8
+      },
+      "parent": {
+        "joint": 19,
+        "raw": 8
+      },
+      "rows": 36,
+      "trained": {
+        "joint": 19,
+        "raw": 8
+      }
+    },
+    "old_authored_eval": {
+      "frozen_N11": {
+        "joint": 51,
+        "raw": 48
+      },
+      "initial": {
+        "joint": 53,
+        "raw": 50
+      },
+      "parent": {
+        "joint": 53,
+        "raw": 50
+      },
+      "rows": 72,
+      "trained": {
+        "joint": 53,
+        "raw": 50
+      }
+    },
+    "old_tune": {
+      "frozen_N11": {
+        "joint": 94,
+        "raw": 94
+      },
+      "initial": {
+        "joint": 94,
+        "raw": 94
+      },
+      "parent": {
+        "joint": 94,
+        "raw": 94
+      },
+      "rows": 96,
+      "trained": {
+        "joint": 93,
+        "raw": 93
+      }
+    },
+    "training168": {
+      "frozen_N11": {
+        "joint": 154,
+        "raw": 154
+      },
+      "initial": {
+        "joint": 154,
+        "raw": 154
+      },
+      "parent": {
+        "joint": 154,
+        "raw": 154
+      },
+      "rows": 168,
+      "trained": {
+        "joint": 154,
+        "raw": 154
+      }
+    }
+  },
+  "all_three_nine_scope_paired_maps_and_all_eight_metrics_reconciled": true,
+  "analysis": {
+    "bytes": 3470679,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-analysis-v01.json",
+    "sha256": "cdb1b30f035dc9710eb12624659dbe31a4eaa78337ca1e8b8d7ffbfe8dbf4722"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-evaluation-author-controls-independent-replay-v01.json": {
+      "bytes": 10168,
+      "sha256": "1a32771172b6b86f51715f061d73171e09ca2106bf7ae7549f065b4c84e91bb6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-plan-v01.json": {
+      "bytes": 71091,
+      "sha256": "71b65a145c0f666e0b58b26a5510e205d351a80ef149bcb0d3c26dd55b1317ee"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-runtime-review-v01.json": {
+      "bytes": 87180,
+      "sha256": "7addc2135ff36c553183f0a8818280b044f694fb592aca152826db8922d3d5a5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-terminal-resource-audit-v01.json": {
+      "bytes": 43725,
+      "sha256": "4066de94530f90d41222334050924f27ed4ce7e0f3e8e00dd97c24a41b598c68"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-training-review-v01.json": {
+      "bytes": 37235,
+      "sha256": "f3b08b61d8c5c66e8258ffbb07c77e9e41ffc51aa71bf5fad58fd2756ab844fa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-independent-recount-v01.json": {
+      "bytes": 3168876,
+      "sha256": "0db57059f3fca19b69e6fc3554a4a3ee64274fc58ed12ed36bcedb5f065a3f6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-output-freeze-v01.json": {
+      "bytes": 22324,
+      "sha256": "f5140b6c3c9a6c32ec3e012444f873bfc79c4f6936d0b2d76296748fa5ceda30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-analysis-v01.json": {
+      "bytes": 3470679,
+      "sha256": "cdb1b30f035dc9710eb12624659dbe31a4eaa78337ca1e8b8d7ffbfe8dbf4722"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/analyze_actor_context_ranking_v01.py": {
+      "bytes": 30542,
+      "sha256": "12c534cd5a1c5051ad0440d7ee9a61b24d60c01f7302c0338ab8c43d1fb3424b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/analyzer-port-source-independent-review-v01.json": {
+      "bytes": 12668,
+      "sha256": "a3e26165d52e9c6e9f91aa0eef6d417a57aa2faf8d304a9fdde6a3a3d7d39faf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/analyzer-source-independent-review-v01.json": {
+      "bytes": 27016,
+      "sha256": "e2f59c829bfdff4fee4e4567b793da1cf37365d638b4a40b2b335b508066c44d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/audit_actor_context_ranking_terminal_resources_v04.py": {
+      "bytes": 18940,
+      "sha256": "c29556a0bdd304933b8de5ba26d7162fdcae750e8e30009df5b6a134bf892aca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 18389,
+      "sha256": "26284be9473a9265659982067bf80a3d60ade49dd504b627d7866f7f09bb418d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/evaluation-source-derivation-v01.json": {
+      "bytes": 8343,
+      "sha256": "38887fd481ae33a770436dcc1cc90f3f6db2af4548a99193235763bff03ec949"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/freeze_actor_context_ranking_outputs_v04.py": {
+      "bytes": 20862,
+      "sha256": "d44331aa0dc7377a0cddcdd4eabfb060c1594b2e3c84e93463fbdebd2732c927"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/postfreeze-comparator-inputs-v01.json": {
+      "bytes": 6310,
+      "sha256": "c9a021d78fb8025efb49b0b13bfc520d8513e96d6e777f14e085a9c26cf1fa44"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/result-recount-inputs-v01.json": {
+      "bytes": 619,
+      "sha256": "1f22dd494463a1f21c282f6a60d49a414c90e7caecff009ddacdd160c68840f4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/result-recount-source-independent-review-v01.json": {
+      "bytes": 12503,
+      "sha256": "20f65553c8f4015150c09afac9383651b3d564b0a31f7fd5b870f5745b19138b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_result_recount_v01.py": {
+      "bytes": 43889,
+      "sha256": "d676f769c5d104fea600ff2036eb72146ab8f5f7519ee974835ce24812035601"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/runtime-freeze-source-independent-review-v02.json": {
+      "bytes": 12576,
+      "sha256": "d4283e05211bef606cf8b090c2e0e9e412cb95463c57a7c48e3d43beb640c389"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/training-design-v01.json": {
+      "bytes": 5655,
+      "sha256": "ab412ceace1375819323afc9cc08f43720db28f007a04a7f4b7be8cdafd93ca1"
+    }
+  },
+  "default_promotion": false,
+  "final632_modality_all_presence_nonactor_scores_preserved": true,
+  "findings": [],
+  "freeze": {
+    "bytes": 22324,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-output-freeze-v01.json",
+    "sha256": "f5140b6c3c9a6c32ec3e012444f873bfc79c4f6936d0b2d76296748fa5ceda30"
+  },
+  "independent_acceptance_recomputation": {
+    "all32_permissions_passed": true,
+    "loss_IDs_vs_both_retained_donors": {
+      "frozen_N11": {
+        "authored_dev": {
+          "joint": [],
+          "raw": []
+        },
+        "authored_eval": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_challenge": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_dev": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_test": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_tune": {
+          "joint": [],
+          "raw": []
+        },
+        "old_authored_eval": {
+          "joint": [],
+          "raw": []
+        },
+        "old_tune": {
+          "joint": [
+            "native-tuning-calendula-t4-q5-p"
+          ],
+          "raw": [
+            "native-tuning-calendula-t4-q5-p"
+          ]
+        },
+        "training168": {
+          "joint": [],
+          "raw": []
+        }
+      },
+      "parent": {
+        "authored_dev": {
+          "joint": [],
+          "raw": []
+        },
+        "authored_eval": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_challenge": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_dev": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_test": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_tune": {
+          "joint": [],
+          "raw": []
+        },
+        "old_authored_eval": {
+          "joint": [],
+          "raw": []
+        },
+        "old_tune": {
+          "joint": [
+            "native-tuning-calendula-t4-q5-p"
+          ],
+          "raw": [
+            "native-tuning-calendula-t4-q5-p"
+          ]
+        },
+        "training168": {
+          "joint": [],
+          "raw": []
+        }
+      }
+    },
+    "no_complete_IR_loss_IDs_passed": false,
+    "required_minimum_each": 155,
+    "scientific_success": false,
+    "training168": {
+      "joint": 154,
+      "raw": 154
+    },
+    "training_passed": false
+  },
+  "independent_recount": {
+    "bytes": 3168876,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-independent-recount-v01.json",
+    "sha256": "0db57059f3fca19b69e6fc3554a4a3ee64274fc58ed12ed36bcedb5f065a3f6d"
+  },
+  "initial632_full_score_and_prediction_parity": true,
+  "limitations": [
+    "All scopes were previously exposed diagnostics; no held-out selection, generalization or statutory-law accuracy claim.",
+    "Actor accuracy/ranking gains do not satisfy the complete-IR criterion. Negative training/no-loss criteria remain failed; no promotion or training retry is authorized.",
+    "The recounter explicitly proves selected scalar hinge/domain and structural source/trace joins, not live numerical gradients, scalarCE or complete preupdate argmax.",
+    "Analyzer and recounter share an author and structural trace helper; independent source qualification, root execution and this arithmetic/custody review are disclosed separately."
+  ],
+  "negative_result": {
+    "fresh_test_full_IR_raw_and_joint": [
+      0,
+      0
+    ],
+    "lost_id": "native-tuning-calendula-t4-q5-p",
+    "old_tune_raw_and_joint": [
+      94,
+      93
+    ],
+    "training_full_IR_joint": [
+      154,
+      154
+    ],
+    "training_full_IR_raw": [
+      154,
+      154
+    ]
+  },
+  "operations": {
+    "checkpoint_JSON_parses": 0,
+    "model_or_encoder_calls": 0,
+    "network_calls": 0,
+    "new_training_or_control_updates": 0,
+    "private_resource_body_reads": 0,
+    "raw_saved_capture_or_reference_packet_reads": 0,
+    "resource_API_calls": 0
+  },
+  "passed": true,
+  "plan": {
+    "bytes": 71091,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-plan-v01.json",
+    "sha256": "71b65a145c0f666e0b58b26a5510e205d351a80ef149bcb0d3c26dd55b1317ee"
+  },
+  "positive_result": {
+    "authored_dev_full_IR_joint": [
+      46,
+      48
+    ],
+    "authored_dev_full_IR_raw": [
+      45,
+      47
+    ],
+    "gain_ids": [
+      "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+      "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+    ]
+  },
+  "review_scope": "Independent postfreeze review of qualified actual analysis/recount and public custody, all panel/pair arithmetic, permissions and fixed acceptance; no additional model run or independent fourth full saved-score replay.",
+  "runtime_review": {
+    "bytes": 87180,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-runtime-review-v01.json",
+    "sha256": "7addc2135ff36c553183f0a8818280b044f694fb592aca152826db8922d3d5a5"
+  },
+  "schema": "actor-context-ranking-result-independent-review/v1",
+  "scientific_success": false,
+  "semantic_accuracy": null,
+  "source_authorship": {
+    "actual_recounter_main_executed_by_root": true,
+    "actual_recounter_main_executed_by_this_reviewer": false,
+    "analyzer_and_recounter_same_agent": true,
+    "independent_source_reviewer_and_this_result_reviewer_different_from_author": true
+  },
+  "technical_qualification_passed": true,
+  "terminal_resource": {
+    "bytes": 43725,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-terminal-resource-audit-v01.json",
+    "sha256": "4066de94530f90d41222334050924f27ed4ce7e0f3e8e00dd97c24a41b598c68"
+  },
+  "training_review": {
+    "bytes": 37235,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-training-review-v01.json",
+    "sha256": "f3b08b61d8c5c66e8258ffbb07c77e9e41ffc51aa71bf5fad58fd2756ab844fa"
+  }
+}

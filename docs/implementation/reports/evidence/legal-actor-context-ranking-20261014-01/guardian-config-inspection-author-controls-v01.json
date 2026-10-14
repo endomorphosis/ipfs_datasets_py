@@ -1,0 +1,37 @@
+{
+  "API_calls": 0,
+  "actual_censuses": 0,
+  "controls_source": {
+    "bytes": 5967,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_guardian_config_inspection_detached_v01.py",
+    "sha256": "a5c74e13a8b8cf0c519b9510cacd26ab8819efa04499901ddf400e34b59b9f2e"
+  },
+  "current_scheduler_source": {
+    "bytes": 111009,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+    "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+  },
+  "errors": 0,
+  "failures": 0,
+  "findings": [],
+  "historical_adoption_source": {
+    "bytes": 15101,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py",
+    "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+  },
+  "independent_qualification": false,
+  "model_calls": 0,
+  "observer": {
+    "bytes": 14880,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/inspect_actor_context_ranking_scheduler_config_v01.py",
+    "sha256": "18a0b0e2d05873e1746cfd1264cff71181eea3fc3143bae004d3b83cd16433bf"
+  },
+  "passed": true,
+  "private_sample_or_endpoint_reads": 0,
+  "producer_main_calls": 0,
+  "scheduler_imports": 0,
+  "schema": "actor-context-ranking-guardian-config-inspection-author-controls/v1",
+  "subprocess_calls": 0,
+  "synthetic_CONFIG_and_public_source_AST_only": true,
+  "tests_run": 13
+}

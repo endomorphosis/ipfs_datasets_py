@@ -1,0 +1,250 @@
+{
+  "actions": {
+    "checkpoint_JSON_parses": 0,
+    "model_calls": 0,
+    "network_or_SDK_calls": 0,
+    "private_body_reads": 0,
+    "publication_calls": 0,
+    "resource_calls": 0,
+    "source_or_recipe_edits": 0
+  },
+  "actual_blockers": [
+    {
+      "finding": "No actual F16 qualified training/freeze/recount result is supplied by this preparation task; root reports current resource smoke needs a source correction and no capacity/training yet.",
+      "id": "F16-science-not-completed",
+      "resolution": "Wait for actual qualified run, full62 freeze, actual scoring/recount and independent result review before porting/building approval."
+    },
+    {
+      "actual_trainer": {
+        "bytes": 4061,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/trainer-source-independent-review-v01.json",
+        "sha256": "257800d1a3ce2e471165ac2e64dfcbb4251106a859386086f36d9cb4ff7930a6"
+      },
+      "finding": "Actual F16 trainer gate has source/tests/artifacts but lacks both source_owner_pins and supplemental_source_pins. The F15 algorithm_sources() predicate therefore rejects it.",
+      "id": "trainer-metadata-shape",
+      "resolution": "Future port must authenticate actual frozen-plan40 owner descriptors and single plan-admitted attention source against its actor_features AST recipe pin, plus current trainer.source/tests/artifacts. Do not invent or mutate legacy trainer fields."
+    },
+    {
+      "finding": "F15 publisher fails closed when Hub appends a per-path LFS rule for a new large JSON checkpoint; its strict per-chunk prior-identity check does not automatically repair it.",
+      "id": "attributes-repair-is-not-automatic",
+      "resolution": "Before actual upload, qualify an F16-specific handling of sole exact attributes drift using the preserved resume predicates and actual concrete payload. Stop on any other difference or unknown outcome; never blind retry."
+    },
+    {
+      "finding": "F16 adds private-resource-diagnostics; the old helper private() excludes other historical private roots but does not name this new directory.",
+      "id": "phase-specific-private-diagnostics",
+      "resolution": "Future explicit public inventory and private-path predicate must exclude current raw stdout/stderr/private copies/backups, weights download trees/debug logs, and any unqualified body. Include public diagnostic receipts only."
+    }
+  ],
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/trainer-source-independent-review-v01.json": {
+      "bytes": 4061,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/trainer-source-independent-review-v01.json",
+      "sha256": "257800d1a3ce2e471165ac2e64dfcbb4251106a859386086f36d9cb4ff7930a6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v02.py": {
+      "bytes": 28426,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v02.py",
+      "sha256": "89a01553f09ea1f228ea50ad8dd1c3d289d1dd89ddda5d2d2598e429393f53a5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/build_actor_refinement_release_spec_v02.py": {
+      "bytes": 17198,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/build_actor_refinement_release_spec_v02.py",
+      "sha256": "81aeaac58a5c6c76e6df0da8d4b12fea19a2fa9825e4dcf81c46862fe39dd9b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-attributes-immutable-readback-independent-v01.json": {
+      "bytes": 2245,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-attributes-immutable-readback-independent-v01.json",
+      "sha256": "cc73613e00ae8c99c573fbe7f58d7cd7f0a8a5de2bc255cce8dc6b0f2d3fc750"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-before-file-identities-v01.json": {
+      "bytes": 2954924,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-before-file-identities-v01.json",
+      "sha256": "d7a5a34039a51b87b65d4d4f28675702b14f282e8327c85a1df8b9189c992f19"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-final-immutable-independent-v01.json": {
+      "bytes": 1520692,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-final-immutable-independent-v01.json",
+      "sha256": "57911acda7e1aa3cc260ba455c0e56af7d10f08745adb4ac82acd36ce2856890"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-helper-port-source-independent-review-v01.json": {
+      "bytes": 53530,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-helper-port-source-independent-review-v01.json",
+      "sha256": "0dd1ec84e8fe9643390492156d2b608e1a3a27992f52a5da3a9b5015a22cc656"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-helper-source-independent-review-v01.json": {
+      "bytes": 155066,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-helper-source-independent-review-v01.json",
+      "sha256": "bdcac74317debe3f980e5a17f8ff7d32134077cc18cb1ac04710cba27d1509f3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-actual-independent-review-v01.json": {
+      "bytes": 220073,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-actual-independent-review-v01.json",
+      "sha256": "3097b700479052acffcc3a601e0cacc376247871b67c01cfac357da5a51fcaab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-independent-review-v01.json": {
+      "bytes": 279329,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-independent-review-v01.json",
+      "sha256": "d3314113f2879f9efdf66a590171fd7b5028f47f8b8d82eef6e8176832f1b73a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-partial-discrepancy-independent-v01.json": {
+      "bytes": 28376,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-partial-discrepancy-independent-v01.json",
+      "sha256": "ecc28d96796c2e68c8bbda6c976959860af545272ba2fc165e7f79fa1dd7d9d0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-resume-independent-review-v01.json": {
+      "bytes": 263832,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-resume-independent-review-v01.json",
+      "sha256": "8bc3f85823eb1055ab4c70005a617698e42c64fb1490aaefac3428c891a7d833"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-verification-v02.json": {
+      "bytes": 93478,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-verification-v02.json",
+      "sha256": "cd28b9794addba489c67efa971b02242a6bf28aa9b475967f4a142ed5709f357"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-resume-helper-source-independent-review-v01.json": {
+      "bytes": 9166,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-resume-helper-source-independent-review-v01.json",
+      "sha256": "f512502ffbc42f2049081085090010b07c7879cf3fad5471fc72c15086ce2298"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resume_actor_refinement_hf_v01.py": {
+      "bytes": 24973,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resume_actor_refinement_hf_v01.py",
+      "sha256": "98d851e0aa900e67a02ecf6b393d7ee772874494e5dbc046d005ddb2e5474a94"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_hf_port_detached_v02.py": {
+      "bytes": 10916,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_hf_port_detached_v02.py",
+      "sha256": "75b6a9a2a5de923e2bb7cc96b2c555c4b17dcc15e7297e3d556760babf87ff86"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_hf_resume_detached_v01.py": {
+      "bytes": 9421,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_hf_resume_detached_v01.py",
+      "sha256": "ec11a590ac839fce399914c9af92fca7ce31d6866c082763cc9bba860d53d391"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_release_builder_detached_v02.py": {
+      "bytes": 7257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_release_builder_detached_v02.py",
+      "sha256": "4814a868202a4ea0b7e63deb565af11ef3cd6557f421efdce0caa3a5ba1ee208"
+    }
+  },
+  "attributes_handling": {
+    "allowed_corrective_pattern": "Compare exact immutable current map with the complete baseline and already created payload. Only the independently authenticated .gitattributes drift may be corrected, using exact original raw2230 bytes and parent CAS; verify every old and created payload identity, then continue only original uncreated chunks.",
+    "final_proof": "Force a fresh immutable hf download with --force-download and rawhash every published file including opaque checkpoint. Disclose corrective commit and overall_protocol_additions_only=False if correction occurred; all payload paths remain additions only.",
+    "future_condition": "If the actual F16 checkpoint exceeds the Hub large-file threshold and receives a new per-path LFS rule, use exact actual bytes/path/line evidence. No checkpoint conversion or model calls are implied.",
+    "not_reusable_as_constants": [
+      "F15 exact129-byte added rule",
+      "F15 >10MB checkpoint12230969B SHA f421...",
+      "F15 original198 files and seven chunks"
+    ],
+    "old_interruption_preserved": {
+      "bytes": 28376,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-partial-discrepancy-independent-v01.json",
+      "sha256": "ecc28d96796c2e68c8bbda6c976959860af545272ba2fc165e7f79fa1dd7d9d0"
+    },
+    "portability_limit": "Hub CLI byte retrieval does not qualify automatic Git-clone LFS materialization or numerical reload."
+  },
+  "intended_minimal_public_bundle": "Actual62 frozen candidate outputs;13 qualified public runtime files;all41 unique package-relative algorithm .py sources plus actual contract test;current recipe/resource/auditor/evaluator source and public receipts;actual plan/design/eval/result/card. Exact finite count/bytes derive only after result. Do not repeat unrelated historical archives or raw private bodies.",
+  "minimum_gate_map": [
+    {
+      "file": "hf-helper-port-source-independent-review-v01.json",
+      "role": "Prepared-only builder/helper source qualification; permits separately triggered read-only baseline metadata action."
+    },
+    {
+      "file": "hf-helper-source-independent-review-v01.json",
+      "role": "Concrete actual source/spec/baseline/freeze/runtime/result inventory gate before prepare; includes all41 algorithm rawpins and exact model-card claims."
+    },
+    {
+      "file": "hf-publication-independent-review-v01.json",
+      "role": "Independent physical prepared payload gate before publish; exact current parent/finite entries/rawbytes/private exclusions."
+    },
+    {
+      "file": "hf-resume-helper-source-independent-review-v01.json",
+      "role": "Conditional corrective/resume source qualification only if an attributes discrepancy needs repair."
+    },
+    {
+      "file": "hf-publication-resume-independent-review-v01.json",
+      "role": "Conditional concrete partial-snapshot/attrs/readback/remaining-chunk qualification, separately preserving original invariant failure."
+    },
+    {
+      "file": "hf-publication-actual-independent-review-v01.json",
+      "role": "Independent actual immutable final identity map, all payload raw downloads, actual commit chain and report disposition after publication."
+    }
+  ],
+  "minimum_reusable_sources": {
+    "archive_actor_refinement_hf_v02.py": {
+      "bytes": 28426,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v02.py",
+      "sha256": "89a01553f09ea1f228ea50ad8dd1c3d289d1dd89ddda5d2d2598e429393f53a5"
+    },
+    "build_actor_refinement_release_spec_v02.py": {
+      "bytes": 17198,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/build_actor_refinement_release_spec_v02.py",
+      "sha256": "81aeaac58a5c6c76e6df0da8d4b12fea19a2fa9825e4dcf81c46862fe39dd9b0"
+    },
+    "resume_actor_refinement_hf_v01.py": {
+      "bytes": 24973,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resume_actor_refinement_hf_v01.py",
+      "sha256": "98d851e0aa900e67a02ecf6b393d7ee772874494e5dbc046d005ddb2e5474a94"
+    }
+  },
+  "observed_at_utc": "2026-10-14T12:33:18.679728+00:00",
+  "preservation_anchor": {
+    "F15_added_file_count": 198,
+    "all5448_original_identities_exact": true,
+    "baseline_attributes_identity": {
+      "blob_id": "1cf99f89f95ce8f39b630d8df37126fc628047de",
+      "lfs": null,
+      "size": 2230
+    },
+    "baseline_attributes_sha256": "88ff4d857c849ce3e11fea7c2f70d648550968cf546ab9cbc4d690e1b6543036",
+    "final_F15_actual_independent_review": {
+      "bytes": 220073,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-actual-independent-review-v01.json",
+      "sha256": "3097b700479052acffcc3a601e0cacc376247871b67c01cfac357da5a51fcaab"
+    },
+    "final_F15_file_count": 5646,
+    "final_F15_forced_download_verification": {
+      "bytes": 93478,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-verification-v02.json",
+      "sha256": "cd28b9794addba489c67efa971b02242a6bf28aa9b475967f4a142ed5709f357"
+    },
+    "final_F15_full_identity_map": {
+      "bytes": 1520692,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-final-immutable-independent-v01.json",
+      "sha256": "57911acda7e1aa3cc260ba455c0e56af7d10f08745adb4ac82acd36ce2856890"
+    },
+    "final_F15_revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4",
+    "future_requirement": "A future fresh current Hub baseline must contain all5646 F15 final identities exactly, which also preserves old5448, plus every legitimate newer identity. Preserve that complete current baseline under parent CAS; do not use counts alone.",
+    "older_file_count": 5448,
+    "older_revision": "0228887c8e33cb23e9679889a9496f87140021e6"
+  },
+  "repository": "Publicus/legal-ir-autoencoder",
+  "schema": "actor-context-ranking-Hub-publication-reuse-inventory/v1",
+  "source_interfaces": [
+    {
+      "interface": "Argument-free main: validated actual freeze/runtime/result review +finite explicit public inventory +card+fresh immutable baseline ->release-manifest-v01.json and hf-release-spec-v01.json; no payload copy/network/checkpoint parse.",
+      "required_port": "F16 cell/attempt/schema/current producer paths,40 declared+one supplementary source=41, actual evidence filenames and scientific disposition.",
+      "source": "build_actor_refinement_release_spec_v02.py"
+    },
+    {
+      "interface": "CLI action baseline | prepare | publish; source-port gate before baseline SDK, concrete helper/spec/result gate before payload copy, physical payload publication gate before parent-CAS chunk commits/readback.",
+      "required_port": "F16 prefix/schema/current recipe filenames,OWNER_COUNT40/ALGORITHM_SOURCE_COUNT41, actual trainer interface, immutable F15 final5646 anchor, fresh current baseline preserving every newer file, forced final downloads.",
+      "source": "archive_actor_refinement_hf_v02.py"
+    },
+    {
+      "interface": "One exact corrective .gitattributes commit plus only uncreated original chunks, with separate independent source and concrete reconciliation gates; no auto-retry/reupload of prior chunks.",
+      "required_port": "Do not run unchanged: F15 revisions/attrs/rawcheckpoint/198file/7chunk/26created/172remaining counts and filenames are hardcoded. Bind actual F16 immutable discrepancy, attrs and original chunk geometry if correction is required.",
+      "source": "resume_actor_refinement_hf_v01.py"
+    }
+  ],
+  "status": "read_only_preparation_no_port_or_publication",
+  "unchanged_publication_bounds": {
+    "chunk_max_files": 48,
+    "chunk_target_bytes": 16000000,
+    "max_files": 500,
+    "max_payload_bytes": 200000000,
+    "max_payload_file_bytes": 33554432,
+    "no_default_promotion": true,
+    "no_replacements_or_deletions": true
+  }
+}
