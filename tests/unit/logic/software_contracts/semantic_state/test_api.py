@@ -10,6 +10,8 @@ from typing import Any, Mapping
 
 import pytest
 
+import ipfs_datasets_py.logic.software_contracts.semantic_state.api as state_api
+
 from ipfs_datasets_py.logic.software_contracts.content import (
     canonical_dag_json_bytes,
     cid_for_bytes,
@@ -791,3 +793,225 @@ def test_single_symbol_compile_matches_bundle_capsule() -> None:
     single = compile_semantic_capsule(state, alpha.stable_id)
     assert single.capsule_cid == from_bundle.capsule_cid
     assert single.identity_payload() == from_bundle.identity_payload()
+
+
+# ---------------------------------------------------------------------------
+# Parsed-index reuse never hides a fresh injected-reader answer.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def fresh_sorted_pair_index_cache(monkeypatch):
+    monkeypatch.delenv("IPFS_DATASETS_SEMANTIC_INDEX_CACHE", raising=False)
+    state_api._cached_sorted_pair_index.cache_clear()
+    yield
+    state_api._cached_sorted_pair_index.cache_clear()
+
+
+@pytest.mark.parametrize("damage", ["tampered", "missing", "foreign_index"])
+def test_warm_index_cache_still_refuses_changed_or_missing_reader_bytes(
+    monkeypatch, fresh_sorted_pair_index_cache, damage,
+):
+    alpha = _make_symbol("pkg.mod.alpha")
+    beta = _make_symbol("pkg.mod.beta")
+    bundle = build_semantic_state(_state([alpha, beta], edges=[_edge(alpha, beta)]))
+    backend = dict(bundle.blocks)
+    reads = []
+
+    def reader(cid):
+        reads.append(cid)
+        return backend[cid]
+
+    view = state_api.open_semantic_state(bundle.root.root_cid, reader)
+    index_cid = bundle.root.symbol_fact_index_cid
+    original = backend[index_cid]
+    assert view.symbol_fact(alpha.stable_id).symbol.to_dict() == alpha.to_dict()
+    if damage == "missing":
+        del backend[index_cid]
+        error = MissingBlockError
+    else:
+        backend[index_cid] = (original.replace(alpha.stable_id.encode(), b"changed-symbol-key") if damage == "tampered"
+                              else backend[bundle.root.capsule_index_cid])
+        error = CorruptBlockError
+    with pytest.raises(error):
+        view.symbol_fact(alpha.stable_id)
+    assert reads.count(index_cid) == 2
+    # Restore exactly the known immutable bytes; the same view can recover,
+    # while a fresh backend fetch remains mandatory even for a cache hit.
+    backend[index_cid] = original
+    assert view.symbol_fact(alpha.stable_id).symbol.to_dict() == alpha.to_dict()
+    assert reads.count(index_cid) == 3
+
+
+def test_enabled_and_explicitly_disabled_index_cache_preserve_native_view_semantics(
+    monkeypatch, fresh_sorted_pair_index_cache,
+):
+    alpha = _make_symbol("pkg.mod.alpha")
+    beta = _make_symbol("pkg.mod.beta")
+    edge = _edge(alpha, beta)
+    bundle = build_semantic_state(_state([alpha, beta], edges=[edge]))
+    view = state_api.open_semantic_state(bundle.root.root_cid, bundle.get_block)
+
+    def observations():
+        return {
+            "facts": [view.symbol_fact(symbol.stable_id).to_dict() for symbol in (alpha, beta)],
+            "capsules": [view.capsule(symbol.stable_id).to_dict() for symbol in (alpha, beta)],
+            "nodes": [view.symbol_node(symbol.stable_id).to_dict() for symbol in (alpha, beta)],
+            "links": [view.semantic_link(edge.edge_id).to_dict()],
+            "outgoing": [link.to_dict() for link in view.semantic_links_for_symbol(alpha.stable_id, "outgoing")],
+            "incoming": [link.to_dict() for link in view.semantic_links_for_symbol(beta.stable_id, "incoming")],
+        }
+
+    enabled = observations()
+    monkeypatch.setenv("IPFS_DATASETS_SEMANTIC_INDEX_CACHE", "0")
+    assert observations() == enabled
+    with pytest.raises(UnknownSymbolError):
+        view.symbol_fact("missing-native-symbol")
+    monkeypatch.delenv("IPFS_DATASETS_SEMANTIC_INDEX_CACHE")
+    assert observations() == enabled
+    with pytest.raises(UnknownSymbolError):
+        view.symbol_fact("missing-native-symbol")
+
+
+def test_warm_index_reuses_native_parse_but_fetches_reader_on_every_lookup(
+    monkeypatch, fresh_sorted_pair_index_cache,
+):
+    alpha = _make_symbol("pkg.mod.alpha")
+    beta = _make_symbol("pkg.mod.beta")
+    bundle = build_semantic_state(_state([alpha, beta]))
+    state_api._cached_sorted_pair_index.cache_clear()
+    index_cid = bundle.root.symbol_fact_index_cid
+    parsed = []
+    original_from_dict = SortedPairIndex.from_dict.__func__
+
+    def counted_from_dict(cls, data):
+        if data.get("index_cid") == index_cid:
+            parsed.append(index_cid)
+        return original_from_dict(cls, data)
+
+    monkeypatch.setattr(SortedPairIndex, "from_dict", classmethod(counted_from_dict))
+    reads = []
+
+    def reader(cid):
+        reads.append(cid)
+        return bundle.get_block(cid)
+
+    view = state_api.open_semantic_state(bundle.root.root_cid, reader)
+    for symbol in (alpha, beta, alpha):
+        assert view.symbol_fact(symbol.stable_id).symbol.to_dict() == symbol.to_dict()
+    assert parsed == [index_cid]
+    assert reads.count(index_cid) == 3
+    monkeypatch.setenv("IPFS_DATASETS_SEMANTIC_INDEX_CACHE", "0")
+    for symbol in (alpha, beta):
+        assert view.symbol_fact(symbol.stable_id).symbol.to_dict() == symbol.to_dict()
+    assert len(parsed) == 3
+    assert reads.count(index_cid) == 5
+
+
+# Append to existing semantic_state/test_api.py (uses _make_symbol/_state).
+
+@pytest.mark.parametrize("damage", ["missing", "corrupt", "nonbytes"])
+def test_warm_block_canonicality_cache_preserves_fresh_reader_failures(
+    monkeypatch, damage,
+):
+    from ipfs_datasets_py.logic.software_contracts.semantic_state import models as state_models
+
+    monkeypatch.delenv("IPFS_DATASETS_SEMANTIC_BLOCK_CACHE", raising=False)
+    state_models._cached_canonical_dag_json_bytes.cache_clear()
+    alpha = _make_symbol("pkg.mod.alpha")
+    bundle = build_semantic_state(_state([alpha]))
+    backend = dict(bundle.blocks)
+    fact_cid = view_semantic_state_bundle(bundle).symbol_fact(alpha.stable_id).fact_cid
+    observed = []
+
+    def reader(cid):
+        observed.append(cid)
+        return backend[cid]
+
+    view = state_api.open_semantic_state(bundle.root.root_cid, reader)
+    assert view.symbol_fact(alpha.stable_id).symbol.to_dict() == alpha.to_dict()
+    good = backend[fact_cid]
+    if damage == "missing":
+        del backend[fact_cid]
+        error = MissingBlockError
+    elif damage == "corrupt":
+        backend[fact_cid] = b'{"value":"changed"}'
+        error = CorruptBlockError
+    else:
+        backend[fact_cid] = bytearray(good)
+        error = CorruptBlockError
+    with pytest.raises(error):
+        view.symbol_fact(alpha.stable_id)
+    backend[fact_cid] = good
+    assert view.symbol_fact(alpha.stable_id).symbol.to_dict() == alpha.to_dict()
+    assert observed.count(fact_cid) == 3
+    assert observed.count(bundle.root.symbol_fact_index_cid) == 3
+    state_models._cached_canonical_dag_json_bytes.cache_clear()
+
+
+# Optional simplification controls; append to existing test_api.py separately.
+
+
+def test_structured_identity_reuse_preserves_detached_values_and_actual_reader_calls(monkeypatch):
+    payload = {"schema": "example@1", "nested": {"items": [1, True, None]}}
+    raw = canonical_dag_json_bytes(payload)
+    cid = cid_for_structured(payload)
+    observed = []
+
+    def reader(requested):
+        observed.append(requested)
+        return raw
+
+    monkeypatch.delenv("IPFS_DATASETS_SEMANTIC_IDENTITY_REUSE", raising=False)
+    first = state_api._load_structured_identity(reader, cid)
+    first["nested"]["items"].append("changed locally")
+    second = state_api._load_structured_identity(reader, cid)
+    assert second == payload
+    monkeypatch.setenv("IPFS_DATASETS_SEMANTIC_IDENTITY_REUSE", "0")
+    assert state_api._load_structured_identity(reader, cid) == second
+    assert observed == [cid] * 3
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+@pytest.mark.parametrize("damage", ["raw_codec", "noncanonical", "float", "wrong_cid", "json_array"])
+def test_structured_identity_reuse_preserves_codec_and_payload_refusals(monkeypatch, enabled, damage):
+    monkeypatch.setenv("IPFS_DATASETS_SEMANTIC_IDENTITY_REUSE", "1" if enabled else "0")
+    raw = b'{"value":1}'
+    cid = cid_for_structured({"value": 1})
+    if damage == "raw_codec":
+        cid = cid_for_bytes(raw)
+    elif damage == "noncanonical":
+        raw = b'{ "value":1}'
+    elif damage == "float":
+        raw = b'{"value":1.0}'
+    elif damage == "wrong_cid":
+        cid = cid_for_structured({"value": 2})
+    else:
+        raw = canonical_dag_json_bytes([1])
+        cid = cid_for_structured([1])
+    with pytest.raises(CorruptBlockError):
+        state_api._load_structured_identity(lambda requested: raw, cid)
+
+
+def test_structured_identity_reuse_removes_only_duplicate_canonical_and_hash_calls(monkeypatch):
+    payload = {"schema": "example@1", "value": 1}
+    raw, cid = canonical_dag_json_bytes(payload), cid_for_structured(payload)
+    duplicate_canonical, duplicate_hash = [], []
+    original_canonical, original_hash = state_api.canonical_dag_json_bytes, state_api.cid_for_structured
+
+    def canonical(value):
+        duplicate_canonical.append(value)
+        return original_canonical(value)
+
+    def hashed(value):
+        duplicate_hash.append(value)
+        return original_hash(value)
+
+    monkeypatch.setattr(state_api, "canonical_dag_json_bytes", canonical)
+    monkeypatch.setattr(state_api, "cid_for_structured", hashed)
+    monkeypatch.delenv("IPFS_DATASETS_SEMANTIC_IDENTITY_REUSE", raising=False)
+    assert state_api._load_structured_identity(lambda requested: raw, cid) == payload
+    assert duplicate_canonical == duplicate_hash == []
+    monkeypatch.setenv("IPFS_DATASETS_SEMANTIC_IDENTITY_REUSE", "0")
+    assert state_api._load_structured_identity(lambda requested: raw, cid) == payload
+    assert duplicate_canonical == duplicate_hash == [payload]
