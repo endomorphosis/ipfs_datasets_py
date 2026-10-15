@@ -306,6 +306,16 @@ class DaemonResourceReservation:
         self._entered = False
         self._cleanup_error = None
 
+    def _scheduler_identity(self):
+        """Private fixed-lane hook; the daemon public API stays HAMMER_LEAN."""
+        return SCHEDULER_LANE, SCHEDULER_WORKLOAD
+
+    def _scheduler_request_id(self):
+        return "daemon:" + self.reservation_id
+
+    def _validate_new_reservation(self, ledger):
+        """Private pre-admission hook; existing daemon attempts bind later."""
+
     def _verify_owner_roots(self):
         if os.getpid() != self._owner_pid:
             raise DaemonResourceError("reservation cannot move to another owner process")
@@ -418,6 +428,7 @@ class DaemonResourceReservation:
         if self._entered:
             raise DaemonResourceError("reservation can only be entered once")
         scheduler = None
+        scheduler_lane, scheduler_workload = self._scheduler_identity()
         if self._scheduler_state_path is not None:
             from .existing_resource_scheduler import open_existing_scheduler
             # Metadata refusal precedes any durable storage reservation. A
@@ -428,13 +439,14 @@ class DaemonResourceReservation:
             ledger = self._read()
             if len(ledger["reservations"]) >= MAX_RESERVATIONS:
                 raise DaemonResourceError("disk reservation inventory full")
+            self._validate_new_reservation(ledger)
             observation = self._account(ledger, additional=self.storage_bytes)
             record = {"reservation_id": self.reservation_id, "status": "reserved",
                       "owner_pid": self._owner_pid, "storage_bytes": self.storage_bytes,
                       "memory_mb": self.memory_mb, "cpu_slots": self.cpu_slots,
                       "child_process_slots": self.child_process_slots,
-                      "scheduler_lane": SCHEDULER_LANE.value, "workload": SCHEDULER_WORKLOAD,
-                      "created_at": time.time(), "attempt_directory": None, "child": None,
+                      "scheduler_lane": scheduler_lane.value, "workload": scheduler_workload,
+                      "created_at": time.time(), "attempt_directory": self._attempt, "child": None,
                       "prior_children": [], "external_charges": {},
                       "last_usage": observation, "artifacts_durable_asserted": False}
             ledger["reservations"][self.reservation_id] = record
@@ -443,9 +455,9 @@ class DaemonResourceReservation:
             self._entered = True
         try:
             self._lease = (scheduler if scheduler is not None else get_global_resource_scheduler()).acquire(
-                SCHEDULER_LANE, cpu_slots=self.cpu_slots, memory_mb=self.memory_mb,
+                scheduler_lane, cpu_slots=self.cpu_slots, memory_mb=self.memory_mb,
                 child_process_slots=self.child_process_slots, requires_gpu=False, timeout=self.timeout_seconds,
-                request_id="daemon:" + self.reservation_id)
+                request_id=self._scheduler_request_id())
             self._update(status="active")
         except BaseException:
             try:
@@ -705,8 +717,9 @@ class DaemonResourceReservation:
     close = release
 
     def to_dict(self):
+        scheduler_lane, scheduler_workload = self._scheduler_identity()
         return {"schema": SCHEMA, "reservation_id": self.reservation_id,
-                "scheduler_lane": SCHEDULER_LANE.value, "workload": SCHEDULER_WORKLOAD,
+                "scheduler_lane": scheduler_lane.value, "workload": scheduler_workload,
                 "status": self._record["status"] if self._record is not None else "not_entered",
                 "ledger_path": str(self.ledger_path), "roots": copy.deepcopy(self.root_identities),
                 "storage_limit_bytes": MAX_STORAGE_BYTES, "record": copy.deepcopy(self._record),
