@@ -118,6 +118,13 @@ include the original absolute input path and change on relocation.
 
 ## Next repair and semantic work
 
+Follow-up: the [primary-graph candidate exporter](legal_primary_graph_export.md)
+now implements the bounded adapter and original-bound readback below, qualified
+by 160 distinct authored-fixture cases. Actual original-corpus generation and
+historical flat-cache occurrence/multiplicity reconciliation remain pending.
+Its new-generation lineage describes selected primary occurrences; it does not
+establish the missing historical original-to-flat mapping.
+
 1. Reuse `legal_primary_graph_manifest` to select and verify the exact original
    files and physical rows, `legal_primary_graph_records` to decode their explicit
    identity profile, and `legal_primary_graph_reconstruction.reconstruct_to_jsonl`
@@ -125,17 +132,17 @@ include the original absolute input path and change on relocation.
    closure. The separately retained 119,134-node/178,691-edge reconstruction is
    selected structural evidence; it is not a row-for-row repair of these
    1,722,395 legacy edge occurrences.
-2. Add a bounded, versioned corrected-generation adapter over those verified
+2. Run the qualified candidate exporter over those independently frozen verified
    originals, preserving full bodies and exact occurrence/source commitments.
-   Retain a lineage ledger mapping each historical occurrence to supported
-   original evidence or an explicit unresolved disposition. Keep flat `node_id`,
+   Separately establish a lineage ledger mapping each historical occurrence to
+   supported original evidence or an explicit unresolved disposition. Keep flat `node_id`,
    current `entry_cid`, alternative `node_cid` and semantic candidate-node record
    CID namespaces explicit. Do not infer correspondence from labels.
 3. Reuse the actual `uscode_hf_release._encode_parquet_rows` writer and the existing
    `test_current_wrapped_graph_parquet_preserves_exact_citation_identity` regression.
    That regression preserves two same-label nodes, one typed edge, complete
    bodies, hashes and role/ordinal/source fields through real Parquet readback.
-   Extend this guard for the correction adapter and require full-population
+   Apply the qualified readback guards to the actual generation and require full-population
    identity, endpoint, multiplicity and source reconciliation after readback.
    Writer success alone does not establish global closure. The current
    `publish_kg_meta_ontology.py` is a citation reader and intentionally cannot

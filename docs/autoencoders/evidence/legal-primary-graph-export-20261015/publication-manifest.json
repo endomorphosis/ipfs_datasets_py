@@ -1,0 +1,237 @@
+{
+  "authority": {
+    "Lean_executed": false,
+    "accepted_graph_view_enabled": false,
+    "accuracy_improvement_claimed": false,
+    "admitted": false,
+    "historical_flat_cache_repaired": false,
+    "model_uploaded": false,
+    "original_corpus_generation_performed": false,
+    "source_semantics_verified": false,
+    "training_performed": false
+  },
+  "created_at_utc": "2026-10-15T20:40:14.401534+00:00",
+  "files": [
+    {
+      "bytes": 3187,
+      "path": "attempt01/failure.json",
+      "sha256": "dcea13027473d00204499a97bafc525473764d37db342676b6bbc6f567a7c709",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/logs/failure.json"
+    },
+    {
+      "bytes": 30014,
+      "path": "attempt01/junit.xml",
+      "sha256": "8ac76d4c1f8a014426a6e3196d1e90ad4a2fa6f8f9b32d8a5812897884396bbb",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/exports/junit.xml"
+    },
+    {
+      "bytes": 44893,
+      "path": "attempt01/qualification-failed.json",
+      "sha256": "17ae52692480d78684e9cf6be9132225308c7208cabdcef03af0ef043714592a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/logs/qualification-failed.json"
+    },
+    {
+      "bytes": 540,
+      "path": "attempt01/stderr.log",
+      "sha256": "dbf94c754994397f26a1b443273e382ebf5b2df69e6f726cb1aa19d6475bf53a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/logs/stderr.log"
+    },
+    {
+      "bytes": 260,
+      "path": "attempt01/stdout.log",
+      "sha256": "3dc808a9092e36203c8ad3d2d49320267d9b8b7be097789296e1f0ca52e19743",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/logs/stdout.log"
+    },
+    {
+      "bytes": 3045,
+      "path": "attempt02/execution.json",
+      "sha256": "fc26a7f4a71281073b73227df0ab1ab678f31dffaf051255a7316e68284c0754",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-02/logs/execution.json"
+    },
+    {
+      "bytes": 30014,
+      "path": "attempt02/junit.xml",
+      "sha256": "0da783ef6a6e889d1f0ceaaaa31bd7a997fcee27ff873243c1c5e6088146933c",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-02/exports/junit.xml"
+    },
+    {
+      "bytes": 149013,
+      "path": "attempt02/qualification.json",
+      "sha256": "fa711a5f96f6f4b84b90f6e3d1ab332717c6762a9ad9ffb0a2e7b93eabf1194c",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-02/logs/qualification.json"
+    },
+    {
+      "bytes": 3195,
+      "path": "attempt02/result.json",
+      "sha256": "505ce7e07b60d7cb8cc8c37b93f60a066e77a348eba9a6958943883c52010d1e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-02/logs/result.json"
+    },
+    {
+      "bytes": 0,
+      "path": "attempt02/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-02/logs/stderr.log"
+    },
+    {
+      "bytes": 593,
+      "path": "attempt02/stdout.log",
+      "sha256": "94f112364d92dc3e98781b42580f4af50fb250e3a26dbedc4e00a53fcd5dd925",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-02/logs/stdout.log"
+    },
+    {
+      "bytes": 102308,
+      "path": "attempt02/validation-durability.json",
+      "sha256": "da4286beeb1840d92deade9f4e71c0d7b00357e55b9dff03cce5eea03e1edb2f",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-02/logs/validation-durability.json"
+    },
+    {
+      "bytes": 43550,
+      "path": "independent-metadata-review-v02.json",
+      "sha256": "2c4e28e7fdf67066b4a77f3abf97d6a9df06439d243a3b4f230911d472b1f1f3",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/independent-metadata-review-v02.json"
+    },
+    {
+      "bytes": 585,
+      "path": "native-parent-output-v01.txt",
+      "sha256": "0173681456fdad868f54024674df88c48314a6f025c78360fa18b586eb08aacf",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/native-parent-output-v01.txt"
+    },
+    {
+      "bytes": 5388,
+      "path": "native-parent-output-v02.json",
+      "sha256": "6d57222bf87b2fa3aee5948e216c3fc5547ed4d7a44d83562f8ee9d1956eeead",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/native-parent-output-v02.json"
+    },
+    {
+      "bytes": 6335,
+      "path": "pytest-import-hook-static-diagnosis.json",
+      "sha256": "c2b6ea1993789ac1566585a84df40d5e58b9251e682468b25021905e664b0bc4",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/pytest-import-hook-static-diagnosis.json"
+    },
+    {
+      "bytes": 7381,
+      "path": "recover_attempt01_v01.py",
+      "sha256": "22302c7fc3d168bd22ef77b0d9a10b515ff53cac2c19b94733e16abb46d9ca09",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/recover_attempt01_v01.py"
+    },
+    {
+      "bytes": 110017,
+      "path": "recovery-request-v01.json",
+      "sha256": "771b4a95a20146be46fedb1564559a77e4ab1cabcf43c6377a1caddd9475bccb",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/recovery-request-v01.json"
+    },
+    {
+      "bytes": 104027,
+      "path": "recovery-result-v01.json",
+      "sha256": "7017b0c4b198475311f46459b49dd78b2eb24da0ce553544e45c7e143d912dc0",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/recovery-result-v01.json"
+    },
+    {
+      "bytes": 21416,
+      "path": "run_export_qualification_v01.py",
+      "sha256": "399131e712a88ea091e791c2ddefbf99ba9e0a7672523fead9d3df14fb7bcd3f",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v01.py"
+    },
+    {
+      "bytes": 28511,
+      "path": "run_export_qualification_v02.py",
+      "sha256": "33b4fddc1fc9de39e19300f9c46284d1b50529d3ac4eaec99f5c87cbdc03240e",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v02.py"
+    },
+    {
+      "bytes": 28529,
+      "path": "run_export_qualification_v03.py",
+      "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py"
+    },
+    {
+      "bytes": 3185,
+      "path": "selection-proposal.json",
+      "sha256": "494be670cb420ca507a200ecec793bce577c3de50108ac9078164cb5af411247",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/selection-proposal.json"
+    },
+    {
+      "bytes": 411,
+      "path": "storage-observation-v01-failed.json",
+      "sha256": "183afb4a88f113cdaf38903822fe46a9ac9fa6cb3dd13a895a72aca913e64435",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/storage-observation-v01-failed.json"
+    },
+    {
+      "bytes": 3092,
+      "path": "storage-observation-v02.json",
+      "sha256": "a8eee6cec2722d206443bfac96a4a15a652822f7c662e4360a1c1944cac1d257",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/storage-observation-v02.json"
+    },
+    {
+      "bytes": 25586,
+      "path": "upstream-reconciliation.json",
+      "sha256": "592a3a382f16a2f03c7d4e6d90f95fc43d0d2ba9c533c6c5ccfad14f034c1ae9",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/upstream-reconciliation.json"
+    },
+    {
+      "bytes": 23049,
+      "path": "validation-request-v01.json",
+      "sha256": "f7bf6667a651fdd30e4bafde2b34c1fc0fd275d7f9072b6bb93526db5b5391fc",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/validation-request-v01.json"
+    },
+    {
+      "bytes": 23049,
+      "path": "validation-request-v02.json",
+      "sha256": "908ca6e6638a08860b5f6209a4f58330f76d491d268c8a16572bce8f2398375b",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/validation-request-v02.json"
+    }
+  ],
+  "integrated_main": "1b63e750ac3bee68b6f94c022aa4d4132f51d8a0",
+  "limitations": [
+    "Absolute-path drivers and frozen requests are retained evidence, not portable grants. A new run needs a newly frozen request and actual native admission.",
+    "Reviewer authored the new export test module; this is a separate stdlib metadata recount, not blind test design or statutory review.",
+    "The complete captured parent JSON records release at execution; it does not authenticate fresh live ledger or scheduler state.",
+    "The original failed closing predicate is unproved; subsequent diagnostic additions and --assert=plain retain all guards and ordinary Python assertions.",
+    "Source hashes and checked buffers do not authenticate third-party distributions; native supervision remains cooperative and sampled.",
+    "Quarantine and original-primary lineage do not establish historical flat-cache physical occurrence correspondence or multiplicity."
+  ],
+  "publication_scope": "Exact copies of selected native metadata and qualification/recovery drivers; no fixture Parquet, reconstruction or original corpus body copied into Git. Manifest excludes itself.",
+  "qualification": {
+    "citation_reader_cases": 38,
+    "distinct_cases": 160,
+    "executed_checked_product_origins": 57,
+    "failed_attempt01_cases_added_to_total": false,
+    "failed_attempt01_promoted": false,
+    "incoming_V2_adapter_executed_by_this_run": false,
+    "native_parent_completed": true,
+    "new_export_cases": 51,
+    "selected_reconstruction_cases": 26,
+    "source_pins": 80,
+    "storage_claim_and_native_lease_recorded_released": true,
+    "strict_record_cases": 45
+  },
+  "qualification_source_base": "6a435a7b1406afe772a7db72d214c2375248b7b0",
+  "repository_files": [
+    {
+      "bytes": 41865,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py",
+      "sha256": "deddfd7aaaf803d21dd630bae0aae47b24836efcac8a98844f1a0f8bb1877179"
+    },
+    {
+      "bytes": 29800,
+      "path": "tests/unit/logic/autoformal/test_legal_primary_graph_export.py",
+      "sha256": "5d96b765060ec9963d7bfd4ef5cf966c58fbb0948b1a0c67549733f2f1f097b2"
+    },
+    {
+      "bytes": 15488,
+      "path": "docs/autoencoders/legal_primary_graph_export.md",
+      "sha256": "c13e98783053d702b5c9f56a12583594341d33e67d8a1432ed476819abadf24a"
+    },
+    {
+      "bytes": 59875,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "f042ae2598901b9cd8e1aadaebc91e694b8e764524b7f9fd119f18ec9b59ebfc"
+    },
+    {
+      "bytes": 10246,
+      "path": "docs/autoencoders/legal_entity_cache_audit_20261015.md",
+      "sha256": "5e354ee334b3781f972737494ad9fccddd4cd860e3a278306c61d8dbdc99efd1"
+    }
+  ],
+  "schema": "legal-primary-graph-export-publication/v1"
+}
