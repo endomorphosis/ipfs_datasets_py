@@ -1,0 +1,54 @@
+{
+  "applied_review_corrections": [
+    "registered-key authentication separate from human identity or legal competence",
+    "candidate source-binding declarations do not adopt governing law",
+    "custody separate from admission evidence",
+    "direct source-conditioned route separate from dimensional bottleneck",
+    "footer span-status count separate from producer counters",
+    "endpoint-preserving exporter regression before graph rebuild"
+  ],
+  "baseline": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+  "checked_at_utc": "2026-10-15T04:24:15.091893+00:00",
+  "corpus_writes": 0,
+  "distinct_git_source_bindings_verified": 79,
+  "earlier_reviews_retain_their_actual_draft_hashes": true,
+  "embedding_generation_calls": 0,
+  "final_plan_architecture_review_sha256": "d9dca296551c92bb90498473384d41a957d9482e8da32c9920bd51d1ca95eb48",
+  "git_and_current_source_bytes_equal": true,
+  "git_source_bindings_verified": 79,
+  "handbook": {
+    "bytes": 13394,
+    "path": "docs/autoencoders/README.md",
+    "sha256": "faa43151d14d6ea773881ccd383b3b48d9ba55d93ac99a83fdd214b119bae08c"
+  },
+  "hub_uploads": 0,
+  "lean_builds": 0,
+  "models_loaded": 0,
+  "plan": {
+    "bytes": 39326,
+    "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+    "sha256": "d9dca296551c92bb90498473384d41a957d9482e8da32c9920bd51d1ca95eb48"
+  },
+  "product_code_changed": false,
+  "raw_http_bytes": 1404267,
+  "raw_http_files_verified": 25,
+  "raw_http_population_exact": true,
+  "relative_link_checks": [
+    {
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "relative_links": 17,
+      "status": "pass"
+    },
+    {
+      "path": "docs/autoencoders/README.md",
+      "relative_links": 52,
+      "status": "pass"
+    }
+  ],
+  "report_json_parsed": true,
+  "schema": "legal-ir-uscode-plan-documentation-validation@1",
+  "status": "pass",
+  "tests_run": 0,
+  "training_steps": 0,
+  "validation_method": "Python standard-library JSON/hash/relative-link checks and read-only Git object comparisons; no package imports"
+}
