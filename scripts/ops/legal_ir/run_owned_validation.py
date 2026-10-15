@@ -112,6 +112,47 @@ def stop_and_reap(child, birth):
         raise RuntimeError('validation group is still alive after cleanup')
 
 
+def report_capacity_refusal(error):
+    """Emit only a bounded aggregate refusal; never replace the original error."""
+    try:
+        observation = error.capacity_observation
+        numbers = {'observed_apparent_bytes', 'outstanding_full_reservations_bytes',
+            'additional_requested_bytes', 'charged_bytes', 'limit_bytes',
+            'minimum_filesystem_free_bytes', 'storage_capacity_deficit_bytes',
+            'filesystem_free_deficit_bytes'}
+        fields = numbers | {'schema', 'scope', 'storage_capacity_exceeded',
+            'filesystem_free_insufficient'}
+        if (str(error) != 'storage reservation capacity exceeded'
+                or type(observation) is not dict or set(observation) != fields
+                or observation['schema'] != 'daemon-resource-capacity-observation/v1'
+                or observation['scope'] != 'named_roots_only_apparent_bytes'
+                or any(type(observation[key]) is not int or not 0 <= observation[key] < 2**63
+                       for key in numbers)):
+            return False
+        charged, limit = observation['charged_bytes'], observation['limit_bytes']
+        promised = observation['outstanding_full_reservations_bytes'] + observation['additional_requested_bytes']
+        free = observation['minimum_filesystem_free_bytes']
+        if (charged != observation['observed_apparent_bytes'] + promised
+                or observation['storage_capacity_exceeded'] is not (charged > limit)
+                or observation['filesystem_free_insufficient'] is not (free < promised)
+                or observation['storage_capacity_deficit_bytes'] != max(0, charged - limit)
+                or observation['filesystem_free_deficit_bytes'] != max(0, promised - free)
+                or not (charged > limit or free < promised)):
+            return False
+        encoded = json.dumps({'schema': 'owned-validation-capacity-refusal/v1',
+            'stage': 'owner.open', 'error_type': 'DaemonResourceError',
+            'error': 'storage reservation capacity exceeded', 'observation': observation},
+            sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n'
+        if len(encoded.encode('utf-8')) > 4096:
+            return False
+        sys.stderr.write(encoded)
+        sys.stderr.flush()
+        return True
+    except Exception:
+        # Even an unavailable stderr must not mask the admission exception.
+        return False
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--request',required=True,type=Path)
@@ -161,7 +202,11 @@ def main(argv=None):
         resource_scope='cooperative_isolated_process_group_and_owned_attempt',
         model_weights_downloaded=False,authority_granted=False)
     try:
-        owner.open()
+        try:
+            owner.open()
+        except host.DaemonResourceError as error:
+            report_capacity_refusal(error)
+            raise
         deadline = time.monotonic()+value['timeout_seconds']
         def guard():
             if snapshot(args.request) != raw:

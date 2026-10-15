@@ -1,0 +1,21 @@
+{
+  "actual_native_cap_bytes": 160000000000,
+  "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-definition-v2-review-integration-20261015-02",
+  "child_started": false,
+  "exception_type": "DaemonResourceError",
+  "exit_code": 1,
+  "failure_stage": "ValidationResourceReservation.open -> DaemonResourceReservation.__enter__ -> _account before record insertion and scheduler lease acquisition",
+  "foreign_claims_released": false,
+  "message": "storage reservation capacity exceeded",
+  "numeric_deficit_not_reported_by_native_error": true,
+  "observed_tool_session": 64971,
+  "provenance_note": "Derived from the native launcher traceback in the tool result; not a byte-for-byte retained stderr transcript.",
+  "request": "validation-request-v02.json",
+  "request_sha256": "0bd3215caba734b2803279accd19a6d89f6606b620a21a076b33dee3e715bd43",
+  "requested_storage_bytes": 67108864,
+  "resource_policy_or_cap_changed": false,
+  "schema": "legal-definition-v2-review-admission-refusal/v1",
+  "selected_tests_executed": false,
+  "source_basis": "autoencoder_daemon_resources.py _account and __enter__ code; native invocation traceback captured in tool response",
+  "source_preparation_executed": false
+}

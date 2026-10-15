@@ -113,6 +113,32 @@ Validation result records describe actual command execution. They do not prove
 semantic correctness, model convergence or Lean admission. Existing compiler,
 projection, logic-family and Lake gates remain separate and unchanged.
 
+### Admission refusals
+
+A storage-capacity refusal from `owner.open` emits one JSON diagnostic to stderr
+with schema `owned-validation-capacity-refusal/v1`, then raises the original
+`DaemonResourceError("storage reservation capacity exceeded")`. It includes the
+existing census's observed bytes, outstanding full promises, additional request,
+charged bytes, cap and minimum filesystem free bytes. Separate Boolean conditions
+and byte deficits distinguish the cap from the physical-free-space check.
+
+The diagnostic is limited to 4,096 UTF8 bytes and contains no inventory paths,
+reservation rows or process identities. It performs no additional census or
+pre-admission output-file writes. An unavailable stderr preserves the original
+exception. The error's optional `capacity_observation` property returns a detached
+aggregate snapshot; unrelated resource errors return `None`.
+
+These numbers describe the failed accounting observation, not a subsequent
+reservation or permission to reuse another owner's promise. A refusal at this
+initial `_account` occurs before insertion of this run's storage record and
+before native grant acquisition. Later failures retain the established claim
+and recovery rules above. Preserve the observation, have the relevant artifact
+and claim owners reclaim space or complete durable finalization, then create a
+fresh request and attempt through the same native owner.
+
+The [source-review handoff diagnosis](legal_source_review_handoff_storage_20261015.md)
+records one actual physical-space refusal and its still-pending source workload.
+
 ## Scope of integration
 
 This command is the direct validation path. The generic accelerate pipeline
