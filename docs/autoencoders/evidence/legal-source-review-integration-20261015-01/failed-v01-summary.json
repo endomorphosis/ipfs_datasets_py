@@ -1,0 +1,39 @@
+{
+  "cause": "The sparse checkout omitted ipfs_datasets_py.processors legal source schema; package/config hydration corrected this before v02. Product assertions and selected cases were not removed.",
+  "counts": {
+    "cases": 996,
+    "errors": 975,
+    "failures": 1,
+    "passed": 20,
+    "skipped": 0
+  },
+  "local_logs": [
+    {
+      "bytes": 1029,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-integration-20261015-01/logs/failure.json",
+      "sha256": "1a6c1d3578b44412f431c004412ce3b7f6877f7248d655f6169eed3b954eeb51"
+    },
+    {
+      "bytes": 2206,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-integration-20261015-01/logs/integration-checks.json",
+      "sha256": "07a45925557a1a02904f4d761853398ca398b70d853e419b4340489641c2c278"
+    },
+    {
+      "bytes": 3994169,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-integration-20261015-01/logs/junit.xml",
+      "sha256": "9a2f131b65dbf8800de727aeab8b8d3b507f9a1a255edb1129dc795ed9984ac3"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-integration-20261015-01/logs/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 4877385,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-integration-20261015-01/logs/stdout.log",
+      "sha256": "5601d43e080f21bd84404d2caad76760a3877d2bb77770a598d5630aaf5aaa78"
+    }
+  ],
+  "schema": "legal-source-review-failed-checkout-attempt/v1",
+  "scope": "complete failed run retained locally; no claim of successful qualification"
+}
