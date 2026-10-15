@@ -1,0 +1,122 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-a-01/cache/pytest
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 297 items
+
+tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py .... [  1%]
+.............................................                            [ 16%]
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py ........... [ 20%]
+.................................                                        [ 31%]
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py ........ [ 34%]
+...........................................                              [ 48%]
+tests/unit/logic/autoformal/test_legal_graph_review.py ................. [ 54%]
+...............................                                          [ 64%]
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py ....... [ 67%]
+...................................................................      [ 89%]
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py ........... [ 93%]
+.......                                                                  [ 95%]
+tests/unit/logic/autoformal/test_corpus_imports.py .......               [ 97%]
+tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py FF. [ 98%]
+                                                                         [ 98%]
+tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py F [ 99%]
+F.                                                                       [100%]
+
+=================================== FAILURES ===================================
+_ test_validated_alias_graph_cold_parquet_readback_preserves_both_originals[fol] _
+tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py:131: in test_validated_alias_graph_cold_parquet_readback_preserves_both_originals
+    assert result.returncode == 0, result.stderr.decode(errors="replace")
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 5, in <module>
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py", line 292, in load_graph_bundle
+E         manifest = _validate_manifest(load_record_bytes(raw, expected_sha256=expected_manifest_sha256))
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py", line 164, in _validate_manifest
+E         result = validate_record(value, schema=SCHEMA, fields=_MANIFEST_FIELDS)
+E                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_contracts.py", line 143, in validate_record
+E         require_cid(checked["record_cid"], "record_cid", codecs=("dag-json",))
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_contracts.py", line 66, in require_cid
+E         return validate_cid(value, codecs=codecs)
+E                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/utils/cid_utils.py", line 139, in validate_cid
+E         from multiformats import CID, multihash
+E     ModuleNotFoundError: No module named 'multiformats'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/usr/bin/python3', '-c', "\nimport sys\nfrom ipfs_datasets_py.logic.autoformal.corpus_graph_ex...in validate_cid\n    from multiformats import CID, multihash\nModuleNotFoundError: No module named \'multiformats\'\n').returncode
+_ test_validated_alias_graph_cold_parquet_readback_preserves_both_originals[tdfol] _
+tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py:131: in test_validated_alias_graph_cold_parquet_readback_preserves_both_originals
+    assert result.returncode == 0, result.stderr.decode(errors="replace")
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 5, in <module>
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py", line 292, in load_graph_bundle
+E         manifest = _validate_manifest(load_record_bytes(raw, expected_sha256=expected_manifest_sha256))
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py", line 164, in _validate_manifest
+E         result = validate_record(value, schema=SCHEMA, fields=_MANIFEST_FIELDS)
+E                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_contracts.py", line 143, in validate_record
+E         require_cid(checked["record_cid"], "record_cid", codecs=("dag-json",))
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_contracts.py", line 66, in require_cid
+E         return validate_cid(value, codecs=codecs)
+E                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/utils/cid_utils.py", line 139, in validate_cid
+E         from multiformats import CID, multihash
+E     ModuleNotFoundError: No module named 'multiformats'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/usr/bin/python3', '-c', "\nimport sys\nfrom ipfs_datasets_py.logic.autoformal.corpus_graph_ex...in validate_cid\n    from multiformats import CID, multihash\nModuleNotFoundError: No module named \'multiformats\'\n').returncode
+_ test_combined_graph_cold_read_binds_joint_subject_but_blank_signed_contexts_block[fol] _
+tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py:130: in test_combined_graph_cold_read_binds_joint_subject_but_blank_signed_contexts_block
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 5, in <module>
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py", line 292, in load_graph_bundle
+E         manifest = _validate_manifest(load_record_bytes(raw, expected_sha256=expected_manifest_sha256))
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py", line 164, in _validate_manifest
+E         result = validate_record(value, schema=SCHEMA, fields=_MANIFEST_FIELDS)
+E                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_contracts.py", line 143, in validate_record
+E         require_cid(checked["record_cid"], "record_cid", codecs=("dag-json",))
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_contracts.py", line 66, in require_cid
+E         return validate_cid(value, codecs=codecs)
+E                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/utils/cid_utils.py", line 139, in validate_cid
+E         from multiformats import CID, multihash
+E     ModuleNotFoundError: No module named 'multiformats'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/usr/bin/python3', '-c', "\nimport sys\nfrom ipfs_datasets_py.logic.autoformal.corpus_graph_ex...in validate_cid\n    from multiformats import CID, multihash\nModuleNotFoundError: No module named \'multiformats\'\n').returncode
+_ test_combined_graph_cold_read_binds_joint_subject_but_blank_signed_contexts_block[tdfol] _
+tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py:130: in test_combined_graph_cold_read_binds_joint_subject_but_blank_signed_contexts_block
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 5, in <module>
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py", line 292, in load_graph_bundle
+E         manifest = _validate_manifest(load_record_bytes(raw, expected_sha256=expected_manifest_sha256))
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py", line 164, in _validate_manifest
+E         result = validate_record(value, schema=SCHEMA, fields=_MANIFEST_FIELDS)
+E                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_contracts.py", line 143, in validate_record
+E         require_cid(checked["record_cid"], "record_cid", codecs=("dag-json",))
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_contracts.py", line 66, in require_cid
+E         return validate_cid(value, codecs=codecs)
+E                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/utils/cid_utils.py", line 139, in validate_cid
+E         from multiformats import CID, multihash
+E     ModuleNotFoundError: No module named 'multiformats'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/usr/bin/python3', '-c', "\nimport sys\nfrom ipfs_datasets_py.logic.autoformal.corpus_graph_ex...in validate_cid\n    from multiformats import CID, multihash\nModuleNotFoundError: No module named \'multiformats\'\n').returncode
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-a-01/logs/junit.xml -
+=========================== short test summary info ============================
+FAILED tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py::test_validated_alias_graph_cold_parquet_readback_preserves_both_originals[fol]
+FAILED tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py::test_validated_alias_graph_cold_parquet_readback_preserves_both_originals[tdfol]
+FAILED tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py::test_combined_graph_cold_read_binds_joint_subject_but_blank_signed_contexts_block[fol]
+FAILED tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py::test_combined_graph_cold_read_binds_joint_subject_but_blank_signed_contexts_block[tdfol]
+================== 4 failed, 293 passed in 107.98s (0:01:47) ===================

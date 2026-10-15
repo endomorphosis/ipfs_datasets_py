@@ -80,7 +80,7 @@ The result has exactly five top-level fields:
 | `population` | Complete ordered review population, including unselected subjects |
 
 Both the whole scope unit and every contributor unit become required subjects.
-Every authoritative report binding maps its exact occurrence interval to all
+Every compiler report binding maps its exact occurrence interval to all
 intersected original blocks. Repeated atoms preserve separate occurrences even
 when they share a native predicate symbol. Multiple roles in one physical
 subject remain separate role bindings. Intersecting withheld parent contexts
@@ -119,16 +119,27 @@ See [V2 source definitions](legal_source_definition_v2.md),
 
 ## Current validation status
 
-The implementation, focused tests and one-off actual §101 replay driver were
-prepared on October 15, 2026. Runtime qualification is pending: the existing
-owned validation launcher refused admission for storage capacity before
-launching any test child. The actual-source driver has not run. Frozen requests
-and refusal/closeout evidence are retained under the workspace artifact stage
-`artifacts/legal-ir-definition-candidate-binding-20261015-01`.
-
-The tests include full FOL/TDFOL owner paths, ordered response commitments,
+The [native integration](legal_definition_use_review_v2_integration_20261015.md)
+now records 244 passing cases across seven complete source/binding modules,
+including all 59 focused binding cases and 28 blank-handoff migration cases.
+They cover full FOL/TDFOL owner paths, ordered response commitments,
 edition/source substitutions, resealed output changes and retained parents of
-fragmented scope paragraphs. Their presence and static review do not establish
-that they pass. Resume through the unchanged
-[owned validation resource path](validation_storage.md) after normal admission
-has sufficient storage headroom.
+fragmented scope paragraphs. The
+[integration receipt](evidence/legal-ir-definition-use-review-v2-integration-20261015/receipt.json)
+retains the selected inventories and execution/native closeout evidence.
+
+The separately executed actual §101 binding replay passed 15 named checks,
+including six refusal controls. Its explicit “enlisted member” declaration retains the
+complete body as one opaque predicate under caller-declared title scope. Both
+families retain all 560 pending subjects, 8,400 blank question slots and 3,360
+original open context obligations; each candidate graph has 15 nodes and 26
+edges. Actual responses and reviews remain zero. This establishes declared
+source geometry and candidate regeneration, not reviewed legal meaning,
+authenticated exposure, gold labels or native Lean execution.
+
+The earlier refused requests, unexecuted historical driver and closeout evidence
+remain under `artifacts/legal-ir-definition-candidate-binding-20261015-01`.
+The current replay has its own pinned driver and does not call the handoff
+migration API. Passing migration fixtures does not establish an actual-source
+handoff migration. Checked correspondence from unsigned source/exposure
+declarations to authenticated interpretation subjects remains separate work.

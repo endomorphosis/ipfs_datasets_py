@@ -100,8 +100,11 @@ Obtain actual source/applicability and legal/formal meaning decisions for one
 complete definition and its uses. Keep disagreement and unsupported material
 explicit. The subsequent [definition-alias integration](legal_definition_use_v2_integration_20261015.md)
 now qualifies the additive `corpus_definition_use_v2.py` contribution. It supplies
-an unreviewed alias between two definitions with representative-only lookup; it
-does not supply a complete statutory norm/use or a combined-use review domain.
+an unreviewed alias between two definitions with representative-only lookup.
+The separate [combined-use review integration](legal_definition_use_review_v2_integration_20261015.md)
+now qualifies its distinct joint subject/domain and explicit sampled-source
+binding, with 541 passing cases across sixteen modules. Its actual §101 binding
+replay still creates zero responses or reviews and no complete statutory norm/use.
 A complete use still needs supported arguments, qualifiers, dependencies,
 checked scope and native-symbol/definition resolution.
 

@@ -119,7 +119,11 @@ sys.stdout.buffer.write(canonical_dag_json_bytes(loaded))
         cwd=tmp_path,
         env=dict(
             os.environ,
-            PYTHONPATH=str(root),
+            # Keep the launcher's explicit dependency paths when user-site
+            # discovery is disabled, with this source checkout first.
+            PYTHONPATH=os.pathsep.join(
+                [str(root), *filter(None, os.environ.get("PYTHONPATH", "").split(os.pathsep))]
+            ),
             PYTHONDONTWRITEBYTECODE="1",
             IPFS_DATASETS_PY_MINIMAL_IMPORTS="1",
             IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI="0",

@@ -26,9 +26,10 @@ lookup dependencies remain part of the candidate.
 
 The graph retains both original graphs and adds the alias interpretation and
 candidate `USES_DEFINITION` edge between definition-assertion graph-node CIDs.
-It supplies no norm or ground actor. The new interpretation requires its own
-combined-use review subject/domain; original definition reviews cannot approve
-the alias, joint AST or new edge. This adapter accepts no review credentials.
+It supplies no norm or ground actor. The separate
+[combined-use review domain](corpus_definition_use_review_v2.md) now binds this
+new interpretation; original definition reviews cannot approve the alias,
+joint AST or new edge. This adapter accepts no review credentials.
 
 ## Qualification
 
@@ -88,10 +89,13 @@ source identities/applicability, splitting its opaque list into inferred classes
 or inventing a norm would add premises. Select an actual source/use component
 and review its meaning before choosing needed scope or norm extensions.
 
-The next bounded work is compatible combined-use review with exact alias/joint
-AST/edge, both original candidates, complete tables/dependencies and explicit
-source/applicability decisions. Checked correspondence to standalone intake and
-exposure evidence remains necessary for evaluation or teacher supervision.
+The subsequent [combined-use review integration](legal_definition_use_review_v2_integration_20261015.md)
+now qualifies the exact alias/joint AST/edge subject, both original candidates
+and complete declared tables, contexts and dependencies. Its native A/B jobs
+pass 541 distinct cases across sixteen modules, overlapping this earlier
+qualification. Actual source/applicability and legal/formal meaning decisions
+remain necessary, as does checked correspondence from standalone intake and
+exposure evidence to the authenticated subject before evaluation or teacher supervision.
 Add same-document scope, normative arguments or per-occurrence lookup through
 existing owners only where the selected reviewed component requires them.
 

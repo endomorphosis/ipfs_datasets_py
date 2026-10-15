@@ -1,0 +1,23 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 171.23222675081342,
+  "executed_checks": [
+    "tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py",
+    "tests/unit/logic/autoformal/test_corpus_definition_use_v2.py",
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py",
+    "tests/unit/logic/autoformal/test_legal_graph_review.py",
+    "tests/unit/logic/autoformal/test_scoped_definition_resolution.py",
+    "tests/unit/logic/autoformal/test_legal_graph_dependencies.py",
+    "tests/unit/logic/autoformal/test_corpus_imports.py",
+    "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py",
+    "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "6aac164acabfaf7913f4019c7dbbca0c72c4f6824211fb430216e39f3e715de3",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

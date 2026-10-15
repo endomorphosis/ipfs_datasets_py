@@ -3,9 +3,17 @@
 The [US Code improvement plan](legal_ir_uscode_corpus_improvement_plan_20261015.md)
 continues through the existing [V2 review integration](legal_definition_v2_review_integration_20261015.md)
 and [definition-use adapter](legal_definition_use_v2_integration_20261015.md).
-This follow-up preserves their parallel contributions on main and prepares a
-source-first review handoff. Actual source preparation remains pending native
-storage admission.
+This follow-up preserves their parallel contributions on main and documents a
+source-first review handoff whose original preparation attempts were refused
+before native storage admission.
+
+The subsequent [combined-review and sampled-source integration](legal_definition_use_review_v2_integration_20261015.md)
+records 541 passing native cases and a separately executed actual §101 definition
+binding replay. Its tests qualify the blank-handoff migration owner, but that
+actual-source driver does not call migration or execute the historical handoff
+driver described below. The original refusals, unexecuted requests and measured
+storage observations retain their original scope; no actual review is supplied
+by the later binding replay.
 
 ## Reconciled work
 

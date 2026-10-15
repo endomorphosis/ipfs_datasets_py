@@ -1,0 +1,25 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-b-01/cache/pytest
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 244 items
+
+tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py . [  0%]
+..........................................................               [ 24%]
+tests/unit/logic/autoformal/test_legal_source_sampling_review_handoff.py . [ 24%]
+...........................                                              [ 35%]
+tests/unit/logic/autoformal/test_legal_source_sampling.py .............. [ 41%]
+...............                                                          [ 47%]
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py ....... [ 50%]
+........................................                                 [ 66%]
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py .. [ 67%]
+.................................                                        [ 81%]
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py ....... [ 84%]
+......                                                                   [ 86%]
+tests/unit/logic/autoformal/test_legal_official_markup_context.py ...... [ 88%]
+...........................                                              [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-b-01/logs/junit.xml -
+============================= 244 passed in 48.36s =============================

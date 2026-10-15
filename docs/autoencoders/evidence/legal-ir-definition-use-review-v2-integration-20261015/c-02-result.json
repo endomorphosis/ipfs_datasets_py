@@ -1,0 +1,13 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/logs/execution.json"
+  ],
+  "executed_checks": [
+    "retained-uscode-10-section-101-enlisted-member-definition-binding-fol-and-tdfol-with-six-refusal-controls"
+  ],
+  "request_sha256": "7cacb8e6ee76931b261e5f9dd1be57953deb20ad93624fc277fe483552d49475",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}
