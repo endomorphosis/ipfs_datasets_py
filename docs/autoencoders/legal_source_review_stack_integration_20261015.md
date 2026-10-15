@@ -133,6 +133,38 @@ V2 path. Its declarations and candidate `DEFINES` graph do not supply genuine
 §101 reviews, compatible V2 meaning-review subjects, a complete norm/use binding
 or the standalone sampler-to-parent/alignment request correspondence.
 
+## Standalone sampling review intake
+
+The [source-first sampling review intake](legal_source_sampling_review.md)
+provides a separate entry point for standalone sampler populations. It replays
+the sampler from independently pinned acquisition inputs, retains the complete
+source/context report once, and accounts for every ordered unit, control and
+withheld paragraph context. Its blank response templates retain explicit
+unanswered questions and unknown reviewer/exposure declarations. The catalog
+preserves the thirteen prepared definition-review question IDs and prompts and
+adds two questions for complete norm meaning and arguments/qualifiers.
+
+Completed declarations are separate records, explicitly bound to the reviewed
+bundle, question catalog and exact subject. Source-evidence findings remain
+separate from meaning proposals. Population summaries preserve pending,
+disputed, unsupported and declarations-recorded states, including unresolved
+questions and unknown exposure. A generated bundle is not a completed review;
+recorded declarations do not authenticate a reviewer, resolve context, adjudicate
+meaning or enable graph, training/evaluation-gold or Lean admission. Different
+prose is not automatically classified as agreement or disagreement.
+
+This standalone intake does not map sampler source-version/occurrence identities
+to the imported parent/alignment requests, create signed review subjects, or
+supply native-view correspondence. It does not make its declarations compatible
+with the separate V2 definition meaning-review interface. The imported five-owner
+stack and V2 bridge keep their existing inputs and authority boundaries. The next
+semantic step remains an actual independently reviewed definition/use component,
+with explicit source/context bindings and a supported typed interpretation;
+blank templates, source-custody replay and successful fixture tests cannot
+substitute for that review.
+
+The [separate intake qualification](evidence/legal-source-review-integration-20261015-01/README.md) records 47 new intake cases plus the complete 29-case sampler suite, all passing. An additional 996-case source-owner/control run passed in the contributing checkout. Its separately declared real-source preparation regenerated all 560 §101 subjects and blank response templates; zero reviews were created and every subject remains pending. Exact request/source pins, native durability/release evidence and independent derived-metadata recounts are retained with the results.
+
 ## Subsequent V2 integration
 
 The [V2 definition integration](legal_definition_v2_integration_20261015.md) now

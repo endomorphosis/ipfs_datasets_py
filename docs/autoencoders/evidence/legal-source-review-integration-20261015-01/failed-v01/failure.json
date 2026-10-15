@@ -1,0 +1,24 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": false,
+  "elapsed_seconds": 115.8037690280471,
+  "error": "validation command failed with returncode 1",
+  "error_type": "RuntimeError",
+  "executed_checks": [
+    "/home/barberb/lift_coding/artifacts/legal-corpus-source-integration-20261015-01/test_temporary_profile.py",
+    "tests/unit/logic/autoformal/test_corpus_source_review_responses.py",
+    "tests/unit/logic/autoformal/test_corpus_source_adjudication.py",
+    "tests/unit/logic/autoformal/test_corpus_source_application.py",
+    "tests/unit/logic/autoformal/test_corpus_source_history.py",
+    "tests/unit/logic/autoformal/test_corpus_source_bindings.py"
+  ],
+  "model_weights_downloaded": false,
+  "received_signals": [],
+  "request_sha256": "42d40d542bc4f00c23dff166d91633d08884bf39cd276d975d76b29e104cf261",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 1,
+  "schema": "owned-validation-result/v1",
+  "watchdog_errors": []
+}

@@ -1,0 +1,175 @@
+{
+  "all_checks_passed": true,
+  "comparison": {
+    "all_passed_both_runs": true,
+    "cases_each": 76,
+    "identity_hash_encoding": "SHA256 over compact sort_keys ensure_ascii=False UTF8 JSON [full classname, full testcase name] rows; status hash additionally includes each outcome",
+    "same_exact_ordered_statuses": true,
+    "same_exact_ordered_test_identities": true
+  },
+  "helper_checks_result_execution_request_consistent": true,
+  "operations": {
+    "Git_mutations": false,
+    "corpus_export_or_checkpoint_bodies_read": false,
+    "network": false,
+    "only_write": "/home/barberb/lift_coding/artifacts/legal-corpus-source-integration-20261015-01/independent-test-recount-v04.json",
+    "product_edits": false,
+    "product_imports": false,
+    "reviewed_source_executed": false,
+    "tests_executed": false
+  },
+  "postrebase_wording_review": {
+    "cross_paragraph_prose_assembly_limit_disclosed": true,
+    "existing_v2_bridge_4e4ea1afa_progress_acknowledged": true,
+    "finding": "PASS; exact identities, review domains, pending semantic work and existing parallel progress remain distinct.",
+    "no_source_view_equivalence_or_legal_admission_claim": true,
+    "parent_alignment_markup_v2_support_acknowledged": true,
+    "preserves_parallel_1565_case_13_module_qualification": true,
+    "roadmap": {
+      "bytes": 42800,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "3663195b45a3555459d63ead41fdfe997196b968cb5f75abd11ee59ad1988615"
+    },
+    "shared_integration_guide": {
+      "bytes": 10843,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_source_review_stack_integration_20261015.md",
+      "sha256": "fd17d9a51f94602086b0531310f7a0063db5efd05fe2335808f29e63d5b13fa2"
+    },
+    "standalone_intake_guide": {
+      "bytes": 5981,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_source_sampling_review.md",
+      "sha256": "33c51c847852da5d5247eafb99a0261c8de381df3b47008d59d35d3d2a4f212b"
+    },
+    "standalone_source_version_request_identity_boundary_preserved": true,
+    "unsigned_intake_not_historical_signed_subject_or_v2_meaning_review": true
+  },
+  "schema": "legal-source-review-independent-postrebase-recount/v1",
+  "scope": "Read-only derived validation metadata, opaque hashes over all 227 explicitly frozen source files, and source-guide wording review; no runtime tests or corpus/export reads",
+  "source_pin_audit": {
+    "all_current_source_pins_match": true,
+    "changed_pin_count": 1,
+    "changes": [
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_legacy_span_cuda.py",
+        "static_review": "Previously inspected owned Git diff: shared-main transient CUDA-memory-pressure wait/source-check/telemetry work; distinct from sampler/review behavior. This recount supplies no CUDA runtime qualification.",
+        "v03_sha256": "8c0bbd2921843f4a03c56b69f08da15969e84cb55cf356f4a0da63514200a2c5",
+        "v04_sha256": "4365090e34063a4aa9c3997ef6feb65e7214766d87d4fa594ecf95b5bb41afb0"
+      }
+    ],
+    "frozen_source_map_canonical_sha256": "1c99f026616222d8bb4c098a6eb9b4fee71ac79564b97adf63405e954c670865",
+    "frozen_v04_pin_count": 227,
+    "unchanged_pin_count": 226,
+    "v03_and_v04_source_path_sets_identical": true,
+    "verified_source_bytes": 5503797
+  },
+  "source_preparation_scope": {
+    "no_recount_of_corpus_or_export_bodies": true,
+    "v03_retained_preparation_remains_separate_evidence": true,
+    "v04_has_no_real_source_preparation_log": true,
+    "v04_performed_new_real_source_preparation": false
+  },
+  "v03_junit_pin": {
+    "bytes": 14246,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-01/logs/junit.xml",
+    "sha256": "cfb2bb5a19986b953e2a7b660d48e1a1d0fba4801cd3b22ddad1e45337e91014"
+  },
+  "v03_junit_recount": {
+    "cases": 76,
+    "ordered_identity_and_status_sha256": "8f1b1588047094c3e6dec9deb7c3e9bb2042e1755915dd1f63105307b7f8e115",
+    "ordered_identity_sha256": "cfc3c7e1f13d5e016d17519975ed715829c4024c6e6b27f89696b6e8669eb4a1",
+    "per_module": {
+      "test_legal_source_sampling": {
+        "error": 0,
+        "failure": 0,
+        "passed": 29,
+        "skipped": 0
+      },
+      "test_legal_source_sampling_review": {
+        "error": 0,
+        "failure": 0,
+        "passed": 47,
+        "skipped": 0
+      }
+    },
+    "statuses": {
+      "error": 0,
+      "failure": 0,
+      "passed": 76,
+      "skipped": 0
+    },
+    "unique_identities": true
+  },
+  "v03_request": {
+    "bytes": 55257,
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-integration-20261015-01/validation-request-v03.json",
+    "sha256": "e57ef66bdb66a414e7926a915f584320502aea5a94fe154ba33b5100c2018aff"
+  },
+  "v03_run": "legal-source-review-intake-20261015-01",
+  "v04_durability_derived_log_pins_verified": [
+    "logs/execution.json",
+    "logs/integration-checks.json",
+    "logs/junit.xml",
+    "logs/result.json",
+    "logs/stderr.log",
+    "logs/stdout.log"
+  ],
+  "v04_junit_recount": {
+    "cases": 76,
+    "ordered_identity_and_status_sha256": "8f1b1588047094c3e6dec9deb7c3e9bb2042e1755915dd1f63105307b7f8e115",
+    "ordered_identity_sha256": "cfc3c7e1f13d5e016d17519975ed715829c4024c6e6b27f89696b6e8669eb4a1",
+    "per_module": {
+      "test_legal_source_sampling": {
+        "error": 0,
+        "failure": 0,
+        "passed": 29,
+        "skipped": 0
+      },
+      "test_legal_source_sampling_review": {
+        "error": 0,
+        "failure": 0,
+        "passed": 47,
+        "skipped": 0
+      }
+    },
+    "statuses": {
+      "error": 0,
+      "failure": 0,
+      "passed": 76,
+      "skipped": 0
+    },
+    "unique_identities": true
+  },
+  "v04_log_pins": {
+    "execution.json": {
+      "bytes": 568,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-02/logs/execution.json",
+      "sha256": "f20583f7123d62cd285cc6e8c2f8a8e1930da70f22976a9ec5fbf9b0c946ef3e"
+    },
+    "integration-checks.json": {
+      "bytes": 1584,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-02/logs/integration-checks.json",
+      "sha256": "5c855dbe2e4789308713c24e51451f82a84b47b2831753809a017d77fcd2fad3"
+    },
+    "junit.xml": {
+      "bytes": 14246,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-02/logs/junit.xml",
+      "sha256": "ff7a2b70e970f4309c079205f1ba94c19c6cbf7de77e59633c38d06b15367d02"
+    },
+    "result.json": {
+      "bytes": 717,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-02/logs/result.json",
+      "sha256": "76aeee69c288c88257f02cfe75f5655f0d2c97c42b18113b11fa256bc6c77841"
+    },
+    "validation-durability.json": {
+      "bytes": 1960,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-02/logs/validation-durability.json",
+      "sha256": "5d20b9f962b74c8a4d577fc740f6c82c9bc83d5a7770c4a66f1366365e5c73b5"
+    }
+  },
+  "v04_request": {
+    "bytes": 55134,
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-integration-20261015-01/validation-request-v04.json",
+    "sha256": "301778e49668f8e0bd34fb0c0cdca88cac1c1c18f182815c220550a6b6086a6c"
+  },
+  "v04_run": "legal-source-review-intake-20261015-02"
+}

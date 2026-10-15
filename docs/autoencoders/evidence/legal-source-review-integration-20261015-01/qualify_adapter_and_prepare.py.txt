@@ -1,0 +1,142 @@
+"""Qualify the additive intake, then prepare pinned source-only review inputs."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import sys
+import types
+
+
+def load(path, name, pins):
+    with path.open("rb") as stream:
+        raw = stream.read(4 * 1024 * 1024 + 1)
+    assert len(raw) <= 4 * 1024 * 1024
+    assert hashlib.sha256(raw).hexdigest() == pins[str(path)]
+    assert name not in sys.modules
+    module = types.ModuleType(name)
+    module.__file__ = str(path)
+    sys.modules[name] = module
+    exec(compile(raw, str(path), "exec", dont_inherit=True), module.__dict__)
+    return module
+
+
+def wire(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False, allow_nan=False).encode("utf-8")
+
+
+def write(path, raw):
+    with path.open("xb") as stream:
+        stream.write(raw)
+    return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def main():
+    if sys.flags.optimize:
+        raise RuntimeError("source preparation requires non-optimized Python")
+    # The native outer owner independently pins and continuously guards this
+    # request. Helpers execute those source bytes directly, never cached pyc.
+    request = json.loads(Path(sys.argv[1]).read_bytes())
+    helper = load(Path(__file__).with_name("qualify_integration.py"),
+                  "source_review_qualified_test_helper", request["source_sha256"])
+    code = helper.main()
+    if code:
+        return code
+    root = Path(request["cwd"])
+    launcher = load(root / "scripts/ops/legal_ir/run_owned_validation.py",
+                    "source_review_fixed_bounded_snapshot", request["source_sha256"])
+    config_path = Path(sys.argv[2])
+    config_raw = launcher.snapshot(config_path)
+    assert hashlib.sha256(config_raw).hexdigest() == request["source_sha256"][str(config_path)]
+    config = json.loads(config_raw)
+    assert type(config) is dict and set(config) == {
+        "schema", "raw", "descriptor", "descriptor_canonical_sha256",
+        "full_canonical_report_sha256", "expected_units", "expected_strata",
+        "declared_steps",
+    }
+    assert config["schema"] == "legal-source-review-real-input-config/v1"
+    assert type(config["declared_steps"]) is list and len(config["declared_steps"]) == 2
+    assert all(type(step) is str and step.strip() for step in config["declared_steps"])
+
+    def retained(name):
+        item = config[name]
+        assert type(item) is dict and set(item) == {"path", "bytes", "sha256"}
+        assert type(item["path"]) is str and Path(item["path"]).is_absolute()
+        assert type(item["bytes"]) is int and 0 < item["bytes"] <= 8_000_000
+        assert type(item["sha256"]) is str and len(item["sha256"]) == 64
+        raw = launcher.snapshot(item["path"], maximum=item["bytes"])
+        assert len(raw) == item["bytes"]
+        assert hashlib.sha256(raw).hexdigest() == item["sha256"]
+        return raw
+
+    raw = retained("raw")
+    descriptor_raw = retained("descriptor")
+    descriptor = json.loads(descriptor_raw)
+    from ipfs_datasets_py.logic.autoformal import legal_source_sampling_review as intake
+
+    inputs = dict(descriptor=descriptor,
+                  expected_descriptor_sha256=config["descriptor_canonical_sha256"],
+                  expected_raw_sha256=config["raw"]["sha256"],
+                  expected_raw_bytes=config["raw"]["bytes"],
+                  expected_sampling_report_sha256=config["full_canonical_report_sha256"])
+    bundle = intake.prepare_sampling_review_bundle(raw, **inputs)
+    bundle_sha = intake.sampling_review_bundle_sha256(bundle)
+    assert intake.validate_sampling_review_bundle(
+        bundle, raw, expected_bundle_sha256=bundle_sha, **inputs) == bundle
+    population = intake.summarize_sampling_review_population(
+        bundle, [], raw, expected_bundle_sha256=bundle_sha,
+        expected_response_sha256s=[], **inputs)
+    assert bundle["manifest"]["counts"]["units"] == config["expected_units"]
+    assert bundle["manifest"]["counts"]["strata"] == config["expected_strata"]
+    assert population["counts"]["pending"] == population["subject_count"]
+    assert population["response_count"] == 0 and population["review_completed"] is False
+    assert all(not any(guide["authority"].values())
+               and guide["training_mask"] == guide["evaluation_gold_mask"] == 0
+               for guide in bundle["guides"])
+    output = Path(request["outputs"]["exports"])
+    files = []
+    files.append(write(output / "review-bundle.json", wire(bundle) + b"\n"))
+    templates = []
+    for guide in bundle["guides"]:
+        template = json.loads(wire(guide["response_template"]))
+        template["bundle_sha256"] = bundle_sha
+        templates.append(template)
+    files.append(write(output / "response-templates.jsonl",
+                       b"".join(wire(value) + b"\n" for value in templates)))
+    files.append(write(output / "population-pending.json", wire(population) + b"\n"))
+    document = bundle["sampling_report"]["document_view_report"]["document"]
+    files.append(write(output / "normalized-source.txt", document["document_text"].encode("utf-8")))
+    files.append(write(output / "acquisition-descriptor.json", descriptor_raw))
+    index = (
+        "# Source-first review inputs for 2024 10 USC 101\n\n"
+        "These are unreviewed inputs. No source role, legal meaning, graph assertion, "
+        "training target or Lean admission is established.\n\n"
+        "- [Complete review bundle](review-bundle.json) retains the sampler report once.\n"
+        "- [Response templates](response-templates.jsonl) bind the exact bundle and catalog; "
+        "all answers and reviewer/exposure declarations still require completion.\n"
+        "- [Normalized source](normalized-source.txt) contains the complete comparison view.\n"
+        "- [Pending population](population-pending.json) retains every unit and control.\n\n"
+        f"Bundle canonical SHA256: `{bundle_sha}`. "
+        f"Subjects: {population['subject_count']}; actual responses: 0. "
+        "Coordinates address markup-v2 text, not raw HTML or the native-v1 view. "
+        "Cross-paragraph selectors proposed in prose are not machine-checked assemblies.\n"
+    )
+    files.append(write(output / "README.md", index.encode("utf-8")))
+    receipt = dict(schema="legal-source-review-real-input-preparation/v1",
+                   declared_steps=config["declared_steps"],
+                   bundle_sha256=bundle_sha, source_config_sha256=hashlib.sha256(config_raw).hexdigest(),
+                   counts=bundle["manifest"]["counts"], files=files,
+                   independently_regenerated_bundle_equal=True,
+                   responses_created=0, reviews_created=0, all_subjects_pending=True,
+                   training_gold_admitted=False, semantic_graph_admitted=False,
+                   native_Lean_executed=False, models_trained=False)
+    write(Path(request["outputs"]["logs"]) / "real-source-preparation.json",
+          json.dumps(receipt, sort_keys=True, indent=2).encode("utf-8") + b"\n")
+    print(json.dumps(receipt, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
