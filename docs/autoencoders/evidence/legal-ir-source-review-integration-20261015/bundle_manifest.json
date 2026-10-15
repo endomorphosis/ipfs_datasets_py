@@ -1,0 +1,1238 @@
+{
+  "authority": {
+    "proof_authority": false,
+    "real_statutory_review_completed": false,
+    "training_qualified": false
+  },
+  "bindings_sha256": "35a23cb960f6ff62894832675672e4e2a06ac89fdf9b886dd41335e06db01cc1",
+  "execution_head": "702142fc8789517ecc204607d07c4b925ec7b441",
+  "files": {
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/integration.json": {
+      "bytes": 14112,
+      "sha256": "0eb611d571eed444c6946243ec25edf57e0c24fc472febc4580fe1a6ac1f8b9b"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v01-aborted/abort_receipt.json": {
+      "bytes": 1008,
+      "sha256": "065fdfbd8bcc27d7b4659fcdc898403b2fc9ba76f58ad69f49bb91ab9f953fcb"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v01-aborted/interruption.json": {
+      "bytes": 725,
+      "sha256": "089bf6fd0212e7a1f53667269d5a7fb0dd7e6e770d70fe29d0aca461d72f4c7f"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v01-aborted/runner.py.txt": {
+      "bytes": 5108,
+      "sha256": "613299bf0dafea8a15d6f215b5aef0d6bc36f8d3807b54726afbe37ce859e3dc"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v01-aborted/stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v01-aborted/stdout.txt": {
+      "bytes": 62703,
+      "sha256": "a1991e18d7fb36b59b95ba150bb46b350659f8539f1510e32eb206bdd5faa9c0"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v02/execution-runner.py.txt": {
+      "bytes": 6393,
+      "sha256": "e249650e37ba3e51ece7c2648da734c2a89fbffe199e350a8a8c73717ede2212"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v02/junit.xml": {
+      "bytes": 1358258,
+      "sha256": "1fd3b571b10b917a8e981e6391c45778c72e24a38e8214930fce11c7bf15970b"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v02/receipt.json": {
+      "bytes": 57415,
+      "sha256": "97298442432aba359c90053cdabe53612333f44371f811f708c2aaae1d2d7bea"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v02/recount.json": {
+      "bytes": 2316,
+      "sha256": "426b926d77c6feef874369fa59c5abd26e12ffccf07a4aca919679d750e7bdf9"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v02/run-inputs.json": {
+      "bytes": 53560,
+      "sha256": "ac129d10bfc6cfcce05fe2c0725b87c9116bfba47d951a185d3ccf1c6d510aa3"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v02/stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v02/stdout.txt": {
+      "bytes": 2630578,
+      "sha256": "533b610c3fec154b43df01a4c71dd2ab6ed6f0862c07e8e9d036360849a8243e"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification_runner.py": {
+      "bytes": 6820,
+      "sha256": "07a64ed7723545939698ac57850ece954977d8742b39e1b01ff0e6e3cd590c9f"
+    },
+    "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/recount_runner.py": {
+      "bytes": 4573,
+      "sha256": "329f5a811d0d0ebf76dcc9aa548307a8acb4fd9ecd2063d332cb478376db188a"
+    },
+    "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md": {
+      "bytes": 41561,
+      "sha256": "8aed7d3d5267776a5fc97d6797dcc76e8709b94e6ff564554aed3fb529106423"
+    },
+    "docs/autoencoders/legal_source_review_stack_integration_20261015.md": {
+      "bytes": 7372,
+      "sha256": "2875bd5cb667fec44268c84eeee5ddeedbc82c4248c30e0b32219652c500fd56"
+    },
+    "ipfs_datasets_py/logic/autoformal/__init__.py": {
+      "bytes": 60251,
+      "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+    },
+    "ipfs_datasets_py/logic/autoformal/autoencoder_router.py": {
+      "bytes": 29400,
+      "sha256": "b1c3327509698d159247315477500989e5925732774175d87e3646360bd80ee9"
+    },
+    "ipfs_datasets_py/logic/autoformal/autoencoder_weight_store.py": {
+      "bytes": 11203,
+      "sha256": "06352dab25a83db636111676db746c836f55ee56ac46c4664c3fba81aa432963"
+    },
+    "ipfs_datasets_py/logic/autoformal/constitution_inventory.py": {
+      "bytes": 11156,
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+    },
+    "ipfs_datasets_py/logic/autoformal/conversion_telemetry.py": {
+      "bytes": 12438,
+      "sha256": "9caaa0dd44e0485adf1339b3540810b8436bc770b7a11b9ebae4c73576be6558"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_contracts.py": {
+      "bytes": 7279,
+      "sha256": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_definition_norm_adapter.py": {
+      "bytes": 20947,
+      "sha256": "82fc3590e7c606905cf0cf8d4984e779309c5f9620380e061910eb014b523af0"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_definition_review.py": {
+      "bytes": 23810,
+      "sha256": "03da9d41741d176a1d305ce3a256213ca981bc98ea9f83721dee3fed10d12833"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_graph.py": {
+      "bytes": 9325,
+      "sha256": "da2bef54beca29d0d613d46a81241f6f1b7f049e1c9bf9cf1c118d9942374061"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py": {
+      "bytes": 17454,
+      "sha256": "32800bca0662830409de0622e16902bd458cf6d47c821fc7079cdf4ba9ddc9ad"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_index.py": {
+      "bytes": 4415,
+      "sha256": "e9b332382517674f7adc89e365f89809e42829095f169a5ca275816c27c7a80e"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_legacy_source_join.py": {
+      "bytes": 23417,
+      "sha256": "120b27eed761228e67e9c560777ff355818ceb59855f1d9ffed237cfc9480609"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_parent_alignment_adapter.py": {
+      "bytes": 40450,
+      "sha256": "884aaae2f162a890a790c51616cc13c70ee91344a530d231e3991a361b9e1326"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_parent_occurrence_adapter.py": {
+      "bytes": 33358,
+      "sha256": "3fc1f863825414eb187e0adc326b4b0710e5a6170ba3b3a014150d3f2ee147b2"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py": {
+      "bytes": 12875,
+      "sha256": "7ea8ba1447617568e4c1b71072329ca870d540a5a97e9040475861764ab53640"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_qualification.py": {
+      "bytes": 12405,
+      "sha256": "e1a8540a6dd2889803138c510aa1f297316b64329e6e155eee4d90c250a12eae"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_source.py": {
+      "bytes": 16185,
+      "sha256": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_source_adjudication.py": {
+      "bytes": 32429,
+      "sha256": "0d658081521bc737ff17ec38f82d34122863b7b2b3094e8d1fabf4eef0caf2b9"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_source_application.py": {
+      "bytes": 32104,
+      "sha256": "2e11ca5f1f8c23b7d399e72c529432f611a94dcc4599c6f69025884e8219dc86"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_source_bindings.py": {
+      "bytes": 38723,
+      "sha256": "9a84a8c7354495d2d9dc69e3ef7141d3bb10429aa56c08700c33b64e34f320f5"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_source_history.py": {
+      "bytes": 45788,
+      "sha256": "88a652a0c10569723a9f278562c5c0bb7a2001515615661a2767fbe0881659d4"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_source_review.py": {
+      "bytes": 47062,
+      "sha256": "308a1955f4d8705369c1a4d25e4b02cc308a4c3d1032085122d7801a9d30f53e"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_source_review_packets.py": {
+      "bytes": 36666,
+      "sha256": "c2a3a08963e32b7ef3371ae32ff1266ad6fe052c87a491857dcc720170367a29"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_source_review_responses.py": {
+      "bytes": 31940,
+      "sha256": "519f91a39f0f6f3fb0b7226042fe75642833588f31af8eeea9c5a488d603c7e9"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_span_adapter.py": {
+      "bytes": 11866,
+      "sha256": "fe8d64b83e731622cc9024ee6a9cd7e656863df7d709c59626887663d72b01d2"
+    },
+    "ipfs_datasets_py/logic/autoformal/embedded_actor.py": {
+      "bytes": 10749,
+      "sha256": "fac57b3fad69b347498bab4380a01efb5d58ffc637f23dc7ef453e86f44ee308"
+    },
+    "ipfs_datasets_py/logic/autoformal/entity_cache.py": {
+      "bytes": 88424,
+      "sha256": "552091318e59718c6111eeaad26e4b03185929558dad3c75fe00b8845d8bc2cd"
+    },
+    "ipfs_datasets_py/logic/autoformal/extended_repair.py": {
+      "bytes": 18885,
+      "sha256": "e967169a8e6063063ff4ba36fa50220bb4f9901bb4e41b26c158b517d5f4e426"
+    },
+    "ipfs_datasets_py/logic/autoformal/family_qualification.py": {
+      "bytes": 37698,
+      "sha256": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8"
+    },
+    "ipfs_datasets_py/logic/autoformal/family_supervision.py": {
+      "bytes": 19095,
+      "sha256": "df9e382d96abb69002fcca0b181b1113aac556e6ad7a09a6a867c2acfcea738e"
+    },
+    "ipfs_datasets_py/logic/autoformal/feedback_cycle.py": {
+      "bytes": 9205,
+      "sha256": "6d5f1a618040154bab66c7b9e48873657fdd54e1d159946adb199f441dbe9967"
+    },
+    "ipfs_datasets_py/logic/autoformal/gap_compile_replay.py": {
+      "bytes": 26508,
+      "sha256": "a5f29209f74dc1822b4b66ddaed7c913d7e28c62cbbad8fda799e02418d4a40c"
+    },
+    "ipfs_datasets_py/logic/autoformal/goal_git_sync.py": {
+      "bytes": 2846,
+      "sha256": "a17ec865bade85c1add39e2192452fe0c092622f236cc45426ec607ba4c1a0e6"
+    },
+    "ipfs_datasets_py/logic/autoformal/huggingface_schedule.py": {
+      "bytes": 2743,
+      "sha256": "c3bb1b133b5716d935b2197e085828eca84534f00568b79c863e3a502e7c687b"
+    },
+    "ipfs_datasets_py/logic/autoformal/joint_benchmark.py": {
+      "bytes": 9760,
+      "sha256": "4d51f408e611a0c6df40d31068df5fd2658af18910a78730382b09e82f71a108"
+    },
+    "ipfs_datasets_py/logic/autoformal/lake_probe.py": {
+      "bytes": 9541,
+      "sha256": "5ff1438b8a7cc88de67472e3bed8f913784bae8d481f58bc9b64e0bff0fae07f"
+    },
+    "ipfs_datasets_py/logic/autoformal/law_package.py": {
+      "bytes": 54145,
+      "sha256": "810043bfa86697ce9519f7bf086f70b18d5df954b9a5fa6eb81fe3d7b111a14f"
+    },
+    "ipfs_datasets_py/logic/autoformal/lean_units.py": {
+      "bytes": 8159,
+      "sha256": "fd22c6f66edde6688e59d1df581694c9d4c788cdc1b674d3cb25e6bf1bb1e037"
+    },
+    "ipfs_datasets_py/logic/autoformal/learned_feedback.py": {
+      "bytes": 13477,
+      "sha256": "af1061217ab1a0e3d64d76cc6939b4af64c38d0ea1487bf7cf20259717e30133"
+    },
+    "ipfs_datasets_py/logic/autoformal/learned_formula_observation.py": {
+      "bytes": 12832,
+      "sha256": "75f241160e1e09d8414fbf43d7effc0f615f821a5de91b91f0e8447eb7fe04ad"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_cache_parent_occurrences.py": {
+      "bytes": 15054,
+      "sha256": "6f032fdfd2b29f0f79bd1900efef44ddb4aff83b867da249a1e5606e13d9240b"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_calendar_lake.py": {
+      "bytes": 10566,
+      "sha256": "912f94c971e656db35a7b17b9c6dddd0379fecac687d6c35f5272aa8cdc38168"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_candidate_context_inventory.py": {
+      "bytes": 26814,
+      "sha256": "201de15034bc334ff7dfc402bbe68ed9f01d3e3794b1790c1e49cbc9785bf395"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": {
+      "bytes": 16905,
+      "sha256": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py": {
+      "bytes": 19295,
+      "sha256": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_checked_flat_composition.py": {
+      "bytes": 3547,
+      "sha256": "8de25e8a60bb6a64a566abf5834c124dbe76a05a4260b5696ea4427973543e27"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_checked_flat_composition_v2.py": {
+      "bytes": 3631,
+      "sha256": "976ce267f397958fad7e1f0d7b22de89794fbe09ffe352155916685d4a7d2470"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_checked_flat_composition_v3.py": {
+      "bytes": 3636,
+      "sha256": "0b6e221c55a5d0002f4347074aeee5c4b4bb8af6e777bc07cbd81b069d46a0fd"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_clause_atom_boundary.py": {
+      "bytes": 21603,
+      "sha256": "97a738655c6ffc2aa23f1fb07533539e5fe05d1e1dd1bf8ed495ca78299aca7c"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_clause_boundary_decoder.py": {
+      "bytes": 11624,
+      "sha256": "dcbe3e1e9820e6060b7dcf4718378c71fd89559822f8a09d224d3a72e29b3686"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_clause_boundary_runtime.py": {
+      "bytes": 2680,
+      "sha256": "f5c6ebe91e9c8192743500925d4282d88587541a783ebb85a3443bf60935a916"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_clause_heading_boundary.py": {
+      "bytes": 19661,
+      "sha256": "9b2d9f724354ab74ae751697ad8e2755316bc03ea1c9ba18fc23c0a79e737d01"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_clause_scope_adapter.py": {
+      "bytes": 13642,
+      "sha256": "e5a8bcb91de7734cdc558e3eac507d50341d1417bdcc1906107b84c51125d735"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_clause_scope_preservation.py": {
+      "bytes": 9887,
+      "sha256": "be1e6e2ac6fd6cdc5369c9378c22611c2fc5d3c99f81c50a252b77ffa371d091"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_context_review.py": {
+      "bytes": 21273,
+      "sha256": "50f4d92175c0812c61a3c45f90fbdfa3dec9a087cfb864342abd376b1f11d84c"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_coordination.py": {
+      "bytes": 10247,
+      "sha256": "346db8bc54ca9961a7b8b03133972e54d22fa2b218e2b547d832403dbf801205"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_coordination_evaluation.py": {
+      "bytes": 6557,
+      "sha256": "8a8bf1842caa91cef2c5799eb7f1252f9c284ff4317cc2ec5b7f20ab1159b90f"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py": {
+      "bytes": 24836,
+      "sha256": "976e8cddcafc274b3c90b48c932bcce6a5026964d8c000958aa0d7f066712b83"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_lake.py": {
+      "bytes": 20116,
+      "sha256": "b9ea921769b6dbfd33b237eef3335df76e5592c9087317f4f19b3cd71cb44c5b"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py": {
+      "bytes": 20213,
+      "sha256": "e4bb92e23878ed081f891fdb05eb69bfa17b9d850ae93a298555e209c64eb413"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_entity_index_intake.py": {
+      "bytes": 23966,
+      "sha256": "a5f9b0fcf3ba06743ca2fe3e1c10b7f3817811702b9db45ee0ac142b44351aeb"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_family_routes.py": {
+      "bytes": 7838,
+      "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_flat_scope_dependencies.py": {
+      "bytes": 16022,
+      "sha256": "219524db93e2250793b0783bd9c55dcd8a742ac456013d8471006973b3d54fa1"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_flat_scope_dependencies_v2.py": {
+      "bytes": 7733,
+      "sha256": "c50b188335301df0ab5e0af7e684cfdb3dd09ad568de31af340cdf77f83124f6"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_flat_scope_dependencies_v3.py": {
+      "bytes": 20227,
+      "sha256": "fb3736935274f2b73aacbf778fc9ba4c50ae2918aba39007e1ef576bd854f5ff"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py": {
+      "bytes": 12974,
+      "sha256": "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_graph_review.py": {
+      "bytes": 30521,
+      "sha256": "32abecbf17bc3d10b59d1bd08fde3e8b6bfa58f73b17e31e817fe0f4e910af9e"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_official_document_views.py": {
+      "bytes": 24944,
+      "sha256": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py": {
+      "bytes": 19956,
+      "sha256": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_paired_temporal_ownership_corpus.py": {
+      "bytes": 25370,
+      "sha256": "fd9a3609dd5fbc11e211a66f768061035c317995899c31eaecf73ec76f50ccf0"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_parent_parquet_pages.py": {
+      "bytes": 41210,
+      "sha256": "4c1b5984b034ecb646038a2a7764862e6c22a53faa54fd028e59d19db9b3603f"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_parent_sentence_candidates.py": {
+      "bytes": 16451,
+      "sha256": "3ba32854f639f0abb78d1ca2abdabdd56007d1c4fcc3862382383887b60c590a"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_parent_source_alignment.py": {
+      "bytes": 21241,
+      "sha256": "8ed1ebc653ae3ed12fdfb69e744dc5622ef47e194fa9cc7e006792cea5405741"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_parent_text_views.py": {
+      "bytes": 13849,
+      "sha256": "94855a18b9ed466a38382715675052f7cb5952c9c672f28c255e376bd28d76cc"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_pilot_lake.py": {
+      "bytes": 15230,
+      "sha256": "a97d3392af57631fa3105947ab5df3bb8380fe46e45fef556210b8318aff6b6a"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_manifest.py": {
+      "bytes": 25730,
+      "sha256": "c1e86ab52371730d52cf582d2b60fbe282ae52608dcb462ec2c59cdf24738d38"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_reconstruction.py": {
+      "bytes": 24607,
+      "sha256": "e8075e6232b64ee3c8469e5c4a71d1bc77dbbdd4dd34e7e03768c516ed61c0c6"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_records.py": {
+      "bytes": 15186,
+      "sha256": "f42d060a97c65269fe453a13eefedc1dc243852efebc09a3e660bcd18b97946c"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_section_index.py": {
+      "bytes": 26538,
+      "sha256": "c05eb53d6b3c3d5b652085da4c5da61a3fcff95b6b58fbf3f49d415f38b4215d"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_producer_lineage.py": {
+      "bytes": 40149,
+      "sha256": "f139235a9d1f7b20a2d37c2904e5656d80f3503f02e71d6a615f8fd662d98cda"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_producer_page_lineage.py": {
+      "bytes": 5723,
+      "sha256": "b47702f6bf21fed209ed7e1581875fb4121a906c15c8c65456ba52f91e85f656"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_qualified_lake.py": {
+      "bytes": 10400,
+      "sha256": "a4e96b4955021d6d5a65aebe5cdf6a32f78b4160aeb22e06ee8f5fb4ebba66eb"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_review_admission.py": {
+      "bytes": 24249,
+      "sha256": "8cbef743f73fac6c25d6d697ccc02bc10dbf71624ad61f5f31223f7afa30f9ec"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_rule_list_composition.py": {
+      "bytes": 17603,
+      "sha256": "3636e29b07c68acd5ee197cb39738a1991ea45bd25857c37640e1311cb91a958"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py": {
+      "bytes": 23445,
+      "sha256": "4baaba35b1f1615bb37a42e542fd28c58996919eb24f4662f374428b181933be"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge.py": {
+      "bytes": 10069,
+      "sha256": "2956a408cf767243f16944e4eb5dad425d26e1b09fd1979fbbbfa8fb4701a812"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_definition_lake.py": {
+      "bytes": 6945,
+      "sha256": "4425cc94fd9b437e6648af00baaf11b97abcae9074e53e590e79f2e150331089"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_definition_norm_bridge.py": {
+      "bytes": 11020,
+      "sha256": "fc658de41226117e096a7e003ffd73edcf32b7ee7ead141c9804db8064a2b18c"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_definition_norm_lake.py": {
+      "bytes": 7263,
+      "sha256": "b3a6831e814786400ced3d49a9e57284e461afd7a86b397b756b579d99cbc541"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py": {
+      "bytes": 21178,
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py": {
+      "bytes": 11880,
+      "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_graph_proposals.py": {
+      "bytes": 14891,
+      "sha256": "d1d66781633b187008b2d5efac0ab0e7dedcc12671e8cc588ee605b9e755d8c7"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_representability.py": {
+      "bytes": 22800,
+      "sha256": "29fb9f987144663a010d191f9b9f9b4591ed9888cef6509a29d70421210e6a7f"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py": {
+      "bytes": 11539,
+      "sha256": "b519e81ec84958ea36934c9201ca7bb8b4eaccf943bd77096c07d05262d9b479"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_sampling.py": {
+      "bytes": 13827,
+      "sha256": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_view_inventory.py": {
+      "bytes": 13550,
+      "sha256": "584b8c90444a0b579e9cea890ffebc5645fe37c4b41a251641ba68aa51c02c6e"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py": {
+      "bytes": 21835,
+      "sha256": "9fa6d8e84886de82e75a2b741803b26ba5d8aff572fd9e20644075ca1f337aba"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_span_provenance.py": {
+      "bytes": 13828,
+      "sha256": "9bf7226c76e7865ca46431f13bc6a0100ca8a99874a1cf8b58637d2b5016ac5c"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_span_section_bridge.py": {
+      "bytes": 15084,
+      "sha256": "e9b1ead32b40c6fe20b6614a1d10041714adeac0856e00399137a264d80e44d4"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py": {
+      "bytes": 23949,
+      "sha256": "1f1e607c7c8d1e479ae5b79e17f928571e3da49f0ad4180dfc93e609d0d47dc2"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_statutory_routing.py": {
+      "bytes": 16752,
+      "sha256": "897a196425977eb2f88bec6893b938d5b558d02c6de7a59c0f6c0faff211824b"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_coupled_span_corpus.py": {
+      "bytes": 27942,
+      "sha256": "bbd64d43d40e4c3a109fd45efd4343345ad87d78d1f9575fcce6a6255ba87a46"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_coupled_span_metrics.py": {
+      "bytes": 16739,
+      "sha256": "d8e0f5b6d924cbe840975b995bbeeccc075ddf014768b909201cf38b5df87566"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_deadline_interpretation.py": {
+      "bytes": 21004,
+      "sha256": "e2fdd30dda994b1842b27dcd46bca1f82a2f1fa921e6e707da1ce86a6ad04d72"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_event_eligibility_adapter.py": {
+      "bytes": 12842,
+      "sha256": "3b7a93d56023a8825c64c2dd41fc6c8c63e1a7adb823faaca5652f4e5d7d0044"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_event_interpretation.py": {
+      "bytes": 19268,
+      "sha256": "96eba826a8c90ba4d2520f6ab254321f93dd8ae7eab9ef939f9b7ab5d34f33c6"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_event_owner_adapter_v2.py": {
+      "bytes": 12411,
+      "sha256": "549e6697004fb59a57a0ffa8c2a78289f7d6b1222f6d861f782d1f829a7566a3"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_event_owner_adapter_v3.py": {
+      "bytes": 12411,
+      "sha256": "2fb0195768993cc5d82e3da3f79d1a39c4161ac6d9ff2de534785d52d38f5ca4"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_event_owner_adapter_v4.py": {
+      "bytes": 12682,
+      "sha256": "9ca4051c79a81102e9c58a8d2e2ec39af61868e2a2f29adac343d7a8c8cdd2cc"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_event_proposer_v2.py": {
+      "bytes": 12691,
+      "sha256": "6544e893feb8b8e4e355716eb6a3ae73b4f23fe94c86caefd9af99a4b018fb90"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_event_proposer_v3.py": {
+      "bytes": 21578,
+      "sha256": "e975c1eac06dbec495920acb10d4eac343d732d6121018cf58d18135bb425af6"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_event_proposer_v4.py": {
+      "bytes": 27231,
+      "sha256": "4f2a6b9640a8b244ff5da67e38ba4424e21acbd33c93e06ba50fab4502440866"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_occurrence_provenance.py": {
+      "bytes": 17794,
+      "sha256": "3c0901c8c90072528f832c177cb716789481214da7df1b47bc0c2f67d4842f6d"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_owner_candidates.py": {
+      "bytes": 5316,
+      "sha256": "03a2df1832f4a42e6efcf535fe3f60eef029f033c7bbfcd31a30b9c9efea91bd"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_owner_pointer_corpus.py": {
+      "bytes": 30031,
+      "sha256": "d2449c5f07a1bfbcd88fc12bb8ecadb38c070c82c93a688bb83cd6e38a458ec2"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_owner_pointer_metrics.py": {
+      "bytes": 12174,
+      "sha256": "8c3e43640259043fc42dc835ae0194127c6ce7c8214f74f448b7c2774cfd371f"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_owner_pointer_metrics_v2.py": {
+      "bytes": 12641,
+      "sha256": "1380d526c7af466ccbc309e96bdc9ca94687fa29e923cd6cf780ab4c644a3179"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_ownership_corpus.py": {
+      "bytes": 28557,
+      "sha256": "248bad63a3bdc8d09c875bcc725e703e30fdb558db3c2d767e147eac42b50d40"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_ownership_metrics.py": {
+      "bytes": 10958,
+      "sha256": "245db48343f6ffe1f124935903320904da354a6545c6b037f00071316489f659"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_placement_corpus.py": {
+      "bytes": 23728,
+      "sha256": "1c21121029262cc0fa9b1df2ae607a835a5c603409acb2a91a7b749ea6d4b1c1"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_placement_qualification.py": {
+      "bytes": 17814,
+      "sha256": "8d7419ed1281cdd2854b2eeb69d2ba031f2139824953d3492aae71e541991602"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_relative_owner_corpus.py": {
+      "bytes": 35036,
+      "sha256": "ff0a0d575c777600437dd766c5db74a0f9124dd5a5f10c52c4846c9208c07007"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_relative_owner_metrics.py": {
+      "bytes": 11871,
+      "sha256": "f0bc4b68d139aa0a59ba05321ccb38cd7cef39582239533cfff8ff09c2745b0c"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_stability_corpus.py": {
+      "bytes": 27062,
+      "sha256": "631a9819c7b23d2d666934df3e1ce9a43427dd81e2c28b04b1fceb2e46b2431e"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_stability_qualification.py": {
+      "bytes": 17902,
+      "sha256": "93e3e3f6c75a530ab2c752cff8356d352dd19f30db031fffdc7088424997075e"
+    },
+    "ipfs_datasets_py/logic/autoformal/meta_ontology.py": {
+      "bytes": 22763,
+      "sha256": "4fcb538a7b15e2074fa08bf8d7e297fb742471be9ff826a92b1ded911b836e05"
+    },
+    "ipfs_datasets_py/logic/autoformal/ontology_capture.py": {
+      "bytes": 16846,
+      "sha256": "d40e1cffe9e7d127b58eb8fe32829c7fd38c2f92723b705f1c730d4d7ae36b9f"
+    },
+    "ipfs_datasets_py/logic/autoformal/ontology_fragments.py": {
+      "bytes": 2767,
+      "sha256": "f616b7dcefc42ce7708c273131e45a4100e7ca17e475549b826dc51174788fae"
+    },
+    "ipfs_datasets_py/logic/autoformal/paired_span_census.py": {
+      "bytes": 59780,
+      "sha256": "b3652d9cd022ec489a86337f129493ca34071cb44baa52a86d7e457a8495ef9e"
+    },
+    "ipfs_datasets_py/logic/autoformal/paired_span_migration.py": {
+      "bytes": 23648,
+      "sha256": "cdcbdf3a73f35d79b968f6ad1e4a21639dd6ba063182ec871ef66efe24e7da65"
+    },
+    "ipfs_datasets_py/logic/autoformal/procedure_slot.py": {
+      "bytes": 4875,
+      "sha256": "f7fe98853048b2301f9fbfe9a76fb810e0c323445ba8c9d57f0da731a092dc86"
+    },
+    "ipfs_datasets_py/logic/autoformal/recipient_reference.py": {
+      "bytes": 6406,
+      "sha256": "d682ea86a12735d49969ce372f14428d66a883d0d2a6be1876c3174bfe3437e4"
+    },
+    "ipfs_datasets_py/logic/autoformal/repair_context.py": {
+      "bytes": 11134,
+      "sha256": "12b2e02474dab5fec5ffceb34d16350dad94d7724eb838ee3da758e7fa1d8b9e"
+    },
+    "ipfs_datasets_py/logic/autoformal/repair_intake.py": {
+      "bytes": 5966,
+      "sha256": "de063914e0eb5b24b04f48e6746dac50ae0db9ee4e5407f8219fad48372fd59e"
+    },
+    "ipfs_datasets_py/logic/autoformal/repair_report.py": {
+      "bytes": 12999,
+      "sha256": "913276fe3872e5a08d574abfc094f350785115d051a55d7c2003daf927c0a660"
+    },
+    "ipfs_datasets_py/logic/autoformal/repeal_fixture.py": {
+      "bytes": 7174,
+      "sha256": "3c97a5b90ce3240b24e91251b2a87956dceefc10efcf4e4c79f4bdcddea2b989"
+    },
+    "ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py": {
+      "bytes": 24846,
+      "sha256": "fdd0f53f66cef06a2b16d24cfbe65e15721dd568d3c76ac3ddde3e133243152a"
+    },
+    "ipfs_datasets_py/logic/autoformal/semantic_integrity.py": {
+      "bytes": 4466,
+      "sha256": "c755f98a629c13c24d6b44c7fe146da65914ae2fbeb9c70f2e38fabd37ef1507"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_agreement.py": {
+      "bytes": 25094,
+      "sha256": "80973b3b9ab901d3b00e66b806947a68ffb25d03b077e72f4975e264793cdf9f"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_cache.py": {
+      "bytes": 79343,
+      "sha256": "491c545f38a26c76a1448864d186fa6c4addef3cda51b1fad26e8350287df234"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_cache_claims.py": {
+      "bytes": 29820,
+      "sha256": "026b5105880cb6675820e79463087101cfa9cf97195cd3659d72248220c206cf"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_cache_exchange.py": {
+      "bytes": 70057,
+      "sha256": "0c31dbe6ada1ecdf5c13ceda0b04da0cf13981801d8563e5750fc0cac41b4857"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_cache_feed.py": {
+      "bytes": 40532,
+      "sha256": "97e6a59859fb9ca59b069a85ca9d569beddbe20eb1e10b62d1d128ad0162ec47"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_cache_fenced_ingest.py": {
+      "bytes": 25976,
+      "sha256": "d54ce7654f5ae4abfbbb420c7899b09ff8d39111d4ec0a91857eabaa974f68f5"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_claim_acceptance.py": {
+      "bytes": 40919,
+      "sha256": "cf92ec0e27d73cea4df4d8ded134428e68f878f024c7477d5489dad5f51abf87"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_evidence.py": {
+      "bytes": 28234,
+      "sha256": "2954dfa10d2aad64178b3b3bfc799686389a98303652f6856bd2dbee9cae95ed"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_ingest_runtime.py": {
+      "bytes": 35388,
+      "sha256": "6bc6fbf151b0b6d995349425a3fe3e925f714475d358d8a9b99d01391cb17e6e"
+    },
+    "ipfs_datasets_py/logic/autoformal/supervisor_dispatch.py": {
+      "bytes": 14075,
+      "sha256": "1d989b339a7c5e641463c406b34f1e2e7109dc9117219678e007491135f4f5a4"
+    },
+    "ipfs_datasets_py/logic/autoformal/supervisor_loop.py": {
+      "bytes": 69939,
+      "sha256": "3c24de1f4747dcb168ecc139fc27f1cc0c931caee803ee19386ad429dee03c4b"
+    },
+    "ipfs_datasets_py/logic/autoformal/supervisor_queue.py": {
+      "bytes": 24339,
+      "sha256": "2802b9a24618abdbd2acd58b5f475c8b634539e68d12d3cfd7a0dff0a2c05172"
+    },
+    "ipfs_datasets_py/logic/autoformal/supervisor_router.py": {
+      "bytes": 16267,
+      "sha256": "2b55984ef40bfb30724fda1fc11d7f2ddb10122a0fb918737bdd62ac0c1c1933"
+    },
+    "ipfs_datasets_py/logic/autoformal/supervisor_todo.py": {
+      "bytes": 29213,
+      "sha256": "e4443a7fa3826ba9709c97c00f4ea2db2c4ab48b24b4aa759eef53d1199ccf70"
+    },
+    "ipfs_datasets_py/logic/autoformal/training_cycle_inputs.py": {
+      "bytes": 5796,
+      "sha256": "f0e9ba9880b1aa9cbe120ec30b566a856a17e9710792c7dbbc1dac2361237a37"
+    },
+    "ipfs_datasets_py/logic/autoformal/tree_pin.py": {
+      "bytes": 2052,
+      "sha256": "ec43fd9379f3c9198451e8d62d98db53826dcf115e6858039a73c3da7d72a1c2"
+    },
+    "ipfs_datasets_py/logic/autoformal/uscode_ingest.py": {
+      "bytes": 10156,
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+    },
+    "ipfs_datasets_py/logic/autoformal/validator_profile.py": {
+      "bytes": 11342,
+      "sha256": "40bca08771b355b32fe401d4124cb0467d1b9563fac301438535d78127dc8389"
+    },
+    "ipfs_datasets_py/logic/autoformal/worker_budget.py": {
+      "bytes": 2585,
+      "sha256": "2bd0a41ec8e7dbbe5c8c90fb7e7e8bc8ffdd4327edceb06f3532416ebb396c55"
+    },
+    "ipfs_datasets_py/logic/profile_g.py": {
+      "bytes": 54035,
+      "sha256": "4ca5dcc601f30c723467f425a6a03a7c5b1f644c2239a0f4a489705f1b715f03"
+    },
+    "ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "pytest.ini": {
+      "bytes": 1536,
+      "sha256": "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff"
+    },
+    "tests/conftest.py": {
+      "bytes": 20716,
+      "sha256": "0a255dc653799cb980d7edbb1d7b2e3c8f0d81b091d4986aa712e1e8e12b7f10"
+    },
+    "tests/unit/logic/autoformal/test_corpus_contracts.py": {
+      "bytes": 5312,
+      "sha256": "e8db2a4b94983828896776da57fe50b7423be0c4ceade0f3945ab3def1ef2e38"
+    },
+    "tests/unit/logic/autoformal/test_corpus_definition_norm_adapter.py": {
+      "bytes": 28009,
+      "sha256": "4344adf8292cbd8e292325c213a2303e409c9d761c7878ed058972142c9e57d8"
+    },
+    "tests/unit/logic/autoformal/test_corpus_definition_review.py": {
+      "bytes": 40563,
+      "sha256": "d6bbdc704e3c0b8d4dd66f7f6584da9bdebca705253ccb66ea2fcb6cd0d6914e"
+    },
+    "tests/unit/logic/autoformal/test_corpus_graph.py": {
+      "bytes": 6553,
+      "sha256": "5f76e437509c323655e1d899ad9bc82222a71ce277ccfed7a0fbd49b45e6d36f"
+    },
+    "tests/unit/logic/autoformal/test_corpus_graph_exchange.py": {
+      "bytes": 16735,
+      "sha256": "b1ab01a2f246fb329f0af247eb1d1b5bdf9cf00567121ec677162fca44d3ff4a"
+    },
+    "tests/unit/logic/autoformal/test_corpus_imports.py": {
+      "bytes": 5009,
+      "sha256": "b679e8d4d09375bfd01dbb97864a7676aef6ebbf8132b511a31f0cb44c08f2b3"
+    },
+    "tests/unit/logic/autoformal/test_corpus_legacy_source_join.py": {
+      "bytes": 15719,
+      "sha256": "82bdee8024f4844d0b1073feb8d2bb1707445e6b65e7ae0aba3a3c8890689844"
+    },
+    "tests/unit/logic/autoformal/test_corpus_parent_alignment_adapter.py": {
+      "bytes": 46345,
+      "sha256": "ca12a4327bd56467ea49b536c3f4b38acf4fcdb458e3c8fa9ab4e6eef4490975"
+    },
+    "tests/unit/logic/autoformal/test_corpus_parent_occurrence_adapter.py": {
+      "bytes": 35980,
+      "sha256": "b81c13da52509e6addc22611d0966cb465950a65842820cf4b1a20aec032f1b3"
+    },
+    "tests/unit/logic/autoformal/test_corpus_proposed_graph_adapter.py": {
+      "bytes": 16440,
+      "sha256": "378c0faa4019993cd2915e9eabcfc40f2e154cab5038d8e2b0d9211f65becee2"
+    },
+    "tests/unit/logic/autoformal/test_corpus_qualification.py": {
+      "bytes": 12677,
+      "sha256": "78300dd38ab5394be06e3f96a51d11932d46aa6397bbb8c941d27d864c948613"
+    },
+    "tests/unit/logic/autoformal/test_corpus_release_cli.py": {
+      "bytes": 9166,
+      "sha256": "2a7bbf390e801e45c1658b2f43aea0621d01fbfe23acd620657b23b7c0769467"
+    },
+    "tests/unit/logic/autoformal/test_corpus_source.py": {
+      "bytes": 12746,
+      "sha256": "723274ff471220491b4fee7a6b9718366992caf84a12d0ad639d8a5705e0156e"
+    },
+    "tests/unit/logic/autoformal/test_corpus_source_adjudication.py": {
+      "bytes": 69569,
+      "sha256": "b9c47fab60a8089139e9c857bc82a541dc618991fad68938e652e6040c7dea4d"
+    },
+    "tests/unit/logic/autoformal/test_corpus_source_application.py": {
+      "bytes": 69181,
+      "sha256": "51aed4dcc6115dba2513561a34295e853277cf752706bdc9b64c2761fbffdd67"
+    },
+    "tests/unit/logic/autoformal/test_corpus_source_bindings.py": {
+      "bytes": 51413,
+      "sha256": "217682af664b1785a984b1090028cf3d3c4efd6d5641239cf0b1cf31b698a798"
+    },
+    "tests/unit/logic/autoformal/test_corpus_source_history.py": {
+      "bytes": 68455,
+      "sha256": "7d64fd16d78577fca3d1362b08a76455de652d76fd2e00224dad83361f1280b2"
+    },
+    "tests/unit/logic/autoformal/test_corpus_source_review.py": {
+      "bytes": 48328,
+      "sha256": "a65d894dc752667b46fc0815c0985204abfb1827c70a95243ffd6961cc2e370d"
+    },
+    "tests/unit/logic/autoformal/test_corpus_source_review_packets.py": {
+      "bytes": 51627,
+      "sha256": "f1514dae7ee57c6ed47860d52e24fea8176d8f00992460ba906183d9d4e629a8"
+    },
+    "tests/unit/logic/autoformal/test_corpus_source_review_responses.py": {
+      "bytes": 61814,
+      "sha256": "aa3b15977f14c61a929bf98999c4fca39ca5869a62b003df6b565a329f5b4560"
+    },
+    "tests/unit/logic/autoformal/test_corpus_span_adapter.py": {
+      "bytes": 12786,
+      "sha256": "b1781881a91c9fa684e52aec9dbc4ee3c50280770c32a065c932580a63dc6a5a"
+    },
+    "tests/unit/logic/autoformal/test_entity_cache_graph_adapter.py": {
+      "bytes": 14291,
+      "sha256": "2c3ba56eaae486c615d1378d5218c9014cea9b19d515f2c6b074fc7ed1902495"
+    },
+    "tests/unit/logic/autoformal/test_legal_cache_parent_occurrences.py": {
+      "bytes": 16101,
+      "sha256": "6897152159ef01dc2ac95dfc8a285482dcd82713451b3367954ccc7fd1b3340a"
+    },
+    "tests/unit/logic/autoformal/test_legal_calendar_replay.py": {
+      "bytes": 2473,
+      "sha256": "91a48257464aee5b2369b6d9cbd7dd0a9bd97f7e37c3cecff614938100022e5f"
+    },
+    "tests/unit/logic/autoformal/test_legal_candidate_context_inventory.py": {
+      "bytes": 25417,
+      "sha256": "162a06bbb82c004a747a9115f47db82cc80110e97cdd161dacd3045f5fbd533b"
+    },
+    "tests/unit/logic/autoformal/test_legal_canonical_calendar.py": {
+      "bytes": 14846,
+      "sha256": "6493c07b31884602f02c37da50175ddf9136708fca8d6f9ad0447d1daec765e8"
+    },
+    "tests/unit/logic/autoformal/test_legal_canonical_qualified.py": {
+      "bytes": 16582,
+      "sha256": "bf6dfabaf2c2f972386b97fbd6637a0b61b928f4adcb8f47b2aec45a1a5abae1"
+    },
+    "tests/unit/logic/autoformal/test_legal_checked_flat_composition.py": {
+      "bytes": 4974,
+      "sha256": "c5a412a2f901cb87cc8262acc19d1783a844a20598b737c34c50dd244fb9558f"
+    },
+    "tests/unit/logic/autoformal/test_legal_checked_flat_composition_v2.py": {
+      "bytes": 7016,
+      "sha256": "b1d597a18ed1d79c82e6b8b41db04eb4fdeab37852b5ab1f7ecf0b8e3c618f60"
+    },
+    "tests/unit/logic/autoformal/test_legal_checked_flat_composition_v3.py": {
+      "bytes": 8233,
+      "sha256": "b050bcf6d5b755a242b276c3cba0e3724a48d167dd9ccaec7b009a78a9e9a0e7"
+    },
+    "tests/unit/logic/autoformal/test_legal_clause_atom_boundary.py": {
+      "bytes": 19562,
+      "sha256": "9cbd892becdafd94aec83cf677e99b723bb46fd3077aaacb8b5e4670f3cee49b"
+    },
+    "tests/unit/logic/autoformal/test_legal_clause_boundary_decoder.py": {
+      "bytes": 7230,
+      "sha256": "b12b2ee78ddcfc9e0bd39121bb2308b62b0fb3730f933364c8bc9999d7f601a5"
+    },
+    "tests/unit/logic/autoformal/test_legal_clause_boundary_runtime.py": {
+      "bytes": 2713,
+      "sha256": "02e92ee99cab06e5b9e175d90262c09bd2dd4a92cf46da2118abb38ac1e93250"
+    },
+    "tests/unit/logic/autoformal/test_legal_clause_heading_boundary.py": {
+      "bytes": 14861,
+      "sha256": "04ebe486d3d03179b795f2f75f8094c2242e2b6c37555917abd65ebc8cc84187"
+    },
+    "tests/unit/logic/autoformal/test_legal_clause_scope_adapter.py": {
+      "bytes": 12026,
+      "sha256": "8ba7736dc02ab11449c20aed3582c1492308c5573fc72bf0232eda0209b41814"
+    },
+    "tests/unit/logic/autoformal/test_legal_clause_scope_preservation.py": {
+      "bytes": 12511,
+      "sha256": "3c59b8ef6928599e421d272961869ae6ec746ba2a8376347c6e47122fbd03dfa"
+    },
+    "tests/unit/logic/autoformal/test_legal_context_representability_integration.py": {
+      "bytes": 3511,
+      "sha256": "c01f0b797db24f952c639fb5530836534284e0b64abebb5f673f53584bef88ea"
+    },
+    "tests/unit/logic/autoformal/test_legal_context_review.py": {
+      "bytes": 18443,
+      "sha256": "c46a6591b37e280d2fe62e2a636fe9ac8cfe037c78c428838d0e72d23d044515"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_incremental.py": {
+      "bytes": 23580,
+      "sha256": "c9e1e282a23d83fcc97d68662bb596a7dd14e274ba64926794c0aede453ef0ba"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_lake.py": {
+      "bytes": 27694,
+      "sha256": "1eaae663573e6b56e243a4f0c22562442e772c626b147b310a21598be1a063e2"
+    },
+    "tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py": {
+      "bytes": 27927,
+      "sha256": "19c417bcf9a85a66d0c2f756fa4c9405fa40075eb709bce5bb9e46a25ff192dc"
+    },
+    "tests/unit/logic/autoformal/test_legal_entity_index_intake.py": {
+      "bytes": 12836,
+      "sha256": "1723a82c4fab67f4cfbf7b3a505494ae65744ffabc5d10705ab1f58c5b84b00b"
+    },
+    "tests/unit/logic/autoformal/test_legal_family_routes.py": {
+      "bytes": 7125,
+      "sha256": "ad622073cfc898162c89117fc0814c4a42af74a4caaf3c741a76a1fc79889ff2"
+    },
+    "tests/unit/logic/autoformal/test_legal_flat_scope_dependencies.py": {
+      "bytes": 12934,
+      "sha256": "0ec9eebdbe00c99e3b9e31c23f7b57406afd261ebcf21dc278845749c460773f"
+    },
+    "tests/unit/logic/autoformal/test_legal_flat_scope_dependencies_v2.py": {
+      "bytes": 10515,
+      "sha256": "5062ff046aed41179bf2b1cb21ea4c43a23e907b83b50248c2a5d221704ee203"
+    },
+    "tests/unit/logic/autoformal/test_legal_flat_scope_dependencies_v3.py": {
+      "bytes": 8468,
+      "sha256": "aa0976b83067b940e8103528de535a1dadc3038167b003e0ddbbdbd89d1ef383"
+    },
+    "tests/unit/logic/autoformal/test_legal_graph_dependencies.py": {
+      "bytes": 8894,
+      "sha256": "7034d445e68638f3d49d0403da5fd2555707a155ee090666a20c02ebb711f556"
+    },
+    "tests/unit/logic/autoformal/test_legal_graph_review.py": {
+      "bytes": 20717,
+      "sha256": "4a9afb5a84ce15e0f728d5e7c497863e2c8a4119a37d007386ce304f2ed3450c"
+    },
+    "tests/unit/logic/autoformal/test_legal_official_document_views.py": {
+      "bytes": 19981,
+      "sha256": "681a4404a4ed4a8f6792c696c17e6975e2b527b3aae5d40afb22fc8a57c93679"
+    },
+    "tests/unit/logic/autoformal/test_legal_official_source_custody.py": {
+      "bytes": 14309,
+      "sha256": "e5774c7a3487669665dbecc8119424edbd269c229db6ffa012d46b2cb2a7ef93"
+    },
+    "tests/unit/logic/autoformal/test_legal_paired_temporal_ownership_corpus.py": {
+      "bytes": 10596,
+      "sha256": "426a2f03310a3d83d22ca40db21e5a3eec76ef9723580fa24ca275a0a7a63530"
+    },
+    "tests/unit/logic/autoformal/test_legal_parent_parquet_pages.py": {
+      "bytes": 19795,
+      "sha256": "857d6b90f63a0608496bcbb158929c7bae528e3698b820aac33baf5b6fe95826"
+    },
+    "tests/unit/logic/autoformal/test_legal_parent_sentence_candidates.py": {
+      "bytes": 15787,
+      "sha256": "3a7450d98109570683b1b1ebfca48d5bf042018aba4912407dcc7b86995c6903"
+    },
+    "tests/unit/logic/autoformal/test_legal_parent_source_alignment.py": {
+      "bytes": 19207,
+      "sha256": "e8efb5183b4c36c3fb92971fab5b403f691733ef9c950a1d0163d06e5147e2f8"
+    },
+    "tests/unit/logic/autoformal/test_legal_parent_text_views.py": {
+      "bytes": 15823,
+      "sha256": "9abb67ece98358c7011c2b61815d550ad79d4726024dfed70073cb883dd8fb28"
+    },
+    "tests/unit/logic/autoformal/test_legal_primary_graph_manifest.py": {
+      "bytes": 16069,
+      "sha256": "74504b2f8851bb81df0841a8b8c28f779d1a45aa5b46aa6091a7dba1e6b57ebc"
+    },
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py": {
+      "bytes": 19684,
+      "sha256": "57cc05cd5a710c41e48ac1f524a21ac7bb33cfd7300f63c811729db87948cf64"
+    },
+    "tests/unit/logic/autoformal/test_legal_primary_graph_records.py": {
+      "bytes": 13515,
+      "sha256": "13e58e78be3155270ae9bc4727894c4a99d205e7c21fb449cf4bc2a733934f88"
+    },
+    "tests/unit/logic/autoformal/test_legal_primary_section_index.py": {
+      "bytes": 19511,
+      "sha256": "a0ef50d825e196b864a106f61fd9f8b0f709068ae368c0dc8c41be00424fdd84"
+    },
+    "tests/unit/logic/autoformal/test_legal_producer_lineage.py": {
+      "bytes": 21973,
+      "sha256": "21d6520185da5295d29948143e3113ef758448c9a080d8042faa12a4c1ca18da"
+    },
+    "tests/unit/logic/autoformal/test_legal_producer_page_lineage.py": {
+      "bytes": 13171,
+      "sha256": "d3633f916080d1bdb5d0d678dbd6b5c749890ffaf4a8cf5996596c057463730d"
+    },
+    "tests/unit/logic/autoformal/test_legal_review_admission.py": {
+      "bytes": 15811,
+      "sha256": "c0c2d6ce78cb7494f779d28654a4ce82b1e602f66a3d7b98cd87ad6e3ffcadf8"
+    },
+    "tests/unit/logic/autoformal/test_legal_rule_list_composition.py": {
+      "bytes": 10858,
+      "sha256": "3e6f4d5bcde1fda5147929b774537b5db6e60e58f8926652751feb688d5df0e5"
+    },
+    "tests/unit/logic/autoformal/test_legal_semantic_graph.py": {
+      "bytes": 12059,
+      "sha256": "064a6b32bbd4b6089abb40c20ff236dad7dedfa3a2b273059a7c50fa1668bb05"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_custody_integration.py": {
+      "bytes": 5391,
+      "sha256": "dc317cee96b0d7818d1c8f6a8450bf6c0ccbee455cd1b9f25dbcfda5c834208f"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_definition_bridge.py": {
+      "bytes": 8757,
+      "sha256": "5cee66cf8132f1ba5d661fd8951de558e047f4e0a316b8e74826298e095315fc"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_definition_lake.py": {
+      "bytes": 1914,
+      "sha256": "6128d4040c97717424777f2befe8bb61309ac0ab2a6719ff2044f0b0b198facb"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_definition_norm_bridge.py": {
+      "bytes": 14361,
+      "sha256": "012ee2f8b82403233a3ad2eb6bb73266d9743a200c375ea022010c15ac2aa023"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_definition_norm_lake.py": {
+      "bytes": 2142,
+      "sha256": "f4a16465188def1b260523c6070b6d08e179a90e1c16ab5f2843304f499810fc"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_family_bridge.py": {
+      "bytes": 11848,
+      "sha256": "d7c940a67f471d0e7f84e88048b3bc29100f0f232abdbb3b4382bcc672dd81ca"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py": {
+      "bytes": 15723,
+      "sha256": "d0bac1b69ea4462170eff0c3cd6a7763f9273b849a726342809683db007053f2"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_family_lake.py": {
+      "bytes": 11239,
+      "sha256": "caa676d1918e87b11198437097182f8782c7eb5e949273d8c0cdf988694369f0"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_graph_proposals.py": {
+      "bytes": 18646,
+      "sha256": "29a6a5e749def1d1a3463c73ab5ca2cabf82c75db2a19235eed4fe058d426606"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_representability.py": {
+      "bytes": 13223,
+      "sha256": "a288ac671dfec75cd518141f5578bf2a3181f70e9766608364d3977239b48d40"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_review_handoff.py": {
+      "bytes": 10828,
+      "sha256": "55f8c2364989ac12bbf49735023a43897b9a3ba781a10808fcadb8ee2543a586"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_sampling.py": {
+      "bytes": 15837,
+      "sha256": "961ea149d94d155b402884a9857e24e5255690301ea1891017f0b0fb2707aeec"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_view_inventory.py": {
+      "bytes": 13803,
+      "sha256": "40c54e440e0ae17a63acc9e4a672f2b56223d2f50e510c1aabbbd085c7e89c5e"
+    },
+    "tests/unit/logic/autoformal/test_legal_span_cache_intake.py": {
+      "bytes": 15815,
+      "sha256": "ebfdfe031a7cc7fbd9449fc68da64537e2ddc9f50d8f6922511a2b1fa780a43c"
+    },
+    "tests/unit/logic/autoformal/test_legal_span_provenance.py": {
+      "bytes": 15678,
+      "sha256": "131021b0708fc9b2387179ae87c56f5cb1028e8cfd6f44ba8846e5070d83f65d"
+    },
+    "tests/unit/logic/autoformal/test_legal_span_section_bridge.py": {
+      "bytes": 19794,
+      "sha256": "5de43fc72e537938065c05e3c74f2b106d688a853bf7aa16f44947188d667ade"
+    },
+    "tests/unit/logic/autoformal/test_legal_statutory_context.py": {
+      "bytes": 9103,
+      "sha256": "0824d7356f931e5611c790d1750396fdaa136d7906cf8f76ffa136b99bdcb96c"
+    },
+    "tests/unit/logic/autoformal/test_legal_statutory_context_v2.py": {
+      "bytes": 9077,
+      "sha256": "3079a8bc0b87d345fc2ae0638af3cc420a7736fbe6c2557628e2104f0ce48113"
+    },
+    "tests/unit/logic/autoformal/test_legal_statutory_routing.py": {
+      "bytes": 10671,
+      "sha256": "b81e1256bb5a03fae691f90a065b3ba5d7b63ad6dbc16e009be6e528611ad75a"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_coupled_span_corpus.py": {
+      "bytes": 9773,
+      "sha256": "014cf6588478e4824e2c4a206e033c792c2a237a88923306877500dd2f0d8061"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_coupled_span_metrics.py": {
+      "bytes": 12970,
+      "sha256": "ccab57172d034fca0804fe33143f098620729ef9f6f814a0346fb986530b9b8f"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_event_eligibility_adapter.py": {
+      "bytes": 10738,
+      "sha256": "1dbf20a1625224feb3c6a10f367e964effd377d84f99386d8230cecec57c5dbd"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_event_owner_adapter_v2.py": {
+      "bytes": 13983,
+      "sha256": "9b262d7226fc7126e585740194e31b3a9e72e9924f6ff4b8b9d020c929097749"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_event_owner_adapter_v3.py": {
+      "bytes": 14333,
+      "sha256": "a411177e5ba3388379711719e2ae7ebacb4e4ae8eefe8d71dba929d022774f57"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_event_owner_adapter_v4.py": {
+      "bytes": 16753,
+      "sha256": "e0ce1ac5d6e9de767bb65e1ee63bab8d51a79e7be2323c569a2c244118b36fdc"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_event_proposer_v2.py": {
+      "bytes": 13465,
+      "sha256": "0b4513e209244f1d699c7bc18ce18a4f8e3174db3c7ccb3417cef37099d5e632"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_event_proposer_v3.py": {
+      "bytes": 17654,
+      "sha256": "12c22523a71a00395a3804def58cc1f44ad31476a56bac6257b3efe1e8c6aae1"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_event_proposer_v4.py": {
+      "bytes": 30177,
+      "sha256": "a15cc4026cfd4be89b337e77ceaa6b5fd4f4e0c43ff8397a7a623159d20804f0"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_owner_candidates.py": {
+      "bytes": 6660,
+      "sha256": "adbc0f9db497a147a37ab496fd98d2f1a2e26e6cb1e8504fa116ad81af32e7f6"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_owner_pointer_corpus.py": {
+      "bytes": 10497,
+      "sha256": "f32405c838eb0e533592b1148784f0bafeae5432f1bb4a9ff45711980c5a7e36"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_owner_pointer_metrics.py": {
+      "bytes": 10602,
+      "sha256": "cbbdcb015b65d7b256204c01eed7d84daac902d1a9807e288eeee767ee4ff268"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_owner_pointer_metrics_v2.py": {
+      "bytes": 11091,
+      "sha256": "595902c7af0fd45dd09464ca187ec146ac474c05032adc5fd415d5c817666369"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_ownership_corpus.py": {
+      "bytes": 12530,
+      "sha256": "b7307ac705aa4ebb1147d797c50eef49d834054513c94f98828baebf81aefda6"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_ownership_metrics.py": {
+      "bytes": 8209,
+      "sha256": "bdc9342282a742cb68d48601834c6652b22949fae7412f4ec0f8454edb86f744"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_placement_corpus.py": {
+      "bytes": 10948,
+      "sha256": "88a944a5118654c472b3f9c7c1f5e41e96560b27f365db057a97e16f863356f5"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_placement_qualification.py": {
+      "bytes": 11497,
+      "sha256": "0a0daf48164b949a0697f5db827bf0e961b81917df4a4774c74fd2537714c73f"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_relative_owner_corpus.py": {
+      "bytes": 8997,
+      "sha256": "a6a710a6036214acdeb11bb4f842e3484585bdc1e4fb02a6199bd2bcaeec30e2"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_relative_owner_metrics.py": {
+      "bytes": 13333,
+      "sha256": "9fdde9bcbea681da9ee61df92c489d6f7d0c1b77413a599419382092289532eb"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_stability_corpus.py": {
+      "bytes": 13325,
+      "sha256": "cb7f22e98c0fd9644622f4101efc8baa9765f02bf7b0176f7738c2566ee34ade"
+    },
+    "tests/unit/logic/autoformal/test_legal_temporal_stability_qualification.py": {
+      "bytes": 13369,
+      "sha256": "e8507764c7d6e8f511f3253984673823b6634848a0e35c3bcd73c12c5c426255"
+    },
+    "tests/unit/logic/autoformal/test_legal_uscode_family_bridge_pilot.py": {
+      "bytes": 7018,
+      "sha256": "af2fedee09877e875045e34cb0f61b2fe0ed33ff92822fb50b67c517afbd4458"
+    },
+    "tests/unit/logic/autoformal/test_legal_uscode_fidelity_runner.py": {
+      "bytes": 6636,
+      "sha256": "d2bc721a339fd4a1690a3c28564d58e163a059a8910dbc2c56e3b722f2de663e"
+    },
+    "tests/unit/logic/autoformal/test_prepare_legal_owner_pointer_real_diagnostics.py": {
+      "bytes": 1944,
+      "sha256": "ca7ae001d9f83b0458e4ad7e7eb7cdbf5d61ae0b6c952f445dd32fd2160f2baf"
+    },
+    "tests/unit/logic/autoformal/test_qualify_legal_paired_ownership_head.py": {
+      "bytes": 19156,
+      "sha256": "59c011c79e2665dcd7414e646d18ba111b393e19d729a9a2077d27e3935f7b48"
+    },
+    "tests/unit/logic/autoformal/test_qualify_legal_paired_ownership_head_v2.py": {
+      "bytes": 22640,
+      "sha256": "f06477c393630b1159f17a81af9979222e818d11fc790827bc7d71005e4df33c"
+    },
+    "tests/unit/logic/autoformal/test_qualify_legal_temporal_coupled_span.py": {
+      "bytes": 17982,
+      "sha256": "00e6bd3d400ff65de1317b6cb8c31b2a8aa7e173180ca2ac1aea37aaf7d029e2"
+    },
+    "tests/unit/logic/autoformal/test_qualify_legal_temporal_owner_pointer.py": {
+      "bytes": 13787,
+      "sha256": "1fbb79c770a6e9215b70c044f5bc5bc07f74b2eaf7242af7a7f1f60ddfeaf254"
+    },
+    "tests/unit/logic/autoformal/test_qualify_legal_temporal_ownership_head.py": {
+      "bytes": 11779,
+      "sha256": "7e829e9edfb94ce1bdcad0b50780eab7fff41f866300d2c48fbdd6e2c0517c96"
+    },
+    "tests/unit/logic/autoformal/test_qualify_legal_temporal_ownership_head_v2.py": {
+      "bytes": 12619,
+      "sha256": "829e70b831255478998d2902d2122408b64827ac4115063bffafaf3ffd8e37f7"
+    },
+    "tests/unit/logic/autoformal/test_qualify_legal_temporal_placement_head.py": {
+      "bytes": 28968,
+      "sha256": "a3c47912871a882616e2b368c90b2f3d3390ae8cfe835e0fbbe53ecc19374bef"
+    },
+    "tests/unit/logic/autoformal/test_qualify_legal_temporal_relative_owner.py": {
+      "bytes": 27582,
+      "sha256": "0691f8a7ff17d78de7d4fd732a213b3507f98bd70e21a1cd9212339aad64aead"
+    },
+    "tests/unit/logic/autoformal/test_qualify_legal_temporal_stability_head.py": {
+      "bytes": 41524,
+      "sha256": "77062330a8b88fcb4fcc1bb23f16d2373adc281a89201a9edf94596cf3548935"
+    },
+    "tests/unit/logic/autoformal/test_qualify_legal_temporal_stability_head_v2.py": {
+      "bytes": 4918,
+      "sha256": "a10e450a2f0ca3de8404feddcbd9cf0dba1a1b078720128e352c79092b83402c"
+    },
+    "tests/unit/logic/autoformal/test_replay_legal_temporal_stability_teacher.py": {
+      "bytes": 8400,
+      "sha256": "d2a8f93f9efd078d9e7e1fafa89a34181f1a8eaa4e15f9e64ff6f61162d19a43"
+    },
+    "tests/unit/logic/autoformal/test_run_legal_temporal_coupled_span.py": {
+      "bytes": 5427,
+      "sha256": "b8e7c799371a85ae13614c9701ae7cb2fd4010d7813ff33355d1fcbf04ec0bcc"
+    },
+    "tests/unit/logic/autoformal/test_run_legal_temporal_owner_pointer.py": {
+      "bytes": 3243,
+      "sha256": "9522b42f621eba6d21a6b84bfcaac84e98847915e44109c8241a183192872219"
+    },
+    "tests/unit/logic/autoformal/test_run_legal_temporal_relative_owner.py": {
+      "bytes": 5436,
+      "sha256": "017cb27959b1f442016f6d41b54b27f47ad681783bcc8609bc07abc653521ea9"
+    },
+    "tests/unit/logic/autoformal/test_scoped_definition_resolution.py": {
+      "bytes": 34064,
+      "sha256": "f560629faade3c81626cc3b53a14e07ed8bfda9bfed48bf47708a369f036af14"
+    },
+    "tests/unit/logic/autoformal/test_span_cache_claims.py": {
+      "bytes": 33429,
+      "sha256": "9141373321e06af0591b3a8f7fdd367fa5723effe65695f9ecfd499743a3ac44"
+    },
+    "tests/unit/logic/autoformal/test_span_claim_acceptance.py": {
+      "bytes": 20887,
+      "sha256": "2fbf9ccb8f716a9fe05cf3a0284bb365734b11198de87440ae4c45c4f3e1dd12"
+    },
+    "tests/unit/logic/autoformal/test_transfer_learned_legal_clause_pipeline.py": {
+      "bytes": 2985,
+      "sha256": "f26d11d418bf01840e275c1b6fbe39329952dc12699d186e088bbdd476631569"
+    },
+    "tests/unit/logic/autoformal/test_transfer_mixed_replay_legal_clause_pipeline.py": {
+      "bytes": 7803,
+      "sha256": "7f79c2a1f76b5070c29079f0adec69378df1fb186642f6c505d978f1835deac1"
+    },
+    "tests/unit/logic/autoformal/test_transfer_temporal_curriculum_legal_clause_pipeline.py": {
+      "bytes": 9318,
+      "sha256": "a748fd155319d77fae85293ad8039c467ed93e952f6e8da0b17c5b31ef3f0830"
+    },
+    "tests/unit/logic/autoformal/test_verify_legal_clause_boundary_experiment.py": {
+      "bytes": 1907,
+      "sha256": "62c8897604a05c696e3680eae50e7db79b72a49add956d05c4bfc18eeb4ecb78"
+    }
+  },
+  "integration_parent": "e6f32949d76749335e4958fe22cfb563b737aea9",
+  "schema": "legal-source-review-integration-evidence-bundle/v1",
+  "scope": "listed local source/test/evidence files; no production review or import-closure claim"
+}

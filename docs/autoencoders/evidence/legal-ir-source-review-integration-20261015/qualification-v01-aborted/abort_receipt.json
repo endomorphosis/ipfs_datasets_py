@@ -1,0 +1,27 @@
+{
+  "complete_JUnit_available": false,
+  "complete_case_count": null,
+  "disposition": "intentionally_abandoned_unqualified_attempt",
+  "files": {
+    "interruption.json": {
+      "bytes": 725,
+      "sha256": "089bf6fd0212e7a1f53667269d5a7fb0dd7e6e770d70fe29d0aca461d72f4c7f"
+    },
+    "runner.py.txt": {
+      "bytes": 5108,
+      "sha256": "613299bf0dafea8a15d6f215b5aef0d6bc36f8d3807b54726afbe37ce859e3dc"
+    },
+    "stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout.txt": {
+      "bytes": 62703,
+      "sha256": "a1991e18d7fb36b59b95ba150bb46b350659f8539f1510e32eb206bdd5faa9c0"
+    }
+  },
+  "original_runner_failure_after_intentional_termination": "missing JUnit; completed qualification not available",
+  "qualification_result_claimed": false,
+  "reason": "replace insufficient1200second sequential budget with2400second bounded isolated xdist3 workers",
+  "schema": "legal-source-review-qualification-abort/v1"
+}
