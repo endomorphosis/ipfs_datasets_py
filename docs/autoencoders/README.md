@@ -22,6 +22,11 @@ belong to their named backend; they are not interchangeable across backends.
 | Obtain formal ASTs or reconstruct native expressions from model scores | [Formal logic decoders](formal_logic_decoders.md) |
 | Train native categorical decoders and check actual outputs with Lake | [Native formula training](native_formula_training.md) |
 | Train a source-only learned formula decoder | [Learned legal formula training](learned_legal_formula_training.md) |
+| Prepare complete official statutory source units and open context | [Whole-source sampling](legal_source_sampling.md) |
+| Record source findings and meaning proposals against the complete source population | [Sampled-source review intake](legal_source_sampling_review.md) |
+| Compile explicit V2 definition declarations into candidate graphs | [V2 source definitions](legal_source_definition_v2.md) |
+| Bind explicit V2 definition candidates to exact source-review subjects | [Sampled-source definition binding](legal_source_sampling_definition_binding_v2.md) |
+| Prepare and authenticate exact V2 definition review evidence | [V2 definition context and review](corpus_definition_review_v2.md) |
 | Preserve and train the old 8D linguistic/IR feature decoder | [Legacy linguistic training](legacy_linguistic_training.md) |
 | Reproduce the September 17 teacher and prepare screened distillation targets | [Historical teacher fidelity, fixes and performance](legacy_teacher_fidelity.md) |
 | Transfer screened teacher evidence into separately embedded 384D formula training | [Teacher-to-student preparation and smoke](teacher_student_transfer.md) |

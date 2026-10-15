@@ -5,10 +5,11 @@ unreviewed unary definition declarations against the complete official V2
 markup view. `corpus_definition_adapter_v2.py` transports a regenerated report
 into source-bound corpus records and a definition-only candidate graph.
 
-This path uses the existing V2 source sampler and source-record owners. It
-shares bounded Boolean lowering with the legacy definition compiler. The
-legacy request/profile and its document validation remain available; a V2
-document is never relabeled as a legacy paragraph population.
+This path uses the existing V2 source sampler and source-record owners. Its
+bounded Boolean lowering preserves the legacy definition compiler's unary
+Boolean semantics. The active repository retains the legacy compiler's source
+unchanged, including its original producer pins. A V2 document is never
+relabeled as a legacy paragraph population.
 
 ## Independent inputs
 

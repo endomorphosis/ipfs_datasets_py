@@ -101,3 +101,51 @@ synthetic reviewer declarations. They include complete-population preservation,
 Unicode occurrences, withheld context, changed bundle/catalog bindings, bounds,
 unresolved states, resealed tampering and a module-body cold-import control.
 They do not qualify actual statutory meanings or the entire package bootstrap.
+
+## Migrate source only preparation packets
+
+The earlier `legal-v2-actual-source-review-handoff-input/v1` packets contain
+thirteen unanswered navigation questions. They are not declarations accepted by
+this recorder. `legal_source_sampling_review_handoff` checks their original
+bytes, exact sampler unit and occurrence, original context and V2 context packet
+against the complete current bundle. It then prepares a new fifteen-question
+blank template with explicit origin commitments.
+
+```python
+from ipfs_datasets_py.logic.autoformal import legal_source_sampling_review_handoff as handoff
+
+draft = handoff.prepare_sampling_review_handoff(
+    original_handoff_bytes, bundle, raw,
+    expected_handoff_sha256=independent_original_handoff_file_hash,
+    expected_bundle_sha256=bundle_pin,
+    **replay_inputs,
+)
+draft_pin = handoff.sampling_review_handoff_sha256(draft)
+handoff.validate_sampling_review_handoff(
+    draft, original_handoff_bytes, bundle, raw,
+    expected_handoff_record_sha256=draft_pin,
+    expected_handoff_sha256=independent_original_handoff_file_hash,
+    expected_bundle_sha256=bundle_pin,
+    **replay_inputs,
+)
+declaration = deepcopy(draft["response_template"])
+```
+
+The bundle hash is filled in the migrated template. Answers, reviewer and exposure
+fields remain blank; a recorder submission still requires explicit declarations.
+The adapter refuses already answered packets rather than discarding answers
+during migration. The old raw-file hash, full canonical hash and context-packet
+hash remain distinct commitments. Scope and definition navigation labels supply
+no legal role, attachment, applicability or typed AST.
+The initial migration profile accepts the original six default open context
+slots. Packets containing supplied dependency requests need a separate explicit
+migration contract; their context cannot be silently replaced with missing slots.
+
+Record unavailability as an explicit unresolved answer naming missing evidence.
+An unanswered template and an unresolved declaration represent different stages.
+The v1 recorder accepts an explained `not_applicable` disposition without
+requiring a citation; downstream review policy must separately decide whether
+the stated evidence is adequate. The population summary preserves different
+prose declarations but does not decide whether those statements agree or
+contradict one another. `declarations_recorded` denotes retained unverified
+declarations, not agreement, independent reviewers or accepted meanings.

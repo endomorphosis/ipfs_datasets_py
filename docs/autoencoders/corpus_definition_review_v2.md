@@ -34,9 +34,10 @@ existing owner. Selectors retain exact Unicode and UTF8 half-open geometry and
 the original V2 view/occurrence identities. The compact packet binds that view,
 descriptor and raw bytes; it does not embed another full source document.
 
-The fixed six dependency kinds and availability rules share a small pure helper
-with the legacy context owner. Legacy packet identities and validators retain
-their original behavior. V2 packet/slot identities have distinct namespaces.
+The fixed six dependency kinds and availability rules use a small pure helper
+matching the legacy context owner's contract. The active repository retains
+the legacy context source, packet identities and validators unchanged. V2
+packet/slot identities have distinct namespaces.
 Same-view candidate content remains open, external locators remain locators,
 and another expected local view produces an explicit stale disposition. These
 are checklist slots, not inferred attachments or an exhaustive legal dependency
