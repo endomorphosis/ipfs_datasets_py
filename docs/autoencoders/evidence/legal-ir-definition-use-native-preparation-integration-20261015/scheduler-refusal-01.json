@@ -1,0 +1,44 @@
+{
+  "attempt_empty": true,
+  "executed_checks": [],
+  "frozen_request_sha256": "f78cac54fbd61f17d0cd4d71d625c4de01885feb9bf84588a3db86153b4e2cda",
+  "matching_native_refusal_observed": true,
+  "native_refusal": {
+    "backoff_until": 1792085229.5634375,
+    "decision_cycle_at": 1792085227.5634375,
+    "demand": {
+      "additional_memory_mb": 6144,
+      "additional_process_slots": 4,
+      "pid_tasks_required": 112,
+      "root_reserved_memory_mb": 8192,
+      "root_reserved_process_slots": 1
+    },
+    "gate": "envelope",
+    "historical": true,
+    "proof_memory_headroom_mb": 24922,
+    "reason": "proof_cpu_stall",
+    "sample": {
+      "available_memory_mb": 108170,
+      "available_pid_tasks": 336325,
+      "cpu_slots": 20,
+      "cpu_stall_percent": 52.5,
+      "io_stall_percent": 0.18,
+      "memory_stall_percent": 0.01,
+      "pid_task_limit": 337808,
+      "total_memory_mb": 124610
+    },
+    "schema": "proof-resource-admission-refusal@1",
+    "thresholds": {
+      "cpu_stall_percent": 50.0,
+      "io_stall_percent": 10.0,
+      "memory_stall_percent": 2.0
+    }
+  },
+  "observation_only_not_admission": true,
+  "schema": "legal-ir-native-preparation-scheduler-refusal/v1",
+  "selected_record_status": "retained",
+  "semantic_or_Lean_authority": false,
+  "test_child_launched": false,
+  "tests_run": 0,
+  "traceback_sha256": "a52213a8646035a436f42272b5567093d1c37841a94e14314f975bcb7ade5ad9"
+}

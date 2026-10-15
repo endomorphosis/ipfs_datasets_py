@@ -1,0 +1,25 @@
+{
+  "collision_exports": [
+    "legal_ir_rule_distillation",
+    "legal_ir_view_contracts",
+    "legal_ir_build_manifest",
+    "legal_ir_semantic_diff"
+  ],
+  "current_bytes": 47365,
+  "current_sha256": "df45e300fd07d6e9f1297f59ba0d03e9822bf1cf2f4faa20250501024b31b8da",
+  "duplicate_constant_final_owner": "legal_ir_schema_evolution",
+  "effective_public_names": 553,
+  "method": "Standard-library AST/Git byte comparison only; no product imports or runtime execution. Runtime qualification belongs to attempt03.",
+  "ordered_all_entries": 553,
+  "ordered_all_names_sha256": "a44ecf830d0e118dda180866b6f4e95e8acdbfd620f7d4ff0e3725f883dee54d",
+  "ordered_groups_and_effective_owners_preserved": true,
+  "ordered_import_groups": 38,
+  "original_all_source_tail_byte_exact": true,
+  "original_bytes": 40876,
+  "original_git_source": "e58337e4b371c9b16fb2451234f7497882e0c4c4:ipfs_datasets_py/logic/integration/reasoning/__init__.py",
+  "original_sha256": "83380d7c173252bfec336a913a928a277ebee40d55d0e18d9f34c6ab3c8325ea",
+  "path": "ipfs_datasets_py/logic/integration/reasoning/__init__.py",
+  "production_change_purpose": "Defer implementation imports until a public object is requested; preserve real owner objects, duplicate precedence, collision-function identities and explicit caller overrides.",
+  "schema": "legal-ir-reasoning-lazy-public-api-static-proof/v1",
+  "source_does_not_authenticate_dependencies_or_semantic_meaning": true
+}

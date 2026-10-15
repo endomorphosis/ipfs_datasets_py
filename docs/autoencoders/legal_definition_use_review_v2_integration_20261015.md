@@ -160,6 +160,26 @@ controls and is excluded from these strict-inventory jobs. This phase does not
 qualify those controls under this launcher or claim universal filesystem
 support. Existing separately retained graph-exchange evidence keeps its scope.
 
+## Subsequent native preparation
+
+The [native-preparation integration](legal_definition_use_native_preparation_integration_20261015.md)
+adopts the parallel `9ff4d29e` owner with all three original contribution files
+unchanged. It prepares the exact conditional project from a replayed combined
+assessment. Historical 163-case functional qualification retains its own scope;
+the complete special-file preparation/project modules are excluded from the
+strict native roster. Attempt02's 300 cases ended with 297 passes and three
+cold-reader optional-import failures. Its evidence and the earlier CPU refusal
+remain preserved after exact claim recovery. After the lazy-import repair,
+attempt03 passed all 316 cases across thirteen complete modules in 134.86
+pytest seconds, with native durability and grant release completed. Those counts
+overlap this guide's earlier runs.
+
+Nine generated source files, six modules and three conditional statements
+establish project preparation, with the alias assumed and `build_eligible=false`.
+No V2 native execution adapter, observed kernel result or actual statutory
+norm/use review follows. The source-subject/exposure correspondence and separate
+training-gold requirements below remain open.
+
 ## Next acceptance
 
 Obtain actual source-first meaning/applicability decisions and reviewer exposure

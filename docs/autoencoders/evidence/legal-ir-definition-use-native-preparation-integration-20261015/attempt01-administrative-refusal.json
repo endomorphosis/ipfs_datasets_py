@@ -1,0 +1,23 @@
+{
+  "actual_launcher_stderr_sha256": "a52213a8646035a436f42272b5567093d1c37841a94e14314f975bcb7ade5ad9",
+  "capacity_policy_changed": false,
+  "cause": "proof_cpu_stall",
+  "checks_executed": false,
+  "child_started": false,
+  "created_at_utc": "2026-10-15T17:32:59.930196+00:00",
+  "evidence_created_after_original_owner_exit": true,
+  "executed_checks": [],
+  "failed_request_sha256": "f78cac54fbd61f17d0cd4d71d625c4de01885feb9bf84588a3db86153b4e2cda",
+  "historical_cpu_stall_percent": 52.5,
+  "matching_redacted_native_decision_sha256": "62f9470cb1f116c74e7acb0b12f21b06fb058042ece95bcebf0bc9d4588b855a",
+  "native_result_record_created": false,
+  "original_artifact_count": 0,
+  "original_attempt_was_empty": true,
+  "purpose": "Truthful administrative closeout artifact for exact evidence-preserving retained-claim recovery; not a native validation success or proof of tests.",
+  "qualification_claimed": false,
+  "schema": "owned-validation-administrative-admission-refusal-evidence/v1",
+  "semantic_or_Lean_authority": false,
+  "status": "not_executed_admission_refused",
+  "test_count": 0,
+  "threshold_percent": 50.0
+}

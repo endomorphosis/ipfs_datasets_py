@@ -29,6 +29,8 @@ belong to their named backend; they are not interchangeable across backends.
 | Prepare and authenticate exact V2 definition review evidence | [V2 definition context and review](corpus_definition_review_v2.md) |
 | Bind the full joint definition-use interpretation to its distinct review subject | [Combined V2 definition-use review](corpus_definition_use_review_v2.md) |
 | Inspect native combined-review qualification and the executed §101 source-binding replay | [Combined review and sampled-source integration](legal_definition_use_review_v2_integration_20261015.md) |
+| Prepare a conditional V2 definition-use Lean project with original review blockers retained | [V2 conditional native preparation](legal_corpus_definition_use_lake_v2.md) |
+| Track native project-exchange, lazy-import evidence and closeout status | [V2 native-preparation integration](legal_definition_use_native_preparation_integration_20261015.md) |
 | Preserve and train the old 8D linguistic/IR feature decoder | [Legacy linguistic training](legacy_linguistic_training.md) |
 | Reproduce the September 17 teacher and prepare screened distillation targets | [Historical teacher fidelity, fixes and performance](legacy_teacher_fidelity.md) |
 | Transfer screened teacher evidence into separately embedded 384D formula training | [Teacher-to-student preparation and smoke](teacher_student_transfer.md) |

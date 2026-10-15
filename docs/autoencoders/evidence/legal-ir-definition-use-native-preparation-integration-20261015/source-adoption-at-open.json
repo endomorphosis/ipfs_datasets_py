@@ -1,0 +1,57 @@
+{
+  "adopted_commit": "e58337e4b371c9b16fb2451234f7497882e0c4c4",
+  "copied_evidence": [
+    {
+      "bytes": 8712,
+      "original_path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-preparation-20261015-01/native-preparation-authored-tests-v01.xml",
+      "path": "historical-new-42-junit.xml",
+      "sha256": "e87aea4d0cd4563b3021b94ac3166316eda39eb7a7786c39a4f3db4191e9c69e"
+    },
+    {
+      "bytes": 22274,
+      "original_path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-preparation-20261015-01/legacy-preparation-review-tests-v01.xml",
+      "path": "historical-legacy-121-junit.xml",
+      "sha256": "d8409162efad0ec8e4d68d98ce1a6ee9ca2a807520a2df0d0f3c5cb7251738f6"
+    },
+    {
+      "bytes": 1451,
+      "original_path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-native-preparation-integration-20261015/historical-test-recount.json",
+      "path": "historical-test-recount.json",
+      "sha256": "fa60903cd04d472436f3e155241d4603894ae83c4dbbc828474213b0d36a5b8f"
+    },
+    {
+      "bytes": 52622,
+      "original_path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-native-preparation-integration-20261015/validation-request-01.json",
+      "path": "validation-request-01.json",
+      "sha256": "f78cac54fbd61f17d0cd4d71d625c4de01885feb9bf84588a3db86153b4e2cda"
+    }
+  ],
+  "historical_tests_rerun_by_this_copy": false,
+  "original_contribution": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+  "runtime_results_pending": true,
+  "schema": "legal-ir-v2-native-preparation-source-adoption/v1",
+  "source_base": "832c9d3b28f68c55237c4af2e99dd9ec5c137db5",
+  "source_files": [
+    {
+      "bytes": 21600,
+      "exact_author_body_preserved": true,
+      "mode_and_blob": "100644 blob b116b636e06191098e1a9128fadc15cc9ce73374",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+      "sha256": "306ab6481b78db8046e3f4eeae7cb917002c4a50b227204c6d4692123914b47e"
+    },
+    {
+      "bytes": 23236,
+      "exact_author_body_preserved": true,
+      "mode_and_blob": "100644 blob b5d90f392dfd4cd62926493d80524ae0422b490b",
+      "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py",
+      "sha256": "3f915be198be0d67133d7b07f5ae4c28b6738de94331a7c099c2783d27b0810e"
+    },
+    {
+      "bytes": 8773,
+      "exact_author_body_preserved": true,
+      "mode_and_blob": "100644 blob d236320fe037baa723f985317e8760626cea4ff5",
+      "path": "docs/autoencoders/legal_corpus_definition_use_lake_v2.md",
+      "sha256": "59aada044248343ae81583bd88e2ecbab995574fa80017ad72538bc42ec2165c"
+    }
+  ]
+}

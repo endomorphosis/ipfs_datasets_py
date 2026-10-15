@@ -1,0 +1,151 @@
+{
+  "audit_method": "stdlib-only read/hash/AST/XML and immutable Git object inspection; no production imports or recovery execution",
+  "checks_completed": 106,
+  "evidence_limits": [
+    "Original retained-record hashes are authenticated by each frozen request and actual native API receipt; this audit has no independent archived full pre-recovery ledger snapshot.",
+    "Other-record integrity during each closeout relies on the native API under-lock unchanged-map commitment. The first receipt predates the second selected closeout; later shared-ledger activity can legitimately change current other-record maps.",
+    "The default final accounting is a copy of the API fresh locked census with only the selected promise subtracted; this audit performs no independent global post-release storage census.",
+    "Durability was performed by the executed native recovery API and recorded in its result; the audit independently re-reads every retained file without claiming a new fsync operation.",
+    "Source verification covers the thirteen recovery-owner dependencies per request, not complete installed-package closure or a successful rerun of the failed 300-test source generation."
+  ],
+  "failed_executions_promoted": false,
+  "private_rows_process_identifiers_lease_keys_or_arguments_published": false,
+  "recoveries": [
+    {
+      "attempt": "admission-01",
+      "failed_execution_promoted": false,
+      "original_outcome": {
+        "administrative_note_created_after_owner_exit": true,
+        "administrative_note_is_native_result": false,
+        "administrative_note_sha256": "ea60c05182ae6d5f6bfe9ef91c0bb86a485ded2088400b796a5d0d472cdb15df",
+        "kind": "admission_refused_before_productive_child",
+        "qualified_test_outcome_available": false,
+        "tests_executed": 0
+      },
+      "other_reservation_integrity": {
+        "independent_pre_recovery_full_ledger_snapshot_available": false,
+        "latest_other_record_map_matches_api_commitment": false,
+        "native_api_under_lock_commitment_present": true
+      },
+      "physical_file_bytes_freed": 0,
+      "private_receipt": {
+        "bytes": 1794,
+        "file": "recovery-admission-01-private-execution.json",
+        "sha256": "c401f1922ba573cf400185dcd6fda6d0cfd753503a765da3eb4eb51745971737"
+      },
+      "recovery_api": {
+        "api_returned": true,
+        "capacity_policy": "require_capacity",
+        "current_released_record_matches_api": true,
+        "original_record_hash_matches_frozen_request": true,
+        "owner_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+        "owner_sha256": "c3497e4c731f2944f6319b2ac2b1d9375bdd69723189cd116471abef8bc3c6e4",
+        "recovery_source_cohort_sha256": "b757395f7b3626fbb864c3ce38ebad143e57cc83daca3bde819ed09915e57a27",
+        "recovery_source_count": 13,
+        "runner_postconditions_verified": true,
+        "schema": "explicit-retained-reservation-reconciliation/v1"
+      },
+      "recovery_grants_validation_or_semantic_authority": false,
+      "released_reserved_promise_bytes": 268435456,
+      "request": {
+        "bytes": 7988,
+        "file": "recovery-admission-01-request.json",
+        "sha256": "57cc9ab7484b0956188701874cc1246c79edbfc607c7f02758c78748dc81280b"
+      },
+      "retained_artifacts": {
+        "bytes": 1129,
+        "complete_inventory_rehashed": true,
+        "count": 1,
+        "files_deleted": false,
+        "inventory_sha256": "aae29fd489dabef813cc50033a08750b07672854f45d1b4b01af06ad054436ea",
+        "original_directory_identity_retained": true
+      },
+      "runner": {
+        "bytes": 11565,
+        "file": "recover_admission_01.py",
+        "sha256": "4df5340ceccc564ca559e3e27ddee06e22504a84e41283f2b93bb3094c169215"
+      },
+      "status": "verified_recovery"
+    },
+    {
+      "attempt": "attempt-02",
+      "failed_execution_promoted": false,
+      "original_outcome": {
+        "all_three_failures_reference_usr_symai": true,
+        "errors": 0,
+        "failures": 3,
+        "historical_initializer": {
+          "git_revision": "e58337e4b371c9b16fb2451234f7497882e0c4c4",
+          "path": "ipfs_datasets_py/logic/integration/reasoning/__init__.py",
+          "restored_or_reexecuted_for_this_audit": false,
+          "sha256": "83380d7c173252bfec336a913a928a277ebee40d55d0e18d9f34c6ab3c8325ea"
+        },
+        "junit_sha256": "1801159cf0eeee1f5f38037ee1d930796bf1c8ddce22fbae3a3f226f3477504c",
+        "kind": "executed_validation_failed",
+        "native_completed": false,
+        "native_failure_sha256": "4b927114f5f7044dcfe4e209e709db9271a2e96d2782fb9ca22647d882999562",
+        "passed": 297,
+        "returncode": 1,
+        "skips": 0,
+        "tests": 300
+      },
+      "other_reservation_integrity": {
+        "independent_pre_recovery_full_ledger_snapshot_available": false,
+        "latest_other_record_map_matches_api_commitment": false,
+        "native_api_under_lock_commitment_present": true
+      },
+      "physical_file_bytes_freed": 0,
+      "private_receipt": {
+        "bytes": 32357,
+        "file": "recovery-attempt-02-private-execution.json",
+        "sha256": "528837bed1265115ba55d2abe1d40cd6b66f20c97d3b7bcb817010ac0c820f26"
+      },
+      "recovery_api": {
+        "api_returned": true,
+        "capacity_policy": "require_capacity",
+        "current_released_record_matches_api": true,
+        "original_record_hash_matches_frozen_request": true,
+        "owner_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+        "owner_sha256": "c3497e4c731f2944f6319b2ac2b1d9375bdd69723189cd116471abef8bc3c6e4",
+        "recovery_source_cohort_sha256": "b757395f7b3626fbb864c3ce38ebad143e57cc83daca3bde819ed09915e57a27",
+        "recovery_source_count": 13,
+        "runner_postconditions_verified": true,
+        "schema": "explicit-retained-reservation-reconciliation/v1"
+      },
+      "recovery_grants_validation_or_semantic_authority": false,
+      "released_reserved_promise_bytes": 268435456,
+      "request": {
+        "bytes": 43735,
+        "file": "recovery-attempt-02-request.json",
+        "sha256": "233f7bb3438a15e0a6d26b93c312c1811cc930277fd08eb57953e807ade73220"
+      },
+      "retained_artifacts": {
+        "bytes": 8999447,
+        "complete_inventory_rehashed": true,
+        "count": 144,
+        "files_deleted": false,
+        "inventory_sha256": "5ffbc495023ceafce275dcd4a7873f0ced3548cd5b66da5d9da50c46f3b63e5b",
+        "original_directory_identity_retained": true
+      },
+      "runner": {
+        "bytes": 11523,
+        "file": "recover_attempt_02.py",
+        "sha256": "79de652c321f5be4b9f6f2a36326207bc8e61ae9f89ea443a083af7a116c46db"
+      },
+      "status": "verified_recovery"
+    }
+  ],
+  "recovery_or_validation_tests_models_solvers_launched_by_auditor": false,
+  "retained_attempt_or_ledger_modified_by_auditor": false,
+  "reviewed_at_utc": "2026-10-15T17:52:00.450457+00:00",
+  "schema": "legal-ir-native-preparation-recovery-independent-audit/v1",
+  "semantic_Lean_human_review_or_training_authority": false,
+  "status": "pass",
+  "totals": {
+    "physical_artifact_bytes_freed": 0,
+    "recoveries_verified": 2,
+    "released_reserved_promise_bytes": 536870912,
+    "retained_artifact_bytes": 9000576,
+    "retained_regular_files": 145
+  }
+}

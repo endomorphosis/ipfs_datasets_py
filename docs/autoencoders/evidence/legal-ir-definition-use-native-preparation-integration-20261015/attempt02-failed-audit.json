@@ -1,0 +1,141 @@
+{
+  "checkout_head": "e58337e4b371c9b16fb2451234f7497882e0c4c4",
+  "limitations": [
+    "The 297 prior cases passed, but this attempt is a failing 300-case qualification and establishes no pass for the three new joined cases.",
+    "Imported author evidence and the 42-case module remain historical/source-bound; that module is not selected by this request.",
+    "No successful six-field result or native durability inventory exists at this observation; no artifact-durability claim is inferred from retained raw pytest outputs.",
+    "No actual legal reviewer, semantic agreement, source exposure authentication, admission, training/model validation, Lean toolchain or proof-kernel build is established.",
+    "No process arguments, signing/private material, ledger rows, reservation/lease identities or owner PIDs are included."
+  ],
+  "method": "Read-only standard-library byte/hash/Git-object/JUnit inspection; no product imports, test execution, resource acquisition, native cleanup or attempt writes. This report is independent metadata, not native admission.",
+  "native_closeout": {
+    "artifacts_durable_asserted": false,
+    "durability_receipt_present": false,
+    "execution_receipt_present": false,
+    "failure_completed": false,
+    "failure_error_type": "RuntimeError",
+    "failure_request_binding_matches": true,
+    "failure_returncode": 1,
+    "release_claim": false,
+    "selected_native_lease_absent": true,
+    "selected_storage_request_binding_matches": true,
+    "selected_storage_status": "retained",
+    "successful_durability_inventory_verified": false,
+    "successful_six_field_result_present": false
+  },
+  "observed_at_utc": "2026-10-15T17:37:34.668189+00:00",
+  "pytest": {
+    "class_aware_unique_cases": 300,
+    "duplicate_case_ids": 0,
+    "errors": 0,
+    "exact_selected_module_roster": true,
+    "failure_boundary": "All three new cases reach fresh-process public load, then fail during optional symai import through integration.reasoning/logic_verification while attempting /usr/.symai; no Lean or native proof build was reached.",
+    "failures": 3,
+    "imported_author_42_case_module_selected_in_this_run": false,
+    "junit": {
+      "bytes": 95685,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-02/logs/junit.xml",
+      "sha256": "1801159cf0eeee1f5f38037ee1d930796bf1c8ddce22fbae3a3f226f3477504c"
+    },
+    "module_counts": {
+      "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py": 51,
+      "tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py": 49,
+      "tests/unit/logic/autoformal/test_corpus_definition_use_v2.py": 44,
+      "tests/unit/logic/autoformal/test_corpus_imports.py": 7,
+      "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py": 3,
+      "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py": 3,
+      "tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py": 3,
+      "tests/unit/logic/autoformal/test_legal_graph_dependencies.py": 18,
+      "tests/unit/logic/autoformal/test_legal_graph_review.py": 48,
+      "tests/unit/logic/autoformal/test_scoped_definition_resolution.py": 74
+    },
+    "new_joined_cases": [
+      {
+        "classname": "tests.unit.logic.autoformal.test_definition_use_v2_native_project_exchange",
+        "name": "test_public_native_project_fresh_process_load_preserves_exact_review_and_sources[fol]",
+        "optional_symai_import_side_effect_observed": true,
+        "outcome": "failure"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_definition_use_v2_native_project_exchange",
+        "name": "test_public_native_project_fresh_process_load_preserves_exact_review_and_sources[tdfol]",
+        "optional_symai_import_side_effect_observed": true,
+        "outcome": "failure"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_definition_use_v2_native_project_exchange",
+        "name": "test_real_competing_table_invalidates_old_assessment_and_replays_blocked_project",
+        "optional_symai_import_side_effect_observed": true,
+        "outcome": "failure"
+      }
+    ],
+    "outcomes": {
+      "failure": 3,
+      "pass": 297
+    },
+    "raw_cases": 300,
+    "root_suite_time_seconds": [
+      139.009
+    ],
+    "skips": 0,
+    "unique_modules": 10
+  },
+  "raw_bindings": {
+    "failure.json": {
+      "bytes": 1290,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-02/logs/failure.json",
+      "sha256": "4b927114f5f7044dcfe4e209e709db9271a2e96d2782fb9ca22647d882999562"
+    },
+    "stderr.log": {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-02/logs/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout.log": {
+      "bytes": 22481,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-02/logs/stdout.log",
+      "sha256": "377445db22bbec0526e8e9e64048da3d26ae485c24a46787cb8403380ca2e263"
+    }
+  },
+  "request": {
+    "bytes": 52622,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-native-preparation-integration-20261015/validation-request-02.json",
+    "sha256": "76823fd3c9d55563ecd06fc3f42a3ad3b896799bec3079ebcfbda2af73a00bd3"
+  },
+  "schema": "legal-ir-v2-native-preparation-independent-audit/v1",
+  "source_preservation": {
+    "adopted_commit": "e58337e4b371c9b16fb2451234f7497882e0c4c4",
+    "attempt01_and02_selected_frozen_inputs_and_budgets_equal": true,
+    "author_files": [
+      {
+        "author_mode_blob_matches_adoption": true,
+        "bytes": 21600,
+        "index_mode_blob_matches_author": true,
+        "original_adopted_current_exact": true,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+        "sha256": "306ab6481b78db8046e3f4eeae7cb917002c4a50b227204c6d4692123914b47e"
+      },
+      {
+        "author_mode_blob_matches_adoption": true,
+        "bytes": 23236,
+        "index_mode_blob_matches_author": true,
+        "original_adopted_current_exact": true,
+        "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py",
+        "sha256": "3f915be198be0d67133d7b07f5ae4c28b6738de94331a7c099c2783d27b0810e"
+      },
+      {
+        "author_mode_blob_matches_adoption": true,
+        "bytes": 8773,
+        "index_mode_blob_matches_author": true,
+        "original_adopted_current_exact": true,
+        "path": "docs/autoencoders/legal_corpus_definition_use_lake_v2.md",
+        "sha256": "59aada044248343ae81583bd88e2ecbab995574fa80017ad72538bc42ec2165c"
+      }
+    ],
+    "changed_paths": [],
+    "currently_matching": 207,
+    "original_contribution": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+    "source_pins": 207
+  },
+  "status": "failed_qualification_retained_not_promoted"
+}

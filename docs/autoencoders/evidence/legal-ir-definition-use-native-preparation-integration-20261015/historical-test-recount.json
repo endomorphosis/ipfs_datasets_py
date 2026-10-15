@@ -1,0 +1,33 @@
+{
+  "bad_outcomes": 0,
+  "combined_review_cases": 49,
+  "counts_added_to_current_run": false,
+  "existing_preparation_cases": 72,
+  "method": "stdlib XML parse/hash and class-aware case identity; no test or product execution",
+  "native_owned_regular_file_profile_claimed": false,
+  "new_preparation_cases": 42,
+  "original_receipt_sha256": "9f0f5249a4339af10466f65e8e832075214d4d3cc0cc48f5c68c188225ded583",
+  "raw_suites": [
+    {
+      "cases": 42,
+      "modules": {
+        "tests.unit.logic.autoformal.test_legal_corpus_definition_use_lake_v2": 42
+      },
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-preparation-20261015-01/native-preparation-authored-tests-v01.xml",
+      "sha256": "e87aea4d0cd4563b3021b94ac3166316eda39eb7a7786c39a4f3db4191e9c69e"
+    },
+    {
+      "cases": 121,
+      "modules": {
+        "tests.unit.logic.autoformal.test_corpus_definition_use_review_v2": 49,
+        "tests.unit.logic.autoformal.test_legal_corpus_lake": 72
+      },
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-preparation-20261015-01/legacy-preparation-review-tests-v01.xml",
+      "sha256": "d8409162efad0ec8e4d68d98ce1a6ee9ca2a807520a2df0d0f3c5cb7251738f6"
+    }
+  ],
+  "schema": "legal-ir-v2-native-preparation-historical-test-recount/v1",
+  "source_commit": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+  "source_parent": "e289e1bc059f3ad975bc2c3072a077a676337e4a",
+  "unique_cases": 163
+}
