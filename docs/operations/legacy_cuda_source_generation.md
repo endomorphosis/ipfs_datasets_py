@@ -66,3 +66,50 @@ it performs no model loading, CUDA work, downloads, uploads, or Lake admission.
 Run them under the normal native validation envelope, followed by existing
 runner and source-lease regressions. They do not establish training convergence
 or legal formalization.
+
+## Bounded shared-target validation (2026-10-15)
+
+Use `run_owned_validation.py` with the actual existing F07 scheduler policy,
+a native storage reservation and private attempt outputs; do not copy the full
+checkout or mint a separate resource authority. Preserve failed outputs/history;
+close only reviewed dead claims through native reconciliation, never ledger edits.
+The 160 GB campaign accounting cap grants no CUDA memory headroom.
+
+A complete package-source change invalidates target reuse, including changes
+outside the parser. Keep exact sample/configuration/artifact identities and start
+a fresh generation. `_ledger(..., lock_timeout_seconds=30)` provides a bounded
+metadata wait within the finite worker/owner deadlines; revalidate the actual
+live native lease and owner birth after waiting, rather than reuse stale expiry.
+Target preparation requires a positive timeout: 300 seconds satisfies that
+contract; zero was invalid. Worker 285 s / owner 300 s bounds still apply.
+
+Fresh preparation used eight archived native 384D inputs (six training, two
+tuning), each within the unchanged 512-token encoder limit. All eight returned
+all five accepted bridge reports; typed compilation separately compiled five
+and abstained on three. Outputs were about 25.3 MB within a 128 MiB claim.
+Combined bridge preparation took 49.635 s (6.204 s/span); total preparation took
+120.718 s (15.090 s/span), including source guards and I/O.
+Names: `modal_frame_logic`, `deontic_norms`, `fol_tdfol`, `cec_dcec`,
+`external_prover_router`; provers=false, metric disk cache=0, adapter workers=1,
+legal-IR workers=1, sample memory=false. OS/dependency caches were uncontrolled;
+this was not a controlled cold run. No model/weight load or download was needed.
+These native checks and targets establish no convergence, decoder fidelity,
+formalization, or Lean admission. Only successful `lake build <Lib>` admits;
+this preparation ran no Lake build. The Constitution remains unformalized.
+
+The subsequent 384D feature smoke accepted one bounded epoch in 8.530 s.
+On two reserved tuning sections, cosine rose from 0.827653 to 0.847531 and raw
+reconstruction loss fell from 0.00197249 to 0.00191770. IR losses were unchanged.
+Both bridge-on tuning evaluations used two real targets and all five names,
+provers=false, cache=0 and one worker; 1.743 s before / 1.535 s after excludes
+target preparation because the verified bundle was reused. This is repeated
+tuning, not independent holdout evidence or formula-decoder training. The
+original checkpoint was preserved; the new candidate remains unqualified.
+See `../implementation/reports/evidence/legal_ir_shared_target_training_20261015.json`.
+
+An admission refusal can retain a genuinely empty storage attempt. Explicit
+`allow_empty_failed_admission=True` recovery accepts only a dead validation
+owner's exact pre-custody admission-failure record and empty bound directory;
+it checks the full claim against existing capacity before release. The default
+path still requires nonempty artifacts. Never create placeholder validation
+outputs to qualify for closeout. This option grants no execution or proof.
