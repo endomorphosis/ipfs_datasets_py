@@ -1,0 +1,41 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "admitted": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "basis": {
+    "default_generation_minimum_lineage_bytes": 1135539134,
+    "explicit_generation_cap_bytes": 2147483648,
+    "reconstruction_cap_bytes": 1073741824,
+    "source_bytes_already_retained": 46241258,
+    "source_rows": 297825,
+    "sqlite_scratch_cap_bytes": 536870912
+  },
+  "consumer": {
+    "own_reconstruction_plus_sqlite_bound_bytes": 1610612736,
+    "planned_native_memory_request_mb": 4096,
+    "planned_native_storage_request_bytes": 4294967296,
+    "producer_generation_counted_in_shared_observed_storage": true,
+    "producer_generation_read_only": true,
+    "replay_parent": "consumer attempt/tmp"
+  },
+  "export": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "deadline_seconds": 3600,
+    "formula": "reconstructed candidate + staging final generation + copied final generation",
+    "native_memory_request_mb": 4096,
+    "native_storage_request_bytes": 8589934592,
+    "principal_file_peak_bound_bytes": 5368709120
+  },
+  "limits": [
+    "Output-byte caps do not prove 2GiB fit, runtime or whole-process RSS. Oversized generations refuse without finalization.",
+    "SQLite is separate from final-generation bounds; logs, metadata, sidecars and transport overhead need reservation margin.",
+    "Original sources remain read-only; no source-body copy/download, cache cleanup or foreign reservation release is planned.",
+    "Read-only capacity observation is nontransactional; existing native parent must freshly admit each request under unchanged policy.",
+    "Host admission and sampled process/storage checks are cooperative, not kernel quotas or arbitrary descendant containment."
+  ],
+  "schema": "legal-primary-corpus-export-resource-plan/v1"
+}

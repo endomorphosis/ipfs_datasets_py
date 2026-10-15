@@ -21,6 +21,7 @@ import stat
 
 SCHEMA = "legal-primary-graph-export/v1"
 PROFILE = "manifest-selected-primary-entry-cid-canonical-parquet/v1"
+PROFILE_2GIB = "manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1"
 LINEAGE_HEADER_SCHEMA = "legal-primary-graph-export-lineage-header/v1"
 LINEAGE_ROW_SCHEMA = "legal-primary-graph-export-lineage-row/v1"
 DEFAULT_LIMITS = {
@@ -96,12 +97,17 @@ def _same(left, right):
     return _wire(left) == _wire(right)
 
 
-def _limits(value):
+def _limits(value, profile=PROFILE):
+    _need(type(profile) is str and profile in (PROFILE, PROFILE_2GIB),
+          "explicit supported export profile required")
+    ceilings = dict(DEFAULT_LIMITS)
+    if profile == PROFILE_2GIB:
+        ceilings["max_output_bytes"] = 2 * 1024 * 1024 * 1024
     _need(value is None or type(value) is dict, "export limits object required")
     supplied = {} if value is None else value
-    _need(not set(supplied) - set(DEFAULT_LIMITS), "unknown export limit")
-    result = {key: supplied.get(key, ceiling) for key, ceiling in DEFAULT_LIMITS.items()}
-    _need(all(type(number) is int and 1 <= number <= DEFAULT_LIMITS[key]
+    _need(not set(supplied) - set(ceilings), "unknown export limit")
+    result = {key: supplied.get(key, ceiling) for key, ceiling in ceilings.items()}
+    _need(all(type(number) is int and 1 <= number <= ceilings[key]
               for key, number in result.items()), "positive lower-only export limits required")
     return result
 
@@ -482,10 +488,10 @@ def _descriptor(pin, kind, family, rows):
     return {**pin, "kind": kind, "family": family, "rows": rows}
 
 
-def _manifest(selection, report, plan, descriptors, quarantined, transformations, limits):
+def _manifest(selection, report, plan, descriptors, quarantined, transformations, limits, profile):
     exported = sum(plan.counts.values())
     return {
-        "schema": SCHEMA, "profile": PROFILE, "identity_namespace": "primary_entry_cid",
+        "schema": SCHEMA, "profile": profile, "identity_namespace": "primary_entry_cid",
         "source_selection_sha256": selection["selection_sha256"],
         "source_manifest_sha256": selection["manifest_sha256"],
         "repository": selection["repository"], "revision": selection["revision"],
@@ -508,7 +514,7 @@ def _reconstruct(selection, snapshot_root, expected_selection_sha256, blobs_root
     return report
 
 
-def _stage_export(selection, snapshot_root, expected_selection_sha256, blobs_root, source_limits, directory, limits, owners):
+def _stage_export(selection, snapshot_root, expected_selection_sha256, blobs_root, source_limits, directory, limits, owners, profile):
     _manifests, records, reconstruction, release = owners
     report = _reconstruct(selection, snapshot_root, expected_selection_sha256, blobs_root, source_limits, directory, reconstruction)
     _need(report["rows"] <= limits["max_rows"], "complete source population exceeds export row bound")
@@ -570,7 +576,7 @@ def _stage_export(selection, snapshot_root, expected_selection_sha256, blobs_roo
         os.fsync(stream.fileno())
     descriptors.append(_descriptor(_file_pin(directory, "lineage.jsonl", limits["max_output_bytes"]),
                                    "lineage", None, report["rows"]))
-    manifest = _manifest(selection, report, plan, descriptors, quarantined, transformations, limits)
+    manifest = _manifest(selection, report, plan, descriptors, quarantined, transformations, limits, profile)
     raw = _wire(manifest) + b"\n"
     _need(len(raw) <= limits["max_manifest_bytes"]
           and len(raw) + sum(row["bytes"] for row in descriptors) <= limits["max_output_bytes"],
@@ -578,8 +584,8 @@ def _stage_export(selection, snapshot_root, expected_selection_sha256, blobs_roo
     return manifest, report
 
 
-def _check_files(directory, manifest, limits, *, manifest_present):
-    _need(set(manifest) == _MANIFEST_FIELDS and manifest["schema"] == SCHEMA and manifest["profile"] == PROFILE
+def _check_files(directory, manifest, limits, profile, *, manifest_present):
+    _need(set(manifest) == _MANIFEST_FIELDS and manifest["schema"] == SCHEMA and manifest["profile"] == profile
           and _same(manifest["limits"], limits) and _same(manifest["authority"], FALSE_AUTHORITY),
           "closed export manifest/profile/limits/authority differs")
     files = manifest["files"]
@@ -615,7 +621,7 @@ def _check_files(directory, manifest, limits, *, manifest_present):
 
 
 def _compare_originals(directory, manifest, selection, snapshot_root, expected_selection_sha256,
-                       blobs_root, source_limits, replay_directory, report, limits, owners):
+                       blobs_root, source_limits, replay_directory, report, limits, owners, profile):
     _manifests, records, _reconstruction, release = owners
     stored_report, _raw = _record(directory, "reconstruction.json", limits["max_manifest_bytes"])
     _need(_same(stored_report, report), "stored reconstruction differs from fresh original replay")
@@ -657,7 +663,7 @@ def _compare_originals(directory, manifest, selection, snapshot_root, expected_s
             transformations["canonicalized" if changed else "unchanged"] += 1
         for family in _FAMILIES:
             check_shard(family)
-        expected_manifest = _manifest(selection, report, plan, manifest["files"], quarantined, transformations, limits)
+        expected_manifest = _manifest(selection, report, plan, manifest["files"], quarantined, transformations, limits, profile)
         _need(_same(manifest, expected_manifest), "export population, encoding or structural claims differ from original replay")
         parquet_descriptors = {name: {"family": row["family"], "rows": row["rows"]}
                                for name, row in descriptors.items() if row["kind"] == "parquet"}
@@ -683,16 +689,18 @@ def _copy(source, destination, descriptor):
 
 
 def export_primary_graph(selection, snapshot_root, output_directory, *, expected_selection_sha256,
-                         blobs_root=None, source_limits=None, limits=None):
+                         blobs_root=None, source_limits=None, limits=None, profile=PROFILE):
     """Export every original occurrence to a NEW candidate generation.
 
     Source limits delegate unchanged to reconstruction. Export limits only lower
-    DEFAULT_LIMITS. Quarantine remains explicit; no structural blocker is waived.
+    the explicitly selected profile's ceilings. The default retains DEFAULT_LIMITS;
+    PROFILE_2GIB raises only the final-generation byte ceiling to 2 GiB.
+    Quarantine remains explicit; no structural blocker is waived.
     A finalized manifest appears only after complete original-bound readback.
     max_output_bytes bounds this generation, not reconstruction scratch or
     staging/publication overlap; the native parent reserves that aggregate.
     """
-    bounds, owners = _limits(limits), _owners()
+    bounds, owners = _limits(limits, profile), _owners()
     output = _path(output_directory)
     _outside_sources(output, snapshot_root, blobs_root)
     _need(not output.exists() and not output.is_symlink(), "export target exists; overwrite refused")
@@ -703,18 +711,18 @@ def export_primary_graph(selection, snapshot_root, output_directory, *, expected
     destination, success = None, False
     try:
         manifest, report = _stage_export(selected, snapshot_root, expected_selection_sha256,
-            blobs_root, source_limits, stage, bounds, owners)
+            blobs_root, source_limits, stage, bounds, owners, profile)
         # Reconstruction is a staging-only source for the independent comparisons.
         companion_names = {row["path"] for row in manifest["files"]}
         _need(stage.names() == companion_names | {"reconstructed.jsonl"}, "unexpected staging files")
         _compare_originals(stage, manifest, selected, snapshot_root, expected_selection_sha256,
-                           blobs_root, source_limits, stage, report, bounds, owners)
+                           blobs_root, source_limits, stage, report, bounds, owners, profile)
         destination = _Directory(output, create=True)
         for descriptor in manifest["files"]:
             _copy(stage, destination, descriptor)
-        _check_files(destination, manifest, bounds, manifest_present=False)
+        _check_files(destination, manifest, bounds, profile, manifest_present=False)
         _compare_originals(destination, manifest, selected, snapshot_root, expected_selection_sha256,
-                           blobs_root, source_limits, stage, report, bounds, owners)
+                           blobs_root, source_limits, stage, report, bounds, owners, profile)
         # Cleanup errors occur before finalization, never after a returned or
         # apparently committed generation. Only unchanged owned inodes unlink.
         stage.cleanup()
@@ -723,7 +731,7 @@ def export_primary_graph(selection, snapshot_root, output_directory, *, expected
         raw = _wire(manifest) + b"\n"
         _need(len(raw) <= bounds["max_manifest_bytes"], "export manifest exceeds byte bound")
         pin = _write(destination, "manifest.json", raw)
-        _check_files(destination, manifest, bounds, manifest_present=True)
+        _check_files(destination, manifest, bounds, profile, manifest_present=True)
         os.fsync(destination.fd)
         os.fsync(destination.parent_fd)
         success = True
@@ -741,19 +749,30 @@ def export_primary_graph(selection, snapshot_root, output_directory, *, expected
 
 def validate_primary_graph_export(output_directory, *, expected_manifest_sha256, selection,
                                   snapshot_root, expected_selection_sha256, blobs_root=None,
-                                  source_limits=None, limits=None):
+                                  source_limits=None, limits=None, profile=PROFILE, replay_parent=None):
     """Rebuild existing-owner dispositions and compare all original-bound rows.
 
     The independently expected manifest hash is necessary but insufficient:
     source custody, full lineage and strict exported bodies are freshly replayed.
     Temporary replay writes never mutate the input sources or exported files.
     Exact Parquet byte replay requires the unchanged writer/encoding environment.
+    The caller selects the profile; saved manifest contents never raise a ceiling.
+    replay_parent optionally directs owned scratch to a separately admitted
+    consumer directory; None preserves the original output-parent placement.
     """
-    bounds, owners = _limits(limits), _owners()
+    bounds, owners = _limits(limits, profile), _owners()
     _need(type(expected_manifest_sha256) is str and re.fullmatch(r"[0-9a-f]{64}", expected_manifest_sha256),
           "independently expected export manifest SHA256 required")
     output = _path(output_directory)
     _outside_sources(output, snapshot_root, blobs_root)
+    replay_root = output.parent
+    if replay_parent is not None:
+        replay_root = _path(replay_parent)
+        _need(stat.S_ISDIR(replay_root.lstat().st_mode)
+              and replay_root.resolve(strict=True) == replay_root,
+              "existing unaliased replay parent directory required")
+        _outside_sources(replay_root, snapshot_root, blobs_root)
+        _need(not replay_root.is_relative_to(output), "replay parent cannot be inside candidate output")
     selected = json.loads(_wire(selection))
     _need(type(selected.get("selected_row_count")) is int
           and 0 <= selected["selected_row_count"] <= bounds["max_rows"], "complete source rows exceed export bound")
@@ -762,13 +781,13 @@ def validate_primary_graph_export(output_directory, *, expected_manifest_sha256,
     try:
         manifest, raw = _record(directory, "manifest.json", bounds["max_manifest_bytes"])
         _need(_sha(raw) == expected_manifest_sha256, "export manifest differs from independent SHA256")
-        _check_files(directory, manifest, bounds, manifest_present=True)
-        replay = _Directory(output.parent / (".legal-primary-replay-" + secrets.token_hex(16)), create=True)
+        _check_files(directory, manifest, bounds, profile, manifest_present=True)
+        replay = _Directory(replay_root / (".legal-primary-replay-" + secrets.token_hex(16)), create=True)
         report = _reconstruct(selected, snapshot_root, expected_selection_sha256,
                               blobs_root, source_limits, replay, owners[2])
         _compare_originals(directory, manifest, selected, snapshot_root, expected_selection_sha256,
-                           blobs_root, source_limits, replay, report, bounds, owners)
-        _check_files(directory, manifest, bounds, manifest_present=True)
+                           blobs_root, source_limits, replay, report, bounds, owners, profile)
+        _check_files(directory, manifest, bounds, profile, manifest_present=True)
         return {"manifest": manifest, "manifest_sha256": expected_manifest_sha256,
                 "manifest_bytes": len(raw), "status": "candidate_export_verified",
                 "fresh_original_replay_performed": True,

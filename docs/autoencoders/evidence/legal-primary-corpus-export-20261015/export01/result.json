@@ -1,0 +1,15 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/logs/execution.json"
+  ],
+  "executed_checks": [
+    "rebuild_independently_pinned_primary_selection",
+    "export_complete_primary_population_2gib",
+    "verify_source_and_product_origin_closure"
+  ],
+  "request_sha256": "d267930941b7f57a7fe850c89a51098dfbea41bca244ef80de42c8cac4034177",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

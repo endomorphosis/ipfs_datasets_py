@@ -119,9 +119,11 @@ include the original absolute input path and change on relocation.
 ## Next repair and semantic work
 
 Follow-up: the [primary-graph candidate exporter](legal_primary_graph_export.md)
-now implements the bounded adapter and original-bound readback below, qualified
-by 160 distinct authored-fixture cases. Actual original-corpus generation and
-historical flat-cache occurrence/multiplicity reconciliation remain pending.
+implements the bounded adapter and original-bound readback below. Its subsequent
+[actual selected-primary export](legal_primary_corpus_export_20261015.md) now
+exports and independently validates all 297,825 original primary occurrences,
+with 189 distinct fixture qualification cases. Historical flat-cache
+occurrence/multiplicity reconciliation remains pending.
 Its new-generation lineage describes selected primary occurrences; it does not
 establish the missing historical original-to-flat mapping.
 
@@ -132,9 +134,9 @@ establish the missing historical original-to-flat mapping.
    closure. The separately retained 119,134-node/178,691-edge reconstruction is
    selected structural evidence; it is not a row-for-row repair of these
    1,722,395 legacy edge occurrences.
-2. Run the qualified candidate exporter over those independently frozen verified
-   originals, preserving full bodies and exact occurrence/source commitments.
-   Separately establish a lineage ledger mapping each historical occurrence to
+2. Reuse the completed candidate generation and its independently frozen original
+   selection/manifest commitments, preserving full bodies and exact occurrence/source
+   commitments. Separately establish a lineage ledger mapping each historical occurrence to
    supported original evidence or an explicit unresolved disposition. Keep flat `node_id`,
    current `entry_cid`, alternative `node_cid` and semantic candidate-node record
    CID namespaces explicit. Do not infer correspondence from labels.
