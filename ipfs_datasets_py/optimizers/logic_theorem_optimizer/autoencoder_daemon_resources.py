@@ -454,10 +454,7 @@ class DaemonResourceReservation:
             self._record = copy.deepcopy(record)
             self._entered = True
         try:
-            self._lease = (scheduler if scheduler is not None else get_global_resource_scheduler()).acquire(
-                scheduler_lane, cpu_slots=self.cpu_slots, memory_mb=self.memory_mb,
-                child_process_slots=self.child_process_slots, requires_gpu=False, timeout=self.timeout_seconds,
-                request_id=self._scheduler_request_id())
+            self._lease = self._acquire_native_lease(scheduler, scheduler_lane)
             self._update(status="active")
         except BaseException:
             try:
@@ -468,6 +465,13 @@ class DaemonResourceReservation:
                 self._cleanup_error = type(cleanup).__name__
             raise
         return self
+
+    def _acquire_native_lease(self, scheduler, lane):
+        """Private acquisition hook; the daemon still owns one native root."""
+        return (scheduler if scheduler is not None else get_global_resource_scheduler()).acquire(
+            lane, cpu_slots=self.cpu_slots, memory_mb=self.memory_mb,
+            child_process_slots=self.child_process_slots, requires_gpu=False,
+            timeout=self.timeout_seconds, request_id=self._scheduler_request_id())
 
     def heartbeat(self):
         """Renew owned native custody without exposing its authority token."""

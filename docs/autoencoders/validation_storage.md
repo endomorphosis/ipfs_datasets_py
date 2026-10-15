@@ -116,9 +116,11 @@ projection, logic-family and Lake gates remain separate and unchanged.
 ## Scope of integration
 
 This command is the direct validation path. The generic accelerate pipeline
-adapter currently passes `parent_lease` and reads `native_lease`, which the
-canonical daemon does not support. It is not silently routed through this
-owner. Converting that multi-phase adapter needs a separately tested parent
-authority contract; wrapping it in another root grant would double admission.
-Other validation entry points retain their existing behavior until explicitly
-migrated. No blanket storage qualification is claimed for all supervisor jobs.
+uses a separate explicit parent authority contract, described in
+[parented phase storage](parented_phase_storage.md). Its real same-lane child
+lives beneath the bridge's existing phase; it does not borrow this command's
+fixed root or acquire another independent host envelope. Generic phases retain
+their explicit artifact-durability assertion and do not inherit this command's
+frozen request/result seal. Other validation entry points retain their existing
+behavior until explicitly migrated. No blanket storage qualification is claimed
+for all supervisor jobs.
