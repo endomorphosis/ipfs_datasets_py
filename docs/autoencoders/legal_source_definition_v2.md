@@ -136,8 +136,9 @@ The full §101 sampling report is about 2.79 MB, so it remains external evidence
 Native parsing/AST roundtrip and generated Lean source qualify the caller's
 bounded encoding. Authority, source meaning/applicability, context closure,
 independent review, training gold, semantic admission and Lean execution flags
-remain false. Actual legal/formal reviews require a compatible versioned V2
-review subject; the old definition-plus-norm domain and blank review packets are
-not compatible submissions. A real definition-use binding, complete supported
-norm, scoped lookup evidence, native build and downstream admission remain
+remain false. Compatible context/evidence/subject APIs are available in the
+[V2 definition review adapter](corpus_definition_review_v2.md). Actual legal/formal
+reviews must use that signing domain; the old definition-plus-norm domain and
+blank review packets are not compatible submissions. A real definition-use
+binding, complete supported norm, scoped lookup evidence, native build and downstream admission remain
 separate work.

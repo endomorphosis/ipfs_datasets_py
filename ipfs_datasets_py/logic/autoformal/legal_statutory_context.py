@@ -14,6 +14,8 @@ import re
 from html.parser import HTMLParser
 from urllib.parse import urlsplit
 
+from . import legal_context_obligations as _context_obligations
+
 SCHEMA = "legal-official-statutory-context/v1"
 _BODY = re.compile(r"statutory-body(?:-(\d+)em)?\Z")
 _LABEL = re.compile(r"^\(([A-Za-z0-9]+)\)")
@@ -247,8 +249,7 @@ VIEW_SCHEMA = "legal-statutory-normalized-document-view/v2"
 SELECTOR_SCHEMA = "legal-statutory-view-occurrence-selector/v2"
 CONTEXT_PACKET_SCHEMA = "legal-statutory-context-obligations/v2"
 NORMALIZATION_PROFILE = "govinfo-visible-paragraph-whitespace-collapse-lf/v1"
-DEPENDENCY_KINDS = ("definition", "authority", "antecedent", "shared_qualifier",
-                    "temporal_origin", "referenced_provision")
+DEPENDENCY_KINDS = _context_obligations.DEPENDENCY_KINDS
 MAX_CONTEXT_PACKET_BYTES = 32 * 1024 * 1024
 MAX_SELECTOR_BYTES = 64 * 1024
 MAX_OCCURRENCES = 4096
@@ -354,45 +355,16 @@ def exact_view_occurrences(document: dict, raw: bytes, *, text: str,
 
 
 def _dependency_slots(document: dict, view: dict, origin: dict, requests: list | None) -> list[dict]:
-    if requests is None:
-        requests = [{"kind": kind, "availability": "missing", "locator": None,
-                     "expected_view_id": None, "candidate_selector": None} for kind in DEPENDENCY_KINDS]
-    _require(type(requests) is list and len(requests) == len(DEPENDENCY_KINDS),
-             "one explicit open obligation for each context dependency kind required")
-    by_kind = {}
-    for request in requests:
-        _require(type(request) is dict and set(request) == _REQUEST_KEYS, "closed context dependency request required")
-        kind = request["kind"]
-        _require(type(kind) is str and kind in DEPENDENCY_KINDS and kind not in by_kind,
-                 "unknown or duplicate context dependency kind")
-        _require(request["availability"] in ("missing", "unavailable", "available"),
-                 "explicit context content availability required")
-        locator, expected_id, candidate = request["locator"], request["expected_view_id"], request["candidate_selector"]
-        _require(locator is None or type(locator) is str and 0 < len(locator.encode("utf-8")) <= 4096,
-                 "bounded context locator or null required")
-        _require(expected_id is None or type(expected_id) is str and _VIEW_ID.fullmatch(expected_id),
-                 "exact expected normalized view identity or null required")
-        stale = expected_id is not None and expected_id != view["view_id"]
-        if candidate is not None:
-            _require(request["availability"] == "available" and not stale,
-                     "candidate content cannot be missing, unavailable or stale")
-            _validate_selector(candidate, document, view)
-        if stale:
-            status = "open_stale"
-        elif request["availability"] == "unavailable":
-            status = "open_unavailable"
-        elif candidate is not None:
-            status = "open_content_available"
-        elif locator is not None:
-            status = "open_locator_only"
-        else:
-            status = "open_missing"
-        slot = {**request, "status": status, "open": True, "attachments": [],
-                "semantic_attachment_verified": False}
-        slot["slot_id"] = "legal-context-slot:sha256:" + _context_digest(
-            {"origin_occurrence_id": origin["occurrence_id"], "request": request})
-        by_kind[kind] = slot
-    return [by_kind[kind] for kind in DEPENDENCY_KINDS]
+    return _context_obligations.build_dependency_slots(
+        view_id=view["view_id"],
+        origin_occurrence_id=origin["occurrence_id"],
+        requests=requests,
+        view_id_pattern=_VIEW_ID,
+        validate_selector=lambda candidate: _validate_selector(candidate, document, view),
+        require=_require,
+        digest=_context_digest,
+        slot_prefix="legal-context-slot:sha256:",
+    )
 
 
 def build_context_packet(document: dict, raw: bytes, *, char_start: int, char_end: int,
