@@ -20,6 +20,20 @@ _OPERATOR_HINT = (
 )
 
 
+UPLOAD_IGNORE_PATTERNS = (
+    "**/.cache/**",
+    ".cache/**",
+    "*token*",
+    ".env",
+    "**/.env",
+    "*.pem",
+    "**/*.pyc",
+    "**/*.tmp",
+    "**/*.tmp.npy",
+    "**/__pycache__/**",
+)
+
+
 CARD_FILES = (
     "README.md",
     ".gitattributes",
@@ -160,7 +174,7 @@ def upload_release(
     api = HfApi(token=resolved)
     if create:
         api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True, private=False)
-    ignore = ["**/__pycache__/**", "**/*.pyc", "**/*.tmp", "**/*.tmp.npy"]
+    ignore = list(UPLOAD_IGNORE_PATTERNS)
     n_files = sum(1 for path in local_dir.rglob("*") if path.is_file())
     nbytes = sum(path.stat().st_size for path in local_dir.rglob("*") if path.is_file())
     use_large = n_files >= 80 or nbytes >= 80 * 1024 * 1024

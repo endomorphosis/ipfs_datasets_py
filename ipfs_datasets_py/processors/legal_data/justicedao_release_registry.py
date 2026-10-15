@@ -14,8 +14,13 @@ from dataclasses import dataclass
 import re
 from typing import Iterable, Sequence
 
+from ipfs_datasets_py.processors.legal_data.justicedao_release_pins import pin_readable
+
 _REPO = re.compile(r"^(?:justicedao/)?(?P<name>[A-Za-z0-9_.-]+)$")
 _COUNTRY_IR = re.compile(r"^ipfs_(?P<slug>[a-z0-9_]+)_laws(?P<suffix>_ir|-ir)?$")
+_LAWS_NORM = re.compile(r"^ipfs_(?P<slug>[a-z0-9_]+)_laws_norm$")
+_PIN_GATED = frozenset({"world-law/v1.1.0", "legal-record/v1"})
+_APRIL_MUNICIPAL = "justicedao/american_municipal_law"
 
 _EXCLUDED = frozenset({"legal-ir-autoencoder-checkpoints"})
 _CASELAW_TEXT = frozenset({"ipfs_caselaw_access_project"})
@@ -54,6 +59,8 @@ _LAYOUTS = frozenset({
     "municipal-gnis",
     "caselaw-text",
     "caselaw-embeddings",
+    "world-law/v1.1.0",
+    "legal-record/v1",
     "unverified",
     "excluded",
     "unclassified",
@@ -148,9 +155,93 @@ def _classify_one(name: str) -> CorpusRelease:
             coverage="snapshot",
             primary_key="cid",
             instrument_kind="municipal",
-            selected=True,
-            searchable=True,
+            selected=False,
+            searchable=False,
             text_corpus=True,
+        )
+    if name == "american_municipal_law_norm":
+        return _row(
+            corpus_id="us:municipal-norm",
+            hf_repo=repo,
+            layout_profile="legal-record/v1",
+            coverage="snapshot",
+            primary_key="entry_cid",
+            instrument_kind="ordinance",
+            selected=False,
+            searchable=False,
+            text_corpus=True,
+        )
+    if name == "world_national_law":
+        return _row(
+            corpus_id="world:national",
+            hf_repo=repo,
+            layout_profile="world-law/v1.1.0",
+            coverage="snapshot",
+            primary_key="entry_cid",
+            instrument_kind="statute",
+            selected=False,
+            searchable=False,
+            text_corpus=True,
+        )
+    if name == "world_municipal_law":
+        return _row(
+            corpus_id="world:municipal",
+            hf_repo=repo,
+            layout_profile="world-law/v1.1.0",
+            coverage="snapshot",
+            primary_key="entry_cid",
+            instrument_kind="ordinance",
+            selected=False,
+            searchable=False,
+            text_corpus=True,
+        )
+    if name == "world_law_scrapers":
+        return _row(
+            corpus_id="artifact:world-law-scrapers",
+            hf_repo=repo,
+            layout_profile="excluded",
+            coverage="excluded",
+            primary_key="",
+            instrument_kind="excluded",
+            selected=False,
+            searchable=False,
+            text_corpus=False,
+        )
+    if name == "legal_scrapers":
+        return _row(
+            corpus_id="artifact:legal-scrapers",
+            hf_repo=repo,
+            layout_profile="excluded",
+            coverage="excluded",
+            primary_key="",
+            instrument_kind="excluded",
+            selected=False,
+            searchable=False,
+            text_corpus=False,
+        )
+    if name == "ipfs_state_laws_normalized_graphrag":
+        return _row(
+            corpus_id="us:state-statutes-normalized",
+            hf_repo=repo,
+            layout_profile="unclassified",
+            coverage="snapshot",
+            primary_key="",
+            instrument_kind="unclassified",
+            selected=False,
+            searchable=False,
+            text_corpus=False,
+        )
+    if name == "ipfs_american_municipal_law_normalized_graphrag":
+        return _row(
+            corpus_id="us:municipal-normalized",
+            hf_repo=repo,
+            layout_profile="unclassified",
+            coverage="snapshot",
+            primary_key="",
+            instrument_kind="unclassified",
+            selected=False,
+            searchable=False,
+            text_corpus=False,
         )
     if name == "ipfs_uscode":
         return _row(
@@ -238,6 +329,20 @@ def _classify_one(name: str) -> CorpusRelease:
             searchable=False,
             text_corpus=name == "ipfs_netherlands_laws",
         )
+    norm = _LAWS_NORM.fullmatch(name)
+    if norm is not None:
+        slug = norm.group("slug")
+        return _row(
+            corpus_id=f"country:{slug}",
+            hf_repo=repo,
+            layout_profile="legal-record/v1",
+            coverage="snapshot",
+            primary_key="entry_cid",
+            instrument_kind="ordinance" if "_municipal" in slug else "statute",
+            selected=False,
+            searchable=False,
+            text_corpus=True,
+        )
     match = _COUNTRY_IR.fullmatch(name)
     if match is not None:
         slug = match.group("slug")
@@ -253,7 +358,7 @@ def _classify_one(name: str) -> CorpusRelease:
             layout_profile="country-laws-ir-graphrag/v1" if suffix else "legacy-split",
             coverage="snapshot" if suffix else "capped",
             primary_key="entry_cid" if suffix else "cid",
-            instrument_kind="statute",
+            instrument_kind="ordinance" if "_municipal" in slug else "statute",
             selected=selected and bool(suffix),
             searchable=selected and bool(suffix),
             text_corpus=True,
@@ -281,6 +386,8 @@ def _prefer(candidate: CorpusRelease, challenger: CorpusRelease) -> CorpusReleas
         "caselaw-text": 1,
         "caselaw-embeddings": 1,
         "municipal-gnis": 1,
+        "world-law/v1.1.0": 2,
+        "legal-record/v1": 2,
         "legacy-split": 3,
         "unverified": 4,
         "excluded": 5,
@@ -348,6 +455,17 @@ def build_release_registry(dataset_ids: Iterable[str]) -> tuple[CorpusRelease, .
             selected = True
         if item.layout_profile == "unverified":
             selected = False
+        if item.layout_profile == "unclassified":
+            selected = False
+        if item.layout_profile in _PIN_GATED:
+            selected = pin_readable(item.hf_repo)
+        if item.hf_repo == _APRIL_MUNICIPAL:
+            selected = False
+        group_has_norm = any(
+            sibling.layout_profile == "legal-record/v1" for sibling in grouped[item.corpus_id]
+        )
+        if group_has_norm and item.layout_profile == "country-laws-ir-graphrag/v1":
+            selected = item.selected
         searchable = selected and item.layout_profile != "excluded"
         if item.layout_profile == "caselaw-text" and item.hf_repo != winner:
             selected = False

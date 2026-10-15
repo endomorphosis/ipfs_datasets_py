@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -72,7 +73,8 @@ def arguments(private, *, engine=False):
 def test_implicit_launch_refuses_before_runtime_cache_or_child(tmp_path, monkeypatch, engine):
     runtime = tmp_path / "not-created"
     monkeypatch.setattr(runner, "engine", lambda *a, **kw: pytest.fail("unowned engine"))
-    monkeypatch.setattr(runner.subprocess, "Popen", lambda *a, **kw: pytest.fail("unowned child"))
+    monkeypatch.setattr(runner, "subprocess", SimpleNamespace(
+        Popen=lambda *a, **kw: pytest.fail("unowned child"), PIPE=subprocess.PIPE))
     values = ["--runtime-directory", str(runtime)] + (["--_engine"] if engine else [])
     with pytest.raises(ValueError, match="explicit existing scheduler"):
         runner.main(values)
@@ -93,7 +95,8 @@ def test_changed_policy_refuses_before_runtime_cache_or_child(private, tmp_path,
     runtime = tmp_path / "not-created"
     before = path.read_bytes()
     monkeypatch.setattr(runner, "engine", lambda *a, **kw: pytest.fail("changed-policy engine"))
-    monkeypatch.setattr(runner.subprocess, "Popen", lambda *a, **kw: pytest.fail("changed-policy child"))
+    monkeypatch.setattr(runner, "subprocess", SimpleNamespace(
+        Popen=lambda *a, **kw: pytest.fail("changed-policy child"), PIPE=subprocess.PIPE))
     values = ["--runtime-directory", str(runtime), "--scheduler-state", str(path),
         "--expected-policy-sha256", "f" * 64] + (["--_engine"] if engine else [])
     with pytest.raises(existing.ExistingResourceSchedulerError, match="exact stored"):
@@ -277,7 +280,7 @@ def test_actual_spawn_time_is_inside_startup_deadline_and_child_is_reaped(privat
         children.append(child)
         clock[0] = 70.001
         return child
-    monkeypatch.setattr(runner.subprocess, "Popen", slow_spawn)
+    monkeypatch.setattr(runner, "subprocess", SimpleNamespace(Popen=slow_spawn, PIPE=subprocess.PIPE))
     values = ["--runtime-directory", str(args.runtime_directory), "--resource-ledger", str(args.resource_ledger),
         "--scheduler-state",str(args.scheduler_state),"--expected-policy-sha256",args.expected_policy_sha256,
         "--compiler-workers","1","--bridge-workers","1","--memory-mb","1024","--storage-bytes","100000"]

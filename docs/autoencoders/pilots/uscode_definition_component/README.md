@@ -16,7 +16,7 @@ order refines those milestones; existing work-item dependencies remain intact.
 
 ## Prerequisite order and exit evidence
 
-1. Recover storage through the existing owners and obtain fresh native admission.
+1. Check current storage through the existing owners and obtain fresh native admission.
    The retained 4.89 GB physical deficit was an admission observation, not current
    capacity. Preserve foreign artifacts and claims. Freeze current source pins
    and a new request; require native durability and finalization for any run.
@@ -54,18 +54,26 @@ order refines those milestones; existing work-item dependencies remain intact.
 The JSON records exact owner paths and public methods. Reuse the
 [sampled-source binding](../../legal_source_sampling_definition_binding_v2.md)
 and blank-handoff adapter rather than writing another transport. The binding's
-runtime qualification and actual-source replay remain pending according to its
-guide. It compiles caller-declared unary FOL/TDFOL definitions; recorded reviewer
+subsequent [native qualification](../../legal_definition_use_review_v2_integration_20261015.md)
+records 541 distinct passing cases across the binding/review suites and 15 separate
+checks on the retained §101 binding. These are engineering checks, not reviewed
+statutory meanings. It compiles caller-declared unary FOL/TDFOL definitions; recorded reviewer
 prose is not parsed into a meaning AST and no declaration state enables gold.
 
 Reuse the committed [combined alias review](../../corpus_definition_use_review_v2.md)
 for its exact supported subject. This planning phase establishes no runtime
-qualification for it. It reviews two definitions plus an unproved alias assumption;
+qualification by itself; the subsequent qualification linked above supplies the
+scoped runtime evidence. It reviews two definitions plus an unproved alias assumption;
 its representative lookup is not per-occurrence governing resolution or a general
 statutory norm/use bridge. Original endpoint reviews cannot approve added meaning.
 `legal_graph_review` and its V2 wrappers authenticate selected declarations and
 report blockers; they do not admit statutory gold. Leave the downstream eligibility
 binding unresolved until the appropriate owner/policy is established.
+
+The immutable JSON specification retains its original planning-time owner limits.
+Use the subsequent qualification above for current engineering status; no runtime
+binding, actual review, gold eligibility or pilot result has been filled into the
+authored specification.
 
 Keep family applicability, strict syntax, lossless lowering, actual native checking
 and reviewed source correspondence separate. A family label or emitted ground

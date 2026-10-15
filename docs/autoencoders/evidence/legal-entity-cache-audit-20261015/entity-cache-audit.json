@@ -1,0 +1,104 @@
+{
+  "acquisition": {
+    "bytes": 11139328,
+    "declared_content_length": "11139328",
+    "file_payload_hash_verified": true,
+    "final_hostname": "us.aws.cdn.hf.co",
+    "http_status": 200,
+    "legal_source_authenticity_verified": false,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/exports/entity-cache.parquet",
+    "redirect_urls_or_credentials_retained": false,
+    "requested_public_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/resolve/79d54378c5d6a89ab56e7a27e0f0ba867e800e19/autoformal/uscode/kg-logic-index.parquet",
+    "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+    "sha256": "f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233"
+  },
+  "admitted": false,
+  "census_report": {
+    "bytes": 22401,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/exports/entity-index-census.json",
+    "sha256": "b6d23ce2cffc942a83115a7d0837ee897c4c9db3bb1ac022585660f00c7f026a"
+  },
+  "census_sha256": "223b5e693635c8270650f6b15a7cbdfdbbe0a214382a5ed6e0d74ffed87dda0b",
+  "complete_row_censuses_performed": 1,
+  "completed_checks": [
+    "verified_entity_cache_acquisition",
+    "pinned_footer_population",
+    "complete_entity_index_census",
+    "entity_input_refusal_controls"
+  ],
+  "dependency_versions": {
+    "numpy": "1.26.4",
+    "pyarrow": "23.0.1"
+  },
+  "elapsed_seconds": 34.801836314145476,
+  "expected_rows": 1960876,
+  "expected_rows_origin": "footer_of_exact_hash_and_length_verified_immutable_file",
+  "file_bytes": 11139328,
+  "file_sha256": "f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233",
+  "footer_population": {
+    "bytes": 11591,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/exports/footer-population.json",
+    "sha256": "e83b8591a178f48b4ccacae51312196e865a52521acda6824735f9ff85aa66ea"
+  },
+  "formalized": false,
+  "independent_source_population_census_performed": false,
+  "lean_executed": false,
+  "legal_meanings_reviewed": false,
+  "limitations": [
+    "Population covers only the exact pinned Parquet; footer rows are not an independent source-corpus denominator.",
+    "Flat node_id strings are matched exactly; primary entry_cid, candidate-node CIDs and legal IDs are not interchangeable.",
+    "Missing endpoint counts combine empty/null values and nonempty dangling IDs; global empty-field counts include non-edge kinds.",
+    "Duplicate node identities do not distinguish identical versus conflicting payload variants.",
+    "Legacy booleans, ontology mappings and classification rules remain observations without semantic authority.",
+    "Original source offsets, governing definitions, legal meaning, graph admission, model training and Lean are not verified.",
+    "Producer pins bind executed Python sources; dependency versions do not authenticate installed distributions.",
+    "The existing native parent owns resource supervision, final durability sealing and claim release."
+  ],
+  "loaded_product_source_origins": {
+    "ipfs_datasets_py": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "ipfs_datasets_py.logic": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/__init__.py",
+      "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+    },
+    "ipfs_datasets_py.logic.autoformal": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+      "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+    },
+    "ipfs_datasets_py.logic.autoformal.legal_entity_index_intake": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_entity_index_intake.py",
+      "sha256": "a5f9b0fcf3ba06743ca2fe3e1c10b7f3817811702b9db45ee0ac142b44351aeb"
+    },
+    "ipfs_datasets_py.logic.autoformal.meta_ontology": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/meta_ontology.py",
+      "sha256": "4fcb538a7b15e2074fa08bf8d7e297fb742471be9ff826a92b1ded911b836e05"
+    },
+    "ipfs_datasets_py.router_deps": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/router_deps.py",
+      "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+    }
+  },
+  "model_sdk_or_cid_imports_performed": false,
+  "parent_native_owner_responsible_for_final_seal_and_release": true,
+  "refusal_controls": {
+    "bytes": 713,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/exports/input-refusal-controls.json",
+    "sha256": "4ade1ef21b8c2152ae319f84066683e1415e9cd539d947453bc3db2b30c0f7ad"
+  },
+  "repository_id": "justicedao/uscode-autoformal-entity-cache",
+  "request_sha256": "604552941cc7a858f1c9c251ec7251552257d153ad775514d4ddbe4260c3d02b",
+  "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+  "schema": "legal-entity-cache-native-audit/v1",
+  "selected_checks": [
+    "verified_entity_cache_acquisition",
+    "pinned_footer_population",
+    "complete_entity_index_census",
+    "entity_input_refusal_controls"
+  ],
+  "source_semantics_verified": false,
+  "status": "pass",
+  "training_performed": false,
+  "training_qualified": false
+}

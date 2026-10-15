@@ -1,0 +1,18 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 70.65148414601572,
+  "executed_checks": [
+    "verified_entity_cache_acquisition",
+    "pinned_footer_population",
+    "complete_entity_index_census",
+    "entity_input_refusal_controls"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "604552941cc7a858f1c9c251ec7251552257d153ad775514d4ddbe4260c3d02b",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}
