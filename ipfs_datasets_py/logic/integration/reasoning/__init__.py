@@ -701,13 +701,25 @@ def __dir__() -> list[str]:
 
 
 class _LazyReasoningModule(_ModuleType):
+    def __setattr__(self, name: str, value):
+        if name in _MODULE_NAME_EXPORTS:
+            module_name, _ = _LAZY_EXPORTS[name]
+            module = _sys.modules.get(__name__ + "." + module_name, _MISSING)
+            if module is not _MISSING and value is module:
+                current = _ModuleType.__getattribute__(self, "__dict__").get(name, _MISSING)
+                if current is not _MISSING and current is not module:
+                    # A first child import must not replace an earlier caller
+                    # override of the same-named public function.
+                    return
+        _ModuleType.__setattr__(self, name, value)
+
     def __getattribute__(self, name: str):
         value = _ModuleType.__getattribute__(self, name)
         if name in _MODULE_NAME_EXPORTS:
             module_name, _ = _LAZY_EXPORTS[name]
             if (
                 isinstance(value, _ModuleType)
-                and vars(value).get("__name__") == __name__ + "." + module_name
+                and value is _sys.modules.get(__name__ + "." + module_name)
             ):
                 # A direct child import can install this module after package
                 # initialization, bypassing PEP 562. Preserve the original

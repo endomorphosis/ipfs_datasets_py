@@ -28,6 +28,7 @@ import json
 import os
 import subprocess
 import sys
+import types
 
 package = 'ipfs_datasets_py.logic.integration.reasoning'
 mode = sys.argv[1]
@@ -152,6 +153,35 @@ elif mode == 'source_maps':
     assert {name for name in sys.modules if name.startswith(package + '.')} == {
         package + '.legal_ir_source_maps',
     }
+elif mode.startswith('early_override:'):
+    _, function_name, kind = mode.split(':')
+    routes = {
+        'legal_ir_view_contracts': 'LegalIRViewContract',
+        'legal_ir_semantic_diff': 'LegalIRSemanticDiffEngine',
+        'legal_ir_rule_distillation': 'LegalIRRuleDistillationConfig',
+        'legal_ir_build_manifest': 'LegalIRBuildManifest',
+    }
+    reasoning = importlib.import_module(package)
+    assert package + '.' + function_name not in sys.modules
+    if kind == 'sentinel':
+        override = object()
+    elif kind == 'callable':
+        override = lambda: 'authored caller replacement'
+    elif kind == 'none':
+        override = None
+    else:
+        assert kind == 'module'
+        override = types.ModuleType(package + '.' + function_name)
+    setattr(reasoning, function_name, override)
+    public_type = getattr(reasoning, routes[function_name])
+    leaf = importlib.import_module(package + '.' + function_name)
+    assert public_type is getattr(leaf, routes[function_name])
+    assert getattr(reasoning, function_name) is override
+    assert vars(reasoning)[function_name] is override
+    public_type = reasoning.LegalIRInteropEnvelope
+    interop = importlib.import_module(package + '.legal_ir_interop')
+    assert public_type is interop.LegalIRInteropEnvelope
+    assert getattr(reasoning, function_name) is override
 elif mode in {'direct_owner_first', 'public_export_first'}:
     reasoning = importlib.import_module(package)
     # These are legacy public functions whose names also identify real child
@@ -267,3 +297,12 @@ def test_pure_legal_leaf_imports_preserve_real_public_objects(tmp_path, leaf):
 @pytest.mark.parametrize("order", ["direct_owner_first", "public_export_first"])
 def test_legacy_public_functions_survive_actual_owner_import_order(tmp_path, order):
     cold_import(tmp_path, order)
+
+
+@pytest.mark.parametrize("kind", ["sentinel", "callable", "none", "module"])
+@pytest.mark.parametrize("name", [
+    "legal_ir_view_contracts", "legal_ir_semantic_diff",
+    "legal_ir_rule_distillation", "legal_ir_build_manifest",
+])
+def test_early_caller_override_survives_first_actual_owner_import(tmp_path, name, kind):
+    cold_import(tmp_path, "early_override:" + name + ":" + kind)
