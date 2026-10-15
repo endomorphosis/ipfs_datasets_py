@@ -1,0 +1,785 @@
+{
+  "author_contribution": {
+    "all8paths_author_exact": true,
+    "files": [
+      {
+        "bytes": 8346,
+        "path": "docs/autoencoders/corpus_definition_review_v2.md",
+        "sha256": "968d9f42d389883fa7d2cdc2144db00497532d850a769f928888492689f2f6c1"
+      },
+      {
+        "bytes": 7953,
+        "path": "docs/autoencoders/legal_source_definition_v2.md",
+        "sha256": "8234812a7769d651b1a20fdbfd569dddabf73e5f5c1c33ca33a51292830cf6ae"
+      },
+      {
+        "bytes": 29833,
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py",
+        "sha256": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190"
+      },
+      {
+        "bytes": 4026,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_context_obligations.py",
+        "sha256": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482"
+      },
+      {
+        "bytes": 21940,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+        "sha256": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53"
+      },
+      {
+        "bytes": 8241,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py",
+        "sha256": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d"
+      },
+      {
+        "bytes": 29489,
+        "path": "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py",
+        "sha256": "a8aa5f72a818d7a888713c6769e50f30cb496cc86d1ac260b2ecebe38e84a5ff"
+      },
+      {
+        "bytes": 15365,
+        "path": "tests/unit/logic/autoformal/test_legal_official_markup_context.py",
+        "sha256": "f481e7aee8744cba67b8477cdf7a7d12c24246f7af7e8950b74d0254f1c7ffac"
+      }
+    ],
+    "revision": "8f33492f4a639aa0ee3218653c63e467cd01d3ea"
+  },
+  "authority": {
+    "Lean_build_or_admission": false,
+    "assessment_performed": false,
+    "proof_authority": false,
+    "registry_policy_keys_signer_or_review_clock_selected": false,
+    "reviews": 0,
+    "semantic_or_training_admission": false
+  },
+  "check_count": 67,
+  "checks": [
+    {
+      "check": "original passing qualification/root/HEAD/index matched",
+      "passed": true
+    },
+    {
+      "check": "501 exact qualified listed source bindings current",
+      "passed": true
+    },
+    {
+      "check": "all raw qualification outputs and original input snapshot exact",
+      "passed": true
+    },
+    {
+      "check": "raw XML independently recounts966distinct clean cases across30modules",
+      "passed": true
+    },
+    {
+      "check": "launcher exact script/qualification/base/probe/log custody",
+      "passed": true
+    },
+    {
+      "check": "launcher exit0no-timeout private guarded checkout600sec",
+      "passed": true
+    },
+    {
+      "check": "probe63checks passed with zero reviews and no assessment/authority",
+      "passed": true
+    },
+    {
+      "check": "all46payloads inventoried uniquely with exact full file hashes",
+      "passed": true
+    },
+    {
+      "check": "owner-private output and launcher trees",
+      "passed": true
+    },
+    {
+      "check": "historical source pins copied exactly and unchanged",
+      "passed": true
+    },
+    {
+      "check": "independent canonical sampler/descriptor source commitments retained",
+      "passed": true
+    },
+    {
+      "check": "complete560/134/426/3360population preserves original records and zero gold",
+      "passed": true
+    },
+    {
+      "check": "fol: six input files and twelve pins exact",
+      "passed": true
+    },
+    {
+      "check": "fol: exact six-occurrence packet population order",
+      "passed": true
+    },
+    {
+      "check": "fol: exact packet/raw/preparation pins 0000.json",
+      "passed": true
+    },
+    {
+      "check": "fol: exact normalized source geometry and open obligations 0000.json",
+      "passed": true
+    },
+    {
+      "check": "fol: exact packet/raw/preparation pins 0001.json",
+      "passed": true
+    },
+    {
+      "check": "fol: exact normalized source geometry and open obligations 0001.json",
+      "passed": true
+    },
+    {
+      "check": "fol: exact packet/raw/preparation pins 0002.json",
+      "passed": true
+    },
+    {
+      "check": "fol: exact normalized source geometry and open obligations 0002.json",
+      "passed": true
+    },
+    {
+      "check": "fol: exact packet/raw/preparation pins 0003.json",
+      "passed": true
+    },
+    {
+      "check": "fol: exact normalized source geometry and open obligations 0003.json",
+      "passed": true
+    },
+    {
+      "check": "fol: exact packet/raw/preparation pins 0004.json",
+      "passed": true
+    },
+    {
+      "check": "fol: exact normalized source geometry and open obligations 0004.json",
+      "passed": true
+    },
+    {
+      "check": "fol: exact packet/raw/preparation pins 0005.json",
+      "passed": true
+    },
+    {
+      "check": "fol: exact normalized source geometry and open obligations 0005.json",
+      "passed": true
+    },
+    {
+      "check": "fol:36distinct open IDs and exact saved preparation/subject binding",
+      "passed": true
+    },
+    {
+      "check": "fol: exact15node26edge candidate graph and exported subject identity",
+      "passed": true
+    },
+    {
+      "check": "fol: all public Parquet/snapshot manifest hashes exact",
+      "passed": true
+    },
+    {
+      "check": "fol:40actual artifact hashes match their declared retained-byte recipes",
+      "passed": true
+    },
+    {
+      "check": "fol:39edges reach exact required population with canonical manifest pin",
+      "passed": true
+    },
+    {
+      "check": "fol: exact subject metadata and explicit current code pin domains",
+      "passed": true
+    },
+    {
+      "check": "fol: review pins include all5claimed context/helper owners",
+      "passed": true
+    },
+    {
+      "check": "fol: prior source and AST unchanged while producer generation changes",
+      "passed": true
+    },
+    {
+      "check": "tdfol: six input files and twelve pins exact",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact six-occurrence packet population order",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact packet/raw/preparation pins 0000.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact normalized source geometry and open obligations 0000.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact packet/raw/preparation pins 0001.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact normalized source geometry and open obligations 0001.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact packet/raw/preparation pins 0002.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact normalized source geometry and open obligations 0002.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact packet/raw/preparation pins 0003.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact normalized source geometry and open obligations 0003.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact packet/raw/preparation pins 0004.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact normalized source geometry and open obligations 0004.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact packet/raw/preparation pins 0005.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact normalized source geometry and open obligations 0005.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol:36distinct open IDs and exact saved preparation/subject binding",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact15node26edge candidate graph and exported subject identity",
+      "passed": true
+    },
+    {
+      "check": "tdfol: all public Parquet/snapshot manifest hashes exact",
+      "passed": true
+    },
+    {
+      "check": "tdfol:40actual artifact hashes match their declared retained-byte recipes",
+      "passed": true
+    },
+    {
+      "check": "tdfol:39edges reach exact required population with canonical manifest pin",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact subject metadata and explicit current code pin domains",
+      "passed": true
+    },
+    {
+      "check": "tdfol: review pins include all5claimed context/helper owners",
+      "passed": true
+    },
+    {
+      "check": "tdfol: prior source and AST unchanged while producer generation changes",
+      "passed": true
+    },
+    {
+      "check": "author exact Git/object/current bytes: docs/autoencoders/corpus_definition_review_v2.md",
+      "passed": true
+    },
+    {
+      "check": "author exact Git/object/current bytes: docs/autoencoders/legal_source_definition_v2.md",
+      "passed": true
+    },
+    {
+      "check": "author exact Git/object/current bytes: ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py",
+      "passed": true
+    },
+    {
+      "check": "author exact Git/object/current bytes: ipfs_datasets_py/logic/autoformal/legal_context_obligations.py",
+      "passed": true
+    },
+    {
+      "check": "author exact Git/object/current bytes: ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+      "passed": true
+    },
+    {
+      "check": "author exact Git/object/current bytes: ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py",
+      "passed": true
+    },
+    {
+      "check": "author exact Git/object/current bytes: tests/unit/logic/autoformal/test_corpus_definition_review_v2.py",
+      "passed": true
+    },
+    {
+      "check": "author exact Git/object/current bytes: tests/unit/logic/autoformal/test_legal_official_markup_context.py",
+      "passed": true
+    },
+    {
+      "check": "eight author paths retained and separate WIP excluded",
+      "passed": true
+    },
+    {
+      "check": "HEAD/raw index unchanged throughout reviewer readback",
+      "passed": true
+    },
+    {
+      "check": "all501sources,46payloads,scripts/rawreceipts and explicit producer pins unchanged at close",
+      "passed": true
+    }
+  ],
+  "families": {
+    "fol": {
+      "assessment_performed": false,
+      "context_packets": 6,
+      "dependency_artifacts": 40,
+      "dependency_edges": 39,
+      "graph_cid": "baguqeerat63ba4mowllg5sez5k3r7utaxxe5d4xaav5rc7qo4ftyddlwqpia",
+      "native_producer_count": 24,
+      "open_slots": 36,
+      "preparation_cid": "baguqeeraieq6naglzrrhha46725hjplrhwjryyxd6b4ufqvfpnh3gvhrbgkq",
+      "review_producer_count": 14,
+      "reviews": 0,
+      "status": "subject_prepared_awaiting_actual_reviews",
+      "subject": {
+        "bytes": 103893,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/subject.json",
+        "sha256": "9e127ce8f7908fda51aace0beb3c911bff54f44d82e2779b5c922b84c084abba"
+      }
+    },
+    "tdfol": {
+      "assessment_performed": false,
+      "context_packets": 6,
+      "dependency_artifacts": 40,
+      "dependency_edges": 39,
+      "graph_cid": "baguqeerahfpotq2lv2yteaesm2j7kdmlmbyvjrz7mlm3ujqf3yia6rb2qsjq",
+      "native_producer_count": 24,
+      "open_slots": 36,
+      "preparation_cid": "baguqeerae6xjakadnvcf3vsbt72p4swjmz7a5ymtrfmo7mxoqeyhwehefefq",
+      "review_producer_count": 14,
+      "reviews": 0,
+      "status": "subject_prepared_awaiting_actual_reviews",
+      "subject": {
+        "bytes": 103895,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/subject.json",
+        "sha256": "4143ef567e033ad0237644d981d5de4b73a6ce6dfe285917a47f81266d291920"
+      }
+    }
+  },
+  "git_read_guard": {
+    "after": {
+      "head": "7488f3249aefba90eae7000365117ff378e12268",
+      "index": {
+        "bytes": 5297733,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/worktrees/legal-ir-definition-v2-review-integration-20261015/index",
+        "sha256": "7cc0af1512a1db3f9cfea7deb017a7ae142802676aa88c6b4a39420c97ccfc7a"
+      }
+    },
+    "before": {
+      "head": "7488f3249aefba90eae7000365117ff378e12268",
+      "index": {
+        "bytes": 5297733,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/worktrees/legal-ir-definition-v2-review-integration-20261015/index",
+        "sha256": "7cc0af1512a1db3f9cfea7deb017a7ae142802676aa88c6b4a39420c97ccfc7a"
+      }
+    }
+  },
+  "historical_inputs": {
+    "acquisition-descriptor.json": {
+      "bytes": 926,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/official-section101-acquisition-descriptor-v01.json",
+      "sha256": "00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe"
+    },
+    "historical-sampling-report.json": {
+      "bytes": 2790275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/sampling-report.json",
+      "sha256": "173e3995b8628c76fbffcff1e1d77aad8d22d32ef84c3335e3ccc1c05af836d6"
+    },
+    "source.html": {
+      "bytes": 98879,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/official-2024-title10-section101.html",
+      "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+    }
+  },
+  "limits": [
+    "Actual same-process public source/context/subject and graph replay are coordinator assertions bound by retained receipts, not new product executions by this reviewer.",
+    "Parquet hashes match manifest commitments; this review does not rerun Parquet or product CID codecs.",
+    "All40supplied dependency artifacts are accounted for;36open slots reside inside6pinned context packets. This is not exhaustive legal dependency closure.",
+    "The whole post-means list remains one opaque unary caller declaration. Changed producer-generation CIDs and unchanged AST/source do not demonstrate improved statutory meaning.",
+    "Actual independent legal/formal review, applicability, definition-use/norm bindings, semantic/training admission and native Lean qualification remain pending.",
+    "The native producer map is not complete import closure; operational review pins explicitly bind shared helper and context owners.",
+    "Historical report/candidate identities remain their original generation; fresh outputs use current source paths and context code.",
+    "Separate definition_use_v2 author WIP is excluded, uninspected and unmodified.",
+    "Sanitized environment/private output/offline flags do not establish an OS network sandbox or cross-UID worker custody."
+  ],
+  "method": "Static source review and stdlib-only retained JSON/XML/hash/Git readback; no product imports or reruns",
+  "observed_at_utc": "2026-10-15T07:09:21.539281+00:00",
+  "output_inventory": [
+    {
+      "bytes": 926,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/acquisition-descriptor.json",
+      "sha256": "00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe"
+    },
+    {
+      "bytes": 1478,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/candidate-input-files.json",
+      "sha256": "3e8381a351db47d9de35f8952fb9f17aae79a855041c234d662eceec44f0298b"
+    },
+    {
+      "bytes": 982,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/candidate-input-pins.json",
+      "sha256": "15aabc6ac399028e58c935163ac8bcf770daaf53df8ba48ff0006b8aa00b8f90"
+    },
+    {
+      "bytes": 57333,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/companion.json",
+      "sha256": "0bd0b327c1d09f04a1486f0986b68465e2cc35ea633b5a4018d52066f18e7036"
+    },
+    {
+      "bytes": 2047,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/context-input-files.json",
+      "sha256": "15165c692671888c4626976096b325fbb73f2688cfeb793a63152f0683ce0e45"
+    },
+    {
+      "bytes": 4641,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/contexts/0000.json",
+      "sha256": "8de156daf64eacdff9edece5eef5608d47d62bdef80cd29971b2bdc706dae031"
+    },
+    {
+      "bytes": 4683,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/contexts/0001.json",
+      "sha256": "c28ffa2e126ca024ca133f2035ecfaefa44d48baa4268821692dc6ccdb2d2ac2"
+    },
+    {
+      "bytes": 4591,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/contexts/0002.json",
+      "sha256": "41a508c9fa9ccd94068ca10b174494a20996c12d889fb2856b323992ff3fc9f3"
+    },
+    {
+      "bytes": 4589,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/contexts/0003.json",
+      "sha256": "2637d7433b2340bb5eb8bd65e8a2996c80ea99fec50ffed764d0172bbf99996e"
+    },
+    {
+      "bytes": 4582,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/contexts/0004.json",
+      "sha256": "ef2c3e000fe1078adad4c51c79ef48f7118f2fe1ea40637a3119d6e619698b85"
+    },
+    {
+      "bytes": 4647,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/contexts/0005.json",
+      "sha256": "5ca681b966c3efe5a13c5a46f41c0f666aac143f01b62fb3b99013226351ee11"
+    },
+    {
+      "bytes": 37184,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/dependency-manifest.json",
+      "sha256": "ef33103ec5946ea96214922533ef197050283393e94240546aacdeb601ad79aa"
+    },
+    {
+      "bytes": 1039,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/expected-context-population.json",
+      "sha256": "b350de6d5f12d471292bcdb99dc476ee2c0ed54f183fc5449a4d054fc5be5a8f"
+    },
+    {
+      "bytes": 17858,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/graph-bundle/edges.parquet",
+      "sha256": "d3d73234bc2914e1e4a9c506c1f3d3f9be7fe9c737fa40e7b6b06287bfa3bba9"
+    },
+    {
+      "bytes": 861,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/graph-bundle/manifest.json",
+      "sha256": "4b6a78b048e2404a12b16da9f1446f9e067214ed8471401c7744b490a894959a"
+    },
+    {
+      "bytes": 14782,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/graph-bundle/nodes.parquet",
+      "sha256": "e888c2d1f2cbac1b14a1068772d8907db946c3206cdfe9b23c888ebe7eadeada"
+    },
+    {
+      "bytes": 22292,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/graph-bundle/snapshot.json",
+      "sha256": "85ced722f775e2605e18f54401316e5767058231908cffbf591688f2ba0c293b"
+    },
+    {
+      "bytes": 78034,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/preparation.json",
+      "sha256": "6777f198870321e37fc9318758b3ccf7a339b19f48c3887dc77f8cf1d831e159"
+    },
+    {
+      "bytes": 32094,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/report.json",
+      "sha256": "4999e019f7346b16350a0dee219323f1441bb27951c4a16f9afda96c4072dac9"
+    },
+    {
+      "bytes": 1698,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/request.json",
+      "sha256": "0b599e4c220cc7c85de3396c88cd6f9e2097765e85478616e2b816fc2beacc33"
+    },
+    {
+      "bytes": 3154,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/required-dependency-ids.json",
+      "sha256": "fda0d8cc6467f35936ade49e35355bf854a9f6fa9fda113f3362b1a95da9e850"
+    },
+    {
+      "bytes": 103893,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/fol/subject.json",
+      "sha256": "9e127ce8f7908fda51aace0beb3c911bff54f44d82e2779b5c922b84c084abba"
+    },
+    {
+      "bytes": 2790275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/historical-sampling-report.json",
+      "sha256": "173e3995b8628c76fbffcff1e1d77aad8d22d32ef84c3335e3ccc1c05af836d6"
+    },
+    {
+      "bytes": 2790274,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/sampling-report.json",
+      "sha256": "be524c7822f5e19a16ee56740560b19b0311001c553bd7ca9c2c9ed989af98b1"
+    },
+    {
+      "bytes": 98879,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/source.html",
+      "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+    },
+    {
+      "bytes": 1484,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/candidate-input-files.json",
+      "sha256": "89377c4a8f9213e2225742b664a3e95df0381f84af63cedae17771e4a1b1a81e"
+    },
+    {
+      "bytes": 982,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/candidate-input-pins.json",
+      "sha256": "ec5bd0284010a5ef10bf27e22a69011f3f1db2c974a49723cdad33c30916854e"
+    },
+    {
+      "bytes": 57341,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/companion.json",
+      "sha256": "f612c7c74f1b3a6008e1b5c573739095fd88261f03602a56a9de8029e17d9fae"
+    },
+    {
+      "bytes": 2059,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/context-input-files.json",
+      "sha256": "7d2b32abf46656afbe3aff45832f3afd4e42ef1684a92f577183e2057d2a9af8"
+    },
+    {
+      "bytes": 4641,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/contexts/0000.json",
+      "sha256": "8de156daf64eacdff9edece5eef5608d47d62bdef80cd29971b2bdc706dae031"
+    },
+    {
+      "bytes": 4683,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/contexts/0001.json",
+      "sha256": "c28ffa2e126ca024ca133f2035ecfaefa44d48baa4268821692dc6ccdb2d2ac2"
+    },
+    {
+      "bytes": 4591,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/contexts/0002.json",
+      "sha256": "41a508c9fa9ccd94068ca10b174494a20996c12d889fb2856b323992ff3fc9f3"
+    },
+    {
+      "bytes": 4589,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/contexts/0003.json",
+      "sha256": "2637d7433b2340bb5eb8bd65e8a2996c80ea99fec50ffed764d0172bbf99996e"
+    },
+    {
+      "bytes": 4582,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/contexts/0004.json",
+      "sha256": "ef2c3e000fe1078adad4c51c79ef48f7118f2fe1ea40637a3119d6e619698b85"
+    },
+    {
+      "bytes": 4647,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/contexts/0005.json",
+      "sha256": "5ca681b966c3efe5a13c5a46f41c0f666aac143f01b62fb3b99013226351ee11"
+    },
+    {
+      "bytes": 37184,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/dependency-manifest.json",
+      "sha256": "74f7abefbef0d6eaaf3fcd701fded81b556acd8489e22a08649366f63b0712bc"
+    },
+    {
+      "bytes": 1039,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/expected-context-population.json",
+      "sha256": "b350de6d5f12d471292bcdb99dc476ee2c0ed54f183fc5449a4d054fc5be5a8f"
+    },
+    {
+      "bytes": 17858,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/graph-bundle/edges.parquet",
+      "sha256": "3a333b80bfd0be6af7e7213ebb12dbc853567348e6db441eb15f132bbf00f29a"
+    },
+    {
+      "bytes": 861,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/graph-bundle/manifest.json",
+      "sha256": "04c525f5d7c9016096d2c2f07ccbf891d2166e6cba5763ffa4ecf4ce86b30c9d"
+    },
+    {
+      "bytes": 14782,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/graph-bundle/nodes.parquet",
+      "sha256": "a9cbf976ace6e6c8c8d1734a1dcf0ee8c4123a05593bbc3860820c8d069ae95f"
+    },
+    {
+      "bytes": 22292,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/graph-bundle/snapshot.json",
+      "sha256": "4464bf0064285bcf488c43b8588373af78b1d21de65b16e76534103d8ae5dc49"
+    },
+    {
+      "bytes": 78036,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/preparation.json",
+      "sha256": "d9d3e968d3a4a12fbb380803b2a822523e81447d7f77a21502af92ddebd675a1"
+    },
+    {
+      "bytes": 32132,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/report.json",
+      "sha256": "131eaa7a51dc1e42f223df74023cf5dc7a7f73e96603825640778ad4430a467d"
+    },
+    {
+      "bytes": 1700,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/request.json",
+      "sha256": "3d514076dae4c0fd82ff9ab78c2b9d28a4b53d005bbaa51ca0225c7876168aef"
+    },
+    {
+      "bytes": 3154,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/required-dependency-ids.json",
+      "sha256": "d7449658ad4859165f41e64134cbbe84cd302c5e0d21fc4ccb124063d4ca4140"
+    },
+    {
+      "bytes": 103895,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/tdfol/subject.json",
+      "sha256": "4143ef567e033ad0237644d981d5de4b73a6ce6dfe285917a47f81266d291920"
+    }
+  ],
+  "producer_generation_comparison": [
+    {
+      "absolute_pin_paths_rebound_to_current_checkout": true,
+      "candidate_cid_changed": true,
+      "changed_relative_native_producer_bodies": [
+        {
+          "current_sha256": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53",
+          "historical_sha256": "1f1e607c7c8d1e479ae5b79e17f928571e3da49f0ad4180dfc93e609d0d47dc2",
+          "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py"
+        }
+      ],
+      "family": "fol",
+      "historical_companion": {
+        "bytes": 57137,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/fol/companion.json",
+        "sha256": "473dcc6accdf26adf4c030d2fd09a94416d8f44280c6305e194273989f4f72f5"
+      },
+      "historical_report": {
+        "bytes": 31807,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/fol/report.json",
+        "sha256": "e39bdbbba98212357f172a31e98532c05ab71efcce3a5c846761788d5f790923"
+      },
+      "native_ast_and_source_version_occurrences_identical": true,
+      "native_map_is_not_full_import_closure": true,
+      "operational_review_domain_includes_shared_helper": true,
+      "semantic_improvement_inferred": false
+    },
+    {
+      "absolute_pin_paths_rebound_to_current_checkout": true,
+      "candidate_cid_changed": true,
+      "changed_relative_native_producer_bodies": [
+        {
+          "current_sha256": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53",
+          "historical_sha256": "1f1e607c7c8d1e479ae5b79e17f928571e3da49f0ad4180dfc93e609d0d47dc2",
+          "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py"
+        }
+      ],
+      "family": "tdfol",
+      "historical_companion": {
+        "bytes": 57145,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/tdfol/companion.json",
+        "sha256": "44c30fd8f36bf75784c9d7171736f177d9689be2e434b26a953f5f04c421cd99"
+      },
+      "historical_report": {
+        "bytes": 31845,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/tdfol/report.json",
+        "sha256": "30493925d8727366c0c040c7fb4c334d56e490cfdaf6f17f1268aa3a30965ffb"
+      },
+      "native_ast_and_source_version_occurrences_identical": true,
+      "native_map_is_not_full_import_closure": true,
+      "operational_review_domain_includes_shared_helper": true,
+      "semantic_improvement_inferred": false
+    }
+  ],
+  "qualification": {
+    "complete_import_closure_claimed": false,
+    "inventory_canonical_sha256": "4133e26a314752ab4d527e17a9ef6e810c8878765af92464ad8bef5b238fed63",
+    "listed_inputs": 501,
+    "modules": 30,
+    "outcomes": {
+      "error": 0,
+      "failure": 0,
+      "skipped": 0
+    },
+    "receipt": {
+      "bytes": 98169,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/qualification-v01/receipt.json",
+      "sha256": "15f9aa8a41d1845cb4aa15331a800c19caae046a48e84d4580538d98cebc4f47"
+    },
+    "tests": 966
+  },
+  "read_bindings": [
+    {
+      "bytes": 12843,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-review-integration-20261015/docs/autoencoders/evidence/legal-ir-definition-v2-review-integration-20261015/real_source_review_subject_probe.py",
+      "sha256": "d58be3c25145f6c619e9d6aa74c4d16f1ac9b7e5a2f480ddf9fe9484fa7942da"
+    },
+    {
+      "bytes": 5691,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-review-integration-20261015/docs/autoencoders/evidence/legal-ir-definition-v2-review-integration-20261015/probe_launcher.py",
+      "sha256": "f9a916c2c93cd44a2ffa97e658e27a1ffcca9eceae80828d08512193f500073c"
+    },
+    {
+      "bytes": 13764,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-review-integration-20261015/docs/autoencoders/evidence/legal-ir-definition-v2-integration-20261015/real_source_probe.py",
+      "sha256": "0703a0729a53514048dbfc3389eb878c114b20ac49f6fcfe89454e4cacd9279f"
+    },
+    {
+      "bytes": 98169,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/qualification-v01/receipt.json",
+      "sha256": "15f9aa8a41d1845cb4aa15331a800c19caae046a48e84d4580538d98cebc4f47"
+    },
+    {
+      "bytes": 183727,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/qualification-v01/junit.xml",
+      "sha256": "23a0ea5dde306d93d35b32afd07c645e3c145ac7a18285f926db73538310b462"
+    },
+    {
+      "bytes": 91772,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/qualification-v01/run-inputs.json",
+      "sha256": "7976e7b7d229b54225f2a5a7ea3bfa059b04dca9aaaf288386530673ba2ec0c4"
+    },
+    {
+      "bytes": 1991,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01-launch/receipt.json",
+      "sha256": "570f9c9caf399776c68256dd61330948bcb64110a572c20c0aaf901efb863c50"
+    },
+    {
+      "bytes": 163,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01-launch/stdout.txt",
+      "sha256": "daa13b8d4efed5de36e99dab2a03706515721d7da9ac9c9221f9441c46b92662"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01-launch/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 37585,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/probe-receipt.json",
+      "sha256": "6d0f530d9926ba0e18e9c6a751afce3bbfb5ce5218da3cbff0bd9948b78a12ff"
+    }
+  ],
+  "reviewer_execution": {
+    "Lean_or_solver_processes": 0,
+    "Parquet_decoder_reruns": 0,
+    "models_or_training": 0,
+    "product_imports": 0,
+    "product_source_context_subject_or_graph_reader_reruns": 0,
+    "tests": 0
+  },
+  "schema": "legal-ir-definition-v2-review-independent-probe-review/v1",
+  "selected_probe_attempt": "real-source-subject-v01",
+  "source_population": {
+    "blocks": 560,
+    "candidate_inputs": 134,
+    "controls": 426,
+    "open_obligations": 3360
+  },
+  "status": "pass"
+}

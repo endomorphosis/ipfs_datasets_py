@@ -103,11 +103,11 @@ receipt custody and checkout-root agreement. Their raw results remain separate.
 
 ## Next connected component
 
-The parallel V2 occurrence-context and meaning-review contribution is now
-committed at `8f33492f4a639aa0ee3218653c63e467cd01d3ea` in its existing
-checkout. Qualify that frozen contribution and retained closeout evidence next
-rather than creating another review engine. Its eight-path source delta is
-outside this increment. Parent/alignment requests still
+The subsequent [V2 context and review integration](legal_definition_v2_review_integration_20261015.md)
+now qualifies and adopts `8f33492f4a639aa0ee3218653c63e467cd01d3ea`. Its fresh
+source/report/subject generation preserves earlier evidence above without
+rewriting producer pins. Actual source/meaning reviews and the parallel complete
+definition/use contribution remain next. Parent/alignment requests still
 require their original identities and request evidence; equal text cannot
 substitute for checked correspondence to the standalone sampler.
 
