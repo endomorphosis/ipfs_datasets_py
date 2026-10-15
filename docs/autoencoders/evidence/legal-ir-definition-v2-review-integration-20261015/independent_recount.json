@@ -1,0 +1,375 @@
+{
+  "all_checks_passed": true,
+  "authority": {
+    "Lean_execution_qualified": false,
+    "published": false,
+    "real_statutory_review_completed": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "checks": {
+    "22_subpassed_stdout_lines": true,
+    "30_distinct_target_modules": true,
+    "966_unique_raw_testcases": true,
+    "all30_target_modules_covered": true,
+    "all501_current_listed_inputs_exact": true,
+    "all_cases_match_exactly_one_expected_module": true,
+    "all_four_raw_output_bindings_exact": true,
+    "current_head_exact": true,
+    "current_index_matches_qualified_tree": true,
+    "execution_passed_without_timeout": true,
+    "fixed_hash_seed_zero": true,
+    "joined2_export_subject_blank_signature_cases_present": true,
+    "junit_suite_988_matches_cases_plus_subtests": true,
+    "new_author84_cases_present": true,
+    "no_failure_error_skip": true,
+    "opening_closing501_inputs_equal": true,
+    "opening_closing_head_index_agree": true,
+    "original8_contribution_files_exact": true,
+    "raw_counts_match_execution_receipt": true,
+    "retained_author251_raw_cases_unique_and_passing": true,
+    "separate_prior4_export_cases_present": true
+  },
+  "current_inputs": {
+    "comparison": "All 501 listed current files match length and SHA256 in the retained original execution inventory. Full path/expected-hash population is independently bound in run-inputs.json.",
+    "differences": {},
+    "head_observed": "7488f3249aefba90eae7000365117ff378e12268",
+    "new_joined_test": {
+      "bytes": 7660,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-review-integration-20261015/tests/unit/logic/autoformal/test_definition_v2_review_graph_exchange.py",
+      "sha256": "6781c98265e681894d09f5b3c189298b90d17ef78c245cf857ac0102cd8b7a7b"
+    },
+    "prior_separate_export_test": {
+      "bytes": 7810,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-review-integration-20261015/tests/unit/logic/autoformal/test_definition_v2_graph_exchange.py",
+      "sha256": "da9fef357b2ea51cd1f0a38e475849d36173eba6a2307880fd1181da6c7240e8"
+    },
+    "readonly_index_comparison_exit_code": 0,
+    "runner": {
+      "bytes": 8004,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-review-integration-20261015/docs/autoencoders/evidence/legal-ir-definition-v2-review-integration-20261015/qualification_runner.py",
+      "sha256": "c210bb43247d008a394712f66670f3ff96016904b5e5fe3a90ae5f3b07d0ecbc"
+    }
+  },
+  "limits": [
+    "966 testcases and22 passed subtests are separate counts; JUnit suite988 includes both.",
+    "501 listed inputs are not a complete transitive Python/native/distribution closure.",
+    "Changing the legacy context source changes producer generations; previously retained source/review/candidate receipts remain historical and are not relabeled as current.",
+    "The two joined regressions authenticate two authored signatures while blank context evidence remains blocked; this is not actual independent human or statutory review.",
+    "Native-build unit suites use authored runner/toolchain stubs; no real Lean execution is qualified.",
+    "Separate real-source probes and any later documentation/publication actions are outside this test recount."
+  ],
+  "observed_at_utc": "2026-10-15T07:01:12.893639+00:00",
+  "original_contribution": {
+    "author_receipt": {
+      "bytes": 19890,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/implementation-receipt.json",
+      "sha256": "8367afeab400739004426512cee8e50f29a488c69ff14c7c2cacd110666d5067"
+    },
+    "commit": "8f33492f4a639aa0ee3218653c63e467cd01d3ea",
+    "earlier_failed_author_source_movement_JUnit": {
+      "bytes": 11322,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/review-authored-tests-v02-source-movement.xml",
+      "sha256": "3b25ef1d4135cf3251a7f7d41e97b2b0536138c4b25f61f1d1aee2845d397bd4"
+    },
+    "earlier_failed_run_scope": "Retained author intermediate51-case run had one source-drift refusal; it is separate historical evidence and not included in the final251 or fresh966 totals.",
+    "file_count": 8,
+    "final_author_raw_junits": {
+      "context-legacy-regression-v01.xml": {
+        "binding": {
+          "bytes": 12817,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/context-legacy-regression-v01.xml",
+          "sha256": "422d2b4b6388ff0a7f9f5a6cf878733e1ecc529e2cd1b74861fe19ea03c47ae6"
+        },
+        "cases_by_class": {
+          "tests.unit.logic.autoformal.test_legal_context_representability_integration": 2,
+          "tests.unit.logic.autoformal.test_legal_statutory_context": 35
+        },
+        "counts": {
+          "error": 0,
+          "failure": 0,
+          "skipped": 0
+        },
+        "raw_cases": 37,
+        "recorded_sha256_exact": true
+      },
+      "context-new-and-restored-legacy-tests-v01.xml": {
+        "binding": {
+          "bytes": 10494,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/context-new-and-restored-legacy-tests-v01.xml",
+          "sha256": "72612e0395f59170f1866d493f955dbeb151b76c8bdef1b30fc772942585e7c7"
+        },
+        "cases_by_class": {
+          "tests.unit.logic.autoformal.test_legal_official_markup_context": 33,
+          "tests.unit.logic.autoformal.test_legal_statutory_context_v2": 23
+        },
+        "counts": {
+          "error": 0,
+          "failure": 0,
+          "skipped": 0
+        },
+        "raw_cases": 56,
+        "recorded_sha256_exact": true
+      },
+      "legacy-definition-review-tests-v01.xml": {
+        "binding": {
+          "bytes": 21631,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/legacy-definition-review-tests-v01.xml",
+          "sha256": "2de2d80c0da7aa876e577e0570c6d8ed11ab819b61fbbcbef862035d354b9537"
+        },
+        "cases_by_class": {
+          "tests.unit.logic.autoformal.test_corpus_definition_review": 107
+        },
+        "counts": {
+          "error": 0,
+          "failure": 0,
+          "skipped": 0
+        },
+        "raw_cases": 107,
+        "recorded_sha256_exact": true
+      },
+      "review-authored-tests-v02.xml": {
+        "binding": {
+          "bytes": 9784,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/review-authored-tests-v02.xml",
+          "sha256": "dd4ac7faa8e6d8c07397c6c131552b225d922ade9475a3525bdb9456ec97c6b7"
+        },
+        "cases_by_class": {
+          "tests.unit.logic.autoformal.test_corpus_definition_review_v2": 51
+        },
+        "counts": {
+          "error": 0,
+          "failure": 0,
+          "skipped": 0
+        },
+        "raw_cases": 51,
+        "recorded_sha256_exact": true
+      }
+    },
+    "historical_author_case_count": 251,
+    "historical_author_legacy_cases": 167,
+    "historical_author_new_cases": 84,
+    "paths": {
+      "docs/autoencoders/corpus_definition_review_v2.md": {
+        "current": {
+          "bytes": 8346,
+          "sha256": "968d9f42d389883fa7d2cdc2144db00497532d850a769f928888492689f2f6c1"
+        },
+        "exact": true,
+        "original_commit": {
+          "bytes": 8346,
+          "sha256": "968d9f42d389883fa7d2cdc2144db00497532d850a769f928888492689f2f6c1"
+        },
+        "retained_author_sha256": "968d9f42d389883fa7d2cdc2144db00497532d850a769f928888492689f2f6c1"
+      },
+      "docs/autoencoders/legal_source_definition_v2.md": {
+        "current": {
+          "bytes": 7953,
+          "sha256": "8234812a7769d651b1a20fdbfd569dddabf73e5f5c1c33ca33a51292830cf6ae"
+        },
+        "exact": true,
+        "original_commit": {
+          "bytes": 7953,
+          "sha256": "8234812a7769d651b1a20fdbfd569dddabf73e5f5c1c33ca33a51292830cf6ae"
+        },
+        "retained_author_sha256": "8234812a7769d651b1a20fdbfd569dddabf73e5f5c1c33ca33a51292830cf6ae"
+      },
+      "ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py": {
+        "current": {
+          "bytes": 29833,
+          "sha256": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190"
+        },
+        "exact": true,
+        "original_commit": {
+          "bytes": 29833,
+          "sha256": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190"
+        },
+        "retained_author_sha256": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190"
+      },
+      "ipfs_datasets_py/logic/autoformal/legal_context_obligations.py": {
+        "current": {
+          "bytes": 4026,
+          "sha256": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482"
+        },
+        "exact": true,
+        "original_commit": {
+          "bytes": 4026,
+          "sha256": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482"
+        },
+        "retained_author_sha256": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482"
+      },
+      "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py": {
+        "current": {
+          "bytes": 21940,
+          "sha256": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53"
+        },
+        "exact": true,
+        "original_commit": {
+          "bytes": 21940,
+          "sha256": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53"
+        },
+        "retained_author_sha256": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53"
+      },
+      "ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py": {
+        "current": {
+          "bytes": 8241,
+          "sha256": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d"
+        },
+        "exact": true,
+        "original_commit": {
+          "bytes": 8241,
+          "sha256": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d"
+        },
+        "retained_author_sha256": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d"
+      },
+      "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py": {
+        "current": {
+          "bytes": 29489,
+          "sha256": "a8aa5f72a818d7a888713c6769e50f30cb496cc86d1ac260b2ecebe38e84a5ff"
+        },
+        "exact": true,
+        "original_commit": {
+          "bytes": 29489,
+          "sha256": "a8aa5f72a818d7a888713c6769e50f30cb496cc86d1ac260b2ecebe38e84a5ff"
+        },
+        "retained_author_sha256": "a8aa5f72a818d7a888713c6769e50f30cb496cc86d1ac260b2ecebe38e84a5ff"
+      },
+      "tests/unit/logic/autoformal/test_legal_official_markup_context.py": {
+        "current": {
+          "bytes": 15365,
+          "sha256": "f481e7aee8744cba67b8477cdf7a7d12c24246f7af7e8950b74d0254f1c7ffac"
+        },
+        "exact": true,
+        "original_commit": {
+          "bytes": 15365,
+          "sha256": "f481e7aee8744cba67b8477cdf7a7d12c24246f7af7e8950b74d0254f1c7ffac"
+        },
+        "retained_author_sha256": "f481e7aee8744cba67b8477cdf7a7d12c24246f7af7e8950b74d0254f1c7ffac"
+      }
+    }
+  },
+  "qualification": {
+    "attempt": "qualification-v01",
+    "cases_by_class": {
+      "tests.unit.logic.autoformal.test_corpus_contracts": 33,
+      "tests.unit.logic.autoformal.test_corpus_definition_adapter_v2": 13,
+      "tests.unit.logic.autoformal.test_corpus_definition_norm_adapter": 54,
+      "tests.unit.logic.autoformal.test_corpus_definition_review": 107,
+      "tests.unit.logic.autoformal.test_corpus_definition_review_v2": 51,
+      "tests.unit.logic.autoformal.test_corpus_graph": 20,
+      "tests.unit.logic.autoformal.test_corpus_graph_exchange": 37,
+      "tests.unit.logic.autoformal.test_corpus_imports": 7,
+      "tests.unit.logic.autoformal.test_corpus_source.SourceCorpusTests": 15,
+      "tests.unit.logic.autoformal.test_definition_v2_graph_exchange": 4,
+      "tests.unit.logic.autoformal.test_definition_v2_review_graph_exchange": 2,
+      "tests.unit.logic.autoformal.test_legal_context_representability_integration": 2,
+      "tests.unit.logic.autoformal.test_legal_corpus_incremental": 29,
+      "tests.unit.logic.autoformal.test_legal_corpus_lake": 72,
+      "tests.unit.logic.autoformal.test_legal_corpus_shared_lake": 31,
+      "tests.unit.logic.autoformal.test_legal_graph_dependencies": 18,
+      "tests.unit.logic.autoformal.test_legal_graph_review": 48,
+      "tests.unit.logic.autoformal.test_legal_official_document_views": 61,
+      "tests.unit.logic.autoformal.test_legal_official_markup_context": 33,
+      "tests.unit.logic.autoformal.test_legal_official_source_custody": 41,
+      "tests.unit.logic.autoformal.test_legal_source_definition_bridge": 23,
+      "tests.unit.logic.autoformal.test_legal_source_definition_bridge_v2": 35,
+      "tests.unit.logic.autoformal.test_legal_source_definition_lake": 7,
+      "tests.unit.logic.autoformal.test_legal_source_definition_norm_bridge": 58,
+      "tests.unit.logic.autoformal.test_legal_source_definition_norm_lake": 9,
+      "tests.unit.logic.autoformal.test_legal_source_representability": 22,
+      "tests.unit.logic.autoformal.test_legal_source_sampling": 29,
+      "tests.unit.logic.autoformal.test_legal_source_sampling_review": 47,
+      "tests.unit.logic.autoformal.test_legal_statutory_context": 35,
+      "tests.unit.logic.autoformal.test_legal_statutory_context_v2": 23
+    },
+    "cases_by_module": {
+      "tests.unit.logic.autoformal.test_corpus_contracts": 33,
+      "tests.unit.logic.autoformal.test_corpus_definition_adapter_v2": 13,
+      "tests.unit.logic.autoformal.test_corpus_definition_norm_adapter": 54,
+      "tests.unit.logic.autoformal.test_corpus_definition_review": 107,
+      "tests.unit.logic.autoformal.test_corpus_definition_review_v2": 51,
+      "tests.unit.logic.autoformal.test_corpus_graph": 20,
+      "tests.unit.logic.autoformal.test_corpus_graph_exchange": 37,
+      "tests.unit.logic.autoformal.test_corpus_imports": 7,
+      "tests.unit.logic.autoformal.test_corpus_source": 15,
+      "tests.unit.logic.autoformal.test_definition_v2_graph_exchange": 4,
+      "tests.unit.logic.autoformal.test_definition_v2_review_graph_exchange": 2,
+      "tests.unit.logic.autoformal.test_legal_context_representability_integration": 2,
+      "tests.unit.logic.autoformal.test_legal_corpus_incremental": 29,
+      "tests.unit.logic.autoformal.test_legal_corpus_lake": 72,
+      "tests.unit.logic.autoformal.test_legal_corpus_shared_lake": 31,
+      "tests.unit.logic.autoformal.test_legal_graph_dependencies": 18,
+      "tests.unit.logic.autoformal.test_legal_graph_review": 48,
+      "tests.unit.logic.autoformal.test_legal_official_document_views": 61,
+      "tests.unit.logic.autoformal.test_legal_official_markup_context": 33,
+      "tests.unit.logic.autoformal.test_legal_official_source_custody": 41,
+      "tests.unit.logic.autoformal.test_legal_source_definition_bridge": 23,
+      "tests.unit.logic.autoformal.test_legal_source_definition_bridge_v2": 35,
+      "tests.unit.logic.autoformal.test_legal_source_definition_lake": 7,
+      "tests.unit.logic.autoformal.test_legal_source_definition_norm_bridge": 58,
+      "tests.unit.logic.autoformal.test_legal_source_definition_norm_lake": 9,
+      "tests.unit.logic.autoformal.test_legal_source_representability": 22,
+      "tests.unit.logic.autoformal.test_legal_source_sampling": 29,
+      "tests.unit.logic.autoformal.test_legal_source_sampling_review": 47,
+      "tests.unit.logic.autoformal.test_legal_statutory_context": 35,
+      "tests.unit.logic.autoformal.test_legal_statutory_context_v2": 23
+    },
+    "counts": {
+      "error": 0,
+      "failure": 0,
+      "skipped": 0
+    },
+    "elapsed_seconds_reported": 158.45971414400265,
+    "head": "7488f3249aefba90eae7000365117ff378e12268",
+    "index_tree": "deb8689930ec27a30bb434ca6f619c215e362a40",
+    "junit_suite_attributes": [
+      {
+        "errors": "0",
+        "failures": "0",
+        "hostname": "spark-b271",
+        "name": "pytest",
+        "skipped": "0",
+        "tests": "988",
+        "time": "158.049",
+        "timestamp": "2026-10-15T06:56:50.360376+00:00"
+      }
+    ],
+    "listed_input_count": 501,
+    "module_count": 30,
+    "passed_subtest_stdout_lines": 22,
+    "python_hash_seed": 0,
+    "testcase_elements": 966,
+    "unique_case_identities": 966
+  },
+  "raw_bindings": {
+    "junit.xml": {
+      "bytes": 183727,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/qualification-v01/junit.xml",
+      "sha256": "23a0ea5dde306d93d35b32afd07c645e3c145ac7a18285f926db73538310b462"
+    },
+    "receipt.json": {
+      "bytes": 98169,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/qualification-v01/receipt.json",
+      "sha256": "15f9aa8a41d1845cb4aa15331a800c19caae046a48e84d4580538d98cebc4f47"
+    },
+    "run-inputs.json": {
+      "bytes": 91772,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/qualification-v01/run-inputs.json",
+      "sha256": "7976e7b7d229b54225f2a5a7ea3bfa059b04dca9aaaf288386530673ba2ec0c4"
+    },
+    "stderr.txt": {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/qualification-v01/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout.txt": {
+      "bytes": 312266,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/qualification-v01/stdout.txt",
+      "sha256": "8157c4886397e46057d254811afefe0127c5707939220bb9b8dea28961bdba9a"
+    }
+  },
+  "reviewer": "/root/source_delivery_tests",
+  "schema": "legal-definition-v2-review-integration-independent-recount/v1",
+  "scope": "Independent stdlib raw JUnit/module/subtest/output/input recount and direct original Git-blob comparisons; no pytest or target runtime imports by this reviewer.",
+  "status": "pass"
+}

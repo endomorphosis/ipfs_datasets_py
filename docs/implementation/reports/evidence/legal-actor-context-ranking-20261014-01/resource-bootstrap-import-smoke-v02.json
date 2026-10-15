@@ -1,0 +1,478 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/bootstrap_actor_context_ranking_resources_v02.py": {
+      "bytes": 6599,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/bootstrap_actor_context_ranking_resources_v02.py",
+      "sha256": "e1847c2723216b4f2a06ee9da80adfeb8121e94e0b2442da0d2f95e2288d7be1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/capture_actor_context_ranking_resource_import_smoke_v02.py": {
+      "bytes": 35640,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/capture_actor_context_ranking_resource_import_smoke_v02.py",
+      "sha256": "cd5f7e479c6bff9e00089c98503cbd0a79d18c566e4e8d64269767a54eafc4b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/__init__.py": {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/__init__.py": {
+      "bytes": 957,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/__init__.py",
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "bytes": 69336,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 15543,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "sha256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 111009,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": {
+      "bytes": 53075,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-import-smoke-v01.json": {
+      "bytes": 8911,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-import-smoke-v01.json",
+      "sha256": "7df903a5325095ef56180a0737f68315d146fdaf97a0288952c635f6eccc0183"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-source-independent-review-v01.json": {
+      "bytes": 12057,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-source-independent-review-v01.json",
+      "sha256": "17c13625a518242da0b8018f46ae2840b3ec19226a49b1df90cde8379a20d2b2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-source-independent-review-v02.json": {
+      "bytes": 16076,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-source-independent-review-v02.json",
+      "sha256": "9024f98bcf1f2970fb2097cac6e49a9a05d0bc5b6455583a94aea8fc2e642493"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-source-independent-review-v02.json": {
+      "bytes": 25630,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-source-independent-review-v02.json",
+      "sha256": "7aa5d74d7e805d122f74c6ac1941736636ad0f9a59409c7777a6d60845c59ebd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-snapshot-v01.json": {
+      "bytes": 4678,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-snapshot-v01.json",
+      "sha256": "fbbbc82c791998e4498a30226cc8f61a17bd7ce46f57229629710631af9761b2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/__init__.py": {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/__init__.py": {
+      "bytes": 957,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/__init__.py",
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "bytes": 69336,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 15543,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "sha256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 111009,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": {
+      "bytes": 53075,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    },
+    "/usr/lib/python3.12/dataclasses.py": {
+      "bytes": 61753,
+      "path": "/usr/lib/python3.12/dataclasses.py",
+      "sha256": "0e449d55d6206b0022f541ba32be88fafc934ff71d9aa65f31f101ca6147f2ae"
+    }
+  },
+  "audit_guard_probes": 2,
+  "bootstrap_calls": 1,
+  "bootstrap_report": {
+    "bytecode_cache_reads_by_resource_loader": false,
+    "canonical_inert_package_shell_count": 3,
+    "exact_source_bytes_compiled_directly": true,
+    "executed_unchanged_resource_source_count": 3,
+    "model_calls": 0,
+    "native_package_init_equivalence_claimed": false,
+    "package_initializer_files_custody_pinned": 3,
+    "package_initializers_executed": false,
+    "resource_source_root": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01",
+    "router_deps_imported": false,
+    "scheduler_client_constructed": false,
+    "schema": "actor-context-ranking-resource-namespace-bootstrap/v1",
+    "shared_state_read_by_bootstrap": false,
+    "sys_path_source_root_added": false
+  },
+  "census_calls": 0,
+  "exception_class": null,
+  "findings": [],
+  "forbidden_events": [],
+  "initializers_custody_only": 3,
+  "model_calls": 0,
+  "native_package_init_equivalence_claimed": false,
+  "network_or_subprocess_calls": 0,
+  "numerical_or_SDK_imports": 0,
+  "owner_adoption_watchdog_imports": 0,
+  "package_initializers_executed": false,
+  "passed": true,
+  "pinned_dataclasses_source": {
+    "bytes": 61753,
+    "path": "/usr/lib/python3.12/dataclasses.py",
+    "sha256": "0e449d55d6206b0022f541ba32be88fafc934ff71d9aa65f31f101ca6147f2ae"
+  },
+  "prior_failed_smoke": {
+    "bytes": 8911,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-import-smoke-v01.json",
+    "sha256": "7df903a5325095ef56180a0737f68315d146fdaf97a0288952c635f6eccc0183"
+  },
+  "prior_source_review": {
+    "bytes": 12057,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-source-independent-review-v01.json",
+    "sha256": "17c13625a518242da0b8018f46ae2840b3ec19226a49b1df90cde8379a20d2b2"
+  },
+  "refused_resource_frames": [],
+  "resource_API_calls": 0,
+  "resource_class_definition_frames": {
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety.PressureReading": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety.PressureScopeSample": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety.ProofHostResources": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety.ProofPressureSources": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.CancellationSignal": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.GlobalResourceScheduler": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.LaneReservation": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.LeaseCancelledError": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.LeaseNotFoundError": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.LeaseTimeoutError": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceConfigurationError": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceLane": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceLease": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceLeaseToken": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceSchedulerConfig": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceSchedulerError": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceUnavailableError": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.SchedulerPressureSummary": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.SchedulerStateError": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler._CombinedCancellationSignal": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry.ResourceSnapshot": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry.RuntimeSpan": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry.RuntimeTelemetry": 1
+  },
+  "resource_constructor_method_sampler_calls": 0,
+  "resource_module_frames": {
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler": 1,
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry": 1
+  },
+  "resource_namespace": {
+    "ipfs_datasets_py": {
+      "file": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/__init__.py",
+      "kind": "custody_only_namespace_shell"
+    },
+    "ipfs_datasets_py.optimizers": {
+      "file": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/__init__.py",
+      "kind": "custody_only_namespace_shell"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer": {
+      "file": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "kind": "custody_only_namespace_shell"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety": {
+      "file": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "kind": "executed_exact_native_source"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler": {
+      "file": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "kind": "executed_exact_native_source"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry": {
+      "file": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "kind": "executed_exact_native_source"
+    }
+  },
+  "scheduler_or_ledger_body_reads": 0,
+  "schema": "actor-context-ranking-resource-bootstrap-import-smoke/v1",
+  "scope": "Guarded import-only; no native client, endpoint, capacity or admission qualification.",
+  "source_fences_before_and_after_passed": true,
+  "source_profile_guard_active_at_close": true,
+  "source_qualification": {
+    "bytes": 16076,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-source-independent-review-v02.json",
+    "sha256": "9024f98bcf1f2970fb2097cac6e49a9a05d0bc5b6455583a94aea8fc2e642493"
+  },
+  "stdlib_dataclass_definition_modules": 51,
+  "stdlib_dataclass_definition_proofs": [
+    {
+      "generated_text_sha256": "8dcac4bcaf865652c7fd8c89746ab0983961f0cf447314f9b22c7172bad18005",
+      "method": "__init__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry"
+    },
+    {
+      "generated_text_sha256": "54ebd64a83c36beef657b7e7b5409c07d61a152da8e857e0e9d55b8b2714ceb2",
+      "method": "__repr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry"
+    },
+    {
+      "generated_text_sha256": "ed49022cf1aa3f99f4e3608a60d4c3bd093bbdb630ff72ee765fc6b5aef5765d",
+      "method": "__eq__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry"
+    },
+    {
+      "generated_text_sha256": "3a9c8455610a4c6274b29eeb6bb5f9a4ecb3e5600955e1a81f884fadb2e6b4b4",
+      "method": "__setattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry"
+    },
+    {
+      "generated_text_sha256": "7fe636bb21407c3478e2038fdc4ea0bcc6d923692208268e2c8de3ae771f04ec",
+      "method": "__delattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry"
+    },
+    {
+      "generated_text_sha256": "fcd40534293cc3f415f2860c31e80458d0121540f137d3a2325131b26e39e594",
+      "method": "__hash__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry"
+    },
+    {
+      "generated_text_sha256": "1d4c4d4ed955cab1c46a97015043d88299dd8d92272d2e1b81ed221dfb768d55",
+      "method": "__init__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "766ccacf2113faf21d1de301021896e564d47bace9a35fd268699e7fd3a3f68c",
+      "method": "__repr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "93ea74ccaffc695f5e5404f6bbeae118b16ecf1cf30b7a7a33b2a85680b87967",
+      "method": "__eq__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "86318d3b3292682d779840f9a007dc3fb93e87cd086799f3f9f2ccc3505404e1",
+      "method": "__setattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "57daf365f64aebec053901b14244a7c57f5548aba9d52cb834f9f19bc9bea140",
+      "method": "__delattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "3953e5d783e33d7d9c1e70f9b8c3975d862bb3a71cd1d019453a969c47a630ab",
+      "method": "__hash__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "b3adb0a9e29c40174443db48f863180a06e34be8b38f7ee6854885dbae14e35a",
+      "method": "__init__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "97d60e253299ab046f0f75f34c2ab1caf1ae43dfdb13ec4e5a3d607b4402f536",
+      "method": "__repr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "eb05b4345eb6c1198af9e18515b695a8672ed5a41536980f2762d9ff835adf20",
+      "method": "__eq__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "ce20be258bff2c94141f5b2ad2572ded32e90b707b81de5eeb85c0df1c70f359",
+      "method": "__setattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "efaadcac38e3eea689c1bdc50a03d7a3119e12175af79f31412eab2dd882da5f",
+      "method": "__delattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "e06528a75435a751756e0de7f0d2df86585a9147dfbd354c93621d771997a179",
+      "method": "__hash__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "1ccb9b1ce7e87aa5eea39312632e0459c72a3e89c93d77162889bde6acee3e8c",
+      "method": "__init__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "9e3c0f4cc1a31453b8293e171da1fe33f9ee45ed8d1b47667802d30378e428b3",
+      "method": "__repr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "efd8ad9f84ef8608c269704a70d39b3dd0540248c158a6f24d6c196f29786527",
+      "method": "__eq__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "02dabf90cff01491fa62eca39cd87d4a24adab6f121448c32a0322056e0b9ae0",
+      "method": "__setattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "0543cb7ec22b630b9e45b95cf628594616485ae160db1b43804986fa9fd40873",
+      "method": "__delattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "b02a65f414bd31962f6af95f76dd19ccafe78ca9fd3580007fea80e1a7cb5dbc",
+      "method": "__hash__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "489e9b5a144136cb95a8ee0b08ac77d862d07e44657fb8868227aa4bf5aa58b9",
+      "method": "__init__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "a0b5af764e736a258c887142bfbe36e63bf46ef8b92bc4e2f93d6f83db1361a1",
+      "method": "__repr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "14bd2683b7890c3f04806179e9e3df5299020bff68b1c65a3a9a1a64b914f7a0",
+      "method": "__eq__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "0e1b6b7d21aef9273a7c8d6b549660fd7ba06983e69f41e83e0276e61e8e0b1e",
+      "method": "__setattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "dbaa49ad25a21b324916a2523b7a9def982acb8d2300e7093dd3a43acf4ef99d",
+      "method": "__delattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "401458605a2acc167758e3a01a1b3c5dea6c93c4a2123154ab9b9b7f31d70ea5",
+      "method": "__hash__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety"
+    },
+    {
+      "generated_text_sha256": "1b39a8f978e153283480268d525d8663dd0f774530a85dd84fda9a373f959579",
+      "method": "__init__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "ac34cb903783eaac4963ab29b5b877844a637c77fff41d5429d5af50627c3e78",
+      "method": "__repr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "27dbe94504d7a80760d0ef694a7000d7ce46dddd96edf6f471fe006bd8e7daa3",
+      "method": "__eq__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "b13f4c0292ace3966be38031d905af0a6c3d022c52e81f4a8aec9427604b141f",
+      "method": "__setattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "96cbce79747c67a5e2aa791792736beb0e2210322da4d259ae10e48b18dcb946",
+      "method": "__delattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "ed53f6b912ff720c8bd7539fef17ff0e69ff2471310b32b40637d819f8ae1061",
+      "method": "__hash__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "30f0c9f1962f74363145f987bdd5629413f7402c339039f78153650669e47720",
+      "method": "__init__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "fcd3421d7c7445c6c716065ad6f4919bc8f77008b6a1c0e23afa71f198f047c4",
+      "method": "__repr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "b3687d4a82013c64d04c1f656dfec8e4be717dde6be89fbc6fb0be5c2d579e6e",
+      "method": "__eq__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "8701bfd9aa9ad395047f70d1b04741534ae80ced7a3d69e7513f6d1a7433c89e",
+      "method": "__setattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "2d0420344bc3f89217cd3e9dc4150e0e562fab326dda7f4a68355f6f6637db38",
+      "method": "__delattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "8d36fd11f57b62401a4288d66845519a4c15e838f30a8a25a1e424507c1abf83",
+      "method": "__hash__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "3d205ae1c2a120f46cdcc87eb2e2c4a067f6185d57b43dcb4e2c87021d9782e0",
+      "method": "__init__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "168e95dbcab56f6d057bbd31a44694984091c2e83c435b0e50f99d399dabced2",
+      "method": "__repr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "c1f51d0c45d84b9d9a0866af60c5ed0e498deff06d16f8bc1e190680e23d577d",
+      "method": "__eq__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "8422232a68e0c299e5baddaad509b7cb064eacc990d2131ee7a4b6867e4d7771",
+      "method": "__init__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "81a362d18d226467a2f2b3a24d431b1492da82d501e1616f1544a935aba9d9ea",
+      "method": "__repr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "599c1e9968570b83ec8a842b356183d4a000d5ec49278a26ed0aad2823d78653",
+      "method": "__eq__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "b5fe1fc1464aac3cdae8afb9dcd196a20153f178c831d5883328d6c9605f776c",
+      "method": "__setattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "49583c79e3c935d21bb71003c762f8f54768e2331ae5b22bf0ae9c3afdcb5d6b",
+      "method": "__delattr__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    },
+    {
+      "generated_text_sha256": "6f7620b9417572637120a6a5c910b1fb1e07314d25e96d895fcd1a31f2c8b0a9",
+      "method": "__hash__",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler"
+    }
+  ],
+  "stdlib_dataclass_method_definition_factories": 51,
+  "stdlib_dataclass_methods_defined_not_called": 51
+}

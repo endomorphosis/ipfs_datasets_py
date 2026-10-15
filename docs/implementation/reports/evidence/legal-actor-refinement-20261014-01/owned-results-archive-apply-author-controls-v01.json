@@ -1,0 +1,103 @@
+{
+  "actual_apply_main_calls": 0,
+  "actual_archive_publications": 0,
+  "actual_original_moves": 0,
+  "actual_original_unlinks": 0,
+  "control_count": 14,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "exact actual public prepared proof passes",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "false800M success refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "savings below concrete750M threshold refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "protected donor archival refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "duplicate prepared member refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "counted publication fsynced and rawbyte exact",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "existing counted publication never overwritten",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "exact original raw/identity fence passes",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "changed original raw bytes refused before move",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "verified quarantine preserves bytes before any deletion",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "existing quarantine destination never overwritten",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "actual-style independent immutable readback predicate",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "priorHFidentity mutation refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "incorrect immutable raw readback refused",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "fixture_only": true,
+  "global_censuses": 0,
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "prepared": {
+    "bytes": 801434,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json",
+    "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+  },
+  "private_body_reads": 0,
+  "producer": {
+    "bytes": 13454,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/apply_owned_results_archive_v01.py",
+    "sha256": "e8cd87849223767c40d48c5e90da55bc7f93f21a6ce2e1a128fc48ede3855d41"
+  },
+  "resource_API_calls": 0,
+  "schema": "actor-refinement-owned-results-archive-apply-author-controls/v1",
+  "source": {
+    "bytes": 5020,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned_results_archive_apply_author_controls_v01.py",
+    "sha256": "602d6a77c080a7f8f65a3081b68da5bd47006d1536b5c2f56d7e60fbdabaafa8"
+  }
+}

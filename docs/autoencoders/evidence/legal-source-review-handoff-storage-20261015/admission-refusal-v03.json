@@ -1,0 +1,32 @@
+{
+  "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-definition-v2-review-integration-20261015-03",
+  "child_started": false,
+  "exception_type": "DaemonResourceError",
+  "exit_code": 1,
+  "failure_stage": "owner.open -> __enter__ -> _account before storage record insertion and scheduler grant acquisition",
+  "foreign_claims_released": false,
+  "message": "storage reservation capacity exceeded",
+  "native_claim_created": false,
+  "observation": {
+    "additional_requested_bytes": 67108864,
+    "charged_bytes": 137558556872,
+    "filesystem_free_deficit_bytes": 4891799232,
+    "filesystem_free_insufficient": true,
+    "limit_bytes": 160000000000,
+    "minimum_filesystem_free_bytes": 35175522304,
+    "observed_apparent_bytes": 97491235336,
+    "outstanding_full_reservations_bytes": 40000212672,
+    "schema": "daemon-resource-capacity-observation/v1",
+    "scope": "named_roots_only_apparent_bytes",
+    "storage_capacity_deficit_bytes": 0,
+    "storage_capacity_exceeded": false
+  },
+  "observed_tool_session": 66684,
+  "provenance": "Aggregate JSON emitted by native launcher to stderr and retained in tool result; this file is a structured transcription, not a raw stderr transcript.",
+  "request": "validation-request-v03.json",
+  "request_sha256": "b5b9cc94f4214cecb1c5697f804d9545778b8f8fe02e49f3678fb2d4f8085900",
+  "resource_policy_or_cap_changed": false,
+  "schema": "legal-definition-v2-review-admission-refusal/v2",
+  "selected_tests_executed": false,
+  "source_preparation_executed": false
+}

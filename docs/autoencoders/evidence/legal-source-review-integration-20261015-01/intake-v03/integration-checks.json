@@ -1,0 +1,39 @@
+{
+  "cases": 76,
+  "checks": [
+    "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+    "tests/unit/logic/autoformal/test_legal_source_sampling.py"
+  ],
+  "counts": {
+    "error": 0,
+    "failure": 0,
+    "skipped": 0
+  },
+  "exit_code": 0,
+  "gold_admitted": false,
+  "models_loaded": false,
+  "native_Lean_executed": false,
+  "passed": true,
+  "pytest_arguments": [
+    "--noconftest",
+    "--import-mode=importlib",
+    "-o",
+    "addopts=",
+    "-q",
+    "--maxfail=1",
+    "--tb=short",
+    "-p",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest",
+    "--basetemp=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-01/pytest/basetemp",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-01/cache/pytest",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-01/logs/junit.xml",
+    "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+    "tests/unit/logic/autoformal/test_legal_source_sampling.py"
+  ],
+  "request_sha256": "e57ef66bdb66a414e7926a915f584320502aea5a94fe154ba33b5100c2018aff",
+  "reviews_created": false,
+  "schema": "legal-source-review-integration-checks/v1",
+  "temporary_profile": "unique-regular-directory-factory/v1",
+  "unchanged_product_and_suite_inputs": true
+}

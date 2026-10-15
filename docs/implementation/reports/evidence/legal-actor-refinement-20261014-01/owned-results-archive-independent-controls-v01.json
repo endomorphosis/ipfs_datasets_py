@@ -1,0 +1,89 @@
+{
+  "actual_original_result_bytes_read": 0,
+  "actual_prepare_main_calls": 0,
+  "claims_modified": 0,
+  "control_count": 12,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "closed nested opaque inventory",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "deterministic compressed byte representation",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "every member restorative fsync/rawhash/readback exact",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "altered restoration raw hash refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "traversal member rejected",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "protected donor member rejected",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "cache member rejected",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "symlink original refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "aliased inode refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "unexpected extra member refused by fixed intake",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "source identity/byte drift before packing refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "private endpoint path refused before access",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "fixture_only": true,
+  "global_censuses": 0,
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "original_moves": 0,
+  "original_unlinks": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "producer": {
+    "bytes": 16909,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_owned_results_archive_v01.py",
+    "sha256": "e24e09b8e8734d4feacb38d679154556cc0c9a7bacfdf5d917eb097077445a38"
+  },
+  "resource_API_calls": 0,
+  "schema": "actor-refinement-owned-results-archive-author-controls/v1",
+  "source": {
+    "bytes": 4314,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned_results_archive_author_controls_v01.py",
+    "sha256": "fee4a2cc766dc1721743bf79b5229b9526a9a0233a60b44f8c15c2a2b39ba883"
+  }
+}

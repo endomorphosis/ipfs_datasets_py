@@ -1,0 +1,97 @@
+{
+  "authority": {
+    "legal_semantics_verified": false,
+    "production_graph_repaired": false,
+    "proof_authority": false,
+    "published": false,
+    "training_qualified": false
+  },
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "-m",
+    "pytest",
+    "-o",
+    "addopts=-v --tb=short --strict-markers --import-mode=importlib",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/artifacts/legal-ir-graph-citations-20261015/baseline-v01/private/pytest-cache",
+    "--basetemp=/home/barberb/lift_coding/artifacts/legal-ir-graph-citations-20261015/baseline-v01/private/tmp",
+    "--junitxml=/home/barberb/lift_coding/artifacts/legal-ir-graph-citations-20261015/baseline-v01/junit.xml",
+    "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_wrapped_graph_parquet_preserves_exact_citation_identity"
+  ],
+  "counts": {
+    "error": 0,
+    "failure": 1,
+    "skipped": 0
+  },
+  "exit_code": 1,
+  "expected_result_observed": true,
+  "head": "6deae26e98452669b32b256794b18affb1155c16",
+  "index_tree": "edb1dfdef81b7d1204c6c3c8c5bc64bb14d513da",
+  "input_inventory": {
+    "docs/autoencoders/evidence/legal-ir-graph-citations-20261015/qualification_runner.py": {
+      "bytes": 6339,
+      "sha256": "c55085e0edc14f79437025c3e2c96bbea5e031f2537e9a96da349a06a41e4380"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_manifest.py": {
+      "bytes": 25730,
+      "sha256": "c1e86ab52371730d52cf582d2b60fbe282ae52608dcb462ec2c59cdf24738d38"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_reconstruction.py": {
+      "bytes": 24607,
+      "sha256": "e8075e6232b64ee3c8469e5c4a71d1bc77dbbdd4dd34e7e03768c516ed61c0c6"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_records.py": {
+      "bytes": 13932,
+      "sha256": "0d07aae6e54cbb44685201333992054817fa7b481ba64cc6dee52b7d5c743cbf"
+    },
+    "ipfs_datasets_py/processors/legal_data/uscode_hf_release.py": {
+      "bytes": 88604,
+      "sha256": "c183915f939892efff604fcd426df383b5393c3f4ca5a59d13216566d4c4805c"
+    },
+    "ipfs_datasets_py/processors/legal_data/uscode_release_schema.py": {
+      "bytes": 91298,
+      "sha256": "7808e42ae4308b8f25421628840e1e23d65f72d8a28ef67a88d48ff510ef3c53"
+    },
+    "pytest.ini": {
+      "bytes": 1536,
+      "sha256": "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff"
+    },
+    "scripts/ops/legal_ir/ingest_ipfs_uscode_entities.py": {
+      "bytes": 40821,
+      "sha256": "12deaa15d57ff75977105f7aa74b0a750cffada6e9f876f16d6d5f87d888f7bc"
+    },
+    "scripts/ops/legal_ir/publish_kg_meta_ontology.py": {
+      "bytes": 4435,
+      "sha256": "41d8af4124c398e90f4f5f4c4ca7b3ebbe82c74b08c7516b1eeaa2ce80f91392"
+    },
+    "tests/conftest.py": {
+      "bytes": 20716,
+      "sha256": "0a255dc653799cb980d7edbb1d7b2e3c8f0d81b091d4986aa712e1e8e12b7f10"
+    },
+    "tests/unit/logic/test_kg_graph_citation_identity.py": {
+      "bytes": 2927,
+      "sha256": "bc237bfc30112052c53fd409d4f32e3ef438c9e380833f23540e5477234c7471"
+    }
+  },
+  "inputs_unchanged": true,
+  "outputs": {
+    "junit.xml": {
+      "bytes": 1569,
+      "sha256": "e7f72b05152757a35c45f1176f1752ac7cb0833935ba0b6dc68c289eefa0d2d2"
+    },
+    "stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout.txt": {
+      "bytes": 2109,
+      "sha256": "65936bacaf6c08a53c4bd0a5d6c5055408171e2b2f6e5f2005ca313e235e7afa"
+    }
+  },
+  "profile": "baseline",
+  "receipt_passed": true,
+  "schema": "legal-graph-citation-qualification/v1",
+  "scope": "listed local inputs and synthetic private files; no production cache or model qualification",
+  "test_cases": 1,
+  "unique_cases": true
+}

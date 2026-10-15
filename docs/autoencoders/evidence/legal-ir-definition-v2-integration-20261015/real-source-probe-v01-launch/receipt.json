@@ -1,0 +1,41 @@
+{
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-integration-20261015/docs/autoencoders/evidence/legal-ir-definition-v2-integration-20261015/real_source_probe.py",
+    "--output-directory",
+    "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v01"
+  ],
+  "driver": {
+    "bytes": 13764,
+    "sha256": "0703a0729a53514048dbfc3389eb878c114b20ac49f6fcfe89454e4cacd9279f"
+  },
+  "elapsed_seconds": 54.01097862608731,
+  "environment_policy": "allow PATH/LANG/LC_ALL/LD_LIBRARY_PATH only; offline flags and private caches added",
+  "exit_code": 0,
+  "head": "0ee2872d085f57128b14f952fa1916734522e991",
+  "index_tree": "69fed11b63e2451f634a0d07cd951231b4b1b895",
+  "output_directory": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v01",
+  "probe_receipt": {
+    "bytes": 10454,
+    "sha256": "b47fc2c72d97f2837567ef85e82c9d9284d3975ab4fe0bfef04df663f2c83dd1"
+  },
+  "probe_status": "pass",
+  "qualification_receipt": {
+    "bytes": 78801,
+    "sha256": "63d0071bb7f4012435a78cc4db6eec7edd0add178f8312fe2a561b77be96f774"
+  },
+  "qualified_input_count": 402,
+  "qualified_inputs_and_driver_unchanged": true,
+  "receipt_passed": true,
+  "schema": "legal-definition-v2-probe-launch/v1",
+  "stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 154,
+    "sha256": "dcb0f77794d93e547ef5dff4cd2381d27f4ffeced81f586dba865397efd855e0"
+  },
+  "stop_reason": null,
+  "timeout_seconds": 300
+}

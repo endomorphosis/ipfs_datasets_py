@@ -1,0 +1,45 @@
+{
+  "actual_builder_main_calls": 0,
+  "actual_command": [
+    "python",
+    "-B",
+    "test_actor_refinement_release_builder_detached_v02.py"
+  ],
+  "actual_freeze_or_result_metadata_reads": 0,
+  "actual_reference_reads": 0,
+  "builder": {
+    "bytes": 17198,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/build_actor_refinement_release_spec_v02.py",
+    "sha256": "81aeaac58a5c6c76e6df0da8d4b12fea19a2fa9825e4dcf81c46862fe39dd9b0"
+  },
+  "checkpoint_JSON_parses": 0,
+  "exit_code": 0,
+  "findings": [],
+  "fixture_only": true,
+  "model_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "payload_copy_calls": 0,
+  "resource_API_calls": 0,
+  "schema": "actor-refinement-release-builder-detached-controls/v1",
+  "test_cases": [
+    "test_exact_62_result_geometry",
+    "test_source_prefix_and_current_recipe_versions",
+    "test_no_payload_or_reference_metadata_read_before_freeze",
+    "test_private_resource_bodies_denied",
+    "test_exact32MiB_payload_source_accepted_above_refused",
+    "test_duplicate_and_traversal_destinations_refuse",
+    "test_scientific_false_and_true_both_publish_without_promotion",
+    "test_disposition_mismatch_or_promotion_refuses",
+    "test_source_gate_precedes_any_freeze_metadata_read",
+    "test_manifest_is_copied_without_recursive_self_inventory",
+    "test_no_legacy_trainer_or_old_scientific_acceptance"
+  ],
+  "test_source": {
+    "bytes": 7257,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_release_builder_detached_v02.py",
+    "sha256": "4814a868202a4ea0b7e63deb565af11ef3cd6557f421efdce0caa3a5ba1ee208"
+  },
+  "tests_passed": 11
+}

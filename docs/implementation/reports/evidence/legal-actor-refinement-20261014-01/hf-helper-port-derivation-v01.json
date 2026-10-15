@@ -1,0 +1,141 @@
+{
+  "actual_baseline_calls": 0,
+  "actual_builder_main_calls": 0,
+  "actual_payload_preparations": 0,
+  "actual_release_specs_created": 0,
+  "actual_result_or_reference_reads": 0,
+  "actual_uploads": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-hf-port-detached-controls-v01.json": {
+      "bytes": 1987,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-hf-port-detached-controls-v01.json",
+      "sha256": "2901e9c82f4be7eaeecbd0d85629f7c065dd0a5a7fcc76953218355e8c048bb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-release-builder-detached-controls-v01.json": {
+      "bytes": 1703,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-release-builder-detached-controls-v01.json",
+      "sha256": "20029bb741e72ea74b5c276217428ea2a890a7deb581c1f668acbb4ee67e2dde"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v01.py": {
+      "bytes": 28390,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v01.py",
+      "sha256": "471dc3f744bfd374e798e0b9e0633a01b1045f039b689e3111c17fe3a4017e95"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/build_actor_refinement_release_spec_v01.py": {
+      "bytes": 17151,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/build_actor_refinement_release_spec_v01.py",
+      "sha256": "1e3ba03b62ee64f90923f96a96fd177cae7c3c1334eed5190ceb46b8e5f45dd6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 12913,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json",
+      "sha256": "a8e64cee523d57149b6becaf18023bf87a9ecdb147d83e9c42453fce9230944e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_hf_port_detached_v01.py": {
+      "bytes": 10116,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_hf_port_detached_v01.py",
+      "sha256": "a81f8bec89b1f13a30d29a0735c5c5155a5e3233a260954996da0a788b619c28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_release_builder_detached_v01.py": {
+      "bytes": 7257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_release_builder_detached_v01.py",
+      "sha256": "7f7b01a2f6ba5308522a6b157bf1835a2cd9fc6a72369dacc647c9b66e34dd0c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/trainer-source-independent-review-v01.json": {
+      "bytes": 40673,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/trainer-source-independent-review-v01.json",
+      "sha256": "2b9ef89ebf9512ccdc61ccfa0e7e83a00b291764ad74fae22272b4be5e5b9ca1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/archive_conditions_balanced_hf_v01.py": {
+      "bytes": 24481,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/archive_conditions_balanced_hf_v01.py",
+      "sha256": "90e63b176bb7b4080a20e56031e57c5f561ac4b41141fb6307179e31fc9ed921"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/build_conditions_balanced_release_spec_v02.py": {
+      "bytes": 14098,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/build_conditions_balanced_release_spec_v02.py",
+      "sha256": "bb9d5687dd634dd0170e7549bb26b1cdc71efdc565ae1d1af2ee44e5e81ca9fe"
+    }
+  },
+  "builder": {
+    "bytes": 17151,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/build_actor_refinement_release_spec_v01.py",
+    "sha256": "1e3ba03b62ee64f90923f96a96fd177cae7c3c1334eed5190ceb46b8e5f45dd6"
+  },
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "gates_required": [
+    {
+      "fields": [
+        "builder",
+        "helper",
+        "artifacts",
+        "passed",
+        "findings"
+      ],
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-helper-port-source-independent-review-v01.json",
+      "schema": "actor-refinement-Hub-helper-port-source-independent-review/v1",
+      "stage": "Independent source-only port qualification before root-triggeredbaseline/builder."
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-helper-source-independent-review-v01.json",
+      "schema": "actor-refinement-Hub-helper-source-independent-review/v1",
+      "stage": "After actual resultreview/card/baseline/spec; bind every actualspecsource/rawpin before prepare."
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-independent-review-v01.json",
+      "schema": "actor-refinement-Hub-publication-independent-review/v1",
+      "stage": "After exactpreparedpayload; concrete repository/parent/completeentry review before upload."
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-actual-independent-review-v01.json",
+      "schema": "actor-refinement-Hub-actual-publication-independent-review/v1",
+      "stage": "After immutablepublication/downloads; independent fullold+newidentity/rawreadback audit."
+    }
+  ],
+  "helper": {
+    "bytes": 28390,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v01.py",
+    "sha256": "471dc3f744bfd374e798e0b9e0633a01b1045f039b689e3111c17fe3a4017e95"
+  },
+  "model_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "parent_sources": {
+    "builder": {
+      "bytes": 14098,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/build_conditions_balanced_release_spec_v02.py",
+      "sha256": "bb9d5687dd634dd0170e7549bb26b1cdc71efdc565ae1d1af2ee44e5e81ca9fe"
+    },
+    "helper": {
+      "bytes": 24481,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/archive_conditions_balanced_hf_v01.py",
+      "sha256": "90e63b176bb7b4080a20e56031e57c5f561ac4b41141fb6307179e31fc9ed921"
+    }
+  },
+  "passed": true,
+  "private_body_reads": 0,
+  "pure_controls": {
+    "builder11": true,
+    "helper16": true,
+    "total": 27
+  },
+  "schema": "actor-refinement-Hub-helper-port-derivation/v1",
+  "source_deltas": [
+    "Namespace/cell/attempt/source and schema labels ported to F15 actor-refinement.",
+    "Exactly39 actual plan-admitted trainer owners plus1 independently qualified supplemental attention raw source; current F15trainer gate replaces F14relocation gate.",
+    "Current admitted runner/preparer/bootstrapV03, freezerV03/sourcegateV02, terminalV01, analyzer/recountV01 and exact model contract test are explicit.",
+    "Full immutable0228887c anchor5448 plus entire observed CURRENT remote inventory preserved; fresh release prefix and all chunk-parent CAS checks retained.",
+    "Typed immutable Git/LFS identities; finite scalar metadata; max32MiB payloadfile with explicit singleton forfiles over16MBchunk target;48file/16MBordinarychunks,total200MBcap.",
+    "Builder and baseline require exact independent sourceportgate; later prepare requires actualspec/science/fullartifact qualification, publish requires separate concretepayload review.",
+    "Builder requires actual complete62freeze/runtime and actualanalysis/recount/resultreview before spec; technicalpassed stays separate from scientific_successbool, defaultpromotionFalse.",
+    "Release manifest is a self-excluded sourceinventory and is itself included as one additional exact public spec source; no recursive selfhash.",
+    "Strict required-public-artifact verification retained; no broad historicalrawpath skip or archivedpath substitution."
+  ],
+  "source_readiness_only": true,
+  "unchanged_scopes": [
+    "Checkpoint/model codec remains opaque and unchanged. No model/encoder/teacher/comparator calls.",
+    "ParentCAS, append-only chunks, unknown-outcome refusal/noautomatic retry, immutable CLIreadback and SHA256 fences retained.",
+    "Private resource body/reference packet/checkpointJSON parsing remain prohibited; historicalfullparentweights alreadyremain in prior immutable releases."
+  ]
+}

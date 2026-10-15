@@ -1,0 +1,20 @@
+test_actual_launcher_handler_reraises_identical_error_once (__main__.CapacityDiagnosticsTests.test_actual_launcher_handler_reraises_identical_error_once) ... ok
+test_both_refusal_conditions (__main__.CapacityDiagnosticsTests.test_both_refusal_conditions) ... ok
+test_cap_constant_is_unchanged (__main__.CapacityDiagnosticsTests.test_cap_constant_is_unchanged) ... ok
+test_equality_at_both_boundaries_still_passes (__main__.CapacityDiagnosticsTests.test_equality_at_both_boundaries_still_passes) ... ok
+test_global_only_refusal (__main__.CapacityDiagnosticsTests.test_global_only_refusal) ... ok
+test_invalid_scalar_bool_or_inconsistent_deficit_is_not_published (__main__.CapacityDiagnosticsTests.test_invalid_scalar_bool_or_inconsistent_deficit_is_not_published) ... ok
+test_missing_or_extra_fields_are_not_published (__main__.CapacityDiagnosticsTests.test_missing_or_extra_fields_are_not_published) ... ok
+test_noncapacity_message_is_not_relabelled (__main__.CapacityDiagnosticsTests.test_noncapacity_message_is_not_relabelled) ... ok
+test_other_errors_have_no_capacity_snapshot (__main__.CapacityDiagnosticsTests.test_other_errors_have_no_capacity_snapshot) ... ok
+test_physical_equality_with_global_headroom_still_passes (__main__.CapacityDiagnosticsTests.test_physical_equality_with_global_headroom_still_passes) ... ok
+test_physical_only_refusal (__main__.CapacityDiagnosticsTests.test_physical_only_refusal) ... ok
+test_released_claim_is_excluded_and_full_retained_claim_is_charged (__main__.CapacityDiagnosticsTests.test_released_claim_is_excluded_and_full_retained_claim_is_charged) ... ok
+test_snapshot_access_is_detached_and_contains_no_inventory (__main__.CapacityDiagnosticsTests.test_snapshot_access_is_detached_and_contains_no_inventory) ... ok
+test_stderr_failure_does_not_replace_original_exception (__main__.CapacityDiagnosticsTests.test_stderr_failure_does_not_replace_original_exception) ... ok
+test_stderr_is_bounded_exact_aggregate_json (__main__.CapacityDiagnosticsTests.test_stderr_is_bounded_exact_aggregate_json) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.009s
+
+OK

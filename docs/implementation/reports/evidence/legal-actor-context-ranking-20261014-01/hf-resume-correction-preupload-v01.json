@@ -1,0 +1,20 @@
+{
+  "baseline_attributes": {
+    "bytes": 2230,
+    "force_download": true,
+    "immutable_download_byte_identity_matches": true,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-partial-attrs-readback-v01/baseline/.gitattributes",
+    "remote_identity": {
+      "blob_id": "1cf99f89f95ce8f39b630d8df37126fc628047de",
+      "lfs": null,
+      "size": 2230
+    },
+    "revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4",
+    "sha256": "88ff4d857c849ce3e11fea7c2f70d648550968cf546ab9cbc4d690e1b6543036"
+  },
+  "parent_revision": "246e7793db1399341387fabbb740781ea23251c8",
+  "paths": [
+    ".gitattributes"
+  ],
+  "sole_prior_file_correction": true
+}

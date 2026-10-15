@@ -1,0 +1,29 @@
+{
+  "additions_only": true,
+  "names": [
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-authored_dev-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-authored_eval-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-authored_eval-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-fresh_challenge-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-fresh_challenge-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-fresh_dev-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-fresh_dev-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-fresh_test-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-fresh_test-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-fresh_tune-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-fresh_tune-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-frozen-head-retention.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-law-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-law-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-old_authored_eval-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-old_authored_eval-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-old_tune-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-old_tune-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-parity-alternate_placeholders.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-parity-disabled.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-parity-rotated_placeholders.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-parity-zeros.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-parity.json"
+  ],
+  "parent_revision": "18c0143f49d60d3dc0ae16903108314310b802b6"
+}

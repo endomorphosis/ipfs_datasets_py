@@ -13,8 +13,9 @@ import copy
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing import Any, Iterable, Sequence
+from typing import Any, Callable, Iterable, Sequence
 
+from ipfs_datasets_py.logic.software_contracts.ast_ir import ASTRecord
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_bytes
 from ipfs_datasets_py.logic.software_contracts.python_frontend import PythonASTExtractor
 from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import (
@@ -919,6 +920,65 @@ def aggregate_logical_bindings(facts: Iterable[PythonSymbolFacts]) -> tuple[Pyth
     return result
 
 
+def _validated_frontend_record(
+    source: bytes,
+    path: str,
+    repository_id: str,
+    record: ASTRecord,
+    context: Any,
+    *,
+    require_default_profile: bool = True,
+) -> tuple[ASTRecord, Any]:
+    """Detach native facts whose producer was independently admitted by the owner.
+
+    These checks establish input/profile compatibility. A claimed record CID or
+    frontend capability alone does not authenticate extraction. The live owner
+    must verify its admitted preparation artifacts before supplying this seam.
+    """
+    from ipfs_datasets_py.logic.software_contracts.duckdb_ingest import (
+        SourceShardContext,
+        _frontend_cache_context,
+        _restart_context,
+        _source_shard_context_payload,
+    )
+
+    if type(source) is not bytes or type(record) is not ASTRecord:
+        raise ValueError("prepared frontend requires exact source bytes and ASTRecord")
+    if type(context) is not SourceShardContext:
+        raise ValueError("prepared frontend requires an exact native parser context")
+    if type(require_default_profile) is not bool:
+        raise ValueError("default frontend profile selection must be an exact boolean")
+    detached = ASTRecord.from_json(record.to_json())
+    native_context = _restart_context(_source_shard_context_payload(context))
+    source_cid = cid_for_bytes(source)
+    native_context.verify(detached, source_cid)
+    if (detached.provenance.path != path
+            or detached.provenance.repository_id != repository_id
+            or native_context.language != "python"
+            or detached.frontend.language != "python"
+            or native_context.module_name is not None):
+        raise ValueError("prepared frontend source, repository or language differs")
+
+    default = PythonASTExtractor()
+    expected = _frontend_cache_context(default, language="python", path=path)
+    if expected is None or native_context.implementation_cid != expected.implementation_cid:
+        raise ValueError("prepared frontend implementation differs from the native parser")
+    if require_default_profile:
+        if native_context != expected or detached.frontend != default.capability:
+            raise ValueError("prepared frontend options differ from default semantic extraction")
+    else:
+        # Resource limits are absent from ASTRecord capability. The caller has
+        # already admitted that complete context; verify its native toolchain
+        # while permitting an opt-out to re-extract with default limits.
+        version = detached.frontend.language_version.split(".")
+        if len(version) != 2 or any(not item.isdecimal() for item in version):
+            raise ValueError("prepared frontend Python feature version is not native")
+        parser = PythonASTExtractor(feature_version=tuple(int(item) for item in version))
+        if detached.frontend != parser.capability:
+            raise ValueError("prepared frontend capability differs from the native parser")
+    return detached, native_context
+
+
 class PythonSemanticAnalyzer:
     def __init__(
         self,
@@ -933,12 +993,35 @@ class PythonSemanticAnalyzer:
         self.extractor_name = extractor_name
         self.extractor_version = extractor_version
 
-    def analyze(self, source: str | bytes, path: str) -> PythonSemanticAnalysis:
+    def analyze(
+        self, source: str | bytes, path: str, *,
+        frontend_record: ASTRecord | None = None,
+        frontend_context: Any = None,
+        checkpoint: Callable[[], None] | None = None,
+    ) -> PythonSemanticAnalysis:
+        """Analyze syntax, optionally reusing independently admitted native facts.
+
+        Both staged inputs are required together and must match the default
+        extraction profile. CPython syntax parsing still supplies semantic
+        version evidence; reusing declaration facts does not skip that work.
+        """
+        if checkpoint is not None and not callable(checkpoint):
+            raise ValueError("checkpoint must be callable")
+        if (frontend_record is None) != (frontend_context is None):
+            raise ValueError("prepared frontend record and context are required together")
+        check = checkpoint if checkpoint is not None else (lambda: None)
         raw = source.encode("utf-8") if isinstance(source, str) else source
         source_cid = cid_for_bytes(raw)
         # The frontend is the declaration and scope authority.  AST nodes below
         # are only syntax payloads keyed back to those canonical facts.
-        frontend = PythonASTExtractor().extract(raw, path=path, repository_id=self.repository_id)
+        if frontend_record is None:
+            check()
+            frontend = PythonASTExtractor().extract(raw, path=path, repository_id=self.repository_id)
+        else:
+            frontend, _context = _validated_frontend_record(
+                raw, path, self.repository_id, frontend_record, frontend_context,
+            )
+        check()
         notices = tuple((*frontend.diagnostics, *frontend.unsupported))
         disposition = PythonFrontendDisposition(
             fatal_diagnostics=tuple(sorted({
@@ -948,11 +1031,14 @@ class PythonSemanticAnalyzer:
         )
         if disposition.is_fatal:
             return PythonSemanticAnalysis(path, source_cid, (), disposition.fatal_diagnostics)
+        check()
         try:
             text = raw.decode("utf-8")
             tree = ast.parse(text, filename=path, type_comments=True)
         except (UnicodeDecodeError, SyntaxError, ValueError):
+            check()
             return PythonSemanticAnalysis(path, source_cid, (), ("python.parse_error",))
+        check()
 
         module = _module_name(path)
         # Hidden script paths have an empty first dotted component. Keep their
@@ -1288,6 +1374,7 @@ class PythonSemanticAnalyzer:
                 tuple(sorted({edge.edge_id: edge for edge in edges}.values(), key=lambda edge: edge.edge_id)),
                 tuple(sorted(item["reasons"])),
             ))
+        check()
         return PythonSemanticAnalysis(
             path, source_cid,
             tuple(sorted(facts, key=lambda item: item.symbol.stable_id)),

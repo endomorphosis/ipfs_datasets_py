@@ -1,0 +1,95 @@
+{
+  "SDK_imports": 0,
+  "checkpoint_JSON_parses": 0,
+  "checkpoint_opened": false,
+  "controls_source": {
+    "bytes": 8927,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_hf_partial_detached_v01.py",
+    "sha256": "4089faab2f5075448687048da65607ae9f4c8ac4ef5558661ac567a6c23a0cf2"
+  },
+  "correction_or_resume_not_authorized_by_author_receipt": true,
+  "coverage": [
+    "exact201-file ninechunk geometry/firsttwoverified/thirdcheckpointcreated",
+    "actual public preparation shape",
+    "typed lineage/geometry/descriptor rejection cases",
+    "strict old identity violation remains false",
+    "old nonattributes difference/missing/unexpected/new byte mismatch classification",
+    "LFS checkpoint metadata verification without opening checkpoint",
+    "exact checkpoint attributes append vs removal/rewrite",
+    "five metadata queries and two forced attrs-only downloads",
+    "sourcegate before SDK import",
+    "exact checked helper source buffer compile"
+  ],
+  "findings": [],
+  "future_actual_observation_requires_independent_source_qualification": true,
+  "helper_or_observer_main_executed": false,
+  "model_calls": 0,
+  "network_calls": 0,
+  "observed_at_utc": "2026-10-14T13:21:29.450359+00:00",
+  "passed": true,
+  "prediction_or_gold_JSON_parses": 0,
+  "private_body_reads": 0,
+  "public_input_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/archive_actor_context_ranking_hf_v01.py": {
+      "bytes": 30925,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/archive_actor_context_ranking_hf_v01.py",
+      "sha256": "e6c383eed91d6cee2405ce401fb0ab6692b714e0a2d3e99c09dbf4abe9f6a1ee"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-before-file-identities-v01.json": {
+      "bytes": 3040998,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-before-file-identities-v01.json",
+      "sha256": "de488e30a48aaba63660ca87fd1ef26f90aadd9b3a7c7beba55908fc7c96e4d9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-01-created-v01.json": {
+      "bytes": 2294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-01-created-v01.json",
+      "sha256": "c63eed3a0193e836c670eefca60bce6a5e4992c4e041f5bdbd558c8732892f03"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-01-verified-v01.json": {
+      "bytes": 214,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-01-verified-v01.json",
+      "sha256": "065790f6af876433e9c8e42a22ba45fc446063f8ff741d3a7a1d6984956d4f3d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-02-created-v01.json": {
+      "bytes": 262,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-02-created-v01.json",
+      "sha256": "0f5c8b9f2b54f7c53820e1f93d538f805bd8e007fb89512fbc86e670eecda4a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-02-verified-v01.json": {
+      "bytes": 213,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-02-verified-v01.json",
+      "sha256": "fe7eea84dcf75197507d5b9c579d24e39467788c1ee530fd8015bb1711780678"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-03-created-v01.json": {
+      "bytes": 256,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-03-created-v01.json",
+      "sha256": "ad0455cf4e66eff65e8b7c740ea4cd7377d5b5444550e07db28f1db913fc0a74"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-preparation-receipt-v01.json": {
+      "bytes": 109799,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-preparation-receipt-v01.json",
+      "sha256": "45cae121d94a6527940f7cebba88f278c573723c4de5a69d7c14d4c9fac24140"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-independent-review-v01.json": {
+      "bytes": 151803,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-independent-review-v01.json",
+      "sha256": "2bcafc080c2e444e738a3488f8a403c70bd3046e8cddb77974b2855a7cb027e0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-release-spec-v01.json": {
+      "bytes": 94501,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-release-spec-v01.json",
+      "sha256": "bc36cad30b42c66d87d2224aa681569dccd50eca2635c1ba137f504909d9717b"
+    }
+  },
+  "remote_mutations": 0,
+  "resource_API_calls": 0,
+  "schema": "actor-context-ranking-Hub-partial-observer-author-controls/v1",
+  "scope": "detached AST/pure synthetic fixtures plus actual PUBLIC preparation/spec/chunk metadata shape; no producer main",
+  "source": {
+    "bytes": 14203,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/observe_actor_context_ranking_hf_partial_v01.py",
+    "sha256": "bab0f43229cb26aa8e7b472463308d773617c21ea4ad1a718a42467694a1002d"
+  },
+  "tests_passed": 12,
+  "tests_run": 12
+}

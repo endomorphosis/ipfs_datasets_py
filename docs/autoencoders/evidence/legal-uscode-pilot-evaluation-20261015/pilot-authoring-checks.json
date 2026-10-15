@@ -1,0 +1,114 @@
+{
+  "actual_source_review_training_or_lean_execution": false,
+  "local_readme_links_exist": [
+    "pilot_spec.json",
+    "pilot_spec.schema.json",
+    "../../legal_ir_uscode_corpus_improvement_plan_20261015.md",
+    "../../legal_source_review_handoff_storage_20261015.md",
+    "../../legal_source_sampling_definition_binding_v2.md",
+    "../../corpus_definition_use_review_v2.md"
+  ],
+  "negative_cases": [
+    {
+      "case": "authority_true",
+      "rejected": true
+    },
+    {
+      "case": "invented_review_evidence",
+      "rejected": true
+    },
+    {
+      "case": "unknown_field",
+      "rejected": true
+    },
+    {
+      "case": "duplicate_owner_id",
+      "rejected": true
+    },
+    {
+      "case": "duplicate_metric_id",
+      "rejected": true
+    },
+    {
+      "case": "duplicate_gate_id",
+      "rejected": true
+    },
+    {
+      "case": "invented_source_selection",
+      "rejected": true
+    },
+    {
+      "case": "dimension_role_swap",
+      "rejected": true
+    },
+    {
+      "case": "invented_preregistration",
+      "rejected": true
+    }
+  ],
+  "owners": [
+    {
+      "id": "sampled_source",
+      "named_methods_present_in_ast": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling.py",
+      "sha256": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489"
+    },
+    {
+      "id": "source_review_intake",
+      "named_methods_present_in_ast": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+      "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+    },
+    {
+      "id": "blank_handoff",
+      "named_methods_present_in_ast": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review_handoff.py",
+      "sha256": "d1aa5ceef271284ed25fdf807bc4d98fe93ebfebd952660b9885ade10c536d89"
+    },
+    {
+      "id": "sampled_definition_binding",
+      "named_methods_present_in_ast": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+      "sha256": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417"
+    },
+    {
+      "id": "definition_review",
+      "named_methods_present_in_ast": true,
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py",
+      "sha256": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190"
+    },
+    {
+      "id": "combined_alias_review",
+      "named_methods_present_in_ast": true,
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py",
+      "sha256": "9a46a3efb5ce17b14ed55f719bd5dc1a48e727cb9168f2f17c5f0cd32bf821a0"
+    },
+    {
+      "id": "graph_exchange",
+      "named_methods_present_in_ast": true,
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py",
+      "sha256": "32800bca0662830409de0622e16902bd458cf6d47c821fc7079cdf4ba9ddc9ad"
+    },
+    {
+      "id": "free_running_metrics",
+      "named_methods_present_in_ast": true,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
+      "sha256": "1f717aeaa0e8c4ae9220976428b2764fc2a7f6d99a74940806c2762b10896376"
+    },
+    {
+      "id": "shared_lean",
+      "named_methods_present_in_ast": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
+      "sha256": "e4bb92e23878ed081f891fdb05eb69bfa17b9d850ae93a298555e209c64eb413"
+    }
+  ],
+  "positive_spec_schema_valid": true,
+  "schema": "legal-uscode-pilot-authoring-checks/v1",
+  "scope": "Metadata shape, AST names and links only; no product imports, source/corpus replay or runtime authority.",
+  "source_sha256": {
+    "docs/autoencoders/pilots/uscode_definition_component/README.md": "90ec1d1416d1d3cabbb1a09c9f5e0cc8e114892fa2511e5cf4bd3bace2d9f083",
+    "docs/autoencoders/pilots/uscode_definition_component/pilot_spec.json": "dd08f3de9ab0ea9cbf5a57cf52b1cdf8517ed41fa0d25f61a3e2753475a25279",
+    "docs/autoencoders/pilots/uscode_definition_component/pilot_spec.schema.json": "562d44725a0f83c3185e3afec3d402eda93e1fdd4b81ee2e86ecfd92b88ade18"
+  },
+  "validator": "jsonschema 4.26.0"
+}

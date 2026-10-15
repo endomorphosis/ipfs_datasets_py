@@ -1,0 +1,176 @@
+{
+  "Git_mutations": 0,
+  "actual_commands": [
+    {
+      "argv": [
+        "python",
+        "-B",
+        "test_actor_refinement_analyzer_detached_v01.py"
+      ],
+      "exit_code": 0,
+      "tests": 20
+    },
+    {
+      "argv": [
+        "python",
+        "-B",
+        "test_actor_refinement_recount_detached_v01.py"
+      ],
+      "exit_code": 0,
+      "tests": 29
+    }
+  ],
+  "actual_model_calls": 0,
+  "analyzer": {
+    "bytes": 28064,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyze_actor_refinement_v01.py",
+    "sha256": "6c6309903cbe20ea73d045e6d29224096ff3a8602cc935c0af6343a6f4599d1b"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyze_actor_refinement_v01.py": {
+      "bytes": 28064,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyze_actor_refinement_v01.py",
+      "sha256": "6c6309903cbe20ea73d045e6d29224096ff3a8602cc935c0af6343a6f4599d1b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 12913,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json",
+      "sha256": "a8e64cee523d57149b6becaf18023bf87a9ecdb147d83e9c42453fce9230944e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py": {
+      "bytes": 41111,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py",
+      "sha256": "e60814cdf89c0fa3d90dd732a4d6fd9e05dd9ea2a27834910fddf7dcbeaa0692"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_analyzer_detached_v01.py": {
+      "bytes": 9501,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_analyzer_detached_v01.py",
+      "sha256": "cc6e77eb10602a1116d4c6f0f5c09e7c4629d2ab5dd5769dc0a806ecbfcf6aa8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_recount_detached_v01.py": {
+      "bytes": 27631,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_recount_detached_v01.py",
+      "sha256": "6eaac15eb42429532ad488e7ccdafd9e6867f78e90271817e74de0c155269dfd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/trainer-source-independent-review-v01.json": {
+      "bytes": 40673,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/trainer-source-independent-review-v01.json",
+      "sha256": "2b9ef89ebf9512ccdc61ccfa0e7e83a00b291764ad74fae22272b4be5e5b9ca1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v02.py": {
+      "bytes": 78492,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v02.py",
+      "sha256": "1a4b4f6b579d0d086ef97d4867c9eea274ceb88142edb4bff849eb95f0fa2e57"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py",
+      "sha256": "0c5b68645cc66e7758d1750c878f5be9fb117faad841fe27f73391c8ccbce8bf"
+    }
+  },
+  "authored_reference_reads": 0,
+  "checkpoint_JSON_parses": 0,
+  "corrected_before_seal": [
+    "bootstrap tuple-target EXPECTED/OBSERVED initialized explicitly",
+    "removed inherited decoded-modality coupling veto",
+    "initial joint parity compares complete row envelopes"
+  ],
+  "covered_predicates": [
+    "initial full632 binary32 projection includes all four learned presence pairs",
+    "final projection excludes only actor start/end vectors; conditions bits and signed zero protected",
+    "closed candidate actor-refinement and parent conditions-presence joint schemas; bounded caps and exact replay",
+    "both raw/joint training exact IR must reach155; each of9 scopes and both views veto lost completeIR IDs",
+    "permission loss/abstention and decoded coupling report scientific failure without technical refusal",
+    "actor ranking changes allowed as diagnostics",
+    "actual model validator trace schema and all32 nonzero-continuation synthetic update fixtures",
+    "exact schedule indices/IDs/digest/final progress and384source/gold joins",
+    "36frozen/650inactive/42total/6trainable/258active and all branch/feature hashes/counters",
+    "pinned F14 stable CE expression yields log2 for huge equal logits; F15 does not claim scalar CE replay"
+  ],
+  "expected_actual_outputs": [
+    "actor-refinement-result-analysis-v01.json",
+    "actor-refinement-independent-recount-v01.json"
+  ],
+  "findings": [],
+  "future_required_gates": {
+    "analyzer-source-independent-review-v01.json": {
+      "actual_plan_and_freezer_producer_must_join": true,
+      "schema": "actor-refinement-analyzer-source-independent-review/v1",
+      "source_key": "analyzer"
+    },
+    "result-recount-source-independent-review-v01.json": {
+      "actual_input_manifest_must_follow_complete_freeze": true,
+      "schema": "actor-refinement-result-recount-source-independent-review/v1",
+      "source_key": "observer"
+    }
+  },
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "qualification_scope": "Source and synthetic metadata only; actual result/reference/checkpoint/private bodies were not parsed. Root independent source gates and complete actual62freeze/runtime remain required.",
+  "recounter": {
+    "bytes": 41111,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py",
+    "sha256": "e60814cdf89c0fa3d90dd732a4d6fd9e05dd9ea2a27834910fddf7dcbeaa0692"
+  },
+  "resource_API_calls": 0,
+  "saved_head_reads": 0,
+  "schema": "actor-refinement-evaluation-detached-controls/v1",
+  "test_cases": {
+    "test_actor_refinement_analyzer_detached_v01.py": [
+      "test_exact_immutable_helpers_only",
+      "test_no_reference_read_before_freeze",
+      "test_exact62_output_geometry",
+      "test_only_actor_pointer_changes_allowed",
+      "test_every_protected_head_detects_bit_drift",
+      "test_signed_zero_preserved_for_conditions",
+      "test_missing_conditions_or_nonactor_shape_refused",
+      "test_binary32_exactness_and_nonfinite",
+      "test_candidate_and_N11_joint_schemas_replay",
+      "test_unknown_joint_schema_wrong_caps_ID_replay_refuse",
+      "test_exact155_both_views_is_accepted",
+      "test_either_training_view154_is_false_outcome",
+      "test_each_scope_and_view_loss_vetoes_net_gain",
+      "test_permission_failure_is_reportable",
+      "test_joint_decoded_coupling_is_reported_without_technical_veto",
+      "test_preregistered_threshold_cannot_change",
+      "test_no_extra_state_or_missing_scope",
+      "test_pinned_stable_CE_huge_equal_logit_regression",
+      "test_actual_trace_helper_pins_load_without_model_import",
+      "test_actor_rank_is_diagnostic_and_float32_stable"
+    ],
+    "test_actor_refinement_recount_detached_v01.py": [
+      "test_actual_contract_pin",
+      "test_source_main_requires_training_hook_and_source_qualification",
+      "test_criterion_passes_at_exact155_and_ignores_actor_ranks",
+      "test_each_training_view154_fails_scientifically",
+      "test_no_scope_or_view_can_hide_completeIR_loss",
+      "test_permission_loss_and_abstention_remain_reportable",
+      "test_all_three_permission_states_are_checked",
+      "test_technical_failure_cannot_be_scientific_success",
+      "test_missing_scope_duplicateID_boolean_count_refused",
+      "test_changed_preregistered_threshold_refused",
+      "test_final_projection_excludes_only_actor_vectors",
+      "test_all_protected_vectors_detect_changes",
+      "test_signed_zero_is_protected_binary32",
+      "test_missing_protected_role_or_wrong_shape_refused",
+      "test_nonbinary32_and_boolean_scores_refused",
+      "test_pinned_choice_guard_tie_and_class",
+      "test_actor_rank_can_change_in_pinned_helper",
+      "test_pinned_pairing_reports_net_gain_with_a_loss",
+      "test_permission_recount_does_not_refuse_candidate_failure",
+      "test_unfrozen_descriptor_refused",
+      "test_real_trace_schema_accepts32_nonzero_first_query_moments",
+      "test_training_partition_frozen_conditions_and_return_limit_refused",
+      "test_changed_conditions_and_inactive_moments_cannot_hide_behind_new_trace_digest",
+      "test_feature_digest_and_training_branch_chain_must_join",
+      "test_actual_sourceSHA_authentication_exceeds_owner_validator",
+      "test_actual_gold_coordinates_authentication_exceeds_owner_validator",
+      "test_reported_schedule_digest_and_feature_learning_counters_checked",
+      "test_closed_schedule_hash_and_final_progress_are_authenticated",
+      "test_complete_initial_greedy_fields_and_joint_envelope_protected"
+    ]
+  },
+  "total_tests": 49
+}

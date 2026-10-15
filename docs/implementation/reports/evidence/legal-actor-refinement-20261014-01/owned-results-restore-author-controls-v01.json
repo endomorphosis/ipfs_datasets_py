@@ -1,0 +1,84 @@
+{
+  "actions": {
+    "Git_mutations": 0,
+    "checkpoint_JSON_parses": 0,
+    "historical_archive_body_reads": 0,
+    "historical_original_result_body_reads": 0,
+    "model_calls": 0,
+    "native_claims": 0,
+    "network_calls": 0,
+    "numerical_imports": 0,
+    "resource_API_calls": 0,
+    "restore_tool_main_calls": 0
+  },
+  "actual_commands": [
+    {
+      "argv": [
+        "python",
+        "-B",
+        "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_restore_owned_results_archive_v01.py"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "actual_unittest_cases": 8,
+  "behaviors": [
+    "Default verify-only performs no writes and validates externally pinned manifest plus compressed archive before/after full streaming membership verification",
+    "stdlib tarfile stream/PAX decoder only; no extract/extractall; strict wrapper refuses malformed/truncated headers instead of silently skipping trailing corruption",
+    "Every yielded member must be unique safe nonsparse regular and exactly match manifest bytes/mode/uid/gid/mtime/SHA; closed complete member set",
+    "Bounded raw/member/expanded/manifest/PAX-overhead counts and300second deadline; compressed archive and manifest identity fences",
+    "Explicit selected-attempt staging only after full successful archive verification, followed by second complete verification during exclusive nofollow writes",
+    "Fresh direct-child owned staging outside all four counted roots; no original result paths opened; no overwrite, symlink/hardlink or private/global resource body acceptance",
+    "Selected file byte readback precedes restoring final file modes, including0000; selected declared empty/nested directory modes restored",
+    "Wrong hashes/malformed/duplicate manifests, missing/unknown/duplicate/path traversal/link/directory members, wrong bytes/modes/uid, truncated/concatenated garbage, wrong counts/bounds all refused",
+    "Original inode/ctime,ownership,timestamps not restored; no counted-original restoration/API/native-capacity approval implemented"
+  ],
+  "contract_preparer": {
+    "bytes": 16909,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_owned_results_archive_v01.py",
+    "sha256": "e24e09b8e8734d4feacb38d679154556cc0c9a7bacfdf5d917eb097077445a38"
+  },
+  "final_unittest_elapsed_seconds": 0.099,
+  "findings": [],
+  "fixture_scope": {
+    "attempts": 2,
+    "contents": "opaque non-JSON binary checkpoint-named member, stdlib PAX long path, empty member",
+    "original_historical_files_read": false,
+    "raw_payload_bytes": 110,
+    "regular_members": 3
+  },
+  "limitations": [
+    "No actual historical archive verification or recovery performed; root independently reviews source and authorizes any actual use.",
+    "Any counted-original restoration requires a separate fresh native-headroom workflow and is intentionally not implemented.",
+    "A failed selected materialization may leave only its newly created owned staging subtree for review; no automatic cleanup or source mutation."
+  ],
+  "passed": true,
+  "public_manifest_metadata_reference": {
+    "bytes": 801434,
+    "parsed_only_after_explicit_root_authorization": true,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json",
+    "scope": "schema keys, entry metadata fields/modes, max member name, final archive/manifest coordinates only; not used by fixture execution",
+    "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+  },
+  "schema": "actor-refinement-owned-results-restore-author-controls/v1",
+  "source": {
+    "bytes": 22600,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/restore_owned_results_archive_v01.py",
+    "sha256": "51afc5cf53afc17a7919ab5a9efe122091f65fa6db26b3e008803feaf6d19a24"
+  },
+  "test_methods": [
+    "test_default_verify_is_readonly_opaque_and_supports_stdlib_PAX",
+    "test_selected_materialization_bytes_modes_empty_dirs_and_no_overwrite",
+    "test_raw_manifest_and_archive_identity_refuse_before_any_stage_write",
+    "test_tar_duplicates_links_directories_unknown_members_and_metadata_fail_closed",
+    "test_manifest_unknown_keys_duplicate_members_bad_paths_shapes_and_bounds_refused",
+    "test_explicit_selection_fresh_owned_stage_and_physical_inputs_required",
+    "test_duplicate_manifest_JSON_and_truncated_or_concatenated_archives_refused",
+    "test_archive_relocation_preserves_content_binding_and_manifest_unmodified"
+  ],
+  "tests": {
+    "bytes": 10686,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_restore_owned_results_archive_v01.py",
+    "sha256": "6529e0f1ded38d554c2bbfcf2f669548b9fd763ec517e4ba2205b8f6a520aef2"
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "schema": "legal-ir-statutory-component-pilot-spec/v1",
+  "status": "authored_acceptance_specification",
+  "guide": "README.md",
+  "validation_schema": "pilot_spec.schema.json",
+  "pipeline_plan": "../../legal_ir_uscode_corpus_improvement_plan_20261015.md",
+  "storage_guide": "../../legal_source_review_handoff_storage_20261015.md",
+  "first_milestone": "reviewed_definition_with_complete_norm_and_second_scope_valid_use",
+  "scope": {
+    "source_kind": "actual_versioned_statutory_source",
+    "selected_component": null,
+    "requested_roles": ["complete_definition", "complete_norm_use_1", "complete_use_2"],
+    "minimum_complete_norm_count": 1,
+    "minimum_actual_use_count": 2,
+    "selection_basis": "actual_dependencies_supported_representation_and_independent_review_capacity",
+    "same_document_required": false,
+    "cross_document_required": false,
+    "shorten_source_to_fit_adapter": false,
+    "whole_corpus_claim": false,
+    "statistical_generalization_claim": false
+  },
+  "reusable_owners": [
+    {
+      "id": "sampled_source",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling.py",
+      "methods": ["prepare_source_sampling", "validate_source_sampling"],
+      "limit": "Structural source population, not reviewed meaning."
+    },
+    {
+      "id": "source_review_intake",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+      "methods": ["prepare_sampling_review_bundle", "validate_sampling_review_bundle", "record_sampling_review_response", "validate_sampling_review_response", "summarize_sampling_review_population"],
+      "limit": "Unsigned declarations preserve pending, disputed, unsupported and declarations_recorded states; no gold eligibility."
+    },
+    {
+      "id": "blank_handoff",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review_handoff.py",
+      "methods": ["prepare_sampling_review_handoff", "validate_sampling_review_handoff"],
+      "limit": "Migrates blank custody drafts; no answers or exposure evidence are supplied."
+    },
+    {
+      "id": "sampled_definition_binding",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+      "methods": ["prepare_definition_binding_v2", "definition_binding_sha256", "validate_definition_binding_v2"],
+      "limit": "Runtime qualification and actual-source replay remain pending per its guide; explicit unary FOL/TDFOL definition only."
+    },
+    {
+      "id": "definition_review",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py",
+      "methods": ["prepare_definition_review_evidence_v2", "build_definition_review_subject_v2", "assess_definition_reviews_v2", "validate_definition_review_assessment_v2"],
+      "limit": "Fixed definition review domain; positive authentication is not statutory gold admission."
+    },
+    {
+      "id": "combined_alias_review",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py",
+      "methods": ["prepare_definition_use_review_evidence_v2", "build_definition_use_review_subject_v2", "assess_definition_use_reviews_v2", "validate_definition_use_review_assessment_v2"],
+      "limit": "Qualification not established by this planning phase; alias assumed, representative lookup only, not a general norm-use or per-occurrence governing review."
+    },
+    {
+      "id": "graph_exchange",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_graph_exchange.py",
+      "methods": ["write_graph_bundle", "load_graph_bundle"],
+      "limit": "Exact endpoint-preserving transport does not establish legal meaning."
+    },
+    {
+      "id": "free_running_metrics",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
+      "methods": ["compare_free_running_formulas"],
+      "limit": "Existing seven-facet canonical JSON comparison; richer reviewed semantics need supported targets and separate metrics."
+    },
+    {
+      "id": "shared_lean",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
+      "methods": ["prepare_shared_definition_corpus", "validate_shared_definition_corpus", "build_shared_definition_corpus"],
+      "limit": "Existing narrow shared unary profile; native compilation does not establish legal correctness."
+    }
+  ],
+  "source_and_review_requirements": [
+    "Retain immutable source release, acquisition, original bytes, source-view profile and independently retained commitments.",
+    "Bind exact source version, physical occurrence and half-open Unicode/UTF8 selectors; repeated text remains distinct.",
+    "Preserve the complete selected population, controls, inherited context and unresolved dependencies.",
+    "Review governing scope and applicability separately from publication edition and extraction success.",
+    "Seal source-first meaning targets and retain actual exposure evidence before candidate inspection.",
+    "Retain authorized independent legal/formal decisions, disagreements, alternatives and identity/competence evidence.",
+    "Bind intake declarations to the exact typed interpretation through supported correspondence; shared text or signatures alone do not suffice.",
+    "Review each added combined meaning in its proper domain; original definition decisions do not approve added uses or aliases.",
+    "Identify the downstream owner and policy for gold eligibility; intake or review assessment alone admits nothing."
+  ],
+  "representation_requirements": [
+    "Preserve definition operator/body, quantifiers, sorts, arity, ordered arguments and actor/action/object/recipient roles.",
+    "Preserve modality, polarity, conditions, exceptions, attachments, numeric limits and temporal qualifiers.",
+    "Bind each actual use to its governing definition under reviewed scope and applicability; retain ambiguity.",
+    "Unsupported material stays explicit; an opaque whole-body atom is not complete statutory meaning.",
+    "Do not force an actual norm into the existing definition-alias profile or merge senses because their labels match."
+  ],
+  "split_contract": {
+    "initial_component_role": "engineering_pilot",
+    "initial_component_is_statistical_holdout": false,
+    "group_by": ["provision_and_revisions", "exact_and_near_duplicates", "derivative_examples", "actual_semantic_dependencies"],
+    "freeze_before_fit_or_selection": true,
+    "public_context_requires_frozen_policy": true,
+    "withheld_interpretations_or_answer_graphs_in_features": false,
+    "target_derived_latents_or_candidate_lists": false,
+    "exposed_panels_become_regressions": true,
+    "new_components_required_for_generalization": true
+  },
+  "dimension_lanes": [
+    {"lane": "8D", "nominal_dimension": 8, "requested_role": "historical_feature_or_latent_boundary_as_verified_from_parent", "actual_input_role": null, "decoder_internal_latent_width": null, "producer_and_checkpoint_ref": null},
+    {"lane": "384D", "nominal_dimension": 384, "requested_role": "native_semantic_encoder_output_width", "actual_input_role": null, "decoder_internal_latent_width": null, "producer_and_checkpoint_ref": null},
+    {"lane": "768D", "nominal_dimension": 768, "requested_role": "native_multilingual_semantic_encoder_output_width", "actual_input_role": null, "decoder_internal_latent_width": null, "producer_and_checkpoint_ref": null}
+  ],
+  "preregistration": {
+    "status": "pending_before_execution",
+    "selected_sources_and_split_manifest": null,
+    "permitted_context_and_target_contract": null,
+    "run_arms_controls_and_initializations": null,
+    "seeds_optimizer_budget_and_resources": null,
+    "metric_implementations_and_eligibility_policy": null,
+    "acceptance_thresholds_and_protected_cases": null,
+    "confidence_and_promotion_procedure": null
+  },
+  "metric_contract": [
+    {"id": "source_accounting", "denominator": "all_selected_source_occurrences", "measure": "Exact identity and explicit included, pending, disputed, unsupported or out-of-scope disposition."},
+    {"id": "review_coverage", "denominator": "all_selected_meaning_units", "measure": "Independent complete decisions; pending, disputed and unsupported remain visible, with no inferred eligibility."},
+    {"id": "candidate_oracle_recall", "denominator": "all_requested_eligible_complete_gold_targets", "measure": "Complete correct candidate present before ranking or budget pruning."},
+    {"id": "complete_ordered_ir", "denominator": "all_requested_eligible_gold_targets", "measure": "Exact full ordered typed IR; missing, duplicate, malformed, abstained and unverifiable rows get no match credit."},
+    {"id": "material_semantic_errors", "denominator": "all_independently_reviewed_complete_predicted_units", "measure": "Omissions/additions and wrong operators, roles, attachments, scope or applicability; report selected-population coverage alongside."},
+    {"id": "graph_integrity", "denominator": "all_expected_component_nodes_edges_and_use_bindings", "measure": "Exact endpoints/origins, scope-valid senses, arguments and per-occurrence governing resolution."},
+    {"id": "family_fragment_coverage", "denominator": "all_declared_applicable_family_fragments", "measure": "Separate syntax, lossless lowering, actual native execution and reviewed source correspondence; unsupported cases remain counted."},
+    {"id": "consequence_cases", "denominator": "all_independently_authored_applicable_positive_and_negative_cases", "measure": "Expected conditional consequences, without inconsistent-premise or vacuous-proof credit."},
+    {"id": "native_build_integrity", "denominator": "all_expected_generated_modules_and_compiled_artifacts", "measure": "Actual build, artifacts, source traceability, declared assumptions and changed-versus-clean rebuild agreement."},
+    {"id": "generation_accounting", "denominator": "all_requested_prediction_ids", "measure": "Report decoded, abstained, missing, duplicate, malformed, unverifiable and overflow counts separately; score after target-free generation."}
+  ],
+  "exit_gates": [
+    {"id": "G0_resource_and_source_custody", "required_evidence": ["fresh_native_admission", "complete_selected_source_population", "exact_source_view_and_occurrence_correspondence", "durable_native_finalization"]},
+    {"id": "G1_reviewed_meaning", "required_evidence": ["actual_independent_source_first_targets", "legal_and_formal_decisions_for_definition_full_norm_and_second_use", "scope_applicability_and_exposure_evidence", "explicit_unresolved_population"]},
+    {"id": "G2_supported_complete_representation", "required_evidence": ["every_material_argument_operator_and_qualifier_preserved", "no_unreviewed_meaning_substitution", "supported_profile_or_explicit_versioned_extension"]},
+    {"id": "G3_connected_graph", "required_evidence": ["exact_roundtrip_with_closed_typed_endpoints", "per_occurrence_reviewed_governing_bindings", "alternatives_and_dependencies_preserved"]},
+    {"id": "G4_native_lean", "required_evidence": ["pinned_supported_semantics_and_toolchain", "actual_lake_build_legal_and_all_expected_artifacts", "no_sorry_admit_or_hidden_placeholders", "declared_assumption_axiom_policy", "meaningful_positive_negative_cases_and_invalidation"]},
+    {"id": "G5_training_eligibility_and_comparison", "required_evidence": ["separate_owner_bound_gold_eligibility", "frozen_experiment_specification", "genuine_dimension_role_and_producer_receipts", "matched_source_context_and_budget_controls"]}
+  ],
+  "exit_gate_interpretation": "These are review requirements, not executable predicates or a task/admission engine. Pilot acceptance requires independently reviewed complete meaning with no material omission/addition, complete graph integrity and actual supported Lean evidence. Low loss, self-reconstruction, syntax and compilation cannot substitute for that review.",
+  "runtime_bindings": {
+    "selected_source_component": null,
+    "source_correspondence": null,
+    "reviewer_registry": null,
+    "trust_policy": null,
+    "evaluation_time_and_clock_evidence": null,
+    "reviews_and_exposure": null,
+    "review_assessments": null,
+    "gold_eligibility_owner_and_policy": null,
+    "typed_interpretations": null,
+    "graph_roundtrip": null,
+    "family_capabilities": null,
+    "native_build_and_invalidation": null,
+    "model_comparison": null,
+    "resource_durability_and_release": null,
+    "metric_results": null
+  },
+  "runtime_materialization": "A future immutable owner-bound execution manifest resolves actual references and outcomes. This authored specification remains unchanged and supplies no runtime, review, gold, queue or admission authority.",
+  "authority": {
+    "actual_statutory_reviews_created": false,
+    "source_semantics_verified": false,
+    "training_eligibility_established": false,
+    "evaluation_gold_established": false,
+    "semantic_graph_admitted": false,
+    "native_build_executed": false,
+    "model_trained_or_promoted": false,
+    "work_enqueued": false
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "checkpoint_JSON_parses": 0,
+  "correction": "Expand only owned source snapshot to include tracked optimizer module directory; no source bytes edited; rerun after required raw sources present.",
+  "finding": "Initial detached tests could not load raw historical source file excluded by over-narrow sparse checkout.",
+  "missing": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py",
+  "model_or_numerical_imports": 0,
+  "passed": false,
+  "schema": "relocated-controls-preparation-refusal/v1",
+  "test_errors": 9,
+  "tests_attempted": 9
+}

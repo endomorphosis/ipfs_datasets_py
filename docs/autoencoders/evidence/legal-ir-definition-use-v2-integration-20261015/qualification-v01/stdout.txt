@@ -1,0 +1,621 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/barberb/.local/bin/python
+cachedir: /home/barberb/lift_coding/artifacts/legal-ir-definition-use-v2-integration-20261015/qualification-v01/private/pytest-cache
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-definition-use-v2-integration-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+created: 3/3 workers
+3 workers [302 items]
+
+scheduling tests via LoadFileScheduling
+
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_complete_v2_subject_retains_all_physical_contexts_without_norm[fol] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_whole_predicate_alias_preserves_originals_and_closed_graph[fol] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_explicit_cross_document_resolution_preserves_raw_tables_exact_owner_result_and_candidate_status 
+[gw0] [  0%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_explicit_cross_document_resolution_preserves_raw_tables_exact_owner_result_and_candidate_status 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_two_equal_names_are_ambiguous_without_selecting_one_or_equating_definitions 
+[gw0] [  0%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_two_equal_names_are_ambiguous_without_selecting_one_or_equating_definitions 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_known_empty_table_is_a_negative_lookup_and_differs_from_unavailable_content 
+[gw0] [  0%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_known_empty_table_is_a_negative_lookup_and_differs_from_unavailable_content 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_unavailable_searched_external_table_prevents_selection_of_an_available_local_match 
+[gw0] [  1%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_unavailable_searched_external_table_prevents_selection_of_an_available_local_match 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_literal_unicode_names_preserve_the_explicit_existing_ascii_token_policy 
+[gw0] [  1%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_literal_unicode_names_preserve_the_explicit_existing_ascii_token_policy 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_alias_resolution_retains_exact_alias_chain_and_cycles_remain_unresolved 
+[gw0] [  1%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_alias_resolution_retains_exact_alias_chain_and_cycles_remain_unresolved 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_route_cannot_mix_release_edition_or_declared_applicability[release_id] 
+[gw0] [  2%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_route_cannot_mix_release_edition_or_declared_applicability[release_id] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_route_cannot_mix_release_edition_or_declared_applicability[edition] 
+[gw0] [  2%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_route_cannot_mix_release_edition_or_declared_applicability[edition] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_route_cannot_mix_release_edition_or_declared_applicability[applicability_cid] 
+[gw0] [  2%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_route_cannot_mix_release_edition_or_declared_applicability[applicability_cid] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_other_scope_versions_have_distinct_registry_and_lookup_identities 
+[gw0] [  3%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_other_scope_versions_have_distinct_registry_and_lookup_identities 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[wrong_pin] 
+[gw0] [  3%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[wrong_pin] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[missing_pin] 
+[gw0] [  3%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[missing_pin] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[unexpected_population] 
+[gw0] [  4%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[unexpected_population] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[reordered_population] 
+[gw0] [  4%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[reordered_population] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[duplicate_partition] 
+[gw0] [  4%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[duplicate_partition] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[unknown_partition_field] 
+[gw0] [  5%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[unknown_partition_field] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[bool_edition] 
+[gw0] [  5%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[bool_edition] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[invalid_CID] 
+[gw0] [  5%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[invalid_CID] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[unavailable_with_hash] 
+[gw0] [  6%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[unavailable_with_hash] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[available_without_hash] 
+[gw0] [  6%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_requires_exact_closed_partition_population_and_independent_hashes[available_without_hash] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[schema] 
+[gw0] [  6%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[schema] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[unknown_field] 
+[gw0] [  7%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[unknown_field] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[omitted_field] 
+[gw0] [  7%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[omitted_field] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[duplicate_definition] 
+[gw0] [  7%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[duplicate_definition] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[duplicate_scope] 
+[gw0] [  8%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[duplicate_scope] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[duplicate_alias] 
+[gw0] [  8%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[duplicate_alias] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[missing_scope] 
+[gw0] [  8%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[missing_scope] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[missing_parent] 
+[gw0] [  9%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[missing_parent] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[foreign_definition_document] 
+[gw0] [  9%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[foreign_definition_document] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[foreign_alias_document] 
+[gw0] [  9%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[foreign_alias_document] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[normalization_override] 
+[gw0] [ 10%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[normalization_override] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[alias_normalization_override] 
+[gw0] [ 10%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_independently_rehashed_tables_cannot_hide_owner_roundtrip_schema_or_identity_defects[alias_normalization_override] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_duplicate_global_definition_or_alias_identity_across_partitions_refuses_instead_of_overwriting[definition] 
+[gw0] [ 10%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_duplicate_global_definition_or_alias_identity_across_partitions_refuses_instead_of_overwriting[definition] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_duplicate_global_definition_or_alias_identity_across_partitions_refuses_instead_of_overwriting[alias] 
+[gw0] [ 11%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_duplicate_global_definition_or_alias_identity_across_partitions_refuses_instead_of_overwriting[alias] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[wrong_hash] 
+[gw0] [ 11%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[wrong_hash] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[unknown_field] 
+[gw0] [ 11%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[unknown_field] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[duplicate_route] 
+[gw0] [ 12%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[duplicate_route] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[unknown_partition] 
+[gw0] [ 12%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[unknown_partition] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[wrong_document] 
+[gw0] [ 12%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[wrong_document] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[unknown_reference_field] 
+[gw0] [ 13%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[unknown_reference_field] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[missing_scope] 
+[gw0] [ 13%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[missing_scope] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[normalization_override] 
+[gw0] [ 13%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[normalization_override] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[bad_source_CID] 
+[gw0] [ 14%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_query_route_reference_and_source_binding_are_closed_and_independently_pinned[bad_source_CID] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_unsearched_partition_changes_preserve_unrelated_lookup_identity 
+[gw0] [ 14%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_unsearched_partition_changes_preserve_unrelated_lookup_identity 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_search_table_changes_invalidate_negative_or_positive_dependents_while_unrelated_lookup_survives[fill_negative] 
+[gw0] [ 14%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_search_table_changes_invalidate_negative_or_positive_dependents_while_unrelated_lookup_survives[fill_negative] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_search_table_changes_invalidate_negative_or_positive_dependents_while_unrelated_lookup_survives[new_competitor] 
+[gw0] [ 15%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_search_table_changes_invalidate_negative_or_positive_dependents_while_unrelated_lookup_survives[new_competitor] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_search_table_changes_invalidate_negative_or_positive_dependents_while_unrelated_lookup_survives[fill_unavailable] 
+[gw0] [ 15%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_search_table_changes_invalidate_negative_or_positive_dependents_while_unrelated_lookup_survives[fill_unavailable] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_adding_competing_match_to_a_searched_table_invalidates_prior_resolution_and_retains_ambiguity 
+[gw0] [ 15%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_adding_competing_match_to_a_searched_table_invalidates_prior_resolution_and_retains_ambiguity 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_explicit_external_scope_is_validated_against_its_target_document 
+[gw0] [ 16%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_explicit_external_scope_is_validated_against_its_target_document 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_alias_cannot_resolve_a_defined_term_query_to_an_actor_symbol 
+[gw0] [ 16%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_alias_cannot_resolve_a_defined_term_query_to_an_actor_symbol 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_explicit_external_scope_cannot_fall_back_to_a_matching_definition_in_another_scope 
+[gw0] [ 16%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_explicit_external_scope_cannot_fall_back_to_a_matching_definition_in_another_scope 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_unavailable_external_target_retains_unknown_source_identity_without_guessing_scope 
+[gw0] [ 17%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_unavailable_external_target_retains_unknown_source_identity_without_guessing_scope 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[registry_seal] 
+[gw0] [ 17%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[registry_seal] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[partition_seal] 
+[gw0] [ 17%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[partition_seal] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[authority] 
+[gw0] [ 18%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[authority] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[source_scope] 
+[gw0] [ 18%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[source_scope] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[table_bytes] 
+[gw0] [ 18%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[table_bytes] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[producer] 
+[gw0] [ 19%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_registry_consumption_replays_nested_seals_raw_bytes_and_external_registry_identity[producer] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[selected] 
+[gw0] [ 19%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[selected] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[status] 
+[gw0] [ 19%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[status] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[route_pin] 
+[gw0] [ 20%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[route_pin] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[owner_result] 
+[gw0] [ 20%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[owner_result] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[source_occurrence] 
+[gw0] [ 20%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[source_occurrence] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[query_text] 
+[gw0] [ 21%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[query_text] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[authority] 
+[gw0] [ 21%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_resealed_lookup_cannot_change_owner_result_route_or_evidence_without_exact_replay[authority] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_dependency_manifest_requires_complete_ordered_independent_lookup_CIDs[missing] 
+[gw0] [ 21%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_dependency_manifest_requires_complete_ordered_independent_lookup_CIDs[missing] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_dependency_manifest_requires_complete_ordered_independent_lookup_CIDs[reordered] 
+[gw0] [ 22%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_dependency_manifest_requires_complete_ordered_independent_lookup_CIDs[reordered] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_dependency_manifest_requires_complete_ordered_independent_lookup_CIDs[duplicate] 
+[gw0] [ 22%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_dependency_manifest_requires_complete_ordered_independent_lookup_CIDs[duplicate] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_dependency_manifest_requires_complete_ordered_independent_lookup_CIDs[wrong_CID] 
+[gw0] [ 22%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_dependency_manifest_requires_complete_ordered_independent_lookup_CIDs[wrong_CID] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_dependency_manifest_requires_complete_ordered_independent_lookup_CIDs[changed_lookup] 
+[gw0] [ 23%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_dependency_manifest_requires_complete_ordered_independent_lookup_CIDs[changed_lookup] 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_table_item_and_aggregate_envelope_bounds_refuse_whole_input_without_truncation 
+[gw0] [ 23%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_table_item_and_aggregate_envelope_bounds_refuse_whole_input_without_truncation 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_stored_review_metadata_is_preserved_without_granting_lookup_authority 
+[gw0] [ 23%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_stored_review_metadata_is_preserved_without_granting_lookup_authority 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_duplicate_JSON_keys_are_refused_even_under_repaired_external_hash 
+[gw0] [ 24%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_duplicate_JSON_keys_are_refused_even_under_repaired_external_hash 
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_public_lookup_import_does_not_initialize_numerical_models_or_symbol_owner 
+[gw0] [ 24%] PASSED tests/unit/logic/autoformal/test_scoped_definition_resolution.py::test_public_lookup_import_does_not_initialize_numerical_models_or_symbol_owner 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_public_exchange_import_does_not_load_pyarrow_or_models 
+[gw0] [ 24%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_public_exchange_import_does_not_load_pyarrow_or_models 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_real_parquet_roundtrip_preserves_exact_snapshot_and_readable_columns 
+[gw1] [ 25%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_complete_v2_subject_retains_all_physical_contexts_without_norm[fol] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_complete_v2_subject_retains_all_physical_contexts_without_norm[tdfol] 
+[gw0] [ 25%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_real_parquet_roundtrip_preserves_exact_snapshot_and_readable_columns 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_zero_edge_table_retains_explicit_schema 
+[gw0] [ 25%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_zero_edge_table_retains_explicit_schema 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_external_manifest_sha_is_required_and_wrong_pin_refuses 
+[gw0] [ 26%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_external_manifest_sha_is_required_and_wrong_pin_refuses 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_payload_tampering_refuses_before_payload_parsing[nodes.parquet] 
+[gw0] [ 26%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_payload_tampering_refuses_before_payload_parsing[nodes.parquet] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_payload_tampering_refuses_before_payload_parsing[edges.parquet] 
+[gw0] [ 26%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_payload_tampering_refuses_before_payload_parsing[edges.parquet] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_payload_tampering_refuses_before_payload_parsing[snapshot.json] 
+[gw0] [ 27%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_payload_tampering_refuses_before_payload_parsing[snapshot.json] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_existing_directory_is_never_overwritten 
+[gw0] [ 27%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_existing_directory_is_never_overwritten 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[edges.parquet] 
+[gw0] [ 27%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[edges.parquet] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[snapshot.json] 
+[gw0] [ 28%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[snapshot.json] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[manifest.json] 
+[gw1] [ 28%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_complete_v2_subject_retains_all_physical_contexts_without_norm[tdfol] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_original_lowered_view_sampler_and_compiler_limits_replay_through_review 
+[gw0] [ 28%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[manifest.json] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[nodes.parquet] 
+[gw0] [ 29%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[nodes.parquet] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_unknown_filename_is_not_silently_ignored 
+[gw2] [ 29%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_whole_predicate_alias_preserves_originals_and_closed_graph[fol] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_whole_predicate_alias_preserves_originals_and_closed_graph[tdfol] 
+[gw0] [ 29%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_unknown_filename_is_not_silently_ignored 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_directory_parent_and_file_symlinks_refuse 
+[gw0] [ 30%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_directory_parent_and_file_symlinks_refuse 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_traversal_refuses_even_when_it_resolves_to_existing_bundle 
+[gw0] [ 30%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_traversal_refuses_even_when_it_resolves_to_existing_bundle 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_nonregular_payload_refuses_without_blocking 
+[gw0] [ 30%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_nonregular_payload_refuses_without_blocking 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_rebound_projection_disagreement_is_rejected 
+[gw0] [ 31%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_rebound_projection_disagreement_is_rejected 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_unknown_or_object_parquet_schema_refuses_before_row_conversion[extra_column] 
+[gw0] [ 31%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_unknown_or_object_parquet_schema_refuses_before_row_conversion[extra_column] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_unknown_or_object_parquet_schema_refuses_before_row_conversion[wrong_type] 
+[gw0] [ 31%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_unknown_or_object_parquet_schema_refuses_before_row_conversion[wrong_type] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_unknown_or_object_parquet_schema_refuses_before_row_conversion[object_rows] 
+[gw0] [ 32%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_unknown_or_object_parquet_schema_refuses_before_row_conversion[object_rows] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_compressed_parquet_bomb_profile_is_refused_before_decoding 
+[gw1] [ 32%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_original_lowered_view_sampler_and_compiler_limits_replay_through_review 
+[gw0] [ 32%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_compressed_parquet_bomb_profile_is_refused_before_decoding 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_real_synthetic_signatures_authenticate_new_domain_but_never_meaning 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_dictionary_profile_is_refused 
+[gw0] [ 33%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_dictionary_profile_is_refused 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_noncanonical_record_json_cannot_replace_canonical_records 
+[gw0] [ 33%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_noncanonical_record_json_cannot_replace_canonical_records 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_rebound_duplicate_ids_cannot_reconstruct_snapshot 
+[gw0] [ 33%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_rebound_duplicate_ids_cannot_reconstruct_snapshot 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_rebound_dangling_endpoint_refuses 
+[gw0] [ 34%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_rebound_dangling_endpoint_refuses 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_parquet_record_order_cannot_change_even_with_fresh_file_bindings 
+[gw0] [ 34%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_parquet_record_order_cannot_change_even_with_fresh_file_bindings 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_resealed_manifest_cannot_claim_authority[admitted] 
+[gw0] [ 34%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_resealed_manifest_cannot_claim_authority[admitted] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_resealed_manifest_cannot_claim_authority[formalized] 
+[gw0] [ 35%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_resealed_manifest_cannot_claim_authority[formalized] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_resealed_manifest_cannot_claim_authority[source_semantics_verified] 
+[gw0] [ 35%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_resealed_manifest_cannot_claim_authority[source_semantics_verified] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_resealed_manifest_cannot_claim_authority[external_references_verified] 
+[gw0] [ 35%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_resealed_manifest_cannot_claim_authority[external_references_verified] 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_resealed_snapshot_cannot_claim_review_or_formalization 
+[gw1] [ 36%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_real_synthetic_signatures_authenticate_new_domain_but_never_meaning 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_external_policy_wire_shape_still_has_no_human_or_semantic_authority 
+[gw0] [ 36%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_resealed_snapshot_cannot_claim_review_or_formalization 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_manifest_path_injection_and_bool_counts_are_rejected 
+[gw0] [ 36%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_manifest_path_injection_and_bool_counts_are_rejected 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_metadata_row_count_mismatch_is_rejected 
+[gw2] [ 37%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_whole_predicate_alias_preserves_originals_and_closed_graph[tdfol] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_mapping_covers_one_complete_body_predicate_and_exact_donor_head[omit_role] 
+[gw0] [ 37%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_metadata_row_count_mismatch_is_rejected 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_footer_and_decoded_budgets_precede_full_read 
+[gw1] [ 37%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_external_policy_wire_shape_still_has_no_human_or_semantic_authority 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[candidate_sha256] 
+[gw1] [ 38%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[candidate_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[candidate_cid] 
+[gw0] [ 38%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_footer_and_decoded_budgets_precede_full_read 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_file_and_manifest_limits_are_enforced 
+[gw1] [ 38%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[candidate_cid] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[graph_cid] 
+[gw0] [ 39%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_file_and_manifest_limits_are_enforced 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_writer_does_not_commit_manifest_before_successful_readback 
+[gw0] [ 39%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_writer_does_not_commit_manifest_before_successful_readback 
+tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_writer_removes_only_its_manifest_if_final_readback_fails 
+[gw0] [ 39%] PASSED tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_writer_removes_only_its_manifest_if_final_readback_fails 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unreviewed_v2_definition_only_preserves_native_structure_without_norm[fol] 
+[gw1] [ 40%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[graph_cid] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[request_sha256] 
+[gw1] [ 40%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[request_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[report_sha256] 
+[gw1] [ 40%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[report_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[raw_sha256] 
+[gw1] [ 41%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[raw_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[raw_bytes] 
+[gw1] [ 41%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[raw_bytes] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[extracted_sha256] 
+[gw1] [ 41%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[extracted_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[sampling_report_sha256] 
+[gw1] [ 42%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[sampling_report_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[sampling_report_full_canonical_sha256] 
+[gw1] [ 42%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[sampling_report_full_canonical_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[descriptor_sha256] 
+[gw1] [ 42%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[descriptor_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[descriptor_full_canonical_sha256] 
+[gw1] [ 43%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required[descriptor_full_canonical_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_context_population_has_exact_order_membership_and_closed_inputs[omit] 
+[gw0] [ 43%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unreviewed_v2_definition_only_preserves_native_structure_without_norm[fol] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unreviewed_v2_definition_only_preserves_native_structure_without_norm[tdfol] 
+[gw1] [ 43%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_context_population_has_exact_order_membership_and_closed_inputs[omit] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_context_population_has_exact_order_membership_and_closed_inputs[reverse] 
+[gw0] [ 44%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unreviewed_v2_definition_only_preserves_native_structure_without_norm[tdfol] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_two_entity_truth_oracle_detects_weakening_and_keeps_explicit_negation 
+[gw1] [ 44%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_context_population_has_exact_order_membership_and_closed_inputs[reverse] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_context_population_has_exact_order_membership_and_closed_inputs[duplicate] 
+[gw0] [ 44%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_two_entity_truth_oracle_detects_weakening_and_keeps_explicit_negation 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repeated_unicode_body_keeps_physical_origins_roles_and_derived_contexts 
+[gw1] [ 45%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_context_population_has_exact_order_membership_and_closed_inputs[duplicate] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_context_population_has_exact_order_membership_and_closed_inputs[unknown_field] 
+[gw1] [ 45%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_context_population_has_exact_order_membership_and_closed_inputs[unknown_field] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_context_cannot_retarget_geometry_or_close_source_obligations[UTF8] 
+[gw2] [ 45%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_mapping_covers_one_complete_body_predicate_and_exact_donor_head[omit_role] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_mapping_covers_one_complete_body_predicate_and_exact_donor_head[reverse_roles] 
+[gw0] [ 46%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repeated_unicode_body_keeps_physical_origins_roles_and_derived_contexts 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_cross_block_atom_retains_exact_LF_and_all_contributor_intersections 
+[gw1] [ 46%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_context_cannot_retarget_geometry_or_close_source_obligations[UTF8] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_context_cannot_retarget_geometry_or_close_source_obligations[omit_slot] 
+[gw0] [ 46%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_cross_block_atom_retains_exact_LF_and_all_contributor_intersections 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_same_bytes_other_edition_or_applicability_do_not_reuse_scoped_symbols 
+[gw1] [ 47%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_context_cannot_retarget_geometry_or_close_source_obligations[omit_slot] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_context_cannot_retarget_geometry_or_close_source_obligations[false_closure] 
+[gw2] [ 47%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_mapping_covers_one_complete_body_predicate_and_exact_donor_head[reverse_roles] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_mapping_covers_one_complete_body_predicate_and_exact_donor_head[head_as_body] 
+[gw1] [ 47%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_context_cannot_retarget_geometry_or_close_source_obligations[false_closure] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_context_cannot_retarget_geometry_or_close_source_obligations[wrong_view] 
+[gw0] [ 48%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_same_bytes_other_edition_or_applicability_do_not_reuse_scoped_symbols 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[forall] 
+[gw1] [ 48%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_context_cannot_retarget_geometry_or_close_source_obligations[wrong_view] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_candidate_still_requires_original_v2_source_and_declared_ast[AST] 
+[gw2] [ 48%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_mapping_covers_one_complete_body_predicate_and_exact_donor_head[head_as_body] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_mapping_covers_one_complete_body_predicate_and_exact_donor_head[wrong_donor] 
+[gw1] [ 49%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_candidate_still_requires_original_v2_source_and_declared_ast[AST] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_candidate_still_requires_original_v2_source_and_declared_ast[scope] 
+[gw0] [ 49%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[forall] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[iff] 
+[gw1] [ 49%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_candidate_still_requires_original_v2_source_and_declared_ast[scope] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_candidate_still_requires_original_v2_source_and_declared_ast[source_geometry] 
+[gw2] [ 50%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_explicit_mapping_covers_one_complete_body_predicate_and_exact_donor_head[wrong_donor] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_complete_lookup_routes_cannot_promote_unavailable_competing_or_negative_results[unavailable] 
+[gw1] [ 50%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_candidate_still_requires_original_v2_source_and_declared_ast[source_geometry] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_candidate_still_requires_original_v2_source_and_declared_ast[context_population] 
+[gw0] [ 50%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[iff] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[scope] 
+[gw1] [ 50%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_candidate_still_requires_original_v2_source_and_declared_ast[context_population] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_subject_requires_exact_complete_source_and_context_dependency_manifest[omit_required] 
+[gw0] [ 51%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[scope] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[binding] 
+[gw2] [ 51%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_complete_lookup_routes_cannot_promote_unavailable_competing_or_negative_results[unavailable] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_complete_lookup_routes_cannot_promote_unavailable_competing_or_negative_results[ambiguous] 
+[gw1] [ 51%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_subject_requires_exact_complete_source_and_context_dependency_manifest[omit_required] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_subject_requires_exact_complete_source_and_context_dependency_manifest[omit_edge] 
+[gw0] [ 52%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[binding] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[lean] 
+[gw1] [ 52%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_subject_requires_exact_complete_source_and_context_dependency_manifest[omit_edge] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_subject_requires_exact_complete_source_and_context_dependency_manifest[wrong_graph_hash] 
+[gw2] [ 52%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_complete_lookup_routes_cannot_promote_unavailable_competing_or_negative_results[ambiguous] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_complete_lookup_routes_cannot_promote_unavailable_competing_or_negative_results[unresolved] 
+[gw0] [ 53%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[lean] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[authority] 
+[gw1] [ 53%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_subject_requires_exact_complete_source_and_context_dependency_manifest[wrong_graph_hash] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_old_definition_plus_norm_signed_domain_cannot_be_relabelled[schema] 
+[gw0] [ 53%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[authority] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[descriptor_hash] 
+[gw1] [ 54%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_old_definition_plus_norm_signed_domain_cannot_be_relabelled[schema] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_old_definition_plus_norm_signed_domain_cannot_be_relabelled[action] 
+[gw0] [ 54%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[descriptor_hash] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[raw_hash] 
+[gw2] [ 54%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_complete_lookup_routes_cannot_promote_unavailable_competing_or_negative_results[unresolved] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_pinned_partition_source_metadata_must_match_original_candidate[source_version_cid-baguqeeranxt4ydfdpmanj262ug3fkrmqvtzptkahirqbebehk2qkb6xn6sta] 
+[gw0] [ 55%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[raw_hash] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[raw_length] 
+[gw0] [ 55%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[raw_length] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[sampling_hash] 
+[gw0] [ 55%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[sampling_hash] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[unit_ref] 
+[gw1] [ 56%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_old_definition_plus_norm_signed_domain_cannot_be_relabelled[action] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_old_definition_plus_norm_signed_domain_cannot_be_relabelled[audience] 
+[gw0] [ 56%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[unit_ref] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[omit] 
+[gw2] [ 56%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_pinned_partition_source_metadata_must_match_original_candidate[source_version_cid-baguqeeranxt4ydfdpmanj262ug3fkrmqvtzptkahirqbebehk2qkb6xn6sta] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_pinned_partition_source_metadata_must_match_original_candidate[scope_cid-baguqeeraj2mrfi4jzwqhgv57kb546tcl2nf7q6hluuqjsqpswgxefhhuaqzq] 
+[gw0] [ 57%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[omit] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[reorder] 
+[gw1] [ 57%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_old_definition_plus_norm_signed_domain_cannot_be_relabelled[audience] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[signature-signature_invalid] 
+[gw0] [ 57%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[reorder] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[gap] 
+[gw0] [ 58%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[gap] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[includes] 
+[gw1] [ 58%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[signature-signature_invalid] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[role-unauthorized_review_role] 
+[gw0] [ 58%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[includes] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[operator] 
+[gw2] [ 59%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_pinned_partition_source_metadata_must_match_original_candidate[scope_cid-baguqeeraj2mrfi4jzwqhgv57kb546tcl2nf7q6hluuqjsqpswgxefhhuaqzq] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_self_consistent_lookup_metadata_cannot_override_candidate_release_or_applicability[release_id-foreign-release] 
+[gw0] [ 59%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[operator] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[sort] 
+[gw0] [ 59%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[sort] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[scope_kind] 
+[gw1] [ 60%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[role-unauthorized_review_role] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[scope-unauthorized_legal_scope] 
+[gw0] [ 60%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[scope_kind] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[self] 
+[gw2] [ 60%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_self_consistent_lookup_metadata_cannot_override_candidate_release_or_applicability[release_id-foreign-release] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_self_consistent_lookup_metadata_cannot_override_candidate_release_or_applicability[edition-2025] 
+[gw1] [ 61%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[scope-unauthorized_legal_scope] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[key_revoked-key_revoked] 
+[gw0] [ 61%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[self] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[civil_date] 
+[gw0] [ 61%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[civil_date] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits0] 
+[gw1] [ 62%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[key_revoked-key_revoked] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[principal_revoked-principal_revoked] 
+[gw0] [ 62%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits0] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits1] 
+[gw0] [ 62%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits1] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits2] 
+[gw0] [ 63%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits2] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits3] 
+[gw1] [ 63%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[principal_revoked-principal_revoked] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[expired_review-review_not_current] 
+[gw2] [ 63%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_self_consistent_lookup_metadata_cannot_override_candidate_release_or_applicability[edition-2025] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_self_consistent_lookup_metadata_cannot_override_candidate_release_or_applicability[applicability_cid-baguqeeraljtftzjaaipep42i7y6f247d5uyhanhwbwsuf2rsw4m4kndhf7zq] 
+[gw0] [ 64%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits3] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_oversize_request_refuses_before_source_replay 
+[gw0] [ 64%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_oversize_request_refuses_before_source_replay 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_public_import_remains_inert_without_models_or_native_compilation 
+[gw1] [ 64%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time[expired_review-review_not_current] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_one_principal_with_two_keys_does_not_supply_independent_roles 
+[gw0] [ 65%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_public_import_remains_inert_without_models_or_native_compilation 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_exact_declared_title_and_section_scope_literals_preserve_applicability[in this title] 
+[gw0] [ 65%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_exact_declared_title_and_section_scope_literals_preserve_applicability[in this title] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_exact_declared_title_and_section_scope_literals_preserve_applicability[In this section:] 
+[gw2] [ 65%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_self_consistent_lookup_metadata_cannot_override_candidate_release_or_applicability[applicability_cid-baguqeeraljtftzjaaipep42i7y6f247d5uyhanhwbwsuf2rsw4m4kndhf7zq] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_selected_table_declaration_requires_exact_native_definition_and_head_sources[change0] 
+[gw1] [ 66%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_one_principal_with_two_keys_does_not_supply_independent_roles 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_missing_complete_signed_context_stays_blocking_even_with_valid_signatures 
+[gw0] [ 66%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_exact_declared_title_and_section_scope_literals_preserve_applicability[In this section:] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_authored_continuation_refused_by_legacy_document_maps_without_relabeling_in_v2 
+[gw1] [ 66%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_missing_complete_signed_context_stays_blocking_even_with_valid_signatures 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_missing_reviews_remain_pending_without_invented_authority 
+[gw0] [ 67%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_authored_continuation_refused_by_legacy_document_maps_without_relabeling_in_v2 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_snapshot_input_order_is_canonical_without_losing_role_order 
+[gw0] [ 67%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_snapshot_input_order_is_canonical_without_losing_role_order 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_same_surface_and_stable_id_can_have_distinct_scoped_versions 
+[gw0] [ 67%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_same_surface_and_stable_id_can_have_distinct_scoped_versions 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_repeated_semantic_arguments_survive_at_distinct_positions 
+[gw0] [ 68%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_repeated_semantic_arguments_survive_at_distinct_positions 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_dangling_endpoint_is_not_silently_dropped_or_imported 
+[gw0] [ 68%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_dangling_endpoint_is_not_silently_dropped_or_imported 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_definition_use_requires_typed_endpoints 
+[gw0] [ 68%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_definition_use_requires_typed_endpoints 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_candidate_alternatives_stay_distinct_and_cross_links_refuse 
+[gw0] [ 69%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_candidate_alternatives_stay_distinct_and_cross_links_refuse 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_role_positions_cannot_conflict 
+[gw0] [ 69%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_role_positions_cannot_conflict 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_assertions_require_provenance_reference_slots[source_occurrence_cids] 
+[gw0] [ 69%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_assertions_require_provenance_reference_slots[source_occurrence_cids] 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_assertions_require_provenance_reference_slots[interpretation_cids] 
+[gw0] [ 70%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_assertions_require_provenance_reference_slots[interpretation_cids] 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_duplicate_records_refuse_and_callers_are_not_mutated 
+[gw0] [ 70%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_duplicate_records_refuse_and_callers_are_not_mutated 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_role_ordinal_is_explicit_and_never_coerced[None] 
+[gw0] [ 70%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_role_ordinal_is_explicit_and_never_coerced[None] 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_role_ordinal_is_explicit_and_never_coerced[True] 
+[gw0] [ 71%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_role_ordinal_is_explicit_and_never_coerced[True] 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_role_ordinal_is_explicit_and_never_coerced[-1] 
+[gw2] [ 71%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_selected_table_declaration_requires_exact_native_definition_and_head_sources[change0] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_selected_table_declaration_requires_exact_native_definition_and_head_sources[change1] 
+[gw0] [ 71%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_role_ordinal_is_explicit_and_never_coerced[-1] 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_role_ordinal_is_explicit_and_never_coerced[0.5] 
+[gw0] [ 72%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_role_ordinal_is_explicit_and_never_coerced[0.5] 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_resealing_does_not_make_candidate_snapshot_reviewed 
+[gw0] [ 72%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_resealing_does_not_make_candidate_snapshot_reviewed 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_qualifier_role_destination_cannot_be_an_untyped_entity[HAS_TEMPORAL_CONSTRAINT] 
+[gw0] [ 72%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_qualifier_role_destination_cannot_be_an_untyped_entity[HAS_TEMPORAL_CONSTRAINT] 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_qualifier_role_destination_cannot_be_an_untyped_entity[HAS_CONDITION] 
+[gw0] [ 73%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_qualifier_role_destination_cannot_be_an_untyped_entity[HAS_CONDITION] 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_qualifier_role_destination_cannot_be_an_untyped_entity[HAS_EXCEPTION] 
+[gw0] [ 73%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_qualifier_role_destination_cannot_be_an_untyped_entity[HAS_EXCEPTION] 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_candidate_assertion_references_are_not_authenticated_by_shape_validation 
+[gw0] [ 73%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_candidate_assertion_references_are_not_authenticated_by_shape_validation 
+tests/unit/logic/autoformal/test_corpus_graph.py::test_aggregate_bound_is_checked_before_individual_record_validation 
+[gw0] [ 74%] PASSED tests/unit/logic/autoformal/test_corpus_graph.py::test_aggregate_bound_is_checked_before_individual_record_validation 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_changed_definition_invalidates_only_reverse_reachable_descendants 
+[gw0] [ 74%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_changed_definition_invalidates_only_reverse_reachable_descendants 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[root] 
+[gw0] [ 74%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[root] 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[source] 
+[gw0] [ 75%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[source] 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[revision] 
+[gw0] [ 75%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[revision] 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[context] 
+[gw0] [ 75%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[context] 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[definition] 
+[gw0] [ 76%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[definition] 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[model] 
+[gw0] [ 76%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[model] 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[policy] 
+[gw0] [ 76%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_each_declared_pin_kind_and_revision_is_compared_exactly[policy] 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_cycle_and_self_loop_are_inventory_items_and_do_not_truncate_propagation 
+[gw0] [ 77%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_cycle_and_self_loop_are_inventory_items_and_do_not_truncate_propagation 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_missing_target_and_pin_propagate_without_claiming_closure 
+[gw0] [ 77%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_missing_target_and_pin_propagate_without_claiming_closure 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_absent_observed_pin_and_explicit_missing_artifact_prevent_reuse 
+[gw0] [ 77%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_absent_observed_pin_and_explicit_missing_artifact_prevent_reuse 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_observation_population_and_extra_keys_cannot_hide_changed_artifacts 
+[gw0] [ 78%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_observation_population_and_extra_keys_cannot_hide_changed_artifacts 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_manifest_omission_reordering_duplicate_or_foreign_dependent_fails 
+[gw0] [ 78%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_manifest_omission_reordering_duplicate_or_foreign_dependent_fails 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_resealed_manifest_and_invalidation_tampering_are_rejected 
+[gw0] [ 78%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_resealed_manifest_and_invalidation_tampering_are_rejected 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_large_linear_frontier_uses_no_recursive_or_hop_cutoff 
+[gw0] [ 79%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_large_linear_frontier_uses_no_recursive_or_hop_cutoff 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_dropped_and_resealed_artifacts_cannot_retarget_manifest_consumption 
+[gw0] [ 79%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_dropped_and_resealed_artifacts_cannot_retarget_manifest_consumption 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_bad_bounds_pin_shape_and_boolean_hash_refuse_before_partial_result 
+[gw0] [ 79%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_bad_bounds_pin_shape_and_boolean_hash_refuse_before_partial_result 
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_returned_observations_are_detached_and_unchanged_artifacts_are_only_conditionally_reusable 
+[gw0] [ 80%] PASSED tests/unit/logic/autoformal/test_legal_graph_dependencies.py::test_returned_observations_are_detached_and_unchanged_artifacts_are_only_conditionally_reusable 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_definition_only_graph_has_exact_endpoints_and_no_invented_norm[fol] 
+[gw1] [ 80%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_missing_reviews_remain_pending_without_invented_authority 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_current_complete_source_context_and_owner_dependencies_are_rechecked[artifact] 
+[gw1] [ 80%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_current_complete_source_context_and_owner_dependencies_are_rechecked[artifact] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_current_complete_source_context_and_owner_dependencies_are_rechecked[owner_pin] 
+[gw2] [ 81%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_selected_table_declaration_requires_exact_native_definition_and_head_sources[change1] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_selected_table_declaration_requires_exact_native_definition_and_head_sources[change2] 
+[gw0] [ 81%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_definition_only_graph_has_exact_endpoints_and_no_invented_norm[fol] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_definition_only_graph_has_exact_endpoints_and_no_invented_norm[tdfol] 
+[gw1] [ 81%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_current_complete_source_context_and_owner_dependencies_are_rechecked[owner_pin] 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_transport_hash_cannot_replace_full_canonical_source_pin 
+[gw1] [ 82%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_transport_hash_cannot_replace_full_canonical_source_pin 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_oversized_original_inputs_refuse_before_owner_import_or_replay 
+[gw1] [ 82%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_oversized_original_inputs_refuse_before_owner_import_or_replay 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_subject_and_resigned_claims_cannot_retarget_exact_context_population 
+[gw2] [ 82%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_selected_table_declaration_requires_exact_native_definition_and_head_sources[change2] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_selected_table_declaration_requires_exact_native_definition_and_head_sources[change3] 
+[gw1] [ 83%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_subject_and_resigned_claims_cannot_retarget_exact_context_population 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_assessment_cannot_promote_semantic_or_accepted_authority 
+[gw0] [ 83%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_definition_only_graph_has_exact_endpoints_and_no_invented_norm[tdfol] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_full_contributors_and_new_subspan_contexts_remain_separate_from_sampler 
+[gw2] [ 83%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_selected_table_declaration_requires_exact_native_definition_and_head_sources[change3] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resolved_query_still_requires_exact_representative_source_and_native_route[second_occurrence] 
+[gw0] [ 84%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_full_contributors_and_new_subspan_contexts_remain_separate_from_sampler 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[AST] 
+[gw1] [ 84%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_assessment_cannot_promote_semantic_or_accepted_authority 
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_import_does_not_load_native_source_context_or_authentication_owners 
+[gw1] [ 84%] PASSED tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_import_does_not_load_native_source_context_or_authentication_owners 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_actual_public_imports_need_no_compiler_or_numerical_runtime 
+[gw1] [ 85%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_actual_public_imports_need_no_compiler_or_numerical_runtime 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_real_public_session_is_deferred_pinned_cached_and_resettable 
+[gw2] [ 85%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resolved_query_still_requires_exact_representative_source_and_native_route[second_occurrence] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resolved_query_still_requires_exact_representative_source_and_native_route[interpretation] 
+[gw0] [ 85%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[AST] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[scope] 
+[gw1] [ 86%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_real_public_session_is_deferred_pinned_cached_and_resettable 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_session_attribute_constructs_once_and_dispatch_uses_same_instance 
+[gw1] [ 86%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_session_attribute_constructs_once_and_dispatch_uses_same_instance 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_reset_explicitly_replaces_the_session 
+[gw1] [ 86%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_reset_explicitly_replaces_the_session 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_failed_initialization_is_not_cached_or_hidden 
+[gw1] [ 87%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_failed_initialization_is_not_cached_or_hidden 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_unknown_dispatch_does_not_construct_a_session 
+[gw1] [ 87%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_unknown_dispatch_does_not_construct_a_session 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_concurrent_first_consumers_share_one_session 
+[gw1] [ 87%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_concurrent_first_consumers_share_one_session 
+tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py::test_validated_alias_graph_cold_parquet_readback_preserves_both_originals[fol] 
+[gw2] [ 88%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resolved_query_still_requires_exact_representative_source_and_native_route[interpretation] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resolved_query_still_requires_exact_representative_source_and_native_route[literal] 
+[gw0] [ 88%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[scope] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[context] 
+[gw2] [ 88%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resolved_query_still_requires_exact_representative_source_and_native_route[literal] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resolved_query_still_requires_exact_representative_source_and_native_route[target_scope] 
+[gw0] [ 89%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[context] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[role] 
+[gw2] [ 89%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resolved_query_still_requires_exact_representative_source_and_native_route[target_scope] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resolved_query_still_requires_exact_representative_source_and_native_route[kind] 
+[gw2] [ 89%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resolved_query_still_requires_exact_representative_source_and_native_route[kind] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_bounded_profile_refuses_unsupported_document_family_or_self_binding[same_document] 
+[gw0] [ 90%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[role] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[authority] 
+[gw0] [ 90%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[authority] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[graph_endpoint] 
+[gw0] [ 90%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[graph_endpoint] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[report_pin] 
+[gw2] [ 91%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_bounded_profile_refuses_unsupported_document_family_or_self_binding[same_document] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_bounded_profile_refuses_unsupported_document_family_or_self_binding[different_family] 
+[gw0] [ 91%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[report_pin] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_bad_transport_hash_and_oversize_body_fail_before_native_owner_import 
+[gw0] [ 91%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_bad_transport_hash_and_oversize_body_fail_before_native_owner_import 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_public_import_does_not_import_native_definition_owners 
+[gw0] [ 92%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_public_import_does_not_import_native_definition_owners 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_changed_adapter_source_is_refused_before_cached_code_can_claim_new_pins 
+[gw0] [ 92%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_changed_adapter_source_is_refused_before_cached_code_can_claim_new_pins 
+[gw1] [ 92%] PASSED tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py::test_validated_alias_graph_cold_parquet_readback_preserves_both_originals[fol] 
+tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py::test_validated_alias_graph_cold_parquet_readback_preserves_both_originals[tdfol] 
+[gw2] [ 93%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_bounded_profile_refuses_unsupported_document_family_or_self_binding[different_family] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_bounded_profile_refuses_unsupported_document_family_or_self_binding[same_candidate] 
+[gw2] [ 93%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_bounded_profile_refuses_unsupported_document_family_or_self_binding[same_candidate] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_original_candidates_preparations_and_complete_contexts_are_replayed[preparation_cid] 
+[gw2] [ 93%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_original_candidates_preparations_and_complete_contexts_are_replayed[preparation_cid] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_original_candidates_preparations_and_complete_contexts_are_replayed[omitted_context] 
+[gw2] [ 94%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_original_candidates_preparations_and_complete_contexts_are_replayed[omitted_context] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_original_candidates_preparations_and_complete_contexts_are_replayed[context_transport] 
+[gw2] [ 94%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_original_candidates_preparations_and_complete_contexts_are_replayed[context_transport] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_original_candidates_preparations_and_complete_contexts_are_replayed[original_ast] 
+[gw2] [ 94%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_original_candidates_preparations_and_complete_contexts_are_replayed[original_ast] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_every_independent_lookup_and_registry_identity_is_required[expected_registry_sha256] 
+[gw2] [ 95%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_every_independent_lookup_and_registry_identity_is_required[expected_registry_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_every_independent_lookup_and_registry_identity_is_required[expected_registry_cid] 
+[gw2] [ 95%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_every_independent_lookup_and_registry_identity_is_required[expected_registry_cid] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_every_independent_lookup_and_registry_identity_is_required[expected_lookup_sha256] 
+[gw2] [ 95%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_every_independent_lookup_and_registry_identity_is_required[expected_lookup_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_every_independent_lookup_and_registry_identity_is_required[expected_lookup_cid] 
+[gw2] [ 96%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_every_independent_lookup_and_registry_identity_is_required[expected_lookup_cid] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_every_independent_lookup_and_registry_identity_is_required[expected_query_sha256] 
+[gw2] [ 96%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_every_independent_lookup_and_registry_identity_is_required[expected_query_sha256] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resealed_use_candidate_cannot_promote_or_replace_bound_native_and_graph_content[alias_ast] 
+[gw1] [ 96%] PASSED tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py::test_validated_alias_graph_cold_parquet_readback_preserves_both_originals[tdfol] 
+tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py::test_new_competing_donor_definition_invalidates_component_without_rewriting_sources 
+[gw2] [ 97%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resealed_use_candidate_cannot_promote_or_replace_bound_native_and_graph_content[alias_ast] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resealed_use_candidate_cannot_promote_or_replace_bound_native_and_graph_content[graph_endpoint] 
+[gw2] [ 97%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resealed_use_candidate_cannot_promote_or_replace_bound_native_and_graph_content[graph_endpoint] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resealed_use_candidate_cannot_promote_or_replace_bound_native_and_graph_content[false_authority] 
+[gw1] [ 97%] PASSED tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py::test_new_competing_donor_definition_invalidates_component_without_rewriting_sources 
+[gw2] [ 98%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_resealed_use_candidate_cannot_promote_or_replace_bound_native_and_graph_content[false_authority] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_input_bounds_precede_native_resolver_and_review_operation_imports[request] 
+[gw2] [ 98%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_input_bounds_precede_native_resolver_and_review_operation_imports[request] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_input_bounds_precede_native_resolver_and_review_operation_imports[aggregate] 
+[gw2] [ 98%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_input_bounds_precede_native_resolver_and_review_operation_imports[aggregate] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_evidence_metadata_is_bounded_and_typed_before_operation_owner_imports[candidate_pin] 
+[gw2] [ 99%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_evidence_metadata_is_bounded_and_typed_before_operation_owner_imports[candidate_pin] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_evidence_metadata_is_bounded_and_typed_before_operation_owner_imports[population] 
+[gw2] [ 99%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_evidence_metadata_is_bounded_and_typed_before_operation_owner_imports[population] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_evidence_metadata_is_bounded_and_typed_before_operation_owner_imports[occurrence_cid] 
+[gw2] [ 99%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_evidence_metadata_is_bounded_and_typed_before_operation_owner_imports[occurrence_cid] 
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_import_remains_inert_without_native_resolver_or_review_owners 
+[gw2] [100%] PASSED tests/unit/logic/autoformal/test_corpus_definition_use_v2.py::test_import_remains_inert_without_native_resolver_or_review_owners 
+
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-ir-definition-use-v2-integration-20261015/qualification-v01/junit.xml -
+================================== Cache Info ==================================
+Commit hash: 7e34bb15
+Note: Uncommitted changes present
+============================= 302 passed in 29.47s =============================

@@ -1,0 +1,129 @@
+{
+  "actual_private_or_live_body_reads": 0,
+  "actual_resource_or_observer_mains": 0,
+  "actual_tree_censuses": 0,
+  "checkpoint_JSON_parses": 0,
+  "control_count": 25,
+  "controls": [
+    {
+      "name": "exact apparent and physical full-run boundaries pass",
+      "passed": true
+    },
+    {
+      "name": "one byte apparent shortfall preserved as prepared-only refusal",
+      "passed": true
+    },
+    {
+      "name": "one byte apparent shortfall blocks model",
+      "passed": true
+    },
+    {
+      "name": "one byte physical shortfall preserved as prepared-only refusal",
+      "passed": true
+    },
+    {
+      "name": "one byte physical shortfall blocks model",
+      "passed": true
+    },
+    {
+      "name": "native admission fit does not imply full-run fit",
+      "passed": true
+    },
+    {
+      "name": "native refusal remains publishable metadata",
+      "passed": true
+    },
+    {
+      "name": "invented passed flag",
+      "passed": true
+    },
+    {
+      "name": "smaller claim",
+      "passed": true
+    },
+    {
+      "name": "smaller future bound",
+      "passed": true
+    },
+    {
+      "name": "changed cap",
+      "passed": true
+    },
+    {
+      "name": "old record count",
+      "passed": true
+    },
+    {
+      "name": "wrong fullclaims",
+      "passed": true
+    },
+    {
+      "name": "future bound is never a claim",
+      "passed": true
+    },
+    {
+      "name": "shared mutation",
+      "passed": true
+    },
+    {
+      "name": "numeric truth refused",
+      "passed": true
+    },
+    {
+      "name": "boolean API count refused",
+      "passed": true
+    },
+    {
+      "name": "model already started refused",
+      "passed": true
+    },
+    {
+      "name": "wrong refusal findings",
+      "passed": true
+    },
+    {
+      "name": "fake headroom",
+      "passed": true
+    },
+    {
+      "name": "foreign prior drift",
+      "passed": true
+    },
+    {
+      "name": "original baseline raw pin conserved",
+      "passed": true
+    },
+    {
+      "name": "observer path closed",
+      "passed": true
+    },
+    {
+      "name": "training selector must be boolean",
+      "passed": true
+    },
+    {
+      "name": "observer applies future bound and fresh opening2 source guards",
+      "passed": true
+    }
+  ],
+  "controls_source": {
+    "bytes": 6826,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions_balanced_capacity_clearance_controls_v01.py",
+    "sha256": "1625f9aa70ad79edc6f335a2e563dd900d583d449fd3fbf3e1c0f08ec366da2d"
+  },
+  "findings": [],
+  "model_or_encoder_calls": 0,
+  "observer": {
+    "bytes": 8023,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_capacity_clearance_v01.py",
+    "sha256": "bce76340578fb66a532bf1085f367e9cff703e8df8bac199f2dddbd70c8b8692"
+  },
+  "passed": true,
+  "resource_API_calls": 0,
+  "runner": {
+    "bytes": 42674,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/run_conditions_balanced_v01.py",
+    "sha256": "f58dbf127567bce1186c1dd78cd0ef20921eeca88467d4ed66c98a3834907af9"
+  },
+  "schema": "conditions-balanced-capacity-clearance-author-controls/v1"
+}

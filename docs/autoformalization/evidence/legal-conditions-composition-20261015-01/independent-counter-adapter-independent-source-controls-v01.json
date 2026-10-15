@@ -1,0 +1,55 @@
+{
+  "Git_mutations": 0,
+  "actual_adapter_token_limit": 128,
+  "actual_primary_result_JSON_parses": 0,
+  "actual_primary_result_rawhash_only": {
+    "bytes": 9716921,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-diagnostic-v01.json",
+    "sha256": "393d154c6f116e255833de8d81be066a80817170a047613dba39ad591facf1df"
+  },
+  "all_configured_contexts_typed_int384": true,
+  "all_source_guard_before_shared_compile": true,
+  "all_three_donor_custody_before_original_body_reads": true,
+  "counter": {
+    "bytes": 33269,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/recount_conditions_composition_v01.py",
+    "sha256": "4f5c4cde42e9e088db70d5f96649a0dac15fab4631e033dc73db08223c2ead41"
+  },
+  "counter_main_calls": 0,
+  "exact_primary_IO_primitives": [
+    "require",
+    "descriptor",
+    "forbidden",
+    "raw_pin",
+    "read_json",
+    "FiniteIO"
+  ],
+  "findings": [],
+  "identical_shared_guard_controls_transferred_without_rerun": true,
+  "kernel_source_review": {
+    "bytes": 14412,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-scientific-kernels-source-review-v01.json",
+    "sha256": "a6a03d9ca9520b68c73434b1753a67d88d791cce28c3f39a6ce80ac341fea8fc"
+  },
+  "network_or_SDK_calls": 0,
+  "new_alarm_test_used_fake_resource_and_signal_objects_only": true,
+  "new_exact_alarm_test_independently_replayed_methods": 1,
+  "original_input_body_reads": 0,
+  "passed": true,
+  "previous_11_author_methods_65_subtests_AST_exact": true,
+  "previous_11_author_methods_transferred_without_rerun": true,
+  "primary_guard_independent_control_evidence": {
+    "bytes": 2077,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-independent-source-controls-v01.json",
+    "sha256": "495c812897b680137fca7f188ef116c349732996ff4bcd4d6c5fe4b47c0243fa"
+  },
+  "private_body_reads": 0,
+  "production_or_numerical_imports": 0,
+  "rank_kernel_general_token_limit": 256,
+  "schema": "conditions-composition-counter-independent-source-controls/v1",
+  "tests": {
+    "bytes": 8159,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_conditions_composition_counter_adapter_v01.py",
+    "sha256": "4c3cf925e24402ff94b9a5dfff86ae4667600fcaaef48a018f092c1b089ae730"
+  }
+}

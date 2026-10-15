@@ -163,12 +163,14 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
             rendered_conditions += 1
 
     rendered_temporal = 0
+    represented_temporal: List[tuple[Mapping[str, Any], str]] = []
     for temporal in norm.temporal_constraints:
         temporal_text = _temporal_phrase_text(temporal)
         if temporal_text and not _text_already_contains(action_phrase, temporal_text):
             if rendered_conditions or rendered_temporal:
                 phrases.append(_fixed_phrase("and", "temporal_connector"))
             phrases.append(_detail_phrase(temporal_text, "temporal_constraints", temporal, norm))
+            represented_temporal.append((temporal, temporal_text))
             rendered_temporal += 1
 
     rendered_procedure = 0
@@ -179,6 +181,12 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
             and not _text_already_contains(action_phrase, procedure_text)
             and not _text_already_contains(procedure_text, action_phrase)
         ):
+            overlap_span = _represented_procedure_temporal_span(
+                norm, procedure_event, procedure_text, represented_temporal
+            )
+            if overlap_span:
+                phrases.append(_provenance_phrase(procedure_text, "procedure", [overlap_span]))
+                continue
             connector = _procedure_event_connector(
                 rendered_conditions,
                 rendered_temporal,
@@ -649,6 +657,82 @@ def _procedure_event_records(procedure: Mapping[str, Any]) -> List[Mapping[str, 
     if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
         return []
     return [record for record in records if isinstance(record, Mapping)]
+
+
+def _represented_procedure_temporal_span(
+    norm: LegalNormIR,
+    procedure: Mapping[str, Any],
+    procedure_text: str,
+    represented_temporal: Sequence[tuple[Mapping[str, Any], str]],
+) -> List[int]:
+    """Locate an already rendered temporal phrase's same-source event clause.
+
+    Text equality alone cannot identify repeated occurrences. Both records must
+    agree with their exact source intervals, and the procedure occurrence must
+    lie inside the represented temporal occurrence. Its provenance is retained
+    even when the shared wording need not be rendered twice.
+    """
+
+    source = norm.source_text
+
+    def exact_span(record: Mapping[str, Any], rendered: str) -> List[int]:
+        span = record.get("span")
+        if (
+            type(span) not in (list, tuple)
+            or len(span) != 2
+            or any(type(bound) is not int for bound in span)
+            or not 0 <= span[0] < span[1] <= len(source)
+        ):
+            return []
+        raw_text = record.get("raw_text")
+        if type(raw_text) is not str or raw_text != source[span[0] : span[1]]:
+            return []
+        if _clean_text(raw_text).casefold() != _clean_text(rendered).casefold():
+            return []
+        if "source_id" in record and record["source_id"] != norm.source_id:
+            return []
+        for key in ("source_span", "support_span"):
+            if key in record and (
+                type(record[key]) not in (list, tuple)
+                or len(record[key]) != 2
+                or any(type(bound) is not int for bound in record[key])
+                or list(record[key]) != list(span)
+            ):
+                return []
+        return list(span)
+
+    procedure_span = exact_span(procedure, procedure_text)
+    if not procedure_span:
+        return []
+    relation = str(procedure.get("relation") or "").strip().casefold()
+    if relation not in {"after", "before", "upon"} or not _starts_with_phrase(
+        procedure_text, relation
+    ):
+        return []
+    anchor = _procedure_event_anchor_text(procedure).casefold()
+    for temporal, temporal_text in represented_temporal:
+        temporal_span = exact_span(temporal, temporal_text)
+        if not temporal_span or not (
+            temporal_span[0] <= procedure_span[0] < procedure_span[1] <= temporal_span[1]
+        ):
+            continue
+        temporal_anchors = [
+            _clean_text(str(temporal[key])).casefold()
+            for key in ("anchor", "anchor_event")
+            if temporal.get(key)
+        ]
+        if temporal_anchors and (not anchor or any(value != anchor for value in temporal_anchors)):
+            continue
+        direction = temporal.get("direction") or temporal.get("anchor_relation")
+        if direction and str(direction).strip().casefold() != relation:
+            continue
+        start, end = procedure_span
+        if start > temporal_span[0] and source[start - 1].isalnum():
+            continue
+        if end < temporal_span[1] and source[end].isalnum():
+            continue
+        return procedure_span
+    return []
 
 
 def _procedure_event_phrase_text(record: Mapping[str, Any]) -> str:

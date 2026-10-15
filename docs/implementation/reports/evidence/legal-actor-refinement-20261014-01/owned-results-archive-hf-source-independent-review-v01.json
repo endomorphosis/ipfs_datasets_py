@@ -1,0 +1,136 @@
+{
+  "actual_SDK_calls": 0,
+  "actual_uploads": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-detached-controls-v01.json": {
+      "bytes": 5730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-detached-controls-v01.json",
+      "sha256": "83cb904b905abf5bfc906beca1fc52496c0e2c0fafe332429a7d860aab1cbc43"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-detached-controls-v02.json": {
+      "bytes": 6853,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-detached-controls-v02.json",
+      "sha256": "fe217933b354881ac01323120bf76c1bbe170db5cd238217d963241da11f31f1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-independent-review-v01.json": {
+      "bytes": 75686,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-independent-review-v01.json",
+      "sha256": "c6c2e49416c864352d2a65cd9d62bfd9d906897cd7861dd6ad93076d53b5a0d2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-independent-review-v02.json": {
+      "bytes": 76972,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-independent-review-v02.json",
+      "sha256": "4f686e18e0bad824af254c92e2a91be767c0553d0dbeb5dc8a99b0cafc82fb31"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json": {
+      "bytes": 801434,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json",
+      "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-source-independent-review-v01.json": {
+      "bytes": 84738,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-source-independent-review-v01.json",
+      "sha256": "f8ffe1618f7b4bba6ce8f906bc62bf5571435434f4a9a5fd5465ca08d06752aa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_owned_results_archive_v01.py": {
+      "bytes": 16909,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_owned_results_archive_v01.py",
+      "sha256": "e24e09b8e8734d4feacb38d679154556cc0c9a7bacfdf5d917eb097077445a38"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/publish_owned_results_archive_hf_v01.py": {
+      "bytes": 11591,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/publish_owned_results_archive_hf_v01.py",
+      "sha256": "15bfc889dccbd0b98ce40ab78649d4106bd15079d5f1d1f72ffb8e808fd21292"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/publish_owned_results_archive_hf_v02.py": {
+      "bytes": 12363,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/publish_owned_results_archive_hf_v02.py",
+      "sha256": "48f917fa3921294631df351c0a402e21285620504665f4bc50dba2181e962502"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_owned_results_archive_prepared_v01.py": {
+      "bytes": 11305,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_owned_results_archive_prepared_v01.py",
+      "sha256": "d2b95e0d901909e240bdac41da8f9b699293ec5449c48d4e9be78aca233130bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_owned_results_archive_hf_detached_v01.py": {
+      "bytes": 11773,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_owned_results_archive_hf_detached_v01.py",
+      "sha256": "ffa8ee52fcd5c96ca52e19b13e4ae17e7814d7a37859307cb8d48dbaca2819b8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_owned_results_archive_hf_detached_v02.py": {
+      "bytes": 12773,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_owned_results_archive_hf_detached_v02.py",
+      "sha256": "ecc939156d846d0ab401f70519c9a5c1f6c8536330f850d5fe2b4cf5c75e4b4d"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "control_receipt": {
+    "bytes": 6853,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-detached-controls-v02.json",
+    "sha256": "fe217933b354881ac01323120bf76c1bbe170db5cd238217d963241da11f31f1"
+  },
+  "corrected_findings": {
+    "V01_preserved": true,
+    "V02_exact_physical_download_destination": true,
+    "V02_exact_revision_join": true,
+    "V02_typed_hex_and_LFS_metadata": true,
+    "original_payload_path_accepted_as_readback_in_V01": true,
+    "wrong_returned_listing_revision_accepted_in_V01": true
+  },
+  "detached_fake_SDK_controls_passed": 30,
+  "findings": [],
+  "limits": [
+    "This source gate authorizes no rawfile eviction, claim/cap change, automatic training or native capacity PASS.",
+    "Actual HF receipt must bind exact archive and manifest, immutable revision, allprior identities and force-downloaded rawhashes before any concrete apply approval.",
+    "Conservative net782820835B includes2M countedmetadata allowance; original800M target remainsfalse; storage minimum750M was explicitly set by root after actual measurement."
+  ],
+  "meaningful_controls": [
+    "Valid3freshpath append with exactCAS parent and immutable Git/LFS rawdownload readback succeeds.",
+    "Wrong returnedimmutable revision, external originalpayload path, noncanonical download path, malformedhex/LFS metadata refuse.",
+    "Any oldfile identity change/deletion, unrelatedaddition, sourcefile drift, newremote identity mismatch and corruptdownload refuse.",
+    "Staleparent produces exactly one commit attempt and no retry."
+  ],
+  "model_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "prepared": {
+    "bytes": 801434,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json",
+    "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+  },
+  "prepared_review": {
+    "bytes": 76972,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-independent-review-v02.json",
+    "sha256": "4f686e18e0bad824af254c92e2a91be767c0553d0dbeb5dc8a99b0cafc82fb31"
+  },
+  "private_body_reads": 0,
+  "producer": {
+    "bytes": 12363,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/publish_owned_results_archive_hf_v02.py",
+    "sha256": "48f917fa3921294631df351c0a402e21285620504665f4bc50dba2181e962502"
+  },
+  "qualified_publication_scope": {
+    "additions_only": true,
+    "cap_changes": 0,
+    "claim_mutations": 0,
+    "create_commit_calls": 1,
+    "current_parent_all_file_identity_conservation": true,
+    "exact_add_paths": [
+      "archives/20261014-owned-released-results-v1/owned-released-results.tar.gz",
+      "archives/20261014-owned-released-results-v1/restoration-manifest.json",
+      "archives/20261014-owned-released-results-v1/README.md"
+    ],
+    "exact_fresh_download_paths_required": true,
+    "fresh_prefix": "archives/20261014-owned-released-results-v1",
+    "immutable_raw_download_hashes_required": true,
+    "original_file_unlinks": 0,
+    "parent_commit_CAS": true,
+    "repository": "Publicus/legal-ir-autoencoder",
+    "requested_and_returned_immutable_revision_must_match": true,
+    "typed_complete_Git_LFS_identities": true
+  },
+  "resource_API_calls": 0,
+  "schema": "actor-refinement-owned-results-archive-hf-source-independent-review/v1",
+  "source_review_scope": "Full V01 source and exact V02 delta independently reviewed; real production/SDK/network main was not executed. Root actual trigger remains separate."
+}

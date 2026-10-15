@@ -1,0 +1,124 @@
+{
+  "SDK_calls": 0,
+  "actual_freeze_available": false,
+  "actual_scoring_calls": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/analyze_actor_context_ranking_v01.py": {
+      "bytes": 30542,
+      "sha256": "12c534cd5a1c5051ad0440d7ee9a61b24d60c01f7302c0338ab8c43d1fb3424b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_evaluation_controls_v01.py": {
+      "bytes": 10425,
+      "sha256": "016a442fcfc542ae803dec319504539ac4d270de2cbad7d63488d787f4097c0c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_evaluation_v01.py": {
+      "bytes": 26148,
+      "sha256": "bc4cf16fb660ff94345d80d2a4b62b8d83c19bff1ae2509d07018b908bc8b66a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 18389,
+      "sha256": "26284be9473a9265659982067bf80a3d60ade49dd504b627d7866f7f09bb418d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/evaluation-port-plan-v01.json": {
+      "bytes": 8055,
+      "sha256": "d300154331d67cfec3b78eb73564df3b4ac4314361d2552264f9adf5b9a25481"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/postfreeze-comparator-inputs-v01.json": {
+      "bytes": 6310,
+      "sha256": "c9a021d78fb8025efb49b0b13bfc520d8513e96d6e777f14e085a9c26cf1fa44"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_result_recount_v01.py": {
+      "bytes": 43889,
+      "sha256": "d676f769c5d104fea600ff2036eb72146ab8f5f7519ee974835ce24812035601"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_evaluation_author_controls_v01.py": {
+      "bytes": 4751,
+      "sha256": "160fec48d1a5fad09f92fff59f1fa4450978ca34cdb2d27fa17798b235624cc5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_analyzer_detached_v01.py": {
+      "bytes": 11676,
+      "sha256": "c456cf72738ee4f68a2c9eeb7758b77906aacc980f70459a07c02b3812c4ca23"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_recount_detached_v01.py": {
+      "bytes": 30414,
+      "sha256": "05baeda46847a59ffd9f37a168e4e6e1187aaf62f40794889fea9587254c3c90"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "evaluator_main_calls": 0,
+  "findings": [],
+  "independent_source_qualification": false,
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "passed_names": [
+    "test_actor_context_ranking_analyzer_detached_v01.BothComparatorControls.test_all_four_permission_states_and_complete36_scores_required",
+    "test_actor_context_ranking_analyzer_detached_v01.BothComparatorControls.test_both_comparator_policies_and_typed_unique_rows_required",
+    "test_actor_context_ranking_analyzer_detached_v01.BothComparatorControls.test_each_comparator_scope_route_loss_veto_is_independent",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_actor_rank_is_diagnostic_and_float32_stable",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_actual_trace_helper_pins_load_without_model_import",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_binary32_exactness_and_nonfinite",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_candidate_and_N11_joint_schemas_replay",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_each_scope_and_view_loss_vetoes_net_gain",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_either_training_view154_is_false_outcome",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_every_protected_head_detects_bit_drift",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_exact155_both_views_is_accepted",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_exact62_output_geometry",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_exact_immutable_helpers_only",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_joint_decoded_coupling_is_reported_without_technical_veto",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_missing_conditions_or_nonactor_shape_refused",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_no_extra_state_or_missing_scope",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_no_reference_read_before_freeze",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_only_actor_pointer_changes_allowed",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_permission_failure_is_reportable",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_pinned_stable_CE_huge_equal_logit_regression",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_preregistered_threshold_cannot_change",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_signed_zero_preserved_for_conditions",
+    "test_actor_context_ranking_analyzer_detached_v01.DetachedAnalyzerControls.test_unknown_joint_schema_wrong_caps_ID_replay_refuse",
+    "test_actor_context_ranking_recount_detached_v01.BothComparatorAndRankingControls.test_each_comparator_nine_scope_both_route_loss_veto",
+    "test_actor_context_ranking_recount_detached_v01.BothComparatorAndRankingControls.test_no_complete_argmax_or_numerical_gradient_claim",
+    "test_actor_context_ranking_recount_detached_v01.BothComparatorAndRankingControls.test_ranking_disabled_and_wrapper_bool_float_index_refused",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_actor_rank_can_change_in_pinned_helper",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_actual_contract_pin",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_actual_gold_coordinates_authentication_exceeds_owner_validator",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_actual_sourceSHA_authentication_exceeds_owner_validator",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_all_protected_vectors_detect_changes",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_all_three_permission_states_are_checked",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_changed_conditions_and_inactive_moments_cannot_hide_behind_new_trace_digest",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_changed_preregistered_threshold_refused",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_closed_schedule_hash_and_final_progress_are_authenticated",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_complete_initial_greedy_fields_and_joint_envelope_protected",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_criterion_passes_at_exact155_and_ignores_actor_ranks",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_each_training_view154_fails_scientifically",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_feature_digest_and_training_branch_chain_must_join",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_final_projection_excludes_only_actor_vectors",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_missing_protected_role_or_wrong_shape_refused",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_missing_scope_duplicateID_boolean_count_refused",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_no_scope_or_view_can_hide_completeIR_loss",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_nonbinary32_and_boolean_scores_refused",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_permission_loss_and_abstention_remain_reportable",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_permission_recount_does_not_refuse_candidate_failure",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_pinned_choice_guard_tie_and_class",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_pinned_pairing_reports_net_gain_with_a_loss",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_real_trace_schema_accepts32_nonzero_first_query_moments",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_reported_schedule_digest_and_feature_learning_counters_checked",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_signed_zero_is_protected_binary32",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_source_main_requires_training_hook_and_source_qualification",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_technical_failure_cannot_be_scientific_success",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_training_partition_frozen_conditions_and_return_limit_refused",
+    "test_actor_context_ranking_recount_detached_v01.Controls.test_unfrozen_descriptor_refused"
+  ],
+  "passed_test_methods": 55,
+  "permitted_public_metadata_JSON_reads": [
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/evaluation-contract-v01.json",
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/evaluation-port-plan-v01.json",
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/postfreeze-comparator-inputs-v01.json"
+  ],
+  "resource_API_calls": 0,
+  "same_author_as_analyzer_and_recounter": true,
+  "saved_head_or_reference_body_reads": 0,
+  "schema": "actor-context-ranking-evaluation-author-controls/v1",
+  "status": "SOURCE_ONLY_CANDIDATE_UNQUALIFIED",
+  "subtest_checks": 23,
+  "tests_run": 55
+}

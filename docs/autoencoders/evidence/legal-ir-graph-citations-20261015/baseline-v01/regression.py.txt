@@ -1,0 +1,63 @@
+"""Current release-wrapper citation identity on real, private Parquet files.
+
+The existing release encoder and citation consumer are exercised together.
+The graph is authored transport evidence, not reviewed statutory semantics.
+No hosted calls, models, training, source-cache migration or legal admission.
+"""
+from copy import deepcopy
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+
+import pyarrow as pa
+import pyarrow.parquet as pq
+
+from ipfs_datasets_py.processors.legal_data import uscode_hf_release as release
+
+
+def citation_reader():
+    path = Path(__file__).resolve().parents[3] / "scripts/ops/legal_ir/publish_kg_meta_ontology.py"
+    spec = importlib.util.spec_from_file_location("_kg_current_wrapper_citation_identity", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_current_wrapped_graph_parquet_preserves_exact_citation_identity(tmp_path):
+    families = release.fixture_family_rows()
+    nodes = deepcopy(families["graph_nodes"])
+    edges = deepcopy(families["graph_edges"])
+    assert len(nodes) == 2 and len(edges) == 1
+    # Equal display labels cannot replace distinct entry identities. Additional
+    # source/role fields are opaque transport data, with no semantic authority.
+    for node in nodes:
+        node["label"] = "Same authored display label"
+    edges[0].update(logic_role="reference", ordinal=0,
+        source_evidence={"source_revision": "authored-release-2024",
+                         "source_sha256": hashlib.sha256(b"Authored source evidence.").hexdigest()})
+    before = deepcopy({"graph_nodes": nodes, "graph_edges": edges})
+    tables = []
+    file_bytes = {}
+    for family, rows in {"graph_nodes": nodes, "graph_edges": edges}.items():
+        raw = release._encode_parquet_rows(rows, family=family)
+        path = tmp_path / (family + ".parquet")
+        path.write_bytes(raw)
+        file_bytes[path] = raw
+        with pq.ParquetFile(path) as parquet:
+            table = parquet.read(use_threads=False)
+        assert table.num_rows == len(rows)
+        wrappers = table.to_pylist()
+        assert [json.loads(row["record_json"]) for row in wrappers] == [
+            {**row, "family": family} for row in rows]
+        assert all(hashlib.sha256(row["record_json"].encode("utf-8")).hexdigest()
+                   == row["record_sha256"] for row in wrappers)
+        tables.append(table)
+    combined = pa.concat_tables(tables)
+    original_wrappers = combined.to_pylist()
+    result = citation_reader().read_graph_cites(combined)
+    assert result == [{"source_legal_id": nodes[0]["legal_id"],
+                       "target_legal_id": nodes[1]["legal_id"], "unresolved": False}]
+    assert combined.to_pylist() == original_wrappers
+    assert {"graph_nodes": nodes, "graph_edges": edges} == before
+    assert all(path.read_bytes() == raw for path, raw in file_bytes.items())

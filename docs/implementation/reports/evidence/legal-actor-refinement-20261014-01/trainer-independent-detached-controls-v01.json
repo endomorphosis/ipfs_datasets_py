@@ -1,0 +1,430 @@
+{
+  "actual_checkpoint_heads_gold_or_private_body_reads": 0,
+  "actual_model_or_encoder_calls": 0,
+  "additional_control_count": 80,
+  "author_stdlib_tests_independently_replayed": 9,
+  "author_test_command": [
+    "python",
+    "-B",
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_refinement_contracts.py"
+  ],
+  "author_test_returncode": 0,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "distinct learned N11 conditions plus nonzero query gate initialized without reset",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: byte_embedding.weight",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: token_projection.weight",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: token_projection.bias",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: encoder.weight_ih_l0",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: encoder.weight_hh_l0",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: encoder.bias_ih_l0",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: encoder.bias_hh_l0",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: encoder.weight_ih_l0_reverse",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: encoder.weight_hh_l0_reverse",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: encoder.bias_ih_l0_reverse",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: encoder.bias_hh_l0_reverse",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: modality.weight",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: modality.bias",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: presence.weight",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: presence.bias",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: start.weight",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: start.bias",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: end.weight",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: end.bias",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: latent_down.weight",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: latent_down.bias",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: latent_up.weight",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: latent_up.bias",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: span_byte_embedding.weight",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: span_token_projection.weight",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: span_token_projection.bias",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: span_encoder.weight_ih_l0",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: span_encoder.weight_hh_l0",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: span_encoder.bias_ih_l0",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: span_encoder.bias_hh_l0",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: span_encoder.weight_ih_l0_reverse",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: span_encoder.weight_hh_l0_reverse",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: span_encoder.bias_ih_l0_reverse",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: span_encoder.bias_hh_l0_reverse",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: conditions_presence.weight",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "frozen state drift refused: conditions_presence.bias",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_start.weight row1",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_start.weight row2",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_start.weight row3",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_start.weight row4",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_start.weight row5",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_start.bias row1",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_start.bias row2",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_start.bias row3",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_start.bias row4",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_start.bias row5",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_end.weight row1",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_end.weight row2",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_end.weight row3",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_end.weight row4",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_end.weight row5",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_end.bias row1",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_end.bias row2",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_end.bias row3",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_end.bias row4",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive state drift refused: actor_end.bias row5",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_start.weight row1",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_start.weight row2",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_start.weight row3",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_start.weight row4",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_start.weight row5",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_start.bias row1",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_start.bias row2",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_start.bias row3",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_start.bias row4",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_start.bias row5",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_end.weight row1",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_end.weight row2",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_end.weight row3",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_end.weight row4",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_end.weight row5",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_end.bias row1",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_end.bias row2",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_end.bias row3",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_end.bias row4",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "inactive Adam moment refused: actor_end.bias row5",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "capture source count refused before model constructor: 0",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "capture source count refused before model constructor: 129",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "128 rows accepted by entry bound before fake constructor sentinel",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "model": {
+    "bytes": 56952,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+    "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+  },
+  "passed": true,
+  "production_or_numerical_imports": 0,
+  "resource_API_or_census_calls": 0,
+  "schema": "actor-refinement-trainer-independent-detached-controls/v1",
+  "scope": "Actual pure source validators with synthetic exact42 state, deliberately learned conditions distinct from original presence, trained nonzero query/gate, frozen36/inactive650 corruption and actual capture128/129 entry bounds. No numerical or actual checkpoint data loaded.",
+  "tests": {
+    "bytes": 21092,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_refinement_contracts.py",
+    "sha256": "d98fded27a3b2aff697ec072533b0124ea1eb1d96baa0954621681651a9fc43a"
+  }
+}

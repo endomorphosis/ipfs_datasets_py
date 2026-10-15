@@ -1,0 +1,51 @@
+{
+  "Git_mutations": 0,
+  "SDK_imports": 0,
+  "actual_public_inputs": [
+    {
+      "bytes": 71091,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-plan-v01.json",
+      "sha256": "71b65a145c0f666e0b58b26a5510e205d351a80ef149bcb0d3c26dd55b1317ee"
+    },
+    {
+      "bytes": 4061,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/trainer-source-independent-review-v01.json",
+      "sha256": "257800d1a3ce2e471165ac2e64dfcbb4251106a859386086f36d9cb4ff7930a6"
+    }
+  ],
+  "checkpoint_JSON_parses": 0,
+  "controls_source": {
+    "bytes": 8123,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_release_builder_detached_v01.py",
+    "sha256": "6242c8c1ba44584603ebc2aebaaa878336454ba9b80d1350dab4639f1243c5c0"
+  },
+  "coverage": [
+    "exact62 inventory",
+    "freeze-before-other-metadata gate",
+    "scientific true/false publication with no promotion",
+    "source gate before freeze",
+    "41 algorithms separate from six resource snapshot sources",
+    "exact helper buffer compilation before execution",
+    "payload32MiB and destination uniqueness bounds",
+    "private diagnostics exclusion",
+    "self-excluded manifest with authoritative complete spec"
+  ],
+  "findings": [],
+  "model_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-14T12:52:05.427310+00:00",
+  "passed": true,
+  "prediction_or_gold_body_reads": 0,
+  "private_body_reads": 0,
+  "resource_API_calls": 0,
+  "schema": "actor-context-ranking-release-builder-detached-controls/v1",
+  "scope": "stdlib source-AST and detached pure fixtures; no production helper main",
+  "source": {
+    "bytes": 18426,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/build_actor_context_ranking_release_spec_v01.py",
+    "sha256": "e4a7e845f2cd9a962a08c6bd1022e386511dad3b9d4a8e509c4edfe11c49fa9b"
+  },
+  "tests_passed": 13,
+  "tests_run": 13
+}

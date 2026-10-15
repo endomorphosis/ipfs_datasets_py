@@ -477,3 +477,181 @@ def test_records_are_deeply_immutable() -> None:
     bundle = SemanticStateBundle(root=_root(), blocks={})
     with pytest.raises(TypeError):
         bundle.blocks[_cid("x")] = b"no"  # type: ignore[index]
+
+
+# Append to the existing semantic_state/test_models.py (reuses its _root helper).
+
+@pytest.fixture
+def fresh_semantic_block_cache(monkeypatch):
+    from ipfs_datasets_py.logic.software_contracts.semantic_state import models as state_models
+
+    monkeypatch.delenv("IPFS_DATASETS_SEMANTIC_BLOCK_CACHE", raising=False)
+    state_models._cached_canonical_dag_json_bytes.cache_clear()
+    yield state_models
+    state_models._cached_canonical_dag_json_bytes.cache_clear()
+
+
+def test_semantic_block_cache_reuses_only_canonicality_and_hashes_every_call(
+    monkeypatch, fresh_semantic_block_cache,
+):
+    from ipfs_datasets_py.logic.software_contracts import content
+
+    models = fresh_semantic_block_cache
+    raw = canonical_dag_json_bytes({"schema": "example@1", "value": 7})
+    cid = cid_for_structured({"schema": "example@1", "value": 7})
+    canonical_checks, observed_hashes = [], []
+    original_canonical = models.canonical_dag_json_bytes
+    original_digest = content._cid_from_digest_bytes
+
+    def canonical(value):
+        canonical_checks.append(value)
+        return original_canonical(value)
+
+    def digest(data, *, codec):
+        observed_hashes.append((data, codec))
+        return original_digest(data, codec=codec)
+
+    monkeypatch.setattr(models, "canonical_dag_json_bytes", canonical)
+    monkeypatch.setattr(content, "_cid_from_digest_bytes", digest)
+    for _ in range(3):
+        assert models.verify_block_bytes(cid, raw) == cid
+    assert canonical_checks == [{"schema": "example@1", "value": 7}]
+    assert observed_hashes == [(raw, "dag-json")] * 3
+    assert models._cached_canonical_dag_json_bytes.cache_info().hits == 2
+
+
+def test_semantic_block_cache_cannot_hide_changed_bytes_or_another_cid(
+    monkeypatch, fresh_semantic_block_cache,
+):
+    from ipfs_datasets_py.logic.software_contracts import content
+
+    models = fresh_semantic_block_cache
+    raw = canonical_dag_json_bytes({"value": 1})
+    cid = cid_for_structured({"value": 1})
+    changed = canonical_dag_json_bytes({"value": 2})
+    foreign = cid_for_structured({"value": 2})
+    assert models.verify_block_bytes(cid, raw) == cid
+    hashes = []
+    original_digest = content._cid_from_digest_bytes
+
+    def digest(data, *, codec):
+        hashes.append((data, codec))
+        return original_digest(data, codec=codec)
+
+    monkeypatch.setattr(content, "_cid_from_digest_bytes", digest)
+    with pytest.raises(SemanticStateModelError, match="forged|mismatched"):
+        models.verify_block_bytes(foreign, raw)
+    with pytest.raises(SemanticStateModelError, match="forged|mismatched"):
+        models.verify_block_bytes(cid, changed)
+    assert models.verify_block_bytes(cid, raw) == cid
+    assert hashes == [(raw, "dag-json"), (changed, "dag-json"), (raw, "dag-json")]
+
+
+@pytest.mark.parametrize("bad", [
+    b'{ "value":1}', b'{"value":1.0}', b'{"value":NaN}',
+    b'{"value":Infinity}', b'{"value":1,"value":1}', b'\xff', b'{',
+])
+def test_semantic_block_cache_never_retains_failed_canonicality(
+    fresh_semantic_block_cache, bad,
+):
+    models = fresh_semantic_block_cache
+    cid = cid_for_structured({"value": 1})
+    assert models.verify_block_bytes(cid, b'{"value":1}') == cid
+    before = models._cached_canonical_dag_json_bytes.cache_info()
+    for _ in range(2):
+        with pytest.raises(SemanticStateModelError):
+            models.verify_block_bytes(cid, bad)
+    after = models._cached_canonical_dag_json_bytes.cache_info()
+    assert after.currsize == before.currsize == 1
+    assert after.misses == before.misses + 2
+
+
+def test_semantic_block_cache_opt_out_preserves_valid_and_invalid_results(
+    monkeypatch, fresh_semantic_block_cache,
+):
+    models = fresh_semantic_block_cache
+    raw = canonical_dag_json_bytes({"value": "caf\u00e9", "items": [1, True, None]})
+    cid = cid_for_structured({"value": "caf\u00e9", "items": [1, True, None]})
+    assert models.verify_block_bytes(cid, raw) == cid
+    before = models._cached_canonical_dag_json_bytes.cache_info()
+    monkeypatch.setenv("IPFS_DATASETS_SEMANTIC_BLOCK_CACHE", "0")
+    for _ in range(2):
+        assert models.verify_block_bytes(cid, raw) == cid
+        with pytest.raises(SemanticStateModelError):
+            models.verify_block_bytes(cid, b'{"value":1.0}')
+        with pytest.raises(SemanticStateModelError):
+            models.verify_block_bytes(cid, canonical_dag_json_bytes({"value": "other"}))
+    assert models._cached_canonical_dag_json_bytes.cache_info() == before
+
+
+def test_semantic_block_cache_byte_bound_does_not_retain_large_payloads(
+    fresh_semantic_block_cache,
+):
+    models = fresh_semantic_block_cache
+    payload = {"value": "x" * models._MAX_CACHED_BLOCK_BYTES}
+    raw = canonical_dag_json_bytes(payload)
+    cid = cid_for_structured(payload)
+    for _ in range(2):
+        assert models.verify_block_bytes(cid, raw) == cid
+    assert models._cached_canonical_dag_json_bytes.cache_info().currsize == 0
+    assert models._cached_canonical_dag_json_bytes.cache_info().maxsize == 4096
+
+
+def test_semantic_block_cache_still_checks_postconstruction_bundle_corruption(
+    fresh_semantic_block_cache,
+):
+    from types import MappingProxyType
+
+    models = fresh_semantic_block_cache
+    payload = {"value": 1}
+    raw = canonical_dag_json_bytes(payload)
+    cid = cid_for_structured(payload)
+    bundle = SemanticStateBundle(root=_root(), blocks={cid: raw})
+    assert bundle.verify() == bundle.root
+    changed = dict(bundle.blocks)
+    changed[cid] = canonical_dag_json_bytes({"value": 2})
+    object.__setattr__(bundle, "blocks", MappingProxyType(changed))
+    with pytest.raises(SemanticStateModelError):
+        bundle.verify()
+
+
+def test_semantic_block_cache_never_keys_custom_bytes_or_cid_subclasses(
+    fresh_semantic_block_cache,
+):
+    models = fresh_semantic_block_cache
+    raw = canonical_dag_json_bytes({"value": 1})
+    cid = cid_for_structured({"value": 1})
+
+    class CustomBytes(bytes):
+        def __hash__(self):
+            raise AssertionError("custom bytes hashing must never reach cache")
+
+    class CustomCID(str):
+        pass
+
+    with pytest.raises(SemanticStateModelError, match="must be bytes"):
+        models.verify_block_bytes(cid, CustomBytes(raw))
+    assert models.verify_block_bytes(CustomCID(cid), raw) == cid
+    assert models._cached_canonical_dag_json_bytes.cache_info().currsize == 0
+
+
+def test_semantic_block_cache_never_skips_raw_source_hashing(
+    monkeypatch, fresh_semantic_block_cache,
+):
+    from ipfs_datasets_py.logic.software_contracts import content
+
+    models = fresh_semantic_block_cache
+    raw = b"retained source bytes"
+    cid = cid_for_bytes(raw)
+    observed = []
+    original_digest = content._cid_from_digest_bytes
+
+    def digest(data, *, codec):
+        observed.append((data, codec))
+        return original_digest(data, codec=codec)
+
+    monkeypatch.setattr(content, "_cid_from_digest_bytes", digest)
+    for _ in range(2):
+        assert models.verify_block_bytes(cid, raw) == cid
+    assert observed == [(raw, "raw")] * 2
+    assert models._cached_canonical_dag_json_bytes.cache_info().currsize == 0

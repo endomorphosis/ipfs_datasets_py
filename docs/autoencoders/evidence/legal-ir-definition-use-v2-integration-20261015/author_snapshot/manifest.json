@@ -1,0 +1,320 @@
+{
+  "actual_reviews": 0,
+  "actual_statutory_ASTs_meaning_reviews_gold_semantic_or_Lean_admissions": 0,
+  "alias_assumed_not_proved": true,
+  "authored_native_Python_AST_parse_lowering_executed": true,
+  "authority": {
+    "accepted_view_eligible": false,
+    "admitted": false,
+    "applicability_verified": false,
+    "backend_executed": false,
+    "combined_use_review_verified": false,
+    "context_closure_verified": false,
+    "formalized": false,
+    "independently_reviewed": false,
+    "lean_compilation_verified": false,
+    "learned_translation": false,
+    "model_executed": false,
+    "per_occurrence_lookup_verified": false,
+    "proof_authority": false,
+    "semantic_definition_binding_verified": false,
+    "source_authenticity_verified": false,
+    "source_semantics_verified": false,
+    "training_gold_qualified": false,
+    "training_qualified": false
+  },
+  "body_physical_origins": [
+    "baguqeeraihl7x43xdqaycjksjr5dhpc7ltcvugpocjoqxtpsaujaw2cbzmea",
+    "baguqeera5zo3fnxe7itwvneddki7krya5tjnnxosxaqvcnsgsqz6kldsh2gq"
+  ],
+  "body_roles": [
+    "definition_body/0000",
+    "definition_body/0001"
+  ],
+  "component_cid": "baguqeerawccthngcygebwnpfyjf3v4ljghtnilvjkpn4lofqd56t6pd2ysnq",
+  "dependency_artifacts": 97,
+  "dependency_edges": 179,
+  "files": [
+    {
+      "bytes": 56845,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/inputs/candidate_raw.json",
+      "relative_path": "donor/inputs/candidate_raw.json",
+      "sha256": "e3a7c93af7667d164f1ac2fb3f057676b36fe0b31bb4a0fa704de6721299071b"
+    },
+    {
+      "bytes": 36604,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/inputs/report_raw.json",
+      "relative_path": "donor/inputs/report_raw.json",
+      "sha256": "ec83e359dc1023583b6838b78af3c5223e5d11809e411922f1561d478198b33a"
+    },
+    {
+      "bytes": 1935,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/inputs/request_raw.json",
+      "relative_path": "donor/inputs/request_raw.json",
+      "sha256": "6e6b8c2d9a8ea4251df5f561c43329fb09aa2d194abb443116d0b5a5dff0cf0b"
+    },
+    {
+      "bytes": 387,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/inputs/raw_html.bin",
+      "relative_path": "donor/inputs/raw_html.bin",
+      "sha256": "70efd01c92af072cf163fd446a0815a43c1a76392692ffe3ae05614665f5b8f4"
+    },
+    {
+      "bytes": 33912,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/inputs/sampling_report_raw.json",
+      "relative_path": "donor/inputs/sampling_report_raw.json",
+      "sha256": "cdfc4ad11149ecac4b46e6d59da8b84a1ec5493bda37de3578186ef9a0cdc437"
+    },
+    {
+      "bytes": 810,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/inputs/descriptor_raw.json",
+      "relative_path": "donor/inputs/descriptor_raw.json",
+      "sha256": "8ef2be924326fe5e950188c84b6f140e72502b65c8d08a15a6f40f7673967c19"
+    },
+    {
+      "bytes": 5460,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/contexts/occurrence-0000.json",
+      "relative_path": "donor/contexts/occurrence-0000.json",
+      "sha256": "b1c475f082075b5200c59373c1080927c9a9aed8b49a4ecba1cdd59749005b05"
+    },
+    {
+      "bytes": 5489,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/contexts/occurrence-0001.json",
+      "relative_path": "donor/contexts/occurrence-0001.json",
+      "sha256": "19b9839c643c169f5f939e35fea56414d7040ba6952171bba5b8b7a38297a34d"
+    },
+    {
+      "bytes": 5456,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/contexts/occurrence-0002.json",
+      "relative_path": "donor/contexts/occurrence-0002.json",
+      "sha256": "c5d04de92660d7adea16b2ba65bc30cf6be9fccf67e152761c8ec6aaa4362a78"
+    },
+    {
+      "bytes": 5454,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/contexts/occurrence-0003.json",
+      "relative_path": "donor/contexts/occurrence-0003.json",
+      "sha256": "eaa873e22d36b13e362b61c439968e2c56107e8cff0876fbd86ebd5302ed2d4d"
+    },
+    {
+      "bytes": 5447,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/contexts/occurrence-0004.json",
+      "relative_path": "donor/contexts/occurrence-0004.json",
+      "sha256": "150f759d7584a40c2d3ca730963b27d906e783df35e87cc6ea8dee992e514550"
+    },
+    {
+      "bytes": 5452,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/contexts/occurrence-0005.json",
+      "relative_path": "donor/contexts/occurrence-0005.json",
+      "sha256": "1742da010962cb80388f80c8b20014f98bc5110f83c668fc133c6d6d1541046f"
+    },
+    {
+      "bytes": 1029,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/candidate-pin.json",
+      "relative_path": "donor/candidate-pin.json",
+      "sha256": "985e2dd9565ffda1d5310d7c5878b3e361f31cad7397ff6f532ac257e25a5d10"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/context-population.json",
+      "relative_path": "donor/context-population.json",
+      "sha256": "369cf802fb0bd55f03c50403ba53ef9deee21395fdb38d90889ba32e3251882b"
+    },
+    {
+      "bytes": 93978,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/donor/preparation.json",
+      "relative_path": "donor/preparation.json",
+      "sha256": "cce3c06c46abbb2abb89b28720792eb28db27e7ae5ed3466cf8a24e2a24cecbe"
+    },
+    {
+      "bytes": 62046,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/inputs/candidate_raw.json",
+      "relative_path": "consumer/inputs/candidate_raw.json",
+      "sha256": "68af22a61bcb99c430907ff04223613abba31a44dfd7e6e108b02ac1b0abae4e"
+    },
+    {
+      "bytes": 41034,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/inputs/report_raw.json",
+      "relative_path": "consumer/inputs/report_raw.json",
+      "sha256": "d49f12533a5b694e424a1c8eb714c8ec7f156f0e13b190223457b1ae243cd68b"
+    },
+    {
+      "bytes": 2205,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/inputs/request_raw.json",
+      "relative_path": "consumer/inputs/request_raw.json",
+      "sha256": "f53224b60695ea9fdd453d5aec56ecb8e50e2c41ac7c42453e97bc3d7f929945"
+    },
+    {
+      "bytes": 408,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/inputs/raw_html.bin",
+      "relative_path": "consumer/inputs/raw_html.bin",
+      "sha256": "d6636715fb789dfdb9d661d98984139022557977ddbfba3bb5c103c0aa881abd"
+    },
+    {
+      "bytes": 34004,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/inputs/sampling_report_raw.json",
+      "relative_path": "consumer/inputs/sampling_report_raw.json",
+      "sha256": "b72aa96234a12fd20365b6a9dbc8ff5a71160f01c9334a93dde5264c34bbccfc"
+    },
+    {
+      "bytes": 810,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/inputs/descriptor_raw.json",
+      "relative_path": "consumer/inputs/descriptor_raw.json",
+      "sha256": "a0519c88544c82fe885cf72ed046577a521a4b091b132f428b684ecf025e9bb1"
+    },
+    {
+      "bytes": 5460,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/contexts/occurrence-0000.json",
+      "relative_path": "consumer/contexts/occurrence-0000.json",
+      "sha256": "63e8aef162fc9e0a142eaf52bd0b46ebc398485b505b6e94d95265e0a1e1e83a"
+    },
+    {
+      "bytes": 5512,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/contexts/occurrence-0001.json",
+      "relative_path": "consumer/contexts/occurrence-0001.json",
+      "sha256": "d895d14021ad2545106ce3be1fcb60c2ad83226227fcd9d4dd959b9985780539"
+    },
+    {
+      "bytes": 5456,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/contexts/occurrence-0002.json",
+      "relative_path": "consumer/contexts/occurrence-0002.json",
+      "sha256": "303832f9548c8b993f944e24aefb5f300641f1a6cbc6b162a6fbf173a69eebe0"
+    },
+    {
+      "bytes": 5457,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/contexts/occurrence-0003.json",
+      "relative_path": "consumer/contexts/occurrence-0003.json",
+      "sha256": "9a8c17046cde19435c0171d82a6582af95173c3ee784e11b19f9c27af55585e1"
+    },
+    {
+      "bytes": 5447,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/contexts/occurrence-0004.json",
+      "relative_path": "consumer/contexts/occurrence-0004.json",
+      "sha256": "be5c877b9b62c3f7f3f9873c0ec9a8d3ec96502600f7025fb648d2771a146fc6"
+    },
+    {
+      "bytes": 5454,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/contexts/occurrence-0005.json",
+      "relative_path": "consumer/contexts/occurrence-0005.json",
+      "sha256": "e50eff7589945014d4a64776aaca0ff693c6cfb5be0a3d6102b6fa718c3dcf0c"
+    },
+    {
+      "bytes": 5456,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/contexts/occurrence-0006.json",
+      "relative_path": "consumer/contexts/occurrence-0006.json",
+      "sha256": "d9659344e7a24c04b554b76304346f81e0e60e9970c5911d80a64b3317ca7120"
+    },
+    {
+      "bytes": 1029,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/candidate-pin.json",
+      "relative_path": "consumer/candidate-pin.json",
+      "sha256": "e2441f17c67b3408666604d95b405973e701813cb099709fabda548f1f151bc5"
+    },
+    {
+      "bytes": 1339,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/context-population.json",
+      "relative_path": "consumer/context-population.json",
+      "sha256": "8ad19745ed5a4b4836ec6cdae8514d84e4eeb3e93ab517d8559f5cb51920e71b"
+    },
+    {
+      "bytes": 103483,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/consumer/preparation.json",
+      "relative_path": "consumer/preparation.json",
+      "sha256": "37c630eb97db9e6ab5e232f5055a68f568da2164d2044c085d1d2368386e4b5a"
+    },
+    {
+      "bytes": 6525,
+      "expected_cid": "baguqeerayk6cp47tye2d6ljhjazupwc5h4r6und42t6rjonhmymk4zsyqpnq",
+      "expected_sha256": "dd2ccf800e97fb37d5d77edf0a6008d7a0b8c3463369c0c0231d20cb09fe3a17",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/registry-raw.json",
+      "relative_path": "registry-raw.json",
+      "sha256": "dd2ccf800e97fb37d5d77edf0a6008d7a0b8c3463369c0c0231d20cb09fe3a17"
+    },
+    {
+      "bytes": 5431,
+      "expected_cid": "baguqeeraiuhve627xvxlow3ycdmaq4zd3bx2ca467mqwcyfxpg7eirwvu6ma",
+      "expected_sha256": "83fecdb981ca2a5785805a748a32110d5a62d41a5883ccef63d1617c90c91c26",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/lookup-raw.json",
+      "relative_path": "lookup-raw.json",
+      "sha256": "83fecdb981ca2a5785805a748a32110d5a62d41a5883ccef63d1617c90c91c26"
+    },
+    {
+      "bytes": 790,
+      "expected_sha256": "af404b2d9dc500bb9f8de51b7d1e1f1fc24b388bf18e227811107d2d1cb133e9",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/query-raw.json",
+      "relative_path": "query-raw.json",
+      "sha256": "af404b2d9dc500bb9f8de51b7d1e1f1fc24b388bf18e227811107d2d1cb133e9"
+    },
+    {
+      "bytes": 545,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/request-raw.json",
+      "relative_path": "request-raw.json",
+      "sha256": "5f09c41490aadd3aab97c759ae9a62d8499313af8f383b4f028873bacb3384b8"
+    },
+    {
+      "bytes": 332407,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/component.json",
+      "relative_path": "component.json",
+      "sha256": "d9a4481cd7293e821f9d875b564aca2784e54d08381ca693f55121b048c86ef7"
+    },
+    {
+      "bytes": 60304,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/graph.json",
+      "relative_path": "graph.json",
+      "sha256": "54c7f2dfccdedb3c16578521674952892e074b3a4526e621cd82dbd448c4fa31"
+    },
+    {
+      "bytes": 134987,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/dependency-manifest.json",
+      "relative_path": "dependency-manifest.json",
+      "sha256": "78c0ab6d0d9ec1409691b2d31f1cff38fdc781422c9d99f76b62b8fbcde4bb11"
+    },
+    {
+      "bytes": 8537,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/alias-native.json",
+      "relative_path": "alias-native.json",
+      "sha256": "1b05ec2c91be63e088e7fb976cefcde09b6e54415863f6aa24a580b5d59a99d2"
+    },
+    {
+      "bytes": 15256,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/joint-native.json",
+      "relative_path": "joint-native.json",
+      "sha256": "c1040b9a63fc629b1a84d7322cf01a960df2333b77ff924c09609b67e2202f05"
+    },
+    {
+      "bytes": 16205,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/replay-inputs.json",
+      "relative_path": "replay-inputs.json",
+      "sha256": "2013ad4fcb69b949fafbbabb545568de5ded4a59f409621f1937720bc4ce4269"
+    }
+  ],
+  "graph_cid": "baguqeeraqif5w4xbbi7lesubntts75lfvrkd3mp7iophlf3q6pobadeofmaa",
+  "graph_edges": 58,
+  "graph_nodes": 33,
+  "lookup_coverage": "representative_first_occurrence_whole_predicate_assumption",
+  "materialized_at_utc": "2026-10-15T07:03:40.331775+00:00",
+  "native_Lean_processes_network_or_remote_publications": 0,
+  "new_model_training_runs": 0,
+  "open_context_obligations": 78,
+  "original_interpretations_unchanged": true,
+  "per_occurrence_lookup_verified": false,
+  "physical_occurrences": 13,
+  "producer_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_contracts.py": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py": "9017a10f5505814e88499e90717009b94d17335e1ec30529c7adfb00b65ceb90",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_graph.py": "da2bef54beca29d0d613d46a81241f6f1b7f049e1c9bf9cf1c118d9942374061",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py": "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py": "fdd0f53f66cef06a2b16d24cfbe65e15721dd568d3c76ac3ddde3e133243152a",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/utils/cid_utils.py": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+  },
+  "replay_index": {
+    "bytes": 16205,
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/replay-inputs.json",
+    "relative_path": "replay-inputs.json",
+    "sha256": "2013ad4fcb69b949fafbbabb545568de5ded4a59f409621f1937720bc4ce4269"
+  },
+  "review_status": "new_combined_use_review_profile_and_actual_reviews_pending",
+  "schema": "authored-v2-definition-use-example-manifest/v1",
+  "scope": "Fictional engineering source only; explicit unreviewed alias assumption, no actual statutory interpretation or reviewer."
+}

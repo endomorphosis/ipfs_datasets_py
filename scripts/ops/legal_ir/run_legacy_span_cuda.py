@@ -37,6 +37,9 @@ STOP = False
 GPU = None
 DEVICE = None
 ALLOCATOR_ADMISSION = None
+CUDA_RUNTIME = None
+CUDA_SOURCE_IDENTITY = None
+CUDA_STARTUP_WAITS = None
 
 
 def encode(value):
@@ -94,21 +97,76 @@ def _cpu_init():
     os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 
+def _verify_cuda_wait_source():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_cuda import _source_snapshot
+    expected = GPU.source_identity if GPU is not None else CUDA_SOURCE_IDENTITY
+    if expected is None or _source_snapshot() != expected or digest_file(__file__) != RUNNER_SHA256:
+        raise RuntimeError("producer source changed during CUDA headroom wait; restart required")
+
+
+def _cuda_with_headroom(probe, stage):
+    """Retry only valid low-free observations; the native owner keeps custody.
+
+    No model work occurs here. The outer process keeps its existing RAM/disk
+    watchdog and lease, and stops this worker's group on cancellation. All
+    invalid telemetry, lock loss, allocator excess and model errors stay fatal.
+    """
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import CudaHeadroomPressure
+    started, started_at = time.monotonic(), time.time()
+    next_report, pressures = 0.0, 0
+    while True:
+        if STOP:
+            raise RuntimeError("CUDA headroom wait cancelled")
+        try:
+            value = probe()
+        except CudaHeadroomPressure as error:
+            pressures += 1
+            now = time.monotonic()
+            if pressures == 1 or now >= next_report:
+                _verify_cuda_wait_source()
+                state = {"schema": "legacy-cuda-headroom-state/v1", "status": "waiting",
+                    "stage": stage, "pid": os.getpid(), "started_at": started_at,
+                    "checked_at": time.time(), "pressure_probes": pressures,
+                    "waited_seconds": now - started, "cuda": dict(error.observation),
+                    "admitted": False, "training_executed": False}
+                atomic(CUDA_RUNTIME / "cuda-headroom.json", state)
+                event("cuda_headroom_wait", **state)
+                next_report = now + 30.0
+            time.sleep(2.0)
+            continue
+        waited = time.monotonic() - started if pressures else 0.0
+        if pressures:
+            # A result made before a pause cannot cross a producer generation.
+            _verify_cuda_wait_source()
+            state = {"schema": "legacy-cuda-headroom-state/v1", "status": "ready",
+                "stage": stage, "pid": os.getpid(), "started_at": started_at,
+                "checked_at": time.time(), "pressure_probes": pressures,
+                "waited_seconds": waited, "cuda": dict(value) if isinstance(value, dict) else dict(DEVICE.last_observation),
+                "admitted": False, "training_executed": False}
+            atomic(CUDA_RUNTIME / "cuda-headroom.json", state)
+            event("cuda_headroom_resumed", **state)
+        return value, {"stage": stage, "pressure_probes": pressures, "waited_seconds": waited}
+
+
 def _gpu_init(checkpoint, runtime, batch_size, bridge_workers, guided_compiler=False):
-    global GPU, DEVICE, ALLOCATOR_ADMISSION
+    global GPU, DEVICE, ALLOCATOR_ADMISSION, CUDA_RUNTIME, CUDA_SOURCE_IDENTITY, CUDA_STARTUP_WAITS
     environment()
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import CudaDeviceBudget, admit_cuda_device
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_cuda import LegacySpanCUDAWorker
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_cuda import LegacySpanCUDAWorker, _source_snapshot
+    CUDA_RUNTIME, CUDA_SOURCE_IDENTITY = Path(runtime), _source_snapshot()
     DEVICE = CudaDeviceBudget(runtime)
-    DEVICE.__enter__()
-    ALLOCATOR_ADMISSION = admit_cuda_device()
+    _, owner_wait = _cuda_with_headroom(DEVICE.__enter__, "device_admission")
+    ALLOCATOR_ADMISSION, allocator_wait = _cuda_with_headroom(admit_cuda_device, "allocator_admission")
+    CUDA_STARTUP_WAITS = {"device": owner_wait, "allocator": allocator_wait}
     GPU = LegacySpanCUDAWorker(checkpoint, mode="legacy_mock_diagnostic", max_batch_size=batch_size,
                                legal_ir_parallel_workers=bridge_workers, guided_compiler=guided_compiler)
 
 
 def _gpu_ready():
-    return {"pid": os.getpid(), "source": GPU.source_identity, "cuda": DEVICE.check(),
-            "allocator_admission": ALLOCATOR_ADMISSION, "resident_mb": resident_mb()}
+    observation, ready_wait = _cuda_with_headroom(DEVICE.check, "worker_ready")
+    return {"pid": os.getpid(), "source": GPU.source_identity, "cuda": observation,
+            "allocator_admission": ALLOCATOR_ADMISSION, "resident_mb": resident_mb(),
+            "cuda_headroom_waits": {"startup": CUDA_STARTUP_WAITS, "ready": ready_wait}}
 
 
 def resident_mb():
@@ -119,10 +177,12 @@ def resident_mb():
 
 
 def _gpu_evaluate(rows, compiled):
-    DEVICE.check()
+    _, before_wait = _cuda_with_headroom(DEVICE.check, "before_batch")
     result = GPU.evaluate_batch(rows, compiler_results=compiled)
-    result["device_budget"] = DEVICE.check()
+    result["device_budget"], after_wait = _cuda_with_headroom(DEVICE.check, "after_batch")
     result["cuda_allocator_admission"] = ALLOCATOR_ADMISSION
+    result["cuda_headroom_waits"] = {"before": before_wait, "after": after_wait}
+    result.setdefault("timings", {})["cuda_headroom_wait_seconds"] = before_wait["waited_seconds"] + after_wait["waited_seconds"]
     return result
 
 
@@ -435,14 +495,55 @@ def publish_pending(db, upload, runtime=None):
                           http_status=getattr(response, "status_code", None), retry_seconds=retry_seconds)
                     raise
             return invoke
-    api = ObservedHubAPI()
-    for batch_id, path in db.execute("SELECT id,manifest FROM batches WHERE status='staged' LIMIT 2").fetchall():
+    api = None
+    for batch_id, path, receipt_sha in db.execute("SELECT id,manifest,receipt_sha256 FROM batches WHERE status='staged' ORDER BY rowid LIMIT 2").fetchall():
         try:
-            manifest_kind = json.loads(Path(path).read_bytes()).get("schema")
+            manifest = json.loads(Path(path).read_bytes())
+            manifest_kind = manifest.get("schema")
             if manifest_kind in {"uscode-paired-span-bundle/v1", "uscode-paired-span-bundle/v2"}:
-                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.paired_span_publication import publish_paired_manifest
+                from ipfs_datasets_py.logic.autoformal.paired_span_census import (
+                    PairedCensusError, load_paired_census_bundle)
+                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.paired_span_publication import (
+                    _descriptors, publish_paired_manifest)
+                # Local validation precedes this batch's first Hub operation.
+                # A publisher/readback failure below remains ambiguous and
+                # must keep the ordinary staged retry/backoff behavior.
+                before = [desc for desc, _ in _descriptors(path, manifest)]
+                try:
+                    bundle = load_paired_census_bundle(path)
+                except PairedCensusError as error:
+                    after = [desc for desc, _ in _descriptors(path, manifest)]
+                    if after != before:
+                        raise ValueError("paired preflight inputs changed") from error
+                    context = {
+                        "schema": "legacy-paired-schema-deferral/v1",
+                        "status": "needs_schema_migration", "batch_id": batch_id,
+                        "manifest_path": str(path), "manifest_sha256": before[0]["sha256"],
+                        "receipt_sha256": receipt_sha, "immutable_files": before,
+                        "error_type": type(error).__name__, "error_message": str(error)[:512],
+                        "observed_at": time.time(), "local_preflight": True,
+                        "uploaded": False, "admitted": False, "formalized": False,
+                        "rows_and_receipt_preserved": True}
+                    db.execute("BEGIN")
+                    try:
+                        meta(db, "publication_schema_deferral:" + batch_id, context)
+                        db.execute("UPDATE batches SET status='needs_schema_migration' WHERE id=? AND status='staged' AND manifest=?",
+                                   [batch_id, path])
+                        db.execute("COMMIT")
+                    except BaseException:
+                        db.execute("ROLLBACK")
+                        raise
+                    event("publication_needs_schema_migration", batch_id=batch_id,
+                          error=type(error).__name__, reason=str(error)[:512],
+                          manifest_sha256=before[0]["sha256"], admitted=False)
+                    continue
+                after = [desc for desc, _ in _descriptors(path, manifest)]
+                if after != before or bundle["manifest_sha256"] != before[0]["sha256"]:
+                    raise ValueError("paired preflight inputs changed")
+                api = api or ObservedHubAPI()
                 receipt = publish_paired_manifest(path, upload=True, api=api)
             else:
+                api = api or ObservedHubAPI()
                 receipt = publish_exchange_manifest(path, upload=True, api=api)
         except Exception as error:
             event("publication_deferred", batch_id=batch_id, error=type(error).__name__)
@@ -456,6 +557,7 @@ def publish_pending(db, upload, runtime=None):
     if runtime is not None and (meta(db, "publication_retry_after") or 0) <= time.time():
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_publication import cleanup_published_batches
         try:
+            api = api or ObservedHubAPI()
             for cleanup in cleanup_published_batches(db, runtime, api=api):
                 batch_id = cleanup["batch_id"]
                 event("verified_publication_cleanup", batch_id=batch_id, deleted_bytes=cleanup["deleted_bytes"],
@@ -504,19 +606,17 @@ def storage_backpressure(runtime, limit):
     return used > limit * 0.75
 
 
-def stop_child(child):
-    """Bound shutdown cleanup only; productive work has no deadline."""
-    if child.poll() is not None:
-        return
-    os.killpg(child.pid, signal.SIGTERM)
-    try:
-        child.wait(timeout=30)
-    except subprocess.TimeoutExpired:
-        os.killpg(child.pid, signal.SIGKILL)
-        child.wait()
+def stop_child(child, identity):
+    """Native birth-checked group cleanup, including an already exited leader."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_invocation import _terminate
+    _terminate(child, identity)
 
 
-def engine(args):
+def engine(args, *, custody):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_engine_custody import LegacySpanEngineVerifier
+    if type(custody) is not LegacySpanEngineVerifier:
+        raise ValueError("concrete native engine custody required")
+    custody.verify()
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_intake import (
         prepare_progress_index, iter_joined_section_batches, progress_coverage)
     runtime = args.runtime_directory
@@ -542,6 +642,9 @@ def engine(args):
                 if after == before:
                     return 1
             publish_pending(db, True, runtime)
+            if db.execute("SELECT count(*) FROM batches WHERE status='needs_schema_migration'").fetchone()[0]:
+                status(db, runtime, phase="publication_needs_schema_migration")
+                return 1
             status(db, runtime, phase="publication_completed")
             return 0
         finally:
@@ -572,6 +675,7 @@ def engine(args):
     exhausted = False
     completed = 0
     context = multiprocessing.get_context("spawn")
+    custody.verify()
     try:
         with ProcessPoolExecutor(1, mp_context=context, initializer=_gpu_init,
                 initargs=(str(args.checkpoint), str(runtime), args.batch_size, args.bridge_workers, args.guided_compiler)) as gpu, \
@@ -584,6 +688,7 @@ def engine(args):
             latest_capacity = {}
             def take_work():
                 nonlocal exhausted, latest_capacity
+                custody.verify()
                 if storage_backpressure(runtime, args.storage_bytes):
                     status(db, runtime, phase="waiting_for_verified_publication_storage")
                     return None
@@ -709,10 +814,14 @@ def arguments(argv=None):
     p.add_argument("--checkpoint", type=Path, default=LEGACY)
     p.add_argument("--source-parquet", type=Path, default=SOURCE)
     p.add_argument("--resource-ledger", type=Path, default=LEDGER)
+    p.add_argument("--scheduler-state", type=Path, help="existing native scheduler; never initialized")
+    p.add_argument("--expected-policy-sha256", help="exact existing native policy SHA256")
     p.add_argument("--compiler-workers", type=int, default=4)
     p.add_argument("--batch-size", type=int, default=8)
     p.add_argument("--bridge-workers", type=int, default=1, help="parallel native target threads within the resident model")
     p.add_argument("--max-batches", type=int, default=0, help="0 runs until explicitly stopped")
+    p.add_argument("--source-lease-timeout-seconds", type=float, default=300.0,
+        help="bound cooperative source read-lock admission only, never productive run time")
     p.add_argument("--poll-seconds", type=int, default=300)
     p.add_argument("--storage-bytes", type=int, default=750_000_000)
     p.add_argument("--memory-mb", type=int, default=12288)
@@ -725,7 +834,16 @@ def arguments(argv=None):
     args = p.parse_args(argv)
     if not 1 <= args.compiler_workers <= 8 or not 1 <= args.bridge_workers <= 8 or not 1 <= args.batch_size <= 32 or args.max_batches < 0 or not 1 <= args.poll_seconds <= 3600:
         p.error("invalid worker, batch or polling bound")
+    if (args.scheduler_state is None) != (args.expected_policy_sha256 is None):
+        p.error("--scheduler-state and --expected-policy-sha256 must be supplied together")
+    if args.expected_policy_sha256 is not None and (len(args.expected_policy_sha256) != 64 or any(c not in "0123456789abcdef" for c in args.expected_policy_sha256)):
+        p.error("exact lowercase native policy SHA256 required")
+    if not math.isfinite(args.source_lease_timeout_seconds) or args.source_lease_timeout_seconds < 0:
+        p.error("source lease timeout must be finite and nonnegative")
     args.runtime_directory = args.runtime_directory.absolute()
+    args.resource_ledger = args.resource_ledger.absolute()
+    if args.scheduler_state is not None:
+        args.scheduler_state = args.scheduler_state.absolute()
     return args
 
 
@@ -734,14 +852,42 @@ def main(argv=None):
     args = arguments(argv)
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
+    if args.scheduler_state is None or args.expected_policy_sha256 is None:
+        raise ValueError("explicit existing scheduler state and policy are required for campaign launch")
+    # The external owner covers its entire engine group and native cleanup.
+    # Engines must not reacquire: a waiting writer holds the fair turnstile
+    # while this owner still holds its read lease, which would deadlock startup.
     if args._engine:
-        return engine(args)
+        return _run(args, argv)
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_source_lease import source_lease
+    event("source_lease_wait", mode="read", canonical_root=str(ROOT),
+          timeout_seconds=args.source_lease_timeout_seconds)
+    with source_lease(ROOT, mode="read", timeout_seconds=args.source_lease_timeout_seconds) as lease:
+        event("source_lease_acquired", **lease.to_dict())
+        if STOP:
+            raise ValueError("campaign cancelled while waiting for its source lease")
+        return _run(args, argv)
+
+
+def _run(args, argv=None):
+    """Execute the unchanged native owner/engine path inside the owner's lease."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.existing_resource_scheduler import open_existing_scheduler
+    scheduler = open_existing_scheduler(args.scheduler_state, args.expected_policy_sha256)
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_engine_custody import (
+        LegacySpanEngineVerifier, engine_resource_spec, invocation_sha256, read_engine_launch,
+        owned_child_identity, verify_startup_deadline, wait_engine_ready)
+    if args._engine:
+        custody = LegacySpanEngineVerifier(read_engine_launch(sys.stdin.buffer), engine_resource_spec(args))
+        from ipfs_datasets_py.logic.autoformal.tree_pin import require_workspace_logic_tree
+        require_workspace_logic_tree()
+        atomic(custody.ready_path(), custody.ready_receipt())
+        return engine(args, custody=custody)
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import LegacySpanCampaignResources
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources import SCHEDULER_LANE, get_global_resource_scheduler
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources import SCHEDULER_LANE
     cpu_slots = 1 if args.publish_only else args.compiler_workers + args.bridge_workers + 1
     memory_mb = min(args.memory_mb, 2048) if args.publish_only else args.memory_mb
     child_slots = 1 if args.publish_only else args.compiler_workers + 4
-    config = get_global_resource_scheduler().config
+    config = scheduler.config
     others = [value for name, value in config.reservations().items() if name != SCHEDULER_LANE.value]
     maximum_cpu = config.total_cpu_slots - sum(value.cpu_slots for value in others)
     maximum_memory = config.total_memory_mb - config.reserved_memory_mb - sum(value.memory_mb for value in others)
@@ -751,38 +897,89 @@ def main(argv=None):
         raise ValueError("campaign child slots exceed the host scheduler capacity")
     args.runtime_directory.mkdir(parents=True, exist_ok=True)
     lock = os.open(args.runtime_directory / "owner.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
-    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    resource = LegacySpanCampaignResources(args.runtime_directory, args.resource_ledger,
-        storage_bytes=args.storage_bytes, memory_mb=memory_mb, cpu_slots=cpu_slots,
-        child_process_slots=child_slots)
-    child = None
-    resource.open()
+    resource, child, child_identity, primary_error = None, None, None, None
     try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        resource = LegacySpanCampaignResources(args.runtime_directory, args.resource_ledger,
+            storage_bytes=args.storage_bytes, memory_mb=memory_mb, cpu_slots=cpu_slots,
+            child_process_slots=child_slots, scheduler_state_path=args.scheduler_state,
+            expected_scheduler_policy_sha256=args.expected_policy_sha256)
+        resource.open()
         command = [sys.executable, "-B", str(Path(__file__).resolve()), *(sys.argv[1:] if argv is None else argv), "--_engine"]
-        child = subprocess.Popen(command, cwd=ROOT, start_new_session=True)
-        resource.attach_child(child.pid)
+        bytecode = resource.prepare_engine_bytecode()
+        engine_environment = dict(os.environ, PYTHONPYCACHEPREFIX=str(bytecode), PYTHONDONTWRITEBYTECODE="1")
+        barrier_start = time.monotonic()
+        child = subprocess.Popen(command, cwd=ROOT, env=engine_environment,
+            start_new_session=True, stdin=subprocess.PIPE)
+        child_identity = owned_child_identity(child)
+        verify_startup_deadline(barrier_start)
+        launch = resource.bind_engine_launch(child.pid, invocation_sha256(args), bytecode_directory=bytecode)
+        verify_startup_deadline(barrier_start)
+        from ipfs_datasets_py.logic.autoformal.span_ingest_runtime import _feed_launch
+        def verify_barrier():
+            verify_startup_deadline(barrier_start)
+            if STOP:
+                raise ValueError("owned engine startup cancelled")
+            if not resource.reservation.heartbeat() or resource.reservation.cancelled:
+                raise ValueError("native engine owner reservation lost before launch")
+            resource.check_limits()
+            verify_startup_deadline(barrier_start)
+        _feed_launch(child, encode(launch) + b"\n", verify_barrier)
+        ready = wait_engine_ready(child, launch, verify_barrier)
+        verify_barrier()
         atomic(args.runtime_directory / "owner.json", {"pid": os.getpid(), "engine_pid": child.pid,
-            "overall_timeout_seconds": None, "reservation_id": resource.reservation.reservation_id})
+            "overall_timeout_seconds": None, "reservation_id": resource.reservation.reservation_id,
+            "scheduler_state": str(args.scheduler_state), "scheduler_policy_sha256": args.expected_policy_sha256,
+            "engine_launch_sha256": hashlib.sha256(encode(launch)).hexdigest(),
+            "engine_custody_ready": ready, "bytecode_directory": str(bytecode)})
+        verify_startup_deadline(barrier_start)
         while child.poll() is None:
             if STOP:
-                stop_child(child)
+                stop_child(child, child_identity)
                 break
+            if not resource.reservation.heartbeat() or resource.reservation.cancelled:
+                raise ValueError("native engine owner reservation cancelled or lost")
             observation = resource.check_limits()
             atomic(args.runtime_directory / "resource-status.json", observation)
             time.sleep(2)
-        return 0 if STOP else (child.returncode or 0)
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources import _group_usage
+        if child_identity is not None and _group_usage(child_identity)["live_processes"]:
+            raise ValueError("engine returned with live descendants")
+        if not STOP and child.returncode != 0:
+            raise ValueError("engine exited unsuccessfully; preserve the native failed attempt")
+        return 0
+    except BaseException as error:
+        primary_error = error
+        raise
     finally:
-        if child is not None and child.poll() is None:
-            stop_child(child)
-        if child is not None:
-            child.wait()
+        cleanup_error = None
         try:
-            resource.close(artifacts_durable=True)
-        except BaseException:
-            resource.__exit__(*sys.exc_info())
-            raise
+            if child is not None:
+                stop_child(child, child_identity)
+                child.wait()
+        except BaseException as error:
+            cleanup_error = error
+        try:
+            if resource is not None and resource._opened:
+                failed = primary_error or cleanup_error
+                if failed is not None:
+                    try:
+                        resource.reservation._update(legacy_engine_failure_type=type(failed).__name__,
+                            legacy_engine_failure_scope="startup_or_execution", artifacts_durable_asserted=False)
+                    finally:
+                        resource.__exit__(type(failed), failed, failed.__traceback__)
+                else:
+                    try:
+                        resource.close(artifacts_durable=True)
+                    except BaseException:
+                        resource.__exit__(*sys.exc_info())
+                        raise
         finally:
             os.close(lock)
+        if cleanup_error is not None:
+            if primary_error is None:
+                raise cleanup_error
+            primary_error.add_note("native child cleanup also failed: " + type(cleanup_error).__name__)
 
 
 if __name__ == "__main__":

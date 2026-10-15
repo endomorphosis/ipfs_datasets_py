@@ -1,0 +1,86 @@
+{
+  "Git_mutations": 0,
+  "actual_execution_or_scoring_authorized": false,
+  "checkpoint_heads_gold_or_private_body_reads": 0,
+  "evaluation_contract": {
+    "bytes": 12913,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json",
+    "sha256": "a8e64cee523d57149b6becaf18023bf87a9ecdb147d83e9c42453fce9230944e"
+  },
+  "fixed_accounting": {
+    "candidate_diagnostic_source_forwards": 928,
+    "candidate_training_capture_source_forwards": 336,
+    "dormant_control_source_forwards": 16,
+    "feature_paths_per_source_forward": 3,
+    "new_parent_control_forwards": 0,
+    "new_parent_control_updates": 0,
+    "reused_parent_capture_file_count": 6,
+    "reused_parent_capture_rows": 240,
+    "total_actual_model_forwards": 1312,
+    "total_model_source_occurrences": 1664,
+    "total_new_inference_source_forwards": 1280,
+    "training_batch_source_occurrences": 384,
+    "training_model_forward_calls": 32
+  },
+  "future_actual_artifact_names": {
+    "analysis": "actor-refinement-result-analysis-v01.json",
+    "final_review": "result-independent-review-v01.json",
+    "freeze": "actor-refinement-output-freeze-v01.json",
+    "plan": "actor-refinement-ce-plan-v01.json",
+    "recount": "actor-refinement-independent-recount-v01.json",
+    "recount_inputs": "result-recount-inputs-v01.json",
+    "runtime_review": "actor-refinement-ce-runtime-review-v01.json",
+    "terminal_inputs": "actor-refinement-terminal-resource-inputs-v01.json",
+    "terminal_review": "actor-refinement-ce-terminal-resource-audit-v01.json",
+    "training_review": "actor-refinement-ce-training-review-v01.json"
+  },
+  "future_source_names": {
+    "analyzer": "analyze_actor_refinement_v01.py",
+    "freezer": "freeze_actor_refinement_outputs_v01.py",
+    "recounter": "review_actor_refinement_result_recount_v01.py"
+  },
+  "minimal_ports": [
+    "Retain62 filenames, bounded strict reads/raw pins, exact freeze/runtime custody, law-unscored and metadata/private/import/process guard boundaries. Change cell/schema/path labels toF15 only after source exists.",
+    "Use exact frozen trained N11 as sole parent/donor; source checkpoint/state are34080.../b3b6... and copy six saved N11 capture files for240rows. Delete N10 and balanced/frozen_N11 fourth-state comparator loops; retain3states/30panels/27scores/9paired scopes.",
+    "Initial632 full comparison is unchanged in strength: all modality/presence/six boundaries plus raw/joint decisions equal N11 before any updates. Final632 projection includes allfour presence pairs including learned conditions and only five nonactor boundaries; excludes only actor start/end vectors.",
+    "Replace conditions-only full-rank-invariance veto with actor rank/score/gold coverage before/after diagnostics. Retain independently tokenized topK/full-domain checks without gold in model child.",
+    "Replace weighted conditions objective-trace checks with exact new actor-refinement trainer policy, six parameter/258active/650inactive/frozen36 checks and nonzero trained query/gate continuation semantics. Preserve stable CE grouping and independent softplus source expressions wherever CE is recounted.",
+    "Implement the explicit conjunctive acceptance only: raw>154 andjoint>154 training168; no raw/joint fullIR lossID vs N11 in9scopes; all32permissions retained. Do not carry F14four-FN-recovery/new-condition-regression/N11gain criteria into F15.",
+    "Require actual independently qualified plan/trainer/terminal/runtime/freezer and all62rawopaque output pins before reference/scorer body reads. New source gates must bind actual emitted source and plan; no gate/source hash is invented by this plan."
+  ],
+  "model_or_resource_API_calls": 0,
+  "necessary_detached_controls": [
+    "Full42 initialization retains trained nonzero query/gate and deliberately distinct learned conditions rows.",
+    "Training route has connected six actor tensors with frozen encoders and learned conditions detached; inherited outer no_grad must not suppress actor gradients.",
+    "Finite nonzero first query/gate gradients/moments accepted; zero actor bias gradients are allowed; inactive650 gradients/moments and allfrozen36 remain protected.",
+    "Final protected projection catches conditions-presence/modality/nonactor boundary bit flips including signedzero; actor-vector changes accepted.",
+    "CompleteIR includes modality; any lossID vs N11 in either route/scope fails, either training count<=154 fails, any permission loss/abstention fails.",
+    "Synthetic N11 conditions-presence joint-panel schema is accepted; unknown schemas/replay/topK/searchbound/source IDs refused."
+  ],
+  "no_future_pins_or_results_asserted": true,
+  "prepared_only": true,
+  "production_or_numerical_imports": 0,
+  "reviewed_source_basis": {
+    "N11_runner": {
+      "bytes": 35837,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/run_conditions_presence_v01.py",
+      "sha256": "e13ac40c7b3a0b0a0591eaec954abe4f3bec7b15ed92292b122aa29a8b6cb861"
+    },
+    "analyzer": {
+      "bytes": 78492,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v02.py",
+      "sha256": "1a4b4f6b579d0d086ef97d4867c9eea274ceb88142edb4bff849eb95f0fa2e57"
+    },
+    "freezer": {
+      "bytes": 18728,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/freeze_conditions_balanced_outputs_v01.py",
+      "sha256": "8e150c915581208f0b3940a6ab72cc86309a1e5c1759e549d8b35bd975161bd8"
+    },
+    "recounter": {
+      "bytes": 46595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py",
+      "sha256": "0c5b68645cc66e7758d1750c878f5be9fb117faad841fe27f73391c8ccbce8bf"
+    }
+  },
+  "schema": "actor-refinement-evaluation-runtime-port-plan/v1"
+}

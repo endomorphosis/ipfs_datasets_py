@@ -1,0 +1,19 @@
+{
+  "schema": "legal-official-source-acquisition/v1",
+  "legal_id": "usc:us:10:101",
+  "edition": 2024,
+  "package_id": "USCODE-2024-title10",
+  "granule_id": "USCODE-2024-title10-subtitleA-partI-chap1-sec101",
+  "url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleA-partI-chap1-sec101.htm",
+  "retrieved_at": "2026-10-15T04:12:21.976249+00:00",
+  "raw_sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b",
+  "raw_bytes": 98879,
+  "http_provenance": {
+    "requested_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleA-partI-chap1-sec101.htm",
+    "final_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleA-partI-chap1-sec101.htm",
+    "status_code": 200,
+    "content_type": "text/html",
+    "etag": null,
+    "last_modified": "Fri, 22 Aug 2025 18:43:41 GMT"
+  }
+}

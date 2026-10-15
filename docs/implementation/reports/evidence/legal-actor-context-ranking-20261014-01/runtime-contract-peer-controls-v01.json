@@ -1,0 +1,86 @@
+{
+  "AST_extraction_only": true,
+  "checkpoint_JSON_parses": 0,
+  "control_count": 11,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "exact62 flat expected outputs",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "complete632 initial final gates accepted",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "missing protected compared_conditions_presence",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "missing protected compared_modality",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "missing protected compared_nonactor_boundaries",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "partial training coverage refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "initial parity after update refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "canonical cell schema terminal custody accepts",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong plan schema",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong plan runner_path",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong plan attempt_name",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "independent_of_runtime_source_author": true,
+  "model_calls": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "resource_API_calls": 0,
+  "schema": "actor-context-ranking-runtime-contract-peer-controls/v1",
+  "source_files": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/audit_actor_context_ranking_terminal_resources_v03.py": {
+      "bytes": 18600,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/audit_actor_context_ranking_terminal_resources_v03.py",
+      "sha256": "fe75cc8fbab28032c967b841b93853a7b3080a7025ac8b943b1900f312b6637f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/freeze_actor_context_ranking_outputs_v03.py": {
+      "bytes": 20530,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/freeze_actor_context_ranking_outputs_v03.py",
+      "sha256": "8b147e6adb9bf98103389c47d6673c61b32a590cfe71c57d26fc55c5c5ab5165"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_training_plan_v02.py": {
+      "bytes": 9248,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_training_plan_v02.py",
+      "sha256": "5d2b02a917c6c5fd2576b5056592b8fb8c23098c5fc562ef8b12b3c5518c609b"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-review-integration-20261015/docs/autoencoders/evidence/legal-ir-definition-v2-review-integration-20261015/real_source_review_subject_probe.py",
+    "--output-directory",
+    "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01"
+  ],
+  "driver": {
+    "bytes": 12843,
+    "sha256": "d58be3c25145f6c619e9d6aa74c4d16f1ac9b7e5a2f480ddf9fe9484fa7942da"
+  },
+  "elapsed_seconds": 83.18011772586033,
+  "environment_policy": "allow PATH/LANG/LC_ALL/LD_LIBRARY_PATH only; offline flags and private caches added",
+  "exit_code": 0,
+  "guard_root_matches_probe_root": true,
+  "head": "7488f3249aefba90eae7000365117ff378e12268",
+  "index_tree": "deb8689930ec27a30bb434ca6f619c215e362a40",
+  "launcher": {
+    "bytes": 5691,
+    "sha256": "f9a916c2c93cd44a2ffa97e658e27a1ffcca9eceae80828d08512193f500073c"
+  },
+  "output_directory": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01",
+  "probe_receipt": {
+    "bytes": 37585,
+    "sha256": "6d0f530d9926ba0e18e9c6a751afce3bbfb5ce5218da3cbff0bd9948b78a12ff"
+  },
+  "probe_status": "pass",
+  "qualification_receipt": {
+    "bytes": 98169,
+    "sha256": "15f9aa8a41d1845cb4aa15331a800c19caae046a48e84d4580538d98cebc4f47"
+  },
+  "qualified_input_count": 501,
+  "qualified_inputs_and_driver_unchanged": true,
+  "receipt_passed": true,
+  "reused_base_driver": {
+    "bytes": 13764,
+    "sha256": "0703a0729a53514048dbfc3389eb878c114b20ac49f6fcfe89454e4cacd9279f"
+  },
+  "schema": "legal-definition-v2-review-subject-probe-launch/v1",
+  "stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 163,
+    "sha256": "daa13b8d4efed5de36e99dab2a03706515721d7da9ac9c9221f9441c46b92662"
+  },
+  "stop_reason": null,
+  "timeout_seconds": 600
+}

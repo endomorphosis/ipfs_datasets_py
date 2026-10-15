@@ -1,0 +1,14 @@
+{
+  "driver_sha256": "613299bf0dafea8a15d6f215b5aef0d6bc36f8d3807b54726afbe37ce859e3dc",
+  "observed_at_utc": "2026-10-15T05:31:14.934976+00:00",
+  "owned_direct_children_terminated": [],
+  "pytest_pid": 863550,
+  "qualifying_result_claimed": false,
+  "reason": "initial1200second bound insufficient for retained1889second five-suite timings; rerun complete matrix with isolated xdist workers and2400second bound",
+  "reason_SIGTERM": "SIGINT did not end the owned pytest process; no completed qualification claimed",
+  "runner_pid": 863479,
+  "schema": "owned-test-qualification-interruption/v1",
+  "signal": "SIGINT",
+  "termination_observed_at_utc": "2026-10-15T05:32:29.903367+00:00",
+  "termination_signal": "SIGTERM"
+}

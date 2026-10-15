@@ -1,0 +1,335 @@
+{
+  "C_export_audit": {
+    "actual_responses": 0,
+    "actual_reviews": 0,
+    "all_transport_pins_and_exact_flat_membership_match": true,
+    "boundary": "C exercised explicit unsigned source-definition binding only; retaining an existing blank intake bundle does not qualify a newly executed reviewer handoff, genuine meaning review, complete statutory use, model improvement or native Lean admission.",
+    "complete_source": {
+      "blank_guides": 560,
+      "blocks": 560,
+      "candidate_units": 134,
+      "controls": 426,
+      "open_obligations": 3360,
+      "records": 1681,
+      "unanswered_questions": 8400,
+      "units": 560
+    },
+    "families": [
+      {
+        "body": "one opaque atom; no person/grade sort inference",
+        "family": "fol",
+        "graph_edges": 26,
+        "graph_nodes": 15,
+        "head": "enlisted member",
+        "legal_as_of_date": null,
+        "meaning_review_admission_and_gold": false,
+        "physical_occurrences": 6,
+        "selected_open_obligations": 36,
+        "selected_subjects_pending": 2,
+        "source_bound_native_AST_preserved": true,
+        "whole_population_pending": 560
+      },
+      {
+        "body": "one opaque atom; no person/grade sort inference",
+        "family": "tdfol",
+        "graph_edges": 26,
+        "graph_nodes": 15,
+        "head": "enlisted member",
+        "legal_as_of_date": null,
+        "meaning_review_admission_and_gold": false,
+        "physical_occurrences": 6,
+        "selected_open_obligations": 36,
+        "selected_subjects_pending": 2,
+        "source_bound_native_AST_preserved": true,
+        "whole_population_pending": 560
+      }
+    ],
+    "limit_bytes": 30000000,
+    "negative_controls_refused": 6,
+    "negative_tampered_payloads_excluded_from_primary_authority_claim": true,
+    "new_handoff_execution_claim": false,
+    "payload_files": 25,
+    "primary_authority_maps_checked": 1131,
+    "primary_zero_mask_fields_checked": 2250,
+    "receipt_files": 1,
+    "replay_receipt": {
+      "bytes": 11149,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/replay-receipt.json",
+      "sha256": "3e2b421aed87627b540712de89d7d8cfc00b7fd1dcb9966ac54044d62383c82b"
+    },
+    "retained_original_inputs": [
+      {
+        "bytes": 5664497,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/review-bundle.json",
+        "sha256": "2c2bb4ce302568feb014cc6abb28501bd3b453600d696a19588bbb14b55d2846"
+      },
+      {
+        "bytes": 98879,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/source.html",
+        "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+      },
+      {
+        "bytes": 926,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/acquisition-descriptor.json",
+        "sha256": "00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe"
+      },
+      {
+        "bytes": 1069,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/acquisition-receipt.json",
+        "sha256": "7d9852fd175ae48dc057f2b879ed176e7b26a394e92e6ae13f4824df894228bf"
+      },
+      {
+        "bytes": 7705,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/replay-receipt.json",
+        "sha256": "10e6cf392bfe00fa175de5d3dc931a20a63517594ea3eed89d40a5a5c185ec93"
+      },
+      {
+        "bytes": 7311,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/synthetic-diagnostic-block-0054-unresolved-response.json",
+        "sha256": "1dec69d5b92f46d03feb1b692cd95826111edaf04d3353566f0be99804a3cc7a"
+      }
+    ],
+    "source_repository_matches_current_checkout": true,
+    "status": "pass",
+    "total_export_bytes": 7052609
+  },
+  "combined_pytest": {
+    "A_B_case_overlap": 0,
+    "C_probe_counted_as_pytest_cases": false,
+    "errors": 0,
+    "failures": 0,
+    "skips": 0,
+    "unique_cases": 541,
+    "unique_modules": 16
+  },
+  "limitations": [
+    "Tests use authored source/signature fixtures; authentication mechanics do not authenticate human independence, legal correctness or production trust.",
+    "Current hash comparison is a point-in-time audit; native historical guards and receipts retain their original execution generations.",
+    "B entire202file cohort is not described as current:200 files match now and two post-release A-only test originals match preserved snapshots.",
+    "No source extractor, compiler, sampler, authentication or resolver was rerun by this audit; existing execution records and exact bytes are checked.",
+    "No blanket formalization, actual review, training, model, handoff or Lean qualification follows from these results."
+  ],
+  "method": "Read-only stdlib raw JUnit/JSON/hash/file-identity audit; no product imports, pytest, models, scheduler admission, census, cleanup or native attempt writes. Only this independent audit file is authored.",
+  "observed_at_utc": "2026-10-15T16:51:45.004574+00:00",
+  "runs": {
+    "a-02": {
+      "all_request_bindings_match": true,
+      "artifacts_durable_asserted": true,
+      "current_source_changes": [],
+      "durability": {
+        "bytes": 18224,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-a-02/logs/validation-durability.json",
+        "sha256": "5e171bfc70c62e038acb8a639729a1aedf66a82b3e7d80a6f356bee258b25296"
+      },
+      "elapsed_native_execution_seconds": 171.23222675081342,
+      "exact_six_field_result": true,
+      "executed_checks": [
+        "tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py",
+        "tests/unit/logic/autoformal/test_corpus_definition_use_v2.py",
+        "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py",
+        "tests/unit/logic/autoformal/test_legal_graph_review.py",
+        "tests/unit/logic/autoformal/test_scoped_definition_resolution.py",
+        "tests/unit/logic/autoformal/test_legal_graph_dependencies.py",
+        "tests/unit/logic/autoformal/test_corpus_imports.py",
+        "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py",
+        "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py"
+      ],
+      "execution": {
+        "bytes": 1064,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-a-02/logs/execution.json",
+        "sha256": "5f403af65c7bd2fcc240b88f477e83b876e1cc9168744d5d75a45344470e7574"
+      },
+      "final_attempt_bytes": 1710656,
+      "recount": {
+        "duplicate_case_ids": 0,
+        "errors": 0,
+        "exact_selected_module_roster": true,
+        "failures": 0,
+        "junit": {
+          "bytes": 57401,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-a-02/logs/junit.xml",
+          "sha256": "2934779cc0a7d7eecd5764c024bb0784d939d59ab5c3652cb19ca84be88c4829"
+        },
+        "junit_seconds": 113.59,
+        "module_counts": {
+          "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py": 51,
+          "tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py": 49,
+          "tests/unit/logic/autoformal/test_corpus_definition_use_v2.py": 44,
+          "tests/unit/logic/autoformal/test_corpus_imports.py": 7,
+          "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py": 3,
+          "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py": 3,
+          "tests/unit/logic/autoformal/test_legal_graph_dependencies.py": 18,
+          "tests/unit/logic/autoformal/test_legal_graph_review.py": 48,
+          "tests/unit/logic/autoformal/test_scoped_definition_resolution.py": 74
+        },
+        "new_joined_cases": [
+          "test_combined_graph_cold_read_binds_joint_subject_but_blank_signed_contexts_block[fol]",
+          "test_combined_graph_cold_read_binds_joint_subject_but_blank_signed_contexts_block[tdfol]",
+          "test_actual_competing_table_blocks_combined_review_and_preserves_original_graphs"
+        ],
+        "raw_cases": 297,
+        "skips": 0,
+        "unique_cases": 297
+      },
+      "request": {
+        "bytes": 49340,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-review-v2-integration-20261015/validation-request-a-02.json",
+        "sha256": "6aac164acabfaf7913f4019c7dbbca0c72c4f6824211fb430216e39f3e715de3"
+      },
+      "result": {
+        "bytes": 1255,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-a-02/logs/result.json",
+        "sha256": "128c8ab09e8571a0bc240114d9239101d85c190d8cbf069d5d64c1432b5f842e"
+      },
+      "sealed_file_hash_size_identity_and_membership_match": true,
+      "sealed_regular_files": 77,
+      "selected_native_lease_absent_at_audit": true,
+      "selected_storage_status": "released",
+      "semantic_or_Lean_admission": false,
+      "source_pins": 202,
+      "status": "pass",
+      "storage_budget_bytes": 268435456
+    },
+    "b-01": {
+      "all_request_bindings_match": true,
+      "artifacts_durable_asserted": true,
+      "current_source_changes": [
+        "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py",
+        "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py"
+      ],
+      "durability": {
+        "bytes": 2447,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-b-01/logs/validation-durability.json",
+        "sha256": "ce9ffaf958e5f71ceeda69fb0fa7f790ebf2a5c4a943691892706561649db347"
+      },
+      "elapsed_native_execution_seconds": 116.75279286294244,
+      "exact_six_field_result": true,
+      "executed_checks": [
+        "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+        "tests/unit/logic/autoformal/test_legal_source_sampling_review_handoff.py",
+        "tests/unit/logic/autoformal/test_legal_source_sampling.py",
+        "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+        "tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py",
+        "tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py",
+        "tests/unit/logic/autoformal/test_legal_official_markup_context.py"
+      ],
+      "execution": {
+        "bytes": 957,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-b-01/logs/execution.json",
+        "sha256": "8258ace58781f0e16204e8310dbfc5ce100e6b644bbf3ca302305faf5386ea97"
+      },
+      "final_attempt_bytes": 91343,
+      "recount": {
+        "duplicate_case_ids": 0,
+        "errors": 0,
+        "exact_selected_module_roster": true,
+        "failures": 0,
+        "junit": {
+          "bytes": 46509,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-b-01/logs/junit.xml",
+          "sha256": "49a9f08dd6cf6b0e4ac6cd98ad80dc9d0de995f4abb68a8754dd97729852e7e0"
+        },
+        "junit_seconds": 48.365,
+        "module_counts": {
+          "tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py": 13,
+          "tests/unit/logic/autoformal/test_legal_official_markup_context.py": 33,
+          "tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py": 35,
+          "tests/unit/logic/autoformal/test_legal_source_sampling.py": 29,
+          "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py": 59,
+          "tests/unit/logic/autoformal/test_legal_source_sampling_review.py": 47,
+          "tests/unit/logic/autoformal/test_legal_source_sampling_review_handoff.py": 28
+        },
+        "new_joined_cases": [],
+        "raw_cases": 244,
+        "skips": 0,
+        "unique_cases": 244
+      },
+      "request": {
+        "bytes": 49126,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-review-v2-integration-20261015/validation-request-b-01.json",
+        "sha256": "cdafc77bcca391736b705012b088640829de65d3f5baed31934b4b2cedfa2017"
+      },
+      "result": {
+        "bytes": 1148,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-b-01/logs/result.json",
+        "sha256": "40c86199086c99f1392e57d53fba721f57730ceedd8ec18bac1c985894cef11b"
+      },
+      "sealed_file_hash_size_identity_and_membership_match": true,
+      "sealed_regular_files": 13,
+      "selected_native_lease_absent_at_audit": true,
+      "selected_storage_status": "released",
+      "semantic_or_Lean_admission": false,
+      "source_pins": 202,
+      "source_preservation": {
+        "all_pinned_causal_product_sources_unchanged": true,
+        "all_seven_selected_B_targets_unchanged": true,
+        "current_A_fix": "Both graph subprocess tests retain inherited PYTHONPATH with the owned source root first; retained old files remain byte-exact.",
+        "entire_202_file_cohort_still_current": false,
+        "post_release_unrelated_A_test_changes": [
+          {
+            "archived_snapshot": {
+              "bytes": 14524,
+              "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-review-v2-integration-20261015/pre-environment-fix-sources/test_definition_use_review_v2_graph_exchange.py",
+              "sha256": "e1bc28d32f69f8a2c0b38b9461f343b5050e76bd97eeb3a655c1b10e4b5a0a9f"
+            },
+            "modified_after_B_native_release": true,
+            "source": "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py"
+          },
+          {
+            "archived_snapshot": {
+              "bytes": 11030,
+              "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-review-v2-integration-20261015/pre-environment-fix-sources/test_definition_use_v2_graph_exchange.py",
+              "sha256": "f3b81ddda224ad147f592ca53cbb44c162e5cb952f310a53c2632390522c7e36"
+            },
+            "modified_after_B_native_release": true,
+            "source": "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py"
+          }
+        ],
+        "unchanged_current": 200
+      },
+      "status": "pass",
+      "storage_budget_bytes": 268435456
+    },
+    "c-02": {
+      "all_request_bindings_match": true,
+      "artifacts_durable_asserted": true,
+      "current_source_changes": [],
+      "durability": {
+        "bytes": 5446,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/logs/validation-durability.json",
+        "sha256": "145d7202b41f8d98077729c87e9c9c0c43f6fa15c83705f13715522ea9858b69"
+      },
+      "elapsed_native_execution_seconds": 177.6888654800132,
+      "exact_six_field_result": true,
+      "executed_checks": [
+        "retained-uscode-10-section-101-enlisted-member-definition-binding-fol-and-tdfol-with-six-refusal-controls"
+      ],
+      "execution": {
+        "bytes": 543,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/logs/execution.json",
+        "sha256": "eb7ade586b1e1d19b403436382d3daedb84393b558e0e73135fbe52182ade979"
+      },
+      "final_attempt_bytes": 7059744,
+      "request": {
+        "bytes": 49497,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-review-v2-integration-20261015/validation-request-c-02.json",
+        "sha256": "7cacb8e6ee76931b261e5f9dd1be57953deb20ad93624fc277fe483552d49475"
+      },
+      "result": {
+        "bytes": 735,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/logs/result.json",
+        "sha256": "33b3bc063b56e507804aec70e05dadbef7f6a4cc34b6b5e8dc5ebea3f7bba794"
+      },
+      "sealed_file_hash_size_identity_and_membership_match": true,
+      "sealed_regular_files": 30,
+      "selected_native_lease_absent_at_audit": true,
+      "selected_storage_status": "released",
+      "semantic_or_Lean_admission": false,
+      "source_pins": 208,
+      "status": "pass",
+      "storage_budget_bytes": 268435456
+    }
+  },
+  "schema": "legal-ir-definition-use-review-v2-independent-audit/v1",
+  "status": "pass"
+}

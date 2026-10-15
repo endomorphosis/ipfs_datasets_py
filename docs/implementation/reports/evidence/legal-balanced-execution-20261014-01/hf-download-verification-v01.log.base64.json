@@ -1,0 +1,10 @@
+{
+  "data": "cGF0aD0vaG9tZS9iYXJiZXJiL2xpZnRfY29kaW5nL2FydGlmYWN0cy9sZWdhbC1iYWxhbmNlZC1leGVjdXRpb24tMjAyNjEwMTQtMDEvaGYtdmVyaWZpZWQtZG93bmxvYWQtdjAxCg==",
+  "encoding": "base64",
+  "schema": "legal-ir-lossless-public-log/v1",
+  "source": {
+    "bytes": 103,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-download-verification-v01.log",
+    "sha256": "c3645ee419fd346c71d78bac9758b89cffa53ada80bace7774b8cb8ec3daf700"
+  }
+}

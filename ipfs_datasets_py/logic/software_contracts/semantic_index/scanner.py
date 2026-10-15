@@ -8,8 +8,10 @@ CID-verified snapshot inputs.
 
 Verified incremental reuse (ISI-040): when ``previous_state`` matches the
 current repository, schema, and extractor identities, source files whose
-snapshot member ``source_cid`` still matches the prior verified records skip
-Python re-analysis.  Pytest unification and graph resolution always rerun so
+snapshot member ``source_cid`` still matches reusable source-local records skip
+Python re-analysis. Paths with final resolver or pytest-derived records are
+re-analyzed because those records do not preserve their raw frontend facts.
+Pytest unification and graph resolution always rerun so
 dependent edges recompute against the live inventory.  Reuse diagnostics live
 on the scanner instance only and never enter the durable state root.
 
@@ -26,8 +28,9 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
+from ipfs_datasets_py.logic.software_contracts.ast_ir import ASTRecord
 from ipfs_datasets_py.logic.software_contracts.content import cid_for_bytes
 from ipfs_datasets_py.logic.software_contracts.semantic_index.identity import (
     stable_symbol_id,
@@ -46,6 +49,7 @@ from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
 from ipfs_datasets_py.logic.software_contracts.semantic_index.python_analysis import (
     PythonSemanticAnalyzer,
 )
+from ipfs_datasets_py.logic.software_contracts.semantic_index import python_analysis
 from ipfs_datasets_py.logic.software_contracts.semantic_index.pytest_analysis import (
     PYTEST_ANALYZER_VERSION,
     PytestAnalyzer,
@@ -421,12 +425,51 @@ def _python_frontend_edge(edge: DependencyEdge) -> bool:
     return True
 
 
+def _unsafe_python_reuse_paths(
+    previous: RepositoryState, *, frontend_edge_version: str,
+) -> frozenset[str]:
+    """Identify final records which cannot stand in for raw frontend facts.
+
+    Resolver fanout/degradation and pytest reclassification lose their original
+    frontend metadata or confidence. Re-running resolution on those final
+    edges can retain a deleted target or upgrade ``finite_may`` to ``definite``.
+    Re-analyze their source paths instead. This one-operation index is neither
+    durable cache authority nor a claim that previous facts authenticate code.
+    """
+    paths = {item.stable_id: item.module_path for item in previous.symbols}
+    unsafe = {
+        item.module_path for item in previous.symbols
+        if item.kind in {SymbolKind.TEST.value, SymbolKind.FIXTURE.value}
+        or "pytest" in item.annotations or "pytest" in item.metadata
+    }
+    for edge in previous.edges:
+        if not _python_frontend_edge(edge):
+            continue
+        path = paths.get(edge.source_id)
+        if path is None:
+            continue
+        metadata = edge.metadata
+        if (
+            metadata.get("resolution") != "definite"
+            or "unresolved_target" in metadata
+            or "candidate_count" in metadata
+            or "derived_from_edge" in metadata
+            or edge.extraction_method == "static-protocol-inheritance"
+            or paths.get(edge.target_id) != path
+            or edge.extractor_version != frontend_edge_version
+        ):
+            unsafe.add(path)
+    return frozenset(unsafe)
+
+
 def _reusable_path_symbols(
     previous: RepositoryState,
     path: str,
     source_cid: str,
+    *,
+    analyzer: PythonSemanticAnalyzer,
 ) -> tuple[SymbolRecord, ...] | None:
-    """Return prior symbols for ``path`` when every record matches ``source_cid``."""
+    """Return source-local records bound to these bytes and actual frontend."""
     items = tuple(item for item in previous.symbols if item.module_path == path)
     if not items:
         return None
@@ -436,24 +479,16 @@ def _reusable_path_symbols(
         return None
     if any(item.repository_id != previous.repository_id for item in items):
         return None
+    module = _module_name(path)
+    namespace = analyzer.namespace or module.split(".")[0] or module
+    if any(
+        item.namespace != namespace
+        or item.extractor_name != analyzer.extractor_name
+        or item.extractor_version != analyzer.extractor_version
+        for item in items
+    ):
+        return None
     return items
-
-
-def _reusable_opaque_python_artifact(
-    previous: RepositoryState,
-    path: str,
-    source_cid: str,
-) -> ArtifactRecord | None:
-    """Return a prior opaque python-analysis artifact for the same bytes."""
-    for artifact in previous.artifacts:
-        if (
-            artifact.path == path
-            and artifact.kind == "python-analysis"
-            and artifact.source_cid == source_cid
-            and artifact.confidence == AnalysisConfidence.OPAQUE.value
-        ):
-            return artifact
-    return None
 
 
 def _reusable_path_edges(
@@ -556,6 +591,10 @@ class RepositoryScanner:
         *,
         previous_state: RepositoryState | None = None,
         unavailable: Mapping[str, str] | None = None,
+        prepared_ast_records: dict[str, ASTRecord] | None = None,
+        prepared_ast_contexts: dict[str, Any] | None = None,
+        optimized_frontend_reuse: bool = True,
+        checkpoint: Callable[[], None] | None = None,
     ) -> RepositoryState:
         """Assemble a state from a snapshot plus bytes keyed by relative path.
 
@@ -568,9 +607,26 @@ class RepositoryScanner:
         a parallel ``lexical:`` residual for the same binding.
 
         ``previous_state`` may skip Python re-analysis for paths whose verified
-        ``source_cid`` and extractor/schema identities still match.  Graph
-        resolution always recomputes against the current inventory.
+        ``source_cid`` and extractor/schema identities still match and prior
+        records preserve source-local frontend facts. Resolver and pytest
+        transformations trigger path re-analysis. Graph resolution always
+        recomputes against the current inventory.
+
+        Prepared native records and contexts must come from independently
+        admitted complete preparation artifacts. Both maps must account for
+        every model-safe nonopaque Python entry using its exact source_key.
+        The default reuses declaration facts only for the default native
+        extraction profile; semantic/pytest syntax parsing and global graph
+        resolution still run. Set optimized_frontend_reuse=False to re-extract
+        default frontend facts after validating the admitted input bindings.
         """
+        if type(optimized_frontend_reuse) is not bool:
+            raise RepositoryScannerError("optimized_frontend_reuse must be an exact boolean")
+        if checkpoint is not None and not callable(checkpoint):
+            raise RepositoryScannerError("checkpoint must be callable")
+        if (prepared_ast_records is None) != (prepared_ast_contexts is None):
+            raise RepositoryScannerError("prepared AST record and context maps are required together")
+        check = checkpoint if checkpoint is not None else (lambda: None)
         if not isinstance(snapshot, RepositorySnapshot):
             raise RepositoryScannerError("snapshot must be a RepositorySnapshot")
         if self.repository_id is not None and snapshot.repository_id != self.repository_id:
@@ -583,16 +639,22 @@ class RepositoryScanner:
             extractor_version=self.extractor_version,
         )
         previous_by_key: dict[tuple[str, str, str], SymbolRecord] = {}
+        unsafe_reuse_paths: frozenset[str] = frozenset()
         if accepted_previous is not None:
             previous_by_key = {
                 (item.stable_id, item.source_cid or "", item.version_cid): item
                 for item in accepted_previous.symbols
             }
+            unsafe_reuse_paths = _unsafe_python_reuse_paths(
+                accepted_previous, frontend_edge_version=python_analysis.EXTRACTOR_VERSION,
+            )
 
         artifacts: list[ArtifactRecord] = []
         symbols: list[SymbolRecord] = []
         edges: list[DependencyEdge] = []
         verified: dict[str, bytes] = {}
+        staged_records: dict[str, ASTRecord] = {}
+        staged_contexts: dict[str, Any] = {}
         failures = dict(unavailable or {})
         entries_by_key = {entry.source_key: entry for entry in snapshot.entries}
         reused_paths: list[str] = []
@@ -611,6 +673,11 @@ class RepositoryScanner:
              "exclusions": list(snapshot.exclusions)},
         ))
         for entry in snapshot.entries:
+            # Supplied staged maps are detached below before calling a caller
+            # checkpoint, so mutation of a caller-owned record cannot alter the
+            # facts consumed by semantic extraction.
+            if prepared_ast_records is None:
+                check()
             if entry.is_opaque:
                 artifacts.append(_opaque_artifact(entry, entry.opaque_reason or "opaque_snapshot"))
                 continue
@@ -630,6 +697,40 @@ class RepositoryScanner:
                 continue
             verified[entry.source_key] = raw
 
+        if prepared_ast_records is not None:
+            if (type(snapshot) is not RepositorySnapshot
+                    or type(prepared_ast_records) is not dict
+                    or type(prepared_ast_contexts) is not dict):
+                raise RepositoryScannerError("prepared extraction requires exact snapshot and closed native maps")
+            eligible = {entry.source_key: entry for entry in snapshot.entries
+                        if not entry.is_opaque and entry.kind == "python"
+                        and _artifact_path(entry) == entry.path}
+            if (set(prepared_ast_records) != set(eligible)
+                    or set(prepared_ast_contexts) != set(eligible)):
+                raise RepositoryScannerError("prepared AST maps do not cover the complete eligible Python inventory")
+            # Copy both maps before any callback; immutable canonical clones
+            # also sever aliases to fields nested inside frozen AST records.
+            records = dict(prepared_ast_records)
+            contexts = dict(prepared_ast_contexts)
+            try:
+                for key, entry in eligible.items():
+                    if key not in verified or key in failures:
+                        raise RepositoryScannerError("prepared AST source bytes are missing or changed")
+                    record, context = python_analysis._validated_frontend_record(
+                        verified[key], entry.path, snapshot.repository_id,
+                        records[key], contexts[key],
+                        require_default_profile=optimized_frontend_reuse,
+                    )
+                    if (record.provenance.revision != f"snapshot:{snapshot.snapshot_cid}"
+                            or record.provenance.repository_tree_cid != snapshot.snapshot_cid):
+                        raise RepositoryScannerError("prepared AST does not bind the complete captured snapshot")
+                    staged_records[key], staged_contexts[key] = record, context
+            except (ValueError, TypeError, KeyError, AttributeError, RecursionError) as exc:
+                raise RepositoryScannerError("prepared native AST binding or parser profile differs") from exc
+            check()
+
+        check()
+
         for key in sorted(failures):
             entry = entries_by_key.get(key)
             if entry is not None:
@@ -639,6 +740,7 @@ class RepositoryScanner:
         pytest = PytestAnalyzer(repository_id=snapshot.repository_id, namespace="pytest")
         pytest_sources: dict[str, bytes] = {}
         for key, raw in sorted(verified.items()):
+            check()
             entry = entries_by_key[key]
             path = entry.path
             if _artifact_path(entry) != entry.path:
@@ -647,8 +749,10 @@ class RepositoryScanner:
             if entry.kind == "python":
                 reused = False
                 if accepted_previous is not None and entry.source_cid is not None:
-                    prior_symbols = _reusable_path_symbols(
-                        accepted_previous, path, entry.source_cid,
+                    prior_symbols = (
+                        None if path in unsafe_reuse_paths else _reusable_path_symbols(
+                            accepted_previous, path, entry.source_cid, analyzer=python,
+                        )
                     )
                     if prior_symbols is not None:
                         symbols.extend(prior_symbols)
@@ -658,17 +762,22 @@ class RepositoryScanner:
                         reused_paths.append(path)
                         reused_symbol_ids.extend(item.stable_id for item in prior_symbols)
                         reused = True
-                    else:
-                        prior_opaque = _reusable_opaque_python_artifact(
-                            accepted_previous, path, entry.source_cid,
-                        )
-                        if prior_opaque is not None:
-                            artifacts.append(prior_opaque)
-                            reused_paths.append(path)
-                            reused_artifact_paths.append(path)
-                            reused = True
+                    # Opaque diagnostic artifacts carry no namespace or
+                    # frontend identity. Matching bytes alone cannot preserve
+                    # their diagnostic vocabulary, so they always re-analyze.
                 if not reused:
-                    analysis = python.analyze(raw, path)
+                    if optimized_frontend_reuse and key in staged_records:
+                        analysis = python.analyze(
+                            raw, path, frontend_record=staged_records[key],
+                            frontend_context=staged_contexts[key], checkpoint=check,
+                        )
+                    elif checkpoint is None:
+                        # Preserve the normal analyzer call shape for existing
+                        # callers and their injectable observation hooks.
+                        analysis = python.analyze(raw, path)
+                    else:
+                        analysis = python.analyze(raw, path, checkpoint=check)
+                    check()
                     analyzed_paths.append(path)
                     if analysis.diagnostics:
                         artifacts.append(ArtifactRecord(
@@ -678,10 +787,10 @@ class RepositoryScanner:
                     else:
                         for fact in analysis.symbols:
                             record = fact.symbol
-                            cached = previous_by_key.get(
+                            prior = previous_by_key.get(
                                 (record.stable_id, record.source_cid or "", record.version_cid),
-                                record,
                             )
+                            cached = prior if prior is not None and prior == record else record
                             symbols.append(cached)
                             edges.extend(fact.edges)
                             recomputed_symbol_ids.append(cached.stable_id)
@@ -691,7 +800,10 @@ class RepositoryScanner:
             else:
                 artifacts.append(_typed_artifact(entry))
 
-        pytest_analysis = pytest.analyze_files(pytest_sources)
+        check()
+        pytest_analysis = (pytest.analyze_files(pytest_sources) if checkpoint is None
+                           else pytest.analyze_files(pytest_sources, checkpoint=check))
+        check()
         # Configuration artifacts are richer than a generic artifact; Python
         # sources stay represented by their module symbol instead.
         artifacts.extend(pytest_analysis.artifacts)
@@ -701,21 +813,24 @@ class RepositoryScanner:
             pytest_analysis.tests, pytest_analysis.fixtures, pytest_analysis.edges,
             repository_id=snapshot.repository_id, namespace=self.namespace,
         )
+        check()
 
         # Explicit lock/dependency artifacts configure test receipts.
         edges.extend(_lock_configuration_edges(symbols, artifacts))
+        check()
 
         # Resolution must run before state-root computation so the public
         # state commits stable symbol CIDs for resolvable call targets.
         # Dependent resolution always recomputes even when file analysis reused.
         graph = build_symbol_graph(symbols, artifacts, edges)
+        check()
         # Prefer previously verified records only when identities still match.
         final_symbols: list[SymbolRecord] = []
         for record in graph.symbols:
             cached = previous_by_key.get(
                 (record.stable_id, record.source_cid or "", record.version_cid)
             )
-            final_symbols.append(cached if cached is not None else record)
+            final_symbols.append(cached if cached is not None and cached == record else record)
 
         self.last_reuse_diagnostics = ScanReuseDiagnostics(
             previous_state_accepted=accepted_previous is not None,

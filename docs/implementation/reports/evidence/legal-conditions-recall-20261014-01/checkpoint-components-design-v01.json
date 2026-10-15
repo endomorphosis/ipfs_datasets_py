@@ -1,0 +1,41 @@
+{
+  "actual_checkpoint_JSON_parses": 0,
+  "compatibility": {
+    "balanced_loss_experiment_unaffected": true,
+    "existing_38_model_owners_unchanged": true,
+    "existing_loaders_unchanged": true,
+    "no_default_loader_switch": true
+  },
+  "format": "One closed canonical JSON archive with a typed metadata skeleton and flat SHA256-keyed rectangular numeric component table. Only arrays with at least8 scalars become deduplicated components.",
+  "identity": "Caller must provide trusted original checkpoint, model-state and implementation SHA256 identities; archive raw identity is also required on unpack. Exact canonical checkpoint bytes are restored; nested lineage is preserved in the reconstructed bytes.",
+  "limits": {
+    "components": 4096,
+    "depth": 128,
+    "expanded_byte_budget_checked_before_result_serialization": true,
+    "raw_and_archive_bytes": 16000000,
+    "structure_nodes": 1000000
+  },
+  "model_calls": 0,
+  "next_guarded_qualification": "Pin a separate zero-update conversion plan or an explicitly reviewed post-run serialization step; exact N10/N11/N12 canonical byte equality and real size counts before advertising usable archived checkpoints.",
+  "private_resource_reads": 0,
+  "qualified_for_trained_checkpoint_storage": false,
+  "schema": "legal-checkpoint-components-design/v1",
+  "source": {
+    "bytes": 11054,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_checkpoint_components.py",
+    "sha256": "b401d103e5aa5a30e79d81bfdf7edf7a758a3f4dabc240725f20509615353254"
+  },
+  "status": "synthetic_controls_passed_actual_checkpoint_qualification_pending",
+  "storage": "No float32 conversion or compression. Signed zero and integer/float JSON distinctions retained. No actual size-savings claim before guarded actual roundtrip.",
+  "synthetic_cases": 9,
+  "synthetic_control_run": {
+    "exit_code": 0,
+    "passed": true,
+    "seconds": 0.084
+  },
+  "tests": {
+    "bytes": 8373,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_checkpoint_components.py",
+    "sha256": "64e9b34baad55523ad5f7c7c683c1e6daeaf64adcfd591a5baa773453467d6dd"
+  }
+}

@@ -1,0 +1,191 @@
+{
+  "actual_guard_or_profile_installations": 0,
+  "actual_resource_module_imports": 0,
+  "actual_smoke_main_calls": 0,
+  "control_count": 33,
+  "controls": [
+    {
+      "expected_refusal": true,
+      "name": "import refused torch",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "import refused numpy",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "import refused huggingface_hub",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "import refused ipfs_datasets_py.router_deps",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "import refused unqualified_package",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "stdlib import finder is passive",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "endpoint/read refused /proc/self/stat",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "endpoint/read refused /sys/fs/cgroup/memory.current",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "endpoint/read refused /tmp/ipfs-datasets-resource-scheduler-1000.json",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "endpoint/read refused relative.json",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "public pinned source read admitted",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "mutating/process/census event os.scandir",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "mutating/process/census event os.listdir",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "mutating/process/census event socket.connect",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "mutating/process/census event subprocess.Popen",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "mutating/process/census event ctypes.dlopen",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "mutating/process/census event os.mkdir",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "mutating/process/census event os.putenv",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "receipt write prohibited during imports",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "second receipt creation refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "unknown file descriptor refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "one exact module frame admitted",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "module reexecution refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "same code wrong module refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "class definition body admitted",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "class definition return identity admitted",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "class definition spoof refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "native constructor/method/sampler refused __init__",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "native constructor/method/sampler refused collect_proof_host_resources",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "native constructor/method/sampler refused acquire",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "native constructor/method/sampler refused release",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "stdlib dataclass definition factory admitted",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "dataclass factory without trusted caller refused",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "model_calls": 0,
+  "network_calls": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "producer": {
+    "bytes": 24004,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/capture_actor_context_ranking_resource_import_smoke_v01.py",
+    "sha256": "6b2da968b047405a4821b0fc59a87738f36db67f73e174977a90a0c9249b71a6"
+  },
+  "resource_API_calls": 0,
+  "sampler_calls": 0,
+  "schema": "actor-context-ranking-resource-import-smoke-independent-controls/v1",
+  "source": {
+    "bytes": 6190,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource_import_smoke_independent_controls_v01.py",
+    "sha256": "22d7135e893c641209aebf3f544e1e4b437e0346fcfba5c618c9ce73747a58d9"
+  }
+}

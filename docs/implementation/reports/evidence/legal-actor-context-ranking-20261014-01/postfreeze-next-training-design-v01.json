@@ -1,0 +1,289 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-runtime-review-v01.json": {
+      "bytes": 87180,
+      "sha256": "7addc2135ff36c553183f0a8818280b044f694fb592aca152826db8922d3d5a5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-independent-recount-v01.json": {
+      "bytes": 3168876,
+      "sha256": "0db57059f3fca19b69e6fc3554a4a3ee64274fc58ed12ed36bcedb5f065a3f6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-output-freeze-v01.json": {
+      "bytes": 22324,
+      "sha256": "f5140b6c3c9a6c32ec3e012444f873bfc79c4f6936d0b2d76296748fa5ceda30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-analysis-v01.json": {
+      "bytes": 3470679,
+      "sha256": "cdb1b30f035dc9710eb12624659dbe31a4eaa78337ca1e8b8d7ffbfe8dbf4722"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-independent-review-v01.json": {
+      "bytes": 14788,
+      "sha256": "d12ab3444109c957ddf6710d084babe73fd4354fa39336c5b6839abaa885268a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py": {
+      "bytes": 57479,
+      "sha256": "6f37e5295ab09fe5f61215ab0445e6348d2972551c6bee1719e1c3c2ce2bd1aa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py": {
+      "bytes": 56952,
+      "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-result-summary-v01.json": {
+      "bytes": 9283,
+      "sha256": "6ebcace6fd13bc112eff52e9d2cce04dfcf4db5a461153df6cefda7ecc23c9e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-summary-card-independent-review-v01.json": {
+      "bytes": 9730,
+      "sha256": "0f4de1c459f95c03562e18e544404938be8bf910aa0b00fd76c9d94152461b28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/training-design-v01.json": {
+      "bytes": 5655,
+      "sha256": "ab412ceace1375819323afc9cc08f43720db28f007a04a7f4b7be8cdafd93ca1"
+    }
+  },
+  "authored_at_utc": "2026-10-14T13:14:52.815650+00:00",
+  "coverage_interpretation": {
+    "actor_top8": 168,
+    "all_gold_present_role_spans_in_top8": 168,
+    "fixed_modality_and_presence_decisions_correct": 161,
+    "full_gold_assignment_survives_retained_domain": 161,
+    "not_a_proven_complete_IR_ceiling": "The161 coverage count checks retained candidates and selected fixed modality/presence decisions, and excludes correctness of nonactor boundary selection and selector coupling. It is not measured oracle accuracy, a complete-IR ceiling, or evidence that161 can be reached by this objective.",
+    "unmeasured_counterfactuals": [
+      "The five actor-only failures are opportunities under current scoring, not proven recoverable updates.",
+      "Allowing modality, condition-boundary and exception-presence gradients may address their errors, but frozen features may fail to separate them; no such improvement has been measured.",
+      "A lower actor hinge does not prove complete-IR improvement or retention outside the training rows."
+    ]
+  },
+  "current_experiment": {
+    "all32_permission_modality_decisions_P_no_abstention": true,
+    "authored_development_joint_full_IR": [
+      46,
+      48
+    ],
+    "authored_development_raw_full_IR": [
+      45,
+      47
+    ],
+    "default_promotion": false,
+    "mean_filtered_actor_hinge": [
+      0.2145724126270839,
+      0.17247733615693592
+    ],
+    "older_tune_full_IR_raw_and_joint": [
+      94,
+      93
+    ],
+    "older_tune_loss_id": "native-tuning-calendula-t4-q5-p",
+    "scientific_success": false,
+    "technical_qualification_passed": true,
+    "training_actor_raw_and_joint": [
+      156,
+      158
+    ],
+    "training_joint_full_IR": [
+      154,
+      154
+    ],
+    "training_raw_full_IR": [
+      154,
+      154
+    ]
+  },
+  "exposure_and_fidelity_limits": {
+    "active_latent_8D_384D_768D": "Future controlled active latent ablations with verified conditioning effect; present384placeholders were disabled.",
+    "native_logic_families_and_Lake": "Future separately qualified family mappings and native proofs/builds. No broader-family or F16 Lake success is asserted.",
+    "reference_status": "Repeatedly exposed authored diagnostics; no blind generalization or independent statutory semantic gold.",
+    "source_alignment_followup": "Source-alignment work reportedly lists418 pending and0 accepted references. This report does not convert that inventory into adjudicated legal labels; independently reviewed governing context, inherited definitions and scope remain separate work.",
+    "training_data": "Same authenticated168 only. No old_tune/dev/eval/fresh/statutory gold rows enter gradients. Replaying exposed evaluation rows would require an explicitly new training-exposure/split contract; it cannot be concealed as retention evaluation."
+  },
+  "operations": {
+    "HPO_runs": 0,
+    "checkpoint_JSON_parses": 0,
+    "model_or_encoder_calls": 0,
+    "model_source_edits": 0,
+    "new_executable_training_plans": 0,
+    "new_forwards": 0,
+    "numerical_imports": 0,
+    "resource_or_private_API_calls": 0,
+    "saved_head_or_reference_body_reads": 0
+  },
+  "recommended_one_fixed_future_candidate": {
+    "fixed_objective": {
+      "actor_hinge": "Retain training-authenticated compatible wrong-span domain, exclusion of gold and overlapping present gold nonactor spans, fixed0.25 coefficient/margin1 and original per-batch normalization.",
+      "expression": "L = L_main_legacy + 0.25 * L_filtered_actor_hinge(margin=1) + 1.0 * L_masked_F15_retention(T=1)",
+      "main": "Retain exact (2*modality_CE + sum(six role facet batch means))/8. Each role pointer is0.5*(startCE+endCE), optional roles add their presence CE, absent pointers use original ignore_index behavior. Do not replace it with unnormalized actor CE or change association.",
+      "mask": "Before updates, derive teacher-correct component masks using only training gold: modality or exception presence class correct; boundary block valid/present and teacher boundary decision equals its gold coordinate. Omit a block mask when teacher is wrong or a boundary is absent. The corresponding wrong-head examples remain trained by supervised main CE, without distilling the known mistake.",
+      "normalization": "For batch B, sum masked KL(teacher||candidate) across the six blocks and rows, divide by6*B including masked zeros. Compute KL with stable log-softmax/logsumexp over only valid classes/tokens. Masks and teacher distributions are immutable, source-authenticated detached values; zero-activity produces a graph-connected zero.",
+      "not_a_guarantee": "Training-only distillation constrains distributions on exposed training rows. It does not guarantee old_tune, authored/fresh diagnostic or complete-IR retention; final paired retention tests remain mandatory.",
+      "proposal_not_empirically_validated": true,
+      "retention_blocks": [
+        "actor_start",
+        "actor_end",
+        "modality",
+        "conditions_start",
+        "conditions_end",
+        "exceptions_presence"
+      ],
+      "teacher": "Detached F15 parent score distributions on authenticated training168 only; reuse exact frozen parent training capture when qualified, with no teacher model forward. No diagnostic or statutory references become teacher labels."
+    },
+    "fixed_optimizer_recipe_proposed": {
+      "batch_size": 12,
+      "gradient_clip_norm": 5,
+      "inherited_moments": false,
+      "latent_enabled": false,
+      "learning_rate": 0.001,
+      "optimizer": "fresh Adam",
+      "seed_and_order": 1729,
+      "steps": 32,
+      "sweeps_or_HPO": false,
+      "weight_decay": 0
+    },
+    "future_preregistered_acceptance": {
+      "complete_IR_retention": "Zero paired loss IDs on both raw and joint routes in all same9exposed scored scopes against N11 and F15. Also bind F16 as an additional diagnostic retention comparator for the next experiment so the two authored_dev gains cannot be silently discarded. This proposed future rule does not change the failed current F16 criterion.",
+      "default_promotion": false,
+      "final_bit_gate": "Exact632 head bits outside the explicitly allowed actor/modality/conditions-boundary/exceptions-presence blocks. Revise the old all-nonactor gate explicitly; do not falsely claim it still applies.",
+      "independent_legal_semantics": "Not established by passing authored metrics.",
+      "initial_gate": "Full632 head/decoded parity to selected F15 research parent before update0.",
+      "tracked32_permissions": "All32 remain P and nonabstaining on raw and joint; test separately from complete-IR retention, including the observed Calendula actor-loss case.",
+      "training_full_IR_joint_minimum": 155,
+      "training_full_IR_raw_minimum": 155
+    },
+    "initialization": {
+      "checkpoint_descriptor": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      },
+      "copy_all42_tensor_values": true,
+      "model_state_sha256_child_authenticated": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42",
+      "reason": "Start before the observed F16 old_tune actor regression; keep F16 as a diagnostic comparator rather than silently promoting it. Copy the trained nonzero actor query/gate and learned conditions presence.",
+      "research_parent": "exact completed F15 actor-refinement checkpoint, not the rejected F16 default"
+    },
+    "minimum_detached_and_guarded_evidence_before_any_run": [
+      "Detached nonzero trained query/gate fixture: all allowed readout/context gradients connected; frozen encoder/learned conditions heads have None gradients.",
+      "Exact42state/14optimizer tensor closed names/shapes/order; reject wrong donor/raw hash/model hash, wrong active rows, aliasing and moment inheritance.",
+      "Inactive actor650 + original boundary650 + original presence390 scalar gradients/Adam moments remain zero, and values byte-identical after each returned update.",
+      "Test finite stable CE/KL under huge equal logits, correct masked-zero normalization, wrong-teacher components not distilled, immutable target membership and no evaluation IDs admitted.",
+      "Test losses154/155 and loss-ID veto independently; a count gain must not mask the known old_tune loss or loss of an earlier correct row.",
+      "Source review, real current resource baseline/guardian, immutable concrete plan/review and full62freeze before scoring; no actual new plan is created by this proposal."
+    ],
+    "required_gradient_route_change": "The existing actor feature factory computes modality/original boundary/presence projections inside no_grad, and the refinement factory constructs the entire combined presence inside no_grad. Merely changing requires_grad is insufficient. A new opt-in factory must keep encoders/features detached but evaluate the selected full-width readouts and the final presence merge outside no_grad, using exact parent arithmetic. Learned conditions-pair projection stays frozen. Actor query/context route remains differentiable.",
+    "state_and_active_rows": {
+      "active_scalars_proposed": 713,
+      "actor_attention.query_and_actor_context.gate": {
+        "active_scalars": 128,
+        "fresh_zero_query_assumption": false,
+        "geometry": "two64 vectors"
+      },
+      "actor_start.weight_and_bias_and_actor_end.weight_and_bias": {
+        "active_rows": [
+          0
+        ],
+        "active_scalars": 130,
+        "geometry": "full6x64 weights and full6 biases, preserve full parent GEMM arithmetic",
+        "inactive_rows": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "conditions_presence.weight_and_bias": "Freeze both full8 tensors, including learned rows2:4. Preserve all other encoders, latent tensors and action/object/temporal readouts.",
+      "fully_frozen_tensor_count": 28,
+      "inactive_scalars_within_trainable_storage_proposed": 1690,
+      "modality.weight_and_bias": {
+        "active_rows": [
+          0,
+          1,
+          2
+        ],
+        "active_scalars": 195,
+        "geometry": "full3x64 and3"
+      },
+      "model_tensor_count": 42,
+      "presence.weight_and_bias": {
+        "active_rows": [
+          4,
+          5
+        ],
+        "active_scalars": 130,
+        "geometry": "original full8x64 and8",
+        "inactive_rows": [
+          0,
+          1,
+          2,
+          3,
+          6,
+          7
+        ],
+        "optional_role": "exceptions"
+      },
+      "start.weight_and_bias_and_end.weight_and_bias": {
+        "active_rows": [
+          3
+        ],
+        "active_scalars": 130,
+        "geometry": "original full6x64 and6",
+        "inactive_rows": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "role": "conditions"
+      },
+      "status": "Counts are source-derived proposed policy, not implemented or numerically qualified. New schema/closed row validators and exact parameter order would be required.",
+      "trainable_storage_scalars_proposed": 2403,
+      "trainable_tensor_count": 14
+    },
+    "working_name": "bounded-actor-and-bottleneck-readout-with-masked-retention"
+  },
+  "schema": "actor-context-ranking-postfreeze-next-training-design/v1",
+  "status": "source-and-public-aggregate proposal only; no new module, plan, run, selection or promotion",
+  "why_training_full_IR_stayed154": {
+    "conditions_presence_note": "Training conditions presence was correct on all168; the two condition-only failures concern boundaries. Do not raise conditions-presence loss to address a boundary error.",
+    "exception_presence_false_positive_rows": 1,
+    "exception_presence_row_also_has_actor_error": true,
+    "explanation": "Both new correct actors still have wrong frozen modality. Their failure pattern changes from modality+actor to modality only, so neither becomes a complete rule.",
+    "frozen_head_causality_scope": "All632 modality, all4presence pairs and nonactor boundary score vectors stayed bit equal. Updating only actor parameters cannot change these frozen head values. A joint decoder can nevertheless select a different object/other span from unchanged scores when actor choices change.",
+    "measured_actor_gain_ids": [
+      "matched-temporal-train-actor_duration_name-1-o-absent",
+      "matched-temporal-train-actor_duration_name-1-o-present"
+    ],
+    "raw_abstention_count": 1,
+    "raw_abstention_note": "The overlapping actor/exception case abstains on copied_spans_overlap. Thus raw modality nonmatches include an abstention in addition to six wrong modality head decisions; these are not seven wrong modality heads.",
+    "remaining_actor_only_rows": 5,
+    "remaining_conditions_boundary_only_rows": 2,
+    "remaining_wrong_modality_heads": 6,
+    "trained_joint_failure_partition": {
+      "EXACT": 154,
+      "actor": 5,
+      "actor,exceptions": 1,
+      "conditions": 2,
+      "modality": 2,
+      "modality,actor": 4
+    }
+  }
+}

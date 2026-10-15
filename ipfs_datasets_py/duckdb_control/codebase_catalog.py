@@ -25,6 +25,7 @@ from ipfs_datasets_py.logic.software_contracts.content import (
 from ipfs_datasets_py.logic.software_contracts.duckdb_ast_store import (
     ASTCatalogProjection, DuckDBASTStore, InvalidationRow,
 )
+from ipfs_datasets_py.logic.software_contracts.duckdb_ingest import SnapshotIngestIdentity
 
 SCHEMA = "codebase-control@1"
 HEAD_SCHEMA = "codebase-head@1"
@@ -204,13 +205,17 @@ class CodebaseCatalog:
     """
 
     def __init__(self, store: DuckDBASTStore, artifacts: ImmutableCAS, *,
-                 limits: CodebaseCatalogLimits | None = None) -> None:
+                 limits: CodebaseCatalogLimits | None = None,
+                 optimized_unchanged_publication: bool = True) -> None:
+        if type(optimized_unchanged_publication) is not bool:
+            raise CodebaseCatalogError("optimized_unchanged_publication must be an exact bool")
         import duckdb
 
         if type(store) is not DuckDBASTStore or type(store._connection) is not duckdb.DuckDBPyConnection:
             raise CodebaseCatalogError("catalog requires an exact native DuckDB AST owner")
         if type(artifacts) is not ImmutableCAS:
             raise CodebaseCatalogError("catalog requires the exact immutable artifact owner")
+        self.optimized_unchanged_publication = optimized_unchanged_publication
         self.store, self.artifacts = store, artifacts
         self.limits = limits if limits is not None else CodebaseCatalogLimits()
         if type(self.limits) is not CodebaseCatalogLimits:
@@ -445,7 +450,14 @@ class CodebaseCatalog:
         The catalog derives supersession from durable history. Ingestor-local
         invalidations are intentionally rejected; their selectors can depend on
         warm process state and cannot define a restart-stable operation identity.
+        An unchanged publication still commits a new operation and generation.
+        Its AST writes may be omitted only when the complete current projection
+        equals the candidate exactly, including the original projection clocks.
+        Set ``optimized_unchanged_publication=False`` to persist every new batch.
         """
+        optimized = self.optimized_unchanged_publication
+        if type(optimized) is not bool:
+            raise CodebaseCatalogError("optimized_unchanged_publication must be an exact bool")
         _text(operation_id, "operation_id", 256)
         if invalidations:
             raise CodebaseCatalogError("catalog derives invalidations from the durable previous head")
@@ -475,6 +487,23 @@ class CodebaseCatalog:
                 actor_id="codebase-catalog", detail=f"superseded by {manifest.ast_revision_id}",
                 created_at=time.time(),
             ),)
+        unchanged_identity = (
+            optimized and expected_head is not None
+            and expected_head.manifest_cid == manifest.cid
+            and expected_head.snapshot_cid == manifest.snapshot.snapshot_cid
+            and expected_head.ast_revision_id == manifest.ast_revision_id
+        )
+
+        def active_matches() -> bool:
+            # This internal helper reads complete canonical native families in
+            # the existing transaction. Public lookups would open a nested one.
+            return self.store._active_revision_matches(
+                projections, (), revision_id=manifest.ast_revision_id,
+                repository_id=manifest.snapshot.repository_id,
+                revision=SnapshotIngestIdentity(manifest.snapshot).revision,
+                repository_tree_cid=manifest.snapshot.snapshot_cid,
+                checkpoint=check,
+            )
 
         def before_apply(connection: Any) -> None:
             self._ensure_owner()
@@ -494,6 +523,13 @@ class CodebaseCatalog:
 
         def before_commit(connection: Any) -> None:
             check()
+            if unchanged_identity:
+                # A fallback batch may repair missing rows or different clocks,
+                # but normal projection writes do not remove extra active blobs.
+                # Do not publish a new head unless the complete membership closes.
+                if not active_matches():
+                    raise CodebaseCatalogError("unchanged publication does not match its complete active AST membership")
+                check()
             head = receipt.head
             connection.execute("INSERT INTO codebase_control.heads VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(repository_id) DO UPDATE SET generation=excluded.generation, manifest_cid=excluded.manifest_cid, snapshot_cid=excluded.snapshot_cid, ast_revision_id=excluded.ast_revision_id, receipt_cid=excluded.receipt_cid",
                                [head.repository_id, head.generation, head.manifest_cid, head.snapshot_cid, head.ast_revision_id, head.receipt_cid])
@@ -501,9 +537,19 @@ class CodebaseCatalog:
                                [operation_id, request_cid, receipt.cid, encoded.decode("utf-8")])
             check()
 
+        def reuse_existing(connection: Any) -> bool:
+            # before_apply has already compared the complete durable head in
+            # this transaction. A matching revision alone is insufficient: the
+            # manifest also binds the full captured inventory and AST units.
+            if not unchanged_identity:
+                return False
+            check()
+            return active_matches()
+
         try:
             self.store.apply_batch(projections, supersession,
-                                   before_apply=before_apply, before_commit=before_commit)
+                                   before_apply=before_apply, before_commit=before_commit,
+                                   reuse_existing=(reuse_existing if optimized else None))
         except _Replay as replayed:
             return replayed.receipt
         return receipt

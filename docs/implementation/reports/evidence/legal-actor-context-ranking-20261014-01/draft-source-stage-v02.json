@@ -1,0 +1,562 @@
+{
+  "added_count": 105,
+  "added_entries": {
+    "docs/autoencoders/actor_context_ranking_20261014.md": [
+      "100644",
+      "blob",
+      "f35db9466eedc8d483e81ca06bc2be9c285a8503"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/DRAFT_REPORT_v01.md": [
+      "100644",
+      "blob",
+      "87daa4f1defe75846f8dd010fc6485b7fd50bb6e"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-bootstrap-smoke-controls-v03.json": [
+      "100644",
+      "blob",
+      "5c683aca049ff3e31a9c9f8943f8fca4a175160f"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-evaluation-author-controls-independent-replay-v01.json": [
+      "100644",
+      "blob",
+      "81787f292d15a4a9635568d5c02d34f343e51772"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-evaluation-author-controls-v01.json": [
+      "100644",
+      "blob",
+      "81787f292d15a4a9635568d5c02d34f343e51772"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-harness-author-controls-v01.json": [
+      "100644",
+      "blob",
+      "d35552267bdd68cc7c30bf8e52096c88fb9b9cbe"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-model-contract-controls-v01.json": [
+      "100644",
+      "blob",
+      "1b265645574e7f00780e6b521f0dfe2adff9f883"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-recipe-independent-controls-v01.json": [
+      "100644",
+      "blob",
+      "98e05917d83fd325786423c2c6c928ca10b0b37c"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-resource-author-controls-v01.json": [
+      "100644",
+      "blob",
+      "35cde6e417897baea63875d32edc159e9bcab873"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-terminal-resource-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "48db505e7ae8ac0f1beedb6efb62ebc4d4170caa"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor_context_ranking_bootstrap_smoke_controls_v01.py": [
+      "100644",
+      "blob",
+      "9a6f20e4d620b243903d42e2c6df6b2b68a8aa22"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor_context_ranking_bootstrap_smoke_controls_v02.py": [
+      "100644",
+      "blob",
+      "2d77976b56415260a61c49c9031557fde117a170"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor_context_ranking_bootstrap_smoke_controls_v03.py": [
+      "100644",
+      "blob",
+      "56e48465a4f1112f13efad3840c170de265c56f4"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor_context_ranking_independent_controls_v01.py": [
+      "100644",
+      "blob",
+      "613297700bd19e040f8a58c167d997060c98fdae"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_author_controls_v01.py": [
+      "100644",
+      "blob",
+      "83922cf93260d7de01c74b1ec460a4bcfeded103"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v01.py": [
+      "100644",
+      "blob",
+      "0a98117fdfebf95c9b409c8901ca317d5e965860"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py": [
+      "100644",
+      "blob",
+      "40b61ac11a7e1f7270768177887f0cea1ee015dc"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/analyze_actor_context_ranking_v01.py": [
+      "100644",
+      "blob",
+      "0a12cd011bf24f29ac532766934aa15d253ed50e"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/analyzer-port-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "6400e53ea593f2fa0681e928e70feea97929f3ad"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/audit_actor_context_ranking_terminal_resources_v01.py": [
+      "100644",
+      "blob",
+      "924592af5ab3071995e55e89d80a964c7ec2d8fb"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/audit_actor_context_ranking_terminal_resources_v02.py": [
+      "100644",
+      "blob",
+      "97853b400012563c33471bf41a1fe2964248e3df"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/audit_actor_context_ranking_terminal_resources_v03.py": [
+      "100644",
+      "blob",
+      "39d63408c69df386d53ad075260f7aaa952668e5"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/bootstrap-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "1142970e388936cd2b9b2bedcdce0a507071b8f3"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/collect_actor_context_ranking_opening_v01.py": [
+      "100644",
+      "blob",
+      "3555b421bd73ea9e66400bc73810dd469e6f45a8"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/concrete-training-reviewer-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "baa3bfae46a138df13e45fdba9f260d8a59758a2"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/datasets-checkout-intake-v01.json": [
+      "100644",
+      "blob",
+      "66a9acaee238b8c08eec3ece0b96210bc051bdff"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_evaluation_controls_v01.py": [
+      "100644",
+      "blob",
+      "59fb60fb4133f97ebd534ae7deb72a7fdfb0a0c0"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_evaluation_v01.py": [
+      "100644",
+      "blob",
+      "07656e8c68212864df4824be9ab6dad8e42f3442"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_harness_v01.py": [
+      "100644",
+      "blob",
+      "af976644ea94b22d558218023c137673a69477fb"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_harness_v02.py": [
+      "100644",
+      "blob",
+      "dc739566916d5d79e49452594effdd8d20796330"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_harness_v03.py": [
+      "100644",
+      "blob",
+      "b9ba54b898fb5795d61294880477c0001eb5afe3"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_source_v01.py": [
+      "100644",
+      "blob",
+      "f8085329977d27b4760c776324e774c6845e04e1"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/diagnose_actor_context_ranking_guardian_check_v01.py": [
+      "100644",
+      "blob",
+      "d17830a98e2aaa97938232ac61bd8c7a1d0a03e6"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/draft-pr-created-v01.json": [
+      "100644",
+      "blob",
+      "958cfd23a098a2a36f10e0f53f3f452d6fcee942"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/draft-publication-handoff-v01.json": [
+      "100644",
+      "blob",
+      "c90bbeca9aeb907a9661502748676a51214f991c"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/draft-source-commit-v01.json": [
+      "100644",
+      "blob",
+      "0882f49b3b662b2e53f759b6a5f09cc39c5dc07f"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/draft-source-stage-v01.json": [
+      "100644",
+      "blob",
+      "3e0a0d7a70158acd5a868d3300918df8627f58c9"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/evaluation-contract-v01.json": [
+      "100644",
+      "blob",
+      "7c3034b5e6f6d019346020e10c9b60585bb5bc7d"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/evaluation-port-plan-v01.json": [
+      "100644",
+      "blob",
+      "8714c780064bec0f6f470912db76e1c03c64bb0b"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/evaluation-source-derivation-v01.json": [
+      "100644",
+      "blob",
+      "6e1813becf8fed1b5f821f16a974a95dac39881c"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/freeze_actor_context_ranking_outputs_v01.py": [
+      "100644",
+      "blob",
+      "5d8405c8383146360c8ce687fdaae135bed7086b"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/freeze_actor_context_ranking_outputs_v02.py": [
+      "100644",
+      "blob",
+      "854c7ac2a42fc43826827aa579a843bbe94d46b0"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/freeze_actor_context_ranking_outputs_v03.py": [
+      "100644",
+      "blob",
+      "27614af28c3a9fc59fdbc4410b6f0340ed80f390"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/guardian-check-diagnostic-author-controls-v01.json": [
+      "100644",
+      "blob",
+      "3cda6b34b070bc1cb64c0674a57fdcad6c519c4e"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/guardian-check-diagnostic-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "64fd0c2bba601217ba6866598b34a55b556c915e"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/guardian-check-diagnostic-v01.json": [
+      "100644",
+      "blob",
+      "f0b0c3879fc0556aaab9d8c608346c0610b36221"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/guardian-check-v01.json": [
+      "100644",
+      "blob",
+      "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/guardian-config-inspection-author-controls-v01.json": [
+      "100644",
+      "blob",
+      "1131e3ed06328cbeedf868bbcdc27198e7090c5a"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/guardian-config-inspection-inputs-v01.json": [
+      "100644",
+      "blob",
+      "5bf59ee9f21c119bb57dd1286c482615240d9cd2"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/guardian-config-inspection-lane-author-controls-v02.json": [
+      "100644",
+      "blob",
+      "292169d3dbf204029a9c2af5ed81999ffe0433a3"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/guardian-config-inspection-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "b5b220884b9f04a538da82d4aa19042ac2e06142"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/guardian-config-inspection-source-independent-review-v02.json": [
+      "100644",
+      "blob",
+      "5ed64820388633be1d872946f7f9ccb3bca4c955"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/guardian-config-inspection-v01.json": [
+      "100644",
+      "blob",
+      "e21d433cc209547277df26641e30dfcbb60557bb"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/guardian-config-inspection-v02.json": [
+      "100644",
+      "blob",
+      "2e9272c7aa4e758ca8554181e8ba20a70083c9a8"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/inspect_actor_context_ranking_scheduler_config_v01.py": [
+      "100644",
+      "blob",
+      "ba25b48b02a68855320a5d14c0a441024278834d"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/inspect_actor_context_ranking_scheduler_config_v02.py": [
+      "100644",
+      "blob",
+      "531cd3ad885ee905e9573e62a044db0f326044f0"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/legal_span_actor_context_ranking_draft_v01.py": [
+      "100644",
+      "blob",
+      "e901f34d016e0315b9e95a148c1995f35522b136"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/model-independent-source-controls-v01.json": [
+      "100644",
+      "blob",
+      "7498b7b71960da5e3205b79a9814504f6aa5974a"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/model-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "9fc5761b22529d964df1cacd2f6fb3dae36c9a11"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/owned_lease_watchdog_actor_ranking_v02.py": [
+      "100644",
+      "blob",
+      "b9b17b0315624d328e8779755d90d7b0a43620a7"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/phase-intake-v01.json": [
+      "100644",
+      "blob",
+      "e37e395ef36869132106e4fc2a3a9dc104921eb5"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/postfreeze-comparator-inputs-v01.json": [
+      "100644",
+      "blob",
+      "81d54c3c1ffb06e89ea29fe9d3a0c4edc34b99a0"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/prepare_actor_context_ranking_v01.py": [
+      "100644",
+      "blob",
+      "8ae2da90b6bac8ef366a879d2a58904cf3bb6560"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/prepare_actor_context_ranking_v02.py": [
+      "100644",
+      "blob",
+      "3ba92b0c3bd40c212891f433767c51478353ee8c"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/prepare_actor_context_ranking_v03.py": [
+      "100644",
+      "blob",
+      "02ac34ddde2e4445e2b05ddf1d286ed16c9338ad"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/pretraining-handoff-v01.json": [
+      "100644",
+      "blob",
+      "8095e847a883a8b46c0d2718378b4272a7cce400"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/pretraining-handoff-v02.json": [
+      "100644",
+      "blob",
+      "d179e41878f0820f479295eb007b10494dbeef4d"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/public-source-capsule-v03.json": [
+      "100644",
+      "blob",
+      "98155fd946ec52aafbcc59c23d33ad014ec7fea1"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-bridge-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "44c67cbd61dc2401ff51be0c72f8acefa324b602"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-collection-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "f80e31d5bac2191401df09c508ea859046a3be32"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-collection-v01.json": [
+      "100644",
+      "blob",
+      "859870b7067011a842586b192e5cdd9113943b05"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json": [
+      "100644",
+      "blob",
+      "3d9db989045a24088a3be8d9cbd559cf1e40f6f0"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-observer-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "acd31507ea99868c8a18e303d8a1560dc0135095"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-port-author-reverification-v01.json": [
+      "100644",
+      "blob",
+      "b382ba1d4f8e31564b4c8c15fb04a385a66381d3"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-protocol-peer-controls-v01.json": [
+      "100644",
+      "blob",
+      "7d8e70819879d1f1f6b338a6c7a6d5a258b14dce"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource_protocol_peer_controls_v01.py": [
+      "100644",
+      "blob",
+      "ad52b1e6202481b5a557937c1882f4c7ac71215b"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/result-recount-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "db18b57c01148e51069bbb2e92225a51718aebcf"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/retained-source-intake-v01.json": [
+      "100644",
+      "blob",
+      "ccd1b7b9b612d4c5fdfb4d4e51c8e909db137ca6"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_recipe_controls_v01.py": [
+      "100644",
+      "blob",
+      "5c50bc8e6f6ca2aa9090a70f1d3b8ea92d376773"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_resource_baseline_v01.py": [
+      "100644",
+      "blob",
+      "8ffc9ba9d43ad3173dda470641345efce4e73916"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_result_recount_v01.py": [
+      "100644",
+      "blob",
+      "4eff484300d872f7bdfc5e18b9885cf9583054e1"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_training_plan_v01.py": [
+      "100644",
+      "blob",
+      "0e358dfed5e4b02294be746d3744078373a57747"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_training_plan_v02.py": [
+      "100644",
+      "blob",
+      "ee8e571701423ef2710b6d6652707b1b6e04c38c"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/root-checkout-intake-v01.json": [
+      "100644",
+      "blob",
+      "b8ec8531590f002ae74df4caad6e5e5d2091d012"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_evaluation_author_controls_v01.py": [
+      "100644",
+      "blob",
+      "373214a6268c25077b638aaedfa8151b19d2edbf"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_v01.py": [
+      "100644",
+      "blob",
+      "ab898bcfe5e4ac0099f09187df47e681f1efad6b"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_v02.py": [
+      "100644",
+      "blob",
+      "476849aa00e1103d89afa76b41b2fb0676e2d90e"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_v03.py": [
+      "100644",
+      "blob",
+      "2597a707931c81789cf56d1647cd1108c6caed74"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/run_scope_guardian_v02.py": [
+      "100644",
+      "blob",
+      "e81d65929cf3b4de51f65f82fd5a731c05995899"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/runner-preparer-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "e34f46f0b81d3bb3dab8e63ea711a7eb1b4fe0c7"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/runtime-contract-peer-controls-v01.json": [
+      "100644",
+      "blob",
+      "b99e675a0ce1b530b6004a57dd72120371eb21f7"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/runtime-freeze-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "35988f84578e9086926fdced9256483981c88ef8"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/sample_actor_context_ranking_private_resources_v01.py": [
+      "100644",
+      "blob",
+      "ec92dd87a4c1db3d32d49f10172cfa5e78b339bd"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/sampler-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "7aac760d1cfd97fea7388d51b7b33a7e6c9b98c1"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/source-hardening-change-v01.json": [
+      "100644",
+      "blob",
+      "e446fb77274e308ce40b4a80efe7268b9525a97e"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_analyzer_detached_v01.py": [
+      "100644",
+      "blob",
+      "e4fa2fda0e9dcf27276183f06698293522e436c3"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_harness_detached_v01.py": [
+      "100644",
+      "blob",
+      "56a1b470078d41e70e9dcc79f96978c7b783ebe1"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_recount_detached_v01.py": [
+      "100644",
+      "blob",
+      "2803876ac0d4a013a5f1a133bd7cf88a049070b7"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/test_guardian_check_diagnostic_detached_v01.py": [
+      "100644",
+      "blob",
+      "7ae60026df994f6c0c74614a3ac7891d3ab0b866"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/test_guardian_config_inspection_detached_v01.py": [
+      "100644",
+      "blob",
+      "993570e5b23f54ece31a4b50f95cf74d2d03dc1e"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/test_guardian_config_lane_disclosure_detached_v02.py": [
+      "100644",
+      "blob",
+      "3190c2449945a7d77dd66c6e2383b4660ce8f5eb"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/trainer-source-independent-review-v01.json": [
+      "100644",
+      "blob",
+      "14ac323261146270c90950a6042227325d412c43"
+    ],
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/training-design-v01.json": [
+      "100644",
+      "blob",
+      "84fa1182262f2f97c1e845664fd6af5be14904d7"
+    ],
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py": [
+      "100644",
+      "blob",
+      "7de8af230326d00b87fd5a4839d16cdf768dadde"
+    ],
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_context_ranking_contracts.py": [
+      "100644",
+      "blob",
+      "b0a85a2807143176f30bc6b8964619cd8f474a9c"
+    ]
+  },
+  "all31843_incoming_entries_preserved_exact": true,
+  "branch": "codex/legal-actor-context-ranking-20261014-01",
+  "capsule": {
+    "bytes": 53293,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-source-capsule-v03.json",
+    "sha256": "92a4f9e880f705da0443bf7fd345cc519b4d87afc4d1ef54ded4929f077077a5"
+  },
+  "default_promotion": false,
+  "delta_from_existing_draft": " .../autoencoders/actor_context_ranking_20261014.md |  93 +--\n ...ntext-ranking-bootstrap-smoke-controls-v03.json | 154 ++++\n ...ion-author-controls-independent-replay-v01.json | 124 +++\n ...ext-ranking-evaluation-author-controls-v01.json | 124 +++\n ...ontext-ranking-harness-author-controls-v01.json |  29 +\n ...xt-ranking-recipe-independent-controls-v01.json |  61 ++\n ...nal-resource-source-independent-review-v01.json | 127 +++\n ...context_ranking_bootstrap_smoke_controls_v01.py | 120 +++\n ...context_ranking_bootstrap_smoke_controls_v02.py | 120 +++\n ...context_ranking_bootstrap_smoke_controls_v03.py | 120 +++\n ...tor_context_ranking_independent_controls_v01.py | 286 +++++++\n .../analyze_actor_context_ranking_v01.py           | 366 ++++++++\n ...nalyzer-port-source-independent-review-v01.json | 269 ++++++\n ...actor_context_ranking_terminal_resources_v01.py | 198 +++++\n ...actor_context_ranking_terminal_resources_v02.py | 198 +++++\n ...actor_context_ranking_terminal_resources_v03.py | 198 +++++\n .../bootstrap-source-independent-review-v01.json   | 347 ++++++++\n ...ing-reviewer-source-independent-review-v01.json | 127 +++\n ...ctor_context_ranking_evaluation_controls_v01.py | 126 +++\n .../derive_actor_context_ranking_evaluation_v01.py | 283 +++++++\n .../derive_actor_context_ranking_harness_v01.py    | 175 ++++\n .../derive_actor_context_ranking_harness_v02.py    | 175 ++++\n .../derive_actor_context_ranking_harness_v03.py    | 176 ++++\n ...ose_actor_context_ranking_guardian_check_v01.py | 208 +++++\n .../draft-pr-created-v01.json                      |   1 +\n .../draft-publication-handoff-v01.json             |  76 ++\n .../draft-source-commit-v01.json                   |  16 +\n .../draft-source-stage-v01.json                    | 141 ++++\n .../evaluation-source-derivation-v01.json          | 193 +++++\n .../freeze_actor_context_ranking_outputs_v01.py    | 224 +++++\n .../freeze_actor_context_ranking_outputs_v02.py    | 230 +++++\n .../freeze_actor_context_ranking_outputs_v03.py    | 230 +++++\n ...rdian-check-diagnostic-author-controls-v01.json |  25 +\n ...k-diagnostic-source-independent-review-v01.json | 122 +++\n .../guardian-check-diagnostic-v01.json             |  74 ++\n .../guardian-check-v01.json                        |   0\n ...dian-config-inspection-author-controls-v01.json |  37 +\n .../guardian-config-inspection-inputs-v01.json     |  33 +\n ...config-inspection-lane-author-controls-v02.json |  38 +\n ...g-inspection-source-independent-review-v01.json |  82 ++\n ...g-inspection-source-independent-review-v02.json |  97 +++\n .../guardian-config-inspection-v01.json            | 375 +++++++++\n .../guardian-config-inspection-v02.json            | 395 +++++++++\n ...t_actor_context_ranking_scheduler_config_v01.py | 225 +++++\n ...t_actor_context_ranking_scheduler_config_v02.py | 259 ++++++\n .../legal_span_actor_context_ranking_draft_v01.py  | 770 +++++++++++++++++\n .../model-independent-source-controls-v01.json     | 113 +++\n .../model-source-independent-review-v01.json       | 419 ++++++++++\n .../prepare_actor_context_ranking_v01.py           | 194 +++++\n .../prepare_actor_context_ranking_v02.py           | 194 +++++\n .../prepare_actor_context_ranking_v03.py           | 194 +++++\n .../pretraining-handoff-v02.json                   | 167 ++++\n .../public-source-capsule-v03.json                 | 929 +++++++++++++++++++++\n ...ource-bridge-source-independent-review-v01.json | 194 +++++\n ...e-collection-source-independent-review-v01.json | 194 +++++\n .../resource-collection-v01.json                   |  62 ++\n ...rce-observer-source-independent-review-v01.json | 204 +++++\n .../resource-port-author-reverification-v01.json   | 110 +++\n .../resource-protocol-peer-controls-v01.json       | 127 +++\n .../resource_protocol_peer_controls_v01.py         |  89 ++\n ...sult-recount-source-independent-review-v01.json | 266 ++++++\n ...ew_actor_context_ranking_recipe_controls_v01.py |  70 ++\n ...iew_actor_context_ranking_result_recount_v01.py | 484 +++++++++++\n ...view_actor_context_ranking_training_plan_v01.py | 137 +++\n ...view_actor_context_ranking_training_plan_v02.py | 137 +++\n ...ntext_ranking_evaluation_author_controls_v01.py |  59 ++\n .../run_actor_context_ranking_v01.py               | 545 ++++++++++++\n .../run_actor_context_ranking_v02.py               | 545 ++++++++++++\n .../run_actor_context_ranking_v03.py               | 545 ++++++++++++\n ...ner-preparer-source-independent-review-v01.json | 704 ++++++++++++++++\n .../runtime-contract-peer-controls-v01.json        |  86 ++\n ...ntime-freeze-source-independent-review-v01.json | 127 +++\n .../sampler-source-independent-review-v01.json     | 179 ++++\n .../source-hardening-change-v01.json               |  31 +\n ..._actor_context_ranking_analyzer_detached_v01.py | 186 +++++\n ...t_actor_context_ranking_harness_detached_v01.py | 198 +++++\n ...t_actor_context_ranking_recount_detached_v01.py | 380 +++++++++\n .../test_guardian_check_diagnostic_detached_v01.py |  96 +++\n ...test_guardian_config_inspection_detached_v01.py | 110 +++\n ...guardian_config_lane_disclosure_detached_v02.py |  88 ++\n .../trainer-source-independent-review-v01.json     |  65 ++\n .../legal_span_actor_context_ranking.py            |   2 +-\n 82 files changed, 16006 insertions(+), 71 deletions(-)\n",
+  "head_before": "b25e0bf7d03b4e29eed2d0cacce85aa629c9b158",
+  "incoming_base": "b1fd77597867ad31f1687edc8bff090caf3d3b7d",
+  "incoming_entry_count": 31843,
+  "independent_review": false,
+  "main_merge": false,
+  "model_source_review_current": true,
+  "new_weights": false,
+  "observed_at_utc": "2026-10-14T12:00:26.619261+00:00",
+  "owned_checkout": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets",
+  "owned_index": {
+    "bytes": 5264388,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/.git/index",
+    "sha256": "55956efdf88922b8500683855ae0eaf1a4de1a902bb0934acea51584c70014fc"
+  },
+  "report": {
+    "bytes": 6231,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/docs/autoencoders/actor_context_ranking_20261014.md",
+    "sha256": "6219dd776b907c7ab16a6d083225a69824cdcbae1dacd108782dc4541f2f7708"
+  },
+  "schema": "actor-context-ranking-draft-source-stage/v2",
+  "staged_entry_count": 31948,
+  "staged_tree": "1b394d7c55b85621a94a2208ce3ef5d012eb9c28",
+  "training_started": false
+}

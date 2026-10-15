@@ -1,0 +1,85 @@
+{
+  "decision": "Do not promote balanced presence weights. Next test boundary learning separately from the unresolved conditions-presence tradeoff.",
+  "default_promotion": false,
+  "evidence": {
+    "actor_source": {
+      "bytes": 60367,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py",
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "result_review": {
+      "bytes": 199842,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-result-independent-review-v01.json",
+      "sha256": "c0f1a533235449e9ef6a1a42a7007fdff2a27ddba2346dc10d1ee8dd2acde4fd"
+    },
+    "summary": {
+      "bytes": 8630,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/public-result-summary-v01.json",
+      "sha256": "51ad97c08ff9207ddb2b80f49799a38cbd7284da92e9a76df47b4ab20f310ba9"
+    }
+  },
+  "future_success_claimed": false,
+  "next_bounded_candidate": {
+    "active_trainable_scalars": 258,
+    "frozen_tensor_count": 36,
+    "inactive_copied_scalars": 650,
+    "model_tensor_count": 42,
+    "new_model_calls": 0,
+    "objective": "Actor boundary CE on all unchanged168 training sources using the existing actor-features objective; no held-out error mining or threshold fitting",
+    "optimizer": "Fresh Adam; same fixed32updates/batch12/seed1729/order for one separately qualified phase",
+    "prototype_code_written": false,
+    "qualification_needed": [
+      "New checkpoint schema that permits actor changes while validating all36 frozen tensors against actual N11",
+      "Source and fake-tensor controls, baseline parity and exact schedule checks",
+      "New resource baseline539 and a fresh never-used attempt under unchanged145GB fullclaim cap",
+      "New preregistered evaluation contract and source-qualified freeze/analyzer/recount before any reference reads"
+    ],
+    "retain": [
+      "All nonactor head bits across632 sources, including N11 conditions-presence outputs",
+      "All inactive actor rows, gradients and optimizer moments",
+      "CompleteIR/no-loss IDs versus N11 in both raw and joint routes across nine exposed scored scopes",
+      "All32 legacy permissions and abstention/status associations"
+    ],
+    "source": "Immutable qualified N11 conditions-presence checkpoint, not failed balanced candidate",
+    "source_checkpoint_sha256": "34080a8ad491e5a351aeea0adfc6f3e29e76d0ae93c1f8a8cee3ebf536a7b9fd",
+    "stored_trainable_scalars": 908,
+    "success": "Training exactIR exceeds154/168 and no completeIR loss IDs versus N11 on any exposed scored scope; report each role and latent/statutory limitations separately",
+    "trainable_tensor_count": 6,
+    "trainable_tensors": [
+      "actor_start.weight",
+      "actor_start.bias",
+      "actor_end.weight",
+      "actor_end.bias",
+      "actor_attention.query",
+      "actor_context.gate"
+    ]
+  },
+  "schema": "conditions-balanced-followup-design/v1",
+  "separate_workstreams": [
+    {
+      "name": "Conditions presence",
+      "task": "Design a separate training-only repair for the two residual balanced FNs and lost N11 training gain; do not combine unseen trial selection with current metrics."
+    },
+    {
+      "name": "Statutory fidelity",
+      "task": "Use upstream parent/occurrence/alignment adapters for an independently reviewed USCode reference set, resolving governing edition, source regions, context closure, ambiguity and gold obligations first."
+    },
+    {
+      "name": "Genuine latent decoding",
+      "task": "Use actual8D/384D/768D encoder outputs, mismatched text/latent controls and dimension-specific held-out splits; current disabled384D placeholders provide no such evidence."
+    },
+    {
+      "name": "Formal output",
+      "task": "Keep LegalIR semantic correctness, logic-family parser/typecheck compliance and Lean compilation as separate metrics; require actual family-specific tests and lake build legal output."
+    },
+    {
+      "name": "Archive portability",
+      "task": "Run a separately guarded isolated reload and saved-score comparison from the downloaded40-source/checkpoint archive before claiming numerical portability."
+    },
+    {
+      "name": "Storage",
+      "task": "Preserve private backup and currentfullclaim ledger; no cleanup credit or inferred release. New work requires actual fresh capacity and native admission."
+    }
+  ],
+  "status": "proposed_not_implemented_or_trained"
+}

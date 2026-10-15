@@ -1,0 +1,2907 @@
+{
+  "PR_merge_approval": false,
+  "actions": {
+    "Git_mutations": 0,
+    "canonical_Git_commands": 0,
+    "compiler_calls": 0,
+    "fetches": 0,
+    "foreign_private_worktree_reads": 0,
+    "model_calls": 0,
+    "network_calls": 0,
+    "producer_imports": 0,
+    "resource_producer_calls": 0,
+    "test_executions": 0
+  },
+  "actual_final_integration_qualified": false,
+  "artifact_count": 60,
+  "artifacts": {
+    "/home/barberb/lift_coding/.git/HEAD": {
+      "bytes": 37,
+      "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+    },
+    "/home/barberb/lift_coding/.git/index": {
+      "bytes": 692628,
+      "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD": {
+      "bytes": 21,
+      "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index": {
+      "bytes": 3799757,
+      "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-plan-v01.json": {
+      "bytes": 71091,
+      "sha256": "71b65a145c0f666e0b58b26a5510e205d351a80ef149bcb0d3c26dd55b1317ee"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-independent-review-v01.json": {
+      "bytes": 14788,
+      "sha256": "d12ab3444109c957ddf6710d084babe73fd4354fa39336c5b6839abaa885268a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets-checkout-intake-v01.json": {
+      "bytes": 1354,
+      "sha256": "5561ab185d1ee2b288cc332b979f6736a0d19aa8dd3cd07cd78496644e1a0f04"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "bytes": 49894,
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py": {
+      "bytes": 57479,
+      "sha256": "6f37e5295ab09fe5f61215ab0445e6348d2972551c6bee1719e1c3c2ce2bd1aa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "bytes": 50602,
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py": {
+      "bytes": 56952,
+      "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py": {
+      "bytes": 56776,
+      "sha256": "fb8670887177ac56379fa76dc9efe310b3a5d598f09c21a3d47e5bf960bc1731"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/model-source-independent-review-v01.json": {
+      "bytes": 30082,
+      "sha256": "1feab43bb59a12d457f3f0363fa4539495b7a0ea7ef11495c2d0cead701d142a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/phase-intake-v01.json": {
+      "bytes": 1494,
+      "sha256": "34c5d2b37132ae4e3430b4cc8054fd9c80dab196067dfefd6817b138db7a2d4e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/pre-run-upstream-intake-v01.json": {
+      "bytes": 14798,
+      "sha256": "600ef51584d9ee2391381edaab48996cdf53fc5f40eea8db2b713359ec3d052c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/remote-related-head-review-datasets-v01.json": {
+      "bytes": 9280,
+      "sha256": "c06eafcb49a3a3410f6d95c1d61f21c94a08f73904c4400a989ab61d6ea0e804"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/remote-related-head-review-root-v01.json": {
+      "bytes": 7331,
+      "sha256": "645d3670df9f0802f3c77d0691e69bb5792613c1a2fc7a1bae974e2e8346426f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/remote-related-heads-datasets-v01.json": {
+      "bytes": 4501,
+      "sha256": "f488611c12c7222337ec9da0cf01fb50e0b5740d40ac764091622be5a675384d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/remote-related-heads-root-v01.json": {
+      "bytes": 3633,
+      "sha256": "6cbc2601310e72a058574c45a7c3e9b3e86e4fe13fce6ecc18ec9c35b2e317e8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/retained-source-intake-v01.json": {
+      "bytes": 16310,
+      "sha256": "f0b237bee8ce9fb9757cf3c5a2b4ee7ee6190d150cd85b692d3e865e8d107db4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/root-checkout-intake-v01.json": {
+      "bytes": 1337,
+      "sha256": "6591d8d2aec0d196e0d12609d88c9d8099958395aa6c7bfd865557ac7ce680c6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/canonical-history-refs-final-observation-v01.json": {
+      "bytes": 33496,
+      "sha256": "7ac4277de187f673f7a7f64eb3989721b0909de39db61b28f781b790ff01f263"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/completion-review-v01.json": {
+      "bytes": 5581,
+      "sha256": "af348479407e93ef63c724c66aff27e30028f2cd117df54b61843a2ae6788dbe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/final-integration-independent-review-v01.json": {
+      "bytes": 106582,
+      "sha256": "9636cd41156648404812da91f0a224270b1e53f334a394a8850e3109ff7b1579"
+    }
+  },
+  "canonical_Git_commands": 0,
+  "canonical_approved_raw4_anchors_opening_and_closing_exact": {
+    "/home/barberb/lift_coding/.git/HEAD": {
+      "bytes": 37,
+      "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+    },
+    "/home/barberb/lift_coding/.git/index": {
+      "bytes": 692628,
+      "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD": {
+      "bytes": 21,
+      "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index": {
+      "bytes": 3799757,
+      "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+    }
+  },
+  "canonical_ref_values_beyond_raw_HEAD_not_read": true,
+  "continuous_ref_or_worktree_custody_claimed": false,
+  "final_stage_review_completed": false,
+  "findings": [],
+  "incoming_main_deltas": {
+    "datasets": {
+      "changed_path_records": 115,
+      "changes": [
+        {
+          "paths": [
+            "configs/autoencoders/legacy-cuda-span-census-existing-policy.conf"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "docs/autoencoders/legacy_cuda_span_campaign.md"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/duckdb_control/codebase_catalog.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/autoformal/__init__.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/autoformal/legal_coordination.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/autoformal/legal_temporal_deadline_interpretation.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/autoformal/legal_temporal_event_interpretation.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/autoformal/legal_temporal_occurrence_provenance.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/backends/process.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/deontic/coordination.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/deontic/decoder.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/deontic/exports.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/deontic/formula_builder.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/deontic/ir.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/deontic/metrics.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_4096_verified.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/codebase_inventory_chunk_scan.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/codebase_inventory_chunks.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/codebase_inventory_shared_chunks.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/codebase_inventory_shared_scan.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/codebase_inventory_shared_successor_receiving.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/codebase_ir.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/codebase_preparation.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/codebase_preparation_projection.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/codebase_preparation_runtime.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/codebase_resume_shared_targets.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/duckdb_ingest.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/semantic_index/pytest_analysis.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/semantic_index/symbol_graph.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/semantic_state/models.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/logic/software_contracts/semantic_state/source.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_candidate_qualification.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/codebase_inventory_shared_worker.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_campaign_resources.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_engine_custody.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "scripts/ops/legal_ir/run_legacy_span_cuda.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "tests/integration/logic/backends/test_owned_process_observation.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/integration/logic/software_contracts/test_codebase_current_observation_linear.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/integration/logic/software_contracts/test_codebase_inventory_chunk_scan.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/integration/logic/software_contracts/test_codebase_inventory_chunks.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/integration/logic/software_contracts/test_codebase_inventory_shared_chunks.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/integration/logic/software_contracts/test_codebase_inventory_shared_scan.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/integration/logic/software_contracts/test_codebase_inventory_shared_successor_receiving.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/formalization/autoencoder/test_source_embeddings_4096_verified.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/codebase_full300_fixture.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/codebase_semantic_completion_fixture.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/semantic_index/test_codebase_scanner_cold_equivalence.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/semantic_state/test_source_state_cid_reads.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/test_codebase_preparation.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/test_codebase_preparation_completion.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/test_codebase_preparation_full300.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/test_codebase_preparation_projection_bytes.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/test_codebase_preparation_runtime.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/test_codebase_preparation_wrapper_decode.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/test_codebase_resume_shared_targets.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/test_duckdb_ast_node_batch.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/test_duckdb_ast_reference_batch.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/test_duckdb_ingest_restart_cache.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/software_contracts/test_duckdb_publication_recovery.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_autoformal_temporal_deadline_session.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_autoformal_temporal_interpretation_session.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_actor_heading_boundaries.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_actor_heading_recovery.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_coordination_boundaries.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_coordination_integration.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_coordination_parser.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_coordination_readiness.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_duty_scope_boundaries.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_duty_scope_integration.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_duty_scope_parser.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_duty_scope_readiness.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_formula_omission_integration.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_formula_omission_readiness.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_grouped_coordination.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_grouped_coordination_boundaries.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_inline_exception_boundaries.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_inline_exception_integration.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_inline_exception_parser.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_inline_exception_readiness.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_override_condition_fidelity.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_persisted_override_readiness.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_procedure_decoder_overlap.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_procedure_source_fidelity.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_qualifier_procedure_integration.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_reference_list_boundaries.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_reference_list_integration.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_reference_list_ir.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_reference_list_parser.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_reference_readiness.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_reference_readiness_integration.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_reference_resolution_boundaries.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_deontic_source_quality_metrics.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_legal_coordination_compiler.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_legal_coordination_evaluation.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_legal_grouped_coordination_integration.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_legal_grouped_decoder_integration.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_legal_grouped_span_decoder_integration.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_legal_grouped_span_decoder_v2_integration.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_legal_temporal_deadline_interpretation.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_legal_temporal_event_interpretation.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_legal_temporal_occurrence_provenance.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_temporal_constraint_inventory.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_temporal_deadline_cue_preservation.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/logic/test_temporal_occurrence_session.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/optimizers/logic_theorem_optimizer/test_codebase_inventory_shared_worker.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_campaign_resources.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_cuda_runner.py"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_engine_custody.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "tests/unit/optimizers/logic_theorem_optimizer/test_resource_scheduler_poll_state_cache.py"
+          ],
+          "status": "A"
+        }
+      ],
+      "from": "b1fd77597867ad31f1687edc8bff090caf3d3b7d",
+      "gitlinks": {
+        ".tools/ipfs_kit_py": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "a9b98beac1ef14278b4adf4f2289cd509530fb86"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "a9b98beac1ef14278b4adf4f2289cd509530fb86"
+          }
+        },
+        "ipfs_accelerate_py": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "c88c0eece0a91297f2ee33859adc2d71724d59d4"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "c88c0eece0a91297f2ee33859adc2d71724d59d4"
+          }
+        },
+        "ipfs_datasets_py/logic/CEC/DCEC_Library": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "a4beb5b3280595be6b9221cac3c91dd019e6d371"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "a4beb5b3280595be6b9221cac3c91dd019e6d371"
+          }
+        },
+        "ipfs_datasets_py/logic/CEC/Eng-DCEC": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "df518c21ef81b8001e6db59f5fd70f10cc04ff6c"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "df518c21ef81b8001e6db59f5fd70f10cc04ff6c"
+          }
+        },
+        "ipfs_datasets_py/logic/CEC/ShadowProver": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "3060ede1ac1ec3f8ef9f9c9e41386aed1dbbe7f9"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "3060ede1ac1ec3f8ef9f9c9e41386aed1dbbe7f9"
+          }
+        },
+        "ipfs_datasets_py/logic/CEC/Talos": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "e0b7650d3e3a403924773f8253e924c719748d36"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "e0b7650d3e3a403924773f8253e924c719748d36"
+          }
+        },
+        "ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "d58933631a5362b1e2fdc45254ef620fa231223a"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "d58933631a5362b1e2fdc45254ef620fa231223a"
+          }
+        },
+        "ipfs_datasets_py/multimedia/omni_converter_mk2": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "c1d9b0d517cea022516aab5b5d8fa5e3bc9a65aa"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "c1d9b0d517cea022516aab5b5d8fa5e3bc9a65aa"
+          }
+        },
+        "ipfs_datasets_py/processors/web_archiving/common_crawl_search_engine": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "0e635cba586e8f6f6ea8126e3b1668b3e675c029"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "0e635cba586e8f6f6ea8126e3b1668b3e675c029"
+          }
+        },
+        "ipfs_kit_py": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "a9b98beac1ef14278b4adf4f2289cd509530fb86"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "a9b98beac1ef14278b4adf4f2289cd509530fb86"
+          }
+        }
+      },
+      "later_final_merge_first_parent_tree_preservation_pending": true,
+      "name_status_sha256": "79d6533195f681c15463a874ac3240e0f4c93accd639c8a10cfef3972c8be3c8",
+      "status_counts": {
+        "A": 89,
+        "M": 26
+      },
+      "to": "904f885c180eb9dfcdef80199f708125428d3859"
+    },
+    "root": {
+      "changed_path_records": 23,
+      "changes": [
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/child-ci-observation.json"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dataset_qualification_runner.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dependency-qualification-01/commands.json"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dependency-qualification-01/junit.xml"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dependency-qualification-01/runner.snapshot.txt"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dependency-qualification-01/source-snapshot/ipfs_datasets_py/logic/software_contracts/semantic_index/pytest_analysis.py.snapshot.txt"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dependency-qualification-01/source-snapshot/ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py.snapshot.txt"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dependency-qualification-01/source-snapshot/ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py.snapshot.txt"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dependency-qualification-01/source-snapshot/ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py.snapshot.txt"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dependency-qualification-01/source-snapshot/ipfs_datasets_py/logic/software_contracts/semantic_index/symbol_graph.py.snapshot.txt"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dependency-qualification-01/source-snapshot/ipfs_datasets_py/logic/software_contracts/semantic_state/models.py.snapshot.txt"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dependency-qualification-01/tests.stderr.log"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/dependency-qualification-01/tests.stdout.log"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/fresh-main-compatibility.json"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/manifest.json"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/observe_hosted_ci.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/parent-checks.json"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/parent-merge-review.json"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/parent_merge_review.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "artifacts/router-signed-scope-closing-publication-20261014/publication_checker.py"
+          ],
+          "status": "A"
+        },
+        {
+          "paths": [
+            "external/ipfs_accelerate"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "external/ipfs_datasets"
+          ],
+          "status": "M"
+        },
+        {
+          "paths": [
+            "implementation_plan/docs/127-supervisor-signed-scope-closing-2026-10-14.md"
+          ],
+          "status": "A"
+        }
+      ],
+      "from": "729d97881136681e90c05e9d2e0707f57708755d",
+      "gitlinks": {
+        "JevOps": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "9af1ebb6a4245ce2b4e673ac277e4988da4d5caa"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "9af1ebb6a4245ce2b4e673ac277e4988da4d5caa"
+          }
+        },
+        "Mcp-Plus-Plus": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "628bb6e7b01867f3bc252a3c276c0e6ef6acd5b0"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "628bb6e7b01867f3bc252a3c276c0e6ef6acd5b0"
+          }
+        },
+        "external/ipfs_accelerate": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "b184d30229b3b8f23a390ca24580962d44620536"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "cb104896f55a28352feb8cd35c4b9991144c933a"
+          }
+        },
+        "external/ipfs_datasets": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "b1fd77597867ad31f1687edc8bff090caf3d3b7d"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "eb18ab0d24557de46d9bd804e8da69d41049874f"
+          }
+        },
+        "external/ipfs_kit": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "40c98c71b95be750509ffdb21e7e5494d91b4e79"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "40c98c71b95be750509ffdb21e7e5494d91b4e79"
+          }
+        },
+        "external/meta-wearables-dat-android": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "4e56e1864a5e78194bababc3a68775c4196cbed0"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "4e56e1864a5e78194bababc3a68775c4196cbed0"
+          }
+        },
+        "external/meta-wearables-dat-ios": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "2b5695d16a710f3d2d7341f88570b86d01723d50"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "2b5695d16a710f3d2d7341f88570b86d01723d50"
+          }
+        },
+        "hallucinate_app": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "ffcf5ff3b3389c95ba53e9f1be45f89fa96c5ef6"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "ffcf5ff3b3389c95ba53e9f1be45f89fa96c5ef6"
+          }
+        },
+        "swissknife": {
+          "before": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "30ade8e512093f4086ad881ac2189e65e556e97c"
+          },
+          "reviewed_main": {
+            "kind": "commit",
+            "mode": "160000",
+            "object": "30ade8e512093f4086ad881ac2189e65e556e97c"
+          }
+        }
+      },
+      "later_final_merge_first_parent_tree_preservation_pending": true,
+      "name_status_sha256": "f6a4c1fbdba7f3d16eeeca2ba05f6fda0882be35c650de6ac4434d80b2049630",
+      "status_counts": {
+        "A": 21,
+        "M": 2
+      },
+      "to": "dd528f888484f47b9665c2a5d1477d2a4dec7e0b"
+    }
+  },
+  "limits": [
+    "Saved remote head intakes were observed at their recorded times. This review made no network request or fresh fetch and does not claim live remote main/branch completeness.",
+    "The name filter selected published head names matching autoencoder|legal|latent|decoder.47source and67root total saved heads do not make the38source/29root subset a census of all relevant work or private progress.",
+    "Thirty-seven selected source heads and all29selected root heads are ancestors of the named mains. The sole outside head is this phase own54aae draft with2commits; this is an explicit distinct lineage, not an automatic merge decision.",
+    "F16 clones declare object alternates into F15 owned clones and are not self-contained object archives. Readable immutable raw commit identities are verified; independent storage redundancy is not inferred.",
+    "Thirty-two F15 immutable selected commits and5 divergent recovery commit bodies remain readable and raw-exact. No current canonical branch-ref or private/old worktree custody is inferred; F15 absent/externally changed ref observations remain historical.",
+    "Only four specifically approved canonical raw HEAD/index files were blind-hashed. No Git command ran in canonical root/source, no canonical symbolic-ref resolution or other canonical metadata was requested.",
+    "Current owned HEADs are separately labeled metadata observations; they do not replace the explicitly reviewed pre-run-main-1240 snapshot refs.",
+    "No tests, producer imports, model/encoder/optimizer/compiler execution, checkpoint parsing, Hub access, resource producer/probe/acquisition/cleanup, Git mutation or foreign worktree inspection occurred."
+  ],
+  "observed_at_utc": "2026-10-14T13:12:57.664112+00:00",
+  "passed": true,
+  "preparatory_only": true,
+  "private_worktree_bodies_or_metadata_read": false,
+  "raw_source_identity_accounting": {
+    "actual_F16_plan_declared_model_owners": 40,
+    "actual_loaded_or_mandatory_owner_counts_recomputed": false,
+    "all_retained39_plus_attention_exact_in_pinned_new_main": true,
+    "distinct_algorithm_raw_files_union": 41,
+    "new_phase_ranking_declared_model_owners": 1,
+    "new_ranking_is_in_own_two_commit_draft_and_absent_pinned_main": true,
+    "new_ranking_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py",
+    "new_ranking_phase_own_candidate_pin": {
+      "bytes": 57479,
+      "sha256": "6f37e5295ab09fe5f61215ab0445e6348d2972551c6bee1719e1c3c2ce2bd1aa"
+    },
+    "plan_expected_loaded_owner_count_saved_only": 17,
+    "retained_declared_model_modules": 39,
+    "retained_source_intake_raw_files": 40,
+    "supplemental_attention_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py",
+    "supplemental_attention_raw_files": 1
+  },
+  "repositories": {
+    "datasets": {
+      "all_remote_heads_saved_count": 47,
+      "base_ancestor_of_main": true,
+      "checkout_object_alternates_declared": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/.git/objects",
+      "checkout_self_contained_object_custody": false,
+      "current_owned_HEAD_separate_observation": "54aae1d13faea237eddde301754db85afd1e127a",
+      "explicit_reviewed_main_ref": "refs/codex/legal-actor-context-ranking-20261014-01/pre-run-main-1240",
+      "heads": [
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+          "raw_commit": {
+            "bytes": 298,
+            "object_id": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+            "sha256": "2c8019bf1501a72b6ab526f59e66d0b5de4eac984ed77d5222b911e981c19ecc"
+          },
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+          "raw_commit": {
+            "bytes": 305,
+            "object_id": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+            "sha256": "e656721486a7761f7079487a74ab993fba7c37374313c21485900ed29b15ed7a"
+          },
+          "ref": "refs/heads/agent/contextual-legal-runtime-20261006"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff",
+          "raw_commit": {
+            "bytes": 383,
+            "object_id": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff",
+            "sha256": "f2faca5600b67e46308792d2aa982fc3a569a60562a3225fec4e82af38b83fa8"
+          },
+          "ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+          "raw_commit": {
+            "bytes": 301,
+            "object_id": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+            "sha256": "af4427ed04d0f7b7118cdb491a5f6c42caec8feb5155ce4df0c4cc5aad27610e"
+          },
+          "ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "04dd69b76b3c14718281d1c4ded53b721f09c328",
+          "raw_commit": {
+            "bytes": 287,
+            "object_id": "04dd69b76b3c14718281d1c4ded53b721f09c328",
+            "sha256": "ba5bda739c97ee0fbe8a4fa9fea8ddbf56bbbbbb7e31edbdccf4d60870fffb68"
+          },
+          "ref": "refs/heads/codex/legal-actor-boundary-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 2,
+          "is_ancestor_of_observed_main": false,
+          "oid": "54aae1d13faea237eddde301754db85afd1e127a",
+          "raw_commit": {
+            "bytes": 297,
+            "object_id": "54aae1d13faea237eddde301754db85afd1e127a",
+            "sha256": "1ac50603fbb53b26cdba5e357dc949dba0fb5d6d9ff1063d87267c53af0ebb7d"
+          },
+          "ref": "refs/heads/codex/legal-actor-context-ranking-20261014-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "8971464f9fd7debab644335d5d6dab8d2e780311",
+          "raw_commit": {
+            "bytes": 295,
+            "object_id": "8971464f9fd7debab644335d5d6dab8d2e780311",
+            "sha256": "ff03561be53834732461f1bef6569cec09b438a908c3154cd7b80554100cdd93"
+          },
+          "ref": "refs/heads/codex/legal-actor-features-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "810fa313613efe6c259c7e71d1c7c09d541c06f9",
+          "raw_commit": {
+            "bytes": 292,
+            "object_id": "810fa313613efe6c259c7e71d1c7c09d541c06f9",
+            "sha256": "67d1b7be152ffd8608c73d99d406f6a8d63d3fae7d7fb56b30342a73360a8da5"
+          },
+          "ref": "refs/heads/codex/legal-actor-ranking-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "9005bc6e90f05362fb4761841346a5b9feb4d2e1",
+          "raw_commit": {
+            "bytes": 281,
+            "object_id": "9005bc6e90f05362fb4761841346a5b9feb4d2e1",
+            "sha256": "1cb74f1ee9b767f381cd2f4702d6f9a65eb0a28935befea5ad36a202ea7ff05d"
+          },
+          "ref": "refs/heads/codex/legal-actor-refinement-20261014-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "99c0b7b0340a76d587dd4fdc77f2db28f5fd7ae3",
+          "raw_commit": {
+            "bytes": 291,
+            "object_id": "99c0b7b0340a76d587dd4fdc77f2db28f5fd7ae3",
+            "sha256": "d4d2ecb78e36dba04b3c41c09c8c4bfb6873955656294a95b5dc649e5e628602"
+          },
+          "ref": "refs/heads/codex/legal-balanced-execution-20261014-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "890098506872d96848667c4a986324d30c86d28a",
+          "raw_commit": {
+            "bytes": 299,
+            "object_id": "890098506872d96848667c4a986324d30c86d28a",
+            "sha256": "03b8dd30bd07351f7494b9bf342808de951ca29ae26f27cc78f43484a36ddfc4"
+          },
+          "ref": "refs/heads/codex/legal-conditions-recall-20261014-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "575a129f19068d58d66cc8119e85c3d23faa560a",
+          "raw_commit": {
+            "bytes": 292,
+            "object_id": "575a129f19068d58d66cc8119e85c3d23faa560a",
+            "sha256": "7063d8e6e376cc0a12ceb327b2b16394eaf70d3c22619a0d5deee00073f60949"
+          },
+          "ref": "refs/heads/codex/legal-cross-agent-guards-20261006"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+          "raw_commit": {
+            "bytes": 302,
+            "object_id": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+            "sha256": "73ae6ea662415f2dd84c61d792fb0b6cfc163c6706cd4f3c0542e75fcab131c3"
+          },
+          "ref": "refs/heads/codex/legal-decoder-followup-20261006-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "raw_commit": {
+            "bytes": 291,
+            "object_id": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+            "sha256": "302cd5c43a36322326a921331308f59633fab273559e36320e283800452e9be4"
+          },
+          "ref": "refs/heads/codex/legal-decoder-progress-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "cea94ddd9962f3e9e7926fa741e752ac112131fc",
+          "raw_commit": {
+            "bytes": 298,
+            "object_id": "cea94ddd9962f3e9e7926fa741e752ac112131fc",
+            "sha256": "9195c1f90cc57c984e029192abf01e5a1c04ff370aaae62a8ba0fb603de70fb4"
+          },
+          "ref": "refs/heads/codex/legal-formal-output-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "004887f6250b083e0b095d5ac7563bc5bb792491",
+          "raw_commit": {
+            "bytes": 293,
+            "object_id": "004887f6250b083e0b095d5ac7563bc5bb792491",
+            "sha256": "2a25d0ae01364c9cfa0d230f0e24268d76e4d62869fabbac1df67e83e7f5e760"
+          },
+          "ref": "refs/heads/codex/legal-grouped-integration-20261006-02"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "996dcfb3bb4faeee5633f2f5146eac659066608e",
+          "raw_commit": {
+            "bytes": 296,
+            "object_id": "996dcfb3bb4faeee5633f2f5146eac659066608e",
+            "sha256": "6f4cbf16e7e95bb808bf6f0a2c40c85587c0b7ecbf0b6487cbcf4020b584609a"
+          },
+          "ref": "refs/heads/codex/legal-head-repair-20261014-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "146e4c88fea6d0a9ab671af00e1596a9a60ea784",
+          "raw_commit": {
+            "bytes": 281,
+            "object_id": "146e4c88fea6d0a9ab671af00e1596a9a60ea784",
+            "sha256": "0228a4492ae5f46ece72131bf6a4204c89d401f02f5f47b4f1ae7452cd3e84cf"
+          },
+          "ref": "refs/heads/codex/legal-joint-readout-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "26dfb492d002ab0f49e3952ec1548a80295906c0",
+          "raw_commit": {
+            "bytes": 293,
+            "object_id": "26dfb492d002ab0f49e3952ec1548a80295906c0",
+            "sha256": "0b5d1b7c232f1619e26894259cc8274724c8659764606ae08cd1df92d4a82006"
+          },
+          "ref": "refs/heads/codex/legal-matched-curriculum-20261012-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "raw_commit": {
+            "bytes": 283,
+            "object_id": "f3901341cdde9b4485315327d5ef06abd1485b11",
+            "sha256": "a509d7008511909b02207ac6eacb5da4aa2c44cf4adb475f4e09bf8501d8b3fc"
+          },
+          "ref": "refs/heads/codex/legal-native-cache-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+          "raw_commit": {
+            "bytes": 283,
+            "object_id": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+            "sha256": "3db58de67406ddda7c64d719f7722943f0d5a7b3dd05fffe2421f8776fbcd72e"
+          },
+          "ref": "refs/heads/codex/legal-open-vocabulary-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "raw_commit": {
+            "bytes": 374,
+            "object_id": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+            "sha256": "03cb1f302e9b4a92ef1f53e9206e0028606e1915fe507a878d5027651d8213fb"
+          },
+          "ref": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "22aefbb4cbcb3569b94c81fc3071bcffc416d8d2",
+          "raw_commit": {
+            "bytes": 291,
+            "object_id": "22aefbb4cbcb3569b94c81fc3071bcffc416d8d2",
+            "sha256": "471c5748716a520ae9d4ba001288d3873783e00973198febb90ce7755157bf8f"
+          },
+          "ref": "refs/heads/codex/legal-permission-retention-20261012-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "304cec4daea763f6668b729162bfca5a3045ef63",
+          "raw_commit": {
+            "bytes": 280,
+            "object_id": "304cec4daea763f6668b729162bfca5a3045ef63",
+            "sha256": "46da3545e02f8e365d3ba06a298cfee23b9391ea488399f533a87704111a29cd"
+          },
+          "ref": "refs/heads/codex/legal-scope-family-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "1530efd07032bac88229c6c97ca5994d498e6216",
+          "raw_commit": {
+            "bytes": 292,
+            "object_id": "1530efd07032bac88229c6c97ca5994d498e6216",
+            "sha256": "8828a7760e3b9b50039f9722c099670c8e5808502045d17c2a4eed58058eab49"
+          },
+          "ref": "refs/heads/codex/legal-scope-span-training-20261007-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "64e93527bed84ecadaab70a570d82a177a859967",
+          "raw_commit": {
+            "bytes": 298,
+            "object_id": "64e93527bed84ecadaab70a570d82a177a859967",
+            "sha256": "0155eb3525c2a784caf83812d406a12a4eb2d7301c67d787ed4bbe4b24ceccb2"
+          },
+          "ref": "refs/heads/codex/legal-split-feature-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "75c55ba38284482f969bde56b6399de37e2b3457",
+          "raw_commit": {
+            "bytes": 306,
+            "object_id": "75c55ba38284482f969bde56b6399de37e2b3457",
+            "sha256": "f18343a88b8a334158dba5dfb44139607df094dbbfbb9073be04d8f6574c007d"
+          },
+          "ref": "refs/heads/codex/legal-storage-closeout-20261012-02"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "f505771a4e12c02bbcf6a2c8e4f956ee47bd35f9",
+          "raw_commit": {
+            "bytes": 284,
+            "object_id": "f505771a4e12c02bbcf6a2c8e4f956ee47bd35f9",
+            "sha256": "7e9e42f52d4228c0edb9074ac1392ae79908726bef5f33cfc146a5e0cebc2e36"
+          },
+          "ref": "refs/heads/codex/legal-storage-recovery-20261012-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "7c90b27d9fd193e768e8ecdca0bb5055145f1b78",
+          "raw_commit": {
+            "bytes": 288,
+            "object_id": "7c90b27d9fd193e768e8ecdca0bb5055145f1b78",
+            "sha256": "ab2d4e776c7e7ef8d7395d819da8f341ce159580e4a3696f714fa54352b6b3e5"
+          },
+          "ref": "refs/heads/codex/legal-structured-training-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+          "raw_commit": {
+            "bytes": 289,
+            "object_id": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+            "sha256": "37921926d780d769aa5b5e4db5ee3d4201161f427425e577b4d38cc87cbe0fe5"
+          },
+          "ref": "refs/heads/codex/legal-support-action-model-20261007-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+          "raw_commit": {
+            "bytes": 287,
+            "object_id": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+            "sha256": "a542a3fa3e35f1f2f12da3bc0b74001c3f5c5b1b7ee91a1f97de9e0343a3989c"
+          },
+          "ref": "refs/heads/codex/legal-support-gate-model-20261007-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "52a54e4f66dd686ffecb4d356b7ac36179734607",
+          "raw_commit": {
+            "bytes": 292,
+            "object_id": "52a54e4f66dd686ffecb4d356b7ac36179734607",
+            "sha256": "105c44cb97f5f2fd4f1fda7127ce335cf41befcbc7529032761848294a22092b"
+          },
+          "ref": "refs/heads/codex/legal-targeted-loss-20261012-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "9c79e4d476e72dcce42e34666a3faecabbb80e25",
+          "raw_commit": {
+            "bytes": 282,
+            "object_id": "9c79e4d476e72dcce42e34666a3faecabbb80e25",
+            "sha256": "80c3a47de004d106747f6187271b8f31506ca99db318f110d345dc542b0135dd"
+          },
+          "ref": "refs/heads/codex/legal-temporal-adapter-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "4a3ee0e6aa5d1af4a540f45aed3b88eff7207aa1",
+          "raw_commit": {
+            "bytes": 294,
+            "object_id": "4a3ee0e6aa5d1af4a540f45aed3b88eff7207aa1",
+            "sha256": "a2f59b629dc37f91b005e8bd4ea29a09ce3ef7601b758d3d5b4a8fb58c5403b5"
+          },
+          "ref": "refs/heads/codex/legal-temporal-attention-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "6b04a8a8551a95ab5fe82d4fe21af5a42375f625",
+          "raw_commit": {
+            "bytes": 286,
+            "object_id": "6b04a8a8551a95ab5fe82d4fe21af5a42375f625",
+            "sha256": "6d3e63e9ed2edb8795eb282a7babe8f11a82630a4e1eaffc94abc96638e3145b"
+          },
+          "ref": "refs/heads/codex/legal-temporal-binding-20261012-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "3555a2153f299e3ff84945a0a51d275efa324831",
+          "raw_commit": {
+            "bytes": 280,
+            "object_id": "3555a2153f299e3ff84945a0a51d275efa324831",
+            "sha256": "074cd7dd19e45340ac5b16baa3211c0a55e45600eb9d7131fd15b9082f321760"
+          },
+          "ref": "refs/heads/codex/legal-temporal-contrast-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "eec41e0d6af448250b6e24f1f0fc1deb5967b264",
+          "raw_commit": {
+            "bytes": 278,
+            "object_id": "eec41e0d6af448250b6e24f1f0fc1deb5967b264",
+            "sha256": "45cc03ded286064a8487a49f325338671959fb455dbccb476d9186e16b78eec2"
+          },
+          "ref": "refs/heads/codex/legal-temporal-presence-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+          "raw_commit": {
+            "bytes": 281,
+            "object_id": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+            "sha256": "b6b21dc181ff9abc11cc47b00e67b1e1bd53c452acbbb652f169ed48adc68022"
+          },
+          "ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01"
+        }
+      ],
+      "main_raw_commit": {
+        "bytes": 383,
+        "object_id": "904f885c180eb9dfcdef80199f708125428d3859",
+        "sha256": "34d41d364b8a5666ca0b1435190226fc9333efd999d341477cae64e03507ae9a"
+      },
+      "name_filtered_heads": 38,
+      "pre_run_base": "b1fd77597867ad31f1687edc8bff090caf3d3b7d",
+      "reviewed_main": "904f885c180eb9dfcdef80199f708125428d3859",
+      "reviewed_main_tree_entries": 31932,
+      "reviewed_main_tree_object": "1dca41d9cee888ba4aeb86f0b5f10a8d73d89017",
+      "saved_ancestry_review_at": "2026-10-14T13:04:35.292293+00:00",
+      "saved_published_head_intake_at": "2026-10-14T13:03:57.835372+00:00",
+      "selected_heads_in_main": 37,
+      "selected_heads_outside_main": 1
+    },
+    "root": {
+      "all_remote_heads_saved_count": 67,
+      "base_ancestor_of_main": true,
+      "checkout_object_alternates_declared": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/root/.git/objects",
+      "checkout_self_contained_object_custody": false,
+      "current_owned_HEAD_separate_observation": "729d97881136681e90c05e9d2e0707f57708755d",
+      "explicit_reviewed_main_ref": "refs/codex/legal-actor-context-ranking-20261014-01/pre-run-main-1240",
+      "heads": [
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "raw_commit": {
+            "bytes": 290,
+            "object_id": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+            "sha256": "fa48154e7d50d98499c8339edd2edec87e35298c7366e8b7b3ad8f854437181f"
+          },
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "raw_commit": {
+            "bytes": 302,
+            "object_id": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+            "sha256": "9f4a61c7ba152538154c02d978ce66b2352933060e20108898721cb09b89c5c1"
+          },
+          "ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "017c70b007a2b2690f419bd2b18f6761c5e2ee38",
+          "raw_commit": {
+            "bytes": 281,
+            "object_id": "017c70b007a2b2690f419bd2b18f6761c5e2ee38",
+            "sha256": "9d007b57850a740ef88dacd35b0797e6e81f9d237c07e008ed493e3e54882b83"
+          },
+          "ref": "refs/heads/codex/legal-actor-boundary-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "4f5a81a71cbbf9369e1afd9123bcc3c397392bed",
+          "raw_commit": {
+            "bytes": 280,
+            "object_id": "4f5a81a71cbbf9369e1afd9123bcc3c397392bed",
+            "sha256": "a787fb60e5f0006081d45e2ee04591d66f9ca7cce7541f0fb666e72cac1a33f5"
+          },
+          "ref": "refs/heads/codex/legal-actor-features-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "b92c62576e1dc1b38a473fe3740571aaa4e0d495",
+          "raw_commit": {
+            "bytes": 312,
+            "object_id": "b92c62576e1dc1b38a473fe3740571aaa4e0d495",
+            "sha256": "0876999a5afd10e5fe92f58ad76e60b9c4a9db271fef5e613882f3ffaf43b7e3"
+          },
+          "ref": "refs/heads/codex/legal-actor-ranking-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "3aafb03f4a47df741ffd2999b664f7d469e3e9f7",
+          "raw_commit": {
+            "bytes": 288,
+            "object_id": "3aafb03f4a47df741ffd2999b664f7d469e3e9f7",
+            "sha256": "73cfca1cc8f9334930e5bb69312fb2c61555b6153b4f408a54522f0bc33eacbc"
+          },
+          "ref": "refs/heads/codex/legal-actor-refinement-20261014-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "9560715afae323defa5e4cb5ae769cc530f10ec3",
+          "raw_commit": {
+            "bytes": 290,
+            "object_id": "9560715afae323defa5e4cb5ae769cc530f10ec3",
+            "sha256": "1f18e27d312421bf7d005f92d01cfc86952c8e8b062a6ef027faea7e4c4be429"
+          },
+          "ref": "refs/heads/codex/legal-balanced-execution-20261014-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "72d3352f985777373a3b59b80807ac786bd020e4",
+          "raw_commit": {
+            "bytes": 289,
+            "object_id": "72d3352f985777373a3b59b80807ac786bd020e4",
+            "sha256": "1d03fac9920bf4c3be32c1fadfb8e4fe22aade9e9253cd25f1a9eb8582709deb"
+          },
+          "ref": "refs/heads/codex/legal-conditions-recall-20261014-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "50ad273eba32737117aa158cf64826d3963ff504",
+          "raw_commit": {
+            "bytes": 288,
+            "object_id": "50ad273eba32737117aa158cf64826d3963ff504",
+            "sha256": "38a36756d359347b1944ad8b477d1a0e005266864c3a9983fbc4b08634a7c505"
+          },
+          "ref": "refs/heads/codex/legal-formal-output-workspace-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "b6dffa3a21a3ba8b0d5e0972c1296ca51d410ef7",
+          "raw_commit": {
+            "bytes": 293,
+            "object_id": "b6dffa3a21a3ba8b0d5e0972c1296ca51d410ef7",
+            "sha256": "076db7678ce9644adbd9765a42992790a56ddae999d99d525b559a5001e5cfd4"
+          },
+          "ref": "refs/heads/codex/legal-head-repair-20261014-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "739e7088a203a4b307d96192e489a88dbf9177b1",
+          "raw_commit": {
+            "bytes": 286,
+            "object_id": "739e7088a203a4b307d96192e489a88dbf9177b1",
+            "sha256": "50fe2b6230bbfb7fecb8ccdb0797ca1313bbe77576ff41023037381ff73d9a01"
+          },
+          "ref": "refs/heads/codex/legal-joint-readout-workspace-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "e82ec9fdbde3f93cac631d27cac463dc643f3d8c",
+          "raw_commit": {
+            "bytes": 301,
+            "object_id": "e82ec9fdbde3f93cac631d27cac463dc643f3d8c",
+            "sha256": "3fb07f211d772379286d0cb24681faa0d5a2c2e2edfd5c57a3211aa76f794570"
+          },
+          "ref": "refs/heads/codex/legal-matched-curriculum-20261012-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "raw_commit": {
+            "bytes": 291,
+            "object_id": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+            "sha256": "9602e17c94920433fe31fdd89f890317c2c8190ba13055ed638484095a017417"
+          },
+          "ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "00130686f43e35105e2ee98e5a36428f3aff3538",
+          "raw_commit": {
+            "bytes": 289,
+            "object_id": "00130686f43e35105e2ee98e5a36428f3aff3538",
+            "sha256": "22a467fbc5c810205d5088ff581f82c3ebebd01533bd22aaeb8326473c0c029b"
+          },
+          "ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "7022af89a77a58c9ea34bd506ad1238d97eee688",
+          "raw_commit": {
+            "bytes": 303,
+            "object_id": "7022af89a77a58c9ea34bd506ad1238d97eee688",
+            "sha256": "b043d86f9837fc454ce390a5ababe8cb5535907abf6609c6b5390058d5d8ce9b"
+          },
+          "ref": "refs/heads/codex/legal-permission-retention-20261012-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "raw_commit": {
+            "bytes": 292,
+            "object_id": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+            "sha256": "e0f17a0015011ec951c3dad8a433a0eeb7d2338d33b0713ec22f63a889767915"
+          },
+          "ref": "refs/heads/codex/legal-retention-objective-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "3e980a7e37bf39c4d29b3fbfb1369910c2686cd3",
+          "raw_commit": {
+            "bytes": 280,
+            "object_id": "3e980a7e37bf39c4d29b3fbfb1369910c2686cd3",
+            "sha256": "02e5d1a2090592580c7e80d0155d91c09538b0d71f0790e367fa2b6e08a9a921"
+          },
+          "ref": "refs/heads/codex/legal-scope-family-workspace-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "5a3172e1d695f0b0337fcb9f91399f10a8a37bf4",
+          "raw_commit": {
+            "bytes": 296,
+            "object_id": "5a3172e1d695f0b0337fcb9f91399f10a8a37bf4",
+            "sha256": "b549149f19ef272436878e72f25d700712776a8495a303742604e3b756a25526"
+          },
+          "ref": "refs/heads/codex/legal-split-feature-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "6a5db7e355d511f37552b092ef0b232a1d4bf875",
+          "raw_commit": {
+            "bytes": 305,
+            "object_id": "6a5db7e355d511f37552b092ef0b232a1d4bf875",
+            "sha256": "5fce7fe1637a212a9c6f20d6a1a5e5b4527764632ae629a520593888482f965b"
+          },
+          "ref": "refs/heads/codex/legal-storage-closeout-workspace-20261012-02"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "b3de21a5ab2d1c16abb65becdd4e604bc11daaeb",
+          "raw_commit": {
+            "bytes": 291,
+            "object_id": "b3de21a5ab2d1c16abb65becdd4e604bc11daaeb",
+            "sha256": "d27ff6add0e456e7d7ec21004e2b5c8fb659acaf24b53055db77bb98a9ce3d92"
+          },
+          "ref": "refs/heads/codex/legal-storage-continuation-20261014-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "3a767d41deb30c83b3d25cdfe1269bdb4bab3904",
+          "raw_commit": {
+            "bytes": 277,
+            "object_id": "3a767d41deb30c83b3d25cdfe1269bdb4bab3904",
+            "sha256": "c92cf991081fb390efe541bd6d01e4b6e85f6ed48526f4c51a70189a5175f2cd"
+          },
+          "ref": "refs/heads/codex/legal-storage-recovery-workspace-20261012-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f",
+          "raw_commit": {
+            "bytes": 296,
+            "object_id": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f",
+            "sha256": "14c1a366a973cba4a23afd4b9bdc732f06b512ff91041cdb6088c2733285308e"
+          },
+          "ref": "refs/heads/codex/legal-structured-training-workspace-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "544ff58507a2237fd697ed2b907dde0fb9a39bae",
+          "raw_commit": {
+            "bytes": 290,
+            "object_id": "544ff58507a2237fd697ed2b907dde0fb9a39bae",
+            "sha256": "1929215b6aed4522e13f90b388cb30cbf84f064da7ea0b9479e4adc0fe989a16"
+          },
+          "ref": "refs/heads/codex/legal-targeted-loss-20261012-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "c38bb4d0530d186414c72e2940e3274b23cd4b0b",
+          "raw_commit": {
+            "bytes": 291,
+            "object_id": "c38bb4d0530d186414c72e2940e3274b23cd4b0b",
+            "sha256": "5d52f5f15e96a68cc1054805649175d48866276b43c598c8b488c9f2b963e8dd"
+          },
+          "ref": "refs/heads/codex/legal-temporal-adapter-root-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "f59df3d04b38b7a43ab945754207e7be57425de1",
+          "raw_commit": {
+            "bytes": 292,
+            "object_id": "f59df3d04b38b7a43ab945754207e7be57425de1",
+            "sha256": "10f588fd53ab16c378c03a9a8277c6c089ca79df021526d5bc8f3226dbca256f"
+          },
+          "ref": "refs/heads/codex/legal-temporal-adapter-root-20261013-02"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "e6fdeac5ea72deb2920719b378e213b62c5487d8",
+          "raw_commit": {
+            "bytes": 281,
+            "object_id": "e6fdeac5ea72deb2920719b378e213b62c5487d8",
+            "sha256": "ef4b9bcfc5db3b1db93428555ac498d9bf36b7bb404e9d4c41f1dab30c434514"
+          },
+          "ref": "refs/heads/codex/legal-temporal-attention-20261013-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "72b5da10319c02e7da84ecea65c6e34583b0e03d",
+          "raw_commit": {
+            "bytes": 292,
+            "object_id": "72b5da10319c02e7da84ecea65c6e34583b0e03d",
+            "sha256": "19c34b8b1e16e3094e25530450947e44eec0ecff5e3518741598c4274ae135f0"
+          },
+          "ref": "refs/heads/codex/legal-temporal-binding-workspace-20261012-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "f23fd713ab83ef2ed800c0b62e36edef7d80073f",
+          "raw_commit": {
+            "bytes": 285,
+            "object_id": "f23fd713ab83ef2ed800c0b62e36edef7d80073f",
+            "sha256": "ff799541c4881c6f750c913b6ab7471642044339a4b9ef9d8861fd93b1fae79a"
+          },
+          "ref": "refs/heads/codex/legal-temporal-contrast-workspace-20261011-01"
+        },
+        {
+          "commits_outside_observed_main": 0,
+          "is_ancestor_of_observed_main": true,
+          "oid": "e33dbd0e9a09fddfffdfb0af66fd7ab8e323638f",
+          "raw_commit": {
+            "bytes": 293,
+            "object_id": "e33dbd0e9a09fddfffdfb0af66fd7ab8e323638f",
+            "sha256": "596abe96aa76c8278621681863808a18c45f1269113cbaf7c5434435c41a32e1"
+          },
+          "ref": "refs/heads/codex/legal-temporal-presence-20261013-01"
+        }
+      ],
+      "main_raw_commit": {
+        "bytes": 286,
+        "object_id": "dd528f888484f47b9665c2a5d1477d2a4dec7e0b",
+        "sha256": "be33269995826149f8c759ae737d23ab7155c1cd1bcd9aa95dbff9986c40d98b"
+      },
+      "name_filtered_heads": 29,
+      "pre_run_base": "729d97881136681e90c05e9d2e0707f57708755d",
+      "reviewed_main": "dd528f888484f47b9665c2a5d1477d2a4dec7e0b",
+      "reviewed_main_tree_entries": 37635,
+      "reviewed_main_tree_object": "1dd7820feaabc6a927fe998545e125dab5c2d41e",
+      "saved_ancestry_review_at": "2026-10-14T13:04:35.232676+00:00",
+      "saved_published_head_intake_at": "2026-10-14T13:03:56.954557+00:00",
+      "selected_heads_in_main": 29,
+      "selected_heads_outside_main": 0
+    }
+  },
+  "required_later_integration_checks": [
+    "Bind final closed source/root staged inventories and compare every staged blob to exact working bytes and approved raw pins.",
+    "Use the actual immutable main first parent at merge time; preserve every incoming tree entry outside the closed owned contribution and declared datasets gitlink update.",
+    "Recheck these32 selected immutable histories and5 retained recovery objects without importing unreviewed divergent branch patches.",
+    "Bind actual source merge in the root datasets gitlink, preserve the other incoming root gitlinks, and compare approved canonical raw4 endpoints.",
+    "Keep later refs and commits outside these explicitly named snapshots distinct until separately reviewed."
+  ],
+  "retained40_raw_source_pins": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "role": "retained_declared_model_module",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "role": "retained_declared_model_module",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "role": "retained_declared_model_module",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "role": "retained_declared_model_module",
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "role": "retained_declared_model_module",
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "role": "retained_declared_model_module",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "role": "retained_declared_model_module",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "role": "retained_declared_model_module",
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "role": "retained_declared_model_module",
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "role": "retained_declared_model_module",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "role": "retained_declared_model_module",
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "role": "retained_declared_model_module",
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "role": "retained_declared_model_module",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "role": "retained_declared_model_module",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "role": "retained_declared_model_module",
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "role": "retained_declared_model_module",
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "role": "retained_declared_model_module",
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "role": "retained_declared_model_module",
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "role": "retained_declared_model_module",
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "role": "retained_declared_model_module",
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "role": "retained_declared_model_module",
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "role": "retained_declared_model_module",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "role": "retained_declared_model_module",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "role": "retained_declared_model_module",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "role": "retained_declared_model_module",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "bytes": 49894,
+      "role": "retained_declared_model_module",
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "role": "retained_declared_model_module",
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "bytes": 50602,
+      "role": "retained_declared_model_module",
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py": {
+      "bytes": 56952,
+      "role": "retained_declared_model_module",
+      "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "role": "retained_declared_model_module",
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "role": "retained_declared_model_module",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "role": "retained_declared_model_module",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "role": "retained_declared_model_module",
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "role": "retained_declared_model_module",
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "role": "retained_declared_model_module",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "role": "retained_declared_model_module",
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py": {
+      "bytes": 56776,
+      "role": "supplemental_attention_raw_file",
+      "sha256": "fb8670887177ac56379fa76dc9efe310b3a5d598f09c21a3d47e5bf960bc1731",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "role": "retained_declared_model_module",
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "role": "retained_declared_model_module",
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6",
+      "unchanged_in_prior_and_reviewed_main": true
+    },
+    "ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "role": "retained_declared_model_module",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf",
+      "unchanged_in_prior_and_reviewed_main": true
+    }
+  },
+  "retained_F15_divergent_recovery_objects": [
+    {
+      "branch_only_commits": 48,
+      "head": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+      "historical_ref_label": "refs/heads/publication/main-20261004/datasets",
+      "historical_ref_or_private_worktree_current_custody_claimed": false,
+      "outside_reviewed_main": true,
+      "raw": {
+        "bytes": 305,
+        "object_id": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+        "sha256": "4b626d869490097398096f3085963115286edde3b6460e79a860849e254c03a5"
+      },
+      "repo": "source"
+    },
+    {
+      "branch_only_commits": 50,
+      "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+      "historical_ref_label": "refs/heads/publication/main-refresh-20261004/datasets-01",
+      "historical_ref_or_private_worktree_current_custody_claimed": false,
+      "outside_reviewed_main": true,
+      "raw": {
+        "bytes": 286,
+        "object_id": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+        "sha256": "3ce86227267bd735f588c9d6b58dbe16f0783c86d0752a4af4365f60b92c46a5"
+      },
+      "repo": "source"
+    },
+    {
+      "branch_only_commits": 5,
+      "head": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+      "historical_ref_label": "refs/heads/publication/main-20261004/root-02",
+      "historical_ref_or_private_worktree_current_custody_claimed": false,
+      "outside_reviewed_main": true,
+      "raw": {
+        "bytes": 435,
+        "object_id": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+        "sha256": "bd2969abca46f729a8de91b3e43aa824abcf394c5c4fa24741f0177d9554d661"
+      },
+      "repo": "root"
+    },
+    {
+      "branch_only_commits": 4,
+      "head": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+      "historical_ref_label": "refs/heads/publication/main-20261004/root-03",
+      "historical_ref_or_private_worktree_current_custody_claimed": false,
+      "outside_reviewed_main": true,
+      "raw": {
+        "bytes": 305,
+        "object_id": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+        "sha256": "d6cb49b7ff3212486dadea0023a64acd3644bf7fdad0eb1a21547584b508c19b"
+      },
+      "repo": "root"
+    },
+    {
+      "branch_only_commits": 6,
+      "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+      "historical_ref_label": "refs/heads/publication/main-refresh-20261004/root-01",
+      "historical_ref_or_private_worktree_current_custody_claimed": false,
+      "outside_reviewed_main": true,
+      "raw": {
+        "bytes": 286,
+        "object_id": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+        "sha256": "ecdc24e842db2a02b2ef80f2ca4a2c650afeb78fa70f90e08f674b95742780d5"
+      },
+      "repo": "root"
+    }
+  ],
+  "retained_F15_selected_immutable_histories": [
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 290,
+        "object_id": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+        "sha256": "fa48154e7d50d98499c8339edd2edec87e35298c7366e8b7b3ad8f854437181f"
+      },
+      "ref_label": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+      "repo": "root"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "30e61092341b47b4e49eb30df443fd607536333a",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 379,
+        "object_id": "30e61092341b47b4e49eb30df443fd607536333a",
+        "sha256": "55ee6a3c5ac59b9d8cad5b6528a640ab29cd1aa1bd8ac8e2ba101c0496ae2b84"
+      },
+      "ref_label": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+      "repo": "root"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 302,
+        "object_id": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+        "sha256": "9f4a61c7ba152538154c02d978ce66b2352933060e20108898721cb09b89c5c1"
+      },
+      "ref_label": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+      "repo": "root"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "739e7088a203a4b307d96192e489a88dbf9177b1",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 286,
+        "object_id": "739e7088a203a4b307d96192e489a88dbf9177b1",
+        "sha256": "50fe2b6230bbfb7fecb8ccdb0797ca1313bbe77576ff41023037381ff73d9a01"
+      },
+      "ref_label": "refs/heads/codex/legal-joint-readout-workspace-20261011-01",
+      "repo": "root"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 291,
+        "object_id": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+        "sha256": "9602e17c94920433fe31fdd89f890317c2c8190ba13055ed638484095a017417"
+      },
+      "ref_label": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+      "repo": "root"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "00130686f43e35105e2ee98e5a36428f3aff3538",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 289,
+        "object_id": "00130686f43e35105e2ee98e5a36428f3aff3538",
+        "sha256": "22a467fbc5c810205d5088ff581f82c3ebebd01533bd22aaeb8326473c0c029b"
+      },
+      "ref_label": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+      "repo": "root"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 292,
+        "object_id": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+        "sha256": "e0f17a0015011ec951c3dad8a433a0eeb7d2338d33b0713ec22f63a889767915"
+      },
+      "ref_label": "refs/heads/codex/legal-retention-objective-20261011-01",
+      "repo": "root"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 296,
+        "object_id": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f",
+        "sha256": "14c1a366a973cba4a23afd4b9bdc732f06b512ff91041cdb6088c2733285308e"
+      },
+      "ref_label": "refs/heads/codex/legal-structured-training-workspace-20261011-01",
+      "repo": "root"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "3b0162bebe0b7a09727081cb8c5f5c15378caba1",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 281,
+        "object_id": "3b0162bebe0b7a09727081cb8c5f5c15378caba1",
+        "sha256": "327af7f36ff5227ff5fa7fdcf157ea268a39e8f4074fc17d18b02935b26e1d4d"
+      },
+      "ref_label": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+      "repo": "root"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "0213bb5e0a2d5a736e9555fb9112411d6a1313d6",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 1269,
+        "object_id": "0213bb5e0a2d5a736e9555fb9112411d6a1313d6",
+        "sha256": "3109212ae1a9a310acad7126572994f15824aa8a7cce461490b86015b85fa67e"
+      },
+      "ref_label": "refs/heads/main",
+      "repo": "root"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 298,
+        "object_id": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+        "sha256": "2c8019bf1501a72b6ab526f59e66d0b5de4eac984ed77d5222b911e981c19ecc"
+      },
+      "ref_label": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 305,
+        "object_id": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+        "sha256": "e656721486a7761f7079487a74ab993fba7c37374313c21485900ed29b15ed7a"
+      },
+      "ref_label": "refs/heads/agent/contextual-legal-runtime-20261006",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "aed87b0d980422c2ca9efaa26cf92df30c51d768",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 302,
+        "object_id": "aed87b0d980422c2ca9efaa26cf92df30c51d768",
+        "sha256": "965f9ce2b49843ac9d931d5b9202effa150cbdd9ac1ddf2885bce3515a758369"
+      },
+      "ref_label": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "c4382ae53ab9497245fccdf85855f0e314711fbc",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 297,
+        "object_id": "c4382ae53ab9497245fccdf85855f0e314711fbc",
+        "sha256": "f0e1e099b03c01558690791dae11ccfe96069a4f37470b33f30cb4dad3bcb379"
+      },
+      "ref_label": "refs/heads/agent/normative-cache-input-datasets-20261007",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 383,
+        "object_id": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff",
+        "sha256": "f2faca5600b67e46308792d2aa982fc3a569a60562a3225fec4e82af38b83fa8"
+      },
+      "ref_label": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 301,
+        "object_id": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+        "sha256": "af4427ed04d0f7b7118cdb491a5f6c42caec8feb5155ce4df0c4cc5aad27610e"
+      },
+      "ref_label": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 287,
+        "object_id": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b",
+        "sha256": "efdddfbe80ac3517d6e68eee77ea1e43ddeab1e058a35c30b9212e650d0af6a0"
+      },
+      "ref_label": "refs/heads/codex/ir-publication-main-integration-20261004",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "575a129f19068d58d66cc8119e85c3d23faa560a",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 292,
+        "object_id": "575a129f19068d58d66cc8119e85c3d23faa560a",
+        "sha256": "7063d8e6e376cc0a12ceb327b2b16394eaf70d3c22619a0d5deee00073f60949"
+      },
+      "ref_label": "refs/heads/codex/legal-cross-agent-guards-20261006",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 302,
+        "object_id": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+        "sha256": "73ae6ea662415f2dd84c61d792fb0b6cfc163c6706cd4f3c0542e75fcab131c3"
+      },
+      "ref_label": "refs/heads/codex/legal-decoder-followup-20261006-01",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 291,
+        "object_id": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+        "sha256": "302cd5c43a36322326a921331308f59633fab273559e36320e283800452e9be4"
+      },
+      "ref_label": "refs/heads/codex/legal-decoder-progress-20261011-01",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "004887f6250b083e0b095d5ac7563bc5bb792491",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 293,
+        "object_id": "004887f6250b083e0b095d5ac7563bc5bb792491",
+        "sha256": "2a25d0ae01364c9cfa0d230f0e24268d76e4d62869fabbac1df67e83e7f5e760"
+      },
+      "ref_label": "refs/heads/codex/legal-grouped-integration-20261006-02",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "146e4c88fea6d0a9ab671af00e1596a9a60ea784",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 281,
+        "object_id": "146e4c88fea6d0a9ab671af00e1596a9a60ea784",
+        "sha256": "0228a4492ae5f46ece72131bf6a4204c89d401f02f5f47b4f1ae7452cd3e84cf"
+      },
+      "ref_label": "refs/heads/codex/legal-joint-readout-20261011-01",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "f3901341cdde9b4485315327d5ef06abd1485b11",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 283,
+        "object_id": "f3901341cdde9b4485315327d5ef06abd1485b11",
+        "sha256": "a509d7008511909b02207ac6eacb5da4aa2c44cf4adb475f4e09bf8501d8b3fc"
+      },
+      "ref_label": "refs/heads/codex/legal-native-cache-20261011-01",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 283,
+        "object_id": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+        "sha256": "3db58de67406ddda7c64d719f7722943f0d5a7b3dd05fffe2421f8776fbcd72e"
+      },
+      "ref_label": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 374,
+        "object_id": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+        "sha256": "03cb1f302e9b4a92ef1f53e9206e0028606e1915fe507a878d5027651d8213fb"
+      },
+      "ref_label": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "1530efd07032bac88229c6c97ca5994d498e6216",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 292,
+        "object_id": "1530efd07032bac88229c6c97ca5994d498e6216",
+        "sha256": "8828a7760e3b9b50039f9722c099670c8e5808502045d17c2a4eed58058eab49"
+      },
+      "ref_label": "refs/heads/codex/legal-scope-span-training-20261007-01",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "7c90b27d9fd193e768e8ecdca0bb5055145f1b78",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 288,
+        "object_id": "7c90b27d9fd193e768e8ecdca0bb5055145f1b78",
+        "sha256": "ab2d4e776c7e7ef8d7395d819da8f341ce159580e4a3696f714fa54352b6b3e5"
+      },
+      "ref_label": "refs/heads/codex/legal-structured-training-20261011-01",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 289,
+        "object_id": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+        "sha256": "37921926d780d769aa5b5e4db5ee3d4201161f427425e577b4d38cc87cbe0fe5"
+      },
+      "ref_label": "refs/heads/codex/legal-support-action-model-20261007-01",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 287,
+        "object_id": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+        "sha256": "a542a3fa3e35f1f2f12da3bc0b74001c3f5c5b1b7ee91a1f97de9e0343a3989c"
+      },
+      "ref_label": "refs/heads/codex/legal-support-gate-model-20261007-01",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 281,
+        "object_id": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+        "sha256": "b6b21dc181ff9abc11cc47b00e67b1e1bd53c452acbbb652f169ed48adc68022"
+      },
+      "ref_label": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 289,
+        "object_id": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+        "sha256": "d428417eb034e3c8cb16fb7ea90478a682c46adc1119df54abcb110908ae105d"
+      },
+      "ref_label": "refs/heads/codex/source-v2-warm-start-20261004",
+      "repo": "source"
+    },
+    {
+      "ancestor_of_reviewed_main": true,
+      "commit": "4af461728329cdad4bfb910ab878d016ce279e54",
+      "current_canonical_ref_not_read": true,
+      "raw": {
+        "bytes": 1261,
+        "object_id": "4af461728329cdad4bfb910ab878d016ce279e54",
+        "sha256": "712a539e190f7ac5f3b6b5645f779f2ef8ba1d35e5603e68071bd1635268e8a9"
+      },
+      "ref_label": "refs/heads/main",
+      "repo": "source"
+    }
+  ],
+  "schema": "actor-context-ranking-main-intake-independent-review/v1",
+  "scientific_results": {
+    "checkpoint_JSON_parses": 0,
+    "default_promotion": false,
+    "human_gold_inferred": false,
+    "metrics_recomputed": false,
+    "model_calls": 0,
+    "optimizer_updates_by_this_review": 0,
+    "prior_independent_result_review_pin": {
+      "bytes": 14788,
+      "sha256": "d12ab3444109c957ddf6710d084babe73fd4354fa39336c5b6839abaa885268a"
+    },
+    "reused_as_prior_saved_qualification_only": true,
+    "source_semantics_verified": false
+  },
+  "scope": "Independent saved-intake and immutable Git-object review in the two F16 owned clones only."
+}

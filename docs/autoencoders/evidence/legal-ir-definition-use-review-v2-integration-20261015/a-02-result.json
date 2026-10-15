@@ -1,0 +1,21 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-a-02/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-a-02/logs/execution.json"
+  ],
+  "executed_checks": [
+    "tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py",
+    "tests/unit/logic/autoformal/test_corpus_definition_use_v2.py",
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py",
+    "tests/unit/logic/autoformal/test_legal_graph_review.py",
+    "tests/unit/logic/autoformal/test_scoped_definition_resolution.py",
+    "tests/unit/logic/autoformal/test_legal_graph_dependencies.py",
+    "tests/unit/logic/autoformal/test_corpus_imports.py",
+    "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py",
+    "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py"
+  ],
+  "request_sha256": "6aac164acabfaf7913f4019c7dbbca0c72c4f6824211fb430216e39f3e715de3",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

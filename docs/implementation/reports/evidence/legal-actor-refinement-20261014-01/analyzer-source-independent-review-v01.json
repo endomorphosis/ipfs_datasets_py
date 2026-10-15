@@ -1,0 +1,388 @@
+{
+  "actual_concrete_training_review": {
+    "bytes": 38284,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-training-review-v01.json",
+    "sha256": "f018f217f9b1f3cd0dc2aafd989c03d0e16685b886f99880f42aae3d6aed5d00"
+  },
+  "actual_freezer_observer": {
+    "bytes": 19181,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/freeze_actor_refinement_outputs_v03.py",
+    "sha256": "0c46b373742fa066d727a158012d0897feabdc73d9264b0881be49da9c8b61b0"
+  },
+  "actual_plan": {
+    "bytes": 66306,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-plan-v01.json",
+    "sha256": "bc7facaba1d1bc78b8145bdd9fed2957e488cab22eb27f470ddd208b04aa5375"
+  },
+  "actual_plan_bound": true,
+  "actual_result_or_reference_reads": 0,
+  "actual_scoring_authorized": false,
+  "analyzer": {
+    "bytes": 28064,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyze_actor_refinement_v01.py",
+    "sha256": "6c6309903cbe20ea73d045e6d29224096ff3a8602cc935c0af6343a6f4599d1b"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-plan-v01.json": {
+      "bytes": 66306,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-plan-v01.json",
+      "sha256": "bc7facaba1d1bc78b8145bdd9fed2957e488cab22eb27f470ddd208b04aa5375"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-training-review-v01.json": {
+      "bytes": 38284,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-training-review-v01.json",
+      "sha256": "f018f217f9b1f3cd0dc2aafd989c03d0e16685b886f99880f42aae3d6aed5d00"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-evaluation-author-controls-v01.json": {
+      "bytes": 9196,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-evaluation-author-controls-v01.json",
+      "sha256": "ea60b2ae3fc854a3f14d89343720ad9cc3b984ecd32366598e256a4baed7cad4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-terminal-resource-source-independent-review-v01.json": {
+      "bytes": 16385,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-terminal-resource-source-independent-review-v01.json",
+      "sha256": "c43a9734490e2da6964a1cbf77ec485804a6fc2f12753765e4f10b4452216cf4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_resource_protocol_v03.py": {
+      "bytes": 19906,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_resource_protocol_v03.py",
+      "sha256": "f7914d018d9d59c7dd611ccfe12cc30e6db4fe9319808651c6b24982cbbbbc55"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyze_actor_refinement_v01.py": {
+      "bytes": 28064,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyze_actor_refinement_v01.py",
+      "sha256": "6c6309903cbe20ea73d045e6d29224096ff3a8602cc935c0af6343a6f4599d1b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyzer-port-source-independent-review-v01.json": {
+      "bytes": 9223,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyzer-port-source-independent-review-v01.json",
+      "sha256": "4f7f2c6045df3cd88e528c404bbcc9803a87649bf751a4a688d48696b8940f6c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py",
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py",
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py",
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py",
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py",
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py",
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py",
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py",
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py",
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "bytes": 49894,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py",
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py",
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "bytes": 50602,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py",
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py": {
+      "bytes": 56952,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+      "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py",
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py",
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py",
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py": {
+      "bytes": 56776,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py",
+      "sha256": "fb8670887177ac56379fa76dc9efe310b3a5d598f09c21a3d47e5bf960bc1731"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 12913,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json",
+      "sha256": "a8e64cee523d57149b6becaf18023bf87a9ecdb147d83e9c42453fce9230944e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-independent-source-controls-v01.json": {
+      "bytes": 6260,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-independent-source-controls-v01.json",
+      "sha256": "61e6e6f74d1483213847e9951d18ea871003c8afc575b8173ae287ef49fe41d7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/freeze_actor_refinement_outputs_v02.py": {
+      "bytes": 19181,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/freeze_actor_refinement_outputs_v02.py",
+      "sha256": "890d36c97172f9d988d640593055a3d4d6242d779c4c0c61078991e641bf3127"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/freeze_actor_refinement_outputs_v03.py": {
+      "bytes": 19181,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/freeze_actor_refinement_outputs_v03.py",
+      "sha256": "0c46b373742fa066d727a158012d0897feabdc73d9264b0881be49da9c8b61b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resource-baseline-v01.json": {
+      "bytes": 88308,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resource-baseline-v01.json",
+      "sha256": "f9fa412edf4934d00812786c0992f027171eb47869aae276fb86c86e3ad8b79b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resource-observer-source-independent-review-v03.json": {
+      "bytes": 22983,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resource-observer-source-independent-review-v03.json",
+      "sha256": "0f5d049cc4354f1a54ab7b5de1dfa7ffd318ac7e85773bc53100189b9356a4a2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py": {
+      "bytes": 41111,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py",
+      "sha256": "e60814cdf89c0fa3d90dd732a4d6fd9e05dd9ea2a27834910fddf7dcbeaa0692"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/runner-preparer-source-independent-review-v02.json": {
+      "bytes": 12281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/runner-preparer-source-independent-review-v02.json",
+      "sha256": "b7faeb602fa614f578d78fc17537228ad6423b96cb84ab190c43d0625601717e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/runtime-freeze-source-independent-review-v01.json": {
+      "bytes": 7329,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/runtime-freeze-source-independent-review-v01.json",
+      "sha256": "278665638c6065f5b0d25177bce4bc0de4ff097ea52a936882fdc895d92ecab6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/runtime-freeze-source-independent-review-v02.json": {
+      "bytes": 10992,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/runtime-freeze-source-independent-review-v02.json",
+      "sha256": "57459e6c11cfcb876015fd99f1d76727c06a84abe6c8adc5c0e12f35d0090fb5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_analyzer_detached_v01.py": {
+      "bytes": 9501,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_analyzer_detached_v01.py",
+      "sha256": "cc6e77eb10602a1116d4c6f0f5c09e7c4629d2ab5dd5769dc0a806ecbfcf6aa8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_recount_detached_v01.py": {
+      "bytes": 27631,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_recount_detached_v01.py",
+      "sha256": "6eaac15eb42429532ad488e7ccdafd9e6867f78e90271817e74de0c155269dfd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/trainer-source-independent-review-v01.json": {
+      "bytes": 40673,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/trainer-source-independent-review-v01.json",
+      "sha256": "2b9ef89ebf9512ccdc61ccfa0e7e83a00b291764ad74fae22272b4be5e5b9ca1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v02.py": {
+      "bytes": 78492,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v02.py",
+      "sha256": "1a4b4f6b579d0d086ef97d4867c9eea274ceb88142edb4bff849eb95f0fa2e57"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py",
+      "sha256": "0c5b68645cc66e7758d1750c878f5be9fb117faad841fe27f73391c8ccbce8bf"
+    }
+  },
+  "findings": [],
+  "independent_control_counts": {
+    "analyzer": 20,
+    "recounter": 29
+  },
+  "independent_control_receipt": {
+    "bytes": 6260,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-independent-source-controls-v01.json",
+    "sha256": "61e6e6f74d1483213847e9951d18ea871003c8afc575b8173ae287ef49fe41d7"
+  },
+  "inherited_source_qualification": {
+    "bytes": 9223,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyzer-port-source-independent-review-v01.json",
+    "sha256": "4f7f2c6045df3cd88e528c404bbcc9803a87649bf751a4a688d48696b8940f6c"
+  },
+  "limitations": [
+    "Exact sealed source plus actual admitted plan/freezer closure qualified. No actual results/references/checkpoint JSON/private resource bodies were opened by this reviewer.",
+    "49 unchanged evaluator controls inherited from sealed final source review; no rerun needed for raw plan/freezer binding.",
+    "This source gate does not by itself assert training completion, numerical accuracy, scientific success, or scoring authority before the durable complete freeze/runtime joins."
+  ],
+  "passed": true,
+  "qualifies_source_for_future_main": true,
+  "remaining_exact_closure": [
+    "Actual source-qualified complete62 output freeze/runtime and its exact CLI bytecount/SHA remain mandatory producer checks before any reference scoring."
+  ],
+  "reserved_runnable_gate_written": true,
+  "reused_immutable_analyzer_helpers": 34,
+  "reviewer_actions": {
+    "Git_mutations": 0,
+    "actual_checkpoint_JSON_parses": 0,
+    "actual_saved_head_or_reference_reads": 0,
+    "model_or_encoder_calls": 0,
+    "network_calls": 0,
+    "numerical_imports": 0,
+    "private_resource_body_reads": 0,
+    "production_main_calls": 0,
+    "resource_API_calls": 0
+  },
+  "schema": "actor-refinement-analyzer-source-independent-review/v1",
+  "source_checks": [
+    "Both analyzer and recounter require complete62 frozen output inventory/full runtime identity before actual result/reference scoring; checkpoint JSON stays opaque",
+    "Only parent/initial/trained,30panels/27 authored score sets/nine paired scopes; sole exact trained N11 comparator,0new parent updates/forwards and6copied files/240rows",
+    "Preregistered raw AND joint training168 exactIR>=155, no completeIR lossID in either view for any9scopes, all32 permission identities/status retained; scientific failure remains a false outcome",
+    "Initial full632 binary32 heads and complete saved greedy/joint envelopes; final632 protects modality,all four presence pairs including learned N11 conditions,and five nonactor pointer roles; onlyactor start/end excluded",
+    "FullIR includes modality plus all six roles; law8 remains unscored and no legal/latent/formal/portability promotion claim",
+    "Retained binary32 ranking/domain helpers and source-qualified joint/greedy replay,rank changes diagnostic only",
+    "Actual32 trace schemas use trained query/gate state; no first-query zero-gradient/value/moment condition; all frozen36/inactive650/source hashes and feature branch chains checked",
+    "Every one of384 source IDs/SHA/actor gold coordinates/present nonactor negative domain, exact1729 schedule indices/IDs/hash/final progress authenticated",
+    "Runtime accounting1280 new inference+32 batchforwards=1312,1664new sourceoccurrences; copied parent captures counted as0new forwards",
+    "Pinned grouped maximum-minus-target CE regression passes huge equal positive/negative logits; F15 does not claim scalar CE or live numerical gradient replay"
+  ]
+}

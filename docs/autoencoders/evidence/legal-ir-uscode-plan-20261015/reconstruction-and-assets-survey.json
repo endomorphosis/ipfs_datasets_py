@@ -1,0 +1,903 @@
+{
+  "corpus_readiness": {
+    "actual_binding_bodies": 0,
+    "existing_profile": "Explicit caller-interpreted section-local unary means definition + complete unary O/P/F norm; typed DEFINES/USES_DEFINITION and shared conditional Lean modules exist.",
+    "full_cache_prevalence_established": false,
+    "gaps": [
+      "Actual definition acquisition and governing source/version/applicability review.",
+      "Typed argument roles, complete conditions/exceptions/timing and title-wide cross-section definitions needed by the selected norms.",
+      "Dependency-complete scoped lookup with unresolved/competing/negative partition evidence.",
+      "Independent statutory meaning and later gold admission; candidate graph integrity cannot supply these."
+    ],
+    "governing_source_binding_requests": 418,
+    "intersection_with_nine_candidate_operative_units": 0,
+    "literal_matches": 96,
+    "retained_cache_sample_rows": 20,
+    "reviewed_statutory_training_gold": 0,
+    "six_retained_parents": "Engineering seed, not a connected semantic corpus.",
+    "source": "Local connected-pilot specification and named content-selection report",
+    "statutory_Lean_admissions": 0,
+    "statutory_graph_admissions": 0
+  },
+  "current_completed_experiments": {
+    "F17": {
+      "active_scalars": 713,
+      "archive": {
+        "files": 229,
+        "forced_immutable_raw_downloads_verified_in_prior_report": true,
+        "payload_bytes": 94548368,
+        "portable_numerical_reload_qualified": false,
+        "prefix": "releases/20261014-joint-readout-retention-v1",
+        "prior_path_identity_exception": "declared146-byte .gitattributes append",
+        "repository": "Publicus/legal-ir-autoencoder",
+        "revision": "290c266d72b8c298ec21db0f9b0857b008914caf"
+      },
+      "checkpoint": {
+        "bytes": 20467217,
+        "payload_read_in_this_survey": false,
+        "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+      },
+      "date": "2026-10-14",
+      "default_promotion": false,
+      "evidence": "docs/autoformalization/legal-joint-readout-retention-20261014.md",
+      "experimental_updates": 32,
+      "external_encoder_calls": 0,
+      "frozen_tensors": 28,
+      "latent_conditioning_enabled": false,
+      "latent_dimension_declared": 384,
+      "name": "joint readout retention",
+      "parent": "Exact trained F15 all42 states",
+      "protected_permission_modalities": 32,
+      "protected_permission_modality_retention": true,
+      "scientific_success": false,
+      "source_file": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+      "technical_gate_passed": true,
+      "trained_tensors": 14,
+      "training_minimum": 155
+    },
+    "F18": {
+      "active_scalars": 325,
+      "archive": {
+        "all_6076_postattributes_identities_exact": true,
+        "all_other_6075_original_identities_exact": true,
+        "automatic_retry": false,
+        "files": 395,
+        "forced_immutable_downloads_byte_exact": true,
+        "independent_completion_review": {
+          "bytes": 77425,
+          "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-completion-independent-review-v01.json",
+          "sha256": "1ade89eda52fe2424bdf1944497d8787b6cbcadad76a77f09302491bb81b2d40"
+        },
+        "original_chunk_absent_proven_before_resume": true,
+        "original_failed_publish_preserved": true,
+        "payload_bytes": 105151374,
+        "prior_identity_change": {
+          "append_bytes": 155,
+          "path": ".gitattributes"
+        },
+        "qualification_source": "Existing completed immutable publication/readback and independent review; no new network verification in this survey.",
+        "release_prefix": "releases/20261015-modality-conditions-retention-v1",
+        "repository": "Publicus/legal-ir-autoencoder",
+        "resume_chunks": 42,
+        "revision": "c9cce4586dd96518088662fb12831173e98e36cc"
+      },
+      "checkpoint": {
+        "bytes": 21058430,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/modality-conditions-retention-20261014-modality-conditions-retention-ce-01/results/cell-checkpoint.json",
+        "payload_read_in_this_survey": false,
+        "portable_numerical_reload_qualified": false,
+        "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+      },
+      "completed_utc": "2026-10-15T03:28:21.882015+00:00",
+      "date": "2026-10-15",
+      "default_promotion": false,
+      "evidence": "docs/autoformalization/legal-modality-conditions-retention-20261015.md",
+      "experimental_updates": 32,
+      "external_encoder_calls": 0,
+      "frozen_tensors": 36,
+      "hosted_CI_passed": false,
+      "latent_conditioning_enabled": false,
+      "latent_dimension_declared": 384,
+      "name": "modality and conditions retention",
+      "parent": "Exact trained F15 all42 states",
+      "parent_ablation_signal": false,
+      "parent_delivery": {
+        "PR": 574,
+        "all_other_incoming_entries_and_gitlinks_preserved": true,
+        "commit": "fa34ad5406587824d4706cbfb67afa552b48d767",
+        "merge": "26c07127043e3faca21fc51ea559c6d8b1513743",
+        "repository": "endomorphosis/lift_coding",
+        "review": {
+          "bytes": 5429,
+          "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/root-merge-independent-review-v01.json",
+          "sha256": "a4c95990f510f1b682a995d5ad39bc74488fdae5ad77c532d6a23bdbe1628035"
+        },
+        "tree": "da62943db523e5c084738e30cd0aafd73a6d3c78"
+      },
+      "protected_permission_modalities": 32,
+      "protected_permission_modality_retention": true,
+      "scientific_success": false,
+      "source_delivery": {
+        "PR": 1306,
+        "commit": "c13e83f4e82d5839465744eef19d4240ca378be0",
+        "merge": "a8d2eb15a24d6003c210d8b96ace481865769160",
+        "newer_paired_span_migration_work_preserved": true,
+        "repository": "endomorphosis/ipfs_datasets_py",
+        "review": {
+          "bytes": 4807,
+          "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/source-merge-independent-review-v01.json",
+          "sha256": "14ed6a646818c62f2bdedd8ee5272826d9582d66a93803acf8d7f18d9cbb5673"
+        },
+        "tree": "033abb89c28f7d02e8ab0ece156a46acc31002c0"
+      },
+      "source_file": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "targeted_conditions_errors_repaired": 0,
+      "technical_gate_passed": true,
+      "trained_tensors": 6,
+      "training_minimum": 155
+    },
+    "F19": {
+      "completed_model_found": false,
+      "scope": "No completed F19 model in inspected cached refs, current source documentation and the named top-level diagnostic phases; no universal absence claim."
+    },
+    "latest_completed_numerical_and_scored_control": "F18 within bounded inspected sources",
+    "latest_qualified_immutable_model_archive": "F18 c9cce4586dd96518088662fb12831173e98e36cc; archive status is distinct from teacher/scientific promotion",
+    "loss_gates": {
+      "F17": "Fails training155 floor and named old-tune plus exception-presence loss-ID vetoes.",
+      "F18": "Fails training155 floor, repairs0/2 targeted conditions errors, and loses comparator-correct F16/F17 IDs despite preserving F15/N11 full-rule IDs. Gains on other rows do not cancel vetoes."
+    },
+    "metric_definition": "Complete canonical one-rule IR requires modality plus all six roles; abstentions are nonmatches. Raw is direct decoded output; joint is existing bounded selector. All nine panels are previously exposed authored engineering diagnostics, not independently adjudicated statutory gold.",
+    "metrics": [
+      {
+        "F17": {
+          "joint_complete_IR": 154,
+          "raw_complete_IR": 154
+        },
+        "F18": {
+          "joint_complete_IR": 154,
+          "raw_complete_IR": 154
+        },
+        "rows": 168,
+        "scope": "training168"
+      },
+      {
+        "F17": {
+          "joint_complete_IR": 93,
+          "raw_complete_IR": 93
+        },
+        "F18": {
+          "joint_complete_IR": 94,
+          "raw_complete_IR": 94
+        },
+        "rows": 96,
+        "scope": "old_tune"
+      },
+      {
+        "F17": {
+          "joint_complete_IR": 21,
+          "raw_complete_IR": 9
+        },
+        "F18": {
+          "joint_complete_IR": 20,
+          "raw_complete_IR": 8
+        },
+        "rows": 36,
+        "scope": "fresh_tune"
+      },
+      {
+        "F17": {
+          "joint_complete_IR": 26,
+          "raw_complete_IR": 26
+        },
+        "F18": {
+          "joint_complete_IR": 26,
+          "raw_complete_IR": 26
+        },
+        "rows": 36,
+        "scope": "fresh_challenge"
+      },
+      {
+        "F17": {
+          "joint_complete_IR": 55,
+          "raw_complete_IR": 52
+        },
+        "F18": {
+          "joint_complete_IR": 54,
+          "raw_complete_IR": 51
+        },
+        "rows": 72,
+        "scope": "old_authored_eval"
+      },
+      {
+        "F17": {
+          "joint_complete_IR": 48,
+          "raw_complete_IR": 47
+        },
+        "F18": {
+          "joint_complete_IR": 46,
+          "raw_complete_IR": 45
+        },
+        "rows": 72,
+        "scope": "authored_dev"
+      },
+      {
+        "F17": {
+          "joint_complete_IR": 33,
+          "raw_complete_IR": 27
+        },
+        "F18": {
+          "joint_complete_IR": 34,
+          "raw_complete_IR": 27
+        },
+        "rows": 72,
+        "scope": "authored_eval"
+      },
+      {
+        "F17": {
+          "joint_complete_IR": 0,
+          "raw_complete_IR": 0
+        },
+        "F18": {
+          "joint_complete_IR": 0,
+          "raw_complete_IR": 0
+        },
+        "rows": 36,
+        "scope": "fresh_dev"
+      },
+      {
+        "F17": {
+          "joint_complete_IR": 0,
+          "raw_complete_IR": 0
+        },
+        "F18": {
+          "joint_complete_IR": 0,
+          "raw_complete_IR": 0
+        },
+        "rows": 36,
+        "scope": "fresh_test"
+      }
+    ]
+  },
+  "exact_source_refs": [
+    {
+      "line": 126,
+      "match": "'latent_dimension': 384, 'latent_enabled': False",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162"
+    },
+    {
+      "line": 121,
+      "match": "max_new_optimizer_steps=32,latent_dimension=384,latent_enabled=False",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162"
+    },
+    {
+      "line": 258,
+      "match": "learning_rate == .001 and latent_enabled is False",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162"
+    },
+    {
+      "line": 759,
+      "match": "\"actual_external_latent_encoder_calls\": 0",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162"
+    }
+  ],
+  "final_authority": {
+    "completion_authority": false,
+    "current_model_manager_registration_qualification": false,
+    "current_model_quality_qualification": false,
+    "execution_authority": false,
+    "new_Lean_admission": false,
+    "new_graph_admission": false,
+    "new_statutory_source_or_meaning_admission": false,
+    "new_teacher_promotion": false,
+    "proof_authority": false,
+    "token_savings_measured": false
+  },
+  "git_bound_sources": [
+    {
+      "bytes": 6380,
+      "git_blob": "96d6912a96c00ff986583b21fba5c5ee1f019722",
+      "path": "docs/autoformalization/legal-joint-readout-retention-20261014.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "2b5075d09884853072f6f725123432e46369f8f4ad66320e24bf0493a9d6ff0c"
+    },
+    {
+      "bytes": 8532,
+      "git_blob": "c4ece8870e7e3b5d5fdbba7e727f1f5c82799902",
+      "path": "docs/autoformalization/legal-modality-conditions-retention-20261015.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "44f7303d44b9240d9842b9e97d73813b4cb2db66610cca9c9c2e95328eba9c29"
+    },
+    {
+      "bytes": 15638,
+      "git_blob": "b700addfae61f3c020831a32d1f95333588dd43c",
+      "path": "docs/autoformalization/evidence/legal-modality-conditions-retention-20261015/public-result-summary-v01.json",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "2cbb3f6ea668bdfa86680ac627840b7515d5a63620486b4d842d190547582490"
+    },
+    {
+      "bytes": 77425,
+      "git_blob": "922bd1de5e48f75b522f7f41978e3ca36b6a6fc9",
+      "path": "docs/autoformalization/evidence/legal-modality-conditions-retention-20261015/hf-publication-completion-independent-review-v01.json",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "1ade89eda52fe2424bdf1944497d8787b6cbcadad76a77f09302491bb81b2d40"
+    },
+    {
+      "bytes": 204043,
+      "git_blob": "4eb60a170cdd949a785a76ddf84f787a69685338",
+      "path": "docs/autoformalization/evidence/legal-modality-conditions-retention-20261015/release-manifest-v01.json",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "37c1305837c11fef6dd95eba5fbef17344a8443e39bad92def1a4418e78993b2"
+    },
+    {
+      "bytes": 5527,
+      "git_blob": "10e13f2e8fb00e2c958e892b0b551b226bdd2e21",
+      "path": "docs/autoformalization/evidence/legal-modality-conditions-retention-20261015/next-experiment-proposal-v01.json",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "ea0742f491f0c4efacdaae2600434b3b0e2b159090837ed05e227d5707ccf6d8"
+    },
+    {
+      "bytes": 80912,
+      "git_blob": "8e1e9d46bd4cc5b41ed54ac313386cfc58eea139",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502"
+    },
+    {
+      "bytes": 83852,
+      "git_blob": "324c4dd3b02b0e1a31e1881e9cc8e317c3250e4d",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+    },
+    {
+      "bytes": 64337,
+      "git_blob": "f3e844c05792b4cb8facceb0513c736be69afcf6",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "33c249b72f374f51675cde95aafcf13370f59cb2e248246f72b92095668d1955"
+    },
+    {
+      "bytes": 17546,
+      "git_blob": "1cb3f8a7169547138dca7baec7beda82cf4ba27f",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/checkpoint_hub.py",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "be1bc90729bc811c8ca0b4d3f77ef10991e29b9df17670a479b955f569f81f3d"
+    },
+    {
+      "bytes": 24439,
+      "git_blob": "c74aed1afce161e349f512f36b6bcfd8db402d48",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    {
+      "bytes": 29370,
+      "git_blob": "d262c36eb036ba5b516636f152038ab81ee19d94",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_grouped_span_decoder.py",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "d03c343d6130e4cb099468dbd605e524fdb15bd21092bc4f526c35c4167c9d51"
+    },
+    {
+      "bytes": 33948,
+      "git_blob": "b34ca1d3406645e8edf58b651dff3049e583741f",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_grouped_span_decoder_v2.py",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "defe782605c99e9954e8ce0c0439af00cced49342c7594379840ea7cf1fc9ce8"
+    },
+    {
+      "bytes": 52940,
+      "git_blob": "e2fe6aedac3be86d47ae5753cea281a434dfa38a",
+      "path": "docs/autoencoders/inference_and_qualification.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "d6589576a5fba43da8f3cb6ec4e302f850fa7eeaf410b8207ff897ade20fddff"
+    },
+    {
+      "bytes": 16345,
+      "git_blob": "76c380c3b09059644dcaf44a7d38346a2ea1724c",
+      "path": "docs/autoencoders/legal_autoencoder_lineages.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "d25a225ed9eb6b6436632fb29da9ff75a5e16a988feff1e9ed8dffc90fef7824"
+    },
+    {
+      "bytes": 15608,
+      "git_blob": "be720d04efb62d49364fe2aa6cd83d0a3f07a1ad",
+      "path": "docs/autoencoders/retained_wording_checkpoint_availability_20261007.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "8de2a30d462efddc89c6503d16913bb9a25bddfe80ddf1059248a65adeb328ad"
+    },
+    {
+      "bytes": 15551,
+      "git_blob": "c155bec4a8899f10c9916d30f86aef88fa34394e",
+      "path": "docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "ee8cb120795ce9ee8c696d952169da5544c34e3ae4f2f6adeeacc58701532fa6"
+    },
+    {
+      "bytes": 9537,
+      "git_blob": "8750d7f22bb563689eb98704f9d5f0c1279734c4",
+      "path": "docs/autoencoders/grouped_legal_decoders.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "b2dabedf5050ac23803eebda2a5d0a9277caaafb797298ee99caebe196122834"
+    },
+    {
+      "bytes": 10467,
+      "git_blob": "c6423c14e52697a9cd5b493018b70db1de582faa",
+      "path": "docs/autoencoders/gte_decoder_knowledge_transfer.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "e50f53bf4db5472ab0d42f78021f29051a184cbfbe84f77210519e00097c8026"
+    },
+    {
+      "bytes": 48025,
+      "git_blob": "4cab30386d51e6faded6939c730c1d9f96c577ac",
+      "path": "docs/autoencoders/gte_multilingual_migration_plan.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "9d7ec5a66a5786223f75412a5bb3d3e97d2e426fd38d5e226afb641ddda36248"
+    },
+    {
+      "bytes": 6743,
+      "git_blob": "08ecd050e9cb88a94a27be209fbf55ec66d87a80",
+      "path": "docs/autoencoders/legal_corpus_graph_exchange.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "e0ea63497e5d8f6fd6ca62390b6ae86953beb6b58ec6a766cd42626adf966d10"
+    },
+    {
+      "bytes": 8329,
+      "git_blob": "1e1f13ffbefd46c2d592b34d3f9b69021336e78f",
+      "path": "docs/autoencoders/legal_corpus_definition_norm_adapter.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "4d8c1a892e99b430dd27d2a0590ae7a02dac19e11e20aecc8c06b19ab5603d7a"
+    },
+    {
+      "bytes": 5567,
+      "git_blob": "8b95dd2a64400090054396903b2bbbbfcadf3ea0",
+      "path": "docs/autoencoders/legal_corpus_shared_lake.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "3749b672d516358c6b0f81d260f6e63dee9583c8251f618de9e591b1d66a140f"
+    },
+    {
+      "bytes": 553913,
+      "git_blob": "96ef53f19791608135d7680a33ef552980ceb014",
+      "path": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/384-semantic-ir-evaluation.json",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "d347e4cc6c69cd8d8b2f75b552f861f1f1dd092c02c8a8e64e769745b124c61f"
+    },
+    {
+      "bytes": 21317,
+      "git_blob": "510ee476bfe9b189cd8f7f60b9a0ad0b6955a554",
+      "path": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/384-original-text-evaluation.json",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "62e2f6764fb3e010a7502af0bfaf54b82b8df5658087d612a6f203b5c1aa0491"
+    },
+    {
+      "bytes": 553913,
+      "git_blob": "96ef53f19791608135d7680a33ef552980ceb014",
+      "path": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/768-semantic-ir-evaluation.json",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "d347e4cc6c69cd8d8b2f75b552f861f1f1dd092c02c8a8e64e769745b124c61f"
+    },
+    {
+      "bytes": 21317,
+      "git_blob": "510ee476bfe9b189cd8f7f60b9a0ad0b6955a554",
+      "path": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/768-original-text-evaluation.json",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+      "sha256": "62e2f6764fb3e010a7502af0bfaf54b82b8df5658087d612a6f203b5c1aa0491"
+    }
+  ],
+  "independent_lanes": [
+    {
+      "limit": "Raw learned endpoints are distinct from target-aware safety reconstruction and later8D formula sidecars.",
+      "name": "Historical8D linguistic/sparse teacher",
+      "reuse": "Preserve complete June checkpoint,1,205,336 reusable rows and original linguistic codec/dependency closure."
+    },
+    {
+      "limit": "Original authored development1/48 and exposed wording0/48 exact do not characterize the historical linguistic teacher.",
+      "name": "8D formula sidecar",
+      "reuse": "Existing train/continuation controls."
+    },
+    {
+      "limit": "Limited authored codec; exactIR does not recover original legal prose.",
+      "name": "Contextual384D/768D formula decoder",
+      "reuse": "Ordered semanticIR contract, authenticated weights, source/recurrent heads, wording continuation and retention panels."
+    },
+    {
+      "limit": "Global embeddings and per-token features are not interchangeable; preserve encoder/projection spaces.",
+      "name": "Raw/core/trained384 and native768 occurrence heads",
+      "reuse": "Same-source embedding caches, source-token positions and pointer/qualifier heads with native conditioning controls."
+    },
+    {
+      "limit": "Source-conditioned independently initialized heads do not consume8/384/768 autoencoder latents; caller scope is supplied rather than inferred. V2 authored positive64/64 and learned negative refusal55/64 are separate engineering results.",
+      "name": "Grouped span v1/v2",
+      "reuse": "Ordered2–8-member semantic request, explicit caller modal scope, support/refusal head and renderer/checkpoint owners."
+    },
+    {
+      "limit": "Clean-F15 branches with incompatible lineage/policy metadata; saved-score or future tensor composition needs a new donor-bound validator and fresh qualification.",
+      "name": "F15→F17 and F15→F18 adapters",
+      "reuse": "Authenticated F15 donor, trained compatible selected tensors and protected casewise regressions."
+    }
+  ],
+  "local_retained_report_bindings": [
+    {
+      "bytes": 4199,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/phase-completion-v01.json",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "84fc8495140b4a0ff0e5b8654add9df9731a7cbce717b2eeb6e3f97f4e1be32f"
+    },
+    {
+      "bytes": 15638,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/public-result-summary-v01.json",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "2cbb3f6ea668bdfa86680ac627840b7515d5a63620486b4d842d190547582490"
+    },
+    {
+      "bytes": 77425,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-completion-independent-review-v01.json",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "1ade89eda52fe2424bdf1944497d8787b6cbcadad76a77f09302491bb81b2d40"
+    },
+    {
+      "bytes": 9716921,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-diagnostic-v01.json",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "393d154c6f116e255833de8d81be066a80817170a047613dba39ad591facf1df"
+    },
+    {
+      "bytes": 55123,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyzer-source-independent-review-v01.json",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "0932627121a7cb0360c2bbbc8f351b92b55ca4abbcc8f306a80a7a7f7ebe2f8b"
+    },
+    {
+      "bytes": 121440,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/extraction-fit-report-v01.json",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "972a05fcbd6a32c434c8232b2b0cfd7b9b1bddfa88f96fd0dd78dd03f9dff6f6"
+    },
+    {
+      "bytes": 16325,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/training-publication-delta-v01.json",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "21a8b3badc631f8056e00b5a09e8da4104c3d218fa7d595ad851dd9620dba811"
+    },
+    {
+      "bytes": 207013,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-connected-pilot-20261015-01/pilot-content-selection-v01.json",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "3f90352c5027f4f179890cee2e51ce3e184cf0aed2add355223da244fd38155b"
+    },
+    {
+      "bytes": 141770,
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-training-review-and-corpus-plan-2026-10-13.md",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "ce5867d595d5ad50806cf63ba4b32de1587da77f92a786db19b026005592e080"
+    },
+    {
+      "bytes": 170799,
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-span-graph-lean4-implementation-plan-2026-10-13.md",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "35c6d99446b4bc63f828ca6733f2016a73afb555974f2d5267aaa9a58deee509"
+    },
+    {
+      "bytes": 16255,
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-connected-statutory-pilot-spec-2026-10-15.md",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "944f0d9e48249dc06dfc9d37ceb0563194ae2471c86c8753cfdc236b1e2bc5a8"
+    }
+  ],
+  "method": {
+    "Git_ref_or_index_changes": 0,
+    "Hub_operations": 0,
+    "complete_artifact_scan": false,
+    "encoder_calls": 0,
+    "model_loads": 0,
+    "model_or_checkpoint_payloads_read": 0,
+    "native_Lean_builds": 0,
+    "network_calls": 0,
+    "product_modules_imported": 0,
+    "raw_reports_read": "Only the explicitly listed source/docs and bounded retained JSON reports; checkpoint facts are metadata observations, not new payload authentication.",
+    "solver_calls": 0,
+    "tests_executed": 0,
+    "training_steps": 0
+  },
+  "model_manager": {
+    "current_F17_registration_verified": false,
+    "current_F18_registration_verified": false,
+    "current_catalog_or_database_opened": false,
+    "historical_verified_claim": {
+      "count_after": 684,
+      "count_before": 678,
+      "evidence": "docs/autoencoders/retained_wording_checkpoint_availability_20261007.md",
+      "independent_registration_audit_sha256": "32cdadd25bd575818121c8fb80c105f45e6d12714a7b637da0811c92ff9ad1c3",
+      "registration_receipt_sha256": "103e95512c83d894bf0a432cc44debbcf57cb589fb3077288d90832737b99320",
+      "runtime_teacher_proof_admission": false,
+      "scope": "Six fitted384D retained-wording recipe/role identities in a prior genuine manager/catalog readback; not F17/F18 and not a fresh current query."
+    },
+    "registration_gap": "Existing F18 archive/source delivery does not independently establish a current genuine ModelManager registration. Audit each exact model ID/checkpoint SHA/family/dimension/schema/task/latent-mode binding through the existing manager before claiming import."
+  },
+  "observed_at_utc": "2026-10-15T04:18:02.405566+00:00",
+  "original_text_vs_semantic_IR": [
+    {
+      "IR_evidence": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/384-semantic-ir-evaluation.json",
+      "NFC_whitespace_exact": 0,
+      "canonical_semantic_IR_exact": 48,
+      "cohort": "48 exposed authored paragraphs / 180 ordered rules",
+      "dimension": 384,
+      "interpretation": "Exact authored IR agreement is distinct from original wording; the deterministic source-withheld text renderer was not a learned original-prose decoder.",
+      "legal_meaning_equivalence_measured": false,
+      "prediction_count": 48,
+      "reference_count": 48,
+      "source_semantic_equivalence_measured": false,
+      "text_evidence": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/384-original-text-evaluation.json",
+      "verbatim_UTF8_exact": 0
+    },
+    {
+      "IR_evidence": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/768-semantic-ir-evaluation.json",
+      "NFC_whitespace_exact": 0,
+      "canonical_semantic_IR_exact": 48,
+      "cohort": "48 exposed authored paragraphs / 180 ordered rules",
+      "dimension": 768,
+      "interpretation": "Exact authored IR agreement is distinct from original wording; the deterministic source-withheld text renderer was not a learned original-prose decoder.",
+      "legal_meaning_equivalence_measured": false,
+      "prediction_count": 48,
+      "reference_count": 48,
+      "source_semantic_equivalence_measured": false,
+      "text_evidence": "docs/autoencoders/evidence/contextual-legal-runtime-20261006/768-original-text-evaluation.json",
+      "verbatim_UTF8_exact": 0
+    }
+  ],
+  "plan_recommendations": [
+    "Refresh exact source/evidence consumer matrix to12dd while preserving dirty canonical work and original historical receipts.",
+    "Reuse V2 source-structured extraction and sample complete legal units before translation; preserve notes, controls, zero matches, unknown roles and exact coordinate views.",
+    "Obtain independently reviewed definition plus one real norm use, then a second use; only extend typed profile where the complete reviewed meaning requires it.",
+    "Reuse graph/definition/resolution/sharedLake/incremental owners; retain alternatives, unsupported forms and dependency frontiers in total denominators.",
+    "Complete existing saved-score diagnostic recount before a changed, separately attributable ranking/context/composition experiment.",
+    "Freeze source/version/applicability/dependency-cluster and exposure splits; reserve new untouched generalization components after development/test exposure.",
+    "Evaluate active8/384/768 conditioning against disabled/permuted/source-only controls using authenticated same-source assets and compatible warm starts.",
+    "Keep completeIR, exact source occurrence/attachment, modality/refusal/coverage, vector loss, original text bytes, graph integrity and Lean outcomes separate.",
+    "Require current genuine ModelManager readback and portable numerical reload before asserting operational checkpoint availability or teacher promotion."
+  ],
+  "preservation_contract": {
+    "dimensions": [
+      8,
+      384,
+      768
+    ],
+    "do_not_claim": [
+      "Padding384 values produces native768 GTE embeddings.",
+      "One checkpoint covers every family/schema/task.",
+      "Archive publication or low loss qualifies a teacher.",
+      "Copying retained source bytes demonstrates learned text reconstruction.",
+      "Native syntax or conditional Lean compilation proves statutory meaning."
+    ],
+    "families": [
+      "legal_ir",
+      "codebase_ir",
+      "security_ir",
+      "intent_ir",
+      "ui_ux_ir"
+    ],
+    "reuse": [
+      "Existing source spans and occurrence coordinates",
+      "Existing compatible embeddings and inventories",
+      "Authenticated compatible donor weights before randomly initializing a successor",
+      "Existing family/dimension DuckDB/DuckLake owners and HF inventories",
+      "Existing ModelManager and checkpoint/runtime/codec owners"
+    ],
+    "separate_identity_axes": [
+      "family",
+      "dimension and its role",
+      "IR schema/version",
+      "decoder task/output format",
+      "encoder/tokenizer/projection producer",
+      "token/span limits",
+      "checkpoint/hash/parent/selected state",
+      "latent mode",
+      "source/data/split/exposure generation"
+    ],
+    "tasks": [
+      "semantic_IR_reconstruction",
+      "source_text_reconstruction",
+      "family-specific formal projection"
+    ]
+  },
+  "prior_conditioning": {
+    "evidence_parent_draft": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-training-review-and-corpus-plan-2026-10-13.md",
+    "limits": "These genuine earlier representation-specific runs are separate from disabled-placeholder F17/F18. Do not say native768 training has never occurred or infer that it solved statutory generalization.",
+    "raw384_core384_trained384_source_only": {
+      "authored_challenge_exact_each_arm": "571/576",
+      "benefit": "Latent controls changed diagnostics without an established canonical accuracy advantage.",
+      "fits": 12,
+      "seeds": 3,
+      "updates_per_fit": 800
+    },
+    "source_only_trained384_native768": {
+      "authored_challenge_exact_each_arm": "571/576",
+      "canonical_or_status_changes": 0,
+      "changed_span_diagnostics": 3456,
+      "fits": 9,
+      "selected_update": 400,
+      "updates_per_fit": 800
+    },
+    "source_owner": "ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py"
+  },
+  "saved_score_conditions_diagnostic": {
+    "composed_checkpoint_constructed": false,
+    "conditions_rank_rows": [
+      {
+        "donor": "F15",
+        "full_gold_assignment_retained": true,
+        "gold_full_span_in_top8": true,
+        "gold_full_span_rank": 3,
+        "gold_minus_best_wrong_float32": -0.9081954956054688,
+        "source_id": "matched-temporal-train-condition_exception_duration-0-p-absent"
+      },
+      {
+        "donor": "F17",
+        "full_gold_assignment_retained": true,
+        "gold_full_span_in_top8": true,
+        "gold_full_span_rank": 2,
+        "gold_minus_best_wrong_float32": -0.6553573608398438,
+        "source_id": "matched-temporal-train-condition_exception_duration-0-p-absent"
+      },
+      {
+        "donor": "F18",
+        "full_gold_assignment_retained": true,
+        "gold_full_span_in_top8": true,
+        "gold_full_span_rank": 2,
+        "gold_minus_best_wrong_float32": -0.6569900512695312,
+        "source_id": "matched-temporal-train-condition_exception_duration-0-p-absent"
+      },
+      {
+        "donor": "F15",
+        "full_gold_assignment_retained": true,
+        "gold_full_span_in_top8": true,
+        "gold_full_span_rank": 3,
+        "gold_minus_best_wrong_float32": -0.6456413269042969,
+        "source_id": "matched-temporal-train-condition_exception_duration-0-p-present"
+      },
+      {
+        "donor": "F17",
+        "full_gold_assignment_retained": true,
+        "gold_full_span_in_top8": true,
+        "gold_full_span_rank": 3,
+        "gold_minus_best_wrong_float32": -0.39594268798828125,
+        "source_id": "matched-temporal-train-condition_exception_duration-0-p-present"
+      },
+      {
+        "donor": "F18",
+        "full_gold_assignment_retained": true,
+        "gold_full_span_in_top8": true,
+        "gold_full_span_rank": 3,
+        "gold_minus_best_wrong_float32": -0.3966827392578125,
+        "source_id": "matched-temporal-train-condition_exception_duration-0-p-present"
+      }
+    ],
+    "encoder_calls": 0,
+    "independent_result_recount_required": true,
+    "interpretation": "Both targeted gold full assignments survive top8. In the primary saved logits, shortened conditions have higher scores. This motivates a separately attributable ranking/selection/context hypothesis; it does not prove capacity cause, qualify a composed model, or justify repeating the unchanged F18 CE recipe.",
+    "model_author_authored_primary": true,
+    "model_calls": 0,
+    "native_donor_panels": 30,
+    "next_action": "Complete independent result recount and scientific-kernel review of the existing saved-score diagnostic before selecting or executing new training.",
+    "optimizer_updates": 0,
+    "primary_passed": true,
+    "publication_scope": "Local unpublished primary diagnostic; no completed F19/composed checkpoint is inferred.",
+    "report": {
+      "bytes": 9716921,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-diagnostic-v01.json",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "393d154c6f116e255833de8d81be066a80817170a047613dba39ad591facf1df"
+    },
+    "schema": "conditions-composition-diagnostic/v1",
+    "scientific_success_not_claimed": true,
+    "scored_source_count": 624,
+    "source_count": 632,
+    "training_complete_IR_all_reported_variants": 154,
+    "variant_panels": 30
+  },
+  "schema": "legal-ir-uscode-reconstruction-and-assets-survey@1",
+  "source_baseline": {
+    "cached_origin_main_observed": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+    "canonical_HEAD_observed": "74f5d98c8ffff3c284cffddf430091b5fc4c6f8c",
+    "canonical_checkout": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "canonical_missing_files_do_not_establish_main_omissions": true,
+    "canonical_working_tree_dirty": true,
+    "network_freshness_claimed": false,
+    "owned_plan_checkout": "/home/barberb/lift_coding/.worktrees/legal-ir-uscode-plan-20261015",
+    "repository": "endomorphosis/ipfs_datasets_py",
+    "revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162"
+  },
+  "stale_documentation_corrections": [
+    "The local parent plans and published note58 retain dated F17-latest and F18-upload-pending/proposal-only observations. Preserve those dates but current summaries must state completed verified F18 archive and failed scientific acceptance.",
+    "The local saved-head diagnostic has executed primary saved-output analysis; it remains independently unrecounted and is not a new trained model.",
+    "Active768 conditioning was executed in earlier separate profiles; F17/F18 disabled384 placeholders cannot erase or qualify that work."
+  ],
+  "structured_extraction_fit": {
+    "interpretation": "Reuse existing V2 official markup/source view and exact source owners. Acquire/review the actual missing status observation through the existing acquisition boundary; never synthesize it. Character/UTF8 offsets in the normalized view are not rawHTML offsets.",
+    "minimal_reuse_recommendation": [
+      "Reuse existing V2 official-document view rather than create another HTML parser.",
+      "A public sampler should authenticate the complete V2 report and external acquisition/raw pins once, then enumerate every statute-region block in DOM order with exact full block references and view-bound char/UTF8 ranges.",
+      "Keep complete document population and all nonselected regions available; statute-region field membership is a markup observation and does not establish governing legal effect.",
+      "Definition surface candidates should retain complete presentation block and all lexical cue occurrences without creating typed predicates, legal term senses, selected definitions, reviewed source choices or training gold.",
+      "Never derive legal citation paths only from first labels plus indent. Preserve ambiguous inline labels and continuation attachments explicitly for review.",
+      "Retain the existing V1 failure and disjoint view identities; do not copy old Parquet offsets or reinterpret V1 selectors as V2."
+    ],
+    "publication_scope": "Local unpublished extraction-fit diagnostic; not statutory semantic or public source admission.",
+    "report": {
+      "bytes": 121440,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/extraction-fit-report-v01.json",
+      "publication_status": "local retained artifact; no Git or Hub publication inferred",
+      "sha256": "972a05fcbd6a32c434c8232b2b0cfd7b9b1bddfa88f96fd0dd78dd03f9dff6f6"
+    },
+    "v1_result": {
+      "exception_type": "ValueError",
+      "message": "codified body must be contiguous; interleaved notes require another mapping profile",
+      "status": "rejected"
+    },
+    "v2_result": {
+      "public_custody_blocker": "retained acquisition receipt lacks HTTP status_code observation required by existing closed descriptor; null etag/last_modified are allowed but not supplied in that receipt",
+      "public_custody_qualified": false,
+      "region_kind_counts": {
+        "editorial_notes": 76,
+        "historical_revision_notes": 109,
+        "metadata_header": 8,
+        "section_heading": 1,
+        "source_credit": 1,
+        "statute": 134,
+        "statutory_notes": 231
+      },
+      "status": "pure_internal_complete_markup_extraction_passed",
+      "view": {
+        "byte_coordinate_system": "UTF8 bytes of v2 document_text; half-open",
+        "char_coordinate_system": "Unicode code points in v2 document_text; half-open",
+        "decoder_profile": "legal_statutory_context-declared-encoding-BOM-strict-default-UTF8/v1",
+        "document_id": "govinfo-markup-v2-html-sha256:4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b",
+        "document_text_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+        "edition": 2024,
+        "heading_profile": "literal-section-token-with-ASCII-hyphen-or-en-dash-render/v1",
+        "html_sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b",
+        "legal_id": "usc:us:10:101",
+        "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+        "parser_profile": "stdlib-html-parser-balanced-GovInfo-markup-events/v1",
+        "raw_html_coordinate_mapping_verified": false,
+        "schema": "legal-official-markup-normalized-view/v2",
+        "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleA-partI-chap1-sec101.htm",
+        "unicode_code_points": 71598,
+        "utf8_bytes": 72592,
+        "view_id": "legal-official-markup-view:sha256:6a4190668d49d48b72067e555ff274380e76d58a3501088f43137f41dabe7973"
+      },
+      "visible_blocks": 560
+    }
+  },
+  "survey_owner": "scope_context_consumers; bounded read-only survey for the comprehensive LegalIR US Code corpus plan"
+}

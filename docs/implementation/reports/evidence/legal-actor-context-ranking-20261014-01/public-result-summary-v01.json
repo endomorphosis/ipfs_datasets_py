@@ -1,0 +1,313 @@
+{
+  "acceptance": {
+    "all32_permission_retention": {
+      "count": 32,
+      "passed": true
+    },
+    "no_complete_IR_loss_IDs_vs_F15": {
+      "loss_ids_by_scope": {
+        "authored_dev": {
+          "joint": [],
+          "raw": []
+        },
+        "authored_eval": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_challenge": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_dev": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_test": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_tune": {
+          "joint": [],
+          "raw": []
+        },
+        "old_authored_eval": {
+          "joint": [],
+          "raw": []
+        },
+        "old_tune": {
+          "joint": [
+            "native-tuning-calendula-t4-q5-p"
+          ],
+          "raw": [
+            "native-tuning-calendula-t4-q5-p"
+          ]
+        },
+        "training168": {
+          "joint": [],
+          "raw": []
+        }
+      },
+      "passed": false,
+      "scopes": [
+        "old_tune",
+        "fresh_tune",
+        "fresh_challenge",
+        "old_authored_eval",
+        "authored_dev",
+        "authored_eval",
+        "fresh_dev",
+        "fresh_test",
+        "training168"
+      ],
+      "views": [
+        "raw",
+        "joint"
+      ]
+    },
+    "no_complete_IR_loss_IDs_vs_N11": {
+      "loss_ids_by_scope": {
+        "authored_dev": {
+          "joint": [],
+          "raw": []
+        },
+        "authored_eval": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_challenge": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_dev": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_test": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_tune": {
+          "joint": [],
+          "raw": []
+        },
+        "old_authored_eval": {
+          "joint": [],
+          "raw": []
+        },
+        "old_tune": {
+          "joint": [
+            "native-tuning-calendula-t4-q5-p"
+          ],
+          "raw": [
+            "native-tuning-calendula-t4-q5-p"
+          ]
+        },
+        "training168": {
+          "joint": [],
+          "raw": []
+        }
+      },
+      "passed": false,
+      "scopes": [
+        "old_tune",
+        "fresh_tune",
+        "fresh_challenge",
+        "old_authored_eval",
+        "authored_dev",
+        "authored_eval",
+        "fresh_dev",
+        "fresh_test",
+        "training168"
+      ],
+      "views": [
+        "raw",
+        "joint"
+      ]
+    },
+    "schema": "actor-context-ranking-scientific-acceptance/v1",
+    "scientific_success": false,
+    "technical_gate_passed": true,
+    "training168": {
+      "joint_full_IR": 154,
+      "minimum_required": 155,
+      "passed": false,
+      "raw_full_IR": 154
+    }
+  },
+  "actual_inference_source_forwards": 1280,
+  "actual_loaded_model_module_count": 17,
+  "actual_model_forwards": 1312,
+  "actual_optimizer_updates": 32,
+  "analysis": {
+    "bytes": 3470679,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-analysis-v01.json",
+    "sha256": "cdb1b30f035dc9710eb12624659dbe31a4eaa78337ca1e8b8d7ffbfe8dbf4722"
+  },
+  "candidate_checkpoint": {
+    "bytes": 15143581,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01/results/cell-checkpoint.json",
+    "sha256": "5bb6425888b4cffe5c9875b5d262b2895c8c02e4745acd231f33c4a79908ff84"
+  },
+  "candidate_model_state_sha256": "12567c93c427c33bb2904ed71992d2c870dc9b70c79a7efbea36c355e654ff10",
+  "complete_rule_scores": {
+    "authored_dev": {
+      "candidate_joint": 48,
+      "candidate_raw": 47,
+      "parent_joint": 46,
+      "parent_raw": 45,
+      "rows": 72
+    },
+    "authored_eval": {
+      "candidate_joint": 34,
+      "candidate_raw": 27,
+      "parent_joint": 34,
+      "parent_raw": 27,
+      "rows": 72
+    },
+    "fresh_challenge": {
+      "candidate_joint": 25,
+      "candidate_raw": 25,
+      "parent_joint": 25,
+      "parent_raw": 25,
+      "rows": 36
+    },
+    "fresh_dev": {
+      "candidate_joint": 0,
+      "candidate_raw": 0,
+      "parent_joint": 0,
+      "parent_raw": 0,
+      "rows": 36
+    },
+    "fresh_test": {
+      "candidate_joint": 0,
+      "candidate_raw": 0,
+      "parent_joint": 0,
+      "parent_raw": 0,
+      "rows": 36
+    },
+    "fresh_tune": {
+      "candidate_joint": 19,
+      "candidate_raw": 8,
+      "parent_joint": 19,
+      "parent_raw": 8,
+      "rows": 36
+    },
+    "old_authored_eval": {
+      "candidate_joint": 53,
+      "candidate_raw": 50,
+      "parent_joint": 53,
+      "parent_raw": 50,
+      "rows": 72
+    },
+    "old_tune": {
+      "candidate_joint": 93,
+      "candidate_raw": 93,
+      "parent_joint": 94,
+      "parent_raw": 94,
+      "rows": 96
+    },
+    "training168": {
+      "candidate_joint": 154,
+      "candidate_raw": 154,
+      "parent_joint": 154,
+      "parent_raw": 154,
+      "rows": 168
+    }
+  },
+  "configured_placeholder_dimension": 384,
+  "declared_model_module_count": 40,
+  "default_promotion": false,
+  "experiment_complete": true,
+  "final_modality_all_presence_nonactor_boundaries_bit_equal_sources": 632,
+  "findings": [],
+  "freeze": {
+    "bytes": 22324,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-output-freeze-v01.json",
+    "sha256": "f5140b6c3c9a6c32ec3e012444f873bfc79c4f6936d0b2d76296748fa5ceda30"
+  },
+  "frozen_result_bytes": 71147530,
+  "frozen_result_files": 62,
+  "independent_recount": {
+    "bytes": 3168876,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-independent-recount-v01.json",
+    "sha256": "0db57059f3fca19b69e6fc3554a4a3ee64274fc58ed12ed36bcedb5f065a3f6d"
+  },
+  "independent_result_review": {
+    "bytes": 14788,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-independent-review-v01.json",
+    "sha256": "d12ab3444109c957ddf6710d084babe73fd4354fa39336c5b6839abaa885268a"
+  },
+  "initial_full_heads_and_decoded_parity_sources": 632,
+  "interpretation": [
+    "Two additional correct training actors still have incorrect frozen modality, leaving complete-rule training accuracy unchanged.",
+    "Five actor-only errors, two condition-only errors, six modality errors and one exception-presence issue remain; categories overlap.",
+    "One older tuning permission rule lost actor/complete-rule correctness even though all32 tracked permission modality decisions remained P with no abstention.",
+    "Authored development gained2 complete rules on both routes; older and newer authored evaluation counts were unchanged."
+  ],
+  "latent_enabled": false,
+  "observed_at_utc": "2026-10-14T13:05:40.006040+00:00",
+  "passed": true,
+  "plan": {
+    "bytes": 71091,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-plan-v01.json",
+    "sha256": "71b65a145c0f666e0b58b26a5510e205d351a80ef149bcb0d3c26dd55b1317ee"
+  },
+  "qualifications": {
+    "Lake_executed": false,
+    "blind_generalization": false,
+    "broader_logic_families": false,
+    "genuine_8D_384D_768D_latent_semantics": false,
+    "portable_numerical_reload": false,
+    "statutory8_scored": false,
+    "statutory_semantic_accuracy": null
+  },
+  "ranking_hinge_mean": {
+    "candidate": 0.17247733615693592,
+    "parent": 0.2145724126270839
+  },
+  "resource": {
+    "closing_records": 543,
+    "kernel_hard_memory_cap": false,
+    "model_phase_wall_seconds": 175.48282306396868,
+    "own_claim_status": "released",
+    "own_final_charge_bytes": 71459330,
+    "own_scheduler_lease_absent": true,
+    "peak_is_sampled": true,
+    "preserved_prior_records": 542,
+    "sampled_model_phase_peak_rss_bytes": 804515840
+  },
+  "reused_parent_captures": 6,
+  "reused_parent_new_forwards": 0,
+  "reused_parent_rows": 240,
+  "runtime_review": {
+    "bytes": 87180,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-runtime-review-v01.json",
+    "sha256": "7addc2135ff36c553183f0a8818280b044f694fb592aca152826db8922d3d5a5"
+  },
+  "schema": "actor-context-ranking-public-result-summary/v1",
+  "scientific_success": false,
+  "source_main_integration_or_HF_publication_claimed": false,
+  "source_parent_checkpoint": {
+    "bytes": 12230969,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+    "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+  },
+  "supplemental_attention_source_count": 1,
+  "technical_checks_passed": true,
+  "total_source_occurrences": 1664,
+  "training_actor_exact": {
+    "candidate_joint": 158,
+    "candidate_raw": 158,
+    "parent_joint": 156,
+    "parent_raw": 156,
+    "rows": 168
+  },
+  "training_joint_failure_patterns": {
+    "EXACT": 154,
+    "actor": 5,
+    "actor,exceptions": 1,
+    "conditions": 2,
+    "modality": 2,
+    "modality,actor": 4
+  }
+}

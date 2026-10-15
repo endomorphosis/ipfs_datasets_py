@@ -1,0 +1,67 @@
+{
+  "actual_original_corpus_or_checkpoint_bodies_opened": false,
+  "admission_granted": false,
+  "derived": {
+    "current_charged_before_request_bytes": 137515390976,
+    "requests": {
+      "candidate_64_MiB_not_authorized_retry": {
+        "both_sampled_conditions_fit": true,
+        "cap_shortfall_bytes": 0,
+        "charged_with_request_bytes": 137582499840,
+        "physical_free_shortfall_bytes": 0,
+        "request_bytes": 67108864
+      },
+      "frozen_256_MiB": {
+        "both_sampled_conditions_fit": true,
+        "cap_shortfall_bytes": 0,
+        "charged_with_request_bytes": 137783826432,
+        "physical_free_shortfall_bytes": 0,
+        "request_bytes": 268435456
+      }
+    },
+    "signed_global_headroom_before_request_bytes": 22484609024,
+    "signed_physical_headroom_before_request_bytes": 4622675392
+  },
+  "elapsed_seconds": 14.787819262826815,
+  "entrypoint": "storage_capacity(ledger_path, state_directory), once; no CLI main/plan/run_wave",
+  "failure": null,
+  "findings": [],
+  "foreign_per_record_fields_published": false,
+  "ledger_mutated_by_observer": false,
+  "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "mutation_process_network_lock_attempts": 0,
+  "native_owner": {
+    "bytes": 39848,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+    "sha256": "aaf67b9f37c4df7b15e1b9d08b9441290a5179dfce0ec01d21d25ae86423beb0"
+  },
+  "numerical_CID_model_SDK_modules_imported": false,
+  "observation": {
+    "headroom_bytes": 4622675392,
+    "ledger_modified": false,
+    "limit_bytes": 160000000000,
+    "minimum_filesystem_free_bytes": 44652888064,
+    "observed_apparent_bytes": 97485178304,
+    "outstanding_reservations_bytes": 40030212672,
+    "reservation_acquired": false
+  },
+  "observer": {
+    "bytes": 25284,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_autoencoder_fleet.py",
+    "sha256": "d7319851aac58ebc2b7ac8c1cb10d715da3f799815a49cbc2b9879b94e25c7d5"
+  },
+  "passed": true,
+  "request": {
+    "bytes": 45615,
+    "path": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/validation-request-v01.json",
+    "sha256": "61a0f668f05ca7a90647fbdfb3d97bd79a85d49c310f435d666f69b65796778f"
+  },
+  "reservation_acquired": false,
+  "scheduler_state_queried": false,
+  "schema": "legal-definition-review-storage-capacity-observation/v1",
+  "scope": "nontransactional point-in-time named-root apparent-byte census and aggregate full outstanding claims through existing shipped fleet API; not an atomic admission or continuous capacity guarantee",
+  "source_hashes_unchanged_after": true,
+  "started_at_UTC": "2026-10-15T07:20:28.149883+00:00",
+  "state_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-definition-v2-review-integration-20261015-01",
+  "timeout_seconds": 50
+}

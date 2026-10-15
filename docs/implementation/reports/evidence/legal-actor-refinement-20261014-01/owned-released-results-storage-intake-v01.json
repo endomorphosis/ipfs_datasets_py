@@ -1,0 +1,1292 @@
+{
+  "files": 1209,
+  "metadata_only": true,
+  "mutations": 0,
+  "ownership_not_yet_qualified": true,
+  "proposed_attempts": [
+    {
+      "attempt": "actor-boundary-20261013-actor-boundary-ce-02",
+      "command": {
+        "bytes": 1061,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/command.json",
+        "sha256": "ab9899533d9a03f3c52a42f7ba01dcb808f1c361ab48ab594fffb7ee15787cd3"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/run_actor_boundary_v02.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-ce-plan-v02.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 62,
+      "nested_directories": [],
+      "result_bytes": 61920310,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results",
+      "terminal": {
+        "bytes": 521,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/guardian-exit.json",
+        "sha256": "7114a2c482be3382309864d8ffe8696dfe39566036f877d53b9f8830dc509ac4"
+      }
+    },
+    {
+      "attempt": "actor-features-20261013-actor-features-ce-02",
+      "command": {
+        "bytes": 1061,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-02/command.json",
+        "sha256": "7ee835e8aeba380804132bb7ce1c30ac74564d0b959435d740fbd9eb8243684e"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v02.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v02.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-02/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 62,
+      "nested_directories": [],
+      "result_bytes": 62074132,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-02/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-02/guardian-exit.json",
+        "sha256": "34f3a91f8b5a3ad2dcb5296e346a442b8f172db0ffacddb1b4380767a1ad1fbd"
+      }
+    },
+    {
+      "attempt": "actor-ranking-20261013-actor-ranking-hinge-01",
+      "command": {
+        "bytes": 1059,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-ranking-20261013-actor-ranking-hinge-01/command.json",
+        "sha256": "52f6b59861e15b91944c36ee18db9a236b094d1dd3858daf6e64ddf1362d798e"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/run_actor_ranking_v02.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-hinge-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-ranking-20261013-actor-ranking-hinge-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 62,
+      "nested_directories": [],
+      "result_bytes": 61920577,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-ranking-20261013-actor-ranking-hinge-01/results",
+      "terminal": {
+        "bytes": 521,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-ranking-20261013-actor-ranking-hinge-01/guardian-exit.json",
+        "sha256": "3f846748b14e631fdabdbde88d525236de3a684a41d7e8073bfcb57ce9c0d60f"
+      }
+    },
+    {
+      "attempt": "arbitrary-native-cache-20261011-02",
+      "command": {
+        "bytes": 1032,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/command.json",
+        "sha256": "9b0f0ebbf217346d7af3b17ca00bf710e757d73ca722a3d8460ffb357e09d28f"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/run_native_cache_pilot.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 7,
+      "nested_directories": [
+        "source-production"
+      ],
+      "result_bytes": 994373,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results",
+      "terminal": {
+        "bytes": 518,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/guardian-exit.json",
+        "sha256": "b94c3a83418d6ea7e00496b6e02c9b60e793b6d34a808c4ce07f596828908e2d"
+      }
+    },
+    {
+      "attempt": "attempt-01",
+      "command": {
+        "bytes": 1020,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/attempt-01/command.json",
+        "sha256": "80502272f3843c909d297a41e1ac5eee656963078abfedb1223830051f6ca4ec"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-trigger-readout-20261007-01/run_trigger_experiment.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-trigger-readout-20261007-01/experiment-plan.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/attempt-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-trigger-readout-20261007-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-trigger-readout-20261007-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 31,
+      "nested_directories": [
+        "global",
+        "predicted_trigger"
+      ],
+      "result_bytes": 39010930,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/attempt-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/attempt-01/guardian-exit.json",
+        "sha256": "d6b719b12321c9a0057ac6dfd672d0832c8c07b50a10c2edc6dcaeb81afb13cd"
+      }
+    },
+    {
+      "attempt": "matched-temporal-20261012-actor0-scope0-modality0-01",
+      "command": {
+        "bytes": 1076,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/command.json",
+        "sha256": "606006b816aa946ef0e16ad9ce4c9b3c486fdf18a7004d7f7310b94ca5426d91"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/run_matched_curriculum.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality0-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 46,
+      "nested_directories": [],
+      "result_bytes": 26140889,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/results",
+      "terminal": {
+        "bytes": 521,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/guardian-exit.json",
+        "sha256": "01e3d8135e8feee438296e0940f0230e92167d3b31eb63f588558bb9cbdd2082"
+      }
+    },
+    {
+      "attempt": "matched-temporal-20261012-actor0-scope0-modality1-01",
+      "command": {
+        "bytes": 1076,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/command.json",
+        "sha256": "f5929383668629da57aff535e7881b31dfdbafcf2104479593342061d462b27a"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/run_matched_curriculum.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality1-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 30,
+      "nested_directories": [],
+      "result_bytes": 14673573,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/results",
+      "terminal": {
+        "bytes": 521,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/guardian-exit.json",
+        "sha256": "eb561ca4e0bf99800ec08226dfe85b4f6abe8fde43e26cd889d9c8d8fbe94f5b"
+      }
+    },
+    {
+      "attempt": "matched-temporal-20261012-actor0-scope1-modality0-01",
+      "command": {
+        "bytes": 1076,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/command.json",
+        "sha256": "3b471b5eb6ebf5a4ef495f9fb9fc06b75ebcd18b99cf1310cd366c333b0b5233"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/run_matched_curriculum.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality0-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 30,
+      "nested_directories": [],
+      "result_bytes": 14669484,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/guardian-exit.json",
+        "sha256": "df67ee4360bbbd38ec36c91506705a4a7adbd1f007858354af14f143910b9b2b"
+      }
+    },
+    {
+      "attempt": "matched-temporal-20261012-actor0-scope1-modality1-01",
+      "command": {
+        "bytes": 1076,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/command.json",
+        "sha256": "3b7b560f33206af4fe5d0c5c6668ec08083f0d9f91c3e1a2b33ccab2b0e7d188"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/run_matched_curriculum.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality1-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 30,
+      "nested_directories": [],
+      "result_bytes": 14689782,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/guardian-exit.json",
+        "sha256": "95294001ea6e02baae810648d67c12d0648fade70db03622778831f16d263e8b"
+      }
+    },
+    {
+      "attempt": "matched-temporal-20261012-actor1-scope0-modality0-01",
+      "command": {
+        "bytes": 1076,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/command.json",
+        "sha256": "1f36597f4a6318de38f0d38b33149bdb47d3377f9e53d7b7f27a018093a96481"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/run_matched_curriculum.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality0-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 30,
+      "nested_directories": [],
+      "result_bytes": 14667683,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/guardian-exit.json",
+        "sha256": "f5f866301d5f7abf1ea0baa617cf815183a3701040b6c6d28086b7d2a9b60edd"
+      }
+    },
+    {
+      "attempt": "matched-temporal-20261012-actor1-scope0-modality1-01",
+      "command": {
+        "bytes": 1076,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/command.json",
+        "sha256": "c6bc4baea148e1099a56011e4398679211c890d7965f171ab23feb8bb878d542"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/run_matched_curriculum.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality1-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 30,
+      "nested_directories": [],
+      "result_bytes": 14673509,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/guardian-exit.json",
+        "sha256": "9c5333b59e4ff14f32ae270322d028071344fade292c79ad1795cbd725e82717"
+      }
+    },
+    {
+      "attempt": "matched-temporal-20261012-actor1-scope1-modality0-01",
+      "command": {
+        "bytes": 1076,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/command.json",
+        "sha256": "a08e4c96944cc0491435752edc7aab417bd70dfe6e0fa6ac339867337b1f1924"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/run_matched_curriculum.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality0-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 30,
+      "nested_directories": [],
+      "result_bytes": 14675955,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/guardian-exit.json",
+        "sha256": "346e84296c1ae8daa8be2750f09786523f23806a6410efa771ff5de4ee33bcf6"
+      }
+    },
+    {
+      "attempt": "matched-temporal-20261012-actor1-scope1-modality1-01",
+      "command": {
+        "bytes": 1076,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/command.json",
+        "sha256": "064fd38137d443e6f16cbd040f1aa2fc927a86f460bf2743111d813d210458f0"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/run_matched_curriculum.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality1-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 30,
+      "nested_directories": [],
+      "result_bytes": 14676942,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/guardian-exit.json",
+        "sha256": "c1eb71084fef0b4fd06a0d563a5e5e5f1906ef1fb2f0b346962148f2868d5a61"
+      }
+    },
+    {
+      "attempt": "permission-retention-20261012-all-parameters-01",
+      "command": {
+        "bytes": 1087,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/command.json",
+        "sha256": "ad5ae1c0f4128bc4120d261dbc61ee9603cdcdfa5ce36e6e16c80337f24d9f4e"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/run_permission_retention.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/all-parameters-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 53,
+      "nested_directories": [],
+      "result_bytes": 32919846,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/guardian-exit.json",
+        "sha256": "4747337f580278257704287c518fdc872184b6a2ea82f746690922402f7e4ec6"
+      }
+    },
+    {
+      "attempt": "permission-retention-20261012-span-heads-only-01",
+      "command": {
+        "bytes": 1089,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-span-heads-only-01/command.json",
+        "sha256": "11b88cbd2a4011acaa233e48904b52678a5764b6e67f10344b611c4dc2e7c25f"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/run_permission_retention.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/span-heads-only-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-span-heads-only-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 34,
+      "nested_directories": [],
+      "result_bytes": 17994898,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-span-heads-only-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-span-heads-only-01/guardian-exit.json",
+        "sha256": "e565f1c1ce1e796fdd7568cf6d40110b3e9169de2bbdcc0ffe4401e8fa0e023f"
+      }
+    },
+    {
+      "attempt": "retained-joint-readout-20261011-01",
+      "command": {
+        "bytes": 1046,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/command.json",
+        "sha256": "269551b2de298ab9871f6000f62b2d8371dbe727312497c159ae884ea9f323fb"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/run_joint_readout_comparison.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/experiment-plan-v02.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 28,
+      "nested_directories": [
+        "source-cache-generation"
+      ],
+      "result_bytes": 4628924,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results",
+      "terminal": {
+        "bytes": 519,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/guardian-exit.json",
+        "sha256": "b6efdda608c21df88faafe8c9586e7edfea300933be69197fb7e59d8ba8c7cb5"
+      }
+    },
+    {
+      "attempt": "retained-pointer-cache-20261011-03",
+      "command": {
+        "bytes": 1060,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/command.json",
+        "sha256": "12dfe8aa5287c925974b4a6701fdade450c69252ea77affce96cadcdf172c19f"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_open_vocabulary_comparison-v02.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/experiment-plan-v02.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 12,
+      "nested_directories": [
+        "source-cache-generation"
+      ],
+      "result_bytes": 2108342,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results",
+      "terminal": {
+        "bytes": 518,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/guardian-exit.json",
+        "sha256": "461ed3f630a5ff5ece732054e13072aad8669a079659bff7adb0fdf56b19d9e3"
+      }
+    },
+    {
+      "attempt": "split-feature-20261013-split-features-01",
+      "command": {
+        "bytes": 1046,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/command.json",
+        "sha256": "c13cc76650fc23417192649ad03bc4a85aaba90b62dcee58df733638ce506cfb"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_features.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-features-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 53,
+      "nested_directories": [],
+      "result_bytes": 33497504,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/guardian-exit.json",
+        "sha256": "8b4bef1c84307bf9ec5007d4ead53e25da8f5277a2912a1463dfaa34f9d75b9e"
+      }
+    },
+    {
+      "attempt": "structured-probability-20261011-01",
+      "command": {
+        "bytes": 1067,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/command.json",
+        "sha256": "4e38c72b1b8bf5897ea98ff0d42dd66bfbe7da333c156412718edc91b2bd9517"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/run_structured_span_pilot.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/experiment-plan-v05.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 50,
+      "nested_directories": [],
+      "result_bytes": 29109165,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/guardian-exit.json",
+        "sha256": "53dac03bf84ef88507d0af5002a4507c3499189613f61d97ea3598ecb109adc0"
+      }
+    },
+    {
+      "attempt": "support-action-20261007-01",
+      "command": {
+        "bytes": 1039,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-action-20261007-01/command.json",
+        "sha256": "dd9866462e317d9bb63fa0a68e09f5726efe0343e7b065beedefc8ea85385699"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-support-action-20261007-01/run_support_action_experiment.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-support-action-20261007-01/experiment-plan.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-action-20261007-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-support-action-20261007-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-support-action-20261007-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 39,
+      "nested_directories": [
+        "linear",
+        "mlp"
+      ],
+      "result_bytes": 59821524,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-action-20261007-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-action-20261007-01/guardian-exit.json",
+        "sha256": "deda2889f43e43527b336865ec5fcc98e2abababefa6a5938b2acec1f02978df"
+      }
+    },
+    {
+      "attempt": "support-gate-20261007-01",
+      "command": {
+        "bytes": 1027,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-gate-20261007-01/command.json",
+        "sha256": "772054ff9708b07cc005454a3e77d3d2a6c9bffc39df9ee37bf473af6543332a"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-support-gate-20261007-01/run_support_gate_experiment.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-support-gate-20261007-01/experiment-plan.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-gate-20261007-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-support-gate-20261007-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-support-gate-20261007-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 42,
+      "nested_directories": [
+        "global",
+        "predicted_trigger"
+      ],
+      "result_bytes": 70894865,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-gate-20261007-01/results",
+      "terminal": {
+        "bytes": 519,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-gate-20261007-01/guardian-exit.json",
+        "sha256": "d6c8a716bbcbfae843c01ec3c80fb50465e8d5e3a6515446ea0243af666cbeb1"
+      }
+    },
+    {
+      "attempt": "support-retention-20261011-01",
+      "command": {
+        "bytes": 1045,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-retention-20261011-01/command.json",
+        "sha256": "f179aad6c25ea659066765a409159c9ba36620668c663e96f5a90753d56caf77"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/run_retention_experiment.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/experiment-plan.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-retention-20261011-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 48,
+      "nested_directories": [
+        "positive_margin",
+        "bce"
+      ],
+      "result_bytes": 75182632,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-retention-20261011-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-retention-20261011-01/guardian-exit.json",
+        "sha256": "2b5e60ca73e0b4e1fa0b03506f3c77d54c17f57bc40c4f46b27c3a8debb7acb4"
+      }
+    },
+    {
+      "attempt": "targeted-loss-20261012-rank0-presence1-01",
+      "command": {
+        "bytes": 1032,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/command.json",
+        "sha256": "9517f3ade4819ce70dcac9ccef96775dc5026ecbd34fd89cf37622cef29cc315"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/run_targeted_loss.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/rank0-presence1-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 52,
+      "nested_directories": [],
+      "result_bytes": 31781128,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/guardian-exit.json",
+        "sha256": "625ff7004d929c6d19745d9043dba2c06f5f2790fca54ea647f42cf31594b8f4"
+      }
+    },
+    {
+      "attempt": "targeted-loss-20261012-rank0-presence2-01",
+      "command": {
+        "bytes": 1032,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/command.json",
+        "sha256": "3f79743e91cb8c933f89ce60c7bf1dd409eaa0422bfa8e630cfb3d117cfb8e67"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/run_targeted_loss.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/rank0-presence2-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 33,
+      "nested_directories": [],
+      "result_bytes": 17956886,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/guardian-exit.json",
+        "sha256": "abe8aa129c4d72099b24ec8c4c96fe23f09d43d9d27836552b883d8b4607acf9"
+      }
+    },
+    {
+      "attempt": "targeted-loss-20261012-rank1-presence1-01",
+      "command": {
+        "bytes": 1032,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank1-presence1-01/command.json",
+        "sha256": "df47439b66f3e1df2a42e53e0750e37f3608623e4aefdd45b257ec87e4ad5c25"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/run_targeted_loss.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/rank1-presence1-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank1-presence1-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 33,
+      "nested_directories": [],
+      "result_bytes": 17948628,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank1-presence1-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank1-presence1-01/guardian-exit.json",
+        "sha256": "a3c0edf80092298944935657e8029ce324095e46db9752330db695c62b1d9065"
+      }
+    },
+    {
+      "attempt": "targeted-loss-20261012-rank1-presence2-01",
+      "command": {
+        "bytes": 1032,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank1-presence2-01/command.json",
+        "sha256": "bbb617a2d50839bc5b31e7bad25e08cc8c58502cfc799137b831d193efb9b339"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/run_targeted_loss.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/rank1-presence2-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank1-presence2-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 33,
+      "nested_directories": [],
+      "result_bytes": 17999383,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank1-presence2-01/results",
+      "terminal": {
+        "bytes": 521,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank1-presence2-01/guardian-exit.json",
+        "sha256": "107910aa2c613fbadb3f5b5ab2f0644110311ed84942d6442d95bb223af24425"
+      }
+    },
+    {
+      "attempt": "temporal-adapter-20261013-temporal-anchor-margin-01",
+      "command": {
+        "bytes": 1079,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/command.json",
+        "sha256": "65f3db8fb8a5e2f1aceb7553d3ed639b10e5f3489488e811850deaeae00543f1"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/run_temporal_adapter.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-anchor-margin-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 45,
+      "nested_directories": [],
+      "result_bytes": 39407996,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/guardian-exit.json",
+        "sha256": "ccd87c9fb4418b105cedaaedb97f3ebe0e9360be200c02b58d10b451efb7ab42"
+      }
+    },
+    {
+      "attempt": "temporal-adapter-20261013-temporal-ce-control-01",
+      "command": {
+        "bytes": 1073,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/command.json",
+        "sha256": "95908774fe573aee5524da76c05e91c86c5fdef3c1edae3bf9d5a40ebeb8d94a"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/run_temporal_adapter.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-ce-control-plan-v01.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 45,
+      "nested_directories": [],
+      "result_bytes": 39409357,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results",
+      "terminal": {
+        "bytes": 520,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/guardian-exit.json",
+        "sha256": "6dd6fce6ab791fd0bf91f9f9ea048f0d81c2ef7152e38dea85dbaee3b3ef6c2e"
+      }
+    },
+    {
+      "attempt": "temporal-attention-20261013-temporal-attention-ce-02",
+      "command": {
+        "bytes": 1093,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/command.json",
+        "sha256": "6a0f9b69c773ad465865479a908804c7a10ce134abe9621301df5b49832449f1"
+      },
+      "command_metadata": {
+        "argv": [
+          "/home/barberb/.local/bin/python",
+          "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/run_temporal_attention_v02.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-plan-v02.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 74,
+      "nested_directories": [],
+      "result_bytes": 70934855,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results",
+      "terminal": {
+        "bytes": 521,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/guardian-exit.json",
+        "sha256": "04df8da0ced036835bc8262b4b740a75d8264425f81c7bc46f6600e4caba9d43"
+      }
+    },
+    {
+      "attempt": "temporal-role-contrast-20261012-03",
+      "command": {
+        "bytes": 1042,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/command.json",
+        "sha256": "2bc9b7ef10bc215c1888a464959cfb40d66407d8e11e3749957c9c4cf30d19f5"
+      },
+      "command_metadata": {
+        "argv": [
+          "/usr/bin/python3",
+          "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py",
+          "--plan",
+          "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v02.json",
+          "--output",
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results"
+        ],
+        "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets",
+        "cwd": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets",
+        "model_authority": false,
+        "no_cuda": true,
+        "no_proof_workers": true,
+        "resources": {
+          "admission_timeout_seconds": 120,
+          "child_deadline_seconds": 300,
+          "child_process_slots": 1,
+          "cpu_slots": 2,
+          "ledger_lock_timeout_seconds": 60,
+          "memory_mb": 1536,
+          "storage_bytes": 200000000
+        },
+        "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+      },
+      "files": 55,
+      "nested_directories": [],
+      "result_bytes": 25673096,
+      "result_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results",
+      "terminal": {
+        "bytes": 521,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/guardian-exit.json",
+        "sha256": "88ea7a68b13c825c3ff6618e9f4a2941e8a94d6f466c6f3cd3d60a74914a65fc"
+      }
+    }
+  ],
+  "protected_attempts": [
+    "conditions-balanced-20261014-conditions-balanced-ce-01",
+    "conditions-presence-20261014-conditions-presence-ce-01"
+  ],
+  "result_bytes": 942057168,
+  "schema": "actor-refinement-owned-released-results-storage-intake/v1"
+}

@@ -22,6 +22,8 @@ from ipfs_datasets_py.logic.software_contracts.content import (
     validate_cid,
 )
 from ipfs_datasets_py.logic.software_contracts.semantic_index.models import (
+    ArtifactRecord,
+    DependencyEdge,
     RepositoryState,
     SourceSpan,
     SymbolRecord,
@@ -205,13 +207,44 @@ class VerifiedSourceMaterialization:
         return self.evidence.to_dict()
 
 
+def _native_state_records(index: object) -> bool:
+    """Identify canonical frozen records without invoking view descriptors.
+
+    RepositoryState accepts record and span subclasses. Their serialization
+    can be stateful, so they retain the compatibility path's original reads.
+    This is an optimization selector, not source or currentness admission.
+    """
+    return (
+        type(index) is RepositoryState
+        and all(
+            type(symbol) is SymbolRecord
+            and (symbol.span is None or type(symbol.span) is SourceSpan)
+            for symbol in index.symbols
+        )
+        and all(type(artifact) is ArtifactRecord for artifact in index.artifacts)
+        and all(
+            type(edge) is DependencyEdge
+            and (edge.span is None or type(edge.span) is SourceSpan)
+            for edge in index.edges
+        )
+    )
+
+
 def _state_cid_of(index: object) -> str:
-    if hasattr(index, "state_cid"):
+    # The canonical immutable value's CID is recomputed on every call. Avoid
+    # computing it once merely to test existence and then discarding it. Do
+    # not apply this to arbitrary views or subclasses: their successive
+    # descriptor reads are observable and must keep existing refusal behavior.
+    if _native_state_records(index):
         value = index.state_cid  # type: ignore[attr-defined]
-        if callable(value):
-            value = value()
-        if type(value) is str and value:
-            return value
+    elif hasattr(index, "state_cid"):
+        value = index.state_cid  # type: ignore[attr-defined]
+    else:
+        value = None
+    if callable(value):
+        value = value()
+    if type(value) is str and value:
+        return value
     raise SourceWrongStateError(
         f"{SourceFailureKind.WRONG_STATE.value}: semantic_index lacks state_cid"
     )

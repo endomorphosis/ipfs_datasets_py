@@ -1,0 +1,1 @@
+{"parquet_files":[{"dataset":"justicedao/uscode-autoformal-entity-cache","config":"autoformal_uscode","split":"train","url":"https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/resolve/refs%2Fconvert%2Fparquet/autoformal_uscode/train/0000.parquet","filename":"0000.parquet","size":16898459}],"pending":[],"failed":[],"partial":false}

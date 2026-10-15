@@ -1,0 +1,109 @@
+{
+  "attempt_name": "actor-refinement-20261014-actor-refinement-ce-01",
+  "baseline": {
+    "bytes": 88308,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resource-baseline-v01.json",
+    "sha256": "f9fa412edf4934d00812786c0992f027171eb47869aae276fb86c86e3ad8b79b"
+  },
+  "cell": "actor-refinement-ce",
+  "findings": [],
+  "metadata_check": {
+    "bytes": 6728,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/guardian-check-v05.json",
+    "sha256": "3057e77fd78eea71e2e202c4ebe51dfd970811c25a76bbeed1a6f3bcbffc6df6"
+  },
+  "opening_snapshot": {
+    "bytes": 1420,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/private-runtime-snapshots/opening-v05/snapshot-receipt-v01.json",
+    "sha256": "fba2e641be23ac534fceaf2d4f4c2325aa85da21e88e907f9109b6c35f50eed5"
+  },
+  "passed": true,
+  "plan": {
+    "bytes": 66306,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-plan-v01.json",
+    "sha256": "bc7facaba1d1bc78b8145bdd9fed2957e488cab22eb27f470ddd208b04aa5375"
+  },
+  "runtime_artifacts": {
+    "child-exit.json": {
+      "bytes": 103,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/child-exit.json",
+      "sha256": "9d3662effd9533e4d5c0783e9d8c0b5ce3e581c30ba72b847ef34ccfee703116"
+    },
+    "child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/child-identity.json",
+      "sha256": "1f6e24040907070ddeb553c4ea182a082a91d5c2f6ef996f299a725f8d05328e"
+    },
+    "command.json": {
+      "bytes": 1077,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/command.json",
+      "sha256": "dfb7de1ed76dcab8d9008e3120986606b8d00dfd8ac8e179ac82c6b63490ded7"
+    },
+    "group-rss-observations.jsonl": {
+      "bytes": 66485,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/group-rss-observations.jsonl",
+      "sha256": "3e1794272e207873167fbf87cf29d460161ff3d0dbfee893bdd6fee02edd381e"
+    },
+    "group-rss-summary.json": {
+      "bytes": 1755,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/group-rss-summary.json",
+      "sha256": "52ed7a594d55fe7f041f56546875c413dd470da1e7f43e7e98bbf6e60d78d91b"
+    },
+    "guardian-exit.json": {
+      "bytes": 522,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/guardian-exit.json",
+      "sha256": "dcbcb507d0bc483b086a0f562ffeaf7594c6ab9ccd5ab11739d44b07883fe79f"
+    },
+    "lease-binding.json": {
+      "bytes": 693,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/lease-binding.json",
+      "sha256": "a500c6935c87306714ec85a5f4c2d35af05729fff7d2e4fd4320133199e1c3d6"
+    },
+    "lease-observations.jsonl": {
+      "bytes": 138501,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/lease-observations.jsonl",
+      "sha256": "9af2ae01e3cb0a2c265db85c4f666d22c79aefdd1e0989a3ce43065920f57f17"
+    },
+    "owned-group-final.json": {
+      "bytes": 190,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/owned-group-final.json",
+      "sha256": "31385dccdfd4aa494f79899c3816117ca544af2bc782d7ef7d6114ae211f51d0"
+    },
+    "pre-admission.json": {
+      "bytes": 7938,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/pre-admission.json",
+      "sha256": "02f3d430970594e30f1762b9eda0a0dcedb5f5f41b417be9913336bc3ef26649"
+    },
+    "resource-observations.json": {
+      "bytes": 3502,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/resource-observations.json",
+      "sha256": "fa13c0aa300de60c3d82360e8b020e7bc8bfe43d474342627113199084b2b35f"
+    },
+    "resources-final.json": {
+      "bytes": 6308,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/resources-final.json",
+      "sha256": "5101414e7934d27346cd6b3df6e1ce3ef4e7ba7b14f53285ead9ecf6e7163572"
+    },
+    "resources-start.json": {
+      "bytes": 2554,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/resources-start.json",
+      "sha256": "b2463681dcdc0245e444833f2ee0a50f3a95aa9aa218b3ec5d4fd57fbf106f39"
+    },
+    "scheduler-adoption.json": {
+      "bytes": 4646,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/scheduler-adoption.json",
+      "sha256": "c5709dca98cfbea503b6f0a8bd4766b749cab19de67c163a7e681724696ec013"
+    }
+  },
+  "schema": "actor-refinement-terminal-resource-inputs/v1",
+  "terminal_snapshot": {
+    "bytes": 2030,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/private-runtime-snapshots/terminal-actor-refinement-ce-v01/snapshot-receipt-v01.json",
+    "sha256": "cce872bea0bbf00e4b6b4a773a7bd00997d26a8aacf9f21384e348b238a528ae"
+  },
+  "training_review": {
+    "bytes": 38284,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-training-review-v01.json",
+    "sha256": "f018f217f9b1f3cd0dc2aafd989c03d0e16685b886f99880f42aae3d6aed5d00"
+  }
+}

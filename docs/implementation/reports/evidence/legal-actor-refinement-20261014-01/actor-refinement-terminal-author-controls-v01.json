@@ -1,0 +1,100 @@
+{
+  "actual_terminal_main_calls": 0,
+  "actual_tree_censuses": 0,
+  "control_count": 13,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "dynamic baseline plusown plusforeign fullyaccounted",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "any baseline body status change refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "any baseline record disappearance refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "retained ownclaim refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "own budget drift refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "prior ownID reuse refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "boolean foreign claim refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "new released foreign record addsnocharge",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "actualV03 custody andconcrete review schema",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "stale nonconcrete review schema refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "stale runnerV02 custody refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "retained ownclaim lease RSS loader exact priorAST",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "terminal main containsno actual treecensus call",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "inherited_controls_rerun": false,
+  "inherited_own_lease_RSS_helpers": {
+    "bytes": 48261,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v03.py",
+    "sha256": "3ac3a0b15434562fbb50e35f8883daad2bc674342d259269643bc9ee2cc0d22f"
+  },
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "observer": {
+    "bytes": 18496,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/audit_actor_refinement_terminal_resources_v01.py",
+    "sha256": "1face201ab85b598e50cf0da74e6c3ed562d9bc589f8ca8249cbdddf7e02705c"
+  },
+  "passed": true,
+  "private_body_reads": 0,
+  "protocol": {
+    "bytes": 19906,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_resource_protocol_v03.py",
+    "sha256": "f7914d018d9d59c7dd611ccfe12cc30e6db4fe9319808651c6b24982cbbbbc55"
+  },
+  "resource_API_calls": 0,
+  "schema": "actor-refinement-terminal-resource-author-controls/v1",
+  "source": {
+    "bytes": 6097,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_terminal_author_controls_v01.py",
+    "sha256": "98b0e6f9844b7c0092332d717e3f36c5838163d1f8b8c2f5caa30b891b70f749"
+  }
+}

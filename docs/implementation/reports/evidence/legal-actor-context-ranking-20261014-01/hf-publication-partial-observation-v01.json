@@ -1,0 +1,291 @@
+{
+  "attributes_difference": {
+    "added_line_count": 1,
+    "attributes_equal": false,
+    "baseline_bytes": 2230,
+    "baseline_sha256": "88ff4d857c849ce3e11fea7c2f70d648550968cf546ab9cbc4d690e1b6543036",
+    "byte_delta": 142,
+    "exact_checkpoint_LFS_rule_append": true,
+    "expected_append_bytes": 142,
+    "interpretation_scope": "public attributes byte difference only; no corrective authority",
+    "partial_bytes": 2372,
+    "partial_sha256": "491dc65266e518f57817be1df5fe35ad3f57aa128ebe2b51662213c5058cabb0",
+    "removed_line_count": 0
+  },
+  "attributes_readback": {
+    "baseline": {
+      "bytes": 2230,
+      "force_download": true,
+      "immutable_download_byte_identity_matches": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-partial-attrs-readback-v01/baseline/.gitattributes",
+      "remote_identity": {
+        "blob_id": "1cf99f89f95ce8f39b630d8df37126fc628047de",
+        "lfs": null,
+        "size": 2230
+      },
+      "revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4",
+      "sha256": "88ff4d857c849ce3e11fea7c2f70d648550968cf546ab9cbc4d690e1b6543036"
+    },
+    "chunk03": {
+      "bytes": 2372,
+      "force_download": true,
+      "immutable_download_byte_identity_matches": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-partial-attrs-readback-v01/chunk03/.gitattributes",
+      "remote_identity": {
+        "blob_id": "99bfc15efcb2583c91404db767f87c9dbec26886",
+        "lfs": null,
+        "size": 2372
+      },
+      "revision": "246e7793db1399341387fabbb740781ea23251c8",
+      "sha256": "491dc65266e518f57817be1df5fe35ad3f57aa128ebe2b51662213c5058cabb0"
+    }
+  },
+  "automatic_retry_performed": false,
+  "baseline_revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4",
+  "checkpoint_JSON_parses": 0,
+  "checkpoint_opened": false,
+  "comparisons": {
+    "chunk01": {
+      "all_created_payload_byte_identities_exact": true,
+      "all_original_identities_exact": true,
+      "all_original_non_attributes_identities_exact": true,
+      "exact_path_inventory": true,
+      "missing_created_paths": [],
+      "missing_old_paths": [],
+      "new_payload_byte_identities": {
+        "releases/20261014-actor-context-ranking-v1/README.md": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_dev-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_dev-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_eval-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_eval-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_challenge-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_challenge-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_dev-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_dev-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_test-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_test-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_tune-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_tune-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-law-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-law-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_authored_eval-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_authored_eval-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_tune-joint.json": true
+      },
+      "old_identity_differences": {},
+      "unexpected_paths": []
+    },
+    "chunk02": {
+      "all_created_payload_byte_identities_exact": true,
+      "all_original_identities_exact": true,
+      "all_original_non_attributes_identities_exact": true,
+      "exact_path_inventory": true,
+      "missing_created_paths": [],
+      "missing_old_paths": [],
+      "new_payload_byte_identities": {
+        "releases/20261014-actor-context-ranking-v1/README.md": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_dev-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_dev-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_eval-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_eval-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_challenge-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_challenge-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_dev-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_dev-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_test-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_test-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_tune-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_tune-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-law-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-law-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_authored_eval-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_authored_eval-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_tune-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_tune-raw.json": true
+      },
+      "old_identity_differences": {},
+      "unexpected_paths": []
+    },
+    "chunk03": {
+      "all_created_payload_byte_identities_exact": true,
+      "all_original_identities_exact": false,
+      "all_original_non_attributes_identities_exact": true,
+      "exact_path_inventory": true,
+      "missing_created_paths": [],
+      "missing_old_paths": [],
+      "new_payload_byte_identities": {
+        "releases/20261014-actor-context-ranking-v1/README.md": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_dev-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_dev-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_eval-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_eval-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_challenge-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_challenge-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_dev-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_dev-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_test-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_test-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_tune-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_tune-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-law-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-law-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_authored_eval-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_authored_eval-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_tune-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_tune-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/cell-checkpoint.json": true
+      },
+      "old_identity_differences": {
+        ".gitattributes": {
+          "after": {
+            "blob_id": "99bfc15efcb2583c91404db767f87c9dbec26886",
+            "lfs": null,
+            "size": 2372
+          },
+          "before": {
+            "blob_id": "1cf99f89f95ce8f39b630d8df37126fc628047de",
+            "lfs": null,
+            "size": 2230
+          }
+        }
+      },
+      "unexpected_paths": []
+    },
+    "live": {
+      "all_created_payload_byte_identities_exact": true,
+      "all_original_identities_exact": false,
+      "all_original_non_attributes_identities_exact": true,
+      "exact_path_inventory": true,
+      "missing_created_paths": [],
+      "missing_old_paths": [],
+      "new_payload_byte_identities": {
+        "releases/20261014-actor-context-ranking-v1/README.md": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_dev-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_dev-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_eval-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_eval-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_challenge-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_challenge-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_dev-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_dev-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_test-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_test-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_tune-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_tune-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-law-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-law-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_authored_eval-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_authored_eval-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_tune-joint.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_tune-raw.json": true,
+        "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/cell-checkpoint.json": true
+      },
+      "old_identity_differences": {
+        ".gitattributes": {
+          "after": {
+            "blob_id": "99bfc15efcb2583c91404db767f87c9dbec26886",
+            "lfs": null,
+            "size": 2372
+          },
+          "before": {
+            "blob_id": "1cf99f89f95ce8f39b630d8df37126fc628047de",
+            "lfs": null,
+            "size": 2230
+          }
+        }
+      },
+      "unexpected_paths": []
+    }
+  },
+  "corrective_action_performed": false,
+  "created_but_unverified_chunk": 3,
+  "created_but_unverified_revision": "246e7793db1399341387fabbb740781ea23251c8",
+  "created_checkpoint_verified_by_LFS_size_and_SHA256_only": true,
+  "created_payload_files": 20,
+  "default_promotion": false,
+  "final_publication_complete": false,
+  "first_verified_revision": "59b54a18f8c685a2097746c88ae2176c43e7169f",
+  "immutable_attributes_downloads": 2,
+  "immutable_snapshots": {
+    "baseline": {
+      "bytes": 1520684,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-baseline-immutable-observed-v01.json",
+      "sha256": "e225a602bef48e4079849019589868da0bcf4d43a21c72ef9086b1b4ec09b082"
+    },
+    "chunk01": {
+      "bytes": 1524820,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk01-immutable-observed-v01.json",
+      "sha256": "6d1d30390fc3cfa616f50477145da5418956589d3c7da17893877b123eefd6fb"
+    },
+    "chunk02": {
+      "bytes": 1525050,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk02-immutable-observed-v01.json",
+      "sha256": "bf3cf365ea20e7849a1fc1c1fffe31f7d90b72d67f303e0cfd6febcef6ae8881"
+    },
+    "chunk03": {
+      "bytes": 1525420,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk03-immutable-observed-v01.json",
+      "sha256": "49bf68250f1aac8ea953303c43b2d78849f9e6ca18c31b6c7f1b59a598fa95ca"
+    },
+    "live": {
+      "bytes": 1525384,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-live-immutable-observed-v01.json",
+      "sha256": "ca3098315f4d77470c8cf4905b7af08414551016ca4b3c198b298874b94a8aac"
+    }
+  },
+  "last_verified_chunk": 2,
+  "live_exactly_matches_known_partial": true,
+  "metadata_queries": 5,
+  "model_calls": 0,
+  "noncheckpoint_created_opaque_files_hashed": 19,
+  "observation_completed": true,
+  "observer": {
+    "bytes": 14203,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/observe_actor_context_ranking_hf_partial_v01.py",
+    "sha256": "bab0f43229cb26aa8e7b472463308d773617c21ea4ad1a718a42467694a1002d"
+  },
+  "original_baseline": {
+    "bytes": 3040998,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-before-file-identities-v01.json",
+    "sha256": "de488e30a48aaba63660ca87fd1ef26f90aadd9b3a7c7beba55908fc7c96e4d9"
+  },
+  "original_file_count": 5646,
+  "original_publication_review": {
+    "bytes": 151803,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-independent-review-v01.json",
+    "sha256": "2bcafc080c2e444e738a3488f8a403c70bd3046e8cddb77974b2855a7cb027e0"
+  },
+  "payload_downloads": 0,
+  "payload_uploads": 0,
+  "preparation": {
+    "bytes": 109799,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-preparation-receipt-v01.json",
+    "sha256": "45cae121d94a6527940f7cebba88f278c573723c4de5a69d7c14d4c9fac24140"
+  },
+  "private_body_reads": 0,
+  "release_prefix": "releases/20261014-actor-context-ranking-v1",
+  "remaining_original_chunk_indices": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "remote_mutations": 0,
+  "repository": "Publicus/legal-ir-autoencoder",
+  "resource_API_calls": 0,
+  "schema": "actor-context-ranking-Hub-partial-observation/v1",
+  "second_verified_revision": "88876ef24d5566f6dc5d6c640b3d6cbcfe20907b",
+  "source_qualification": {
+    "bytes": 19029,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-partial-observer-source-independent-review-v01.json",
+    "sha256": "468425fa9bed4cdd0abe2db10d2b20272f1a0b8be9279141bd1cb2d75e01d214"
+  },
+  "source_spec": {
+    "bytes": 94501,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-release-spec-v01.json",
+    "sha256": "bc36cad30b42c66d87d2224aa681569dccd50eca2635c1ba137f504909d9717b"
+  },
+  "strict_publication_invariants_passed": false
+}

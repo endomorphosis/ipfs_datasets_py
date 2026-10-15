@@ -1,0 +1,364 @@
+{
+  "actual_apply_calls_by_reviewer": 0,
+  "actual_downloaded_archive_recovery": {
+    "bytes": 1860,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-actual-v01.json",
+    "sha256": "f7a3d5fca1e4aa24da4f984eb7e71f1677e2e159295c940ad0896c334b8600e2"
+  },
+  "actual_originals_removed_by_reviewer": 0,
+  "approved_scope": {
+    "archive_bytes": 149504694,
+    "attempts27": true,
+    "counted_manifest_journal_bound_bytes": 2000000,
+    "excluded_ambiguous_attempts": [
+      "arbitrary-native-cache-20261011-02",
+      "retained-joint-readout-20261011-01",
+      "retained-pointer-cache-20261011-03"
+    ],
+    "files": 1162,
+    "final_counted_archive": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/attempt-01/owned-released-results-20261014-v01.tar.gz",
+    "final_counted_manifest": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/attempt-01/owned-released-results-20261014-v01.manifest.json",
+    "protected_attempts": [
+      "conditions-balanced-20261014-conditions-balanced-ce-01",
+      "conditions-presence-20261014-conditions-presence-ce-01"
+    ],
+    "raw_bytes": 934325529
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/apply_owned_results_archive_v01.py": {
+      "bytes": 13454,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/apply_owned_results_archive_v01.py",
+      "sha256": "e8cd87849223767c40d48c5e90da55bc7f93f21a6ce2e1a128fc48ede3855d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-README-v01.txt": {
+      "bytes": 759,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-README-v01.txt",
+      "sha256": "feba43f213b2c4075cab0f131a6e6b1ba8eeac427a1b97eba5b2ab303dc39c09"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-apply-author-controls-v01.json": {
+      "bytes": 2949,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-apply-author-controls-v01.json",
+      "sha256": "f9d484035ba5b1a30b761efe05a51b51749984eda539c898e66bcba2f6b28763"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-apply-source-independent-review-v01.json": {
+      "bytes": 5381,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-apply-source-independent-review-v01.json",
+      "sha256": "88dcadd74569b9cd0ae05205411567ccd311dc90f58dc948e132796404383fe1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-after-v01.json": {
+      "bytes": 1482925,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-after-v01.json",
+      "sha256": "e606c48c121dabe2e8ee19f3ead38187ba51ece2057fc376f810f04509034237"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-before-v01.json": {
+      "bytes": 1482227,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-before-v01.json",
+      "sha256": "be949a0984afdb08bf0bbce87ff1b7d87068084fd340d130d3be76bee6bcdfbc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-commit-v01.json": {
+      "bytes": 1211,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-commit-v01.json",
+      "sha256": "907a2eb241f59b24dd57221956ac9abada059c094dfd98b7fe3a1042b272dbcf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-immutable-independent-v01.json": {
+      "bytes": 1483184,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-immutable-independent-v01.json",
+      "sha256": "6e1b00ffc16833888704d72c2920a53d263dc62a05678d389c5647404a12794e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-independent-review-v01.json": {
+      "bytes": 25582,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-independent-review-v01.json",
+      "sha256": "b99998f868a62e0005d1e43815a57e342271adb234dba4c97d51bb220a15916e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-publication-v01.json": {
+      "bytes": 4750,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-publication-v01.json",
+      "sha256": "c579a3e8feb9277235816137649757ce9a7cdc4e522255c22da79316efd04d48"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-readback-v01/archives/20261014-owned-released-results-v1/README.md": {
+      "bytes": 759,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-readback-v01/archives/20261014-owned-released-results-v1/README.md",
+      "sha256": "feba43f213b2c4075cab0f131a6e6b1ba8eeac427a1b97eba5b2ab303dc39c09"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-readback-v01/archives/20261014-owned-released-results-v1/owned-released-results.tar.gz": {
+      "bytes": 149504694,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-readback-v01/archives/20261014-owned-released-results-v1/owned-released-results.tar.gz",
+      "sha256": "76f81402e57a5782abd7fb76b91b62e8af20886239187dd8603425eb4caee47f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-readback-v01/archives/20261014-owned-released-results-v1/restoration-manifest.json": {
+      "bytes": 801434,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-readback-v01/archives/20261014-owned-released-results-v1/restoration-manifest.json",
+      "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-source-independent-review-v01.json": {
+      "bytes": 8240,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-source-independent-review-v01.json",
+      "sha256": "39910af955e6dcabcb1392f09161b5f88ea7bdea91477f8506af213cb73c701e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-independent-review-v02.json": {
+      "bytes": 76972,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-independent-review-v02.json",
+      "sha256": "4f686e18e0bad824af254c92e2a91be767c0553d0dbeb5dc8a99b0cafc82fb31"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json": {
+      "bytes": 801434,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json",
+      "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-actual-v01.json": {
+      "bytes": 1860,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-actual-v01.json",
+      "sha256": "f7a3d5fca1e4aa24da4f984eb7e71f1677e2e159295c940ad0896c334b8600e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/cell-checkpoint.json": {
+      "bytes": 2742144,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/cell-checkpoint.json",
+      "sha256": "01dda8db527879dd47f84af2e0486d7ccd4e8df04ea501fb55410c343cbaa27d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/cell-training.json": {
+      "bytes": 47985,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/cell-training.json",
+      "sha256": "d3abe32938149bba74f22d58f81ddedc0fab356b72c3254a8befb81c519000af"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 22351,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/initial-parity-alternate_placeholders.json",
+      "sha256": "6ff7857fc3dab789bf1faf03dc624092936a35ce4baba8a5e9e94b966278923b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/initial-parity-disabled.json": {
+      "bytes": 22355,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/initial-parity-disabled.json",
+      "sha256": "57bb7cb972b208d82911040d90254f0176c6544852c32f76e9e96b2d10c6e147"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 22353,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/initial-parity-rotated_placeholders.json",
+      "sha256": "9cf73ccba8649adb5a0e00ac268408e5e6399f2c40c8ffb6b72dfa4523d81145"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/initial-parity-zeros.json": {
+      "bytes": 22351,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/initial-parity-zeros.json",
+      "sha256": "1e1770d73f208c15765335baf5679315905b7dd5cc86b8968b728843a838c26b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/initial-parity.json": {
+      "bytes": 2131,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/initial-parity.json",
+      "sha256": "fd32590c1464d198765dc894067069b9fb2b9bfe837268c3ea215c5a6abce551"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/summary.json": {
+      "bytes": 50095,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/summary.json",
+      "sha256": "e55c2b791c178a8a781e8de7dafae62f2fa19c17f70388e2df295ea59d779011"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-authored_dev-joint.json": {
+      "bytes": 1030136,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-authored_dev-joint.json",
+      "sha256": "253dce8b2d88aaa60b53394117f8ae086d538bebdf33d37a12ddefb3ead13e26"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-authored_dev-raw.json": {
+      "bytes": 1383306,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-authored_dev-raw.json",
+      "sha256": "a00ace947842fa12f8bd7cf8e48a8d13231de1972257657fa7ca2119e1343843"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-authored_dev-score.json": {
+      "bytes": 105106,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-authored_dev-score.json",
+      "sha256": "222639d913bf29df94a3b3bd98a8be79e9347ddedd346e9462edf322c21a519e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-authored_eval-joint.json": {
+      "bytes": 1044392,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-authored_eval-joint.json",
+      "sha256": "d75029c3a9da20203c65b5d5098cf81fc33d9f7d074c831abe76fc25be813b2f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1438252,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-authored_eval-raw.json",
+      "sha256": "b8e38bd466f5d1b796408f7ba6b40b6c3b0e3c55f6ca1953c825773ea982716d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_challenge-joint.json": {
+      "bytes": 528662,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_challenge-joint.json",
+      "sha256": "2b390b8d18cd0e1180a0cb609fe414e33fcb914d8b86598db88eeee20cf0fb9e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_challenge-raw.json": {
+      "bytes": 667421,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_challenge-raw.json",
+      "sha256": "26befe8b713a16d9d3a87d103d5fc12dfc53dc6f89da59da4299132c5386c823"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_challenge-score.json": {
+      "bytes": 53550,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_challenge-score.json",
+      "sha256": "e7d2fd74ab01f66b066c975c60f4bdda77d69bc2fd04de3637701a3fa9fdb3ef"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_tune-joint.json": {
+      "bytes": 500470,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_tune-joint.json",
+      "sha256": "c277bfa4803b847f8beef23c9e2eac74516823846240130e6e6d1c70696616c0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_tune-raw.json": {
+      "bytes": 603732,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_tune-raw.json",
+      "sha256": "4b1c1142c2a22a3f79f8d4e810519f9b31a493a48d267d403777bc6b51f20313"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_tune-score.json": {
+      "bytes": 53309,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-fresh_tune-score.json",
+      "sha256": "49ee3b0123070694335b5588ddb735eac9333ca13f886a2d404f1d31c4218ea0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-law-joint.json": {
+      "bytes": 98567,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-law-joint.json",
+      "sha256": "318135c01550fc48998590306725138064bdcb536ad21835d073a996f66932a7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-law-raw.json": {
+      "bytes": 275208,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-law-raw.json",
+      "sha256": "8397ec1ec251afa8bfae5d7c32003b9eea593e77c58ce0b9dad83406dc97c85b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-old_tune-joint.json": {
+      "bytes": 1459993,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-old_tune-joint.json",
+      "sha256": "0a583f1dc14607adf5ddc944f9b410f2dbd92035b8fe5bfc885a52cec848d636"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-old_tune-raw.json": {
+      "bytes": 2279874,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-old_tune-raw.json",
+      "sha256": "e425fe710def504d0d277e2baa45073ebc15d4ac6f89900859d229babc88fcd8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-old_tune-score.json": {
+      "bytes": 101544,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-old_tune-score.json",
+      "sha256": "61520c0162527619eea031bc964a5d2d88f6a3e7e4ac922492cd552ecb46dcb2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 22356,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-parity-alternate_placeholders.json",
+      "sha256": "80073bd4103355b3f98ec593d644bdfcea7ff4e5d5d05b79b1050ba1314bc83b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-parity-disabled.json": {
+      "bytes": 22360,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-parity-disabled.json",
+      "sha256": "dcba1422c204538c4ed96da29c78c3c8e4c3cb003b1395a0925a8ffe7d79d759"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 22358,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-parity-rotated_placeholders.json",
+      "sha256": "508c1068dc21940e8ddc4ea649b250a91f25f6a86a13934e7f1bc6f039e5b9ba"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-parity-zeros.json": {
+      "bytes": 22356,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-parity-zeros.json",
+      "sha256": "1b2d877b31f13144ed831f300fbb4e75a78f051defc28fda47b59c084e1200f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-parity.json": {
+      "bytes": 2131,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-recovery-test-v01/matched-temporal-20261012-actor0-scope0-modality1-01/results/trained-parity.json",
+      "sha256": "132230ce717de582481ce22b9574084f21483870178b437e6a25f45bbfe1e716"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-source-independent-review-v01.json": {
+      "bytes": 84738,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-source-independent-review-v01.json",
+      "sha256": "f8ffe1618f7b4bba6ce8f906bc62bf5571435434f4a9a5fd5465ca08d06752aa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-staging-v01/owned-released-results.tar.gz": {
+      "bytes": 149504694,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-staging-v01/owned-released-results.tar.gz",
+      "sha256": "76f81402e57a5782abd7fb76b91b62e8af20886239187dd8603425eb4caee47f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-restore-source-independent-review-v01.json": {
+      "bytes": 6152,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-restore-source-independent-review-v01.json",
+      "sha256": "b0ea2d22dba56259d0b0c20e81c5131ead3b3d8663b0e62e73e324c5e92b2b72"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned_results_archive_apply_author_controls_v01.py": {
+      "bytes": 5020,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned_results_archive_apply_author_controls_v01.py",
+      "sha256": "602d6a77c080a7f8f65a3081b68da5bd47006d1536b5c2f56d7e60fbdabaafa8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_owned_results_archive_v01.py": {
+      "bytes": 16909,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_owned_results_archive_v01.py",
+      "sha256": "e24e09b8e8734d4feacb38d679154556cc0c9a7bacfdf5d917eb097077445a38"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/publish_owned_results_archive_hf_v02.py": {
+      "bytes": 12363,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/publish_owned_results_archive_hf_v02.py",
+      "sha256": "48f917fa3921294631df351c0a402e21285620504665f4bc50dba2181e962502"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/restore_owned_results_archive_v01.py": {
+      "bytes": 22600,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/restore_owned_results_archive_v01.py",
+      "sha256": "51afc5cf53afc17a7919ab5a9efe122091f65fa6db26b3e008803feaf6d19a24"
+    }
+  },
+  "authorize_exact_archival_replacement": true,
+  "cap_change_authorized": false,
+  "claim_mutation_authorized": false,
+  "conservative_measured_savings_lower_bound_bytes": 782820835,
+  "current_original_metadata_fences_match1162": true,
+  "findings": [],
+  "full_root_censuses": 0,
+  "future_actual_training_plan_qualification_still_required": true,
+  "hf_independent_review": {
+    "bytes": 25582,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-independent-review-v01.json",
+    "sha256": "b99998f868a62e0005d1e43815a57e342271adb234dba4c97d51bb220a15916e"
+  },
+  "hf_publication": {
+    "bytes": 4750,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-publication-v01.json",
+    "sha256": "c579a3e8feb9277235816137649757ce9a7cdc4e522255c22da79316efd04d48"
+  },
+  "minimum_conservative_savings_bytes": 750000000,
+  "model_calls": 0,
+  "native_capacity_PASS_claimed": false,
+  "no_selected_original_result_paths_in_live_F15_donor_or_capture_inputs": true,
+  "numerical_imports": 0,
+  "original800M_target_met": false,
+  "original_rawhash_revalidation_delegated_to_exact_source_qualified_apply": true,
+  "passed": true,
+  "prepared": {
+    "bytes": 801434,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json",
+    "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+  },
+  "prepared_independent_review": {
+    "bytes": 76972,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-independent-review-v02.json",
+    "sha256": "4f686e18e0bad824af254c92e2a91be767c0553d0dbeb5dc8a99b0cafc82fb31"
+  },
+  "private_body_reads": 0,
+  "producer": {
+    "bytes": 13454,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/apply_owned_results_archive_v01.py",
+    "sha256": "e8cd87849223767c40d48c5e90da55bc7f93f21a6ce2e1a128fc48ede3855d41"
+  },
+  "raw_checkpoint_JSON_parses": 0,
+  "raw_score_JSON_parses": 0,
+  "required_execution_guards": [
+    "Exact known owned1162 rawmembers only; tool must rehash every original and identity before moving it.",
+    "Full archive+manifest must be fsynced/readback verified inside original countedroot BEFORE any raw move; immutable HF copy already independently verified.",
+    "Move each approved original into fresh private700same-countedroot quarantine, verify inode/metadata/rawhash before unlink, fsync intent/verified/removed progress.",
+    "Preserve all attempt/results directories, runtime command/terminal metadata, protectedN11/N14, excluded/failed/foreign runs, source owners/reference artifact files and all claim/cap/config.",
+    "Any mismatch stops without automatic retry; archive/HF preserve all removed bytes. Actual measured final metadata bound/savings and fresh qualified native capacity observation remain mandatory."
+  ],
+  "resource_API_calls": 0,
+  "restore_source_qualification": {
+    "bytes": 6152,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-restore-source-independent-review-v01.json",
+    "sha256": "b0ea2d22dba56259d0b0c20e81c5131ead3b3d8663b0e62e73e324c5e92b2b72"
+  },
+  "root_explicit_actual_execution_trigger_still_required": true,
+  "schema": "actor-refinement-owned-results-archive-apply-independent-review/v1",
+  "source_qualification": {
+    "bytes": 5381,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-apply-source-independent-review-v01.json",
+    "sha256": "88dcadd74569b9cd0ae05205411567ccd311dc90f58dc948e132796404383fe1"
+  },
+  "training_authorized": false
+}

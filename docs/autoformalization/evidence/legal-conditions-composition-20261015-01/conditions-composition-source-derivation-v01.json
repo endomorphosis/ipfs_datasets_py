@@ -1,0 +1,149 @@
+{
+  "analyzer": {
+    "bytes": 40929,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyze_conditions_composition_v01.py",
+    "sha256": "b5e946babffb41834d4b95e5700201d50b957991b17e7b44551130df12446553"
+  },
+  "author_controls": {
+    "bytes": 5005,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-author-controls-v01.json",
+    "sha256": "d2d0052c7a525d5a2e641d6c077014c19833757b137be13e5efd606a43e2f35d"
+  },
+  "current_F19_resource_owners_imported_or_substituted": false,
+  "new_rank_copy_comparison_plumbing_authored_by": "/root/actor_ranking_model_n9",
+  "original_capture_reference_checkpoint_body_reads": 0,
+  "other42_source_owner_pins_descriptor_only": true,
+  "schema": "conditions-composition-diagnostic-source-derivation/v1",
+  "selected_function_AST_sha256": {
+    "coordinate": {
+      "gold_coordinates": "d258bd9324e740a5f6175df52ed65bbd2101932d4b3de79b949780a967638c76",
+      "scorers": "5559490349f3dca2ab77b813f1546347a06a73df1fcb78578c900e6d52ddfeb8",
+      "strict_rule": "46140579d75ced5435dbaf932fb34bb97ebef3e03e137fc9d5a209b75c74c3c1",
+      "tokenize": "86c342401a6c658b43d143ab3a079519058ddd3d81583d7191b2e1b21872c6b7"
+    },
+    "greedy": {
+      "_f32": "2f2f09f56b3399adb3da43c089892cac7e1e1639c4b0474d100e8c65df063d0d",
+      "_pair_winners": "5f6b38ee29cc6e1fdf90a376eee7926958653632e8fca995d820e7ebab7592a4",
+      "_require": "1e62c0a9b1a226fcca4eaa3736d002ab0b6d2bab6c4d8444c234d75efc046143",
+      "_same": "ea2dc462a0f68d76fe8d85e2260b638294cf28f977b926aece1ee7cf4954f0bd",
+      "_verify_greedy": "b0c75bb28e2e0e6d56ec6bc0aa01fb181202b8991b71be79c5b2c657a5a76799",
+      "_wire": "4caf766e20698169d5c57cddb82d459d65d6b7405d18131ffc84b7f242a1f12d"
+    },
+    "joint": {
+      "JointSelectionError": "a85a732c25b9f4dc6959df063a109dcef014a5abcee70cc678254837f4da57f0",
+      "_canonical": "7ef057c3a36fd6618edae1ff01049c3f304a4e1e856d8d2bf0a303dcdb9ec68a",
+      "_choice": "55abb39a2008ac9d38a9738abb1693abb8cf44ab3496fa46ddfe11a9367c506d",
+      "_f32": "c6713f86beacf179f2ed3b31f3c7921b8980dfe4d41f9347cd1286f329292b69",
+      "_greedy": "7fa2c6ae6574ece3e53296faab0501c55a9803744907a92e873817963c688e58",
+      "_keys": "7f30b5cda7202c2b25df2c11218ffd6c2ca5a009dde3f131939e8ef724601329",
+      "_rank_spans": "91765eb5512402addfdc722ad63a32700530727aefb9b9c85eb74eaf50f01df0",
+      "_raw": "44d3f4f8b5ef49a7b9412626678dc1c26ffb1086c4fd547f0e8d34fe049284b4",
+      "_require": "0e0f96851525cb4b45a061f94092d10e8b2d5f3577719989a1fa03a4ba92c23c",
+      "_span": "0862d29fa145b0ae344ba75ab654289a2dc7c451636ef410c92b4e1031ca31e0",
+      "_validated": "8e83ba67f71115be678963a8c6ccbbf058e185f373d67fef13a45fd520d8a988",
+      "select_joint_spans": "3b8b98eb732c6c0e0823f5ff3b8025e41d6ede7b20c083f8bd84170727b6a0f1"
+    },
+    "pure": {
+      "binary": "99331a32d01b4e40d7e3f44d5127bd33dd4e37b60cb3df9ce8ba6a37d5cf72be",
+      "canonical": "57d0bce2d72373dc6652703724fa37ab69fba4bcad05709c6711311eeb75bcad",
+      "detached": "1a0f1e01ac9d2ede1d3f4a1c052376f232b7676ac4c06bc6ca6117dfb004fcb7",
+      "digest": "b36e994c4f1228c8a6eb83a65b27199e3fb6c4351cc38d285a73145071769945",
+      "f32": "26d214c23e04439d97d65abfdc56ccc4fdd9a6b4afd3ba464a2669f64bf659c8",
+      "fixed": "344ac06c99d955ffc0381b4b8e3db8c4da7e32330f49f30132a2851dd8e637e6",
+      "guarded_choice": "0d06a448bd3ae3dbeb1a3067df0672b6f6b81b8b8eedb420552b95500680498a",
+      "independent_score_checks": "54f53fdcb38c2ebb4231d631e9c6c46be34016f8bc6940d659de265794f9de72",
+      "modality_summary": "12fb204aeb96cde4a4616f4b13d1465e7fea052fd5cdbbce7288a49a4b794e82",
+      "optional_presence_confusion": "e2e844fdd8c68bc8bf53c669648746ee647b6f9895689567e1a87e50e45ab27c",
+      "paired_changes": "628dc3653184bc6423559a19fd190d0dba9cfae58453b339ea677b228c59ab48",
+      "references": "9cd8b88b659e1bf87e5faa2d869654d60a8d8ea3e2b6fc78c8fca14efac58381",
+      "require_map_pin": "caf53b96e62ad81d8b7b20442fe9b66b10c3a56c5d1170eb99c9290e0a3dd49c",
+      "source_projection": "9c8cdedb1976a55ad3d078b1132545d548c4dabc15c823e1f92ae44e76b10c54"
+    },
+    "scorer": {
+      "score_panel": "f30a9ecb197ac6e6cbd6316f1134fba96a4c72e27e3e04eb19611e3d7a5ef4ac"
+    }
+  },
+  "selected_function_rosters": {
+    "coordinate": [
+      "tokenize",
+      "strict_rule",
+      "gold_coordinates",
+      "scorers"
+    ],
+    "greedy": [
+      "_require",
+      "_wire",
+      "_same",
+      "_f32",
+      "_pair_winners",
+      "_verify_greedy"
+    ],
+    "joint": [
+      "JointSelectionError",
+      "_require",
+      "_raw",
+      "_f32",
+      "_keys",
+      "_validated",
+      "_choice",
+      "_rank_spans",
+      "_span",
+      "_canonical",
+      "_greedy",
+      "select_joint_spans"
+    ],
+    "pure": [
+      "canonical",
+      "digest",
+      "f32",
+      "binary",
+      "fixed",
+      "require_map_pin",
+      "detached",
+      "source_projection",
+      "references",
+      "independent_score_checks",
+      "paired_changes",
+      "modality_summary",
+      "optional_presence_confusion",
+      "guarded_choice"
+    ],
+    "scorer": [
+      "score_panel"
+    ]
+  },
+  "shared_AST_sources": {
+    "coordinate": {
+      "bytes": 66275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/analyze_targeted_results_v01.py",
+      "sha256": "4274d682da303954689bbb318750a91a49b407961f26d718104e1890a0ae4d0f"
+    },
+    "greedy": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "joint": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "pure": {
+      "bytes": 78492,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v02.py",
+      "sha256": "1a4b4f6b579d0d086ef97d4867c9eea274ceb88142edb4bff849eb95f0fa2e57"
+    },
+    "scorer": {
+      "bytes": 42637,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py",
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    }
+  },
+  "shared_greedy_and_joint_decoder_semantics_not_independently_requalified": true,
+  "source_files_consumed": 5,
+  "tests": {
+    "bytes": 10398,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_conditions_composition_detached_v01.py",
+    "sha256": "baab524c2dd8b5136d70974b2680e0e111a8c969e163f327e6a5492d3f90446e"
+  }
+}

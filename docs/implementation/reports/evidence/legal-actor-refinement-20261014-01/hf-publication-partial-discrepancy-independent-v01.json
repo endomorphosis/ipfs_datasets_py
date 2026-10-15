@@ -1,0 +1,612 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v02.py": {
+      "bytes": 28426,
+      "sha256": "89a01553f09ea1f228ea50ad8dd1c3d289d1dd89ddda5d2d2598e429393f53a5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-attributes-immutable-readback-independent-v01.json": {
+      "bytes": 2245,
+      "sha256": "cc73613e00ae8c99c573fbe7f58d7cd7f0a8a5de2bc255cce8dc6b0f2d3fc750"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-before-file-identities-v01.json": {
+      "bytes": 2954924,
+      "sha256": "d7a5a34039a51b87b65d4d4f28675702b14f282e8327c85a1df8b9189c992f19"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-chunk-01-created-v01.json": {
+      "bytes": 2068,
+      "sha256": "e0e3b75d5977a24fefe7d3e83969b83d0630f64ad4d744907ae4359108c8e190"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-chunk-01-preupload-v01.json": {
+      "bytes": 2036,
+      "sha256": "d902678baac5cbb83e09cdad5235a2fd0cae896da2adc33314980eecaf9d664a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-chunk-01-verified-v01.json": {
+      "bytes": 214,
+      "sha256": "9eb54e033917615e465d13cd024a4e26f1b01e635ed52ffae8c5f58a2bf92844"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-chunk-02-comparison-working-v01.json": {
+      "bytes": 12405,
+      "sha256": "95cf0e46ce0258983ef7fcaa420a7c3d84cd26a409845a503eef8f9c8beee97f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-chunk-02-created-v01.json": {
+      "bytes": 1020,
+      "sha256": "4bcc7cdc7212b885a08ec243844218e020a1d39ebf641299c59a805c45a926f6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-chunk-02-immutable-independent-v01.json": {
+      "bytes": 1483457,
+      "sha256": "cebb9c77560f68c263a1a84a54c62b6cbc5092b517b75e3cdb9b06c0e7492781"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-chunk-02-preupload-v01.json": {
+      "bytes": 988,
+      "sha256": "39cfd7e16890a67a7ec528eb1f1584fb4f3c91cf014436cd8c7396dff6084868"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-preparation-receipt-v01.json": {
+      "bytes": 102664,
+      "sha256": "0a2431e854c9f85d4b0060da796446deb867bdbcba4de0d20f3bd8c596063922"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-independent-review-v01.json": {
+      "bytes": 279329,
+      "sha256": "d3314113f2879f9efdf66a590171fd7b5028f47f8b8d82eef6e8176832f1b73a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-interruption-v01.json": {
+      "bytes": 2270,
+      "sha256": "7ab60fef70347c7d2a57a9d536dcabfa42f243dc823606d934b946e82c66c697"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-reconciliation-attrs-readback-v01/baseline/.gitattributes": {
+      "bytes": 2230,
+      "sha256": "88ff4d857c849ce3e11fea7c2f70d648550968cf546ab9cbc4d690e1b6543036"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-reconciliation-attrs-readback-v01/chunk02/.gitattributes": {
+      "bytes": 2359,
+      "sha256": "f0ad1ecaa2d81a65bb4dba0fb29222339fd93034de8729fed21b1f5c1c2de71a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/README.md": {
+      "bytes": 2754,
+      "sha256": "e3b072e59f9774d9aeb85358ab2c3131bb81ed6f41da499c0a063c6f59c81df8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_dev-joint.json": {
+      "bytes": 1024993,
+      "sha256": "d8b2e643e5537f42c3e9991416950083fc1e1f36105cbe1ad740ca55008bcfe5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_dev-raw.json": {
+      "bytes": 1438100,
+      "sha256": "db8a5e2c48876a35701ab4cb81525ac9d67d874e1a74264c76e9049120cfdc0e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_eval-joint.json": {
+      "bytes": 1024785,
+      "sha256": "4a89fc3dcf951d130d2122d66d7b40eabd375039f05437595c075aa940afa1f3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_eval-raw.json": {
+      "bytes": 1437514,
+      "sha256": "a8fbba197956ac23686c4b02744adaf5409fe4a114a579f383d90b0b057e7eab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526657,
+      "sha256": "d16895051911a7326993301d0cd7b2fd01b1f308f339daa00f3e887035f34b43"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 682622,
+      "sha256": "a12ad7cd31cb60e7be7118a2e6d97902c48426f5dd7da450b0484f0c6d9c2190"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_dev-joint.json": {
+      "bytes": 520906,
+      "sha256": "e360c4ba30f5d56ec33f6ad10a3bae8b62f3e0edb02e6ed3a9e5b7b07578f0fd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_dev-raw.json": {
+      "bytes": 811034,
+      "sha256": "fa0e7869c535824215d13d06bec9b01c178827cdd8c2b555ca9111801f087e0f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_test-joint.json": {
+      "bytes": 462506,
+      "sha256": "a25323e07126e63f596cc56dcd0b9ab2c3485b5d1cc867df82c06b14506af0ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_test-raw.json": {
+      "bytes": 809432,
+      "sha256": "865a30127a66b323424b8fdfead9fe1e04272c4d7b430ad98ae9272f64925745"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509135,
+      "sha256": "646a814e84c95f6b176853fac7d4bad59a7da7ae94a556425e39f90e1f934806"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_tune-raw.json": {
+      "bytes": 630431,
+      "sha256": "0b8fbbbd41dadfefaf3f51057d7bd2f6ab4dc6c4043c00b72565f3d191c403ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-law-joint.json": {
+      "bytes": 107527,
+      "sha256": "925f718051ac0f8195c5abe10f7d54dfb4d8b8327d49ba7182cb52d1898c727d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-law-raw.json": {
+      "bytes": 285903,
+      "sha256": "9eed0d70f6f37156201cc967c302df52a76f5f99626556a3a5cccc7e8acd172d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1044649,
+      "sha256": "0831f607c0cf9919a6c5c5353b81b98dea134cf9fe73f1a904dabdee81076dd2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1455898,
+      "sha256": "f67be7d22ab61e85365da173573fca1ddbda539e51e118d1ac08d0f4726b9ddc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_tune-joint.json": {
+      "bytes": 1456846,
+      "sha256": "37b69d7cb173033d7a77612885a1f8f70b83d977ef4cf62f341ab38c62fab943"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_tune-raw.json": {
+      "bytes": 2290875,
+      "sha256": "01672897d289154acf17b85fdd40a7ce8ab2c974bd0272874469273d6ea41e19"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json": {
+      "bytes": 12230969,
+      "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-training.json": {
+      "bytes": 1203059,
+      "sha256": "8bdb7ae24b69963b733970ca8a24c13c56692fcc2eb0f9d029f2233f069fab56"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parent-head-parity.json": {
+      "bytes": 170289,
+      "sha256": "dcdaa3de2743b0d5cf282982634cd03baef1a2af59a3c0e1062289b0994f3771"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 23452,
+      "sha256": "4c55ee04ebd3a70fe1eec90ee550a38f6ad4559032460b38bea125a435710624"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parity-disabled.json": {
+      "bytes": 23456,
+      "sha256": "abf75ca05ab49d594228dcdf16fc1b4eeaad89b2ce2a8c0405a294cfae388648"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-upload-v01/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 23454,
+      "sha256": "8f15aa6b896e31bb5879f83bce3dd1f4b1ca9c1986756872346d61a2dc72cc38"
+    }
+  },
+  "attributes_qualification": "Both immutable raw .gitattributes downloads match their exact Git blob IDs and sizes. The only line delta adds LFS handling for this release checkpoint. Attribution to an SDK or Hub implementation step is an inference; the committed byte difference is established.",
+  "baseline_revision": "0228887c8e33cb23e9679889a9496f87140021e6",
+  "checkpoint_handling": "The12230969-byte checkpoint was hashed as opaque bytes only; its LFS SHA256 and size match the sealed payload. No checkpoint JSON or tensors were parsed.",
+  "chunk1_history_qualification": "The public verified receipt records exact original and new identities at chunk1. At chunk2, all18 chunk1 files have no LFS metadata and exact raw Git blob hashes and sizes derived from sealed local payload bytes. No second metadata query for chunk1 was made.",
+  "completion_state": {
+    "automatic_retry_performed": false,
+    "chunk2_source_verification_receipt_exists": false,
+    "existing_sources_or_receipts_modified": false,
+    "final_verification_receipt_claimed": false,
+    "publication_complete": false,
+    "remote_mutations_by_reviewer": 0
+  },
+  "created_but_unverified_revision": "1c5d3103e73895c250b84261d7ab4c4341da9a0f",
+  "failed_helper_conjunction": {
+    "all_chunk1_byte_identities": true,
+    "all_chunk2_byte_identities": true,
+    "all_prior_identity_fields": false,
+    "complete_path_set": true,
+    "returned_revision": true
+  },
+  "findings": [
+    {
+      "added_lines": [
+        "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json filter=lfs diff=lfs merge=lfs -text"
+      ],
+      "after": {
+        "blob_id": "a2a2c85690269e3dc9a72f8d3729ee785b2587e1",
+        "lfs": null,
+        "size": 2359
+      },
+      "before": {
+        "blob_id": "1cf99f89f95ce8f39b630d8df37126fc628047de",
+        "lfs": null,
+        "size": 2230
+      },
+      "byte_delta": 129,
+      "changed_fields": [
+        "size",
+        "blob_id"
+      ],
+      "code": "previous-file-identity-changed",
+      "consequence": "The sealed helper correctly refused its prior-file identity invariant after chunk2 had already been created.",
+      "path": ".gitattributes",
+      "removed_lines": []
+    }
+  ],
+  "immutable_attributes_readback": {
+    "bytes": 2245,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-attributes-immutable-readback-independent-v01.json",
+    "sha256": "cc73613e00ae8c99c573fbe7f58d7cd7f0a8a5de2bc255cce8dc6b0f2d3fc750"
+  },
+  "immutable_snapshot": {
+    "bytes": 1483457,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-chunk-02-immutable-independent-v01.json",
+    "sha256": "cebb9c77560f68c263a1a84a54c62b6cbc5092b517b75e3cdb9b06c0e7492781"
+  },
+  "interruption": {
+    "bytes": 2270,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-interruption-v01.json",
+    "sha256": "7ab60fef70347c7d2a57a9d536dcabfa42f243dc823606d934b946e82c66c697"
+  },
+  "last_verified_revision": "5bd19a067cd014288591b12bfc118046f8d978a2",
+  "limits": [
+    "The model release is incomplete and cannot be called a verified198-file publication.",
+    "This receipt authorizes no repair, resume, retry, replacement, or remote mutation.",
+    "The original failure and V01/V02 sources remain preserved."
+  ],
+  "new_payload_byte_checks": [
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 2754,
+      "local_sha256": "e3b072e59f9774d9aeb85358ab2c3131bb81ed6f41da499c0a063c6f59c81df8",
+      "path": "releases/20261014-actor-refinement-v1/README.md",
+      "remote": {
+        "blob_id": "3e3932369b9c5918192b245878d9b87b61ff7fb8",
+        "lfs": null,
+        "size": 2754
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 1024993,
+      "local_sha256": "d8b2e643e5537f42c3e9991416950083fc1e1f36105cbe1ad740ca55008bcfe5",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_dev-joint.json",
+      "remote": {
+        "blob_id": "36995905e34500ad43dfc07ae0e9caabde784665",
+        "lfs": null,
+        "size": 1024993
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 1438100,
+      "local_sha256": "db8a5e2c48876a35701ab4cb81525ac9d67d874e1a74264c76e9049120cfdc0e",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_dev-raw.json",
+      "remote": {
+        "blob_id": "c5e1d35a94792143541edc988634b8f6d31e8f86",
+        "lfs": null,
+        "size": 1438100
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 1024785,
+      "local_sha256": "4a89fc3dcf951d130d2122d66d7b40eabd375039f05437595c075aa940afa1f3",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_eval-joint.json",
+      "remote": {
+        "blob_id": "26b9d1e3fc3ae1e39736ed408f65b3cf3867bde0",
+        "lfs": null,
+        "size": 1024785
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 1437514,
+      "local_sha256": "a8fbba197956ac23686c4b02744adaf5409fe4a114a579f383d90b0b057e7eab",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_eval-raw.json",
+      "remote": {
+        "blob_id": "8c5c58fc09584e74c2e8afa1d43626de1e24abb2",
+        "lfs": null,
+        "size": 1437514
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 526657,
+      "local_sha256": "d16895051911a7326993301d0cd7b2fd01b1f308f339daa00f3e887035f34b43",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_challenge-joint.json",
+      "remote": {
+        "blob_id": "957cbc91c81d95d5e9c3e16a8fc56492ba8a5707",
+        "lfs": null,
+        "size": 526657
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 682622,
+      "local_sha256": "a12ad7cd31cb60e7be7118a2e6d97902c48426f5dd7da450b0484f0c6d9c2190",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_challenge-raw.json",
+      "remote": {
+        "blob_id": "0d59cf8576d793f8fab5038c1e15ad93613db4f8",
+        "lfs": null,
+        "size": 682622
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 520906,
+      "local_sha256": "e360c4ba30f5d56ec33f6ad10a3bae8b62f3e0edb02e6ed3a9e5b7b07578f0fd",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_dev-joint.json",
+      "remote": {
+        "blob_id": "7a32563d59076de68e2d44cf2ef377d041456a5a",
+        "lfs": null,
+        "size": 520906
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 811034,
+      "local_sha256": "fa0e7869c535824215d13d06bec9b01c178827cdd8c2b555ca9111801f087e0f",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_dev-raw.json",
+      "remote": {
+        "blob_id": "b857ae73195dc8a8934a6797a18bd60adafabd0d",
+        "lfs": null,
+        "size": 811034
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 462506,
+      "local_sha256": "a25323e07126e63f596cc56dcd0b9ab2c3485b5d1cc867df82c06b14506af0ec",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_test-joint.json",
+      "remote": {
+        "blob_id": "d976f6243bd60ac9ca9cd1b40a0fe6ec07dc4d70",
+        "lfs": null,
+        "size": 462506
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 809432,
+      "local_sha256": "865a30127a66b323424b8fdfead9fe1e04272c4d7b430ad98ae9272f64925745",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_test-raw.json",
+      "remote": {
+        "blob_id": "20d3dfd535bf2557888a72abd4f0b9b1968b6886",
+        "lfs": null,
+        "size": 809432
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 509135,
+      "local_sha256": "646a814e84c95f6b176853fac7d4bad59a7da7ae94a556425e39f90e1f934806",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_tune-joint.json",
+      "remote": {
+        "blob_id": "810e88022b893f4f28a32ca386ea5a83fd35244c",
+        "lfs": null,
+        "size": 509135
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 630431,
+      "local_sha256": "0b8fbbbd41dadfefaf3f51057d7bd2f6ab4dc6c4043c00b72565f3d191c403ea",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_tune-raw.json",
+      "remote": {
+        "blob_id": "29946d0004d45ddcc5c82cc20165a180231ab0ee",
+        "lfs": null,
+        "size": 630431
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 107527,
+      "local_sha256": "925f718051ac0f8195c5abe10f7d54dfb4d8b8327d49ba7182cb52d1898c727d",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-law-joint.json",
+      "remote": {
+        "blob_id": "3ad09171f5a3f121dbaeaf58c1cdebddde2fb174",
+        "lfs": null,
+        "size": 107527
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 285903,
+      "local_sha256": "9eed0d70f6f37156201cc967c302df52a76f5f99626556a3a5cccc7e8acd172d",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-law-raw.json",
+      "remote": {
+        "blob_id": "33a49d8112ec0ac4ffdcb8c33451ac8f892e026c",
+        "lfs": null,
+        "size": 285903
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 1044649,
+      "local_sha256": "0831f607c0cf9919a6c5c5353b81b98dea134cf9fe73f1a904dabdee81076dd2",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_authored_eval-joint.json",
+      "remote": {
+        "blob_id": "b9382e2ba3b2e380b472425f37b12ce2dbfba0ba",
+        "lfs": null,
+        "size": 1044649
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 1455898,
+      "local_sha256": "f67be7d22ab61e85365da173573fca1ddbda539e51e118d1ac08d0f4726b9ddc",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_authored_eval-raw.json",
+      "remote": {
+        "blob_id": "92e009fa0e84c950bb62814e6d6a2d988ededccf",
+        "lfs": null,
+        "size": 1455898
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 1,
+      "local_bytes": 1456846,
+      "local_sha256": "37b69d7cb173033d7a77612885a1f8f70b83d977ef4cf62f341ab38c62fab943",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_tune-joint.json",
+      "remote": {
+        "blob_id": "c8a580b3f03e7ed5217d5f8f8f0e5f8404a44776",
+        "lfs": null,
+        "size": 1456846
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 2,
+      "local_bytes": 2290875,
+      "local_sha256": "01672897d289154acf17b85fdd40a7ce8ab2c974bd0272874469273d6ea41e19",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_tune-raw.json",
+      "remote": {
+        "blob_id": "b7b2b7652ac9a93e8ae303c46949c387d0aba462",
+        "lfs": null,
+        "size": 2290875
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 2,
+      "local_bytes": 12230969,
+      "local_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+      "remote": {
+        "blob_id": "6ab7f4c04583def1d47f48aa181f884362d35ed7",
+        "lfs": {
+          "pointer_size": 133,
+          "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+          "size": 12230969
+        },
+        "size": 12230969
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 2,
+      "local_bytes": 1203059,
+      "local_sha256": "8bdb7ae24b69963b733970ca8a24c13c56692fcc2eb0f9d029f2233f069fab56",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-training.json",
+      "remote": {
+        "blob_id": "a111b1e8ec4556e208127bc7751e4e6b5d65b42d",
+        "lfs": null,
+        "size": 1203059
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 2,
+      "local_bytes": 26725,
+      "local_sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/data-schedule-before-models.json",
+      "remote": {
+        "blob_id": "36f14e2367dff6f9c29fcac121529c5668a162ae",
+        "lfs": null,
+        "size": 26725
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 2,
+      "local_bytes": 170289,
+      "local_sha256": "dcdaa3de2743b0d5cf282982634cd03baef1a2af59a3c0e1062289b0994f3771",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parent-head-parity.json",
+      "remote": {
+        "blob_id": "f845783fdb0c93ae53b7478f3388e802fd26f6c8",
+        "lfs": null,
+        "size": 170289
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 2,
+      "local_bytes": 23452,
+      "local_sha256": "4c55ee04ebd3a70fe1eec90ee550a38f6ad4559032460b38bea125a435710624",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parity-alternate_placeholders.json",
+      "remote": {
+        "blob_id": "ffc946b8e87680f68cef36c64a2de77d2b5d9456",
+        "lfs": null,
+        "size": 23452
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 2,
+      "local_bytes": 23456,
+      "local_sha256": "abf75ca05ab49d594228dcdf16fc1b4eeaad89b2ce2a8c0405a294cfae388648",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parity-disabled.json",
+      "remote": {
+        "blob_id": "b092c01992a2ef101ef656c2baacb8506c1ac656",
+        "lfs": null,
+        "size": 23456
+      }
+    },
+    {
+      "byte_identity_matches": true,
+      "chunk": 2,
+      "local_bytes": 23454,
+      "local_sha256": "8f15aa6b896e31bb5879f83bce3dd1f4b1ca9c1986756872346d61a2dc72cc38",
+      "path": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parity-rotated_placeholders.json",
+      "remote": {
+        "blob_id": "6eef12cac5d73e9763c188c5c03a5c3763e4a2d5",
+        "lfs": null,
+        "size": 23454
+      }
+    }
+  ],
+  "observed_counts": {
+    "actual_current_files": 5474,
+    "changed_original_file_identities": 1,
+    "chunk1_exact_Git_blob_and_size_checks": 18,
+    "chunk1_files": 18,
+    "chunk2_exact_Git_or_LFS_byte_identity_checks": 8,
+    "chunk2_files": 8,
+    "created_payload_files": 26,
+    "expected_current_files": 5474,
+    "missing_current_paths": 0,
+    "original_files": 5448,
+    "release_payload_files": 198,
+    "remaining_payload_files": 172,
+    "unchanged_original_file_identities": 5447,
+    "unexpected_current_paths": 0
+  },
+  "original_identity_differences": {
+    ".gitattributes": {
+      "after": {
+        "blob_id": "a2a2c85690269e3dc9a72f8d3729ee785b2587e1",
+        "lfs": null,
+        "size": 2359
+      },
+      "before": {
+        "blob_id": "1cf99f89f95ce8f39b630d8df37126fc628047de",
+        "lfs": null,
+        "size": 2230
+      }
+    }
+  },
+  "passed": false,
+  "reconciliation_completed": true,
+  "repository": "Publicus/legal-ir-autoencoder",
+  "returned_revision_exact": true,
+  "reviewer_actions": {
+    "checkpoint_JSON_parses": 0,
+    "gold_or_saved_heads_parses": 0,
+    "immutable_metadata_queries": 1,
+    "immutable_raw_attributes_downloads": 2,
+    "model_calls": 0,
+    "numerical_imports": 0,
+    "other_network_queries": 0,
+    "private_body_or_stderr_reads": 0,
+    "resource_census_or_claim_calls": 0,
+    "source_mutations": 0,
+    "uploads": 0
+  },
+  "schema": "actor-refinement-Hub-partial-publication-independent-review/v1",
+  "scientific_disposition": {
+    "default_promotion": false,
+    "portable_numerical_reload_claimed": false,
+    "publication_reconciliation_changes_metrics": false,
+    "scientific_success": false
+  },
+  "source_helper": {
+    "bytes": 28426,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v02.py",
+    "sha256": "89a01553f09ea1f228ea50ad8dd1c3d289d1dd89ddda5d2d2598e429393f53a5"
+  }
+}

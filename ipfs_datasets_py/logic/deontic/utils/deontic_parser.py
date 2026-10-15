@@ -238,6 +238,13 @@ _MODAL_RE = re.compile(
     """,
     re.IGNORECASE | re.VERBOSE,
 )
+# Reuse the existing operative-tail boundaries at an original-source offset.
+_MODAL_ACTION_RE = re.compile(
+    _MODAL_RE.pattern[_MODAL_RE.pattern.index("(?P<action>"):], _MODAL_RE.flags,
+)
+_EXPLICIT_MODAL_HEAD_RE = re.compile(
+    _MODAL_RE.pattern[:_MODAL_RE.pattern.index("(?P<action>")], _MODAL_RE.flags,
+)
 _HEREBY_PROHIBITED_RE = re.compile(
     r"(?P<subject>.+?)\s+is\s+hereby\s+prohibited\b",
     re.IGNORECASE,
@@ -1723,8 +1730,304 @@ def _split_segment_fragments(line: str) -> List[tuple[int, int, str, List[str]]]
     return fragments
 
 
+def _explicit_duty_scope_ranges(sentence: str) -> List[tuple[int, int]]:
+    """Return unambiguous explicit-duty clauses separated by top-level semicolons.
+
+    Bare conjunctions, alternatives, implicit actors, unbalanced delimiters and
+    sentence-leading qualifications are deliberately outside this contract.
+    Returned offsets always select original source, excluding the separator and
+    an optional right-hand ``and`` connector.
+    """
+    separators: List[int] = []
+    top_level: set[int] = set()
+    brackets: List[str] = []
+    closing_quote = ""
+    escaped = False
+    quote_pairs = {'"': '"', "“": "”", "‘": "’", "'": "'"}
+    bracket_pairs = {"(": ")", "[": "]", "{": "}"}
+    for index, char in enumerate(sentence):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if closing_quote:
+            if char == closing_quote:
+                closing_quote = ""
+            continue
+        if char in quote_pairs and not (char in {"'", "‘"} and index > 0 and sentence[index - 1].isalnum()):
+            closing_quote = quote_pairs[char]
+            continue
+        if char in bracket_pairs:
+            brackets.append(bracket_pairs[char])
+            continue
+        if char in ")]}":
+            if not brackets or brackets.pop() != char:
+                return []
+            continue
+        if not brackets:
+            top_level.add(index)
+            if char == ";":
+                separators.append(index)
+    if not separators or brackets or closing_quote:
+        return []
+
+    ranges: List[tuple[int, int]] = []
+    boundaries = [-1, *separators, len(sentence)]
+    for index, (previous, following) in enumerate(zip(boundaries, boundaries[1:])):
+        start, end = previous + 1, following
+        while start < end and sentence[start].isspace():
+            start += 1
+        while end > start and sentence[end - 1].isspace():
+            end -= 1
+        if index:
+            connector = re.match(r"and\s+", sentence[start:end], re.IGNORECASE)
+            if connector:
+                start += connector.end()
+        if start >= end or re.match(r"(?:or|nor|but|and)\b", sentence[start:end], re.IGNORECASE):
+            return []
+        heads = [match for match in _EXPLICIT_MODAL_HEAD_RE.finditer(sentence, start, end)
+                 if match.start("modal") in top_level]
+        if len(heads) != 1:
+            return []
+        head = heads[0]
+        if re.match(r"(?:if|unless|except|when|where|provided|and|or|nor|but)\b", head.group("subject"), re.IGNORECASE):
+            return []
+        if not sentence[head.end():end].strip():
+            return []
+        prefix = sentence[start:head.start("subject")]
+        if prefix.strip():
+            # A leading qualification before the first duty may govern the
+            # whole coordination. Right-hand leading qualifiers are local to
+            # their explicit semicolon-delimited clause.
+            if not index:
+                return []
+            details = extract_condition_details(sentence[start:end]) + extract_exception_details(sentence[start:end])
+            if not any(item.get("clause_span", [None])[0] == 0
+                       and item["clause_span"][1] >= len(prefix.rstrip())
+                       for item in details):
+                return []
+        ranges.append((start, end))
+    return ranges
+
+
+def _unresolved_duty_disjunction_groups(sentence: str) -> List[Dict[str, Any]]:
+    """Locate repeated-modal duty alternatives without assigning logical scope.
+
+    Only unquoted, unparenthesized top-level ``or`` joining recognizable modal
+    heads is covered. Plain semicolons bound independent source regions; ``; or``
+    remains within its alternatives. Every returned coordinate selects original
+    source. Object alternatives, subordinate modal clauses, and malformed source
+    delimiters are outside this deliberately lexical contract.
+    """
+    source = str(sentence or "")
+    masked = list(source)
+    brackets: List[str] = []
+    closing_quote = ""
+    escaped = False
+    quote_pairs = {'"': '"', "“": "”", "‘": "’", "'": "'"}
+    bracket_pairs = {"(": ")", "[": "]", "{": "}"}
+    for index, char in enumerate(source):
+        if escaped:
+            masked[index] = " "
+            escaped = False
+            continue
+        if char == "\\":
+            masked[index] = " "
+            escaped = True
+            continue
+        if closing_quote:
+            masked[index] = " "
+            if char == closing_quote:
+                closing_quote = ""
+            continue
+        if char in quote_pairs and not (
+            char in {"'", "‘"} and index > 0 and source[index - 1].isalnum()
+        ):
+            closing_quote = quote_pairs[char]
+            masked[index] = " "
+            continue
+        if char in bracket_pairs:
+            brackets.append(bracket_pairs[char])
+            masked[index] = " "
+            continue
+        if char in ")]}":
+            if not brackets or brackets.pop() != char:
+                return []
+            masked[index] = " "
+            continue
+        if brackets:
+            masked[index] = " "
+    if brackets or closing_quote or escaped:
+        return []
+    visible = "".join(masked)
+    modal_pattern = _EXPLICIT_MODAL_HEAD_RE.pattern
+    modal_re = re.compile(r"\b" + modal_pattern[modal_pattern.index("(?P<modal>"):],
+                          _EXPLICIT_MODAL_HEAD_RE.flags)
+    explicit_head_re = re.compile(modal_pattern.replace("{0,10}", "{0,10}?"),
+                                  _EXPLICIT_MODAL_HEAD_RE.flags)
+    subordinate_re = re.compile(
+        r"\b(?:if|unless|except|when|where|provided|who|which|that|until|once|while|because|whether)\b",
+        re.IGNORECASE,
+    )
+    # An ordinary sentence stop also prevents matching independent sentences.
+    boundaries = [-1]
+    for mark in re.finditer(r"[;.!?\n]", visible):
+        position = mark.start()
+        if mark.group() == ";" and re.match(r"\s*or\b", visible[position + 1:], re.IGNORECASE):
+            continue
+        if mark.group() == "." and (
+            (position and position + 1 < len(source) and source[position - 1].isalnum()
+             and source[position + 1].isalnum())
+            or re.search(r"(?:\bU\.S\.C|\bU\.S|\bSec|\bsec|\bPub\. L)$", source[:position])
+        ):
+            continue
+        boundaries.append(position)
+    boundaries.append(len(source))
+
+    def trim(start: int, end: int) -> tuple[int, int]:
+        while start < end and source[start] in " \t\r\n,;":
+            start += 1
+        while end > start and source[end - 1] in " \t\r\n,;":
+            end -= 1
+        return start, end
+
+    groups: List[Dict[str, Any]] = []
+    for previous, following in zip(boundaries, boundaries[1:]):
+        start, end = trim(previous + 1, following)
+        if start >= end:
+            continue
+        modals = list(modal_re.finditer(visible, start, end))
+        if len(modals) < 2:
+            continue
+        heads: Dict[int, int] = {}
+        for head in explicit_head_re.finditer(visible, start, end):
+            heads[head.start("modal")] = head.start("subject")
+        coordinators = []
+        for connector in re.finditer(r"\b(?:and|or|nor|but)\b", visible[start:end], re.IGNORECASE):
+            connector_start = start + connector.start()
+            connector_end = start + connector.end()
+            if (re.search(r"\band\s*/\s*$", visible[start:connector_start], re.IGNORECASE)
+                    or re.match(r"\s*/\s*or\b", visible[connector_end:end], re.IGNORECASE)):
+                # ``and/or`` has its own unresolved scope; this contract only
+                # records plain disjunctions and never silently rewrites it.
+                continue
+            rhs = connector_end
+            while rhs < end and source[rhs].isspace():
+                rhs += 1
+            head = modal_re.match(visible, rhs, end)
+            if head is None:
+                head = explicit_head_re.match(visible, rhs, end)
+                if head is None or subordinate_re.search(head.group("subject")):
+                    continue
+            if not source[head.end():end].strip(" \t\r\n,;"):
+                continue
+            heads[head.start("modal")] = rhs
+            coordinators.append((connector_start, connector_end, head))
+        edges = []
+        for connector_start, connector_end, right in coordinators:
+            if visible[connector_start:connector_end].casefold() != "or":
+                continue
+            left = next((item for item in reversed(modals) if item.end("modal") <= connector_start), None)
+            if left is None:
+                continue
+            # A repeated modal in a trailing if/unless/relative clause belongs
+            # to that subordinate clause, not to a new independent duty.
+            clause_start = max(start, visible.rfind(",", start, left.start("modal")) + 1)
+            if (subordinate_re.search(visible[clause_start:left.start("modal")])
+                    or subordinate_re.search(visible[left.end("modal"):connector_start])):
+                continue
+            left_start = heads.get(left.start("modal"))
+            if left_start is None:
+                continue
+            left_start = max(left_start, clause_start)
+            left_start, left_end = trim(left_start, connector_start)
+            if not source[left.end("modal"):left_end].strip(" \t\r\n,;"):
+                continue
+            right_end = next((item[0] for item in coordinators if item[0] > connector_end), end)
+            right_start, right_end = trim(heads[right.start("modal")], right_end)
+            if not source[right.end("modal"):right_end].strip(" \t\r\n,;"):
+                continue
+            members = []
+            for member_start, member_end, modal in (
+                (left_start, left_end, left), (right_start, right_end, right)
+            ):
+                members.append({"span": [member_start, member_end],
+                                "raw_text": source[member_start:member_end],
+                                "modal_span": list(modal.span("modal")),
+                                "modal_raw_text": source[slice(*modal.span("modal"))]})
+            edges.append({"connector": {"span": [connector_start, connector_end],
+                                         "raw_text": source[connector_start:connector_end]},
+                          "members": members})
+        region_groups: List[Dict[str, Any]] = []
+        for edge in edges:
+            if (region_groups and region_groups[-1]["members"][-1]["modal_span"]
+                    == edge["members"][0]["modal_span"]):
+                region_groups[-1]["members"][-1] = edge["members"][0]
+                region_groups[-1]["members"].append(edge["members"][1])
+                region_groups[-1]["connectors"].append(edge["connector"])
+            else:
+                region_groups.append({"members": edge["members"], "connectors": [edge["connector"]]})
+        for group in region_groups:
+            group_start, group_end = group["members"][0]["span"][0], group["members"][-1]["span"][1]
+            groups.append({"span": [group_start, group_end], "raw_text": source[group_start:group_end],
+                           "scope_span": [start, end], "scope_raw_text": source[start:end], **group})
+    return groups
+
+
+def _offset_source_spans(value: Any, offset: int, *, span_mapping: bool = False) -> Any:
+    """Translate existing source coordinates; never synthesize source text."""
+    if isinstance(value, dict):
+        result = {}
+        for key, item in value.items():
+            is_span = span_mapping or key == "span" or key.endswith("_span")
+            if is_span and isinstance(item, (list, tuple)) and len(item) == 2 and all(type(part) is int for part in item):
+                result[key] = [item[0] + offset, item[1] + offset]
+            else:
+                result[key] = _offset_source_spans(item, offset, span_mapping=key == "field_spans")
+        return result
+    if isinstance(value, list):
+        return [_offset_source_spans(item, offset) for item in value]
+    return value
+
+
+def _duty_scope_source(element: Dict[str, Any]) -> tuple[str, int]:
+    text = str(element.get("text") or "")
+    scope = element.get("duty_scope_span")
+    if (isinstance(scope, (list, tuple)) and len(scope) == 2
+            and all(type(part) is int for part in scope)
+            and 0 <= scope[0] < scope[1] <= len(text)):
+        return text[scope[0]:scope[1]], scope[0]
+    return text, 0
+
+
 def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[str, Any]]:
     sentence = sentence.strip()
+    duty_scopes = _explicit_duty_scope_ranges(sentence)
+    if duty_scopes:
+        scoped_elements: List[Dict[str, Any]] = []
+        for start, end in duty_scopes:
+            local_elements = analyze_normative_sentence(sentence[start:end], document_type)
+            if len(local_elements) != 1:
+                break
+            element = _offset_source_spans(local_elements[0], start)
+            element["text"] = sentence
+            element["support_span"] = [start, end]
+            element["support_text"] = sentence[start:end]
+            element["duty_scope_span"] = [start, end]
+            element["slot_details_scoped"] = True
+            action_span = (element.get("field_spans") or {}).get("action")
+            if isinstance(action_span, list) and len(action_span) == 2:
+                # Match the existing action normalizer's boundary trimming,
+                # keeping the remaining span an exact original-source slice.
+                while action_span[0] < action_span[1] and sentence[action_span[0]] in " \t\r\n,;:":
+                    action_span[0] += 1
+                while action_span[1] > action_span[0] and sentence[action_span[1] - 1] in " \t\r\n,;:":
+                    action_span[1] -= 1
+            scoped_elements.append(_finalize_element(element))
+        else:
+            return scoped_elements
     sentence_lower = sentence.lower()
     elements: List[Dict[str, Any]] = []
 
@@ -1969,12 +2272,15 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
         subject_text = _expand_infinitive_subject(sentence, subject_text, match)
         subject_text = _restore_provided_that(sentence, subject_text, match)
         subject_text = _restore_otherwise(sentence, subject_text, match)
+        inline_action = _inline_parenthetical_exception_action(sentence, match)
+        action_span = inline_action.span("action") if inline_action else match.span("action")
+        support_span = (match.start(), inline_action.end()) if inline_action else match.span()
         action_text = _keep_inhabitant_clause(
             sentence,
             _restore_interrupted_action(
                 sentence,
-                _clean_action(match.group("action")),
-                span=match.span(),
+                _clean_action(inline_action.group("action") if inline_action else match.group("action")),
+                span=support_span,
             ),
         )
         power = _enumerated_power_before(sentence, match)
@@ -2027,11 +2333,11 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                 modal=modal,
                 subject_text=subject_text,
                 action_text=action_text,
-                support_span=match.span(),
+                support_span=support_span,
                 field_spans={
                     "subject": list(match.span("subject")),
                     "modal": list(match.span("modal")),
-                    "action": list(match.span("action")),
+                    "action": list(action_span),
                 },
                 extraction_method="deterministic_modal_clause_v2",
             )
@@ -4261,7 +4567,7 @@ def merge_ontology_terms(
 
 
 def _enrich_legal_frame(element: Dict[str, Any]) -> None:
-    text = str(element.get("text") or "")
+    text, scope_offset = _duty_scope_source(element)
     action = (element.get("action") or [""])[0]
     subject = (element.get("subject") or [""])[0]
     category = classify_legal_frame(element)
@@ -4279,19 +4585,19 @@ def _enrich_legal_frame(element: Dict[str, Any]) -> None:
         "norm_type": element.get("norm_type", ""),
         "deontic_operator": element.get("deontic_operator", ""),
     }
-    element["monetary_amounts"] = extract_monetary_amounts(text)
-    element["monetary_amount_details"] = extract_monetary_amount_details(text)
+    element["monetary_amounts"] = _offset_source_spans(extract_monetary_amounts(text), scope_offset)
+    element["monetary_amount_details"] = _offset_source_spans(extract_monetary_amount_details(text), scope_offset)
     existing_penalty = element.get("penalty") or {}
-    penalty = extract_penalty_details(text, action)
+    penalty = extract_penalty_details(text, "" if element.get("duty_scope_span") else action)
     if existing_penalty.get("recurrence") and not penalty.get("recurrence"):
         penalty["recurrence"] = existing_penalty["recurrence"]
-    element["penalty"] = penalty
-    element["procedure"] = extract_procedure_details(text, action)
+    element["penalty"] = _offset_source_spans(penalty, scope_offset)
+    element["procedure"] = _offset_source_spans(extract_procedure_details(text, action), scope_offset)
     element["kg_relationship_hints"] = build_kg_relationship_hints(element)
 
 
 def classify_legal_frame(element: Dict[str, Any]) -> str:
-    text = str(element.get("text") or "").lower()
+    text = _duty_scope_source(element)[0].lower()
     action = " ".join(element.get("action", [])).lower()
     norm_type = element.get("norm_type")
     subject = " ".join(element.get("subject", [])).lower()
@@ -4476,8 +4782,8 @@ def extract_imprisonment_duration(text: str) -> Dict[str, Any]:
 
 
 def extract_procedure_details(text: str, action: str = "") -> Dict[str, Any]:
-    combined = f"{text} {action}".strip()
-    lower = combined.lower()
+    source = str(text or "")
+    lower = source.lower()
     events = [
         event
         for event in _PROCEDURE_EVENT_ORDER
@@ -4485,10 +4791,12 @@ def extract_procedure_details(text: str, action: str = "") -> Dict[str, Any]:
     ]
     if not events:
         return {}
-    event_mentions = extract_procedure_event_mentions(combined)
-    event_relations = extract_procedure_event_relations(combined, action, events)
-    # One verb, such as "issue a writ", is the act. A procedure needs a chain.
-    if len(events) < 2 and not event_relations:
+    event_mentions = extract_procedure_event_mentions(source)
+    event_relations = extract_procedure_event_relations(source, action, events)
+    unresolved_relations = _procedure_unresolved_event_relations(source, action, event_relations)
+    # One verb alone is the act. An unresolved ordering cue is still evidence
+    # that the procedure needs interpretation; it must not silently disappear.
+    if len(events) < 2 and not event_relations and not unresolved_relations:
         return {}
     return {
         "events": events,
@@ -4509,9 +4817,10 @@ def extract_procedure_details(text: str, action: str = "") -> Dict[str, Any]:
         ],
         "event_mentions": event_mentions,
         "event_relations": event_relations,
-        "trigger_event": _infer_trigger_event(events, event_relations),
-        "terminal_event": _infer_terminal_event(events, event_relations),
-        "raw_text": combined,
+        "unresolved_event_relations": unresolved_relations,
+        "trigger_event": _infer_trigger_event(events, event_relations) if len(events) > 1 or event_relations else "",
+        "terminal_event": _infer_terminal_event(events, event_relations) if len(events) > 1 or event_relations else "",
+        "raw_text": source,
     }
 
 
@@ -4537,56 +4846,263 @@ def extract_procedure_event_mentions(text: str) -> List[Dict[str, Any]]:
     )
 
 
+def _procedure_unquoted_source(text: str) -> str:
+    """Mask quoted and parenthetical material without changing source offsets."""
+    output = list(text)
+    delimiters: List[str] = []
+    pairs = {'"': '"', "“": "”", "‘": "’", "(": ")", "[": "]", "{": "}"}
+    for index, char in enumerate(text):
+        if delimiters:
+            output[index] = " "
+            if char == delimiters[-1]:
+                delimiters.pop()
+            elif delimiters[-1] in {")", "]", "}"} and char in pairs:
+                delimiters.append(pairs[char])
+        elif char in pairs:
+            delimiters.append(pairs[char])
+            output[index] = " "
+        elif char == "'" and (index == 0 or not text[index - 1].isalnum()):
+            delimiters.append("'")
+            output[index] = " "
+    return "".join(output)
+
+
+def _procedure_action_owner(
+    source: str, unquoted: str, action: str
+) -> tuple[str, int, int, int, int]:
+    """Bind one operative event to an unambiguous action in its source clause.
+
+    This is a lexical ownership check, not a general action parser. Unsupported
+    or compound actions retain their event mentions without ordering claims.
+    """
+    action_text = str(action or "").strip().rstrip(".;?!")
+    if not action_text:
+        return "", 0, 0, 0, 0
+    matches = list(re.finditer(r"(?<!\w)" + re.escape(action_text) + r"(?!\w)", source))
+    if len(matches) != 1:
+        return "", 0, 0, 0, 0
+    match = matches[0]
+    if (
+        unquoted[match.start():match.end()] != source[match.start():match.end()]
+        or re.search(r"[.;?!\n]", action_text)
+    ):
+        return "", 0, 0, 0, 0
+    start = max(
+        (item.end() for item in re.finditer(r"[.;?!\n]", unquoted[:match.start()])),
+        default=0,
+    )
+    following_boundary = re.search(r"[.;?!\n]", unquoted[match.end():])
+    end = match.end() + following_boundary.start() if following_boundary else len(source)
+    # Do not attach another actor's connector to the selected action.
+    modals = list(re.finditer(r"\b(?:shall|must|may)\b", unquoted[start:end], re.IGNORECASE))
+    if len(modals) > 1 or (modals and start + modals[0].end() > match.start()):
+        return "", 0, 0, 0, 0
+    operative = re.split(
+        r"\b(?:before|after|upon|within|until|when|if|unless|provided|subject\s+to)\b",
+        action_text,
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0]
+    event = _infer_event_from_phrase(operative)
+    event_heads = {
+        "application": r"(?:apply\b|(?:file|submit|make)\s+(?:(?:a|an|the)\s+)?application\b)",
+        "receipt": r"receive\b",
+        "inspection": r"(?:inspect\b|(?:conduct|perform)\s+(?:(?:a|an|the)\s+)?inspection\b)",
+        "review": r"(?:review\b|investigate\b|conduct\s+(?:(?:a|an|the)\s+)?(?:review|investigation)\b)",
+        "notice": r"(?:notify\b|(?:give|provide|send|serve|publish)\s+(?:(?:a|an|the|public|written)\s+)*notice\b)",
+        "hearing": r"(?:hold|conduct|schedule)\s+(?:(?:a|an|the|public)\s+)*hearing\b",
+        "decision": r"(?:decide\b|(?:make|render)\s+(?:(?:a|an|the)\s+)?(?:decision|determination|order)\b)",
+        "issuance": r"(?:issue|grant|approve)\b",
+        "renewal": r"renew\b",
+        "suspension": r"suspend\b",
+        "revocation": r"revoke\b",
+        "appeal": r"appeal\b",
+    }
+    if not event or not re.match(event_heads[event], operative.strip(), re.IGNORECASE):
+        return "", 0, 0, 0, 0
+    return event, start, end, match.start(), match.end()
+
+
+def _procedure_anchor_event(phrase: str) -> str:
+    """Recognize an event noun phrase without treating a later object as its head."""
+    event = _infer_event_from_phrase(phrase)
+    if not event:
+        return ""
+    mention = re.search(_PROCEDURE_EVENT_PATTERNS[event], phrase, re.IGNORECASE)
+    prefix = phrase[:mention.start()] if mention else phrase
+    if not re.fullmatch(
+        r"\s*(?:(?:a|an|the|any|such|this|that|each|its|their|public|written|oral|"
+        r"complete|completed|valid|final|initial|prior|previous|required|formal|timely)\s+)*",
+        prefix,
+        re.IGNORECASE,
+    ):
+        return ""
+    return event
+
+
+def _procedure_connector_matches(source: str) -> List[tuple[str, re.Match[str], str]]:
+    patterns = (
+        ("upon_receipt_of", r"\bupon\s+receipt\s+of\s+(?P<anchor>[^,.;?!\n]+)"),
+        ("after", r"\bafter\s+(?P<anchor>[^,.;?!\n]+?)(?=\s+(?:and\s+)?(?:shall|must|may|before|within)\b|[,.;?!\n]|$)"),
+        ("before", r"\bbefore\s+(?P<anchor>[^,.;?!\n]+?)(?=\s+(?:and\s+)?(?:shall|must|may|after|within)\b|[,.;?!\n]|$)"),
+    )
+    return [
+        (connector, match, match.group("anchor"))
+        for connector, pattern in patterns
+        for match in re.finditer(pattern, source, re.IGNORECASE)
+    ]
+
+
+def _procedure_match_span(source: str, match: re.Match[str]) -> tuple[int, int]:
+    start, end = match.span()
+    while start < end and source[start].isspace():
+        start += 1
+    while end > start and source[end - 1].isspace():
+        end -= 1
+    return start, end
+
+
+def _procedure_unresolved_event_relations(
+    source: str, action: str, relations: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Retain unsupported source cues without asserting their owner or anchor.
+
+    Called only for sources with a recognized procedural event mention. Clear
+    scalar/date anchors remain the responsibility of the temporal inventory.
+    """
+    unquoted = _procedure_unquoted_source(source)
+    owner, *_ = _procedure_action_owner(source, unquoted, action)
+    unresolved: List[Dict[str, Any]] = []
+    for connector, match, phrase in _procedure_connector_matches(source):
+        if connector != "upon_receipt_of" and re.fullmatch(
+            r"(?:(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|"
+            r"eleven|twelve|twenty|thirty|sixty|ninety)\s+(?:(?:business|calendar)\s+)?"
+            r"(?:seconds?|minutes?|hours?|days?|weeks?|months?|years?)|"
+            r"(?:January|February|March|April|May|June|July|August|September|October|November|December)"
+            r"(?:\s+\d{1,2}(?:,?\s+\d{4})?)?|"
+            r"(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)|"
+            r"\d{4}(?:-\d{2}-\d{2})?|\d{1,2}:\d{2}|\d{1,2}(?::\d{2})?\s*(?:am|pm)|"
+            r"today|tomorrow|yesterday|noon|midnight|all)",
+            phrase.strip(),
+            re.IGNORECASE,
+        ):
+            continue
+        start, end = _procedure_match_span(source, match)
+        relation_name = "triggered_by_receipt_of" if connector == "upon_receipt_of" else connector
+        parts = [phrase] if connector == "upon_receipt_of" else re.split(r"\s*(?:\band\b|\bor\b)\s*", phrase)
+        anchors = [_procedure_anchor_event(part) for part in parts]
+        represented = {
+            item["anchor_event"] for item in relations
+            if item["relation"] == relation_name and item["span"] == [start, end]
+        }
+        if unquoted[start:end] != source[start:end]:
+            reason = "quoted_or_parenthetical_context"
+        elif not all(anchors):
+            reason = "unresolved_anchor_event"
+        elif not owner:
+            reason = "unresolved_action_owner"
+        elif re.search(r"\bor\b", phrase, re.IGNORECASE):
+            reason = "disjunctive_anchor_requires_interpretation"
+        elif owner in anchors:
+            reason = "same_event_type_requires_occurrence_binding"
+        elif not set(anchors).issubset(represented):
+            reason = "unresolved_action_scope"
+        else:
+            continue
+        unresolved.append({
+            "connector": connector,
+            "raw_text": source[start:end],
+            "span": [start, end],
+            "reason": reason,
+            "interpretation_required": True,
+        })
+    return sorted(unresolved, key=lambda item: (item["span"][0], item["span"][1]))
+
+
 def extract_procedure_event_relations(
     text: str, action: str = "", events: Optional[List[str]] = None
 ) -> List[Dict[str, Any]]:
-    """Extract deterministic event ordering relations from procedural connectors."""
-    combined = str(text or "")
-    known_events = events or [
+    """Extract source-bound lexical ordering evidence from procedural connectors.
+
+    ``events`` remains an optional compatibility argument; it cannot introduce
+    an event absent from the original source.
+    """
+    source = str(text or "")
+    unquoted = _procedure_unquoted_source(source)
+    known_events = [
         event
         for event in _PROCEDURE_EVENT_ORDER
-        if re.search(_PROCEDURE_EVENT_PATTERNS[event], combined, flags=re.IGNORECASE)
+        if re.search(_PROCEDURE_EVENT_PATTERNS[event], source, flags=re.IGNORECASE)
     ]
-    action_event = _infer_event_from_phrase(action) or (known_events[-1] if known_events else "")
+    action_event, owner_start, owner_end, action_start, action_end = _procedure_action_owner(
+        source, unquoted, action
+    )
     relations: List[Dict[str, Any]] = []
 
     def add_relation(
-        event: str, relation: str, anchor_event: str, match: re.Match[str], raw_text: str = ""
+        event: str, relation: str, anchor_event: str, match: re.Match[str]
     ) -> None:
-        if not event and not anchor_event:
+        if (
+            not event
+            or not anchor_event
+            or event == anchor_event
+            or event not in known_events
+            or anchor_event not in known_events
+            or unquoted[match.start():match.end()] != source[match.start():match.end()]
+        ):
             return
+        if relation != "receives" and not (
+            owner_start <= match.start() < match.end() <= owner_end
+        ):
+            return
+        if relation != "receives":
+            if match.start() >= action_end:
+                # A detached connector can follow the exact action directly or
+                # a simple duration. Intervening actor/action text is not ours.
+                gap = source[action_end:match.start()]
+                if not re.fullmatch(
+                    r"\s*,?\s*(?:(?:within|not\s+later\s+than|no\s+later\s+than)\s+"
+                    r"\d+\s+(?:(?:business|calendar)\s+)?(?:days?|hours?|weeks?|months?|years?)\s*)?",
+                    gap,
+                    re.IGNORECASE,
+                ):
+                    return
+            elif match.start() >= action_start:
+                if re.search(
+                    r"[,;?!\n]|\b(?:and|or|while|whereas|although|but|who|which)\b",
+                    source[action_start:match.start()],
+                    re.IGNORECASE,
+                ):
+                    return
+            elif match.end() <= action_start:
+                gap = source[match.end():action_start].lstrip().lstrip(",")
+                if re.search(
+                    r"[,;?!\n]|\b(?:and|or|while|whereas|although|but|who|which)\b",
+                    gap,
+                    re.IGNORECASE,
+                ):
+                    return
+            else:
+                return
+        start, end = _procedure_match_span(source, match)
         relation_record = {
             "event": event,
             "relation": relation,
             "anchor_event": anchor_event,
-            "raw_text": (raw_text or match.group(0)).strip(),
-            "span": [match.start(), match.end()],
+            "raw_text": source[start:end],
+            "span": [start, end],
         }
         if relation_record not in relations:
             relations.append(relation_record)
 
-    for match in re.finditer(
-        r"\bupon\s+receipt\s+of\s+(?P<object>[^,.;]+)", combined, flags=re.IGNORECASE
-    ):
-        anchor_event = _infer_event_from_phrase(match.group("object")) or "receipt"
-        add_relation(action_event, "triggered_by_receipt_of", anchor_event, match)
-        add_relation("receipt", "receives", anchor_event, match)
-
-    for match in re.finditer(
-        r"\bafter\s+(?P<events>[^,.;]+?)(?=\s+(?:and\s+)?(?:shall|must|may|before|within)\b|[,.;]|$)",
-        combined,
-        flags=re.IGNORECASE,
-    ):
-        for anchor_event in _events_from_phrase(match.group("events")):
-            add_relation(action_event, "after", anchor_event, match)
-
-    for match in re.finditer(
-        r"\bbefore\s+(?P<events>[^,.;]+?)(?=\s+(?:and\s+)?(?:shall|must|may|after|within)\b|[,.;]|$)",
-        combined,
-        flags=re.IGNORECASE,
-    ):
-        for anchor_event in _events_from_phrase(match.group("events")):
-            add_relation(action_event, "before", anchor_event, match)
+    for connector, match, phrase in _procedure_connector_matches(source):
+        if connector == "upon_receipt_of":
+            anchor_event = _procedure_anchor_event(phrase)
+            add_relation(action_event, "triggered_by_receipt_of", anchor_event, match)
+            add_relation("receipt", "receives", anchor_event, match)
+        else:
+            for anchor_event in _events_from_phrase(phrase):
+                add_relation(action_event, connector, anchor_event, match)
 
     return relations
 
@@ -4614,9 +5130,11 @@ def _infer_terminal_event(events: List[str], relations: List[Dict[str, Any]]) ->
 
 
 def _events_from_phrase(phrase: str) -> List[str]:
+    if re.search(r"\bor\b", str(phrase or ""), re.IGNORECASE):
+        return []
     events = []
-    for part in re.split(r"\s*(?:,|and|or)\s*", str(phrase or "")):
-        event = _infer_event_from_phrase(part)
+    for part in re.split(r"\s*(?:,|\band\b|\bor\b)\s*", str(phrase or "")):
+        event = _procedure_anchor_event(part)
         if event and event not in events:
             events.append(event)
     return events
@@ -4624,21 +5142,11 @@ def _events_from_phrase(phrase: str) -> List[str]:
 
 def _infer_event_from_phrase(phrase: str) -> str:
     normalized = str(phrase or "").lower()
-    aliases = {
-        "approval": "issuance",
-        "approve": "issuance",
-        "grant": "issuance",
-        "receipt": "receipt",
-        "receive": "receipt",
-        "received": "receipt",
-    }
-    for token, event in aliases.items():
-        if re.search(rf"\b{re.escape(token)}\b", normalized):
-            return event
-    for event in _PROCEDURE_EVENT_ORDER:
-        if re.search(_PROCEDURE_EVENT_PATTERNS[event], normalized):
-            return event
-    return ""
+    events = [
+        event for event in _PROCEDURE_EVENT_ORDER
+        if re.search(_PROCEDURE_EVENT_PATTERNS[event], normalized)
+    ]
+    return events[0] if len(events) == 1 else ""
 
 
 def build_kg_relationship_hints(element: Dict[str, Any]) -> List[Dict[str, str]]:
@@ -5607,6 +6115,86 @@ def _attach_leading_case(element: dict, sentence: str, match: re.Match[str]) -> 
     element["conditions"] = list(element.get("conditions") or []) + [prefix.lower()]
 
 
+def _source_quote_at(text: str, position: int) -> bool:
+    """Whether an original-source offset lies inside a quoted literal."""
+    closing = ""
+    pairs = {'"': '"', "“": "”", "‘": "’", "'": "'"}
+    escaped = False
+    for index, char in enumerate(text[:position]):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if closing:
+            if char == closing:
+                closing = ""
+        elif char in pairs and not (
+            char in {"'", "‘"} and index > 0 and text[index - 1].isalnum()
+        ):
+            closing = pairs[char]
+    return bool(closing)
+
+
+def _balanced_parenthesis_end(sentence: str, start: int) -> int | None:
+    """Return the exclusive outer closing offset, retaining nested citations."""
+    if start >= len(sentence) or sentence[start] != "(" or _source_quote_at(sentence, start):
+        return None
+    depth = 0
+    closing = ""
+    escaped = False
+    pairs = {'"': '"', "“": "”", "‘": "’", "'": "'"}
+    for position in range(start, len(sentence)):
+        char = sentence[position]
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if closing:
+            if char == closing:
+                closing = ""
+            continue
+        if char in pairs and not (char in {"'", "‘"} and position > 0 and sentence[position - 1].isalnum()):
+            closing = pairs[char]
+            continue
+        depth += (char == "(") - (char == ")")
+        if depth == 0:
+            return position + 1
+    return None
+
+
+def _inline_parenthetical_exception_action(sentence: str, match: re.Match[str]) -> re.Match[str] | None:
+    """Bind one immediate exception interrupter to its following source action."""
+    start = match.end("modal")
+    while start < len(sentence) and sentence[start].isspace():
+        start += 1
+    if start >= len(sentence) or sentence[start] != "(" or _source_quote_at(sentence, start):
+        return None
+    end = _balanced_parenthesis_end(sentence, start)
+    if end is None or not re.match(r"\s*(?:except|unless)\s+\S", sentence[start + 1:end - 1], re.IGNORECASE):
+        return None
+    introducers = [item for item in re.finditer(r"\b(?:except|unless)\b", sentence[start + 1:end - 1], re.IGNORECASE)
+                   if not _source_quote_at(sentence, start + 1 + item.start())]
+    if len(introducers) != 1:
+        # Nested exception scope needs its own contract; do not clean the
+        # operative action while a second exception may absorb that action.
+        return None
+    action_start = end
+    while action_start < len(sentence) and sentence[action_start].isspace():
+        action_start += 1
+    if action_start >= len(sentence) or not re.match(r"[A-Za-z]", sentence[action_start:]):
+        return None
+    if re.match(r"(?:if|unless|except|when|where|until|provided|and|or)\b", sentence[action_start:], re.IGNORECASE):
+        return None
+    action = _MODAL_ACTION_RE.match(sentence, action_start)
+    if action and (_MODAL_RE.search(action.group("action")) or _IMPLICIT_MODAL_RE.search(action.group("action"))):
+        return None
+    return action
+
+
 def _restore_interrupted_action(
     sentence: str,
     action_text: str,
@@ -5848,6 +6436,18 @@ def score_scaffold_quality(element: Dict[str, Any]) -> Dict[str, Any]:
         warnings.append("definition_term_uncertain")
         score -= 0.10
 
+    coordination_groups = _unresolved_duty_disjunction_groups(str(element.get("text") or ""))
+    support = element.get("support_span")
+    valid_support = (isinstance(support, (list, tuple)) and len(support) == 2
+                     and all(type(part) is int for part in support)
+                     and 0 <= support[0] < support[1] <= len(str(element.get("text") or "")))
+    if coordination_groups and (not valid_support or any(
+        support[0] < group["scope_span"][1] and support[1] > group["scope_span"][0]
+        for group in coordination_groups
+    )):
+        warnings.append("disjunctive_duty_scope_unresolved")
+        score -= 0.10
+
     score = max(0.0, min(score, 0.95))
     # Promotion here means "safe to use as a deterministic theorem scaffold
     # without LLM repair"; any warning should keep it in the review lane.
@@ -5959,8 +6559,98 @@ def extract_cross_references(sentence: str) -> List[Dict[str, str]]:
     ]
 
 
+_CITATION_LIST_NUMBER = r"[0-9][0-9A-Za-z]*(?:[.\-][0-9A-Za-z]+)*(?:\([a-z0-9]+\))*"
+_CITATION_LIST_PREFIX_RE = re.compile(
+    r"\b(?P<title>\d+)\s+u\.?\s*s\.?\s*c\.?\s*(?:(?:sections?|secs?\.?|§{1,2})\s*)?"
+    r"|\b(?P<kind>sections?|subsections?|chapters?|titles?|articles?|parts?)\s+"
+    r"|(?P<symbol>§{1,2})\s*", re.IGNORECASE,
+)
+_CITATION_LIST_NUMBER_RE = re.compile(_CITATION_LIST_NUMBER + r"(?![\w(])", re.IGNORECASE)
+_CITATION_LIST_SEPARATOR_RE = re.compile(r"\s*(?:,\s*(?:(?:and|or)\s+)?|(?:and|or)\s+)", re.IGNORECASE)
+_CITATION_LIST_LABEL_RE = re.compile(r"(?:sections?|subsections?|chapters?|titles?|articles?|parts?)\s+|§{1,2}\s*", re.IGNORECASE)
+_CITATION_DURATION_TAIL_RE = re.compile(
+    r"(?:and\s+|or\s+)?\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?|hours?|minutes?)\b",
+    re.IGNORECASE,
+)
+
+
+def _citation_tail_has_operative_modal(text: str) -> bool:
+    fragment = re.split(r"[,;.!?]", text, maxsplit=1)[0]
+    return bool(_MODAL_RE.search(fragment) or _IMPLICIT_MODAL_RE.search(fragment)
+                or re.search(r"\b(?:shall|must|may)\b", fragment, re.IGNORECASE))
+
+
+def _numeric_citation_lists(sentence: str) -> List[Dict[str, Any]]:
+    """Locate citation members in original source, without expanding ranges."""
+    result: List[Dict[str, Any]] = []
+    covered_end = -1
+    for prefix in _CITATION_LIST_PREFIX_RE.finditer(sentence):
+        if prefix.start() < covered_end:
+            continue
+        first = _CITATION_LIST_NUMBER_RE.match(sentence, prefix.end())
+        if first is None:
+            continue
+        kind = "usc" if prefix.group("title") else str(prefix.group("kind") or "section").lower().rstrip("s")
+        members = [{"start": prefix.start(), "end": first.end(), "number": first.group()}]
+        cursor = first.end()
+        while separator := _CITATION_LIST_SEPARATOR_RE.match(sentence, cursor):
+            member_start = separator.end()
+            label = _CITATION_LIST_LABEL_RE.match(sentence, member_start)
+            if label:
+                label_kind = label.group().strip().lower().rstrip("s")
+                if label_kind.startswith("§"):
+                    label_kind = "section"
+                if label_kind != ("section" if kind == "usc" else kind):
+                    break
+            number = _CITATION_LIST_NUMBER_RE.match(sentence, label.end() if label else member_start)
+            if number is None:
+                break
+            # A quantity or numbered actor is not an inherited citation member.
+            tail = sentence[number.start():]
+            after_number = sentence[number.end():]
+            if _CITATION_DURATION_TAIL_RE.match(tail) or _citation_tail_has_operative_modal(after_number):
+                break
+            if not label and not (
+                not after_number.strip()
+                or re.match(r"\s*[,;.!?)\]]", after_number)
+                or _CITATION_LIST_SEPARATOR_RE.match(sentence, number.end())
+            ):
+                break
+            members.append({"start": member_start, "end": number.end(), "number": number.group()})
+            cursor = number.end()
+        result.append({"start": prefix.start(), "end": cursor, "kind": kind,
+                       "title": prefix.group("title") or "", "members": members})
+        covered_end = cursor
+    return result
+
+
+def _citation_clause_end(sentence: str, start: int, end: int, clause_end: int,
+                        citations: List[Dict[str, Any]]) -> tuple[int, int]:
+    """Cross only citation-internal punctuation or attached substantive tails."""
+    relevant = [item for item in citations if start <= item["start"] <= end]
+    if not relevant:
+        return end, clause_end
+    extended = False
+    for boundary in re.finditer(r"[,;?!]|\.(?=\s|$)", sentence[end:]):
+        position = end + boundary.start()
+        internal = any(item["start"] <= position < item["end"] for item in relevant)
+        attached = False
+        if sentence[position] == ",":
+            tail = sentence[position + 1:].lstrip()
+            has_duty = _citation_tail_has_operative_modal(tail)
+            attached = not has_duty and bool(
+                re.match(r"(?:and|or)\s+|\d", tail, re.IGNORECASE)
+            )
+        if internal or attached:
+            extended = True
+            continue
+        return (position, position + len(boundary.group())) if extended else (end, clause_end)
+    return (len(sentence), len(sentence)) if extended else (end, clause_end)
+
+
 def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
     refs: List[Dict[str, Any]] = []
+    citation_lists = [item for item in _numeric_citation_lists(sentence) if len(item["members"]) > 1]
     patterns = [
         (
             "section_range",
@@ -5980,8 +6670,22 @@ def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
         ("usc", r"\b(\d+)\s+u\.?s\.?c\.?\s+(?:§|sec(?:tion)?\.?)?\s*([0-9A-Za-z.\-]+)"),
     ]
     seen: set[tuple[str, str]] = set()
+    for citation in citation_lists:
+        for member in citation["members"]:
+            number = member["number"].lower()
+            value = f"{citation['title']} {number}" if citation["title"] else number
+            key = (citation["kind"], value)
+            if key in seen:
+                continue
+            seen.add(key)
+            refs.append({"type": citation["kind"], "value": value,
+                         "raw_text": sentence[member["start"]:member["end"]],
+                         "normalized_text": f"{citation['kind']} {value}",
+                         "span": [member["start"], member["end"]]})
     for ref_type, pattern in patterns:
         for match in re.finditer(pattern, sentence, flags=re.IGNORECASE):
+            if any(item["start"] <= match.start() < item["end"] for item in citation_lists):
+                continue
             if _is_definition_scope_marker(sentence, match):
                 continue
             if ref_type == "section_range":
@@ -6010,6 +6714,8 @@ def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
             if ref_type == "section_range":
                 refs[-1]["start_section"] = start_section
                 refs[-1]["end_section"] = end_section
+    if citation_lists:
+        refs.sort(key=lambda item: item["span"])
     return refs
 
 
@@ -6042,11 +6748,27 @@ def extract_temporal_constraints(sentence: str) -> List[Dict[str, str]]:
 
 
 def extract_temporal_constraint_details(sentence: str) -> List[Dict[str, Any]]:
+    return extract_temporal_constraint_inventory(sentence)["retained"]
+
+
+def extract_temporal_constraint_inventory(sentence: str) -> Dict[str, Any]:
+    """Expose temporal observations and the clauses that exclude them.
+
+    Retained details preserve the legacy extractor's order and content. Excluded
+    details keep the same fields, together with every containing condition or
+    exception. Spans are offsets into the original, unmodified sentence.
+    """
+
     details: List[Dict[str, Any]] = []
     seen: set[tuple[str, str, int, int]] = set()
     for constraint_type, temporal_kind, pattern in _TEMPORAL_PATTERNS:
         for match in re.finditer(pattern, sentence, flags=re.IGNORECASE):
             value = match.group(1).strip().lower()
+            # Preserve the deadline relation in every downstream open-vocabulary
+            # atom. Normalize only its payload, leaving exact source spans and
+            # raw text intact; tabs/newlines must not hide an explicit "after".
+            if temporal_kind in {"not_later_than", "no_later_than"}:
+                value = " ".join(value.split())
             anchor = ""
             if " after " in value:
                 value_part, anchor_part = value.split(" after ", 1)
@@ -6057,6 +6779,8 @@ def extract_temporal_constraint_details(sentence: str) -> List[Dict[str, Any]]:
                 display = f"within {display}"
             elif temporal_kind == "on_date" and not display.startswith("on "):
                 display = f"on {display}"
+            elif temporal_kind in {"not_later_than", "no_later_than"}:
+                display = f"{temporal_kind.replace('_', ' ')} {display}"
             key = (constraint_type, display, match.start(), match.end())
             if key in seen:
                 continue
@@ -6073,24 +6797,50 @@ def extract_temporal_constraint_details(sentence: str) -> List[Dict[str, Any]]:
                     "span": [match.start(), match.end()],
                 }
             )
-    containers: list[tuple[int, int]] = []
-    for item in extract_condition_details(sentence) + extract_exception_details(sentence):
-        span = item.get("clause_span") or item.get("span") or []
-        if isinstance(span, (list, tuple)) and len(span) == 2:
-            containers.append((int(span[0]), int(span[1])))
-    if not containers:
-        return details
+    containers: List[Dict[str, Any]] = []
+    for kind, clause_details in (
+        ("condition", extract_condition_details(sentence)),
+        ("exception", extract_exception_details(sentence)),
+    ):
+        for item in clause_details:
+            span = item.get("clause_span") or item.get("span") or []
+            if isinstance(span, (list, tuple)) and len(span) == 2:
+                containers.append(
+                    {
+                        "kind": kind,
+                        "span": [int(span[0]), int(span[1])],
+                        "detail": item,
+                    }
+                )
     kept: list[dict[str, Any]] = []
+    excluded: List[Dict[str, Any]] = []
     for item in details:
         span = item.get("span") or []
         if not isinstance(span, (list, tuple)) or len(span) != 2:
             kept.append(item)
             continue
         start, end = int(span[0]), int(span[1])
-        if any(left <= start and end <= right for left, right in containers):
+        containing = [
+            container
+            for container in containers
+            if container["span"][0] <= start and end <= container["span"][1]
+        ]
+        if containing:
+            excluded.append(
+                {
+                    "detail": item,
+                    "containers": containing,
+                    "reason_codes": ["contained_in_condition_or_exception"],
+                }
+            )
             continue
         kept.append(item)
-    return kept
+    return {
+        "schema_version": "legal-temporal-constraint-inventory/v1",
+        "retained": kept,
+        "excluded": excluded,
+        "containers": containers,
+    }
 
 
 def normalize_temporal_value(value: str) -> Dict[str, Any]:
@@ -6140,17 +6890,39 @@ def _extract_clause_details(
     slot_type: str,
 ) -> List[Dict[str, Any]]:
     details: List[Dict[str, Any]] = []
+    citations = _numeric_citation_lists(sentence)
     seen: set[tuple[str, str, int, int]] = set()
     for clause_type, pattern in patterns:
         for match in re.finditer(pattern, sentence, flags=re.IGNORECASE):
-            value = match.group(1).strip()
             end = match.end(1)
             start = match.start(1)
-            if match.start() > 0 and sentence[match.start() - 1] == "(":
-                paren = value.find(")")
-                if paren >= 0:
-                    value = value[:paren].strip()
-                    end = start + paren
+            end, clause_end = _citation_clause_end(sentence, start, end, match.end(), citations)
+            while start < end and sentence[start].isspace():
+                start += 1
+            while end > start and sentence[end - 1].isspace():
+                end -= 1
+            value = sentence[start:end]
+            parenthetical_start = match.start() - 1
+            while parenthetical_start >= 0 and sentence[parenthetical_start].isspace():
+                parenthetical_start -= 1
+            if parenthetical_start >= 0 and sentence[parenthetical_start] == "(":
+                outer_end = _balanced_parenthesis_end(sentence, parenthetical_start)
+                if outer_end is not None:
+                    immediate_exception = slot_type == "exception" and clause_type in {"except", "unless"} and any(
+                        modal.end("modal") < parenthetical_start
+                        and sentence[modal.end("modal"):parenthetical_start].isspace()
+                        for modal in _MODAL_RE.finditer(sentence)
+                    )
+                    end = outer_end - 1 if immediate_exception else min(end, outer_end - 1)
+                    clause_end = outer_end if immediate_exception else min(clause_end, outer_end)
+                    while end > start and sentence[end - 1].isspace():
+                        end -= 1
+                    value = sentence[start:end]
+                else:
+                    paren = value.find(")")
+                    if paren >= 0:
+                        value = value[:paren].strip()
+                        end = start + paren
             normalized = value.lower()
             key = (clause_type, normalized, start, end)
             if key in seen:
@@ -6163,7 +6935,7 @@ def _extract_clause_details(
                     "raw_text": value,
                     "normalized_text": normalized,
                     "span": [start, end],
-                    "clause_span": [match.start(), match.end()],
+                    "clause_span": [match.start(), clause_end],
                 }
             )
     return details

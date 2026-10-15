@@ -1,0 +1,264 @@
+{
+  "actual_main_executions": 0,
+  "checkpoint_JSON_parses": 0,
+  "control_count": 30,
+  "control_source": {
+    "bytes": 12773,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_owned_results_archive_hf_detached_v02.py",
+    "sha256": "ecc939156d846d0ab401f70519c9a5c1f6c8536330f850d5fe2b4cf5c75e4b4d"
+  },
+  "controls": [
+    {
+      "detail": "Actual detached kernel accepts exact additive bytes through one fake parent-guarded commit and three immutable readbacks.",
+      "name": "normal_exact_LFS_Git_three_payload_immutable_readback",
+      "passed": true
+    },
+    {
+      "detail": {
+        "commit_calls": 0,
+        "download_calls": 0,
+        "error": {
+          "message": "Fresh additive archive prefix required",
+          "type": "ValueError"
+        }
+      },
+      "name": "prefix_exists",
+      "passed": true
+    },
+    {
+      "detail": "Rejected before fake commit.",
+      "name": "prefix_exists_before_any_commit",
+      "passed": true
+    },
+    {
+      "detail": {
+        "commit_calls": 0,
+        "download_calls": 0,
+        "error": {
+          "message": "Pre-upload local payload drift",
+          "type": "ValueError"
+        }
+      },
+      "name": "local_preupload_drift",
+      "passed": true
+    },
+    {
+      "detail": "Rejected before fake commit.",
+      "name": "local_preupload_drift_before_any_commit",
+      "passed": true
+    },
+    {
+      "detail": {
+        "commit_calls": 1,
+        "download_calls": 0,
+        "error": {
+          "message": "Simulated server rejects stale parent commit",
+          "type": "ValueError"
+        }
+      },
+      "name": "parent_changed",
+      "passed": true
+    },
+    {
+      "detail": "One failed fake CAS; no retry or readback.",
+      "name": "parent_conflict_has_no_retry",
+      "passed": true
+    },
+    {
+      "detail": {
+        "commit_calls": 1,
+        "download_calls": 0,
+        "error": {
+          "message": "Every prior remote file must retain its exact identity",
+          "type": "ValueError"
+        }
+      },
+      "name": "old_changed",
+      "passed": true
+    },
+    {
+      "detail": {
+        "commit_calls": 1,
+        "download_calls": 0,
+        "error": {
+          "message": "Every prior remote file must retain its exact identity",
+          "type": "ValueError"
+        }
+      },
+      "name": "old_deleted",
+      "passed": true
+    },
+    {
+      "detail": {
+        "commit_calls": 1,
+        "download_calls": 0,
+        "error": {
+          "message": "Every prior remote file must retain its exact identity",
+          "type": "ValueError"
+        }
+      },
+      "name": "unrelated_added",
+      "passed": true
+    },
+    {
+      "detail": {
+        "commit_calls": 1,
+        "download_calls": 0,
+        "error": {
+          "message": "Remote Git/LFS payload identity differs",
+          "type": "ValueError"
+        }
+      },
+      "name": "lfs_sha_wrong",
+      "passed": true
+    },
+    {
+      "detail": {
+        "commit_calls": 1,
+        "download_calls": 0,
+        "error": {
+          "message": "Remote Git/LFS payload identity differs",
+          "type": "ValueError"
+        }
+      },
+      "name": "git_blob_wrong",
+      "passed": true
+    },
+    {
+      "detail": {
+        "commit_calls": 1,
+        "download_calls": 0,
+        "error": {
+          "message": "Typed exact LFS metadata required",
+          "type": "ValueError"
+        }
+      },
+      "name": "remote_size_wrong",
+      "passed": true
+    },
+    {
+      "detail": {
+        "commit_calls": 1,
+        "download_calls": 1,
+        "error": {
+          "message": "Immutable downloaded payload bytes differ",
+          "type": "ValueError"
+        }
+      },
+      "name": "download_corrupt",
+      "passed": true
+    },
+    {
+      "detail": {
+        "actual_kernel_accepted": false,
+        "commit_calls": 1,
+        "download_calls": 0
+      },
+      "name": "wrong_after_revision_must_be_rejected",
+      "passed": true
+    },
+    {
+      "detail": {
+        "actual_kernel_accepted": false,
+        "commit_calls": 1,
+        "download_calls": 1
+      },
+      "name": "download_original_path_must_be_rejected",
+      "passed": true
+    },
+    {
+      "detail": {
+        "actual_kernel_accepted": false,
+        "commit_calls": 1,
+        "download_calls": 1
+      },
+      "name": "download_noncanonical_must_be_rejected",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "duplicate_path",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "boolean_size",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "empty_listing",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "bad_blob_id",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "bad_revision_length",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "nonhex_revision",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "nonhex_blob",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "LFS_size_mismatch",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "LFS_boolean_size",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "LFS_short_SHA",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "LFS_nonhex_SHA",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "LFS_boolean_pointer",
+      "passed": true
+    },
+    {
+      "detail": "Actual detached remote_map validation.",
+      "name": "LFS_zero_pointer",
+      "passed": true
+    }
+  ],
+  "fake_commit_calls_only": true,
+  "findings": [],
+  "limitations": [
+    "Actual filesystem pin implementation and source/prepared gate checks remain full-source reviewer responsibilities.",
+    "SDK behavior is simulated; no remote state or durable publication is observed."
+  ],
+  "network_calls": 0,
+  "passed": true,
+  "passed_controls": 30,
+  "payload_files_read": 0,
+  "private_body_reads": 0,
+  "publisher": {
+    "bytes": 12363,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/publish_owned_results_archive_hf_v02.py",
+    "sha256": "48f917fa3921294631df351c0a402e21285620504665f4bc50dba2181e962502"
+  },
+  "real_SDK_imports": 0,
+  "result_JSON_parses": 0,
+  "schema": "actor-refinement-owned-results-archive-hf-detached-controls/v2",
+  "uploads": 0
+}

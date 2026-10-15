@@ -1,0 +1,71 @@
+{
+  "all13_target_modules_covered": true,
+  "authority": {
+    "proof_authority": false,
+    "published": false,
+    "real_statutory_review_completed": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "cases_by_module": {
+    "corpus_contracts": 33,
+    "corpus_parent_alignment_adapter": 107,
+    "corpus_parent_occurrence_adapter": 84,
+    "corpus_source": 15,
+    "corpus_source_adjudication": 204,
+    "corpus_source_application": 235,
+    "corpus_source_bindings": 98,
+    "corpus_source_history": 260,
+    "corpus_source_review": 133,
+    "corpus_source_review_packets": 145,
+    "corpus_source_review_responses": 185,
+    "legal_graph_dependencies": 18,
+    "legal_graph_review": 48
+  },
+  "corrected_driver": {
+    "bytes": 6820,
+    "sha256": "07a64ed7723545939698ac57850ece954977d8742b39e1b01ff0e6e3cd590c9f"
+  },
+  "correction": "JUnit may append a unittest class; use exact module or module-dot prefix, preserving the original false coverage receipt",
+  "counts": {
+    "error": 0,
+    "failure": 0,
+    "skipped": 0
+  },
+  "current_product_and_test_inputs_match_execution": true,
+  "execution_head": "702142fc8789517ecc204607d07c4b925ec7b441",
+  "execution_receipt": {
+    "bytes": 57415,
+    "sha256": "97298442432aba359c90053cdabe53612333f44371f811f708c2aaae1d2d7bea"
+  },
+  "new_stack_cases": 982,
+  "original_execution_driver_matches_pinned_snapshot": true,
+  "original_execution_inputs_unchanged": true,
+  "raw_outputs": {
+    "junit.xml": {
+      "bytes": 1358258,
+      "sha256": "1fd3b571b10b917a8e981e6391c45778c72e24a38e8214930fce11c7bf15970b"
+    },
+    "run-inputs.json": {
+      "bytes": 53560,
+      "sha256": "ac129d10bfc6cfcce05fe2c0725b87c9116bfba47d951a185d3ccf1c6d510aa3"
+    },
+    "stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout.txt": {
+      "bytes": 2630578,
+      "sha256": "533b610c3fec154b43df01a4c71dd2ab6ed6f0862c07e8e9d036360849a8243e"
+    }
+  },
+  "receipt_passed": true,
+  "recount_driver": {
+    "bytes": 4573,
+    "sha256": "329f5a811d0d0ebf76dcc9aa548307a8acb4fd9ecd2063d332cb478376db188a"
+  },
+  "schema": "legal-source-review-stack-recount/v1",
+  "test_cases": 1565,
+  "tests_rerun_for_accounting_correction": false,
+  "unique_cases": true
+}

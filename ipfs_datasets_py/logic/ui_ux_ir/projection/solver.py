@@ -355,9 +355,15 @@ class SolverBoundsReceipt:
     exceeded_bounds: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
+        # ``elapsed_ms`` is deliberately excluded from the canonical
+        # serialization: it is wall-clock runtime telemetry, not artifact
+        # content. Including it made UIProjectionArtifact.to_dict()/digest()
+        # differ between identical solves, breaking the deterministic
+        # artifact contract (and any cross-language golden digest). The
+        # measured value remains available on the receipt object itself,
+        # and the live bound check in _SolveState.tick is unaffected.
         return {
             "bound_exceeded": self.bound_exceeded,
-            "elapsed_ms": self.elapsed_ms,
             "exceeded_bounds": list(self.exceeded_bounds),
             "max_memory_nodes": self.max_memory_nodes,
             "max_solve_ms": self.max_solve_ms,

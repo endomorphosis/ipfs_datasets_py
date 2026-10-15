@@ -1,0 +1,154 @@
+{
+  "artifacts": {
+    "counter_derived_analysis": {
+      "bytes": 9720380,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-independent-recount-v01.json",
+      "sha256": "eaa6f1a2dccebd202c995e441df65849d0ea1c4d8613a6039f6bd57f1f4a83d4"
+    },
+    "family_source_review": {
+      "bytes": 20268,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/family-existing-bridge-independent-source-review-v01.json",
+      "sha256": "840824af8f89e4551f044b491144ff757629463d0c0f52c8d80375efdebc1bf0"
+    },
+    "guide": {
+      "bytes": 6147,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoformalization/legal-conditions-composition-20261015.md",
+      "sha256": "014e1487e079beb3d85892c8d6d012ec79048635b2539f5bcd93ae766648aa2b"
+    },
+    "manifest": {
+      "bytes": 40054,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-inputs-v01.json",
+      "sha256": "fbbf88f03dac543c6fb839c385f2ef165e0b0636854764e662f770a19a7ebb77"
+    },
+    "primary_derived_analysis": {
+      "bytes": 9716921,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-diagnostic-v01.json",
+      "sha256": "393d154c6f116e255833de8d81be066a80817170a047613dba39ad591facf1df"
+    },
+    "primary_source_gate": {
+      "bytes": 55123,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyzer-source-independent-review-v01.json",
+      "sha256": "0932627121a7cb0360c2bbbc8f351b92b55ca4abbcc8f306a80a7a7f7ebe2f8b"
+    },
+    "proposal": {
+      "bytes": 49817,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/next-training-proposal-v01.json",
+      "sha256": "3701f01f6ee48dfd42214a433c4e801df73e22e99537fc69dc74ced225080fa8"
+    },
+    "root_result_review": {
+      "bytes": 69834,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-result-independent-review-v01.json",
+      "sha256": "07a1682642e5a3274929d55f64b661c8f5ba17385cd6e239e9e3ea030332eddf"
+    },
+    "summary": {
+      "bytes": 245319,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-result-summary-v01.json",
+      "sha256": "cd49699b791e14d92ed7d05f13f2dceed82dd59979aca83f45c2e4ae4a0f9826"
+    }
+  },
+  "copy_checks": {
+    "all_eight_primary_counter_scientific_record_roots_equal": true,
+    "all_ordered_gain_loss_ID_lists_and_counts_exact": true,
+    "comparison_filter": "Retain full_IR unconditionally, plus every modality/actor/action/object/conditions/exceptions/temporal column having any gain or loss. No nonzero field changes are dropped.",
+    "comparison_groups_copied": 81,
+    "comparison_route_metric_columns_recalculated_from_derived_per_ID_flags": 1296,
+    "declared_original_93role_input_closure_bytes": 88017586,
+    "full_IR_route_columns_retained_even_when_unchanged": 162,
+    "guide_table_scored_scope_rows_exact": 9,
+    "initial_readonly_check_note": "An initial review assertion assumed a canonical field-name list order. The summary lists modality then alphabetic role keys. That presentation assumption was corrected; no summary or scientific data changed.",
+    "native_panels_copied": 30,
+    "nonzero_nonfullIR_columns_of_seven_fields_retained": 221,
+    "panel_compaction": "Only optional_presence_confusion trees are omitted from compact panels; every retained panel field matches the derived primary and counter exactly. Full original trees remain in pinned analyses.",
+    "permission_modalities_correct_both_routes_all_three_variants": true,
+    "permission_records_copied_exact": 96,
+    "rank_records_copied_exact": 6,
+    "training_conditions_reference_denominators_derived_all_variants": {
+      "gold_absent": 96,
+      "gold_present": 72
+    },
+    "training_error_lists": "IDs in original derived order, full-IR booleans and unique incorrect-field membership match. Field-name presentation order need not match canonical field order.",
+    "training_error_rows": 42,
+    "variant_panels_copied": 30
+  },
+  "default_promotion": false,
+  "findings": [],
+  "guide_fidelity": {
+    "active_latent_family_Lake_USCode_semantics_or_portable_reload_claimed": false,
+    "all_six_gold_end_and_span_ranks_2_or_3": true,
+    "all_six_gold_full_spans_already_actual_top8_and_assignments_feasible": true,
+    "all_six_gold_starts_rank1": true,
+    "both_mixes_training_raw_and_joint": 154,
+    "fresh_dev_and_test_total72_complete_IR_zero": true,
+    "new_model_training_weights_or_composed_checkpoint_claimed": false,
+    "old_tune_before_after_raw_and_joint": [
+      94,
+      93
+    ],
+    "old_tune_loss_actor_scope_correct": true,
+    "old_tune_loss_id": "native-tuning-calendula-t4-q5-p",
+    "per_process_complete_original_greedy_verifications": 1896,
+    "per_process_joint_and_raw_replays": 3160,
+    "per_process_joint_search_nodes": 495056,
+    "shared_AST_and_independent_arithmetic_limits_disclosed": true,
+    "shorter_competitor_gap_range_rounded": [
+      0.396,
+      0.908
+    ],
+    "statutory8_unscored": true,
+    "topk_conclusion_is_narrow_unchanged_objective_ordering_not_general_cause_or_capacity_proof": true,
+    "training_total": 168
+  },
+  "no_model_encoder_optimizer_or_Lake_execution": true,
+  "no_original_capture_reference_teacher_export_checkpoint_or_private_bodies_opened": true,
+  "no_primary_or_counter_main_executed_by_reviewer": true,
+  "no_product_edits_Git_or_network": true,
+  "no_production_or_numeric_imports": true,
+  "passed": true,
+  "proposal_scope": {
+    "active_conditions_row_scalars": 130,
+    "coefficient": 0.25,
+    "compound_freezing_plus_margin_no_isolated_causal_effect_claim": true,
+    "existing_F18_CE_and_F15_teacher_KL_anchor_associations_retained": true,
+    "existing_actor_hinge_convention_reused_no_algorithm_novelty_claim": true,
+    "finite_connected_bias_gradients_without_nonzero_requirement": true,
+    "fixed_seed1729_32_updates_batch12_no_sweep_retry_or_threshold_fit": true,
+    "full_batch_denominator_not_present_or_active_count": true,
+    "fully_frozen_tensors": 38,
+    "future_concrete_source_training_runtime_scalar_and_tensor_checks_required": true,
+    "future_initial_all632_parity_and_final_protected_bit_checks_required": true,
+    "inactive_stored_scalars": 650,
+    "margin": 1.0,
+    "margin_applies_to_all72_gold_present_training_conditions_rows_of168": true,
+    "no_future_accuracy_guarantee_or_blind_legal_generalization_claim": true,
+    "parent_is_exact_F18_states_not_score_mixture": true,
+    "pointer_tensors": 4,
+    "source_only_single_future_arm_not_execution_authority": true,
+    "stable_exact_score_row_major_hardest_wrong_selection_detached_only": true,
+    "unchanged_strict_cross_phase_acceptance_kept_separate_from_parent_engineering_signal": true,
+    "wrong_and_gold_tensor_scores_recomputed_with_gradients": true,
+    "wrong_domain": "All unpadded valid upper-triangle pairs except exact gold; no other-facet overlap filter or inference-top8 restriction.",
+    "zero_contributions_graph_connected_for_absent_or_empty_domain": true
+  },
+  "review_receipt_only_new_file": true,
+  "reviewer_authorship": {
+    "authored_independent_rank_composition_kernels_and_counter": true,
+    "authored_primary_analyzer_or_model": false,
+    "authored_root_compact_summary_guide_or_next_training_proposal": false,
+    "independent_counter_algorithm_authority_reasserted_by_this_prose_review": false,
+    "reviewer": "conditions_rank_counter_f19",
+    "role": "Independent review of root summary/prose copying and scope; scientific evidence remains the disclosed source-qualified primary/counter agreement."
+  },
+  "schema": "conditions-composition-publication-prose-and-summary-independent-review/v1",
+  "scope": "Root-authored compact summary/prose copying and source-family/proposed-objective scope. Derived public analyses and source files only; this is not a new original-data recount, model execution, legal semantic review, source-stage Git audit or future training qualification.",
+  "source_family_scope": {
+    "dcec_scope": "Qualifier-free ground Object O/P/F only.",
+    "duration_calendar_context_constraints_retained": true,
+    "existing_canonical_source_family_bridge_and_Lake_gate_reused": true,
+    "historical_saved_adapter_remains_strict": true,
+    "new_F15_F17_F18_transport_gap_kept_separate": true,
+    "new_registered_family_qualification_or_build_not_claimed": true,
+    "no_new_emitter_parser_or_Lake_runner_needed_for_existing_supported_requests": true,
+    "qualifier_meaning_modality_cues_occurrence_and_context_are_explicit_declarations": true,
+    "tdfol_scope": "Ground non-temporal Boolean/deontic subset; no temporal operators or quantifiers in this source-bound route."
+  }
+}

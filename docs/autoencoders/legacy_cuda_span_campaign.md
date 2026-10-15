@@ -176,6 +176,8 @@ does not upload results or fetch weights:
 ```bash
 python3 -B scripts/ops/legal_ir/run_legacy_span_cuda.py \
   --runtime-directory /CHARGED/legacy-span-cuda \
+  --scheduler-state /ABSOLUTE/existing-native-scheduler.json \
+  --expected-policy-sha256 CURRENT_POLICY_SHA256 \
   --compiler-workers 2 --bridge-workers 1 --batch-size 4 --max-batches 2 \
   --storage-bytes 750000000 --memory-mb 12288 \
   --agent-id legacy-cuda-census
@@ -193,6 +195,8 @@ omit the batch limit, and enable immutable census publication if desired:
 ```bash
 python3 -B scripts/ops/legal_ir/run_legacy_span_cuda.py \
   --runtime-directory /CHARGED/legacy-span-cuda \
+  --scheduler-state /ABSOLUTE/existing-native-scheduler.json \
+  --expected-policy-sha256 CURRENT_POLICY_SHA256 \
   --compiler-workers 4 --bridge-workers 1 --batch-size 8 --max-batches 0 \
   --poll-seconds 300 --storage-bytes 750000000 --memory-mb 12288 \
   --agent-id legacy-cuda-census --upload
@@ -225,10 +229,11 @@ systemctl --user start UNIT_NAME.service
 Stopping and restarting is resumable. Work interrupted before a durable receipt
 returns to pending. A retained receipt must match its complete queued source,
 batch ID, checkpoint, mode, and authority flags before recovery can stage it.
-On explicit shutdown, the outer owner sends SIGTERM to its child process group
-and waits up to 30 seconds before escalating to SIGKILL and reaping it. This
-grace interval bounds shutdown cleanup only; it is not a deadline on productive
-campaign execution. A prefetched batch interrupted during shutdown resumes
+On explicit shutdown, the outer owner uses the existing native, birth-checked
+process-group cleanup, including descendants whose leader has already exited.
+It sends SIGTERM followed by bounded SIGKILL escalation and reaping when needed.
+These existing native cleanup bounds apply only to shutdown; they are not a
+deadline on productive campaign execution. A prefetched batch interrupted during shutdown resumes
 through the same queue recovery path.
 Do not edit the queue or copy an open DuckDB file to resume on another host.
 
@@ -263,6 +268,8 @@ without loading the model, preparing new source inputs, or invoking CUDA:
 ```bash
 python3 -B scripts/ops/legal_ir/run_legacy_span_cuda.py \
   --runtime-directory /CHARGED/legacy-span-cuda \
+  --scheduler-state /ABSOLUTE/existing-native-scheduler.json \
+  --expected-policy-sha256 CURRENT_POLICY_SHA256 \
   --agent-id legacy-cuda-census --publish-only --upload \
   --storage-bytes 750000000 --memory-mb 12288
 ```
@@ -388,3 +395,189 @@ working-tree producer digest rather than inferring source identity from Git HEAD
 See the [deployment receipt](../implementation/reports/evidence/legacy-cuda-campaign-20260930/deployment.json),
 [measurements](../implementation/reports/evidence/legacy-cuda-campaign-20260930/smoke-measurements.json),
 and [verified publications](../implementation/reports/evidence/legacy-cuda-campaign-20260930/verified-publications.json).
+
+
+## Explicit existing scheduler binding and owner-gated engine launch
+
+The outer CLI now requires paired `--scheduler-state` and
+`--expected-policy-sha256` identities. It opens only the exact existing native
+policy before runtime directory creation, owner locks or ledger access. The
+library's `LegacySpanCampaignResources` constructor likewise requires paired
+`scheduler_state_path` and `expected_scheduler_policy_sha256` keywords.
+The subsequent `DaemonResourceReservation` uses these same scalar identities
+and `require_existing_ledger=True`; policy drift before entry refuses before
+a new disk claim is written. No process-global facade is installed. Argument
+parsing and `--help` remain available without reserving anything, but omitted
+or partial bindings cannot launch a real campaign, including publication-only
+mode or the hidden engine entry.
+
+The parent attaches the actual isolated engine child, records its PID and birth
+in the native disk row, and binds a closed launch envelope to that same row.
+It sends public lease/reservation identities, actual parent and child births,
+root identities, the exact parsed CLI digest and resource envelope through a
+bounded stdin barrier. No lease key is sent. Before opening the cache or
+starting CUDA/pools, the engine joins that envelope to its currently live
+native parent lease, native disk reservation, root/runtime identities and
+actual Linux process relationship. A matching policy hash alone cannot start
+an engine. The engine rechecks this custody at work-dispatch boundaries;
+the external owner continues monitoring the process group and storage. The
+60-second startup barrier bounds owner handoff only; productive inference
+still has no campaign-wide deadline. Private controller tests use explicit
+fixtures and do not run CUDA, legal inference or Lean admission.
+
+The existing unit file records the historical deployment. Keep it and all
+prior attempts unchanged. The reviewed optional successor drop-in is
+[legacy-cuda-span-census-existing-policy.conf](../../configs/autoencoders/legacy-cuda-span-census-existing-policy.conf).
+It explicitly binds the externally observed 24-field policy `f07cb142…`, with
+one compiler worker, one bridge worker, CPU 3, RAM 8192MiB and five child-process
+slots. The original runtime, agent identity, paired/guided diagnostic outputs,
+publication, `max-batches 0`, temperature 0 and lack of an overall runtime limit
+are preserved. This is a deployment candidate, not an assertion that these
+budgets or CUDA execution have been admitted. The observed policy permits 16
+CPU slots, 16 process slots and 99688MiB host memory, reserves validation CPU 2
+and 24922MiB proof headroom. That policy was changed externally; this repair did
+not apply the earlier proposed four-to-eight-slot expansion. Its current source
+producer and exact digest must be explicitly reconciled and revalidated before
+any real deployment. No prior scheduler state is restored, and this client does
+not initialize, normalize or reconfigure the current policy.
+
+A 4096MiB host request can pass basic CPU/process arithmetic but still leave no
+buffer headroom because legacy batch planning reserves at least 4096MiB for
+resident work. The candidate 8192MiB allowance leaves room for those buffers
+and also fits the older 9830MiB host budget; the explicitly observed current
+policy and actual hardware observations still govern admission. Native
+reservations still decide admission. Change worker counts only with matched
+wall-time/target-count observations, retaining the bridge/prover/cache fields.
+
+Before adoption, stop the old failing restart loop and verify it has no live
+owner or descendants. Preserve the old service definition, runtime, weights,
+spans, retry counters, completed batches and budgets. After authenticating the
+current external policy and compatible canonical
+native producer, explicitly bind the new drop-in and fresh acceptance/source
+contexts to that observed policy. Install the drop-in as a separate
+`20-existing-native-policy.conf` beneath the user unit's drop-in directory,
+then reload systemd and inspect the effective command before deciding whether
+the genuinely admitted diagnostic campaign may resume. Do not start the old
+deleted source-preparation generation or rewrite its historical receipts.
+
+The October 14 metadata audit found `next_sequence=2` and one acquisition/release
+in the shared scheduler, versus a larger earlier retained state file. The old
+unpinned native constructor can reset idle state on configuration mismatch.
+This explains a plausible reset mechanism, but the audit did not authenticate
+which external process replaced/reset the state. No prior scheduler state is
+reconstructed from those observations. The repair prevents this client's
+implicit configuration path; independently running legacy clients still need
+explicit owner review before their own shared-policy migration.
+
+
+### Fresh bytecode, scoped producer pins and one startup deadline
+
+The v2 launch adds a new empty 0700 bytecode-prefix directory for each engine,
+created inside the already admitted runtime. The child receives
+`PYTHONPYCACHEPREFIX` pointing to that directory and retains Python `-B`/
+`PYTHONDONTWRITEBYTECODE=1`. The verifier checks its actual
+`sys.pycache_prefix`, `sys.dont_write_bytecode`, directory identity and continued
+emptiness before cache/pool execution and at dispatch boundaries. This prevents
+reuse of a previous engine's standard Python bytecode cache. Declared controller,
+resource, package and metadata-helper source hashes and loaded producer origins
+must match the exact same source tree before the native launch is accepted.
+The real CLI still requires the workspace compiler/decompiler/parser tree.
+No HACC import aliases, module-cache removal or source retargeting are used.
+
+These pins cover 16 declared source files, not the entire Python environment,
+interpreter binary, third-party import hooks or checkpoint authenticity. They
+observe current source bytes; they do not independently attest the parent's
+already loaded bytecode. The later legacy model's full canonical source snapshot
+and checkpoint checks continue to apply. Private metadata/control fixtures can
+run in an isolated source tree and grant no semantic or Lean admission.
+
+The same 60-second parent startup deadline starts immediately before Popen.
+It is checked after spawn, after the required native child attach/census and
+launch binding, before and after each heartbeat/resource check, and before
+accepting the engine's exact handoff receipt. The child also bounds its stdin
+wait to 60 seconds. A slow full native inventory remains a genuine startup
+refusal; no census is skipped and no deadline/context cap is increased.
+The owner accepts only a receipt tied to this exact child and launch hash,
+checks the deadline again after reading it, and preserves each ready receipt
+beside that launch's unique bytecode directory. A stale prior receipt cannot
+stand in for the current child. Receipt transport is an engineering observation,
+not a model result, proof, independent operational grant or Lake admission.
+
+The earlier idle audit at 10:47 UTC observed the old 19-field policy. At 11:10 UTC,
+a read-only observation found the external 24-field `f07cb142…` policy with
+`next_sequence=51`; no leases or waiters were then observed. Those timestamps
+and local observations do not identify or authorize the external policy change.
+Do not reconstitute missing/reset scheduler history from either snapshot.
+A later active peer lease remains owned by that peer and must not be stopped,
+recovered or reconfigured merely to resume this campaign.
+
+
+Source, startup and execution failures use the existing native reservation exit
+path to retain their full disk claim and failure type instead of asserting
+successful artifact durability. Native group cleanup runs even after the engine
+leader exits; a live descendant prevents accepting a successful return. After
+cleanup, the native owner decides whether its lease can be released. No peer
+lease, prior claim, task history or storage cap is modified by that recovery.
+Successful and explicitly stopped runs still require native strict finalization
+with a stopped process group, durable artifacts and fresh accounting.
+
+
+### Retained runtime storage headroom
+
+The reviewed successor drop-in reserves 1000000000 bytes for the same retained
+runtime. An October 14 read-only footprint observation found 613748056 bytes:
+that exceeds the previous 750000000-byte reservation's 75% intake threshold
+(562500000 bytes), so the old command can admit a process yet defer all new
+intake for verified publication cleanup. The successor's 75% threshold is
+750000000 bytes, leaving about 136.25MB before that intake threshold at the
+observed footprint. The campaign's hard allowance rises by 250MB; the shared
+145000000000-byte cap and all prior full claims remain unchanged. A fresh native
+accounting/admission check is required before each real run. This is no promise
+of unlimited storage: successful remote hash verification and native cleanup
+still govern eviction, and failed/unpublished work remains retained.
+
+The cached source parquet and local legacy checkpoint must retain their exact
+required hashes. Runner/source-guard edits are recorded per observation and do
+not change the existing campaign identity: checkpoint path, fixed source hash,
+diagnostic representation and agent identity are unchanged. A root-owned native
+read must verify the actual queue identity before resuming; status JSON and
+filesystem hashes alone do not prove that logical database identity or progress.
+
+
+The successor is an explicitly observed trial and sets `Restart=no`. The original
+unit's recovery policy stays unchanged underneath the separate drop-in, and
+`max-batches 0` plus the lack of a productive deadline still allow an admitted,
+healthy owner to continue. Automatic failure restarts are held because each
+failed native attempt retains its full 1GB claim; three uncontrolled retries
+would consume most of the approximately 4.12GB headroom in the preceding native
+accounting observation. Confirm actual custody, CUDA execution, a completed
+batch and publication behavior before deliberately enabling any bounded
+recovery policy. Do not release old failed claims to manufacture headroom.
+
+
+### Service cgroup allowance and unchanged native memory headroom
+
+The first October 14 observed trial stopped before model execution: its effective
+service cgroup reported total 8192MiB and available 7133MiB, while the explicitly
+bound F07 native policy requires 24922MiB of proof headroom in addition to the
+8192MiB campaign request. `MemoryHigh=8G`/`MemoryMax=10G` made that request
+impossible in the service's actual scope, despite healthy host-level memory.
+The failed 1GB disk claim and original failure evidence remain retained.
+
+The reviewed successor uses `MemoryHigh=36G` and `MemoryMax=40G` so the native
+request and unchanged headroom can fit the same service cgroup, with margin.
+Those are outer service/container allowances. The actual native campaign
+request, combined parent/child RSS monitoring and declared memory envelope
+remain 8192MiB; CPU 3, child 5, the 1GB storage reservation, the shared 145GB cap,
+proof thresholds, source/logic gates and fixed encoder context remain unchanged.
+A 36GiB high allowance is 36864MiB, leaving 3750MiB above 8192+24922 before existing
+cgroup occupancy. Actual occupancy and proof telemetry still decide admission;
+this change is not a memory reservation, performance claim or proof admission.
+
+`Restart=no` remains set for one observed trial, with `max-batches 0` and no
+productive deadline. Install only the exact reviewed successor over the exact
+previous drop-in, while stopped, preserve both versions and the failed claim,
+and inspect effective systemd memory settings before root starts one new trial.
+No native threshold or stored reservation is weakened or released to make the
+trial pass. The cgroup mismatch was revealed by the externally changed F07
+policy's scope; the scheduler policy itself is not reconfigured by this fix.

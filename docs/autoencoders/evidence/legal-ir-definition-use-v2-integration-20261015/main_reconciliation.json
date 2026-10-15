@@ -1,0 +1,33 @@
+{
+  "all_506_listed_inputs_unchanged": true,
+  "incoming_main": "9b870a811b9651f37a1dc2b7ef9b8288405fe55e",
+  "merge_head": "66d02e3255b7004f0849f770130dd6bcbf89a46d",
+  "observed_utc": "2026-10-15T07:34:43.234183+00:00",
+  "overlap_with_506_qualified_input_inventory": [],
+  "preserved_paths": [
+    {
+      "bytes": 4767,
+      "path": "docs/operations/ipfs_staging_and_disk_recovery.md",
+      "sha256": "bae79b2932d820f360314346acc756cb96f4fb8ac108751a2e416fd2eefdbe32"
+    },
+    {
+      "bytes": 35292,
+      "path": "ipfs_datasets_py/ipfs_backend_router.py",
+      "sha256": "d57898ceb7a5be0d8776f81ecb08cf96144afa03f55090d5f33b41baed3e8b0d"
+    },
+    {
+      "bytes": 4826,
+      "path": "tests/unit/test_ipfs_backend_router.py",
+      "sha256": "389eeafd2280f425b10fd5e16b439b5129f9467e37064d7fda0532ecc0382e6d"
+    },
+    {
+      "bytes": 11650,
+      "path": "tests/unit/test_ipfs_backend_router_staging_cleanup.py",
+      "sha256": "1d7bf865e648874c19eca97c3109c2f8d17ecb16a9565f14b14478351cd70fa4"
+    }
+  ],
+  "qualified_source_head": "7e34bb15d7b9bf4d8d25136f56e575e8d3644a7c",
+  "schema": "legal-definition-use-v2-main-preservation/v1",
+  "scope": "Normal merge preserves concurrent provider staging cleanup. Definition/graph/lookup paths are unchanged; no provider-operation behavior qualified by these suites.",
+  "tests_repeated_after_disjoint_merge": false
+}

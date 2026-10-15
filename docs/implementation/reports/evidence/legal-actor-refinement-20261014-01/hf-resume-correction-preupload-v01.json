@@ -1,0 +1,20 @@
+{
+  "baseline_attributes": {
+    "bytes": 2230,
+    "git_blob_id": "1cf99f89f95ce8f39b630d8df37126fc628047de",
+    "immutable_download_byte_identity_matches": true,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-reconciliation-attrs-readback-v01/baseline/.gitattributes",
+    "remote_identity": {
+      "blob_id": "1cf99f89f95ce8f39b630d8df37126fc628047de",
+      "lfs": null,
+      "size": 2230
+    },
+    "revision": "0228887c8e33cb23e9679889a9496f87140021e6",
+    "sha256": "88ff4d857c849ce3e11fea7c2f70d648550968cf546ab9cbc4d690e1b6543036"
+  },
+  "parent_revision": "1c5d3103e73895c250b84261d7ab4c4341da9a0f",
+  "paths": [
+    ".gitattributes"
+  ],
+  "sole_prior_file_correction": true
+}

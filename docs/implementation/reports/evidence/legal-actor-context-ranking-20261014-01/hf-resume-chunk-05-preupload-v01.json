@@ -1,0 +1,24 @@
+{
+  "additions_only": true,
+  "names": [
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/parent-training168-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/summary.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-authored_dev-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-authored_dev-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-authored_eval-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-authored_eval-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-fresh_challenge-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-fresh_challenge-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-fresh_dev-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-fresh_dev-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-fresh_test-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-fresh_test-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-fresh_tune-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-fresh_tune-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-frozen-head-retention.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-law-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-law-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/trained-old_authored_eval-joint.json"
+  ],
+  "parent_revision": "8441564083804f070b36c84cdd3ae26a376defd0"
+}

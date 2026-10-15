@@ -1,0 +1,24 @@
+{
+  "declared_steps": [
+    "Run the selected sampler and source-review intake pytest suites unchanged.",
+    "Regenerate the pinned retained source into a complete blank review bundle and pending population; no review or model inference."
+  ],
+  "descriptor": {
+    "bytes": 926,
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/official-section101-acquisition-descriptor-v01.json",
+    "sha256": "00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe"
+  },
+  "descriptor_canonical_sha256": "431a4da4edc59bed35841256a9e13a56c52715b227e5d0a036b55ae255df07c8",
+  "expected_strata": {
+    "candidate_statute_paragraph": 134,
+    "retained_context_control": 426
+  },
+  "expected_units": 560,
+  "full_canonical_report_sha256": "be524c7822f5e19a16ee56740560b19b0311001c553bd7ca9c2c9ed989af98b1",
+  "raw": {
+    "bytes": 98879,
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/official-2024-title10-section101.html",
+    "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+  },
+  "schema": "legal-source-review-real-input-config/v1"
+}

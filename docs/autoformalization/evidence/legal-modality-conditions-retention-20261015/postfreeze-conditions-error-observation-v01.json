@@ -1,0 +1,169 @@
+{
+  "Lake_or_broader_logic_family_qualification": false,
+  "causal_explanation_verified": false,
+  "new_model_calls": 0,
+  "observed": "Both routes still truncate the conditions clause after the quoted application name; all other six fields are exact for these two rows.",
+  "posthoc_diagnostic_only": true,
+  "proposed_next_diagnostics": [
+    "Compare expected conditions-end rank and margin against the early quoted-name end in frozen saved diagnostics after separate source qualification.",
+    "Evaluate actor and modality readout composition under a new exposed engineering contract.",
+    "If rank evidence supports a conditions feature gap, preregister a separate conditions context/ranking adapter; do not mix this into the fixed F18 recipe."
+  ],
+  "recipe_changed": false,
+  "representational_capacity_limit_proven": false,
+  "rows": [
+    {
+      "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+      "reference_conditions": [
+        "the \u201cindigoport5 application\u201d was received within 2601 days of publication"
+      ],
+      "states": {
+        "parent_F15": {
+          "joint": {
+            "conditions": [
+              "the \u201cindigoport5 application"
+            ],
+            "exact_fields": {
+              "action": true,
+              "actor": true,
+              "conditions": false,
+              "exceptions": true,
+              "modality": true,
+              "object": true,
+              "temporal": true
+            },
+            "exact_rule": false
+          },
+          "raw": {
+            "conditions": [
+              "the \u201cindigoport5 application"
+            ],
+            "exact_fields": {
+              "action": true,
+              "actor": true,
+              "conditions": false,
+              "exceptions": true,
+              "modality": true,
+              "object": true,
+              "temporal": true
+            },
+            "exact_rule": false
+          }
+        },
+        "trained": {
+          "joint": {
+            "conditions": [
+              "the \u201cindigoport5 application"
+            ],
+            "exact_fields": {
+              "action": true,
+              "actor": true,
+              "conditions": false,
+              "exceptions": true,
+              "modality": true,
+              "object": true,
+              "temporal": true
+            },
+            "exact_rule": false
+          },
+          "raw": {
+            "conditions": [
+              "the \u201cindigoport5 application"
+            ],
+            "exact_fields": {
+              "action": true,
+              "actor": true,
+              "conditions": false,
+              "exceptions": true,
+              "modality": true,
+              "object": true,
+              "temporal": true
+            },
+            "exact_rule": false
+          }
+        }
+      }
+    },
+    {
+      "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+      "reference_conditions": [
+        "the \u201cindigoport5 application\u201d was received within 2601 days of publication"
+      ],
+      "states": {
+        "parent_F15": {
+          "joint": {
+            "conditions": [
+              "the \u201cindigoport5 application"
+            ],
+            "exact_fields": {
+              "action": true,
+              "actor": true,
+              "conditions": false,
+              "exceptions": true,
+              "modality": true,
+              "object": true,
+              "temporal": true
+            },
+            "exact_rule": false
+          },
+          "raw": {
+            "conditions": [
+              "the \u201cindigoport5 application"
+            ],
+            "exact_fields": {
+              "action": true,
+              "actor": true,
+              "conditions": false,
+              "exceptions": true,
+              "modality": true,
+              "object": true,
+              "temporal": true
+            },
+            "exact_rule": false
+          }
+        },
+        "trained": {
+          "joint": {
+            "conditions": [
+              "the \u201cindigoport5 application"
+            ],
+            "exact_fields": {
+              "action": true,
+              "actor": true,
+              "conditions": false,
+              "exceptions": true,
+              "modality": true,
+              "object": true,
+              "temporal": true
+            },
+            "exact_rule": false
+          },
+          "raw": {
+            "conditions": [
+              "the \u201cindigoport5 application"
+            ],
+            "exact_fields": {
+              "action": true,
+              "actor": true,
+              "conditions": false,
+              "exceptions": true,
+              "modality": true,
+              "object": true,
+              "temporal": true
+            },
+            "exact_rule": false
+          }
+        }
+      }
+    }
+  ],
+  "schema": "modality-conditions-retention-postfreeze-conditions-error-observation/v1",
+  "scope": "Only two preselected authored training errors in a newly produced independent training168 audit; no original reference or score captures read.",
+  "source_audit": {
+    "bytes": 1242975,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-training168-audit-v01.json",
+    "sha256": "1530a7db79a1ee0a121576c927ae9269ae59ca2ede2eee93f7b078b7a445f24c"
+  },
+  "statutory_semantic_accuracy": null,
+  "training_retried": false
+}

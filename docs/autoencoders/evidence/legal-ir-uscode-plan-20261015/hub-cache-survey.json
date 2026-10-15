@@ -1,0 +1,2398 @@
+{
+  "bounded_parquet_samples": {
+    "original-span-evidence.parquet": {
+      "arrow_schema": "schema_version: string\nrecord_kind: string\nrepository_id: string\ndataset_id: string\nsource_span_id: string\nlegal_id: string\nsource_sha256: string\nsource_text: string\nstatus: string\nsealed: bool\nadmitted: bool\nformalized: bool\nwrote_compiler: bool\ncode_identity: string\ndecoded_text: string\nstructural: string\nformulas_json: string\ncitations_json: string\ncompiler_status: string\ncompiler_reason: string\ncompiler_fields_json: string\ndecompiled: string\nrule_json: string\nrepair_error: string\nrepair_fix: string\nrepair_diagnostic: string\nedit_paths_json: string\nsymbols_json: string\nrepair_json: string\ncosine_similarity: double\nembedding_cosine_similarity: double\nembedding_cosine_loss: double\nreconstruction_loss: double\nir_compression_loss: double\nir_compression_ratio: double\ncross_entropy_loss: double\nround_trip_cross_entropy_loss: double\nformula_cross_entropy_loss: double\nfamily_cross_entropy_loss: double\nview_cross_entropy_loss: double\nmeasurements: int32\nformula_matches: bool\nconsensus: string\nagrees: bool\ncensus_agree: bool\nlake_ok: bool\nlake_disposition: string\ntrain: bool",
+      "columns": [
+        "schema_version",
+        "record_kind",
+        "repository_id",
+        "dataset_id",
+        "source_span_id",
+        "legal_id",
+        "source_sha256",
+        "source_text",
+        "status",
+        "sealed",
+        "admitted",
+        "formalized",
+        "wrote_compiler",
+        "code_identity",
+        "decoded_text",
+        "structural",
+        "formulas_json",
+        "citations_json",
+        "compiler_status",
+        "compiler_reason",
+        "compiler_fields_json",
+        "decompiled",
+        "rule_json",
+        "repair_error",
+        "repair_fix",
+        "repair_diagnostic",
+        "edit_paths_json",
+        "symbols_json",
+        "repair_json",
+        "cosine_similarity",
+        "embedding_cosine_similarity",
+        "embedding_cosine_loss",
+        "reconstruction_loss",
+        "ir_compression_loss",
+        "ir_compression_ratio",
+        "cross_entropy_loss",
+        "round_trip_cross_entropy_loss",
+        "formula_cross_entropy_loss",
+        "family_cross_entropy_loss",
+        "view_cross_entropy_loss",
+        "measurements",
+        "formula_matches",
+        "consensus",
+        "agrees",
+        "census_agree",
+        "lake_ok",
+        "lake_disposition",
+        "train"
+      ],
+      "footer_row_count": 12,
+      "read_scope": "one complete bounded shard, not repository population",
+      "row_groups": 1,
+      "sample_rows": [
+        {
+          "admitted": false,
+          "agrees": true,
+          "census_agree": true,
+          "citations_json": "[]",
+          "code_identity": "sha256:05ded12711ebac48224f6f86035701022b35745c0b18242c3903deca6b8ad0c1",
+          "compiler_fields_json": "[]",
+          "compiler_reason": "",
+          "compiler_status": "compiled",
+          "consensus": "agree",
+          "cosine_similarity": 0.7302967433402214,
+          "cross_entropy_loss": 1.9824436902928904,
+          "dataset_id": "justicedao/ipfs_uscode",
+          "decoded_text": "Each agency shall make records available.",
+          "decompiled": "Agency must make records available.",
+          "edit_paths_json": "[]",
+          "embedding_cosine_loss": 0.16099934214300438,
+          "embedding_cosine_similarity": 0.8390006578569956,
+          "family_cross_entropy_loss": 1.1624350255286717,
+          "formalized": false,
+          "formula_cross_entropy_loss": 1.9357971524250737,
+          "formula_matches": true,
+          "formulas_json": "[{\"arguments\":[\"actor:agency\",\"scope:record_available\"],\"lake\":\"duty\",\"lake_code\":0,\"op\":\"O\",\"predicate\":\"record_available\",\"role\":\"clause\"}]",
+          "ir_compression_loss": 0.3333333333333333,
+          "ir_compression_ratio": 3.0,
+          "lake_disposition": "duty",
+          "lake_ok": true,
+          "legal_id": "usc:us:5:552",
+          "measurements": 8,
+          "reconstruction_loss": 0.0,
+          "record_kind": "span",
+          "repair_diagnostic": "",
+          "repair_error": "",
+          "repair_fix": "",
+          "repair_json": "{\"admitted\":false,\"autoencoder\":{\"cosine_loss\":0.16099934214300438,\"cosine_similarity\":0.8390006578569956,\"cross_entropy_loss\":1.1624350255286717,\"decoded_text\":\"Each agency shall make records available.\",\"formulas\":[{\"arguments\":[\"actor:agency\",\"scope:record_available\"],\"lake\":\"duty\",\"lake_code\":0,\"op\":\"O\",\"predicate\":\"record_available\",\"role\":\"clause\"}],\"ir_compression_loss\":0.3333333333333333,\"ir_compression_ratio\":3.0,\"reconstruction_loss\":0.0,\"structural\":\"conditional obligation permission prohibition temporal deadline period legal frame source reconstructs reconstruction record available positive scope deontic obligations force shal\",\"view_cross_entropy_loss\":null},\"census\":{\"admitted\":false,\"agree\":true,\"consensus\":\"agree\",\"cosine_loss\":0.16099934214300438,\"cosine_similarity\":0.8390006578569956,\"cross_entropy_loss\":1.1624350255286717,\"formalized\":false,\"ir_compression_loss\":0.3333333333333333,\"lake_ok\":true,\"reconstruction_loss\":0.0,\"train\":false,\"view_cross_entropy_loss\":null,\"work_kind\":\"\"},\"citations\":[],\"compiler\":{\"decompiled\":\"Agency must make records available.\",\"fields\":[],\"reason\":\"\",\"rule\":{\"action\":\"make\",\"actor\":\"agency\",\"conditions\":[],\"exceptions\":[],\"modality\":\"O\",\"object\":\"records available\",\"temporal\":[]},\"status\":\"compiled\"},\"diagnostic\":\"\",\"edit_paths\":[],\"error\":\"\",\"fix\":\"\",\"formalized\":false,\"lake\":{\"admits\":false,\"command\":\"lake build Legal\",\"refuses\":[\"admit\",\"axiom\",\"sorry\"]},\"symbols\":[],\"wrote_compiler\":false}",
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "round_trip_cross_entropy_loss": 2.0104316130135804,
+          "rule_json": "{\"action\":\"make\",\"actor\":\"agency\",\"conditions\":[],\"exceptions\":[],\"modality\":\"O\",\"object\":\"records available\",\"temporal\":[]}",
+          "schema_version": "uscode-autoformal-span-evidence/v1",
+          "sealed": true,
+          "source_sha256": "21ee430c8898708526a55bad2a03338f0bcab8a263edf347d7425b3b059e0ccd",
+          "source_span_id": "e2e-duty-5-552",
+          "source_text": "Each agency shall make records available.",
+          "status": "sealed",
+          "structural": "conditional obligation permission prohibition temporal deadline period legal frame source reconstructs reconstruction record available positive scope deontic obligations force shal",
+          "symbols_json": "[]",
+          "train": false,
+          "view_cross_entropy_loss": null,
+          "wrote_compiler": false
+        }
+      ]
+    },
+    "paired-v1-sample.parquet": {
+      "arrow_schema": "schema_version: string\nrepository_id: string\nsource: struct<span_id: string, text: string, text_sha256: string, legal_id: string, revision: string, const (... 14 chars omitted)\n  child 0, span_id: string\n  child 1, text: string\n  child 2, text_sha256: string\n  child 3, legal_id: string\n  child 4, revision: string\n  child 5, constitution: bool\nautoencoder: struct<status: string, model_identity: string, embedding_model: string, semantic_embeddings: bool, f (... 482 chars omitted)\n  child 0, status: string\n  child 1, model_identity: string\n  child 2, embedding_model: string\n  child 3, semantic_embeddings: bool\n  child 4, formal_outputs: list<element: struct<family: string, format: string, payload_json: string, sha256: string, origin: s (... 75 chars omitted)\n      child 0, element: struct<family: string, format: string, payload_json: string, sha256: string, origin: string, indepen (... 60 chars omitted)\n          child 0, family: string\n          child 1, format: string\n          child 2, payload_json: string\n          child 3, sha256: string\n          child 4, origin: string\n          child 5, independent: bool\n          child 6, target_conditioned: bool\n          child 7, syntax_status: string\n  child 5, source_binding_verified: bool\n  child 6, complete: bool\n  child 7, raw_vector: list<element: double>\n      child 0, element: double\n  child 8, cosine_similarity: double\n  child 9, reconstruction_loss: double\n  child 10, projected_vector: list<element: double>\n      child 0, element: double\n  child 11, projected_cosine_similarity: double\n  child 12, projected_reconstruction_loss: double\n  child 13, projected_target_conditioned: bool\ncompiler: struct<status: string, reason: string, complete: bool, canonical_complete: bool, decompiled: string, (... 513 chars omitted)\n  child 0, status: string\n  child 1, reason: string\n  child 2, complete: bool\n  child 3, canonical_complete: bool\n  child 4, decompiled: string\n  child 5, roundtrip_ok: bool\n  child 6, formal_outputs: list<element: struct<family: string, format: string, payload_json: string, sha256: string, origin: s (... 75 chars omitted)\n      child 0, element: struct<family: string, format: string, payload_json: string, sha256: string, origin: string, indepen (... 60 chars omitted)\n          child 0, family: string\n          child 1, format: string\n          child 2, payload_json: string\n          child 3, sha256: string\n          child 4, origin: string\n          child 5, independent: bool\n          child 6, target_conditioned: bool\n          child 7, syntax_status: string\n  child 7, canonical_formal_outputs: list<element: struct<family: string, format: string, payload_json: string, sha256: string, origin: s (... 75 chars omitted)\n      child 0, element: struct<family: string, format: string, payload_json: string, sha256: string, origin: string, indepen (... 60 chars omitted)\n          child 0, family: string\n          child 1, format: string\n          child 2, payload_json: string\n          child 3, sha256: string\n          child 4, origin: string\n          child 5, independent: bool\n          child 6, target_conditioned: bool\n          child 7, syntax_status: string\n  child 8, component_count: int64\n  child 9, components_artifact_sha256: string\n  child 10, components_artifact_pointer: string\nprovenance: struct<agent_id: string, code_identity: string, model_identity: string, batch_id: string, elapsed_se (... 170 chars omitted)\n  child 0, agent_id: string\n  child 1, code_identity: string\n  child 2, model_identity: string\n  child 3, batch_id: string\n  child 4, elapsed_seconds: double\n  child 5, wall_seconds_per_span: double\n  child 6, bridge_names: list<element: string>\n      child 0, element: string\n  child 7, evaluate_provers: bool\n  child 8, disk_cache: bool\n  child 9, parallel_workers: int64\n  child 10, sample_count: int64\nlake: struct<status: string, receipt_sha256: string, admitted: bool>\n  child 0, status: string\n  child 1, receipt_sha256: string\n  child 2, admitted: bool\nsource_target_artifact_sha256: string\nsource_target_artifact_pointer: string\ngoal_ids: list<element: string>\n  child 0, element: string\nadmitted: bool\nformalized: bool\ncomparison: struct<status: string, comparable: bool, agrees: bool, independent: bool, method: string, coverage_s (... 127 chars omitted)\n  child 0, status: string\n  child 1, comparable: bool\n  child 2, agrees: bool\n  child 3, independent: bool\n  child 4, method: string\n  child 5, coverage_scope: string\n  child 6, reason: string\n  child 7, mismatches: list<element: string>\n      child 0, element: string\n  child 8, autoencoder_output_count: int64\n  child 9, compiler_output_count: int64\nobservation_id: string",
+      "columns": [
+        "schema_version",
+        "repository_id",
+        "source",
+        "autoencoder",
+        "compiler",
+        "provenance",
+        "lake",
+        "source_target_artifact_sha256",
+        "source_target_artifact_pointer",
+        "goal_ids",
+        "admitted",
+        "formalized",
+        "comparison",
+        "observation_id"
+      ],
+      "footer_row_count": 8,
+      "projected_vector_dimensions": [
+        8
+      ],
+      "raw_vector_dimensions": [
+        8
+      ],
+      "read_scope": "one complete bounded shard, not repository population",
+      "row_groups": 1,
+      "sample_admitted_counts": {
+        "false": 8,
+        "true": 0
+      },
+      "sample_formalized_counts": {
+        "false": 8,
+        "true": 0
+      },
+      "sample_rows": [
+        {
+          "admitted": false,
+          "autoencoder": {
+            "complete": true,
+            "cosine_similarity": 0.011305887062494418,
+            "embedding_model": "mock:stable-sha256",
+            "formal_outputs": [],
+            "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+            "projected_cosine_similarity": 0.19611613513818407,
+            "projected_reconstruction_loss": 0.30910766320681826,
+            "projected_target_conditioned": true,
+            "projected_vector": [
+              -0.07847516,
+              -0.07110592,
+              -0.06319724000000002,
+              0.011782560000000001,
+              -0.05267874,
+              0.03355214000000001,
+              0.051163280000000005,
+              -0.06809276000000002
+            ],
+            "raw_vector": [
+              -0.07932412520105385,
+              -0.038177999520389014,
+              -0.11239542827038367,
+              0.0205137915171923,
+              -0.04188814913323734,
+              0.05760822154191942,
+              0.02929190713181639,
+              -0.04829668273047568
+            ],
+            "reconstruction_loss": 0.3214004980934787,
+            "semantic_embeddings": false,
+            "source_binding_verified": true,
+            "status": "guided_no_formulas"
+          },
+          "comparison": {
+            "agrees": null,
+            "autoencoder_output_count": 0,
+            "comparable": false,
+            "compiler_output_count": 0,
+            "coverage_scope": "all_emitted_formulas_not_semantic_span_coverage",
+            "independent": false,
+            "method": "exact_canonical_ast_sequence/v1",
+            "mismatches": [],
+            "reason": "neither_producer_emitted_formal_output",
+            "status": "both_unavailable"
+          },
+          "compiler": {
+            "canonical_complete": false,
+            "canonical_formal_outputs": [],
+            "complete": true,
+            "component_count": 0,
+            "components_artifact_pointer": "",
+            "components_artifact_sha256": null,
+            "decompiled": "",
+            "formal_outputs": [],
+            "reason": "no_parser_elements",
+            "roundtrip_ok": false,
+            "status": "abstain"
+          },
+          "formalized": false,
+          "goal_ids": [
+            "AFTD-58f1f36e4bbb65810c93"
+          ],
+          "lake": {
+            "admitted": false,
+            "receipt_sha256": null,
+            "status": "not_run"
+          },
+          "observation_id": "c07cb15d34eaadb4611180a129281598f2d10370c8a98325aac024f4b9063c9d",
+          "provenance": {
+            "agent_id": "legacy-cuda-census",
+            "batch_id": "ccf8ea718aeb4ae3a0c9d929acf69846",
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "code_identity": "sha256:55d314fcb9cd258c1e4e576f55b7c2f9880676aba0f4516792db4bececca16d5",
+            "disk_cache": false,
+            "elapsed_seconds": 17.681708164978772,
+            "evaluate_provers": false,
+            "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+            "parallel_workers": 1,
+            "sample_count": 8,
+            "wall_seconds_per_span": 2.2102135206223466
+          },
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "schema_version": "uscode-paired-span-census/v1",
+          "source": {
+            "constitution": false,
+            "legal_id": "usc:us:10:7362",
+            "revision": "ipfs-uscode-5016b86a",
+            "span_id": "uscode-span-09f613676505b1ee4477c0a718688446b2d7d419392d4d6e10cd54f3e2e6ad7a",
+            "text": "L.",
+            "text_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+          },
+          "source_target_artifact_pointer": "/rows/0/logic_target_observation",
+          "source_target_artifact_sha256": "d9906680d9ff862228c3263d213c89cfea24bce030c249edfdb23e2b5573823f"
+        },
+        {
+          "admitted": false,
+          "autoencoder": {
+            "complete": true,
+            "cosine_similarity": -0.151956957138197,
+            "embedding_model": "mock:stable-sha256",
+            "formal_outputs": [
+              {
+                "family": "deontic",
+                "format": "modal-ir-formula/v1",
+                "independent": false,
+                "origin": "autoencoder_guided_compiler",
+                "payload_json": "{\"conditions\":[\"under the Inspector General\"],\"exceptions\":[],\"formula_id\":\"us-code-usc:us:10:7374-uscode-span-154ff34fb7ce7ad43faf777def197e4fbf585b041c340b511e622d527af6a989-96f02b99182c6686:spacy:f0001\",\"metadata\":{\"aliased_from\":\"appoint_expert_accountant_perform_duty_inspector\",\"cue\":\"shall\",\"cue_end_char\":71,\"cue_start_char\":66,\"encoder\":\"spacy_modal_codec_v1\"},\"operator\":{\"family\":\"deontic\",\"label\":\"obligation\",\"symbol\":\"O\",\"system\":\"D\"},\"predicate\":{\"arguments\":[\"actor:secretary_army\",\"scope:appoint_expert_accountant_perform\"],\"name\":\"administrative_notice_hearing\",\"role\":\"clause\"},\"provenance\":{\"citation\":\"usc:us:10:7374\",\"end_char\":147,\"source_id\":\"us-code-usc:us:10:7374-uscode-span-154ff34fb7ce7ad43faf777def197e4fbf585b041c340b511e622d527af6a989-96f02b99182c6686\",\"start_char\":40}}",
+                "sha256": "6d01263539b9a54efb161e992ab8a7956d63fb9e6a91e708f085681b0f9c9bf3",
+                "syntax_status": "not_checked",
+                "target_conditioned": true
+              },
+              {
+                "family": "deontic",
+                "format": "modal-ir-formula/v1",
+                "independent": false,
+                "origin": "autoencoder_guided_compiler",
+                "payload_json": "{\"conditions\":[\"under the Inspector General\"],\"exceptions\":[],\"formula_id\":\"us-code-usc:us:10:7374-uscode-span-154ff34fb7ce7ad43faf777def197e4fbf585b041c340b511e622d527af6a989-96f02b99182c6686:spacy:f0002\",\"metadata\":{\"aliased_from\":\"expert_accountant_perform_duty_inspector_general\",\"cue\":\"shall appoint\",\"cue_end_char\":79,\"cue_start_char\":66,\"encoder\":\"spacy_modal_codec_v1\"},\"operator\":{\"family\":\"deontic\",\"label\":\"obligation\",\"symbol\":\"O\",\"system\":\"D\"},\"predicate\":{\"arguments\":[\"actor:secretary_army\",\"scope:expert_accountant_perform_duty\"],\"name\":\"administrative_notice_hearing\",\"role\":\"clause\"},\"provenance\":{\"citation\":\"usc:us:10:7374\",\"end_char\":147,\"source_id\":\"us-code-usc:us:10:7374-uscode-span-154ff34fb7ce7ad43faf777def197e4fbf585b041c340b511e622d527af6a989-96f02b99182c6686\",\"start_char\":40}}",
+                "sha256": "fe653d5b0bdd2d98d262792a2e4f7c63b3bc45b074a800410b681f9862da4433",
+                "syntax_status": "not_checked",
+                "target_conditioned": true
+              }
+            ],
+            "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+            "projected_cosine_similarity": 0.19611613513818402,
+            "projected_reconstruction_loss": 0.28764171323583376,
+            "projected_target_conditioned": true,
+            "projected_vector": [
+              0.029876120000000003,
+              0.10262024,
+              -0.07447376,
+              -0.0564102,
+              -0.04031392,
+              -0.00921812,
+              -0.031486600000000003,
+              0.0425234
+            ],
+            "raw_vector": [
+              0.12885520302572348,
+              0.1441442996573741,
+              -0.15223424650710352,
+              -0.043418726367173685,
+              -0.06182160364068263,
+              0.052630976695942425,
+              -0.07573548315849679,
+              0.012334516353419991
+            ],
+            "reconstruction_loss": 0.32179334075304994,
+            "semantic_embeddings": false,
+            "source_binding_verified": true,
+            "status": "guided_output"
+          },
+          "comparison": {
+            "agrees": true,
+            "autoencoder_output_count": 2,
+            "comparable": true,
+            "compiler_output_count": 2,
+            "coverage_scope": "all_emitted_formulas_not_semantic_span_coverage",
+            "independent": false,
+            "method": "exact_canonical_ast_sequence/v1",
+            "mismatches": [],
+            "reason": "identical_formal_representations",
+            "status": "diagnostic_agree"
+          },
+          "compiler": {
+            "canonical_complete": true,
+            "canonical_formal_outputs": [
+              {
+                "family": "typed_deontic",
+                "format": "typed-deontic-rule/v1",
+                "independent": true,
+                "origin": "deterministic_compiler",
+                "payload_json": "{\"action\":\"appoint\",\"actor\":\"Expert accountant for Inspector General The Secretary of the Army\",\"conditions\":[],\"exceptions\":[],\"modality\":\"O\",\"object\":\"an expert accountant to perform duties under the Inspector General\",\"temporal\":[]}",
+                "sha256": "c697ece5302cb483aa7103c2cc93fe2194639838321220fba2930e7075db5f0e",
+                "syntax_status": "compiler_accepted",
+                "target_conditioned": false
+              }
+            ],
+            "complete": true,
+            "component_count": 1,
+            "components_artifact_pointer": "/rows/1/compiler/components",
+            "components_artifact_sha256": "d9906680d9ff862228c3263d213c89cfea24bce030c249edfdb23e2b5573823f",
+            "decompiled": "Expert accountant for Inspector General The Secretary of the Army must appoint an expert accountant to perform duties under the Inspector General.",
+            "formal_outputs": [
+              {
+                "family": "deontic",
+                "format": "modal-ir-formula/v1",
+                "independent": false,
+                "origin": "deterministic_codec",
+                "payload_json": "{\"conditions\":[\"under the Inspector General\"],\"exceptions\":[],\"formula_id\":\"us-code-usc:us:10:7374-uscode-span-154ff34fb7ce7ad43faf777def197e4fbf585b041c340b511e622d527af6a989-96f02b99182c6686:spacy:f0001\",\"metadata\":{\"aliased_from\":\"appoint_expert_accountant_perform_duty_inspector\",\"cue\":\"shall\",\"cue_end_char\":71,\"cue_start_char\":66,\"encoder\":\"spacy_modal_codec_v1\"},\"operator\":{\"family\":\"deontic\",\"label\":\"obligation\",\"symbol\":\"O\",\"system\":\"D\"},\"predicate\":{\"arguments\":[\"actor:secretary_army\",\"scope:appoint_expert_accountant_perform\"],\"name\":\"administrative_notice_hearing\",\"role\":\"clause\"},\"provenance\":{\"citation\":\"usc:us:10:7374\",\"end_char\":147,\"source_id\":\"us-code-usc:us:10:7374-uscode-span-154ff34fb7ce7ad43faf777def197e4fbf585b041c340b511e622d527af6a989-96f02b99182c6686\",\"start_char\":40}}",
+                "sha256": "6d01263539b9a54efb161e992ab8a7956d63fb9e6a91e708f085681b0f9c9bf3",
+                "syntax_status": "not_checked",
+                "target_conditioned": false
+              },
+              {
+                "family": "deontic",
+                "format": "modal-ir-formula/v1",
+                "independent": false,
+                "origin": "deterministic_codec",
+                "payload_json": "{\"conditions\":[\"under the Inspector General\"],\"exceptions\":[],\"formula_id\":\"us-code-usc:us:10:7374-uscode-span-154ff34fb7ce7ad43faf777def197e4fbf585b041c340b511e622d527af6a989-96f02b99182c6686:spacy:f0002\",\"metadata\":{\"aliased_from\":\"expert_accountant_perform_duty_inspector_general\",\"cue\":\"shall appoint\",\"cue_end_char\":79,\"cue_start_char\":66,\"encoder\":\"spacy_modal_codec_v1\"},\"operator\":{\"family\":\"deontic\",\"label\":\"obligation\",\"symbol\":\"O\",\"system\":\"D\"},\"predicate\":{\"arguments\":[\"actor:secretary_army\",\"scope:expert_accountant_perform_duty\"],\"name\":\"administrative_notice_hearing\",\"role\":\"clause\"},\"provenance\":{\"citation\":\"usc:us:10:7374\",\"end_char\":147,\"source_id\":\"us-code-usc:us:10:7374-uscode-span-154ff34fb7ce7ad43faf777def197e4fbf585b041c340b511e622d527af6a989-96f02b99182c6686\",\"start_char\":40}}",
+                "sha256": "fe653d5b0bdd2d98d262792a2e4f7c63b3bc45b074a800410b681f9862da4433",
+                "syntax_status": "not_checked",
+                "target_conditioned": false
+              }
+            ],
+            "reason": "",
+            "roundtrip_ok": true,
+            "status": "compiled"
+          },
+          "formalized": false,
+          "goal_ids": [],
+          "lake": {
+            "admitted": false,
+            "receipt_sha256": null,
+            "status": "not_run"
+          },
+          "observation_id": "6762381f712207f3597bf115f1a0ed0596eff2c231108ff24adfa822bb76f058",
+          "provenance": {
+            "agent_id": "legacy-cuda-census",
+            "batch_id": "ccf8ea718aeb4ae3a0c9d929acf69846",
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "code_identity": "sha256:55d314fcb9cd258c1e4e576f55b7c2f9880676aba0f4516792db4bececca16d5",
+            "disk_cache": false,
+            "elapsed_seconds": 17.681708164978772,
+            "evaluate_provers": false,
+            "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+            "parallel_workers": 1,
+            "sample_count": 8,
+            "wall_seconds_per_span": 2.2102135206223466
+          },
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "schema_version": "uscode-paired-span-census/v1",
+          "source": {
+            "constitution": false,
+            "legal_id": "usc:us:10:7374",
+            "revision": "ipfs-uscode-5016b86a",
+            "span_id": "uscode-span-154ff34fb7ce7ad43faf777def197e4fbf585b041c340b511e622d527af6a989",
+            "text": "Expert accountant for Inspector General The Secretary of the Army shall appoint an expert accountant to perform duties under the Inspector General.",
+            "text_sha256": "48a93c88d591d67e133e44f967a2ba3f6bcf75faa6dba392e1a96d1a46f2749b"
+          },
+          "source_target_artifact_pointer": "/rows/1/logic_target_observation",
+          "source_target_artifact_sha256": "d9906680d9ff862228c3263d213c89cfea24bce030c249edfdb23e2b5573823f"
+        }
+      ],
+      "source_fields": [
+        "span_id",
+        "text",
+        "text_sha256",
+        "legal_id",
+        "revision",
+        "constitution"
+      ]
+    },
+    "paired-v2-goals-sample.parquet": {
+      "arrow_schema": "goal_id: string\nrecord_kind: string\nissue: string\nwork_kind: string\nstatus: string\nsource_span_ids: list<element: string>\n  child 0, element: string\nobservation_ids: list<element: string>\n  child 0, element: string\npacket_sha256: string\ntask_sha256: string\npacket_artifact_sha256: string\ntask_artifact_sha256: string\npacket_schema: string\ntask_schema: string\nlegacy_census_sha256: string\ncode_identity: string\nmodel_identity: string\nrepository_id: string\nagent_id: string\nrelease_id: string\nlegal_id: string\nenqueued: bool\nadmitted: bool",
+      "columns": [
+        "goal_id",
+        "record_kind",
+        "issue",
+        "work_kind",
+        "status",
+        "source_span_ids",
+        "observation_ids",
+        "packet_sha256",
+        "task_sha256",
+        "packet_artifact_sha256",
+        "task_artifact_sha256",
+        "packet_schema",
+        "task_schema",
+        "legacy_census_sha256",
+        "code_identity",
+        "model_identity",
+        "repository_id",
+        "agent_id",
+        "release_id",
+        "legal_id",
+        "enqueued",
+        "admitted"
+      ],
+      "footer_row_count": 7,
+      "read_scope": "one complete bounded shard, not repository population",
+      "row_groups": 1,
+      "sample_rows": [
+        {
+          "admitted": false,
+          "agent_id": "legacy-cuda-census",
+          "code_identity": "sha256:07e2fe334f47779bd13aaf2b89588b1dc278b76f2fa3ad267a8cb9c3c8f7f5dc",
+          "enqueued": false,
+          "goal_id": "AFTD-d71c899aac5bcc798600",
+          "issue": "no_parser_elements",
+          "legacy_census_sha256": "fbe5add25cb60e3289df029e5e4408784ad0bcb6409a55e60c7dada7269e401c",
+          "legal_id": "usc:us:10:8588",
+          "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+          "observation_ids": [
+            "fbe5add25cb60e3289df029e5e4408784ad0bcb6409a55e60c7dada7269e401c"
+          ],
+          "packet_artifact_sha256": "d71c899aac5bcc7986003e1619119d7f61bf41d74f5d0dd96e078acbed4b3f4b",
+          "packet_schema": "uscode-autoformal-repair-packet/v1",
+          "packet_sha256": "d71c899aac5bcc7986003e1619119d7f61bf41d74f5d0dd96e078acbed4b3f4b",
+          "record_kind": "repair_packet",
+          "release_id": "ipfs-uscode-5016b86a",
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "source_span_ids": [
+            "uscode-span-11bdbbe0d0743c9011acbbe370268e37bde2298cec707d6d53d8055429d3b5c8"
+          ],
+          "status": "deferred",
+          "task_artifact_sha256": "8405858e6ea7f6f23b5b376708147f1a59fdb65f3131e2873b1471edaddd75db",
+          "task_schema": "uscode-autoformal-supervisor-todo/v1",
+          "task_sha256": "8405858e6ea7f6f23b5b376708147f1a59fdb65f3131e2873b1471edaddd75db",
+          "work_kind": "compiler_decompiler_repair"
+        }
+      ]
+    },
+    "paired-v2-sample.parquet": {
+      "arrow_schema": "schema_version: string\nrepository_id: string\nsource: struct<span_id: string, text: string, text_sha256: string, legal_id: string, revision: string, const (... 14 chars omitted)\n  child 0, span_id: string\n  child 1, text: string\n  child 2, text_sha256: string\n  child 3, legal_id: string\n  child 4, revision: string\n  child 5, constitution: bool\nautoencoder: struct<status: string, model_identity: string, embedding_model: string, semantic_embeddings: bool, f (... 575 chars omitted)\n  child 0, status: string\n  child 1, model_identity: string\n  child 2, embedding_model: string\n  child 3, semantic_embeddings: bool\n  child 4, formal_outputs: list<element: struct<family: string, format: string, payload_json: string, sha256: string, origin: s (... 75 chars omitted)\n      child 0, element: struct<family: string, format: string, payload_json: string, sha256: string, origin: string, indepen (... 60 chars omitted)\n          child 0, family: string\n          child 1, format: string\n          child 2, payload_json: string\n          child 3, sha256: string\n          child 4, origin: string\n          child 5, independent: bool\n          child 6, target_conditioned: bool\n          child 7, syntax_status: string\n  child 5, source_binding_verified: bool\n  child 6, complete: bool\n  child 7, raw_vector: list<element: double>\n      child 0, element: double\n  child 8, cosine_similarity: double\n  child 9, reconstruction_loss: double\n  child 10, projected_vector: list<element: double>\n      child 0, element: double\n  child 11, projected_cosine_similarity: double\n  child 12, projected_reconstruction_loss: double\n  child 13, projected_target_conditioned: bool\n  child 14, learned_formula_capture_verified: bool\n  child 15, learned_formula_observation_artifact_sha256: string\ncompiler: struct<status: string, reason: string, complete: bool, canonical_complete: bool, decompiled: string, (... 513 chars omitted)\n  child 0, status: string\n  child 1, reason: string\n  child 2, complete: bool\n  child 3, canonical_complete: bool\n  child 4, decompiled: string\n  child 5, roundtrip_ok: bool\n  child 6, formal_outputs: list<element: struct<family: string, format: string, payload_json: string, sha256: string, origin: s (... 75 chars omitted)\n      child 0, element: struct<family: string, format: string, payload_json: string, sha256: string, origin: string, indepen (... 60 chars omitted)\n          child 0, family: string\n          child 1, format: string\n          child 2, payload_json: string\n          child 3, sha256: string\n          child 4, origin: string\n          child 5, independent: bool\n          child 6, target_conditioned: bool\n          child 7, syntax_status: string\n  child 7, canonical_formal_outputs: list<element: struct<family: string, format: string, payload_json: string, sha256: string, origin: s (... 75 chars omitted)\n      child 0, element: struct<family: string, format: string, payload_json: string, sha256: string, origin: string, indepen (... 60 chars omitted)\n          child 0, family: string\n          child 1, format: string\n          child 2, payload_json: string\n          child 3, sha256: string\n          child 4, origin: string\n          child 5, independent: bool\n          child 6, target_conditioned: bool\n          child 7, syntax_status: string\n  child 8, component_count: int64\n  child 9, components_artifact_sha256: string\n  child 10, components_artifact_pointer: string\nprovenance: struct<agent_id: string, code_identity: string, model_identity: string, batch_id: string, elapsed_se (... 170 chars omitted)\n  child 0, agent_id: string\n  child 1, code_identity: string\n  child 2, model_identity: string\n  child 3, batch_id: string\n  child 4, elapsed_seconds: double\n  child 5, wall_seconds_per_span: double\n  child 6, bridge_names: list<element: string>\n      child 0, element: string\n  child 7, evaluate_provers: bool\n  child 8, disk_cache: bool\n  child 9, parallel_workers: int64\n  child 10, sample_count: int64\nlake: struct<status: string, receipt_sha256: string, admitted: bool>\n  child 0, status: string\n  child 1, receipt_sha256: string\n  child 2, admitted: bool\nsource_target_artifact_sha256: string\nsource_target_artifact_pointer: string\ngoal_ids: list<element: string>\n  child 0, element: string\nadmitted: bool\nformalized: bool\ncomparison: struct<status: string, comparable: bool, agrees: bool, independent: bool, method: string, coverage_s (... 279 chars omitted)\n  child 0, status: string\n  child 1, comparable: bool\n  child 2, agrees: bool\n  child 3, independent: bool\n  child 4, method: string\n  child 5, coverage_scope: string\n  child 6, reason: string\n  child 7, mismatches: list<element: string>\n      child 0, element: string\n  child 8, autoencoder_output_count: int64\n  child 9, compiler_output_count: int64\n  child 10, raw_agrees: bool\n  child 11, canonical_core_agrees: bool\n  child 12, difference_kind: string\n  child 13, canonical_core_scope: string\n  child 14, canonical_core_mismatches: list<element: string>\n      child 0, element: string\nobservation_id: string",
+      "columns": [
+        "schema_version",
+        "repository_id",
+        "source",
+        "autoencoder",
+        "compiler",
+        "provenance",
+        "lake",
+        "source_target_artifact_sha256",
+        "source_target_artifact_pointer",
+        "goal_ids",
+        "admitted",
+        "formalized",
+        "comparison",
+        "observation_id"
+      ],
+      "footer_row_count": 8,
+      "projected_vector_dimensions": [
+        8
+      ],
+      "raw_vector_dimensions": [
+        8
+      ],
+      "read_scope": "one complete bounded shard, not repository population",
+      "row_groups": 1,
+      "sample_admitted_counts": {
+        "false": 8,
+        "true": 0
+      },
+      "sample_formalized_counts": {
+        "false": 8,
+        "true": 0
+      },
+      "sample_rows": [
+        {
+          "admitted": false,
+          "autoencoder": {
+            "complete": true,
+            "cosine_similarity": 0.21159796053634702,
+            "embedding_model": "mock:stable-sha256",
+            "formal_outputs": [],
+            "learned_formula_capture_verified": false,
+            "learned_formula_observation_artifact_sha256": null,
+            "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+            "projected_cosine_similarity": 1.0000000000000002,
+            "projected_reconstruction_loss": 0.0,
+            "projected_target_conditioned": true,
+            "projected_vector": [
+              -0.858326,
+              0.466116,
+              0.06924,
+              0.912391,
+              -0.521299,
+              0.213748,
+              0.811506,
+              0.131877
+            ],
+            "raw_vector": [
+              0.028448391063335483,
+              0.12769358891996394,
+              0.04367231260995911,
+              0.020079933443198868,
+              0.02158010130341251,
+              0.08018964483787877,
+              0.007908670211339286,
+              -0.0588178316460202
+            ],
+            "reconstruction_loss": 0.3365575044038458,
+            "semantic_embeddings": false,
+            "source_binding_verified": true,
+            "status": "guided_no_formulas"
+          },
+          "comparison": {
+            "agrees": null,
+            "autoencoder_output_count": 0,
+            "canonical_core_agrees": null,
+            "canonical_core_mismatches": [],
+            "canonical_core_scope": "validated_redundant_temporal_records_only_not_semantic_equivalence",
+            "comparable": false,
+            "compiler_output_count": 0,
+            "coverage_scope": "all_emitted_formulas_not_semantic_span_coverage",
+            "difference_kind": "not_compared",
+            "independent": false,
+            "method": "exact_ast_and_validated_canonical_core/v2",
+            "mismatches": [],
+            "raw_agrees": null,
+            "reason": "neither_producer_emitted_formal_output",
+            "status": "both_unavailable"
+          },
+          "compiler": {
+            "canonical_complete": false,
+            "canonical_formal_outputs": [],
+            "complete": true,
+            "component_count": 0,
+            "components_artifact_pointer": "",
+            "components_artifact_sha256": null,
+            "decompiled": "",
+            "formal_outputs": [],
+            "reason": "no_parser_elements",
+            "roundtrip_ok": false,
+            "status": "abstain"
+          },
+          "formalized": false,
+          "goal_ids": [
+            "AFTD-d71c899aac5bcc798600"
+          ],
+          "lake": {
+            "admitted": false,
+            "receipt_sha256": null,
+            "status": "not_run"
+          },
+          "observation_id": "fbe5add25cb60e3289df029e5e4408784ad0bcb6409a55e60c7dada7269e401c",
+          "provenance": {
+            "agent_id": "legacy-cuda-census",
+            "batch_id": "5fda0cc05a1d4d168318910d99f1f4ec",
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "code_identity": "sha256:07e2fe334f47779bd13aaf2b89588b1dc278b76f2fa3ad267a8cb9c3c8f7f5dc",
+            "disk_cache": false,
+            "elapsed_seconds": 42.471935742069036,
+            "evaluate_provers": false,
+            "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+            "parallel_workers": 1,
+            "sample_count": 8,
+            "wall_seconds_per_span": 5.3089919677586295
+          },
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "schema_version": "uscode-paired-span-census/v2",
+          "source": {
+            "constitution": false,
+            "legal_id": "usc:us:10:8588",
+            "revision": "ipfs-uscode-5016b86a",
+            "span_id": "uscode-span-11bdbbe0d0743c9011acbbe370268e37bde2298cec707d6d53d8055429d3b5c8",
+            "text": "U.S.C.",
+            "text_sha256": "1d1b932916ddd23b221c642bff16f451508fdbc067a5666ee17cb35de1168958"
+          },
+          "source_target_artifact_pointer": "/rows/0/logic_target_observation",
+          "source_target_artifact_sha256": "a5cdc325ecd489b241aea16ce664fe511bce9726b09883e1f8b3b71044121d62"
+        },
+        {
+          "admitted": false,
+          "autoencoder": {
+            "complete": true,
+            "cosine_similarity": 0.0511710393086212,
+            "embedding_model": "mock:stable-sha256",
+            "formal_outputs": [
+              {
+                "family": "deontic",
+                "format": "modal-ir-formula/v1",
+                "independent": false,
+                "origin": "autoencoder_guided_compiler",
+                "payload_json": "{\"conditions\":[],\"exceptions\":[],\"formula_id\":\"us-code-usc:us:10:8617-uscode-span-1c96e635448d2b6224554562a67fec6b501b1d2294877d098d06ea007aab9c86-4fbd9d7ff483a179:spacy:f0001\",\"metadata\":{\"aliased_from\":\"authorize_partner_organization_contract_phase_development\",\"cue\":\"may\",\"cue_end_char\":21,\"cue_start_char\":18,\"encoder\":\"spacy_modal_codec_v1\"},\"operator\":{\"family\":\"deontic\",\"label\":\"permission\",\"symbol\":\"P\",\"system\":\"D\"},\"predicate\":{\"arguments\":[\"actor:secretary\",\"scope:authorize_partner_organization_contract\"],\"name\":\"administrative_notice_hearing\",\"role\":\"clause\"},\"provenance\":{\"citation\":\"usc:us:10:8617\",\"end_char\":278,\"source_id\":\"us-code-usc:us:10:8617-uscode-span-1c96e635448d2b6224554562a67fec6b501b1d2294877d098d06ea007aab9c86-4fbd9d7ff483a179\",\"start_char\":0}}",
+                "sha256": "c6b9b823acf085c543e77753756b124fe904fccd99219beabd4929799b80c573",
+                "syntax_status": "not_checked",
+                "target_conditioned": true
+              }
+            ],
+            "learned_formula_capture_verified": false,
+            "learned_formula_observation_artifact_sha256": null,
+            "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+            "projected_cosine_similarity": 0.19611613513818404,
+            "projected_reconstruction_loss": 0.23487998268949573,
+            "projected_target_conditioned": true,
+            "projected_vector": [
+              0.004525399999999999,
+              0.04939508,
+              -0.01410284,
+              0.0697992,
+              -0.03976312,
+              0.08426220000000001,
+              -0.052192340000000004,
+              -0.034665060000000004
+            ],
+            "raw_vector": [
+              0.0676938716138842,
+              0.17675708896215292,
+              -0.1576527409367612,
+              0.07353425344628557,
+              -0.008893791108876226,
+              0.18659761946154843,
+              -0.16496822106370096,
+              0.010108579056764775
+            ],
+            "reconstruction_loss": 0.2517058461005569,
+            "semantic_embeddings": false,
+            "source_binding_verified": true,
+            "status": "guided_output"
+          },
+          "comparison": {
+            "agrees": true,
+            "autoencoder_output_count": 1,
+            "canonical_core_agrees": true,
+            "canonical_core_mismatches": [],
+            "canonical_core_scope": "validated_redundant_temporal_records_only_not_semantic_equivalence",
+            "comparable": true,
+            "compiler_output_count": 1,
+            "coverage_scope": "all_emitted_formulas_not_semantic_span_coverage",
+            "difference_kind": "raw_equal",
+            "independent": false,
+            "method": "exact_ast_and_validated_canonical_core/v2",
+            "mismatches": [],
+            "raw_agrees": true,
+            "reason": "identical_formal_representations",
+            "status": "diagnostic_agree"
+          },
+          "compiler": {
+            "canonical_complete": false,
+            "canonical_formal_outputs": [],
+            "complete": true,
+            "component_count": 0,
+            "components_artifact_pointer": "",
+            "components_artifact_sha256": null,
+            "decompiled": "",
+            "formal_outputs": [
+              {
+                "family": "deontic",
+                "format": "modal-ir-formula/v1",
+                "independent": false,
+                "origin": "deterministic_codec",
+                "payload_json": "{\"conditions\":[],\"exceptions\":[],\"formula_id\":\"us-code-usc:us:10:8617-uscode-span-1c96e635448d2b6224554562a67fec6b501b1d2294877d098d06ea007aab9c86-4fbd9d7ff483a179:spacy:f0001\",\"metadata\":{\"aliased_from\":\"authorize_partner_organization_contract_phase_development\",\"cue\":\"may\",\"cue_end_char\":21,\"cue_start_char\":18,\"encoder\":\"spacy_modal_codec_v1\"},\"operator\":{\"family\":\"deontic\",\"label\":\"permission\",\"symbol\":\"P\",\"system\":\"D\"},\"predicate\":{\"arguments\":[\"actor:secretary\",\"scope:authorize_partner_organization_contract\"],\"name\":\"administrative_notice_hearing\",\"role\":\"clause\"},\"provenance\":{\"citation\":\"usc:us:10:8617\",\"end_char\":278,\"source_id\":\"us-code-usc:us:10:8617-uscode-span-1c96e635448d2b6224554562a67fec6b501b1d2294877d098d06ea007aab9c86-4fbd9d7ff483a179\",\"start_char\":0}}",
+                "sha256": "c6b9b823acf085c543e77753756b124fe904fccd99219beabd4929799b80c573",
+                "syntax_status": "not_checked",
+                "target_conditioned": false
+              }
+            ],
+            "reason": "no_parser_elements",
+            "roundtrip_ok": false,
+            "status": "abstain"
+          },
+          "formalized": false,
+          "goal_ids": [
+            "AFTD-0d941b7dd562c46bb630"
+          ],
+          "lake": {
+            "admitted": false,
+            "receipt_sha256": null,
+            "status": "not_run"
+          },
+          "observation_id": "37fd24c0a83f38f55e01540d2f13ed1cc3a58e9ab5435427260d7bc7639e28de",
+          "provenance": {
+            "agent_id": "legacy-cuda-census",
+            "batch_id": "5fda0cc05a1d4d168318910d99f1f4ec",
+            "bridge_names": [
+              "modal_frame_logic",
+              "deontic_norms",
+              "fol_tdfol",
+              "cec_dcec",
+              "external_prover_router"
+            ],
+            "code_identity": "sha256:07e2fe334f47779bd13aaf2b89588b1dc278b76f2fa3ad267a8cb9c3c8f7f5dc",
+            "disk_cache": false,
+            "elapsed_seconds": 42.471935742069036,
+            "evaluate_provers": false,
+            "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+            "parallel_workers": 1,
+            "sample_count": 8,
+            "wall_seconds_per_span": 5.3089919677586295
+          },
+          "repository_id": "justicedao/uscode-autoformal-span-cache",
+          "schema_version": "uscode-paired-span-census/v2",
+          "source": {
+            "constitution": false,
+            "legal_id": "usc:us:10:8617",
+            "revision": "ipfs-uscode-5016b86a",
+            "span_id": "uscode-span-1c96e635448d2b6224554562a67fec6b501b1d2294877d098d06ea007aab9c86",
+            "text": "(2) The Secretary may\u2014 (A) authorize a partner organization to contract for each phase of development, design, construction, renovation, or operation of the museum, or all such phases; or (B) authorize acceptance of funds from a partner organization for each or all such phases.",
+            "text_sha256": "3f3444d9bccff825eff1a35e4400ed959e996c83b4f9f5b65edcb7c93ccdb522"
+          },
+          "source_target_artifact_pointer": "/rows/1/logic_target_observation",
+          "source_target_artifact_sha256": "a5cdc325ecd489b241aea16ce664fe511bce9726b09883e1f8b3b71044121d62"
+        }
+      ],
+      "source_fields": [
+        "span_id",
+        "text",
+        "text_sha256",
+        "legal_id",
+        "revision",
+        "constitution"
+      ]
+    }
+  },
+  "effects": {
+    "auth_environment_reads": 0,
+    "checkpoint_or_embedding_changes": 0,
+    "full_content_scans": 0,
+    "full_dataset_downloads": 0,
+    "hub_uploads": 0,
+    "model_loads": 0,
+    "provider_calls": 0,
+    "repository_runtime_imports": 0,
+    "solver_calls": 0,
+    "target_program_executions": 0,
+    "tests_executed": 0,
+    "training_steps": 0
+  },
+  "http_observations": [
+    {
+      "bytes": 1064335,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "span-metadata.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-metadata.json",
+      "read_limit_bytes": 1200000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "2dcddd7c0b346c262af56b38fad48d0192b3bcdcec9a154f69172db711130edc",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache/revision/ac68213001c649516036562ad031529c97c10b97"
+    },
+    {
+      "bytes": 1221,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-metadata.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-metadata.json",
+      "read_limit_bytes": 10000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "dfef810e7ef721f8f5d9b3816ca1bef0243bad5e0ce0d366c6215cfe6066eb28",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache/revision/067c2a41affc6041fafb8237ae6df41bf4320008"
+    },
+    {
+      "bytes": 13863,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "span-README.md",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-README.md",
+      "read_limit_bytes": 30000,
+      "repo_commit_header": "ac68213001c649516036562ad031529c97c10b97",
+      "requested_range": null,
+      "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/README.md"
+    },
+    {
+      "bytes": 581,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-README.md",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-README.md",
+      "read_limit_bytes": 5000,
+      "repo_commit_header": "067c2a41affc6041fafb8237ae6df41bf4320008",
+      "requested_range": null,
+      "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/resolve/067c2a41affc6041fafb8237ae6df41bf4320008/README.md"
+    },
+    {
+      "bytes": 2118,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "paired-v1-manifest.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v1-manifest.json",
+      "read_limit_bytes": 10000,
+      "repo_commit_header": "ac68213001c649516036562ad031529c97c10b97",
+      "requested_range": null,
+      "sha256": "c5427410ef41d3a6a40778a15b0c2e85b9f87d145840c5106e1d96b129ff9fc1",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/paired-v1/manifests/legacy-cuda-census/manifest-00319d67e72123f28457c42f94e4ed395b39c5476c6f3a8a33893486afcec92d.json"
+    },
+    {
+      "bytes": 2118,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "paired-v2-manifest.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v2-manifest.json",
+      "read_limit_bytes": 10000,
+      "repo_commit_header": "ac68213001c649516036562ad031529c97c10b97",
+      "requested_range": null,
+      "sha256": "c8264675403c17acd6d11e2fb0b521a441809eff78e2beb45fcb26d4c45c4201",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/paired-v2/manifests/legacy-cuda-census/manifest-02f47f41fd8c1d9bcfcf6d5f6f134b807cd19a1c8159f9662e889f0f40fe0265.json"
+    },
+    {
+      "bytes": 2674,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "formula-text-manifest.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/formula-text-manifest.json",
+      "read_limit_bytes": 10000,
+      "repo_commit_header": "ac68213001c649516036562ad031529c97c10b97",
+      "requested_range": null,
+      "sha256": "1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c/manifest.json"
+    },
+    {
+      "bytes": 44324,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "paired-v1-sample.parquet",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v1-sample.parquet",
+      "read_limit_bytes": 100000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "dac287c0f68b667fc3204855daf82291482f95205cd48810369a449dcee0039d",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/paired-v1/paired_spans/legacy-cuda-census/paired_spans-1e65d0c608e6d681281f0aed671e85440ae3379f656215500aed9f43066e5c42-dac287c0f68b667fc3204855daf82291482f95205cd48810369a449dcee0039d.parquet"
+    },
+    {
+      "bytes": 49600,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "paired-v2-sample.parquet",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v2-sample.parquet",
+      "read_limit_bytes": 100000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "89752616934159101508173859375afd2c8b41fece2ed503f36f84aa7a71f70f",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/paired-v2/paired_spans/legacy-cuda-census/paired_spans-43ef447e6a9ddc7ad46b67a8ac25c71db77f6128ba2ee42fba298d886434a098-89752616934159101508173859375afd2c8b41fece2ed503f36f84aa7a71f70f.parquet"
+    },
+    {
+      "bytes": 11929,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "paired-v2-goals-sample.parquet",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v2-goals-sample.parquet",
+      "read_limit_bytes": 30000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "78e8ef56ac689126db3020e1d08ed4e4a2a388f1dc603c108c8a89a642dff5f9",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/paired-v2/goals/legacy-cuda-census/goals-43ef447e6a9ddc7ad46b67a8ac25c71db77f6128ba2ee42fba298d886434a098-78e8ef56ac689126db3020e1d08ed4e4a2a388f1dc603c108c8a89a642dff5f9.parquet"
+    },
+    {
+      "bytes": 39897,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "original-span-evidence.parquet",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/original-span-evidence.parquet",
+      "read_limit_bytes": 100000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "a77a00a35b09b70b5d759ee7d1bc0d515106b0a1a0aaec526512fd8fee9e13c7",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/span-evidence.parquet"
+    },
+    {
+      "bytes": 65536,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": "bytes 16832923-16898458/16898459",
+      "http_status": 206,
+      "name": "entity-parquet-tail.bin",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-parquet-tail.bin",
+      "read_limit_bytes": 65536,
+      "repo_commit_header": null,
+      "requested_range": [
+        16832923,
+        16898458
+      ],
+      "sha256": "7ee086e9a93d693919ecf7912665cc9f19430cba2b7c225595035ec2d5445b5e",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/resolve/067c2a41affc6041fafb8237ae6df41bf4320008/autoformal/uscode/kg-logic-index.parquet"
+    },
+    {
+      "bytes": 65536,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": "bytes 52635643-52701178/52701179",
+      "http_status": 206,
+      "name": "resume-parquet-tail.bin",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/resume-parquet-tail.bin",
+      "read_limit_bytes": 65536,
+      "repo_commit_header": null,
+      "requested_range": [
+        52635643,
+        52701178
+      ],
+      "sha256": "efce96dbf4abef575ccffa6e1ce2affc335bed875686203a28732a3910b528d6",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/resume-checkpoint.parquet"
+    },
+    {
+      "bytes": 98,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "error_type": "HTTPError",
+      "http_status": 500,
+      "name": "span-viewer-is-valid.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-viewer-is-valid.json",
+      "read_limit_bytes": 20000,
+      "requested_range": null,
+      "sha256": "91afbb421f5cc8355184136eb309db91f2089dc0d9fe89c6115b25c88d608b33",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://datasets-server.huggingface.co/is-valid?dataset=justicedao%2Fuscode-autoformal-span-cache"
+    },
+    {
+      "bytes": 98,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "error_type": "HTTPError",
+      "http_status": 500,
+      "name": "span-viewer-splits.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-viewer-splits.json",
+      "read_limit_bytes": 20000,
+      "requested_range": null,
+      "sha256": "91afbb421f5cc8355184136eb309db91f2089dc0d9fe89c6115b25c88d608b33",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fuscode-autoformal-span-cache"
+    },
+    {
+      "bytes": 76,
+      "completed_at_utc": "2026-10-15T04:17:52+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-viewer-is-valid.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-is-valid.json",
+      "read_limit_bytes": 20000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "43203b08ebe297d116d215e33cd2f232e5d8611404c2c814693d6f3379713165",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://datasets-server.huggingface.co/is-valid?dataset=justicedao%2Fuscode-autoformal-entity-cache"
+    },
+    {
+      "bytes": 138,
+      "completed_at_utc": "2026-10-15T04:17:51+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-viewer-splits.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-splits.json",
+      "read_limit_bytes": 20000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "6a460ee4eff400c981cc0d66879cacb6716cc7d91949d261224dc35a52595c5b",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fuscode-autoformal-entity-cache"
+    },
+    {
+      "bytes": 756,
+      "completed_at_utc": "2026-10-15T04:17:52+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-viewer-size.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-size.json",
+      "read_limit_bytes": 100000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "0306835cdfef6a430eee2ba8213aabd9a5a1c8c295b8b713d0eedc190b4a9e98",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://datasets-server.huggingface.co/size?dataset=justicedao%2Fuscode-autoformal-entity-cache"
+    },
+    {
+      "bytes": 355,
+      "completed_at_utc": "2026-10-15T04:17:52+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-viewer-parquet.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-parquet.json",
+      "read_limit_bytes": 100000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "d3b1ab1901fc1a778bc240df98d3ee60c7281cc9ef46febf130378bfb9808723",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://datasets-server.huggingface.co/parquet?dataset=justicedao%2Fuscode-autoformal-entity-cache"
+    },
+    {
+      "bytes": 31051,
+      "completed_at_utc": "2026-10-15T04:17:52+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-viewer-first-rows.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-first-rows.json",
+      "read_limit_bytes": 100000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "5f081b7189518d0f38edb98b4f2a3f45a3aef9ac807961cc097d05a9f61da53b",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://datasets-server.huggingface.co/first-rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train"
+    },
+    {
+      "bytes": 1584,
+      "completed_at_utc": "2026-10-15T04:17:52+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-viewer-rows-100000.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-100000.json",
+      "read_limit_bytes": 20000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "b8bb4b44e200de16726e98a8fa61cf6ebb01f4528c179114c08e76932fd347df",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=100000&length=2"
+    },
+    {
+      "bytes": 1703,
+      "completed_at_utc": "2026-10-15T04:17:52+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-viewer-rows-130000.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-130000.json",
+      "read_limit_bytes": 20000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "e593b4c015dcfcf2dc80fe01ef248a9495e2331498dd55969c1e8371a68b27b0",
+      "started_at_utc": "2026-10-15T04:17:51+00:00",
+      "url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=130000&length=2"
+    },
+    {
+      "bytes": 1552,
+      "completed_at_utc": "2026-10-15T04:17:52+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-viewer-rows-245000.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-245000.json",
+      "read_limit_bytes": 20000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "6c05014f76a1473e2ddfeec6ae412f5fc2a806cb9e9f344f64e7b1af0b5e6e8e",
+      "started_at_utc": "2026-10-15T04:17:52+00:00",
+      "url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=245000&length=2"
+    },
+    {
+      "bytes": 1574,
+      "completed_at_utc": "2026-10-15T04:17:52+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-viewer-rows-1000000.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-1000000.json",
+      "read_limit_bytes": 20000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "52c1672af74fea413919666a6c74bcbc57d8d4fb2d9dcba43122ebdcecb87523",
+      "started_at_utc": "2026-10-15T04:17:52+00:00",
+      "url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=1000000&length=2"
+    },
+    {
+      "bytes": 1550,
+      "completed_at_utc": "2026-10-15T04:17:53+00:00",
+      "content_range": null,
+      "http_status": 200,
+      "name": "entity-viewer-rows-1960874.json",
+      "raw_path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-1960874.json",
+      "read_limit_bytes": 20000,
+      "repo_commit_header": null,
+      "requested_range": null,
+      "sha256": "ff401ff9667ff97f9224c8e8dd8cfc085d6dd726fa8b23bab3f2dc342afe2d49",
+      "started_at_utc": "2026-10-15T04:17:52+00:00",
+      "url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=1960874&length=2"
+    }
+  ],
+  "interpretation": [
+    "Entity 1,960,876 is a mixed node/edge/category/logical-relation/classification-rule row total, not an entity count, statute count, span count or proved theorem count. Exact per-record-kind counts were not scanned.",
+    "The resume checkpoint footer partitions its 443,905 rows into 443,904 span-status records plus one meta record. Its progress row reports 60,068 documents / 22,379 sealed / 421,525 gaps / 3,820,263 pending. Sealed+gap matches span-status rows, but uniqueness and a current complete corpus denominator were not independently scanned; producer counters do not establish successful semantic admission.",
+    "Pinned paired-v1/v2 samples are 8 rows each, with 8D raw/projected diagnostic vectors and mock:stable-sha256 inputs. Exact zero projected reconstruction loss is target-conditioned vector behavior, not learned legal-text reconstruction or accepted semantics.",
+    "Sample paired sources have span_id,text,text_sha256,legal_id,revision,constitution; no source offset/length or statutory effective-date/version field is present in this nested source schema. revision ipfs-uscode-5016b86a is a producer dataset release label, not established here as a legal effective-date.",
+    "Entity schema has legal_id,node_id,src,dst and labels/roles but no source span ID, text hash, source offsets or revision. Sample section nodes offer legal_id correspondence; selected source/provenance edges have empty src/dst. Some footer groups have nonempty endpoints, so completeness and reversible span-to-entity lineage are not established. Complete footer statistics additionally identify at least 1,597,955 edge rows (groups 2\u201314) whose src and dst are both empty strings with no nulls. This lower bound is not an exact count of all malformed edges; no complete content scan was performed.",
+    "Hub metadata has 611 paired-v1 and 80 paired-v2 manifest/shard sets. Card configs expose paired-v1 only. Do not multiply shard count by sample size or sum generations as unique corpus spans; immutable manifests and deduplication must define a processing denominator.",
+    "Formula-text manifest is a fixed four-report audit: 56 span observations,45 available documents,11 unavailable documents,372 formula occurrences,328 fallback formula occurrences. It explicitly marks admitted=false, learned_formula_generation=false, independent_validation=false and training_qualified=false; these are not corpus-wide successful formalizations.",
+    "Publishing deferred goals does not enqueue or execute them. Sample goal has enqueued=false/admitted=false and retains packet/task/source/observation IDs. Sample compiler/guided agreement remains diagnostic; Lake admission and semantic correctness require independent evidence."
+  ],
+  "known_process_limit": "An earlier asynchronous remote-file PyArrow read printed the one-row checkpoint sample then aborted during interpreter teardown (exit134). This artifact recaptures raw tail bytes and parses synchronously in memory; it makes no runtime/model/benchmark qualification claim.",
+  "method": "Public unauthenticated urllib HTTP, Hugging Face Dataset Viewer skill, pinned small Parquet samples and synchronous in-memory footer parsing. No target repository module imported; no full corpus download/content scan.",
+  "observed_at_utc": "2026-10-15T04:17:53+00:00",
+  "pinned_manifests": {
+    "formula_text": {
+      "admitted": false,
+      "counts": {
+        "available_document_count": 45,
+        "fallback_formula_occurrence_count": 328,
+        "formula_row_count": 372,
+        "identity_verified_document_count": 45,
+        "source_span_observations": 56,
+        "unavailable_document_count": 11
+      },
+      "files": {
+        "examples": {
+          "bytes": 4349,
+          "filename": "EXAMPLES.md",
+          "sha256": "78ec6407b6d5895a8f2ba87bce1dbc9d77f6bc66d77fa937a8f30a6dfc1e25e2"
+        },
+        "jsonl": {
+          "bytes": 710024,
+          "filename": "formulas.jsonl",
+          "sha256": "b2b4accfe96d135e0453a0c1d744184081eccf78e39186c3c126504a6f42557e"
+        },
+        "parquet": {
+          "bytes": 32802,
+          "filename": "formulas.parquet",
+          "sha256": "23b093517b36ba43c8adcb9489d53aca1f12b99fa714e1df25daacdd201da06e"
+        }
+      },
+      "formula_fields": [
+        "event_calculus_formula",
+        "fol_formula",
+        "formula",
+        "formula_text",
+        "frame_formula",
+        "proof_input"
+      ],
+      "independent_validation": false,
+      "learned_formula_generation": false,
+      "notes": "Exact captured strings; repeated occurrences retained by document pointer. Reported syntax or validity flags are provenance, not independent checks or Lake admission.",
+      "producer_origin": "source_bridge_target",
+      "schema": "uscode-report-formula-text/v1",
+      "source_reports": [
+        {
+          "original": {
+            "bytes": 73673016,
+            "sha256": "93001fc3773aa5180b52caad379b323d9e83415ed1f12e028724175d94cb3fc5"
+          },
+          "report": {
+            "bytes": 3959482,
+            "path_in_repo": "autoformal/uscode/reports/v1/reports/43a822841e7192587a190bf56381bc55cdb1249a97ff3fa0a8a876d90bd75e90.json.gz",
+            "sha256": "43a822841e7192587a190bf56381bc55cdb1249a97ff3fa0a8a876d90bd75e90"
+          },
+          "revision": "4f7922a2188c111e30841a08769f0f989d0b7c61"
+        },
+        {
+          "original": {
+            "bytes": 22370458,
+            "sha256": "6c6d8771b7162dd30ac3ba325ff3b828213b76cb26b38e7abb7cb537f1907530"
+          },
+          "report": {
+            "bytes": 2651524,
+            "path_in_repo": "autoformal/uscode/reports/v1/reports/fae864238b8c34e19aecaada1aa650fe7d5c7828c7eb5869c1ec40ae066366f9.json.gz",
+            "sha256": "fae864238b8c34e19aecaada1aa650fe7d5c7828c7eb5869c1ec40ae066366f9"
+          },
+          "revision": "f1ff72b4b171fca4ac63a44e4f263982e9129f03"
+        },
+        {
+          "original": {
+            "bytes": 30911519,
+            "sha256": "3ca36729333750bd302f87e2ef3d33c53861c9ec51ead06f4ff733925da21c51"
+          },
+          "report": {
+            "bytes": 2748255,
+            "path_in_repo": "autoformal/uscode/reports/v1/reports/49f60d4504a5b8df4d87b0c57eca52eecebdfbcbe5e52c1b74070de960d946fc.json.gz",
+            "sha256": "49f60d4504a5b8df4d87b0c57eca52eecebdfbcbe5e52c1b74070de960d946fc"
+          },
+          "revision": "48cd0a5b666a8ef6cbaf259e9f1cc94792740e8b"
+        },
+        {
+          "original": {
+            "bytes": 23223530,
+            "sha256": "9ea4cbb5249848986f0b5f226f92f139d266b275d1799ad61a7ae55bdcd1cb06"
+          },
+          "report": {
+            "bytes": 2693457,
+            "path_in_repo": "autoformal/uscode/reports/v1/reports/5fe4185488765685d8b4449f2bfbc1fab8d56f853ef333d0bab3ef06a98e812e.json.gz",
+            "sha256": "5fe4185488765685d8b4449f2bfbc1fab8d56f853ef333d0bab3ef06a98e812e"
+          },
+          "revision": "45acc122f3f9c11da46c039e057a38ab5054a699"
+        }
+      ],
+      "training_qualified": false
+    },
+    "paired_v1": {
+      "admitted": false,
+      "agent_id": "legacy-cuda-census",
+      "enqueued": false,
+      "exporter_sha256": "cefcda33760cbd95b82d3887e9b8fb87417d49f3da0140f22f0c73c31403f231",
+      "fingerprint": "00319d67e72123f28457c42f94e4ed395b39c5476c6f3a8a33893486afcec92d",
+      "formalized": false,
+      "original_receipt_artifact_sha256": "d9906680d9ff862228c3263d213c89cfea24bce030c249edfdb23e2b5573823f",
+      "path_in_repo": "autoformal/uscode/paired-v1/manifests/legacy-cuda-census/manifest-00319d67e72123f28457c42f94e4ed395b39c5476c6f3a8a33893486afcec92d.json",
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "schema": "uscode-paired-span-bundle/v1",
+      "tables": {
+        "artifacts": {
+          "bytes": 3147447,
+          "filename": "artifacts-1e65d0c608e6d681281f0aed671e85440ae3379f656215500aed9f43066e5c42-bbd16f7f9cda564c74035ae26181186381d17e5abb34479b5e0d3fbff43583b1.parquet",
+          "path_in_repo": "autoformal/uscode/paired-v1/artifacts/legacy-cuda-census/artifacts-1e65d0c608e6d681281f0aed671e85440ae3379f656215500aed9f43066e5c42-bbd16f7f9cda564c74035ae26181186381d17e5abb34479b5e0d3fbff43583b1.parquet",
+          "row_count": 13,
+          "sha256": "bbd16f7f9cda564c74035ae26181186381d17e5abb34479b5e0d3fbff43583b1"
+        },
+        "goals": {
+          "bytes": 11654,
+          "filename": "goals-1e65d0c608e6d681281f0aed671e85440ae3379f656215500aed9f43066e5c42-1ffa2211257bf1e9a3329a551a350a964217005431526ef38d312320b5bfda34.parquet",
+          "path_in_repo": "autoformal/uscode/paired-v1/goals/legacy-cuda-census/goals-1e65d0c608e6d681281f0aed671e85440ae3379f656215500aed9f43066e5c42-1ffa2211257bf1e9a3329a551a350a964217005431526ef38d312320b5bfda34.parquet",
+          "row_count": 6,
+          "sha256": "1ffa2211257bf1e9a3329a551a350a964217005431526ef38d312320b5bfda34"
+        },
+        "paired_spans": {
+          "bytes": 44324,
+          "filename": "paired_spans-1e65d0c608e6d681281f0aed671e85440ae3379f656215500aed9f43066e5c42-dac287c0f68b667fc3204855daf82291482f95205cd48810369a449dcee0039d.parquet",
+          "path_in_repo": "autoformal/uscode/paired-v1/paired_spans/legacy-cuda-census/paired_spans-1e65d0c608e6d681281f0aed671e85440ae3379f656215500aed9f43066e5c42-dac287c0f68b667fc3204855daf82291482f95205cd48810369a449dcee0039d.parquet",
+          "row_count": 8,
+          "sha256": "dac287c0f68b667fc3204855daf82291482f95205cd48810369a449dcee0039d"
+        }
+      }
+    },
+    "paired_v2": {
+      "admitted": false,
+      "agent_id": "legacy-cuda-census",
+      "enqueued": false,
+      "exporter_sha256": "b3652d9cd022ec489a86337f129493ca34071cb44baa52a86d7e457a8495ef9e",
+      "fingerprint": "02f47f41fd8c1d9bcfcf6d5f6f134b807cd19a1c8159f9662e889f0f40fe0265",
+      "formalized": false,
+      "original_receipt_artifact_sha256": "a5cdc325ecd489b241aea16ce664fe511bce9726b09883e1f8b3b71044121d62",
+      "path_in_repo": "autoformal/uscode/paired-v2/manifests/legacy-cuda-census/manifest-02f47f41fd8c1d9bcfcf6d5f6f134b807cd19a1c8159f9662e889f0f40fe0265.json",
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "schema": "uscode-paired-span-bundle/v2",
+      "tables": {
+        "artifacts": {
+          "bytes": 3016132,
+          "filename": "artifacts-43ef447e6a9ddc7ad46b67a8ac25c71db77f6128ba2ee42fba298d886434a098-bd9272857e48d0cfc741e9a7009ee0dfd59785bdc16342054366fc859b6dfd7a.parquet",
+          "path_in_repo": "autoformal/uscode/paired-v2/artifacts/legacy-cuda-census/artifacts-43ef447e6a9ddc7ad46b67a8ac25c71db77f6128ba2ee42fba298d886434a098-bd9272857e48d0cfc741e9a7009ee0dfd59785bdc16342054366fc859b6dfd7a.parquet",
+          "row_count": 15,
+          "sha256": "bd9272857e48d0cfc741e9a7009ee0dfd59785bdc16342054366fc859b6dfd7a"
+        },
+        "goals": {
+          "bytes": 11929,
+          "filename": "goals-43ef447e6a9ddc7ad46b67a8ac25c71db77f6128ba2ee42fba298d886434a098-78e8ef56ac689126db3020e1d08ed4e4a2a388f1dc603c108c8a89a642dff5f9.parquet",
+          "path_in_repo": "autoformal/uscode/paired-v2/goals/legacy-cuda-census/goals-43ef447e6a9ddc7ad46b67a8ac25c71db77f6128ba2ee42fba298d886434a098-78e8ef56ac689126db3020e1d08ed4e4a2a388f1dc603c108c8a89a642dff5f9.parquet",
+          "row_count": 7,
+          "sha256": "78e8ef56ac689126db3020e1d08ed4e4a2a388f1dc603c108c8a89a642dff5f9"
+        },
+        "paired_spans": {
+          "bytes": 49600,
+          "filename": "paired_spans-43ef447e6a9ddc7ad46b67a8ac25c71db77f6128ba2ee42fba298d886434a098-89752616934159101508173859375afd2c8b41fece2ed503f36f84aa7a71f70f.parquet",
+          "path_in_repo": "autoformal/uscode/paired-v2/paired_spans/legacy-cuda-census/paired_spans-43ef447e6a9ddc7ad46b67a8ac25c71db77f6128ba2ee42fba298d886434a098-89752616934159101508173859375afd2c8b41fece2ed503f36f84aa7a71f70f.parquet",
+          "row_count": 8,
+          "sha256": "89752616934159101508173859375afd2c8b41fece2ed503f36f84aa7a71f70f"
+        }
+      }
+    }
+  },
+  "pinned_parquet_footers": {
+    "entity-parquet-tail.bin": {
+      "all_row_group_footer_statistics": [
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 757,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 757,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 532031,
+              "max": "usc:us:9:9",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 221655,
+              "max": "bafkreie7x7gqq7ozkincftdqa5ttwo5tpedafdfcrnabzlb75rnkft6vq4",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "node",
+              "min": "node",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 0,
+          "rows": 123230
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 759,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 759,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 272899,
+              "max": "usc:us:9:7",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 6046836,
+              "max": "bafkreihzzxpikscwh2zjc62gg7oezowedw3k5gazy7gsrrned7js2f67h4",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 69,
+              "max": "node",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 1,
+          "rows": 123414
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 2,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 757,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 757,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 3,
+          "rows": 123395
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 4,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 5,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 6,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 7,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 8,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 9,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 10,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 11,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 12,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 13,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 754,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 57,
+              "max": "edge",
+              "min": "edge",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 14,
+          "rows": 122880
+        },
+        {
+          "columns": {
+            "admitted": {
+              "compressed_bytes": 717,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "dst": {
+              "compressed_bytes": 109,
+              "max": "section",
+              "min": "",
+              "null_count": 0
+            },
+            "formalized": {
+              "compressed_bytes": 717,
+              "max": false,
+              "min": false,
+              "null_count": 0
+            },
+            "legal_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "node_id": {
+              "compressed_bytes": 53,
+              "max": "",
+              "min": "",
+              "null_count": 0
+            },
+            "record_kind": {
+              "compressed_bytes": 118,
+              "max": "logical_relation",
+              "min": "category",
+              "null_count": 0
+            },
+            "src": {
+              "compressed_bytes": 107,
+              "max": "title",
+              "min": "",
+              "null_count": 0
+            }
+          },
+          "row_group": 15,
+          "rows": 116277
+        }
+      ],
+      "arrow_schema": "record_kind: string\nmeta_category: string\ngraph_kind: string\nlabel: string\nlegal_id: string\nnode_id: string\nsrc: string\ndst: string\nlogic_role: string\nin_formula: bool\nadmitted: bool\nformalized: bool",
+      "columns": [
+        "record_kind",
+        "meta_category",
+        "graph_kind",
+        "label",
+        "legal_id",
+        "node_id",
+        "src",
+        "dst",
+        "logic_role",
+        "in_formula",
+        "admitted",
+        "formalized"
+      ],
+      "data_file_fully_downloaded": false,
+      "endpoint_count_scope": "Lower bound from complete all-edge row groups with min=max empty string and null_count=0 for both src and dst; no full content scan or claim about mixed groups.",
+      "file_bytes": 16898459,
+      "footer_empty_endpoint_edge_groups": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "footer_known_edge_rows_with_empty_both_endpoints": 1597955,
+      "footer_reports_all_admitted_false": true,
+      "footer_reports_all_formalized_false": true,
+      "num_rows": 1960876,
+      "row_groups": 16
+    },
+    "resume-parquet-tail.bin": {
+      "arrow_schema": "record_kind: string\ndataset_id: string\nagent_id: string\nrole: string\nheartbeat: string\ndocuments: int32\nsource_parquet: string\nsource_span_id: string\nlegal_id: string\nstatus: string\nsealed: bool\nclaim_worker: string\nclaim_token: string\nsource_sha256: string\nreason: string\ncode_identity: string\nterm_id: string\nterm_kind: string\nterm_value: string\ntask_id: string\nfailure_mode: string\nwork_kind: string\nowner_agent: string\nsealed_count: int32\ngap_count: int32\npending_count: int32\nadmitted: bool\nformalized: bool",
+      "bounded_last_row_group": [
+        {
+          "admitted": false,
+          "agent_id": "",
+          "claim_token": "",
+          "claim_worker": "",
+          "code_identity": "",
+          "dataset_id": "justicedao/ipfs_uscode",
+          "documents": 60068,
+          "failure_mode": "",
+          "formalized": false,
+          "gap_count": 421525,
+          "heartbeat": "",
+          "legal_id": "",
+          "owner_agent": "",
+          "pending_count": 3820263,
+          "reason": "",
+          "record_kind": "meta",
+          "role": "",
+          "sealed": false,
+          "sealed_count": 22379,
+          "source_parquet": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "source_sha256": "",
+          "source_span_id": "",
+          "status": "progress",
+          "task_id": "",
+          "term_id": "",
+          "term_kind": "",
+          "term_value": "",
+          "work_kind": ""
+        }
+      ],
+      "columns": [
+        "record_kind",
+        "dataset_id",
+        "agent_id",
+        "role",
+        "heartbeat",
+        "documents",
+        "source_parquet",
+        "source_span_id",
+        "legal_id",
+        "status",
+        "sealed",
+        "claim_worker",
+        "claim_token",
+        "source_sha256",
+        "reason",
+        "code_identity",
+        "term_id",
+        "term_kind",
+        "term_value",
+        "task_id",
+        "failure_mode",
+        "work_kind",
+        "owner_agent",
+        "sealed_count",
+        "gap_count",
+        "pending_count",
+        "admitted",
+        "formalized"
+      ],
+      "data_file_fully_downloaded": false,
+      "file_bytes": 52701179,
+      "footer_record_kind_counts": {
+        "meta": 1,
+        "span": 443904
+      },
+      "num_rows": 443905,
+      "record_kind_row_group_statistics": [
+        {
+          "max": "span",
+          "min": "span",
+          "null_count": 0,
+          "row_group": 0,
+          "rows": 123566
+        },
+        {
+          "max": "span",
+          "min": "span",
+          "null_count": 0,
+          "row_group": 1,
+          "rows": 122880
+        },
+        {
+          "max": "span",
+          "min": "span",
+          "null_count": 0,
+          "row_group": 2,
+          "rows": 122880
+        },
+        {
+          "max": "span",
+          "min": "span",
+          "null_count": 0,
+          "row_group": 3,
+          "rows": 74578
+        },
+        {
+          "max": "meta",
+          "min": "meta",
+          "null_count": 0,
+          "row_group": 4,
+          "rows": 1
+        }
+      ],
+      "row_groups": 5,
+      "unique_span_ids_independently_counted": false
+    }
+  },
+  "plan_recommendations": [
+    "Pin both repository revisions and manifest/table hashes; include paired-v1/v2 schema versions explicitly rather than silently reading only card default.",
+    "Build a bounded queue from immutable manifest membership and typed source identity. Separate unique sources, repeated observations, goals, artifacts, diagnostics and admitted outputs. Compute exact processing denominator in a separately authorized indexed pass.",
+    "For exact legal-text roundtrip retain original bytes plus byte offsets/length, full document hash/ID, source URL, statutory release/effective-date provenance and Unicode normalization policy. Mark missing historical offsets unknown; recover by verified source alignment, never guessed text matching.",
+    "Repair and qualify entity-export endpoint preservation before treating this cache as a navigable provenance graph: at least 1,597,955 pinned edge rows have both endpoints empty according to complete footer groups. Rebuild from retained original graph/source evidence, preserve old observations, and test endpoint referential integrity instead of inventing missing joins.",
+    "Create versioned span-to-entity edges retaining both source span ID/hash/release and entity node ID/typed relation, immutable source record pointers and derivation provenance. Do not join only on a legal_id or label without generation checks.",
+    "Reuse existing diagnostic assets as provenance/negative/repair examples. Do not teach from unavailable outputs, target-conditioned vector matches or failed formula strings as accepted gold.",
+    "Keep raw originals, semantic IR, legal-text reconstruction and FOL/TDFOL/Lean outputs as separate decoder tasks and metrics; preserve IR family/schema/dimension/checkpoint/tokenizer identity for 8D/384D/768D paths."
+  ],
+  "repositories": {
+    "entity": {
+      "card_configs": [
+        {
+          "config_name": "autoformal_uscode",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/kg-logic-index.parquet",
+              "split": "train"
+            }
+          ],
+          "default": true
+        }
+      ],
+      "file_count": 3,
+      "gated": false,
+      "last_modified": "2026-10-14T19:45:48.000Z",
+      "metadata_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache/revision/067c2a41affc6041fafb8237ae6df41bf4320008",
+      "parquet_file_bytes": 16898459,
+      "parquet_file_count": 1,
+      "parquet_lfs_sha256": "f0c9280a6838ff431af2065138402bdd866ad0ed72719ac48669930804cf6575",
+      "private": false,
+      "readme_sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4",
+      "repository": "justicedao/uscode-autoformal-entity-cache",
+      "revision": "067c2a41affc6041fafb8237ae6df41bf4320008"
+    },
+    "span": {
+      "card_configs": [
+        {
+          "config_name": "formal_logic_text",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/formula-text/v1/*/formulas.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "paired_spans",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/paired-v1/paired_spans/**/*.parquet",
+              "split": "train"
+            }
+          ],
+          "default": true
+        },
+        {
+          "config_name": "deferred_goals",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/paired-v1/goals/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "evidence_artifacts",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/paired-v1/artifacts/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "retained_outputs_v1",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/outputs/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "census_v3",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/census-v3/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "census_v2",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/census/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "supervisor_goals_v2",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/goals/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        }
+      ],
+      "file_inventory": {
+        "feature_pretraining_generation_files": 6,
+        "files": 6336,
+        "paired_v1_manifest_files": 611,
+        "paired_v1_paired_shards": 611,
+        "paired_v2_manifest_files": 80,
+        "paired_v2_paired_shards": 80,
+        "parquet_files": 3852,
+        "path_population_method": "complete pinned Hub metadata sibling list only; no corpus content scan",
+        "suffix_counts": {
+          "gitattributes": 1,
+          "gz": 4,
+          "json": 2345,
+          "jsonl": 121,
+          "lean": 4,
+          "lean-toolchain": 1,
+          "log": 6,
+          "md": 2,
+          "parquet": 3852
+        }
+      },
+      "gated": false,
+      "last_modified": "2026-10-15T03:35:13.000Z",
+      "metadata_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache/revision/ac68213001c649516036562ad031529c97c10b97",
+      "private": false,
+      "readme_sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6",
+      "repository": "justicedao/uscode-autoformal-span-cache",
+      "revision": "ac68213001c649516036562ad031529c97c10b97"
+    }
+  },
+  "schema": "legal-ir-uscode-hub-cache-survey@1",
+  "scope": "Inspection evidence only; no new proof/execution/completion/teacher-promotion/distillation/token-saving authority.",
+  "skill": "/home/barberb/.codex/plugins/cache/openai-curated-remote/hugging-face/1.0.0/skills/datasets/SKILL.md",
+  "status": "bounded_read_only_observation",
+  "verified_sample_join": {
+    "goal_id": "AFTD-d71c899aac5bcc798600",
+    "goal_to_packet_sha256": "d71c899aac5bcc7986003e1619119d7f61bf41d74f5d0dd96e078acbed4b3f4b",
+    "goal_to_task_sha256": "8405858e6ea7f6f23b5b376708147f1a59fdb65f3131e2873b1471edaddd75db",
+    "observation_id": "fbe5add25cb60e3289df029e5e4408784ad0bcb6409a55e60c7dada7269e401c",
+    "original_receipt_artifact_bytes_not_downloaded": true,
+    "packet_and_task_bytes_not_downloaded": true,
+    "source_artifact_pointer": "/rows/0/logic_target_observation",
+    "source_artifact_sha256": "a5cdc325ecd489b241aea16ce664fe511bce9726b09883e1f8b3b71044121d62",
+    "source_legal_id": "usc:us:10:8588",
+    "source_revision": "ipfs-uscode-5016b86a",
+    "source_span_id": "uscode-span-11bdbbe0d0743c9011acbbe370268e37bde2298cec707d6d53d8055429d3b5c8",
+    "source_text_sha256": "1d1b932916ddd23b221c642bff16f451508fdbc067a5666ee17cb35de1168958",
+    "source_to_goal_span_and_observation_keys_verified": true
+  },
+  "viewer_limits": [
+    "Viewer responses are live service observations with no immutable repo commit response header, even when their schema/row total match the pinned Parquet footer. They are not promoted to byte-pinned row samples.",
+    "Span Viewer is-valid/splits returned HTTP500 busy during initial inspection; final recapture statuses are recorded per request. No supported split was established through the Viewer, so no first-rows success is asserted.",
+    "Entity first-rows returns100 rows and truncated=true; only bounded sample rows are inspected. Additional rows endpoints request2 records at explicit offsets. Filter requests failed (502/timeout) and are not used to establish counts."
+  ]
+}

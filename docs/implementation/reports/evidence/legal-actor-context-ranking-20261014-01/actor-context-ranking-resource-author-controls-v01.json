@@ -1,0 +1,165 @@
+{
+  "actual_baseline_main_calls": 0,
+  "actual_censuses": 0,
+  "control_count": 25,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "exact immutable policy",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "cap policy mutation refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "public historical540 digest",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "all current nonreleased claims charged",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "changed historical body refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "boolean claim refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "unknown current status refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "apparent fullrun boundary fits",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "one byte apparent excess refuses",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "native fit does not imply fullrun fit",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "one byte physical shortage refuses",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "public pure dynamic541 nonidle baseline passes",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "public historical hash tampering refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "public uncharged additional claim refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "public boolean count refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "public physical root change refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "public numerical authorization flag refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "public false pass refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "private body artifact admission refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "scheduler configuration mutation refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "public native-only fit refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "exact inherited bridge run_scope_guardian_v02.py",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "exact inherited bridge adopt_shared_scheduler_actor_ranking_v02.py",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "exact inherited bridge owned_lease_watchdog_actor_ranking_v02.py",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "sampler exact phase-and-cell port",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "kernel": {
+    "bytes": 13965,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions_balanced_resource_protocol_v01.py",
+    "sha256": "265d96839054a16d4c4ab0f2550dc69948263a87566e9337a429b3ddb02f69f0"
+  },
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "observer": {
+    "bytes": 7237,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_resource_baseline_v01.py",
+    "sha256": "210280704339a89b4d43a13b3e096271af016c3472634f96e6e9fd1423ffa7f9"
+  },
+  "passed": true,
+  "policy": {
+    "bytes": 7532,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json",
+    "sha256": "d9056253244e653c544b4fee5ac371a3d86a538fa8c67f6330512ec2cd9a90ac"
+  },
+  "private_body_reads": 0,
+  "protocol": {
+    "bytes": 20230,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v01.py",
+    "sha256": "4edb0362eced0670740dc973e921cc09ee6e3e939c1d092fe81626a2a75aa39b"
+  },
+  "resource_API_calls": 0,
+  "schema": "actor-context-ranking-resource-author-controls/v1",
+  "source": {
+    "bytes": 9793,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_author_controls_v01.py",
+    "sha256": "7f369a92a5af14fb0c1a09f84c59b8ac046598241a557b9fa0aec3dd88c50369"
+  },
+  "synthetic_fixture_gate_descriptors_are_not_actual_approvals": true
+}

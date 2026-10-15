@@ -1,0 +1,2659 @@
+{
+  "agreement": {
+    "all8_scientific_sections_exact": true,
+    "all_consumed_descriptors_join_sourcegates": true,
+    "comparison_route_field_columns_independently_recalculated": 1296,
+    "comparison_scope_groups": 81,
+    "component_copy_proofs": 1264,
+    "counter_consumed_input_pin_count": 100,
+    "panels_compared": 60,
+    "per_ID_score_records": 3744,
+    "permission_records": 96,
+    "presence_cell_invariants_checked": 3240,
+    "primary_consumed_input_pin_count": 96,
+    "rank_records": 6,
+    "scientific_section_sha256": {
+      "all32_permissions": "479a706bce86e61ae38e5769b8e37bf19560997c72bb593e20f23f553504dd37",
+      "comparisons": "9b7c88da39698962c6e537c1663e64b82aeb4c8d68aee62f2725ca38c4624fa9",
+      "component_copy_proofs": "c96268b9ff4e5516b5c467997caf3eb4ceb59b1bf07f39a8657f7025e7ab3dd6",
+      "conditions_rank_diagnostics": "a942ab264f9ab797dd4f328974f1ef44446fb3201f0acfb60949e9895c7729a1",
+      "native_donor_panels": "e419d194299e1bfcfe59e528b7e2f9dded657b0243b48197ee3cb6f66da4465d",
+      "native_donor_score_rows": "6890ad13f1c4bc3a36fcd340e3b8f0e166467222130dde166bc9f0eeae004710",
+      "variant_panels": "375c72302f3ef1d7c20f45354e5e6d5423151c0aba0a3b71c9ddfaf77f6c4c47",
+      "variant_score_rows": "13c32f72b3466ae615a3537a666306a441444a18d410e8252b11b45365adf637"
+    },
+    "scored_panels": 54,
+    "shared_consumed_input_pin_count": 95
+  },
+  "all32_permissions": {
+    "F15_baseline": {
+      "joint": 32,
+      "raw": 32,
+      "total": 32
+    },
+    "F17_actor_F17_readouts": {
+      "joint": 32,
+      "raw": 32,
+      "total": 32
+    },
+    "F17_actor_F18_readouts": {
+      "joint": 32,
+      "raw": 32,
+      "total": 32
+    }
+  },
+  "analysis": {
+    "bytes": 9716921,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-diagnostic-v01.json",
+    "sha256": "393d154c6f116e255833de8d81be066a80817170a047613dba39ad591facf1df"
+  },
+  "analyzer_source_qualification": {
+    "bytes": 55123,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyzer-source-independent-review-v01.json",
+    "sha256": "0932627121a7cb0360c2bbbc8f351b92b55ca4abbcc8f306a80a7a7f7ebe2f8b"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyze_conditions_composition_v01.py": {
+      "bytes": 40929,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyze_conditions_composition_v01.py",
+      "sha256": "b5e946babffb41834d4b95e5700201d50b957991b17e7b44551130df12446553"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyzer-source-independent-review-v01.json": {
+      "bytes": 55123,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyzer-source-independent-review-v01.json",
+      "sha256": "0932627121a7cb0360c2bbbc8f351b92b55ca4abbcc8f306a80a7a7f7ebe2f8b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-diagnostic-v01.json": {
+      "bytes": 9716921,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-diagnostic-v01.json",
+      "sha256": "393d154c6f116e255833de8d81be066a80817170a047613dba39ad591facf1df"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-independent-recount-v01.json": {
+      "bytes": 9720380,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-independent-recount-v01.json",
+      "sha256": "eaa6f1a2dccebd202c995e441df65849d0ea1c4d8613a6039f6bd57f1f4a83d4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-independent-source-controls-v01.json": {
+      "bytes": 2077,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-independent-source-controls-v01.json",
+      "sha256": "495c812897b680137fca7f188ef116c349732996ff4bcd4d6c5fe4b47c0243fa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/counter-source-independent-review-v01.json": {
+      "bytes": 76523,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/counter-source-independent-review-v01.json",
+      "sha256": "e2fb06ff0432338336887a1058dde5e6345d35118cadd435f666693f10b6b514"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json": {
+      "bytes": 6172,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json",
+      "sha256": "485e24dccd7f55ef547acb54afc1e3785a46de547454c9e5a155fc4f04a359c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json": {
+      "bytes": 3321,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json",
+      "sha256": "1bf6393d2c3c177342df97856b73868652d8f23aafa1dbe47f1aca81f3382dea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-inputs-v01.json": {
+      "bytes": 40054,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-inputs-v01.json",
+      "sha256": "fbbf88f03dac543c6fb839c385f2ef165e0b0636854764e662f770a19a7ebb77"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/finite-input-readiness-independent-review-v01.json": {
+      "bytes": 71119,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/finite-input-readiness-independent-review-v01.json",
+      "sha256": "4e95d79f1bd542c60344bba9077a8fa7e162bd3fb8589b4295f07ce1d8b2de84"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-counter-adapter-independent-source-controls-v01.json": {
+      "bytes": 2474,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-counter-adapter-independent-source-controls-v01.json",
+      "sha256": "9ebf8dfaa58a1539cd0dbaff4f9dc50eea838ff135ae1139166ee37f2cac8ece"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-scientific-kernels-source-review-v01.json": {
+      "bytes": 14412,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-scientific-kernels-source-review-v01.json",
+      "sha256": "a6a03d9ca9520b68c73434b1753a67d88d791cce28c3f39a6ce80ac341fea8fc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/recount_conditions_composition_v01.py": {
+      "bytes": 33269,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/recount_conditions_composition_v01.py",
+      "sha256": "4f5c4cde42e9e088db70d5f96649a0dac15fab4631e033dc73db08223c2ead41"
+    }
+  },
+  "conditions_rank_summary": [
+    {
+      "donor": "F15",
+      "exact_ties_including_gold": 1,
+      "full_gold_assignment_feasible": true,
+      "fullspan_top8_boundary_margin_f32": 0.46773529052734375,
+      "gold": {
+        "end": 20,
+        "start": 9
+      },
+      "gold_end_rank": 3,
+      "gold_fullspan_rank": 3,
+      "gold_in_actual_fullspan_top8": true,
+      "gold_minus_short_pair_score_f32": -0.9081954956054688,
+      "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+      "raw_and_joint_select_shorter": true,
+      "short_competitor": {
+        "end": 12,
+        "start": 9
+      }
+    },
+    {
+      "donor": "F17",
+      "exact_ties_including_gold": 1,
+      "full_gold_assignment_feasible": true,
+      "fullspan_top8_boundary_margin_f32": 0.6553573608398438,
+      "gold": {
+        "end": 20,
+        "start": 9
+      },
+      "gold_end_rank": 2,
+      "gold_fullspan_rank": 2,
+      "gold_in_actual_fullspan_top8": true,
+      "gold_minus_short_pair_score_f32": -0.6553573608398438,
+      "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+      "raw_and_joint_select_shorter": true,
+      "short_competitor": {
+        "end": 12,
+        "start": 9
+      }
+    },
+    {
+      "donor": "F18",
+      "exact_ties_including_gold": 1,
+      "full_gold_assignment_feasible": true,
+      "fullspan_top8_boundary_margin_f32": 0.6569900512695312,
+      "gold": {
+        "end": 20,
+        "start": 9
+      },
+      "gold_end_rank": 2,
+      "gold_fullspan_rank": 2,
+      "gold_in_actual_fullspan_top8": true,
+      "gold_minus_short_pair_score_f32": -0.6569900512695312,
+      "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+      "raw_and_joint_select_shorter": true,
+      "short_competitor": {
+        "end": 12,
+        "start": 9
+      }
+    },
+    {
+      "donor": "F15",
+      "exact_ties_including_gold": 1,
+      "full_gold_assignment_feasible": true,
+      "fullspan_top8_boundary_margin_f32": 1.0581130981445312,
+      "gold": {
+        "end": 23,
+        "start": 12
+      },
+      "gold_end_rank": 3,
+      "gold_fullspan_rank": 3,
+      "gold_in_actual_fullspan_top8": true,
+      "gold_minus_short_pair_score_f32": -0.6456413269042969,
+      "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+      "raw_and_joint_select_shorter": true,
+      "short_competitor": {
+        "end": 15,
+        "start": 12
+      }
+    },
+    {
+      "donor": "F17",
+      "exact_ties_including_gold": 1,
+      "full_gold_assignment_feasible": true,
+      "fullspan_top8_boundary_margin_f32": 1.0644264221191406,
+      "gold": {
+        "end": 23,
+        "start": 12
+      },
+      "gold_end_rank": 3,
+      "gold_fullspan_rank": 3,
+      "gold_in_actual_fullspan_top8": true,
+      "gold_minus_short_pair_score_f32": -0.39594268798828125,
+      "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+      "raw_and_joint_select_shorter": true,
+      "short_competitor": {
+        "end": 15,
+        "start": 12
+      }
+    },
+    {
+      "donor": "F18",
+      "exact_ties_including_gold": 1,
+      "full_gold_assignment_feasible": true,
+      "fullspan_top8_boundary_margin_f32": 1.0687522888183594,
+      "gold": {
+        "end": 23,
+        "start": 12
+      },
+      "gold_end_rank": 3,
+      "gold_fullspan_rank": 3,
+      "gold_in_actual_fullspan_top8": true,
+      "gold_minus_short_pair_score_f32": -0.3966827392578125,
+      "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+      "raw_and_joint_select_shorter": true,
+      "short_competitor": {
+        "end": 15,
+        "start": 12
+      }
+    }
+  ],
+  "counter_source_qualification": {
+    "bytes": 76523,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/counter-source-independent-review-v01.json",
+    "sha256": "e2fb06ff0432338336887a1058dde5e6345d35118cadd435f666693f10b6b514"
+  },
+  "design": {
+    "bytes": 6172,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json",
+    "sha256": "485e24dccd7f55ef547acb54afc1e3785a46de547454c9e5a155fc4f04a359c5"
+  },
+  "execution_contract": {
+    "bytes": 3321,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json",
+    "sha256": "1bf6393d2c3c177342df97856b73868652d8f23aafa1dbe47f1aca81f3382dea"
+  },
+  "findings": [],
+  "full_IR_comparison_groups": [
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 46,
+        "before_correct": 46,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 45,
+        "before_correct": 45,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_dev",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 34,
+        "before_correct": 34,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 27,
+        "before_correct": 27,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_eval",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 25,
+        "before_correct": 25,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 25,
+        "before_correct": 25,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_challenge",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_dev",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_test",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 19,
+        "before_correct": 19,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 8,
+        "before_correct": 8,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_tune",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 53,
+        "before_correct": 53,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 50,
+        "before_correct": 50,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "old_authored_eval",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 94,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 94,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "old_tune",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "training168",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 46,
+        "before_correct": 48,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+          "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+        ],
+        "losses": 2
+      },
+      "raw": {
+        "after_correct": 45,
+        "before_correct": 47,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+          "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+        ],
+        "losses": 2
+      },
+      "scope": "authored_dev",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 34,
+        "before_correct": 33,
+        "gain_ids": [
+          "targeted-loss-authored_eval-condition_exception_duration-0-f-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 27,
+        "before_correct": 27,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_eval",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 25,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "temporal-contrast-challenge-condition_exception_duration-0-p-present"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 25,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "temporal-contrast-challenge-condition_exception_duration-0-p-present"
+        ],
+        "losses": 1
+      },
+      "scope": "fresh_challenge",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_dev",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_test",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 19,
+        "before_correct": 21,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "temporal-contrast-tuning-object_duration_title-0-f-present",
+          "temporal-contrast-tuning-condition_exception_duration-0-p-present"
+        ],
+        "losses": 2
+      },
+      "raw": {
+        "after_correct": 8,
+        "before_correct": 9,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "temporal-contrast-tuning-object_duration_title-0-f-present"
+        ],
+        "losses": 1
+      },
+      "scope": "fresh_tune",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 53,
+        "before_correct": 55,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "matched-temporal-authored_eval-condition_duration-0-o-present",
+          "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+        ],
+        "losses": 2
+      },
+      "raw": {
+        "after_correct": 50,
+        "before_correct": 52,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "matched-temporal-authored_eval-condition_duration-0-o-present",
+          "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+        ],
+        "losses": 2
+      },
+      "scope": "old_authored_eval",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 94,
+        "before_correct": 93,
+        "gain_ids": [
+          "native-tuning-calendula-t4-q5-p"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 94,
+        "before_correct": 93,
+        "gain_ids": [
+          "native-tuning-calendula-t4-q5-p"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "old_tune",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "training168",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 46,
+        "before_correct": 46,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 45,
+        "before_correct": 45,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_dev",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 34,
+        "before_correct": 34,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 27,
+        "before_correct": 27,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_eval",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 25,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "temporal-contrast-challenge-condition_exception_duration-0-p-present"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 25,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "temporal-contrast-challenge-condition_exception_duration-0-p-present"
+        ],
+        "losses": 1
+      },
+      "scope": "fresh_challenge",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_dev",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_test",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 19,
+        "before_correct": 20,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "temporal-contrast-tuning-condition_exception_duration-0-p-present"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 8,
+        "before_correct": 8,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_tune",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 53,
+        "before_correct": 54,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "matched-temporal-authored_eval-condition_duration-0-o-present"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 50,
+        "before_correct": 51,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "matched-temporal-authored_eval-condition_duration-0-o-present"
+        ],
+        "losses": 1
+      },
+      "scope": "old_authored_eval",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 94,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 94,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "old_tune",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "training168",
+      "variant": "F15_baseline"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 48,
+        "before_correct": 46,
+        "gain_ids": [
+          "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+          "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+        ],
+        "gains": 2,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 47,
+        "before_correct": 45,
+        "gain_ids": [
+          "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+          "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+        ],
+        "gains": 2,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_dev",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 34,
+        "before_correct": 34,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 27,
+        "before_correct": 27,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_eval",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 26,
+        "before_correct": 25,
+        "gain_ids": [
+          "temporal-contrast-challenge-condition_exception_duration-0-p-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 26,
+        "before_correct": 25,
+        "gain_ids": [
+          "temporal-contrast-challenge-condition_exception_duration-0-p-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_challenge",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_dev",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_test",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 20,
+        "before_correct": 19,
+        "gain_ids": [
+          "temporal-contrast-tuning-condition_exception_duration-0-p-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 8,
+        "before_correct": 8,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_tune",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 54,
+        "before_correct": 53,
+        "gain_ids": [
+          "matched-temporal-authored_eval-condition_duration-0-o-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 51,
+        "before_correct": 50,
+        "gain_ids": [
+          "matched-temporal-authored_eval-condition_duration-0-o-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "old_authored_eval",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 93,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "native-tuning-calendula-t4-q5-p"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 93,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "native-tuning-calendula-t4-q5-p"
+        ],
+        "losses": 1
+      },
+      "scope": "old_tune",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "training168",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 48,
+        "before_correct": 48,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 47,
+        "before_correct": 47,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_dev",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 34,
+        "before_correct": 33,
+        "gain_ids": [
+          "targeted-loss-authored_eval-condition_exception_duration-0-f-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 27,
+        "before_correct": 27,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_eval",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 26,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 26,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_challenge",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_dev",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_test",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 20,
+        "before_correct": 21,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "temporal-contrast-tuning-object_duration_title-0-f-present"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 8,
+        "before_correct": 9,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "temporal-contrast-tuning-object_duration_title-0-f-present"
+        ],
+        "losses": 1
+      },
+      "scope": "fresh_tune",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 54,
+        "before_correct": 55,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 51,
+        "before_correct": 52,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+        ],
+        "losses": 1
+      },
+      "scope": "old_authored_eval",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 93,
+        "before_correct": 93,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 93,
+        "before_correct": 93,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "old_tune",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "training168",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 48,
+        "before_correct": 46,
+        "gain_ids": [
+          "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+          "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+        ],
+        "gains": 2,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 47,
+        "before_correct": 45,
+        "gain_ids": [
+          "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+          "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+        ],
+        "gains": 2,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_dev",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 34,
+        "before_correct": 34,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 27,
+        "before_correct": 27,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_eval",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 26,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 26,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_challenge",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_dev",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_test",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 20,
+        "before_correct": 20,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 8,
+        "before_correct": 8,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_tune",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 54,
+        "before_correct": 54,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 51,
+        "before_correct": 51,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "old_authored_eval",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 93,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "native-tuning-calendula-t4-q5-p"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 93,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "native-tuning-calendula-t4-q5-p"
+        ],
+        "losses": 1
+      },
+      "scope": "old_tune",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "training168",
+      "variant": "F17_actor_F18_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 48,
+        "before_correct": 46,
+        "gain_ids": [
+          "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+          "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+        ],
+        "gains": 2,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 47,
+        "before_correct": 45,
+        "gain_ids": [
+          "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+          "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+        ],
+        "gains": 2,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_dev",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 34,
+        "before_correct": 34,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 27,
+        "before_correct": 27,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_eval",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 26,
+        "before_correct": 25,
+        "gain_ids": [
+          "temporal-contrast-challenge-condition_exception_duration-0-p-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 26,
+        "before_correct": 25,
+        "gain_ids": [
+          "temporal-contrast-challenge-condition_exception_duration-0-p-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_challenge",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_dev",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_test",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 20,
+        "before_correct": 19,
+        "gain_ids": [
+          "temporal-contrast-tuning-condition_exception_duration-0-p-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 8,
+        "before_correct": 8,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_tune",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 54,
+        "before_correct": 53,
+        "gain_ids": [
+          "matched-temporal-authored_eval-condition_duration-0-o-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 51,
+        "before_correct": 50,
+        "gain_ids": [
+          "matched-temporal-authored_eval-condition_duration-0-o-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "old_authored_eval",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 93,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "native-tuning-calendula-t4-q5-p"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 93,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "native-tuning-calendula-t4-q5-p"
+        ],
+        "losses": 1
+      },
+      "scope": "old_tune",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F15",
+      "joint": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "training168",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 48,
+        "before_correct": 48,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 47,
+        "before_correct": 47,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_dev",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 34,
+        "before_correct": 33,
+        "gain_ids": [
+          "targeted-loss-authored_eval-condition_exception_duration-0-f-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 27,
+        "before_correct": 27,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_eval",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 26,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 26,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_challenge",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_dev",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_test",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 20,
+        "before_correct": 21,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "temporal-contrast-tuning-object_duration_title-0-f-present"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 8,
+        "before_correct": 9,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "temporal-contrast-tuning-object_duration_title-0-f-present"
+        ],
+        "losses": 1
+      },
+      "scope": "fresh_tune",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 54,
+        "before_correct": 55,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 51,
+        "before_correct": 52,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+        ],
+        "losses": 1
+      },
+      "scope": "old_authored_eval",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 93,
+        "before_correct": 93,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 93,
+        "before_correct": 93,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "old_tune",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F17",
+      "joint": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "training168",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 48,
+        "before_correct": 46,
+        "gain_ids": [
+          "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+          "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+        ],
+        "gains": 2,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 47,
+        "before_correct": 45,
+        "gain_ids": [
+          "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+          "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+        ],
+        "gains": 2,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_dev",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 34,
+        "before_correct": 34,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 27,
+        "before_correct": 27,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "authored_eval",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 26,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 26,
+        "before_correct": 26,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_challenge",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_dev",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_test",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 20,
+        "before_correct": 20,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 8,
+        "before_correct": 8,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "fresh_tune",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 54,
+        "before_correct": 54,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 51,
+        "before_correct": 51,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "old_authored_eval",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 93,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "native-tuning-calendula-t4-q5-p"
+        ],
+        "losses": 1
+      },
+      "raw": {
+        "after_correct": 93,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [
+          "native-tuning-calendula-t4-q5-p"
+        ],
+        "losses": 1
+      },
+      "scope": "old_tune",
+      "variant": "F17_actor_F17_readouts"
+    },
+    {
+      "donor": "F18",
+      "joint": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 154,
+        "before_correct": 154,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "scope": "training168",
+      "variant": "F17_actor_F17_readouts"
+    }
+  ],
+  "independent_recount": {
+    "bytes": 9720380,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-independent-recount-v01.json",
+    "sha256": "eaa6f1a2dccebd202c995e441df65849d0ea1c4d8613a6039f6bd57f1f4a83d4"
+  },
+  "inputs": {
+    "bytes": 40054,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-inputs-v01.json",
+    "sha256": "fbbf88f03dac543c6fb839c385f2ef165e0b0636854764e662f770a19a7ebb77"
+  },
+  "limitations": {
+    "Lake_executed": false,
+    "active_latent_semantics_qualified": false,
+    "all_sources_previously_exposed_authored_diagnostics": true,
+    "composed_checkpoint_constructed": false,
+    "default_promotion": false,
+    "portable_numerical_reload_qualified": false,
+    "saved_head_composition_is_not_executed_tensor_subset_composition": true,
+    "scientific_success_not_claimed": true,
+    "source_group_generalization_claim": false,
+    "statutory8_unscored": true,
+    "statutory_semantics_qualified": false,
+    "training_or_weight_selection_performed": false
+  },
+  "operation_counts": {
+    "actual_joint_visited_nodes": 495056,
+    "native_donor_panel_count": 30,
+    "native_donor_scored_sets": 27,
+    "saved_score_joint_decoder_calls": 3160,
+    "saved_score_raw_reconstructions": 3160,
+    "scored_source_count": 624,
+    "source_count": 632,
+    "variant_donor_scope_comparisons": 81,
+    "variant_panel_count": 30,
+    "variant_scored_sets": 27
+  },
+  "panel_totals": {
+    "native_donor": [
+      {
+        "joint_complete_IR": 46,
+        "joint_modality_exact": 56,
+        "label": "F15",
+        "raw_complete_IR": 45,
+        "raw_modality_exact": 52,
+        "rows": 72,
+        "scope": "authored_dev"
+      },
+      {
+        "joint_complete_IR": 34,
+        "joint_modality_exact": 55,
+        "label": "F15",
+        "raw_complete_IR": 27,
+        "raw_modality_exact": 45,
+        "rows": 72,
+        "scope": "authored_eval"
+      },
+      {
+        "joint_complete_IR": 25,
+        "joint_modality_exact": 33,
+        "label": "F15",
+        "raw_complete_IR": 25,
+        "raw_modality_exact": 31,
+        "rows": 36,
+        "scope": "fresh_challenge"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 32,
+        "label": "F15",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 8,
+        "rows": 36,
+        "scope": "fresh_dev"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 18,
+        "label": "F15",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 3,
+        "rows": 36,
+        "scope": "fresh_test"
+      },
+      {
+        "joint_complete_IR": 19,
+        "joint_modality_exact": 29,
+        "label": "F15",
+        "raw_complete_IR": 8,
+        "raw_modality_exact": 10,
+        "rows": 36,
+        "scope": "fresh_tune"
+      },
+      {
+        "joint_complete_IR": 53,
+        "joint_modality_exact": 59,
+        "label": "F15",
+        "raw_complete_IR": 50,
+        "raw_modality_exact": 56,
+        "rows": 72,
+        "scope": "old_authored_eval"
+      },
+      {
+        "joint_complete_IR": 94,
+        "joint_modality_exact": 96,
+        "label": "F15",
+        "raw_complete_IR": 94,
+        "raw_modality_exact": 96,
+        "rows": 96,
+        "scope": "old_tune"
+      },
+      {
+        "joint_complete_IR": 154,
+        "joint_modality_exact": 162,
+        "label": "F15",
+        "raw_complete_IR": 154,
+        "raw_modality_exact": 161,
+        "rows": 168,
+        "scope": "training168"
+      },
+      {
+        "joint_complete_IR": 48,
+        "joint_modality_exact": 57,
+        "label": "F17",
+        "raw_complete_IR": 47,
+        "raw_modality_exact": 52,
+        "rows": 72,
+        "scope": "authored_dev"
+      },
+      {
+        "joint_complete_IR": 33,
+        "joint_modality_exact": 57,
+        "label": "F17",
+        "raw_complete_IR": 27,
+        "raw_modality_exact": 47,
+        "rows": 72,
+        "scope": "authored_eval"
+      },
+      {
+        "joint_complete_IR": 26,
+        "joint_modality_exact": 33,
+        "label": "F17",
+        "raw_complete_IR": 26,
+        "raw_modality_exact": 30,
+        "rows": 36,
+        "scope": "fresh_challenge"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 32,
+        "label": "F17",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 8,
+        "rows": 36,
+        "scope": "fresh_dev"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 18,
+        "label": "F17",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 3,
+        "rows": 36,
+        "scope": "fresh_test"
+      },
+      {
+        "joint_complete_IR": 21,
+        "joint_modality_exact": 30,
+        "label": "F17",
+        "raw_complete_IR": 9,
+        "raw_modality_exact": 11,
+        "rows": 36,
+        "scope": "fresh_tune"
+      },
+      {
+        "joint_complete_IR": 55,
+        "joint_modality_exact": 61,
+        "label": "F17",
+        "raw_complete_IR": 52,
+        "raw_modality_exact": 58,
+        "rows": 72,
+        "scope": "old_authored_eval"
+      },
+      {
+        "joint_complete_IR": 93,
+        "joint_modality_exact": 96,
+        "label": "F17",
+        "raw_complete_IR": 93,
+        "raw_modality_exact": 96,
+        "rows": 96,
+        "scope": "old_tune"
+      },
+      {
+        "joint_complete_IR": 154,
+        "joint_modality_exact": 163,
+        "label": "F17",
+        "raw_complete_IR": 154,
+        "raw_modality_exact": 162,
+        "rows": 168,
+        "scope": "training168"
+      },
+      {
+        "joint_complete_IR": 46,
+        "joint_modality_exact": 57,
+        "label": "F18",
+        "raw_complete_IR": 45,
+        "raw_modality_exact": 52,
+        "rows": 72,
+        "scope": "authored_dev"
+      },
+      {
+        "joint_complete_IR": 34,
+        "joint_modality_exact": 57,
+        "label": "F18",
+        "raw_complete_IR": 27,
+        "raw_modality_exact": 47,
+        "rows": 72,
+        "scope": "authored_eval"
+      },
+      {
+        "joint_complete_IR": 26,
+        "joint_modality_exact": 33,
+        "label": "F18",
+        "raw_complete_IR": 26,
+        "raw_modality_exact": 30,
+        "rows": 36,
+        "scope": "fresh_challenge"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 32,
+        "label": "F18",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 8,
+        "rows": 36,
+        "scope": "fresh_dev"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 18,
+        "label": "F18",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 3,
+        "rows": 36,
+        "scope": "fresh_test"
+      },
+      {
+        "joint_complete_IR": 20,
+        "joint_modality_exact": 30,
+        "label": "F18",
+        "raw_complete_IR": 8,
+        "raw_modality_exact": 10,
+        "rows": 36,
+        "scope": "fresh_tune"
+      },
+      {
+        "joint_complete_IR": 54,
+        "joint_modality_exact": 61,
+        "label": "F18",
+        "raw_complete_IR": 51,
+        "raw_modality_exact": 57,
+        "rows": 72,
+        "scope": "old_authored_eval"
+      },
+      {
+        "joint_complete_IR": 94,
+        "joint_modality_exact": 96,
+        "label": "F18",
+        "raw_complete_IR": 94,
+        "raw_modality_exact": 96,
+        "rows": 96,
+        "scope": "old_tune"
+      },
+      {
+        "joint_complete_IR": 154,
+        "joint_modality_exact": 163,
+        "label": "F18",
+        "raw_complete_IR": 154,
+        "raw_modality_exact": 162,
+        "rows": 168,
+        "scope": "training168"
+      }
+    ],
+    "variant": [
+      {
+        "joint_complete_IR": 46,
+        "joint_modality_exact": 56,
+        "label": "F15_baseline",
+        "raw_complete_IR": 45,
+        "raw_modality_exact": 52,
+        "rows": 72,
+        "scope": "authored_dev"
+      },
+      {
+        "joint_complete_IR": 34,
+        "joint_modality_exact": 55,
+        "label": "F15_baseline",
+        "raw_complete_IR": 27,
+        "raw_modality_exact": 45,
+        "rows": 72,
+        "scope": "authored_eval"
+      },
+      {
+        "joint_complete_IR": 25,
+        "joint_modality_exact": 33,
+        "label": "F15_baseline",
+        "raw_complete_IR": 25,
+        "raw_modality_exact": 31,
+        "rows": 36,
+        "scope": "fresh_challenge"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 32,
+        "label": "F15_baseline",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 8,
+        "rows": 36,
+        "scope": "fresh_dev"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 18,
+        "label": "F15_baseline",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 3,
+        "rows": 36,
+        "scope": "fresh_test"
+      },
+      {
+        "joint_complete_IR": 19,
+        "joint_modality_exact": 29,
+        "label": "F15_baseline",
+        "raw_complete_IR": 8,
+        "raw_modality_exact": 10,
+        "rows": 36,
+        "scope": "fresh_tune"
+      },
+      {
+        "joint_complete_IR": 53,
+        "joint_modality_exact": 59,
+        "label": "F15_baseline",
+        "raw_complete_IR": 50,
+        "raw_modality_exact": 56,
+        "rows": 72,
+        "scope": "old_authored_eval"
+      },
+      {
+        "joint_complete_IR": 94,
+        "joint_modality_exact": 96,
+        "label": "F15_baseline",
+        "raw_complete_IR": 94,
+        "raw_modality_exact": 96,
+        "rows": 96,
+        "scope": "old_tune"
+      },
+      {
+        "joint_complete_IR": 154,
+        "joint_modality_exact": 162,
+        "label": "F15_baseline",
+        "raw_complete_IR": 154,
+        "raw_modality_exact": 161,
+        "rows": 168,
+        "scope": "training168"
+      },
+      {
+        "joint_complete_IR": 48,
+        "joint_modality_exact": 57,
+        "label": "F17_actor_F18_readouts",
+        "raw_complete_IR": 47,
+        "raw_modality_exact": 52,
+        "rows": 72,
+        "scope": "authored_dev"
+      },
+      {
+        "joint_complete_IR": 34,
+        "joint_modality_exact": 57,
+        "label": "F17_actor_F18_readouts",
+        "raw_complete_IR": 27,
+        "raw_modality_exact": 47,
+        "rows": 72,
+        "scope": "authored_eval"
+      },
+      {
+        "joint_complete_IR": 26,
+        "joint_modality_exact": 33,
+        "label": "F17_actor_F18_readouts",
+        "raw_complete_IR": 26,
+        "raw_modality_exact": 30,
+        "rows": 36,
+        "scope": "fresh_challenge"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 32,
+        "label": "F17_actor_F18_readouts",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 8,
+        "rows": 36,
+        "scope": "fresh_dev"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 18,
+        "label": "F17_actor_F18_readouts",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 3,
+        "rows": 36,
+        "scope": "fresh_test"
+      },
+      {
+        "joint_complete_IR": 20,
+        "joint_modality_exact": 30,
+        "label": "F17_actor_F18_readouts",
+        "raw_complete_IR": 8,
+        "raw_modality_exact": 10,
+        "rows": 36,
+        "scope": "fresh_tune"
+      },
+      {
+        "joint_complete_IR": 54,
+        "joint_modality_exact": 61,
+        "label": "F17_actor_F18_readouts",
+        "raw_complete_IR": 51,
+        "raw_modality_exact": 57,
+        "rows": 72,
+        "scope": "old_authored_eval"
+      },
+      {
+        "joint_complete_IR": 93,
+        "joint_modality_exact": 96,
+        "label": "F17_actor_F18_readouts",
+        "raw_complete_IR": 93,
+        "raw_modality_exact": 96,
+        "rows": 96,
+        "scope": "old_tune"
+      },
+      {
+        "joint_complete_IR": 154,
+        "joint_modality_exact": 163,
+        "label": "F17_actor_F18_readouts",
+        "raw_complete_IR": 154,
+        "raw_modality_exact": 162,
+        "rows": 168,
+        "scope": "training168"
+      },
+      {
+        "joint_complete_IR": 48,
+        "joint_modality_exact": 57,
+        "label": "F17_actor_F17_readouts",
+        "raw_complete_IR": 47,
+        "raw_modality_exact": 52,
+        "rows": 72,
+        "scope": "authored_dev"
+      },
+      {
+        "joint_complete_IR": 34,
+        "joint_modality_exact": 57,
+        "label": "F17_actor_F17_readouts",
+        "raw_complete_IR": 27,
+        "raw_modality_exact": 47,
+        "rows": 72,
+        "scope": "authored_eval"
+      },
+      {
+        "joint_complete_IR": 26,
+        "joint_modality_exact": 33,
+        "label": "F17_actor_F17_readouts",
+        "raw_complete_IR": 26,
+        "raw_modality_exact": 30,
+        "rows": 36,
+        "scope": "fresh_challenge"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 32,
+        "label": "F17_actor_F17_readouts",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 8,
+        "rows": 36,
+        "scope": "fresh_dev"
+      },
+      {
+        "joint_complete_IR": 0,
+        "joint_modality_exact": 18,
+        "label": "F17_actor_F17_readouts",
+        "raw_complete_IR": 0,
+        "raw_modality_exact": 3,
+        "rows": 36,
+        "scope": "fresh_test"
+      },
+      {
+        "joint_complete_IR": 20,
+        "joint_modality_exact": 30,
+        "label": "F17_actor_F17_readouts",
+        "raw_complete_IR": 8,
+        "raw_modality_exact": 10,
+        "rows": 36,
+        "scope": "fresh_tune"
+      },
+      {
+        "joint_complete_IR": 54,
+        "joint_modality_exact": 61,
+        "label": "F17_actor_F17_readouts",
+        "raw_complete_IR": 51,
+        "raw_modality_exact": 57,
+        "rows": 72,
+        "scope": "old_authored_eval"
+      },
+      {
+        "joint_complete_IR": 93,
+        "joint_modality_exact": 96,
+        "label": "F17_actor_F17_readouts",
+        "raw_complete_IR": 93,
+        "raw_modality_exact": 96,
+        "rows": 96,
+        "scope": "old_tune"
+      },
+      {
+        "joint_complete_IR": 154,
+        "joint_modality_exact": 163,
+        "label": "F17_actor_F17_readouts",
+        "raw_complete_IR": 154,
+        "raw_modality_exact": 162,
+        "rows": 168,
+        "scope": "training168"
+      }
+    ]
+  },
+  "passed": true,
+  "principal_findings": [
+    "All three fixed saved-head variants remain154/168 complete IR on both raw and joint training routes; no descriptive155 threshold crossing.",
+    "Both fixed conditions cases retain the gold full span at rank2 or3 inside the actual full-span top8 for every donor, and all six complete gold assignments are feasible under the decoded modality/presence/nonoverlap/top8 constraints.",
+    "Raw and joint decoding still select the fixed shorter conditions competitor in all six donor case records. Candidate inclusion is therefore not the observed bottleneck for these six records; this does not establish the efficacy of any training loss or a modified decoder."
+  ],
+  "schema": "conditions-composition-result-independent-review/v1",
+  "scope": {
+    "checkpoint_JSON_parses_by_reviewer": 0,
+    "counter_uses_independent_copy_score_rank_kernels": true,
+    "derived_JSON_only": true,
+    "full_domain_joint_optimality_claimed": false,
+    "full_original_input_pins_rehashed_only_by_qualified_main_children": true,
+    "model_or_encoder_calls_by_reviewer": 0,
+    "network_SDK_private_body_reads_Git_mutations_by_reviewer": 0,
+    "original_summary_capture_reference_bodies_opened_by_reviewer": 0,
+    "primary_authored_by_model_author": true,
+    "reviewer_authored_primary_and_counter_qualification_and_additional_guard_controls": true,
+    "reviewer_authored_primary_or_counter": false,
+    "shared_custody_reference_tokenizer_coordinate_greedy_joint_ASTs": true
+  },
+  "technical_gate_passed": true,
+  "training_variants": [
+    {
+      "joint_complete_IR": 154,
+      "joint_modality_exact": 162,
+      "label": "F15_baseline",
+      "raw_complete_IR": 154,
+      "raw_modality_exact": 161,
+      "rows": 168,
+      "scope": "training168"
+    },
+    {
+      "joint_complete_IR": 154,
+      "joint_modality_exact": 163,
+      "label": "F17_actor_F18_readouts",
+      "raw_complete_IR": 154,
+      "raw_modality_exact": 162,
+      "rows": 168,
+      "scope": "training168"
+    },
+    {
+      "joint_complete_IR": 154,
+      "joint_modality_exact": 163,
+      "label": "F17_actor_F17_readouts",
+      "raw_complete_IR": 154,
+      "raw_modality_exact": 162,
+      "rows": 168,
+      "scope": "training168"
+    }
+  ]
+}

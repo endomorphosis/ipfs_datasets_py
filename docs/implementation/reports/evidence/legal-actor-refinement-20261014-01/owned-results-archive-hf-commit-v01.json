@@ -1,0 +1,23 @@
+{
+  "files": {
+    "archives/20261014-owned-released-results-v1/README.md": {
+      "bytes": 759,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-README-v01.txt",
+      "sha256": "feba43f213b2c4075cab0f131a6e6b1ba8eeac427a1b97eba5b2ab303dc39c09"
+    },
+    "archives/20261014-owned-released-results-v1/owned-released-results.tar.gz": {
+      "bytes": 149504694,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-staging-v01/owned-released-results.tar.gz",
+      "sha256": "76f81402e57a5782abd7fb76b91b62e8af20886239187dd8603425eb4caee47f"
+    },
+    "archives/20261014-owned-released-results-v1/restoration-manifest.json": {
+      "bytes": 801434,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json",
+      "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+    }
+  },
+  "parent": "77e33d1c07b09a421b272e3ccb0af229933a7f82",
+  "prefix": "archives/20261014-owned-released-results-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "revision": "0228887c8e33cb23e9679889a9496f87140021e6"
+}

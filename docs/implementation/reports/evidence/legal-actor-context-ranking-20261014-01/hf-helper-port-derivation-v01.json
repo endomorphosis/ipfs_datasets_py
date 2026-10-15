@@ -1,0 +1,108 @@
+{
+  "actual_Hub_baseline_observed": false,
+  "actual_frozen_execution_plan": {
+    "bytes": 71091,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-plan-v01.json",
+    "sha256": "71b65a145c0f666e0b58b26a5510e205d351a80ef149bcb0d3c26dd55b1317ee"
+  },
+  "actual_payload_prepared": false,
+  "actual_payload_spec_created": false,
+  "actual_trainer_source_qualification": {
+    "bytes": 4061,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/trainer-source-independent-review-v01.json",
+    "sha256": "257800d1a3ce2e471165ac2e64dfcbb4251106a859386086f36d9cb4ff7930a6"
+  },
+  "algorithm_sources": 41,
+  "all_newer_actual_baseline_identities_preserved": true,
+  "builder": {
+    "bytes": 18426,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/build_actor_context_ranking_release_spec_v01.py",
+    "sha256": "e4a7e845f2cd9a962a08c6bd1022e386511dad3b9d4a8e509c4edfe11c49fa9b"
+  },
+  "concrete_source_and_payload_reviews_required": true,
+  "controls": [
+    {
+      "bytes": 2075,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hf-port-detached-controls-v01.json",
+      "sha256": "27cfd9a4309e497349b544a08ab53da7dca5eb61516f37b3c0208cd9acf761e7"
+    },
+    {
+      "bytes": 2058,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-release-builder-detached-controls-v01.json",
+      "sha256": "bbb0556a88060206ab11cb49a16b699cb8be9a7e354add35595f3e0dc648dde1"
+    }
+  ],
+  "declared_modules": 40,
+  "helper": {
+    "bytes": 30925,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/archive_actor_context_ranking_hf_v01.py",
+    "sha256": "e6c383eed91d6cee2405ce401fb0ab6692b714e0a2d3e99c09dbf4abe9f6a1ee"
+  },
+  "independent_source_review_required": true,
+  "prepared_only": true,
+  "prior_builder": {
+    "bytes": 17198,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/build_actor_refinement_release_spec_v02.py",
+    "sha256": "81aeaac58a5c6c76e6df0da8d4b12fea19a2fa9825e4dcf81c46862fe39dd9b0"
+  },
+  "prior_helper": {
+    "bytes": 28426,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v02.py",
+    "sha256": "89a01553f09ea1f228ea50ad8dd1c3d289d1dd89ddda5d2d2598e429393f53a5"
+  },
+  "prior_interruption_and_corrective_resume_preserved": [
+    {
+      "bytes": 28376,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-partial-discrepancy-independent-v01.json",
+      "sha256": "ecc28d96796c2e68c8bbda6c976959860af545272ba2fc165e7f79fa1dd7d9d0"
+    },
+    {
+      "bytes": 24973,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resume_actor_refinement_hf_v01.py",
+      "sha256": "98d851e0aa900e67a02ecf6b393d7ee772874494e5dbc046d005ddb2e5474a94"
+    },
+    {
+      "bytes": 93478,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-verification-v02.json",
+      "sha256": "cd28b9794addba489c67efa971b02242a6bf28aa9b475967f4a142ed5709f357"
+    },
+    {
+      "bytes": 220073,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-actual-independent-review-v01.json",
+      "sha256": "3097b700479052acffcc3a601e0cacc376247871b67c01cfac357da5a51fcaab"
+    }
+  ],
+  "publication_executed": false,
+  "required_prior_file_count": 5646,
+  "required_prior_revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4",
+  "resource_snapshot_sources_separate": 6,
+  "result_freeze_recount_or_scientific_success_not_asserted_by_this_source_port": true,
+  "schema": "actor-context-ranking-Hub-helper-port-derivation/v1",
+  "source_changes": [
+    "F16 phase/prefix/current producer labels",
+    "actual frozen plan40 + admitted attention source without nonexistent trainer owner fields",
+    "actual trainer module/tests descriptor joins",
+    "private-resource-diagnostics exclusion",
+    "exact raw helper buffer compilation",
+    "actual complete freeze/runtime/analysis/recount/result-review required",
+    "forced immutable CLI raw-byte download",
+    "no automatic attributes repair or publication retry"
+  ],
+  "source_only": true,
+  "supplemental_attention_sources": 1,
+  "unchanged_helper_function_ASTs": [
+    "approved",
+    "brief",
+    "byte_identity",
+    "chunks",
+    "clean",
+    "destination",
+    "fence",
+    "identities",
+    "pin",
+    "read",
+    "require",
+    "write",
+    "write_json"
+  ]
+}

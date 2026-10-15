@@ -1,0 +1,41 @@
+{
+  "added_lines": [
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json filter=lfs diff=lfs merge=lfs -text"
+  ],
+  "byte_delta": 129,
+  "files": {
+    "baseline": {
+      "bytes": 2230,
+      "git_blob_id": "1cf99f89f95ce8f39b630d8df37126fc628047de",
+      "immutable_download_byte_identity_matches": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-reconciliation-attrs-readback-v01/baseline/.gitattributes",
+      "remote_identity": {
+        "blob_id": "1cf99f89f95ce8f39b630d8df37126fc628047de",
+        "lfs": null,
+        "size": 2230
+      },
+      "revision": "0228887c8e33cb23e9679889a9496f87140021e6",
+      "sha256": "88ff4d857c849ce3e11fea7c2f70d648550968cf546ab9cbc4d690e1b6543036"
+    },
+    "chunk02": {
+      "bytes": 2359,
+      "git_blob_id": "a2a2c85690269e3dc9a72f8d3729ee785b2587e1",
+      "immutable_download_byte_identity_matches": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-reconciliation-attrs-readback-v01/chunk02/.gitattributes",
+      "remote_identity": {
+        "blob_id": "a2a2c85690269e3dc9a72f8d3729ee785b2587e1",
+        "lfs": null,
+        "size": 2359
+      },
+      "revision": "1c5d3103e73895c250b84261d7ab4c4341da9a0f",
+      "sha256": "f0ad1ecaa2d81a65bb4dba0fb29222339fd93034de8729fed21b1f5c1c2de71a"
+    }
+  },
+  "metadata_listing_queries": 0,
+  "raw_download_calls": 2,
+  "remote_mutations": 0,
+  "removed_lines": [],
+  "repository": "Publicus/legal-ir-autoencoder",
+  "schema": "actor-refinement-Hub-attributes-immutable-readback/v1",
+  "unified_diff": "--- baseline/.gitattributes\n+++ chunk02/.gitattributes\n@@ -39,3 +39,4 @@\n experiments/grouped-boundary-20261006/run-01/checkpoints/original_negatives/checkpoint.json filter=lfs diff=lfs merge=lfs -text\n experiments/grouped-boundary-20261006/run-01/checkpoints/position_local_negatives/checkpoint.json filter=lfs diff=lfs merge=lfs -text\n releases/20261011-structured-span-probability-v1/data/authored-train-tune-only.json filter=lfs diff=lfs merge=lfs -text\n+releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json filter=lfs diff=lfs merge=lfs -text\n"
+}

@@ -1,0 +1,165 @@
+{
+  "actual_N12_checkpoints": 0,
+  "actual_N12_inference": 0,
+  "actual_N12_model_forwards": 0,
+  "actual_N12_training_updates": 0,
+  "actual_training_accuracy": null,
+  "artifacts": {
+    "capacity-clearance-inputs-v01.json": {
+      "bytes": 1589,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/capacity-clearance-inputs-v01.json",
+      "sha256": "733ed66f01ef52b69bfd314d4f3a827ff41e5050f706fc7c4e1f55aff51d26f5"
+    },
+    "capacity-clearance-source-independent-review-v01.json": {
+      "bytes": 9453,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/capacity-clearance-source-independent-review-v01.json",
+      "sha256": "eed7e84b12c0064f9578630fdc6fa2803e5074ebe1d23f643e3aecf1ac9845e5"
+    },
+    "capacity-clearance-v01.json": {
+      "bytes": 19246,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/capacity-clearance-v01.json",
+      "sha256": "4167848eb92ff26fe77ed7b01adf01d7bea56adcf94fec5b7314e0c5b61e4143"
+    },
+    "checkpoint-components-design-v01.json": {
+      "bytes": 2286,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/checkpoint-components-design-v01.json",
+      "sha256": "d967b52e9605574b8e47e128ffffcc093366429e611776e8159f87d9a4463adb"
+    },
+    "checkpoint-components-source-independent-review-v01.json": {
+      "bytes": 4621,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/checkpoint-components-source-independent-review-v01.json",
+      "sha256": "0ef68eb3684dcdcff5e108653d13dd41fac0f82a33108c1519dc843be2edca4a"
+    },
+    "conditions-balanced-bootstrap-smoke-controls-v01.json": {
+      "bytes": 8380,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions-balanced-bootstrap-smoke-controls-v01.json",
+      "sha256": "0388a554cc814f092588cc78ba01751e5513704bc3974f417702950af9906bf1"
+    },
+    "conditions-balanced-contract-controls-v01.json": {
+      "bytes": 1994,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions-balanced-contract-controls-v01.json",
+      "sha256": "743ed8d77e6caa6293ebcb86acb9d6b9a0a9e6489be7d16cc3a5338168ef4774"
+    },
+    "evaluation-contract-root-review-v01.json": {
+      "bytes": 5303,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/evaluation-contract-root-review-v01.json",
+      "sha256": "e94f78e15ebd1f83782bd424df6b25a0c208f99210cbc9ef6f19ff03887e7738"
+    },
+    "evaluation-contract-v01.json": {
+      "bytes": 15724,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/evaluation-contract-v01.json",
+      "sha256": "cdd58af7b0b0abbb5e8523e23682a53f26ef28bf30e4b0f9090c4a88aeacf837"
+    },
+    "phase-intake-v01.json": {
+      "bytes": 2365,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/phase-intake-v01.json",
+      "sha256": "f0095b6392a23467b83b5d85734925339a5aa39036488205e141588a588eee6b"
+    },
+    "resource-baseline-v01.json": {
+      "bytes": 77889,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-baseline-v01.json",
+      "sha256": "9fd03480b85fb3b9a9164a4b4e87b4807bf8c65419a1037edccbb1b04723775f"
+    },
+    "trainer-source-independent-review-v01.json": {
+      "bytes": 29079,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/trainer-source-independent-review-v01.json",
+      "sha256": "876d8e1a87e29c1bdf00ac4659fdf395c4453572be1eb77faceb56773c12a25d"
+    },
+    "training-design-v01.json": {
+      "bytes": 8880,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/training-design-v01.json",
+      "sha256": "a64ba710a1f02dbad996eec355ef42e9368846b2b4ba9bdb735d1b5ae6f60f11"
+    }
+  },
+  "broader_logic_family_or_Lake_build_qualified": false,
+  "capacity": {
+    "all538_prior_record_bodies_unchanged": true,
+    "claim_or_cap_changes": false,
+    "foreign_cleanup": false,
+    "full_run_charged_bound_bytes": 148093494769,
+    "limit_bytes": 145000000000,
+    "minimum_required_accounting_headroom_bytes": 3093494769,
+    "native_charged_bytes": 147893494769,
+    "physical_free_bytes": 148894699520
+  },
+  "codec": {
+    "actual_size_savings": null,
+    "actual_trained_checkpoint_roundtrip_qualified": false,
+    "existing_loaders_unchanged": true,
+    "independent_source_review": true,
+    "independent_synthetic_probes": 3,
+    "outside_training_comparison": true,
+    "source": {
+      "bytes": 11054,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_checkpoint_components.py",
+      "sha256": "b401d103e5aa5a30e79d81bfdf7edf7a758a3f4dabc240725f20509615353254"
+    },
+    "synthetic_tests": 9,
+    "tests": {
+      "bytes": 8373,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_checkpoint_components.py",
+      "sha256": "64e9b34baad55523ad5f7c7c683c1e6daeaf64adcfd591a5baa773453467d6dd"
+    }
+  },
+  "default_promotion": false,
+  "hosted_CI_passing_claimed": false,
+  "independent_US_Code_fidelity_qualified": false,
+  "model": {
+    "active_values": 130,
+    "class_name": "SpanConditionsBalancedAdapterDecoder",
+    "contract_cases": 9,
+    "inactive_values": 390,
+    "independent_root_controls_passed": true,
+    "model_tensors": 42,
+    "module": "legal_span_conditions_balanced",
+    "new_trainable_tensors": 2,
+    "parent_tensors_frozen": 40,
+    "source": {
+      "bytes": 53599,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_balanced.py",
+      "sha256": "40254faadaded8a227a15d5b1526579d5212289837fd428991e32a5707e3824c"
+    },
+    "tests": {
+      "bytes": 11929,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_balanced_contracts.py",
+      "sha256": "17a00716a4c4e42cb8cc7b6b5e9bc9f063b2d44b5fe420fc604d5147bca9fe51"
+    },
+    "trained_donor": "N10"
+  },
+  "new_model_weights_published": false,
+  "new_reservations": 0,
+  "new_training_attempts": 0,
+  "prior_trained_release": {
+    "immutable_Hub_revision": "702caba2da183f9d98a0ffd12f1240243167aab2",
+    "interpretation": "Previously exposed engineering diagnostics; these are not N12 results.",
+    "phase": "N11",
+    "release_prefix": "releases/20261014-conditions-presence-v1"
+  },
+  "real_8D_384D_768D_latent_decoding_qualified": false,
+  "recipe": {
+    "fresh_Adam": true,
+    "learning_rate": 0.001,
+    "loss": "Mean of all12 weighted per-row conditions CE values; diagnostic class-weight sum never used as denominator.",
+    "optimizer_updates": 32,
+    "seed": 1729,
+    "training_class_counts": {
+      "absent": 96,
+      "present": 72
+    },
+    "training_occurrences": 384,
+    "training_sources": 168,
+    "weights_rational": [
+      [
+        7,
+        8
+      ],
+      [
+        7,
+        6
+      ]
+    ]
+  },
+  "schema": "conditions-balanced-preparation-summary/v1",
+  "scientific_success": null,
+  "status": "prepared_only_capacity_refused"
+}

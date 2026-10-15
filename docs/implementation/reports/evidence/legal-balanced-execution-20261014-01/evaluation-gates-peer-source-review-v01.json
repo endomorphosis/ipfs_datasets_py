@@ -1,0 +1,480 @@
+{
+  "Git_mutations": 0,
+  "actual_census_or_resource_API_calls": 0,
+  "actual_model_or_main_calls": 0,
+  "actual_plan": {
+    "bytes": 67232,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-ce-plan-v01.json",
+    "sha256": "bf02c6ee3c53a58291b48d3fca358165a51193e33defcad3c28849c3ea4ea7f9"
+  },
+  "actual_result_reference_savedscore_checkpoint_or_private_body_reads": 0,
+  "analyzer_function_count": 41,
+  "analyzer_gate": {
+    "bytes": 41117,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyzer-source-independent-review-v01.json",
+    "sha256": "21fbb304453d59b63d1ad7fc264aed1836ec22a7772dae4016c41e829e1c9ce6"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v01.py": {
+      "bytes": 78455,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v01.py",
+      "sha256": "eefcb0c464f368f0c2e29f80c93252d8d81e4534e7252ea30761049a08d95940"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyzer-source-independent-review-v01.json": {
+      "bytes": 41117,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyzer-source-independent-review-v01.json",
+      "sha256": "21fbb304453d59b63d1ad7fc264aed1836ec22a7772dae4016c41e829e1c9ce6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-ce-plan-v01.json": {
+      "bytes": 67232,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-ce-plan-v01.json",
+      "sha256": "bf02c6ee3c53a58291b48d3fca358165a51193e33defcad3c28849c3ea4ea7f9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation-independent-detached-controls-v01.json": {
+      "bytes": 9875,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation-independent-detached-controls-v01.json",
+      "sha256": "f0c1fe07655d72470b258899555d9b2acf660603f819145d580a8379174bfa05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation-port-static-controls-v01.json": {
+      "bytes": 4773,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation-port-static-controls-v01.json",
+      "sha256": "f99c7b18511e09f055688802b019bf176363d79ac6713018e792867c033823d2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/freeze_conditions_balanced_outputs_v01.py": {
+      "bytes": 18728,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/freeze_conditions_balanced_outputs_v01.py",
+      "sha256": "8e150c915581208f0b3940a6ab72cc86309a1e5c1759e549d8b35bd975161bd8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/result-recount-source-independent-review-v01.json": {
+      "bytes": 41137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/result-recount-source-independent-review-v01.json",
+      "sha256": "d3dc57dd5e46c309fbdb7d6c84305a607407048eda34dd3ee3c63f092abe32cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py",
+      "sha256": "0c5b68645cc66e7758d1750c878f5be9fb117faad841fe27f73391c8ccbce8bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_evaluation_detached_controls_v01.py": {
+      "bytes": 4495,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_evaluation_detached_controls_v01.py",
+      "sha256": "42fdb61e2bb3d9f2172afb91baa8e323a4dd93a7f9f5e10b45ebce0745ff7314"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/analyze_conditions_balanced_v02.py": {
+      "bytes": 78445,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/analyze_conditions_balanced_v02.py",
+      "sha256": "505ab5504578533bdf427b3a679c1af498e7d050cd4eeff0439b7144cf6a0126"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_result_recount_v01.py",
+      "sha256": "4b2a739bd5ff2af9dccd831db06c0d108bbfdbd436bf342a4ad89cd4700da3dc"
+    }
+  },
+  "author_control_count": 19,
+  "check_count": 95,
+  "checks": [
+    {
+      "name": "actual_plan_rawpin",
+      "passed": true
+    },
+    {
+      "name": "exact_reviewed_runtime_producer",
+      "passed": true
+    },
+    {
+      "name": "analyzer-source-independent-review-v01.json_rawpin",
+      "passed": true
+    },
+    {
+      "name": "analyzer-source-independent-review-v01.json_schema_and_status",
+      "passed": true
+    },
+    {
+      "name": "analyzer-source-independent-review-v01.json_actual_plan_and_own_source",
+      "passed": true
+    },
+    {
+      "name": "analyzer-source-independent-review-v01.json_plan_artifact",
+      "passed": true
+    },
+    {
+      "name": "analyzer-source-independent-review-v01.json_runtime_producer_artifact",
+      "passed": true
+    },
+    {
+      "name": "analyzer-source-independent-review-v01.json_source_artifact",
+      "passed": true
+    },
+    {
+      "name": "analyzer-source-independent-review-v01.json_all_admitted_plan_artifacts_bound",
+      "passed": true
+    },
+    {
+      "name": "analyzer-source-independent-review-v01.json_no_invented_future_runtime_or_freeze_pin",
+      "passed": true
+    },
+    {
+      "name": "result-recount-source-independent-review-v01.json_rawpin",
+      "passed": true
+    },
+    {
+      "name": "result-recount-source-independent-review-v01.json_schema_and_status",
+      "passed": true
+    },
+    {
+      "name": "result-recount-source-independent-review-v01.json_actual_plan_and_own_source",
+      "passed": true
+    },
+    {
+      "name": "result-recount-source-independent-review-v01.json_plan_artifact",
+      "passed": true
+    },
+    {
+      "name": "result-recount-source-independent-review-v01.json_runtime_producer_artifact",
+      "passed": true
+    },
+    {
+      "name": "result-recount-source-independent-review-v01.json_source_artifact",
+      "passed": true
+    },
+    {
+      "name": "result-recount-source-independent-review-v01.json_all_admitted_plan_artifacts_bound",
+      "passed": true
+    },
+    {
+      "name": "result-recount-source-independent-review-v01.json_no_invented_future_runtime_or_freeze_pin",
+      "passed": true
+    },
+    {
+      "name": "exact_root_control_receipt",
+      "passed": true
+    },
+    {
+      "name": "all84_root_controls_passed",
+      "passed": true
+    },
+    {
+      "name": "root_control_artifact_analyze_conditions_balanced_v01.py",
+      "passed": true
+    },
+    {
+      "name": "root_control_artifact_evaluation-port-static-controls-v01.json",
+      "passed": true
+    },
+    {
+      "name": "root_control_artifact_review_conditions_balanced_result_recount_v01.py",
+      "passed": true
+    },
+    {
+      "name": "root_control_artifact_review_evaluation_detached_controls_v01.py",
+      "passed": true
+    },
+    {
+      "name": "root_control_artifact_analyze_conditions_balanced_v02.py",
+      "passed": true
+    },
+    {
+      "name": "root_control_artifact_review_conditions_balanced_result_recount_v01.py",
+      "passed": true
+    },
+    {
+      "name": "all19_author_controls_passed",
+      "passed": true
+    },
+    {
+      "name": "fourteen_actual_expression_CE_cases",
+      "passed": true
+    },
+    {
+      "name": "same_function_set_0",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_require",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_canonical",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_digest",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_pin",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_read",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_detached",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_source_projection",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_structural_validity",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_private",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_fixed",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_descriptor",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_f32",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_binary",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_guarded_choice",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_expected_names",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_validate_freeze",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_bind",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_references",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_validate_joint",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_span_ranking",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_span_coverage",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_hard_negative",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_gold_coverage",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_independent_score_checks",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_modality_summary",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_failure_overlap",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_coverage_summary",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_panel_score",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_paired_changes",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_decoded_coupling",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_require_map_pin",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_validate_capture_base",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_pure_predicates",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_projection",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_compare_saved",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_optional_presence_confusion",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_conditions_presence_changes",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_training_metadata",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_validate_capture",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_scientific_acceptance",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_0_main",
+      "passed": true
+    },
+    {
+      "name": "same_function_set_1",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_require",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_digest",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_identity",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_read",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_audit",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_descriptor_read",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_f32",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_bits",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_choice",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_coordinates",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_ranked",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_actor_coverage",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_coverage_summary",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_paired_score",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_authenticate_freeze",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_projection",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_presence_recount",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_recount_training",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_independent_acceptance",
+      "passed": true
+    },
+    {
+      "name": "exact_function_AST_1_main",
+      "passed": true
+    },
+    {
+      "name": "analyzer_reference_guard_refuses_before_read",
+      "passed": true
+    },
+    {
+      "name": "recounter_reference_guard_refuses_before_read",
+      "passed": true
+    },
+    {
+      "name": "analyzer_complete_freeze_and_runtime_before_references",
+      "passed": true
+    },
+    {
+      "name": "recounter_authenticates_complete_freeze_before_reference_reads",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "independent_CE_case_count": 14,
+  "numerical_imports": 0,
+  "passed": true,
+  "recounter_function_count": 20,
+  "recounter_gate": {
+    "bytes": 41137,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/result-recount-source-independent-review-v01.json",
+    "sha256": "d3dc57dd5e46c309fbdb7d6c84305a607407048eda34dd3ee3c63f092abe32cd"
+  },
+  "runtime_producer": {
+    "bytes": 18728,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/freeze_conditions_balanced_outputs_v01.py",
+    "sha256": "8e150c915581208f0b3940a6ab72cc86309a1e5c1759e549d8b35bd975161bd8"
+  },
+  "schema": "conditions-balanced-evaluation-gates-peer-source-review/v1",
+  "scope": "Peer review of root-authored immutable source gates and control source/receipts only; raw metadata/artifact joins checked without opening any saved scores, actual results, references, checkpoints or private bodies. Exact actual plan and runtime producer bound; no future freeze/runtime inferred.",
+  "source_control_receipt": {
+    "bytes": 9875,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation-independent-detached-controls-v01.json",
+    "sha256": "f0c1fe07655d72470b258899555d9b2acf660603f819145d580a8379174bfa05"
+  }
+}

@@ -469,7 +469,7 @@ def test_engine_prefetches_one_cpu_batch_before_waiting_for_current_gpu(tmp_path
         compiler_workers=2, bridge_workers=1, publish_only=False, max_batches=2,
         storage_bytes=100_000_000, poll_seconds=1, upload=False, memory_mb=12288,
         guided_compiler=True, publication_format="paired")
-    assert runner.engine(args) == 0
+    assert runner.engine(args, custody=private_custody(monkeypatch)) == 0
     gpu_order = [event[1] for event in events if event[0] == "gpu_submit"]
     assert len(gpu_order) == 2
     assert events.index(("cpu_submit", gpu_order[1])) < events.index(("gpu_result", gpu_order[0]))
@@ -493,7 +493,7 @@ def test_publish_only_retries_existing_outbox_without_input_download_or_model(tm
     monkeypatch.setattr(runner, "download_progress", forbidden)
     monkeypatch.setattr(runner, "publish_pending", publish)
     args = runner.arguments(["--runtime-directory", str(tmp_path), "--publish-only", "--upload"])
-    assert runner.engine(args) == 0
+    assert runner.engine(args, custody=private_custody(monkeypatch)) == 0
     assert calls and all(value == (True, tmp_path) for value in calls)
     assert json.loads((tmp_path / "status.json").read_text())["phase"] == "publication_completed"
 
@@ -580,3 +580,495 @@ def test_paired_manifest_dispatch_does_not_enter_legacy_exporter(queue, monkeypa
     runner.publish_pending(db, True)
     assert calls == [(staged["manifest"]["path"], True)]
     assert db.execute("SELECT status FROM batches").fetchone()[0] == "published"
+
+
+def private_custody(monkeypatch):
+    """Explicit controller-only doubles; no subprocess, CUDA or admission."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_engine_custody as custody
+    class PrivateControllerFixture:
+        def verify(self):
+            return True
+    monkeypatch.setattr(custody, "LegacySpanEngineVerifier", PrivateControllerFixture)
+    return PrivateControllerFixture()
+
+
+
+def paired_queue_batch(db, runtime, span_id):
+    row = source(span_id=span_id)
+    runner.enqueue(db, {"rows": [row], "next_section": 1})
+    batch_id, _ = runner.select_batch(db, 1)
+    captured = receipt(row, batch_id)
+    captured["campaign"]["publication_format"] = "paired"
+    staged = runner.stage(db, runtime, batch_id, captured, "fixture-agent")
+    return batch_id, Path(staged["manifest"]["path"])
+
+
+def test_local_paired_schema_failure_preserves_bytes_and_allows_next_publication(queue, monkeypatch):
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    import huggingface_hub
+    from ipfs_datasets_py.logic.autoformal import paired_span_census as census
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import paired_span_publication as paired
+    db, runtime = queue
+    bad_id, original = paired_queue_batch(db, runtime, "bad-old-layout")
+    good_id, good_path = paired_queue_batch(db, runtime, "good-current-layout")
+    old_bundle = census.load_paired_census_bundle(original)
+    manifest = json.loads(original.read_bytes())
+    # Reproduce the retained producer's exact class of drift: v2 manifest,
+    # old-layout paired table, matching immutable bytes/hash/row count.
+    sink = pa.BufferOutputStream()
+    pq.write_table(pa.Table.from_pylist(old_bundle["paired_spans"],
+        schema=census.arrow_schemas(census.LEGACY_SCHEMA)["paired_spans"]), sink, compression="zstd")
+    raw = sink.getvalue().to_pybytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    filename = "paired_spans-old-layout-" + digest + ".parquet"
+    (runtime / "outbox" / filename).write_bytes(raw)
+    desc = manifest["tables"]["paired_spans"]
+    desc.update(filename=filename, sha256=digest, bytes=len(raw),
+        path_in_repo=str(Path(desc["path_in_repo"]).with_name(filename)))
+    manifest.pop("fingerprint")
+    manifest.pop("path_in_repo")
+    fingerprint = hashlib.sha256(runner.encode(manifest)).hexdigest()
+    filename = "manifest-" + fingerprint + ".json"
+    manifest.update(fingerprint=fingerprint,
+        path_in_repo=census.REPO_PREFIX + "/manifests/fixture-agent/" + filename)
+    bad_path = runtime / "outbox" / filename
+    bad_path.write_bytes(runner.encode(manifest))
+    db.execute("UPDATE batches SET manifest=? WHERE id=?", [str(bad_path), bad_id])
+    retained = {str(p): p.read_bytes() for root in (runtime / "outbox", runtime / "receipts")
+                for p in root.iterdir() if p.is_file()}
+    work_before = db.execute("SELECT * FROM work ORDER BY id").fetchall()
+    bad_before = db.execute("SELECT ids,manifest,publication,receipt_sha256 FROM batches WHERE id=?", [bad_id]).fetchone()
+    events = []
+    monkeypatch.setattr(huggingface_hub, "HfApi", lambda: events.append("api_created") or object())
+    def publish(path, *, upload, api):
+        assert Path(path) == good_path and upload is True
+        assert db.execute("SELECT status FROM batches WHERE id=?", [bad_id]).fetchone()[0] == "needs_schema_migration"
+        assert census.load_paired_census_bundle(path)["admitted"] is False
+        events.append("good_publisher")
+        return {"uploaded": True, "commit_sha": "f" * 40}
+    monkeypatch.setattr(paired, "publish_paired_manifest", publish)
+    runner.publish_pending(db, True)
+    assert events == ["api_created", "good_publisher"]
+    assert db.execute("SELECT status FROM batches WHERE id=?", [good_id]).fetchone()[0] == "published"
+    assert db.execute("SELECT ids,manifest,publication,receipt_sha256 FROM batches WHERE id=?", [bad_id]).fetchone() == bad_before
+    assert db.execute("SELECT * FROM work ORDER BY id").fetchall() == work_before
+    assert all(Path(p).read_bytes() == raw for p, raw in retained.items())
+    deferred = runner.meta(db, "publication_schema_deferral:" + bad_id)
+    assert deferred["error_message"] == "bundle table schema or row count differs"
+    assert deferred["manifest_sha256"] == hashlib.sha256(bad_path.read_bytes()).hexdigest()
+    assert deferred["status"] == "needs_schema_migration" and deferred["local_preflight"] is True
+    assert deferred["uploaded"] is deferred["admitted"] is deferred["formalized"] is False
+    runner.publish_pending(db, True)
+    assert events == ["api_created", "good_publisher"]
+
+
+def test_paired_publisher_error_after_preflight_remains_staged_without_schema_deferral(queue, monkeypatch):
+    import huggingface_hub
+    from ipfs_datasets_py.logic.autoformal.paired_span_census import PairedCensusError
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import paired_span_publication as paired
+    db, runtime = queue
+    batch_id, path = paired_queue_batch(db, runtime, "valid-preflight-ambiguous-readback")
+    before = db.execute("SELECT * FROM batches").fetchall()
+    monkeypatch.setattr(huggingface_hub, "HfApi", lambda: object())
+    calls = []
+    def publish(*args, **kwargs):
+        calls.append("remote_mutation_may_have_happened")
+        raise PairedCensusError("bundle table schema or row count differs")
+    monkeypatch.setattr(paired, "publish_paired_manifest", publish)
+    runner.publish_pending(db, True)
+    assert calls == ["remote_mutation_may_have_happened"]
+    assert db.execute("SELECT * FROM batches").fetchall() == before
+    assert runner.meta(db, "publication_schema_deferral:" + batch_id) is None
+    assert path.exists()
+
+
+def test_paired_preflight_keeps_hub_rate_limit_backoff_and_staged_evidence(queue, monkeypatch):
+    import huggingface_hub
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import paired_span_publication as paired
+    db, runtime = queue
+    batch_id, path = paired_queue_batch(db, runtime, "valid-preflight-rate-limit")
+    calls = []
+    class RateLimit(Exception):
+        response = SimpleNamespace(status_code=429, headers={"Retry-After": "90"})
+    class API:
+        def __init__(self):
+            calls.append("api_created")
+        def repo_info(self, **kwargs):
+            calls.append("repo_info")
+            raise RateLimit("fixture network refusal")
+    def publish(path, *, upload, api):
+        api.repo_info(repo_id="fixture-repository")
+        pytest.fail("rate limit should have interrupted publisher")
+    monkeypatch.setattr(huggingface_hub, "HfApi", API)
+    monkeypatch.setattr(paired, "publish_paired_manifest", publish)
+    monkeypatch.setattr(runner.time, "time", lambda: 1000.0)
+    runner.publish_pending(db, True)
+    assert calls == ["api_created", "repo_info"]
+    assert runner.meta(db, "publication_retry_after") == 1090.0
+    assert db.execute("SELECT status,publication FROM batches WHERE id=?", [batch_id]).fetchone() == ("staged", None)
+    assert runner.meta(db, "publication_schema_deferral:" + batch_id) is None
+    runner.publish_pending(db, True)
+    assert calls == ["api_created", "repo_info"] and path.exists()
+
+
+def test_publish_only_does_not_claim_completion_with_schema_migration_pending(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_publication as publication
+    runtime = tmp_path / "runtime"
+    for name in ("receipts", "outbox", "inputs"):
+        (runtime / name).mkdir(parents=True, exist_ok=True)
+    db = runner.open_queue(runtime / "campaign.duckdb")
+    db.execute("INSERT INTO batches VALUES ('old','[]','needs_schema_migration',NULL,NULL,'retained-digest')")
+    db.close()
+    monkeypatch.setattr(publication, "cleanup_published_batches", lambda *a, **kw: [])
+    args = runner.arguments(["--runtime-directory", str(runtime), "--publish-only", "--upload"])
+    assert runner.engine(args, custody=private_custody(monkeypatch)) == 1
+    observed = json.loads((runtime / "status.json").read_bytes())
+    assert observed["phase"] == "publication_needs_schema_migration"
+    db = runner.open_queue(runtime / "campaign.duckdb")
+    try:
+        assert db.execute("SELECT status,publication,receipt_sha256 FROM batches").fetchone() == ("needs_schema_migration", None, "retained-digest")
+    finally:
+        db.close()
+
+
+def _headroom_observation(*, healthy, admission=False):
+    """Typed, internally consistent synthetic telemetry; never touches CUDA."""
+    gib = 1024 ** 3
+    return {"device": 0, "device_name": "unit-test-device",
+            "free_bytes": (5 if healthy else 1) * gib, "total_bytes": 8 * gib,
+            "allocated_bytes": gib // 4, "reserved_bytes": gib // 2,
+            "torch_version": "synthetic", "cuda_version": "synthetic",
+            "observed_at": 1700000000.0, "budget_bytes": 2 * gib,
+            "safety_bytes": 2 * gib, "admission": admission,
+            "required_free_bytes": (7 * gib // 2 if admission else 2 * gib),
+            "headroom_ok": healthy, "host_global_gpu_reservation": False,
+            "scope": "unit_test_valid_observed_headroom"}
+
+
+def _headroom_pressure(*, admission=False):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import CudaHeadroomPressure
+    error = CudaHeadroomPressure("insufficient observed CUDA memory headroom")
+    error.observation = _headroom_observation(healthy=False, admission=admission)
+    return error
+
+
+def _headroom_harness(monkeypatch, tmp_path):
+    """Real atomic private-file writes with a deterministic, nonblocking clock."""
+    clock = SimpleNamespace(now=0.0)
+    calls, states = [], []
+    original_atomic, original_verify = runner.atomic, runner._verify_cuda_wait_source
+
+    def sleep(seconds):
+        calls.append(("sleep", seconds))
+        clock.now += seconds
+
+    def atomic(path, value):
+        assert path == tmp_path / "cuda-headroom.json"
+        original_atomic(path, value)
+        assert json.loads(path.read_bytes()) == value
+        assert not path.with_name(path.name + ".tmp").exists()
+        states.append(copy.deepcopy(value))
+        calls.append(("state", value["status"]))
+
+    monkeypatch.setattr(runner, "STOP", False)
+    monkeypatch.setattr(runner, "CUDA_RUNTIME", tmp_path)
+    monkeypatch.setattr(runner, "time", SimpleNamespace(monotonic=lambda: clock.now,
+        time=lambda: 1700000000.0 + clock.now, sleep=sleep))
+    monkeypatch.setattr(runner, "atomic", atomic)
+    monkeypatch.setattr(runner, "event", lambda kind, **value: calls.append(("event", kind)))
+    monkeypatch.setattr(runner, "_verify_cuda_wait_source", lambda: calls.append(("verify",)))
+    return SimpleNamespace(clock=clock, calls=calls, states=states,
+        original_verify=original_verify)
+
+
+def test_cuda_headroom_pressure_writes_waiting_then_ready_without_admission(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    healthy = _headroom_observation(healthy=True)
+    attempts = []
+
+    def probe():
+        attempts.append(len(attempts))
+        if len(attempts) == 1:
+            raise _headroom_pressure()
+        assert json.loads((tmp_path / "cuda-headroom.json").read_bytes())["status"] == "waiting"
+        return healthy
+
+    result, wait = runner._cuda_with_headroom(probe, "before_batch")
+    assert result is healthy
+    assert wait == {"stage": "before_batch", "pressure_probes": 1, "waited_seconds": 2.0}
+    assert len(attempts) == 2
+    assert [state["status"] for state in harness.states] == ["waiting", "ready"]
+    assert harness.states[0]["cuda"] == _headroom_observation(healthy=False)
+    assert harness.states[1]["cuda"] == healthy
+    assert all(state["stage"] == "before_batch" and state["admitted"] is False
+               and state["training_executed"] is False for state in harness.states)
+    assert harness.calls == [("verify",), ("state", "waiting"), ("event", "cuda_headroom_wait"),
+        ("sleep", 2.0), ("verify",), ("state", "ready"), ("event", "cuda_headroom_resumed")]
+
+
+def test_cuda_headroom_repeated_pressure_retries_without_logging_every_probe(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    attempts = []
+
+    def probe():
+        attempts.append(len(attempts))
+        if len(attempts) <= 3:
+            raise _headroom_pressure()
+        return _headroom_observation(healthy=True)
+
+    _, wait = runner._cuda_with_headroom(probe, "after_batch")
+    assert wait == {"stage": "after_batch", "pressure_probes": 3, "waited_seconds": 6.0}
+    assert len(attempts) == 4
+    assert [state["status"] for state in harness.states] == ["waiting", "ready"]
+    assert harness.states[0]["pressure_probes"] == 1
+    assert harness.states[1]["pressure_probes"] == 3
+    assert harness.calls.count(("sleep", 2.0)) == 3
+    assert harness.calls.count(("verify",)) == 2
+
+
+@pytest.mark.parametrize("message", ["invalid CUDA memory telemetry", "campaign CUDA lock identity changed",
+                                     "CUDA allocator budget exceeded"])
+def test_cuda_headroom_base_resource_errors_are_fatal_without_retry(tmp_path, monkeypatch, message):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import LegacySpanResourceError
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    attempts, failure = [], LegacySpanResourceError(message)
+
+    def probe():
+        attempts.append(True)
+        raise failure
+
+    with pytest.raises(LegacySpanResourceError) as raised:
+        runner._cuda_with_headroom(probe, "before_batch")
+    assert raised.value is failure
+    assert attempts == [True]
+    assert harness.calls == [] and harness.states == []
+    assert not (tmp_path / "cuda-headroom.json").exists()
+
+
+def test_cuda_headroom_base_error_after_pressure_is_not_retried(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import LegacySpanResourceError
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    attempts, failure = [], LegacySpanResourceError("CUDA allocator budget exceeded")
+
+    def probe():
+        attempts.append(True)
+        if len(attempts) == 1:
+            raise _headroom_pressure()
+        raise failure
+
+    with pytest.raises(LegacySpanResourceError) as raised:
+        runner._cuda_with_headroom(probe, "after_batch")
+    assert raised.value is failure
+    assert len(attempts) == 2 and harness.calls.count(("sleep", 2.0)) == 1
+    assert [state["status"] for state in harness.states] == ["waiting"]
+
+
+def test_cuda_headroom_stop_cancels_before_any_probe_or_model_work(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(runner, "STOP", True)
+    with pytest.raises(RuntimeError, match="headroom wait cancelled"):
+        runner._cuda_with_headroom(lambda: pytest.fail("cancelled worker probed CUDA"), "before_batch")
+    assert harness.calls == [] and harness.states == []
+
+
+def test_cuda_headroom_stop_during_pressure_prevents_another_probe(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    attempts = []
+
+    def probe():
+        attempts.append(True)
+        raise _headroom_pressure()
+
+    def sleep(seconds):
+        assert seconds == 2.0
+        monkeypatch.setattr(runner, "STOP", True)
+
+    monkeypatch.setattr(runner.time, "sleep", sleep)
+    with pytest.raises(RuntimeError, match="headroom wait cancelled"):
+        runner._cuda_with_headroom(probe, "before_batch")
+    assert attempts == [True]
+    assert [state["status"] for state in harness.states] == ["waiting"]
+
+
+@pytest.mark.parametrize("changed", ["package", "runner"])
+def test_cuda_headroom_source_generation_change_after_pause_fails_closed(tmp_path, monkeypatch, changed):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_cuda as cuda
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    identity = {"sha256": "a" * 64, "file_count": 3}
+    generation = {"package": identity, "runner": runner.RUNNER_SHA256}
+    attempts = []
+    monkeypatch.setattr(runner, "GPU", None)
+    monkeypatch.setattr(runner, "CUDA_SOURCE_IDENTITY", identity)
+    monkeypatch.setattr(cuda, "_source_snapshot", lambda: generation["package"])
+    monkeypatch.setattr(runner, "digest_file", lambda path: generation["runner"])
+    monkeypatch.setattr(runner, "_verify_cuda_wait_source", harness.original_verify)
+
+    def probe():
+        attempts.append(True)
+        if len(attempts) == 1:
+            raise _headroom_pressure()
+        return _headroom_observation(healthy=True)
+
+    def sleep(seconds):
+        harness.clock.now += seconds
+        generation[changed] = {"sha256": "b" * 64} if changed == "package" else "b" * 64
+
+    monkeypatch.setattr(runner.time, "sleep", sleep)
+    with pytest.raises(RuntimeError, match="producer source changed.*restart required"):
+        runner._cuda_with_headroom(probe, "after_batch")
+    assert len(attempts) == 2
+    assert [state["status"] for state in harness.states] == ["waiting"]
+    assert json.loads((tmp_path / "cuda-headroom.json").read_bytes())["status"] == "waiting"
+
+
+def test_cuda_headroom_healthy_fast_path_avoids_source_snapshot_state_and_sleep(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    healthy, attempts = _headroom_observation(healthy=True), []
+    def probe():
+        attempts.append(True)
+        return healthy
+    result, wait = runner._cuda_with_headroom(probe, "before_batch")
+    assert result is healthy and attempts == [True]
+    assert wait == {"stage": "before_batch", "pressure_probes": 0, "waited_seconds": 0.0}
+    assert harness.calls == [] and harness.states == []
+    assert not (tmp_path / "cuda-headroom.json").exists()
+
+
+def test_gpu_evaluate_waits_for_headroom_before_calling_model(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    healthy, order = _headroom_observation(healthy=True), []
+    rows, compiled, result = [source()], {"fixture": True}, {"timings": {"existing": 1.0}}
+
+    def check():
+        order.append("probe")
+        if order == ["probe"]:
+            raise _headroom_pressure()
+        return healthy
+
+    def evaluate(batch, *, compiler_results):
+        assert batch is rows and compiler_results is compiled
+        assert order == ["probe", "probe"]
+        assert [state["status"] for state in harness.states] == ["waiting", "ready"]
+        order.append("model")
+        return result
+
+    monkeypatch.setattr(runner, "DEVICE", SimpleNamespace(check=check))
+    monkeypatch.setattr(runner, "GPU", SimpleNamespace(evaluate_batch=evaluate))
+    monkeypatch.setattr(runner, "ALLOCATOR_ADMISSION", {"allocator_fraction_set": True})
+    captured = runner._gpu_evaluate(rows, compiled)
+    assert captured is result
+    assert order == ["probe", "probe", "model", "probe"]
+    assert result["device_budget"] is healthy
+    assert result["cuda_headroom_waits"]["before"]["pressure_probes"] == 1
+    assert result["cuda_headroom_waits"]["after"]["pressure_probes"] == 0
+    assert result["timings"] == {"existing": 1.0, "cuda_headroom_wait_seconds": 2.0}
+
+
+def test_gpu_evaluate_retains_computed_result_through_post_batch_pressure(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    healthy, order = _headroom_observation(healthy=True), []
+    result = {"raw_evaluation": {"legal_ir_target_count": 1}, "rows": [source()]}
+    rows, compiled = [source()], {"fixture": True}
+
+    def check():
+        order.append("probe")
+        if order == ["probe", "model", "probe"]:
+            raise _headroom_pressure()
+        return healthy
+
+    def evaluate(batch, *, compiler_results):
+        assert batch is rows and compiler_results is compiled
+        order.append("model")
+        return result
+
+    monkeypatch.setattr(runner, "DEVICE", SimpleNamespace(check=check))
+    monkeypatch.setattr(runner, "GPU", SimpleNamespace(evaluate_batch=evaluate))
+    monkeypatch.setattr(runner, "ALLOCATOR_ADMISSION", {"allocator_fraction_set": True})
+    captured = runner._gpu_evaluate(rows, compiled)
+    assert captured is result
+    assert order == ["probe", "model", "probe", "probe"]
+    assert order.count("model") == 1
+    assert captured["rows"] is result["rows"]
+    assert captured["raw_evaluation"] == {"legal_ir_target_count": 1}
+    assert result["cuda_allocator_admission"] == {"allocator_fraction_set": True}
+    assert result["cuda_headroom_waits"]["before"]["pressure_probes"] == 0
+    assert result["cuda_headroom_waits"]["after"]["pressure_probes"] == 1
+    assert result["timings"]["cuda_headroom_wait_seconds"] == 2.0
+    assert [state["status"] for state in harness.states] == ["waiting", "ready"]
+
+
+def test_gpu_model_error_is_fatal_and_does_not_repeat_evaluation(tmp_path, monkeypatch):
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    order, failure = [], RuntimeError("synthetic model failure")
+    def check():
+        order.append("probe")
+        return _headroom_observation(healthy=True)
+    def evaluate(*args, **kwargs):
+        order.append("model")
+        raise failure
+    monkeypatch.setattr(runner, "DEVICE", SimpleNamespace(check=check))
+    monkeypatch.setattr(runner, "GPU", SimpleNamespace(evaluate_batch=evaluate))
+    with pytest.raises(RuntimeError) as raised:
+        runner._gpu_evaluate([source()], {})
+    assert raised.value is failure
+    assert order == ["probe", "model"]
+    assert harness.calls == [] and harness.states == []
+
+
+def test_gpu_startup_requires_device_and_allocator_headroom_before_model_load(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_campaign_resources as work
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_cuda as cuda
+    harness = _headroom_harness(monkeypatch, tmp_path)
+    order, attempts = [], {"device": 0, "allocator": 0}
+    allocator, identity = {"allocator_fraction_set": True}, {"sha256": "c" * 64}
+
+    class Device:
+        def __init__(self, runtime):
+            assert runtime == tmp_path
+            self.last_observation = None
+        def __enter__(self):
+            attempts["device"] += 1
+            order.append("device_probe")
+            if attempts["device"] == 1:
+                raise _headroom_pressure(admission=True)
+            self.last_observation = _headroom_observation(healthy=True, admission=True)
+            order.append("device_ready")
+            return self
+
+    def admit():
+        assert "device_ready" in order
+        attempts["allocator"] += 1
+        order.append("allocator_probe")
+        if attempts["allocator"] == 1:
+            raise _headroom_pressure(admission=True)
+        order.append("allocator_ready")
+        return allocator
+
+    def load(checkpoint, **kwargs):
+        assert checkpoint == "synthetic-checkpoint-no-weights-read"
+        assert order[-1] == "allocator_ready"
+        assert kwargs == {"mode": "legacy_mock_diagnostic", "max_batch_size": 8,
+                          "legal_ir_parallel_workers": 1, "guided_compiler": True}
+        order.append("model_load")
+        return SimpleNamespace(source_identity=identity)
+
+    monkeypatch.setattr(runner, "GPU", None)
+    monkeypatch.setattr(runner, "environment", lambda: None)
+    monkeypatch.setattr(runner, "DEVICE", None)
+    monkeypatch.setattr(runner, "ALLOCATOR_ADMISSION", None)
+    monkeypatch.setattr(runner, "CUDA_SOURCE_IDENTITY", None)
+    monkeypatch.setattr(runner, "CUDA_STARTUP_WAITS", None)
+    monkeypatch.setattr(work, "CudaDeviceBudget", Device)
+    monkeypatch.setattr(work, "admit_cuda_device", admit)
+    monkeypatch.setattr(cuda, "_source_snapshot", lambda: identity)
+    monkeypatch.setattr(cuda, "LegacySpanCUDAWorker", load)
+    runner._gpu_init("synthetic-checkpoint-no-weights-read", tmp_path, 8, 1, guided_compiler=True)
+    assert order == ["device_probe", "device_probe", "device_ready",
+                     "allocator_probe", "allocator_probe", "allocator_ready", "model_load"]
+    assert runner.ALLOCATOR_ADMISSION is allocator
+    assert runner.GPU.source_identity is identity
+    assert runner.CUDA_STARTUP_WAITS["device"]["pressure_probes"] == 1
+    assert runner.CUDA_STARTUP_WAITS["allocator"]["pressure_probes"] == 1
+    assert [state["status"] for state in harness.states] == ["waiting", "ready", "waiting", "ready"]
+

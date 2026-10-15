@@ -1,0 +1,146 @@
+{
+  "conditions_presence_loss": false,
+  "context_contract": {
+    "dimension": 384,
+    "producer_sha256": "aecff8f97f0c76f6df9b505803974817eda8162d57501eb872a9370472609101",
+    "representation_id": "targeted-loss-source-only-dormant384/v1",
+    "training_index_sha256": "72365c091abd613306fe56ce957d7fe1bbf3a8c5c9c92fee07bca6f659c1d073"
+  },
+  "default_promotion": false,
+  "evaluation_contract": {
+    "bytes": 12913,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json",
+    "sha256": "a8e64cee523d57149b6becaf18023bf87a9ecdb147d83e9c42453fce9230944e"
+  },
+  "first_query_gradient_or_moment_forced_zero": false,
+  "fresh_initialization_of_actor_or_conditions_weights": false,
+  "global_storage_cap_bytes": 145000000000,
+  "heldout_mining": false,
+  "hyperparameter_sweep": false,
+  "new_model_calls": 0,
+  "nonactor_parent_outputs_required_bit_equal": true,
+  "objective": "Unchanged N10 actor-features boundary CE on all168 training sources, continued from exact trained N11 state",
+  "parameter_partition": {
+    "active_trainable_scalars": 258,
+    "actor_pointer_active_rows": [
+      0
+    ],
+    "actor_pointer_inactive_rows": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "all32_returned_branch_and_gradient_moment_freeze_traces_required": true,
+    "both_complete_N11_conditions_presence_tensors_frozen": true,
+    "exact_tensor_count": 42,
+    "frozen_gradients_none_and_no_frozen_optimizer_members": true,
+    "frozen_tensor_count": 36,
+    "inactive_gradients_and_Adam_moments_zero": true,
+    "inactive_stored_scalars": 650,
+    "query_and_gate_full64_active": true,
+    "stored_trainable_scalars": 908,
+    "trainable_parameter_order": [
+      "actor_start.weight",
+      "actor_start.bias",
+      "actor_end.weight",
+      "actor_end.bias",
+      "actor_attention.query",
+      "actor_context.gate"
+    ],
+    "trainable_tensor_count": 6
+  },
+  "ranking_loss": false,
+  "recipe": {
+    "actor_ranking_enabled": false,
+    "batch_size": 12,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "capture_rows_max": 128,
+    "clip_gradient_norm": 5.0,
+    "configured_dimension": 384,
+    "eps": 1e-08,
+    "foreach": false,
+    "inherited_optimizer_moments": false,
+    "latent_enabled": false,
+    "learning_rate": 0.001,
+    "new_embedding_encoder_calls": 0,
+    "new_updates": 32,
+    "optimizer": "fresh Adam",
+    "seed_and_order": 1729,
+    "source_order_unchanged": true,
+    "source_tokens_max": 128,
+    "training168_capture_chunk_sizes": [
+      128,
+      40
+    ],
+    "training_row_occurrences": 384,
+    "training_rows": 168,
+    "training_seconds": 32,
+    "weight_decay": 0.0
+  },
+  "runtime_resource_contract": {
+    "child_slots": 1,
+    "cpu_slots": 2,
+    "deadline_seconds": 300,
+    "rss_mib": 1536,
+    "storage_bytes": 200000000
+  },
+  "schema": "actor-refinement-training-design/v1",
+  "scientific_acceptance": {
+    "conjunctive": true,
+    "no_additional_heldout_accuracy_or_actor_margin_threshold": true,
+    "no_complete_IR_loss_IDs_vs_N11": {
+      "allowed_loss_count_each_scope_and_view": 0,
+      "scopes": [
+        "old_tune",
+        "fresh_tune",
+        "fresh_challenge",
+        "old_authored_eval",
+        "authored_dev",
+        "authored_eval",
+        "fresh_dev",
+        "fresh_test",
+        "training168"
+      ],
+      "views": [
+        "raw",
+        "joint"
+      ]
+    },
+    "permission_retention": {
+      "allowed_abstentions": 0,
+      "allowed_losses": 0,
+      "gold_permission_count": 32,
+      "modality": "P",
+      "must_remain_decoded_or_selected": true,
+      "panel": "old_tune",
+      "views": [
+        "raw",
+        "joint"
+      ]
+    },
+    "scientific_failure_is_archived_without_retry_or_promotion": true,
+    "technical_gate_required": true,
+    "training168": {
+      "joint_full_IR_strictly_greater_than": 154,
+      "minimum_accepted_raw_and_joint": 155,
+      "parent_joint_full_IR": 154,
+      "parent_raw_full_IR": 154,
+      "raw_full_IR_strictly_greater_than": 154,
+      "reference": "frozen trained N11"
+    }
+  },
+  "seed_and_source_order_unchanged": true,
+  "source_model_state_sha256": "b3b6fdb2eeb7653265930660d3a4eaae7b1a93db22b09e71a2276367c1b156a9",
+  "source_parent": {
+    "bytes": 9337558,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-checkpoint.json",
+    "sha256": "34080a8ad491e5a351aeea0adfc6f3e29e76d0ae93c1f8a8cee3ebf536a7b9fd"
+  },
+  "threshold_fitting": false,
+  "training_started": false
+}

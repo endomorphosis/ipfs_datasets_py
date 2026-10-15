@@ -1,0 +1,116 @@
+"""Run unchanged source-review suites with explicit regular-directory fixtures.
+
+This cooperative validation adapter changes only pytest temporary allocation:
+session factories and function fixtures allocate unique private directories
+without navigation symlinks. It supplies no corpus, review or model authority.
+The native run_owned_validation launcher owns the actual resource admission.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import stat
+import sys
+import tempfile
+import xml.etree.ElementTree as ET
+
+
+class RegularDirectoryFactory:
+    """The mktemp/getbasetemp subset used by the selected unchanged suites."""
+
+    def __init__(self, base):
+        self.base = Path(base)
+        if not self.base.is_absolute():
+            raise ValueError("absolute private temporary base required")
+        for parent in (self.base.parent, *self.base.parent.parents):
+            if not stat.S_ISDIR(parent.lstat().st_mode):
+                raise ValueError("unaliased temporary parent required")
+        self.base.mkdir(mode=0o700)
+        info = self.base.lstat()
+        self.identity = (info.st_dev, info.st_ino)
+
+    def getbasetemp(self):
+        """Return the exact retained base, without numbered aliases."""
+        for parent in (self.base.parent, *self.base.parent.parents):
+            if not stat.S_ISDIR(parent.lstat().st_mode):
+                raise ValueError("temporary parent changed or became aliased")
+        info = self.base.lstat()
+        if (not stat.S_ISDIR(info.st_mode)
+                or (info.st_dev, info.st_ino) != self.identity):
+            raise ValueError("temporary base changed")
+        return self.base
+
+    def mktemp(self, basename, numbered=True):
+        """Allocate beneath the base, refusing path traversal and replacement."""
+        if (type(basename) is not str or not basename or basename in (".", "..")
+                or Path(basename).name != basename or "\x00" in basename):
+            raise ValueError("single relative temporary basename required")
+        if type(numbered) is not bool:
+            raise ValueError("explicit Boolean numbered flag required")
+        base = self.getbasetemp()
+        if numbered:
+            return Path(tempfile.mkdtemp(prefix=basename + "-", dir=base))
+        path = base / basename
+        path.mkdir(mode=0o700)
+        return path
+
+
+def main():
+    request_path = Path(sys.argv[1])
+    raw = request_path.read_bytes()
+    # The native launcher independently pins and continuously guards this file.
+    # Do not embed its own digest in request.argv (a circular hash reference).
+    request = json.loads(raw)
+    if Path.cwd() != Path(request["cwd"]):
+        raise ValueError("integration source root differs")
+    for path, digest in request["source_sha256"].items():
+        if hashlib.sha256(Path(path).read_bytes()).hexdigest() != digest:
+            raise ValueError("integration input changed: " + path)
+    os.environ.update(PYTEST_DISABLE_PLUGIN_AUTOLOAD="1", HF_HUB_OFFLINE="1",
+                      HF_DATASETS_OFFLINE="1", TRANSFORMERS_OFFLINE="1",
+                      IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI="0")
+    import pytest
+
+    class Fixtures:
+        @pytest.fixture(scope="session")
+        def tmp_path_factory(self, request):
+            return RegularDirectoryFactory(request.config.option.basetemp)
+
+    output = {key: Path(value) for key, value in request["outputs"].items()}
+    command = ["--noconftest", "--import-mode=importlib", "-o", "addopts=", "-q",
+               "--maxfail=1", "--tb=short",
+               "-p", "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest",
+               "--basetemp=" + str(output["pytest"] / "basetemp"),
+               "-o", "cache_dir=" + str(output["cache"] / "pytest"),
+               "--junitxml=" + str(output["logs"] / "junit.xml"),
+               *request["selected_checks"]]
+    code = pytest.main(command, plugins=[Fixtures()])
+    cases = list(ET.parse(output["logs"] / "junit.xml").getroot().iter("testcase"))
+    identities = [(case.get("classname"), case.get("name")) for case in cases]
+    counts = {key: sum(case.find(key) is not None for case in cases)
+              for key in ("failure", "error", "skipped")}
+    for path, digest in request["source_sha256"].items():
+        if hashlib.sha256(Path(path).read_bytes()).hexdigest() != digest:
+            raise ValueError("integration input changed during checks: " + path)
+    passed = code == 0 and bool(cases) and not any(counts.values())
+    passed = passed and len(identities) == len(set(identities))
+    result = dict(schema="legal-source-review-integration-checks/v1",
+                  request_sha256=hashlib.sha256(raw).hexdigest(),
+                  checks=request["selected_checks"], pytest_arguments=command,
+                  cases=len(cases), counts=counts, exit_code=int(code), passed=passed,
+                  temporary_profile="unique-regular-directory-factory/v1",
+                  unchanged_product_and_suite_inputs=True,
+                  reviews_created=False, gold_admitted=False, models_loaded=False,
+                  native_Lean_executed=False)
+    with (output["logs"] / "integration-checks.json").open("x") as stream:
+        json.dump(result, stream, sort_keys=True, indent=2)
+        stream.write("\n")
+    print(json.dumps(result, sort_keys=True))
+    return 0 if passed else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

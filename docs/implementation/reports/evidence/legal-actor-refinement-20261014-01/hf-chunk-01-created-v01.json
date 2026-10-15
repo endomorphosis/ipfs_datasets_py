@@ -1,0 +1,24 @@
+{
+  "names": [
+    "releases/20261014-actor-refinement-v1/README.md",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_dev-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_dev-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_eval-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-authored_eval-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_challenge-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_challenge-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_dev-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_dev-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_test-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_test-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_tune-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-fresh_tune-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-law-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-law-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_authored_eval-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_authored_eval-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_tune-joint.json"
+  ],
+  "parent_revision": "0228887c8e33cb23e9679889a9496f87140021e6",
+  "revision": "5bd19a067cd014288591b12bfc118046f8d978a2"
+}

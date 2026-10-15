@@ -1,0 +1,216 @@
+{
+  "all_checks_passed": true,
+  "authority": {
+    "Lean_execution_qualified": false,
+    "published": false,
+    "real_statutory_review_completed": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "checks": {
+    "22_passed_subtest_lines": true,
+    "402_current_inputs_exact": true,
+    "402_opening_closing_bindings_exact": true,
+    "48_new_v2_author_cases_passed": true,
+    "actual_runner_receipt_passed": true,
+    "all_23_modules_covered": true,
+    "all_case_identities_unique": true,
+    "current_head_exact": true,
+    "current_index_matches_qualified_tree": true,
+    "every_case_matches_one_exact_target_module": true,
+    "four_new_export_cases_passed": true,
+    "no_case_failure_error_skip": true,
+    "only_runner_binding_differs_between_attempts": true,
+    "opening_closing_head_and_index_equal": true,
+    "raw_732_cases": true,
+    "raw_counts_match_receipt": true,
+    "raw_output_bindings_exact": true,
+    "rerun_seed_is_explicit_zero": true,
+    "runner_lists_23_distinct_modules": true,
+    "suite_total_agrees_cases_plus_subtests": true,
+    "v01_executed_driver_matches_original_input": true,
+    "v01_failed_collection_retained_honestly": true,
+    "v01_historical_raw_outputs_preserved": true
+  },
+  "current_inputs": {
+    "differences": {},
+    "head_observed": "0ee2872d085f57128b14f952fa1916734522e991",
+    "index_readonly_comparison_exit_code": 0,
+    "inventory_comparison": "All 402 current relative paths were read and matched byte length/SHA256 against the raw execution inventory. Full expected inventory remains bound in run-inputs.json.",
+    "new_test": {
+      "bytes": 7810,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-integration-20261015/tests/unit/logic/autoformal/test_definition_v2_graph_exchange.py",
+      "sha256": "da9fef357b2ea51cd1f0a38e475849d36173eba6a2307880fd1181da6c7240e8"
+    },
+    "runner": {
+      "bytes": 7493,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-integration-20261015/docs/autoencoders/evidence/legal-ir-definition-v2-integration-20261015/qualification_runner.py",
+      "sha256": "8b919082f6776f8dc3dd52f9b3aa0a9ed75f039ed6d8c551b274e3297293e5ad"
+    }
+  },
+  "limits": [
+    "732 cases and 22 subtests are distinct accounting units; the JUnit suite total 754 includes both.",
+    "This inventory is 402 listed local files, not a complete Python import or native dependency closure.",
+    "Native-build suites use their authored process/toolchain stubs; no real Lean build or proof is qualified.",
+    "The separate real-source engineering probe is outside this qualification/recount.",
+    "Authored declarations and signature fixtures do not establish statutory meaning, review, applicability, context closure, training gold or admission."
+  ],
+  "observed_at_utc": "2026-10-15T06:21:59.398172+00:00",
+  "prior_attempt": {
+    "actual_pytest_exit_code": 1,
+    "attempt": "qualification-v01",
+    "cause": "Existing test_incomplete_bundle_refuses parametrizes list(exchange.BUNDLE_FILES), where BUNDLE_FILES is a frozenset. Worker hash randomization produced inconsistent collection order.",
+    "changed_inventory_paths": [
+      "docs/autoencoders/evidence/legal-ir-definition-v2-integration-20261015/qualification_runner.py"
+    ],
+    "collection_errors": 2,
+    "inputs_unchanged_reported": true,
+    "raw_bindings": {
+      "executed-runner.py": {
+        "bytes": 7447,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v01/executed-runner.py",
+        "sha256": "16e79638ef2ceaf0e3eab4185f6332478af6eb6351cd2936bba7de7fdd6e094e"
+      },
+      "junit.xml": {
+        "bytes": 3147,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v01/junit.xml",
+        "sha256": "2f3ee5bfce51f249fd5a4d6111ccaa0fd19e9763926d35c36d843cb0a4465373"
+      },
+      "receipt.json": {
+        "bytes": 77148,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v01/receipt.json",
+        "sha256": "e6911a661e8641fac5e0ffef98f4968d448d9f0dc2a41792145b1f534186a684"
+      },
+      "run-inputs.json": {
+        "bytes": 73489,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v01/run-inputs.json",
+        "sha256": "286654343d44afb3e4335ce7bbcfcb7080b35c1b37f32f514c3655a2d9a2b936"
+      },
+      "stderr.txt": {
+        "bytes": 0,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v01/stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout.txt": {
+        "bytes": 4217,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v01/stdout.txt",
+        "sha256": "7e9684fda8d88f173e68b703f7e226a89e642369c913fd089bb589746b92a662"
+      }
+    },
+    "repair": "Runner-only PYTHONHASHSEED=0 plus recording that seed; runtime and tests unchanged between attempts.",
+    "runner_diff": "--- v01-executed-runner\n+++ v02-executed-runner\n@@ -81,7 +81,7 @@\n     (output / \"run-inputs.json\").write_text(json.dumps({\"head\": head, \"index_tree\": index,\n         \"input_inventory\": before}, indent=2, sort_keys=True) + \"\\n\")\n     env = {key: os.environ[key] for key in (\"PATH\", \"LANG\", \"LC_ALL\", \"LD_LIBRARY_PATH\") if key in os.environ}\n-    env.update({\"PYTEST_DISABLE_PLUGIN_AUTOLOAD\": \"1\", \"PYTHONDONTWRITEBYTECODE\": \"1\",\n+    env.update({\"PYTHONHASHSEED\": \"0\", \"PYTEST_DISABLE_PLUGIN_AUTOLOAD\": \"1\", \"PYTHONDONTWRITEBYTECODE\": \"1\",\n         \"IPFS_DATASETS_AUTO_INSTALL_TEST_DEPS\": \"0\", \"IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI\": \"0\",\n         \"HF_HUB_OFFLINE\": \"1\", \"HF_DATASETS_OFFLINE\": \"1\", \"TRANSFORMERS_OFFLINE\": \"1\",\n         \"GITHUB_TOKEN\": \"offline-test-sentinel-not-a-credential\", \"PYTHONPATH\": str(root),\n@@ -117,7 +117,7 @@\n     report = {\"schema\": \"legal-definition-v2-integration-qualification/v1\", \"head\": head,\n         \"index_tree\": index, \"command\": command, \"exit_code\": exit_code,\n         \"elapsed_seconds\": time.monotonic() - started, \"stop_reason\": stop_reason,\n-        \"junit_present\": junit_present, \"workers\": 3, \"distribution\": \"loadfile\",\n+        \"junit_present\": junit_present, \"workers\": 3, \"distribution\": \"loadfile\", \"python_hash_seed\": 0,\n         \"versions\": {name: version(name) for name in (\"pytest\", \"pytest-xdist\", \"cryptography\", \"pyarrow\")},\n         \"input_inventory\": before, \"inputs_unchanged\": unchanged,\n         \"test_cases\": len(cases), \"unique_cases\": unique, \"counts\": counts,\n",
+    "status": "failed_collection_no_test_execution",
+    "target_items_reported_per_worker": 732,
+    "testcase_elements": 2
+  },
+  "qualification": {
+    "attempt": "qualification-v02",
+    "cases_by_class": {
+      "tests.unit.logic.autoformal.test_corpus_contracts": 33,
+      "tests.unit.logic.autoformal.test_corpus_definition_adapter_v2": 13,
+      "tests.unit.logic.autoformal.test_corpus_definition_norm_adapter": 54,
+      "tests.unit.logic.autoformal.test_corpus_definition_review": 107,
+      "tests.unit.logic.autoformal.test_corpus_graph": 20,
+      "tests.unit.logic.autoformal.test_corpus_graph_exchange": 37,
+      "tests.unit.logic.autoformal.test_corpus_imports": 7,
+      "tests.unit.logic.autoformal.test_corpus_source.SourceCorpusTests": 15,
+      "tests.unit.logic.autoformal.test_definition_v2_graph_exchange": 4,
+      "tests.unit.logic.autoformal.test_legal_context_representability_integration": 2,
+      "tests.unit.logic.autoformal.test_legal_corpus_incremental": 29,
+      "tests.unit.logic.autoformal.test_legal_corpus_lake": 72,
+      "tests.unit.logic.autoformal.test_legal_corpus_shared_lake": 31,
+      "tests.unit.logic.autoformal.test_legal_official_document_views": 61,
+      "tests.unit.logic.autoformal.test_legal_official_source_custody": 41,
+      "tests.unit.logic.autoformal.test_legal_source_definition_bridge": 23,
+      "tests.unit.logic.autoformal.test_legal_source_definition_bridge_v2": 35,
+      "tests.unit.logic.autoformal.test_legal_source_definition_lake": 7,
+      "tests.unit.logic.autoformal.test_legal_source_definition_norm_bridge": 58,
+      "tests.unit.logic.autoformal.test_legal_source_definition_norm_lake": 9,
+      "tests.unit.logic.autoformal.test_legal_source_representability": 22,
+      "tests.unit.logic.autoformal.test_legal_source_sampling": 29,
+      "tests.unit.logic.autoformal.test_legal_statutory_context_v2": 23
+    },
+    "cases_by_module": {
+      "tests.unit.logic.autoformal.test_corpus_contracts": 33,
+      "tests.unit.logic.autoformal.test_corpus_definition_adapter_v2": 13,
+      "tests.unit.logic.autoformal.test_corpus_definition_norm_adapter": 54,
+      "tests.unit.logic.autoformal.test_corpus_definition_review": 107,
+      "tests.unit.logic.autoformal.test_corpus_graph": 20,
+      "tests.unit.logic.autoformal.test_corpus_graph_exchange": 37,
+      "tests.unit.logic.autoformal.test_corpus_imports": 7,
+      "tests.unit.logic.autoformal.test_corpus_source": 15,
+      "tests.unit.logic.autoformal.test_definition_v2_graph_exchange": 4,
+      "tests.unit.logic.autoformal.test_legal_context_representability_integration": 2,
+      "tests.unit.logic.autoformal.test_legal_corpus_incremental": 29,
+      "tests.unit.logic.autoformal.test_legal_corpus_lake": 72,
+      "tests.unit.logic.autoformal.test_legal_corpus_shared_lake": 31,
+      "tests.unit.logic.autoformal.test_legal_official_document_views": 61,
+      "tests.unit.logic.autoformal.test_legal_official_source_custody": 41,
+      "tests.unit.logic.autoformal.test_legal_source_definition_bridge": 23,
+      "tests.unit.logic.autoformal.test_legal_source_definition_bridge_v2": 35,
+      "tests.unit.logic.autoformal.test_legal_source_definition_lake": 7,
+      "tests.unit.logic.autoformal.test_legal_source_definition_norm_bridge": 58,
+      "tests.unit.logic.autoformal.test_legal_source_definition_norm_lake": 9,
+      "tests.unit.logic.autoformal.test_legal_source_representability": 22,
+      "tests.unit.logic.autoformal.test_legal_source_sampling": 29,
+      "tests.unit.logic.autoformal.test_legal_statutory_context_v2": 23
+    },
+    "counts": {
+      "error": 0,
+      "failure": 0,
+      "skipped": 0
+    },
+    "elapsed_seconds_reported": 154.19101796089672,
+    "head": "0ee2872d085f57128b14f952fa1916734522e991",
+    "index_tree": "69fed11b63e2451f634a0d07cd951231b4b1b895",
+    "junit_suite_attributes": [
+      {
+        "errors": "0",
+        "failures": "0",
+        "hostname": "spark-b271",
+        "name": "pytest",
+        "skipped": "0",
+        "tests": "754",
+        "time": "153.845",
+        "timestamp": "2026-10-15T06:17:24.192601+00:00"
+      }
+    ],
+    "listed_input_count": 402,
+    "modules": 23,
+    "passed_subtest_stdout_lines": 22,
+    "python_hash_seed": 0,
+    "testcase_elements": 732,
+    "unique_case_identities": 732
+  },
+  "raw_bindings": {
+    "junit.xml": {
+      "bytes": 134787,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v02/junit.xml",
+      "sha256": "22e26c49ab14e118bef82a027d402031eabda98d60bc308643dce23d629dd510"
+    },
+    "receipt.json": {
+      "bytes": 78801,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v02/receipt.json",
+      "sha256": "63d0071bb7f4012435a78cc4db6eec7edd0add178f8312fe2a561b77be96f774"
+    },
+    "run-inputs.json": {
+      "bytes": 73489,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v02/run-inputs.json",
+      "sha256": "a6f11cd42ca59a7a24ec7e8df430db355d6894b6cf1f618293a2d440531db5df"
+    },
+    "stderr.txt": {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v02/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout.txt": {
+      "bytes": 231777,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v02/stdout.txt",
+      "sha256": "b6d1453f1fb73559a234b7f27b0f0188430eb3aa95d71d72428cf2e4938376cd"
+    }
+  },
+  "reviewer": "/root/source_delivery_tests",
+  "schema": "legal-definition-v2-integration-independent-recount/v1",
+  "scope": "Independent stdlib raw-output, module-coverage and listed-input recount; no pytest or target runtime imports by this reviewer.",
+  "status": "pass"
+}
