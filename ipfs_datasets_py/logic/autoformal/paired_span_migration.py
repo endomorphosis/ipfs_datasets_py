@@ -20,6 +20,9 @@ from . import paired_span_census as paired
 HISTORICAL_EXPORTER = "93a5b6c4fafabf45f84cd12b53347e7e8e96686592b489a6a7ea036d88d5b2e9"
 MIGRATION_SCHEMA = "paired-census-seven-field-migration/v1"
 _AE_ADDED = ("learned_formula_capture_verified", "learned_formula_observation_artifact_sha256")
+_COMPARISON_ADDED = ("raw_agrees", "canonical_core_agrees", "difference_kind",
+                     "canonical_core_scope", "canonical_core_mismatches")
+_HISTORICAL_COMPARISON_METHOD = "exact_ast_and_validated_canonical_core/v2"
 SOURCE_RELATIVES = (
     "ipfs_datasets_py/logic/autoformal/paired_span_migration.py",
     "ipfs_datasets_py/logic/autoformal/paired_span_census.py",
@@ -154,13 +157,23 @@ def _observations(receipt, runner):
 
 
 def _historical_view(current):
+    """Reproduce the pinned exporter's identity before its lossy Arrow write.
+
+    That producer hashed the full v2 comparison, without the two later learned
+    capture fields. Its v1 Arrow layout then omitted five comparison fields,
+    retaining the pre-serialization hash and v2 method label. This is one fixed
+    producer contract, not an alternative identity or schema search.
+    """
     value = copy.deepcopy(current)
+    _need(value["comparison"]["method"] == _HISTORICAL_COMPARISON_METHOD,
+          "unsupported historical comparison method")
     for key in _AE_ADDED:
         value["autoencoder"].pop(key)
-    value["comparison"] = paired._compare_formal_outputs_v1(value["autoencoder"], value["compiler"])
     value.pop("observation_id")
     value["goal_ids"] = []
     value["observation_id"] = _sha(paired._json(value))
+    for key in _COMPARISON_ADDED:
+        value["comparison"].pop(key)
     return value
 
 
@@ -276,6 +289,11 @@ def migrate_historical_paired_bundle(manifest_path, output_directory, *, expecte
         "observation_id_map": links, "historical_goal_links": historical_goal_links,
         "historical_goals": historical["goals"], "producer_source_pins": expected_sources,
         "exact_historical_observations_reproduced": True,
+        "historical_observation_identity": {
+            "producer_sha256": HISTORICAL_EXPORTER,
+            "hash_input": "full_v2_comparison_without_two_learned_capture_fields_and_with_empty_goal_ids",
+            "serialization": "legacy_arrow_omits_five_comparison_fields_after_observation_id_is_hashed",
+            "comparison_method": _HISTORICAL_COMPARISON_METHOD},
         "new_comparison_scope": "current canonical-core representation diagnostic, not independent validation",
         "learned_capture_created": False, "compiler_rerun": False, "model_rerun": False,
         "old_files_modified": False, "admitted": False, "formalized": False, "enqueued": False}

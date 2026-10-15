@@ -52,7 +52,18 @@ def write_old(directory, receipt, *, mutation=None):
     code, model = "sha256:" + "a" * 64, "legacy-mock-diagnostic:sha256:" + "7" * 64
     current = paired.build_paired_census(migration._observations(receipt, runner), original_receipt=receipt,
         agent_id="private-migration", code_identity=code, model_identity=model)
-    spans = [migration._historical_view(row) for row in current["paired_spans"]]
+    # Reproduce the historical producer independently of the migration helper:
+    # its pre-serialization rows had full v2 comparisons, no learned-capture
+    # fields, and IDs hashed before legacy Arrow discarded comparison fields.
+    spans = deepcopy(current["paired_spans"])
+    for span in spans:
+        del span["autoencoder"]["learned_formula_capture_verified"]
+        del span["autoencoder"]["learned_formula_observation_artifact_sha256"]
+        del span["observation_id"]
+        span["goal_ids"] = []
+        raw = json.dumps(span, sort_keys=True, ensure_ascii=True,
+                         separators=(",", ":"), allow_nan=False).encode("ascii")
+        span["observation_id"] = hashlib.sha256(raw).hexdigest()
     by_source = {row["source"]["span_id"]: row for row in spans}
     archive = paired._Artifacts(paired.MAX_BYTES)
     receipt_ref = archive.add(receipt, "original_producer_receipt")
@@ -84,6 +95,9 @@ def write_old(directory, receipt, *, mutation=None):
         raw = (directory / filename).read_bytes()
         entries[kind] = dict(filename=filename, path_in_repo=f"{paired.REPO_PREFIX}/{kind}/private-migration/{filename}",
             bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest(), row_count=len(rows))
+    # The actual Arrow serialization, rather than this fixture's Python code,
+    # discards the five comparison additions while retaining the earlier ID.
+    tables["paired_spans"] = pq.read_table(directory / entries["paired_spans"]["filename"]).to_pylist()
     manifest = dict(schema=paired.MANIFEST_SCHEMA, repository_id=paired.REPOSITORY, agent_id="private-migration",
         exporter_sha256=migration.HISTORICAL_EXPORTER, tables=entries,
         original_receipt_artifact_sha256=receipt_ref, admitted=False, formalized=False, enqueued=False)
@@ -122,6 +136,9 @@ def test_real_old_parquet_regenerates_honest_v2_and_preserves_every_original(tmp
         assert artifacts[artifact["artifact_sha256"]] == artifact
     lineage = json.loads(paired.decode_artifact(artifacts[result["lineage_artifact_sha256"]]))
     assert lineage["historical_goals"] == old["goals"]
+    identity = lineage["historical_observation_identity"]
+    assert identity["producer_sha256"] == "93a5b6c4fafabf45f84cd12b53347e7e8e96686592b489a6a7ea036d88d5b2e9"
+    assert identity["comparison_method"] == "exact_ast_and_validated_canonical_core/v2"
     summaries = [row for row in loaded["goals"] if row["record_kind"] == "historical_goal_record"]
     assert len(summaries) == 8
     assert all(row["packet_artifact_sha256"] is row["task_artifact_sha256"] is None for row in summaries)
@@ -150,6 +167,21 @@ def test_changed_old_observation_cannot_be_recreated_from_original_receipt(tmp_p
     path, digest, _, _ = write_old(tmp_path / "old", producer_receipt(1), mutation=mutate)
     with pytest.raises(paired.PairedCensusError, match="exactly reproduce"):
         migration.migrate_historical_paired_bundle(path, tmp_path / "never", expected_manifest_sha256=digest, expected_sources=pins())
+    assert not (tmp_path / "never").exists()
+
+
+@pytest.mark.parametrize("change", ["observation_id", "comparison_method"])
+def test_historical_identity_and_method_cannot_be_substituted(tmp_path, change):
+    def mutate(tables):
+        span = tables["paired_spans"][0]
+        if change == "observation_id":
+            span["observation_id"] = "0" * 64
+        else:
+            span["comparison"]["method"] = "exact_canonical_ast_sequence/v1"
+    path, digest, _, _ = write_old(tmp_path / "old", producer_receipt(1), mutation=mutate)
+    with pytest.raises(paired.PairedCensusError, match="exactly reproduce"):
+        migration.migrate_historical_paired_bundle(path, tmp_path / "never",
+            expected_manifest_sha256=digest, expected_sources=pins())
     assert not (tmp_path / "never").exists()
 
 

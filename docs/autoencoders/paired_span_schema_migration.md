@@ -9,8 +9,12 @@ The affected historical exporter is
 `93a5b6c4fafabf45f84cd12b53347e7e8e96686592b489a6a7ea036d88d5b2e9`.
 It labeled bundles `uscode-paired-span-bundle/v2`, but its paired table has the
 current v1 Arrow layout. Seven newer fields are missing: two learned-capture
-fields and five comparison fields. Other layouts are refused. The ordinary
-current loader is unchanged and continues to reject those old files.
+fields and five comparison fields. This producer hashed observations with the
+full v2 comparison and without the two learned-capture fields. The old Arrow
+write then omitted the five comparison fields while retaining the earlier
+observation ID and `exact_ast_and_validated_canonical_core/v2` method label.
+Other producer/layout contracts are refused. The ordinary current loader is
+unchanged and continues to reject those old files.
 
 ## Evidence preserved
 
@@ -36,10 +40,15 @@ computes current canonical-core diagnostics. Missing learned captures remain
 explicitly false with no learned-capture artifact. Guided agreement remains
 diagnostic, not independent correctness or semantic validation.
 
-Before writing, each new observation is projected back into the historical
-seven-field-missing view. Its full fields and original observation hash must
-match the historical row. A mismatch refuses migration; the worker does not
-repair, rerun, approximate, or silently drop the mismatch.
+Before writing, each new observation is projected through this exact historical
+contract. The worker removes only the two learned-capture fields, clears goal
+IDs, and hashes the row with its full v2 comparison. It then removes the five
+comparison fields without changing that hash or the retained method label.
+Every retained field and the reproduced original observation ID must match the
+historical row. The lineage artifact records this pre-serialization identity
+contract. A mismatch refuses migration; the worker does not copy an old ID,
+search alternative hash conventions, repair, rerun, approximate, or silently
+drop the mismatch.
 
 The unchanged 64 MiB decoded-evidence limit includes all retained historical
 artifacts, archival file envelopes, current goals and observations. Exceeding
@@ -104,9 +113,12 @@ the migration need not contact Hugging Face or rerun its producer.
 
 ## Required verification before use
 
-Prepared tests use real private Parquet files: eight-span migration, exact old
+Prepared tests construct historical pre-serialization rows and their IDs
+independently of the migration projection, then use real private legacy-schema
+Parquet files: eight-span migration, exact old
 artifact/goal/file retention, zero learned-capture verification, table tamper,
-receipt mismatch, unsupported layout, source/observation mismatch and bounds.
+receipt mismatch, unsupported layout, source/observation mismatch, substituted
+observation IDs or comparison methods, and bounds.
 Tests grant no model, semantic, proof, Lake or training qualification. Actual
 target staging must then be run under the native lease, with before/after input
 hashes, current strict-loader validation, row/goal counts, memory/time telemetry
