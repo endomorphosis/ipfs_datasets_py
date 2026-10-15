@@ -820,6 +820,8 @@ def arguments(argv=None):
     p.add_argument("--batch-size", type=int, default=8)
     p.add_argument("--bridge-workers", type=int, default=1, help="parallel native target threads within the resident model")
     p.add_argument("--max-batches", type=int, default=0, help="0 runs until explicitly stopped")
+    p.add_argument("--source-lease-timeout-seconds", type=float, default=300.0,
+        help="bound cooperative source read-lock admission only, never productive run time")
     p.add_argument("--poll-seconds", type=int, default=300)
     p.add_argument("--storage-bytes", type=int, default=750_000_000)
     p.add_argument("--memory-mb", type=int, default=12288)
@@ -836,6 +838,8 @@ def arguments(argv=None):
         p.error("--scheduler-state and --expected-policy-sha256 must be supplied together")
     if args.expected_policy_sha256 is not None and (len(args.expected_policy_sha256) != 64 or any(c not in "0123456789abcdef" for c in args.expected_policy_sha256)):
         p.error("exact lowercase native policy SHA256 required")
+    if not math.isfinite(args.source_lease_timeout_seconds) or args.source_lease_timeout_seconds < 0:
+        p.error("source lease timeout must be finite and nonnegative")
     args.runtime_directory = args.runtime_directory.absolute()
     args.resource_ledger = args.resource_ledger.absolute()
     if args.scheduler_state is not None:
@@ -850,6 +854,23 @@ def main(argv=None):
     signal.signal(signal.SIGINT, stop)
     if args.scheduler_state is None or args.expected_policy_sha256 is None:
         raise ValueError("explicit existing scheduler state and policy are required for campaign launch")
+    # The external owner covers its entire engine group and native cleanup.
+    # Engines must not reacquire: a waiting writer holds the fair turnstile
+    # while this owner still holds its read lease, which would deadlock startup.
+    if args._engine:
+        return _run(args, argv)
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_source_lease import source_lease
+    event("source_lease_wait", mode="read", canonical_root=str(ROOT),
+          timeout_seconds=args.source_lease_timeout_seconds)
+    with source_lease(ROOT, mode="read", timeout_seconds=args.source_lease_timeout_seconds) as lease:
+        event("source_lease_acquired", **lease.to_dict())
+        if STOP:
+            raise ValueError("campaign cancelled while waiting for its source lease")
+        return _run(args, argv)
+
+
+def _run(args, argv=None):
+    """Execute the unchanged native owner/engine path inside the owner's lease."""
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.existing_resource_scheduler import open_existing_scheduler
     scheduler = open_existing_scheduler(args.scheduler_state, args.expected_policy_sha256)
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_engine_custody import (
