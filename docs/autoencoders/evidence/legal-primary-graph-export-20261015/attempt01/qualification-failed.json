@@ -1,0 +1,778 @@
+{
+  "Lean_executed": false,
+  "admitted": false,
+  "all_checks_complete": false,
+  "authority_granted": false,
+  "completed_checks": [],
+  "elapsed_seconds": 7.266597263980657,
+  "error": "Qualification failed; exception values omitted from metadata.",
+  "error_type": "QualificationFailure",
+  "failure_stage": "junit_and_closing_guards",
+  "final_source_pins_unchanged": true,
+  "formalized": false,
+  "guard_attempts": {
+    "child_process": 0,
+    "network": 0
+  },
+  "junit": {
+    "case_count": 160,
+    "counts_by_module": {
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py": 51,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py": 26,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py": 45,
+      "tests/unit/logic/test_kg_graph_citation_identity.py": 38
+    },
+    "errors": 0,
+    "failures": 0,
+    "file": {
+      "bytes": 30014,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/exports/junit.xml",
+      "sha256": "8ac76d4c1f8a014426a6e3196d1e90ad4a2fa6f8f9b32d8a5812897884396bbb"
+    },
+    "selected_target_coverage": {
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py": 51,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked": 6,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_candidate_identity_excludes_cache_location_and_unselected_older_files": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_cross_family_identity_lookup_has_bounded_work_on_a_populated_index": 2,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_edges_reference_quarantined_cross_family_identity_as_conflict": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_failed_exclusive_temporary_creation_never_unlinks_a_preexisting_file": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_literal_unknown_and_missing_producer_kinds_remain_observations": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_output_bounds_leave_no_partial_candidate_or_owned_tempfile": 2,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_output_parent_swap_during_second_pass_is_refused_without_publication": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_outputs_and_full_reports_are_reproducible_across_destination_paths": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_publication_rollback_preserves_a_replaced_foreign_output": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_real_scratch_allocation_limit_refuses_population_without_partial_output": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_second_pass_population_mutation_is_detected_and_partial_output_removed": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs": 4,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_tampered_candidate_bytes_and_original_source_bytes_cannot_pass": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_unresolved_edge_keeps_quarantine_and_complete_endpoint_denominators": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_whole_population_global_endpoints_properties_and_lineage_are_preserved": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py": 45,
+      "tests/unit/logic/test_kg_graph_citation_identity.py": 38
+    },
+    "skipped": 0,
+    "unique_testcase_ids": [
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_actual_writer_roundtrip_preserves_body_identity_custody_and_original_bytes"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_repeated_export_is_reproducible_without_rewriting_either_destination"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_already_canonical_original_wrappers_are_not_rewritten"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_exact_row_and_shard_boundaries_are_accepted"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_shards_respect_small_physical_bound_and_keep_every_occurrence"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_empty_family_never_writes_null_typed_empty_parquet"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[duplicate]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[conflict]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[dangling]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[edge_duplicate]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[cross_family]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[malformed]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_writer_legal_id_fallback_cannot_silently_reinterpret_original_wrapper"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_finite_export_bounds_refuse_without_partial_destination[max_rows]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_finite_export_bounds_refuse_without_partial_destination[max_shards]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_finite_export_bounds_refuse_without_partial_destination[max_shard_input_bytes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_finite_export_bounds_refuse_without_partial_destination[max_parquet_bytes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_finite_export_bounds_refuse_without_partial_destination[max_output_bytes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_finite_export_bounds_refuse_without_partial_destination[max_lineage_line_bytes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_finite_export_bounds_refuse_without_partial_destination[max_manifest_bytes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_finite_export_bounds_refuse_without_partial_destination[max_decoded_batch_bytes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_unsupported_or_noninteger_limits_cannot_raise_the_owner_ceiling[limits0]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_unsupported_or_noninteger_limits_cannot_raise_the_owner_ceiling[limits1]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_unsupported_or_noninteger_limits_cannot_raise_the_owner_ceiling[limits2]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_unsupported_or_noninteger_limits_cannot_raise_the_owner_ceiling[limits3]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_unsupported_or_noninteger_limits_cannot_raise_the_owner_ceiling[limits4]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_wrong_independent_selection_pin_cannot_export_another_population"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_existing_destination_and_immutable_source_root_survive_refusal"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_late_real_parquet_writer_failure_leaves_no_partial_publication"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_lower_aggregate_budget_refuses_before_opening_generation_companions"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_new_destination_open_failure_removes_only_provably_owned_empty_directory[none]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_new_destination_open_failure_removes_only_provably_owned_empty_directory[foreign_inode]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_new_destination_open_failure_removes_only_provably_owned_empty_directory[nonempty_owned_inode]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_compressed_shard_is_refused_before_saved_arrow_row_allocation"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_manifest_cannot_change_authority_population_or_contract[authority]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_manifest_cannot_change_authority_population_or_contract[flat_repair]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_manifest_cannot_change_authority_population_or_contract[population]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_manifest_cannot_change_authority_population_or_contract[unknown]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_manifest_cannot_change_authority_population_or_contract[authority_numeric]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_manifest_cannot_change_authority_population_or_contract[population_float]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_manifest_cannot_change_authority_population_or_contract[structural_numeric]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_lineage_cannot_alias_json_number_or_boolean_types[number]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_lineage_cannot_alias_json_number_or_boolean_types[boolean]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_parquet_and_lineage_cannot_replace_original_typed_edge[role]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_parquet_and_lineage_cannot_replace_original_typed_edge[source_evidence]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_resealed_parquet_and_lineage_cannot_replace_original_typed_edge[endpoint]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_independent_validation_rejects_missing_added_dropped_or_retargeted_inputs[missing]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_independent_validation_rejects_missing_added_dropped_or_retargeted_inputs[extra]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_independent_validation_rejects_missing_added_dropped_or_retargeted_inputs[lineage_drop]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_independent_validation_rejects_missing_added_dropped_or_retargeted_inputs[source_bytes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_export",
+        "name": "test_independent_validation_rejects_missing_added_dropped_or_retargeted_inputs[manifest_pin]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_payload_observation_preserves_decoder_fields_without_fabricating_custody[False-graph_nodes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_payload_observation_preserves_decoder_fields_without_fabricating_custody[False-graph_edges]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_payload_observation_preserves_decoder_fields_without_fabricating_custody[True-graph_nodes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_payload_observation_preserves_decoder_fields_without_fabricating_custody[True-graph_edges]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_payload_pin_mismatch_and_unsupported_family_cannot_decode_a_different_observation"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_current_wrapper_decodes_literal_ids_without_semantic_authority[graph_nodes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_current_wrapper_decodes_literal_ids_without_semantic_authority[graph_edges]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_original_record_bytes_whitespace_unicode_escapes_and_unknown_fields_are_lossless"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_optional_legal_id_transport_parity_preserves_original_body_value[None]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_optional_legal_id_transport_parity_preserves_original_body_value[]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_optional_legal_id_transport_parity_preserves_original_body_value[usc:us:10:1]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_materialized_wrapper_endpoint_field_cannot_override_body_endpoint"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_wrapper_body_parity_or_original_byte_hash_tampering_stays_unresolved[family]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_wrapper_body_parity_or_original_byte_hash_tampering_stays_unresolved[entry_cid]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_wrapper_body_parity_or_original_byte_hash_tampering_stays_unresolved[legal_id]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_wrapper_body_parity_or_original_byte_hash_tampering_stays_unresolved[record_sha256]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"x\":1,\"x\":2}]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"nested\":{\"x\":1,\"x\":2}}]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"x\":NaN}]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"x\":Infinity}]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"x\":-Infinity}]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"x\":1e999}]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{broken]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[[1,2]]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[null]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_missing_explicit_edge_identities_never_use_labels_or_positional_fallback[entry_cid]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_missing_explicit_edge_identities_never_use_labels_or_positional_fallback[source_entry_cid]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_missing_explicit_edge_identities_never_use_labels_or_positional_fallback[target_entry_cid]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_conflicting_identity_aliases_cannot_be_chosen[edge_cid]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_conflicting_identity_aliases_cannot_be_chosen[src]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_conflicting_identity_aliases_cannot_be_chosen[source_node_cid]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_conflicting_identity_aliases_cannot_be_chosen[dst]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_conflicting_identity_aliases_cannot_be_chosen[target_node_cid]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_agreeing_legacy_alias_remains_observed_without_becoming_an_identity_source"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_explicit_unknown_version_never_selects_another_graph_layout[body]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_explicit_unknown_version_never_selects_another_graph_layout[wrapper]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_physical_occurrences_are_distinct_without_text_or_identity_deduplication"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_independent_raw_row_and_manifest_file_ordinal_pins_reject_retargeting"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_regeneration_rejects_resealed_identity_or_authority_promotion"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_invalid_or_noncanonical_identity_is_never_normalized[row-12]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_invalid_or_noncanonical_identity_is_never_normalized[ sha256:1111111111111111111111111111111111111111111111111111111111111111]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_invalid_or_noncanonical_identity_is_never_normalized[SHA256:1111111111111111111111111111111111111111111111111111111111111111]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_invalid_or_noncanonical_identity_is_never_normalized[same display label]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_legacy_flags_missing_wrapper_and_absent_legal_id_cannot_confer_authority"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_records",
+        "name": "test_finite_byte_bounds_and_plain_json_custody_raise_without_truncation"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_wrapped_graph_parquet_preserves_exact_citation_identity"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_unresolved_citation_retains_declared_structural_target_without_legal_id"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_noncitation_edge_is_validated_and_excluded_from_citation_closure"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_unreferenced_structural_node_needs_no_invented_legal_identity"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_distinct_edge_records_preserve_repeated_citation_occurrences_in_order"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[missing_source]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[missing_target]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[missing_entry]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[empty_source]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[empty_target]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[invalid_source]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[wrapper_entry]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[wrapper_legal]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[wrapper_family]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[record_hash]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[duplicate_json_key]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[nonobject_json]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_conflicting_identity_alias_never_overrides_the_explicit_namespace[node_id]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_conflicting_identity_alias_never_overrides_the_explicit_namespace[src]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_conflicting_identity_alias_never_overrides_the_explicit_namespace[dst]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_conflicting_identity_alias_never_overrides_the_explicit_namespace[source_node_cid]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_agreeing_aliases_are_observations_and_do_not_change_endpoint_identity"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_unknown_explicit_schema_never_selects_a_different_transport[wrapper]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_unknown_explicit_schema_never_selects_a_different_transport[body]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_partial_current_wrapper_is_not_downgraded_to_a_legacy_projection[entry_cid]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_partial_current_wrapper_is_not_downgraded_to_a_legacy_projection[legal_id]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_partial_current_wrapper_is_not_downgraded_to_a_legacy_projection[family]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_partial_current_wrapper_is_not_downgraded_to_a_legacy_projection[record_sha256]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_partial_current_wrapper_is_not_downgraded_to_a_legacy_projection[record_json]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_duplicate_record_identities_refuse_instead_of_silent_deduplication[node]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_duplicate_record_identities_refuse_instead_of_silent_deduplication[edge]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_duplicate_record_identities_refuse_instead_of_silent_deduplication[cross_family]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_dangling_endpoint_cannot_masquerade_as_a_legal_id[source_entry_cid]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_dangling_endpoint_cannot_masquerade_as_a_legal_id[target_entry_cid]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_resolved_citation_requires_both_nodes_declared_legal_identities[source]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_current_resolved_citation_requires_both_nodes_declared_legal_identities[target]"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_legacy_flat_citations_keep_direct_legal_ids_and_explicit_unresolved_target"
+      },
+      {
+        "classname": "tests.unit.logic.test_kg_graph_citation_identity",
+        "name": "test_legacy_wrapped_aliases_remain_separate_from_the_current_five_field_profile"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_whole_population_global_endpoints_properties_and_lineage_are_preserved"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_outputs_and_full_reports_are_reproducible_across_destination_paths"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_candidate_identity_excludes_cache_location_and_unselected_older_files"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[duplicate]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[conflict]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[missing]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[malformed]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[edge_duplicate]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[cross_family]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_unresolved_edge_keeps_quarantine_and_complete_endpoint_denominators"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs[authority]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs[count]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs[unknown]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs[candidate_hash]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_tampered_candidate_bytes_and_original_source_bytes_cannot_pass"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_output_bounds_leave_no_partial_candidate_or_owned_tempfile[max_output_bytes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_output_bounds_leave_no_partial_candidate_or_owned_tempfile[max_line_bytes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_real_scratch_allocation_limit_refuses_population_without_partial_output"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_second_pass_population_mutation_is_detected_and_partial_output_removed"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_literal_unknown_and_missing_producer_kinds_remain_observations"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_edges_reference_quarantined_cross_family_identity_as_conflict"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_output_parent_swap_during_second_pass_is_refused_without_publication"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_failed_exclusive_temporary_creation_never_unlinks_a_preexisting_file"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_publication_rollback_preserves_a_replaced_foreign_output"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_cross_family_identity_lookup_has_bounded_work_on_a_populated_index[graph_nodes]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction",
+        "name": "test_cross_family_identity_lookup_has_bounded_work_on_a_populated_index[graph_edges]"
+      }
+    ]
+  },
+  "legal_meanings_reviewed": false,
+  "models_loaded": false,
+  "native_parent_owns_admission_supervision_seal_and_release": true,
+  "pytest_arguments": [
+    "-q",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-c",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/pytest.ini",
+    "-o",
+    "addopts=-q --tb=short --strict-markers --import-mode=importlib",
+    "--noconftest",
+    "--disable-warnings",
+    "-p",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest",
+    "--basetemp=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/pytest/basetemp",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/exports/junit.xml",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/cache/pytest",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_export.py",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_records.py",
+    "tests/unit/logic/test_kg_graph_citation_identity.py",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_whole_population_global_endpoints_properties_and_lineage_are_preserved",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_outputs_and_full_reports_are_reproducible_across_destination_paths",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_candidate_identity_excludes_cache_location_and_unselected_older_files",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_unresolved_edge_keeps_quarantine_and_complete_endpoint_denominators",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_tampered_candidate_bytes_and_original_source_bytes_cannot_pass",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_output_bounds_leave_no_partial_candidate_or_owned_tempfile",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_real_scratch_allocation_limit_refuses_population_without_partial_output",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_second_pass_population_mutation_is_detected_and_partial_output_removed",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_literal_unknown_and_missing_producer_kinds_remain_observations",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_edges_reference_quarantined_cross_family_identity_as_conflict",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_output_parent_swap_during_second_pass_is_refused_without_publication",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_failed_exclusive_temporary_creation_never_unlinks_a_preexisting_file",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_publication_rollback_preserves_a_replaced_foreign_output",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_cross_family_identity_lookup_has_bounded_work_on_a_populated_index"
+  ],
+  "pytest_exit_code": 0,
+  "request_sha256": "f7bf6667a651fdd30e4bafde2b34c1fc0fd275d7f9072b6bb93526db5b5391fc",
+  "schema": "legal-primary-graph-export-qualification/v1",
+  "scope": "selected standalone synthetic-fixture pytest targets only; no original corpus acquisition",
+  "selected_checks": [
+    "tests/unit/logic/autoformal/test_legal_primary_graph_export.py",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_records.py",
+    "tests/unit/logic/test_kg_graph_citation_identity.py",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_whole_population_global_endpoints_properties_and_lineage_are_preserved",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_outputs_and_full_reports_are_reproducible_across_destination_paths",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_candidate_identity_excludes_cache_location_and_unselected_older_files",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_unresolved_edge_keeps_quarantine_and_complete_endpoint_denominators",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_tampered_candidate_bytes_and_original_source_bytes_cannot_pass",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_output_bounds_leave_no_partial_candidate_or_owned_tempfile",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_real_scratch_allocation_limit_refuses_population_without_partial_output",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_second_pass_population_mutation_is_detected_and_partial_output_removed",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_literal_unknown_and_missing_producer_kinds_remain_observations",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_edges_reference_quarantined_cross_family_identity_as_conflict",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_output_parent_swap_during_second_pass_is_refused_without_publication",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_failed_exclusive_temporary_creation_never_unlinks_a_preexisting_file",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_publication_rollback_preserves_a_replaced_foreign_output",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_cross_family_identity_lookup_has_bounded_work_on_a_populated_index"
+  ],
+  "source_semantics_verified": false,
+  "status": "failed",
+  "training_performed": false,
+  "writable_path_redirections": {
+    "HF_DATASETS_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/cache",
+    "HF_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/cache",
+    "HF_HUB_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/cache",
+    "HUGGINGFACE_HUB_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/cache",
+    "SENTENCE_TRANSFORMERS_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/cache",
+    "SQLITE_TMPDIR": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/db",
+    "TEMP": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/tmp",
+    "TMP": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/tmp",
+    "TMPDIR": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/tmp",
+    "TRANSFORMERS_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/cache",
+    "XDG_CACHE_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-01/cache"
+  }
+}

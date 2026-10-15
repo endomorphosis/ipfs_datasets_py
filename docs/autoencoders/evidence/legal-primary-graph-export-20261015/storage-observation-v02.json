@@ -1,0 +1,32 @@
+{
+  "elapsed_seconds": 14.878669438883662,
+  "entrypoint": "run_autoencoder_fleet.storage_capacity",
+  "ledger_mutated_by_this_observer": false,
+  "native_reservation_acquired": false,
+  "numerical_CID_or_SDK_imports": [],
+  "observation": {
+    "headroom_bytes": 27898577569,
+    "ledger_modified": false,
+    "limit_bytes": 160000000000,
+    "minimum_filesystem_free_bytes": 188050640896,
+    "observed_apparent_bytes": 98466992031,
+    "outstanding_reservations_bytes": 33634430400,
+    "reservation_acquired": false
+  },
+  "original_corpus_or_checkpoint_bodies_opened": false,
+  "schema": "legal-primary-export-storage-observation/v1",
+  "scope": "Nontransactional existing read-only control-plane aggregate; not native admission.",
+  "source_sha256": {
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/__init__.py": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/_router_alias.py": "908ecfb1abdb38edbe8da2b3efd89eec88594d97acfd7cb54518ff7ea2b23e20",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/__init__.py": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": "7c889bc858ff092e18bd2e97ff5a6407973e226eae33cddc9e5eef1d21f35986",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/router_deps.py": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_autoencoder_fleet.py": "d7319851aac58ebc2b7ac8c1cb10d715da3f799815a49cbc2b9879b94e25c7d5"
+  },
+  "started_at_utc": "2026-10-15T20:04:06.919776+00:00"
+}
