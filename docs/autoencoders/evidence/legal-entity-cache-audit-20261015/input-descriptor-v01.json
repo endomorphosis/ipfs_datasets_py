@@ -1,0 +1,40 @@
+{
+  "admitted": false,
+  "download_allowed_only_after_native_admission": true,
+  "expected_file_bytes": 11139328,
+  "expected_file_sha256": "f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233",
+  "expected_rows": null,
+  "expected_rows_origin": "To be observed from the exact hash-verified file footer inside native execution; not independently known or adopted from Viewer.",
+  "git_pointer_blob_sha1": "0a55d8e7f3ab74d4f046c115a88ab20c102e3cdc",
+  "head_observation_scope": "Same revision at open and close only.",
+  "metadata_observations": [
+    {
+      "bytes": 1221,
+      "local_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/entity-hub-main-open.json",
+      "sha256": "639182e840301a2c154d9152a125dd501d5097354a887f57009bc0d910aa60ed",
+      "status": 200,
+      "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache"
+    },
+    {
+      "bytes": 1534,
+      "local_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/entity-hub-pinned.json",
+      "sha256": "a6e283701865a8a93cf88010f8f684a940750cfb3aa2c7ff82181de20576bd1b",
+      "status": 200,
+      "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache/revision/79d54378c5d6a89ab56e7a27e0f0ba867e800e19?blobs=true"
+    },
+    {
+      "bytes": 1221,
+      "local_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/entity-hub-main-close.json",
+      "sha256": "639182e840301a2c154d9152a125dd501d5097354a887f57009bc0d910aa60ed",
+      "status": 200,
+      "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache"
+    }
+  ],
+  "observed_at_utc": "2026-10-15T17:25:23.410591+00:00",
+  "repository_id": "justicedao/uscode-autoformal-entity-cache",
+  "repository_path": "autoformal/uscode/kg-logic-index.parquet",
+  "resolve_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/resolve/79d54378c5d6a89ab56e7a27e0f0ba867e800e19/autoformal/uscode/kg-logic-index.parquet",
+  "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+  "schema": "legal-entity-cache-pinned-input/v1",
+  "source_semantics_verified": false
+}
