@@ -1,0 +1,33 @@
+{
+  "all_authority_flags_false": true,
+  "all_sealed_paths_sizes_hashes_device_inode_exact": true,
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-b-02",
+  "durability": {
+    "bytes": 12129,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-b-02/logs/validation-durability.json",
+    "sha256": "47a3d1a240f8fce9e9abd53601c6500fd95a3c37721ca6e1bd332c330d06ec67"
+  },
+  "final_bytes": 10634265,
+  "final_files": 69,
+  "method": "Independent stdlib read-only request/source/ordinary-file/native-seal/exact-selected-ledger-row inspection. No product imports, tests, resource acquisition, recovery or attempt writes.",
+  "native_elapsed_seconds": 320.49554496607743,
+  "observed_at_utc": "2026-10-15T21:03:58.681033+00:00",
+  "request": {
+    "bytes": 52956,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-retained-source-correspondence-20261015/validation-request-b-02.json",
+    "sha256": "40f7c340044279f430589f287ac18e63fc5e157e40f4e69e031ea4f955665f27"
+  },
+  "result": {
+    "bytes": 700,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-b-02/logs/result.json",
+    "sha256": "7c21daa0096ba7ea5001919290892828350a717679ed7f3fec150c0bb1405550"
+  },
+  "schema": "retained-source-native-independent-audit/v1",
+  "sealed_files": 68,
+  "selected_checks": [
+    "retained-section101-definition-review-correspondence-fol-tdfol-with-eight-refusals"
+  ],
+  "selected_storage_status": "released",
+  "source_pins_rehashed": 227,
+  "storage_budget": 268435456
+}

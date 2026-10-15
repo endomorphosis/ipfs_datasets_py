@@ -1,0 +1,242 @@
+{
+  "actual_source": {
+    "attempt": "b-02",
+    "blank_question_slots": 8400,
+    "candidate_statutory_paragraphs": 134,
+    "controls": 426,
+    "curated_omitted_historical_duplicate_inputs": 13,
+    "curated_publication_bytes": 1621925,
+    "curated_publication_files": 51,
+    "export_bytes": 10620287,
+    "export_files": 64,
+    "families": [
+      {
+        "actual_responses": 0,
+        "actual_reviews": 0,
+        "correspondence_sha256": "1429c6c73ba2ec3b973ea3402803e3632df0d185ff08761647abcacad366822d",
+        "family": "fol",
+        "graph_edges": 26,
+        "graph_nodes": 15,
+        "native_ast_sha256": "3d5ea9d4a02c3b6134b1e37f02b589d16fd4c0fdffbf568da7dac8f98480e500",
+        "physical_context_occurrences": 6,
+        "replay_index": {
+          "bytes": 4967,
+          "path": "actual-fol-replay-index.json",
+          "sha256": "848548eb9725f63d4e7ce14d214af71bae2d0ce5d2024cf136857972f0aaa585"
+        },
+        "selected_open_context_slots": 36,
+        "selected_subjects": 2,
+        "whole_population_pending": 560
+      },
+      {
+        "actual_responses": 0,
+        "actual_reviews": 0,
+        "correspondence_sha256": "eafaed34bbb88abaa69f2ba8e8b2a28082f589e29781a62d62b83cfb36f8d7d3",
+        "family": "tdfol",
+        "graph_edges": 26,
+        "graph_nodes": 15,
+        "native_ast_sha256": "3d5ea9d4a02c3b6134b1e37f02b589d16fd4c0fdffbf568da7dac8f98480e500",
+        "physical_context_occurrences": 6,
+        "replay_index": {
+          "bytes": 4985,
+          "path": "actual-tdfol-replay-index.json",
+          "sha256": "84d6c50b85a5e9fb98f18486169b84ae5ff6b2b50d57fbf20e3d78cea0355b0c"
+        },
+        "selected_open_context_slots": 36,
+        "selected_subjects": 2,
+        "whole_population_pending": 560
+      }
+    ],
+    "file_index": {
+      "bytes": 10872,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/file-index.json",
+      "sha256": "b199860a06d2ba8f69f0197e5d088205ac4eae8c77aa4280b5a78a212289d0a3"
+    },
+    "final_bytes": 10634265,
+    "final_files": 69,
+    "full_attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-b-02",
+    "named_check_count": 17,
+    "named_checks": [
+      "independently_pinned_original_receipt_source_and_request_chain",
+      "complete_560_subjects_134_candidates_426_controls_8400_blanks_3360_original_obligations",
+      "fol_exact_original_inputs_six_contexts_current_subject_and_full_population_link",
+      "fol_public_full_regeneration_preserves_unsigned_authority_and_retained_artifacts",
+      "tdfol_exact_original_inputs_six_contexts_current_subject_and_full_population_link",
+      "tdfol_public_full_regeneration_preserves_unsigned_authority_and_retained_artifacts",
+      "declared_pure_first_order_subset_matches_both_family_routes",
+      "negative_independent-link-pin_refused",
+      "negative_omitted-unselected-population_refused",
+      "negative_pretty-report-transport_refused",
+      "negative_missing-context_refused",
+      "negative_reordered-context_refused",
+      "negative_swapped-context-packet_refused",
+      "negative_incomplete-dependency-closure_refused",
+      "negative_mixed-family-candidate_refused",
+      "all_original_inputs_new_originals_and_public_owner_bytes_retained",
+      "closed_bounded_primary_artifact_inventory_exact_readback"
+    ],
+    "native_seconds": 320.49554496607743,
+    "negative_controls_refused": 8,
+    "original_input_files": 13,
+    "original_open_context_obligations": 3360,
+    "pytest_cases_claimed": false,
+    "receipt": {
+      "bytes": 21119,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/replay-receipt.json",
+      "sha256": "ca49f5783d96664c6c53f61d23b91d6adfcac283e505efc70a66ec5e4b095b2a"
+    },
+    "same_process_saved_artifact_readback": true,
+    "sealed_files": 68,
+    "selected_storage_status": "released",
+    "separate_fresh_interpreter_readback": false,
+    "source_pins": 227,
+    "source_subjects_unique": 560
+  },
+  "authority": {
+    "Lean_admitted": false,
+    "accepted_view_eligible": false,
+    "actual_legal_review_performed": false,
+    "admitted": false,
+    "applicability_semantics_verified": false,
+    "applicability_verified": false,
+    "assessment_performed": false,
+    "backend_executed": false,
+    "binding_authenticated": false,
+    "context_closure_verified": false,
+    "cross_family_equivalence_verified": false,
+    "definition_operator_interpreted": false,
+    "evaluation_gold_qualified": false,
+    "exposure_authenticated": false,
+    "exposure_correspondence_verified": false,
+    "external_definition_resolution_verified": false,
+    "formalized": false,
+    "governing_source_binding_verified": false,
+    "human_identity_verified": false,
+    "human_independence_verified": false,
+    "independently_reviewed": false,
+    "lean_compilation_verified": false,
+    "learned_translation": false,
+    "legal_currentness_verified": false,
+    "legal_dependency_inventory_exhaustive": false,
+    "legal_roles_verified": false,
+    "meaning_admitted": false,
+    "proof_authority": false,
+    "publisher_authenticity_verified": false,
+    "review_subject_authenticated": false,
+    "reviewer_identity_authenticated": false,
+    "reviewer_independence_verified": false,
+    "semantic_agreement_verified": false,
+    "semantic_graph_admitted": false,
+    "signature_verified": false,
+    "source_authenticity_verified": false,
+    "source_context_resolved": false,
+    "source_findings_verified": false,
+    "source_semantics_verified": false,
+    "training_gold_qualified": false,
+    "training_qualified": false
+  },
+  "canonical_runtime_checkout_observation": {
+    "dirty": true,
+    "head": "74f5d98c8ffff3c284cffddf430091b5fc4c6f8c",
+    "observed_at_utc": "2026-10-15T21:10:52.669477+00:00",
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "reason": "Foreign active checkout has tracked and untracked work; publication to origin/main is separate from safe adoption into that runtime.",
+    "refreshed_or_mutated_by_this_increment": false
+  },
+  "checkpoint_separation": "IR family / schema version / decoder task / dimension and context/token profile / retained asset lineage",
+  "driver": {
+    "bytes": 39684,
+    "path": "scripts/ops/legal_ir/replay_retained_definition_correspondence.py",
+    "sha256": "a580d10c33539058ff5019a6edd1b48a14b65adac4597567629573998f5a9d8b"
+  },
+  "driver_source_commit": "6ece63e4da70596c223779e804136968ccebe124",
+  "evaluation_gold_mask": 0,
+  "executed_precommit_head_observed_at_b_launch": "de95d23980725e857ebdb2c98fd989fb15635f6e",
+  "failed_attempt": {
+    "attempt": "b-01",
+    "command_returncode": 1,
+    "completed": false,
+    "failed_result_promoted": false,
+    "native_seconds": 76.56182333896868,
+    "old_driver": {
+      "bytes": 38913,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/failed-driver-b-01.py",
+      "sha256": "35570c5563a6f809c1aad011f6189b5afabcf002846476cf597be4c4a8937af1"
+    },
+    "originals_rewritten": false,
+    "owner_or_validation_weakened": false,
+    "physical_bytes_deleted": 0,
+    "preserved_apparent_bytes": 9005753,
+    "preserved_regular_files": 17,
+    "reason": "Explicit default view/sampling limits changed the original sealed request shape; exact omitted optional keys must remain omitted.",
+    "recovery_audit": {
+      "bytes": 2930,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/recovery-b-01-audit.json",
+      "sha256": "a5f25665536e1340b2b6d9ef8a3e19b0fe40e0236333f602f24bd2a6fe43737b"
+    },
+    "storage_promise_released_bytes": 268435456
+  },
+  "initial_main": "685b565f5710fecbf42b9f92b8a7131e1401f0dd",
+  "main_reconciliation": {
+    "bytes": 11250,
+    "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/upstream-reconciliation.json",
+    "sha256": "db9f8e3807ff029e4b3ab0d3004778b4632ea514b80ef7a63b7db9d5ca206094"
+  },
+  "model_acceptance_changed": false,
+  "models_or_embeddings_created": false,
+  "namespace": {
+    "attempt": "a-01",
+    "errors": 0,
+    "failures": 0,
+    "final_bytes": 12871,
+    "final_files": 14,
+    "independent_review": {
+      "bytes": 8466,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/namespace-independent-review.json",
+      "sha256": "09b5495e2923f65535a1903763fcc2bcba704a47c5f971fb2547cbfe80b40fd5"
+    },
+    "native_seconds": 58.18734279484488,
+    "new_early_override_cases_included": 16,
+    "pytest_cases": 21,
+    "pytest_seconds": 15.626,
+    "sealed_files": 13,
+    "selected_storage_status": "released",
+    "skips": 0,
+    "source_pins": 256,
+    "whole_modules": 1
+  },
+  "observed_at_utc": "2026-10-15T21:07:33.576201+00:00",
+  "parallel_adoption_commit": "de95d23980725e857ebdb2c98fd989fb15635f6e",
+  "parallel_ir_paths": [
+    "8D",
+    "384D",
+    "768D"
+  ],
+  "parallel_original_commit": "4a88f05b1feb35c77db11c8442b2ccfd714ba672",
+  "qualification_limits": [
+    "21pytestcases and17named standalone checks are distinct denominators; no cumulative novel coverage sum with earlier296/316/160 author runs.",
+    "Native qualification covers finite declared source cohorts, not complete installed or dynamic import closure; sampled cooperative process group is not arbitrary descendant containment.",
+    "Both family outputs describe the same declared definition/source case in the pure first-order subset.560source subjects are preserved pending, not560formalized laws.",
+    "Exact custody, shape and declared geometry do not establish source authenticity, authenticated exposure, independent legal/formal review, semantic agreement or training/gold.",
+    "No model/embedding/encoder/training/native compiler/Lean or new checkpoint registration/upload was executed; published384head observations and160case exporter qualification remain separate attributed work.",
+    "Actual original-corpus exporter processing, primary physical-row to semantic candidate correspondence and historical flat-cache lineage remain separate gaps."
+  ],
+  "schema": "legal-ir-retained-source-correspondence-integration/v1",
+  "source_custody": {
+    "all_original_transport_bytes_preserved": true,
+    "bundle_exceeds_native_four_MiB_pin_limit": true,
+    "bundle_separately_bounded_descriptor_and_driver_before_after_replay_checks": true,
+    "descriptor": {
+      "bytes": 4737,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/retained-inputs.json",
+      "sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736"
+    },
+    "new_reports_candidates_subjects_not_historical_originals": true,
+    "provenance": {
+      "bytes": 13060,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/retained-inputs-provenance-audit.json",
+      "sha256": "b637ddac2979600935c251a9bff4091bd9deb5041e34f100567ecb56604ecba7"
+    }
+  },
+  "training_mask": 0
+}

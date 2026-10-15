@@ -1,0 +1,15 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 58.18734279484488,
+  "executed_checks": [
+    "tests/unit/logic/integration/test_reasoning_lazy_imports.py"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "b96f146e6a59cc40fc90bf58a8b40c228d3ed68ae739cba770b2d63dabf93a43",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

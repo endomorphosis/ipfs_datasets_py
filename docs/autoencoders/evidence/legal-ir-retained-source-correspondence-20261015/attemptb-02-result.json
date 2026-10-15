@@ -1,0 +1,13 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-b-02/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-b-02/logs/execution.json"
+  ],
+  "executed_checks": [
+    "retained-section101-definition-review-correspondence-fol-tdfol-with-eight-refusals"
+  ],
+  "request_sha256": "40f7c340044279f430589f287ac18e63fc5e157e40f4e69e031ea4f955665f27",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

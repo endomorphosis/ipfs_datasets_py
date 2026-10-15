@@ -1,0 +1,241 @@
+{
+  "actual_responses": 0,
+  "actual_reviews": 0,
+  "all_original_read_inputs_preserved": true,
+  "authority": {
+    "evaluation_gold": false,
+    "exposure_authentication": false,
+    "legal_meaning": false,
+    "proof": false,
+    "review_authentication": false,
+    "semantic_admission": false,
+    "source_authenticity": false,
+    "training_gold": false
+  },
+  "canonical_namespace_commitments": {
+    "bundle_full_canonical_sha256": "62bbead449c5e1d10cbdb23957f3a6325ad6cb830b86106086fd1ccd66134b33",
+    "canonical_hashes_do_not_replace_original_file_hashes": true,
+    "descriptor_full_canonical_sha256": "431a4da4edc59bed35841256a9e13a56c52715b227e5d0a036b55ae255df07c8",
+    "sampling_report_full_canonical_sha256": "be524c7822f5e19a16ee56740560b19b0311001c553bd7ca9c2c9ed989af98b1"
+  },
+  "descriptor": {
+    "bytes": 4737,
+    "closed_input_row_fields": [
+      "name",
+      "path",
+      "bytes",
+      "sha256"
+    ],
+    "closed_top_level_fields": [
+      "schema",
+      "inputs"
+    ],
+    "file": "retained-inputs.json",
+    "required_roles_order": [
+      "c02_receipt",
+      "source_review_receipt",
+      "sampler_receipt",
+      "bundle",
+      "raw_html",
+      "descriptor",
+      "acquisition_receipt",
+      "sampling_report",
+      "fol_request",
+      "tdfol_request",
+      "fol_result",
+      "tdfol_result",
+      "actual_responses"
+    ],
+    "schema": "retained-definition-correspondence-inputs/v1",
+    "sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736"
+  },
+  "evaluation_gold_mask": 0,
+  "historical_c02_receipt": {
+    "all_output_filename_size_sha_joins": true,
+    "bytes": 11149,
+    "exact_closed_file_population": 26,
+    "output_bytes": 7041460,
+    "output_rows": 25,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/replay-receipt.json",
+    "receipt_is_historical_not_new_run": true,
+    "schema": "legal-ir-definition-candidate-binding-replay/v1",
+    "sha256": "3e2b421aed87627b540712de89d7d8cfc00b7fd1dcb9966ac54044d62383c82b"
+  },
+  "historical_controller": {
+    "bytes": 28445,
+    "current_tree_path": "docs/autoencoders/evidence/legal-ir-definition-use-review-v2-integration-20261015/run_actual_definition_binding.py",
+    "original_predecessor_path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-candidate-binding-20261015-01/run_actual_definition_binding.py",
+    "original_predecessor_sha256": "3c7facd701f90231cb63f637f2cc01a9ba08c720bae16609d1bd43637e73d9b5",
+    "sha256": "c483c0f1abbfa7f8cf5471f7a710feaa474b3cefb6f7da0c89ae76c31b9545ff"
+  },
+  "historical_sampler_receipt": {
+    "bytes": 3343,
+    "complete_decoded_report_equal_to_bundle_sampling_report": true,
+    "independently_pinned_outputs": [
+      {
+        "bytes": 2790275,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/sampling-report.json",
+        "sha256": "173e3995b8628c76fbffcff1e1d77aad8d22d32ef84c3335e3ccc1c05af836d6"
+      },
+      {
+        "bytes": 2073483,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/records.jsonl",
+        "sha256": "bee69343b533bba0cc57f3282c604c1e9daf73eaede7f205bf89262dbd3f1050"
+      },
+      {
+        "bytes": 173832,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/candidate-inputs.jsonl",
+        "sha256": "10027f8de59ff8b2b1d962a4b66d97821c191127b03e79498e328d8a85465d57"
+      }
+    ],
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/integration-receipt.json",
+    "report_full_canonical_sha256": "be524c7822f5e19a16ee56740560b19b0311001c553bd7ca9c2c9ed989af98b1",
+    "sha256": "90152d5f2226955929392dd24d514e80ca19e313b7d3a7c3be28ec8972aaf2b8"
+  },
+  "historical_source_review_receipt": {
+    "all_original_output_rows_verified": 14,
+    "bytes": 7705,
+    "c02_shared_outputs_equal": [
+      "review-bundle.json",
+      "source.html",
+      "acquisition-descriptor.json",
+      "acquisition-receipt.json"
+    ],
+    "copied_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/prior-replay-receipt.json",
+    "original_and_copy_bytes_equal": true,
+    "original_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/replay-receipt.json",
+    "sha256": "10e6cf392bfe00fa175de5d3dc931a20a63517594ea3eed89d40a5a5c185ec93"
+  },
+  "method": {
+    "compiler_invocations": 0,
+    "models_loaded": 0,
+    "network_requests": 0,
+    "product_imports": 0,
+    "read_policy": "Absolute unaliased directory chain, bounded NOFOLLOW regular nlink1 file, stable identity/size/timestamps before-after-path and exact independent original hash; final source fence repeats all reads.",
+    "tests_executed": 0
+  },
+  "native_source_pin_policy": {
+    "bundle_policy": "Bundle5664497 bytes exceeds unchanged native source_guard4MiB ceiling. Pin this descriptor and controller independently; controller must perform its separately bounded original-file hash/canonical/filename-receipt checks before and after every public operation. Do not claim bundle itself was native-source-pinned.",
+    "eligible_roles": [
+      "c02_receipt",
+      "source_review_receipt",
+      "sampler_receipt",
+      "raw_html",
+      "descriptor",
+      "acquisition_receipt",
+      "sampling_report",
+      "fol_request",
+      "tdfol_request",
+      "fol_result",
+      "tdfol_result",
+      "actual_responses"
+    ],
+    "ineligible_roles": [
+      "bundle"
+    ],
+    "maximum_individual_bytes": 4194304
+  },
+  "new_actual_source_replay_performed": false,
+  "observed_at_utc": "2026-10-15T20:45:58.035319+00:00",
+  "producer_generation_constraints": {
+    "historical_absolute_producer_paths_preserved": true,
+    "replay_requirement": "Regenerate new binding/candidate/context/subject under actual current module origins; retain historical results unchanged as independently pinned comparison evidence. New absolute producer paths change derived identities despite equal source bodies. Never rewrite an old report pin/producer path or call fresh serialization historical original.",
+    "same_owner_bodies_at_new_checkout": [
+      {
+        "body_equal": true,
+        "current_path": "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+        "historical_path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+        "module": "ipfs_datasets_py.logic.autoformal.legal_source_sampling_definition_binding_v2",
+        "path_equal": false,
+        "sha256": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417"
+      },
+      {
+        "body_equal": true,
+        "current_path": "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+        "historical_path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+        "module": "ipfs_datasets_py.logic.autoformal.legal_source_sampling_review",
+        "path_equal": false,
+        "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+      },
+      {
+        "body_equal": true,
+        "current_path": "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling.py",
+        "historical_path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling.py",
+        "module": "ipfs_datasets_py.logic.autoformal.legal_source_sampling",
+        "path_equal": false,
+        "sha256": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489"
+      },
+      {
+        "body_equal": true,
+        "current_path": "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py",
+        "historical_path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py",
+        "module": "ipfs_datasets_py.logic.autoformal.legal_source_definition_bridge_v2",
+        "path_equal": false,
+        "sha256": "dc4448d3cb8dbbc23f7686674bb5b2b56d04cfbdb74b817b9e22b180ee7ee36a"
+      },
+      {
+        "body_equal": true,
+        "current_path": "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py",
+        "historical_path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py",
+        "module": "ipfs_datasets_py.logic.autoformal.corpus_definition_adapter_v2",
+        "path_equal": false,
+        "sha256": "2e0eed594cbfa256f54d229e2c9e006eada04263aae17c5d330c79741047f087"
+      },
+      {
+        "body_equal": true,
+        "current_path": "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/corpus_contracts.py",
+        "historical_path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_contracts.py",
+        "module": "ipfs_datasets_py.logic.autoformal.corpus_contracts",
+        "path_equal": false,
+        "sha256": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa"
+      },
+      {
+        "body_equal": true,
+        "current_path": "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/corpus_graph.py",
+        "historical_path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_graph.py",
+        "module": "ipfs_datasets_py.logic.autoformal.corpus_graph",
+        "path_equal": false,
+        "sha256": "da2bef54beca29d0d613d46a81241f6f1b7f049e1c9bf9cf1c118d9942374061"
+      }
+    ]
+  },
+  "report_transport_constraint": "C02 exported definition-report files contain compact JSON plus LF. Their candidates bind compact report WITHOUT LF: FOLbf07126b0109ee7f0dae1933349c5c8769432aeb6ebc34698a5d7fffed74419d and TDFOLc6a70588dfd08d87dfc21c103deda5a8adcd01c4bd943147091e4f8cec886301. For fresh regenerated candidate capture the exact fresh compact report transport and independent pins, not the historical exported report-file bytes.",
+  "repository_head": "685b565f5710fecbf42b9f92b8a7131e1401f0dd",
+  "schema": "retained-definition-correspondence-input-provenance-audit/v1",
+  "source_context_obligations": 3360,
+  "source_counts": {
+    "blocks": 560,
+    "interblock_LF_separators": 559,
+    "records": 1681,
+    "region_kinds": {
+      "editorial_notes": 76,
+      "historical_revision_notes": 109,
+      "metadata_header": 8,
+      "section_heading": 1,
+      "source_credit": 1,
+      "statute": 134,
+      "statutory_notes": 231
+    },
+    "strata": {
+      "candidate_statute_paragraph": 134,
+      "retained_context_control": 426
+    },
+    "units": 560,
+    "withheld_fragmented_paragraphs": 0
+  },
+  "training_diagnostic_survey": {
+    "commit": "685b565f5710fecbf42b9f92b8a7131e1401f0dd",
+    "material_plan_effect": "Add fixed-schema-vocabulary diagnostic before further view-head tuning; accepted structural384 sparse update only improved repeated-tuning embedding reconstruction, formula/deonticIR metrics unchanged; two real nonzero-gradient view proposals remain rejected/rolledback. Four-vs-six support inflation confounds comparison. No independent holdout, decoder/formula reconstruction, semantic supervision, teacher promotion or new model validation follows. No effect on source-correspondence owner bytes or semantics.",
+    "source_objects": {
+      "docs/autoencoders/legal_ir_head_training_probe_20261015.md": {
+        "bytes": 6264,
+        "sha256": "2f55e77a69a20b37216bf59279ef1e610357d148350eeb575b42a96fb23dafcc"
+      },
+      "docs/implementation/reports/evidence/legal_ir_head_training_probe_20261015.json": {
+        "bytes": 14396,
+        "sha256": "bd3599791fd6b9238c02226630639b3b499c723b348cf4e9535af4c5ccbe73db"
+      }
+    }
+  },
+  "training_mask": 0
+}

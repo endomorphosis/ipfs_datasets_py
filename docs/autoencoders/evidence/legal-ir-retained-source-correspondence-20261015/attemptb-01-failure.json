@@ -1,0 +1,19 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": false,
+  "elapsed_seconds": 76.56182333896868,
+  "error": "validation command failed with returncode 1",
+  "error_type": "RuntimeError",
+  "executed_checks": [
+    "retained-section101-definition-review-correspondence-fol-tdfol-with-eight-refusals"
+  ],
+  "model_weights_downloaded": false,
+  "received_signals": [],
+  "request_sha256": "5be492c8c7a06af4505040d4eec3f262b6111fdcbe8e1ad6ac5e1da7d1029bd0",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 1,
+  "schema": "owned-validation-result/v1",
+  "watchdog_errors": []
+}

@@ -1,0 +1,94 @@
+{
+  "actual_retained_input_binding_fields": [
+    "descriptor",
+    "expected_descriptor_sha256",
+    "expected_raw_bytes",
+    "expected_raw_sha256"
+  ],
+  "authority": {
+    "corrected_native_probe_pass_observed": false,
+    "gold_admitted": false,
+    "meaning_authenticated": false,
+    "proof_admitted": false,
+    "review_performed": false
+  },
+  "contract_sources": [
+    {
+      "bytes": 33945,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+      "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+    },
+    {
+      "bytes": 22701,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+      "sha256": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417"
+    }
+  ],
+  "corrected_driver": {
+    "bytes": 39684,
+    "path": "scripts/ops/legal_ir/replay_retained_definition_correspondence.py",
+    "sha256": "a580d10c33539058ff5019a6edd1b48a14b65adac4597567629573998f5a9d8b"
+  },
+  "correction_reason": "The first native B01 genuinely failed during initial binding preparation. The earlier static review missed that optional keyword presence is committed by the retained review bundle manifest, even when explicit values equal sampler defaults.",
+  "diagnosis": [
+    "legal_source_sampling_review._input_snapshot copies the exact allowed keyword mapping, including whether optional view_limits and sampling_limits are present.",
+    "validate_sampling_review_bundle regenerates the complete original bundle with its independently pinned bundle limits and requires offered == expected. The retained manifest.input_binding omits both optional sampler limit fields.",
+    "The original driver added both optional limit fields. Equal sampler reports did not make the resulting input_binding/manifest identical; the existing strict owner refusal was correct.",
+    "This was not evidence that producer-origin differences were inherently unsupported. The intended current candidate/report/subject remain a distinct producer generation, with the historical source/bundle/candidate artifacts unchanged."
+  ],
+  "minimal_patch_checks": {
+    "added_lines": 17,
+    "all_previously_reviewed_eight_operation_owner_source_hashes_unchanged": true,
+    "ast_parse": true,
+    "closed_required_four_optional_two_field_contract": true,
+    "deep_copy_original_manifest_input_binding": true,
+    "inline_equality_removing_report_pin_preserves_original_mapping": true,
+    "one_unified_diff_hunk_limited_to_replay_block": true,
+    "only_complete_sampling_report_pin_added": true,
+    "original_failed_driver_and_initial_review_retained_unchanged": true,
+    "raw_length_requires_exact_integer_type": true,
+    "removed_lines": 8,
+    "retained_descriptor_canonical_pin_and_raw_sha_length_checked": true,
+    "sequence_matcher_changed_opcodes": 2,
+    "standalone_new_generation_context_limit_calls_unchanged": true
+  },
+  "native_b01_failure_record": {
+    "bytes": 662,
+    "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-01-failure.json",
+    "sha256": "1657e29c6a276bcda949c2306e1f7f500dc4f4bb8aac042ddbc16e58991c85ee"
+  },
+  "native_calls_by_reviewer": 0,
+  "observed_b01": {
+    "completed": false,
+    "elapsed_seconds": 76.56182333896868,
+    "promoted_to_success": false,
+    "request_sha256": "5be492c8c7a06af4505040d4eec3f262b6111fdcbe8e1ad6ac5e1da7d1029bd0",
+    "returncode": 1
+  },
+  "preserved_failed_driver": {
+    "bytes": 38913,
+    "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/failed-driver-b-01.py",
+    "sha256": "35570c5563a6f809c1aad011f6189b5afabcf002846476cf597be4c4a8937af1"
+  },
+  "preserved_original_static_review": {
+    "bytes": 7750,
+    "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/implementation-review.json",
+    "sha256": "47a24dd994f889faaf9ca1711b224aebb454c31d34fd0718d0c62f651788b67c"
+  },
+  "prior_static_review_missed_shape_sensitive_replay": true,
+  "runtime_executions_by_reviewer": 0,
+  "schema": "legal-retained-definition-correspondence-correction-review/v1",
+  "scope": [
+    "Static source and retained JSON/hash review only. No product imports, tests, driver invocation, native API invocation or compiler/model/solver execution was performed by this reviewer.",
+    "This review records a correction to the earlier static assessment, not successful execution of the corrected driver. The next exact native attempt must independently demonstrate complete output, refusals, source guards, durability and release.",
+    "No historical bundle, input descriptor, source original, producer identity, subject signing domain or existing public owner was relaxed or rewritten.",
+    "Unsigned source-to-subject linkage does not authenticate declarations, exposure, legal meaning, reviewer independence or gold, and grants no semantic/proof/model authority."
+  ],
+  "status": "no_concrete_static_blocker_in_minimal_correction",
+  "tests_executed_by_reviewer": 0,
+  "unchanged_input_descriptor": {
+    "bytes": 4737,
+    "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/retained-inputs.json",
+    "sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736"
+  }
+}

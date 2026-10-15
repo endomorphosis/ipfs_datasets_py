@@ -1,0 +1,616 @@
+{
+  "files": [
+    {
+      "bytes": 15986,
+      "git_blob_sha1": "54380fcc33d62fbcea35bdb8863259ef4b51d381",
+      "path": "docs/autoencoders/README.md",
+      "sha256": "2901d7a1e491bb239ac6249ee7ecce6100a804fda2427981ac10d8121fa7bc58"
+    },
+    {
+      "bytes": 2633,
+      "git_blob_sha1": "34a02816b401b7ced410a0bfea046f914b016977",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/README.md",
+      "sha256": "bb26ff55039a6c8219c01511584df5ffbb2074a8937a440bae94e4d131931f96"
+    },
+    {
+      "bytes": 208001,
+      "git_blob_sha1": "51de09d262dae74a10ff34dfe5786ddf2225255d",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-binding-result.json",
+      "sha256": "6a438cd715a71ea92944b5a07805164182d18013f2222b8a9785c1df7643c6b5"
+    },
+    {
+      "bytes": 57051,
+      "git_blob_sha1": "de86d926e0812fd306f285d9a9d003ef215cecdb",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-candidate-input.json",
+      "sha256": "0a0d46c40ea8c97e99fcfd7859497d0d1e2793c36ee8384a8e7f17875ddcaa8c"
+    },
+    {
+      "bytes": 4686,
+      "git_blob_sha1": "8fed842be434ef3d9834411cde3b3b28d87a46de",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-00.json",
+      "sha256": "b1dc8245be9ba3ecf768873ab82f94fc38a45cc65c35c2d05274623c02b79043"
+    },
+    {
+      "bytes": 4651,
+      "git_blob_sha1": "7540a74dc515c7c2abca66c872fab3b83bee03c2",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-01.json",
+      "sha256": "5716e65c77e1aab7fc2afafd48c4801aa611d5ec4fb9acf7a8e9473d903fb26b"
+    },
+    {
+      "bytes": 4596,
+      "git_blob_sha1": "c88b133ef6f42d222ad21f3c485647d1a24fd68c",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-02.json",
+      "sha256": "9aef24b56db1801ec213fdaef1d18f1cf60605a364ed51d857a353742dd551b1"
+    },
+    {
+      "bytes": 4597,
+      "git_blob_sha1": "7b98d1fd64943e2fa85f4b0faab9803ef4769f4d",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-03.json",
+      "sha256": "1d43e484482a9206fb4044b8950cc860e2b3b18d597ac99590b0bc7b8564d0dc"
+    },
+    {
+      "bytes": 4587,
+      "git_blob_sha1": "990c64a4776f7622607a863d942ead4ec3f3ccd5",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-04.json",
+      "sha256": "2f9889e298394690629b90020851e1470279df9365bccb4abe76764351985c0c"
+    },
+    {
+      "bytes": 4611,
+      "git_blob_sha1": "d84fabf6f0f1f8d999cee6ee62d370057ac868d8",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-05.json",
+      "sha256": "c8db5e2b3376011c24a20dcad456b65ab3458e08d75efa5fab460225022f0b7f"
+    },
+    {
+      "bytes": 3209,
+      "git_blob_sha1": "f666d8f63fd4382a08721b8dfddb1fa80ca8ed11",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-index.json",
+      "sha256": "c8a19f1bbd78317983b0a517df04b9abe709d063851ccc3ffeb311be7237d2e8"
+    },
+    {
+      "bytes": 133255,
+      "git_blob_sha1": "99ba89bc5e522a479745237d0b2a0d5df8387064",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-correspondence.json",
+      "sha256": "f9f70fc76952819aa3c82ef5dfcb598675e9d89ae632d8f3ad523087afaac9b7"
+    },
+    {
+      "bytes": 37109,
+      "git_blob_sha1": "0cb70563381bd8722c1e8ab2e7792041ee7db2ce",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-dependency-manifest.json",
+      "sha256": "9408bedf4c8886e69f418bf3d1112201602daff615e914d882afdc1e6010db75"
+    },
+    {
+      "bytes": 2174,
+      "git_blob_sha1": "1f70214c4a94851f90b09e0d77eb0441c8dd426a",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-original-input-custody.json",
+      "sha256": "c5f9a16efed1f92f0fb9992a29d01ab972f11da892196a9a0544ff6006c2a480"
+    },
+    {
+      "bytes": 4967,
+      "git_blob_sha1": "9adc58cd66a1f868b8755484d5af1b3ba813a58f",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-replay-index.json",
+      "sha256": "848548eb9725f63d4e7ce14d214af71bae2d0ce5d2024cf136857972f0aaa585"
+    },
+    {
+      "bytes": 31853,
+      "git_blob_sha1": "aae428c2f1dd5ef30bfd03b69b466d75ef0773ab",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-report-input.json",
+      "sha256": "aa7723a6800ad1672b8a55ed11b125c04115817fdc5c42394a7af75c6ed6cfa9"
+    },
+    {
+      "bytes": 77863,
+      "git_blob_sha1": "fef879e06abd57284ee0be46a63c7ae6bfbc037e",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-review-preparation.json",
+      "sha256": "acac8419ece1a45500d838817f98c3094f7d8edcc6ece22e3b3d04b1e2a146ad"
+    },
+    {
+      "bytes": 103722,
+      "git_blob_sha1": "32c29770c7f78c75db4f8e73b1c0049ad6de356e",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-review-subject.json",
+      "sha256": "2d4c179dd2c51bfc53a29d361e021152cd43c6f25abe2a34df9ae86de26e5c74"
+    },
+    {
+      "bytes": 11158,
+      "git_blob_sha1": "42b82c2fd9a12bdc0a0599275f4703f2e6c8177b",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-source-generation-comparison.json",
+      "sha256": "2805d5035769b9bbd0517a0c396425a6f995d157c1ff041252c6c8b8046efd7b"
+    },
+    {
+      "bytes": 208047,
+      "git_blob_sha1": "c49cb93fc4c79a5e06f4ce875a4b76cf84957ff8",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-binding-result.json",
+      "sha256": "72c3b1629befacc9311ce22c94840ab3ebc7c7577a971dc705d2c9eda30ee47d"
+    },
+    {
+      "bytes": 57059,
+      "git_blob_sha1": "eef12ed67c16301deaa7ecaceeeb4f58ef8fd8d3",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-candidate-input.json",
+      "sha256": "d43446bacca4a8785efd76ab629ffd09e4ac29594e4306d81d72b4030cd8bca0"
+    },
+    {
+      "bytes": 4686,
+      "git_blob_sha1": "8fed842be434ef3d9834411cde3b3b28d87a46de",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-00.json",
+      "sha256": "b1dc8245be9ba3ecf768873ab82f94fc38a45cc65c35c2d05274623c02b79043"
+    },
+    {
+      "bytes": 4651,
+      "git_blob_sha1": "7540a74dc515c7c2abca66c872fab3b83bee03c2",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-01.json",
+      "sha256": "5716e65c77e1aab7fc2afafd48c4801aa611d5ec4fb9acf7a8e9473d903fb26b"
+    },
+    {
+      "bytes": 4596,
+      "git_blob_sha1": "c88b133ef6f42d222ad21f3c485647d1a24fd68c",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-02.json",
+      "sha256": "9aef24b56db1801ec213fdaef1d18f1cf60605a364ed51d857a353742dd551b1"
+    },
+    {
+      "bytes": 4597,
+      "git_blob_sha1": "7b98d1fd64943e2fa85f4b0faab9803ef4769f4d",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-03.json",
+      "sha256": "1d43e484482a9206fb4044b8950cc860e2b3b18d597ac99590b0bc7b8564d0dc"
+    },
+    {
+      "bytes": 4587,
+      "git_blob_sha1": "990c64a4776f7622607a863d942ead4ec3f3ccd5",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-04.json",
+      "sha256": "2f9889e298394690629b90020851e1470279df9365bccb4abe76764351985c0c"
+    },
+    {
+      "bytes": 4611,
+      "git_blob_sha1": "d84fabf6f0f1f8d999cee6ee62d370057ac868d8",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-05.json",
+      "sha256": "c8db5e2b3376011c24a20dcad456b65ab3458e08d75efa5fab460225022f0b7f"
+    },
+    {
+      "bytes": 3221,
+      "git_blob_sha1": "adeb3e5f9579927eaa5e51c4a8a8e41cbf7d0fba",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-index.json",
+      "sha256": "e256f8ee8fd598bf2a02f542049eef41758e855b09cc2db7cf63728abc25aabb"
+    },
+    {
+      "bytes": 133255,
+      "git_blob_sha1": "e4cabc626ff54b5c07f1e19bda60fa4effdff3bf",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-correspondence.json",
+      "sha256": "6b9c3544e8faa03ca6092ce4af74b7b2a3404f5a4260217d5e15ea60e9b4aefb"
+    },
+    {
+      "bytes": 37109,
+      "git_blob_sha1": "c77bee68c4b82e8349e8afed555567fe11b8017a",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-dependency-manifest.json",
+      "sha256": "84b918e5a3c55c0bd3eed70f097332f8ee2c55e7e9711d1a9e249130212aab83"
+    },
+    {
+      "bytes": 2182,
+      "git_blob_sha1": "46eb577ba4492af131182c9e679ede4e9f42bf3d",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-original-input-custody.json",
+      "sha256": "05e9b170e11d9f29827881fc054b65d4bbb675970dbe7be9afd801ef5d026897"
+    },
+    {
+      "bytes": 4985,
+      "git_blob_sha1": "db876add8447ee3117cb2e46652e3567220731b5",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-replay-index.json",
+      "sha256": "84d6c50b85a5e9fb98f18486169b84ae5ff6b2b50d57fbf20e3d78cea0355b0c"
+    },
+    {
+      "bytes": 31891,
+      "git_blob_sha1": "e7bfaed4ad8dcef766f2a8d8445ac1d42ce6739e",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-report-input.json",
+      "sha256": "2cf6d0b2384a395fdc4c6777be3d80d96695df9696162415600c112c85abaa18"
+    },
+    {
+      "bytes": 77865,
+      "git_blob_sha1": "87235f443eccc17ed52d164ab686424d19dce941",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-review-preparation.json",
+      "sha256": "2726546d637b256785e3cfb75b9c59b62adc95702d60ece4303c3f82db42ccbe"
+    },
+    {
+      "bytes": 103724,
+      "git_blob_sha1": "9b2e638172a9db433a697c485fe838d966958668",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-review-subject.json",
+      "sha256": "90858aa28be14e83f3e72bd8a43611585ae179a06a11f4d70dc71fa361efec3f"
+    },
+    {
+      "bytes": 11164,
+      "git_blob_sha1": "e27d228d37812a2ccb91bbff7d0940089acee737",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-source-generation-comparison.json",
+      "sha256": "23a673702423dcdbadcf43917be589a02e4a02cbc8b2da4895d17209401db2fa"
+    },
+    {
+      "bytes": 10872,
+      "git_blob_sha1": "7b7118b26986cadda6d6b103ddfef321c9c63747",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/file-index.json",
+      "sha256": "b199860a06d2ba8f69f0197e5d088205ac4eae8c77aa4280b5a78a212289d0a3"
+    },
+    {
+      "bytes": 4737,
+      "git_blob_sha1": "aecd9ea6ffd59cbad405a76c4fe17590b2de3165",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/input-descriptor.json",
+      "sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736"
+    },
+    {
+      "bytes": 2619,
+      "git_blob_sha1": "5b0aca165e6acb418299d426fb2a7e482338faa2",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-control-results.json",
+      "sha256": "bb9139429e412c5658bbfc934d01264528b98b2bb91c81b90552f118fd5300ae"
+    },
+    {
+      "bytes": 3405,
+      "git_blob_sha1": "ba3deaba31cd50a1027c880ee8d4566fffcdc436",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-incomplete-dependency-closure-control.json",
+      "sha256": "353e1fa49dea7a449296bdfa39b9e9c9452af15bb9a5e20eb36f598fdd32b551"
+    },
+    {
+      "bytes": 408,
+      "git_blob_sha1": "2252bd27cffe0f5a87345418e38549d3eb37c46a",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-independent-link-pin-control.json",
+      "sha256": "425a591e4abd8fe46afbbedcb489268f91daabba3b292eed23a2b2939975aa84"
+    },
+    {
+      "bytes": 2642,
+      "git_blob_sha1": "0431613bcb84a414b616cabb96c1e52aedd3b818",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-missing-context-context-index.json",
+      "sha256": "a54f48fd839a014b4a347ef2cf81ff93d8a79048a971a1fa14f035efec0a4f85"
+    },
+    {
+      "bytes": 463,
+      "git_blob_sha1": "0c69b96dd515206cc7660c2ac578817d206ab094",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-missing-context-control.json",
+      "sha256": "11e9405244d520ca26e11f06034b2376251403ddb8372fa0c92e6a36731dfa1d"
+    },
+    {
+      "bytes": 478,
+      "git_blob_sha1": "40a9b250d3402dfc0e4aed83ff58b24c7fe6f734",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-mixed-family-candidate-control.json",
+      "sha256": "ecd1289ff2ddc7aaec8ff2702fcb938d8afb5aef84e28812c9ee00a83df38d82"
+    },
+    {
+      "bytes": 133071,
+      "git_blob_sha1": "38a3679185dff9025a49c02ef874614b99954bc8",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-omitted-unselected-link.json",
+      "sha256": "910a8ad1e98972d3cef5fa8ebf29c2875b4d7b9cf003263dedda3ab8b568b6ac"
+    },
+    {
+      "bytes": 698,
+      "git_blob_sha1": "926d66ee24073f1f5a534eb2d1168fc9bc6cf365",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-omitted-unselected-population-control.json",
+      "sha256": "8d06b20e5f76946aac496e3e31b1905e327753a7247c116d3691f5e10673502a"
+    },
+    {
+      "bytes": 37285,
+      "git_blob_sha1": "7dad540e31f87814015c1d09d077421eea1fea1f",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-pretty-report-input.json",
+      "sha256": "8aa627887cdc3d619aa79fe2188c975c7f01f6a6774dde9c8bc088667ca44f84"
+    },
+    {
+      "bytes": 542,
+      "git_blob_sha1": "76c8d997747394043ea8438dda798c105d6bc9d6",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-pretty-report-transport-control.json",
+      "sha256": "ac3d373d5464e7c30d12d7fcf80d4315e1b372882b5199408aa5212c29f7232a"
+    },
+    {
+      "bytes": 3161,
+      "git_blob_sha1": "025584f7595d5890e4a2d45e14a059cbaf1d8b58",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-reordered-context-context-index.json",
+      "sha256": "a11979af6a8f8255117b8c4d138320be64a3a228aa8d0dedaf7cb0d70025d674"
+    },
+    {
+      "bytes": 467,
+      "git_blob_sha1": "59502bfe70dffcf15dcd919fe4ec0d2f5d941956",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-reordered-context-control.json",
+      "sha256": "c998695c90ab3eb63f088477a24161f273cfdec74095e2d193c407f6bd58b29d"
+    },
+    {
+      "bytes": 3161,
+      "git_blob_sha1": "0818e381694a0aff860cd6086005c0ab8559104a",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-swapped-context-packet-context-index.json",
+      "sha256": "e59b8b9d4a80c7e71563059927efbcefcd08c6e595f63ae15579afdb25691427"
+    },
+    {
+      "bytes": 477,
+      "git_blob_sha1": "bce56277042ea592ccd904cd40e998e7cc74d2dd",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-swapped-context-packet-control.json",
+      "sha256": "1660ee410579e52f8153c36e1c898d9c24e1d294413a19a879be9945e33bceed"
+    },
+    {
+      "bytes": 21119,
+      "git_blob_sha1": "d91a5c5bc1d80ff0475ce2df671f5db859044f05",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/replay-receipt.json",
+      "sha256": "ca49f5783d96664c6c53f61d23b91d6adfcac283e505efc70a66ec5e4b095b2a"
+    },
+    {
+      "bytes": 3861,
+      "git_blob_sha1": "66e7a959911c25f8d140843731f13da48e838d2a",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-durability-projection.json",
+      "sha256": "24e675c81cb5f6b10c8e1ffab8342fe0b90e75ab579f1304bba10c7b29ac0b54"
+    },
+    {
+      "bytes": 497,
+      "git_blob_sha1": "28582f8d0e542901a763bac1cd63546aa811c779",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-execution.json",
+      "sha256": "6b1601c89c936fbf18b7285d7060538b569b7af08788af36352dc342bd0648da"
+    },
+    {
+      "bytes": 1978,
+      "git_blob_sha1": "061b92365964ba857df62c84f3bb6a8ec58f2836",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-independent-audit.json",
+      "sha256": "f86ba18de20c847c46af824350e1f0ec87a65e78c1146961030bee9f9bb012a8"
+    },
+    {
+      "bytes": 4258,
+      "git_blob_sha1": "f2ed0119f4045d0cb69d45da9b7a3e421bf0820d",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-junit.xml",
+      "sha256": "8ceee966b3e3a436e598d65e9bd07634bed8753e44bbcdedfa0857fa171561ce"
+    },
+    {
+      "bytes": 677,
+      "git_blob_sha1": "b872f5899ec1b79c30c3773fbd82c9b6883442ae",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-result.json",
+      "sha256": "4c0f18620cb5a8e9b591c9a5d55894446ff1ac886e276c644c9361a66af0efdb"
+    },
+    {
+      "bytes": 0,
+      "git_blob_sha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1096,
+      "git_blob_sha1": "c11edb4d8da70f622dc0a130b630ce285a1e9588",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-stdout.log",
+      "sha256": "2f7383e71110af568093d7871071590ec57a238d9c1f4df7df6f06407abbe5a2"
+    },
+    {
+      "bytes": 358,
+      "git_blob_sha1": "bb1ce51c83473f570741d682c45a4c1915a8d175",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-terminal-observation.json",
+      "sha256": "7ebab524645cf03ad8ba5f59b81a33def38b4e59b388fe1374c1d50ec727f375"
+    },
+    {
+      "bytes": 7431,
+      "git_blob_sha1": "a6940193b1e19eaa47cbc6ed3d9d7a9c983908b3",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-01-failed-audit.json",
+      "sha256": "14807cf03884550bda47aedd5d36489c5c3eee6c83ec979832d8e05701ce7c0f"
+    },
+    {
+      "bytes": 662,
+      "git_blob_sha1": "28ca89d08b63e1584c99ce84cd321891bcf9e420",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-01-failure.json",
+      "sha256": "1657e29c6a276bcda949c2306e1f7f500dc4f4bb8aac042ddbc16e58991c85ee"
+    },
+    {
+      "bytes": 1992,
+      "git_blob_sha1": "2fe4cf99ea71193be3dfefa157b17114ccb9671a",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-01-stderr.log",
+      "sha256": "f2bad45f605dc398280b1da93d9a22e004fe5a8a61802e1ea3865a8509a7328d"
+    },
+    {
+      "bytes": 0,
+      "git_blob_sha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-01-stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 17067,
+      "git_blob_sha1": "bdcb98caeb97a1afd034d7844a322b542a6c07cc",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-durability-projection.json",
+      "sha256": "fd13f28d21f67524e5d85269c8136873cd2221fb95b4179eaee2eb34790c8819"
+    },
+    {
+      "bytes": 521,
+      "git_blob_sha1": "7ce0d7f01d11abcab8030b961eec2cc85ed82265",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-execution.json",
+      "sha256": "b2db43b7272f89fb882f8020efa9851c2839c09fcca600ccb70d4d64e6550809"
+    },
+    {
+      "bytes": 1842,
+      "git_blob_sha1": "0bbbaf9bbb9fe7852ecb4bbda8275da0ace5e5ee",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-independent-audit.json",
+      "sha256": "6321e71a82829c6b8017e6bcae02cde21a0df8da601467a2b8cf4a1dfafcf6e3"
+    },
+    {
+      "bytes": 700,
+      "git_blob_sha1": "be6c2a1d3c24359c69bcacda511f4055cf8e7e02",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-result.json",
+      "sha256": "7c21daa0096ba7ea5001919290892828350a717679ed7f3fec150c0bb1405550"
+    },
+    {
+      "bytes": 0,
+      "git_blob_sha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 628,
+      "git_blob_sha1": "fdd9cd55bb3cf960fb9b4db8fd300762bdd91852",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-stdout.log",
+      "sha256": "786973649791df5aea4d2989577b588eafed140178debdba836d1dec0b65c8e0"
+    },
+    {
+      "bytes": 361,
+      "git_blob_sha1": "cead9144f5eb9c98b43fe4e1aa6500bdfde60ab1",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-terminal-observation.json",
+      "sha256": "e3c29bc10dc5cc8a288f0ea42f9ff468d87380ccf154007b01b3cfd8df52d39d"
+    },
+    {
+      "bytes": 5290,
+      "git_blob_sha1": "d572cd7cde5d2e8533b9a3bce500a53ea96eef91",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/correction-review.json",
+      "sha256": "ccb803d069fd5dad95505c1ff4643c6dfc141296d97fac70d7023eab1fa9e4ad"
+    },
+    {
+      "bytes": 38913,
+      "git_blob_sha1": "0cd0d9598b82c81ed698b0ecbaad9192c5e0d974",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/failed-driver-b-01.py",
+      "sha256": "35570c5563a6f809c1aad011f6189b5afabcf002846476cf597be4c4a8937af1"
+    },
+    {
+      "bytes": 32551,
+      "git_blob_sha1": "cc5e9b77c11e2aa8abf96a0903f538798b3742b3",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/final-audit.json",
+      "sha256": "9c3002fdf81903837aabe90f2d07c43ce00272d6443be49a8d38930c6c46b1cc"
+    },
+    {
+      "bytes": 21720,
+      "git_blob_sha1": "8c9d96ef996b7b743ad4c49aa3ba0ca581ab91ed",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/final-docs-review.json",
+      "sha256": "b64a79953f0a592e88f70be4a0fd44b52c6c3a2240a0a9aea5f8d09f7987d4dc"
+    },
+    {
+      "bytes": 7750,
+      "git_blob_sha1": "2f878b591d6b1a1bf88294b5c7ebf2d5a81a1a47",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/implementation-review.json",
+      "sha256": "47a24dd994f889faaf9ca1711b224aebb454c31d34fd0718d0c62f651788b67c"
+    },
+    {
+      "bytes": 8466,
+      "git_blob_sha1": "0efe0a8b6f334188c666aeb97ccdf8c2c7667b05",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/namespace-independent-review.json",
+      "sha256": "09b5495e2923f65535a1903763fcc2bcba704a47c5f971fb2547cbfe80b40fd5"
+    },
+    {
+      "bytes": 2550,
+      "git_blob_sha1": "56c854ee1eb04b4cc11c393c42a5f47504b87a49",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/parallel-adoption.json",
+      "sha256": "7e26da6e5ab9dae51e02b1ae22efac14891631e4dfebc5b086089797dd532fde"
+    },
+    {
+      "bytes": 1433,
+      "git_blob_sha1": "706429948228323c8bf7319138e2cf326ffff613",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/prelaunch-reconciliation.json",
+      "sha256": "d59e0b1337445ffeb2020e0f25a4798673abd5fa319252b863123d506a34edf9"
+    },
+    {
+      "bytes": 11139,
+      "git_blob_sha1": "4eae3f6fe2a63a8fa62413592bd118392995da9e",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/receipt.json",
+      "sha256": "81cc9e5733ff0862242dd4a7e4d6ffb11c4786e26dcb2ac5f7d90d959be86988"
+    },
+    {
+      "bytes": 2930,
+      "git_blob_sha1": "84470be40e3f4faf1fa0d4c0f14f5f927e2b548f",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/recovery-b-01-audit.json",
+      "sha256": "a5f25665536e1340b2b6d9ef8a3e19b0fe40e0236333f602f24bd2a6fe43737b"
+    },
+    {
+      "bytes": 432,
+      "git_blob_sha1": "3e8eee71a83af9e63eb58905b7372a4e53096a40",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/recovery-b-01-terminal-observation.json",
+      "sha256": "639a4ee835be6e47ad1d984522a1b65762ba5c9c110226ddf6382aee02d77a30"
+    },
+    {
+      "bytes": 13060,
+      "git_blob_sha1": "4aeddc77f0437645b2a256b31b6cf06e7b6c473f",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/retained-inputs-provenance-audit.json",
+      "sha256": "b637ddac2979600935c251a9bff4091bd9deb5041e34f100567ecb56604ecba7"
+    },
+    {
+      "bytes": 4737,
+      "git_blob_sha1": "aecd9ea6ffd59cbad405a76c4fe17590b2de3165",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/retained-inputs.json",
+      "sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736"
+    },
+    {
+      "bytes": 11250,
+      "git_blob_sha1": "1cc5b46aff791327a5b791173bc5f02816dda8d4",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/upstream-reconciliation.json",
+      "sha256": "db9f8e3807ff029e4b3ab0d3004778b4632ea514b80ef7a63b7db9d5ca206094"
+    },
+    {
+      "bytes": 59425,
+      "git_blob_sha1": "11c432493945ebac4a8b517db35a7de03b45b56a",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/validation-request-a-01.json",
+      "sha256": "b96f146e6a59cc40fc90bf58a8b40c228d3ed68ae739cba770b2d63dabf93a43"
+    },
+    {
+      "bytes": 52956,
+      "git_blob_sha1": "272b91b31d33d96ffb5a56bffa4b2dda18aec991",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/validation-request-b-01.json",
+      "sha256": "5be492c8c7a06af4505040d4eec3f262b6111fdcbe8e1ad6ac5e1da7d1029bd0"
+    },
+    {
+      "bytes": 52956,
+      "git_blob_sha1": "107739c5d4b484673425388db237e54cfe736bb6",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/validation-request-b-02.json",
+      "sha256": "40f7c340044279f430589f287ac18e63fc5e157e40f4e69e031ea4f955665f27"
+    },
+    {
+      "bytes": 5186,
+      "git_blob_sha1": "222d12cb03e96fd9e5c6aa91830f5d0891176cb8",
+      "path": "docs/autoencoders/legal_corpus_v2_public_handoffs.md",
+      "sha256": "75c0149c5061ed7e7e3e1221c4f6cc592db400bedb5276011acffb128511ee6d"
+    },
+    {
+      "bytes": 66793,
+      "git_blob_sha1": "5e3a7804f33a08551dcc2567f510235f90d58c0f",
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "61b1b0ed8fd9aa3a638d14e2323a7850650a169d7f7e8a47fe630b438c1aa935"
+    },
+    {
+      "bytes": 9409,
+      "git_blob_sha1": "3362a05bc1023983144bd81a4523caff2d6c483a",
+      "path": "docs/autoencoders/legal_retained_source_correspondence_20261015.md",
+      "sha256": "2992c59430c5bfc078c262c0cf778f0610ceb6d09f9c96e9751a4ca800cd32a3"
+    },
+    {
+      "bytes": 14848,
+      "git_blob_sha1": "b8aadcb0449c42797d04b0a8893ab15271db1115",
+      "path": "docs/autoencoders/legal_source_definition_review_correspondence_integration_20261015.md",
+      "sha256": "e08017e351c54521750a087d0d3f19bd730b01bca1f1da8ba0d2013fdecb7f52"
+    },
+    {
+      "bytes": 48019,
+      "git_blob_sha1": "0d9ec25dea3f61c647ffa68eefc1676d1a5b5f1c",
+      "path": "ipfs_datasets_py/logic/integration/reasoning/__init__.py",
+      "sha256": "40610ac00bd3b1d123a4bf5aa7dfd08d2164aa859130c1f72b625471accfce2e"
+    },
+    {
+      "bytes": 39684,
+      "git_blob_sha1": "4f054b3b3afebcd7013a24245b06c9aba5c95549",
+      "path": "scripts/ops/legal_ir/replay_retained_definition_correspondence.py",
+      "sha256": "a580d10c33539058ff5019a6edd1b48a14b65adac4597567629573998f5a9d8b"
+    },
+    {
+      "bytes": 14785,
+      "git_blob_sha1": "e3b2adc896da476009a10671cded1faac5bc8d41",
+      "path": "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py",
+      "sha256": "0070f10f39719c256e98dbf2c3d925dd783cd01d29fcf0a49ef99a396001fa2c"
+    },
+    {
+      "bytes": 11291,
+      "git_blob_sha1": "d3ed3a7b5d401a2851f34586206db42d812324bc",
+      "path": "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py",
+      "sha256": "a7c8d20b40b77eacf55b7a1f4821f632289f875df5a0e02a2a81dc5415e3efef"
+    },
+    {
+      "bytes": 17069,
+      "git_blob_sha1": "914a7650a6d7495a1b47804d3e867ff9a35691f8",
+      "path": "tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py",
+      "sha256": "fd243a3208bf04e7197bc4b39de5797ef6b666ffc5f19a96df4607a3653caf9b"
+    },
+    {
+      "bytes": 13134,
+      "git_blob_sha1": "e920fc7d6affcbb38d6fe78a91ed27d7aef92908",
+      "path": "tests/unit/logic/integration/test_reasoning_lazy_imports.py",
+      "sha256": "905dbed2b4fa3248d70f972a24aea6cc816a2baa8e6c3a9f42aac44c7b4c1311"
+    }
+  ],
+  "main_merge": "7a6e5743560b5fbf95cbe1dbb393a29a3c9fd6a1",
+  "native_qualification": {
+    "Lean_admitted": false,
+    "admitted": false,
+    "evaluation_gold": false,
+    "namespace_pytest_cases": 21,
+    "qualifications_are_separate_denominators": true,
+    "refusals_included_in_named_checks": 8,
+    "standalone_named_checks": 17,
+    "training_gold": false
+  },
+  "observed_at_utc": "2026-10-15T21:11:58.923030+00:00",
+  "payload_bytes": 2252249,
+  "payload_count": 99,
+  "publication_commit": "Containing commit is verified externally; excluded from self-referential payload commitments.",
+  "schema": "legal-ir-retained-source-correspondence-publication-manifest/v1",
+  "scope": "Exact current source/docs/curated evidence and original parallel file bodies; no claim that the curated51 directory contains all64 retained exports.",
+  "self_excluded": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/publication-manifest.json"
+}

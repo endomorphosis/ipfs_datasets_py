@@ -1,0 +1,28 @@
+{
+  "base_main": "685b565f5710fecbf42b9f92b8a7131e1401f0dd",
+  "current_head": "de95d23980725e857ebdb2c98fd989fb15635f6e",
+  "excluded_bundle": {
+    "bounded_independent_descriptor_driver_checks": true,
+    "bytes": 5664497,
+    "native_source_pin": false
+  },
+  "historical_assets_rewritten": false,
+  "notes": [
+    "Published685b matched384head diagnostic retained in base; structuralembedding improvement on reused tuning rows is separate from formula reconstruction.",
+    "Original current-source correspondence owner stays byte-identical to previously qualified95bf source.",
+    "Canonical stale checkout and foreign worktree untouched. No model or embeddings created."
+  ],
+  "observed_at_utc": "2026-10-15T20:51:24.239750+00:00",
+  "official_model_acceptance_changed": false,
+  "parallel_adopted_source_commit": "4a88f05b1feb35c77db11c8442b2ccfd714ba672",
+  "schema": "retained-source-correspondence-prelaunch-reconciliation/v1",
+  "selection": {
+    "a-01": "One complete21-case lazy namespace module; actual passed evidence separate",
+    "b-01": "One standalone actual-source probe with17named checks including8refusals; no pytest denominator"
+  },
+  "source_pins_unchanged_at_freeze": {
+    "a-01": 256,
+    "b-01": 227
+  },
+  "source_scope": "Finite reviewed cohort, not asserted complete dynamic import closure. B retains all213 prior source-review pins plus driver, descriptor and12sub4MiB retained input files."
+}

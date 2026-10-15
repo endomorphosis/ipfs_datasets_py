@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/scripts/ops/legal_ir/replay_retained_definition_correspondence.py", line 629, in <module>
+    main()
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/scripts/ops/legal_ir/replay_retained_definition_correspondence.py", line 364, in main
+    result = call(family + "_binding_prepare", binding.prepare_definition_binding_v2,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/scripts/ops/legal_ir/replay_retained_definition_correspondence.py", line 271, in call
+    return function(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py", line 381, in prepare_definition_binding_v2
+    population = review.summarize_sampling_review_population(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py", line 872, in summarize_sampling_review_population
+    expected = validate_sampling_review_bundle(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py", line 578, in validate_sampling_review_bundle
+    _need(
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py", line 181, in _need
+    raise ValueError(message)
+ValueError: review bundle differs from exact complete sampler regeneration

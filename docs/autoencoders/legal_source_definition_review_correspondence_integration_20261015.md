@@ -204,11 +204,15 @@ to both profiles.
 
 ## Next acceptance
 
-Replay the qualified correspondence against separately retained actual source
-inputs, preserving the complete population and each original byte/hash
-namespace. That replay would establish an exact unsigned source-to-subject
-link, not agreement with the candidate AST. Keep this completed qualification
-and its closeout evidence under their original source generation.
+The later [retained-source follow-up](legal_retained_source_correspondence_20261015.md)
+now replays the original §101 inputs through both logic routes, preserving all
+560 pending subjects and the selected six physical contexts. Native b-02 passed
+17 named checks, including eight refusals; its saved-artifact readback occurs
+in the same driver process. It preserves new current-generation companions and
+all historical byte/hash namespaces. This closes that unsigned correspondence
+probe, while legal agreement, exposure authentication and gold remain absent.
+Keep this earlier 296-case qualification and closeout under its original source
+generation; its fictional cold-process controls are a distinct observation.
 
 The semantic milestone still needs authorized source-first legal/formal review,
 actual exposure and independence evidence, supported governing applicability
