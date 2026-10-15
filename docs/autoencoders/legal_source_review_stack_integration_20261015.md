@@ -132,3 +132,14 @@ bridge, adapter and legacy refactor next rather than implementing another native
 V2 path. Its declarations and candidate `DEFINES` graph do not supply genuine
 §101 reviews, compatible V2 meaning-review subjects, a complete norm/use binding
 or the standalone sampler-to-parent/alignment request correspondence.
+
+## Subsequent V2 integration
+
+The [V2 definition integration](legal_definition_v2_integration_20261015.md) now
+adopts and qualifies that seven-path contribution, including actual public graph
+export/readback. Its separate qualification covers the changed legacy Boolean
+producer generation; the 1,565-case evidence above remains attributable to its
+original generation. The retained §101 probe produces explicitly unreviewed
+candidates, while the compatible V2 review/context owner is still separate active
+work. It supplies none of the genuine statutory review or complete norm/use
+binding identified above.
