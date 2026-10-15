@@ -1,0 +1,128 @@
+{
+  "method": "Parsed original fields except reservation_id; original bytes retained and independently hashed.",
+  "native_receipt": {
+    "admitted": false,
+    "arbitrary_descendant_containment": false,
+    "files": [
+      {
+        "bytes": 1658,
+        "device": 66306,
+        "inode": 69253178,
+        "path": "exports/file-index.json",
+        "sha256": "51cc04a8e7c4acae748b430f030fd9c9495daef268f450a94ddb944c295039b1"
+      },
+      {
+        "bytes": 690,
+        "device": 66306,
+        "inode": 69253174,
+        "path": "exports/fixed-view-profile.json",
+        "sha256": "e604f9e3c3e02aa6ecde30ffbac78a1a6f79889cf3383481a9f5c25adc9562f7"
+      },
+      {
+        "bytes": 16440,
+        "device": 66306,
+        "inode": 69253175,
+        "path": "exports/parent-shadow-report.json",
+        "sha256": "79d64269be1eaa27e15cfa902adac5e0d8ea69f76b4bf9e469d34f3869d41142"
+      },
+      {
+        "bytes": 16620,
+        "device": 66306,
+        "inode": 69253177,
+        "path": "exports/probe-receipt.json",
+        "sha256": "fdc5eb3c338f2c5de47928e504b5ae86acccee829d649ea4e03cb280af1dfc09"
+      },
+      {
+        "bytes": 9050,
+        "device": 66306,
+        "inode": 69253168,
+        "path": "exports/retained-head-inputs.json",
+        "sha256": "3ed669866f03b34098877f6e5e94ea5b8ec3766510bb2e4d6638058a27d608b5"
+      },
+      {
+        "bytes": 520,
+        "device": 66306,
+        "inode": 69253171,
+        "path": "exports/row-targets.json",
+        "sha256": "944bffc78930d8710223504a0b5d5e7b04291bf9b52608911832ea5b20055965"
+      },
+      {
+        "bytes": 17460,
+        "device": 66306,
+        "inode": 69253169,
+        "path": "exports/sample-06.json",
+        "sha256": "6ba4fa923f60574b10e994b9cf117ffc02b71888f3366607fc7dad6422522e62"
+      },
+      {
+        "bytes": 14730,
+        "device": 66306,
+        "inode": 69253170,
+        "path": "exports/sample-07.json",
+        "sha256": "01350020d8a601bfbdc9326a6324e7f524a39da4bfa6c775b63c405332e8cf37"
+      },
+      {
+        "bytes": 16367,
+        "device": 66306,
+        "inode": 69253176,
+        "path": "exports/structural-shadow-report.json",
+        "sha256": "e86931721619146a5558e24e5eb21900b549be45d570d706492e46a85a8195bb"
+      },
+      {
+        "bytes": 2201,
+        "device": 66306,
+        "inode": 69253172,
+        "path": "exports/target-loss-context.json",
+        "sha256": "bb46ee322986b49cd91a2cb841376719753114424a9a52838f3b20fa6b533709"
+      },
+      {
+        "bytes": 2422,
+        "device": 66306,
+        "inode": 69253173,
+        "path": "exports/target-readbacks.json",
+        "sha256": "2408dd829fd3ddf928d2802903e337a811b5746ddfd5d33783abbef197f72811"
+      },
+      {
+        "bytes": 494,
+        "device": 66306,
+        "inode": 69253179,
+        "path": "logs/execution.json",
+        "sha256": "1abe50da5175783448725d678587a0cbf8433b1b3c2d104c4ab3d228f8ccf827"
+      },
+      {
+        "bytes": 656,
+        "device": 66306,
+        "inode": 69253180,
+        "path": "logs/result.json",
+        "sha256": "568e57a7fd9afcb9b176175bd5a4ea197e73af832765588ed0f91c1eba507914"
+      },
+      {
+        "bytes": 0,
+        "device": 66306,
+        "inode": 69253167,
+        "path": "logs/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 877,
+        "device": 66306,
+        "inode": 69253166,
+        "path": "logs/stdout.log",
+        "sha256": "2822f6a9e3d69161899ec4906b85e8debe5aceb81ccf3e933d57c18532743663"
+      }
+    ],
+    "request_sha256": "54f158e0338d2904d25c261c33249cb2c769a1086abf0567c1f73cb3397f14e7",
+    "result_path": "logs/result.json",
+    "result_sha256": "568e57a7fd9afcb9b176175bd5a4ea197e73af832765588ed0f91c1eba507914",
+    "schema": "owned-validation-durability/v1",
+    "scope": "owned_files_fsynced_after_recorded_group_observed_stopped"
+  },
+  "omitted_fields": [
+    "reservation_id"
+  ],
+  "original": {
+    "bytes": 2801,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/logs/validation-durability.json",
+    "sha256": "15497f3de6bef8e0160c51a90a4ff682a0aec16f546b479208877c19d6432e4c"
+  },
+  "schema": "retained-source-durability-public-projection/v1"
+}

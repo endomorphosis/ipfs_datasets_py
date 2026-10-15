@@ -1,0 +1,15 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 48.04187000985257,
+  "executed_checks": [
+    "retained-two-row-parent-structural-fixed-view-vocabulary"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "54f158e0338d2904d25c261c33249cb2c769a1086abf0567c1f73cb3397f14e7",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

@@ -1,0 +1,13 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/logs/execution.json"
+  ],
+  "executed_checks": [
+    "retained-two-row-parent-structural-fixed-view-vocabulary"
+  ],
+  "request_sha256": "54f158e0338d2904d25c261c33249cb2c769a1086abf0567c1f73cb3397f14e7",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

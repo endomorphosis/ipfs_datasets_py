@@ -1,0 +1,46 @@
+{
+  "all_authority_flags_false": true,
+  "all_sealed_paths_sizes_hashes_device_inode_exact": true,
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-a-02",
+  "durability": {
+    "bytes": 2664,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-a-02/logs/validation-durability.json",
+    "sha256": "ecf10768bde088cb484f4177914ab95dc39d82a3ff6764d6839ee94387e5c637"
+  },
+  "final_bytes": 53237,
+  "final_files": 15,
+  "method": "Independent stdlib read-only request/source/ordinary-file/native-seal/exact-selected-ledger-row inspection. No product imports, tests, resource acquisition, recovery or attempt writes.",
+  "native_elapsed_seconds": 41.96363989007659,
+  "observed_at_utc": "2026-10-15T22:07:12.130221+00:00",
+  "pytest": {
+    "cases": 122,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "suite_seconds": [
+      1.857
+    ],
+    "unique_class_aware": true
+  },
+  "request": {
+    "bytes": 34753,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-fixed-view-vocabulary-20261015/validation-request-a-02.json",
+    "sha256": "58d343001a3098f59c6aaafd9e37260ee52edf566c2a17fd32ee5046cd66b0c0"
+  },
+  "result": {
+    "bytes": 950,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-a-02/logs/result.json",
+    "sha256": "3106f31e81f74776a01012e8f47166da7a8915f0906660fdc22e2fb5e0baef10"
+  },
+  "schema": "retained-source-native-independent-audit/v1",
+  "sealed_files": 14,
+  "selected_checks": [
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_nonview_projection.py",
+    "tests/unit/logic/integration/test_legal_ir_view_contracts.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_vocabulary_diagnostic.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_view_diagnostic.py"
+  ],
+  "selected_storage_status": "released",
+  "source_pins_rehashed": 146,
+  "storage_budget": 268435456
+}

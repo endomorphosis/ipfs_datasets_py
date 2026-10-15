@@ -1,0 +1,128 @@
+{
+  "all_original_assets_unchanged": true,
+  "asset_descriptor_sha256": "3ed669866f03b34098877f6e5e94ea5b8ec3766510bb2e4d6638058a27d608b5",
+  "authority": {
+    "completion_authority": false,
+    "execution_authority": false,
+    "gold_admitted": false,
+    "legal_meaning_verified": false,
+    "model_promoted": false,
+    "proof_admitted": false,
+    "semantic_reconstruction_verified": false,
+    "teacher_promoted": false
+  },
+  "canonical_foreign_dirty_checkout_updated": false,
+  "checkpoint_context_is_caller_declaration_in_adapter": true,
+  "combined_selected_unique_cases": 122,
+  "existing_dynamic_row_ce": [
+    1.3862943611198906,
+    1.7917594692280547
+  ],
+  "fixed_mean_ce_both_states": 1.9459101490553132,
+  "independent_holdout": false,
+  "merged_source_head": "a0a71389dcce011d798bec344adf4880b7128a7f",
+  "native_attempts": [
+    {
+      "attempt": "a-01",
+      "completed": true,
+      "final_bytes": 43393,
+      "final_files": 15,
+      "native_elapsed_seconds": 42.63100290996954,
+      "pytest": {
+        "cases": 95,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "suite_seconds": [
+          1.739
+        ],
+        "unique_class_aware": true
+      },
+      "request_sha256": "cc03ebcfaff655647572c44ad70b8182b3156f92c94856a5448da6c4d8f6db1c",
+      "returncode": 0,
+      "sealed_files": 14,
+      "selected_storage_status": "released",
+      "source_pins_rehashed": 144
+    },
+    {
+      "attempt": "b-01",
+      "completed": true,
+      "final_bytes": 102977,
+      "final_files": 16,
+      "native_elapsed_seconds": 48.48552621877752,
+      "request_sha256": "e2c6c97fdf2d4d406e0020c07b253dc8523d7e10fecb48dd1cfe2d343431d7b6",
+      "returncode": 0,
+      "sealed_files": 15,
+      "selected_storage_status": "released",
+      "source_pins_rehashed": 163
+    },
+    {
+      "attempt": "a-02",
+      "completed": true,
+      "final_bytes": 53237,
+      "final_files": 15,
+      "native_elapsed_seconds": 41.96363989007659,
+      "pytest": {
+        "cases": 122,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "suite_seconds": [
+          1.857
+        ],
+        "unique_class_aware": true
+      },
+      "request_sha256": "58d343001a3098f59c6aaafd9e37260ee52edf566c2a17fd32ee5046cd66b0c0",
+      "returncode": 0,
+      "sealed_files": 14,
+      "selected_storage_status": "released",
+      "source_pins_rehashed": 146
+    },
+    {
+      "attempt": "b-02",
+      "completed": true,
+      "final_bytes": 102986,
+      "final_files": 16,
+      "native_elapsed_seconds": 48.04187000985257,
+      "request_sha256": "54f158e0338d2904d25c261c33249cb2c769a1086abf0567c1f73cb3397f14e7",
+      "returncode": 0,
+      "sealed_files": 15,
+      "selected_storage_status": "released",
+      "source_pins_rehashed": 165
+    }
+  ],
+  "new_compiler_calls": 0,
+  "new_diagnostic_cases": 44,
+  "new_encoder_calls": 0,
+  "new_lean_builds": 0,
+  "new_model_registration_or_hub_upload": false,
+  "new_model_weights": 0,
+  "new_training_calls": 0,
+  "next_work": [
+    "Reviewed source-bound definition/norm/use component with explicit scope and dependencies.",
+    "Separate original-text, semantic-AST, view and embedding outcomes; correct/shuffled/absent-latent controls.",
+    "Reconcile any future objective or acceptance change as a versioned ablation, preserving past rejections.",
+    "Keep separate IR family/schema/version/decoder-task and8D/384D/768D model inventories and lineage."
+  ],
+  "observed_at_utc": "2026-10-15T22:10:00.449715+00:00",
+  "original_and_merged_source_metric_parity": true,
+  "original_checkpoints": {
+    "parent": {
+      "bytes": 7204344,
+      "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+    },
+    "structural": {
+      "bytes": 13402647,
+      "sha256": "dadf1964dc6dbf9c89dbe360dd06908e24d299b5f80f5b6e2014967361932312"
+    }
+  },
+  "original_retained_files": 19,
+  "outer_probe_independently_checks_checkpoint_bytes": true,
+  "prior_setup_refusals_preserved": "launcher-cli-preflight.json",
+  "published_parallel_contribution_included": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+  "replayed_partition": "repeated_tuning",
+  "schema": "legal-ir-fixed-view-phase-closeout/v1",
+  "sorted_sample_exports_cannot_regenerate_ordered_adapter_context": true,
+  "source_cohort_is_complete_dynamic_import_closure": false,
+  "test_counts_overlap": true
+}

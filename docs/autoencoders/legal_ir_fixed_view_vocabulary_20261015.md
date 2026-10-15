@@ -3,14 +3,19 @@
 The new diagnostic in
 [`legal_ir_view_vocabulary_diagnostic.py`](../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_view_vocabulary_diagnostic.py)
 compares the existing LegalIR view head under one explicit prediction vocabulary.
-It changes no existing production source, official evaluation, training loss,
-Pareto check, rollback rule or checkpoint serialization. Native a-01 passed **95 cases across three complete modules**, including 44 new
+The standalone diagnostic and probe add new files without changing official
+evaluation, training loss, Pareto checks, rollback or checkpoint serialization.
+The separately attributed training observer is integrated below.
+Native a-01 passed **95 cases across three complete modules**, including 44 new
 diagnostic cases, in 1.739 JUnit seconds (42.63100290996954 native seconds).
 Its 144 declared source pins stayed exact; all fifteen retained files total
 43,393 bytes, and the selected storage claim was released. The separate retained
 checkpoint probe b-01 also passed on the original source cohort: two tuning rows,
 two saved checkpoints and 163 exact pins in 48.48552621877752 native seconds.
 Its sixteen files total 102,977 bytes and its storage claim was released.
+These a-01/b-01 observations precede integration of the published training
+observer. The combined source then passed **122 tests** and a fresh original-asset
+replay, with unchanged numerical results, as recorded below.
 
 ## Why this comparison is separate
 
@@ -103,8 +108,19 @@ fixed seven-class CE is **1.9459101490553132**, exactly the uniform reference
 1.7917594692280547 (`ln(6)`) on the respective rows for both states. These are
 different normalization supports, not an improvement from the structural update.
 The structural embedding improvement remains a separate historical finding.
+The reports show no stored rows in any supported view-logit head. This result
+does not establish decoder saturation; it describes these retained view heads
+and the two inspected inputs.
 All original nineteen files stayed exact through 37 guarded public operations.
 No encoder, training, full decoder, compiler or solver was called.
+
+The standalone sample exports use the historical sorted-formula serializer.
+They preserve that archived JSON contract but cannot regenerate the adapter's
+ordered-input digest by themselves. The probe binds the original source/record
+inputs and producer; the adapter verifies its ordered dataclass snapshot. The
+independent metadata auditor verifies matching reported ordered-input/context
+commitments across checkpoints without claiming to reconstruct every ordered
+cache alias from the sorted sample exports.
 
 Two launcher setup omissions were corrected before the native attempt opened:
 the required resource-ledger argument and the initially empty attempt directory.
@@ -123,26 +139,58 @@ check does not turn compiler targets into reviewed legal meanings.
 
 A later read-only survey found overlapping work in the dirty canonical checkout:
 `modal_autoencoder_view_diagnostic.py` and optional training observers in its
-modified `modal_autoencoder.py`. Those files are uncommitted foreign work and
-were preserved. The generic observer accepts a caller-declared vocabulary,
+modified `modal_autoencoder.py`. At that observation, those files were
+uncommitted foreign work and were preserved. The generic observer accepts a caller-declared vocabulary,
 warms existing feature caches and records baseline/proposal/final observations.
 Our standalone diagnostic pins the actual seven-lane generation, refuses unknown
 stored labels and isolates the readout with complete input/state witnesses.
 Their different profiles and receipt boundaries must remain explicit; neither
-is a drop-in alias for the other. This run does not qualify the foreign observer.
+is a drop-in alias for the other. The original a-01/b-01 runs did not qualify
+that observer.
 
 The author subsequently published the observer in `origin/main` commit
 `3421e861ac06662a18c23b342acfbd8e4e3cf0df`. It changes the core model source;
 the a-01/b-01 results above apply to their original pinned source and cannot be
-relabeled as qualification of that incoming code. Integration and fresh combined
-qualification are the next step. Preserve both profiles and boundary adapters;
+relabeled as qualification of that incoming code. A normal merge integrates its
+unchanged contribution and the actual primary-graph corpus export. Fresh combined
+qualification passed after that merge. Preserve both profiles and boundary adapters;
 sharing the pure numerical reducer can be considered later. The training
 observer can retain rejected proposal observations in future runs; old
 rolled-back checkpoint files cannot supply those missing measurements.
 
+The author's [fresh-target training probe](legal_ir_fixed_view_probe_20261015.md)
+already retains those observations: proposed fixed CE is 1.900527/global and
+1.897565/feature, from 1.945910, while both proposals fail the existing native
+acceptance rule. That separately attributed run uses newly compiled targets;
+this standalone replay deliberately reuses the historical complete targets.
+Neither is an independent holdout or a legal reconstruction result. The author's
+240-case fixture-alias qualification remains distinct from our combined strict
+ordinary-file qualification; overlapping cases must not be added together.
+
+After the normal merge, native **a-02 passed 122 unique cases across four
+complete modules**, with no failures, errors or skips. It includes the original
+95-case roster and the observer author's complete 27-case module. JUnit reports
+1.857 seconds; native ownership reports 41.96363989007659 seconds, 146 unchanged
+source pins and fifteen retained files totaling 53,237 bytes, with the selected
+storage claim released. This uses the existing strict ordinary-file profile.
+It qualifies these selected tests on the combined source rather than rerunning
+the author's broader 240-case roster or repeating training.
+
+Native **b-02** then passed the same standalone original-asset comparison on the
+combined source: 165 unchanged declared pins, 48.04187000985257 native seconds,
+sixteen retained files totaling 102,986 bytes and a released storage claim.
+The nineteen original input hashes, two checkpoint state identities, seven-lane
+profile, target/loss and evaluator-context commitments stayed identical to b-01.
+Every fixed-view metric and existing dynamic-support readout also stayed
+identical. Producer source hashes correctly record the updated model core.
+The observer helper and its tests retain their published bodies unchanged.
+
 The [comprehensive corpus plan](legal_ir_uscode_corpus_improvement_plan_20261015.md)
 still requires independent legal/formal targets, exact reconstruction measures,
 scoped graph closure and actual Lean builds. A view-classification diagnostic
-alone measures none of those outcomes. Fresh matched training should follow a
-qualified comparison design; historical rejected updates cannot be accepted
-retroactively or used as independent holdout evidence.
+alone measures none of those outcomes. The next semantic experiment needs a
+reviewed connected definition/norm/use component, complete dependency/exposure
+partitions and separate exact-text, semantic-AST, view and embedding metrics.
+Compare correct, shuffled and absent latents and declared source/retrieval
+controls before qualifying a task-specific teacher. Historical rejected updates
+cannot be accepted retroactively or used as independent holdout evidence.
