@@ -11,6 +11,7 @@ belong to their named backend; they are not interchangeable across backends.
 
 | I need to… | Start here |
 | --- | --- |
+| Record unsigned source/primary anchors with complete populations and unresolved evidence | [Sampled source / primary association](legal_sampled_primary_association_v2.md) |
 | Improve LegalIR on US Code spans and aggregate scoped semantic graphs into a shared Lean 4 corpus | [Current source, decoder, graph and Lean improvement plan](legal_ir_uscode_corpus_improvement_plan_20261015.md) |
 | Replay selected normative Legal384/768 states on their original or separately bound retained native caches | [Original cached replay](normative_legal_ir_runtime.md), [retained native caches](normative_cached_legal_ir_runtime.md) |
 | Replay both retained and balanced normative wording banks in one private trainer | [Dual-bank training adapter](dual_bank_wording_training_adapter.md) |

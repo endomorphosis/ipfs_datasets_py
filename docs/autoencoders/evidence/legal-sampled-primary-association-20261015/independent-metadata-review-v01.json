@@ -1,0 +1,473 @@
+{
+  "association": {
+    "families": [
+      "fol",
+      "tdfol"
+    ],
+    "mapping_freeze_scope": "Caller declaration from frozen config plus exact fresh-link identity; not independent source equivalence, authenticity, exposure or legal review.",
+    "per_family_receipt_metadata": [
+      {
+        "actual_responses": 0,
+        "all_authority_false": true,
+        "all_subjects_pending": true,
+        "association": {
+          "bytes": 156554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/association/fol-sampled-primary-association.json",
+          "sha256": "4e058d471089bdbef1e2211ee1f89994915976e6f7dfe9cc7d34f864383f9370"
+        },
+        "association_sha256": "a294560fbf0d1050cf316a1af978293a19e8532d7f64721013e08c708b0eda92",
+        "context_slots": 36,
+        "correspondence_replay_index": {
+          "bytes": 4967,
+          "path": "actual-fol-replay-index.json",
+          "sha256": "ed1e1c153fc7c02747c992ebe16a400cc23c4efdbadff5679c38bfffa9d4d690"
+        },
+        "family": "fol",
+        "issues": [],
+        "mapping": {
+          "bytes": 882,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/association/fol-caller-mapping.json",
+          "sha256": "f112b4472606a9c61d61cbb04330fdd11abaf69442cacc058ec04f65c998c751"
+        },
+        "nonnull_caller_anchors_supplied": true,
+        "population_pending": 560,
+        "population_subjects": 560,
+        "preserved_original_correspondence_fields": [
+          "source_identity",
+          "population_ref",
+          "population_subjects",
+          "population_counts",
+          "population_subject_count",
+          "response_count",
+          "selected_unit_roles",
+          "required_subjects",
+          "source_role_bindings",
+          "occurrence_context_links",
+          "candidate_ref",
+          "subject_ref",
+          "dependency_manifest_ref",
+          "context_slot_ids"
+        ],
+        "primary_artifact_ref_count": 6,
+        "primary_artifact_roles": {
+          "declared_HAS_SOURCE_release_context_evidence": 1,
+          "declared_HAS_SOURCE_transport_evidence": 1,
+          "declared_primary_release_point": 1,
+          "declared_primary_section": 1,
+          "declared_primary_source_correspondence_only": 1,
+          "declared_primary_source_package": 1
+        },
+        "source_occurrences": 6,
+        "status": "declared_primary_association_only"
+      },
+      {
+        "actual_responses": 0,
+        "all_authority_false": true,
+        "all_subjects_pending": true,
+        "association": {
+          "bytes": 156554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/association/tdfol-sampled-primary-association.json",
+          "sha256": "2ef33e410b2c60ec026023f97d03d151aae27ff0d32dd1e56f5685e9c7e76ffa"
+        },
+        "association_sha256": "258bff4b0d75b18ad18202661025c96ac156aaa9f278398f03289dfd36f3a8db",
+        "context_slots": 36,
+        "correspondence_replay_index": {
+          "bytes": 4985,
+          "path": "actual-tdfol-replay-index.json",
+          "sha256": "d3557f4cb9fda9c46653da9bd1b61aa54965cd86e41595e338f8d3f5aefcb290"
+        },
+        "family": "tdfol",
+        "issues": [],
+        "mapping": {
+          "bytes": 882,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/association/tdfol-caller-mapping.json",
+          "sha256": "a8889ac82ad7cd7e22eca80cacd8cc97d82d387126f68e66d2f7c941df5adae1"
+        },
+        "nonnull_caller_anchors_supplied": true,
+        "population_pending": 560,
+        "population_subjects": 560,
+        "preserved_original_correspondence_fields": [
+          "source_identity",
+          "population_ref",
+          "population_subjects",
+          "population_counts",
+          "population_subject_count",
+          "response_count",
+          "selected_unit_roles",
+          "required_subjects",
+          "source_role_bindings",
+          "occurrence_context_links",
+          "candidate_ref",
+          "subject_ref",
+          "dependency_manifest_ref",
+          "context_slot_ids"
+        ],
+        "primary_artifact_ref_count": 6,
+        "primary_artifact_roles": {
+          "declared_HAS_SOURCE_release_context_evidence": 1,
+          "declared_HAS_SOURCE_transport_evidence": 1,
+          "declared_primary_release_point": 1,
+          "declared_primary_section": 1,
+          "declared_primary_source_correspondence_only": 1,
+          "declared_primary_source_package": 1
+        },
+        "source_occurrences": 6,
+        "status": "declared_primary_association_only"
+      }
+    ],
+    "retained_replay_bytes_including_index": 10630440,
+    "retained_replay_file_count": 64,
+    "retained_replay_file_index": {
+      "bytes": 10872,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/exports/file-index.json",
+      "sha256": "9a462929515a1ce4735e3d1bd8870cd2f239a342e3b8cca5852ab96165c18e1a"
+    },
+    "retained_replay_file_index_entries_match_native_seal": true,
+    "retained_replay_named_checks": 17,
+    "retained_replay_pytest_cases": 0,
+    "retained_replay_receipt": {
+      "bytes": 21218,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/exports/replay-receipt.json",
+      "sha256": "bffb49f77b9e551fd7901b3c0baf3f51956549cff6d176b987c8263bf01b6b5e"
+    },
+    "retained_replay_refused_controls": 8,
+    "source_contract_all_original_record_hash_witnesses_checked": true,
+    "source_contract_complete_14_field_canonical_comparison": true,
+    "source_contract_same_process_validation": true,
+    "source_contract_saved_artifact_original_bound_revalidation": true,
+    "source_contract_unchanged_replay_export_inventory_checked": true
+  },
+  "discovery": {
+    "authority_all_false": true,
+    "caller_mapping_matches_literal_discovery_summary": true,
+    "caller_selection": {
+      "bytes": 2114,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/caller-anchor-selection-v01.json",
+      "sha256": "0fa448aaad712bf606ace403bb1b9d09d7c4f1f7c2d2582bb005a7c17221adb7"
+    },
+    "candidate_bytes": 716898677,
+    "full_original_family_rows": {
+      "graph_edges": 178691,
+      "graph_nodes": 119134
+    },
+    "full_original_primary_rows": 297825,
+    "index_sha256": "82b8099255a93c5a22135229d9bcab8a7a8dd25f09074ca744155734a1d931e1",
+    "literal_legal_id": "usc:us:10:101",
+    "mapping_declaration": {
+      "legal_id": "usc:us:10:101",
+      "section_entry_cid": "sha256:f8de2c7365103727fae090e339acf8d7510a2677dc0966fd60118e62b41a3373",
+      "source_package_entry_cid": "sha256:57babd7a207fcbf6e0476e22bbf07cb6e3950739ee7e608bdda06fd8d879a996"
+    },
+    "physical_observations": {
+      "package_has_source_global_ordinals": [
+        154398
+      ],
+      "release_points": [
+        {
+          "entry_cid": "sha256:24261fa5a8ba5d392760b93af55a1f892693e7d19e3679abd6397594d84007d8",
+          "global_ordinal": 195778,
+          "has_source_edge_global_ordinals": [
+            2120
+          ]
+        }
+      ],
+      "section_global_ordinal": 294522,
+      "source_package_global_ordinal": 219691
+    },
+    "primary_identity": {
+      "candidate_sha256": "46986513582973996e4d69ecf0669ed7331e6cca07ca793f3b1c1ea2dcdec8f1",
+      "manifest_sha256": "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6",
+      "release_point": "us/pl/119/102",
+      "repository": "justicedao/ipfs_uscode",
+      "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+      "selection_sha256": "83c8fb05b4a0435486dff800297674a8433dd4af7dcfd50beae85a8490f2a330",
+      "source_revision": "006dd603185b283c54648dd4aef3c2cbe650981a"
+    },
+    "section_count": 1,
+    "source_package_count": 1,
+    "summary": {
+      "bytes": 1160,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-discover01/logs/association/literal-section101-discovery-summary.json",
+      "sha256": "53bbec7eff94bbd444488b02287cb519dfe46834c5da9772e22d5813b8ceacb5"
+    }
+  },
+  "final_source_pins": [
+    {
+      "bytes": 20647,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_primary_association_v2.py",
+      "sha256": "535ae636de2a6e216df1a46f488e8802538a0386101b6e087d24a99b23969233"
+    },
+    {
+      "bytes": 35212,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_source_sampling_primary_association_v2.py",
+      "sha256": "27c412b196e06354839c103cdf648ccbc57093b4e2501b475d3afc301a7d5823"
+    },
+    {
+      "bytes": 34752,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/run_sampled_primary_actual_v01.py",
+      "sha256": "a02b28e902d9a1b4757b63c2b990ff1200fb3d0ba79a6684fb17ed8285871e81"
+    }
+  ],
+  "findings": [
+    "All final source pin maps currently match their exact frozen native requests: qualification02 222, discovery01 79, association01 229.",
+    "Every reported loaded product origin matches a request source pin. Qualification diagnostic independently lists 122 checked-buffer origins with no mismatches/refusals; discovery lists 24 and association lists 118, under the reviewed checked-buffer owner contract.",
+    "Final qualification has exact ordered identity agreement between 173 collected nodes, 173 successful calls, receipt JUnit identities and parsed native JUnit XML; 88 new, 35 correspondence and 50 primary-index cases; zero unsuccessful or skipped cases.",
+    "Result, execution, child receipt, durability metadata and captured parent request/ownership chains close for all three jobs. Each captured parent reports durable files, released storage and resource lease, zero live recorded group processes and null cleanup error.",
+    "The full 297825-row original primary index is independently pinned; literal section101 discovery summary and later unsigned caller anchors agree on section, source package, release point and both physical relationship ordinals.",
+    "FOL and TDFOL actual association receipt summaries each retain 560 pending subjects, six physical occurrences, 36 slots, zero responses and 14 unchanged correspondence fields; six artifact refs comprise five original primary witnesses and one caller mapping commitment.",
+    "All 63 retained replay file-index declarations plus the file index itself form the original 64-file/10630440-byte closure; declared entries match the native durability seal. The reviewed driver requires this inventory unchanged at close.",
+    "All actual association and replay authority flags remain false, training and evaluation masks zero. This is transport/custody evidence, not source authenticity, legal semantics, trained-model accuracy or Lean admission."
+  ],
+  "jobs": {
+    "associate": {
+      "all_current_source_pins_match": true,
+      "association_output_bytes": 336630,
+      "association_output_files": 7,
+      "authority_all_false": true,
+      "child_receipt_elapsed_seconds": 406.7284547239542,
+      "cleanup_error": null,
+      "declared_output_entries_match_native_seal": true,
+      "durability": {
+        "bytes": 13579,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/validation-durability.json",
+        "sha256": "a4ccf010b5cbe7b7db5ffdc9190a48a93c11e520b78dc4a8f4c34095567eb008"
+      },
+      "durability_asserted": true,
+      "evaluation_gold_mask": 0,
+      "execution": {
+        "bytes": 721,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/execution.json",
+        "sha256": "175d8f4e39ac7ee0409b8bbec72184a8959a3d399ae9413a1fd983a6de8de6fa"
+      },
+      "final_attempt_bytes": 11032562,
+      "guard_attempts": {
+        "child_process": 0,
+        "network": 0
+      },
+      "loaded_checked_buffer_product_origins": 118,
+      "loaded_origin_map_canonical_sha256": "b185a0c3d045881083dbc8f0bf326139e05c0831e24a63651aa6fc36516a1621",
+      "metadata_seal_entries_checked": 5,
+      "native_completed_returncode": 0,
+      "native_execution_elapsed_seconds": 450.8475522729568,
+      "origin_entries_all_match_native_source_pins": true,
+      "parent_stderr": {
+        "bytes": 0,
+        "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/associate-parent-stderr-v01.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "parent_stdout": {
+        "bytes": 5534,
+        "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/associate-parent-stdout-v01.json",
+        "sha256": "5b19da266a538a92db015302b76d8097f2bb39ba2894a6cec5fb791c9b89a10b"
+      },
+      "pytest_testcases_executed": 0,
+      "receipt": {
+        "bytes": 49136,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/sampled-primary-associate-receipt.json",
+        "sha256": "bdfd190b215cafac03f99d19a7b592d3c2b616376531802fec1336c2d3d816fc"
+      },
+      "request": {
+        "bytes": 55169,
+        "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/associate-request-v01.json",
+        "sha256": "88963d15fe5981bdc13ed1106c12fe005278c78ef8a034dbeac2faca2005e53c"
+      },
+      "reservation_status": "released",
+      "resource_lease_released": true,
+      "result": {
+        "bytes": 903,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/result.json",
+        "sha256": "bdb815924910535933892f7c1cf7f6a62ba60bae6ba880dcbe1055bc1028d437"
+      },
+      "selected_named_targets": 5,
+      "source_pin_count": 229,
+      "source_pin_map_canonical_sha256": "4f9beb1571b4658c4b624563c2ae4609c2000efb2b5340755470256f9995e2d9",
+      "stopped_group_live_processes": 0,
+      "strict_native_inventory_file_count": 76,
+      "training_mask": 0
+    },
+    "discover": {
+      "all_current_source_pins_match": true,
+      "association_output_bytes": 21758,
+      "association_output_files": 3,
+      "authority_all_false": true,
+      "child_receipt_elapsed_seconds": 20.91116167907603,
+      "cleanup_error": null,
+      "declared_output_entries_match_native_seal": true,
+      "durability": {
+        "bytes": 1747,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-discover01/logs/validation-durability.json",
+        "sha256": "c5450b6a22859b7b57b0ea7dc240b07ea05768ea57eb4d23c8edbac6534183b4"
+      },
+      "durability_asserted": true,
+      "evaluation_gold_mask": 0,
+      "execution": {
+        "bytes": 565,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-discover01/logs/execution.json",
+        "sha256": "206588e2223a3f422abe083bf1cb23c7f5e977f29eada48d24215bfcaf616e83"
+      },
+      "final_attempt_bytes": 36983,
+      "guard_attempts": {
+        "child_process": 0,
+        "network": 0
+      },
+      "loaded_checked_buffer_product_origins": 24,
+      "loaded_origin_map_canonical_sha256": "f224957477c36d7a1763e4ac2de87de55e2a774ea464704958951dfc53662f6f",
+      "metadata_seal_entries_checked": 5,
+      "native_completed_returncode": 0,
+      "native_execution_elapsed_seconds": 61.56352891307324,
+      "origin_entries_all_match_native_source_pins": true,
+      "parent_stderr": {
+        "bytes": 0,
+        "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/discover-parent-stderr-v01.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "parent_stdout": {
+        "bytes": 5515,
+        "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/discover-parent-stdout-v01.json",
+        "sha256": "e463b87a4444680a1f346f1ee408456bf6f89023793f3f014e38a47da05742df"
+      },
+      "pytest_testcases_executed": 0,
+      "receipt": {
+        "bytes": 11714,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-discover01/logs/sampled-primary-discover-receipt.json",
+        "sha256": "9385c7f92d20f3f9e3d6bdb3b993009eb5ce4f5bedb028d01b133701ec3b0b06"
+      },
+      "request": {
+        "bytes": 20450,
+        "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/discover-request-v01.json",
+        "sha256": "3006d0fe1b08777871d6eafafec8e1b2c05e0c57af2309c3fa7ebc855c1b69db"
+      },
+      "reservation_status": "released",
+      "resource_lease_released": true,
+      "result": {
+        "bytes": 745,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-discover01/logs/result.json",
+        "sha256": "f065f66d2c50455f890c9c101c182962bb7fac150d229296e3a61ee728c48f95"
+      },
+      "selected_named_targets": 3,
+      "source_pin_count": 79,
+      "source_pin_map_canonical_sha256": "2e37354bec5e60c36034b252b6c5938eba769b535c3633b82923c5dc4440d33c",
+      "stopped_group_live_processes": 0,
+      "strict_native_inventory_file_count": 8,
+      "training_mask": 0
+    },
+    "qualification": {
+      "all_current_source_pins_match": true,
+      "child_receipt_elapsed_seconds": 134.0752518910449,
+      "cleanup_error": null,
+      "durability": {
+        "bytes": 80199,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-qualification02/logs/validation-durability.json",
+        "sha256": "57eb70a24c05a81e584335f487484c1262ee979c07c57a4abe1657b0a467f3a7"
+      },
+      "durability_asserted": true,
+      "execution": {
+        "bytes": 5069,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-qualification02/logs/execution.json",
+        "sha256": "91d09f12dd92aac189d1c0a470f3bbf7fd1ad5175e7e1e23f7a0d15334020ab9"
+      },
+      "final_attempt_bytes": 4445575,
+      "guard_attempts": {
+        "child_process": 0,
+        "network": 0
+      },
+      "loaded_checked_buffer_product_origins": 122,
+      "loaded_origin_map_canonical_sha256": "c0dd020497c430a8c21d2001e2521ced06c7d23c79f0275e9371859d0346b9a5",
+      "metadata_seal_entries_checked": 5,
+      "native_completed_returncode": 0,
+      "native_execution_elapsed_seconds": 176.8762773249764,
+      "origin_entries_all_match_native_source_pins": true,
+      "parent_stderr": {
+        "bytes": 0,
+        "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/qualification-parent-stderr-v02.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "parent_stdout": {
+        "bytes": 5561,
+        "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/qualification-parent-stdout-v02.json",
+        "sha256": "3e9c2a4b3c9fdf0ccd45c93b975b16308cc52ef0c25635c424794030a011e7e8"
+      },
+      "pytest": {
+        "checked_buffer_diagnostics_complete": true,
+        "checked_buffer_origin_mismatches": 0,
+        "collected": 173,
+        "collected_nodeids_canonical_sha256": "0ace6497a8ef56072bda2bd5e0a52be384763e84652b969361b9c6569b80d2be",
+        "errors": 0,
+        "exact_ordered_identity_join": true,
+        "failures": 0,
+        "finder_refused": 0,
+        "junit": {
+          "bytes": 34859,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-qualification02/exports/junit.xml",
+          "sha256": "73a51303797d14f2d8cba9129aed8c730b68cc951e188207ae1afdfd89ac4da0"
+        },
+        "junit_cases": 173,
+        "per_module": {
+          "tests/unit/logic/autoformal/test_legal_primary_section_index.py": 50,
+          "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py": 35,
+          "tests/unit/logic/autoformal/test_legal_source_sampling_primary_association_v2.py": 88
+        },
+        "plain_assertions": true,
+        "skips": 0,
+        "successful_calls": 173
+      },
+      "receipt": {
+        "bytes": 231041,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-qualification02/logs/qualification.json",
+        "sha256": "bbf135a2b1b6961f6035be3c63d31944d9aa12ddbc8599a4ad7f9b8c88a1f407"
+      },
+      "request": {
+        "bytes": 57976,
+        "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/qualification-request-v02.json",
+        "sha256": "1de300d09c19f0275d6b1a89da1f827a8c2c3b0aa79c13ca8c858505f6fb15c6"
+      },
+      "reservation_status": "released",
+      "resource_lease_released": true,
+      "result": {
+        "bytes": 5259,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-qualification02/logs/result.json",
+        "sha256": "1a49b1f2077d78bd5fc900281e313687fc37e13d5f55a704e536aaaff4c74842"
+      },
+      "selected_named_targets": 32,
+      "source_pin_count": 222,
+      "source_pin_map_canonical_sha256": "c779fc8eb8489c1b286eb985e266de19614eef2ba1d7e58fe0c8207a5c6cd43e",
+      "stopped_group_live_processes": 0,
+      "strict_native_inventory_file_count": 333
+    }
+  },
+  "limitations": [
+    "No product/test/model/corpus operation was executed by this reviewer. Raw retained source, candidate JSONL, fixture data, literal lookup and association/mapping payloads were not opened or rehashed. Their readback and original-bound validation are supported by reviewed source contracts, successful native receipts and declared native durability seals.",
+    "Native metadata is retained producer/parent evidence, not an independent scheduler authentication or OS containment claim. Python guards and storage admission are cooperative; arbitrary descendant containment and kernel quotas are not asserted.",
+    "Captured parent stdout records the successful native return path and resource closeout. This audit does not recover a separate historical shell exit-status capture from the interrupted tool session. Native child result and execution both record returncode 0.",
+    "Saved-sidecar revalidation occurs in the same admitted child process. It is not an independent fresh-interpreter replay.",
+    "Qualification01 and qualification02 repeat the same 173-case roster; count final qualification once. The previous static 36+49 reused-case arithmetic is superseded by exact runtime 35+50 identities.",
+    "The phase turn-progress.json predates native completion and still lists sessions / incomplete association. This audit uses closed job metadata rather than that stale progress snapshot.",
+    "No publication, trained weights, training improvement, semantic correctness, official source equivalence or Lean build claim is established by this review."
+  ],
+  "observed_at_utc": "2026-10-15T22:49:22.176086+00:00",
+  "qualification_history": {
+    "do_not_sum_repeated_runs": true,
+    "exact_qualification01_and_qualification02_collected_successful_and_JUnit_identity_lists_equal": true,
+    "final_qualification_cases": 173,
+    "new_cases": 88,
+    "preserved_before_fence_source": {
+      "bytes": 20629,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/association-owner-qualified-v01.py",
+      "sha256": "41cf48fe1c651731057af876fbc9e254a462c0b32abdd0b8b35de15c40e703f6"
+    },
+    "qualification01_is_same_case_roster_before_final_intake_codec_fence": true,
+    "qualification01_product_pin_matches_preserved_source": true,
+    "qualification01_receipt": {
+      "bytes": 231042,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-qualification01/logs/qualification.json",
+      "sha256": "942836526f5003c33aa96b80fc7cd3f37cee700850921282454c45ce012ac839"
+    },
+    "reused_correspondence_cases": 35,
+    "reused_primary_index_cases": 50
+  },
+  "review_errors": [],
+  "reviewer": "/root/sampled_primary_metadata_review_n10",
+  "schema": "independent-sampled-primary-metadata-review/v1",
+  "scope": "Independent read-only source and JSON/XML metadata audit of final completed native jobs; no product imports, tests, model/corpus execution, live ledger reads or raw source/fixture/lookup/sidecar payload reads.",
+  "status": "pass"
+}
