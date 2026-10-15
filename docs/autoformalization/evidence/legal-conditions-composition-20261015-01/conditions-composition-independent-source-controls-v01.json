@@ -1,0 +1,46 @@
+{
+  "Git_mutations": 0,
+  "actual_original_body_reads": 0,
+  "actual_primary_main_calls": 0,
+  "additional_guard_method_names": [
+    "exact_descriptor_types_bounds_closed_fields",
+    "finite_role_admission_no_roster_broadening",
+    "exact_source_pin_admission",
+    "capture_reference_barrier_zero_early_read",
+    "imports_process_locks_scans_intFD_denied",
+    "exclusive_output_and_seal_only",
+    "fake_exact_rlimits_and_hard_alarm",
+    "actual_main_custody_order_and_decoder_budget"
+  ],
+  "additional_independent_guard_methods": 8,
+  "analyzer": {
+    "bytes": 40929,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyze_conditions_composition_v01.py",
+    "sha256": "b5e946babffb41834d4b95e5700201d50b957991b17e7b44551130df12446553"
+  },
+  "author_detached_methods_independently_replayed": 16,
+  "author_test_source": {
+    "bytes": 10398,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_conditions_composition_detached_v01.py",
+    "sha256": "baab524c2dd8b5136d70974b2680e0e111a8c969e163f327e6a5492d3f90446e"
+  },
+  "execution": "python3 -I -S -B; source-only AST/stdlib invented fixtures",
+  "findings": [],
+  "independent_test_source": {
+    "bytes": 5525,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/review_conditions_composition_primary_detached_v01.py",
+    "sha256": "33fe45fc88a917bc554d1f4fcee2dd9b3454d04aaa1b179106561757c016715e"
+  },
+  "initial_reviewer_harness_failure": {
+    "cause": "Fake sys object from resource-limit test leaked into the next import-guard method; setUp now restores real stdlib sys before every method.",
+    "corrected_replay_methods_passed": 8,
+    "first_replay_errors_in_failed_method": 9,
+    "first_replay_failed_method_count": 1,
+    "production_unchanged": true
+  },
+  "network_or_SDK_calls": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "production_or_numerical_imports": 0,
+  "schema": "conditions-composition-independent-source-controls/v1"
+}

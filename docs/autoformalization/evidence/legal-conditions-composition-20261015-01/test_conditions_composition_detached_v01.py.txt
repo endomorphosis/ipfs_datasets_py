@@ -1,0 +1,121 @@
+"""F19 invented source/fake-score controls, no original bodies or module imports."""
+import ast
+from collections import Counter
+from copy import deepcopy
+import hashlib
+import itertools
+import json
+import math
+import os
+from pathlib import Path
+import re
+import stat
+import struct
+import sys
+from types import SimpleNamespace
+import unittest
+
+SOURCE=Path(__file__).with_name('analyze_conditions_composition_v01.py')
+TREE=ast.parse(SOURCE.read_text())
+ENV=dict(ast=ast,Counter=Counter,deepcopy=deepcopy,hashlib=hashlib,itertools=itertools,json=json,math=math,os=os,Path=Path,re=re,stat=stat,struct=struct,sys=sys,SimpleNamespace=SimpleNamespace)
+# Only inert declarations and defs; no main, package initialization or model import.
+for n in TREE.body:
+ if isinstance(n,ast.Assign):
+  if any(isinstance(x,ast.Name) and x.id in {'ROOT','SELF','GATE','INPUTS','OUTPUT','DESIGN','EXECUTION_CONTRACT'} for x in n.targets):continue
+  exec(compile(ast.Module(body=[n],type_ignores=[]),'<detached-constant>','exec'),ENV)
+ENV.update(ROOT=SOURCE.parent,SELF=SOURCE,GATE=SOURCE.with_name('analyzer-source-independent-review-v01.json'),INPUTS=SOURCE.with_name('diagnostic-inputs-v01.json'),OUTPUT=SOURCE.with_name('conditions-composition-diagnostic-v01.json'),DESIGN=SOURCE.with_name('diagnostic-design-v01.json'),EXECUTION_CONTRACT=SOURCE.with_name('diagnostic-execution-contract-v01.json'))
+selected=[n for n in TREE.body if isinstance(n,(ast.FunctionDef,ast.ClassDef)) and n.name not in {'main','execution_limits'}]
+exec(compile(ast.Module(body=selected,type_ignores=[]),'<detached-primary-definitions>','exec'),ENV)
+
+class ConditionsCompositionTests(unittest.TestCase):
+ @classmethod
+ def setUpClass(cls):
+  ENV['EXPECTED']={d['path']:d for d in ENV['SOURCE_PINS'].values()};ENV['ROLES']={p:'source' for p in ENV['EXPECTED']};ENV['OBSERVED']={}
+  owners={'ipfs_datasets_py.logic.formalization.autoencoder.retained_span_score_capture':ENV['SOURCE_PINS']['greedy'],'ipfs_datasets_py.logic.legal_ir.joint_span_selection':ENV['SOURCE_PINS']['joint']}
+  cls.ns,cls.greedy,cls.joint,cls.scorer=ENV['load_kernels'](owners)
+ def packet(self):
+  text='Alice must apply request if done today.';tokens=self.ns['tokenize'](text);n=len(tokens)
+  v=lambda k:[10.0 if i==k else -10.0 for i in range(n)]
+  scores=dict(schema='joint-source-span-scores/v1',tokens=tokens,modality_logits=[0.0,10.0,0.0],presence_logits={'object':[0.0,10.0],'conditions':[0.0,10.0],'exceptions':[10.0,0.0],'temporal':[10.0,0.0]},start_logits={},end_logits={})
+  for role,index in zip(ENV['FIELDS'],(0,2,3,4,6,6),strict=True):scores['start_logits'][role]=v(index);scores['end_logits'][role]=v(5 if role=='conditions' else index)
+  return text,scores
+ def donors(self):
+  text,s=self.packet();packets={d:deepcopy(s) for d in ENV['DONORS']}
+  packets['F17']['start_logits']['actor'][0]=20.0;packets['F17']['modality_logits']=[20.0,0.0,0.0];packets['F17']['end_logits']['conditions'][5]=30.0
+  packets['F17']['presence_logits']['exceptions']=[0.0,20.0]
+  packets['F18']['modality_logits']=[0.0,0.0,40.0];packets['F18']['end_logits']['conditions'][5]=40.0
+  return text,packets
+ def test_exact_consumed_AST_graph_loads_without_numeric_or_production(self):
+  self.assertEqual(set(ENV['SOURCE_PINS']),{'pure','coordinate','scorer','greedy','joint'})
+  self.assertEqual(self.ns['tokenize']('A must act.'),[{'text':'A','start':0,'end':1},{'text':'must','start':2,'end':6},{'text':'act','start':7,'end':10},{'text':'.','start':10,'end':11}])
+  self.assertFalse(set(sys.modules)&{'torch','numpy','ipfs_datasets_py','huggingface_hub','multiformats'})
+ def test_three_lenses_and_deepcopy_preserve_every_F15_presence(self):
+  text,p=self.donors()
+  for name,mod in [('F15_baseline','F15'),('F17_actor_F18_readouts','F18'),('F17_actor_F17_readouts','F17')]:
+   with self.subTest(name=name):
+    out=ENV['compose_scores'](name,p);self.assertEqual(out['modality_logits'],p[mod]['modality_logits']);self.assertEqual(out['presence_logits'],p['F15']['presence_logits'])
+    self.assertEqual(out['start_logits']['actor'],p['F15' if name=='F15_baseline' else 'F17']['start_logits']['actor'])
+    self.assertEqual(out['end_logits']['conditions'],p[mod]['end_logits']['conditions'])
+    out['presence_logits']['exceptions'][0]=999.0;self.assertNotEqual(out['presence_logits'],p['F15']['presence_logits'])
+ def test_changed_frozen_other_heads_or_F18actor_or_F17protectedpresence_refused(self):
+  for mutation in ('other','actor','presence'):
+   with self.subTest(mutation=mutation):
+    _,p=self.donors()
+    if mutation=='other':p['F17']['end_logits']['action'][0]=999.0
+    elif mutation=='actor':p['F18']['end_logits']['actor'][0]=999.0
+    else:p['F17']['presence_logits']['conditions'][0]=999.0
+    with self.assertRaises(ValueError):ENV['compose_scores']('F17_actor_F18_readouts',p)
+ def test_token_drift_or_unknown_variant_refused(self):
+  _,p=self.donors();p['F18']['tokens'][0]['text']='Other'
+  with self.assertRaises(ValueError):ENV['compose_scores']('F15_baseline',p)
+  with self.assertRaises(ValueError):ENV['compose_scores']('adaptive_best',p)
+ def test_binary32_geometry_and_nonfinite_scores_refused(self):
+  text,s=self.packet()
+  for value in (1.1,float('nan'),True):
+   with self.subTest(value=value):
+    d=deepcopy(s);d['end_logits']['conditions'][0]=value
+    with self.assertRaises(ValueError):self.joint['_validated'](text,d)
+ def test_unary_stable_ties_and_guard_ties_are_distinct(self):
+  f=ENV['f32'];logits=[0.0,0.0,f(5e-8),1.0];d=ENV['boundary_rank'](logits,1,list(range(4)),1)
+  self.assertEqual(d['stable_rank'],4);self.assertEqual(d['strictly_higher'],2);self.assertEqual(d['exact_ties_including_gold'],2);self.assertEqual(d['guard_ties_including_gold'],3);self.assertEqual(d['gold_minus_short_f32'],0.0)
+ def test_conditional_end_domain_excludes_before_goldstart(self):
+  logits=[99.0,80.0,0.0,2.0,1.0];a=ENV['boundary_rank'](logits,3,list(range(5)),2);b=ENV['boundary_rank'](logits,3,[2,3,4],2)
+  self.assertEqual(a['stable_rank'],3);self.assertEqual(b['stable_rank'],1)
+ def test_binary64_and_explicit_f32_gaps_differ(self):
+  f=ENV['f32'];a=ENV['boundary_rank']([1.0,-f(2**-25)],0,[0,1],1)
+  self.assertEqual(a['gold_minus_best_wrong_f32'],1.0);self.assertGreater(a['gold_minus_best_wrong_binary64'],1.0)
+ def test_upper_triangle_stable_pair_top8_not_cartesian_marginal_top8(self):
+  z=[0.0]*10;d=ENV['full_span_rank'](z,z,(1,1),(1,1));a=ENV['boundary_rank'](z,1,list(range(10)),1)
+  self.assertEqual(d['domain_count'],55);self.assertEqual(d['stable_rank'],11);self.assertFalse(d['in_fullspan_top8']);self.assertTrue(a['in_marginal_top8']);self.assertEqual(d['exact_ties_including_gold'],55);self.assertTrue(d['boundary8_9_tied_within_guard'])
+ def test_fullpair_scores_match_retained_selector_ranking(self):
+  text,s=self.packet();d=ENV['full_span_rank'](s['start_logits']['conditions'],s['end_logits']['conditions'],(4,5),(4,4));pairs=self.joint['_rank_spans'](s,'conditions')[0]
+  self.assertEqual(d['top8'],[dict(start=l,end=r,score_f32=v) for v,l,r in pairs[:8]]);self.assertEqual(d['stable_rank'],1);self.assertEqual(d['gold_minus_short_f32'],20.0)
+ def test_literal_alignment_preserves_quote_and_uniqueness(self):
+  text='the “indigo application” was received.';tokens=self.ns['tokenize'](text)
+  self.assertEqual(ENV['align_literal'](text,tokens,'the “indigo application'),(0,3))
+  self.assertEqual(tokens[4]['text'],'”')
+  with self.assertRaises(ValueError):ENV['align_literal'](text+' '+text,self.ns['tokenize'](text+' '+text),'the “indigo application')
+  with self.assertRaises(ValueError):ENV['align_literal'](text,tokens,'indig')
+ def test_joint_status_and_cutoff_remain_actual_fixed_policy(self):
+  text,s=self.packet();r=self.joint['select_joint_spans'](text,s,top_k=8,max_search_nodes=50000);self.assertEqual(r['status'],'selected');self.assertEqual(r['independent_greedy']['status'],'decoded')
+  cutoff=self.joint['select_joint_spans'](text,s,top_k=8,max_search_nodes=1);self.assertEqual(cutoff['status'],'abstained');self.assertTrue(cutoff['search']['budget_exhausted']);self.assertFalse(cutoff['search']['retained_domain_optimality_established'])
+ def test_gold_assignment_coverage_needs_fixed_presence_as_well_as_pair(self):
+  text,s=self.packet();row=dict(source_text=text,canonical_ir={'rules':[dict(modality='P',actor='Alice',action='apply',object='request',conditions=['if done'],exceptions=[],temporal=[])]});tokens,coords=self.ns['gold_coordinates'](row)
+  d=ENV['assignment_coverage'](row,s,coords,self.joint);self.assertTrue(d['full_gold_assignment_retained']);s['presence_logits']['conditions']=[10.0,0.0];d=ENV['assignment_coverage'](row,s,coords,self.joint);self.assertFalse(d['full_gold_assignment_retained']);self.assertTrue(d['gold_present_role_fullspan_top8']['conditions'])
+ def test_unlisted_intFD_network_directory_and_mutation_guard_refusals(self):
+  g=ENV['FiniteIO']()
+  for event,args in [('open',(3,'r',0)),('open',('/not/admitted.json','r',0)),('socket.connect',()),('os.scandir',('/tmp',)),('os.unlink',('/tmp/any',))]:
+   with self.subTest(event=event),self.assertRaises(ValueError):g.audit(event,args)
+  g.allowed.add(str(ENV['OUTPUT']));g.audit('open',(str(ENV['OUTPUT']),'rb',0));g.audit('open',(str(ENV['OUTPUT']),'xb',os.O_WRONLY|os.O_CREAT|os.O_EXCL))
+  with self.assertRaises(ValueError):g.audit('open',(str(ENV['OUTPUT']),'w',os.O_WRONLY|os.O_CREAT|os.O_TRUNC))
+ def test_reference_body_barrier_precedes_any_open(self):
+  p='/does-not-exist/fixed-capture.json';old=ENV['ROLES'];ENV['ROLES']={p:'capture'};ENV['BODY_READY']=False
+  try:
+   with self.assertRaisesRegex(ValueError,'before complete donor'):ENV['read_json'](p)
+  finally:ENV['ROLES']=old
+ def test_execution_and_manifest_contract_are_closed_before_main(self):
+  source=SOURCE.read_text();self.assertIn("INPUTS=ROOT/'diagnostic-inputs-v01.json'",source);self.assertIn("resource.setrlimit(resource.RLIMIT_AS,(1610612736,1610612736))",source);self.assertIn('signal.alarm(900)',source)
+  main=next(n for n in TREE.body if isinstance(n,ast.FunctionDef) and n.name=='main');segment=ast.get_source_segment(source,main);self.assertLess(segment.index('sys.addaudithook'),segment.index('load_kernels'))
+  self.assertNotIn('execution_contract\',\'source_owner_pins',segment);self.assertIn("{'schema','design','reference_plan','source_owner_pins','donors','read_roles'}",segment)
+
+if __name__=='__main__':unittest.main()

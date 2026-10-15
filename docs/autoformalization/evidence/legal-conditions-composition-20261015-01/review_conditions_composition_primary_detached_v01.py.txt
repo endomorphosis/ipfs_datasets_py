@@ -1,0 +1,65 @@
+"""Independent invented-only guards for the sealed F19 primary; no actualmain."""
+import ast
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import re
+import struct
+import sys
+from types import SimpleNamespace
+import unittest
+F=Path(__file__).resolve().parent
+SOURCE=F/'analyze_conditions_composition_v01.py'
+RAW=SOURCE.read_bytes();TREE=ast.parse(RAW)
+N=dict(Path=Path,re=re,os=os,sys=sys,math=math,struct=struct,json=json,hashlib=hashlib,MAX_PACKET=16000000,MAX_OUTPUT=50000000,SELF=SOURCE,GATE=F/'analyzer-source-independent-review-v01.json',INPUTS=F/'diagnostic-inputs-v01.json',OUTPUT=F/'conditions-composition-diagnostic-v01.json',EXPECTED={},OBSERVED={},ROLES={},BODY_READY=False)
+selected={'require','descriptor','forbidden','FiniteIO','exact_admission','read_json','execution_limits'}
+exec(compile(ast.Module(body=[x for x in TREE.body if isinstance(x,(ast.FunctionDef,ast.ClassDef)) and x.name in selected],type_ignores=[]),'<independent-primary-guard-defs>','exec'),N)
+
+class IndependentGuardControls(unittest.TestCase):
+ def setUp(self):
+  N['sys']=sys
+ def test_exact_descriptors_reject_wrongtypes_bounds_andfields(self):
+  good=dict(path='/fixed/example.json',bytes=4,sha256='a'*64);self.assertEqual(N['descriptor'](good),good)
+  for key,value in [('path','relative.json'),('path','/fixed/../else.json'),('bytes',True),('bytes',0),('bytes',16000001),('sha256','g'*64)]:
+   with self.subTest(field=key,value=value),self.assertRaises(ValueError):N['descriptor']({**good,key:value})
+  with self.assertRaises(ValueError):N['descriptor']({**good,'unused':1})
+ def test_roleadmission_is_exact_and_doesnot_broaden_roster(self):
+  g=N['FiniteIO']();item=dict(bytes=4,sha256='a'*64);g.admit({'/fixed/helper.py':item},{'/fixed/helper.py':'source'});self.assertIn('/fixed/helper.py',g.allowed)
+  for path,role in [('/fixed/cell-checkpoint.json','metadata'),('/fixed/private-copy/x.json','metadata'),('/fixed/x.jsonl','capture'),('/fixed/x.py','capture'),('/fixed/x.json','unknown')]:
+   with self.subTest(path=path,role=role),self.assertRaises(ValueError):g.admit({path:item},{path:role})
+  self.assertNotIn('/unlisted/model.py',g.allowed)
+ def test_sourceadmission_pin_never_schemaonly(self):
+  d=dict(path='/fixed/helper.py',bytes=4,sha256='a'*64);N['exact_admission']({'artifacts':{d['path']:d}},d)
+  for a in ({'artifacts':{}},{'artifacts':{d['path']:{'bytes':4,'sha256':'b'*64}}}):
+   with self.assertRaises(ValueError):N['exact_admission'](a,d)
+ def test_no_reference_or_capture_body_open_before_barrier(self):
+  previous=N.get('raw_pin');calls=[];N['raw_pin']=lambda *a:calls.append(a)
+  try:
+   for role in ('reference','capture'):
+    N['ROLES']={'/fixed/closed.json':role};N['BODY_READY']=False
+    with self.subTest(role=role),self.assertRaises(ValueError):N['read_json']('/fixed/closed.json')
+   self.assertEqual(calls,[])
+  finally:N['raw_pin']=previous
+ def test_import_process_lock_dirscan_and_fd_refusals(self):
+  g=N['FiniteIO']()
+  for name in ('torch','numpy','ipfs_datasets_py','huggingface_hub','multiformats','site','ctypes','socket','subprocess'):
+   with self.subTest(name=name),self.assertRaises(ValueError):g.audit('import',(name,))
+  for event,args in [('open',(7,'rb',0)),('open',('/proc/self/fd/7','rb',0)),('fcntl.flock',(7,6)),('os.listdir',('/fixed',)),('os.scandir',('/fixed',)),('subprocess.Popen',()),('socket.connect',()),('marshal.loads',()),('os.rename',('/a','/b'))]:
+   with self.subTest(event=event),self.assertRaises(ValueError):g.audit(event,args)
+ def test_only_exclusive_own_output_and_0444_seal(self):
+  g=N['FiniteIO']();out=str(N['OUTPUT']);g.audit('open',(out,'xb',os.O_WRONLY|os.O_CREAT|os.O_EXCL));g.allowed.add(out);g.audit('open',(out,'rb',0));g.audit('os.chmod',(out,0o444,-1))
+  for event,args in [('open',(out,'wb',os.O_WRONLY|os.O_CREAT|os.O_TRUNC)),('open',('/fixed/other.json','xb',os.O_WRONLY|os.O_CREAT|os.O_EXCL)),('os.chmod',(out,0o644,-1)),('os.chmod',('/fixed/other.json',0o444,-1))]:
+   with self.subTest(event=event,args=args),self.assertRaises(ValueError):g.audit(event,args)
+ def test_exact_limits_and_hard_alarm_with_fake_objects_only(self):
+  calls=[];fake_resource=SimpleNamespace(RLIMIT_AS=1,RLIMIT_CPU=2,RLIMIT_FSIZE=3,setrlimit=lambda kind,value:calls.append(('rlimit',kind,value)));fake_signal=SimpleNamespace(SIGALRM=14,signal=lambda kind,handler:calls.append(('signal',kind,handler)),alarm=lambda value:calls.append(('alarm',value)))
+  N.update(resource=fake_resource,signal=fake_signal,sys=SimpleNamespace(flags=SimpleNamespace(isolated=True,no_site=True),dont_write_bytecode=True,modules={}))
+  N['execution_limits']();self.assertEqual(calls[:3],[('rlimit',1,(1610612736,1610612736)),('rlimit',2,(600,600)),('rlimit',3,(50000000,50000000))]);self.assertEqual(calls[-1],('alarm',900))
+  with self.assertRaises(TimeoutError):calls[-2][2](14,None)
+ def test_actualsource_orders_all_donor_custody_before_capture_and_refs(self):
+  main=next(x for x in TREE.body if isinstance(x,ast.FunctionDef) and x.name=='main');text=ast.get_source_segment(RAW.decode(),main)
+  self.assertLess(text.index('sys.addaudithook'),text.index('read_json(GATE)'));self.assertLess(text.index('qualified_donor'),text.index('BODY_READY=True'));self.assertLess(text.index('BODY_READY=True'),text.index("ns['references'](plan)"));self.assertLess(text.index('BODY_READY=True'),text.index("read_json(desc['raw']['path']"))
+  self.assertIn('actual_joint==3160',text);self.assertIn('len(raw)<=MAX_OUTPUT',text)
+
+if __name__=='__main__':unittest.main()

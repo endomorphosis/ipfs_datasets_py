@@ -1,0 +1,91 @@
+{
+  "IO_profile": {
+    "cold_flags": [
+      "-I",
+      "-S",
+      "-B"
+    ],
+    "deny_directory_scans": true,
+    "deny_private_log_JSONL_scheduler_ledger_and_checkpoints": true,
+    "deny_subprocess_network_locks_and_other_mutations": true,
+    "exclusive_single_output_sealed_0444": true,
+    "finite_read_roles_and_raw_pins": true,
+    "no_implicit_inherited_FD_data_reads": true,
+    "output_readback_only_at_exact_own_path": true,
+    "stdlib_only": true
+  },
+  "actual_joint_top_k_unchanged": 8,
+  "all_donor_custody_before_capture_or_reference_body_reads": true,
+  "automatic_retry": false,
+  "conditions_rank_records": 6,
+  "default_promotion": false,
+  "design": {
+    "bytes": 6172,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json",
+    "sha256": "485e24dccd7f55ef547acb54afc1e3785a46de547454c9e5a155fc4f04a359c5"
+  },
+  "donor_fields": [
+    "plan",
+    "review",
+    "freeze",
+    "runtime_review",
+    "summary",
+    "snapshot_content_review"
+  ],
+  "guard_tie_definition": "abs(float32(candidate_score - gold_score)) <= 1e-7, independently of exact rank ties.",
+  "input_fields": [
+    "schema",
+    "design",
+    "reference_plan",
+    "source_owner_pins",
+    "donors",
+    "read_roles"
+  ],
+  "input_manifest": "diagnostic-inputs-v01.json",
+  "input_schema": "conditions-composition-diagnostic-inputs/v1",
+  "limits": {
+    "CPU_seconds": 600,
+    "address_space_bytes": 1610612736,
+    "checkpoint_JSON_parses": 0,
+    "maximum_greedy_replays": 3160,
+    "maximum_joint_nodes_per_replay": 50000,
+    "maximum_joint_replays": 3160,
+    "maximum_output_bytes": 50000000,
+    "maximum_pinned_input_bytes": 1000000000,
+    "maximum_source_tokens": 128,
+    "model_or_encoder_calls": 0,
+    "network_calls": 0,
+    "optimizer_steps": 0,
+    "processes": 1,
+    "theoretical_maximum_joint_nodes": 158000000,
+    "total_existing_sources": 632,
+    "wall_seconds": 900
+  },
+  "native_donor_panels": 30,
+  "native_donor_scored_panels": 27,
+  "native_greedy_validation": "Full original row/status/partial facets and canonical IR; do not reduce comparison to accepted rules.",
+  "native_joint_validation": "Exact retained result, candidate-domain search semantics and abstention at cutoff; summed pair scores use source-defined math.fsum binary64.",
+  "primary_entry": "analyze_conditions_composition_v01.py",
+  "primary_output": "conditions-composition-diagnostic-v01.json",
+  "primary_output_schema": "conditions-composition-diagnostic/v1",
+  "rank_span_budgets_reported": [
+    8,
+    16
+  ],
+  "read_roles": [
+    "metadata",
+    "source",
+    "reference",
+    "capture"
+  ],
+  "resource_lane_or_scheduler_admission_claimed": false,
+  "schema": "conditions-composition-diagnostic-execution-contract/v1",
+  "scoped_interpretation": "Saved-head combinations do not authenticate shared hidden states or execute composed checkpoint tensors; no blind source-generalization or legal meaning proof.",
+  "separate_primary_source_and_independent_counter_reviews_required": true,
+  "source_only_controls_must_pass_before_actual": true,
+  "top16_diagnostic_does_not_alter_pruning": true,
+  "training_or_inference_admission": false,
+  "variant_donor_paired_comparison_groups": 81,
+  "variant_panels": 30,
+  "variant_scored_panels": 27
+}

@@ -1,0 +1,266 @@
+"""Independent copy lens and seven-field arithmetic for the F19 recount.
+
+No files or model are opened here. Native/compound readouts are supplied by a
+separately qualified caller. These arithmetic kernels do not import or call the
+primary analyzer, its scorer, or its scientific count helpers.
+"""
+from __future__ import annotations
+
+from copy import deepcopy
+import hashlib
+import json
+import math
+import struct
+
+FIELDS = ("actor", "action", "object", "conditions", "exceptions", "temporal")
+ALL_FIELDS = ("modality",) + FIELDS
+OPTIONAL = FIELDS[2:]
+DONORS = ("F15", "F17", "F18")
+VARIANTS = ("F15_baseline", "F17_actor_F18_readouts", "F17_actor_F17_readouts")
+OTHER_BOUNDARIES = ("action", "object", "exceptions", "temporal")
+
+
+def require(value, message):
+    if not value:
+        raise ValueError(message)
+
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=True, allow_nan=False).encode("utf-8")
+
+
+def digest(value):
+    return hashlib.sha256(canonical(value)).hexdigest()
+
+
+def _f32(value):
+    require(type(value) in (int, float) and math.isfinite(value), "finite scalar required")
+    try:
+        value = struct.unpack("!f", struct.pack("!f", value))[0]
+    except (OverflowError, struct.error) as error:
+        raise ValueError("float32 overflow") from error
+    require(math.isfinite(value), "finite float32 required")
+    return value
+
+
+def _vector_bytes(values, count):
+    require(type(values) is list and len(values) == count, "exact saved vector length required")
+    require(all(type(value) is float and _f32(value) == value for value in values),
+            "exact saved finite float32 values required")
+    return b"".join(struct.pack("!f", value) for value in values)
+
+
+def validate_packet(packet):
+    require(type(packet) is dict and set(packet) == {
+        "schema", "tokens", "modality_logits", "presence_logits", "start_logits", "end_logits"},
+        "closed score packet required")
+    require(packet["schema"] == "joint-source-span-scores/v1"
+            and type(packet["tokens"]) is list and 1 <= len(packet["tokens"]) <= 128,
+            "fixed score schema and 128-token limit required")
+    _vector_bytes(packet["modality_logits"], 3)
+    for name, roles, size in (("presence_logits", OPTIONAL, 2),
+                              ("start_logits", FIELDS, len(packet["tokens"])),
+                              ("end_logits", FIELDS, len(packet["tokens"]))):
+        require(type(packet[name]) is dict and set(packet[name]) == set(roles),
+                "complete exact score head roles required")
+        for role in roles:
+            _vector_bytes(packet[name][role], size)
+    return packet
+
+
+def protected_packet(packet):
+    return {"presence_logits": deepcopy(packet["presence_logits"]),
+            "start_logits": {role: deepcopy(packet["start_logits"][role]) for role in OTHER_BOUNDARIES},
+            "end_logits": {role: deepcopy(packet["end_logits"][role]) for role in OTHER_BOUNDARIES}}
+
+
+def _same_heads(left, right, roles):
+    size = len(left["tokens"])
+    for side in ("start_logits", "end_logits"):
+        for role in roles:
+            require(_vector_bytes(left[side][role], size) == _vector_bytes(right[side][role], size),
+                    "binary32 role-head block differs")
+
+
+def copy_saved_heads(packets, variant):
+    """A separate per-role donor selection lens with bit-preservation checks."""
+    require(type(packets) is dict and set(packets) == set(DONORS) and variant in VARIANTS,
+            "exact fixed donor and variant membership required")
+    for packet in packets.values():
+        validate_packet(packet)
+    base = packets["F15"]
+    require(all(canonical(packet["tokens"]) == canonical(base["tokens"])
+                for packet in packets.values()), "three donor token geometries differ")
+    for donor in ("F17", "F18"):
+        _same_heads(base, packets[donor], OTHER_BOUNDARIES)
+    _same_heads(base, packets["F18"], ("actor",))
+    for donor, roles in (("F18", OPTIONAL), ("F17", ("object", "conditions", "temporal"))):
+        for role in roles:
+            require(_vector_bytes(base["presence_logits"][role], 2)
+                    == _vector_bytes(packets[donor]["presence_logits"][role], 2),
+                    "protected donor presence block differs")
+    actor_donor = "F15" if variant == "F15_baseline" else "F17"
+    readout_donor = {"F15_baseline": "F15", "F17_actor_F18_readouts": "F18",
+                     "F17_actor_F17_readouts": "F17"}[variant]
+    mixed = {"schema": base["schema"], "tokens": deepcopy(base["tokens"]),
+             "modality_logits": deepcopy(packets[readout_donor]["modality_logits"]),
+             "presence_logits": deepcopy(base["presence_logits"])}
+    for side in ("start_logits", "end_logits"):
+        mixed[side] = {}
+        for role in FIELDS:
+            donor = actor_donor if role == "actor" else readout_donor if role == "conditions" else "F15"
+            mixed[side][role] = list(packets[donor][side][role])
+            require(_vector_bytes(mixed[side][role], len(base["tokens"]))
+                    == _vector_bytes(packets[donor][side][role], len(base["tokens"])),
+                    "selected donor bytes were not preserved")
+    for role in OPTIONAL:
+        require(_vector_bytes(mixed["presence_logits"][role], 2)
+                == _vector_bytes(base["presence_logits"][role], 2), "F15 all-presence copy differs")
+    _same_heads(base, mixed, OTHER_BOUNDARIES)
+    require(_vector_bytes(mixed["modality_logits"], 3)
+            == _vector_bytes(packets[readout_donor]["modality_logits"], 3), "selected modality bytes differ")
+    return mixed
+
+
+def _rule(ir):
+    require(type(ir) is dict and set(ir) == {"rules"} and type(ir["rules"]) is list
+            and len(ir["rules"]) == 1 and type(ir["rules"][0]) is dict
+            and set(ir["rules"][0]) == set(ALL_FIELDS), "closed single seven-field rule required")
+    rule = ir["rules"][0]
+    require(type(rule["modality"]) is str and rule["modality"] in ("O", "P", "F"),
+            "exact modality required")
+    require(all(type(rule[role]) is str for role in FIELDS[:3])
+            and all(type(rule[role]) is list and len(rule[role]) <= 1
+                    and all(type(atom) is str for atom in rule[role]) for role in FIELDS[3:]),
+            "typed string/qualifier values required")
+    return rule
+
+
+def field_matches(record, reference, route):
+    """Every abstention is false for every field, including empty optional fields."""
+    require(route in ("raw", "joint"), "exact route required")
+    target = _rule(reference)
+    success = record["status"] == ("decoded" if route == "raw" else "selected")
+    candidate = _rule(record["canonical_ir"]) if success else None
+    return {field: candidate is not None and candidate[field] == target[field] for field in ALL_FIELDS}
+
+
+def score_rows(rows, metadata, occurrences, raw_records, joint_records):
+    """Independently reconstruct complete primary per-ID scientific flags."""
+    require(len({row["id"] for row in rows}) == len(rows), "unique source IDs required")
+    scored = []
+    for row, meta, occurrence, raw, wrapped in zip(rows, metadata, occurrences,
+                                                raw_records, joint_records, strict=True):
+        require(row["id"] == meta["id"] == occurrence["id"] == wrapped["id"], "exact score ID order required")
+        require(set(meta) == {"id", "class_name", "group_id", "pair_id", "pair_variant"},
+                "closed authored scoring metadata required")
+        joint = wrapped["result"]
+        source_hash = hashlib.sha256(row["source_text"].encode("utf-8")).hexdigest()
+        require(source_hash == occurrence["source_sha256"] == raw["source_sha256"] == joint["source_sha256"],
+                "independent source hash join differs")
+        require(joint["scores_sha256"] == digest(occurrence["scores"]), "independent score packet digest differs")
+        truth = _rule(row["canonical_ir"])
+        raw_fields = field_matches(raw, row["canonical_ir"], "raw")
+        joint_fields = field_matches(joint, row["canonical_ir"], "joint")
+        pair = occurrence["scores"]["presence_logits"]["temporal"]
+        _vector_bytes(pair, 2)
+        predicted = None if abs(_f32(pair[1] - pair[0])) <= 1e-7 else pair[1] > pair[0]
+        expected = bool(truth["temporal"])
+        require((meta["group_id"] is None) == (meta["pair_id"] is None)
+                == (meta["pair_variant"] is None), "complete pair identity required")
+        require(meta["pair_variant"] in (None, "temporal_present", "temporal_absent")
+                and (meta["pair_variant"] is None or (meta["pair_variant"] == "temporal_present") is expected),
+                "pair variant disagrees with temporal reference")
+        scored.append({"id": row["id"], "class_name": meta["class_name"], "group_id": meta["group_id"],
+            "pair_id": meta["pair_id"], "pair_variant": meta["pair_variant"],
+            "raw_decoded": raw["status"] == "decoded",
+            "reference_non_temporal_sha256": digest({key: value for key, value in truth.items() if key != "temporal"}),
+            "raw_exact_ir": all(raw_fields.values()), "joint_exact_ir": all(joint_fields.values()),
+            "role_exact": {field: raw_fields[field] for field in FIELDS},
+            "joint_role_exact": {field: joint_fields[field] for field in FIELDS},
+            "modality_exact": raw_fields["modality"], "joint_modality_exact": joint_fields["modality"],
+            "expected_temporal_presence": expected, "predicted_temporal_presence": predicted,
+            "temporal_presence_correct": predicted is expected,
+            "temporal_false_positive": predicted is True and not expected,
+            "temporal_false_negative": predicted is False and expected, "temporal_ambiguous": predicted is None})
+    return scored
+
+
+def compare_scored(before, after):
+    """Count all gains/losses by explicit independently built boolean columns."""
+    require([row["id"] for row in before] == [row["id"] for row in after], "paired score IDs differ")
+    result = {}
+    for route in ("raw", "joint"):
+        result[route] = {}
+        roles_key = "role_exact" if route == "raw" else "joint_role_exact"
+        modal_key = "modality_exact" if route == "raw" else "joint_modality_exact"
+        for field in ("full_IR",) + ALL_FIELDS:
+            previous = [row[route + "_exact_ir"] if field == "full_IR" else row[modal_key]
+                        if field == "modality" else row[roles_key][field] for row in before]
+            current = [row[route + "_exact_ir"] if field == "full_IR" else row[modal_key]
+                       if field == "modality" else row[roles_key][field] for row in after]
+            require(all(type(value) is bool for value in previous + current), "exact scientific boolean flags required")
+            gains = [row["id"] for row, old, new in zip(before, previous, current, strict=True) if new and not old]
+            losses = [row["id"] for row, old, new in zip(before, previous, current, strict=True) if old and not new]
+            result[route][field] = {"before_correct": previous.count(True), "after_correct": current.count(True),
+                "gains": len(gains), "losses": len(losses), "gain_ids": gains, "loss_ids": losses}
+    return result
+
+
+def presence_recount(rows, occurrences, raw_records, joint_records):
+    """Independent TP/TN/FP/FN/exclusion ID lists; abstention is never absence."""
+    bucket_names = ("TP", "TN", "FP", "FN", "abstained_or_ambiguous")
+    views = {view: {field: {name: [] for name in bucket_names} for field in OPTIONAL}
+             for view in ("head", "raw", "joint")}
+    denominators = {field: {"gold_present": 0, "gold_absent": 0} for field in OPTIONAL}
+    excluded = {view: {field: {"gold_present": [], "gold_absent": []} for field in OPTIONAL}
+                for view in views}
+    for row, occurrence, raw, wrapped in zip(rows, occurrences, raw_records, joint_records, strict=True):
+        require(row["id"] == occurrence["id"] == wrapped["id"], "presence source IDs differ")
+        target = _rule(row["canonical_ir"])
+        joint = wrapped["result"]
+        for field in OPTIONAL:
+            truth = bool(target[field]); label = "gold_present" if truth else "gold_absent"
+            denominators[field][label] += 1
+            pair = occurrence["scores"]["presence_logits"][field]
+            _vector_bytes(pair, 2)
+            head = None if abs(_f32(pair[1] - pair[0])) <= 1e-7 else pair[1] > pair[0]
+            predictions = {"head": head,
+                "raw": None if raw["status"] != "decoded" else bool(_rule(raw["canonical_ir"])[field]),
+                "joint": None if joint["status"] != "selected" else bool(_rule(joint["canonical_ir"])[field])}
+            for view, prediction in predictions.items():
+                if prediction is None:
+                    bucket = "abstained_or_ambiguous"
+                    excluded[view][field][label].append(row["id"])
+                elif prediction:
+                    bucket = "TP" if truth else "FP"
+                else:
+                    bucket = "FN" if truth else "TN"
+                views[view][field][bucket].append(row["id"])
+    compact = lambda ids: {"count": len(ids), "ids": ids}
+    return {"denominators": denominators,
+            "views": {view: {field: {name: compact(ids) for name, ids in buckets.items()}
+                              for field, buckets in fields.items()} for view, fields in views.items()},
+            "excluded_by_gold": {view: {field: {name: compact(ids) for name, ids in split.items()}
+                                         for field, split in fields.items()} for view, fields in excluded.items()},
+            "abstentions_excluded_from_TP_TN_FP_FN": True,
+            "independent_primary_recount_required": True,
+            "scope": "Post-freeze exposed authored presence only; ambiguity and abstention excluded from all confusion cells."}
+
+
+def panel_packet(scope, label, rows, occurrences, raw_records, joint_records, scored):
+    require(scope != "law", "statutory law8 must remain unscored")
+    return {"scope": scope, "label": label, "rows": len(rows), "reference_scored": True,
+            "raw_complete_IR": sum(row["raw_exact_ir"] for row in scored),
+            "joint_complete_IR": sum(row["joint_exact_ir"] for row in scored),
+            "raw_role_exact": {field: sum(row["role_exact"][field] for row in scored) for field in FIELDS},
+            "joint_role_exact": {field: sum(row["joint_role_exact"][field] for row in scored) for field in FIELDS},
+            "raw_modality_exact": sum(row["modality_exact"] for row in scored),
+            "joint_modality_exact": sum(row["joint_modality_exact"] for row in scored),
+            "raw_abstentions": sum(record["status"] != "decoded" for record in raw_records),
+            "joint_abstentions": sum(record["result"]["status"] != "selected" for record in joint_records),
+            "optional_presence_confusion": presence_recount(rows, occurrences, raw_records, joint_records),
+            "raw_only_reconstructed_saved_head_readout": label in VARIANTS[1:],
+            "metric_authority": "previously_exposed_authored_engineering_only",
+            "scientific_success_not_claimed": True, "semantic_accuracy": None}

@@ -1,0 +1,156 @@
+{
+  "Lake_or_logic_family_qualification": false,
+  "active_latent_semantics_qualified": false,
+  "allowed_execution": {
+    "checkpoint_JSON_parses": 0,
+    "encoder_calls": 0,
+    "model_calls": 0,
+    "numeric_or_production_imports": 0,
+    "optimizer_updates": 0,
+    "private_body_reads": 0,
+    "remote_calls": 0,
+    "root_original_score_reference_body_reads": 0,
+    "scheduler_or_ledger_mutations": 0,
+    "source_qualified_child_required": true
+  },
+  "bounds": {
+    "artifact_map_maximum": 1024,
+    "independent_output_bytes_maximum": 50000000,
+    "primary_output_bytes_maximum": 50000000,
+    "score_packet_bytes_maximum": 16000000,
+    "source_files_maximum": 128,
+    "total_pinned_bytes_maximum": 1000000000
+  },
+  "comparison_policy": {
+    "abstentions_are_nonmatches": true,
+    "all_32_protected_permission_modalities": true,
+    "compare_each_variant_to": [
+      "F15",
+      "F17",
+      "F18"
+    ],
+    "complete_IR_includes": [
+      "modality",
+      "actor",
+      "action",
+      "object",
+      "conditions",
+      "exceptions",
+      "temporal"
+    ],
+    "no_automatic_selection_or_default_promotion": true,
+    "record_every_gain_and_loss_ID": true,
+    "source_group_generalization_claim": false,
+    "training_minimum_descriptive_only": 155
+  },
+  "composition_scope": "Only copied saved output heads; no constructed or executed composed checkpoint. F17 actor query/gate are represented by their already saved output logits, not newly evaluated.",
+  "created_utc": "2026-10-15T03:44:04.965817+00:00",
+  "decoder_policy": {
+    "max_search_nodes": 50000,
+    "max_tokens": 128,
+    "tie_tolerance": 1e-07,
+    "top_k_full_spans": 8
+  },
+  "default_promotion": false,
+  "donors": [
+    "F15",
+    "F17",
+    "F18"
+  ],
+  "fixed_conditions_ids": [
+    "matched-temporal-train-condition_exception_duration-0-p-absent",
+    "matched-temporal-train-condition_exception_duration-0-p-present"
+  ],
+  "fixed_conditions_observation": {
+    "bytes": 5466,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/postfreeze-conditions-error-observation-v01.json",
+    "sha256": "ac5a216f23558754acf98195c38e64c951cacbb4da4e8052d11545e470a6700d"
+  },
+  "law8_unscored": true,
+  "owned_source_intake": {
+    "bytes": 2613,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/owned-source-intake-v01.json",
+    "sha256": "0547e44d15cc986ef40883b9a1db6c4ddfba94cb2c8298461de3740b3ece5587"
+  },
+  "portable_composed_checkpoint_reload_qualified": false,
+  "prior_completed_phase": {
+    "bytes": 4199,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/phase-completion-v01.json",
+    "sha256": "84fc8495140b4a0ff0e5b8654add9df9731a7cbce717b2eeb6e3f97f4e1be32f"
+  },
+  "proposal": {
+    "bytes": 5527,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/next-experiment-proposal-v01.json",
+    "sha256": "ea0742f491f0c4efacdaae2600434b3b0e2b159090837ed05e227d5707ccf6d8"
+  },
+  "rank_policy": {
+    "alignment": "Unique literal occurrence with exact owner token start/end alignment; same fixed gold start for previously observed shortened competitor.",
+    "competitor": "Exact previously exposed truncated string from fixed F18 observation; no quote heuristic or adaptive negative selection.",
+    "end": "Report unrestricted and conditional right >= gold_start stable ranks",
+    "margins": "Report binary64 difference of saved float32 values and explicitly rounded float32 difference; ambiguity guard is distinct from rank equality.",
+    "span": "Upper-triangle left <= right; float32(start[left]+end[right]); descending score then lexicographic coordinates",
+    "start": "1 + strictly higher finite float32 logits + earlier exact-score ties",
+    "top8": "Boundary marginal and full-pair top8 are separate measures; joint uses full pairs."
+  },
+  "required_proofs": [
+    "Three donor source orders and source/token/binary32 geometry join before any composition.",
+    "Every donor native greedy and joint replay matches retained originals, with source-pinned pure definitions.",
+    "All F15 presence scores and four nonactor/nonconditions boundary heads remain binary32-identical per recombined source.",
+    "Copied actor/modality/conditions logits equal exact selected donor bytes.",
+    "Gold/short coordinates and rank tie policies verified independently.",
+    "Separate raw/joint complete-rule counts, every per-ID gain/loss and protected permissions; retain law8 unscored."
+  ],
+  "schema": "conditions-composition-diagnostic-design/v1",
+  "scientific_success_not_claimed": true,
+  "scopes": {
+    "authored_dev": 72,
+    "authored_eval": 72,
+    "fresh_challenge": 36,
+    "fresh_dev": 36,
+    "fresh_test": 36,
+    "fresh_tune": 36,
+    "law": 8,
+    "old_authored_eval": 72,
+    "old_tune": 96,
+    "training168": 168
+  },
+  "scored_source_count": 624,
+  "source_count": 632,
+  "source_feasibility": {
+    "bytes": 13410,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/static-composition-feasibility-review-v01.json",
+    "sha256": "ad22313ff275dd9e1ac3d5bfcd1c24d7fdd5a9c4941cd9c3e32a1de244a8aeba"
+  },
+  "status": "FIXED_BEFORE_NEW_DIAGNOSTIC_BODY_READS",
+  "statutory_semantics_qualified": false,
+  "study_kind": "Posthoc engineering on previously exposed frozen saved scores; no new model or checkpoint selection qualification.",
+  "variants": [
+    {
+      "actor": "F15",
+      "all_presence": "F15",
+      "base": "F15",
+      "conditions_boundaries": "F15",
+      "modality": "F15",
+      "name": "F15_baseline",
+      "other_boundaries": "F15"
+    },
+    {
+      "actor": "F17",
+      "all_presence": "F15",
+      "base": "F15",
+      "conditions_boundaries": "F18",
+      "modality": "F18",
+      "name": "F17_actor_F18_readouts",
+      "other_boundaries": "F15"
+    },
+    {
+      "actor": "F17",
+      "all_presence": "F15",
+      "base": "F15",
+      "conditions_boundaries": "F17",
+      "modality": "F17",
+      "name": "F17_actor_F17_readouts",
+      "other_boundaries": "F15"
+    }
+  ]
+}

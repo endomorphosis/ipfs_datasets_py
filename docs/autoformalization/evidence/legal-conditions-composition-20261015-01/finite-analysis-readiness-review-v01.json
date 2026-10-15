@@ -1,0 +1,209 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json": {
+      "bytes": 6172,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json",
+      "sha256": "485e24dccd7f55ef547acb54afc1e3785a46de547454c9e5a155fc4f04a359c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json": {
+      "bytes": 3321,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json",
+      "sha256": "1bf6393d2c3c177342df97856b73868652d8f23aafa1dbe47f1aca81f3382dea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/analysis-inputs-v01.json": {
+      "bytes": 1996,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/analysis-inputs-v01.json",
+      "sha256": "92919c5b41f5692a85bb5570b07f80d8d75d8215f23a44ccc49abcd3be7b8d4f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/analyze_modality_conditions_retention_v01.py": {
+      "bytes": 53164,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/analyze_modality_conditions_retention_v01.py",
+      "sha256": "07b5097e8eeea3e6aecdc1d8185dd277482e33e31d246484ff04e09d58a6b336"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-runtime-review-v01.json": {
+      "bytes": 105331,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-runtime-review-v01.json",
+      "sha256": "4e05383af5e8ea6212daaf1eea41affc084c7b4910ac5049b5dcc1a28fe079e1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-independent-recount-v01.json": {
+      "bytes": 6956192,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-independent-recount-v01.json",
+      "sha256": "aef0f3f888522adce0a0325799d27fbaefaba26d99d016ddf2ceaaf8c32d63d3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-result-analysis-v01.json": {
+      "bytes": 5202480,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-result-analysis-v01.json",
+      "sha256": "d35a7c0665534380bae9159f7d2a370f7476ba55a54847ed487006057075823b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/next-experiment-proposal-v01.json": {
+      "bytes": 5527,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/next-experiment-proposal-v01.json",
+      "sha256": "ea0742f491f0c4efacdaae2600434b3b0e2b159090837ed05e227d5707ccf6d8"
+    }
+  },
+  "design": {
+    "bytes": 6172,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json",
+    "sha256": "485e24dccd7f55ef547acb54afc1e3785a46de547454c9e5a155fc4f04a359c5"
+  },
+  "execution_contract": {
+    "bytes": 3321,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json",
+    "sha256": "1bf6393d2c3c177342df97856b73868652d8f23aafa1dbe47f1aca81f3382dea"
+  },
+  "findings": [],
+  "future_concrete_inputmanifest_required": true,
+  "future_primary_sourcegate_required": true,
+  "guard_requirements": [
+    "Cold-I-S-Bfreshprocess andstdlibimports only; rejectpreloadednumeric/production/SDK/CID modulesbeforeany helper/dataaccess.",
+    "Auditinstalledbeforekernelcompile andbefore anycapture/referencebodyread; rawsourcefullpin beforeparse/exec,finiteASTfunction/name list,onlypurevalidateddependencies,no retainedwholemodule execution.",
+    "Exactabsolutephysicalordinaryfiles only,source/inputsizehashbefore/afterread;closedfull3descriptors,keypath equalsdescriptorpath; duplicate/nonfiniteJSON andboolascount refused.",
+    "Closedrole/schema/donor/panel/path joins;passedTrue/findingsempty withexactruntime/freeze/resultreview notschemaalone. Onlythenenable60capture/refreadscope.",
+    "No os.scandir/listdir orfilesysteminventorywalk;metadata givesfinitepaths. No privatepaths,symlinks,foreignFD/integeropen or /proc/self/fd escape; closeinheritedFDs inrootlauncher.",
+    "No subprocess/network/process/locks/resourceAPI/sharedmutation; no Git; no torch/numpy/model/encoder/checkpointJSON.",
+    "Onlyexclusivefixedoutput<=50000000Band0444sealing; allowitsownboundedrawreadback whenpinreopens it. Failures retained viaexternallyqualifiedrootcapture,neverarbitraryexceptionbodypublication.",
+    "Enforce1536MiBAS/600CPUsec/900wall/oneprocess and128tokens beforeN\u00b2rankenumeration,3160joint/greedyrecords,158Mtheoreticaljointattemptnodes. Nodecutoffabstains; outputboundcheckedbeforewrite."
+  ],
+  "new_native_validation_guidance": {
+    "Git_blob_oid": "2a9fd6e4b1c7caa461e1d7b4bba6ad59697071d7",
+    "bytes": 7139,
+    "new_runtime_imports_or_grants": 0,
+    "owned_source_head": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+    "relative_path": "docs/autoencoders/validation_storage.md",
+    "relevance": "Provides anexplicitnativeVALIDATIONowner/newentrypoint withrequest/source/grant/storage/durabilitycustody. Itsdoc explicitly saysothervalidationentrypointsretainbehavior; fixedF19pureanalysis doesnotinheritthatgrantorblanketstoragequalification. No nativeendpoint/API/sourceexecutionqualifiedbythisreadinessreview.",
+    "sha256": "d901a9f24181c6f277e87ea48db557f3b00c47f8e0c37bbcc2ac5c59ea6d4449",
+    "source_only_read": true
+  },
+  "prepared_only": true,
+  "proof_limits": [
+    "Savedheadmixing recombinesalreadycapturedoutputlogits. It doesnotconstruct,validate,reload orexecutea composedcheckpoint,query/gate parameters ortrainingoptimizer.",
+    "No semantic/Lake/active-latent/generalization/defaultpromotion qualification; panelsalreadyexposed,law8unscored.",
+    "No actualcapture/export/reference/teacher/private/checkpointbodiesopened andnooriginaldata/scorebodyrecountperformedbythisreadinessreview. Onlyqualifiedpublicanalysis/counter/runtimemetadata andsourcesread.",
+    "No sourceedits/productionimports/tests/Gitmutations/SDK/network/actualnewdiagnosticexecution."
+  ],
+  "qualification_contract": {
+    "independent_counter": "Separatelyauthoredrank arithmetic andper-ID panel/gain/loss/permissionrecount; sharedretaineddecoderkernel mustbe disclosed andnotcalledindependentnumericalorsemanticproof.",
+    "minimum_negative_controls": [
+      "unlisted/privatepath",
+      "symlink/nonordinary/sourceorhashdrift",
+      "incorrectdonor/freeze/runtime/scoredpopulation",
+      "checkpoint/teacherroleadmission",
+      "unknownimport/process/socket/flock",
+      "directoryscan/FDescape",
+      "existingoutput/outputoverflow",
+      "top8pairvsmarginal/tieguard/pruningcutoff",
+      "raw/jointnative replaymismatch",
+      "mixedpreservedheads drift"
+    ],
+    "primary": "Independent completefrozenanalyzersource review +meaningfulinventedguardnegativecontrols before rootruns fixedconcretemanifest once."
+  },
+  "rank_requirements": [
+    "Jointtop8 isuppertriangleFULLPAIRtop8 sorted(-f32(start+end),left,right),notintersectedmarginalstart/endtop8.",
+    "Marginalgoldend ranks unrestricted andright>=goldstart areseparate; fullgoldpairrank/top8membership isthirdmeasure.",
+    "Rankexactties useexactf32score equality andstableindex/coordinates. 1e-7ambiguitythreshold isdistinctfromranktie; reportbinary64androundedf32 margins separately.",
+    "Presence/modality decisionsfixed first; retainedgoldpairmembershipdoesnotprovefeasibility,selection,semanticcorrectness orfull-domainoptimality.",
+    "Jointobjective math.fsum64 ofroundedf32pairscore; pruningstrictbelowknownrunnerup retainsbestties;50000nodecutoffabstains evenifcandidatefound.",
+    "Nativegreedy replay mustretain earlierpartialfacetdiagnostics/stopreason,notonlydecodedcanonicalIR; retained _verify_greedy and _pair_winners implementoriginaltie/abstentionbehavior.",
+    "Gold andfixedshortcompetitor literals eachmusthaveunique source/token-alignedoccurrence; usegoldstart forshortpair,notadaptivequoting/mining.",
+    "ExplicitF15presence/allfourotherboundaryrawbinary32projections equalbefore/after; selectedactor/modality/conditions equalexactdonorheads onall632rows."
+  ],
+  "read_only_source_assessment_complete": true,
+  "required_roles": {
+    "authored_sources_and_references": "Oneexactauthenticated168trainingmanifest/export plusonlyold/freshauthoredsource/referencepacket files actuallyconsumed byF18qualifiedreferences; rows632/order/token/sourcehashandscored624/goldcoordinates joined. Statutoryreference scoring forbidden.",
+    "bootstrap_public_metadata": [
+      "exactF19design",
+      "exactF19executioncontract",
+      "exactF19inputsmanifest",
+      "actualindependentsourcegate",
+      "entrysource andonlyconsumedpureASTkernels"
+    ],
+    "donor_custody_public_metadata": "For eachF15/F17/F18: exactplan,summary,freezeorsnapshot,snapshotcontentreviewwhereapplicable,runtimereview,resultreview; bindreview\u2192runtime\u2192freeze\u2192selectedcapturedescriptors. Do notrecursively admitallancestralartifactmaps.",
+    "never_admit": [
+      "checkpointbodies",
+      "teachercapturebodies",
+      "privateendpointcopies",
+      "globalledger/scheduler",
+      "logs/JSONL",
+      "unconsumedexportsorcomparators",
+      "broadsourcecheckoutdirectory",
+      "SDK/numerical/production/CIDpackages"
+    ],
+    "saved_heads": "Exactly3donors\u00d710panels\u00d7raw+joint=60trainedcapturefiles,632orderedrows/donor withlaw8presentbutunscored. Nativefullraw/jointreplaymustmatchall3beforemixing."
+  },
+  "reviewer": "/root/runtime_protocol_n9",
+  "schema": "conditions-composition-finite-analysis-readiness-review/v1",
+  "source_function_locations_and_AST_digests": {
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/analyze_modality_conditions_retention_v01.py": {
+      "FiniteIO": {
+        "AST_SHA256": "9e685de48ddb7535b1d841bd990d38b4484c9fa9338b67a2b26fa00faf25881a",
+        "line": 305
+      },
+      "bootstrap_source": {
+        "AST_SHA256": "8cdef59c5e3e6346441d9195eb4de7bea010464b388e1066787814e7b2972cc2",
+        "line": 54
+      },
+      "load_pure_definitions": {
+        "AST_SHA256": "7cc9d0ddc27fb0f5c9e9088e1c0d50f30218e10287fc91129774ad07a7e0bb54",
+        "line": 66
+      },
+      "qualified_metadata": {
+        "AST_SHA256": "cf37ce99f513d9c27f940f78a4c2df0ec234c26bb1e08db56df2862930bd3db6",
+        "line": 90
+      },
+      "qualify_output_snapshot": {
+        "AST_SHA256": "97e9352de0257b574802eb147f9ed625b9f40a7c8f05adaa87d9583d8c66b843",
+        "line": 100
+      }
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "_pair_winners": {
+        "AST_SHA256": "5f6b38ee29cc6e1fdf90a376eee7926958653632e8fca995d820e7ebab7592a4",
+        "line": 75
+      },
+      "_verify_greedy": {
+        "AST_SHA256": "b0c75bb28e2e0e6d56ec6bc0aa01fb181202b8991b71be79c5b2c657a5a76799",
+        "line": 89
+      }
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "_choice": {
+        "AST_SHA256": "55abb39a2008ac9d38a9738abb1693abb8cf44ab3496fa46ddfe11a9367c506d",
+        "line": 111
+      },
+      "_rank_spans": {
+        "AST_SHA256": "91765eb5512402addfdc722ad63a32700530727aefb9b9c85eb74eaf50f01df0",
+        "line": 117
+      },
+      "select_joint_spans": {
+        "AST_SHA256": "3b8b98eb732c6c0e0823f5ff3b8025e41d6ede7b20c083f8bd84170727b6a0f1",
+        "line": 200
+      }
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "_labels": {
+        "AST_SHA256": "1e9d2a8be84d381173330863edb60bfd7c13a2c50a090b2dfbe4801753d65e4a",
+        "line": 98
+      },
+      "tokenize_source": {
+        "AST_SHA256": "5f86f06edc082ecc41d94c5d64bdfc279837c95d362747f10a5ee5fc28e58213",
+        "line": 76
+      }
+    }
+  },
+  "source_qualification_completed": false
+}
