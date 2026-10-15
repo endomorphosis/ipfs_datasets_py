@@ -120,16 +120,35 @@
   "new_stack_cases": 982,
   "observed_at_utc": "2026-10-15T05:34:59.119007+00:00",
   "original_execution_receipt_preserved": true,
+  "parallel_checkout_closing": {
+    "advanced_externally_from_initial_census": true,
+    "branch": "codex/legal-definition-v2-20261015-01",
+    "changed_paths": [
+      "docs/autoencoders/legal_source_definition_v2.md",
+      "ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py",
+      "ipfs_datasets_py/logic/autoformal/legal_definition_boolean.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py",
+      "tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py",
+      "tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py"
+    ],
+    "checkout_reset_by_this_integration": false,
+    "clean": true,
+    "head": "4e4ea1afa0226c62fdd28e1678cd4046feb90218",
+    "new_v2_definition_path_qualified_by_this_integration": false,
+    "observed_at_utc": "2026-10-15T06:01:06.065326+00:00",
+    "overlap_with15_imported_paths": false
+  },
   "product_or_tests_changed_for_accounting_correction": false,
   "qualification_recount": "qualification-v02/recount.json",
   "qualified_cases": 1565,
   "qualified_shared_cases": 583,
   "remaining_gaps": [
-    "actual reviewed source and meaning responses",
-    "standalone sampler correspondence to original parent/alignment/request preparation, or a deliberately versioned source-only request profile",
-    "older paragraph-based native semantic/definition profile versus markup source units",
-    "supported complete title-wide and ordered multiple-occurrence interpretation",
-    "native Lean consequence and dependency qualification"
+    "qualify existing parallel V2 definition bridge and corpus adapter at4e4ea1afa with legacy Boolean refactor regression",
+    "standalone sampler request/profile mapping and compatible V2 meaning review subjects",
+    "actual definition/use source and meaning reviews",
+    "complete supported norm/use bindings and native Lean dependency qualification",
+    "corrected historical graph cache source reconciliation"
   ],
   "retained_original_checkout_clean": true,
   "retained_original_head": "c5149abeac4c4f5f735125c190d324efe19ab7c4",

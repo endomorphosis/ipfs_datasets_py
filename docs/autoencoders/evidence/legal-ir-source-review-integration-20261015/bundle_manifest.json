@@ -4,12 +4,12 @@
     "real_statutory_review_completed": false,
     "training_qualified": false
   },
-  "bindings_sha256": "35a23cb960f6ff62894832675672e4e2a06ac89fdf9b886dd41335e06db01cc1",
+  "bindings_sha256": "85ea050608c55e719781b477bdfd7551abaeb875fc52b8385309692818ca480e",
   "execution_head": "702142fc8789517ecc204607d07c4b925ec7b441",
   "files": {
     "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/integration.json": {
-      "bytes": 14112,
-      "sha256": "0eb611d571eed444c6946243ec25edf57e0c24fc472febc4580fe1a6ac1f8b9b"
+      "bytes": 15079,
+      "sha256": "2c3d2cf61f7d006cfaedd8de46512048482c45bad570ed13173c2d8731a597ce"
     },
     "docs/autoencoders/evidence/legal-ir-source-review-integration-20261015/qualification-v01-aborted/abort_receipt.json": {
       "bytes": 1008,
@@ -68,12 +68,12 @@
       "sha256": "329f5a811d0d0ebf76dcc9aa548307a8acb4fd9ecd2063d332cb478376db188a"
     },
     "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md": {
-      "bytes": 41561,
-      "sha256": "8aed7d3d5267776a5fc97d6797dcc76e8709b94e6ff564554aed3fb529106423"
+      "bytes": 41840,
+      "sha256": "ae921d02c118a24beb2ef98300550a627931c4a40a1ed4b2d27e5e54b7b8be73"
     },
     "docs/autoencoders/legal_source_review_stack_integration_20261015.md": {
-      "bytes": 7372,
-      "sha256": "2875bd5cb667fec44268c84eeee5ddeedbc82c4248c30e0b32219652c500fd56"
+      "bytes": 8343,
+      "sha256": "cfd548d8027cf3b35cb88148b6e1f08ab7b13231caf4f5f75c9f68fe106ebad9"
     },
     "ipfs_datasets_py/logic/autoformal/__init__.py": {
       "bytes": 60251,

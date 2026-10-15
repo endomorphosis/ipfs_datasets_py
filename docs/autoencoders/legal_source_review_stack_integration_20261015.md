@@ -116,3 +116,19 @@ Main's concurrent CUDA census resource changes are preserved separately; their
 six paths do not overlap these listed inputs. This run supplies no CUDA census
 qualification. The [integration inventory](evidence/legal-ir-source-review-integration-20261015/integration.json)
 records the exact imported files and the 26 unchanged existing producer bodies.
+
+## Parallel advance observed at closing
+
+After the initial census, another session advanced the original checkout from
+`c5149abe` to clean commit `4e4ea1afa0226c62fdd28e1678cd4046feb90218`
+on `codex/legal-definition-v2-20261015-01`. That seven-path delta adds a V2
+source-bound definition bridge, definition-only corpus adapter and tests, and
+shares Boolean lowering with the legacy bridge. It supports explicit unreviewed
+title/section scope and ordered source contributors. Our five imported owners
+are unchanged by that advance; the other session's checkout was not reset.
+
+This newer V2 contribution remains outside this integration. Qualify its existing
+bridge, adapter and legacy refactor next rather than implementing another native
+V2 path. Its declarations and candidate `DEFINES` graph do not supply genuine
+§101 reviews, compatible V2 meaning-review subjects, a complete norm/use binding
+or the standalone sampler-to-parent/alignment request correspondence.
