@@ -1,0 +1,103 @@
+{
+  "attribution": "normal cherry-pick -x; all three Git modes and file bodies preserved; no existing runtime file changed",
+  "authority": {
+    "actual_statutory_reviews_created": 0,
+    "model_training_runs": 0,
+    "native_Lean_processes": 0,
+    "semantic_admissions": 0,
+    "training_gold_created": 0
+  },
+  "base_main": "56abb75457f1b57ceaef02c08dcdccba5ec6bb03",
+  "execution_evidence_copies": [
+    {
+      "bytes": 96250,
+      "original_path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-v2-integration-20261015/qualification-v01/receipt.json",
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-v2-integration-20261015/qualification-v01/receipt.json",
+      "sha256": "18fa2aab5a31f57ca4417e74439451850927d1600cedc8c9095f1386aa6dd6fa"
+    },
+    {
+      "bytes": 92700,
+      "original_path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-v2-integration-20261015/qualification-v01/run-inputs.json",
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-v2-integration-20261015/qualification-v01/run-inputs.json",
+      "sha256": "c8a382d76a9190561127a99ae5599abb005678f0d6f7b0cadad874554bf333e3"
+    },
+    {
+      "bytes": 94961,
+      "original_path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-v2-integration-20261015/qualification-v01/stdout.txt",
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-v2-integration-20261015/qualification-v01/stdout.txt",
+      "sha256": "fe93105a560942273e16c6d2242fe99832997acc8f4e6bf8dcf31d4b2bf075f5"
+    },
+    {
+      "bytes": 0,
+      "original_path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-v2-integration-20261015/qualification-v01/stderr.txt",
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-v2-integration-20261015/qualification-v01/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 55965,
+      "original_path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-v2-integration-20261015/qualification-v01/junit.xml",
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-v2-integration-20261015/qualification-v01/junit.xml",
+      "sha256": "42e39d8047e8cb838a5b75e805cb7b764db29f5e092026a8cbb393b63108daf6"
+    },
+    {
+      "bytes": 14318,
+      "original_path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/implementation-receipt.json",
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-v2-integration-20261015/author_snapshot/implementation-receipt.json",
+      "sha256": "b19a47a689c0a33c7fc762b3ffa6672ff0957aac01257fb2497b9bff4bac2e5f"
+    },
+    {
+      "bytes": 17952,
+      "original_path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/manifest.json",
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-v2-integration-20261015/author_snapshot/manifest.json",
+      "sha256": "701f65e742ef262112441ec397fb5790b25a22f6eea870ba4085f05c1c15dbfc"
+    }
+  ],
+  "imported_files": [
+    {
+      "bytes": 9577,
+      "original_blob": "4a032f274da614f3070f9f8401230da78216f864",
+      "path": "docs/autoencoders/corpus_definition_use_v2.md",
+      "sha256": "4d7ed9e181bf6cd5975dbbf980dfbb13911e86276a0ed86fd4b5c3aaa5d41dfc"
+    },
+    {
+      "bytes": 29795,
+      "original_blob": "7fc85d794a1a30e2c4ca04183fde7b9281076c1e",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py",
+      "sha256": "9017a10f5505814e88499e90717009b94d17335e1ec30529c7adfb00b65ceb90"
+    },
+    {
+      "bytes": 32046,
+      "original_blob": "f0e6b6a53becbba11c09861a4b80bd0b28eb7369",
+      "path": "tests/unit/logic/autoformal/test_corpus_definition_use_v2.py",
+      "sha256": "7a9bb538226e64cb11d34eab3f601963cc3a4c82a344c1454dcf28e9573ac1a5"
+    }
+  ],
+  "observed_utc": "2026-10-15T07:32:24.209703+00:00",
+  "original_author_255_cases_are_subset_of_302": true,
+  "original_contribution": "6b5ee085a9ffc4cb2492552ca31b335badfd1fc1",
+  "original_parent": "8f33492f4a639aa0ee3218653c63e467cd01d3ea",
+  "parallel_owner_observation": {
+    "branch": "codex/legal-definition-v2-use-20261015-01",
+    "head": "6b5ee085a9ffc4cb2492552ca31b335badfd1fc1",
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets",
+    "status_porcelain": ""
+  },
+  "prior_966_case_generation_all_501_listed_file_bodies_match": true,
+  "prior_966_tests_rerun": false,
+  "qualified_import": "7e34bb15d7b9bf4d8d25136f56e575e8d3644a7c",
+  "retained_authored_example": {
+    "current_checkout_full_component_replay_claimed": false,
+    "dependency_artifacts": 97,
+    "dependency_edges": 179,
+    "graph_edges": 58,
+    "graph_nodes": 33,
+    "historical_producer_generation_preserved": true,
+    "manifest_path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/manifest.json",
+    "open_context_obligations": 78,
+    "payload_files_byte_verified": 41,
+    "physical_occurrences": 13,
+    "scope": "Fictional engineering source only; explicit unreviewed alias assumption, no actual statutory interpretation or reviewer."
+  },
+  "schema": "legal-ir-definition-use-v2-integration/v1",
+  "scope": "Authored two-definition alias engineering; no actual statutory norm/use, combined review signing domain or per-occurrence governing lookup."
+}

@@ -98,10 +98,12 @@ compatible version; preserve the existing closed messages and signing domains.
 
 Obtain actual source/applicability and legal/formal meaning decisions for one
 complete definition and its uses. Keep disagreement and unsupported material
-explicit. A parallel owner is already developing `corpus_definition_use_v2.py`,
-its guide and tests; preserve and qualify its frozen contribution rather than
-creating another adapter. A complete use needs supported arguments, qualifiers,
-dependencies, checked scope and native-symbol/definition resolution.
+explicit. The subsequent [definition-alias integration](legal_definition_use_v2_integration_20261015.md)
+now qualifies the additive `corpus_definition_use_v2.py` contribution. It supplies
+an unreviewed alias between two definitions with representative-only lookup; it
+does not supply a complete statutory norm/use or a combined-use review domain.
+A complete use still needs supported arguments, qualifiers, dependencies,
+checked scope and native-symbol/definition resolution.
 
 Graph admission, actual pinned native Lean builds and model promotion retain
 their own gates. Keep the separate IR families, schema/version/task checkpoints

@@ -1,0 +1,429 @@
+{
+  "schema": "legal-v2-definition-use-implementation-receipt/v1",
+  "closed_at_utc": "2026-10-15T07:12:10.262226+00:00",
+  "all_checks_passed": true,
+  "check_count": 54,
+  "checks": [
+    {
+      "name": "source_commit",
+      "passed": true
+    },
+    {
+      "name": "source_parent",
+      "passed": true
+    },
+    {
+      "name": "source_branch",
+      "passed": true
+    },
+    {
+      "name": "owned_source_checkout_clean",
+      "passed": true
+    },
+    {
+      "name": "exact_three_new_source_paths",
+      "passed": true
+    },
+    {
+      "name": "all_existing_31370_modes_OIDs_preserved",
+      "passed": true
+    },
+    {
+      "name": "all_ten_gitlinks_preserved",
+      "passed": true
+    },
+    {
+      "name": "tested_source_corpus_definition_use_v2.md",
+      "passed": true
+    },
+    {
+      "name": "committed_blob_docs/autoencoders/corpus_definition_use_v2.md",
+      "passed": true
+    },
+    {
+      "name": "tested_source_corpus_definition_use_v2.py",
+      "passed": true
+    },
+    {
+      "name": "committed_blob_ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py",
+      "passed": true
+    },
+    {
+      "name": "tested_source_test_corpus_definition_use_v2.py",
+      "passed": true
+    },
+    {
+      "name": "committed_blob_tests/unit/logic/autoformal/test_corpus_definition_use_v2.py",
+      "passed": true
+    },
+    {
+      "name": "original_definition_AST_owners_unchanged",
+      "passed": true
+    },
+    {
+      "name": "Ruff_Black_and_diff_checks_passed",
+      "passed": true
+    },
+    {
+      "name": "JUnit_pin_use-authored-tests-v03.xml",
+      "passed": true
+    },
+    {
+      "name": "JUnit_unique_passes_use-authored-tests-v03.xml",
+      "passed": true
+    },
+    {
+      "name": "JUnit_pin_legacy-regression-v01.xml",
+      "passed": true
+    },
+    {
+      "name": "JUnit_unique_passes_legacy-regression-v01.xml",
+      "passed": true
+    },
+    {
+      "name": "255_unique_tests_44_new_211_legacy",
+      "passed": true
+    },
+    {
+      "name": "independent_use_review_passed",
+      "passed": true
+    },
+    {
+      "name": "independent_use_review_current_source",
+      "passed": true
+    },
+    {
+      "name": "eleven_independent_early_refusals",
+      "passed": true
+    },
+    {
+      "name": "independent_example_review_passed",
+      "passed": true
+    },
+    {
+      "name": "progress_guide_pin",
+      "passed": true
+    },
+    {
+      "name": "progress_owner_pin",
+      "passed": true
+    },
+    {
+      "name": "progress_test_pin",
+      "passed": true
+    },
+    {
+      "name": "progress_validation_pin",
+      "passed": true
+    },
+    {
+      "name": "progress_tree_validation_pin",
+      "passed": true
+    },
+    {
+      "name": "progress_independent_use_review_pin",
+      "passed": true
+    },
+    {
+      "name": "progress_authored_alias_example_pin",
+      "passed": true
+    },
+    {
+      "name": "progress_independent_example_readback_pin",
+      "passed": true
+    },
+    {
+      "name": "progress_training_delta_pin",
+      "passed": true
+    },
+    {
+      "name": "41_example_payload_pins",
+      "passed": true
+    },
+    {
+      "name": "example_counts",
+      "passed": true
+    },
+    {
+      "name": "example_no_authority_no_actual_reviews",
+      "passed": true
+    },
+    {
+      "name": "representative_only_assumption",
+      "passed": true
+    },
+    {
+      "name": "combined_use_review_pending",
+      "passed": true
+    },
+    {
+      "name": "example_source_owner_pins",
+      "passed": true
+    },
+    {
+      "name": "training_audit_29_passed",
+      "passed": true
+    },
+    {
+      "name": "no_completed_training_or_diagnostic_successor",
+      "passed": true
+    },
+    {
+      "name": "F18_archive_preserved",
+      "passed": true
+    },
+    {
+      "name": "independent_plan_review_passed",
+      "passed": true
+    },
+    {
+      "name": "independent_reconciliation_pin",
+      "passed": true
+    },
+    {
+      "name": "five_final_plan_pins",
+      "passed": true
+    },
+    {
+      "name": "independent_plan_pins_agree",
+      "passed": true
+    },
+    {
+      "name": "all_24_task_statuses_dependencies_exact",
+      "passed": true
+    },
+    {
+      "name": "current_pilot_human_spec",
+      "passed": true
+    },
+    {
+      "name": "current_profile_human_spec",
+      "passed": true
+    },
+    {
+      "name": "current_use_feature_matches_progress",
+      "passed": true
+    },
+    {
+      "name": "all_four_canonical_HEAD_index_fences_unchanged",
+      "passed": true
+    },
+    {
+      "name": "canonical_HEAD_and_32220_stage_rows_exact",
+      "passed": true
+    },
+    {
+      "name": "canonical_fences_still_exact_after_readonly_git",
+      "passed": true
+    },
+    {
+      "name": "prior_implementation_receipt_exact",
+      "passed": true
+    }
+  ],
+  "source": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets",
+    "commit": "6b5ee085a9ffc4cb2492552ca31b335badfd1fc1",
+    "parent": "8f33492f4a639aa0ee3218653c63e467cd01d3ea",
+    "branch": "codex/legal-definition-v2-use-20261015-01",
+    "clean": true,
+    "before_rows": 31370,
+    "after_rows": 31373,
+    "added_paths": [
+      "docs/autoencoders/corpus_definition_use_v2.md",
+      "ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py",
+      "tests/unit/logic/autoformal/test_corpus_definition_use_v2.py"
+    ],
+    "changed_existing_paths": [],
+    "all_existing_mode_OIDs_and_10_gitlinks_preserved": true,
+    "product_pins": [
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/docs/autoencoders/corpus_definition_use_v2.md",
+        "bytes": 9577,
+        "sha256": "4d7ed9e181bf6cd5975dbbf980dfbb13911e86276a0ed86fd4b5c3aaa5d41dfc"
+      },
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py",
+        "bytes": 29795,
+        "sha256": "9017a10f5505814e88499e90717009b94d17335e1ec30529c7adfb00b65ceb90"
+      },
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/tests/unit/logic/autoformal/test_corpus_definition_use_v2.py",
+        "bytes": 32046,
+        "sha256": "7a9bb538226e64cb11d34eab3f601963cc3a4c82a344c1454dcf28e9573ac1a5"
+      }
+    ]
+  },
+  "opening": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/opening.json",
+    "bytes": 3135,
+    "sha256": "b58c34db1a2a26bcad56ee78bbf5950eae9baf0e4d547e21aa6e061e1eaf67a8"
+  },
+  "prior_receipt": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/implementation-receipt.json",
+    "bytes": 19890,
+    "sha256": "8367afeab400739004426512cee8e50f29a488c69ff14c7c2cacd110666d5067"
+  },
+  "progress": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/implementation-plan-progress-v01.json",
+    "bytes": 4523,
+    "sha256": "68a52930694548fdc245fda3a7bd5c28b1b48eaa11cce4ddaaaa91db079cfd92"
+  },
+  "validation": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/precommit-validation-v01.json",
+    "bytes": 2161,
+    "sha256": "172f0d35758db760984f63abd5379a512b713cbc064ed19330f478f7804471c9"
+  },
+  "tests": {
+    "unique_passed": 255,
+    "new_authored": 44,
+    "legacy": 211,
+    "failures_errors_skips": 0,
+    "JUnit": [
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-use-v2-20261015-01/use-authored-tests-v03.xml",
+        "bytes": 8916,
+        "sha256": "5e18ddd19c023abd54c2c398ac3ae185a5500d5e6c64f4b1deb452fb2c6802bb",
+        "tests": 44
+      },
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/legacy-regression-v01.xml",
+        "bytes": 39874,
+        "sha256": "0335f42001fa5ee0bdfbc91d1da440550f3547d1632983dcfd15fbb5f6099a10",
+        "tests": 211
+      }
+    ],
+    "authored_test_receipt": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-use-v2-20261015-01/use-authored-test-receipt-v01.json",
+      "bytes": 7085,
+      "sha256": "8113f2c22e0242170c6c6a5ab16bd823f440755c8a27c13ef32d514593e9da82"
+    },
+    "earlier_35_and_41_test_runs_retained_as_dated_evidence": true
+  },
+  "independent_use_review": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/independent-use-review-v01.json",
+    "bytes": 9207,
+    "sha256": "c41fc0748495b699f76b4c079e459d3e2daaf4600a58a1d1054fc805321f657c"
+  },
+  "authored_example": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/authored-alias-component-01/manifest.json",
+    "bytes": 17952,
+    "sha256": "701f65e742ef262112441ec397fb5790b25a22f6eea870ba4085f05c1c15dbfc"
+  },
+  "independent_example_readback": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/independent-authored-example-readback-v01.json",
+    "bytes": 24417,
+    "sha256": "2d13b78f642c5e5a90fbbd3652ef858ac6ad05c9d342fc6e4f358f3cd4574005"
+  },
+  "plan_reconciliation": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/plan-reconciliation-v01.json",
+    "bytes": 23506,
+    "sha256": "2b3834793388a0e28494d6ccfc10f8b9c27d02c6813c6bc15768629c3f021311"
+  },
+  "independent_plan_training_consistency": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/plan-training-consistency-v01.json",
+    "bytes": 58409,
+    "sha256": "34f456e76acd99af146a4367be379d12f093307d077fc8543da3b332af28b262"
+  },
+  "final_plan_pins": [
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-span-graph-lean4-implementation-plan-2026-10-13.md",
+      "bytes": 191777,
+      "sha256": "c6067421e02707c565af530380a01641d58d3f1c2c84c9b6150364c745815599"
+    },
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-training-review-and-corpus-plan-2026-10-13.md",
+      "bytes": 162742,
+      "sha256": "1e5c0e92633ad9be613470faacfde249861a298c4b86bb5c44cbda5a8696729d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-comprehensive-review-20261013/implementation-backlog.json",
+      "bytes": 1683209,
+      "sha256": "c714717a766562c7290b5cccad864fe918e85f3b76c1e90add668d331909cb5b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-connected-statutory-pilot-spec-2026-10-15.md",
+      "bytes": 37402,
+      "sha256": "51602c427cd406eb69ae4c164219a63d5108bdc0eb8ada22f9e9c4ccc4b73d01"
+    },
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-definition-profile-extension-spec-2026-10-15.md",
+      "bytes": 30928,
+      "sha256": "ae44b288c31a1b25c0c2c9708551f3746c87b27440c3ecaf28883ae6801e3751"
+    }
+  ],
+  "training_evidence": {
+    "audit": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/training-delta-v01.json",
+      "bytes": 53771,
+      "sha256": "244065fb7455697bde9ad30eae4804735c6151c095cbb0b727841109df43f12b"
+    },
+    "fixed_cutoff_utc": "2026-10-15T06:51:48.363826+00:00",
+    "prior_summary_identities_unchanged": 68,
+    "latest_trained_scored_control": "F18; scientific fail; no promotion",
+    "latest_qualified_model_archive_revision": "c9cce4586dd96518088662fb12831173e98e36cc",
+    "latest_completed_saved_score_diagnostic": "F19",
+    "new_completed_training_runs": 0,
+    "new_completed_saved_score_diagnostics": 0,
+    "new_qualified_scored_successors": 0,
+    "F20_state_inferred": false
+  },
+  "canonical_guard": {
+    "raw_fences": [
+      {
+        "path": "/home/barberb/lift_coding/.git/HEAD",
+        "bytes": 37,
+        "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+      },
+      {
+        "path": "/home/barberb/lift_coding/.git/index",
+        "bytes": 692628,
+        "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+      },
+      {
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD",
+        "bytes": 21,
+        "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+      },
+      {
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+        "bytes": 5251025,
+        "sha256": "8bd28a44ae0a0425cfaba561c3bf8c13f25bbf7e61cbf12c05708c9563dceda8"
+      }
+    ],
+    "resolved_HEAD": "74f5d98c8ffff3c284cffddf430091b5fc4c6f8c",
+    "stage_rows": 32220,
+    "stage_mapping_sha256": "b025665e177920ec3ec22e04c7a06afcb70f80e4e40bebdde18937aab2d6d922",
+    "all_unchanged": true,
+    "canonical_working_source_bodies_not_qualified_by_this_guard": true
+  },
+  "authority_and_actions": {
+    "actual_statutory_ASTs": 0,
+    "actual_source_meaning_reviews": 0,
+    "actual_semantic_graph_admissions": 0,
+    "new_training_gold": 0,
+    "new_Lean_admissions": 0,
+    "new_model_training_runs": 0,
+    "native_Lean_processes": 0,
+    "network_or_remote_publications": 0,
+    "authored_native_Python_AST_parse_lowering_executed": true,
+    "training_payload_reads_or_rescoring": 0,
+    "resource_actions": 0,
+    "canonical_mutations": 0,
+    "combined_use_signing_domain_implemented": false,
+    "per_occurrence_lookup_verified": false,
+    "actual_governing_definition_use_qualified": false,
+    "V2_native_Lean_profile_registration_or_execution": false
+  },
+  "remaining": [
+    "A separately versioned combined-use review subject/domain binding the new assumption, both originals and complete dependencies.",
+    "Actual independently supplied source/meaning/applicability decisions and legal/formal reviews for a complete supported source/use component.",
+    "Per-occurrence governing lookup when claimed, same-document scope carriers when needed, and compatible native V2 build qualification.",
+    "Reviewed corpus/cache release and dependency/exposure-aware training targets after those admission gates."
+  ],
+  "closing_driver": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-use-20261015-01/close_implementation_v01.py",
+    "bytes": 12168,
+    "sha256": "a0047fc79eab6f1c0085feeb6755cfd8727f5564a342ebea1725844c2efa5553"
+  }
+}

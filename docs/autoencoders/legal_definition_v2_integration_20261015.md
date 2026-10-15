@@ -106,8 +106,9 @@ receipt custody and checkout-root agreement. Their raw results remain separate.
 The subsequent [V2 context and review integration](legal_definition_v2_review_integration_20261015.md)
 now qualifies and adopts `8f33492f4a639aa0ee3218653c63e467cd01d3ea`. Its fresh
 source/report/subject generation preserves earlier evidence above without
-rewriting producer pins. Actual source/meaning reviews and the parallel complete
-definition/use contribution remain next. Parent/alignment requests still
+rewriting producer pins. The subsequent [definition-alias candidate integration](legal_definition_use_v2_integration_20261015.md)
+is also qualified. Actual source/meaning reviews and a complete supported
+statutory norm/use remain next. Parent/alignment requests still
 require their original identities and request evidence; equal text cannot
 substitute for checked correspondence to the standalone sampler.
 
