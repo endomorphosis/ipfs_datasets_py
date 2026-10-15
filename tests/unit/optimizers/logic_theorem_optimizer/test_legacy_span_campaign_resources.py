@@ -1,6 +1,7 @@
 """Local filesystem/scheduler tests; synthetic CUDA observations are unit tests."""
 import json
 import os
+import pickle
 from types import SimpleNamespace
 
 import pytest
@@ -148,3 +149,120 @@ def test_cuda_lock_symlink_rejected(tmp_path):
         with work.CudaDeviceBudget(tmp_path):
             pytest.fail("symlink lock admitted")
     assert (tmp_path / "other").read_text() == "preserved"
+
+
+@pytest.mark.parametrize("reserved", [0, work.GIB])
+@pytest.mark.parametrize("difference", [-1, 0, 1])
+def test_cuda_admission_headroom_boundary_preserves_allocator_reserve(reserved, difference):
+    required = 4 * work.GIB - reserved
+    torch, calls = _torch(free=required + difference, reserved=reserved)
+    if difference < 0:
+        with pytest.raises(work.CudaHeadroomPressure) as caught:
+            work.admit_cuda_device(torch_module=torch)
+        observed = caught.value.observation
+        assert observed["free_bytes"] == required - 1
+        assert observed["required_free_bytes"] == required
+        assert observed["headroom_ok"] is False
+        assert observed["allocator_fraction_set"] is False
+        assert observed["admission"] is True
+        assert calls == []
+    else:
+        observed = work.admit_cuda_device(torch_module=torch)
+        assert observed["required_free_bytes"] == required
+        assert observed["headroom_ok"] is True
+        assert observed["allocator_fraction_set"] is True
+        assert calls == [(0.125, 0)]
+    assert observed["budget_bytes"] == 2 * work.GIB
+    assert observed["safety_bytes"] == 2 * work.GIB
+    assert observed["host_global_gpu_reservation"] is False
+
+
+@pytest.mark.parametrize("admission", [False, True])
+@pytest.mark.parametrize("difference", [-1, 0, 1])
+def test_cuda_budget_records_pressure_and_recovers_without_releasing_owner(
+        tmp_path, monkeypatch, admission, difference):
+    torch, _ = _torch()
+    observed = work.cuda_memory_snapshot(torch_module=torch)
+    monkeypatch.setattr(work, "cuda_memory_snapshot", lambda device=0: dict(observed))
+    with work.CudaDeviceBudget(tmp_path) as budget:
+        required = (4 if admission else 2) * work.GIB
+        observed["free_bytes"] = required + difference
+        observed["observed_at"] += 1
+        if difference < 0:
+            with pytest.raises(work.CudaHeadroomPressure) as caught:
+                budget.check(admission=admission)
+            failure = caught.value
+            assert failure.args == ("insufficient observed CUDA memory headroom",)
+            assert failure.observation == budget.last_observation
+            assert failure.observation is not budget.last_observation
+            assert failure.observation["free_bytes"] == required - 1
+            assert failure.observation["required_free_bytes"] == required
+            assert failure.observation["observed_at"] == observed["observed_at"]
+            assert failure.observation["headroom_ok"] is False
+            restored = pickle.loads(pickle.dumps(failure))
+            assert type(restored) is work.CudaHeadroomPressure
+            assert restored.args == failure.args
+            assert restored.observation == failure.observation
+            assert restored.observation is not failure.observation
+            restored.observation["free_bytes"] = 0
+            assert failure.observation["free_bytes"] == required - 1
+            observed["free_bytes"] = required
+        healthy = budget.check(admission=admission)
+        assert healthy["headroom_ok"] is True
+        assert healthy["required_free_bytes"] == required
+        assert healthy["free_bytes"] >= required
+        assert healthy["admission"] is admission
+        assert healthy["budget_bytes"] == 2 * work.GIB
+        assert healthy["safety_bytes"] == 2 * work.GIB
+        assert healthy["host_global_gpu_reservation"] is False
+        assert budget._fd is not None
+        # A pause keeps this process's ownership; another owner cannot enter.
+        with pytest.raises(work.LegacySpanResourceError, match="already active") as caught:
+            with work.CudaDeviceBudget(tmp_path):
+                pytest.fail("pressure handling released the CUDA owner")
+        assert not isinstance(caught.value, work.CudaHeadroomPressure)
+    assert budget._fd is None
+
+
+@pytest.mark.parametrize("values", [
+    {"available": False}, {"free": None}, {"free": 20 * work.GIB},
+    {"reserved": 3 * work.GIB}, {"total": work.GIB, "free": work.GIB},
+])
+def test_only_valid_cuda_free_memory_pressure_is_temporary(values):
+    torch, calls = _torch(**values)
+    with pytest.raises(work.LegacySpanResourceError) as caught:
+        work.admit_cuda_device(torch_module=torch)
+    assert not isinstance(caught.value, work.CudaHeadroomPressure)
+    assert calls == []
+
+
+@pytest.mark.parametrize("invalid", [
+    {"free_bytes": None}, {"reserved_bytes": 3 * work.GIB},
+    {"allocated_bytes": 1, "reserved_bytes": 0},
+])
+def test_cuda_budget_invalid_telemetry_and_allocator_violation_stay_fatal(
+        tmp_path, monkeypatch, invalid):
+    torch, _ = _torch()
+    observed = work.cuda_memory_snapshot(torch_module=torch)
+    monkeypatch.setattr(work, "cuda_memory_snapshot", lambda device=0: dict(observed))
+    with work.CudaDeviceBudget(tmp_path) as budget:
+        observed.update(invalid)
+        with pytest.raises(work.LegacySpanResourceError) as caught:
+            budget.check()
+        assert not isinstance(caught.value, work.CudaHeadroomPressure)
+        assert budget.last_observation["headroom_ok"] is True
+
+
+def test_cuda_budget_lock_identity_change_is_fatal_even_when_headroom_is_low(
+        tmp_path, monkeypatch):
+    torch, _ = _torch()
+    observed = work.cuda_memory_snapshot(torch_module=torch)
+    monkeypatch.setattr(work, "cuda_memory_snapshot", lambda device=0: dict(observed))
+    with work.CudaDeviceBudget(tmp_path) as budget:
+        budget.lock_path.rename(tmp_path / "retained-lock")
+        budget.lock_path.write_bytes(b"")
+        observed["free_bytes"] = 0
+        with pytest.raises(work.LegacySpanResourceError, match="identity changed") as caught:
+            budget.check()
+        assert not isinstance(caught.value, work.CudaHeadroomPressure)
+        assert budget.last_observation["headroom_ok"] is True

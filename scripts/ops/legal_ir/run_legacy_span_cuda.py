@@ -37,6 +37,9 @@ STOP = False
 GPU = None
 DEVICE = None
 ALLOCATOR_ADMISSION = None
+CUDA_RUNTIME = None
+CUDA_SOURCE_IDENTITY = None
+CUDA_STARTUP_WAITS = None
 
 
 def encode(value):
@@ -94,21 +97,76 @@ def _cpu_init():
     os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 
+def _verify_cuda_wait_source():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_cuda import _source_snapshot
+    expected = GPU.source_identity if GPU is not None else CUDA_SOURCE_IDENTITY
+    if expected is None or _source_snapshot() != expected or digest_file(__file__) != RUNNER_SHA256:
+        raise RuntimeError("producer source changed during CUDA headroom wait; restart required")
+
+
+def _cuda_with_headroom(probe, stage):
+    """Retry only valid low-free observations; the native owner keeps custody.
+
+    No model work occurs here. The outer process keeps its existing RAM/disk
+    watchdog and lease, and stops this worker's group on cancellation. All
+    invalid telemetry, lock loss, allocator excess and model errors stay fatal.
+    """
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import CudaHeadroomPressure
+    started, started_at = time.monotonic(), time.time()
+    next_report, pressures = 0.0, 0
+    while True:
+        if STOP:
+            raise RuntimeError("CUDA headroom wait cancelled")
+        try:
+            value = probe()
+        except CudaHeadroomPressure as error:
+            pressures += 1
+            now = time.monotonic()
+            if pressures == 1 or now >= next_report:
+                _verify_cuda_wait_source()
+                state = {"schema": "legacy-cuda-headroom-state/v1", "status": "waiting",
+                    "stage": stage, "pid": os.getpid(), "started_at": started_at,
+                    "checked_at": time.time(), "pressure_probes": pressures,
+                    "waited_seconds": now - started, "cuda": dict(error.observation),
+                    "admitted": False, "training_executed": False}
+                atomic(CUDA_RUNTIME / "cuda-headroom.json", state)
+                event("cuda_headroom_wait", **state)
+                next_report = now + 30.0
+            time.sleep(2.0)
+            continue
+        waited = time.monotonic() - started if pressures else 0.0
+        if pressures:
+            # A result made before a pause cannot cross a producer generation.
+            _verify_cuda_wait_source()
+            state = {"schema": "legacy-cuda-headroom-state/v1", "status": "ready",
+                "stage": stage, "pid": os.getpid(), "started_at": started_at,
+                "checked_at": time.time(), "pressure_probes": pressures,
+                "waited_seconds": waited, "cuda": dict(value) if isinstance(value, dict) else dict(DEVICE.last_observation),
+                "admitted": False, "training_executed": False}
+            atomic(CUDA_RUNTIME / "cuda-headroom.json", state)
+            event("cuda_headroom_resumed", **state)
+        return value, {"stage": stage, "pressure_probes": pressures, "waited_seconds": waited}
+
+
 def _gpu_init(checkpoint, runtime, batch_size, bridge_workers, guided_compiler=False):
-    global GPU, DEVICE, ALLOCATOR_ADMISSION
+    global GPU, DEVICE, ALLOCATOR_ADMISSION, CUDA_RUNTIME, CUDA_SOURCE_IDENTITY, CUDA_STARTUP_WAITS
     environment()
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_campaign_resources import CudaDeviceBudget, admit_cuda_device
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_cuda import LegacySpanCUDAWorker
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_cuda import LegacySpanCUDAWorker, _source_snapshot
+    CUDA_RUNTIME, CUDA_SOURCE_IDENTITY = Path(runtime), _source_snapshot()
     DEVICE = CudaDeviceBudget(runtime)
-    DEVICE.__enter__()
-    ALLOCATOR_ADMISSION = admit_cuda_device()
+    _, owner_wait = _cuda_with_headroom(DEVICE.__enter__, "device_admission")
+    ALLOCATOR_ADMISSION, allocator_wait = _cuda_with_headroom(admit_cuda_device, "allocator_admission")
+    CUDA_STARTUP_WAITS = {"device": owner_wait, "allocator": allocator_wait}
     GPU = LegacySpanCUDAWorker(checkpoint, mode="legacy_mock_diagnostic", max_batch_size=batch_size,
                                legal_ir_parallel_workers=bridge_workers, guided_compiler=guided_compiler)
 
 
 def _gpu_ready():
-    return {"pid": os.getpid(), "source": GPU.source_identity, "cuda": DEVICE.check(),
-            "allocator_admission": ALLOCATOR_ADMISSION, "resident_mb": resident_mb()}
+    observation, ready_wait = _cuda_with_headroom(DEVICE.check, "worker_ready")
+    return {"pid": os.getpid(), "source": GPU.source_identity, "cuda": observation,
+            "allocator_admission": ALLOCATOR_ADMISSION, "resident_mb": resident_mb(),
+            "cuda_headroom_waits": {"startup": CUDA_STARTUP_WAITS, "ready": ready_wait}}
 
 
 def resident_mb():
@@ -119,10 +177,12 @@ def resident_mb():
 
 
 def _gpu_evaluate(rows, compiled):
-    DEVICE.check()
+    _, before_wait = _cuda_with_headroom(DEVICE.check, "before_batch")
     result = GPU.evaluate_batch(rows, compiler_results=compiled)
-    result["device_budget"] = DEVICE.check()
+    result["device_budget"], after_wait = _cuda_with_headroom(DEVICE.check, "after_batch")
     result["cuda_allocator_admission"] = ALLOCATOR_ADMISSION
+    result["cuda_headroom_waits"] = {"before": before_wait, "after": after_wait}
+    result.setdefault("timings", {})["cuda_headroom_wait_seconds"] = before_wait["waited_seconds"] + after_wait["waited_seconds"]
     return result
 
 
