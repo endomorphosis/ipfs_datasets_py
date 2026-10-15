@@ -1,0 +1,13 @@
+{
+  "actual_helper_main_runs": 0,
+  "actual_original_body_opens": 0,
+  "correction": "Preload standard-library __future__ before installing unchanged no-open capability guard; rerun only invented controls under a separately versioned receipt.",
+  "failed_control_receipt_written": false,
+  "passed": false,
+  "refusal": "No-open audit guard denied lazy stdlib __future__ import while executing kernel module; no test method began.",
+  "schema": "conditions-rank-detached-control-harness-refusal/v1",
+  "source_controls_unchanged": true,
+  "source_files_sealed_before_refusal": true,
+  "source_kernel_unchanged": true,
+  "test_methods_executed": 0
+}

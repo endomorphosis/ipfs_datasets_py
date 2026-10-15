@@ -1,0 +1,44 @@
+{
+  "adapter_is_unsealed_draft_pending_primary_source": true,
+  "blocked_events": [],
+  "errors": [],
+  "failures": [],
+  "findings": [],
+  "harness": "Finite stdlib detached AST harness: compiles adapter with non-main module name; removes only test source loader _PATH/_SPEC/adapter bindings, exec_module call and main guard; injects exact separately compiled adapter. No adapter main, source plumb loader or actual IO is called. Test functions/classes/imports unchanged. Exclusive receipt written by os.write.",
+  "limits": {
+    "address_space_bytes": 536870912,
+    "cpu_seconds": 30,
+    "maximum_file_bytes": 1000000
+  },
+  "no_numerical_or_installed_package_imports": true,
+  "no_original_data_or_helper_main": true,
+  "passed": true,
+  "schema": "conditions-counter-adapter-invented-detached-controls/v1",
+  "source_files": [
+    {
+      "bytes": 32808,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/recount_conditions_composition_v01.py",
+      "sha256": "1dd435a5a82a60d4f7a5538b41898f593670336082c7aec459216e221cbe1152"
+    },
+    {
+      "bytes": 6979,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_conditions_composition_counter_adapter_v01.py",
+      "sha256": "2f6c1cc0d79085269ef13d18bbd2e98094cb8dfddb78bd3ab8e886403cdbbfce"
+    }
+  ],
+  "subtests": 65,
+  "test_methods": 11,
+  "test_names": [
+    "test_artifact_roles_are_closed_bounded_and_suffix_checked",
+    "test_capability_mutations_network_process_and_directory_scans_are_denied",
+    "test_closed_descriptor_rejects_oversized_and_ill_typed_records",
+    "test_forbidden_private_checkpoint_and_shared_resource_paths",
+    "test_model_sdk_cid_and_dynamic_capability_imports_are_denied",
+    "test_only_exact_final_output_chmod_0444_is_allowed",
+    "test_only_exact_output_exclusive_write_is_allowed",
+    "test_output_readback_requires_explicit_exact_own_admission",
+    "test_panel_identity_index_rejects_duplicate_membership",
+    "test_raw_and_joint_conditions_extraction_preserves_early_abstention",
+    "test_wall_deadline_refuses_expired_budget"
+  ]
+}

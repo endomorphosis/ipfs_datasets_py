@@ -1,0 +1,180 @@
+"""Invented controls for the separate F19 copy/scientific arithmetic kernels."""
+from __future__ import annotations
+
+from copy import deepcopy
+import hashlib
+import importlib.util
+from pathlib import Path
+import unittest
+
+_PATH = Path(__file__).with_name("independent_conditions_composition_kernel_v01.py")
+_SPEC = importlib.util.spec_from_file_location("f19_independent_composition_kernel", _PATH)
+kernel = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(kernel)
+
+
+def packet():
+    return {"schema": "joint-source-span-scores/v1", "tokens": [
+        {"text": "a", "start": 0, "end": 1}, {"text": "b", "start": 2, "end": 3}],
+        "modality_logits": [1.0, 0.0, -1.0],
+        "presence_logits": {field: [1.0, 0.0] for field in kernel.OPTIONAL},
+        "start_logits": {field: [0.0, 0.0] for field in kernel.FIELDS},
+        "end_logits": {field: [0.0, 0.0] for field in kernel.FIELDS}}
+
+
+def donor_packets():
+    packets = {name: packet() for name in kernel.DONORS}
+    for side in ("start_logits", "end_logits"):
+        packets["F17"][side]["actor"] = [7.0, 1.0]
+        packets["F17"][side]["conditions"] = [17.0, 1.0]
+        packets["F18"][side]["conditions"] = [18.0, 1.0]
+    packets["F17"]["modality_logits"] = [0.0, 17.0, 1.0]
+    packets["F18"]["modality_logits"] = [0.0, 18.0, 1.0]
+    packets["F17"]["presence_logits"]["exceptions"] = [0.0, 1.0]
+    return packets
+
+
+def ir(modality="P", temporal=None):
+    return {"rules": [{"modality": modality, "actor": "a", "action": "b", "object": "",
+                       "conditions": [], "exceptions": [], "temporal": [] if temporal is None else [temporal]}]}
+
+
+def fixture(identifier="invented-a", *, raw_status="decoded", joint_status="selected", raw_ir=None,
+            joint_ir=None, target=None, scores=None):
+    source = "a b"; scores = packet() if scores is None else scores
+    target = ir() if target is None else target
+    sh = hashlib.sha256(source.encode()).hexdigest()
+    row = {"id": identifier, "source_text": source, "canonical_ir": target}
+    meta = {"id": identifier, "class_name": "invented", "group_id": None, "pair_id": None, "pair_variant": None}
+    occurrence = {"id": identifier, "source_sha256": sh, "scores": scores}
+    raw = {"source_sha256": sh, "status": raw_status,
+           "canonical_ir": (target if raw_ir is None else raw_ir) if raw_status == "decoded" else None}
+    joint = {"id": identifier, "result": {"source_sha256": sh, "scores_sha256": kernel.digest(scores),
+        "status": joint_status, "canonical_ir": (target if joint_ir is None else joint_ir) if joint_status == "selected" else None}}
+    return row, meta, occurrence, raw, joint
+
+
+class InventedCompositionControls(unittest.TestCase):
+    def test_each_fixed_copy_lens_selects_exact_donor_roles(self):
+        source = donor_packets(); before = deepcopy(source)
+        for variant, actor, readout in [("F15_baseline", "F15", "F15"),
+                                       ("F17_actor_F18_readouts", "F17", "F18"),
+                                       ("F17_actor_F17_readouts", "F17", "F17")]:
+            with self.subTest(variant=variant):
+                mixed = kernel.copy_saved_heads(source, variant)
+                self.assertEqual(mixed["modality_logits"], source[readout]["modality_logits"])
+                self.assertEqual(mixed["presence_logits"], source["F15"]["presence_logits"])
+                for side in ("start_logits", "end_logits"):
+                    self.assertEqual(mixed[side]["actor"], source[actor][side]["actor"])
+                    self.assertEqual(mixed[side]["conditions"], source[readout][side]["conditions"])
+                    for field in kernel.OTHER_BOUNDARIES:
+                        self.assertEqual(mixed[side][field], source["F15"][side][field])
+                mixed["start_logits"]["actor"][0] = 999.0
+        self.assertEqual(source, before)
+
+    def test_protected_negative_zero_difference_is_detected_by_bits(self):
+        donors = donor_packets()
+        donors["F18"]["start_logits"]["action"][0] = -0.0
+        self.assertEqual(donors["F18"]["start_logits"]["action"], donors["F15"]["start_logits"]["action"])
+        with self.assertRaises(ValueError):
+            kernel.copy_saved_heads(donors, "F17_actor_F18_readouts")
+
+    def test_protected_f18_actor_and_presence_changes_are_rejected(self):
+        for role in ("actor", "presence"):
+            with self.subTest(role=role):
+                donors = donor_packets()
+                if role == "actor": donors["F18"]["start_logits"]["actor"][0] = 1.0
+                else: donors["F18"]["presence_logits"]["conditions"][0] = 2.0
+                with self.assertRaises(ValueError):
+                    kernel.copy_saved_heads(donors, "F17_actor_F18_readouts")
+
+    def test_unknown_variant_donor_and_geometry_are_rejected(self):
+        for mutation in ("variant", "donor", "tokens", "head", "bool"):
+            donors = donor_packets(); variant = "F15_baseline"
+            if mutation == "variant": variant = "adaptive-best"
+            elif mutation == "donor": donors.pop("F17")
+            elif mutation == "tokens": donors["F17"]["tokens"][0]["text"] = "different"
+            elif mutation == "head": donors["F15"]["modality_logits"].append(0.0)
+            else: donors["F15"]["end_logits"]["actor"][0] = False
+            with self.subTest(mutation=mutation):
+                with self.assertRaises(ValueError): kernel.copy_saved_heads(donors, variant)
+
+    def test_packet_enforces_fixed_128_token_budget(self):
+        scores = packet(); scores["tokens"] = scores["tokens"] * 65
+        with self.assertRaises(ValueError): kernel.validate_packet(scores)
+
+    def test_abstention_makes_every_field_false_even_empty_optional(self):
+        for route in ("raw", "joint"):
+            with self.subTest(route=route):
+                flags = kernel.field_matches({"status": "abstained", "canonical_ir": None}, ir(), route)
+                self.assertEqual(flags, {field: False for field in kernel.ALL_FIELDS})
+
+    def test_modality_error_is_not_a_complete_ir_match(self):
+        flags = kernel.field_matches({"status": "decoded", "canonical_ir": ir("O")}, ir("P"), "raw")
+        self.assertFalse(all(flags.values())); self.assertFalse(flags["modality"])
+        self.assertTrue(all(flags[field] for field in kernel.FIELDS))
+
+    def test_malformed_selected_rule_is_rejected(self):
+        bad = ir(); bad["rules"][0]["conditions"] = ""
+        with self.assertRaises(ValueError):
+            kernel.field_matches({"status": "selected", "canonical_ir": bad}, ir(), "joint")
+
+    def test_per_id_score_rows_and_temporal_ambiguity_are_rebuilt(self):
+        scores = packet(); scores["presence_logits"]["temporal"] = [0.0, 0.0]
+        row, meta, occ, raw, chosen = fixture(scores=scores)
+        scored = kernel.score_rows([row], [meta], [occ], [raw], [chosen])[0]
+        self.assertTrue(scored["raw_exact_ir"]); self.assertTrue(scored["joint_exact_ir"])
+        self.assertTrue(scored["temporal_ambiguous"]); self.assertIsNone(scored["predicted_temporal_presence"])
+        self.assertFalse(scored["temporal_presence_correct"])
+
+    def test_join_hash_id_digest_and_pair_variant_mutations_are_rejected(self):
+        for mutation in ("id", "source", "digest", "pair"):
+            row, meta, occ, raw, joint = fixture()
+            if mutation == "id": occ["id"] = "different"
+            elif mutation == "source": raw["source_sha256"] = "0" * 64
+            elif mutation == "digest": joint["result"]["scores_sha256"] = "0" * 64
+            else:
+                meta.update(group_id="g", pair_id="p", pair_variant="temporal_present")
+            with self.subTest(mutation=mutation):
+                with self.assertRaises(ValueError): kernel.score_rows([row], [meta], [occ], [raw], [joint])
+
+    def test_gain_loss_counts_retain_ids_and_include_modality(self):
+        rows = []
+        for identifier in ("a", "b"):
+            row, meta, occ, raw, joint = fixture(identifier)
+            rows += kernel.score_rows([row], [meta], [occ], [raw], [joint])
+        before, after = deepcopy(rows), deepcopy(rows)
+        before[0]["raw_exact_ir"] = False; before[0]["modality_exact"] = False
+        after[1]["raw_exact_ir"] = False; after[1]["role_exact"]["conditions"] = False
+        actual = kernel.compare_scored(before, after)
+        self.assertEqual(actual["raw"]["full_IR"], {"before_correct": 1, "after_correct": 1,
+            "gains": 1, "losses": 1, "gain_ids": ["a"], "loss_ids": ["b"]})
+        self.assertEqual(actual["raw"]["modality"]["gain_ids"], ["a"])
+        self.assertEqual(actual["raw"]["conditions"]["loss_ids"], ["b"])
+        self.assertEqual(actual["joint"]["full_IR"]["loss_ids"], [])
+
+    def test_presence_abstention_is_excluded_from_all_confusion_cells(self):
+        scores = packet(); scores["presence_logits"]["conditions"] = [0.0, 0.0]
+        row, meta, occ, raw, joint = fixture(raw_status="abstained", joint_status="abstained", scores=scores)
+        actual = kernel.presence_recount([row], [occ], [raw], [joint])
+        for view in ("head", "raw", "joint"):
+            with self.subTest(view=view):
+                values = actual["views"][view]["conditions"]
+                self.assertEqual(values["abstained_or_ambiguous"], {"count": 1, "ids": [row["id"]]})
+                self.assertEqual(sum(values[name]["count"] for name in ("TP", "TN", "FP", "FN")), 0)
+                self.assertEqual(actual["excluded_by_gold"][view]["conditions"]["gold_absent"]["count"], 1)
+
+    def test_panel_counts_use_independent_rows_and_law_is_refused(self):
+        fixtures = [fixture("a"), fixture("b", raw_status="abstained", joint_ir=ir("O"))]
+        rows, metas, occs, raws, joints = [list(items) for items in zip(*fixtures, strict=True)]
+        scored = kernel.score_rows(rows, metas, occs, raws, joints)
+        panel = kernel.panel_packet("invented", "F15_baseline", rows, occs, raws, joints, scored)
+        self.assertEqual(panel["raw_complete_IR"], 1); self.assertEqual(panel["joint_complete_IR"], 1)
+        self.assertEqual(panel["raw_abstentions"], 1); self.assertEqual(panel["joint_abstentions"], 0)
+        self.assertEqual(panel["joint_role_exact"], {field: 2 for field in kernel.FIELDS})
+        self.assertEqual(panel["joint_modality_exact"], 1)
+        with self.assertRaises(ValueError): kernel.panel_packet("law", "F15_baseline", rows, occs, raws, joints, scored)
+
+
+if __name__ == "__main__":
+    unittest.main()

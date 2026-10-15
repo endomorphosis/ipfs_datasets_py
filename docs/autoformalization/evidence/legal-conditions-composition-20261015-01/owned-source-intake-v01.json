@@ -1,0 +1,51 @@
+{
+  "AGENTS_paths": [],
+  "alternate_stores": [
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/objects",
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/.git/objects",
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/.git/objects",
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/.git/objects",
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets-integration/.git/objects",
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/datasets/.git/objects",
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/datasets-integration/.git/objects",
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/.git/objects"
+  ],
+  "borrowed_backing_stores_modified": false,
+  "canonical_git_commands": 0,
+  "canonical_raw_anchors": [
+    {
+      "bytes": 37,
+      "path": "/home/barberb/lift_coding/.git/HEAD",
+      "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+    },
+    {
+      "bytes": 692628,
+      "path": "/home/barberb/lift_coding/.git/index",
+      "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+    },
+    {
+      "bytes": 21,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD",
+      "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+    },
+    {
+      "bytes": 5251025,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+      "sha256": "8bd28a44ae0a0425cfaba561c3bf8c13f25bbf7e61cbf12c05708c9563dceda8"
+    }
+  ],
+  "created_utc": "2026-10-15T03:37:57.487582+00:00",
+  "head": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+  "incoming_entries": 32246,
+  "intake_ref": "refs/codex/legal-conditions-composition-diagnostic-20261015-01/intake-main-v01",
+  "other_worktrees_inspected": false,
+  "owned_clone": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets",
+  "prior_completed_phase": {
+    "bytes": 4199,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/phase-completion-v01.json",
+    "sha256": "84fc8495140b4a0ff0e5b8654add9df9731a7cbce717b2eeb6e3f97f4e1be32f"
+  },
+  "schema": "conditions-composition-diagnostic-owned-source-intake/v1",
+  "scope": "NEW_POSTFREEZE_SAVED_HEAD_AND_CONDITIONS_RANK_DIAGNOSTIC_NO_MODEL_OR_TRAINING",
+  "tree": "aa0a1e3f7858c85b69358d93a6e485b46badf350"
+}

@@ -1,0 +1,334 @@
+"""Independent scalar rank arithmetic for the fixed exposed F19 diagnostic.
+
+No I/O, model construction, installed packages, or source decoder imports.
+The joint decoder's documented score/tie contract is reproduced independently:
+exact finite binary32 heads; binary32 start-plus-end; upper-triangle coordinates;
+stable coordinate order. Ordinal rank counts outrankers directly rather than
+trusting any primary analyzer ranking. This is engineering evidence, not legal
+semantic validation or qualification of a composed checkpoint.
+"""
+from __future__ import annotations
+
+import math
+import re
+import struct
+
+SCHEMA = "conditions-boundary-rank-independent-kernel/v1"
+TOP_K = 8
+MAX_TOKENS = 256
+AMBIGUITY_GUARD = 1e-7
+_LEXEMES = re.compile(r"\w+|[^\w\s]", re.UNICODE)
+
+
+def require(value, message):
+    if not value:
+        raise ValueError(message)
+
+
+def binary32(value):
+    """Round a scalar operation once, rejecting bools and nonfinite results."""
+    require(type(value) in (int, float), "scalar number required")
+    try:
+        require(math.isfinite(value), "finite scalar required")
+        result = struct.unpack(">f", struct.pack(">f", value))[0]
+    except (OverflowError, struct.error) as error:
+        raise ValueError("binary32 overflow") from error
+    require(math.isfinite(result), "finite binary32 result required")
+    return result
+
+
+def heads(values):
+    require(type(values) is list and 1 <= len(values) <= MAX_TOKENS,
+            "one through 256 saved head values required")
+    for value in values:
+        require(type(value) is float and binary32(value) == value,
+                "exact saved binary32 float required")
+    return list(values)
+
+
+def _coordinate(value, size):
+    require(type(value) is int and 0 <= value < size,
+            "bounded exact integer coordinate required")
+
+
+def _bounded_order(items, key, limit):
+    """Insertion into a bounded list; no primary ranking helper or full sort."""
+    kept = []
+    for item in items:
+        at = 0
+        item_key = key(item)
+        while at < len(kept) and key(kept[at]) <= item_key:
+            at += 1
+        if at < limit:
+            kept.insert(at, item)
+            if len(kept) > limit:
+                kept.pop()
+    return kept
+
+
+def _rank_summary(value, higher, tied, before, count):
+    return {
+        "score_float32": value,
+        "ordinal_rank_1based": 1 + higher + before,
+        "strictly_higher_count": higher,
+        "equal_score_count_including_self": tied,
+        "equal_score_earlier_coordinate_count": before,
+        "best_rank_under_score_ties_1based": 1 + higher,
+        "worst_rank_under_score_ties_1based": higher + tied,
+        "candidate_count": count,
+        "retained_by_stable_top8": higher + before < TOP_K,
+    }
+
+
+def boundary_rank(values, gold_position, *, lower=0, upper=None):
+    """Rank one boundary, optionally in the triangle-compatible interval."""
+    values = heads(values)
+    upper = len(values) - 1 if upper is None else upper
+    _coordinate(lower, len(values))
+    _coordinate(upper, len(values))
+    _coordinate(gold_position, len(values))
+    require(lower <= gold_position <= upper, "gold outside boundary domain")
+    value = values[gold_position]
+    higher = tied = before = 0
+    for index in range(lower, upper + 1):
+        score = values[index]
+        higher += score > value
+        tied += score == value
+        before += score == value and index < gold_position
+    result = _rank_summary(value, higher, tied, before, upper - lower + 1)
+    result.update(token_index=gold_position, domain_lower=lower, domain_upper=upper)
+    result["top8_token_indices"] = _bounded_order(
+        range(lower, upper + 1), lambda index: (-values[index], index), TOP_K)
+    return result
+
+
+def _all_spans(starts, ends):
+    for left in range(len(starts)):
+        for right in range(left, len(ends)):
+            yield (binary32(starts[left] + ends[right]), left, right)
+
+
+def span_rank(starts, ends, gold_left, gold_right):
+    """Exhaustively count full-span outrankers in the upper triangle."""
+    starts, ends = heads(starts), heads(ends)
+    require(len(starts) == len(ends), "start/end lengths differ")
+    _coordinate(gold_left, len(starts))
+    _coordinate(gold_right, len(starts))
+    require(gold_left <= gold_right, "gold span outside upper triangle")
+    gold_score = binary32(starts[gold_left] + ends[gold_right])
+    higher = tied = before = count = 0
+    for score, left, right in _all_spans(starts, ends):
+        count += 1
+        higher += score > gold_score
+        tied += score == gold_score
+        before += score == gold_score and (left, right) < (gold_left, gold_right)
+    require(count == len(starts) * (len(starts) + 1) // 2,
+            "upper triangle enumeration differs")
+    result = _rank_summary(gold_score, higher, tied, before, count)
+    result.update(token_start=gold_left, token_end_inclusive=gold_right)
+    first_nine = _bounded_order(_all_spans(starts, ends),
+                               lambda item: (-item[0], item[1], item[2]), TOP_K + 1)
+    result["top8_spans"] = [
+        {"score_float32": score, "token_start": left, "token_end_inclusive": right}
+        for score, left, right in first_nine[:TOP_K]]
+    boundary = (binary32(first_nine[TOP_K - 1][0] - first_nine[TOP_K][0])
+                if len(first_nine) > TOP_K else None)
+    result["top8_boundary_margin_float32"] = boundary
+    result["top8_boundary_tied_within_guard"] = (
+        boundary is not None and boundary <= AMBIGUITY_GUARD)
+    best_gap = (binary32(first_nine[0][0] - first_nine[1][0])
+                if len(first_nine) > 1 else None)
+    result["best_span_margin_float32"] = best_gap
+    result["greedy_span_ambiguous_within_guard"] = (
+        best_gap is not None and best_gap <= AMBIGUITY_GUARD)
+    return result
+
+
+def aligned_span(source, tokens, atom):
+    """Independent exact unique literal/token-coordinate label reconstruction.
+
+    The structural Unicode lexeme expression matches the disclosed owner
+    tokenizer contract; no owner AST is loaded or executed.
+    """
+    require(type(source) is str and source.strip() and len(source) <= 16384,
+            "bounded nonempty source required")
+    require(type(atom) is str and atom, "one nonempty source atom required")
+    expected = [{"text": match.group(), "start": match.start(), "end": match.end()}
+                for match in _LEXEMES.finditer(source)]
+    require(1 <= len(expected) <= MAX_TOKENS and type(tokens) is list,
+            "bounded structural token list required")
+    for token in tokens:
+        require(type(token) is dict and set(token) == {"text", "start", "end"}
+                and type(token["text"]) is str
+                and type(token["start"]) is int and type(token["end"]) is int,
+                "closed exact token record required")
+    require(tokens == expected, "tokens differ from exact structural tokenization")
+    require(all(len(token["text"].casefold().encode("utf-8")) <= 2048
+                for token in tokens), "owner token byte bound exceeded")
+    begins = {token["start"]: index for index, token in enumerate(tokens)}
+    finishes = {token["end"]: index for index, token in enumerate(tokens)}
+    matches = []
+    cursor = 0
+    while True:
+        begin = source.find(atom, cursor)
+        if begin < 0:
+            break
+        end = begin + len(atom)
+        if begin in begins and end in finishes:
+            matches.append((begins[begin], finishes[end]))
+        cursor = begin + 1
+    require(len(matches) == 1, "source atom is missing, misaligned, or ambiguous")
+    left, right = matches[0]
+    return {"token_start": left, "token_end_inclusive": right,
+            "char_start": tokens[left]["start"], "char_end": tokens[right]["end"],
+            "utf8_byte_start": len(source[:tokens[left]["start"]].encode("utf-8")),
+            "utf8_byte_end": len(source[:tokens[right]["end"]].encode("utf-8")),
+            "text": atom}
+
+
+def conditions_diagnostic(source, tokens, gold_text, early_text, starts, ends):
+    """Recount one fixed gold/early pair without any primary aggregate input."""
+    starts, ends = heads(starts), heads(ends)
+    require(len(starts) == len(ends) == len(tokens), "token/head geometry differs")
+    gold, early = aligned_span(source, tokens, gold_text), aligned_span(source, tokens, early_text)
+    left, right, early_right = (gold["token_start"], gold["token_end_inclusive"],
+                                early["token_end_inclusive"])
+    require(early["token_start"] == left and left <= early_right < right
+            and gold_text.startswith(early_text), "fixed early competitor is not a proper gold prefix")
+    start = boundary_rank(starts, left)
+    end = boundary_rank(ends, right)
+    gold_span = span_rank(starts, ends, left, right)
+    early_span = span_rank(starts, ends, left, early_right)
+    top = gold_span["top8_spans"]
+    end_difference = ends[right] - ends[early_right]
+    span_difference = gold_span["score_float32"] - early_span["score_float32"]
+    return {
+        "schema": SCHEMA,
+        "gold_alignment": gold,
+        "fixed_early_quoted_name_alignment": early,
+        "gold_start_all_tokens": start,
+        "gold_start_conditional_on_gold_end": boundary_rank(starts, left, upper=right),
+        "gold_end_all_tokens": end,
+        "gold_end_conditional_on_gold_start": boundary_rank(ends, right, lower=left),
+        "fixed_early_end_all_tokens": boundary_rank(ends, early_right),
+        "fixed_early_end_conditional_on_gold_start": boundary_rank(ends, early_right, lower=left),
+        "gold_full_span": gold_span,
+        "fixed_early_full_span": early_span,
+        "gold_minus_early_end_score_float64": end_difference,
+        "gold_minus_early_end_score_float32": binary32(end_difference),
+        "gold_minus_early_span_score_float64": span_difference,
+        "gold_minus_early_span_score_float32": binary32(span_difference),
+        "top8_coverage": {
+            "gold_start_in_marginal_start_top8": start["retained_by_stable_top8"],
+            "gold_end_in_marginal_end_top8": end["retained_by_stable_top8"],
+            "gold_pair_in_marginal_top8_cartesian_product": (
+                start["retained_by_stable_top8"] and end["retained_by_stable_top8"]),
+            "gold_start_appears_in_full_span_top8": any(item["token_start"] == left for item in top),
+            "gold_end_appears_in_full_span_top8": any(item["token_end_inclusive"] == right for item in top),
+            "gold_pair_retained_by_actual_full_span_top8": gold_span["retained_by_stable_top8"],
+            "fixed_early_pair_retained_by_actual_full_span_top8": early_span["retained_by_stable_top8"],
+        },
+        "rank_ties_use_exact_score_equality": True,
+        "rank_order": "descending_binary32_score_then_ascending_token_coordinates",
+        "joint_candidate_domain": "top8_full_upper_triangular_spans_not_boundary_cartesian_product",
+        "source_span_alignment_independent": True,
+        "shared_tokenizer_regex_contract_disclosed": r"\w+|[^\w\s]",
+        "semantic_accuracy_measured": False,
+        "model_execution_performed": False,
+        "checkpoint_composition_qualified": False,
+    }
+
+
+def _differences(left, right):
+    if right is None:
+        return None, None
+    difference = left - right
+    return difference, binary32(difference)
+
+
+def boundary_packet(values, gold_index, short_index, *, lower=0):
+    """The agreed primary boundary packet, independently recounted."""
+    values = heads(values)
+    _coordinate(short_index, len(values))
+    require(short_index >= lower, "short boundary outside conditional domain")
+    rank = boundary_rank(values, gold_index, lower=lower)
+    gold = values[gold_index]
+    domain = list(range(lower, len(values)))
+    best_wrong = None
+    for index in domain:
+        if index != gold_index and (best_wrong is None or values[index] > best_wrong):
+            best_wrong = values[index]
+    wrong64, wrong32 = _differences(gold, best_wrong)
+    short64, short32 = _differences(gold, values[short_index])
+    return {
+        "gold_index": gold_index,
+        "domain_indices": domain,
+        "stable_rank": rank["ordinal_rank_1based"],
+        "strictly_higher": rank["strictly_higher_count"],
+        "exact_ties_including_gold": rank["equal_score_count_including_self"],
+        "guard_ties_including_gold": sum(
+            abs(binary32(values[index] - gold)) <= AMBIGUITY_GUARD for index in domain),
+        "in_marginal_top8": rank["retained_by_stable_top8"],
+        "logit": gold,
+        "gold_minus_best_wrong_binary64": wrong64,
+        "gold_minus_best_wrong_f32": wrong32,
+        "gold_minus_short_binary64": short64,
+        "gold_minus_short_f32": short32,
+    }
+
+
+def full_span_packet(starts, ends, gold_left, gold_right, short_right):
+    """The agreed primary full-span packet, independently recounted."""
+    starts, ends = heads(starts), heads(ends)
+    rank = span_rank(starts, ends, gold_left, gold_right)
+    _coordinate(short_right, len(starts))
+    require(gold_left <= short_right < gold_right, "proper shortened gold span required")
+    gold_score = rank["score_float32"]
+    short_score = binary32(starts[gold_left] + ends[short_right])
+    best_wrong = None
+    guarded = 0
+    for score, left, right in _all_spans(starts, ends):
+        guarded += abs(binary32(score - gold_score)) <= AMBIGUITY_GUARD
+        if (left, right) != (gold_left, gold_right) and (best_wrong is None or score > best_wrong):
+            best_wrong = score
+    wrong64, wrong32 = _differences(gold_score, best_wrong)
+    short64, short32 = _differences(gold_score, short_score)
+    return {
+        "gold_start": gold_left,
+        "gold_end": gold_right,
+        "stable_rank": rank["ordinal_rank_1based"],
+        "domain_count": rank["candidate_count"],
+        "strictly_higher": rank["strictly_higher_count"],
+        "exact_ties_including_gold": rank["equal_score_count_including_self"],
+        "guard_ties_including_gold": guarded,
+        "in_fullspan_top8": rank["ordinal_rank_1based"] <= 8,
+        "in_fullspan_top16": rank["ordinal_rank_1based"] <= 16,
+        "pair_score_f32": gold_score,
+        "gold_minus_best_wrong_binary64": wrong64,
+        "gold_minus_best_wrong_f32": wrong32,
+        "gold_minus_short_binary64": short64,
+        "gold_minus_short_f32": short32,
+        "boundary8_9_margin_f32": rank["top8_boundary_margin_float32"],
+        "boundary8_9_tied_within_guard": rank["top8_boundary_tied_within_guard"],
+        "top8": [{"start": item["token_start"], "end": item["token_end_inclusive"],
+                  "score_f32": item["score_float32"]} for item in rank["top8_spans"]],
+    }
+
+
+def primary_rank_fields(source, tokens, gold_text, early_text, starts, ends):
+    """Rebuild the agreed six-row rank metric subset from source heads only."""
+    starts, ends = heads(starts), heads(ends)
+    require(len(starts) == len(ends) == len(tokens), "token/head geometry differs")
+    gold = aligned_span(source, tokens, gold_text)
+    short = aligned_span(source, tokens, early_text)
+    left, right, short_right = gold["token_start"], gold["token_end_inclusive"], short["token_end_inclusive"]
+    require(short["token_start"] == left and left <= short_right < right
+            and gold_text.startswith(early_text), "fixed short atom is not a proper gold prefix")
+    return {
+        "gold": {"start": left, "end": right},
+        "short_competitor": {"start": left, "end": short_right, "text": early_text},
+        "start_unrestricted": boundary_packet(starts, left, left),
+        "end_unrestricted": boundary_packet(ends, right, short_right),
+        "end_conditioned_gold_start": boundary_packet(ends, right, short_right, lower=left),
+        "full_span": full_span_packet(starts, ends, left, right, short_right),
+    }

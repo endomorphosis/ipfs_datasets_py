@@ -1,0 +1,13 @@
+{
+  "AGENTS_paths": [],
+  "canonical_Git_calls": 0,
+  "canonical_mutations": 0,
+  "incoming_entries": 37728,
+  "intake_commit": "26c07127043e3faca21fc51ea559c6d8b1513743",
+  "intake_ref": "refs/codex/legal-conditions-composition-diagnostic-20261015-01/intake-main-v01",
+  "intake_tree": "da62943db523e5c084738e30cd0aafd73a6d3c78",
+  "objects_store_policy": "Shared owned F18 root backing stores retained; no source store removal authorized.",
+  "original_data_body_reads": 0,
+  "owned_root": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/root",
+  "schema": "legal-conditions-composition-root-intake/v1"
+}

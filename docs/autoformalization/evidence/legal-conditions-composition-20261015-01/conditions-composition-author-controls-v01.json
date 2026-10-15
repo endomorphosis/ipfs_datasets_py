@@ -1,0 +1,93 @@
+{
+  "Git_mutations": 0,
+  "SDK_or_network_calls": 0,
+  "actual_analyzer_main_calls": 0,
+  "actual_model_encoder_or_training_calls": 0,
+  "analyzer": {
+    "bytes": 40929,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyze_conditions_composition_v01.py",
+    "sha256": "b5e946babffb41834d4b95e5700201d50b957991b17e7b44551130df12446553"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyze_conditions_composition_v01.py": {
+      "bytes": 40929,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyze_conditions_composition_v01.py",
+      "sha256": "b5e946babffb41834d4b95e5700201d50b957991b17e7b44551130df12446553"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_conditions_composition_detached_v01.py": {
+      "bytes": 10398,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_conditions_composition_detached_v01.py",
+      "sha256": "baab524c2dd8b5136d70974b2680e0e111a8c969e163f327e6a5492d3f90446e"
+    }
+  },
+  "authoring_corrections_before_seal": [
+    "Aligned final diagnostic-inputs-v01 filename",
+    "Legacy freeze source schema has no passed/findings; use all_outputs_frozen/authorizes_authored_eval_scoring/update32/runtime joins",
+    "Bound exact executioncontract and local1536MiB/600CPU/900wall limits",
+    "Source-confirmed384D equal contexts and raw context hash joins",
+    "Explicit own output readback with50MB bound",
+    "Full original greedy partial facet replay via shared retained verifier"
+  ],
+  "command": "python -I -S -B test_conditions_composition_detached_v01.py",
+  "control_scope": [
+    "Exact five-source pure AST graph loads without production/numerical imports",
+    "Three fixed copy lenses, independent donor changes and deep-copy isolation; all F15 presence protected",
+    "Reject changed shared frozen heads/F18actor/F17 protected presence/token drift/unknown variants",
+    "Finite exact binary32 head geometry including NaN/bool/unrounded scalar refusals",
+    "Stable unary ties, separate guard ties and conditionalend domain",
+    "Binary64 versus explicitly rounded f32 margin distinction",
+    "Full upper-triangle ranks/top8 differs from marginal boundarytop8",
+    "Pair top8 exactly equals retained selector source on invented scores",
+    "Fixed literal quote/uniqueness/token-boundary refusal",
+    "Actual retained joint cutoff abstains without optimality claim",
+    "Gold assignment requires fixedpresence and retained spans",
+    "Finite guard refuses intFD/unlisted/network/directory/mutation paths; only exclusiveoutput/readback",
+    "Body barrier refuses capture before any open",
+    "Fixed six inputkeys and executionlimit source controls"
+  ],
+  "elapsed_seconds_reported_by_unittest": 0.048,
+  "errors": 0,
+  "failures": 0,
+  "findings": [],
+  "no_pytest_or_temp_cache": true,
+  "numerical_or_production_imports": 0,
+  "original_capture_reference_teacher_checkpoint_body_reads": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "returncode": 0,
+  "schema": "conditions-composition-diagnostic-author-controls/v1",
+  "shared_AST_sources": {
+    "coordinate": {
+      "bytes": 66275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/analyze_targeted_results_v01.py",
+      "sha256": "4274d682da303954689bbb318750a91a49b407961f26d718104e1890a0ae4d0f"
+    },
+    "greedy": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "joint": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "pure": {
+      "bytes": 78492,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v02.py",
+      "sha256": "1a4b4f6b579d0d086ef97d4867c9eea274ceb88142edb4bff849eb95f0fa2e57"
+    },
+    "scorer": {
+      "bytes": 42637,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py",
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    }
+  },
+  "source_only_AST_definitions_executed": true,
+  "test_methods": 16,
+  "tests": {
+    "bytes": 10398,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_conditions_composition_detached_v01.py",
+    "sha256": "baab524c2dd8b5136d70974b2680e0e111a8c969e163f327e6a5492d3f90446e"
+  }
+}

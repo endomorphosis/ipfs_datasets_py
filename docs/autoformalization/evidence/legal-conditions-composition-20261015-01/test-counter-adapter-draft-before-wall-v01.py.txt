@@ -1,0 +1,122 @@
+"""Invented source/guard controls; no real manifest, sources or captures read."""
+from __future__ import annotations
+
+import ast
+import importlib.util
+import os
+from pathlib import Path
+import unittest
+
+_PATH = Path(__file__).with_name("recount_conditions_composition_v01.py")
+_SPEC = importlib.util.spec_from_file_location("f19_independent_counter_adapter", _PATH)
+adapter = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(adapter)
+
+
+class CounterAdapterInventedControls(unittest.TestCase):
+    def test_closed_descriptor_rejects_oversized_and_ill_typed_records(self):
+        valid = {'path': '/tmp/invented-f19.json', 'bytes': 5, 'sha256': 'a' * 64}
+        self.assertEqual(adapter.descriptor(valid), valid)
+        for field, value in [('path', 'relative.json'), ('path', '/tmp/../private.json'),
+                             ('bytes', True), ('bytes', 0), ('bytes', 16000001),
+                             ('sha256', 'A' * 64), ('sha256', 'a' * 63)]:
+            with self.subTest(field=field, value=value):
+                bad = dict(valid); bad[field] = value
+                with self.assertRaises(ValueError): adapter.descriptor(bad)
+        with self.assertRaises(ValueError): adapter.descriptor(dict(valid, extra=False))
+
+    def test_forbidden_private_checkpoint_and_shared_resource_paths(self):
+        names = ['/tmp/private-x/evidence.json', '/tmp/.git/config', '/tmp/.cache/a.json',
+                 '/tmp/__pycache__/a.pyc', '/tmp/checkpoint.json', '/tmp/a.log', '/tmp/a.jsonl',
+                 '/tmp/resources-start.json', '/tmp/resources-final.json', '/tmp/scheduler.json',
+                 '/tmp/disk-reservations.json', '/tmp/ipfs-datasets-resource-scheduler-a.json']
+        for name in names:
+            with self.subTest(name=name): self.assertTrue(adapter.forbidden(name))
+        self.assertFalse(adapter.forbidden('/tmp/ordinary-evidence.json'))
+
+    def test_only_exact_output_exclusive_write_is_allowed(self):
+        guard = adapter.FiniteIO()
+        guard.audit('open', (str(adapter.OUTPUT), 'x', os.O_WRONLY | os.O_CREAT | os.O_EXCL))
+        rejected = [(str(adapter.OUTPUT), 'w', os.O_WRONLY | os.O_CREAT | os.O_TRUNC),
+                    ('/tmp/different.json', 'x', os.O_WRONLY | os.O_CREAT | os.O_EXCL),
+                    (str(adapter.INPUTS), 'x', os.O_WRONLY | os.O_CREAT | os.O_EXCL),
+                    (3, 'r', 0), ('/tmp/unlisted.json', 'r', 0)]
+        for args in rejected:
+            with self.subTest(args=args):
+                with self.assertRaises(ValueError): guard.audit('open', args)
+
+    def test_output_readback_requires_explicit_exact_own_admission(self):
+        guard = adapter.FiniteIO()
+        with self.assertRaises(ValueError): guard.audit('open', (str(adapter.OUTPUT), 'r', 0))
+        guard.allowed.add(str(adapter.OUTPUT))
+        guard.audit('open', (str(adapter.OUTPUT), 'r', 0))
+        with self.assertRaises(ValueError): guard.audit('open', (str(adapter.OUTPUT) + '.extra', 'r', 0))
+
+    def test_capability_mutations_network_process_and_directory_scans_are_denied(self):
+        guard = adapter.FiniteIO()
+        events = ['subprocess.Popen', 'socket.connect', 'os.exec', 'os.spawn', 'os.system',
+                  'os.fork', 'os.posix_spawn', 'fcntl.flock', 'os.kill', 'os.killpg', 'os.mkdir',
+                  'os.unlink', 'os.remove', 'os.rmdir', 'os.rename', 'os.replace', 'marshal.loads',
+                  'os.listdir', 'os.scandir']
+        for event in events:
+            with self.subTest(event=event):
+                with self.assertRaises(ValueError): guard.audit(event, ())
+
+    def test_model_sdk_cid_and_dynamic_capability_imports_are_denied(self):
+        guard = adapter.FiniteIO()
+        for name in ['torch', 'numpy', 'transformers', 'huggingface_hub', 'ipfs_datasets_py',
+                     'site', 'ctypes', 'subprocess', 'socket']:
+            with self.subTest(name=name):
+                with self.assertRaises(ValueError): guard.audit('import', (name,))
+        guard.audit('import', ('json',))
+
+    def test_only_exact_final_output_chmod_0444_is_allowed(self):
+        guard = adapter.FiniteIO()
+        guard.audit('os.chmod', (str(adapter.OUTPUT), 0o444))
+        for event, args in [('os.chmod', (str(adapter.OUTPUT), 0o644)),
+                            ('os.chmod', ('/tmp/other.json', 0o444)),
+                            ('os.chown', (str(adapter.OUTPUT), 1, 1)),
+                            ('os.truncate', (str(adapter.OUTPUT), 0)),
+                            ('os.link', ('/tmp/a', '/tmp/b')), ('os.symlink', ('/tmp/a', '/tmp/b'))]:
+            with self.subTest(event=event, args=args):
+                with self.assertRaises(ValueError): guard.audit(event, args)
+
+    def test_artifact_roles_are_closed_bounded_and_suffix_checked(self):
+        valid_path = '/tmp/invented-f19.json'
+        metadata = {valid_path: {'bytes': 5, 'sha256': 'a' * 64}}
+        adapter.FiniteIO().admit(metadata, {valid_path: 'metadata'})
+        cases = [({}, {valid_path: 'metadata'}), (metadata, {valid_path: 'arbitrary'}),
+                 (metadata, {valid_path: 'source'}),
+                 ({'/tmp/a.log': {'bytes': 5, 'sha256': 'a' * 64}}, {'/tmp/a.log': 'metadata'}),
+                 ({valid_path: {'bytes': 1000000001, 'sha256': 'a' * 64}}, {valid_path: 'metadata'})]
+        for artifacts, roles in cases:
+            with self.subTest(roles=roles):
+                with self.assertRaises(ValueError): adapter.FiniteIO().admit(artifacts, roles)
+
+    def test_wall_deadline_refuses_expired_budget(self):
+        original = adapter.STARTED
+        try:
+            adapter.STARTED -= 1000
+            with self.assertRaises(ValueError): adapter.bounded_time()
+        finally:
+            adapter.STARTED = original
+
+    def test_panel_identity_index_rejects_duplicate_membership(self):
+        panel = {'label': 'invented', 'scope': 'invented'}
+        self.assertEqual(adapter.panel_index([panel]), {('invented', 'invented'): panel})
+        with self.assertRaises(ValueError): adapter.panel_index([panel, panel])
+
+    def test_raw_and_joint_conditions_extraction_preserves_early_abstention(self):
+        empty = {'status': 'abstained', 'reason': 'invented', 'canonical_ir': None}
+        for route in ('raw', 'joint'):
+            with self.subTest(route=route):
+                self.assertEqual(adapter.selected_conditions(empty, route),
+                    {'status': 'abstained', 'reason': 'invented', 'conditions': None, 'canonical_ir': None})
+        raw = dict(empty, span_diagnostics={'facets': {'conditions': {'token_start': 2, 'token_end_inclusive': 4}}})
+        joint = dict(empty, span_diagnostics={'conditions': {'span': {'token_start': 2, 'token_end_inclusive': 4}}})
+        self.assertEqual(adapter.selected_conditions(raw, 'raw')['conditions'], {'start': 2, 'end': 4})
+        self.assertEqual(adapter.selected_conditions(joint, 'joint')['conditions'], {'start': 2, 'end': 4})
+
+
+if __name__ == '__main__':
+    unittest.main()
