@@ -1,0 +1,325 @@
+{
+  "accepted_selection_sha256": "83c8fb05b4a0435486dff800297674a8433dd4af7dcfd50beae85a8490f2a330",
+  "all_rows_decoded_unreviewed_transport": true,
+  "authority": {
+    "Lean_executed": false,
+    "admitted": false,
+    "published": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "baseline_blockers": [],
+  "baseline_candidate_body_opened": false,
+  "baseline_candidate_bytes": 716898677,
+  "baseline_candidate_sha256": "46986513582973996e4d69ecf0669ed7331e6cca07ca793f3b1c1ea2dcdec8f1",
+  "constructed_minima": {
+    "graph_edges": {
+      "additional_bytes_above_existing_reconstruction_row": 1487,
+      "constructed_minimum_body": {
+        "edge_type": "x",
+        "entry_cid": "baaaaaaaaaaaaaaaaaaaa",
+        "family": "graph_edges",
+        "source_entry_cid": "baaaaaaaaaaaaaaaaaaaa",
+        "target_entry_cid": "baaaaaaaaaaaaaaaaaaaa"
+      },
+      "constructed_minimum_wrapper": {
+        "entry_cid": "baaaaaaaaaaaaaaaaaaaa",
+        "family": "graph_edges",
+        "legal_id": "",
+        "record_json": "{\"edge_type\":\"x\",\"entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\",\"family\":\"graph_edges\",\"source_entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\",\"target_entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\"}",
+        "record_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "constructed_optimistic_lineage_with_empty_reconstruction_placeholder": {
+        "disposition": "proposed_unreviewed_transport",
+        "encoding_transformation": {
+          "exported_raw_row_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "exported_record_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "original_raw_row_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "original_record_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "profile": "canonical-json-encoding-only/v1",
+          "record_json_changed": true,
+          "record_sha256_changed": true
+        },
+        "export_location": {
+          "file": "graph_edges-000000.parquet",
+          "row_ordinal": 0
+        },
+        "exported_wrapper": {
+          "entry_cid": "baaaaaaaaaaaaaaaaaaaa",
+          "family": "graph_edges",
+          "legal_id": "",
+          "record_json": "{\"edge_type\":\"x\",\"entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\",\"family\":\"graph_edges\",\"source_entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\",\"target_entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\"}",
+          "record_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "global_ordinal": 0,
+        "original_raw_wrapper": {
+          "entry_cid": "baaaaaaaaaaaaaaaaaaaa",
+          "family": "graph_edges",
+          "legal_id": "",
+          "record_json": "{\"edge_type\":\"x\",\"entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\",\"family\":\"graph_edges\",\"source_entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\",\"target_entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\"}",
+          "record_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "quarantined": false,
+        "reconstruction_row": {},
+        "schema": "legal-primary-graph-export-lineage-row/v1"
+      },
+      "empty_placeholder_bytes": 2,
+      "lineage_object_bytes_with_placeholder": 1489,
+      "population": 178691
+    },
+    "graph_nodes": {
+      "additional_bytes_above_existing_reconstruction_row": 1299,
+      "constructed_minimum_body": {
+        "entry_cid": "baaaaaaaaaaaaaaaaaaaa",
+        "family": "graph_nodes",
+        "node_type": "x"
+      },
+      "constructed_minimum_wrapper": {
+        "entry_cid": "baaaaaaaaaaaaaaaaaaaa",
+        "family": "graph_nodes",
+        "legal_id": "",
+        "record_json": "{\"entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\",\"family\":\"graph_nodes\",\"node_type\":\"x\"}",
+        "record_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "constructed_optimistic_lineage_with_empty_reconstruction_placeholder": {
+        "disposition": "proposed_unreviewed_transport",
+        "encoding_transformation": {
+          "exported_raw_row_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "exported_record_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "original_raw_row_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "original_record_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "profile": "canonical-json-encoding-only/v1",
+          "record_json_changed": true,
+          "record_sha256_changed": true
+        },
+        "export_location": {
+          "file": "graph_nodes-000000.parquet",
+          "row_ordinal": 0
+        },
+        "exported_wrapper": {
+          "entry_cid": "baaaaaaaaaaaaaaaaaaaa",
+          "family": "graph_nodes",
+          "legal_id": "",
+          "record_json": "{\"entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\",\"family\":\"graph_nodes\",\"node_type\":\"x\"}",
+          "record_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "global_ordinal": 0,
+        "original_raw_wrapper": {
+          "entry_cid": "baaaaaaaaaaaaaaaaaaaa",
+          "family": "graph_nodes",
+          "legal_id": "",
+          "record_json": "{\"entry_cid\":\"baaaaaaaaaaaaaaaaaaaa\",\"family\":\"graph_nodes\",\"node_type\":\"x\"}",
+          "record_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "quarantined": false,
+        "reconstruction_row": {},
+        "schema": "legal-primary-graph-export-lineage-row/v1"
+      },
+      "empty_placeholder_bytes": 2,
+      "lineage_object_bytes_with_placeholder": 1301,
+      "population": 119134
+    }
+  },
+  "derivation": {
+    "default_1GiB_cannot_fit_under_stated_baseline_encoding": true,
+    "default_final_cap_bytes": 1073741824,
+    "formula": "baseline_candidate_bytes - reconstructed_candidate_header_line_bytes + nodes*node_minimum_added_bytes + edges*edge_minimum_added_bytes",
+    "lineage_alone_lower_bound_bytes": 1135539134,
+    "minimum_excess_before_Parquet_and_companions_bytes": 61797310,
+    "two_GiB_fit_established": false
+  },
+  "execution": {
+    "corpus_or_candidate_body_reads": 0,
+    "ledger_or_scheduler_reads": 0,
+    "model_or_numerical_calls": 0,
+    "native_or_network_calls": 0,
+    "product_imports_or_calls": 0
+  },
+  "families": {
+    "graph_edges": 178691,
+    "graph_nodes": 119134
+  },
+  "final_export_source_custody": {
+    "critical_lineage_functions_AST_equal_to_immutable_prior_source": {
+      "_canonical_wrapper": true,
+      "_lineage_header": true,
+      "_lineage_row": true,
+      "_wire": true
+    },
+    "frozen_source_raw_hash_no_readonly_mode_claim": true,
+    "immutable_owned_HEAD_blob": {
+      "bytes": 41865,
+      "git_object_sha1": "78f07bf9385df6c92104f5b2e8737893666ef21d",
+      "repository": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets",
+      "revision": "90662a4c6e0f12059c9900ba94ae80a4c86a0e25",
+      "sha256": "deddfd7aaaf803d21dd630bae0aae47b24836efcac8a98844f1a0f8bb1877179"
+    },
+    "observed_mode": "0664",
+    "product_code_executed": false,
+    "reconstruction_source_byte_identical_to_v01_proof": true,
+    "source": {
+      "bytes": 43244,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py",
+      "sha256": "9762f1efe9354a19299307f46ba72c2e14e953295e1a2f0ed965816f109b6b6a"
+    }
+  },
+  "findings": [],
+  "historical_v01_status": "Preserved static proof; exporter descriptor was a stable read of an unsealed intermediate author buffer and is not final source custody.",
+  "input_metadata": {
+    "reconstruction-baseline.json": {
+      "bytes": 160983,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/reconstruction-baseline.json",
+      "sha256": "3368f3698f25ac66d3584f388ee0b6d52746443e142d423ed0b8a1ded31abfe2"
+    },
+    "selection-options.json": {
+      "bytes": 848,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/selection-options.json",
+      "sha256": "97f9cc53f7491a9f186bb68c4b11757db6cd06bfd9d2fcdad53d5afc33c0bff4"
+    },
+    "selection.json": {
+      "bytes": 1994389,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/selection.json",
+      "sha256": "3ec568b38976ddeb6608f95c052127975182251d64baeae8755f9a8a73c83ed7"
+    }
+  },
+  "limitations": [
+    "The prior candidate byte count/hash are inherited from its pinned derived report, not independently rehashed or replayed here.",
+    "This proof requires the same accepted selection, decoded population and deterministic reconstruction-row encoding. Any changed source/owner generation requires a newly qualified replay or corresponding proof.",
+    "The minimum objects are deliberately optimistic and need not be jointly realizable; they establish a lower bound, not an expected mean row size or an actual payload.",
+    "This establishes neither exact final size, RAM, runtime, a 2GiB fit, source-to-semantic correspondence nor historical flat-cache repair."
+  ],
+  "minimum_assumptions": [
+    "Every baseline row is decoded and therefore has both required wrappers and a transformation in full lineage.",
+    "The admitted entry-CID regex allows no identity shorter than 21 ASCII bytes; longer actual identities only raise the bound.",
+    "Empty legal_id, one-byte graph kind, minimal mandatory body fields, zero ordinals and shortest JSON booleans are optimistic lower bounds, not observed source values.",
+    "Four transformation hashes and wrapper hashes are required 64-character SHA256 values.",
+    "Actual original properties, body text, escaping, integer lengths and Parquet bytes are never replaced by these constructed minima.",
+    "Nested reconstruction row canonical bytes equal their prior canonical row bytes, excluding the old header; row newlines cancel."
+  ],
+  "passed": true,
+  "raw_selection_sha256": "3ec568b38976ddeb6608f95c052127975182251d64baeae8755f9a8a73c83ed7",
+  "reconstructed_header": {
+    "bytes": 1828126,
+    "full_header_embedded": false,
+    "selected_files_digest_matches_baseline": true,
+    "selected_files_sha256": "a31fc55c07d6f06848446e863799f28bf2c8d601b2332a446d25471bc07e1e97",
+    "sha256": "94a89a8c00927723a0b28fb6226ef6b1219812213a52a312949b6f63bb383ecb"
+  },
+  "rows": 297825,
+  "schema": "legal-primary-graph-lineage-size-lower-bound/v1",
+  "scope": "Static source and already-derived public metadata lower bound, rebound to final fixed-profile exporter bytes with unchanged full-lineage encoding.",
+  "source_artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py": {
+      "bytes": 43244,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py",
+      "sha256": "9762f1efe9354a19299307f46ba72c2e14e953295e1a2f0ed965816f109b6b6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_manifest.py": {
+      "bytes": 25730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_manifest.py",
+      "sha256": "c1e86ab52371730d52cf582d2b60fbe282ae52608dcb462ec2c59cdf24738d38"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_reconstruction.py": {
+      "bytes": 24607,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_reconstruction.py",
+      "sha256": "e8075e6232b64ee3c8469e5c4a71d1bc77dbbdd4dd34e7e03768c516ed61c0c6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_records.py": {
+      "bytes": 15186,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_records.py",
+      "sha256": "f42d060a97c65269fe453a13eefedc1dc243852efebc09a3e660bcd18b97946c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_release_schema.py": {
+      "bytes": 91298,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_release_schema.py",
+      "sha256": "7808e42ae4308b8f25421628840e1e23d65f72d8a28ef67a88d48ff510ef3c53"
+    }
+  },
+  "source_function_locations": {
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py:_canonical_wrapper": {
+      "AST_sha256": "38746e05bdc09ba2e59e40c42aeac38c99cd9e58c6777474589a341c43c43738",
+      "end_line": 358,
+      "line": 347
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py:_limits": {
+      "AST_sha256": "ba133fcc5c79d327c6efbe4a230f5d52468f9cb03207b671e068846e109a0b31",
+      "end_line": 112,
+      "line": 100
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py:_lineage_header": {
+      "AST_sha256": "1004298f8549db51714ff50a0b33bced669eb0dfa431be52e19d841b704362f5",
+      "end_line": 389,
+      "line": 386
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py:_lineage_row": {
+      "AST_sha256": "d42991052c7c811359655d1259a4969160904a5bed9d6e31f7fda3348b565457",
+      "end_line": 412,
+      "line": 392
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py:_wire": {
+      "AST_sha256": "492ce58476ba7ef71192562c3910f512d835bfa761f7d540f798abe079e81182",
+      "end_line": 65,
+      "line": 60
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py:export_primary_graph": {
+      "AST_sha256": "c57b61b22b919c073e672a47acb115738fcbea3769f1c069e48f169f82b6e7b1",
+      "end_line": 747,
+      "line": 691
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py:validate_primary_graph_export": {
+      "AST_sha256": "96ea06ded3e600a5009eab7f01fff23625e826d7f3a3ecea175d7ea9c8471df9",
+      "end_line": 800,
+      "line": 750
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_manifest.py:iter_verified_graph_rows": {
+      "AST_sha256": "94b1328f293edd7dce5d8e67689d4ed4768374eff1bb561ad02e11ae87bc844b",
+      "end_line": 426,
+      "line": 391
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_manifest.py:select_primary_graph_manifest": {
+      "AST_sha256": "19ba8e4a3d0ad035e0acb0ddf94c676acae85bfacd4cdeb69b441f3c13b81fb5",
+      "end_line": 200,
+      "line": 125
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_reconstruction.py:_database": {
+      "AST_sha256": "8af92fbd4e3becd3b8d4c83ed067953f713050b1dd6a8802ad93f99a8531f845",
+      "end_line": 130,
+      "line": 114
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_reconstruction.py:_selected_sources": {
+      "AST_sha256": "e43bbfebc5371e0843ac6ec2874c90978b273dc3fad30b9499b6c55d350049ac",
+      "end_line": 226,
+      "line": 220
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_reconstruction.py:_wire": {
+      "AST_sha256": "fc5914fb5639e23de7294f74b7dddddc22afcdb8ecce83734006b559df89559f",
+      "end_line": 54,
+      "line": 49
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_reconstruction.py:reconstruct_to_jsonl": {
+      "AST_sha256": "8d4a6cba14ae7d5f4ee6af27972c4a481e051a5c4e0b1ce7a4d06efd2119e770",
+      "end_line": 371,
+      "line": 229
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_records.py:_identity": {
+      "AST_sha256": "d09f26479eccdeef900570c697465529909ce3db23cad4ce17647d1eac1005e8",
+      "end_line": 154,
+      "line": 144
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_records.py:decode_primary_graph_payload": {
+      "AST_sha256": "ace2212331ca9fccdf5601f8ec73020e5adee2e74cd8d87620859e43333bb5eb",
+      "end_line": 260,
+      "line": 170
+    },
+    "ipfs_datasets_py/processors/legal_data/uscode_release_schema.py:validate_entry_cid": {
+      "AST_sha256": "142fc02f52f9c9a180106a7d8061a04e1c970c2a9c6889b8e1ba59621ef6d84b",
+      "end_line": 451,
+      "line": 430
+    }
+  },
+  "supersedes_final_source_custody_of": {
+    "bytes": 15447,
+    "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/lineage-size-lower-bound-v01.json",
+    "sha256": "c3c6c6ce5d6db092701c987ac854a68e747233c491c57a52285da90a80f54bb4"
+  }
+}

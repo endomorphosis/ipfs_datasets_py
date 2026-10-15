@@ -1,0 +1,32 @@
+{
+  "all_89_source_pins_unchanged": true,
+  "durability_inventory_sha256": "589b88d88fadf5f24a06df98c99522721f3704bc269a9957a2dd1c5b8ca240f7",
+  "expected_export_manifest_sha256": "5c94588706c54c8b8803e03971a18cc917aea754e31e7a9e1359f9c80b7021fd",
+  "generation": {
+    "exported_rows": 297825,
+    "file_count": 586,
+    "lineage_only_rows": 0,
+    "manifest": {
+      "bytes": 106252,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/exports/candidate-generation-v01/manifest.json",
+      "sha256": "5c94588706c54c8b8803e03971a18cc917aea754e31e7a9e1359f9c80b7021fd"
+    },
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/exports/candidate-generation-v01",
+    "quarantined_rows": 0,
+    "source_rows": 297825,
+    "structural_endpoint_integrity_passed": true,
+    "total_bytes": 1342890287
+  },
+  "manifest_bytes": 106252,
+  "native_execution_complete": true,
+  "native_result_sha256": "cf56039c736d299c91f1209cea31c953fd0602103ff761eab7b766b383e66162",
+  "producer_receipt": {
+    "bytes": 23793,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/logs/corpus-export-producer.json",
+    "sha256": "0e7e2dd99fd75f24156188a29d5e652a71bf3225ba5ff078badda261eb843591"
+  },
+  "producer_request_sha256": "d267930941b7f57a7fe850c89a51098dfbea41bca244ef80de42c8cac4034177",
+  "schema": "legal-primary-corpus-export-accepted-producer/v1",
+  "scope": "Root acceptance of completed producer metadata and pinned manifest before separately frozen original-bound consumer; original sources and expected selection remain independently required.",
+  "semantic_or_training_authority_granted": false
+}

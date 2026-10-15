@@ -1,0 +1,926 @@
+{
+  "case_recount": {
+    "counting_rule": "189 is this run total, including the prior 160; do not add historical runs or corpus populations.",
+    "counts_by_module": {
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py": 80,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py": 26,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py": 45,
+      "tests/unit/logic/test_kg_graph_citation_identity.py": 38
+    },
+    "coverage_canonical_json_sha256": "b2f44a155ca95533ebbd318890ef965eb9f0ecaf7cf017fd5b0f38633ceba22b",
+    "duplicate_cases": 0,
+    "errors": 0,
+    "excluded_unchanged_symlink_case": "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_atomic_export_never_rewrites_existing_output_or_writes_into_source_tree",
+    "failures": 0,
+    "new_cases": 29,
+    "new_functions": [
+      "test_explicit_2gib_profile_preserves_v1_transport_and_all_other_ceilings",
+      "test_only_explicit_2gib_profile_permits_larger_generation_limits",
+      "test_profile_limits_cannot_implicitly_select_or_expand_a_profile",
+      "test_reader_refuses_unsafe_replay_parent_without_mutating_producer_or_source",
+      "test_reader_replay_parent_preserves_producer_and_uses_only_its_owned_child",
+      "test_unknown_or_nonstring_profile_refuses_before_operation_owners",
+      "test_unknown_saved_profile_cannot_dispatch_its_own_validator",
+      "test_validator_requires_caller_profile_even_when_generation_limits_are_identical"
+    ],
+    "nodeids_canonical_json_sha256": "da65a2f862aee48c145e5883baa8bfa91eaa0e7fc63a3851e4addcc08dc515c5",
+    "normalized_nodeids": [
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_actual_writer_roundtrip_preserves_body_identity_custody_and_original_bytes",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_repeated_export_is_reproducible_without_rewriting_either_destination",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_explicit_2gib_profile_preserves_v1_transport_and_all_other_ceilings",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_only_explicit_2gib_profile_permits_larger_generation_limits[1073741825]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_only_explicit_2gib_profile_permits_larger_generation_limits[2147483648]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_validator_requires_caller_profile_even_when_generation_limits_are_identical[manifest-selected-primary-entry-cid-canonical-parquet/v1-manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_validator_requires_caller_profile_even_when_generation_limits_are_identical[manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1-manifest-selected-primary-entry-cid-canonical-parquet/v1]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unknown_or_nonstring_profile_refuses_before_operation_owners[export-None]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unknown_or_nonstring_profile_refuses_before_operation_owners[export-False]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unknown_or_nonstring_profile_refuses_before_operation_owners[export-1]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unknown_or_nonstring_profile_refuses_before_operation_owners[export-unknown-primary-export-profile/v1]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unknown_or_nonstring_profile_refuses_before_operation_owners[validate-None]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unknown_or_nonstring_profile_refuses_before_operation_owners[validate-False]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unknown_or_nonstring_profile_refuses_before_operation_owners[validate-1]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unknown_or_nonstring_profile_refuses_before_operation_owners[validate-unknown-primary-export-profile/v1]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_profile_limits_cannot_implicitly_select_or_expand_a_profile[manifest-selected-primary-entry-cid-canonical-parquet/v1-limits0]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_profile_limits_cannot_implicitly_select_or_expand_a_profile[manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1-limits1]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_profile_limits_cannot_implicitly_select_or_expand_a_profile[manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1-limits2]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_profile_limits_cannot_implicitly_select_or_expand_a_profile[manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1-limits3]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_profile_limits_cannot_implicitly_select_or_expand_a_profile[manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1-limits4]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_profile_limits_cannot_implicitly_select_or_expand_a_profile[manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1-limits5]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_profile_limits_cannot_implicitly_select_or_expand_a_profile[manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1-limits6]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unknown_saved_profile_cannot_dispatch_its_own_validator",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_reader_replay_parent_preserves_producer_and_uses_only_its_owned_child[False]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_reader_replay_parent_preserves_producer_and_uses_only_its_owned_child[True]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_reader_refuses_unsafe_replay_parent_without_mutating_producer_or_source[snapshot]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_reader_refuses_unsafe_replay_parent_without_mutating_producer_or_source[blobs]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_reader_refuses_unsafe_replay_parent_without_mutating_producer_or_source[candidate]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_reader_refuses_unsafe_replay_parent_without_mutating_producer_or_source[candidate_descendant]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_reader_refuses_unsafe_replay_parent_without_mutating_producer_or_source[missing]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_reader_refuses_unsafe_replay_parent_without_mutating_producer_or_source[parent_traversal]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_already_canonical_original_wrappers_are_not_rewritten",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_exact_row_and_shard_boundaries_are_accepted",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_shards_respect_small_physical_bound_and_keep_every_occurrence",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_empty_family_never_writes_null_typed_empty_parquet",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[duplicate]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[conflict]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[dangling]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[edge_duplicate]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[cross_family]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_quarantine_retains_complete_source_population_without_graph_or_repair_authority[malformed]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_writer_legal_id_fallback_cannot_silently_reinterpret_original_wrapper",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_finite_export_bounds_refuse_without_partial_destination[max_rows]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_finite_export_bounds_refuse_without_partial_destination[max_shards]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_finite_export_bounds_refuse_without_partial_destination[max_shard_input_bytes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_finite_export_bounds_refuse_without_partial_destination[max_parquet_bytes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_finite_export_bounds_refuse_without_partial_destination[max_output_bytes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_finite_export_bounds_refuse_without_partial_destination[max_lineage_line_bytes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_finite_export_bounds_refuse_without_partial_destination[max_manifest_bytes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_finite_export_bounds_refuse_without_partial_destination[max_decoded_batch_bytes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unsupported_or_noninteger_limits_cannot_raise_the_owner_ceiling[limits0]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unsupported_or_noninteger_limits_cannot_raise_the_owner_ceiling[limits1]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unsupported_or_noninteger_limits_cannot_raise_the_owner_ceiling[limits2]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unsupported_or_noninteger_limits_cannot_raise_the_owner_ceiling[limits3]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_unsupported_or_noninteger_limits_cannot_raise_the_owner_ceiling[limits4]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_wrong_independent_selection_pin_cannot_export_another_population",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_existing_destination_and_immutable_source_root_survive_refusal",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_late_real_parquet_writer_failure_leaves_no_partial_publication",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_lower_aggregate_budget_refuses_before_opening_generation_companions",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_new_destination_open_failure_removes_only_provably_owned_empty_directory[none]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_new_destination_open_failure_removes_only_provably_owned_empty_directory[foreign_inode]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_new_destination_open_failure_removes_only_provably_owned_empty_directory[nonempty_owned_inode]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_compressed_shard_is_refused_before_saved_arrow_row_allocation",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_manifest_cannot_change_authority_population_or_contract[authority]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_manifest_cannot_change_authority_population_or_contract[flat_repair]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_manifest_cannot_change_authority_population_or_contract[population]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_manifest_cannot_change_authority_population_or_contract[unknown]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_manifest_cannot_change_authority_population_or_contract[authority_numeric]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_manifest_cannot_change_authority_population_or_contract[population_float]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_manifest_cannot_change_authority_population_or_contract[structural_numeric]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_lineage_cannot_alias_json_number_or_boolean_types[number]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_lineage_cannot_alias_json_number_or_boolean_types[boolean]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_parquet_and_lineage_cannot_replace_original_typed_edge[role]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_parquet_and_lineage_cannot_replace_original_typed_edge[source_evidence]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_resealed_parquet_and_lineage_cannot_replace_original_typed_edge[endpoint]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_independent_validation_rejects_missing_added_dropped_or_retargeted_inputs[missing]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_independent_validation_rejects_missing_added_dropped_or_retargeted_inputs[extra]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_independent_validation_rejects_missing_added_dropped_or_retargeted_inputs[lineage_drop]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_independent_validation_rejects_missing_added_dropped_or_retargeted_inputs[source_bytes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py::test_independent_validation_rejects_missing_added_dropped_or_retargeted_inputs[manifest_pin]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_payload_observation_preserves_decoder_fields_without_fabricating_custody[False-graph_nodes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_payload_observation_preserves_decoder_fields_without_fabricating_custody[False-graph_edges]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_payload_observation_preserves_decoder_fields_without_fabricating_custody[True-graph_nodes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_payload_observation_preserves_decoder_fields_without_fabricating_custody[True-graph_edges]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_payload_pin_mismatch_and_unsupported_family_cannot_decode_a_different_observation",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_current_wrapper_decodes_literal_ids_without_semantic_authority[graph_nodes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_current_wrapper_decodes_literal_ids_without_semantic_authority[graph_edges]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_original_record_bytes_whitespace_unicode_escapes_and_unknown_fields_are_lossless",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_optional_legal_id_transport_parity_preserves_original_body_value[None]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_optional_legal_id_transport_parity_preserves_original_body_value[]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_optional_legal_id_transport_parity_preserves_original_body_value[usc:us:10:1]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_materialized_wrapper_endpoint_field_cannot_override_body_endpoint",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_wrapper_body_parity_or_original_byte_hash_tampering_stays_unresolved[family]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_wrapper_body_parity_or_original_byte_hash_tampering_stays_unresolved[entry_cid]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_wrapper_body_parity_or_original_byte_hash_tampering_stays_unresolved[legal_id]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_wrapper_body_parity_or_original_byte_hash_tampering_stays_unresolved[record_sha256]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"x\":1,\"x\":2}]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"nested\":{\"x\":1,\"x\":2}}]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"x\":NaN}]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"x\":Infinity}]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"x\":-Infinity}]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{\"x\":1e999}]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[{broken]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[[1,2]]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_duplicate_nonfinite_malformed_or_nonobject_body_is_retained_unresolved[null]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_missing_explicit_edge_identities_never_use_labels_or_positional_fallback[entry_cid]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_missing_explicit_edge_identities_never_use_labels_or_positional_fallback[source_entry_cid]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_missing_explicit_edge_identities_never_use_labels_or_positional_fallback[target_entry_cid]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_conflicting_identity_aliases_cannot_be_chosen[edge_cid]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_conflicting_identity_aliases_cannot_be_chosen[src]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_conflicting_identity_aliases_cannot_be_chosen[source_node_cid]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_conflicting_identity_aliases_cannot_be_chosen[dst]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_conflicting_identity_aliases_cannot_be_chosen[target_node_cid]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_agreeing_legacy_alias_remains_observed_without_becoming_an_identity_source",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_explicit_unknown_version_never_selects_another_graph_layout[body]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_explicit_unknown_version_never_selects_another_graph_layout[wrapper]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_physical_occurrences_are_distinct_without_text_or_identity_deduplication",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_independent_raw_row_and_manifest_file_ordinal_pins_reject_retargeting",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_regeneration_rejects_resealed_identity_or_authority_promotion",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_invalid_or_noncanonical_identity_is_never_normalized[row-12]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_invalid_or_noncanonical_identity_is_never_normalized[ sha256:1111111111111111111111111111111111111111111111111111111111111111]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_invalid_or_noncanonical_identity_is_never_normalized[SHA256:1111111111111111111111111111111111111111111111111111111111111111]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_invalid_or_noncanonical_identity_is_never_normalized[same display label]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_legacy_flags_missing_wrapper_and_absent_legal_id_cannot_confer_authority",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py::test_finite_byte_bounds_and_plain_json_custody_raise_without_truncation",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_wrapped_graph_parquet_preserves_exact_citation_identity",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_unresolved_citation_retains_declared_structural_target_without_legal_id",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_noncitation_edge_is_validated_and_excluded_from_citation_closure",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_unreferenced_structural_node_needs_no_invented_legal_identity",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_distinct_edge_records_preserve_repeated_citation_occurrences_in_order",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[missing_source]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[missing_target]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[missing_entry]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[empty_source]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[empty_target]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[invalid_source]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[wrapper_entry]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[wrapper_legal]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[wrapper_family]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[record_hash]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[duplicate_json_key]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_payload_problem_cannot_become_an_unresolved_or_legacy_success[nonobject_json]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_conflicting_identity_alias_never_overrides_the_explicit_namespace[node_id]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_conflicting_identity_alias_never_overrides_the_explicit_namespace[src]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_conflicting_identity_alias_never_overrides_the_explicit_namespace[dst]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_conflicting_identity_alias_never_overrides_the_explicit_namespace[source_node_cid]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_agreeing_aliases_are_observations_and_do_not_change_endpoint_identity",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_unknown_explicit_schema_never_selects_a_different_transport[wrapper]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_unknown_explicit_schema_never_selects_a_different_transport[body]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_partial_current_wrapper_is_not_downgraded_to_a_legacy_projection[entry_cid]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_partial_current_wrapper_is_not_downgraded_to_a_legacy_projection[legal_id]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_partial_current_wrapper_is_not_downgraded_to_a_legacy_projection[family]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_partial_current_wrapper_is_not_downgraded_to_a_legacy_projection[record_sha256]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_partial_current_wrapper_is_not_downgraded_to_a_legacy_projection[record_json]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_duplicate_record_identities_refuse_instead_of_silent_deduplication[node]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_duplicate_record_identities_refuse_instead_of_silent_deduplication[edge]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_duplicate_record_identities_refuse_instead_of_silent_deduplication[cross_family]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_dangling_endpoint_cannot_masquerade_as_a_legal_id[source_entry_cid]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_dangling_endpoint_cannot_masquerade_as_a_legal_id[target_entry_cid]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_resolved_citation_requires_both_nodes_declared_legal_identities[source]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_current_resolved_citation_requires_both_nodes_declared_legal_identities[target]",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_legacy_flat_citations_keep_direct_legal_ids_and_explicit_unresolved_target",
+      "tests/unit/logic/test_kg_graph_citation_identity.py::test_legacy_wrapped_aliases_remain_separate_from_the_current_five_field_profile",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_whole_population_global_endpoints_properties_and_lineage_are_preserved",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_outputs_and_full_reports_are_reproducible_across_destination_paths",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_candidate_identity_excludes_cache_location_and_unselected_older_files",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[duplicate]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[conflict]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[missing]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[malformed]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[edge_duplicate]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked[cross_family]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_unresolved_edge_keeps_quarantine_and_complete_endpoint_denominators",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs[authority]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs[count]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs[unknown]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs[candidate_hash]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_tampered_candidate_bytes_and_original_source_bytes_cannot_pass",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_output_bounds_leave_no_partial_candidate_or_owned_tempfile[max_output_bytes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_output_bounds_leave_no_partial_candidate_or_owned_tempfile[max_line_bytes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_real_scratch_allocation_limit_refuses_population_without_partial_output",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_second_pass_population_mutation_is_detected_and_partial_output_removed",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_literal_unknown_and_missing_producer_kinds_remain_observations",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_edges_reference_quarantined_cross_family_identity_as_conflict",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_output_parent_swap_during_second_pass_is_refused_without_publication",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_failed_exclusive_temporary_creation_never_unlinks_a_preexisting_file",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_publication_rollback_preserves_a_replaced_foreign_output",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_cross_family_identity_lookup_has_bounded_work_on_a_populated_index[graph_nodes]",
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_cross_family_identity_lookup_has_bounded_work_on_a_populated_index[graph_edges]"
+    ],
+    "ordered_collection_successful_call_and_junit_nodeids_identical": true,
+    "prior_160_case_ids_preserved_as_ordered_subsequence": true,
+    "reconstruction_scope": "16 selected regular-file function targets / 26 parametrized cases, not whole reconstruction module.",
+    "selected_target_count": 19,
+    "selected_target_coverage": {
+      "tests/unit/logic/autoformal/test_legal_primary_graph_export.py": 80,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_all_rows_remain_visible_when_identity_or_endpoint_integrity_is_blocked": 6,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_candidate_identity_excludes_cache_location_and_unselected_older_files": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_cross_family_identity_lookup_has_bounded_work_on_a_populated_index": 2,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_edges_reference_quarantined_cross_family_identity_as_conflict": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_failed_exclusive_temporary_creation_never_unlinks_a_preexisting_file": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_literal_unknown_and_missing_producer_kinds_remain_observations": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_output_bounds_leave_no_partial_candidate_or_owned_tempfile": 2,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_output_parent_swap_during_second_pass_is_refused_without_publication": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_outputs_and_full_reports_are_reproducible_across_destination_paths": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_publication_rollback_preserves_a_replaced_foreign_output": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_real_scratch_allocation_limit_refuses_population_without_partial_output": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_second_pass_population_mutation_is_detected_and_partial_output_removed": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_self_resealed_reports_cannot_replace_independently_reconstructed_inputs": 4,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_tampered_candidate_bytes_and_original_source_bytes_cannot_pass": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_unresolved_edge_keeps_quarantine_and_complete_endpoint_denominators": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py::test_whole_population_global_endpoints_properties_and_lineage_are_preserved": 1,
+      "tests/unit/logic/autoformal/test_legal_primary_graph_records.py": 45,
+      "tests/unit/logic/test_kg_graph_citation_identity.py": 38
+    },
+    "skipped": 0,
+    "unique_cases": 189
+  },
+  "checked_metadata_artifacts": [
+    {
+      "bytes": 23157,
+      "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/qualification-request-v01.json",
+      "sha256": "3f8088db40c2ac2adbcaad067074c43eb1a39074fc81c54d3180d0745c3bcd25"
+    },
+    {
+      "bytes": 166007,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/qualification.json",
+      "sha256": "2c4c0be4a91e3ad9384e6f8008f887e52eb739d5397034b1ed0608ca6192e8f2"
+    },
+    {
+      "bytes": 36063,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/exports/junit.xml",
+      "sha256": "7d6ff84477b020c5ec9845ce5d2d3b682d697ea66654ad23bf4bd9fc0f629ab5"
+    },
+    {
+      "bytes": 3223,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/result.json",
+      "sha256": "cbc3db96fb3df24e0ac06b0201aa293e7278851bbef834dd33cc8d355c98e2a9"
+    },
+    {
+      "bytes": 3045,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/execution.json",
+      "sha256": "464c2aab8477afe3a64108464061a14a52a373f750c031a9eeb62a05bbf1d079"
+    },
+    {
+      "bytes": 142099,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/validation-durability.json",
+      "sha256": "995611dc42b1be5835591c217d8fdb41ea7e30ff2e94ca4eb7480db93617811b"
+    },
+    {
+      "bytes": 607,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/stdout.log",
+      "sha256": "8b1e163a19b4ac5480c8c4f55afcd8e4ab4209f932559dbb736840e91d05b3a7"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 5504,
+      "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/qualification-parent-output-v01.json",
+      "sha256": "ed79fcf73b133ca51bea8ca2904b961d6fff2bb6a667ca6ab455b6715fa7346f"
+    },
+    {
+      "bytes": 149013,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-02/logs/qualification.json",
+      "sha256": "fa711a5f96f6f4b84b90f6e3d1ab332717c6762a9ad9ffb0a2e7b93eabf1194c"
+    }
+  ],
+  "limitations": [
+    "Synthetic selected test qualification does not execute the real 297,825-row corpus export or prove 2 GiB fit.",
+    "Added tests use small genuine fixtures and verify ceilings; they do not physically produce over 1 GiB.",
+    "Only six derived metadata entries were rehashed; 577 fixture-body commitments rely on native durability sealing and were not reopened.",
+    "The complete parent JSON is captured original stdout, not manual projection. Recorded release is not fresh ledger/scheduler authentication or a new capacity grant.",
+    "Native supervision remains cooperative admission and polled usage, not a kernel quota or arbitrary-descendant containment.",
+    "The inert intent_ir.autoencoder Python owner appears in the actual import closure; models_loaded=false and training_performed=false do not mean no autoencoder-named Python module was imported.",
+    "Source hashes identify these bytes; recorded dependency versions alone do not authenticate distributions.",
+    "No statutory semantic review, gold labels, accepted graph admission, Lean build, proof, training or weight promotion follows from these tests."
+  ],
+  "material_findings": [],
+  "native_closeout": {
+    "artifacts_durable_asserted": true,
+    "cleanup_error": null,
+    "complete_captured_parent_stdout": {
+      "bytes": 5504,
+      "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/qualification-parent-output-v01.json",
+      "sha256": "ed79fcf73b133ca51bea8ca2904b961d6fff2bb6a667ca6ab455b6715fa7346f"
+    },
+    "durability_descriptor_count": 583,
+    "durability_paths_unique_sorted_safe": true,
+    "full_claim_release_delta_bytes": 536870912,
+    "inventory_bytes_plus_durability_bytes": 3430621,
+    "native_lease_id": "fbba8380fa724f0f858a6be6fc2223dd",
+    "recorded_finalization_scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+    "recorded_live_group_processes": 0,
+    "rehashed_metadata_entries": [
+      {
+        "bytes": 36063,
+        "path": "exports/junit.xml",
+        "sha256": "7d6ff84477b020c5ec9845ce5d2d3b682d697ea66654ad23bf4bd9fc0f629ab5"
+      },
+      {
+        "bytes": 166007,
+        "path": "logs/qualification.json",
+        "sha256": "2c4c0be4a91e3ad9384e6f8008f887e52eb739d5397034b1ed0608ca6192e8f2"
+      },
+      {
+        "bytes": 3045,
+        "path": "logs/execution.json",
+        "sha256": "464c2aab8477afe3a64108464061a14a52a373f750c031a9eeb62a05bbf1d079"
+      },
+      {
+        "bytes": 3223,
+        "path": "logs/result.json",
+        "sha256": "cbc3db96fb3df24e0ac06b0201aa293e7278851bbef834dd33cc8d355c98e2a9"
+      },
+      {
+        "bytes": 607,
+        "path": "logs/stdout.log",
+        "sha256": "8b1e163a19b4ac5480c8c4f55afcd8e4ab4209f932559dbb736840e91d05b3a7"
+      },
+      {
+        "bytes": 0,
+        "path": "logs/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "request_and_selected_checks_join": true,
+    "reservation_and_record_status": "released",
+    "reservation_id": "780a8cbb74fb454d8868768d0d75c97c",
+    "resource_lease_released": true,
+    "result_and_execution_completed_returncode_zero": true,
+    "storage_cap_unchanged_bytes": 160000000000,
+    "unopened_fixture_body_commitments": 577
+  },
+  "request_sha256": "3f8088db40c2ac2adbcaad067074c43eb1a39074fc81c54d3180d0745c3bcd25",
+  "review_date_utc": "2026-10-15",
+  "reviewer": "/root/conditions_rank_counter_f19",
+  "reviewer_actions": {
+    "live_ledger_read": false,
+    "network_used": false,
+    "only_written_file": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/qualification-independent-review-v01.json",
+    "original_corpus_or_fixture_bodies_opened": false,
+    "product_model_or_numerical_imports": false,
+    "product_source_edited": false,
+    "tests_or_helpers_executed": false
+  },
+  "schema": "legal-primary-corpus-export-qualification-independent-review/v1",
+  "scope": "Independent stdlib XML/JSON/hash recount and source-only review; no product/test/helper execution, original corpus/fixture body reads, ledger or network.",
+  "source_and_origin_recount": {
+    "actual_product_origin_count": 57,
+    "all_current_hashes_match": true,
+    "all_origins_equal_finder_and_join_frozen_pins": true,
+    "authority_and_execution_flags": {
+      "Lean_executed": false,
+      "admitted": false,
+      "authority_granted": false,
+      "formalized": false,
+      "legal_meanings_reviewed": false,
+      "models_loaded": false,
+      "source_semantics_verified": false,
+      "training_performed": false
+    },
+    "finder_refusals": [],
+    "guard_attempts": {
+      "child_process": 0,
+      "network": 0
+    },
+    "natural_product_namespaces": {},
+    "origin_mapping_canonical_json_sha256": "526873d1047384da81c4ca1ab09c20e2e993bb875f821d4d87fc2186ad8515ba",
+    "origin_mismatches": [],
+    "recorded_dependency_versions": {
+      "numpy": "1.26.4",
+      "pyarrow": "23.0.1",
+      "pytest": "9.1.1"
+    },
+    "router_discovery_only": [
+      {
+        "module": "ipfs_datasets_py.ipfs_backend_router",
+        "origin": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/ipfs_backend_router.py"
+      }
+    ],
+    "source_pin_count": 80,
+    "source_pins": [
+      {
+        "bytes": 56829,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/__init__.py",
+        "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+      },
+      {
+        "bytes": 1775,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/_router_alias.py",
+        "sha256": "908ecfb1abdb38edbe8da2b3efd89eec88594d97acfd7cb54518ff7ea2b23e20"
+      },
+      {
+        "bytes": 2525,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/__init__.py",
+        "sha256": "208d92ad7d0ab4c940f7590df241717fa30fe695b437d7bfc32ef4599d01f8f7"
+      },
+      {
+        "bytes": 43726,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/bucket.py",
+        "sha256": "b2716e4433ebc225609e988bc71f2b270c9d7ff768793eb77a57eda18609be3e"
+      },
+      {
+        "bytes": 31104,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/corpus.py",
+        "sha256": "6a320fbccc899d7b6a52fdcc9260c1a36fd01f04e2edeaad0c4fe9dc81388bc9"
+      },
+      {
+        "bytes": 18655,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/release.py",
+        "sha256": "067fb01b0ed84fb50117b625225ab4394a321dd308b987ce55eebd77cfbaa080"
+      },
+      {
+        "bytes": 9336,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/repository.py",
+        "sha256": "b3d924755c9956711c0266a69f5ac7d1117df796ca2f932628b529983076f59f"
+      },
+      {
+        "bytes": 1969,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/snapshot.py",
+        "sha256": "8b7c62f289e5ea9aa886ab38d1ff9147273d6a870047a2ecfdcfd9ed9c864122"
+      },
+      {
+        "bytes": 4434,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/__init__.py",
+        "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+      },
+      {
+        "bytes": 60251,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+        "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+      },
+      {
+        "bytes": 43244,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py",
+        "sha256": "9762f1efe9354a19299307f46ba72c2e14e953295e1a2f0ed965816f109b6b6a"
+      },
+      {
+        "bytes": 25730,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_manifest.py",
+        "sha256": "c1e86ab52371730d52cf582d2b60fbe282ae52608dcb462ec2c59cdf24738d38"
+      },
+      {
+        "bytes": 24607,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_reconstruction.py",
+        "sha256": "e8075e6232b64ee3c8469e5c4a71d1bc77dbbdd4dd34e7e03768c516ed61c0c6"
+      },
+      {
+        "bytes": 15186,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_records.py",
+        "sha256": "f42d060a97c65269fe453a13eefedc1dc243852efebc09a3e660bcd18b97946c"
+      },
+      {
+        "bytes": 2386,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/__init__.py",
+        "sha256": "acf68a7215af95b4a7d4e4dc883cb7577e2129e7bbadf49c1fc2c404848bc641"
+      },
+      {
+        "bytes": 1006,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/autoencoder.py",
+        "sha256": "ff944970bd24db83b6851fe4b84db62fe00128ed6ee0019c17cd941f2feb2e91"
+      },
+      {
+        "bytes": 1495,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/canonicalize.py",
+        "sha256": "3609047cc8c99437d77461b4f7ea0e05d193a31bf0d20a7e80b7b0c10a8cff87"
+      },
+      {
+        "bytes": 24220,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/decoder.py",
+        "sha256": "7bab5781c07e00b54b0283d3a2962926f75935caedc80eceb23264cb388be257"
+      },
+      {
+        "bytes": 1693,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/protocols.py",
+        "sha256": "adb0ae8eaf2e55bf587ac76baa90d8303b61e0df246c03c30b56cb31a9643780"
+      },
+      {
+        "bytes": 27163,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/schema.py",
+        "sha256": "93d38e4724c5f34aab7f39f050742e98ef0c8d80e2ff70459d2401541505fc56"
+      },
+      {
+        "bytes": 732,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/source_adapters/__init__.py",
+        "sha256": "d60f048c70a7b90c668e1bc8064eaf78eafadfb7c579db47c63ad51b70fac5aa"
+      },
+      {
+        "bytes": 21084,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/source_adapters/skillcenter.py",
+        "sha256": "3d10d1b7a78df0184b44ee05747d27581761b7d687c2b5bf78891c6fa2597636"
+      },
+      {
+        "bytes": 30612,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/source_adapters/snapshot.py",
+        "sha256": "105ad0f7d75e6e473d0b17c7f3cfa9aeab9b63c4ad15eb2eda7be13b03eddcc6"
+      },
+      {
+        "bytes": 6942,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/__init__.py",
+        "sha256": "4c0070482e009dd7cb9875e91124d48683da37d53f691cccb306ec50f23c946c"
+      },
+      {
+        "bytes": 44109,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/artifacts.py",
+        "sha256": "63896fb1fb4ef22be50d76996ce404119a5d209d01f046a6a842b7b96848ebc6"
+      },
+      {
+        "bytes": 14098,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/canonical.py",
+        "sha256": "339b5778581c19525a7685edf432aaf124cd12e02d37cd0eca88cb25ab86c0d0"
+      },
+      {
+        "bytes": 8911,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/identity.py",
+        "sha256": "606bffc1f938c59f44651eeb65cb9c0738e16e465aabba0ad82ef05e3b5b3b0e"
+      },
+      {
+        "bytes": 31891,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/provenance.py",
+        "sha256": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe"
+      },
+      {
+        "bytes": 31823,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/schema_registry.py",
+        "sha256": "1b214ea190a41c6a451377a03bc71ea84f6703314293ef78c5f269082eee4fbe"
+      },
+      {
+        "bytes": 32159,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/source_lineage.py",
+        "sha256": "381bd72c934429341010d5d5c93e0493dc29ade18a0225008bba51c639baccca"
+      },
+      {
+        "bytes": 54035,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/profile_g.py",
+        "sha256": "4ca5dcc601f30c723467f425a6a03a7c5b1f644c2239a0f4a489705f1b715f03"
+      },
+      {
+        "bytes": 957,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/__init__.py",
+        "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+      },
+      {
+        "bytes": 69336,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+        "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+      },
+      {
+        "bytes": 40999,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+        "sha256": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed"
+      },
+      {
+        "bytes": 17545,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py",
+        "sha256": "e19dbd913e30c6960d4a848bc2b2f15236944e55bc7718598e047fbdf664f18d"
+      },
+      {
+        "bytes": 15543,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+        "sha256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633"
+      },
+      {
+        "bytes": 121503,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+        "sha256": "7c889bc858ff092e18bd2e97ff5a6407973e226eae33cddc9e5eef1d21f35986"
+      },
+      {
+        "bytes": 53075,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+        "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+      },
+      {
+        "bytes": 1489,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+        "sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31"
+      },
+      {
+        "bytes": 27271,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py",
+        "sha256": "8ed63a0dd0510ed5f5eaf453491616d65f5cad681fde8adca4a528a5d0fed72b"
+      },
+      {
+        "bytes": 13495,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/__init__.py",
+        "sha256": "ad900d235b175e021f0fb679ede5ce5f810dbdca29bc488a2f10bc06b0a17047"
+      },
+      {
+        "bytes": 1660,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/core/__init__.py",
+        "sha256": "35a86c358c1b2acdf5390a864df857978cd82eedde7ca096c293d417939aa6d5"
+      },
+      {
+        "bytes": 14806,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/core/input_detector.py",
+        "sha256": "80a5cecad4308023febcda895d6cd3ac984fb7167f942281db5425547e090746"
+      },
+      {
+        "bytes": 13576,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/core/protocol.py",
+        "sha256": "ad0198f49eb31a5d764cbf828c74080070ade6ed16d202ac6dd735bc423cc7c8"
+      },
+      {
+        "bytes": 22036,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/core/registry.py",
+        "sha256": "cc89d69c1886b762867d3dc991a2129d5fadfb0663bff7dda933c4591be59be0"
+      },
+      {
+        "bytes": 18503,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/core/universal_processor.py",
+        "sha256": "450e0926c6596b11e24d0ae5181bdfa1bd45f575f26de30eab0acf83027914b8"
+      },
+      {
+        "bytes": 934,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/infrastructure/__init__.py",
+        "sha256": "e73c6dbd4706b81daad0648b6d16b3184ea5db8c57c6fc1ee5362cff604f7b70"
+      },
+      {
+        "bytes": 10731,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/infrastructure/caching.py",
+        "sha256": "49b8586a3c4921bf72d7d46e34d94af1a039deedaa3be95e94e1ac20984c5ae7"
+      },
+      {
+        "bytes": 12161,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/infrastructure/error_handling.py",
+        "sha256": "3b223f9943f16f6312ae4712999818c21c3cadcfa88085936236e8ac56b340dd"
+      },
+      {
+        "bytes": 19076,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/infrastructure/monitoring.py",
+        "sha256": "ec3502a6c677cc46d2d5942f3ef5c5345d32a7e23febe1203d6d71a1b16bd1a7"
+      },
+      {
+        "bytes": 15062,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/input_detection.py",
+        "sha256": "08cd2e1ec4033eb82b40380e93f80e85e08593981296ed7b0a5eed9d3caac727"
+      },
+      {
+        "bytes": 42578,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/__init__.py",
+        "sha256": "c591d799ad6e2468fd3d211bc3028b135dc45f48f21c4f0f01f10fe9069f251f"
+      },
+      {
+        "bytes": 78783,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/open_us_law_acquisition_coordinator.py",
+        "sha256": "7504261545618df8bd982bfd2c87694795c43ce97390c9f9eb5c15ab21d06c46"
+      },
+      {
+        "bytes": 42349,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/patent_authority_sources.py",
+        "sha256": "8b73dbbb6687f660739bf0c9abd2dc3e4c5ce89d7ec1e29753e55d882c0349b3"
+      },
+      {
+        "bytes": 59610,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/state_laws_completeness.py",
+        "sha256": "54b984e7730c633123494e8e1384af8cb9b395ec38b2a9e840a12de5782b6ab0"
+      },
+      {
+        "bytes": 2445,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/state_laws_current_source_software.py",
+        "sha256": "178b17996af10fb79ba833458515738128d2007ebf31ab07d8dd04a114f44daf"
+      },
+      {
+        "bytes": 98742,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/state_laws_legacy_v2_adapter.py",
+        "sha256": "31f595a61db110492dfd769d27ee62e4de90e7a959e30f08c5700be5d049de5c"
+      },
+      {
+        "bytes": 119150,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/state_laws_multifetch_acquisition.py",
+        "sha256": "735590eab0784d4f867739201d337c9fcde0c00f9266b1eb7b7b32bb22893c11"
+      },
+      {
+        "bytes": 12813,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/state_laws_run_seal.py",
+        "sha256": "b45e1e9d1c0c599f8317ac50e20b8fa6317a2176f564910420dfd6800e089368"
+      },
+      {
+        "bytes": 48430,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/state_laws_source_policy.py",
+        "sha256": "443bc79f7552df6fcd27a0b7d55c1f93d52fdf8304465c274a14b238d24e82c8"
+      },
+      {
+        "bytes": 34963,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/state_laws_source_provenance.py",
+        "sha256": "25d088c6b9187aaa27d6df71a51aabbfd46c156ba7cac9a12ebd1c5fafc50007"
+      },
+      {
+        "bytes": 74115,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+        "sha256": "4d9148e5f51f0d5837a44fb75525941443133261f193fca98bb57679eded0b87"
+      },
+      {
+        "bytes": 88604,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_hf_release.py",
+        "sha256": "c183915f939892efff604fcd426df383b5393c3f4ca5a59d13216566d4c4805c"
+      },
+      {
+        "bytes": 91298,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_release_schema.py",
+        "sha256": "7808e42ae4308b8f25421628840e1e23d65f72d8a28ef67a88d48ff510ef3c53"
+      },
+      {
+        "bytes": 79201,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_source_policy.py",
+        "sha256": "64d8b938b8670963c644b304332b240d2997506e2e14d636c3b49342ef75b215"
+      },
+      {
+        "bytes": 36427,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_sparse_graphrag.py",
+        "sha256": "93f11228cfa70404376cd7608c2a70a53398d02b7b42270d089c696f207ebe12"
+      },
+      {
+        "bytes": 16179,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/protocol.py",
+        "sha256": "18293ad803f137d5aea1498528eac5f43dcb67481739f1f46027053257b3bdde"
+      },
+      {
+        "bytes": 21686,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/retrieval.py",
+        "sha256": "3111cd77eb800c5534b42e765c971577f7b8ea4bc720ec938222b273cc90ac82"
+      },
+      {
+        "bytes": 25111,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/universal_processor.py",
+        "sha256": "5da3068aa1733eeea1b948da98323b9ed6834eb8efeceb66d26c80a03e3cb3f5"
+      },
+      {
+        "bytes": 5845,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/router_deps.py",
+        "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+      },
+      {
+        "bytes": 175,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/__init__.py",
+        "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+      },
+      {
+        "bytes": 4428,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+        "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      },
+      {
+        "bytes": 1536,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/pytest.ini",
+        "sha256": "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff"
+      },
+      {
+        "bytes": 8371,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/publish_kg_meta_ontology.py",
+        "sha256": "21beacf5b6e355a9b088edb536bc7d888858aeb100f57412a8680bc47776a330"
+      },
+      {
+        "bytes": 15958,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_owned_validation.py",
+        "sha256": "2d7a250e4c5237d24bf1b9328b059a71854d613a568de55f08c83b8e045e41b4"
+      },
+      {
+        "bytes": 38815,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_primary_graph_export.py",
+        "sha256": "7b1aa14eccb77baa480529cc50bc100d64fec7e276349bf1df31e2370a9c27e6"
+      },
+      {
+        "bytes": 19684,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py",
+        "sha256": "57cc05cd5a710c41e48ac1f524a21ac7bb33cfd7300f63c811729db87948cf64"
+      },
+      {
+        "bytes": 13515,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_primary_graph_records.py",
+        "sha256": "13e58e78be3155270ae9bc4727894c4a99d205e7c21fb449cf4bc2a733934f88"
+      },
+      {
+        "bytes": 14029,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/test_kg_graph_citation_identity.py",
+        "sha256": "ad57dc9a823698684657846160bbc89c2f8909bcbb6a7e8c32304db40fe7180a"
+      },
+      {
+        "bytes": 28529,
+        "matches_frozen_request": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py",
+        "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+      }
+    ]
+  },
+  "source_review": {
+    "added_controls": "29 parametrized cases in eight functions cover genuine small-fixture transport parity, profile equality/over-ceiling and unchanged other ceilings, unknown/cross profiles, separate replay placement, unchanged producer/source inventories and unsafe parent refusals.",
+    "additional_reviewer": {
+      "agent": "/root/conditions_rank_counter_f19/profile_replay_audit",
+      "scope": "Independent source/profile/replay review, 80 pin hashes, 57 origin/finder joins, 19 targets and false flags; no execution or writes.",
+      "status": "PASS"
+    },
+    "authorship_disclosure": "Reviewer authored the earlier 51-case exporter test module. Another agent authored the 29-case profile/replay extension. Reviewer did not edit product or extension.",
+    "caller_profile_checked_before_original_traversal": true,
+    "closed_exact_str_profile_before_lazy_owners": true,
+    "explicit_replay_parent_existing_unaliased_outside_sources_and_candidate_subtree": true,
+    "only_second_profile_max_output_bytes_ceiling_increased": true,
+    "product": {
+      "bytes": 43244,
+      "matches_frozen_request": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py",
+      "sha256": "9762f1efe9354a19299307f46ba72c2e14e953295e1a2f0ed965816f109b6b6a"
+    },
+    "random_owned_child_cleanup_unchanged": true,
+    "saved_manifest_cannot_dispatch_profile": true,
+    "second_profile": "manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1",
+    "status": "PASS",
+    "test": {
+      "bytes": 38815,
+      "matches_frozen_request": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_primary_graph_export.py",
+      "sha256": "7b1aa14eccb77baa480529cc50bc100d64fec7e276349bf1df31e2370a9c27e6"
+    },
+    "v1_profile_DEFAULT_LIMITS_and_transport_preserved": true
+  },
+  "status": "PASS"
+}

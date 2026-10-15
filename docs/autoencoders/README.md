@@ -28,6 +28,7 @@ belong to their named backend; they are not interchangeable across backends.
 | Bind explicit V2 definition candidates to exact source-review subjects | [Sampled-source definition binding](legal_source_sampling_definition_binding_v2.md) |
 | Join exact sampled-source bindings to existing V2 review subjects while preserving all open populations | [Unsigned source/review correspondence integration](legal_source_definition_review_correspondence_integration_20261015.md) |
 | Replay the retained 560-subject §101 population into inspectable unsigned review correspondence | [Retained actual-source replay](legal_retained_source_correspondence_20261015.md) |
+| Preserve and independently replay every selected original primary graph occurrence | [Export API and profiles](legal_primary_graph_export.md), [297,825-occurrence candidate and qualification](legal_primary_corpus_export_20261015.md) |
 | Prepare and authenticate exact V2 definition review evidence | [V2 definition context and review](corpus_definition_review_v2.md) |
 | Bind the full joint definition-use interpretation to its distinct review subject | [Combined V2 definition-use review](corpus_definition_use_review_v2.md) |
 | Inspect native combined-review qualification and the executed §101 source-binding replay | [Combined review and sampled-source integration](legal_definition_use_review_v2_integration_20261015.md) |

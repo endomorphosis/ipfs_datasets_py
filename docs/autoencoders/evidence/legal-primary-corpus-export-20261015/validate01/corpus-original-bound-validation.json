@@ -1,0 +1,383 @@
+{
+  "accepted_producer_receipt": {
+    "bytes": 23793,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/logs/corpus-export-producer.json",
+    "sha256": "0e7e2dd99fd75f24156188a29d5e652a71bf3225ba5ff078badda261eb843591"
+  },
+  "all_checks_complete": true,
+  "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-validate01",
+  "authority": {
+    "accepted_graph_view_enabled": false,
+    "admitted": false,
+    "formalized": false,
+    "historical_flat_occurrences_repaired": false,
+    "proof_authority": false,
+    "published": false,
+    "semantic_review_verified": false,
+    "source_population_equivalence_verified": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "completed_checks": [
+    "rebuild_independently_pinned_primary_selection",
+    "validate_original_bound_candidate_generation",
+    "verify_source_and_product_origin_closure"
+  ],
+  "config": {
+    "bytes": 776,
+    "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/execution-config-validate-v01.json",
+    "sha256": "3072d044ff668bf5fa4202c918c0d247ef01f9f67fcd92f79569332d2eeee891"
+  },
+  "consumer_owned_replay_parent": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-validate01/tmp",
+  "dependency_versions": {
+    "numpy": "1.26.4",
+    "pyarrow": "23.0.1"
+  },
+  "elapsed_seconds": 281.1305441209115,
+  "fresh_reconstruction_report": {
+    "bytes": 120643,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/exports/candidate-generation-v01/reconstruction.json",
+    "sha256": "e81b214aaf4fc652f2ff0880d9d7d27825c522ec9431bd0a550c30bf7da83ab1"
+  },
+  "generation": {
+    "exported_rows": 297825,
+    "file_count": 586,
+    "lineage_only_rows": 0,
+    "manifest": {
+      "bytes": 106252,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/exports/candidate-generation-v01/manifest.json",
+      "sha256": "5c94588706c54c8b8803e03971a18cc917aea754e31e7a9e1359f9c80b7021fd"
+    },
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/exports/candidate-generation-v01",
+    "quarantined_rows": 0,
+    "source_rows": 297825,
+    "structural_endpoint_integrity_passed": true,
+    "total_bytes": 1342890287
+  },
+  "guard_attempts": {
+    "child_process": 0,
+    "network": 0
+  },
+  "historical_selected_stream_comparison": {
+    "all_selected_stream_invariants_match": true,
+    "complete_report_canonical_equality": true,
+    "excluded_inventory_canonical_equality": true,
+    "fresh_extra_file_count": 407,
+    "old_extra_file_count": 407,
+    "scope": "Engineering retention of exactly selected original rows; no legal currentness, semantic or historical flat-cache equivalence.",
+    "selected_stream_invariants": {
+      "blockers": true,
+      "candidate_bytes": true,
+      "candidate_lines": true,
+      "candidate_sha256": true,
+      "decoder_disposition_counts": true,
+      "decoder_issue_counts": true,
+      "disposition_counts": true,
+      "endpoint_counts": true,
+      "endpoint_integrity_passed": true,
+      "family_row_counts": true,
+      "identity_census": true,
+      "identity_status_counts": true,
+      "manifest_sha256": true,
+      "ordered_candidate_rows_sha256": true,
+      "ordered_population_sha256": true,
+      "population_complete": true,
+      "rows": true,
+      "selected_files_sha256": true,
+      "selection_sha256": true
+    }
+  },
+  "input_descriptor": {
+    "bytes": 3507,
+    "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/input-descriptor-v01.json",
+    "sha256": "7c91b196349888b6b293aeef7743ea915a39ab7cac3e693bce51e4f39c7d52e8"
+  },
+  "input_metadata": {
+    "accepted_reconstruction_report": {
+      "bytes": 160983,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/reconstruction-baseline.json",
+      "sha256": "3368f3698f25ac66d3584f388ee0b6d52746443e142d423ed0b8a1ded31abfe2"
+    },
+    "accepted_selection": {
+      "bytes": 1994389,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/selection.json",
+      "sha256": "3ec568b38976ddeb6608f95c052127975182251d64baeae8755f9a8a73c83ed7"
+    },
+    "historical_completion": {
+      "bytes": 16170,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/completion.json",
+      "sha256": "c8275909c967ff712a6500d717699ccb38d284e37661a2e63c2de0d0907de8a3"
+    },
+    "input_custody": {
+      "bytes": 1632,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/input-custody.json",
+      "sha256": "20783310ff0adbf278fc1147278589c5fb300d3c77ea8d89c7afc48c643cfa19"
+    },
+    "raw_manifest": {
+      "bytes": 852161,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-cache-intake-20261013-01/entity-index-repair-metadata/primary-manifest.json",
+      "sha256": "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6"
+    },
+    "selection_options": {
+      "bytes": 848,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/selection-options.json",
+      "sha256": "97f9cc53f7491a9f186bb68c4b11757db6cd06bfd9d2fcdad53d5afc33c0bff4"
+    }
+  },
+  "limitations": [
+    "Native parent evidence, not this child, establishes admission, final durability, group stop and lease/storage release.",
+    "Python network/process audit and writable redirects are cooperative, not an OS sandbox or kernel quota.",
+    "The retained release is engineering input; source legal currentness and historical flat-cache occurrence correspondence are unestablished.",
+    "No semantic review, statutory training mask, accepted graph, model, publication or Lean authority is granted."
+  ],
+  "loaded_product_source_origins": {
+    "ipfs_datasets_py": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "ipfs_datasets_py.huggingface": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/__init__.py",
+      "sha256": "208d92ad7d0ab4c940f7590df241717fa30fe695b437d7bfc32ef4599d01f8f7"
+    },
+    "ipfs_datasets_py.huggingface.bucket": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/bucket.py",
+      "sha256": "b2716e4433ebc225609e988bc71f2b270c9d7ff768793eb77a57eda18609be3e"
+    },
+    "ipfs_datasets_py.huggingface.corpus": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/corpus.py",
+      "sha256": "6a320fbccc899d7b6a52fdcc9260c1a36fd01f04e2edeaad0c4fe9dc81388bc9"
+    },
+    "ipfs_datasets_py.huggingface.release": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/release.py",
+      "sha256": "067fb01b0ed84fb50117b625225ab4394a321dd308b987ce55eebd77cfbaa080"
+    },
+    "ipfs_datasets_py.huggingface.repository": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/repository.py",
+      "sha256": "b3d924755c9956711c0266a69f5ac7d1117df796ca2f932628b529983076f59f"
+    },
+    "ipfs_datasets_py.huggingface.snapshot": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/huggingface/snapshot.py",
+      "sha256": "8b7c62f289e5ea9aa886ab38d1ff9147273d6a870047a2ecfdcfd9ed9c864122"
+    },
+    "ipfs_datasets_py.logic": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/__init__.py",
+      "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+    },
+    "ipfs_datasets_py.logic.autoformal": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+      "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+    },
+    "ipfs_datasets_py.logic.autoformal.legal_primary_graph_export": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py",
+      "sha256": "9762f1efe9354a19299307f46ba72c2e14e953295e1a2f0ed965816f109b6b6a"
+    },
+    "ipfs_datasets_py.logic.autoformal.legal_primary_graph_manifest": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_manifest.py",
+      "sha256": "c1e86ab52371730d52cf582d2b60fbe282ae52608dcb462ec2c59cdf24738d38"
+    },
+    "ipfs_datasets_py.logic.autoformal.legal_primary_graph_reconstruction": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_reconstruction.py",
+      "sha256": "e8075e6232b64ee3c8469e5c4a71d1bc77dbbdd4dd34e7e03768c516ed61c0c6"
+    },
+    "ipfs_datasets_py.logic.autoformal.legal_primary_graph_records": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_graph_records.py",
+      "sha256": "f42d060a97c65269fe453a13eefedc1dc243852efebc09a3e660bcd18b97946c"
+    },
+    "ipfs_datasets_py.logic.intent_ir": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/__init__.py",
+      "sha256": "acf68a7215af95b4a7d4e4dc883cb7577e2129e7bbadf49c1fc2c404848bc641"
+    },
+    "ipfs_datasets_py.logic.intent_ir.autoencoder": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/autoencoder.py",
+      "sha256": "ff944970bd24db83b6851fe4b84db62fe00128ed6ee0019c17cd941f2feb2e91"
+    },
+    "ipfs_datasets_py.logic.intent_ir.canonicalize": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/canonicalize.py",
+      "sha256": "3609047cc8c99437d77461b4f7ea0e05d193a31bf0d20a7e80b7b0c10a8cff87"
+    },
+    "ipfs_datasets_py.logic.intent_ir.decoder": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/decoder.py",
+      "sha256": "7bab5781c07e00b54b0283d3a2962926f75935caedc80eceb23264cb388be257"
+    },
+    "ipfs_datasets_py.logic.intent_ir.protocols": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/protocols.py",
+      "sha256": "adb0ae8eaf2e55bf587ac76baa90d8303b61e0df246c03c30b56cb31a9643780"
+    },
+    "ipfs_datasets_py.logic.intent_ir.schema": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/schema.py",
+      "sha256": "93d38e4724c5f34aab7f39f050742e98ef0c8d80e2ff70459d2401541505fc56"
+    },
+    "ipfs_datasets_py.logic.intent_ir.source_adapters": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/source_adapters/__init__.py",
+      "sha256": "d60f048c70a7b90c668e1bc8064eaf78eafadfb7c579db47c63ad51b70fac5aa"
+    },
+    "ipfs_datasets_py.logic.intent_ir.source_adapters.skillcenter": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/source_adapters/skillcenter.py",
+      "sha256": "3d10d1b7a78df0184b44ee05747d27581761b7d687c2b5bf78891c6fa2597636"
+    },
+    "ipfs_datasets_py.logic.intent_ir.source_adapters.snapshot": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/source_adapters/snapshot.py",
+      "sha256": "105ad0f7d75e6e473d0b17c7f3cfa9aeab9b63c4ad15eb2eda7be13b03eddcc6"
+    },
+    "ipfs_datasets_py.logic.ir_core": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/__init__.py",
+      "sha256": "4c0070482e009dd7cb9875e91124d48683da37d53f691cccb306ec50f23c946c"
+    },
+    "ipfs_datasets_py.logic.ir_core.artifacts": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/artifacts.py",
+      "sha256": "63896fb1fb4ef22be50d76996ce404119a5d209d01f046a6a842b7b96848ebc6"
+    },
+    "ipfs_datasets_py.logic.ir_core.canonical": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/canonical.py",
+      "sha256": "339b5778581c19525a7685edf432aaf124cd12e02d37cd0eca88cb25ab86c0d0"
+    },
+    "ipfs_datasets_py.logic.ir_core.identity": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/identity.py",
+      "sha256": "606bffc1f938c59f44651eeb65cb9c0738e16e465aabba0ad82ef05e3b5b3b0e"
+    },
+    "ipfs_datasets_py.logic.ir_core.provenance": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/provenance.py",
+      "sha256": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe"
+    },
+    "ipfs_datasets_py.logic.ir_core.schema_registry": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/schema_registry.py",
+      "sha256": "1b214ea190a41c6a451377a03bc71ea84f6703314293ef78c5f269082eee4fbe"
+    },
+    "ipfs_datasets_py.logic.ir_core.source_lineage": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/source_lineage.py",
+      "sha256": "381bd72c934429341010d5d5c93e0493dc29ade18a0225008bba51c639baccca"
+    },
+    "ipfs_datasets_py.logic.profile_g": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/profile_g.py",
+      "sha256": "4ca5dcc601f30c723467f425a6a03a7c5b1f644c2239a0f4a489705f1b715f03"
+    },
+    "ipfs_datasets_py.processors": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/__init__.py",
+      "sha256": "ad900d235b175e021f0fb679ede5ce5f810dbdca29bc488a2f10bc06b0a17047"
+    },
+    "ipfs_datasets_py.processors.core": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/core/__init__.py",
+      "sha256": "35a86c358c1b2acdf5390a864df857978cd82eedde7ca096c293d417939aa6d5"
+    },
+    "ipfs_datasets_py.processors.core.input_detector": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/core/input_detector.py",
+      "sha256": "80a5cecad4308023febcda895d6cd3ac984fb7167f942281db5425547e090746"
+    },
+    "ipfs_datasets_py.processors.core.protocol": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/core/protocol.py",
+      "sha256": "ad0198f49eb31a5d764cbf828c74080070ade6ed16d202ac6dd735bc423cc7c8"
+    },
+    "ipfs_datasets_py.processors.core.registry": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/core/registry.py",
+      "sha256": "cc89d69c1886b762867d3dc991a2129d5fadfb0663bff7dda933c4591be59be0"
+    },
+    "ipfs_datasets_py.processors.core.universal_processor": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/core/universal_processor.py",
+      "sha256": "450e0926c6596b11e24d0ae5181bdfa1bd45f575f26de30eab0acf83027914b8"
+    },
+    "ipfs_datasets_py.processors.infrastructure": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/infrastructure/__init__.py",
+      "sha256": "e73c6dbd4706b81daad0648b6d16b3184ea5db8c57c6fc1ee5362cff604f7b70"
+    },
+    "ipfs_datasets_py.processors.infrastructure.caching": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/infrastructure/caching.py",
+      "sha256": "49b8586a3c4921bf72d7d46e34d94af1a039deedaa3be95e94e1ac20984c5ae7"
+    },
+    "ipfs_datasets_py.processors.infrastructure.error_handling": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/infrastructure/error_handling.py",
+      "sha256": "3b223f9943f16f6312ae4712999818c21c3cadcfa88085936236e8ac56b340dd"
+    },
+    "ipfs_datasets_py.processors.infrastructure.monitoring": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/infrastructure/monitoring.py",
+      "sha256": "ec3502a6c677cc46d2d5942f3ef5c5345d32a7e23febe1203d6d71a1b16bd1a7"
+    },
+    "ipfs_datasets_py.processors.input_detection": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/input_detection.py",
+      "sha256": "08cd2e1ec4033eb82b40380e93f80e85e08593981296ed7b0a5eed9d3caac727"
+    },
+    "ipfs_datasets_py.processors.legal_data": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/__init__.py",
+      "sha256": "c591d799ad6e2468fd3d211bc3028b135dc45f48f21c4f0f01f10fe9069f251f"
+    },
+    "ipfs_datasets_py.processors.legal_data.patent_authority_sources": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/patent_authority_sources.py",
+      "sha256": "8b73dbbb6687f660739bf0c9abd2dc3e4c5ce89d7ec1e29753e55d882c0349b3"
+    },
+    "ipfs_datasets_py.processors.legal_data.uscode_embeddings": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_embeddings.py",
+      "sha256": "4d9148e5f51f0d5837a44fb75525941443133261f193fca98bb57679eded0b87"
+    },
+    "ipfs_datasets_py.processors.legal_data.uscode_hf_release": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_hf_release.py",
+      "sha256": "c183915f939892efff604fcd426df383b5393c3f4ca5a59d13216566d4c4805c"
+    },
+    "ipfs_datasets_py.processors.legal_data.uscode_release_schema": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_release_schema.py",
+      "sha256": "7808e42ae4308b8f25421628840e1e23d65f72d8a28ef67a88d48ff510ef3c53"
+    },
+    "ipfs_datasets_py.processors.legal_data.uscode_source_policy": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_source_policy.py",
+      "sha256": "64d8b938b8670963c644b304332b240d2997506e2e14d636c3b49342ef75b215"
+    },
+    "ipfs_datasets_py.processors.legal_data.uscode_sparse_graphrag": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/legal_data/uscode_sparse_graphrag.py",
+      "sha256": "93f11228cfa70404376cd7608c2a70a53398d02b7b42270d089c696f207ebe12"
+    },
+    "ipfs_datasets_py.processors.protocol": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/protocol.py",
+      "sha256": "18293ad803f137d5aea1498528eac5f43dcb67481739f1f46027053257b3bdde"
+    },
+    "ipfs_datasets_py.processors.retrieval": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/retrieval.py",
+      "sha256": "3111cd77eb800c5534b42e765c971577f7b8ea4bc720ec938222b273cc90ac82"
+    },
+    "ipfs_datasets_py.processors.universal_processor": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/processors/universal_processor.py",
+      "sha256": "5da3068aa1733eeea1b948da98323b9ed6834eb8efeceb66d26c80a03e3cb3f5"
+    },
+    "ipfs_datasets_py.router_deps": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/router_deps.py",
+      "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+    },
+    "ipfs_datasets_py.utils": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/__init__.py",
+      "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+    },
+    "ipfs_datasets_py.utils.cid_utils": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  },
+  "mode": "validate",
+  "native_parent_owns_admission_supervision_seal_and_release": true,
+  "producer_generation_metadata_witness": {
+    "directory_device": 66306,
+    "directory_inode": 69253686,
+    "file_count": 586,
+    "ordered_file_metadata_sha256": "afd42eb03c3eb99dc4138f73393478473847dffeef9d062ab75c9be500eabf9b",
+    "total_bytes": 1342890287
+  },
+  "producer_inventory_metadata_unchanged": true,
+  "product_router_discovery_only": [
+    {
+      "module": "ipfs_datasets_py.ipfs_backend_router",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/ipfs_backend_router.py"
+    }
+  ],
+  "profile": "manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1",
+  "public_validator_checks_all_companion_sizes_hashes_and_file_set_before_and_after_replay": true,
+  "pytest_testcases_executed": 0,
+  "request": {
+    "bytes": 22758,
+    "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/validation-request-v01.json",
+    "sha256": "b89d997226a8500195387bbbb04be11919dc4e26b6b8411c584d92c998108a4e"
+  },
+  "schema": "legal-primary-corpus-original-bound-validation/v1",
+  "selected_checks": [
+    "rebuild_independently_pinned_primary_selection",
+    "validate_original_bound_candidate_generation",
+    "verify_source_and_product_origin_closure"
+  ],
+  "selection_sha256": "83c8fb05b4a0435486dff800297674a8433dd4af7dcfd50beae85a8490f2a330",
+  "status": "pass"
+}

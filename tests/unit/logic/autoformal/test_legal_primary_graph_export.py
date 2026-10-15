@@ -69,10 +69,10 @@ def graph_case(tmp_path):
                           edges=[wrapped(edges[0])])
 
 
-def export_case(tmp_path, *, limits=None):
+def export_case(tmp_path, *, limits=None, profile=exports.PROFILE):
     selection, root, trusted = graph_case(tmp_path)
     output = tmp_path / "corrected"
-    result = exports.export_primary_graph(selection, root, output, **trusted, limits=limits)
+    result = exports.export_primary_graph(selection, root, output, **trusted, limits=limits, profile=profile)
     return selection, root, trusted, output, result
 
 
@@ -100,10 +100,12 @@ def parquet_rows(output, manifest):
     return result, tables
 
 
-def validate(output, result, selection, root, trusted, *, limits=None):
+def validate(output, result, selection, root, trusted, *, limits=None, profile=exports.PROFILE,
+             replay_parent=None):
     return exports.validate_primary_graph_export(
         output, expected_manifest_sha256=result["manifest_sha256"],
-        selection=selection, snapshot_root=root, **trusted, limits=limits)
+        selection=selection, snapshot_root=root, **trusted, limits=limits,
+        profile=profile, replay_parent=replay_parent)
 
 
 def rewrite_manifest(output, manifest):
@@ -203,6 +205,165 @@ def test_repeated_export_is_reproducible_without_rewriting_either_destination(tm
     b = exports.export_primary_graph(selection, root, second, **trusted)
     assert a == b
     assert source_bytes(first) == source_bytes(second)
+
+
+def test_explicit_2gib_profile_preserves_v1_transport_and_all_other_ceilings(tmp_path):
+    selection, root, trusted = graph_case(tmp_path)
+    original = source_bytes(root)
+    first, second = tmp_path / "default-profile", tmp_path / "explicit-2gib-profile"
+    default = exports.export_primary_graph(selection, root, first, **trusted)
+    larger = exports.export_primary_graph(selection, root, second, **trusted, profile=exports.PROFILE_2GIB)
+    assert exports.PROFILE == "manifest-selected-primary-entry-cid-canonical-parquet/v1"
+    assert exports.DEFAULT_LIMITS["max_output_bytes"] == 1024**3
+    assert default["manifest"]["profile"] == exports.PROFILE
+    assert default["manifest"]["limits"] == exports.DEFAULT_LIMITS
+    assert larger["manifest"]["profile"] == "manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1"
+    expected = deepcopy(default["manifest"])
+    expected["profile"] = exports.PROFILE_2GIB
+    expected["limits"]["max_output_bytes"] = 2 * 1024**3
+    assert larger["manifest"] == expected
+    assert {name: body for name, body in source_bytes(first).items() if name != "manifest.json"} == {
+        name: body for name, body in source_bytes(second).items() if name != "manifest.json"}
+    assert json.loads((second / "reconstruction.json").read_bytes())["limits"]["max_output_bytes"] == 1024**3
+    assert all(value is False for value in larger["manifest"]["authority"].values())
+    validate(first, default, selection, root, trusted)
+    verified = validate(second, larger, selection, root, trusted, profile=exports.PROFILE_2GIB)
+    assert verified["manifest"] == larger["manifest"]
+    assert source_bytes(root) == original
+
+
+@pytest.mark.parametrize("ceiling", [1024**3 + 1, 2 * 1024**3])
+def test_only_explicit_2gib_profile_permits_larger_generation_limits(tmp_path, ceiling):
+    limits = {"max_output_bytes": ceiling}
+    selection, root, trusted, output, result = export_case(
+        tmp_path, limits=limits, profile=exports.PROFILE_2GIB)
+    assert result["manifest"]["limits"]["max_output_bytes"] == ceiling
+    validate(output, result, selection, root, trusted, limits=limits, profile=exports.PROFILE_2GIB)
+    with pytest.raises(exports.PrimaryGraphExportError):
+        exports.validate_primary_graph_export(output, expected_manifest_sha256=result["manifest_sha256"],
+            selection=selection, snapshot_root=root, **trusted, limits=limits)
+
+
+@pytest.mark.parametrize("producer,consumer", [
+    (exports.PROFILE, exports.PROFILE_2GIB), (exports.PROFILE_2GIB, exports.PROFILE)])
+def test_validator_requires_caller_profile_even_when_generation_limits_are_identical(
+        tmp_path, monkeypatch, producer, consumer):
+    limits = {"max_output_bytes": 1024**3}
+    selection, root, trusted, output, result = export_case(tmp_path, limits=limits, profile=producer)
+    before = source_bytes(output)
+    def no_reconstruction(*args, **kwargs):
+        raise AssertionError("profile mismatch must refuse before original traversal")
+    monkeypatch.setattr(exports, "_reconstruct", no_reconstruction)
+    with pytest.raises(exports.PrimaryGraphExportError):
+        validate(output, result, selection, root, trusted, limits=limits, profile=consumer)
+    assert source_bytes(output) == before
+
+
+@pytest.mark.parametrize("profile", [None, False, 1, "unknown-primary-export-profile/v1"])
+@pytest.mark.parametrize("operation", ["export", "validate"])
+def test_unknown_or_nonstring_profile_refuses_before_operation_owners(
+        tmp_path, monkeypatch, profile, operation):
+    selection, root, trusted = graph_case(tmp_path)
+    output = tmp_path / "unknown-profile"
+    before = {path.name for path in tmp_path.iterdir()}
+    def no_owners():
+        raise AssertionError("unknown caller profile must refuse before lazy owners")
+    monkeypatch.setattr(exports, "_owners", no_owners)
+    with pytest.raises(exports.PrimaryGraphExportError):
+        if operation == "export":
+            exports.export_primary_graph(selection, root, output, **trusted, profile=profile)
+        else:
+            exports.validate_primary_graph_export(output, expected_manifest_sha256="0" * 64,
+                selection=selection, snapshot_root=root, **trusted, profile=profile)
+    assert_no_partial_output(tmp_path, output, before)
+
+
+@pytest.mark.parametrize("profile,limits", [
+    (exports.PROFILE, {"max_output_bytes": 1024**3 + 1}),
+    (exports.PROFILE_2GIB, {"max_output_bytes": 2 * 1024**3 + 1}),
+    (exports.PROFILE_2GIB, {"max_parquet_bytes": 64 * 1024**2 + 1}),
+    (exports.PROFILE_2GIB, {"rows_per_shard": 513}),
+    (exports.PROFILE_2GIB, {"max_output_bytes": True}),
+    (exports.PROFILE_2GIB, {"max_output_bytes": float(2 * 1024**3)}),
+    (exports.PROFILE_2GIB, {"unknown_limit": 1}),
+])
+def test_profile_limits_cannot_implicitly_select_or_expand_a_profile(tmp_path, profile, limits):
+    selection, root, trusted = graph_case(tmp_path)
+    output = tmp_path / "profile-limit-refusal"
+    before = {path.name for path in tmp_path.iterdir()}
+    with pytest.raises(exports.PrimaryGraphExportError):
+        exports.export_primary_graph(selection, root, output, **trusted, profile=profile, limits=limits)
+    assert_no_partial_output(tmp_path, output, before)
+
+
+def test_unknown_saved_profile_cannot_dispatch_its_own_validator(tmp_path, monkeypatch):
+    selection, root, trusted, output, result = export_case(tmp_path, profile=exports.PROFILE_2GIB)
+    changed = deepcopy(result["manifest"])
+    changed["profile"] = "untrusted-profile/v1"
+    incoming = rewrite_manifest(output, changed)
+    def no_reconstruction(*args, **kwargs):
+        raise AssertionError("saved unknown profile must refuse before original traversal")
+    monkeypatch.setattr(exports, "_reconstruct", no_reconstruction)
+    with pytest.raises(exports.PrimaryGraphExportError):
+        validate(output, incoming, selection, root, trusted, profile=exports.PROFILE_2GIB)
+
+
+@pytest.mark.parametrize("separate_parent", [False, True])
+def test_reader_replay_parent_preserves_producer_and_uses_only_its_owned_child(
+        tmp_path, monkeypatch, separate_parent):
+    selection, root, trusted = graph_case(tmp_path)
+    producer, consumer = tmp_path / "producer", tmp_path / "consumer"
+    producer.mkdir()
+    consumer.mkdir()
+    output = producer / "candidate"
+    result = exports.export_primary_graph(selection, root, output, **trusted, profile=exports.PROFILE_2GIB)
+    producer_before, original = source_bytes(producer), source_bytes(root)
+    created, real_init = [], exports._Directory.__init__
+    def observe_init(self, path, *, create=False):
+        if create:
+            created.append(Path(path))
+        real_init(self, path, create=create)
+    monkeypatch.setattr(exports._Directory, "__init__", observe_init)
+    replay_parent = consumer if separate_parent else None
+    verified = validate(output, result, selection, root, trusted,
+        profile=exports.PROFILE_2GIB, replay_parent=replay_parent)
+    assert verified["status"] == "candidate_export_verified"
+    expected_parent = consumer if separate_parent else producer
+    assert len(created) == 1 and created[0].parent == expected_parent
+    assert created[0].name.startswith(".legal-primary-replay-") and not created[0].exists()
+    assert source_bytes(producer) == producer_before and source_bytes(root) == original
+    assert {path.name for path in producer.iterdir()} == {"candidate"}
+    assert list(consumer.iterdir()) == []
+
+
+@pytest.mark.parametrize("damage", ["snapshot", "blobs", "candidate", "candidate_descendant",
+                                    "missing", "parent_traversal"])
+def test_reader_refuses_unsafe_replay_parent_without_mutating_producer_or_source(tmp_path, damage):
+    selection, root, trusted, output, result = export_case(tmp_path, profile=exports.PROFILE_2GIB)
+    blobs = tmp_path / "blobs"
+    blobs.mkdir()
+    if damage == "snapshot":
+        parent = root
+    elif damage == "blobs":
+        parent = blobs
+    elif damage == "candidate":
+        parent = output
+    elif damage == "candidate_descendant":
+        parent = output / "untrusted-child"
+        parent.mkdir()
+    elif damage == "missing":
+        parent = tmp_path / "not-created"
+    else:
+        parent = tmp_path / ".." / tmp_path.name
+    before, original = source_bytes(output), source_bytes(root)
+    inventory = {path.name for path in tmp_path.iterdir()}
+    with pytest.raises((exports.PrimaryGraphExportError, OSError)):
+        exports.validate_primary_graph_export(output, expected_manifest_sha256=result["manifest_sha256"],
+            selection=selection, snapshot_root=root, **trusted, blobs_root=blobs,
+            profile=exports.PROFILE_2GIB, replay_parent=parent)
+    assert source_bytes(output) == before and source_bytes(root) == original
+    assert {path.name for path in tmp_path.iterdir()} == inventory
+    assert list(blobs.iterdir()) == []
 
 
 def test_already_canonical_original_wrappers_are_not_rewritten(tmp_path):
