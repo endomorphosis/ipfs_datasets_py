@@ -1,0 +1,143 @@
+{
+  "checks_completed": 39,
+  "concrete_blockers_found": [],
+  "distinctions_checked": [
+    "Native01 zero-child/zero-test admission refusal and later exact empty recovery stay separate; no CPU cause, artificial attempt artifact or physical disk-saving claim.",
+    "The unsigned link preserves unchanged candidate/graph/subject/manifest/domain, complete roles/parents/populations and separate transport/canonical/internal identities. Original bodies remain external; report reformatting refuses for the same graph.",
+    "New source fixtures are fictional; retained actual560-subject C02 source was not replayed through this owner.",
+    "Current three build-readback cases use marked simulated artifacts; their negative changes dependency observations, not a newly rebuilt competing table.",
+    "Author FOL/TDFOL native examples remain attributed historical observations, not current compiler executions or independently authenticated historical processes.",
+    "Incoming NATIVE and adopted BUILD share a schema string but differ in owner, profile, public API and receipt contract; no alias, migration, schema-only dispatch or combined109/296 coverage is claimed.",
+    "Alias premises, representative lookup, source meaning/exposure/independence, toolchain-library closure, cache validity and gold/admission remain separate gates.",
+    "Five IR families, schema/task checkpoints and parallel8D/384D/768D paths preserve existing assets; no training/model/Hub/decoder-quality advance is claimed."
+  ],
+  "limits": [
+    "Finite static documentation and retained-output review is not exhaustive runtime, import-closure, process-custody or security qualification.",
+    "JUnit was independently parsed and the public durability projection compared to the raw receipt; no new test/compiler execution, fsync operation, recovery or global storage census occurred.",
+    "Historical artifact hashes do not independently prove historical process execution.",
+    "Final coordinating receipt, final native audit and publication manifest are separately qualified; this review does not replace their checks."
+  ],
+  "method": "Read-only documentation/source bytes and retained JSON/XML inspection; no product imports, tests, compiler, version probe, model, recovery or native API execution.",
+  "qualification": {
+    "errors": 0,
+    "executed_HEAD_documented": "8c79995d781c4d964cdcc1af08cdc34f98b3d57c",
+    "existing_core_cases": 257,
+    "failures": 0,
+    "independently_recounted_unique_passes": 296,
+    "initial306_estimate_explained_by_context33_vs_actual23": true,
+    "later_commit_not_a_second_execution": true,
+    "later_source_commit_documented": "fafafcf9f09bd2b5e437b65ce2975e7c51778d34",
+    "launcher_seconds_observed": 172.5561812191736,
+    "new_correspondence_cases": 36,
+    "new_simulated_build_readback_cases": 3,
+    "pytest_seconds_documented": 132.04,
+    "sealed_payload_files": 66,
+    "selected_source_pins": 213,
+    "skips": 0,
+    "terminal_release_basis": "Explicit retained transcription; no independent live-ledger authentication by this reviewer.",
+    "total_including_durability_receipt_documented": 67,
+    "whole_module_namespaces": 9
+  },
+  "related_evidence": [
+    {
+      "bytes": 6096,
+      "path": "docs/autoencoders/evidence/legal-ir-source-review-correspondence-20261015/implementation-review.json",
+      "sha256": "517d3abc5c11b2cc11ba4fbbab67bba20dbe0cc996e12a7187a609d0c02dde4c"
+    },
+    {
+      "bytes": 16765,
+      "path": "docs/autoencoders/evidence/legal-ir-source-review-correspondence-20261015/parallel-native-build-evidence-audit.json",
+      "sha256": "aa11dd28676791fb9166175f8a3c5b77f38dcd0e64e0ea5311f6f7946f37c258"
+    },
+    {
+      "bytes": 10190,
+      "path": "docs/autoencoders/evidence/legal-ir-source-review-correspondence-20261015/execution-profile-reconciliation.json",
+      "sha256": "50a95e2ed9a995d5be30a94bd6db4bf6cb13a153b5a3f81a727adb82e07dead1"
+    },
+    {
+      "bytes": 6694,
+      "path": "docs/autoencoders/evidence/legal-ir-source-review-correspondence-20261015/recovery-admission-01-audit.json",
+      "sha256": "5ae7f684548524579d571df5b2bb4d4a325360672bf00951e5360eab8253c823"
+    }
+  ],
+  "retained_outcome_evidence": [
+    {
+      "bytes": 50246,
+      "path": "docs/autoencoders/evidence/legal-ir-source-review-correspondence-20261015/validation-request-02.json",
+      "sha256": "b5cea48e9224c00dcdd78757a5944710255dcdc47431c353a6e6eb26d1975ea3"
+    },
+    {
+      "bytes": 1278,
+      "path": "docs/autoencoders/evidence/legal-ir-source-review-correspondence-20261015/attempt02-result.json",
+      "sha256": "113aa5cfcec6bcd3ea444f4e1e2e4a88352fc7ffd68d57c99d129164ab7f0bda"
+    },
+    {
+      "bytes": 1106,
+      "path": "docs/autoencoders/evidence/legal-ir-source-review-correspondence-20261015/attempt02-execution.json",
+      "sha256": "12b6327ddf5919827c6a1a60137f02839d5a1511708185baf682ae6af0287332"
+    },
+    {
+      "bytes": 56311,
+      "path": "docs/autoencoders/evidence/legal-ir-source-review-correspondence-20261015/attempt02-junit.xml",
+      "sha256": "77b34762556f9ae16fa533da7fc000fc6abaa50f929172847b49bebc747e2265"
+    },
+    {
+      "bytes": 810,
+      "path": "docs/autoencoders/evidence/legal-ir-source-review-correspondence-20261015/native-closeout-observation.json",
+      "sha256": "355d6a673f01f99f2ff04cc879af107f16c30dc1e5a4917d7efdb24e4cbcc35c"
+    },
+    {
+      "bytes": 22394,
+      "path": "docs/autoencoders/evidence/legal-ir-source-review-correspondence-20261015/attempt02-durability-projection.json",
+      "sha256": "86f03998a5975d14891fe3ade95e1066478b8012e8d9b90d31472dfade0c71cd"
+    }
+  ],
+  "reviewed_at_utc": "2026-10-15T20:30:08.607122+00:00",
+  "reviewed_documents": [
+    {
+      "bytes": 14499,
+      "path": "docs/autoencoders/legal_source_definition_review_correspondence_integration_20261015.md",
+      "sha256": "618bebc292b573eadc3dd9f6ff44d8a7266ea3d51ad196b169cf4e62300bddf0"
+    },
+    {
+      "bytes": 59293,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "f47e3b155bb281ce884f93d2933accf9bd8fd8438a92e99cbfa391352e28aebc"
+    },
+    {
+      "bytes": 15648,
+      "path": "docs/autoencoders/README.md",
+      "sha256": "8309eb7f6d3acaf8eb6dc6892007c623924fdc68a010b7218b618da7e90b8856"
+    },
+    {
+      "bytes": 14213,
+      "path": "docs/autoencoders/legal_definition_use_native_preparation_integration_20261015.md",
+      "sha256": "ab98c2bf1d9ff55d5471a6d880a280f106f959cc8f7a473386210db321b76263"
+    },
+    {
+      "bytes": 3661,
+      "path": "docs/autoencoders/evidence/legal-ir-source-review-correspondence-20261015/README.md",
+      "sha256": "3a3cd0858688de11fd394c1e88569de1b567ac62a6da70b639cda291a02b416a"
+    }
+  ],
+  "reviewed_tested_source": [
+    {
+      "bytes": 28166,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+      "sha256": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567"
+    },
+    {
+      "bytes": 25031,
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py",
+      "sha256": "d4bd0a34ae71a9c833ea9469e0f2478ef6a6d791f7b49c4566292def247f12c7"
+    },
+    {
+      "bytes": 7162,
+      "path": "tests/unit/logic/autoformal/test_definition_use_v2_build_exchange.py",
+      "sha256": "bb9bb7e006e8393ad268245a7620a756efba44410cd24f0b6efb50aa1c32ae63"
+    }
+  ],
+  "schema": "legal-ir-source-review-correspondence-documentation-review/v1",
+  "status": "no_concrete_blocker_within_finite_reviewed_scope",
+  "tested_source_or_existing_evidence_modified_by_reviewer": false
+}

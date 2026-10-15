@@ -1,0 +1,158 @@
+{
+  "build": {
+    "axiom_observations": "Three expected qualified theorem messages exactly once across combined stdout and stderr; bounded generic info path prefix allowed. Separate sorry/sorryAx/admit refusal.",
+    "capture_bound_bytes": 262144,
+    "closed_receipt_contract": "FIELDS at source line48; 61 payload fields excluding reserved schema/cid_scope/record_cid, 64 total. The loader requires exact shape, producer pins and complete reconstructed receipt.",
+    "historical_transport": "Public load_definition_use_build_v2 requires independently expected receipt SHA, original inputs and binary expectation map; exact closed FIELDS and independent reconstruction of project/artifacts/receipt. Does not reopen installed binaries, probe or rerun Lean.",
+    "independent_expectations": "Original assessment file SHA, complete review inputs, and independently supplied exact Lake/Lean path-to-binary-SHA map; executable bodies checked before probes and after execution.",
+    "module": "ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_build_v2",
+    "native_observations": "Exact typed bounded ToolRunResult; accepts native/kernel runtime and six .olean outputs. Does not request nine executed source readbacks or typed current-caller lifecycle ownership.",
+    "preparation": "Existing exact typed preparation is publicly regenerated; no separate expected whole-preparation digest argument.",
+    "profile": "bounded-v2-definition-use-conditional-build/v1",
+    "public_apis": [
+      "build_definition_use_corpus_v2",
+      "load_definition_use_build_v2"
+    ]
+  },
+  "build_original_revision": "d00ace8bd0ac96c30cf4a4e12b1d442876390539",
+  "compatibility": {
+    "discard_either_contribution": false,
+    "drop_in_alias": false,
+    "future_schema_disambiguation": "Separate versioned and independently qualified change; no alias or schema rewrite introduced here.",
+    "required_dispatch": "Exact owner module + profile + producer pins + complete matching contract; never shared schema/CID/self-hash alone. BUILD closed loader cannot consume NATIVE shape as its own contract.",
+    "same_receipt_contract": false
+  },
+  "execution_authority": false,
+  "finite_qualification_preservation": {
+    "actual_local_cases": 296,
+    "actual_local_result_reference": "final-audit.json",
+    "actual_local_whole_modules": 9,
+    "current_mismatches": 0,
+    "incoming_path_intersection": [],
+    "local_build_exchange": "Three authored simulated runner/artifact controls; not new actual Lean execution.",
+    "local_build_exchange_cases": 3,
+    "local_correspondence_cases": 36,
+    "request_02_sha256": "b5cea48e9224c00dcdd78757a5944710255dcdc47431c353a6e6eb26d1975ea3",
+    "requested_source_bindings": 213,
+    "scope": "The incoming three additive leaf paths do not change any213 requested byte. Retain the finite existing result; do not claim incoming tests or a complete import closure were qualified here."
+  },
+  "incoming_changes": {
+    "added_paths": [
+      "docs/autoencoders/legal_corpus_definition_use_native_v2.md",
+      "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+      "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py"
+    ],
+    "existing_paths_modified": 0
+  },
+  "incoming_historical_evidence_attribution": {
+    "actual_authored_families_reported": [
+      "FOL",
+      "TDFOL"
+    ],
+    "basis": "Immutable incoming commit and guide declarations, not reexecuted or independently raw-recounted by this comparison.",
+    "broader_historical_watch_list_reported": "116/118; independent additive source-review/context changes. Not a fresh118-pin qualification.",
+    "compiled_modules_reported": 12,
+    "conditional_theorem_instances_reported": 6,
+    "existing_main_dependencies_reported": "29/29",
+    "focused_cases_reported": 109,
+    "not_aggregated_into_current_296": true,
+    "retained_exports_reported": 98,
+    "runtime_producer_matches_reported": "30/30"
+  },
+  "incoming_revision": "1b63e750ac3bee68b6f94c022aa4d4132f51d8a0",
+  "method": "Read-only Git objects, exact file hashes and stdlib AST/source comparison. No product imports, tests, compiler invocations, ref changes or new execution qualification.",
+  "native": {
+    "axiom_observations": "Only stdout can establish exact expected theorem messages, once each. Info prefix must match exact generated theorem source path; stderr markers, duplicate/unknown/nonempty/wrong-path claims refuse.",
+    "capture_bound_bytes": 2097152,
+    "digest_helper_limit": "compilation_receipt_sha256 checks dict/shared schema and bounded canonical serialization; it does not authenticate profile, producers or execution. validate_definition_use_native_v2 validates preparation, not saved execution receipts.",
+    "executed_inputs": "Six .olean outputs plus all nine executed input bodies; exact equality to private immutable preparation snapshot. Retains executed-inputs and full bounded log files.",
+    "historical_transport": null,
+    "independent_expectations": "Whole canonical preparation manifest+files SHA and original assessment file SHA, plus original review inputs. Installed-toolchain owner observes/probes/hashes explicit sibling native binaries, then rechecks; public API has no independent expected_binary_sha256 parameter.",
+    "inherited_flags": "toolchain_probed/installed_toolchain_verified/native_build_profile_registered remain false despite separate actual probe observations; guide explicitly documents ambiguous inherited preparation flag names.",
+    "module": "ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_native_v2",
+    "native_observations": "Requests owned_process_observation=True. Requires typed NativeToolLifecycleObservation and NativeProcessIdentity with current-caller parent binding, positive births, matching leader/group/session and sampled descendant scope, cleanup confirmed. Sampled ownership is not kernel containment.",
+    "profile": "replayed-v2-definition-use-conditional-native-build/v1",
+    "public_apis": [
+      "preparation_sha256",
+      "validate_definition_use_native_v2",
+      "build_definition_use_native_v2",
+      "compilation_receipt_sha256"
+    ],
+    "receipt_contract": "No exported closed FIELDS or public saved-receipt validator. Normal emission statically has111 total fields; unresolved-cleanup refusal has60. These emission shapes differ from BUILD and do not create a public receipt validator.",
+    "receipt_log_preview_bytes": 32768
+  },
+  "observed_at_utc": "2026-10-15T20:29:02.985894+00:00",
+  "observed_merged_head": "d5709e1c4777ad069abe61c6895e518076525afd",
+  "plan_reference": "Keep both modules and profiles explicit. BUILD provides independently binary-pinned builds and historical cold transport; NATIVE provides independently preparation-pinned execution with typed sampled lifecycle and executed source readback. Attribute each actual native example to its original generation/owner/phase. No blanket claim that a native executor is missing and no relabelling historical runs as current.",
+  "proof_authority": false,
+  "schema": "legal-ir-definition-use-execution-profile-reconciliation@1",
+  "semantic_admission_authority": false,
+  "semantic_limits": [
+    "Same existing six-module conditional preparation scope; original donor/consumer/alias premises remain hypotheses.",
+    "Actual authored native examples are fictional two-document definitions, not genuine statutory meaning/reviews.",
+    "No source-to-model equivalence, complete statutory use coverage, installed-library closure, cache/corpus admission, training or evaluation-gold qualification follows."
+  ],
+  "shared_schema": "legal-corpus-v2-definition-use-native-build/v1",
+  "source_preservation": {
+    "adopted_build_originals": [
+      {
+        "blob": "5156ad433ba31274639b2ef2abf359f9b18b3272",
+        "bytes": 28371,
+        "matches_original_bytes": true,
+        "matches_original_mode_blob": true,
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_build_v2.py",
+        "sha256": "1b4c03f9af40603f66df3f0e702ddd492a942badd533213e087c5fbf78cd855f"
+      },
+      {
+        "blob": "7ab6d46d5d6532b4fc579956452c12fe5e7ae59c",
+        "bytes": 23933,
+        "matches_original_bytes": true,
+        "matches_original_mode_blob": true,
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_build_v2.py",
+        "sha256": "3d26768a4402d4fe5942ab9f370361c8c1513e4c26af8cd03d42ab980eb4b7a6"
+      },
+      {
+        "blob": "c521d75100ff802e354264462c3705b696139bc6",
+        "bytes": 9848,
+        "matches_original_bytes": true,
+        "matches_original_mode_blob": true,
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_corpus_definition_use_build_v2.md",
+        "sha256": "db24d817c33610c6da3b99e1799e6737c3c351034c2419f7cd894246e27fee7f"
+      }
+    ],
+    "incoming_native_originals": [
+      {
+        "blob": "99f78f20d2abd381678bf9ee41a8576af84202c2",
+        "bytes": 18141,
+        "matches_original_bytes": true,
+        "matches_original_mode_blob": true,
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_corpus_definition_use_native_v2.md",
+        "sha256": "315446a2c82e79b7594c65aea8da05397bc3f0f9c570a6180eeee2c1d708c05b"
+      },
+      {
+        "blob": "fb75dd464c822b05e1c84a37137209264f58d92f",
+        "bytes": 30842,
+        "matches_original_bytes": true,
+        "matches_original_mode_blob": true,
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+        "sha256": "98c1ff8ff52923c9c7ea392bdf77fb5baf8c946a4e8956d19be22e4f956b5e8f"
+      },
+      {
+        "blob": "3481a6a30d4760d113c9f26500072f72a0e95bbf",
+        "bytes": 36138,
+        "matches_original_bytes": true,
+        "matches_original_mode_blob": true,
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+        "sha256": "bda94ed19c11b4b5635d3a74090679a55cfea95ad7ad59867b76890a7f37a74b"
+      }
+    ]
+  },
+  "training_gold_authority": false,
+  "whole_repository_qualified": false
+}

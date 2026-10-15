@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-source-review-correspondence-20261015-02/cache/pytest
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-source-review-correspondence-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 296 items
+
+tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py . [  0%]
+..........................................................               [ 19%]
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py ........ [ 22%]
+...........................................                              [ 37%]
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py .. [ 37%]
+.................................                                        [ 48%]
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py ....... [ 51%]
+......                                                                   [ 53%]
+tests/unit/logic/autoformal/test_legal_statutory_context_v2.py ......... [ 56%]
+..............                                                           [ 61%]
+tests/unit/logic/autoformal/test_legal_source_sampling.py .............. [ 65%]
+...............                                                          [ 70%]
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py ....... [ 73%]
+........................................                                 [ 86%]
+tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py . [ 87%]
+...................................                                      [ 98%]
+tests/unit/logic/autoformal/test_definition_use_v2_build_exchange.py ... [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-source-review-correspondence-20261015-02/logs/junit.xml -
+======================= 296 passed in 132.04s (0:02:12) ========================

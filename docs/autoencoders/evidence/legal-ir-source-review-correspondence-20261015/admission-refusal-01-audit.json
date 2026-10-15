@@ -1,0 +1,121 @@
+{
+  "execution": {
+    "actual_560_span_replay_claim": false,
+    "actual_new_link_cases_executed": 0,
+    "actual_new_simulated_build_exchange_cases_executed": 0,
+    "actual_test_cases_executed": 0,
+    "durability_receipt_present": false,
+    "execution_receipt_present": false,
+    "junit_present": false,
+    "new_native_Lean_build_claim": false,
+    "new_signature_assessment_or_statutory_review_claim": false,
+    "planned_case_count_not_executed": 306,
+    "selected_module_count": 9,
+    "semantic_or_training_admission": false,
+    "six_field_success_result_present": false
+  },
+  "limitations": [
+    "The requested9-module/306-case roster was not executed. This refusal is not a failed pytest case and is not promoted into a qualification pass.",
+    "All213 source pins and six imported author files match at this observation; this is source preservation evidence, not runtime qualification.",
+    "The selected storage claim is retained, not released or recovered. No grant was acquired or cleanup/recovery performed by this audit.",
+    "Historical native FOL/TDFOL examples and authored simulated build tests remain separate generations and scopes; no historical receipt is relabelled as this attempt.",
+    "No ledger rows, reservation/lease identities, PIDs, process arguments or private signing material are included."
+  ],
+  "method": "Independent read-only standard-library source/Git-object/request/stderr/selected-storage-row/empty-directory inspection. No product imports, test execution, native grants, recovery, ledger mutation or attempt writes.",
+  "observed_at_utc": "2026-10-15T20:12:48.589944+00:00",
+  "observed_checkout_head": "8c79995d781c4d964cdcc1af08cdc34f98b3d57c",
+  "refusal": {
+    "actual_terminal_exit_code_reported_by_controller": 1,
+    "aggregate_refusal_limit": "LeaseTimeoutError stderr establishes acquisition timeout; no independently validated aggregate capacity observation is inferred from current scheduler state.",
+    "artifacts_durable_asserted": false,
+    "attempt_directory_empty": true,
+    "attempt_identity_matches_selected_record": true,
+    "attempt_private_owned_ordinary_directory": true,
+    "error_type": "LeaseTimeoutError",
+    "native_lease_binding_present": false,
+    "recorded_child_is_absent": true,
+    "recorded_prior_children_count": 0,
+    "release_claim": false,
+    "selected_record_join": "exact unique attempt_directory path plus original device/inode; requestSHA field is not installed before successful acquisition",
+    "selected_record_validation_request_sha256_present": false,
+    "selected_storage_reservation_bytes": 268435456,
+    "selected_storage_status": "retained",
+    "stage": "owner.open/acquire",
+    "stderr": {
+      "bytes": 1724,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-source-review-correspondence-20261015/scheduler-refusal-01.stderr.txt",
+      "sha256": "12794758977e3cadfa5c417becf7979961bc61aa704ee9a022f1ae5c98b37450"
+    },
+    "successful_durability_claim": false,
+    "validated_aggregate_capacity_refusal_available": false
+  },
+  "request": {
+    "bytes": 50246,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-source-review-correspondence-20261015/validation-request-01.json",
+    "sha256": "82ca313ef3682430d71d6af7b49f6377607ebfb8d0c8a88c9918a535cd1911af"
+  },
+  "schema": "legal-ir-source-review-correspondence-admission-audit/v1",
+  "source_preservation": {
+    "changed_paths": [],
+    "currently_matching": 213,
+    "original_d00_and_9ff_files": [
+      {
+        "author_body_exact": true,
+        "bytes": 9848,
+        "index_mode_blob_exact": true,
+        "original_commit": "d00ace8bd0ac96c30cf4a4e12b1d442876390539",
+        "original_mode_blob": "100644 blob c521d75100ff802e354264462c3705b696139bc6",
+        "path": "docs/autoencoders/legal_corpus_definition_use_build_v2.md",
+        "sha256": "db24d817c33610c6da3b99e1799e6737c3c351034c2419f7cd894246e27fee7f"
+      },
+      {
+        "author_body_exact": true,
+        "bytes": 28371,
+        "index_mode_blob_exact": true,
+        "original_commit": "d00ace8bd0ac96c30cf4a4e12b1d442876390539",
+        "original_mode_blob": "100644 blob 5156ad433ba31274639b2ef2abf359f9b18b3272",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_build_v2.py",
+        "sha256": "1b4c03f9af40603f66df3f0e702ddd492a942badd533213e087c5fbf78cd855f"
+      },
+      {
+        "author_body_exact": true,
+        "bytes": 23933,
+        "index_mode_blob_exact": true,
+        "original_commit": "d00ace8bd0ac96c30cf4a4e12b1d442876390539",
+        "original_mode_blob": "100644 blob 7ab6d46d5d6532b4fc579956452c12fe5e7ae59c",
+        "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_build_v2.py",
+        "sha256": "3d26768a4402d4fe5942ab9f370361c8c1513e4c26af8cd03d42ab980eb4b7a6"
+      },
+      {
+        "author_body_exact": true,
+        "bytes": 8773,
+        "index_mode_blob_exact": true,
+        "original_commit": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+        "original_mode_blob": "100644 blob d236320fe037baa723f985317e8760626cea4ff5",
+        "path": "docs/autoencoders/legal_corpus_definition_use_lake_v2.md",
+        "sha256": "59aada044248343ae81583bd88e2ecbab995574fa80017ad72538bc42ec2165c"
+      },
+      {
+        "author_body_exact": true,
+        "bytes": 21600,
+        "index_mode_blob_exact": true,
+        "original_commit": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+        "original_mode_blob": "100644 blob b116b636e06191098e1a9128fadc15cc9ce73374",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+        "sha256": "306ab6481b78db8046e3f4eeae7cb917002c4a50b227204c6d4692123914b47e"
+      },
+      {
+        "author_body_exact": true,
+        "bytes": 23236,
+        "index_mode_blob_exact": true,
+        "original_commit": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+        "original_mode_blob": "100644 blob b5d90f392dfd4cd62926493d80524ae0422b490b",
+        "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py",
+        "sha256": "3f915be198be0d67133d7b07f5ae4c28b6738de94331a7c099c2783d27b0810e"
+      }
+    ],
+    "source_cohort_is_complete_dynamic_import_closure": false,
+    "source_pins": 213
+  },
+  "status": "resource_admission_refused_no_tests"
+}
