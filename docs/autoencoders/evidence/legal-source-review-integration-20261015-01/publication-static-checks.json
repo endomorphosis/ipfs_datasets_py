@@ -1,0 +1,51 @@
+{
+  "documentation_links": {
+    "checked": 38,
+    "missing": 0,
+    "sparse_only_repository_target": "docs/autoformalization/legal-modality-conditions-retention-20261015.md"
+  },
+  "files": [
+    {
+      "bytes": 33945,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+      "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+    },
+    {
+      "bytes": 38723,
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_source_bindings.py",
+      "sha256": "6909ac7e9ebb260ff63cee90fea2d6a76a0cbd7618823d541a69dbd86d281fef"
+    },
+    {
+      "bytes": 24916,
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+      "sha256": "1ded7a9fbc841d2e9678c8a0b1f22b5ebe1b58d9b3aab9938960707c2e8b58c6"
+    },
+    {
+      "bytes": 5981,
+      "path": "docs/autoencoders/legal_source_sampling_review.md",
+      "sha256": "33c51c847852da5d5247eafb99a0261c8de381df3b47008d59d35d3d2a4f212b"
+    },
+    {
+      "bytes": 10843,
+      "path": "docs/autoencoders/legal_source_review_stack_integration_20261015.md",
+      "sha256": "fd17d9a51f94602086b0531310f7a0063db5efd05fe2335808f29e63d5b13fa2"
+    },
+    {
+      "bytes": 42800,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "3663195b45a3555459d63ead41fdfe997196b968cb5f75abd11ee59ad1988615"
+    }
+  ],
+  "ruff": {
+    "paths": [
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+      "ipfs_datasets_py/logic/autoformal/corpus_source_bindings.py",
+      "tests/unit/logic/autoformal/test_legal_source_sampling_review.py"
+    ],
+    "status": "passed"
+  },
+  "schema": "legal-source-review-publication-static-checks/v1",
+  "scope": "static checks following successful native runtime qualification",
+  "source_code_changed_after_final_runtime_qualification": false,
+  "whitespace": "passed"
+}

@@ -1,0 +1,45 @@
+{
+  "cases": 996,
+  "checks": [
+    "/home/barberb/lift_coding/artifacts/legal-corpus-source-integration-20261015-01/test_temporary_profile.py",
+    "tests/unit/logic/autoformal/test_corpus_source_review_responses.py",
+    "tests/unit/logic/autoformal/test_corpus_source_adjudication.py",
+    "tests/unit/logic/autoformal/test_corpus_source_application.py",
+    "tests/unit/logic/autoformal/test_corpus_source_history.py",
+    "tests/unit/logic/autoformal/test_corpus_source_bindings.py"
+  ],
+  "counts": {
+    "error": 975,
+    "failure": 1,
+    "skipped": 0
+  },
+  "exit_code": 1,
+  "gold_admitted": false,
+  "models_loaded": false,
+  "native_Lean_executed": false,
+  "passed": false,
+  "pytest_arguments": [
+    "--noconftest",
+    "--import-mode=importlib",
+    "-o",
+    "addopts=",
+    "-q",
+    "-p",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest",
+    "--basetemp=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-integration-20261015-01/pytest/basetemp",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-integration-20261015-01/cache/pytest",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-integration-20261015-01/logs/junit.xml",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-source-integration-20261015-01/test_temporary_profile.py",
+    "tests/unit/logic/autoformal/test_corpus_source_review_responses.py",
+    "tests/unit/logic/autoformal/test_corpus_source_adjudication.py",
+    "tests/unit/logic/autoformal/test_corpus_source_application.py",
+    "tests/unit/logic/autoformal/test_corpus_source_history.py",
+    "tests/unit/logic/autoformal/test_corpus_source_bindings.py"
+  ],
+  "request_sha256": "42d40d542bc4f00c23dff166d91633d08884bf39cd276d975d76b29e104cf261",
+  "reviews_created": false,
+  "schema": "legal-source-review-integration-checks/v1",
+  "temporary_profile": "unique-regular-directory-factory/v1",
+  "unchanged_product_and_suite_inputs": true
+}

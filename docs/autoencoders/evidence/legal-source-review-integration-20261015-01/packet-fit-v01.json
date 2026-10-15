@@ -1,0 +1,427 @@
+{
+  "admissions_or_reviews_created": 0,
+  "all_checked_pins_match": true,
+  "all_gold_masks_zero": true,
+  "api_fit": {
+    "corpus_definition_review": {
+      "directly_compatible": false,
+      "reason": "prepare_definition_review_evidence requires an existing supported typed unary means definition-and-norm candidate, original four candidate input byte fields, independently pinned exact candidate and full context packet population; it replays candidates and context before preparing an authenticated review subject.",
+      "reuse": "After a supported candidate and exact reviewed source bindings exist, reuse its original review/domain/dependency owner. Blank source-first packet creation requires no signature or alternative attestation engine."
+    },
+    "corpus_source_review_packets": {
+      "directly_compatible": false,
+      "prohibited_shortcut": "Do not relabel new sampler requests with old source-review request/subject schemas, invent parent/comparison/authority IDs, or pass retained presentation as successful source replay.",
+      "reason": "prepare_source_review_packets unconditionally regenerates the original source/alignment/context preparation; it requires its exact independently pinned original preparation manifest and consumes original parent, official document, comparison, context and request collections. Sampler units/candidate inputs lack these original request/subject/dependency-manifest identities.",
+      "reuse": "Presentation conventions only: complete exact source views, occurrence quoting, deterministic pages, blank declarations/answers, evidence refs and explicit unresolved/deferred status. Reuse common pure seal/reference owners where useful."
+    },
+    "legal_source_sampling": {
+      "directly_compatible": true,
+      "reuse": "Use independently pinned already-validated retained sampling-report.json, records.jsonl and candidate-inputs.jsonl as packet inputs; verify raw/fullcanonical pins, report roots and exact ordered correspondence. Do not replay raw source for a renderer."
+    },
+    "legal_statutory_context": {
+      "directly_compatible": false,
+      "reason": "The normalized_document_view/source_selector/build_context_packet APIs address their original document/view coordinate profile. Sampler occurrences address the newer full markup V2 text including every retained block. Coordinates cannot be relabeled even though both use normalized Unicode/UTF8.",
+      "reuse": "Retain all six context requirement categories and the distinction between content availability, attachment and reviewed meaning. Preserve the existing sampler context records unchanged; no old-profile context regeneration is needed for a presentation artifact."
+    }
+  },
+  "input_pins": [
+    {
+      "bytes": 3343,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/integration-receipt.json",
+      "sha256": "90152d5f2226955929392dd24d514e80ca19e313b7d3a7c3be28ec8972aaf2b8"
+    },
+    {
+      "bytes": 2790275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/sampling-report.json",
+      "sha256": "173e3995b8628c76fbffcff1e1d77aad8d22d32ef84c3335e3ccc1c05af836d6"
+    },
+    {
+      "bytes": 2073483,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/records.jsonl",
+      "sha256": "bee69343b533bba0cc57f3282c604c1e9daf73eaede7f205bf89262dbd3f1050"
+    },
+    {
+      "bytes": 173832,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/candidate-inputs.jsonl",
+      "sha256": "10027f8de59ff8b2b1d962a4b66d97821c191127b03e79498e328d8a85465d57"
+    }
+  ],
+  "minimum_slice": {
+    "bounds": "Stat before reading; retain original sampler32MiB collection cap or a documented lower cap;1MiB sealed record envelopes; bounded fixed page sizes; reject complete overflows instead of cropping text or populations.",
+    "implementation": "Artifact-only deterministic renderer and separate stdlib readback over the exact pinned sampler outputs; no product API or new attestation domain needed for this milestone.",
+    "input_identity": "Each packet binds the unchanged candidate input fullcanonical hash and exact unit/source-version/occurrence/context refs. Keep block ordinal and new packet ordinal distinct. Every physical occurrence remains separate.",
+    "no_authentication_claim": "These new artifact IDs are presentation IDs, not existing source-review signing subjects, accepted reviewer assignments or evidence that any person performed review.",
+    "output_status": "blank_not_a_review. All proposed finding, rationale, selected source role, definition operator, term/sense, scope, assembly, graph assertion, symbol mapping and target fields start null or empty.",
+    "population": "Exactly134 ordered candidate packets and134 blank response guides, with all560 markup blocks, all426 noncandidate context/control blocks, original report/records and full normalized source text retained once as shared context. Parent list/tail/intro attachments stay proposals, not automatic semantic joins.",
+    "rendering": "Deterministic sealed machine records are authoritative for custody; Markdown is inspection-only. Show complete source text, literal occurrence quote/geometry, markup observations, source refs, surrounding/context links and blank questions without model/compiler outputs."
+  },
+  "notable_literal_evidence_for_question_design": [
+    {
+      "block_index": 9,
+      "literal": "(a) In General.—The following definitions apply in this title:",
+      "purpose": "Questions need explicit inherited title-scope evidence; this is a literal observation, not a reviewed scope attachment."
+    },
+    {
+      "block_indices": [
+        14,
+        15,
+        16,
+        17
+      ],
+      "purpose": "A definition introduction and its enumerated members occupy distinct complete paragraphs;134 source inputs are not134 independently complete definitions."
+    },
+    {
+      "block_index": 11,
+      "purpose": "A repeal marker is retained as a candidate paragraph; paragraph stratum does not assert an operative rule."
+    },
+    {
+      "block_indices": [
+        136,
+        137,
+        138,
+        139,
+        140,
+        141
+      ],
+      "purpose": "Construction-rule source text is present; operator questions must retain it without automatically adopting its interpretation."
+    },
+    {
+      "block_index": 142,
+      "purpose": "The Title1 reference creates an explicit external-evidence question; no cross-document applicability or dependency closure has been established."
+    }
+  ],
+  "observed_at_utc": "2026-10-15T05:02:21.344250+00:00",
+  "owned_product_commit": "c5149abeac4c4f5f735125c190d324efe19ab7c4",
+  "producer_source_pins": [
+    {
+      "bytes": 36666,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_source_review_packets.py",
+      "sha256": "c2a3a08963e32b7ef3371ae32ff1266ad6fe052c87a491857dcc720170367a29"
+    },
+    {
+      "bytes": 23810,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_definition_review.py",
+      "sha256": "03da9d41741d176a1d305ce3a256213ca981bc98ea9f83721dee3fed10d12833"
+    },
+    {
+      "bytes": 47062,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_source_review.py",
+      "sha256": "308a1955f4d8705369c1a4d25e4b02cc308a4c3d1032085122d7801a9d30f53e"
+    },
+    {
+      "bytes": 13827,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling.py",
+      "sha256": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489"
+    },
+    {
+      "bytes": 23949,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+      "sha256": "1f1e607c7c8d1e479ae5b79e17f928571e3da49f0ad4180dfc93e609d0d47dc2"
+    },
+    {
+      "bytes": 8443,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/docs/autoencoders/corpus_source_review_packets.md",
+      "sha256": "3265768bf94e54aca0102ff608efdeaf73ca0e41d6b0ad9c0b0cdfdd3a4fa341"
+    },
+    {
+      "bytes": 6691,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/docs/autoencoders/corpus_definition_review.md",
+      "sha256": "322f1be6ee07d4cadf5149ef50767538fa07e630b8b45a8bdb55c7a3ce672c3b"
+    },
+    {
+      "bytes": 4888,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/docs/autoencoders/legal_source_sampling.md",
+      "sha256": "290a6320bd0522109df593af4fd4a6e0a52b80c375a6cde1511c27c6c5ae0f62"
+    }
+  ],
+  "product_or_plan_edits": false,
+  "recommended_blank_question_catalog": {
+    "answer_semantics": "Null means blank, not unknown, no, not-applicable, rejected or resolved. Future unknown/unavailable findings must remain blocking where necessary. No answer content is inferred from source lexical cues.",
+    "deferred_outcomes": [
+      "Authenticated human review or accepted adjudication",
+      "Governing edition/source choice and legal applicability",
+      "Definition/reference/exception/temporal closure",
+      "Accepted IR or graph assertions and semantic fidelity",
+      "Training/evaluation gold, representative coverage or split independence",
+      "Lean source generation, native compilation/kernel evidence and corpus admission"
+    ],
+    "meaning_proposal_questions": [
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Propose which source operator(s) occur: means, includes, exclusion, refers-to, construction rule, other or unresolved. Give exact selectors and rationale; no operator is automatically translated to biconditional.",
+        "question_key": "definition_operator",
+        "rationale": null,
+        "status": "requires_independent_meaning_review_and_supported_profile"
+      },
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Propose the exact defined expression, senses and source occurrences. Repeated labels may denote distinct scoped senses; labels alone do not identify an entity or Lean symbol.",
+        "question_key": "term_and_sense",
+        "rationale": null,
+        "status": "requires_independent_meaning_review_and_supported_profile"
+      },
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Propose the complete definiens and constituent list/boolean/qualified structure with each source occurrence, including alternatives and exclusions. Preserve ambiguity and unsupported constructions.",
+        "question_key": "body_structure",
+        "rationale": null,
+        "status": "requires_independent_meaning_review_and_supported_profile"
+      },
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Propose the legal sort, arguments, relations and temporal parameters needed. Mark unsupported multi-argument, role-dependent, intensional or temporal meaning; do not squeeze into the existing unary profile.",
+        "question_key": "legal_sort_arity",
+        "rationale": null,
+        "status": "requires_independent_meaning_review_and_supported_profile"
+      },
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Propose any use-to-definition relation only by exact use occurrence, exact scoped sense/definition occurrence, proposed applicability and evidence. Cross-section lexical matches remain search observations.",
+        "question_key": "definition_use",
+        "rationale": null,
+        "status": "requires_independent_meaning_review_and_supported_profile"
+      },
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Identify whether the reviewed meaning fits an existing native profile or needs a separately specified extension. Formal ASTs, target symbols and assumptions remain blank until that profile and mapping exist.",
+        "question_key": "formal_profile_fit",
+        "rationale": null,
+        "status": "requires_independent_meaning_review_and_supported_profile"
+      }
+    ],
+    "reviewer_and_exposure_declarations": {
+      "candidate_interpretations_exposed": null,
+      "identity_evidence_refs": [],
+      "independence_evidence_refs": [],
+      "issued_at_utc": null,
+      "organizer_metadata_exposed": null,
+      "other_exposure": null,
+      "principal_id": null,
+      "role": null
+    },
+    "source_evidence_questions": [
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Propose the source role of this exact occurrence: definition, introductory scope text, list/continuation, repeal marker, construction rule, note, other or unresolved. Name source evidence and keep extractor labels observational.",
+        "question_key": "source_role",
+        "rationale": null
+      },
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Identify publication, edition, legal time and governing-source evidence independently. Byte custody and an acquisition URL do not settle applicability or currentness.",
+        "question_key": "authority_edition",
+        "rationale": null
+      },
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Identify exact scope-introduction text and any limiting subject, title, section, sense, event or date. Record inheritance as a proposal with evidence; do not default to section-local or global.",
+        "question_key": "scope_applicability",
+        "rationale": null
+      },
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Identify every physical paragraph required for the proposed meaning unit, including introduction, enumerated members, exclusions, tail text and antecedents. Retain each source occurrence; paragraph boundaries do not certify completeness.",
+        "question_key": "complete_meaning_unit",
+        "rationale": null
+      },
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Record necessary definitions, authority, antecedents, shared qualifiers, temporal origin and referenced provisions; unavailable evidence remains unavailable. The six categories are a checklist, not an exhaustive inventory.",
+        "question_key": "dependency_inventory",
+        "rationale": null
+      },
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Record exact referenced provision/source identities or competing and unavailable targets. Distinguish a locator from an applicable reviewed definition binding.",
+        "question_key": "reference_targets",
+        "rationale": null
+      },
+      {
+        "answer": null,
+        "evidence_refs": [],
+        "finding": null,
+        "prompt": "Inspect retained notes, construction rules, repeal text and edition observations for potentially relevant evidence. Record unavailable or unsupported application rather than assuming notes are irrelevant.",
+        "question_key": "notes_construction",
+        "rationale": null
+      }
+    ]
+  },
+  "retained_population": {
+    "all_source_and_semantic_authority_flags_false": true,
+    "candidate_inputs": 134,
+    "candidate_ordinals": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129,
+      130,
+      131,
+      132,
+      133,
+      134,
+      135,
+      136,
+      137,
+      138,
+      139,
+      140,
+      141,
+      142
+    ],
+    "context_declarations": 560,
+    "full_context_blocks": 560,
+    "normalized_UTF8_bytes": 72592,
+    "normalized_characters": 71598,
+    "open_context_requirements": 3360,
+    "other_context_control_blocks": 426,
+    "records": 1681,
+    "strata": {
+      "candidate_statute_paragraph": 134,
+      "retained_context_control": 426
+    },
+    "withheld_paragraph_contexts": 0
+  },
+  "schema": "legal-corpus-source-structured-review-packet-fit/v1",
+  "scope": "Read-only API/source and retained sampler artifact inspection. No original raw HTML, Parquet, source/history replay, model, native compiler, network, trust or review action."
+}

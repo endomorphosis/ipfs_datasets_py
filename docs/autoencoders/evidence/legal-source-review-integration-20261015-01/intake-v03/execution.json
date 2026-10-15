@@ -1,0 +1,16 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 74.75243106903508,
+  "executed_checks": [
+    "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+    "tests/unit/logic/autoformal/test_legal_source_sampling.py"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "e57ef66bdb66a414e7926a915f584320502aea5a94fe154ba33b5100c2018aff",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

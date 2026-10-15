@@ -1,0 +1,305 @@
+{
+  "Lean_admitted": false,
+  "V2_meaning_review_compatibility_established": false,
+  "actual_reviews_created": 0,
+  "baseline_before_parallel_integration": "077184f148ce497e8b2d3d2a10030a1185bac75b",
+  "contributions_qualified_in_initial_checkout": [
+    {
+      "files": [
+        {
+          "current_sha256": "dabbb727e38b43f99c0089b924e29c20b26141d6b8d2a8bf4246b6f8168c2c7b",
+          "integrated_blob": "71ed481f338190d89f9dbbc0d469e5f857f79a48",
+          "original_blob": "71ed481f338190d89f9dbbc0d469e5f857f79a48",
+          "path": "docs/autoencoders/corpus_source_review_responses.md"
+        },
+        {
+          "current_sha256": "519f91a39f0f6f3fb0b7226042fe75642833588f31af8eeea9c5a488d603c7e9",
+          "integrated_blob": "f48770f68e72fc55f2bdf9bd0226dcc4e5af361c",
+          "original_blob": "f48770f68e72fc55f2bdf9bd0226dcc4e5af361c",
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_source_review_responses.py"
+        },
+        {
+          "current_sha256": "aa3b15977f14c61a929bf98999c4fca39ca5869a62b003df6b565a329f5b4560",
+          "integrated_blob": "5200c3d6e97021518052f4cc3eae2757f17d223d",
+          "original_blob": "5200c3d6e97021518052f4cc3eae2757f17d223d",
+          "path": "tests/unit/logic/autoformal/test_corpus_source_review_responses.py"
+        }
+      ],
+      "integrated_commit": "74a78eb1c2c1f3066ab4bba939af9cc0eda0704e",
+      "original_commit": "f4316438b146446f5ea600b5c8feacf3f29ab5a7",
+      "shared_main_commit": "364b4ba8ff792a670ca25e094e6006c1e2d3c617"
+    },
+    {
+      "files": [
+        {
+          "current_sha256": "b8f4d6129bbbd64e1dae16f447ec83ce75c12d18938f8f6faf628a65e7a25721",
+          "integrated_blob": "783ba0e9ddf72980691ef526d6f7db4fc835af56",
+          "original_blob": "783ba0e9ddf72980691ef526d6f7db4fc835af56",
+          "path": "docs/autoencoders/corpus_source_adjudication.md"
+        },
+        {
+          "current_sha256": "0d658081521bc737ff17ec38f82d34122863b7b2b3094e8d1fabf4eef0caf2b9",
+          "integrated_blob": "41a44d2fc0bcb4f47d111c056d526493402880cc",
+          "original_blob": "41a44d2fc0bcb4f47d111c056d526493402880cc",
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_source_adjudication.py"
+        },
+        {
+          "current_sha256": "b9c47fab60a8089139e9c857bc82a541dc618991fad68938e652e6040c7dea4d",
+          "integrated_blob": "bc028c90d14268516e7c7845a761053419d180ec",
+          "original_blob": "bc028c90d14268516e7c7845a761053419d180ec",
+          "path": "tests/unit/logic/autoformal/test_corpus_source_adjudication.py"
+        }
+      ],
+      "integrated_commit": "90512f3225862a0bf6d10c34d62e7cbd1f8ed7c0",
+      "original_commit": "b86d5723ad33dde2432f7c9a5c734618c3625289",
+      "shared_main_commit": "d17e0a2b5ccd7b74b4911fde9db04d8d755ad2de"
+    },
+    {
+      "files": [
+        {
+          "current_sha256": "9a260c308d748b9a5fda174afd528a1e4a2b916d60b8b6920ed6f67e119526d8",
+          "integrated_blob": "82c69c3b108fb48fdec3fc2ad87b9f77fe06eaf9",
+          "original_blob": "82c69c3b108fb48fdec3fc2ad87b9f77fe06eaf9",
+          "path": "docs/autoencoders/corpus_source_application.md"
+        },
+        {
+          "current_sha256": "2e11ca5f1f8c23b7d399e72c529432f611a94dcc4599c6f69025884e8219dc86",
+          "integrated_blob": "199c88971a61d73692adb3112755c4304da0bf20",
+          "original_blob": "199c88971a61d73692adb3112755c4304da0bf20",
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_source_application.py"
+        },
+        {
+          "current_sha256": "51aed4dcc6115dba2513561a34295e853277cf752706bdc9b64c2761fbffdd67",
+          "integrated_blob": "ac7fb726bfdd73b7bd444124b24730a2e5e7ed13",
+          "original_blob": "ac7fb726bfdd73b7bd444124b24730a2e5e7ed13",
+          "path": "tests/unit/logic/autoformal/test_corpus_source_application.py"
+        }
+      ],
+      "integrated_commit": "0492b9d12ba4a13def6a3f4dcd4ab908edf8e040",
+      "original_commit": "89d2a5fc36806bc31fe089f595197f86b8b0736b",
+      "shared_main_commit": "fbd7f4dd5b721dbabf8ec9dca2a84c4871dc3405"
+    },
+    {
+      "files": [
+        {
+          "current_sha256": "ffa4aa092fa76a8edb66ba488e306e72c0f5503da5f8e5d6fce5ba99e87bbea2",
+          "integrated_blob": "2a7a83ecc826f36a96360aac42574804be56fee9",
+          "original_blob": "2a7a83ecc826f36a96360aac42574804be56fee9",
+          "path": "docs/autoencoders/corpus_source_history.md"
+        },
+        {
+          "current_sha256": "88a652a0c10569723a9f278562c5c0bb7a2001515615661a2767fbe0881659d4",
+          "integrated_blob": "14b3f7cbe967bfdf47a19e856b8e1615baf1609d",
+          "original_blob": "14b3f7cbe967bfdf47a19e856b8e1615baf1609d",
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_source_history.py"
+        },
+        {
+          "current_sha256": "7d64fd16d78577fca3d1362b08a76455de652d76fd2e00224dad83361f1280b2",
+          "integrated_blob": "109417346c2485cceda7da46e7bec1b45803bbe9",
+          "original_blob": "109417346c2485cceda7da46e7bec1b45803bbe9",
+          "path": "tests/unit/logic/autoformal/test_corpus_source_history.py"
+        }
+      ],
+      "integrated_commit": "5beaa6c7f8d64cc1622a0e20f9d9a39356a31ceb",
+      "original_commit": "855b47bcb3e82a81b713652092e05905ba25905f",
+      "shared_main_commit": "d0e0c28dab3dd81e0de5627dd18f3ea838d1a057"
+    },
+    {
+      "files": [
+        {
+          "current_sha256": "90c7628b9436f72507185d030e936063ca0a3791222c0356002bd0f145f3b85d",
+          "integrated_blob": "5510a3eb9e11c25b64d2e523e7394fe4beb74a36",
+          "original_blob": "5510a3eb9e11c25b64d2e523e7394fe4beb74a36",
+          "path": "docs/autoencoders/corpus_source_bindings.md"
+        },
+        {
+          "current_sha256": "6909ac7e9ebb260ff63cee90fea2d6a76a0cbd7618823d541a69dbd86d281fef",
+          "integrated_blob": "57b39d3692949dd3d1f0d020431fd3016488dff0",
+          "original_blob": "57b39d3692949dd3d1f0d020431fd3016488dff0",
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_source_bindings.py"
+        },
+        {
+          "current_sha256": "217682af664b1785a984b1090028cf3d3c4efd6d5641239cf0b1cf31b698a798",
+          "integrated_blob": "d5860b22c9abae13fbd3af6b3fbe4114a964d68e",
+          "original_blob": "d5860b22c9abae13fbd3af6b3fbe4114a964d68e",
+          "path": "tests/unit/logic/autoformal/test_corpus_source_bindings.py"
+        }
+      ],
+      "integrated_commit": "257dd563ec7faab15852aeb9d5f8453944033bb9",
+      "original_commit": "11a5d50dc04cc57d029f4556d49ef4ccea98df64",
+      "shared_main_commit": "702142fc8789517ecc204607d07c4b925ec7b441"
+    }
+  ],
+  "duplicate_five_owner_cherry_picks_excluded_from_publication_branch": true,
+  "failed_first_attempt": {
+    "cases": 996,
+    "errors": 975,
+    "failures": 1,
+    "passed": 20,
+    "status": "failed",
+    "subsequent_identical_case_population_passed": true,
+    "summary": "failed-v01-summary.json"
+  },
+  "final_rebase_pin_changes": [
+    {
+      "after": "4365090e34063a4aa9c3997ef6feb65e7214766d87d4fa594ecf95b5bb41afb0",
+      "before": "8c0bbd2921843f4a03c56b69f08da15969e84cb55cf356f4a0da63514200a2c5",
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_legacy_span_cuda.py"
+    }
+  ],
+  "final_request_all_227_source_pins_match": true,
+  "historical_signing_domain_equivalence": false,
+  "import_order_only_tidy_preserved": true,
+  "independent_audits": [
+    {
+      "bytes": 15133,
+      "path": "independent-test-recount.json",
+      "sha256": "fe8c00fea2fe7f257b71d7caa9d8e02be04671d86896333deb666b992a09e81b"
+    },
+    {
+      "bytes": 8066,
+      "path": "independent-test-recount-v04.json",
+      "sha256": "95785a9ce95fa5ff034955dc952006e79b2050d888b2889a03cda6db56bc1772"
+    },
+    {
+      "bytes": 42949,
+      "path": "native-release-audit.json",
+      "sha256": "bf70ece5733feb610e2d734c7e916d79a500375e6f623c505bdd41ed0bf78f35"
+    },
+    {
+      "bytes": 17666,
+      "path": "native-release-audit-v04.json",
+      "sha256": "40f821cfc384b8f036fdfc5cb69150258449cc06f859c50d3e5b67fb84580c2f"
+    }
+  ],
+  "machine_checked_cross_paragraph_assembly": false,
+  "models_trained": false,
+  "native_reservations_durably_released": true,
+  "next_semantic_gate": "Actual independently reviewed definition and two uses, with supported typed interpretation and exact occurrence/context bindings; qualify/reuse existing V2 bridge rather than duplicating it.",
+  "publication_base": "8dc7dba621f2c4f8db1bea10243d031987df7687",
+  "qualification_runs": [
+    {
+      "cases": 996,
+      "counts": {
+        "error": 0,
+        "failure": 0,
+        "skipped": 0
+      },
+      "durability": "integration-v02/validation-durability.json",
+      "real_source_preparation": false,
+      "request_sha256": "c35639026de8c3ffaf930414e9c1dacab89a9e694bec6ecdb5e92495f3decac5",
+      "result": "integration-v02/result.json",
+      "selected_checks": [
+        "/home/barberb/lift_coding/artifacts/legal-corpus-source-integration-20261015-01/test_temporary_profile.py",
+        "tests/unit/logic/autoformal/test_corpus_source_review_responses.py",
+        "tests/unit/logic/autoformal/test_corpus_source_adjudication.py",
+        "tests/unit/logic/autoformal/test_corpus_source_application.py",
+        "tests/unit/logic/autoformal/test_corpus_source_history.py",
+        "tests/unit/logic/autoformal/test_corpus_source_bindings.py"
+      ],
+      "status": "passed",
+      "version": "v02"
+    },
+    {
+      "cases": 76,
+      "counts": {
+        "error": 0,
+        "failure": 0,
+        "skipped": 0
+      },
+      "durability": "intake-v03/validation-durability.json",
+      "real_source_preparation": true,
+      "request_sha256": "e57ef66bdb66a414e7926a915f584320502aea5a94fe154ba33b5100c2018aff",
+      "result": "intake-v03/result.json",
+      "selected_checks": [
+        "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+        "tests/unit/logic/autoformal/test_legal_source_sampling.py"
+      ],
+      "status": "passed",
+      "version": "v03"
+    },
+    {
+      "cases": 76,
+      "counts": {
+        "error": 0,
+        "failure": 0,
+        "skipped": 0
+      },
+      "durability": "intake-v04/validation-durability.json",
+      "real_source_preparation": false,
+      "request_sha256": "301778e49668f8e0bd34fb0c0cdca88cac1c1c18f182815c220550a6b6086a6c",
+      "result": "intake-v04/result.json",
+      "selected_checks": [
+        "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+        "tests/unit/logic/autoformal/test_legal_source_sampling.py"
+      ],
+      "status": "passed",
+      "version": "v04"
+    }
+  ],
+  "qualified_pre_rebase_history_preserved_in_local_branch": "codex/legal-source-review-qualified-snapshot-20261015",
+  "review_bundle": {
+    "all_subjects_pending": true,
+    "bundle_sha256": "62bbead449c5e1d10cbdb23957f3a6325ad6cb830b86106086fd1ccd66134b33",
+    "counts": {
+      "strata": {
+        "candidate_statute_paragraph": 134,
+        "retained_context_control": 426
+      },
+      "subjects": 560,
+      "units": 560,
+      "withheld_contexts": 0
+    },
+    "declared_steps": [
+      "Run the selected sampler and source-review intake pytest suites unchanged.",
+      "Regenerate the pinned retained source into a complete blank review bundle and pending population; no review or model inference."
+    ],
+    "files": [
+      {
+        "bytes": 5664497,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-01/exports/review-bundle.json",
+        "sha256": "2c2bb4ce302568feb014cc6abb28501bd3b453600d696a19588bbb14b55d2846"
+      },
+      {
+        "bytes": 1556130,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-01/exports/response-templates.jsonl",
+        "sha256": "5e51299243ffd20f38df43cf658793803ef91c24a3855ce337514869b1996a2c"
+      },
+      {
+        "bytes": 105066,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-01/exports/population-pending.json",
+        "sha256": "586ad0a866b6f309e962a6f703f17b51ec85c86fd96604a44fa52c894bf3f951"
+      },
+      {
+        "bytes": 72592,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-01/exports/normalized-source.txt",
+        "sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+      },
+      {
+        "bytes": 926,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-01/exports/acquisition-descriptor.json",
+        "sha256": "00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe"
+      },
+      {
+        "bytes": 861,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-01/exports/README.md",
+        "sha256": "a528cb03c9e13490425c767518edfafabd9573aa43b5c1ed8dc0623a2892a7cc"
+      }
+    ],
+    "independently_regenerated_bundle_equal": true,
+    "models_trained": false,
+    "native_Lean_executed": false,
+    "responses_created": 0,
+    "reviews_created": 0,
+    "schema": "legal-source-review-real-input-preparation/v1",
+    "semantic_graph_admitted": false,
+    "source_config_sha256": "1e713434add778ea452a4106c2ebd50df28d61e58e63f2ccf61f482f1d50e818",
+    "training_gold_admitted": false
+  },
+  "schema": "legal-source-review-integration-completion/v1",
+  "semantic_graph_admitted": false,
+  "shared_main_integration_reused": true,
+  "source_head_at_final_intake_qualification": "8aebfd95c8f028aa5b44a42aca6462c452ad3562",
+  "source_head_at_initial_qualification": "f98996e7aa98524bf7bef8094b6ce2fa88fbf54e",
+  "training_gold_admitted": false
+}
