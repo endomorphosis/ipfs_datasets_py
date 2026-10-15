@@ -1,0 +1,54 @@
+{
+  "corpus_execution_or_semantic_gold_created": false,
+  "files": [
+    {
+      "bytes": 2817,
+      "path": "README.md",
+      "sha256": "285823c7cb4eeb1c4ae9a34cb30401b1920111fe7bf323918f3fcd1a98e39be9"
+    },
+    {
+      "bytes": 20630,
+      "path": "cache-metadata-summary.json",
+      "sha256": "1801f5820902adbe03f47d095eb4b89bbae78415f6dbd4a704c4e3e5f3fe9f48"
+    },
+    {
+      "bytes": 1927,
+      "path": "independent-static-reviews.json",
+      "sha256": "df09fb3c57ad8c78ad3f007d8b416c23f96ec9e66e0d9e793dd7a25c0c479be8"
+    },
+    {
+      "bytes": 3079,
+      "path": "main-reconciliation.json",
+      "sha256": "ea00e4d64a115841874f8308b9f455d6dd74e7ca922de15cbf3ad51e25befce0"
+    },
+    {
+      "bytes": 862,
+      "path": "metadata-control-tests.json",
+      "sha256": "4d5d7e7b6af7a6f3d91cf9da04f27de3f4b2e4497c819836cc22254ed949ab1e"
+    },
+    {
+      "bytes": 2092,
+      "path": "metadata-control-tests.stderr.txt",
+      "sha256": "7e0494a4ecb440ced67962b47ac492993fbc62e4e5d6152d4fbc0f1fd53afa54"
+    },
+    {
+      "bytes": 0,
+      "path": "metadata-control-tests.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 4124,
+      "path": "pilot-authoring-checks.json",
+      "sha256": "bbb61a909014d6b9e041a99672d46f5f2ba56dc808e4bdcd1070285d4d8990df"
+    }
+  ],
+  "reviewed_source_sha256": {
+    "docs/autoencoders/pilots/uscode_definition_component/README.md": "90ec1d1416d1d3cabbb1a09c9f5e0cc8e114892fa2511e5cf4bd3bace2d9f083",
+    "docs/autoencoders/pilots/uscode_definition_component/pilot_spec.json": "dd08f3de9ab0ea9cbf5a57cf52b1cdf8517ed41fa0d25f61a3e2753475a25279",
+    "docs/autoencoders/pilots/uscode_definition_component/pilot_spec.schema.json": "562d44725a0f83c3185e3afec3d402eda93e1fdd4b81ee2e86ecfd92b88ade18",
+    "scripts/ops/legal_ir/observe_uscode_cache_metadata.py": "b6f5d756c901eba35827b25e72c79249d3bbf8e5965f5fa9b0a5e6d59906dce7",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_cache_metadata_observer.py": "bc056edef16bae718e72781605294f58876cbd89402c76b8c207f95c27b32202"
+  },
+  "runtime_status": "metadata_observation_partial_failed_span_viewer_http_500",
+  "schema": "legal-uscode-pilot-evaluation-evidence/v1"
+}

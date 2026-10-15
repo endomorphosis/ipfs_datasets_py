@@ -1,0 +1,19 @@
+{
+  "evidence": {
+    "metadata-control-tests.stderr.txt": {
+      "bytes": 2092,
+      "sha256": "7e0494a4ecb440ced67962b47ac492993fbc62e4e5d6152d4fbc0f1fd53afa54"
+    },
+    "metadata-control-tests.stdout.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "returncode": 0,
+  "schema": "uscode-cache-metadata-control-tests/v1",
+  "scope": "stdlib synthetic HTTP/control fixtures; no real network, resource ledger, product imports, corpus/checkpoints or numerical execution",
+  "source_sha256": {
+    "scripts/ops/legal_ir/observe_uscode_cache_metadata.py": "b6f5d756c901eba35827b25e72c79249d3bbf8e5965f5fa9b0a5e6d59906dce7",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_cache_metadata_observer.py": "bc056edef16bae718e72781605294f58876cbd89402c76b8c207f95c27b32202"
+  }
+}

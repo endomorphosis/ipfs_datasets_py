@@ -1,0 +1,18 @@
+test_aggregate_body_budget_stops_further_fetches (__main__.CacheMetadataObserverTests.test_aggregate_body_budget_stops_further_fetches) ... ok
+test_changed_main_preserves_pinned_inventory_but_fails_stability (__main__.CacheMetadataObserverTests.test_changed_main_preserves_pinned_inventory_but_fails_stability) ... ok
+test_existing_output_is_never_overwritten_or_fetched (__main__.CacheMetadataObserverTests.test_existing_output_is_never_overwritten_or_fetched) ... ok
+test_explicit_revision_replay_makes_no_main_observation (__main__.CacheMetadataObserverTests.test_explicit_revision_replay_makes_no_main_observation) ... ok
+test_nonempty_viewer_rows_are_rejected (__main__.CacheMetadataObserverTests.test_nonempty_viewer_rows_are_rejected) ... ok
+test_oversized_response_preserves_only_bounded_prefix (__main__.CacheMetadataObserverTests.test_oversized_response_preserves_only_bounded_prefix) ... ok
+test_oversized_row_response_archives_no_payload_prefix (__main__.CacheMetadataObserverTests.test_oversized_row_response_archives_no_payload_prefix) ... ok
+test_pending_split_service_declarations_prevent_completeness (__main__.CacheMetadataObserverTests.test_pending_split_service_declarations_prevent_completeness) ... ok
+test_request_budget_stops_further_fetches (__main__.CacheMetadataObserverTests.test_request_budget_stops_further_fetches) ... ok
+test_success_preserves_returned_descriptors_and_unversioned_schema (__main__.CacheMetadataObserverTests.test_success_preserves_returned_descriptors_and_unversioned_schema) ... ok
+test_viewer_failure_retains_raw_observation_and_pinned_metadata (__main__.CacheMetadataObserverTests.test_viewer_failure_retains_raw_observation_and_pinned_metadata) ... ok
+test_wrong_pinned_sha_is_not_an_inventory (__main__.CacheMetadataObserverTests.test_wrong_pinned_sha_is_not_an_inventory) ... ok
+test_wrong_repository_cannot_supply_the_pinned_inventory (__main__.CacheMetadataObserverTests.test_wrong_repository_cannot_supply_the_pinned_inventory) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.394s
+
+OK

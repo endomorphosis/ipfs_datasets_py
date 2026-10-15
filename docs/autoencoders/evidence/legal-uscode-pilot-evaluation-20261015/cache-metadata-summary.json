@@ -1,0 +1,567 @@
+{
+  "accounted_response_bytes": 4881762,
+  "actual_cli_returncode": 1,
+  "completed_at_utc": "2026-10-15T16:46:42.012514+00:00",
+  "datasets": {
+    "entity": {
+      "card_configs": [
+        {
+          "config_name": "autoformal_uscode",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/kg-logic-index.parquet",
+              "split": "train"
+            }
+          ],
+          "default": true
+        }
+      ],
+      "live_head_stability": "same_at_open_and_close_only",
+      "main_changed_during_observation": false,
+      "main_close_revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "main_open_revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "mode": "observed_main_snapshot",
+      "observed_revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "repository_id": "justicedao/uscode-autoformal-entity-cache",
+      "requested_revision": null,
+      "sibling_inventory": {
+        "complete_descriptor_list": {
+          "canonical_json_sha256": "bb1f1effd1d05b4ca0d3ae717fa970497cb280c447c24fe9a2600f767ffd2a8a",
+          "count": 3,
+          "omitted_from_public_summary": false,
+          "retained_in_local_observation": true
+        },
+        "declared_file_bytes": 11142413,
+        "file_count": 3,
+        "files": [
+          {
+            "bytes": 2504,
+            "git_blob_sha1": "bed0738c7eeb449bca98b5d2f33c89a1ee56349a",
+            "lfs": null,
+            "path": ".gitattributes"
+          },
+          {
+            "bytes": 581,
+            "git_blob_sha1": "30a529f324c3b8eb4d5212ae67d3e993ed96706b",
+            "lfs": null,
+            "path": "README.md"
+          },
+          {
+            "bytes": 11139328,
+            "git_blob_sha1": "0a55d8e7f3ab74d4f046c115a88ab20c102e3cdc",
+            "lfs": {
+              "pointerSize": 133,
+              "sha256": "f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233",
+              "size": 11139328
+            },
+            "path": "autoformal/uscode/kg-logic-index.parquet"
+          }
+        ],
+        "independent_tree_or_file_validation_performed": false,
+        "lfs_file_count": 1,
+        "parquet_file_count": 1,
+        "returned_sibling_population_preserved": true,
+        "scope": "every sibling descriptor returned by the pinned Hub revision API",
+        "suffix_counts": {
+          "(none)": 1,
+          ".md": 1,
+          ".parquet": 1
+        }
+      },
+      "status": "complete",
+      "viewer": {
+        "pinned_data_equality_verified": false,
+        "revision_bound": false,
+        "scope": "live unversioned service schema and declared row totals",
+        "split_population": [
+          {
+            "config": "autoformal_uscode",
+            "split": "train"
+          }
+        ],
+        "split_service_declarations": {
+          "failed": [],
+          "pending": []
+        },
+        "views": [
+          {
+            "config": "autoformal_uscode",
+            "declared_num_rows_total": 1960876,
+            "features": [
+              {
+                "feature_idx": 0,
+                "name": "record_kind",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              },
+              {
+                "feature_idx": 1,
+                "name": "meta_category",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              },
+              {
+                "feature_idx": 2,
+                "name": "graph_kind",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              },
+              {
+                "feature_idx": 3,
+                "name": "label",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              },
+              {
+                "feature_idx": 4,
+                "name": "legal_id",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              },
+              {
+                "feature_idx": 5,
+                "name": "node_id",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              },
+              {
+                "feature_idx": 6,
+                "name": "src",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              },
+              {
+                "feature_idx": 7,
+                "name": "dst",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              },
+              {
+                "feature_idx": 8,
+                "name": "logic_role",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "string"
+                }
+              },
+              {
+                "feature_idx": 9,
+                "name": "in_formula",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                }
+              },
+              {
+                "feature_idx": 10,
+                "name": "admitted",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                }
+              },
+              {
+                "feature_idx": 11,
+                "name": "formalized",
+                "type": {
+                  "_type": "Value",
+                  "dtype": "bool"
+                }
+              }
+            ],
+            "partial": false,
+            "pinned_data_equality_verified": false,
+            "returned_row_count": 0,
+            "revision_bound": false,
+            "split": "train"
+          }
+        ]
+      }
+    },
+    "span": {
+      "card_configs": [
+        {
+          "config_name": "formal_logic_text",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/formula-text/v1/*/formulas.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "paired_spans",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/paired-v1/paired_spans/**/*.parquet",
+              "split": "train"
+            }
+          ],
+          "default": true
+        },
+        {
+          "config_name": "deferred_goals",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/paired-v1/goals/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "evidence_artifacts",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/paired-v1/artifacts/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "retained_outputs_v1",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/outputs/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "census_v3",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/census-v3/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "census_v2",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/census/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        },
+        {
+          "config_name": "supervisor_goals_v2",
+          "data_files": [
+            {
+              "path": "autoformal/uscode/goals/**/*.parquet",
+              "split": "train"
+            }
+          ]
+        }
+      ],
+      "live_head_stability": "same_at_open_and_close_only",
+      "main_changed_during_observation": false,
+      "main_close_revision": "1683cad08b93bba1fa78c3ece594b12dcdc3c2aa",
+      "main_open_revision": "1683cad08b93bba1fa78c3ece594b12dcdc3c2aa",
+      "mode": "observed_main_snapshot",
+      "observed_revision": "1683cad08b93bba1fa78c3ece594b12dcdc3c2aa",
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "requested_revision": null,
+      "sibling_inventory": {
+        "complete_descriptor_list": {
+          "canonical_json_sha256": "5a6f2a522fe93f43e5a4a4396bd8229cd731ff390142db12c2aed025326bf027",
+          "count": 7406,
+          "omitted_from_public_summary": true,
+          "retained_in_local_observation": true
+        },
+        "declared_file_bytes": 5971753371,
+        "file_count": 7406,
+        "independent_tree_or_file_validation_performed": false,
+        "lfs_file_count": 4742,
+        "parquet_file_count": 4653,
+        "returned_sibling_population_preserved": true,
+        "scope": "every sibling descriptor returned by the pinned Hub revision API",
+        "suffix_counts": {
+          "(none)": 1,
+          ".gz": 4,
+          ".json": 2614,
+          ".jsonl": 121,
+          ".lean": 4,
+          ".lean-toolchain": 1,
+          ".log": 6,
+          ".md": 2,
+          ".parquet": 4653
+        }
+      },
+      "status": "partial_failed",
+      "viewer": {
+        "pinned_data_equality_verified": false,
+        "revision_bound": false,
+        "scope": "live unversioned service schema and declared row totals",
+        "views": []
+      }
+    }
+  },
+  "derived_from": {
+    "bytes": 3249112,
+    "complete_local_http_evidence_directory": "/home/barberb/lift_coding/artifacts/legal-uscode-pilot-evaluation-20261015-01/metadata-01/http",
+    "local_path": "/home/barberb/lift_coding/artifacts/legal-uscode-pilot-evaluation-20261015-01/metadata-01/observation.json",
+    "sha256": "c87878914999b68de6d135689be36ce3798596cd80ae66542bfe6a3dcd7f2389"
+  },
+  "errors": [
+    {
+      "dataset": "span",
+      "error": "metadata HTTP status was not 200",
+      "error_type": "ObservationError",
+      "stage": "viewer_splits"
+    }
+  ],
+  "http_observations": [
+    {
+      "body_truncated": false,
+      "dataset": "span",
+      "final_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache",
+      "json_object_decoded": true,
+      "observed_at_utc": "2026-10-15T16:46:39.794518+00:00",
+      "observed_body_bytes": 1281665,
+      "observed_body_is_complete": true,
+      "observed_body_sha256": "9de67515598520935c2fe21e3db9ea53dfc3cb6dfcfaa8c9d785a27bbcd04468",
+      "raw_body_archived": true,
+      "raw_path": "http/response-0001.body",
+      "requested_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache",
+      "response_headers": {
+        "content-length": "1281665",
+        "content-type": "application/json; charset=utf-8",
+        "etag": "W/\"138e81-7iNBAN2XgSyUQR+80Xd0PneFtds\""
+      },
+      "retained_body_is_complete": true,
+      "retained_bytes": 1281665,
+      "retained_sha256": "9de67515598520935c2fe21e3db9ea53dfc3cb6dfcfaa8c9d785a27bbcd04468",
+      "stage": "main_open",
+      "status": 200
+    },
+    {
+      "body_truncated": false,
+      "dataset": "span",
+      "final_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache/revision/1683cad08b93bba1fa78c3ece594b12dcdc3c2aa?blobs=true",
+      "json_object_decoded": true,
+      "observed_at_utc": "2026-10-15T16:46:40.103028+00:00",
+      "observed_body_bytes": 2313197,
+      "observed_body_is_complete": true,
+      "observed_body_sha256": "0b0f18ab6f282aa2300e88243ae5b77d568e24ba510d273cc015370a24920c12",
+      "raw_body_archived": true,
+      "raw_path": "http/response-0002.body",
+      "requested_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache/revision/1683cad08b93bba1fa78c3ece594b12dcdc3c2aa?blobs=true",
+      "response_headers": {
+        "content-length": "2313197",
+        "content-type": "application/json; charset=utf-8",
+        "etag": "W/\"234bed-4S4qAtK4G3NN8ZItNZ7fR3xIDwc\""
+      },
+      "retained_body_is_complete": true,
+      "retained_bytes": 2313197,
+      "retained_sha256": "0b0f18ab6f282aa2300e88243ae5b77d568e24ba510d273cc015370a24920c12",
+      "stage": "pinned_revision",
+      "status": 200
+    },
+    {
+      "body_truncated": false,
+      "dataset": "span",
+      "error": "metadata HTTP status was not 200",
+      "error_type": "ObservationError",
+      "final_url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fuscode-autoformal-span-cache",
+      "observed_at_utc": "2026-10-15T16:46:40.696889+00:00",
+      "observed_body_bytes": 98,
+      "observed_body_is_complete": true,
+      "observed_body_sha256": "91afbb421f5cc8355184136eb309db91f2089dc0d9fe89c6115b25c88d608b33",
+      "raw_body_archived": true,
+      "raw_path": "http/response-0003.body",
+      "requested_url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fuscode-autoformal-span-cache",
+      "response_headers": {
+        "content-length": "98",
+        "content-type": "application/json"
+      },
+      "retained_body_is_complete": true,
+      "retained_bytes": 98,
+      "retained_sha256": "91afbb421f5cc8355184136eb309db91f2089dc0d9fe89c6115b25c88d608b33",
+      "stage": "viewer_splits",
+      "status": 500
+    },
+    {
+      "body_truncated": false,
+      "dataset": "span",
+      "final_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache",
+      "json_object_decoded": true,
+      "observed_at_utc": "2026-10-15T16:46:40.861149+00:00",
+      "observed_body_bytes": 1281665,
+      "observed_body_is_complete": true,
+      "observed_body_sha256": "9de67515598520935c2fe21e3db9ea53dfc3cb6dfcfaa8c9d785a27bbcd04468",
+      "raw_body_archived": true,
+      "raw_path": "http/response-0004.body",
+      "requested_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache",
+      "response_headers": {
+        "content-length": "1281665",
+        "content-type": "application/json; charset=utf-8",
+        "etag": "W/\"138e81-7iNBAN2XgSyUQR+80Xd0PneFtds\""
+      },
+      "retained_body_is_complete": true,
+      "retained_bytes": 1281665,
+      "retained_sha256": "9de67515598520935c2fe21e3db9ea53dfc3cb6dfcfaa8c9d785a27bbcd04468",
+      "stage": "main_close",
+      "status": 200
+    },
+    {
+      "body_truncated": false,
+      "dataset": "entity",
+      "final_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache",
+      "json_object_decoded": true,
+      "observed_at_utc": "2026-10-15T16:46:41.254207+00:00",
+      "observed_body_bytes": 1221,
+      "observed_body_is_complete": true,
+      "observed_body_sha256": "639182e840301a2c154d9152a125dd501d5097354a887f57009bc0d910aa60ed",
+      "raw_body_archived": true,
+      "raw_path": "http/response-0005.body",
+      "requested_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache",
+      "response_headers": {
+        "content-length": "1221",
+        "content-type": "application/json; charset=utf-8",
+        "etag": "W/\"4c5-6IjHZ9e6cUz+XbUpaTAxJ1hc/RY\""
+      },
+      "retained_body_is_complete": true,
+      "retained_bytes": 1221,
+      "retained_sha256": "639182e840301a2c154d9152a125dd501d5097354a887f57009bc0d910aa60ed",
+      "stage": "main_open",
+      "status": 200
+    },
+    {
+      "body_truncated": false,
+      "dataset": "entity",
+      "final_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache/revision/79d54378c5d6a89ab56e7a27e0f0ba867e800e19?blobs=true",
+      "json_object_decoded": true,
+      "observed_at_utc": "2026-10-15T16:46:41.384668+00:00",
+      "observed_body_bytes": 1534,
+      "observed_body_is_complete": true,
+      "observed_body_sha256": "a6e283701865a8a93cf88010f8f684a940750cfb3aa2c7ff82181de20576bd1b",
+      "raw_body_archived": true,
+      "raw_path": "http/response-0006.body",
+      "requested_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache/revision/79d54378c5d6a89ab56e7a27e0f0ba867e800e19?blobs=true",
+      "response_headers": {
+        "content-length": "1534",
+        "content-type": "application/json; charset=utf-8",
+        "etag": "W/\"5fe-yYnlWgzvM9DLLEwn8DswOooPBCA\""
+      },
+      "retained_body_is_complete": true,
+      "retained_bytes": 1534,
+      "retained_sha256": "a6e283701865a8a93cf88010f8f684a940750cfb3aa2c7ff82181de20576bd1b",
+      "stage": "pinned_revision",
+      "status": 200
+    },
+    {
+      "body_truncated": false,
+      "dataset": "entity",
+      "final_url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fuscode-autoformal-entity-cache",
+      "json_object_decoded": true,
+      "observed_at_utc": "2026-10-15T16:46:41.516676+00:00",
+      "observed_body_bytes": 138,
+      "observed_body_is_complete": true,
+      "observed_body_sha256": "6a460ee4eff400c981cc0d66879cacb6716cc7d91949d261224dc35a52595c5b",
+      "raw_body_archived": true,
+      "raw_path": "http/response-0007.body",
+      "requested_url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fuscode-autoformal-entity-cache",
+      "response_headers": {
+        "content-length": "138",
+        "content-type": "application/json"
+      },
+      "retained_body_is_complete": true,
+      "retained_bytes": 138,
+      "retained_sha256": "6a460ee4eff400c981cc0d66879cacb6716cc7d91949d261224dc35a52595c5b",
+      "stage": "viewer_splits",
+      "status": 200
+    },
+    {
+      "body_truncated": false,
+      "dataset": "entity",
+      "final_url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=0&length=0",
+      "json_object_decoded": true,
+      "observed_at_utc": "2026-10-15T16:46:41.668533+00:00",
+      "observed_body_bytes": 1023,
+      "observed_body_is_complete": true,
+      "observed_body_sha256": "f84387892843299da396a8953b530c4510586c4f57091ae475c90b89fc38e2a5",
+      "raw_body_archived": true,
+      "raw_path": "http/response-0008.body",
+      "requested_url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=0&length=0",
+      "response_headers": {
+        "content-length": "1023",
+        "content-type": "application/json"
+      },
+      "retained_body_is_complete": true,
+      "retained_bytes": 1023,
+      "retained_sha256": "f84387892843299da396a8953b530c4510586c4f57091ae475c90b89fc38e2a5",
+      "stage": "viewer_rows_metadata",
+      "status": 200
+    },
+    {
+      "body_truncated": false,
+      "dataset": "entity",
+      "final_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache",
+      "json_object_decoded": true,
+      "observed_at_utc": "2026-10-15T16:46:41.868283+00:00",
+      "observed_body_bytes": 1221,
+      "observed_body_is_complete": true,
+      "observed_body_sha256": "639182e840301a2c154d9152a125dd501d5097354a887f57009bc0d910aa60ed",
+      "raw_body_archived": true,
+      "raw_path": "http/response-0009.body",
+      "requested_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache",
+      "response_headers": {
+        "content-length": "1221",
+        "content-type": "application/json; charset=utf-8",
+        "etag": "W/\"4c5-6IjHZ9e6cUz+XbUpaTAxJ1hc/RY\""
+      },
+      "retained_body_is_complete": true,
+      "retained_bytes": 1221,
+      "retained_sha256": "639182e840301a2c154d9152a125dd501d5097354a887f57009bc0d910aa60ed",
+      "stage": "main_close",
+      "status": 200
+    }
+  ],
+  "limits": {
+    "http_requests": 80,
+    "http_timeout_seconds": 15,
+    "response_bytes": 8388608,
+    "total_response_bytes": 33554432,
+    "viewer_splits": 32
+  },
+  "observer_source": {
+    "path": "scripts/ops/legal_ir/observe_uscode_cache_metadata.py",
+    "sha256": "b6f5d756c901eba35827b25e72c79249d3bbf8e5965f5fa9b0a5e6d59906dce7"
+  },
+  "qualification": {
+    "admitted": false,
+    "corpus_coverage_verified": false,
+    "file_payload_integrity_verified": false,
+    "formalized": false,
+    "lean_execution_performed": false,
+    "model_execution_performed": false,
+    "pinned_parquet_schema_verified": false,
+    "repository_file_bodies_downloaded": false,
+    "source_semantics_verified": false,
+    "training_performed": false,
+    "unique_source_population_verified": false,
+    "viewer_revision_binding_verified": false
+  },
+  "retained_response_bytes": 4881762,
+  "schema": "uscode-cache-metadata-public-summary/v1",
+  "started_at_utc": "2026-10-15T16:46:39.794506+00:00",
+  "status": "partial_failed",
+  "viewer_splits_probed": 1
+}
