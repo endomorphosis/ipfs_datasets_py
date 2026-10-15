@@ -1,0 +1,155 @@
+{
+  "authority": {
+    "legal_semantics_verified": false,
+    "production_graph_repaired": false,
+    "proof_authority": false,
+    "published": false,
+    "training_qualified": false
+  },
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "-m",
+    "pytest",
+    "-o",
+    "addopts=-v --tb=short --strict-markers --import-mode=importlib",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/artifacts/legal-ir-graph-citations-20261015/qualification-v02/private/pytest-cache",
+    "--basetemp=/home/barberb/lift_coding/artifacts/legal-ir-graph-citations-20261015/qualification-v02/private/tmp",
+    "--junitxml=/home/barberb/lift_coding/artifacts/legal-ir-graph-citations-20261015/qualification-v02/junit.xml",
+    "tests/unit/logic/test_kg_graph_citation_identity.py",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_records.py",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_manifest.py",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py",
+    "tests/unit/logic/autoformal/test_legal_source_sampling.py",
+    "tests/unit/logic/test_ingest_ipfs_uscode_entities.py",
+    "tests/unit/logic/test_entity_cache.py",
+    "tests/unit/logic/test_meta_ontology.py",
+    "tests/unit/logic/test_law_package.py",
+    "tests/unit/processors/legal_data/test_uscode_hf_release.py",
+    "tests/security/test_uscode_hf_release.py"
+  ],
+  "counts": {
+    "error": 0,
+    "failure": 0,
+    "skipped": 0
+  },
+  "exit_code": 0,
+  "expected_result_observed": true,
+  "head": "d1d087ef9388f75cef193dd56bf03fcb8cb4affb",
+  "index_tree": "540af8ff3dbb2fd96c91014584dceb4820d3885e",
+  "input_inventory": {
+    "docs/autoencoders/evidence/legal-ir-graph-citations-20261015/qualification_runner.py": {
+      "bytes": 6339,
+      "sha256": "c55085e0edc14f79437025c3e2c96bbea5e031f2537e9a96da349a06a41e4380"
+    },
+    "docs/autoencoders/legal_source_sampling.md": {
+      "bytes": 4888,
+      "sha256": "290a6320bd0522109df593af4fd4a6e0a52b80c375a6cde1511c27c6c5ae0f62"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_manifest.py": {
+      "bytes": 25730,
+      "sha256": "c1e86ab52371730d52cf582d2b60fbe282ae52608dcb462ec2c59cdf24738d38"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_reconstruction.py": {
+      "bytes": 24607,
+      "sha256": "e8075e6232b64ee3c8469e5c4a71d1bc77dbbdd4dd34e7e03768c516ed61c0c6"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_records.py": {
+      "bytes": 15186,
+      "sha256": "f42d060a97c65269fe453a13eefedc1dc243852efebc09a3e660bcd18b97946c"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_sampling.py": {
+      "bytes": 13827,
+      "sha256": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489"
+    },
+    "ipfs_datasets_py/processors/legal_data/uscode_hf_release.py": {
+      "bytes": 88604,
+      "sha256": "c183915f939892efff604fcd426df383b5393c3f4ca5a59d13216566d4c4805c"
+    },
+    "ipfs_datasets_py/processors/legal_data/uscode_release_schema.py": {
+      "bytes": 91298,
+      "sha256": "7808e42ae4308b8f25421628840e1e23d65f72d8a28ef67a88d48ff510ef3c53"
+    },
+    "pytest.ini": {
+      "bytes": 1536,
+      "sha256": "01737eaafcd2b7e7e1a8db2368a93d4a28053ba44e611a10b1c87d2155dc65ff"
+    },
+    "scripts/ops/legal_ir/ingest_ipfs_uscode_entities.py": {
+      "bytes": 40821,
+      "sha256": "12deaa15d57ff75977105f7aa74b0a750cffada6e9f876f16d6d5f87d888f7bc"
+    },
+    "scripts/ops/legal_ir/publish_kg_meta_ontology.py": {
+      "bytes": 8371,
+      "sha256": "21beacf5b6e355a9b088edb536bc7d888858aeb100f57412a8680bc47776a330"
+    },
+    "tests/conftest.py": {
+      "bytes": 20716,
+      "sha256": "0a255dc653799cb980d7edbb1d7b2e3c8f0d81b091d4986aa712e1e8e12b7f10"
+    },
+    "tests/security/test_uscode_hf_release.py": {
+      "bytes": 30104,
+      "sha256": "c1f33f4901841c807aedf1a4ec1b0aeb9b9b2014e5ab40e863fcaf3b4d4fa7f6"
+    },
+    "tests/unit/logic/autoformal/test_legal_primary_graph_manifest.py": {
+      "bytes": 16069,
+      "sha256": "74504b2f8851bb81df0841a8b8c28f779d1a45aa5b46aa6091a7dba1e6b57ebc"
+    },
+    "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py": {
+      "bytes": 19684,
+      "sha256": "57cc05cd5a710c41e48ac1f524a21ac7bb33cfd7300f63c811729db87948cf64"
+    },
+    "tests/unit/logic/autoformal/test_legal_primary_graph_records.py": {
+      "bytes": 13515,
+      "sha256": "13e58e78be3155270ae9bc4727894c4a99d205e7c21fb449cf4bc2a733934f88"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_sampling.py": {
+      "bytes": 15837,
+      "sha256": "961ea149d94d155b402884a9857e24e5255690301ea1891017f0b0fb2707aeec"
+    },
+    "tests/unit/logic/test_entity_cache.py": {
+      "bytes": 43166,
+      "sha256": "4e11fc2a109e7904a1baf4b44cdc704fc983e5d5a29d3caceaf876f595733a85"
+    },
+    "tests/unit/logic/test_ingest_ipfs_uscode_entities.py": {
+      "bytes": 37839,
+      "sha256": "a2ff23167de0a737e971cdffb047b30c30be2e0d836bb82c8ecedf55074ad8ad"
+    },
+    "tests/unit/logic/test_kg_graph_citation_identity.py": {
+      "bytes": 14029,
+      "sha256": "ad57dc9a823698684657846160bbc89c2f8909bcbb6a7e8c32304db40fe7180a"
+    },
+    "tests/unit/logic/test_law_package.py": {
+      "bytes": 18851,
+      "sha256": "f06e03b00de3f03242ea1309be1470eacd05f8384dcf4190f992c69fe04f07e2"
+    },
+    "tests/unit/logic/test_meta_ontology.py": {
+      "bytes": 8518,
+      "sha256": "3de3074fd3865b39034d455dd7b76114c8ba6a75154036aca6c41b0f5f56f492"
+    },
+    "tests/unit/processors/legal_data/test_uscode_hf_release.py": {
+      "bytes": 14339,
+      "sha256": "3062c31c6ac6483682f16741c28dfc4eef0188e04866dd12f24779719554b01a"
+    }
+  },
+  "inputs_unchanged": true,
+  "outputs": {
+    "junit.xml": {
+      "bytes": 67034,
+      "sha256": "9d448c2bdf56f587845f73e76bf1b8c109ca25ee874288a55d61c563bbb2bdf1"
+    },
+    "stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout.txt": {
+      "bytes": 56987,
+      "sha256": "a804c20fe4d3d86ab6c9a35961ca2c8b54420f59121cef85ff0122eddb5e08a4"
+    }
+  },
+  "profile": "qualification",
+  "receipt_passed": true,
+  "schema": "legal-graph-citation-qualification/v1",
+  "scope": "listed local inputs and synthetic private files; no production cache or model qualification",
+  "test_cases": 406,
+  "unique_cases": true
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.527" timestamp="2026-10-15T05:04:16.097302+00:00" hostname="spark-b271"><testcase classname="tests.unit.logic.test_kg_graph_citation_identity" name="test_current_wrapped_graph_parquet_preserves_exact_citation_identity" time="0.139"><failure message="AssertionError: assert [{'source_leg...olved': True}] == [{'source_leg...lved': False}]&#10;  &#10;  At index 0 diff: {'source_legal_id': '', 'target_legal_id': '', 'unresolved': True} != {'source_legal_id': 'usc:us:t5:s552', 'target_legal_id': 'usc:us:t35:s101', 'unresolved': False}&#10;  &#10;  Full diff:&#10;    [&#10;        {&#10;  -         'source_legal_id': 'usc:us:t5:s552',...&#10;  &#10;  ...Full output truncated (11 lines hidden), use '-vv' to show">tests/unit/logic/test_kg_graph_citation_identity.py:59: in test_current_wrapped_graph_parquet_preserves_exact_citation_identity
+    assert result == [{"source_legal_id": nodes[0]["legal_id"],
+E   AssertionError: assert [{'source_leg...olved': True}] == [{'source_leg...lved': False}]
+E     
+E     At index 0 diff: {'source_legal_id': '', 'target_legal_id': '', 'unresolved': True} != {'source_legal_id': 'usc:us:t5:s552', 'target_legal_id': 'usc:us:t35:s101', 'unresolved': False}
+E     
+E     Full diff:
+E       [
+E           {
+E     -         'source_legal_id': 'usc:us:t5:s552',...
+E     
+E     ...Full output truncated (11 lines hidden), use '-vv' to show</failure></testcase></testsuite></testsuites>
