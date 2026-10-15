@@ -1,0 +1,33 @@
+{
+  "all_executed_owners_unchanged": true,
+  "base": "96338f30daf01407ebd19073cb7be818613b67ee",
+  "changed": [
+    {
+      "executed_jobs": [],
+      "frozen_jobs": [],
+      "path": "docs/autoencoders/frozen_source_runtime_protocol.md"
+    },
+    {
+      "executed_jobs": [],
+      "frozen_jobs": [],
+      "path": "docs/implementation/reports/evidence/legal_ir_source_runtime_protocol_20261015.json"
+    },
+    {
+      "executed_jobs": [],
+      "frozen_jobs": [],
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py"
+    },
+    {
+      "executed_jobs": [],
+      "frozen_jobs": [],
+      "path": "scripts/ops/legal_ir/run_frozen_autoencoder_source.py"
+    },
+    {
+      "executed_jobs": [],
+      "frozen_jobs": [],
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_snapshot.py"
+    }
+  ],
+  "incoming_commit": "4d231c8dd4652a15130b69677471e77c107ca74b",
+  "schema": "sampled-primary-incoming-runtime-intersection/v1"
+}

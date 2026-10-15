@@ -1,0 +1,242 @@
+{
+  "Lean_executed": false,
+  "actual_summary": {
+    "association_loaded_origin_count": 118,
+    "association_named_checks": 5,
+    "association_seconds": 406.7284547239542,
+    "association_source_pin_count": 229,
+    "discovery_seconds": 20.91116167907603,
+    "families": [
+      "fol",
+      "tdfol"
+    ],
+    "full_primary_rows": 297825,
+    "index_sha256": "82b8099255a93c5a22135229d9bcab8a7a8dd25f09074ca744155734a1d931e1",
+    "mapping_refs_per_family": 1,
+    "nested_refusals": 8,
+    "nested_retained_checks": 17,
+    "new_output_bytes": 336630,
+    "new_output_count": 7,
+    "occurrences_per_family": 6,
+    "open_context_slots_per_family": 36,
+    "population_per_family": 560,
+    "preserved_fields_per_family": 14,
+    "primary_records_per_family": 5,
+    "primary_refs_per_family": 6,
+    "replay_export_bytes": 10630440,
+    "replay_export_count": 64,
+    "responses_per_family": 0,
+    "sidecar_transport_bytes_per_family": 156554
+  },
+  "authority_granted": false,
+  "blocking_findings": [],
+  "findings": [
+    {
+      "detail": "The owner reuses the old public correspondence validator, exact live PrimarySectionIndex and required_primary_artifacts. The sidecar retains all 14 correspondence fields and complete literal lookup observations; it changes no existing graph, review subject, dependency manifest or primary index.",
+      "status": "pass",
+      "topic": "additive original-bound interface"
+    },
+    {
+      "detail": "The raw seven-field mapping has an independently supplied transport hash, finite duplicate-free closed JSON checks, exact full source identity and ordered physical occurrence commitments. Invalid commitments refuse; null, missing, ambiguous, conflicting or quarantined primary anchors remain explicit unresolved sidecars. Output overflow refuses rather than clipping evidence.",
+      "status": "pass",
+      "topic": "bounded declaration and refusal boundary"
+    },
+    {
+      "detail": "Direct operation pins include proposals.intake, the active mapping codec owner; original correspondence producer pins are rechecked. Current product/test pins match both final qualification and association requests.",
+      "status": "pass",
+      "topic": "active source fence"
+    },
+    {
+      "detail": "Declared anchor matches remain unsigned declarations. All authority flags are false and training/evaluation-gold masks integer zero. Full sealed correspondence/association canonical hashes, raw mapping transport, full canonical mapping artifact hash, original record_json witnesses, reconstruction raw/full/internal hashes and index internal/full hashes are separate commitments.",
+      "status": "pass",
+      "topic": "authority and hash namespaces"
+    },
+    {
+      "detail": "Separate discovery and association native modes bind the independent original index baseline. Unchanged replay main creates a closed 64-file generation; its 63 indexed files and index are checked, then rechecked after association. Replayed optional keyword omission is preserved. Seven new artifacts are written beneath logs/association, leaving original exports unchanged.",
+      "status": "pass",
+      "topic": "actual helper source"
+    },
+    {
+      "detail": "The guide matches 173 unique cases (88 new, 35 correspondence, 50 primary), 222 fixture source pins/122 loaded origins, actual full-index discovery and two-family association metadata. The repeated initial roster is not added to the unique count. Three discovery and five association artifact checks remain separate from pytest cases.",
+      "status": "pass",
+      "topic": "documented qualification scope"
+    },
+    {
+      "detail": "The guide explicitly states saved-artifact regeneration and the public-import control run in the existing interpreter. No independent fresh-interpreter consumer, official-source equivalence, actual legal review, gold labels, training result, model accuracy gain, Lean build or Hugging Face upload is claimed.",
+      "status": "pass",
+      "topic": "replay independence limits"
+    },
+    {
+      "detail": "The plan now says remaining original-to-official and semantic correspondence obligations, avoiding a stale claim that the newly added mechanical interface is absent. The final revised plan bytes are pinned above.",
+      "status": "resolved",
+      "topic": "plan correspondence milestone clarity"
+    },
+    {
+      "detail": "README gains one link and the plan gains the association milestone plus the preceding clarity edit; fixed-view diagnostic/model findings are retained. Incoming origin/main 4d231c8dd4652a15130b69677471e77c107ca74b changes five unrelated frozen-runtime files, absent from the frozen source maps and loaded origins in the retained intersection report. This review claims no execution of those new runtime files.",
+      "status": "pass",
+      "topic": "parallel progress preservation"
+    }
+  ],
+  "inspected_metadata_pins": [
+    {
+      "bytes": 57976,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/qualification-request-v02.json",
+      "sha256": "1de300d09c19f0275d6b1a89da1f827a8c2c3b0aa79c13ca8c858505f6fb15c6"
+    },
+    {
+      "bytes": 5561,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/qualification-parent-stdout-v02.json",
+      "sha256": "3e9c2a4b3c9fdf0ccd45c93b975b16308cc52ef0c25635c424794030a011e7e8"
+    },
+    {
+      "bytes": 20450,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/discover-request-v01.json",
+      "sha256": "3006d0fe1b08777871d6eafafec8e1b2c05e0c57af2309c3fa7ebc855c1b69db"
+    },
+    {
+      "bytes": 5515,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/discover-parent-stdout-v01.json",
+      "sha256": "e463b87a4444680a1f346f1ee408456bf6f89023793f3f014e38a47da05742df"
+    },
+    {
+      "bytes": 55169,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/associate-request-v01.json",
+      "sha256": "88963d15fe5981bdc13ed1106c12fe005278c78ef8a034dbeac2faca2005e53c"
+    },
+    {
+      "bytes": 5534,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/associate-parent-stdout-v01.json",
+      "sha256": "5b19da266a538a92db015302b76d8097f2bb39ba2894a6cec5fb791c9b89a10b"
+    },
+    {
+      "bytes": 1006,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/incoming-runtime-progress-intersection-v01.json",
+      "sha256": "ca710663f962f302a52bbf0f1a89ad30f5d50448b8edec3e69a903d46472118b"
+    },
+    {
+      "bytes": 231041,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-qualification02/logs/qualification.json",
+      "sha256": "bbf135a2b1b6961f6035be3c63d31944d9aa12ddbc8599a4ad7f9b8c88a1f407"
+    },
+    {
+      "bytes": 11714,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-discover01/logs/sampled-primary-discover-receipt.json",
+      "sha256": "9385c7f92d20f3f9e3d6bdb3b993009eb5ce4f5bedb028d01b133701ec3b0b06"
+    },
+    {
+      "bytes": 49136,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/sampled-primary-associate-receipt.json",
+      "sha256": "bdfd190b215cafac03f99d19a7b592d3c2b616376531802fec1336c2d3d816fc"
+    },
+    {
+      "bytes": 10872,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/exports/file-index.json",
+      "sha256": "9a462929515a1ce4735e3d1bd8870cd2f239a342e3b8cca5852ab96165c18e1a"
+    }
+  ],
+  "native_closeout_metadata": [
+    {
+      "cleanup_error": null,
+      "completed": true,
+      "durable": true,
+      "live_processes": 0,
+      "mode": "qualification",
+      "reservation_status": "released",
+      "resource_lease_released": true,
+      "returncode": 0
+    },
+    {
+      "cleanup_error": null,
+      "completed": true,
+      "durable": true,
+      "live_processes": 0,
+      "mode": "discover",
+      "reservation_status": "released",
+      "resource_lease_released": true,
+      "returncode": 0
+    },
+    {
+      "cleanup_error": null,
+      "completed": true,
+      "durable": true,
+      "live_processes": 0,
+      "mode": "associate",
+      "reservation_status": "released",
+      "resource_lease_released": true,
+      "returncode": 0
+    }
+  ],
+  "observed_at_utc": "2026-10-15T22:48:21.775950+00:00",
+  "publication_followup": [
+    "At review time the guide evidence-index link intentionally awaits the curator; root must verify final curated membership and all link targets before commit. The curated bundle is metadata/code only, not a self-contained source/lookup/sidecar replay corpus.",
+    "Merge incoming main normally and preserve both contributions; verify final source bytes remain those qualified."
+  ],
+  "qualification_summary": {
+    "correspondence_cases": 35,
+    "errors": 0,
+    "failures": 0,
+    "loaded_origin_count": 122,
+    "new_cases": 88,
+    "primary_cases": 50,
+    "skips": 0,
+    "source_pin_count": 222,
+    "unique_cases": 173
+  },
+  "reviewed_base": "96338f30daf01407ebd19073cb7be818613b67ee",
+  "reviewer": "/root/sampled_primary_docs_review_n10",
+  "schema": "sampled-primary-final-source-documentation-review/v1",
+  "scope": "Static product/helper/documentation review and retained engineering metadata inspection only. No product, test, fixture, corpus, lookup, sidecar payload, numerical, model or Lean execution; no ledger read or mutation.",
+  "source_and_documentation_pins": [
+    {
+      "bytes": 20647,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_primary_association_v2.py",
+      "sha256": "535ae636de2a6e216df1a46f488e8802538a0386101b6e087d24a99b23969233"
+    },
+    {
+      "bytes": 35212,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_source_sampling_primary_association_v2.py",
+      "sha256": "27c412b196e06354839c103cdf648ccbc57093b4e2501b475d3afc301a7d5823"
+    },
+    {
+      "bytes": 9021,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_sampled_primary_association_v2.md",
+      "sha256": "d4de1ebe8a5446f3b6ef9c59a4c548152502bd7d4461456ef008473d428fab25"
+    },
+    {
+      "bytes": 73275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "4d9f42a65dcc8b5ef11f7b5d1001d0a572748f6cf4eab5cef616c942f62d6039"
+    },
+    {
+      "bytes": 16577,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/README.md",
+      "sha256": "313c5d7f510b994b7c5f100883041a230d6b63784f2325dd296602272b18baab"
+    },
+    {
+      "bytes": 34752,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/run_sampled_primary_actual_v01.py",
+      "sha256": "a02b28e902d9a1b4757b63c2b990ff1200fb3d0ba79a6684fb17ed8285871e81"
+    },
+    {
+      "bytes": 14891,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_graph_proposals.py",
+      "sha256": "d1d66781633b187008b2d5efac0ab0e7dedcc12671e8cc588ee605b9e755d8c7"
+    },
+    {
+      "bytes": 21835,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py",
+      "sha256": "9fa6d8e84886de82e75a2b741803b26ba5d8aff572fd9e20644075ca1f337aba"
+    },
+    {
+      "bytes": 26538,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_primary_section_index.py",
+      "sha256": "c05eb53d6b3c3d5b652085da4c5da61a3fcff95b6b58fbf3f49d415f38b4215d"
+    },
+    {
+      "bytes": 7279,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_contracts.py",
+      "sha256": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa"
+    }
+  ],
+  "training_performed": false
+}

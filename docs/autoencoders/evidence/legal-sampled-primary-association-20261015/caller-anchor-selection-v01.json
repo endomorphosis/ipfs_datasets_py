@@ -1,0 +1,47 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "official_source_equivalence_verified": false,
+    "source_or_meaning_reviewed": false,
+    "training_qualified": false
+  },
+  "basis": "literal original-primary transport discovery; unsigned caller declaration only",
+  "captured_discovery_parent": {
+    "bytes": 5515,
+    "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/discover-parent-stdout-v01.json",
+    "sha256": "e463b87a4444680a1f346f1ee408456bf6f89023793f3f014e38a47da05742df"
+  },
+  "discovery_receipt": {
+    "bytes": 11714,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-discover01/logs/sampled-primary-discover-receipt.json",
+    "sha256": "9385c7f92d20f3f9e3d6bdb3b993009eb5ce4f5bedb028d01b133701ec3b0b06"
+  },
+  "discovery_summary": {
+    "bytes": 1160,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-discover01/logs/association/literal-section101-discovery-summary.json",
+    "sha256": "53bbec7eff94bbd444488b02287cb519dfe46834c5da9772e22d5813b8ceacb5"
+  },
+  "mapping_declaration": {
+    "legal_id": "usc:us:10:101",
+    "section_entry_cid": "sha256:f8de2c7365103727fae090e339acf8d7510a2677dc0966fd60118e62b41a3373",
+    "source_package_entry_cid": "sha256:57babd7a207fcbf6e0476e22bbf07cb6e3950739ee7e608bdda06fd8d879a996"
+  },
+  "physical_observations": {
+    "package_has_source_global_ordinals": [
+      154398
+    ],
+    "release_points": [
+      {
+        "entry_cid": "sha256:24261fa5a8ba5d392760b93af55a1f892693e7d19e3679abd6397594d84007d8",
+        "global_ordinal": 195778,
+        "has_source_edge_global_ordinals": [
+          2120
+        ]
+      }
+    ],
+    "section_global_ordinal": 294522,
+    "source_package_global_ordinal": 219691
+  },
+  "primary_index_sha256": "82b8099255a93c5a22135229d9bcab8a7a8dd25f09074ca744155734a1d931e1",
+  "schema": "sampled-primary-caller-anchor-selection/v1"
+}

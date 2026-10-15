@@ -1,0 +1,15 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-discover01/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-discover01/logs/execution.json"
+  ],
+  "executed_checks": [
+    "full_original_primary_index_baseline",
+    "literal_section101_primary_discovery",
+    "source_and_native_output_closing_guards"
+  ],
+  "request_sha256": "3006d0fe1b08777871d6eafafec8e1b2c05e0c57af2309c3fa7ebc855c1b69db",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

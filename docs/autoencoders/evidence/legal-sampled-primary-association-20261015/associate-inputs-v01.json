@@ -1,0 +1,32 @@
+{
+  "expected_index_sha256": "82b8099255a93c5a22135229d9bcab8a7a8dd25f09074ca744155734a1d931e1",
+  "expected_reconstruction_full_canonical_sha256": "18d46ded43628d1ee96c4fa919de5d398aa058c3cc45ac0baaa917280380dcaa",
+  "expected_reconstruction_sha256": "b7b24bf24494df6f7afd82825512dbdd86491ef08f8f2609d80bf445465bf24c",
+  "index_baseline": {
+    "bytes": 2812,
+    "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-span-section-20261013-01/section-index-baseline.json",
+    "sha256": "da5b83b8d6401279ba89bc029a0a0d09a55918118c0609e86926dabfb0c8bcbf"
+  },
+  "mapping_declaration": {
+    "legal_id": "usc:us:10:101",
+    "section_entry_cid": "sha256:f8de2c7365103727fae090e339acf8d7510a2677dc0966fd60118e62b41a3373",
+    "source_package_entry_cid": "sha256:57babd7a207fcbf6e0476e22bbf07cb6e3950739ee7e608bdda06fd8d879a996"
+  },
+  "mode": "associate",
+  "primary_candidate": {
+    "bytes": 716898677,
+    "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/candidate.jsonl",
+    "sha256": "46986513582973996e4d69ecf0669ed7331e6cca07ca793f3b1c1ea2dcdec8f1"
+  },
+  "reconstruction_report": {
+    "bytes": 160983,
+    "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/reconstruction-baseline.json",
+    "sha256": "3368f3698f25ac66d3584f388ee0b6d52746443e142d423ed0b8a1ded31abfe2"
+  },
+  "retained_input_descriptor": {
+    "bytes": 4737,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/retained-inputs.json",
+    "sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736"
+  },
+  "schema": "legal-sampled-primary-actual-inputs/v1"
+}

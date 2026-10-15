@@ -1,0 +1,24 @@
+{
+  "adopted_main_work": [
+    "70a91f7b7",
+    "3421e861a",
+    "d51516dd5",
+    "0a4213a5d",
+    "d5bb42cb1",
+    "a0a71389d",
+    "96338f30d"
+  ],
+  "adopted_work_scope": "fixed-lane diagnostic, retained checkpoint comparison, training observer and qualified corpus plan; no new numerical run of those modules in this phase",
+  "authority": {
+    "Lean_executed": false,
+    "source_equivalence_verified": false,
+    "training_accuracy_improved": false
+  },
+  "base_commit": "96338f30daf01407ebd19073cb7be818613b67ee",
+  "new_work_scope": "additive sampled-source/primary association; reuse old validators/index/witness owners",
+  "observed_at_utc": "2026-10-15T22:25:22.127796+00:00",
+  "owned_checkout": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets",
+  "previous_main": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+  "published_search_observation": "No matching open PR or new published sampled-primary implementation found at turn opening; source/review correspondence branches already integrated. Private phase bodies not inspected.",
+  "schema": "sampled-primary-upstream-reconciliation/v1"
+}

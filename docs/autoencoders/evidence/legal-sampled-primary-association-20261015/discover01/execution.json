@@ -1,0 +1,17 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 61.56352891307324,
+  "executed_checks": [
+    "full_original_primary_index_baseline",
+    "literal_section101_primary_discovery",
+    "source_and_native_output_closing_guards"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "3006d0fe1b08777871d6eafafec8e1b2c05e0c57af2309c3fa7ebc855c1b69db",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}
