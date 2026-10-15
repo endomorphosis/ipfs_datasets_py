@@ -1,0 +1,503 @@
+{
+  "active_probe_source_or_original_assets_modified": false,
+  "additional_training_diagnostic_changed_paths": [
+    "docs/autoencoders/fixed_view_vocabulary_diagnostics.md",
+    "docs/autoencoders/legal_ir_fixed_view_probe_20261015.md",
+    "docs/implementation/reports/evidence/legal_ir_fixed_view_probe_20261015.json",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_view_diagnostic.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_view_diagnostic.py"
+  ],
+  "authority": {
+    "complete_import_closure_verified": false,
+    "current_scheduler_state_verified": false,
+    "native_execution_verified_by_this_review": false,
+    "semantic_admission": false,
+    "teacher_promotion": false,
+    "training_gold": false
+  },
+  "base_revision": "0ae59458167b3438bc4d112d0ffb3bf63a7f30c0",
+  "export_feature_revision": "3a3a5570ec742a1dcff319486025b0d13e5fe773",
+  "export_only_changed_paths": [
+    "docs/autoencoders/README.md",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/accepted-producer-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/execution-config-export-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/execution-config-validate-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export-independent-metadata-review-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export-own-reservation-closeout-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export-request-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export01/corpus-export-producer.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export01/execution.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export01/manifest.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export01/reconstruction.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export01/result.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export01/stderr.log",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export01/stdout.log",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export01/validation-durability.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/input-descriptor-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/lineage-size-lower-bound-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/lineage-size-lower-bound-v02.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/publication-manifest.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/qualification-independent-review-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/qualification-parent-output-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/qualification-request-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/qualification01/execution.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/qualification01/junit.xml",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/qualification01/qualification.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/qualification01/result.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/qualification01/stderr.log",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/qualification01/stdout.log",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/qualification01/validation-durability.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/resource-plan-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/run_primary_graph_corpus_campaign_v01.py",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/source-bridge-survey-v02.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/storage-observation-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/upstream-reconciliation-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validate01/corpus-original-bound-validation.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validate01/execution.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validate01/result.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validate01/stderr.log",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validate01/stdout.log",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validate01/validation-durability.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validation-independent-metadata-review-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validation-native-parent-stderr-v01.txt",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validation-native-parent-stdout-v01.json",
+    "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validation-request-v01.json",
+    "docs/autoencoders/legal_entity_cache_audit_20261015.md",
+    "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+    "docs/autoencoders/legal_primary_corpus_export_20261015.md",
+    "docs/autoencoders/legal_primary_graph_export.md",
+    "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py",
+    "tests/unit/logic/autoformal/test_legal_primary_graph_export.py"
+  ],
+  "frozen_request_overlap": [
+    {
+      "changed_path_intersections": [
+        {
+          "incoming_revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+          "overlap_count": 0,
+          "paths": []
+        },
+        {
+          "incoming_revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+          "overlap_count": 1,
+          "paths": [
+            {
+              "frozen_sha256": "ad1a964c1b6b15592aaabe5550af331cb97721b6d362f768c148a62cfd442990",
+              "incoming": {
+                "bytes": 1428524,
+                "git_blob": "180e18423529e15eccb382bc9a466c211a366122",
+                "mode": "100644",
+                "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+                "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+                "sha256": "4b44bb723709be5b4606d497935b245723231df8ec19b24f1bd329fd8932ad24"
+              },
+              "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+            }
+          ]
+        }
+      ],
+      "frozen_source_pin_count": 144,
+      "repository_relative_pin_count": 144,
+      "request": {
+        "bytes": 34082,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-fixed-view-vocabulary-20261015/validation-request-a-01.json",
+        "sha256": "cc03ebcfaff655647572c44ad70b8182b3156f92c94856a5448da6c4d8f6db1c"
+      }
+    },
+    {
+      "changed_path_intersections": [
+        {
+          "incoming_revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+          "overlap_count": 0,
+          "paths": []
+        },
+        {
+          "incoming_revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+          "overlap_count": 1,
+          "paths": [
+            {
+              "frozen_sha256": "ad1a964c1b6b15592aaabe5550af331cb97721b6d362f768c148a62cfd442990",
+              "incoming": {
+                "bytes": 1428524,
+                "git_blob": "180e18423529e15eccb382bc9a466c211a366122",
+                "mode": "100644",
+                "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+                "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+                "sha256": "4b44bb723709be5b4606d497935b245723231df8ec19b24f1bd329fd8932ad24"
+              },
+              "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+            }
+          ]
+        }
+      ],
+      "frozen_source_pin_count": 163,
+      "repository_relative_pin_count": 145,
+      "request": {
+        "bytes": 37683,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-fixed-view-vocabulary-20261015/validation-request-b-01.json",
+        "sha256": "e2c6c97fdf2d4d406e0020c07b253dc8523d7e10fecb48dd1cfe2d343431d7b6"
+      }
+    }
+  ],
+  "later_parallel_training_diagnostic": {
+    "AST_equality_authenticates_dynamic_import_or_runtime_equivalence": false,
+    "finite_AST_comparison": [
+      {
+        "AST_equal": true,
+        "name": "cross_entropy_distribution_loss",
+        "owner": null
+      },
+      {
+        "AST_equal": true,
+        "name": "_legal_ir_target_payload",
+        "owner": null
+      },
+      {
+        "AST_equal": true,
+        "name": "__init__",
+        "owner": "AdaptiveModalAutoencoder"
+      },
+      {
+        "AST_equal": true,
+        "name": "_cache_legal_ir_targets",
+        "owner": "AdaptiveModalAutoencoder"
+      },
+      {
+        "AST_equal": true,
+        "name": "_legal_ir_view_distribution",
+        "owner": "AdaptiveModalAutoencoder"
+      },
+      {
+        "AST_equal": true,
+        "name": "_legal_ir_view_logits_for",
+        "owner": "AdaptiveModalAutoencoder"
+      },
+      {
+        "AST_equal": true,
+        "name": "from_dict",
+        "owner": "ModalAutoencoderTrainingState"
+      },
+      {
+        "AST_equal": true,
+        "name": "state_identity",
+        "owner": "ModalAutoencoderTrainingState"
+      }
+    ],
+    "guide": {
+      "bytes": 5951,
+      "git_blob": "602d3b6d12f40bce3629178060f4a3e77413e9e6",
+      "mode": "100644",
+      "path": "docs/autoencoders/legal_ir_fixed_view_probe_20261015.md",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "7287333debcba5625f6d14d572e8be1811a97209909b2a0250705ce419131c29"
+    },
+    "historical_proposal_sidecars_and_rejections_are_not_retroactively_changed": true,
+    "independent_holdout": false,
+    "merge_consequence": "Export-only has zero listed-source intersection. Later training diagnostic changes a pinned model source and adds a newly imported helper; do not relabel active frozen probe as validation of those bytes. Preserve and separately reconcile/qualify the concurrent implementation before publication of a merged current-source claim.",
+    "new_owner": {
+      "bytes": 8430,
+      "git_blob": "c03881a6c0b9d7e3d6a7f204c1811693d0898997",
+      "mode": "100644",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_view_diagnostic.py",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "1937169c7d49409b89b00c2b2c9d1d9e955ab3f37f15122931b79be9bb0c36ba"
+    },
+    "observation": {
+      "bytes": 14169,
+      "git_blob": "4f8198809a3e0a5eedcfb31954961c8110dbf19a",
+      "mode": "100644",
+      "path": "docs/implementation/reports/evidence/legal_ir_fixed_view_probe_20261015.json",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "766a9d87952995a076db9a85062ed3f3443cc3a963264ce89611b158f185c9f8"
+    },
+    "profile_ids": [
+      "CEC.native",
+      "TDFOL.prover",
+      "deontic.ir",
+      "knowledge_graphs.neo4j_compat",
+      "external_provers.router",
+      "modal.frame_logic",
+      "zkp.circuits"
+    ],
+    "profile_sha256": "0e74add921c50b9eced04b54b1df62a0aac503ca6ce0577e598a781c13105d1c",
+    "qualification_scope": "Authored canonical dirty producer generation and explicit private pytest alias profile, not this isolated95-case qualification or current163-pin retained-state probe. No independent heldout or semantic accuracy gain.",
+    "repeated_tuning_rows": 2,
+    "reported_complete_targets": 8,
+    "reported_fixed_view_before": 1.945910149055313,
+    "reported_native_acceptance": {
+      "feature_view": 0,
+      "global_view": 0,
+      "structural": 1
+    },
+    "reported_proposal_fixed_CE": {
+      "feature_view": {
+        "before": 1.945910149055313,
+        "committed": 1.945910149055313,
+        "proposed": 1.8975647294940672
+      },
+      "global_view": {
+        "before": 1.945910149055313,
+        "committed": 1.945910149055313,
+        "proposed": 1.9005269451286178
+      },
+      "structural": {
+        "before": 1.945910149055313,
+        "committed": 1.945910149055313,
+        "proposed": 1.945910149055313
+      }
+    },
+    "reported_source_generation": {
+      "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+      "python_file_count": 8767,
+      "sha256": "301f5086fe0d0915b045572887c3efe38cdf87ab03027e2fbc6b10ff041f7fc7"
+    },
+    "reported_structural_candidate": {
+      "bytes": 13402647,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-vocabulary-20261015/head-probe-v1/exports/structural.candidate.state.json",
+      "sha256": "dadf1964dc6dbf9c89dbe360dd06908e24d299b5f80f5b6e2014967361932312"
+    },
+    "reported_tuning_reconstruction": {
+      "after": 0.0019177031657274055,
+      "before": 0.0019724909690556148,
+      "relative_improvement": 0.02777594634790162
+    },
+    "reported_unit_observation": {
+      "failed": 0,
+      "fixture_profile": "explicit_private_pytest_alias_profile/v1",
+      "full_suite_files": 6,
+      "passed": 240,
+      "pytest_wall_seconds": 3.79,
+      "strict_profile_passed": false
+    },
+    "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+    "source": {
+      "bytes": 1428524,
+      "git_blob": "180e18423529e15eccb382bc9a466c211a366122",
+      "mode": "100644",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "4b44bb723709be5b4606d497935b245723231df8ec19b24f1bd329fd8932ad24"
+    },
+    "training_rows": 6
+  },
+  "method": "Read-only immutable Git objects, stdlib JSON/AST/hash comparison and frozen request metadata. No corpus/Parquet/lineage body read, product import, model load, target hydration, test, compiler, native job or network operation.",
+  "observed_later_origin_main": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+  "observed_local_head": "d51516dd5a21b829ef604c18b90a64842dfe8938",
+  "published_export": {
+    "CITES_UNRESOLVED_edges": 13,
+    "authority": {
+      "accepted_graph_view_enabled": false,
+      "admitted": false,
+      "formalized": false,
+      "historical_flat_occurrences_repaired": false,
+      "proof_authority": false,
+      "published": false,
+      "semantic_review_verified": false,
+      "source_population_equivalence_verified": false,
+      "source_semantics_verified": false,
+      "training_qualified": false
+    },
+    "consumer_artifact_checks": [
+      "rebuild_independently_pinned_primary_selection",
+      "validate_original_bound_candidate_generation",
+      "verify_source_and_product_origin_closure"
+    ],
+    "consumer_seconds": 281.1305441209115,
+    "consumer_status": "pass",
+    "corpus_job_pytest_cases": 0,
+    "custody_limits": [
+      "This reviewer did not execute or independently reopen the exported corpus population; metrics are attributed to published producer/consumer receipts with exact Git byte commitments.",
+      "Producer original parent terminal capture is unavailable; its own-reservation closeout is a narrower recorded observation, not captured parent stdout or current scheduler authentication.",
+      "Consumer has retained original parent stdout/durability/release metadata; recorded release is not a fresh current-ledger or grant verification.",
+      "Native enforcement is cooperative and sampled, not a kernel quota or arbitrary descendant containment.",
+      "The1.34GB runtime generation is not copied into Git by these metadata records."
+    ],
+    "default_1gib_profile_preserved": true,
+    "edge_occurrences": 178691,
+    "endpoint_closure_resolves_references": false,
+    "generation": {
+      "exported_rows": 297825,
+      "file_count": 586,
+      "lineage_only_rows": 0,
+      "manifest": {
+        "bytes": 106252,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/exports/candidate-generation-v01/manifest.json",
+        "sha256": "5c94588706c54c8b8803e03971a18cc917aea754e31e7a9e1359f9c80b7021fd"
+      },
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/exports/candidate-generation-v01",
+      "quarantined_rows": 0,
+      "source_rows": 297825,
+      "structural_endpoint_integrity_passed": true,
+      "total_bytes": 1342890287
+    },
+    "lineage_bytes": 1294880789,
+    "lineage_only_occurrences": 0,
+    "manifest_bytes": 106252,
+    "node_occurrences": 119134,
+    "parquet_bytes": 47782603,
+    "parquet_shards": 583,
+    "producer_artifact_checks": [
+      "rebuild_independently_pinned_primary_selection",
+      "export_complete_primary_population_2gib",
+      "verify_source_and_product_origin_closure"
+    ],
+    "producer_inventory_recorded_unchanged": true,
+    "producer_seconds": 586.6329221448395,
+    "producer_status": "pass",
+    "profile": "manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1",
+    "profile_max_output_bytes": 2147483648,
+    "quarantined_occurrences": 0,
+    "reconstruction_blockers": 0,
+    "reconstruction_bytes": 120643,
+    "recorded_consumer_original_bound_validation": true,
+    "recorded_fixture_qualification": {
+      "counts_by_module": {
+        "tests/unit/logic/autoformal/test_legal_primary_graph_export.py": 80,
+        "tests/unit/logic/autoformal/test_legal_primary_graph_reconstruction.py": 26,
+        "tests/unit/logic/autoformal/test_legal_primary_graph_records.py": 45,
+        "tests/unit/logic/test_kg_graph_citation_identity.py": 38
+      },
+      "errors": 0,
+      "failures": 0,
+      "full_reconstruction_module_executed": false,
+      "new_profile_replay_cases": 29,
+      "prior160_included_not_additive": true,
+      "skipped": 0,
+      "unique_cases": 189
+    },
+    "repository": "justicedao/ipfs_uscode",
+    "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+    "selected_compressed_source_bytes": 46241258,
+    "selected_files": 74,
+    "selected_rows": 297825,
+    "selection_sha256": "83c8fb05b4a0435486dff800297674a8433dd4af7dcfd50beae85a8490f2a330",
+    "source_manifest_sha256": "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6",
+    "unchanged_encoding_occurrences": 297825,
+    "unresolved_citation_placeholder_nodes": 13
+  },
+  "requested_export_merge_revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+  "reviewed_git_inputs": [
+    {
+      "bytes": 7939,
+      "git_blob": "189c67bbb7dd15582eaba5c812ce3d8bdf772ec5",
+      "mode": "100644",
+      "path": "docs/autoencoders/legal_primary_corpus_export_20261015.md",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "fa996a9f7781876489894ea99c9be5140ab5d40513fbc0037b9e717540d348b6"
+    },
+    {
+      "bytes": 68438,
+      "git_blob": "38f7504441b60fc91006bc51c1ee062421599f89",
+      "mode": "100644",
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "c8ffb1850ee6ba36584fc284f6d268839e4bffea1fd157bc2de17f6dc35e85f7"
+    },
+    {
+      "bytes": 3507,
+      "git_blob": "adb5e539d9643f358624f08f27bbb78d5f035a35",
+      "mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/input-descriptor-v01.json",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "7c91b196349888b6b293aeef7743ea915a39ab7cac3e693bce51e4f39c7d52e8"
+    },
+    {
+      "bytes": 1957,
+      "git_blob": "7668ce89bedee8b06ebd43823ca3e5b1da3c5344",
+      "mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/accepted-producer-v01.json",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "085e07d55c01b739e3e2104c8dd382db0e4a82b42288fe273ce9ea39c3077c96"
+    },
+    {
+      "bytes": 20623,
+      "git_blob": "edc3c1ef45fc25f2db695db63a848c6b658c5d56",
+      "mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/publication-manifest.json",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "d561c9e409a64db0ebb270f87142455d378b796f2e155b9c6422df69f40e59db"
+    },
+    {
+      "bytes": 106252,
+      "git_blob": "3e904987fddb9d223721631b5d8f99cbff1c7010",
+      "mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export01/manifest.json",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "5c94588706c54c8b8803e03971a18cc917aea754e31e7a9e1359f9c80b7021fd"
+    },
+    {
+      "bytes": 23793,
+      "git_blob": "66716a520760ecb9789138307f8b5a5fcbad36e4",
+      "mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export01/corpus-export-producer.json",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "0e7e2dd99fd75f24156188a29d5e652a71bf3225ba5ff078badda261eb843591"
+    },
+    {
+      "bytes": 24519,
+      "git_blob": "6f02cf8116f26c97f05ba780776c2feb3ccd67c8",
+      "mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validate01/corpus-original-bound-validation.json",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "12dba1c3648d87defb589f1a08bb7eb6b4d317986d4ee2eb785745af7be334ba"
+    },
+    {
+      "bytes": 71971,
+      "git_blob": "06e4dbc2e7f8954985317ebaeaac7a2084411ed4",
+      "mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/qualification-independent-review-v01.json",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "e80d070045932ea8c130a5386882473f0c7cb1372cf66e366c165bdbd6dc76b2"
+    },
+    {
+      "bytes": 50031,
+      "git_blob": "a6de5602bce8579a0f24eee7d8fd38c01dd028c1",
+      "mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/export-independent-metadata-review-v01.json",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "438c149e55280b88de8788a8d886fc7ea3e0d0e187791a52c23ac7c789a44aa5"
+    },
+    {
+      "bytes": 49262,
+      "git_blob": "6d1b891f309f71ce20c295f6baf4b911745489ea",
+      "mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-primary-corpus-export-20261015/validation-independent-metadata-review-v01.json",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "26b76507349c80f43d9b1e1698e18c78cadd8b055451ff8de52edf797db3a1ed"
+    },
+    {
+      "bytes": 43244,
+      "git_blob": "d5b28d4cb59171886cea89776a12eb25b27bd7df",
+      "mode": "100644",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "9762f1efe9354a19299307f46ba72c2e14e953295e1a2f0ed965816f109b6b6a"
+    },
+    {
+      "bytes": 38815,
+      "git_blob": "4bed049d18ee75ca45159c05daf87f74ae55f493",
+      "mode": "100644",
+      "path": "tests/unit/logic/autoformal/test_legal_primary_graph_export.py",
+      "revision": "38b70060af59c95f62299d7052b2e61a1f8b5162",
+      "sha256": "7b1aa14eccb77baa480529cc50bc100d64fec7e276349bf1df31e2370a9c27e6"
+    }
+  ],
+  "schema": "legal-ir-upstream-publication-reconciliation/v1",
+  "source_namespace_and_plan": {
+    "completed_milestone": "Complete selected original-primary candidate transport and separately frozen original-bound consumer replay, not complete USCode formalization.",
+    "next_reuse": [
+      "PrimarySectionIndex consumes original reconstruction candidate JSONL/report, not canonical export Parquet or lineage.",
+      "Reuse legal_span_section_bridge and legal_source_graph_proposals.required_primary_artifacts with independently pinned original record_json commitments.",
+      "Bind primary selection/export pins and original physical shard/row/custody to exact source document/version/acquisition/coordinate/interval and existing candidate/review-subject pins.",
+      "Keep primary entry_cid, canonical exported record hash, candidate graph-node CID and physical sampled occurrence identity distinct.",
+      "Reuse completed retained560-subject unsigned correspondence; do not reinterpret the legacy128-row flat-span bridge as that API."
+    ],
+    "remaining": [
+      "Historical flat-cache lineage and1,722,395 endpointless-edge occurrence multiplicity are not repaired by this selected-primary export.",
+      "Primary-to-official-source and primary-to-semantic-candidate correspondence remain unqualified.",
+      "Authenticated exposure, genuine legal/formal review, applicability, training gold and native Lean admission remain separate gates."
+    ]
+  },
+  "status": "metadata-survey-complete"
+}

@@ -1,0 +1,182 @@
+{
+  "ast_method_changes": {
+    "AdaptiveModalAutoencoder": [
+      "train_generalizable_projection"
+    ],
+    "ModalAutoencoderTrainingState": []
+  },
+  "authority": {
+    "gold_admitted": false,
+    "legal_meaning_verified": false,
+    "model_promoted": false,
+    "postmerge_qualified": false,
+    "proof_admitted": false,
+    "review_performed": false,
+    "semantic_equivalence": false
+  },
+  "comparison_base": "0ae59458167b3438bc4d112d0ffb3bf63a7f30c0",
+  "compatibility": [
+    {
+      "assessment": "No concrete break",
+      "details": "Published core changes import the generic helper and add optional train_generalizable_projection observations. Exact constructor, scalar instance initialization, _legal_ir_view_logits_for, dynamic-support readout, feature extraction, target cache priming and invalidation methods are AST-identical. All40 state methods are AST-identical. Strict model/state type checks, clone isolation, state identity/schema and unknown-label policy remain supported.",
+      "scope": "Strict adapter ABI"
+    },
+    {
+      "assessment": "No concrete break",
+      "details": "Full historical constructor signature remains unchanged. Supplied-target payload, TargetSnapshotConfig/TargetBundle owner objects and actual seven-lane mapper/registry objects are unchanged. Retained target hydration, fixed-first isolated readout and separately identified existing clamped readout therefore retain the inspected contracts. Historical target producer configuration remains historical; no new compilation or identity rewrite is implied.",
+      "scope": "Retained probe ABI"
+    },
+    {
+      "assessment": "Fresh exact qualification required",
+      "details": "modal_autoencoder.py has a new body hash and imports modal_autoencoder_view_diagnostic.py. Old completed requests remain qualified only for their original source hashes. Merge must be followed by new source inventories/requests including the new helper; future strict reports must record the changed core producer source hash. The strict profile source manifest itself still derives the unchanged multiview/registry lane namespace.",
+      "scope": "Source generation and import dependency"
+    },
+    {
+      "assessment": "Keep schemas separate",
+      "details": "Published FixedViewVocabulary accepts caller-declared generic raw IDs and normalized probability maps, excludes undeclared checkpoint keys and may warm caller caches; it adds optional training before/proposal/final observations. Owned standalone contract derives and pins the actual seven compiler lanes, normalizes bounded target weights, refuses unknown stored view labels, uses isolated cache/state copies and binds compiler context. These are not interchangeable profiles, receipts or coverage/authority claims.",
+      "scope": "Distinct policy"
+    }
+  ],
+  "current_owned_frozen_files": [
+    {
+      "bytes": 27402,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_view_vocabulary_diagnostic.py",
+      "sha256": "71de47401a54d9374691ebd5fe5e50db38a4d741883e12ec1c7fbe4734292104"
+    },
+    {
+      "bytes": 24209,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_vocabulary_diagnostic.py",
+      "sha256": "8b344f6feb6cde3c90598ab4585a7d9e8d8d83a721573d74ce27eb67031947b4"
+    },
+    {
+      "bytes": 32621,
+      "path": "scripts/ops/legal_ir/probe_retained_fixed_view_vocabulary.py",
+      "sha256": "9d0f9f8378c117627625b54845f4eea76c5e0bd6c18c01d308f3769428de7a06"
+    }
+  ],
+  "documentation_caveat": {
+    "claim": "The diagnostic neither consults stale caches nor substitutes a model prior.",
+    "published_path": "docs/autoencoders/fixed_view_vocabulary_diagnostics.md",
+    "qualification": "Generic scoring calls caller _legal_ir_view_logits_for, which reads/warm feature caches and cached compiler target/loss context. The generic helper docstring acknowledges cache use. Preserve the original publication; reconciliation should state the narrower caller-owned cache policy and reserve cache-independent/isolation claims for the strict standalone contract. Optional observer deadline/cache effects are separate from algebraic absence in acceptance metrics."
+  },
+  "future_consolidation": "After exact combined qualification, consider sharing pure log-sum-exp reduction only. Retain explicit profile/namespace/target shape/unknown-label/cache/custody adapters. No schema aliasing, silent receipt migration, unqualified generic hook adoption or consolidation of legal/intent/security/codebase/ui_ux family checkpoints is justified by this review.",
+  "observed_at_utc": "2026-10-15T22:04:32.317406+00:00",
+  "owned_head_observed": "0a4213a5df6503a38f99f1c386d16b61efc56602",
+  "prior_uncommitted_survey": {
+    "bytes": 8370,
+    "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/parallel-observer-reconciliation.json",
+    "prior_dirty_observation_not_rewritten": true,
+    "prior_foreign_head": "74f5d98c8ffff3c284cffddf430091b5fc4c6f8c",
+    "same_four_observed_bodies_now_published": true,
+    "sha256": "493d0134853234d2c5ba1e1944d76044d6cb425cce99bc6a252cacc83ca602f8"
+  },
+  "published_author_qualification_retained_not_reexecuted": {
+    "aggregated_with_owned_tests": false,
+    "independently_rerun_by_this_review": false,
+    "scope": "Published author reports240 tests across six files under explicit_private_pytest_alias_profile/v1, with strict_profile_passed=False. Published matched training/canary observations are attributed historical evidence for that exact dirty generation, not this owned postmerge qualification or current-source training.",
+    "source_generation": {
+      "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+      "python_file_count": 8767,
+      "sha256": "301f5086fe0d0915b045572887c3efe38cdf87ab03027e2fbc6b10ff041f7fc7"
+    },
+    "unit_tests": {
+      "failed": 0,
+      "fixture_profile": "explicit_private_pytest_alias_profile/v1",
+      "full_suite_files": 6,
+      "passed": 240,
+      "pytest_wall_seconds": 3.79,
+      "strict_profile_passed": false
+    }
+  },
+  "published_files": [
+    {
+      "bytes": 1428524,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "4b44bb723709be5b4606d497935b245723231df8ec19b24f1bd329fd8932ad24"
+    },
+    {
+      "bytes": 8430,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_view_diagnostic.py",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "1937169c7d49409b89b00c2b2c9d1d9e955ab3f37f15122931b79be9bb0c36ba"
+    },
+    {
+      "bytes": 10687,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_view_diagnostic.py",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "fea8840b7c020444bf667f8fdeae14a7cba5b0edb4317c4882b2a4e130f08f68"
+    },
+    {
+      "bytes": 4089,
+      "path": "docs/autoencoders/fixed_view_vocabulary_diagnostics.md",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "dd2bac1e73290b44137925dc75bedbbe66425b9b2a358d21e5a1ceb0fae31b80"
+    },
+    {
+      "bytes": 5951,
+      "path": "docs/autoencoders/legal_ir_fixed_view_probe_20261015.md",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "7287333debcba5625f6d14d572e8be1811a97209909b2a0250705ce419131c29"
+    },
+    {
+      "bytes": 14169,
+      "path": "docs/implementation/reports/evidence/legal_ir_fixed_view_probe_20261015.json",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "766a9d87952995a076db9a85062ed3f3443cc3a963264ce89611b158f185c9f8"
+    }
+  ],
+  "recommended_bounded_qualification": {
+    "counts_must_be_confirmed_by_actual_collection_and_junit": true,
+    "expected_combined_tests_if_existing_roster_unchanged": 122,
+    "extra_broad_suite_required_by_this_static_diff": false,
+    "fresh_retained_probe": "Repeat the frozen two-row retained parent/structural probe under new source bindings including the published helper. Keep all19 original asset references and historical target configuration unchanged; compare independently recorded producer/context identities and paired readouts.",
+    "fresh_unit_roster": "Retain the existing three whole selected modules and add the entire published test_modal_autoencoder_view_diagnostic.py module. This directly qualifies strict diagnostic, no-option/rollback and supplied-target behavior together with generic observer proposal capture/target-copy controls.",
+    "incoming_whole_module_authored_functions": 11,
+    "incoming_whole_module_static_cases": 27,
+    "minimal_causal_source_additions": [
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_view_diagnostic.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_view_diagnostic.py"
+    ],
+    "preserve_completed_old_source_attempts": true,
+    "previous_owned_roster_tests": 95,
+    "source_updates": [
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+    ],
+    "unrelated_primary_corpus_export_runtime_not_qualified_by_this_roster": true
+  },
+  "reviewed_published_revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+  "schema": "legal-ir-fixed-view-vocabulary-published-observer-integration-review/v1",
+  "scope_limits": [
+    "Static immutable Git-object/source/AST/metadata review only; no checkout, fetch, ref mutation, runtime product import, test collection, native API, model, solver or compiler execution.",
+    "No postmerge test or retained-probe pass is claimed. Native owner results and durability/release observations must independently qualify the final source generation.",
+    "The published source cohort and inspected objects are finite; neither authored240 nor planned122 counts imply complete installed-package import closure, reviewed legal meaning, holdout performance, proof admission or token savings."
+  ],
+  "status": "no_concrete_static_integration_blocker_fresh_qualification_required",
+  "unchanged_relevant_owner_objects": [
+    {
+      "bytes": 188632,
+      "path": "ipfs_datasets_py/logic/bridge/multiview.py",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa"
+    },
+    {
+      "bytes": 14516,
+      "path": "ipfs_datasets_py/logic/bridge/registry.py",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "267d5065864c6778601fc8ebb23a5b4c57ef74856fc1b1b974b96bf283e47569"
+    },
+    {
+      "bytes": 19728,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b"
+    },
+    {
+      "bytes": 27683,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py",
+      "revision": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+      "sha256": "4553e2feef78f3088750f5442433e05444fa6a04cd4788e2c25a32352f4c4fdb"
+    }
+  ]
+}
