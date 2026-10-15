@@ -1,0 +1,143 @@
+{
+  "capacity": {
+    "administrative_closeout_used": false,
+    "all_four_registered_root_identities_match": true,
+    "audit_performed_global_census": false,
+    "charged_and_outstanding_delta_exactly_original_promise": true,
+    "current_and_both_receipt_limit_bytes": 160000000000,
+    "final_charged_bytes": 129471707670,
+    "full_claim_charged_bytes": 129740143126,
+    "physical_artifact_bytes_freed": 0,
+    "policy": "require_capacity",
+    "receipt_capacity_equations_and_default_limit_pass": true,
+    "released_storage_promise_bytes": 268435456
+  },
+  "limitations": [
+    "The original admission remains a pre-child LeaseTimeoutError with zero tests executed. Releasing its empty storage promise is not runtime qualification.",
+    "The API receipt and selected released row were joined exactly. This audit does not reconstruct historical before/after state of every foreign row while a separate02 run may add records.",
+    "Default capacity/root identities were compared without policy changes, new grants, global root census or recovery of any additional claim.",
+    "Current runner matches its actual frozen request pin; the different reused-original-driver hash is lineage metadata, not current-byte identity.",
+    "No private reservation/lease identities, ledger rows, PIDs, process arguments or signing material are included."
+  ],
+  "method": "Independent standard-library read-only request/API-receipt/current-selected-row/empty-directory/source-Git checks. This auditor invoked no recovery or resource API, test, model, solver or global filesystem census.",
+  "observed_at_utc": "2026-10-15T20:18:48.308607+00:00",
+  "preserved_refusal_audit": {
+    "bytes": 6311,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-source-review-correspondence-20261015/failed-admission-audit-01.json",
+    "sha256": "d3f42c9ad68ae8ca13ad9df0a2ce5e695c36bef45292790525bfe85eeed58513"
+  },
+  "private_execution_receipt_binding": {
+    "bytes": 1709,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-source-review-correspondence-20261015/recovery-admission-01-private-execution.json",
+    "sha256": "6381a4d01d1c9c6ab91de8db92a6c1e396ed5e7bc86983b8f5dbe77581eea09c"
+  },
+  "recovery_runner": {
+    "actual_bytes": 12917,
+    "actual_pinned_sha256": "fb64482360c0fbab5b349a49fe979d10891b95c273402cc768cd5c1401071b3b",
+    "current_runner_claimed_byte_identical_to_original_lineage": false,
+    "current_runner_matches_actual_pin": true,
+    "original_reused_driver_lineage_sha256": "4df5340ceccc564ca559e3e27ddee06e22504a84e41283f2b93bb3094c169215"
+  },
+  "request": {
+    "bytes": 8100,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-source-review-correspondence-20261015/recovery-admission-01-request.json",
+    "sha256": "9e5b33837af24a8b6a53b9db34c3659b44d3f2197504b47d98591794e270f712"
+  },
+  "schema": "legal-ir-source-correspondence-empty-admission-recovery-audit/v1",
+  "selected_recovery": {
+    "administrative_artifact_created": false,
+    "admitted": false,
+    "allow_empty_failed_admission_explicit": true,
+    "api_receipt_exactly_retained_in_current_selected_row": true,
+    "artifact_bytes": 0,
+    "artifacts": 0,
+    "artifacts_durable_asserted": true,
+    "automatic_expiry": false,
+    "controller_api_invoked_returned_and_postconditions_verified": true,
+    "controller_error_type": null,
+    "directory_still_empty_private_owned": true,
+    "failed_execution_promoted": false,
+    "final_attempt_bytes": 0,
+    "native_lease_binding_present": false,
+    "original_path_device_inode_join_exact": true,
+    "outputs_deleted": false,
+    "recorded_child_absent": true,
+    "recorded_prior_children": 0,
+    "request_api_previous_record_current_selected_row_join_exact": true,
+    "status": "released"
+  },
+  "source_proof": {
+    "all_current_and_exact_revision_git_bytes": true,
+    "finite_cohort_not_complete_dynamic_import_closure": true,
+    "pins": [
+      {
+        "bytes": 56829,
+        "path": "ipfs_datasets_py/__init__.py",
+        "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+      },
+      {
+        "bytes": 1775,
+        "path": "ipfs_datasets_py/_router_alias.py",
+        "sha256": "908ecfb1abdb38edbe8da2b3efd89eec88594d97acfd7cb54518ff7ea2b23e20"
+      },
+      {
+        "bytes": 5845,
+        "path": "ipfs_datasets_py/router_deps.py",
+        "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+      },
+      {
+        "bytes": 175,
+        "path": "ipfs_datasets_py/utils/__init__.py",
+        "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+      },
+      {
+        "bytes": 12149,
+        "path": "ipfs_datasets_py/utils/anyio_compat.py",
+        "sha256": "75fe36e8ffb3f8cec2240aa3fd91385493555fba6d573dff1d3c1d6270b58530"
+      },
+      {
+        "bytes": 957,
+        "path": "ipfs_datasets_py/optimizers/__init__.py",
+        "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+      },
+      {
+        "bytes": 69336,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+        "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+      },
+      {
+        "bytes": 13056,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+        "sha256": "2f3cbbeaac77ca71531b4f844ef522d909677f3ee78a6d6d21412299d9cddb8c"
+      },
+      {
+        "bytes": 40999,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+        "sha256": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed"
+      },
+      {
+        "bytes": 17545,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py",
+        "sha256": "e19dbd913e30c6960d4a848bc2b2f15236944e55bc7718598e047fbdf664f18d"
+      },
+      {
+        "bytes": 121503,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+        "sha256": "7c889bc858ff092e18bd2e97ff5a6407973e226eae33cddc9e5eef1d21f35986"
+      },
+      {
+        "bytes": 53075,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+        "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+      },
+      {
+        "bytes": 15543,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+        "sha256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633"
+      }
+    ],
+    "source_pin_count": 13,
+    "source_revision": "6a435a7b1406afe772a7db72d214c2375248b7b0"
+  },
+  "status": "verified_selected_empty_recovery"
+}

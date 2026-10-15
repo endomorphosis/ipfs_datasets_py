@@ -204,3 +204,17 @@ schema/version/decoder-task checkpoints and parallel 8D, 384D and 768D paths.
 Reuse compatible retained source assets, embeddings, weights and lineage.
 This integration runs no model, encoder, training job, actual Lean process or
 Hub publication and claims no decoder improvement or new gold.
+
+The successor [source/review correspondence integration](legal_source_definition_review_correspondence_integration_20261015.md)
+now implements the narrow unsigned link proposed above and adopts the parallel
+[bounded V2 engineering-build adapter](legal_corpus_definition_use_build_v2.md).
+Its bounded native qualification passed 296 cases across nine complete modules
+with 213 unchanged declared source pins and completed durability/release; that
+scope is recorded separately.
+The preparation-only and missing-adapter statements in this guide describe
+this earlier contribution and its completed attempt03, not the newer adapter.
+Attributed retained FOL/TDFOL build observations are independently rehashed in
+the successor's evidence audit, without a current compiler rerun or inferred
+six-field owned-validation closeout. The original preparation remains immutable
+with false admission eligibility; source/exposure authentication, actual meaning
+review and statutory gold remain separate requirements.

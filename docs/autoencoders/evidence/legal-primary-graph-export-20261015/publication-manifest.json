@@ -163,6 +163,12 @@
       "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/storage-observation-v02.json"
     },
     {
+      "bytes": 35723,
+      "path": "upstream-reconciliation-v02.json",
+      "sha256": "5236478d7dd062a2b8ff56012b81f6835be0f268c6785cddfa2c080864b5b4f4",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/upstream-reconciliation-v02.json"
+    },
+    {
       "bytes": 25586,
       "path": "upstream-reconciliation.json",
       "sha256": "592a3a382f16a2f03c7d4e6d90f95fc43d0d2ba9c533c6c5ccfad14f034c1ae9",
@@ -181,7 +187,8 @@
       "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/validation-request-v02.json"
     }
   ],
-  "integrated_main": "1b63e750ac3bee68b6f94c022aa4d4132f51d8a0",
+  "initial_integrated_main": "1b63e750ac3bee68b6f94c022aa4d4132f51d8a0",
+  "integrated_main": "95bf722c058ce6b9ba97c784d5914e6b664f7860",
   "limitations": [
     "Absolute-path drivers and frozen requests are retained evidence, not portable grants. A new run needs a newly frozen request and actual native admission.",
     "Reviewer authored the new export test module; this is a separate stdlib metadata recount, not blind test design or statutory review.",
@@ -190,8 +197,14 @@
     "Source hashes and checked buffers do not authenticate third-party distributions; native supervision remains cooperative and sampled.",
     "Quarantine and original-primary lineage do not establish historical flat-cache physical occurrence correspondence or multiplicity."
   ],
+  "post_PR_reconciliation_at_utc": "2026-10-15T20:42:57.699835+00:00",
+  "previous_publication_manifest": {
+    "commit": "924ae30575cc4fabff0fb4c72550023864911b93",
+    "sha256": "5a8c67ff6ede586344d69accde675d1cf520ee7efa81ba39100bd749fb24a4c4"
+  },
   "publication_scope": "Exact copies of selected native metadata and qualification/recovery drivers; no fixture Parquet, reconstruction or original corpus body copied into Git. Manifest excludes itself.",
   "qualification": {
+    "both_incoming_V2_adapters_and_correspondence_executed_by_this_run": false,
     "citation_reader_cases": 38,
     "distinct_cases": 160,
     "executed_checked_product_origins": 57,
@@ -218,14 +231,14 @@
       "sha256": "5d96b765060ec9963d7bfd4ef5cf966c58fbb0948b1a0c67549733f2f1f097b2"
     },
     {
-      "bytes": 15488,
+      "bytes": 16177,
       "path": "docs/autoencoders/legal_primary_graph_export.md",
-      "sha256": "c13e98783053d702b5c9f56a12583594341d33e67d8a1432ed476819abadf24a"
+      "sha256": "4d99fb334cbe6ca859e2e93d9415f2b435e5ece9e34d33613e703f4f22e12bb7"
     },
     {
-      "bytes": 59875,
+      "bytes": 63536,
       "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
-      "sha256": "f042ae2598901b9cd8e1aadaebc91e694b8e764524b7f9fd119f18ec9b59ebfc"
+      "sha256": "2b50ef46f7d532a99292f027210a1705747411e3a62bb9510ef07cd83680e762"
     },
     {
       "bytes": 10246,

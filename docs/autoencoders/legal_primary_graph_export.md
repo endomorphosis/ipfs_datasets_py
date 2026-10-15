@@ -252,6 +252,14 @@ executing product code or reopening fixture payloads. The
 [upstream reconciliation](evidence/legal-primary-graph-export-20261015/upstream-reconciliation.json)
 preserves the parallel V2 definition/use adapter while confirming all 80
 qualification pins unchanged. That incoming adapter was not executed by this run.
+Main then added the unsigned sampled-source/review correspondence and a separate
+V2 engineering-build adapter. The [second reconciliation](evidence/legal-primary-graph-export-20261015/upstream-reconciliation-v02.json)
+preserves 31 incoming file bodies exactly, combines the comprehensive plan,
+and again verifies the same 80 pins. The two build owners have distinct profiles,
+inputs and receipt fields despite a shared schema name. Neither incoming
+contribution was executed by this qualification, and their counts are not added
+to its 160 cases. The unsigned definition-only correspondence does not establish
+primary-entry-to-source/candidate lineage or authenticated semantic agreement.
 The [publication manifest](evidence/legal-primary-graph-export-20261015/publication-manifest.json)
 binds the selected evidence copies. Absolute-path drivers and requests are
 historical evidence; another run needs a newly frozen request and admission.

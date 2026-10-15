@@ -1,0 +1,329 @@
+{
+  "authority": {
+    "actual_560_subject_source_replay_performed": false,
+    "actual_Lean_process_run_by_this_increment": false,
+    "actual_legal_or_formal_review_performed": false,
+    "formal_corpus_or_model_promoted": false,
+    "model_inference_or_fit_performed": false,
+    "semantic_agreement_established": false,
+    "source_exposure_authenticated": false,
+    "statutory_graph_admitted": false,
+    "training_gold_admitted": false
+  },
+  "concurrent_main_merge_commit": "d5709e1c4777ad069abe61c6895e518076525afd",
+  "current_qualification": {
+    "all_new_cases_included_in_total": true,
+    "attempt": "02",
+    "complete_selected_modules": 9,
+    "core_cases": 257,
+    "distinct_passing_cases": 296,
+    "duplicate_case_ids": 0,
+    "errors": 0,
+    "execution": {
+      "bytes": 1106,
+      "path": "attempt02-execution.json",
+      "sha256": "12b6327ddf5919827c6a1a60137f02839d5a1511708185baf682ae6af0287332"
+    },
+    "failures": 0,
+    "independent_audit": {
+      "bytes": 23080,
+      "path": "final-audit.json",
+      "sha256": "f1f0873e1ec2c1373d1617ddf2cca5e2a0a8fa0419e8cf8a697d525d5a340f9a"
+    },
+    "junit": {
+      "bytes": 56311,
+      "path": "attempt02-junit.xml",
+      "sha256": "77b34762556f9ae16fa533da7fc000fc6abaa50f929172847b49bebc747e2265"
+    },
+    "junit_suite_seconds": 132.044,
+    "module_counts": {
+      "tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py": 13,
+      "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py": 51,
+      "tests/unit/logic/autoformal/test_definition_use_v2_build_exchange.py": 3,
+      "tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py": 35,
+      "tests/unit/logic/autoformal/test_legal_source_sampling.py": 29,
+      "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py": 59,
+      "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py": 36,
+      "tests/unit/logic/autoformal/test_legal_source_sampling_review.py": 47,
+      "tests/unit/logic/autoformal/test_legal_statutory_context_v2.py": 23
+    },
+    "native_execution_elapsed_seconds": 172.5561812191736,
+    "new_correspondence_cases": 36,
+    "new_simulated_build_readback_cases": 3,
+    "nominal_count_correction": {
+      "actual": 296,
+      "cause": "Selected complete test_legal_statutory_context_v2 module has23 cases rather than the estimated33; sources and all9 target paths remained unchanged.",
+      "core_cases": 257,
+      "nominal_prelaunch_estimate": 306,
+      "removed_or_shortened_target_claim": false
+    },
+    "result": {
+      "bytes": 1278,
+      "path": "attempt02-result.json",
+      "sha256": "113aa5cfcec6bcd3ea444f4e1e2e4a88352fc7ffd68d57c99d129164ab7f0bda"
+    },
+    "skips": 0,
+    "source_inventory_is_complete_dynamic_import_closure": false,
+    "source_pins": 213,
+    "stdout_summary_seconds": 132.04
+  },
+  "earlier_or_incoming_qualifications_added_to_current_case_total": false,
+  "executed_precommit_checkout_head": "8c79995d781c4d964cdcc1af08cdc34f98b3d57c",
+  "failed_admission": {
+    "CPU_or_capacity_cause_inferred": false,
+    "actual_tests_run": 0,
+    "artificial_administrative_attempt_artifact_created": false,
+    "attempt": "01",
+    "capacity_policy": "require_capacity",
+    "exact_stderr": {
+      "bytes": 1724,
+      "path": "scheduler-refusal-01.stderr.txt",
+      "sha256": "12794758977e3cadfa5c417becf7979961bc61aa704ee9a022f1ae5c98b37450"
+    },
+    "existing_qualified_empty_recovery_API_used": true,
+    "failed_result_promoted": false,
+    "failure": "LeaseTimeoutError during owner.open native grant acquisition",
+    "physical_artifact_bytes_deleted": 0,
+    "productive_child_started": false,
+    "recovery_audit": {
+      "bytes": 6694,
+      "path": "recovery-admission-01-audit.json",
+      "sha256": "5ae7f684548524579d571df5b2bb4d4a325360672bf00951e5360eab8253c823"
+    },
+    "refusal_audit": {
+      "bytes": 6311,
+      "path": "admission-refusal-01-audit.json",
+      "sha256": "d3f42c9ad68ae8ca13ad9df0a2ce5e695c36bef45292790525bfe85eeed58513"
+    },
+    "released_reserved_promise_bytes": 268435456,
+    "retained_attempt_files": 0,
+    "successful_result_or_JUnit_created": false
+  },
+  "implementation_review": {
+    "bytes": 6096,
+    "path": "implementation-review.json",
+    "sha256": "517d3abc5c11b2cc11ba4fbbab67bba20dbe0cc996e12a7187a609d0c02dde4c"
+  },
+  "incoming_separate_native_executor": {
+    "adopted_build_profile": "bounded-v2-definition-use-conditional-build/v1",
+    "contracts_aliased_or_migrated": false,
+    "exact_owner_profile_producer_and_closed_contract_required": true,
+    "included_in_current_runtime_qualification": false,
+    "incoming_native_profile": "replayed-v2-definition-use-conditional-native-build/v1",
+    "original_commit": "1b63e750ac3bee68b6f94c022aa4d4132f51d8a0",
+    "profile_comparison": "execution-profile-reconciliation.json",
+    "reconciliation": {
+      "bytes": 1972,
+      "path": "upstream-reconciliation.json",
+      "sha256": "c42f5b445334dcb8ca9afe31bcc53cdbfea38c293e9e02d0e2ecb2b11a318451"
+    },
+    "schema_only_dispatch_qualified": false,
+    "shared_schema_string": "legal-corpus-v2-definition-use-native-build/v1",
+    "three_incoming_files_preserved": true
+  },
+  "native_closeout": {
+    "cleanup_error": null,
+    "complete_files_including_durability_receipt": 67,
+    "durability_original": {
+      "bytes": 17537,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-source-review-correspondence-20261015-02/logs/validation-durability.json",
+      "sha256": "85654132a991e96bd65adac6c344544f9fdbcdbd19e9f8c44480ee2a3f5d9fc5"
+    },
+    "final_attempt_bytes": 6539742,
+    "launcher_exit_code": 0,
+    "native_lease_absent_at_independent_audit": true,
+    "public_durability_projection": {
+      "bytes": 22394,
+      "path": "attempt02-durability-projection.json",
+      "sha256": "86f03998a5975d14891fe3ade95e1066478b8012e8d9b90d31472dfade0c71cd"
+    },
+    "scope": "Existing sampled cooperative process-group and regular-file owned-attempt profile; no arbitrary-descendant filesystem containment.",
+    "sealed_payload_bytes": 6522205,
+    "sealed_regular_files": 66,
+    "selected_storage_status": "released",
+    "terminal_observation": {
+      "bytes": 810,
+      "path": "native-closeout-observation.json",
+      "sha256": "355d6a673f01f99f2ff04cc879af107f16c30dc1e5a4917d7efdb24e4cbcc35c"
+    },
+    "terminal_observation_is_selected_transcription_not_raw_capture": true
+  },
+  "new_contract": {
+    "aggregate_input_bytes_max": 134217728,
+    "all_authority_flags_false": true,
+    "all_original_inputs_external_and_independently_pinned": true,
+    "canonical_hashes_do_not_replace_original_transport_hashes": true,
+    "evaluation_gold_mask": 0,
+    "existing_binding_and_review_owners_reused": true,
+    "existing_candidate_graph_subject_manifest_and_signing_domain_unchanged": true,
+    "global_and_per_occurrence_role_order_preserved": true,
+    "original_report_transport_required_for_exact_same_candidate": true,
+    "output_record_bytes_max": 1048576,
+    "profile": "unsigned-exact-v2-definition-source-review-subject-link/v1",
+    "review_assessment_created": false,
+    "schema": "legal-source-sampling-definition-review-correspondence/v1",
+    "selected_and_unselected_population_and_parent_references_preserved": true,
+    "training_mask": 0,
+    "unsigned": true
+  },
+  "parallel_build_contribution": {
+    "adopted_commit": "8c79995d781c4d964cdcc1af08cdc34f98b3d57c",
+    "complete_authored_module_excluded_from_strict_native_roster": true,
+    "current_build_cases_use_marked_fake_artifacts": true,
+    "exclusion_reason": "Deliberate persistent symlink control; no parameter filtering or whole-module native qualification is claimed.",
+    "historical_authored_cases_use_simulated_runner": true,
+    "historical_authored_functional_cases": 59,
+    "historical_processes_independently_reexecuted_or_authenticated": false,
+    "historical_unit_xml": {
+      "bytes": 12358,
+      "path": "historical-build-59-junit.xml",
+      "sha256": "6e125e1aec086f54e33fbcff42a73e058402c59794d657acf7ed79efd6eeee11"
+    },
+    "new_real_compiler_invocations": 0,
+    "original_commit": "d00ace8bd0ac96c30cf4a4e12b1d442876390539",
+    "original_three_files_preserved": true,
+    "retained_author_native_FOL_and_TDFOL_examples": {
+      "bytes": 16765,
+      "path": "parallel-native-build-evidence-audit.json",
+      "sha256": "aa11dd28676791fb9166175f8a3c5b77f38dcd0e64e0ea5311f6f7946f37c258"
+    }
+  },
+  "qualified_implementation_commit": "fafafcf9f09bd2b5e437b65ce2975e7c51778d34",
+  "remaining_acceptance": [
+    "Replay retained actual560-subject source inputs through this exact correspondence owner under a newly frozen owned request; preserve original evidence and producer generations.",
+    "Obtain actual independent source-first legal/formal meaning, applicability and exposure evidence for a definition, operative norm/use and a second use; define downstream reviewed-target eligibility separately.",
+    "Repair graph-cache endpoint identity and occurrence lineage from verified original bodies with complete-population reconciliation.",
+    "Keep separately versioned native execution profiles and receipt contracts explicit; any consolidation must qualify combined binary-intake, lifecycle, executed-input and historical-readback requirements.",
+    "Train/evaluate separate8D/384D/768D family/schema/task decoders only against appropriately screened retained targets, with matched evaluation before teacher promotion."
+  ],
+  "schema": "legal-ir-source-review-correspondence-integration/v1",
+  "simulated_build_transport": {
+    "cases": 3,
+    "fake_compiled_artifacts_verified": 17,
+    "historical_author_native_examples_are_separate_evidence": true,
+    "new_real_compiler_invocations": 0,
+    "saved_build_receipts": [
+      {
+        "actual_compiler_invocation_claim": false,
+        "admission_build_eligible": false,
+        "engineering_build_only": true,
+        "fake_compiled_artifacts": 5,
+        "installed_fake_binary_files_absent_at_readback": true,
+        "observations_explicitly_authored_simulation": true,
+        "proof_authority": false,
+        "receipt_sha256": "56ec4cdcca5e0846c036437fe223ed32221caa176b678bf21de2e4d51a36f297",
+        "semantic_authority_flags_false": true,
+        "simulated_build_passed": false
+      },
+      {
+        "actual_compiler_invocation_claim": false,
+        "admission_build_eligible": false,
+        "engineering_build_only": true,
+        "fake_compiled_artifacts": 6,
+        "installed_fake_binary_files_absent_at_readback": true,
+        "observations_explicitly_authored_simulation": true,
+        "proof_authority": false,
+        "receipt_sha256": "66b0502f82f94fb8f7a610b6cda1390173d7e129065bc0a6a19bc9f63014adf3",
+        "semantic_authority_flags_false": true,
+        "simulated_build_passed": true
+      },
+      {
+        "actual_compiler_invocation_claim": false,
+        "admission_build_eligible": false,
+        "engineering_build_only": true,
+        "fake_compiled_artifacts": 6,
+        "installed_fake_binary_files_absent_at_readback": true,
+        "observations_explicitly_authored_simulation": true,
+        "proof_authority": false,
+        "receipt_sha256": "c786a1d419335e1c7782cd708bb6d3de7a455b4fa364b2119096c4c35e37706f",
+        "semantic_authority_flags_false": true,
+        "simulated_build_passed": true
+      }
+    ]
+  },
+  "source_base_commit": "6a435a7b1406afe772a7db72d214c2375248b7b0",
+  "source_preservation": {
+    "all_six_original_author_files": [
+      {
+        "author_body_exact": true,
+        "bytes": 9848,
+        "index_mode_blob_exact": true,
+        "original_commit": "d00ace8bd0ac96c30cf4a4e12b1d442876390539",
+        "original_mode_blob": "100644 blob c521d75100ff802e354264462c3705b696139bc6",
+        "path": "docs/autoencoders/legal_corpus_definition_use_build_v2.md",
+        "sha256": "db24d817c33610c6da3b99e1799e6737c3c351034c2419f7cd894246e27fee7f"
+      },
+      {
+        "author_body_exact": true,
+        "bytes": 28371,
+        "index_mode_blob_exact": true,
+        "original_commit": "d00ace8bd0ac96c30cf4a4e12b1d442876390539",
+        "original_mode_blob": "100644 blob 5156ad433ba31274639b2ef2abf359f9b18b3272",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_build_v2.py",
+        "sha256": "1b4c03f9af40603f66df3f0e702ddd492a942badd533213e087c5fbf78cd855f"
+      },
+      {
+        "author_body_exact": true,
+        "bytes": 23933,
+        "index_mode_blob_exact": true,
+        "original_commit": "d00ace8bd0ac96c30cf4a4e12b1d442876390539",
+        "original_mode_blob": "100644 blob 7ab6d46d5d6532b4fc579956452c12fe5e7ae59c",
+        "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_build_v2.py",
+        "sha256": "3d26768a4402d4fe5942ab9f370361c8c1513e4c26af8cd03d42ab980eb4b7a6"
+      },
+      {
+        "author_body_exact": true,
+        "bytes": 8773,
+        "index_mode_blob_exact": true,
+        "original_commit": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+        "original_mode_blob": "100644 blob d236320fe037baa723f985317e8760626cea4ff5",
+        "path": "docs/autoencoders/legal_corpus_definition_use_lake_v2.md",
+        "sha256": "59aada044248343ae81583bd88e2ecbab995574fa80017ad72538bc42ec2165c"
+      },
+      {
+        "author_body_exact": true,
+        "bytes": 21600,
+        "index_mode_blob_exact": true,
+        "original_commit": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+        "original_mode_blob": "100644 blob b116b636e06191098e1a9128fadc15cc9ce73374",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+        "sha256": "306ab6481b78db8046e3f4eeae7cb917002c4a50b227204c6d4692123914b47e"
+      },
+      {
+        "author_body_exact": true,
+        "bytes": 23236,
+        "index_mode_blob_exact": true,
+        "original_commit": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+        "original_mode_blob": "100644 blob b5d90f392dfd4cd62926493d80524ae0422b490b",
+        "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py",
+        "sha256": "3f915be198be0d67133d7b07f5ae4c28b6738de94331a7c099c2783d27b0810e"
+      }
+    ],
+    "attempt01_and02_source_roster_budgets_and_policy_identical": true,
+    "changed_paths": [],
+    "currently_matching": 213,
+    "source_cohort_is_complete_dynamic_import_closure": false,
+    "source_pins": 213
+  },
+  "status": "qualified_unsigned_exact_candidate_source_review_correspondence",
+  "unchanged_assets": {
+    "existing_embeddings_or_checkpoints_changed": false,
+    "existing_source_caches_replaced": false,
+    "model_training_started": false,
+    "models_registered_or_uploaded_by_this_increment": false,
+    "parallel_dimensions_preserved": [
+      8,
+      384,
+      768
+    ],
+    "separate_IR_family_schema_version_and_decoder_task_required": true
+  },
+  "unsigned_link_scope": {
+    "all_link_authority_flags_false_and_masks_zero_asserted_by_tests": true,
+    "evidence": "36 passing authored-fixture tests exercise exact existing public source binding and V2 review-subject regeneration, namespace distinctions, strict report transport, all role/context/population mappings, refusals and cold public replay.",
+    "existing_signing_domain_subject_and_manifest_unchanged_asserted_by_tests": true,
+    "new_signature_review_assessment_or_gold_created_claim": false,
+    "retained_link_records_available_for_independent_rehash": 0,
+    "standalone_actual_560_subject_replay_claim": false
+  }
+}

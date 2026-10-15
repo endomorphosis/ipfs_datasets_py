@@ -1,0 +1,291 @@
+{
+  "adopted_commit": "8c79995d781c4d964cdcc1af08cdc34f98b3d57c",
+  "author_files_preserved": [
+    {
+      "bytes": 28371,
+      "mode_blob": "100644 blob 5156ad433ba31274639b2ef2abf359f9b18b3272",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_build_v2.py",
+      "sha256": "1b4c03f9af40603f66df3f0e702ddd492a942badd533213e087c5fbf78cd855f"
+    },
+    {
+      "bytes": 23933,
+      "mode_blob": "100644 blob 7ab6d46d5d6532b4fc579956452c12fe5e7ae59c",
+      "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_build_v2.py",
+      "sha256": "3d26768a4402d4fe5942ab9f370361c8c1513e4c26af8cd03d42ab980eb4b7a6"
+    },
+    {
+      "bytes": 9848,
+      "mode_blob": "100644 blob c521d75100ff802e354264462c3705b696139bc6",
+      "path": "docs/autoencoders/legal_corpus_definition_use_build_v2.md",
+      "sha256": "db24d817c33610c6da3b99e1799e6737c3c351034c2419f7cd894246e27fee7f"
+    }
+  ],
+  "authored_cases_use_simulated_runner": true,
+  "authored_functional_cases": 59,
+  "exclusion_reason": "Complete authored module has a persistent deliberate symlink refusal control.",
+  "historical_native_examples": [
+    {
+      "admission_build_eligible": false,
+      "all_checked_files": [
+        {
+          "bytes": 1431,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/project/LegalCorpusV2/Alias57bfdeb8de4ad2f64c0f2c4d95b2c53d23c491c3841785c5a16531655679ef98.lean",
+          "sha256": "6b71cbf0722e7d098fcfb45818b009b1ba8a08c26e3bc119a25319426d68ec01"
+        },
+        {
+          "bytes": 748,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/project/LegalCorpusV2/Definition148bfcdd6f1be3a60522f8fb8c6e88eb69c6e0a4dcb684b1a54bb62c84f05658.lean",
+          "sha256": "a19566e3a6a78aa0196122dec0dd2094f3ba15a57ea8a3e672501e5442a1a962"
+        },
+        {
+          "bytes": 984,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/project/LegalCorpusV2/Definitionab63fd6aea6336681a692865747ef12ccd6c519b5f0695c724af18f13a8f7c5b.lean",
+          "sha256": "f69ef6185d712aa1acfb0112d51e0e8fc4ba6094bfa5518b9cbfcec5b5eb72ab"
+        },
+        {
+          "bytes": 2585,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/project/LegalCorpusV2/Jointe58fa67c26115c8f371f1ce70e629daf1d5c9d1700a00d65173145287b8ac3b6.lean",
+          "sha256": "f57ee515edb1dd40b0ead25631fe89ae5835ef522453a35f7ade74b7ef469db5"
+        },
+        {
+          "bytes": 1262,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/project/LegalCorpusV2/Prelude.lean",
+          "sha256": "b5e04902f046fba4fbdf2b8f311058021181b8db305d58fb00bb1283ccdda717"
+        },
+        {
+          "bytes": 91,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/project/LegalCorpusV2.lean",
+          "sha256": "e4955e97c00be740c5da7a5d64204d2adce68b02c124ea2379f32f5931128243"
+        },
+        {
+          "bytes": 254984,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/project/corpus-manifest.json",
+          "sha256": "a16d23a665e7e73f5be881c055ee240f2d4eb16aa4973fca438a6820e0042870"
+        },
+        {
+          "bytes": 113,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/project/lakefile.toml",
+          "sha256": "6a3f343d765843f03960382e98dbc5746e5bc0f1be9f602e6936d24ca2f37f85"
+        },
+        {
+          "bytes": 25,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/project/lean-toolchain",
+          "sha256": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+        },
+        {
+          "bytes": 1781,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/project/v2-input-bindings.json",
+          "sha256": "0e7c12717807720ad2e317c6aeb3ef6b5a579660b4da0e8b449f9906c150f570"
+        },
+        {
+          "bytes": 12208,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/compiled/LegalCorpusV2/Alias57bfdeb8de4ad2f64c0f2c4d95b2c53d23c491c3841785c5a16531655679ef98.olean",
+          "sha256": "78ae89b47dbca4f000e19fea28d1a0bb3a75cd57fe6bb532fddc1ebd3407ff10"
+        },
+        {
+          "bytes": 8120,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/compiled/LegalCorpusV2/Definition148bfcdd6f1be3a60522f8fb8c6e88eb69c6e0a4dcb684b1a54bb62c84f05658.olean",
+          "sha256": "745c94506d63bf667df0eebae5aa057616d92a59739513800ec258577b089a57"
+        },
+        {
+          "bytes": 8824,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/compiled/LegalCorpusV2/Definitionab63fd6aea6336681a692865747ef12ccd6c519b5f0695c724af18f13a8f7c5b.olean",
+          "sha256": "b35fcf7323eef082c4abfd94f12d751f2f58afc4609d9a2d5abb9769f8bb67ee"
+        },
+        {
+          "bytes": 20168,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/compiled/LegalCorpusV2/Jointe58fa67c26115c8f371f1ce70e629daf1d5c9d1700a00d65173145287b8ac3b6.olean",
+          "sha256": "38600acce17e11111ef972500bad97eb30f5ee67dbac2391d12ae915abd57530"
+        },
+        {
+          "bytes": 106328,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/compiled/LegalCorpusV2/Prelude.olean",
+          "sha256": "81d959c939cc560aa80fcd619d9a3753641b32b774894dba1c2223ea3808341d"
+        },
+        {
+          "bytes": 1648,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/compiled/LegalCorpusV2.olean",
+          "sha256": "677ec71b5a499f325de6f1c92f7d09d088fbf01e2c303cc461ea42016702d86a"
+        }
+      ],
+      "engineering_build_only": true,
+      "evidence_type": "Author-retained actual native observations, independently rehashed here; not a current native rerun or independent proof that historical processes ran.",
+      "execution_returncode": 0,
+      "execution_runtime": "native",
+      "family": "fol",
+      "manifest": {
+        "bytes": 28134,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/native-integration-manifest-v01.json",
+        "sha256": "e3595bcb2404ad66d370861572c90fdab6cd4f44c6784df00643ac92c0e143fb"
+      },
+      "manifest_simulation_only": false,
+      "receipt": {
+        "bytes": 14560,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-integration-20261015-01/authored-native-build-01/build-receipt.json",
+        "sha256": "58bba5bd53fbdc7869b39738ddcffc3a287657604648d84b3c3f7e0cdc0ff78d"
+      },
+      "retained_compiled_bytes": 157296,
+      "retained_modules": 6,
+      "theorem_axiom_dependencies": {
+        "LegalCorpusV2.Alias57bfdeb8de4ad2f64c0f2c4d95b2c53d23c491c3841785c5a16531655679ef98.consumer_predicate_iff_donor_body": [],
+        "LegalCorpusV2.Jointe58fa67c26115c8f371f1ce70e629daf1d5c9d1700a00d65173145287b8ac3b6.joint_matches_original": [],
+        "LegalCorpusV2.Jointe58fa67c26115c8f371f1ce70e629daf1d5c9d1700a00d65173145287b8ac3b6.joint_of_components": []
+      },
+      "toolchain_library_closure_verified": false
+    },
+    {
+      "admission_build_eligible": false,
+      "all_checked_files": [
+        {
+          "bytes": 1431,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/project/LegalCorpusV2/Alias473e82630f475676b492aa0470b978439e685656f7774971c6f37c349b36766a.lean",
+          "sha256": "c91a434243efae7bc25c7e18f0472587c1223bfe67c4bd40967311dd319567ee"
+        },
+        {
+          "bytes": 984,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/project/LegalCorpusV2/Definition17f58b1d1bd1c931a7107c233c91d9aeff0e6a0e67b66df306fd2736824ec3c6.lean",
+          "sha256": "5ca7f47c3ff4e3a6b35c29dfced99b7401cb2052bf921336a49c33be3854de92"
+        },
+        {
+          "bytes": 748,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/project/LegalCorpusV2/Definitionaf28588c45b268c42be765aa35a0129e0c182077350546119bbd5905b76a23e2.lean",
+          "sha256": "3fb0ee09bc0014f039cd1d1e7eb30849ccbeeef1d5666c6bbbe0cdd56b58e416"
+        },
+        {
+          "bytes": 2585,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/project/LegalCorpusV2/Joint5dc50288136e686215f35586b685f0bf45778544d668a267e2ebb1e06a5e4b1e.lean",
+          "sha256": "a733dde73cdd68401d1da5493065f8a5d15553c12292c5783b9b7bc155c14bda"
+        },
+        {
+          "bytes": 1262,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/project/LegalCorpusV2/Prelude.lean",
+          "sha256": "b5e04902f046fba4fbdf2b8f311058021181b8db305d58fb00bb1283ccdda717"
+        },
+        {
+          "bytes": 91,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/project/LegalCorpusV2.lean",
+          "sha256": "e5483be54c2c37654ca2d686138fded619e72744e14d224e4aea9f6dc8bbf843"
+        },
+        {
+          "bytes": 255137,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/project/corpus-manifest.json",
+          "sha256": "aab29db0428c4481cdd845f2f2bddf2a5eacd7423e145b270b63f68a852dcd19"
+        },
+        {
+          "bytes": 113,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/project/lakefile.toml",
+          "sha256": "6a3f343d765843f03960382e98dbc5746e5bc0f1be9f602e6936d24ca2f37f85"
+        },
+        {
+          "bytes": 25,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/project/lean-toolchain",
+          "sha256": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+        },
+        {
+          "bytes": 1781,
+          "kind": "project_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/project/v2-input-bindings.json",
+          "sha256": "4f1f515e4346b60a4bd4270857970f8a11517e68360d51af30a255f19e3e5467"
+        },
+        {
+          "bytes": 12208,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/compiled/LegalCorpusV2/Alias473e82630f475676b492aa0470b978439e685656f7774971c6f37c349b36766a.olean",
+          "sha256": "efa765afff5dd8759de9a56e87d77af336354b95014059a2326321a0201f0fc7"
+        },
+        {
+          "bytes": 8824,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/compiled/LegalCorpusV2/Definition17f58b1d1bd1c931a7107c233c91d9aeff0e6a0e67b66df306fd2736824ec3c6.olean",
+          "sha256": "eb649e7bf07d5d55d16ebdfb1847d400a8035b621fa52540d3e15b5c31065f16"
+        },
+        {
+          "bytes": 8120,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/compiled/LegalCorpusV2/Definitionaf28588c45b268c42be765aa35a0129e0c182077350546119bbd5905b76a23e2.olean",
+          "sha256": "215a3986535e4c5c4e43e3ac10b713ec3f15f1f3c913e307dd53b6b165253d8f"
+        },
+        {
+          "bytes": 20144,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/compiled/LegalCorpusV2/Joint5dc50288136e686215f35586b685f0bf45778544d668a267e2ebb1e06a5e4b1e.olean",
+          "sha256": "7a69b518941b860c8f7e966cf9d70fea2e5c77f353489d46a30f8f8966bedbb8"
+        },
+        {
+          "bytes": 106328,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/compiled/LegalCorpusV2/Prelude.olean",
+          "sha256": "81d959c939cc560aa80fcd619d9a3753641b32b774894dba1c2223ea3808341d"
+        },
+        {
+          "bytes": 1648,
+          "kind": "compiled_files",
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/compiled/LegalCorpusV2.olean",
+          "sha256": "0076bab7abd5ee08b25b791fe591670a7e8678812276f5e9a3e92bd083c091da"
+        }
+      ],
+      "engineering_build_only": true,
+      "evidence_type": "Author-retained actual native observations, independently rehashed here; not a current native rerun or independent proof that historical processes ran.",
+      "execution_returncode": 0,
+      "execution_runtime": "native",
+      "family": "tdfol",
+      "manifest": {
+        "bytes": 9300,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/tdfol-native-integration-manifest-v01.json",
+        "sha256": "bfe787e824870f2cb798ea7f6c2aeab2fba727cee3f4f10279b0d772200d18d4"
+      },
+      "manifest_simulation_only": false,
+      "receipt": {
+        "bytes": 14560,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-tdfol-integration-20261015-01/actual-tdfol-native-build-01/build-receipt.json",
+        "sha256": "780426491b67562df8087d382bf6f9591481b5189b3ef938c95d71b95e6fa01c"
+      },
+      "retained_compiled_bytes": 157272,
+      "retained_modules": 6,
+      "theorem_axiom_dependencies": {
+        "LegalCorpusV2.Alias473e82630f475676b492aa0470b978439e685656f7774971c6f37c349b36766a.consumer_predicate_iff_donor_body": [],
+        "LegalCorpusV2.Joint5dc50288136e686215f35586b685f0bf45778544d668a267e2ebb1e06a5e4b1e.joint_matches_original": [],
+        "LegalCorpusV2.Joint5dc50288136e686215f35586b685f0bf45778544d668a267e2ebb1e06a5e4b1e.joint_of_components": []
+      },
+      "toolchain_library_closure_verified": false
+    }
+  ],
+  "historical_native_processes_independently_reexecuted_or_authenticated": false,
+  "method": "Standard-library read/hash/JSON/XML/Git-object inspection; no product imports, compiler, version probe, test or recovery execution.",
+  "native_six_field_owned_validation_result_inferred": false,
+  "original_contribution": "d00ace8bd0ac96c30cf4a4e12b1d442876390539",
+  "raw_private_process_or_lease_identities_published": false,
+  "schema": "legal-ir-parallel-native-build-evidence-recount/v1",
+  "statutory_reviews_training_gold_or_admissions_added": false,
+  "unit_xml": {
+    "bytes": 12358,
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-v2-native-build-20261015-01/native-build-authored-tests-v01.xml",
+    "sha256": "6e125e1aec086f54e33fbcff42a73e058402c59794d657acf7ed79efd6eeee11"
+  },
+  "whole_authored_module_selected_by_current_strict_native_profile": false
+}

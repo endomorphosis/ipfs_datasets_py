@@ -1,0 +1,13 @@
+{
+  "cleanup_error": null,
+  "final_admitted_field": false,
+  "final_admitted_field_role": "Launcher explicitly emits false authority; this is not the resource-gate outcome.",
+  "launcher_exit_code": 0,
+  "method": "Selected non-identity fields transcribed from actual run_owned_validation terminal result; not a byte-identical terminal capture or independent live-ledger authentication.",
+  "native_lease_cancelled": true,
+  "native_lease_released": true,
+  "record_artifacts_durable_asserted": true,
+  "reservation_status": "released",
+  "result_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-source-review-correspondence-20261015-02/logs/result.json",
+  "schema": "legal-ir-source-review-terminal-closeout-observation/v1"
+}
