@@ -38,3 +38,30 @@ training convergence, or provide a Lean admission. Runtime admission and work
 must be observed separately after restart. See
 [CUDA memory backpressure](legacy_cuda_headroom_backpressure.md) and
 [campaign storage allocation](campaign_storage_allocation.md).
+
+## Concurrent memory reservations
+
+After the task limit was corrected, a concurrent 6144 MiB validation reservation
+exposed the independent memory boundary. The unchanged admission requirement
+was 24922 MiB proof headroom + 6144 MiB other root reservations + 8192 MiB for
+this worker = 39258 MiB. The unit's previous 36 GiB `MemoryHigh` supplied less
+than that amount even before model startup.
+
+The reviewed additional local drop-in is:
+
+```ini
+# ~/.config/systemd/user/legacy-cuda-span-census.service.d/40-native-memory-headroom.conf
+[Service]
+MemoryHigh=48G
+MemoryMax=52G
+```
+
+Its installed SHA256, including two explanatory comment lines, is
+`499ed665b822d13db5bb16d2bd2db09cbc518822299f8a42777552cb254f548e`.
+At installation, host available memory exceeded the 52 GiB hard boundary plus
+the unchanged 24922 MiB proof reserve. Visible ancestors imposed no tighter
+memory boundary. Verify actual `memory.high`, `memory.max`, `pids.max` and usage
+from the live service cgroup after startup; systemd configuration alone is not
+an admission. The native worker allowance remains 8192 MiB, with the existing
+RSS watchdog, five child slots and three CPU slots. This outer kernel margin
+does not increase the model context, CUDA allocator allowance, or native policy.
