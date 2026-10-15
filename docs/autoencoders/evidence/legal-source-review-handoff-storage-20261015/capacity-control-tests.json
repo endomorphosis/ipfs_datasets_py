@@ -1,0 +1,22 @@
+{
+  "evidence": {
+    "capacity-control-tests.stderr.txt": {
+      "bytes": 2144,
+      "sha256": "fa745149849bbe6ff118d35fc2ae2a5f042f59c1de0ae49d5fd9eb784c16ce8e"
+    },
+    "capacity-control-tests.stdout.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "native_source_workload_executed": false,
+  "real_ledger_scheduler_claim_or_corpus_accessed": false,
+  "returncode": 0,
+  "schema": "legal-capacity-diagnostic-control-check/v1",
+  "scope": "detached actual control-function ASTs with synthetic inventory and free-space inputs",
+  "source_sha256": {
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_owned_validation.py": "2d7a250e4c5237d24bf1b9328b059a71854d613a568de55f08c83b8e045e41b4",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_daemon_capacity_diagnostics.py": "1813e4321cf9a6cb0b0d6000a27e291fe555ea759255fcd1d5de388af1e4258c"
+  }
+}

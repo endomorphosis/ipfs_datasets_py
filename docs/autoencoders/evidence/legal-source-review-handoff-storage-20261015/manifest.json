@@ -1,0 +1,95 @@
+{
+  "actual_legal_or_formal_reviews": 0,
+  "files": [
+    {
+      "bytes": 1688,
+      "path": "README.md",
+      "provenance": "authored evidence index",
+      "sha256": "7d6864b622c13440b15e258eaa835eb90092923567a30cc7fb1628cae321a270"
+    },
+    {
+      "bytes": 1157,
+      "path": "admission-refusal-v01.json",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/admission-refusal-v01.json",
+      "sha256": "00789117119a86ad159df057dfc1a6704b97afbd0b9e49c306124a33053bfb53"
+    },
+    {
+      "bytes": 1291,
+      "path": "admission-refusal-v02.json",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/admission-refusal-v02.json",
+      "sha256": "d2d21a255ce8cfa7aee8557af28075a146015730dc8ecda9bea151329733adbe"
+    },
+    {
+      "bytes": 1605,
+      "path": "admission-refusal-v03.json",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/admission-refusal-v03.json",
+      "sha256": "c7991d9c33a288e1ada330a9b95f821bfe3f2125b838f8b263bf05bbc79800fc"
+    },
+    {
+      "bytes": 1359,
+      "path": "capacity-control-tests.json",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/capacity-control-tests.json",
+      "sha256": "0f240863a2568c525c731ddb3e4efb9513c60d1ed0215cdbdb939925830b46ac"
+    },
+    {
+      "bytes": 2144,
+      "path": "capacity-control-tests.stderr.txt",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/capacity-control-tests.stderr.txt",
+      "sha256": "fa745149849bbe6ff118d35fc2ae2a5f042f59c1de0ae49d5fd9eb784c16ce8e"
+    },
+    {
+      "bytes": 0,
+      "path": "capacity-control-tests.stdout.txt",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/capacity-control-tests.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 4992,
+      "path": "capacity-diagnostics-static-review.json",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/capacity-diagnostics-static-review.json",
+      "sha256": "cd0bb15d828a47d27943fe83bab8453df3600b20e88b7563f5acc4f2346598dd"
+    },
+    {
+      "bytes": 7956,
+      "path": "handoff-static-review.json",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/wrapper-static-review-v02.json",
+      "sha256": "253a6c79ece0428dbbf13a9e160e13367757b85487e5f3405f97bb69413846c2"
+    },
+    {
+      "bytes": 40098,
+      "path": "prepare_handoff.py.txt",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/qualify_definition_review_and_prepare_v02.py",
+      "sha256": "4f24a10e97bf38e015dd828c595e984983a83ed720af40c5ba24664747f48235"
+    },
+    {
+      "bytes": 5471,
+      "path": "qualification_helper.py.txt",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/qualify_integration.py",
+      "sha256": "f73b01ccb7c998e75aed92c289dd3e0db2a2fe6b2e017cddc600774349560de1"
+    },
+    {
+      "bytes": 22714,
+      "path": "retained-evidence-inventory.json",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/retained-evidence-inventory.json",
+      "sha256": "efbec383bdd91d86924309c75cf71ab2f3778787329d1d345208588507a4e4ce"
+    },
+    {
+      "bytes": 3192,
+      "path": "storage-capacity-observation-v01.json",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/storage-capacity-observation-v01.json",
+      "sha256": "d60089e53c13ec870b474f41cf9c9e23221f71bf7e337b7921af4a022e3e6a9f"
+    },
+    {
+      "bytes": 44921,
+      "path": "validation-request-v03.json",
+      "retained_source": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/validation-request-v03.json",
+      "sha256": "b5b9cc94f4214cecb1c5697f804d9545778b8f8fe02e49f3678fb2d4f8085900"
+    }
+  ],
+  "main_reconciled": "ece13d02a6f390330a25aca373c86d68eaeba75b",
+  "model_fit_executed": false,
+  "native_lean_build_executed": false,
+  "new_semantic_gold": 0,
+  "preparation_status": "not_executed_native_storage_refused",
+  "schema": "legal-source-review-handoff-storage-evidence/v1"
+}

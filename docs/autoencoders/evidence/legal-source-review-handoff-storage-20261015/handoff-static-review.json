@@ -1,0 +1,153 @@
+{
+  "all_static_checks_passed": true,
+  "frozen_source_inventory": {
+    "added_vs_v01": [
+      "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_definition_v2_review_graph_exchange.py",
+      "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/qualify_definition_review_and_prepare_v02.py"
+    ],
+    "all_current_hashes_match": true,
+    "all_positive_regular_single_link_unaliased_and_at_or_below4MiB": true,
+    "common_source_hash_changes": [],
+    "count": 185,
+    "native_cap256_unchanged": true,
+    "no_product_or_original_probe_edits": true,
+    "original_body_files_not_code_pins": true,
+    "removed_vs_v01": [
+      "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/qualify_definition_review_and_prepare_v01.py"
+    ],
+    "source_map_canonical_sha256": "e592c56851fb5085c56e1a86419b06515a569cdff3b1f84b8f57a68b905e8b7f",
+    "verified_source_bytes": 4065518
+  },
+  "independent_subreview": "A delegated source-only reviewer separately checked the unsigned handoff/template/link/authority delta and found no blocker.",
+  "inherits_v01_source_review": {
+    "bytes": 9948,
+    "path": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/wrapper-static-review.json",
+    "sha256": "28089512dc48b8851804144053f429a4a01b630313a278bae5f7df663250ccf8"
+  },
+  "operations": {
+    "Git_mutations": false,
+    "actual_source_or_export_bodies_opened": false,
+    "model_or_numeric_libraries_imported": false,
+    "network": false,
+    "only_write": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/wrapper-static-review-v02.json",
+    "product_imports": false,
+    "resource_claims": false,
+    "source_edits": false,
+    "tests_helpers_or_probe_executed": false
+  },
+  "persistence_and_failure_scope": {
+    "current_process_model_import_and_loaded_origin_guards_not_universal_child_code_attestation": true,
+    "existing_V2_original_input_context_manifest_subject_disk_replay_unchanged": true,
+    "failures_rethrown_and_no_partial_success_conversion": true,
+    "native_final_inventory_durability_and_subsequent_audit_must_bind_all_new_outputs": true,
+    "native_owner_controls_fresh_admission_deadline_storage_process_cancellation_and_release": true,
+    "new_bundle_and_association_manifest_saved_then_reopened_for_exact_equality": true,
+    "new_templates_and_pending_population_written_exclusively_with_hash_descriptors": true
+  },
+  "request": {
+    "bytes": 44921,
+    "path": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/validation-request-v02.json",
+    "sha256": "0bd3215caba734b2803279accd19a6d89f6606b620a21a076b33dee3e715bd43"
+  },
+  "request_envelope": {
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "memory_mb": 6144,
+    "process_scope": "isolated_process_group",
+    "storage_bytes": 67108864,
+    "timeout_seconds": 900
+  },
+  "schema": "legal-definition-v2-source-first-wrapper-static-review/v1",
+  "scope_limits": [
+    "The physical associations establish bounded custody only, not answer compatibility, legal applicability, meaning equivalence or admission.",
+    "No actual reviewer or human independence/exposure attestation is created. Candidate-AST exposure must be recorded separately.",
+    "Static source review does not establish fresh runtime outcomes, available capacity or resource release; the native owner and derived receipts remain authoritative.",
+    "No retained original source, candidate/context/subject/template output, Parquet or checkpoint body was opened by this reviewer."
+  ],
+  "selected_test_scope": {
+    "complete_modules": 5,
+    "expected_cases_from_identical_published_test_sources": {
+      "test_corpus_definition_review_v2": 51,
+      "test_definition_v2_review_graph_exchange": 2,
+      "test_legal_official_markup_context": 33,
+      "test_legal_source_sampling": 29,
+      "test_legal_source_sampling_review": 47
+    },
+    "expected_total": 162,
+    "fresh_actual_outcomes_not_claimed_by_static_review": true,
+    "published_966_broad_run_not_repeated": true
+  },
+  "six_custody_associations": {
+    "absolute_character_and_UTF8_containment": true,
+    "both_FOL_TDFOL_populations_and_sampler_commitments_equal": true,
+    "derived_associations_have_strictly_smaller_character_interval": true,
+    "exact_bundle_guide_unit_subject_and_V2_physical_anchor_refs_retained": true,
+    "expected_two_full_units_and_four_derived_subspans_from_fixed_geometry": true,
+    "full_character_geometry_requires_complete_original_occurrence_equality": true,
+    "no_historical_parent_alignment_evidence_fabricated": true,
+    "parent_relative_UTF8_byte_slice_equals_child_encoded_text": true,
+    "parent_relative_character_slice_equals_child_span_text": true,
+    "parent_unit_ordinals": [
+      9,
+      13,
+      9,
+      13,
+      13,
+      13
+    ],
+    "schema_equivalence_claimed_false": true,
+    "semantic_attachment_meaning_and_exposure_transfer_explicitly_false": true,
+    "six_links_cover_two_selected_units_without_dropping_other558_pending_units": true,
+    "source_version_cid_view_id_coordinate_system_agreement": true,
+    "strict_six_occurrence_iteration": true,
+    "unique_containing_parent_required_for_every_occurrence": true
+  },
+  "source_comparison": {
+    "all_other_function_class_and_module_statement_ASTs_equal": true,
+    "new_function": "prepare_unsigned_review_handoff",
+    "only_changed_existing_function": "main",
+    "unchanged_helpers_keep_probe_readers_failure_model_origin_snapshot_and_authority_guards": true
+  },
+  "status": "PASS_FOR_FROZEN_V02_REQUEST",
+  "trust_and_human_handoff": {
+    "actual_responses": 0,
+    "actual_reviews": 0,
+    "existing_fixed_signing_domains_unchanged": true,
+    "handoff_README_requires_source_first_target_and_exposure_before_viewing_candidate_interpretations": true,
+    "handoff_is_procedural_guidance_not_technical_reviewer_blinding": true,
+    "no_answer_or_exposure_declaration_copied_to_V2_signed_subject": true,
+    "no_real_source_key_registry_signer_signature_or_assessment_APIs_called": true,
+    "no_semantic_training_gold_graph_admission_or_native_Lean_authority_added": true,
+    "source_first_targets_and_human_exposure_records_explicitly_pending": true,
+    "source_guide_vs_candidate_AST_subject_are_distinct_exposures": true
+  },
+  "unsigned_bundle_and_templates": {
+    "all_guides_and_catalog_and_manifest_false_authority": true,
+    "all_guides_kind_unit_in_source_order": true,
+    "answers_reviewer_identity_and_exposure_declarations_remain_blank": true,
+    "bundle_sampler_and_V2_input_sampler_exactly_equal": true,
+    "candidate_paragraphs": 134,
+    "controls": 426,
+    "fixed_existing_intake_owner_reused": true,
+    "no_requirement_that_regenerated_content_hash_differ_from_historical_hash": true,
+    "old_run_provenance_not_relabelled_as_current_generation": true,
+    "original_descriptor_raw_source_and_full_sampling_pins_replayed": true,
+    "response_population_empty_all560_pending": true,
+    "sealed_bundle_template_hash_placeholder_stays_null": true,
+    "standalone_exported_templates_only_fill_known_external_bundle_hash": true,
+    "subjects": 560,
+    "units": 560,
+    "withheld_contexts": 0,
+    "zero_training_evaluation_masks_blank_status_and_unresolved_guides": true
+  },
+  "v01_wrapper": {
+    "bytes": 30941,
+    "path": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/qualify_definition_review_and_prepare_v01.py",
+    "sha256": "b44c5d62742d094e463cbbaa1b052fd4ba17ff1bd95f528b6e5f0c8d9e766b9a"
+  },
+  "wrapper": {
+    "bytes": 40098,
+    "path": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/qualify_definition_review_and_prepare_v02.py",
+    "sha256": "4f24a10e97bf38e015dd828c595e984983a83ed720af40c5ba24664747f48235"
+  }
+}

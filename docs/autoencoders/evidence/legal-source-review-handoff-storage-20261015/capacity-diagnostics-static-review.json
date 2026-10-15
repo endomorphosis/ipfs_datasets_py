@@ -1,0 +1,71 @@
+{
+  "actual_resource_reads": false,
+  "authority_limits": [
+    "Static review is not a test-run receipt or fresh capacity measurement.",
+    "Historical and new native attempts, actual resource claims and completion outcomes are not inspected or inferred.",
+    "No original corpus, capture, reference, teacher, checkpoint or private source payload bodies read."
+  ],
+  "baseline_head": "ece13d02a6f390330a25aca373c86d68eaeba75b",
+  "checkout": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets",
+  "findings": [
+    {
+      "evidence": "MAX_STORAGE_BYTES remains 160_000_000_000. Refusal remains charged > MAX_STORAGE_BYTES or free < outstanding + additional; equality passes. Observed apparent bytes plus full outstanding nonreleased reservations plus additional request remain unchanged.",
+      "id": "constant-and-boundaries",
+      "status": "PASS"
+    },
+    {
+      "evidence": "AST parity preserves lock/read/account/write ordering, native scheduler lane/policy/acquisition, reservation status transitions, retained failed claims, child attachment, monitoring, durability and explicit release. Refusal still precedes new reservation insertion/write/native acquisition. No new persistent pre-admission artifact, ledger write, capacity bypass, census, cleanup or release path is introduced; existing lock behavior remains unchanged.",
+      "id": "custody-and-scheduler",
+      "status": "PASS"
+    },
+    {
+      "evidence": "DaemonResourceError remains a RuntimeError subclass without a new constructor. Refusal type, message and args remain compatible. Launcher catches that type around one owner.open call, emits diagnostic if eligible, then bare-raises the same exception. Other failures are not relabeled. Formatter catches ordinary formatting/write/flush exceptions so they do not mask original admission refusal.",
+      "id": "same-error",
+      "status": "PASS"
+    },
+    {
+      "evidence": "Snapshot uses only existing local result scalar fields, fixed schema/scope, two flags and two nonnegative deficits; excludes inventory, root paths, reservation IDs, process identities, claims and authority tokens. Capture and property access deepcopy the snapshot. No additional resource observation occurs.",
+      "id": "aggregate-observation",
+      "status": "PASS"
+    },
+    {
+      "evidence": "Formatter accepts exact field set, fixed message/schema/scope, nonnegative integers strictly below 2**63 excluding booleans, exact bool flags and consistent charged/deficit arithmetic. JSON is a single line of at most 4096 UTF-8 bytes. Diagnostic is descriptive and confers no admission or policy authority.",
+      "id": "bounded-stderr",
+      "status": "PASS"
+    },
+    {
+      "evidence": "Stdlib test module extracts actual exception/_account/formatter/open-handler ASTs. All inventory, disk, owner calls and stderr are invented or in memory. Cases cover unchanged cap, separate/combined deficits, both equality boundaries, released-row exclusion, detached private-free snapshot, normal-error absence, exact bounded JSON, malformed field/scalar refusal, distinct error message, unavailable stderr and identical exception re-raise once.",
+      "id": "synthetic-tests",
+      "methods": 15,
+      "status": "PASS_STATIC"
+    }
+  ],
+  "method": {
+    "ast_parity": "Parse only; no reviewed source compilation or execution. Removing new exception property and restoring original capacity-refusal body gives identical resource-module AST. Removing new formatter and flattening the single owner.open handler gives identical launcher AST.",
+    "bounded_reads": "Only three finalized source/test files and their first two HEAD Git baselines.",
+    "independent_subreview": "/root/conditions_rank_counter_f19/v2_dependency_inventory separately read and hashed all three finalized files and reviewed test isolation/coverage; no runtime."
+  },
+  "nonblocking_test_coverage_limits": [
+    "No dedicated invalid schema/scope test, negative numeric test, or stderr.flush failure test; corresponding guards are present."
+  ],
+  "product_edits": false,
+  "reviewer": "/root/conditions_rank_counter_f19",
+  "schema": "legal-capacity-diagnostics-static-review/v1",
+  "scope": "Static source and AST comparison only; no product imports, tests, native resource admission, ledger or fleet reads.",
+  "source_pins": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": {
+      "bytes": 40999,
+      "sha256": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed"
+    },
+    "scripts/ops/legal_ir/run_owned_validation.py": {
+      "bytes": 15958,
+      "sha256": "2d7a250e4c5237d24bf1b9328b059a71854d613a568de55f08c83b8e045e41b4"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_capacity_diagnostics.py": {
+      "bytes": 11459,
+      "sha256": "1813e4321cf9a6cb0b0d6000a27e291fe555ea759255fcd1d5de388af1e4258c"
+    }
+  },
+  "status": "PASS",
+  "tests_executed": false
+}

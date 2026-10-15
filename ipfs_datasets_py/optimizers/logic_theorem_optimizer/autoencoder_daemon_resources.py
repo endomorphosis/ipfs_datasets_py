@@ -52,6 +52,15 @@ _CHARGE_KEY = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:@+-]{0,127}\Z")
 class DaemonResourceError(RuntimeError):
     """Admission, accounting, or explicit release could not be verified."""
 
+    @property
+    def capacity_observation(self):
+        """Return a detached aggregate snapshot, when capacity caused refusal.
+
+        The captured observation has no inventory or reservation records. Each
+        access returns a copy so a diagnostic consumer cannot change it.
+        """
+        return copy.deepcopy(getattr(self, "_capacity_observation", None))
+
 
 def _integer(value, name, *, minimum=1, maximum=None):
     if type(value) is not int or value < minimum or (maximum is not None and value > maximum):
@@ -420,7 +429,19 @@ class DaemonResourceReservation:
                   "limit_bytes": MAX_STORAGE_BYTES, "minimum_filesystem_free_bytes": free,
                   "scope": "named_roots_only_apparent_bytes", "inventory": inventory}
         if charged > MAX_STORAGE_BYTES or free < outstanding + additional:
-            raise DaemonResourceError("storage reservation capacity exceeded")
+            error = DaemonResourceError("storage reservation capacity exceeded")
+            error._capacity_observation = copy.deepcopy({
+                "schema": "daemon-resource-capacity-observation/v1",
+                **{key: result[key] for key in (
+                    "observed_apparent_bytes", "outstanding_full_reservations_bytes",
+                    "additional_requested_bytes", "charged_bytes", "limit_bytes",
+                    "minimum_filesystem_free_bytes", "scope")},
+                "storage_capacity_exceeded": charged > MAX_STORAGE_BYTES,
+                "filesystem_free_insufficient": free < outstanding + additional,
+                "storage_capacity_deficit_bytes": max(0, charged - MAX_STORAGE_BYTES),
+                "filesystem_free_deficit_bytes": max(0, outstanding + additional - free),
+            })
+            raise error
         self._verify_owner_roots()
         return result
 
