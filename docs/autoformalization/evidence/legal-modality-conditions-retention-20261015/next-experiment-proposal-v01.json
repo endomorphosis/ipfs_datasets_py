@@ -1,0 +1,96 @@
+{
+  "USCode_semantic_accuracy": null,
+  "acceptance_unchanged": {
+    "all_gold_permission_modalities": 32,
+    "automatic_default_promotion": false,
+    "full_IR_loss_IDs_allowed_each_scope_and_view": 0,
+    "parent_ablation_comparators": [
+      "N11",
+      "F15"
+    ],
+    "strict_comparators": [
+      "N11",
+      "F15",
+      "F16",
+      "F17"
+    ],
+    "training_raw_and_joint_minimum": 155
+  },
+  "actual_model_calls": 0,
+  "actual_new_training_runs": 0,
+  "checkpoint_JSON_parses": 0,
+  "composition_checkpoint_requirements": [
+    "New closed donor-bound lineage and tensor inventory validator; existing checkpoint metadata is not drop-in compatible.",
+    "F15 protected36/all-presence source identity and exact selected donor states must be authenticated.",
+    "Fresh guarded captures and final validation are required; source disjointness alone does not prove decoded preservation."
+  ],
+  "default_promotion": false,
+  "evidence": [
+    {
+      "bytes": 13410,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/static-composition-feasibility-review-v01.json",
+      "sha256": "ad22313ff275dd9e1ac3d5bfcd1c24d7fdd5a9c4941cd9c3e32a1de244a8aeba"
+    },
+    {
+      "bytes": 5466,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/postfreeze-conditions-error-observation-v01.json",
+      "sha256": "ac5a216f23558754acf98195c38e64c951cacbb4da4e8052d11545e470a6700d"
+    },
+    {
+      "bytes": 5202480,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-result-analysis-v01.json",
+      "sha256": "d35a7c0665534380bae9159f7d2a370f7476ba55a54847ed487006057075823b"
+    }
+  ],
+  "new_Lake_or_logic_family_qualification": false,
+  "primary_results_pending_separate_all_panel_counter": true,
+  "reason": "The fixed F18 six-tensor weighting ablation left complete training IR at154/168 on both routes. A single modality gain did not repair the two conditions-end errors.",
+  "schema": "modality-conditions-retention-next-experiment-proposal/v1",
+  "scientific_success": false,
+  "status": "SOURCE_ONLY_PROPOSAL_NO_NEW_TRAINING_OR_COMPOSITION",
+  "steps": [
+    {
+      "action": "Under a new source-qualified exposed-diagnostic contract, replay fixed greedy/joint decoders on predeclared head combinations. No model calls or weight modification.",
+      "limits": "This is posthoc engineering over previously exposed captures; no heldout or legal semantic claim, automatic selection or default promotion.",
+      "name": "Saved-head composition diagnostic",
+      "order": 1,
+      "variants": [
+        "F15 protected baseline",
+        "F17 actor start/end/query/gate plus F18 modality/conditions readouts and F15 all-presence states",
+        "F17 actor/modality/conditions readouts with F15 all-presence states"
+      ]
+    },
+    {
+      "action": "For the two fixed training conditions-only errors, recount expected start/end ranks, expected full-span rank, early quoted-name end competitor and top8 coverage from frozen captures; retain absent/present temporal partners.",
+      "limits": "Causal capacity or optimization explanations require evidence; extra training steps or stronger weights are not yet prescribed.",
+      "name": "Conditions-end ranking diagnostic",
+      "order": 2,
+      "question": "Does the gold end survive candidate pruning, and does joint selection prefer a shortened but structurally valid span?"
+    },
+    {
+      "action": "If diagnostic evidence supports feature/ranking work, preregister a conditions-specific context query and pointer residual with exact zero-init parity, fixed all-presence states, and matched baseline.",
+      "controls": [
+        "Preserve F17 ExactZeroResidual arithmetic for the all-zero actor branch; verify binary32 equality on actual initialization.",
+        "Keep changes to representation, ranking loss and donor composition in separately attributable arms.",
+        "Derive all teacher masks/near-complete weights from training sources only; fresh ordered optimizer and explicit fixed seed/step budget.",
+        "Log complete logits needed for CE replay, including presence and both pointer heads; retain per-source contributions and fullB/outer/6B normalization.",
+        "Verify frozen tensor and inactive Adam state invariants inside the qualified training child."
+      ],
+      "name": "Separate conditions-context adapter experiment",
+      "order": 3
+    },
+    {
+      "action": "Create a separately reviewed reference set with exact US Code source/version/span provenance and source-group split isolation; use open-us-law-span-cache as an input candidate, not presumed independent gold.",
+      "controls": [
+        "Keep all source variants, paraphrases and interpretations in the same split.",
+        "Reserve new final source groups after prior dev/test exposure.",
+        "Report exact IR, source occurrence fidelity, abstention and independently reviewed semantic equivalence separately.",
+        "Run typed family-specific AST/parser and lake build legal checks on actual generated outputs; report unsupported families and build failures without target substitution.",
+        "Compare active8D/384D/768D conditioning with zero/disabled/permuted controls only under actual encoder-bound runs."
+      ],
+      "name": "Resume generalization and legal semantics qualification",
+      "order": 4
+    }
+  ],
+  "weight_composition_performed": false
+}

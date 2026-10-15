@@ -1,0 +1,80 @@
+{
+  "CLI_child_attempts": 1,
+  "CLI_child_numerical_model_CID_import_attempts": [
+    0
+  ],
+  "CLI_invocations": [
+    {
+      "bytes": 2428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/private-hf-action-resume-v01/cli-final-proof.json",
+      "sha256": "ddf9a6428e3b83b0b72dd339fc0f3aea05913a041b4d07c4000fbf865552b4e1"
+    }
+  ],
+  "SDK_transitive_raw_source_closure_qualified": false,
+  "SDK_version": "0.36.2",
+  "action": "resume",
+  "attributes_operations_authorized": false,
+  "automatic_retry": false,
+  "default_promotion": false,
+  "elapsed_seconds": 297.8728310659062,
+  "exception_type": null,
+  "helper_action_calls": 1,
+  "helper_output": {
+    "bytes": 3533809,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-verification-v02.json",
+    "sha256": "64ab8d2d395d067285c35b0cc437c113351f23c358335df58b8f9d6c7a155f41"
+  },
+  "intent": {
+    "bytes": 1934,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-action-resume-intent-v01.json",
+    "sha256": "19868e81eb00feeff37d14a8fa5261508877d7e4065be3941b7cfa9877c75757"
+  },
+  "isolated": true,
+  "no_bytecode_writes": true,
+  "no_site": true,
+  "numerical_model_CID_import_attempts": 0,
+  "original_publish_rerun": false,
+  "parent_numerical_model_CID_import_attempts": 0,
+  "private_combined_log": {
+    "bytes": 298278,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/private-hf-action-resume-v01/combined.log",
+    "sha256": "c2d65590824238d1a6234a2a4218d40461c4fdef1ab406e86a51c2a5463aef65"
+  },
+  "provenance": {
+    "action_qualification": {
+      "bytes": 286545,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-resume-independent-review-v01.json",
+      "sha256": "d529d8b10a3fd1145e0e0ba00b9d5316c95be8c5b31e604e7742dd2d93afdf7f"
+    },
+    "context": {
+      "bytes": 3444,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-isolated-sdk-context-v03.json",
+      "sha256": "ebd7889ac99b483076b3604b48e903ae8ca8f7c933d7e0690a6d1b7e870c7f50"
+    },
+    "helper": {
+      "bytes": 35482,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/resume_modality_conditions_hf_v03.py",
+      "sha256": "d12077a0d191b5c798a0105acc24d0d006432b2e59cfcf015c221e1c8b6d5849"
+    },
+    "helper_source_qualification": {
+      "bytes": 12734,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-helper-source-independent-review-v01.json",
+      "sha256": "73f836ab0cb4360d1eb7cf469c453d9ed2a553ab527b802f19b16783033a8a8d"
+    },
+    "source_qualification": {
+      "bytes": 17780,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-invocation-source-independent-review-v04.json",
+      "sha256": "fd438eb08c77578af822bd085121ccae81f5a4fd25d44d3f8d9a7b0a22874394"
+    },
+    "wrapper": {
+      "bytes": 21656,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/invoke_modality_conditions_hf_resume_v04.py",
+      "sha256": "809e6b1ff0c6599f44cb65c8045cd303cf9328df7dab33eaee4a43fad74b1d19"
+    }
+  },
+  "returncode": 0,
+  "schema": "modality-conditions-retention-HF-resume-invocation/v1",
+  "site_hooks_executed": false,
+  "site_packages": "/home/barberb/.local/lib/python3.12/site-packages",
+  "wrapper_grants_future_action_authority": false
+}

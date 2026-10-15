@@ -1,0 +1,202 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-runtime-review-v01.json": {
+      "bytes": 105331,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-runtime-review-v01.json",
+      "sha256": "4e05383af5e8ea6212daaf1eea41affc084c7b4910ac5049b5dcc1a28fe079e1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-terminal-resource-audit-v01.json": {
+      "bytes": 104652,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-terminal-resource-audit-v01.json",
+      "sha256": "4d137979bb7c24460fd1caf139d269a744f4b31937b1663aac22f9aa7fc48eb9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-independent-recount-v01.json": {
+      "bytes": 6956192,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-independent-recount-v01.json",
+      "sha256": "aef0f3f888522adce0a0325799d27fbaefaba26d99d016ddf2ceaaf8c32d63d3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-output-snapshot-v01.json": {
+      "bytes": 35957,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-output-snapshot-v01.json",
+      "sha256": "c6480d7a6bd5d8baabc49be6903cae5d3895f264a9bf9cf4267492c5a3c91bcd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-result-analysis-v01.json": {
+      "bytes": 5202480,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-result-analysis-v01.json",
+      "sha256": "d35a7c0665534380bae9159f7d2a370f7476ba55a54847ed487006057075823b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-result-independent-review-v01.json": {
+      "bytes": 181847,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-result-independent-review-v01.json",
+      "sha256": "0c9d1105006f3d5a6cd92a219a49c8a421e6ecf799ac3c4f83e8aba5dce60d30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-training-trace-review-v01.json": {
+      "bytes": 83505,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-training-trace-review-v01.json",
+      "sha256": "0ba0456b5d3fc4396985fb2b2352612cb4c0a8728e070d10cb57f04365ae37a2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/output-snapshot-content-independent-review-v01.json": {
+      "bytes": 23410,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/output-snapshot-content-independent-review-v01.json",
+      "sha256": "6d94a4f808a3222f473b5d6c45de7eee85b32beb9f9e67cc9589c99c0bc874de"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/public-result-summary-v01.json": {
+      "bytes": 15638,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/public-result-summary-v01.json",
+      "sha256": "2cbb3f6ea668bdfa86680ac627840b7515d5a63620486b4d842d190547582490"
+    }
+  },
+  "authorship": {
+    "authored_independent_result_counter": true,
+    "authored_training168_audit": true,
+    "authored_training_trace_counter": true,
+    "independent_from_model_and_primary_analyzer_author": true,
+    "independent_from_root_join_and_summary_author": true,
+    "new_third_party_counter_claim": false
+  },
+  "check_count": 1434,
+  "check_groups": [
+    "Exact root review and summary immutable pins",
+    "All60 panel extents and54 authored score sets",
+    "All seven fields including modality and per-row full-rule equivalence",
+    "All paired gain/loss IDs including36 comparator scopes and9 initial scopes",
+    "All four no-loss maps and both routes in all9 scopes",
+    "Training154/168 versus minimum155 on both routes",
+    "All32 permission IDs in all6 states",
+    "Strict four-comparator versus separate parent two-comparator failure",
+    "Public nine-scope table/abstentions/component counts",
+    "Two selected conditions errors remain unrepaired",
+    "Exact trace32/384/2304 and CE/tensor limitations",
+    "Opaque62 output hash-map/byte/checkpoint descriptor joins only",
+    "632 initial/protected head metadata agreement",
+    "No statutory/Lake/family/latent/portable-reload/default-promotion claim",
+    "Terminal public metadata joins without new resource audit",
+    "Authorship limits and no premature publication completion claim",
+    "Closing identity checks on all9 public metadata files"
+  ],
+  "conclusion": "Root joins and public summary preserve exact reported counts and loss IDs, failed strict and parent criteria, arithmetic/tensor limits, authorship disclosures and pending publication status.",
+  "confirmed": {
+    "all32_permission_retention": true,
+    "authored_score_sets": 54,
+    "comparator_no_loss": {
+      "F15": {
+        "nonempty_loss_scopes": {},
+        "passed": true
+      },
+      "F16": {
+        "nonempty_loss_scopes": {
+          "authored_dev": {
+            "joint": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ],
+            "raw": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ]
+          }
+        },
+        "passed": false
+      },
+      "F17": {
+        "nonempty_loss_scopes": {
+          "authored_dev": {
+            "joint": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ],
+            "raw": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ]
+          },
+          "fresh_tune": {
+            "joint": [
+              "temporal-contrast-tuning-object_duration_title-0-f-present"
+            ],
+            "raw": [
+              "temporal-contrast-tuning-object_duration_title-0-f-present"
+            ]
+          },
+          "old_authored_eval": {
+            "joint": [
+              "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+            ],
+            "raw": [
+              "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+            ]
+          }
+        },
+        "passed": false
+      },
+      "N11": {
+        "nonempty_loss_scopes": {},
+        "passed": true
+      }
+    },
+    "comparator_scope_groups": 36,
+    "default_promotion": false,
+    "fields": [
+      "modality",
+      "actor",
+      "action",
+      "object",
+      "conditions",
+      "exceptions",
+      "temporal"
+    ],
+    "initial_to_trained_scope_groups": 9,
+    "minimum_required": 155,
+    "opaque_output_bytes": 80553403,
+    "opaque_output_files": 62,
+    "panel_count": 60,
+    "parent_ablation_signal": false,
+    "recorded_KL_components": 2304,
+    "recorded_training_rows": 384,
+    "recorded_training_updates": 32,
+    "scientific_success": false,
+    "selected_conditions_errors_repaired": 0,
+    "technical_gate_passed": true,
+    "training168": {
+      "joint_full_IR": 154,
+      "raw_full_IR": 154
+    }
+  },
+  "detailed_check_receipt": {
+    "bytes": 116119,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/root-result-joins-and-summary-independent-review-v01.json",
+    "sha256": "94cc02e8336abc6b7c96da617bf5741cb481ec447d97a9888c6b42eb2555673e"
+  },
+  "findings": [],
+  "limitations": {
+    "Git_operations": 0,
+    "Lake_or_logic_family_or_active_latent_dimension_qualification": false,
+    "actual_model_calls": 0,
+    "complete_CE_logits_or_kernel_proof_claim": false,
+    "fresh_autograd_Adam_tensor_or_checkpoint_replay": false,
+    "independent_statutory_legal_gold_claim": false,
+    "network_calls": 0,
+    "new_terminal_resource_audit": false,
+    "numerical_or_producer_imports": 0,
+    "numerical_training_scoring_main_executions": 0,
+    "opaque_output_hash_maps_compared_only": true,
+    "original_capture_score_teacher_export_reference_checkpoint_bodies_read": 0,
+    "private_or_live_resource_bodies_read": 0,
+    "raw_original_outputs_rehashed_by_this_reviewer": false
+  },
+  "passed": true,
+  "presentation": "Condensed successor of the unchanged clean V01 review; exact public input pins, findings and conclusions retained. Detailed1434 check labels remain in V01.",
+  "public_summary": {
+    "bytes": 15638,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/public-result-summary-v01.json",
+    "sha256": "2cbb3f6ea668bdfa86680ac627840b7515d5a63620486b4d842d190547582490"
+  },
+  "review_scope": "Review of root final joins and public prose from already produced public metadata and opaque descriptor maps; not a second independently authored result counter.",
+  "reviewer": "/root/review_workflow_design_20261011",
+  "root_result_review": {
+    "bytes": 181847,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-result-independent-review-v01.json",
+    "sha256": "0c9d1105006f3d5a6cd92a219a49c8a421e6ecf799ac3c4f83e8aba5dce60d30"
+  },
+  "schema": "modality-conditions-retention-root-result-joins-and-summary-review/v1"
+}

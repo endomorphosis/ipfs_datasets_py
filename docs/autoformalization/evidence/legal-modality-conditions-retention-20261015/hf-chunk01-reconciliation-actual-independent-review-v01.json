@@ -1,0 +1,156 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-action-publish-invocation-v01.json": {
+      "bytes": 3016,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-action-publish-invocation-v01.json",
+      "sha256": "971108260a32d46b83fb5b433643f40125c745bf567921b894bd47b17b13ba9f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-attributes-verified-v01.json": {
+      "bytes": 840,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-attributes-verified-v01.json",
+      "sha256": "e04c6aa1b6032fbcbf940f56601f60f8bbaff270119d841f13091f4ea19aafbe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-before-file-identities-v01.json": {
+      "bytes": 3238638,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-before-file-identities-v01.json",
+      "sha256": "dda8df60ea15d33fef7761d8c45a6eba43cc18017d57f5223bb0e09909bffb8f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk-01-preupload-v01.json": {
+      "bytes": 2491,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk-01-preupload-v01.json",
+      "sha256": "f329cbbfc10b2c69cb00d75e50aea5a13e8a446f387b02dfe4452ed918d1288f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk-01-unknown-outcome-v01.json": {
+      "bytes": 2580,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk-01-unknown-outcome-v01.json",
+      "sha256": "4d5749424f42220669c36a0768e26def30184af14f80b38255c927f81f014d15"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-immutable-reconciliation-v01.json": {
+      "bytes": 1618787,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-immutable-reconciliation-v01.json",
+      "sha256": "39baeadc3f6d594a0b61baf984bc93a88881f5d9e08d1f0849bb0b7b5805af6c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-helper-intent-v01.json": {
+      "bytes": 756,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-helper-intent-v01.json",
+      "sha256": "7541cf5f9fd4540cd4f9a93c1fd9a32f140d1ded0235addff151f3d6096c7e68"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-intent-v01.json": {
+      "bytes": 1756,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-intent-v01.json",
+      "sha256": "596a4cd78cd40c73055fff3f6f6c167d2c3c4771a5f04d43eb31a10fff35ab31"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-invocation-source-independent-review-v01.json": {
+      "bytes": 12273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-invocation-source-independent-review-v01.json",
+      "sha256": "81761c8bbc63b1dd256dec5ac72e740be0ebe4b9fddea0c2920d10d5eb716338"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-invocation-v01.json": {
+      "bytes": 2919,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-invocation-v01.json",
+      "sha256": "73c027b520cbe721741aadbd2d57e3ba33c9fdf75e1f4ec5f0626e42344919dd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-source-independent-review-v01.json": {
+      "bytes": 23484,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-source-independent-review-v01.json",
+      "sha256": "71e30a1786ad42937dae3435ed619719b6e9977c546d61dbddf078d12f0a5383"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-v01.json": {
+      "bytes": 31488,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-v01.json",
+      "sha256": "974aa14eae86f171c0ff91ce8116e5c1c781100292db1f7a838b466b4b4e3802"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-isolated-sdk-context-v03.json": {
+      "bytes": 3444,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-isolated-sdk-context-v03.json",
+      "sha256": "ebd7889ac99b483076b3604b48e903ae8ca8f7c933d7e0690a6d1b7e870c7f50"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-postattributes-identities-v01.json": {
+      "bytes": 1618950,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-postattributes-identities-v01.json",
+      "sha256": "b4a5a9c6eef539446ea2d4d0be0455e661ed0b3cc365f4e6726d919f911fad64"
+    }
+  },
+  "authorship": {
+    "authored_reconciliation_helper": false,
+    "authored_supplemental_detached_wrapper_controls": true,
+    "authored_wrapper_source": false,
+    "performed_network_reconciliation": false,
+    "previously_reviewed_wrapper_source_and_authored_invocation_gate": true
+  },
+  "check_count": 93,
+  "check_groups": [
+    "Exact actual output/invocation/intent/source/context pins",
+    "All6076 reported immutable identities equal postattributes map",
+    "Original baseline differs only at planned gitattributes identity",
+    "All18 originally attempted names absent and original byte descriptors retained",
+    "Failed publication and SSL unknown outcome retained",
+    "No declared mutations/downloads/model/numerical/CLI attempts",
+    "No resume, blind retry, future publication success or commit-parent proof claim",
+    "Closing identities of14 allowed public metadata files"
+  ],
+  "conclusion": "Public records consistently show an observed absent original chunk at the retained postattributes revision. This receipt preserves the failed attempt and grants no resume or publication authority.",
+  "confirmed": {
+    "all18_names_absent": true,
+    "automatic_publish_retry_performed": false,
+    "classification": "absent",
+    "default_promotion": false,
+    "exact_safe_parent_revision": "675e0c346005d8cd853d4f0d90b0506c572ad9fe",
+    "network_downloads": 0,
+    "numerical_model_CID_import_attempts": 0,
+    "observed_revision": "675e0c346005d8cd853d4f0d90b0506c572ad9fe",
+    "original_chunk_bytes": 14254714,
+    "original_chunk_files": 18,
+    "original_publication_succeeded": false,
+    "original_publish_failure_retained": true,
+    "remote_mutations": 0,
+    "reported_exact_postattributes_file_identities": 6076,
+    "reported_model_info_calls": 3,
+    "resume_authorized": false
+  },
+  "findings": [],
+  "immutable_snapshot": {
+    "bytes": 1618787,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-immutable-reconciliation-v01.json",
+    "sha256": "39baeadc3f6d594a0b61baf984bc93a88881f5d9e08d1f0849bb0b7b5805af6c"
+  },
+  "invocation": {
+    "bytes": 2919,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-invocation-v01.json",
+    "sha256": "73c027b520cbe721741aadbd2d57e3ba33c9fdf75e1f4ec5f0626e42344919dd"
+  },
+  "invocation_source_qualification": {
+    "bytes": 12273,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-invocation-source-independent-review-v01.json",
+    "sha256": "81761c8bbc63b1dd256dec5ac72e740be0ebe4b9fddea0c2920d10d5eb716338"
+  },
+  "limits": {
+    "Git_operations": 0,
+    "SDK_internal_transport_retries_qualified": false,
+    "SDK_transitive_raw_source_closure_qualified": false,
+    "actual_SDK_imports": 0,
+    "actual_network_calls": 0,
+    "actual_remote_mutations": 0,
+    "commit_parent_chain_proven": false,
+    "continuous_or_future_remote_state_guaranteed": false,
+    "fresh_payload_hashes_recomputed": false,
+    "independent_network_observation": false,
+    "new_resume_authority_granted": false,
+    "original_payload_score_checkpoint_teacher_export_reference_bodies_read": 0,
+    "private_log_or_live_resource_bodies_read": 0
+  },
+  "passed": true,
+  "reconciliation": {
+    "bytes": 31488,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-v01.json",
+    "sha256": "974aa14eae86f171c0ff91ce8116e5c1c781100292db1f7a838b466b4b4e3802"
+  },
+  "reviewer": "/root/review_workflow_design_20261011",
+  "schema": "modality-conditions-retention-HF-chunk01-reconciliation-actual-independent-review/v1",
+  "scope": "Saved public reconciliation metadata, immutable file-identity maps and custody joins only; no new network observation or commit ancestry audit.",
+  "source_qualification": {
+    "bytes": 23484,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-source-independent-review-v01.json",
+    "sha256": "71e30a1786ad42937dae3435ed619719b6e9977c546d61dbddf078d12f0a5383"
+  }
+}

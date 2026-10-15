@@ -1,0 +1,25 @@
+{
+  "arbitrary_log_decoding": false,
+  "automatic_retry": false,
+  "failed_log": {
+    "bytes": 4473,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/private-hf-action-publish-v01/combined.log",
+    "sha256": "e9a52c0fdca10705635119e351237bacf90acc1cae4ed4a47f9a8d522eacb536"
+  },
+  "fixed_pattern_matches": {
+    "CERTIFICATE_VERIFY_FAILED": false,
+    "Connection reset by peer": false,
+    "EOF occurred in violation of protocol": true,
+    "Max retries exceeded": true,
+    "Read timed out": false,
+    "SSLEOFError": true,
+    "SSLError": true,
+    "UNEXPECTED_EOF_WHILE_READING": false,
+    "certificate has expired": false,
+    "certificate verify failed": false,
+    "unable to get local issuer certificate": false
+  },
+  "log_body_printed": false,
+  "remote_state_not_inferred": true,
+  "schema": "modality-conditions-retention-HF-failed-TLS-fixed-byte-classification/v1"
+}

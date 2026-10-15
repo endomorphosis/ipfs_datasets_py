@@ -804,3 +804,8 @@ Qualification's model-metric pass intentionally uses an empty bridge list. Its `
 - [Training guide](legal_training.md), [API map](api_map.md), and [control plane and synchronization](control_plane_and_sync.md)
 
 Documentation was checked against published dataset commit `3666ebad19422b8345ebe5432a1c02f26d2eba4c`. The minimal offline example was executed on the pinned canonical workspace without training, bridge target generation, Lake execution or downloads. Its shape/assertions were checked; its numerical values are intentionally not a quality baseline.
+
+
+## Fixed modality and conditions retention ablation
+
+The [F18 result report](../autoformalization/legal-modality-conditions-retention-20261015.md) records the single-rule decoder continuation from exact trained F15. Complete training IR remains 154/168 on greedy and joint routes; both acceptance criteria fail and the default decoder is unchanged. All F15/N11 complete-rule correct IDs survive across nine exposed authored scopes, while some F16/F17 gains are absent. This source-span experiment retains the separate grouped v1/v2 and existing latent decoder work described above. It qualifies no active 8D/384D/768D comparison, independently reviewed US Code semantics, new logic family, or new Lake build.

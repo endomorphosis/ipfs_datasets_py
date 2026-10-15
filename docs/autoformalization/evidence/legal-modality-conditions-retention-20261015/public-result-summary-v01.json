@@ -1,0 +1,522 @@
+{
+  "Lake_executed": false,
+  "USCode_semantic_accuracy": null,
+  "accounting": {
+    "experimental_model_forwards": 1312,
+    "experimental_optimizer_updates": 32,
+    "experimental_source_occurrences": 1664,
+    "synthetic_fixture_model_forwards": 1,
+    "synthetic_fixture_optimizer_steps": 1,
+    "synthetic_fixture_source_occurrences": 2,
+    "total_model_forwards": 1313,
+    "total_optimizer_steps": 33,
+    "total_source_occurrences": 1666
+  },
+  "active_8D_384D_768D_comparison_qualified": false,
+  "active_selected_scalars": 325,
+  "all32_permission_retention": {
+    "abstentions": 0,
+    "count": 32,
+    "ids": [
+      "native-tuning-begonia-t0-q0-p",
+      "native-tuning-begonia-t1-q1-p",
+      "native-tuning-begonia-t2-q2-p",
+      "native-tuning-begonia-t3-q3-p",
+      "native-tuning-begonia-t4-q4-p",
+      "native-tuning-begonia-t5-q5-p",
+      "native-tuning-begonia-t6-q6-p",
+      "native-tuning-begonia-t7-q7-p",
+      "native-tuning-calendula-t0-q1-p",
+      "native-tuning-calendula-t1-q2-p",
+      "native-tuning-calendula-t2-q3-p",
+      "native-tuning-calendula-t3-q4-p",
+      "native-tuning-calendula-t4-q5-p",
+      "native-tuning-calendula-t5-q6-p",
+      "native-tuning-calendula-t6-q7-p",
+      "native-tuning-calendula-t7-q0-p",
+      "native-tuning-freesia-t0-q2-p",
+      "native-tuning-freesia-t1-q3-p",
+      "native-tuning-freesia-t2-q4-p",
+      "native-tuning-freesia-t3-q5-p",
+      "native-tuning-freesia-t4-q6-p",
+      "native-tuning-freesia-t5-q7-p",
+      "native-tuning-freesia-t6-q0-p",
+      "native-tuning-freesia-t7-q1-p",
+      "native-tuning-hellebore-t0-q3-p",
+      "native-tuning-hellebore-t1-q4-p",
+      "native-tuning-hellebore-t2-q5-p",
+      "native-tuning-hellebore-t3-q6-p",
+      "native-tuning-hellebore-t4-q7-p",
+      "native-tuning-hellebore-t5-q0-p",
+      "native-tuning-hellebore-t6-q1-p",
+      "native-tuning-hellebore-t7-q2-p"
+    ],
+    "joint_P_to_P": 32,
+    "losses": 0,
+    "raw_P_to_P": 32
+  },
+  "broader_logic_families_qualified": false,
+  "checkpoint": {
+    "bytes": 21058430,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/modality-conditions-retention-20261014-modality-conditions-retention-ce-01/results/cell-checkpoint.json",
+    "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+  },
+  "default_promotion": false,
+  "experiment": "F18 fixed clean-F15 modality and conditions retention CE ablation",
+  "external_encoder_calls": 0,
+  "frozen_output_bytes": 80553403,
+  "frozen_output_files": 62,
+  "frozen_tensors": 36,
+  "inactive_selected_scalars": 650,
+  "initialization": "Exact trained F15 all42 states",
+  "latent_conditioning_enabled": false,
+  "next_proposal": {
+    "bytes": 5527,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/next-experiment-proposal-v01.json",
+    "sha256": "ea0742f491f0c4efacdaae2600434b3b0e2b159090837ed05e227d5707ccf6d8"
+  },
+  "observed_latent_dimension": 384,
+  "parent_ablation_signal": false,
+  "portable_numerical_reload_proven": false,
+  "publication_completion_not_asserted_by_this_prepublication_summary": true,
+  "publication_prefix": "releases/20261015-modality-conditions-retention-v1",
+  "resources": {
+    "all_prior_bodies_unchanged": true,
+    "capacity": {
+      "additional_requested_bytes": 0,
+      "additional_reservation_requested": false,
+      "admission_authorized": false,
+      "full_observed_plus_future_bound_bytes": 134569257120,
+      "future_own_output_bound_bytes": 200000000,
+      "inventory": {
+        "apparent_bytes": 96637479904,
+        "entry_count": 1366172,
+        "special_file_count": 5,
+        "symlink_count": 1013
+      },
+      "limit_bytes": 145000000000,
+      "minimum_filesystem_free_bytes": 223400488960,
+      "observed_apparent_bytes": 96637479904,
+      "observed_plus_future_capacity_fits": true,
+      "outstanding_full_reservations_bytes": 37731777216,
+      "per_root_inventory": [
+        {
+          "apparent_bytes": 89462597022,
+          "entry_count": 1350538,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+          "special_file_count": 5,
+          "symlink_count": 651
+        },
+        {
+          "apparent_bytes": 237099227,
+          "entry_count": 122,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+          "special_file_count": 0,
+          "symlink_count": 0
+        },
+        {
+          "apparent_bytes": 4175484180,
+          "entry_count": 6677,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+          "special_file_count": 0,
+          "symlink_count": 0
+        },
+        {
+          "apparent_bytes": 2762299475,
+          "entry_count": 8835,
+          "path": "/tmp/pytest-of-barberb",
+          "special_file_count": 0,
+          "symlink_count": 362
+        }
+      ]
+    },
+    "closing_records": 550,
+    "opening_records": 549,
+    "own_reservation": {
+      "final_total_charged_bytes": 80894568,
+      "public_owner_attempt_child_binding_verified": true,
+      "record_body_sha256": "6288fe125121e874b7ca91e6e486d92b654c563ee52895ebf0526b519cd3aabb",
+      "reservation_id": "4a796fc7c01547208d304e4683c2e6c0",
+      "status": "released",
+      "storage_bytes": 200000000
+    },
+    "own_scheduler_lease_absent": true
+  },
+  "result_review": {
+    "bytes": 181847,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-result-independent-review-v01.json",
+    "sha256": "0c9d1105006f3d5a6cd92a219a49c8a421e6ecf799ac3c4f83e8aba5dce60d30"
+  },
+  "results": [
+    {
+      "F15_joint_complete_IR": 154,
+      "F15_raw_abstentions": 1,
+      "F15_raw_complete_IR": 154,
+      "F18_joint_complete_IR": 154,
+      "F18_raw_abstentions": 1,
+      "F18_raw_complete_IR": 154,
+      "rows": 168,
+      "scope": "training168"
+    },
+    {
+      "F15_joint_complete_IR": 94,
+      "F15_raw_abstentions": 0,
+      "F15_raw_complete_IR": 94,
+      "F18_joint_complete_IR": 94,
+      "F18_raw_abstentions": 0,
+      "F18_raw_complete_IR": 94,
+      "rows": 96,
+      "scope": "old_tune"
+    },
+    {
+      "F15_joint_complete_IR": 19,
+      "F15_raw_abstentions": 24,
+      "F15_raw_complete_IR": 8,
+      "F18_joint_complete_IR": 20,
+      "F18_raw_abstentions": 23,
+      "F18_raw_complete_IR": 8,
+      "rows": 36,
+      "scope": "fresh_tune"
+    },
+    {
+      "F15_joint_complete_IR": 25,
+      "F15_raw_abstentions": 3,
+      "F15_raw_complete_IR": 25,
+      "F18_joint_complete_IR": 26,
+      "F18_raw_abstentions": 4,
+      "F18_raw_complete_IR": 26,
+      "rows": 36,
+      "scope": "fresh_challenge"
+    },
+    {
+      "F15_joint_complete_IR": 53,
+      "F15_raw_abstentions": 6,
+      "F15_raw_complete_IR": 50,
+      "F18_joint_complete_IR": 54,
+      "F18_raw_abstentions": 6,
+      "F18_raw_complete_IR": 51,
+      "rows": 72,
+      "scope": "old_authored_eval"
+    },
+    {
+      "F15_joint_complete_IR": 46,
+      "F15_raw_abstentions": 11,
+      "F15_raw_complete_IR": 45,
+      "F18_joint_complete_IR": 46,
+      "F18_raw_abstentions": 13,
+      "F18_raw_complete_IR": 45,
+      "rows": 72,
+      "scope": "authored_dev"
+    },
+    {
+      "F15_joint_complete_IR": 34,
+      "F15_raw_abstentions": 13,
+      "F15_raw_complete_IR": 27,
+      "F18_joint_complete_IR": 34,
+      "F18_raw_abstentions": 13,
+      "F18_raw_complete_IR": 27,
+      "rows": 72,
+      "scope": "authored_eval"
+    },
+    {
+      "F15_joint_complete_IR": 0,
+      "F15_raw_abstentions": 26,
+      "F15_raw_complete_IR": 0,
+      "F18_joint_complete_IR": 0,
+      "F18_raw_abstentions": 26,
+      "F18_raw_complete_IR": 0,
+      "rows": 36,
+      "scope": "fresh_dev"
+    },
+    {
+      "F15_joint_complete_IR": 0,
+      "F15_raw_abstentions": 31,
+      "F15_raw_complete_IR": 0,
+      "F18_joint_complete_IR": 0,
+      "F18_raw_abstentions": 31,
+      "F18_raw_complete_IR": 0,
+      "rows": 36,
+      "scope": "fresh_test"
+    }
+  ],
+  "schema": "modality-conditions-retention-public-result-summary/v1",
+  "scientific_acceptance": {
+    "all32_permission_retention": {
+      "count": 32,
+      "passed": true
+    },
+    "default_promotion": false,
+    "no_complete_IR_loss_IDs": {
+      "F15": {
+        "loss_ids_by_scope": {
+          "authored_dev": {
+            "joint": [],
+            "raw": []
+          },
+          "authored_eval": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_challenge": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_dev": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_test": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_tune": {
+            "joint": [],
+            "raw": []
+          },
+          "old_authored_eval": {
+            "joint": [],
+            "raw": []
+          },
+          "old_tune": {
+            "joint": [],
+            "raw": []
+          },
+          "training168": {
+            "joint": [],
+            "raw": []
+          }
+        },
+        "passed": true
+      },
+      "F16": {
+        "loss_ids_by_scope": {
+          "authored_dev": {
+            "joint": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ],
+            "raw": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ]
+          },
+          "authored_eval": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_challenge": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_dev": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_test": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_tune": {
+            "joint": [],
+            "raw": []
+          },
+          "old_authored_eval": {
+            "joint": [],
+            "raw": []
+          },
+          "old_tune": {
+            "joint": [],
+            "raw": []
+          },
+          "training168": {
+            "joint": [],
+            "raw": []
+          }
+        },
+        "passed": false
+      },
+      "F17": {
+        "loss_ids_by_scope": {
+          "authored_dev": {
+            "joint": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ],
+            "raw": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ]
+          },
+          "authored_eval": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_challenge": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_dev": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_test": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_tune": {
+            "joint": [
+              "temporal-contrast-tuning-object_duration_title-0-f-present"
+            ],
+            "raw": [
+              "temporal-contrast-tuning-object_duration_title-0-f-present"
+            ]
+          },
+          "old_authored_eval": {
+            "joint": [
+              "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+            ],
+            "raw": [
+              "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+            ]
+          },
+          "old_tune": {
+            "joint": [],
+            "raw": []
+          },
+          "training168": {
+            "joint": [],
+            "raw": []
+          }
+        },
+        "passed": false
+      },
+      "N11": {
+        "loss_ids_by_scope": {
+          "authored_dev": {
+            "joint": [],
+            "raw": []
+          },
+          "authored_eval": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_challenge": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_dev": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_test": {
+            "joint": [],
+            "raw": []
+          },
+          "fresh_tune": {
+            "joint": [],
+            "raw": []
+          },
+          "old_authored_eval": {
+            "joint": [],
+            "raw": []
+          },
+          "old_tune": {
+            "joint": [],
+            "raw": []
+          },
+          "training168": {
+            "joint": [],
+            "raw": []
+          }
+        },
+        "passed": true
+      }
+    },
+    "parent_ablation": {
+      "comparators": [
+        "N11",
+        "F15"
+      ],
+      "criteria_met_on_saved_diagnostics": false,
+      "qualified_outcome": false,
+      "technical_gate_passed": true
+    },
+    "parent_ablation_signal": false,
+    "schema": "modality-conditions-retention-scientific-acceptance/v1",
+    "scientific_success": false,
+    "strict_global": {
+      "comparators": [
+        "N11",
+        "F15",
+        "F16",
+        "F17"
+      ],
+      "criteria_met_on_saved_diagnostics": false,
+      "qualified_outcome": false,
+      "technical_gate_passed": true
+    },
+    "technical_gate_passed": true,
+    "training168": {
+      "joint_full_IR": 154,
+      "minimum_required": 155,
+      "passed": false,
+      "raw_full_IR": 154
+    }
+  },
+  "scientific_success": false,
+  "selected_tensors": 6,
+  "status": "COMPLETED_TRAINING_FAILED_SCIENTIFIC_ACCEPTANCE",
+  "statutory8_unscored": true,
+  "stored_selected_scalars": 975,
+  "technical_gate_passed": true,
+  "tensor_scope": {
+    "checkpoint_tensors_read": false,
+    "fixture_autograd_controls_independently_reexecuted": false,
+    "frozen36_and_inactive650_declarations_and_hash_chain_checked": true,
+    "gradient_and_inactive_moment_flags_checked": true,
+    "independent_autograd_proof": false,
+    "independent_parameter_tensor_or_Adam_moment_replay": false,
+    "logged_candidate_logits_independently_rederived": false
+  },
+  "training_arithmetic_scope": {
+    "KL_and_modality_CE_tolerance_relative": 3e-05,
+    "all384_scalar_rows_reaggregated": true,
+    "batch_mean_denominator": 12,
+    "complete_CE_from_logits": false,
+    "complete_CE_kernel_verification": false,
+    "mean_tolerance_relative": 2e-06,
+    "missing_nonmodality_CE_logits_not_invented": true,
+    "modality_CE_recomputed_from_logged_logits": true,
+    "modality_multiplier": 2,
+    "outer_denominator": 8,
+    "parent_single_row_inference_logits_used_as_training_logits": false,
+    "whole_conditions_presence_and_half_boundary_weight_verified": true
+  },
+  "training_component_counts": {
+    "F15_joint_modality": 162,
+    "F15_raw_modality": 161,
+    "F18_joint_modality": 163,
+    "F18_raw_modality": 162,
+    "joint_actor": 156,
+    "joint_conditions": 166,
+    "raw_actor": 156,
+    "raw_conditions": 165
+  },
+  "training_policy": {
+    "CE_full_batch_denominator": 12,
+    "CE_outer_denominator": 8,
+    "KL_coefficient": 1,
+    "KL_denominator": "6B=72",
+    "KL_temperature": 1,
+    "actor_hinge": false,
+    "batch_size": 12,
+    "conditions_facet_weight": 2,
+    "conditions_weight_selected_rows": 2,
+    "fresh_Adam": true,
+    "learning_rate": 0.001,
+    "modality_CE_coefficient": 2,
+    "seed": 1729,
+    "updates": 32
+  },
+  "two_targeted_conditions_errors_repaired": 0
+}
