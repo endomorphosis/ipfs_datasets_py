@@ -6,6 +6,14 @@ The combined-review contribution comes from
 and blank-handoff migration arrived through `f9b69c7aa`. These are existing
 owners, not a second implementation or a new signing authority.
 
+During publication, main advanced through `f84512733` with the parallel
+[statutory pilot specification](pilots/uscode_definition_component/README.md)
+and cache-metadata observations. The
+[reconciliation](evidence/legal-ir-definition-use-review-v2-integration-20261015/main-reconciliation.json)
+preserves its fourteen non-plan files unchanged and combines both plan updates.
+All 202 A02 and 208 C02 pins still match. Its independent metadata observer and
+tests are outside this phase's execution counts.
+
 The combined contribution's original three files remain unchanged: its
 [public owner](../../ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py),
 [authored tests](../../tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py)

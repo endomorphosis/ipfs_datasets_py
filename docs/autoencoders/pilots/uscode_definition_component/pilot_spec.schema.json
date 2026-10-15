@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Authored US Code definition and complete-use pilot specification",
+  "description": "Closed planning shape only. No runtime owner, source review, gold eligibility, admission or queue effect is established.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "guide", "validation_schema", "pipeline_plan", "storage_guide", "first_milestone", "scope", "reusable_owners", "source_and_review_requirements", "representation_requirements", "split_contract", "dimension_lanes", "preregistration", "metric_contract", "exit_gates", "exit_gate_interpretation", "runtime_bindings", "runtime_materialization", "authority"],
+  "properties": {
+    "schema": {"const": "legal-ir-statutory-component-pilot-spec/v1"},
+    "status": {"const": "authored_acceptance_specification"},
+    "guide": {"const": "README.md"},
+    "validation_schema": {"const": "pilot_spec.schema.json"},
+    "pipeline_plan": {"const": "../../legal_ir_uscode_corpus_improvement_plan_20261015.md"},
+    "storage_guide": {"const": "../../legal_source_review_handoff_storage_20261015.md"},
+    "first_milestone": {"const": "reviewed_definition_with_complete_norm_and_second_scope_valid_use"},
+    "scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_kind", "selected_component", "requested_roles", "minimum_complete_norm_count", "minimum_actual_use_count", "selection_basis", "same_document_required", "cross_document_required", "shorten_source_to_fit_adapter", "whole_corpus_claim", "statistical_generalization_claim"],
+      "properties": {
+        "source_kind": {"const": "actual_versioned_statutory_source"},
+        "selected_component": {"type": "null"},
+        "requested_roles": {"const": ["complete_definition", "complete_norm_use_1", "complete_use_2"]},
+        "minimum_complete_norm_count": {"const": 1},
+        "minimum_actual_use_count": {"const": 2},
+        "selection_basis": {"const": "actual_dependencies_supported_representation_and_independent_review_capacity"},
+        "same_document_required": {"const": false},
+        "cross_document_required": {"const": false},
+        "shorten_source_to_fit_adapter": {"const": false},
+        "whole_corpus_claim": {"const": false},
+        "statistical_generalization_claim": {"const": false}
+      }
+    },
+    "reusable_owners": {
+      "type": "array", "minItems": 9, "maxItems": 9,
+      "allOf": [
+        {"contains": {"properties": {"id": {"const": "sampled_source"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "source_review_intake"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "blank_handoff"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "sampled_definition_binding"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "definition_review"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "combined_alias_review"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "graph_exchange"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "free_running_metrics"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "shared_lean"}}, "required": ["id"]}}
+      ],
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "path", "methods", "limit"],
+        "properties": {
+          "id": {"enum": ["sampled_source", "source_review_intake", "blank_handoff", "sampled_definition_binding", "definition_review", "combined_alias_review", "graph_exchange", "free_running_metrics", "shared_lean"]},
+          "path": {"type": "string", "pattern": "^ipfs_datasets_py/[A-Za-z0-9_/]+\\.py$", "maxLength": 256},
+          "methods": {"$ref": "#/$defs/methods"},
+          "limit": {"$ref": "#/$defs/text"}
+        }
+      }
+    },
+    "source_and_review_requirements": {"$ref": "#/$defs/requirements"},
+    "representation_requirements": {"$ref": "#/$defs/requirements"},
+    "split_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["initial_component_role", "initial_component_is_statistical_holdout", "group_by", "freeze_before_fit_or_selection", "public_context_requires_frozen_policy", "withheld_interpretations_or_answer_graphs_in_features", "target_derived_latents_or_candidate_lists", "exposed_panels_become_regressions", "new_components_required_for_generalization"],
+      "properties": {
+        "initial_component_role": {"const": "engineering_pilot"},
+        "initial_component_is_statistical_holdout": {"const": false},
+        "group_by": {"const": ["provision_and_revisions", "exact_and_near_duplicates", "derivative_examples", "actual_semantic_dependencies"]},
+        "freeze_before_fit_or_selection": {"const": true},
+        "public_context_requires_frozen_policy": {"const": true},
+        "withheld_interpretations_or_answer_graphs_in_features": {"const": false},
+        "target_derived_latents_or_candidate_lists": {"const": false},
+        "exposed_panels_become_regressions": {"const": true},
+        "new_components_required_for_generalization": {"const": true}
+      }
+    },
+    "dimension_lanes": {
+      "type": "array", "minItems": 3, "maxItems": 3,
+      "prefixItems": [
+        {"allOf": [{"$ref": "#/$defs/lane"}, {"properties": {"lane": {"const": "8D"}, "nominal_dimension": {"const": 8}, "requested_role": {"const": "historical_feature_or_latent_boundary_as_verified_from_parent"}}}]},
+        {"allOf": [{"$ref": "#/$defs/lane"}, {"properties": {"lane": {"const": "384D"}, "nominal_dimension": {"const": 384}, "requested_role": {"const": "native_semantic_encoder_output_width"}}}]},
+        {"allOf": [{"$ref": "#/$defs/lane"}, {"properties": {"lane": {"const": "768D"}, "nominal_dimension": {"const": 768}, "requested_role": {"const": "native_multilingual_semantic_encoder_output_width"}}}]}
+      ],
+      "items": false
+    },
+    "preregistration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "selected_sources_and_split_manifest", "permitted_context_and_target_contract", "run_arms_controls_and_initializations", "seeds_optimizer_budget_and_resources", "metric_implementations_and_eligibility_policy", "acceptance_thresholds_and_protected_cases", "confidence_and_promotion_procedure"],
+      "properties": {
+        "status": {"const": "pending_before_execution"},
+        "selected_sources_and_split_manifest": {"type": "null"},
+        "permitted_context_and_target_contract": {"type": "null"},
+        "run_arms_controls_and_initializations": {"type": "null"},
+        "seeds_optimizer_budget_and_resources": {"type": "null"},
+        "metric_implementations_and_eligibility_policy": {"type": "null"},
+        "acceptance_thresholds_and_protected_cases": {"type": "null"},
+        "confidence_and_promotion_procedure": {"type": "null"}
+      }
+    },
+    "metric_contract": {
+      "type": "array", "minItems": 10, "maxItems": 10,
+      "allOf": [
+        {"contains": {"properties": {"id": {"const": "source_accounting"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "review_coverage"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "candidate_oracle_recall"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "complete_ordered_ir"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "material_semantic_errors"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "graph_integrity"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "family_fragment_coverage"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "consequence_cases"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "native_build_integrity"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "generation_accounting"}}, "required": ["id"]}}
+      ],
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "denominator", "measure"],
+        "properties": {
+          "id": {"enum": ["source_accounting", "review_coverage", "candidate_oracle_recall", "complete_ordered_ir", "material_semantic_errors", "graph_integrity", "family_fragment_coverage", "consequence_cases", "native_build_integrity", "generation_accounting"]},
+          "denominator": {"type": "string", "pattern": "^all_[a-z_]+$", "maxLength": 128},
+          "measure": {"$ref": "#/$defs/text"}
+        }
+      }
+    },
+    "exit_gates": {
+      "type": "array", "minItems": 6, "maxItems": 6,
+      "allOf": [
+        {"contains": {"properties": {"id": {"const": "G0_resource_and_source_custody"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "G1_reviewed_meaning"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "G2_supported_complete_representation"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "G3_connected_graph"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "G4_native_lean"}}, "required": ["id"]}},
+        {"contains": {"properties": {"id": {"const": "G5_training_eligibility_and_comparison"}}, "required": ["id"]}}
+      ],
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "required_evidence"],
+        "properties": {
+          "id": {"enum": ["G0_resource_and_source_custody", "G1_reviewed_meaning", "G2_supported_complete_representation", "G3_connected_graph", "G4_native_lean", "G5_training_eligibility_and_comparison"]},
+          "required_evidence": {"$ref": "#/$defs/requirements"}
+        }
+      }
+    },
+    "exit_gate_interpretation": {"$ref": "#/$defs/text"},
+    "runtime_bindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["selected_source_component", "source_correspondence", "reviewer_registry", "trust_policy", "evaluation_time_and_clock_evidence", "reviews_and_exposure", "review_assessments", "gold_eligibility_owner_and_policy", "typed_interpretations", "graph_roundtrip", "family_capabilities", "native_build_and_invalidation", "model_comparison", "resource_durability_and_release", "metric_results"],
+      "properties": {
+        "selected_source_component": {"type": "null"}, "source_correspondence": {"type": "null"},
+        "reviewer_registry": {"type": "null"}, "trust_policy": {"type": "null"},
+        "evaluation_time_and_clock_evidence": {"type": "null"}, "reviews_and_exposure": {"type": "null"},
+        "review_assessments": {"type": "null"}, "gold_eligibility_owner_and_policy": {"type": "null"},
+        "typed_interpretations": {"type": "null"}, "graph_roundtrip": {"type": "null"},
+        "family_capabilities": {"type": "null"}, "native_build_and_invalidation": {"type": "null"},
+        "model_comparison": {"type": "null"}, "resource_durability_and_release": {"type": "null"},
+        "metric_results": {"type": "null"}
+      }
+    },
+    "runtime_materialization": {"$ref": "#/$defs/text"},
+    "authority": {
+      "type": "object", "additionalProperties": false,
+      "required": ["actual_statutory_reviews_created", "source_semantics_verified", "training_eligibility_established", "evaluation_gold_established", "semantic_graph_admitted", "native_build_executed", "model_trained_or_promoted", "work_enqueued"],
+      "properties": {
+        "actual_statutory_reviews_created": {"const": false}, "source_semantics_verified": {"const": false},
+        "training_eligibility_established": {"const": false}, "evaluation_gold_established": {"const": false},
+        "semantic_graph_admitted": {"const": false}, "native_build_executed": {"const": false},
+        "model_trained_or_promoted": {"const": false}, "work_enqueued": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1, "maxLength": 2048},
+    "requirements": {"type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "methods": {"type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$", "maxLength": 128}},
+    "lane": {
+      "type": "object", "additionalProperties": false,
+      "required": ["lane", "nominal_dimension", "requested_role", "actual_input_role", "decoder_internal_latent_width", "producer_and_checkpoint_ref"],
+      "properties": {
+        "lane": {"enum": ["8D", "384D", "768D"]}, "nominal_dimension": {"enum": [8, 384, 768]},
+        "requested_role": {"$ref": "#/$defs/text"}, "actual_input_role": {"type": "null"},
+        "decoder_internal_latent_width": {"type": "null"}, "producer_and_checkpoint_ref": {"type": "null"}
+      }
+    }
+  }
+}

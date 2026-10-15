@@ -1,0 +1,75 @@
+{
+  "combined_review_runtime_qualification": "not_established_by_this_phase",
+  "incoming_commits": [
+    "234dc97a2fedb864c99add7f0d8e37ba81c785cf Record explicit V2 definition-use review evidence.",
+    "f9b69c7aadf099fb73f90c2853b72f8427f3ec63 Bind sampled legal definitions and migrate retained review handoffs"
+  ],
+  "new_contributions_executed_by_this_phase": false,
+  "preserved_paths": [
+    {
+      "git_blob": "d9d9fc4b10a8cdea32c03ade54c90cbd6779686a",
+      "path": "docs/autoencoders/README.md",
+      "physical_file_matches": true
+    },
+    {
+      "git_blob": "5929d06335e54b632a313fd5a07032fe7cf25760",
+      "path": "docs/autoencoders/corpus_definition_review_v2.md",
+      "physical_file_matches": true
+    },
+    {
+      "git_blob": "7ac676283fe14e85c4709feb4d79eb8c964c385e",
+      "path": "docs/autoencoders/corpus_definition_use_review_v2.md",
+      "physical_file_matches": true
+    },
+    {
+      "git_blob": "95a35f4bddfa3435143a59732f16fbd19f957f3e",
+      "path": "docs/autoencoders/legal_source_definition_v2.md",
+      "physical_file_matches": true
+    },
+    {
+      "git_blob": "b2d1cda8e3cc9f0b24cc1fc3b76dd22acd6741c7",
+      "path": "docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+      "physical_file_matches": true
+    },
+    {
+      "git_blob": "ed1c20429ed74f43daa9bdc80cd028fd67238dc6",
+      "path": "docs/autoencoders/legal_source_sampling_review.md",
+      "physical_file_matches": true
+    },
+    {
+      "git_blob": "7687361d25f9729a0a03b92bc6ba01def4b50166",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py",
+      "physical_file_matches": true
+    },
+    {
+      "git_blob": "780afbf171b850c4cb413dd6b525e2fe8ef8a6e6",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+      "physical_file_matches": true
+    },
+    {
+      "git_blob": "8cb89b89f41bde420f76c62bfcc20483869f7217",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review_handoff.py",
+      "physical_file_matches": true
+    },
+    {
+      "git_blob": "da068ffcf5997c414ab5edd96d99997741e71a7c",
+      "path": "tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py",
+      "physical_file_matches": true
+    },
+    {
+      "git_blob": "47bd14cec65d455231170c0593346ece2f1e059a",
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+      "physical_file_matches": true
+    },
+    {
+      "git_blob": "3213e58a4d6cdb710921450b8689f67eb61e20fb",
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_review_handoff.py",
+      "physical_file_matches": true
+    }
+  ],
+  "previous_main": "8b4189227dd929ecc7fdf7d3bf15229917abe2e4",
+  "reconciled_main": "234dc97a2fedb864c99add7f0d8e37ba81c785cf",
+  "schema": "legal-uscode-pilot-main-reconciliation/v1",
+  "scope": "Read-only Git/source metadata in owned checkout; no private worktree, corpus, checkpoint, numerical owner or live resource access.",
+  "source_binding_runtime_qualification": "pending_per_published_guide"
+}

@@ -163,6 +163,11 @@
       "bytes": 3733,
       "path": "recovery-a-01-audit.json",
       "sha256": "76eaabe5fdb419b163e454db29dd19f6f7c6775aebb517d0c17ce5fedf5a3834"
+    },
+    {
+      "bytes": 7006,
+      "path": "main-reconciliation.json",
+      "sha256": "82ded6b5738c2f01986eb49a8cea52d368094bd5c378237d6c0201ab71714466"
     }
   ],
   "existing_models_or_embeddings_changed": false,
@@ -327,6 +332,21 @@
   },
   "model_training_run": false,
   "passing_pytest_cases": 541,
+  "post_validation_main_reconciliation": {
+    "concurrent_main_commit": "f84512733dd1a40bfe07d030337136fb08b1c652",
+    "path": "main-reconciliation.json",
+    "post_merge_matching_pins": {
+      "a-02": {
+        "matching_current_pins": 202,
+        "upstream_changed_pin_count": 0
+      },
+      "c-02": {
+        "matching_current_pins": 208,
+        "upstream_changed_pin_count": 0
+      }
+    },
+    "sha256": "82ded6b5738c2f01986eb49a8cea52d368094bd5c378237d6c0201ab71714466"
+  },
   "preserved_contributions": [
     {
       "exact_bytes_preserved": true,
