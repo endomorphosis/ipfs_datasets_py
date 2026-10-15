@@ -1,0 +1,355 @@
+{
+  "arms": [
+    {
+      "acceptance_source": "strict",
+      "accepted_epochs": 1,
+      "committed_deontic_ir_cosine": {
+        "after": 0.9848952290286693,
+        "after_minus_before": 0.0,
+        "before": 0.9848952290286693
+      },
+      "committed_deontic_ir_cross_entropy": {
+        "after": 0.6459133093322332,
+        "after_minus_before": 0.0,
+        "before": 0.6459133093322332
+      },
+      "committed_repeated_tuning_embedding_cosine": {
+        "after": 0.8475307002247241,
+        "after_minus_before": 0.019877460996072127,
+        "before": 0.827653239228652
+      },
+      "committed_repeated_tuning_reconstruction_loss": {
+        "after": 0.0019177031657274055,
+        "after_minus_before": -5.478780332820923e-05,
+        "before": 0.0019724909690556148,
+        "relative_change": -0.027775946347901592
+      },
+      "name": "structural",
+      "nonzero_gradient": true,
+      "nonzero_update": true,
+      "numerical_update_batch_seconds": 0.5442256298847497,
+      "objective_gain_committed": 0.02987097929743676,
+      "operator": "decoded_embedding_structural",
+      "proposed_view_cross_entropy": {
+        "committed_after": 1.5890269151739727,
+        "committed_after_minus_before": 0.0,
+        "committed_before": 1.5890269151739727,
+        "proposed_after": 1.5890269151739727,
+        "proposed_before": 1.5890269151739727
+      },
+      "reused_target_bridge_on_evaluate_seconds": {
+        "after": 1.420603475999087,
+        "before": 1.6791940338443965,
+        "sample_count_per_call": 2
+      },
+      "state_changed": true,
+      "training_wall_seconds": 14.147284329868853,
+      "whole_arm_wall_seconds": 23.297557721845806
+    },
+    {
+      "acceptance_source": "rejected",
+      "accepted_epochs": 0,
+      "committed_deontic_ir_cosine": {
+        "after": 0.9848952290286693,
+        "after_minus_before": 0.0,
+        "before": 0.9848952290286693
+      },
+      "committed_deontic_ir_cross_entropy": {
+        "after": 0.6459133093322332,
+        "after_minus_before": 0.0,
+        "before": 0.6459133093322332
+      },
+      "committed_repeated_tuning_embedding_cosine": {
+        "after": 0.827653239228652,
+        "after_minus_before": 0.0,
+        "before": 0.827653239228652
+      },
+      "committed_repeated_tuning_reconstruction_loss": {
+        "after": 0.0019724909690556148,
+        "after_minus_before": 0.0,
+        "before": 0.0019724909690556148,
+        "relative_change": 0.0
+      },
+      "name": "global_view",
+      "nonzero_gradient": true,
+      "nonzero_update": true,
+      "numerical_update_batch_seconds": 0.013297333847731352,
+      "objective_gain_committed": 0.0,
+      "operator": "legal_ir_view_global_logits",
+      "proposed_view_cross_entropy": {
+        "committed_after": 1.5890269151739727,
+        "committed_after_minus_before": 0.0,
+        "committed_before": 1.5890269151739727,
+        "proposed_after": 1.7470878838489052,
+        "proposed_before": 1.5890269151739727
+      },
+      "reused_target_bridge_on_evaluate_seconds": {
+        "after": 1.2378030640538782,
+        "before": 1.3150193749461323,
+        "sample_count_per_call": 2
+      },
+      "state_changed": false,
+      "training_wall_seconds": 12.847413358977064,
+      "whole_arm_wall_seconds": 21.332657489925623
+    },
+    {
+      "acceptance_source": "rejected",
+      "accepted_epochs": 0,
+      "committed_deontic_ir_cosine": {
+        "after": 0.9848952290286693,
+        "after_minus_before": 0.0,
+        "before": 0.9848952290286693
+      },
+      "committed_deontic_ir_cross_entropy": {
+        "after": 0.6459133093322332,
+        "after_minus_before": 0.0,
+        "before": 0.6459133093322332
+      },
+      "committed_repeated_tuning_embedding_cosine": {
+        "after": 0.827653239228652,
+        "after_minus_before": 0.0,
+        "before": 0.827653239228652
+      },
+      "committed_repeated_tuning_reconstruction_loss": {
+        "after": 0.0019724909690556148,
+        "after_minus_before": 0.0,
+        "before": 0.0019724909690556148,
+        "relative_change": 0.0
+      },
+      "name": "feature_view",
+      "nonzero_gradient": true,
+      "nonzero_update": true,
+      "numerical_update_batch_seconds": 0.34219769202172756,
+      "objective_gain_committed": 0.0,
+      "operator": "legal_ir_view_logits",
+      "proposed_view_cross_entropy": {
+        "committed_after": 1.5890269151739727,
+        "committed_after_minus_before": 0.0,
+        "committed_before": 1.5890269151739727,
+        "proposed_after": 1.7442272839927504,
+        "proposed_before": 1.5890269151739727
+      },
+      "reused_target_bridge_on_evaluate_seconds": {
+        "after": 1.2288372069597244,
+        "before": 1.3200802009087056,
+        "sample_count_per_call": 2
+      },
+      "state_changed": false,
+      "training_wall_seconds": 13.890736031113192,
+      "whole_arm_wall_seconds": 22.34997198288329
+    }
+  ],
+  "authority": {
+    "Constitution_formalized": false,
+    "Lean_admitted": false,
+    "acceptance_criteria_changed": false,
+    "admitted": false,
+    "corpus_admitted": false,
+    "formula_decoder_fidelity_verified": false,
+    "independent_holdout_qualification": false,
+    "lake_run_in_head_probe": false,
+    "model_qualified": false,
+    "new_scoring_by_static_audit": false,
+    "new_training_by_documentation": false,
+    "parent_checkpoint_overwritten": false,
+    "retroactive_proposal_acceptance": false,
+    "source_semantics_verified": false,
+    "training_gold_qualified": false,
+    "weights_downloaded": false
+  },
+  "evidence": {
+    "actual_raw_view_support_audit": {
+      "bytes": 15576,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-followup-20261015/head-probe-view-support-audit-v2.json",
+      "sha256": "f111c12dbbb337a361cbb581d6c4c2a2cc0c1a1f0668bbcc56696cf2cc075553"
+    },
+    "compact_training_analysis": {
+      "bytes": 25195,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-followup-20261015/head-probe-analysis-v1.json",
+      "sha256": "5a8df56d65798401ce1b29df62a2dd9bfba3d5e24da4c9a8a013c78e9def4abd"
+    },
+    "head_owned_request": {
+      "bytes": 16512,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-followup-20261015/head-probe-owned-request-v1.json",
+      "sha256": "c15cd5548f3cfbe752ff20e6cc195936c489907f8258063c9295e960f061c7af"
+    },
+    "raw_head_worker_report": {
+      "bytes": 493485,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/head-probe-v1/exports/report.json",
+      "sha256": "4b701084aaa5b8cccd5c3bb4c3001e07df2364487d730352c119c0106f61ee1b"
+    },
+    "raw_target_preparation_report": {
+      "bytes": 32738,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/report.json",
+      "sha256": "39a55c4cbb68ca5f1c07c65d06b86234db00f4ceb043b158807c8c6ac466a531"
+    }
+  },
+  "matched_design": {
+    "accepted_epoch_total": 1,
+    "backend": "python_sparse_batch",
+    "checkpoint": {
+      "bytes": 7204344,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/4f/4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+      "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+    },
+    "completed_arms": 3,
+    "independent_holdout": false,
+    "parent_checkpoint_modified": false,
+    "training_samples": 6,
+    "tuning_samples": 2
+  },
+  "measurement_configuration": {
+    "OS_dependency_caches_controlled": false,
+    "adapter_workers": 1,
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "context_window_increased": false,
+    "legal_ir_evaluate_provers": false,
+    "legal_ir_parallel_workers": 1,
+    "metric_disk_cache": 0,
+    "temperature": 0,
+    "use_sample_memory": false
+  },
+  "next_diagnostic": {
+    "contract": "Explicit versioned fixed raw-view vocabulary from modality/schema, independent of targets and sparse head key presence. Do not default to the six observed IDs. Keep official gates/scoring unchanged and record both existing and diagnostic paired results.",
+    "status": "proposed_not_implemented",
+    "tests": [
+      "zero-valued key insertion does not change fixed-profile class support",
+      "epsilon continuity at zero under identical class support",
+      "inactive head behavior",
+      "unknown raw view labels and profile/checkpoint incompatibility refuse explicitly",
+      "candidate-cache invalidation and cold/warm equivalence",
+      "same diagnostic baseline and candidate vocabulary",
+      "genuinely bad update still rejected; historical rollback remains unchanged"
+    ]
+  },
+  "observed_native_code": {
+    "existing_regression": {
+      "function": "test_nonview_preserves_reference_dependent_ir_support_and_losses",
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_nonview_projection.py",
+      "sha256": "c1cc6a72b0df515d08896df8c62bd82ddd203f3a997cbd86b31defa03bbb119c"
+    },
+    "functions": [
+      "_legal_ir_view_distribution",
+      "_legal_ir_view_family_candidates",
+      "_legal_ir_view_logits_for",
+      "_invalidate_legal_ir_view_family_candidates",
+      "_nudge_legal_ir_view_global_logits",
+      "_nudge_legal_ir_view_logits",
+      "_softmax",
+      "train_generalizable_projection"
+    ],
+    "module": {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "ad1a964c1b6b15592aaabe5550af331cb97721b6d362f768c148a62cfd442990"
+    },
+    "repository_commit": "1b63e750ac3bee68b6f94c022aa4d4132f51d8a0"
+  },
+  "peak_worker_RSS_bytes": 1098657792,
+  "producer_source": {
+    "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+    "python_file_count": 8760,
+    "sha256": "90a10fe576640cea47bc8b8843bc00bb9fd785007b2c4b5167a2705a8351125f"
+  },
+  "producer_source_unchanged_in_worker": true,
+  "schema": "legal-ir-head-training-probe-observation/v1",
+  "scope": "Three matched native384 CPU sparse training diagnostics, six training rows and two repeatedly inspected tuning rows; static support analysis, not a new score or qualification.",
+  "timing_scope": {
+    "bridge_on_evaluate_reuses_verified_targets": true,
+    "bridge_on_evaluate_samples_per_call": 2,
+    "bridge_on_evaluate_wall_seconds_per_span_range": [
+      0.6144186034798622,
+      0.8395970169221982
+    ],
+    "bridge_on_evaluate_wall_seconds_range": [
+      1.2288372069597244,
+      1.6791940338443965
+    ],
+    "cache_scope": "Fresh process; metric/multiview target caches bypassed during preparation. OS/dependency caches uncontrolled.",
+    "full_cold_path_speedup_claimed": false,
+    "new_target_bridge_prepare_seconds": 48.94381491630338,
+    "new_target_bridge_prepare_seconds_per_span": 6.117976864537923,
+    "new_target_samples": 8,
+    "new_target_total_wall_seconds": 144.49737664009444,
+    "new_target_total_wall_seconds_per_span": 18.062172080011806,
+    "profile_categories_may_overlap": true,
+    "source_guard_cost_independently_timed": false,
+    "target_compilation_excluded_from_evaluate_timing": true
+  },
+  "view_support_observation": {
+    "actual_attempts": [
+      {
+        "all_training_labels_uniform_CE": 1.791759469228055,
+        "arm": "structural",
+        "candidate_CE_after": 1.5890269151739727,
+        "candidate_CE_before": 1.5890269151739727,
+        "candidate_CE_change": 0.0,
+        "candidate_CE_minus_same_expanded_uniform_baseline": null,
+        "expanded_reference_comparison_applicable": false,
+        "global_logit_scalar_update_count": 0,
+        "neutral_support_expansion_penalty": 0.2027325540540823,
+        "nonzero_gradient": true,
+        "nonzero_update": true,
+        "rejected": false,
+        "target_derived_empty_state_uniform_CE": 1.5890269151739727
+      },
+      {
+        "all_training_labels_uniform_CE": 1.791759469228055,
+        "arm": "global_view",
+        "candidate_CE_after": 1.7470878838489052,
+        "candidate_CE_before": 1.5890269151739727,
+        "candidate_CE_change": 0.15806096867493258,
+        "candidate_CE_minus_same_expanded_uniform_baseline": -0.044671585379149725,
+        "expanded_reference_comparison_applicable": true,
+        "global_logit_scalar_update_count": 6,
+        "neutral_support_expansion_penalty": 0.2027325540540823,
+        "nonzero_gradient": true,
+        "nonzero_update": true,
+        "rejected": true,
+        "target_derived_empty_state_uniform_CE": 1.5890269151739727
+      },
+      {
+        "all_training_labels_uniform_CE": 1.791759469228055,
+        "arm": "feature_view",
+        "candidate_CE_after": 1.7442272839927504,
+        "candidate_CE_before": 1.5890269151739727,
+        "candidate_CE_change": 0.15520036881877775,
+        "candidate_CE_minus_same_expanded_uniform_baseline": -0.04753218523530456,
+        "expanded_reference_comparison_applicable": true,
+        "global_logit_scalar_update_count": 6,
+        "neutral_support_expansion_penalty": 0.2027325540540823,
+        "nonzero_gradient": true,
+        "nonzero_update": true,
+        "rejected": true,
+        "target_derived_empty_state_uniform_CE": 1.5890269151739727
+      }
+    ],
+    "conclusion": "Support expansion is corroborated as a material comparison confound, not proof of corrected-objective acceptance. No per-attempt prediction class list was persisted; combine actual target supports, recorded six-key updates and pinned implementation.",
+    "expanded_six_support_uniform_CE": 1.791759469228055,
+    "historical_rejections_preserved": true,
+    "neutral_uniform_support_expansion_mean_CE_penalty": 0.2027325540540823,
+    "new_model_scoring_performed": false,
+    "observed_six_ids_are_not_exhaustive_schema_vocabulary": true,
+    "original_mixed_support_uniform_CE": 1.5890269151739727,
+    "raw_training_union": [
+      "CEC.native",
+      "TDFOL.prover",
+      "deontic.ir",
+      "external_provers.router",
+      "knowledge_graphs.neo4j_compat",
+      "modal.frame_logic"
+    ],
+    "raw_view_ids_are_not_aggregated_reporting_family_names": true,
+    "training_union_count": 6,
+    "tuning_original_support_counts": [
+      4,
+      6
+    ]
+  },
+  "wall_seconds": 113.4815902041737
+}

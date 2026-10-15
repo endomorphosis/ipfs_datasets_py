@@ -1,0 +1,13 @@
+{
+  "all144_request_source_pins_exact": true,
+  "attempt": "a-01",
+  "cleanup_error": null,
+  "launcher_exit_code": 0,
+  "method": "Selected transcription of tools terminal exit; not original full launcher stdout.",
+  "old_production_sources": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "ad1a964c1b6b15592aaabe5550af331cb97721b6d362f768c148a62cfd442990"
+  },
+  "schema": "fixed-view-native-terminal-observation/v1",
+  "selected_storage_status": "released"
+}

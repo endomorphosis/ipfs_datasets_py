@@ -1,0 +1,16 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-a-01/cache/pytest
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 95 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_nonview_projection.py . [  1%]
+.........................................                                [ 44%]
+tests/unit/logic/integration/test_legal_ir_view_contracts.py .........   [ 53%]
+tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_vocabulary_diagnostic.py . [ 54%]
+...........................................                              [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-a-01/logs/junit.xml -
+============================== 95 passed in 1.74s ==============================

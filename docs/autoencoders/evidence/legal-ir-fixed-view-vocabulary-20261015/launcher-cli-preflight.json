@@ -1,0 +1,18 @@
+{
+  "attempt_directory_created": false,
+  "correction": "Supply existing unchanged native resource ledger CLI argument and reuse the unconsumed unchanged request; no source or request edits.",
+  "exit_code": 2,
+  "omitted_cli_argument": "--resource-ledger",
+  "product_child_executed": false,
+  "schema": "retained-fixed-view-launcher-cli-preflight/v1",
+  "second_setup_refusal": {
+    "attempt_directory_created": false,
+    "correction": "Create exactly the declared empty0700 attempt directory; reuse unchanged request.",
+    "exit_code": 1,
+    "product_child_executed": false,
+    "reason": "Required empty attempt directory did not exist",
+    "stage": "owner construction before owner.open",
+    "stderr_file": "launcher-missing-attempt.stderr.log"
+  },
+  "stderr": "usage: run_owned_validation.py [-h] --request REQUEST\n                               --expected-request-sha256\n                               EXPECTED_REQUEST_SHA256\n                               [--resource-ledger RESOURCE_LEDGER]\nrun_owned_validation.py: error: --resource-ledger is required for native ownership\n"
+}

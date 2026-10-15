@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015/scripts/ops/legal_ir/run_owned_validation.py", line 326, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015/scripts/ops/legal_ir/run_owned_validation.py", line 183, in main
+    owner = ValidationResourceReservation(args.resource_ledger,roots=[row['path'] for row in ledger['roots']],
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py", line 119, in __init__
+    self.directory = host._safe_path(attempt_directory, directory=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py", line 85, in _safe_path
+    return _checked_path(path, (*reversed(path.parents), path), directory=directory, missing=missing)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py", line 96, in _checked_path
+    raise DaemonResourceError(f"missing resource path: {part}") from None
+ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources.DaemonResourceError: missing resource path: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-01

@@ -1,0 +1,120 @@
+{
+  "authority": {
+    "foreign_training_hooks_qualified": false,
+    "gold_admitted": false,
+    "meaning_authenticated": false,
+    "model_promoted": false,
+    "proof_admitted": false,
+    "review_performed": false
+  },
+  "concrete_documentation_caveat": {
+    "needed_interpretation": "Describe generic scorer as caller-owned cache/readout policy. It is not a cache-independent or isolated custody contract. No foreign files are edited by this review.",
+    "observed_claim": "The diagnostic neither consults stale caches nor substitutes a model prior.",
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/fixed_view_vocabulary_diagnostics.md",
+    "source_correspondence": "The generic helper directly calls model._legal_ir_view_logits_for; existing head extraction reads cached legal_ir_view_feature_keys and compiler target/loss context. The helper docstring itself states that existing feature caches may be read and warmed."
+  },
+  "contracts": {
+    "owned_strict_standalone_audit": {
+      "apis": [
+        "build_bridge_contract_view_profile",
+        "view_profile_sha256",
+        "score_fixed_view_logits",
+        "evaluate_fixed_view_vocabulary"
+      ],
+      "numerical": "Stable shifted log-sum-exp with an explicit small roundoff policy. It does not replace the current official clamped CE arithmetic.",
+      "owner_module": "legal_ir_view_vocabulary_diagnostic",
+      "profile_schema": "legal-ir-bridge-contract-view-profile/v1",
+      "report_schema": "legal-ir-fixed-view-vocabulary-diagnostic/v1",
+      "state_and_cache": "Exact supported model/state type, actual state identity/revision and finite contents, isolated copied state and target/loss context, fresh feature/candidate caches, explicit evaluator-context digest, closing source/sample/configuration guards. Unknown stored view labels are refused, including inactive/zero keys.",
+      "targets": "Closed bounded ordered row list with independently pinned full target values and finite nonnegative weights normalized only for separately named diagnostics.",
+      "training_integration": "No existing production file or training API is changed. Read-only adapter report remains separate from official evaluate, losses, optimizer, Pareto, rollback and checkpoint serialization.",
+      "vocabulary": "Existing optimizer six core lanes plus preserved zkp.circuits tail, minus declared exclusions. Actual target-owner and registry source bodies are pinned; no payload-registry or observed-row vocabulary derivation."
+    },
+    "parallel_generic_observer": {
+      "apis": [
+        "FixedViewVocabulary",
+        "validate_fixed_view_targets",
+        "score_fixed_view_vocabulary"
+      ],
+      "numerical": "Stable shifted log-sum-exp and CE/entropy/excess, outside the declared objective and acceptance report fields.",
+      "owner_module": "modal_autoencoder_view_diagnostic",
+      "profile_schema": "fixed-view-vocabulary/v1",
+      "report_schema": "fixed-view-diagnostic/v1",
+      "state_and_cache": "Calls caller model existing head directly with sample memory false. Existing caller feature caches can be read or warmed. Undeclared state labels are excluded by declared prediction support, without asserting schema coverage.",
+      "targets": "Exact sample-ID mapping of already normalized nonnegative probabilities, bounded by individual probability range and sum tolerance.",
+      "training_integration": "Uncommitted core diff adds optional baseline/proposed/final diagnostic observations in train_generalizable_projection, including composed refinement. No adoption into this owned checkout.",
+      "vocabulary": "Caller declaration for modality/schema/lineage, with 1..4096 arbitrary unique raw labels; declaration coverage is not authenticated."
+    }
+  },
+  "current_owned_native_results_promote_foreign_work": false,
+  "foreign_branch": "main",
+  "foreign_files": [
+    {
+      "bytes": 8430,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_view_diagnostic.py",
+      "repository_relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_view_diagnostic.py",
+      "sha256": "1937169c7d49409b89b00c2b2c9d1d9e955ab3f37f15122931b79be9bb0c36ba"
+    },
+    {
+      "bytes": 1428524,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "repository_relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "4b44bb723709be5b4606d497935b245723231df8ec19b24f1bd329fd8932ad24"
+    },
+    {
+      "bytes": 10687,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_view_diagnostic.py",
+      "repository_relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_view_diagnostic.py",
+      "sha256": "fea8840b7c020444bf667f8fdeae14a7cba5b0edb4317c4882b2a4e130f08f68"
+    },
+    {
+      "bytes": 4089,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/fixed_view_vocabulary_diagnostics.md",
+      "repository_relative_path": "docs/autoencoders/fixed_view_vocabulary_diagnostics.md",
+      "sha256": "dd2bac1e73290b44137925dc75bedbbe66425b9b2a358d21e5a1ceb0fae31b80"
+    }
+  ],
+  "foreign_files_adopted_or_modified": false,
+  "foreign_head": "74f5d98c8ffff3c284cffddf430091b5fc4c6f8c",
+  "foreign_observer_in_owned_native_qualification": false,
+  "foreign_repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "foreign_runtime_imports_or_tests_by_reviewer": 0,
+  "foreign_safety_or_compatibility_qualified": false,
+  "foreign_selected_path_status": [
+    " M ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+    "?? docs/autoencoders/fixed_view_vocabulary_diagnostics.md",
+    "?? ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_view_diagnostic.py",
+    "?? tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_view_diagnostic.py"
+  ],
+  "foreign_selected_paths_dirty": true,
+  "observed_at_utc": "2026-10-15T21:52:43.821705+00:00",
+  "owned_existing_production_preserved": [
+    {
+      "bytes": 1425600,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "ad1a964c1b6b15592aaabe5550af331cb97721b6d362f768c148a62cfd442990",
+      "working_bytes_equal_owned_head_git": true
+    },
+    {
+      "bytes": 188632,
+      "path": "ipfs_datasets_py/logic/bridge/multiview.py",
+      "sha256": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa",
+      "working_bytes_equal_owned_head_git": true
+    },
+    {
+      "bytes": 14516,
+      "path": "ipfs_datasets_py/logic/bridge/registry.py",
+      "sha256": "267d5065864c6778601fc8ebb23a5b4c57ef74856fc1b1b974b96bf283e47569",
+      "working_bytes_equal_owned_head_git": true
+    }
+  ],
+  "reconciliation": [
+    "Preserve the foreign uncommitted contribution, its dirty checkout and the exact observed files. Do not copy, reset, stage or include it in the owned native qualification source cohort.",
+    "Publish the owned module only as an explicitly separate strict compiler-lane audit contract. Attribute the parallel generic observer rather than claiming no parallel implementation exists.",
+    "After the parallel author commits and qualifies its exact source generation, review consolidation of the pure numerical reducer. Keep distinct profile namespaces, target shape, state/custody, unknown-label and cache policies explicit; do not alias schemas or interchange receipts silently.",
+    "Training observer integration is future work requiring separate authored and actual qualification of before/proposal/after placement, deadline overhead, cache effects, rejection/rollback and no-option compatibility. Current owned results do not qualify those hooks.",
+    "Neither contract authenticates compiler targets as legal meaning, reviewer independence or gold. Fixed support does not establish formula fidelity, exact text reconstruction, model gain, proof admission or token savings."
+  ],
+  "review_kind": "read_only_static_comparison_of_uncommitted_parallel_work",
+  "schema": "legal-ir-fixed-view-vocabulary-parallel-observer-reconciliation/v1"
+}

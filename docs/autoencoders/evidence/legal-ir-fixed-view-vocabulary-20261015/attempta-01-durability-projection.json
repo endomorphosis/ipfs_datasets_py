@@ -1,0 +1,121 @@
+{
+  "method": "Parsed original fields except reservation_id; original bytes retained and independently hashed.",
+  "native_receipt": {
+    "admitted": false,
+    "arbitrary_descendant_containment": false,
+    "files": [
+      {
+        "bytes": 37,
+        "device": 66306,
+        "inode": 69253092,
+        "path": "cache/pytest/.gitignore",
+        "sha256": "3ed731b65d06150c138e2dadb0be0697550888a6b47eb8c45ecc9adba8b8e9bd"
+      },
+      {
+        "bytes": 191,
+        "device": 66306,
+        "inode": 69253093,
+        "path": "cache/pytest/CACHEDIR.TAG",
+        "sha256": "37dc88ef9a0abeddbe81053a6dd8fdfb13afb613045ea1eb4a5c815a74a3bde4"
+      },
+      {
+        "bytes": 302,
+        "device": 66306,
+        "inode": 69253091,
+        "path": "cache/pytest/README.md",
+        "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad"
+      },
+      {
+        "bytes": 16042,
+        "device": 66306,
+        "inode": 69253105,
+        "path": "cache/pytest/v/cache/nodeids",
+        "sha256": "bed0d3424be6420777f09d257898ad2ab1af89e2056cfce26af21ddac59359e3"
+      },
+      {
+        "bytes": 42,
+        "device": 66306,
+        "inode": 69253095,
+        "path": "cache/pytest/v/commit_hash",
+        "sha256": "059b0eb35885a0286414706e3b2b8d18e23d01d9f5fe78dc4a79c84035c7567b"
+      },
+      {
+        "bytes": 42,
+        "device": 66306,
+        "inode": 69253097,
+        "path": "cache/pytest/v/last_run_commit",
+        "sha256": "059b0eb35885a0286414706e3b2b8d18e23d01d9f5fe78dc4a79c84035c7567b"
+      },
+      {
+        "bytes": 4,
+        "device": 66306,
+        "inode": 69253098,
+        "path": "cache/pytest/v/last_run_uncommitted",
+        "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      },
+      {
+        "bytes": 4,
+        "device": 66306,
+        "inode": 69253096,
+        "path": "cache/pytest/v/uncommitted_changes",
+        "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      },
+      {
+        "bytes": 693,
+        "device": 66306,
+        "inode": 69253088,
+        "path": "logs/execution.json",
+        "sha256": "2091663f35ee268ae5b0d0ee7af189fdfe36bede44a19754690c5ac06fa12d9d"
+      },
+      {
+        "bytes": 19612,
+        "device": 66306,
+        "inode": 69253103,
+        "path": "logs/junit.xml",
+        "sha256": "62bcca233ccd680f8886b1a243856b36c5491afdfe193c9f0e5f23687c22b853"
+      },
+      {
+        "bytes": 855,
+        "device": 66306,
+        "inode": 69253089,
+        "path": "logs/result.json",
+        "sha256": "6b5f2b52b2cde821b1c29e27a08b89af5d44da1c2119c9fcf56d8723c7e75391"
+      },
+      {
+        "bytes": 0,
+        "device": 66306,
+        "inode": 69253087,
+        "path": "logs/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 1348,
+        "device": 66306,
+        "inode": 69253086,
+        "path": "logs/stdout.log",
+        "sha256": "c8a1dec0dea28442846ddfb318d15584141f6bade4f528dcd383a2418e636792"
+      },
+      {
+        "bytes": 1557,
+        "device": 66306,
+        "inode": 69253101,
+        "path": "pytest/basetemp/test_worker_explicit_order_is_bound_and_default_-r5jd7a87/parent.json",
+        "sha256": "5975e52cd3db3f1ac7e8be248351d685782e102a56d69dd17ecb4b1ef1d23737"
+      }
+    ],
+    "request_sha256": "cc03ebcfaff655647572c44ad70b8182b3156f92c94856a5448da6c4d8f6db1c",
+    "result_path": "logs/result.json",
+    "result_sha256": "6b5f2b52b2cde821b1c29e27a08b89af5d44da1c2119c9fcf56d8723c7e75391",
+    "schema": "owned-validation-durability/v1",
+    "scope": "owned_files_fsynced_after_recorded_group_observed_stopped"
+  },
+  "omitted_fields": [
+    "reservation_id"
+  ],
+  "original": {
+    "bytes": 2664,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-a-01/logs/validation-durability.json",
+    "sha256": "9d59ee1ef205469e575d1ae74c7ac3b4ea2cd3a5c9657227a4193708a49c315d"
+  },
+  "schema": "retained-source-durability-public-projection/v1"
+}
