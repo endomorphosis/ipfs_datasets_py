@@ -1,0 +1,69 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "admitted": false,
+    "historical_flat_occurrences_repaired": false,
+    "source_population_equivalence_verified": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "blobs_root": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs",
+  "expected_graph_population": {
+    "graph_edges": {
+      "files": 44,
+      "rows": 178691
+    },
+    "graph_nodes": {
+      "files": 30,
+      "rows": 119134
+    }
+  },
+  "expected_manifest_sha256": "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6",
+  "expected_selection_sha256": "83c8fb05b4a0435486dff800297674a8433dd4af7dcfd50beae85a8490f2a330",
+  "export_limit_policy": "explicit versioned2GiBfinalprofile; allotherceilingsunchanged, onlyloweroverrides",
+  "historical_extras_count_observed": 407,
+  "historical_reconstruction_candidate_bytes": 716898677,
+  "historical_reconstruction_candidate_sha256": "46986513582973996e4d69ecf0669ed7331e6cca07ca793f3b1c1ea2dcdec8f1",
+  "inputs": {
+    "accepted_reconstruction_report": {
+      "bytes": 160983,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/reconstruction-baseline.json",
+      "sha256": "3368f3698f25ac66d3584f388ee0b6d52746443e142d423ed0b8a1ded31abfe2"
+    },
+    "accepted_selection": {
+      "bytes": 1994389,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/selection.json",
+      "sha256": "3ec568b38976ddeb6608f95c052127975182251d64baeae8755f9a8a73c83ed7"
+    },
+    "historical_completion": {
+      "bytes": 16170,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/completion.json",
+      "sha256": "c8275909c967ff712a6500d717699ccb38d284e37661a2e63c2de0d0907de8a3"
+    },
+    "input_custody": {
+      "bytes": 1632,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/input-custody.json",
+      "sha256": "20783310ff0adbf278fc1147278589c5fb300d3c77ea8d89c7afc48c643cfa19"
+    },
+    "raw_manifest": {
+      "bytes": 852161,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-cache-intake-20261013-01/entity-index-repair-metadata/primary-manifest.json",
+      "sha256": "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6"
+    },
+    "selection_options": {
+      "bytes": 848,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/selection-options.json",
+      "sha256": "97f9cc53f7491a9f186bb68c4b11757db6cd06bfd9d2fcdad53d5afc33c0bff4"
+    }
+  },
+  "new_export_profile": "manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1",
+  "repository": "justicedao/ipfs_uscode",
+  "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+  "schema": "legal-primary-corpus-export-input/v1",
+  "scope": "Independently retained primary-release inputs and historical metadata commitments; no new custody/body verification or source currentness asserted before actual admitted replay. Historical completion is an attribution anchor, not authenticated legal review.",
+  "selected_file_count": 74,
+  "selected_row_count": 297825,
+  "selected_total_file_bytes": 46241258,
+  "snapshot_root": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/snapshots/5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+  "source_limit_policy": "unchanged existing reconstruction ceilings"
+}

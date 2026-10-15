@@ -7,8 +7,14 @@ record bodies and custody while declaring the release writer's canonical JSON
 encoding transformation. It does not reconstruct historical flat-cache links,
 merge entities by label, or admit a graph for legal or training use.
 
-The format is `legal-primary-graph-export/v1`, with profile
-`manifest-selected-primary-entry-cid-canonical-parquet/v1`. Its identity namespace
+The format is `legal-primary-graph-export/v1`. The default profile is
+`manifest-selected-primary-entry-cid-canonical-parquet/v1`, with a 1 GiB final
+generation ceiling. Explicit profile
+`manifest-selected-primary-entry-cid-canonical-parquet-2gib/v1` raises only that
+ceiling to 2 GiB. The caller must select it for both export and validation;
+saved manifest contents never select or expand an accepted profile. All other
+ceilings, transport records, readback checks and authority flags are unchanged.
+The identity namespace
 is explicitly `primary_entry_cid`: legal IDs and labels are retained properties,
 not substitute node identities. Other record-CID or node-CID namespaces are not
 implicitly interchangeable with this one.
@@ -40,6 +46,7 @@ export_primary_graph(
     selection, snapshot_root, new_output_directory,
     expected_selection_sha256=accepted_selection_sha256,
     blobs_root=None, source_limits=None, limits=None,
+    profile="manifest-selected-primary-entry-cid-canonical-parquet/v1",
 )
 
 validate_primary_graph_export(
@@ -48,6 +55,8 @@ validate_primary_graph_export(
     selection=selection, snapshot_root=snapshot_root,
     expected_selection_sha256=accepted_selection_sha256,
     blobs_root=None, source_limits=None, limits=None,
+    profile="manifest-selected-primary-entry-cid-canonical-parquet/v1",
+    replay_parent=None,
 )
 ```
 
@@ -153,9 +162,11 @@ or silently accept a new encoding profile.
 
 ## Finite bounds and lifecycle
 
-All export overrides are positive exact integers no larger than these defaults;
-unknown keys, booleans, and ceiling increases are refused. The validator requires
-the same effective export limits as the manifest.
+All export overrides are positive exact integers no larger than the explicitly
+selected profile's ceilings. Unknown profiles/keys, booleans and ceiling
+increases are refused. The validator requires the caller's exact profile and
+effective limits to match the manifest, even when two profiles use equal lowered
+limits. The defaults remain:
 
 | Export limit | Default ceiling |
 | --- | ---: |
@@ -169,6 +180,10 @@ the same effective export limits as the manifest.
 | `max_manifest_bytes` | 1 MiB, also bounding `reconstruction.json` |
 | `batch_size` | 512 rows |
 | `max_decoded_batch_bytes` | 16 MiB |
+
+Only `max_output_bytes` changes under the explicit 2 GiB profile. Selecting a
+larger profile establishes a finite bound, not evidence that an actual corpus
+fits it or that native storage/memory admission is available.
 
 Writer input row/byte sums are checked before encoding. Footer uncompressed
 totals and aggregate decoded shard bytes are also bounded by
@@ -192,6 +207,15 @@ original-bound readback in staging and after exclusive copying, then writes the
 manifest last and checks the final closed inventory. Readers must require the
 independently accepted manifest pin and full validator; an incomplete directory
 is not a usable generation.
+
+Validation defaults to placing its temporary replay beside the candidate.
+For a separately admitted consumer, pass its existing owned temporary directory
+as `replay_parent`; the validator creates and cleans only a fresh random child
+there and reads the producer generation without writing into it. The explicit
+parent must be an unaliased directory outside the immutable source roots and
+the candidate subtree. This location does not change the report or grant
+resources. Reserve replay output, SQLite and auxiliary scratch under that
+consumer's own native owner.
 
 Caught failures clean up only files/directories still proven to be the unchanged
 owned inodes. Foreign replacements and nonempty foreign directories are
@@ -264,10 +288,17 @@ The [publication manifest](evidence/legal-primary-graph-export-20261015/publicat
 binds the selected evidence copies. Absolute-path drivers and requests are
 historical evidence; another run needs a newly frozen request and admission.
 
-This qualification executes authored fixtures. No production primary-graph
+That qualification executed authored fixtures. No production primary-graph
 generation, historical flat-cache repair, statutory review, decoder training,
-accuracy improvement, model upload or Lean build occurred. The next corpus job
-must freeze its original source selection and full peak resource budget, run
-this exporter and original-bound validator under the existing owner, and retain
-the complete population/quarantine result. Historical flat-cache occurrence
-lineage and multiplicity require their own supported reconciliation.
+accuracy improvement, model upload or Lean build occurred in that fixture phase.
+
+The subsequent [original-corpus export](legal_primary_corpus_export_20261015.md)
+qualifies the explicit 2 GiB profile and consumer-owned replay location with
+189 distinct cases, including the earlier 160 and 29 additional cases. Its
+separate native producer exported all 297,825 selected primary occurrences into
+586 files totaling 1,342,890,287 bytes. An independently frozen consumer then
+replayed the originals and verified the full generation, preserving the producer
+inventory. Both jobs retained completed native durability and resource closeout
+evidence. The 1 GiB default remains unchanged. This is transport verification;
+historical flat-cache occurrence lineage/multiplicity, source correspondence,
+meaning review, training gold and Lean admission remain separate work.

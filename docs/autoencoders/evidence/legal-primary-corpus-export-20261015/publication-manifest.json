@@ -1,0 +1,373 @@
+{
+  "authority": {
+    "Lean_executed": false,
+    "accepted_graph_view_enabled": false,
+    "accuracy_gain_claimed": false,
+    "admitted": false,
+    "formalized": false,
+    "historical_flat_occurrence_multiplicity_verified": false,
+    "historical_flat_occurrences_repaired": false,
+    "primary_to_official_source_correspondence_verified": false,
+    "proof_authority": false,
+    "published": false,
+    "semantic_review_verified": false,
+    "source_population_equivalence_verified": false,
+    "source_semantics_verified": false,
+    "training_performed": false,
+    "training_qualified": false
+  },
+  "created_at_utc": "2026-10-15T21:58:00.500882+00:00",
+  "files": [
+    {
+      "bytes": 1957,
+      "path": "accepted-producer-v01.json",
+      "sha256": "085e07d55c01b739e3e2104c8dd382db0e4a82b42288fe273ce9ea39c3077c96",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/accepted-producer-v01.json"
+    },
+    {
+      "bytes": 403,
+      "path": "execution-config-export-v01.json",
+      "sha256": "d03e3982b0685dae7cc04d78379792645716a72e19d316a66b39315d2401f598",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/execution-config-export-v01.json"
+    },
+    {
+      "bytes": 776,
+      "path": "execution-config-validate-v01.json",
+      "sha256": "3072d044ff668bf5fa4202c918c0d247ef01f9f67fcd92f79569332d2eeee891",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/execution-config-validate-v01.json"
+    },
+    {
+      "bytes": 50031,
+      "path": "export-independent-metadata-review-v01.json",
+      "sha256": "438c149e55280b88de8788a8d886fc7ea3e0d0e187791a52c23ac7c789a44aa5",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/export-independent-metadata-review-v01.json"
+    },
+    {
+      "bytes": 5244,
+      "path": "export-own-reservation-closeout-v01.json",
+      "sha256": "a1f6abfe37e1ea085d49e987d07b1e1652f76a19c574ee04012ae22b09837dc5",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/export-own-reservation-closeout-v01.json"
+    },
+    {
+      "bytes": 22464,
+      "path": "export-request-v01.json",
+      "sha256": "d267930941b7f57a7fe850c89a51098dfbea41bca244ef80de42c8cac4034177",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/export-request-v01.json"
+    },
+    {
+      "bytes": 23793,
+      "path": "export01/corpus-export-producer.json",
+      "sha256": "0e7e2dd99fd75f24156188a29d5e652a71bf3225ba5ff078badda261eb843591",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/logs/corpus-export-producer.json"
+    },
+    {
+      "bytes": 579,
+      "path": "export01/execution.json",
+      "sha256": "318cd9eb8afd2c7875cf6e942798ceb34e2dbe4f2332f408f95d472f68f01096",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/logs/execution.json"
+    },
+    {
+      "bytes": 106252,
+      "path": "export01/manifest.json",
+      "sha256": "5c94588706c54c8b8803e03971a18cc917aea754e31e7a9e1359f9c80b7021fd",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/exports/candidate-generation-v01/manifest.json"
+    },
+    {
+      "bytes": 120643,
+      "path": "export01/reconstruction.json",
+      "sha256": "e81b214aaf4fc652f2ff0880d9d7d27825c522ec9431bd0a550c30bf7da83ab1",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/exports/candidate-generation-v01/reconstruction.json"
+    },
+    {
+      "bytes": 743,
+      "path": "export01/result.json",
+      "sha256": "cf56039c736d299c91f1209cea31c953fd0602103ff761eab7b766b383e66162",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/logs/result.json"
+    },
+    {
+      "bytes": 0,
+      "path": "export01/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/logs/stderr.log"
+    },
+    {
+      "bytes": 436,
+      "path": "export01/stdout.log",
+      "sha256": "a398b83233960bf462f0bc97aeaea7ffc85562eba342238384589b4b7c76c6f6",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/logs/stdout.log"
+    },
+    {
+      "bytes": 114260,
+      "path": "export01/validation-durability.json",
+      "sha256": "589b88d88fadf5f24a06df98c99522721f3704bc269a9957a2dd1c5b8ca240f7",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/logs/validation-durability.json"
+    },
+    {
+      "bytes": 3507,
+      "path": "input-descriptor-v01.json",
+      "sha256": "7c91b196349888b6b293aeef7743ea915a39ab7cac3e693bce51e4f39c7d52e8",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/input-descriptor-v01.json"
+    },
+    {
+      "bytes": 15447,
+      "path": "lineage-size-lower-bound-v01.json",
+      "sha256": "c3c6c6ce5d6db092701c987ac854a68e747233c491c57a52285da90a80f54bb4",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/lineage-size-lower-bound-v01.json"
+    },
+    {
+      "bytes": 17232,
+      "path": "lineage-size-lower-bound-v02.json",
+      "sha256": "449ecc88afebe48d628557d7d4260b3b269e84c3b502a3d6aa1e18392a41fae6",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/lineage-size-lower-bound-v02.json"
+    },
+    {
+      "bytes": 71971,
+      "path": "qualification-independent-review-v01.json",
+      "sha256": "e80d070045932ea8c130a5386882473f0c7cb1372cf66e366c165bdbd6dc76b2",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/qualification-independent-review-v01.json"
+    },
+    {
+      "bytes": 5504,
+      "path": "qualification-parent-output-v01.json",
+      "sha256": "ed79fcf73b133ca51bea8ca2904b961d6fff2bb6a667ca6ab455b6715fa7346f",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/qualification-parent-output-v01.json"
+    },
+    {
+      "bytes": 23157,
+      "path": "qualification-request-v01.json",
+      "sha256": "3f8088db40c2ac2adbcaad067074c43eb1a39074fc81c54d3180d0745c3bcd25",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/qualification-request-v01.json"
+    },
+    {
+      "bytes": 3045,
+      "path": "qualification01/execution.json",
+      "sha256": "464c2aab8477afe3a64108464061a14a52a373f750c031a9eeb62a05bbf1d079",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/execution.json"
+    },
+    {
+      "bytes": 36063,
+      "path": "qualification01/junit.xml",
+      "sha256": "7d6ff84477b020c5ec9845ce5d2d3b682d697ea66654ad23bf4bd9fc0f629ab5",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/exports/junit.xml"
+    },
+    {
+      "bytes": 166007,
+      "path": "qualification01/qualification.json",
+      "sha256": "2c4c0be4a91e3ad9384e6f8008f887e52eb739d5397034b1ed0608ca6192e8f2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/qualification.json"
+    },
+    {
+      "bytes": 3223,
+      "path": "qualification01/result.json",
+      "sha256": "cbc3db96fb3df24e0ac06b0201aa293e7278851bbef834dd33cc8d355c98e2a9",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/result.json"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification01/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/stderr.log"
+    },
+    {
+      "bytes": 607,
+      "path": "qualification01/stdout.log",
+      "sha256": "8b1e163a19b4ac5480c8c4f55afcd8e4ab4209f932559dbb736840e91d05b3a7",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/stdout.log"
+    },
+    {
+      "bytes": 142099,
+      "path": "qualification01/validation-durability.json",
+      "sha256": "995611dc42b1be5835591c217d8fdb41ea7e30ff2e94ca4eb7480db93617811b",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-qualification01/logs/validation-durability.json"
+    },
+    {
+      "bytes": 1836,
+      "path": "resource-plan-v01.json",
+      "sha256": "fb49b57bc3214c8425393b7a841459919af8b5d73157b655487c81bc0d08dc0b",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/resource-plan-v01.json"
+    },
+    {
+      "bytes": 27023,
+      "path": "run_primary_graph_corpus_campaign_v01.py",
+      "sha256": "82fed6232cab278c8138795fe0c73bb65b25bf285ef4ddfd4d3516b15b1c68dc",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/run_primary_graph_corpus_campaign_v01.py"
+    },
+    {
+      "bytes": 30379,
+      "path": "source-bridge-survey-v02.json",
+      "sha256": "1db722c558f0dc44f8b2af11420474a3a98ce2c7c80090b7f11b572715b048f5",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/source-bridge-survey-v02.json",
+      "transport_normalization": {
+        "only_change": "Remove extra blank line at EOF; parsed JSON exactly equal; original retained.",
+        "original_bytes": 30380,
+        "original_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/source-bridge-survey-v01.json",
+        "original_sha256": "a2541405ad7c72c0f866c62680a504d99e87a0a007cb72f94280703d580162fc"
+      }
+    },
+    {
+      "bytes": 5839,
+      "path": "storage-observation-v01.json",
+      "sha256": "c76b7ad4f22ab1c5340e059a4ffb23ea1f78979d025de0d562d36f9bc2d7fc38",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/storage-observation-v01.json"
+    },
+    {
+      "bytes": 59724,
+      "path": "upstream-reconciliation-v01.json",
+      "sha256": "0cd8a46ac8200501b2ade735b48a3ef52fd4c93e989a47b44e48732944d89f01",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/upstream-reconciliation-v01.json"
+    },
+    {
+      "bytes": 24519,
+      "path": "validate01/corpus-original-bound-validation.json",
+      "sha256": "12dba1c3648d87defb589f1a08bb7eb6b4d317986d4ee2eb785745af7be334ba",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-validate01/logs/corpus-original-bound-validation.json"
+    },
+    {
+      "bytes": 584,
+      "path": "validate01/execution.json",
+      "sha256": "7600b329a23ab8a7b5ca24790c65f552c2c495011aab25aaa5e6eb8d956bf3a7",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-validate01/logs/execution.json"
+    },
+    {
+      "bytes": 752,
+      "path": "validate01/result.json",
+      "sha256": "9d900578aa03f703bac8ba330a26af742c0d8e5982fb19814ff8e975556d84c9",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-validate01/logs/result.json"
+    },
+    {
+      "bytes": 0,
+      "path": "validate01/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-validate01/logs/stderr.log"
+    },
+    {
+      "bytes": 454,
+      "path": "validate01/stdout.log",
+      "sha256": "55a2657a14afb77a54055fdc635b4829f2ce2acbf5b7a5e92f80a76dafaaadf2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-validate01/logs/stdout.log"
+    },
+    {
+      "bytes": 1199,
+      "path": "validate01/validation-durability.json",
+      "sha256": "1e33132c037697c19ad14198859c1bf30327133735abca7d158687577584788c",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-validate01/logs/validation-durability.json"
+    },
+    {
+      "bytes": 49262,
+      "path": "validation-independent-metadata-review-v01.json",
+      "sha256": "26b76507349c80f43d9b1e1698e18c78cadd8b055451ff8de52edf797db3a1ed",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/validation-independent-metadata-review-v01.json"
+    },
+    {
+      "bytes": 0,
+      "path": "validation-native-parent-stderr-v01.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/validation-native-parent-stderr-v01.txt"
+    },
+    {
+      "bytes": 5458,
+      "path": "validation-native-parent-stdout-v01.json",
+      "sha256": "5be795077231a0a138f95ab848e069c71f126b39b7bb641b04091bd27f81b5cb",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/validation-native-parent-stdout-v01.json"
+    },
+    {
+      "bytes": 22758,
+      "path": "validation-request-v01.json",
+      "sha256": "b89d997226a8500195387bbbb04be11919dc4e26b6b8411c584d92c998108a4e",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/validation-request-v01.json"
+    }
+  ],
+  "frozen_execution_base": "90662a4c6e0f12059c9900ba94ae80a4c86a0e25",
+  "integrated_main": "0ae59458167b3438bc4d112d0ffb3bf63a7f30c0",
+  "limitations": [
+    "The producer terminal session was unavailable after a new user turn. Its completed execution/durability and exact own-reservation read-only released-row observation are retained, without asserting captured stdout or independent scheduler-lease authentication.",
+    "The consumer parent stdout is an exact complete capture recording release at execution; it is not current live-ledger/scheduler authentication.",
+    "Absolute-path drivers/requests are historical evidence, not portable resource grants; another job requires separately frozen inputs and actual native admission.",
+    "Independent reviewers checked metadata and derived commitments without reopening Parquet/lineage bodies; native original-bound replay and durability own those payload checks.",
+    "Source/buffer pins do not authenticate third-party distributions. Storage/process enforcement remains cooperative and sampled, not kernel quotas or arbitrary descendant containment.",
+    "The 13 unresolved-citation placeholder nodes and 13 CITES_UNRESOLVED edges remain unresolved legal references despite structural endpoint closure.",
+    "Primary entry_cid, original physical occurrence, semantic candidate record CID and historical flat-cache IDs remain distinct namespaces.",
+    "The default 1 GiB profile is unchanged. The explicit 2 GiB profile changes only the final-generation ceiling; neither ceiling is whole-process memory or aggregate peak storage."
+  ],
+  "publication_scope": "Exact copies of selected native metadata/driver and final source/test/document commitments; no original corpus, Parquet or lineage payload copied into Git. Manifest excludes itself. Source-survey v02 only normalizes an extra EOF blank line; entry retains original v01 commitment.",
+  "qualification": {
+    "actual_consumer_product_origins": 54,
+    "actual_consumer_source_pins": 90,
+    "actual_producer_product_origins": 54,
+    "actual_producer_source_pins": 89,
+    "added_profile_replay_cases": 29,
+    "citation_reader_cases": 38,
+    "consumer_artifact_checks": 3,
+    "corpus_job_pytest_cases": 0,
+    "distinct_cases": 189,
+    "export_cases": 80,
+    "fixture_source_pins": 80,
+    "incoming_main_executed_by_this_run": false,
+    "prior160_cases_included_not_added": true,
+    "producer_artifact_checks": 3,
+    "producer_complete": true,
+    "producer_inventory_unchanged": true,
+    "selected_reconstruction_cases": 26,
+    "separate_consumer_original_bound_verification_complete": true,
+    "strict_record_cases": 45
+  },
+  "repository_files": [
+    {
+      "bytes": 43244,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py",
+      "sha256": "9762f1efe9354a19299307f46ba72c2e14e953295e1a2f0ed965816f109b6b6a"
+    },
+    {
+      "bytes": 38815,
+      "path": "tests/unit/logic/autoformal/test_legal_primary_graph_export.py",
+      "sha256": "7b1aa14eccb77baa480529cc50bc100d64fec7e276349bf1df31e2370a9c27e6"
+    },
+    {
+      "bytes": 16223,
+      "path": "docs/autoencoders/README.md",
+      "sha256": "b61d85cc036001c3d9dfad29ce3b8efccd767b2725230e4e2056f4ebc05a0cc4"
+    },
+    {
+      "bytes": 10395,
+      "path": "docs/autoencoders/legal_entity_cache_audit_20261015.md",
+      "sha256": "82585c2b9bd83d611af8fb34a5651fbd3540b33db6fe16a88e9b1d8cf9e6c886"
+    },
+    {
+      "bytes": 68438,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "c8ffb1850ee6ba36584fc284f6d268839e4bffea1fd157bc2de17f6dc35e85f7"
+    },
+    {
+      "bytes": 18118,
+      "path": "docs/autoencoders/legal_primary_graph_export.md",
+      "sha256": "a0fd28eb38eaf872971d5a4acd9e0cac3e8563b6acffbead04d557ee451ba521"
+    },
+    {
+      "bytes": 7939,
+      "path": "docs/autoencoders/legal_primary_corpus_export_20261015.md",
+      "sha256": "fa996a9f7781876489894ea99c9be5140ab5d40513fbc0037b9e717540d348b6"
+    }
+  ],
+  "retained_generation": {
+    "exported_rows": 297825,
+    "file_count": 586,
+    "lineage_bytes": 1294880789,
+    "lineage_only_rows": 0,
+    "manifest": {
+      "bytes": 106252,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/exports/candidate-generation-v01/manifest.json",
+      "sha256": "5c94588706c54c8b8803e03971a18cc917aea754e31e7a9e1359f9c80b7021fd"
+    },
+    "parquet_bytes": 47782603,
+    "parquet_shards": 583,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-corpus-export-20261015-export01/exports/candidate-generation-v01",
+    "payload_published_to_Git": false,
+    "payload_uploaded_to_Hub": false,
+    "quarantined_rows": 0,
+    "source_population": "Exact74descriptor297825roworiginalprimaryreleaseonly; not1,960,876rowhistoricalflatcacheorstatutorysemanticcoverage.",
+    "source_rows": 297825,
+    "structural_endpoint_integrity_passed": true,
+    "total_bytes": 1342890287
+  },
+  "schema": "legal-primary-corpus-export-publication/v1"
+}
