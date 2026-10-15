@@ -1,0 +1,186 @@
+{
+  "baseline": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+  "corpus_writes": 0,
+  "created_at_utc": "2026-10-15T04:24:15.092489+00:00",
+  "entity_cache_revision": "067c2a41affc6041fafb8237ae6df41bf4320008",
+  "files": [
+    {
+      "bytes": 13394,
+      "path": "docs/autoencoders/README.md",
+      "sha256": "faa43151d14d6ea773881ccd383b3b48d9ba55d93ac99a83fdd214b119bae08c"
+    },
+    {
+      "bytes": 7088,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/architecture-plan-review.json",
+      "sha256": "6e4ff91c5c0969cbcd1af47fc2ac7ff3a3cf68d988f0d401230b4369133f63ee"
+    },
+    {
+      "bytes": 17138,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/cache-plan-review.json",
+      "sha256": "167345ef99e67f661a418614c6630dd16974cd58856ef45482c9ef619c083be4"
+    },
+    {
+      "bytes": 581,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-README.md",
+      "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4"
+    },
+    {
+      "bytes": 1221,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-metadata.json",
+      "sha256": "dfef810e7ef721f8f5d9b3816ca1bef0243bad5e0ce0d366c6215cfe6066eb28"
+    },
+    {
+      "bytes": 65536,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-parquet-tail.bin",
+      "sha256": "7ee086e9a93d693919ecf7912665cc9f19430cba2b7c225595035ec2d5445b5e"
+    },
+    {
+      "bytes": 31051,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-first-rows.json",
+      "sha256": "5f081b7189518d0f38edb98b4f2a3f45a3aef9ac807961cc097d05a9f61da53b"
+    },
+    {
+      "bytes": 76,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-is-valid.json",
+      "sha256": "43203b08ebe297d116d215e33cd2f232e5d8611404c2c814693d6f3379713165"
+    },
+    {
+      "bytes": 355,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-parquet.json",
+      "sha256": "d3b1ab1901fc1a778bc240df98d3ee60c7281cc9ef46febf130378bfb9808723"
+    },
+    {
+      "bytes": 1584,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-100000.json",
+      "sha256": "b8bb4b44e200de16726e98a8fa61cf6ebb01f4528c179114c08e76932fd347df"
+    },
+    {
+      "bytes": 1574,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-1000000.json",
+      "sha256": "52c1672af74fea413919666a6c74bcbc57d8d4fb2d9dcba43122ebdcecb87523"
+    },
+    {
+      "bytes": 1703,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-130000.json",
+      "sha256": "e593b4c015dcfcf2dc80fe01ef248a9495e2331498dd55969c1e8371a68b27b0"
+    },
+    {
+      "bytes": 1550,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-1960874.json",
+      "sha256": "ff401ff9667ff97f9224c8e8dd8cfc085d6dd726fa8b23bab3f2dc342afe2d49"
+    },
+    {
+      "bytes": 1552,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-245000.json",
+      "sha256": "6c05014f76a1473e2ddfeec6ae412f5fc2a806cb9e9f344f64e7b1af0b5e6e8e"
+    },
+    {
+      "bytes": 756,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-size.json",
+      "sha256": "0306835cdfef6a430eee2ba8213aabd9a5a1c8c295b8b713d0eedc190b4a9e98"
+    },
+    {
+      "bytes": 138,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-splits.json",
+      "sha256": "6a460ee4eff400c981cc0d66879cacb6716cc7d91949d261224dc35a52595c5b"
+    },
+    {
+      "bytes": 2674,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/formula-text-manifest.json",
+      "sha256": "1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c"
+    },
+    {
+      "bytes": 39897,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/original-span-evidence.parquet",
+      "sha256": "a77a00a35b09b70b5d759ee7d1bc0d515106b0a1a0aaec526512fd8fee9e13c7"
+    },
+    {
+      "bytes": 2118,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v1-manifest.json",
+      "sha256": "c5427410ef41d3a6a40778a15b0c2e85b9f87d145840c5106e1d96b129ff9fc1"
+    },
+    {
+      "bytes": 44324,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v1-sample.parquet",
+      "sha256": "dac287c0f68b667fc3204855daf82291482f95205cd48810369a449dcee0039d"
+    },
+    {
+      "bytes": 11929,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v2-goals-sample.parquet",
+      "sha256": "78e8ef56ac689126db3020e1d08ed4e4a2a388f1dc603c108c8a89a642dff5f9"
+    },
+    {
+      "bytes": 2118,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v2-manifest.json",
+      "sha256": "c8264675403c17acd6d11e2fb0b521a441809eff78e2beb45fcb26d4c45c4201"
+    },
+    {
+      "bytes": 49600,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v2-sample.parquet",
+      "sha256": "89752616934159101508173859375afd2c8b41fece2ed503f36f84aa7a71f70f"
+    },
+    {
+      "bytes": 65536,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/resume-parquet-tail.bin",
+      "sha256": "efce96dbf4abef575ccffa6e1ce2affc335bed875686203a28732a3910b528d6"
+    },
+    {
+      "bytes": 13863,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-README.md",
+      "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6"
+    },
+    {
+      "bytes": 1064335,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-metadata.json",
+      "sha256": "2dcddd7c0b346c262af56b38fad48d0192b3bcdcec9a154f69172db711130edc"
+    },
+    {
+      "bytes": 98,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-viewer-is-valid.json",
+      "sha256": "91afbb421f5cc8355184136eb309db91f2089dc0d9fe89c6115b25c88d608b33"
+    },
+    {
+      "bytes": 98,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-viewer-splits.json",
+      "sha256": "91afbb421f5cc8355184136eb309db91f2089dc0d9fe89c6115b25c88d608b33"
+    },
+    {
+      "bytes": 111508,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub-cache-survey.json",
+      "sha256": "735c53c37be1a512618e7561ec8a2e8ec53b29c1a68dfe3688ef848ade64976a"
+    },
+    {
+      "bytes": 48373,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/pipeline-and-integration-survey.json",
+      "sha256": "a777bcba3c155d063ff860f5416c9fc75c6be3da8cba72c33da94fb084b388c6"
+    },
+    {
+      "bytes": 44262,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/reconstruction-and-assets-survey.json",
+      "sha256": "be53f4860478d6c5321edf0a7628cef6bc893c2b226fe3e0d559a40dfc0f22c1"
+    },
+    {
+      "bytes": 3036,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/reconstruction-plan-review.json",
+      "sha256": "7631253981ed3f52f1fd88a57639cea3751a12d14bb244a4a7153686439fe285"
+    },
+    {
+      "bytes": 2074,
+      "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/validation.json",
+      "sha256": "c36debd0bfbda587d1fbbd7ab4eb6da9e21396ac32bf2b0e71cb6d923ffe42f3"
+    },
+    {
+      "bytes": 39326,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "d9dca296551c92bb90498473384d41a957d9482e8da32c9920bd51d1ca95eb48"
+    }
+  ],
+  "manifest_self_excluded": true,
+  "models_loaded": 0,
+  "plan": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+  "product_code_changed": false,
+  "schema": "legal-ir-uscode-plan-manifest@1",
+  "scope": "documentation_plan_and_bounded_read_only_evidence",
+  "span_cache_revision": "ac68213001c649516036562ad031529c97c10b97",
+  "training_steps": 0
+}

@@ -1,0 +1,83 @@
+{
+  "architectural_findings": {
+    "DAG": "Existing24LIR tasks remain authoritative; cited LIR04→08,09→10,11+14→15 dependencies match the retained backlog. Milestones refine rather than replace that DAG; separately retained LAC campaign requires reconciliation before job import.",
+    "Lean_profile": "The conditional example matches existing shared theorem hDef+hNorm+hBody under the same parameterized interpretation and evaluation time. Compilation is separate from source correspondence or legal truth. Empty printed theorem axiom dependencies apply to the current narrow profile; future allowances require separately reviewed profiles. No placeholder/trusted law axioms are proposed.",
+    "applicability_conflict": "Plan separates source edition/legal applicability/event time and retains competing assertions. No global consistency follows from syntactic diagnostics, a successful solver call or definition lookup; no execution/Security authority is conferred.",
+    "connected_pilot": "Definition plus one complete actual norm and second actual use is an appropriate bounded target. Existing nine units and2024Title10§101 acquisition stay unselected/unreviewed; richer statutory arguments/qualifiers and cross-section use require versioned extensions. No complete statutory meaning is invented by this plan.",
+    "endpoints": "Plan correctly separates graph node record CID from stable conceptual ID/content payload CID, preserves actual versioned endpoint repair from original evidence, and refuses label-invented edges. Proposed HAS_ARGUMENT is named as use-or-version schema work; current corpus_graph instead has typed HAS_ACTOR/HAS_ACTION/HAS_OBJECT and ordinal role constraints.",
+    "owner_reuse": "Source/candidate/lookup/review/native/graph/Lean owners are reused, while local11a5 contract stack and untracked sampler require reconciliation before dependency. No new parser, crypto or resource engine is claimed as existing.",
+    "publication": "Versioned corrected entity generation preserves old export/unresolved records; coordinated immutable manifests avoid data self-reference and keep current cache/model/Lean readback separate from historical observations.",
+    "reconstruction": "Exact retained-source restoration, source-withheld semantic rendering, IR reconstruction and representation benefit remain distinct. Family/dimension/schema/decoder-task/producer/lineage inventory separation avoids falsely sharing incompatible checkpoints.",
+    "source_alignment": "Raw/source-version/physical occurrence/view/character/UTF8 namespaces, ambiguous/zero matches and aliases are preserved. Complete selected-population disposition and independent source correspondence remain gates. No sample prevalence or legal role is inferred from markup."
+  },
+  "deferred_to_other_evidence": [
+    "Hub repository file/row/footer statistics and malformed-edge lower bounds are supported by the separate Hub survey, not independently recounted by this reviewer.",
+    "F17/F18 numerical metrics, latest immutable model publication, saved-score conditions ranks and model-manager state are supplied by the reconstruction/asset survey and named original reports; no model/tensor/cache bodies were reloaded here.",
+    "No plan alone supplies actual reviewer trust, legal meaning, admitted labels, trained improvement, native Lean build or measured whole-cache throughput."
+  ],
+  "draft_update_note": "Fresh static read observes all three requested terminology corrections and the explicit source-conditioned control route; the bound draft supersedes the prior digest without relabelling runtime or qualification evidence.",
+  "effects": {
+    "git_mutations": false,
+    "model_calls": 0,
+    "native_builds": 0,
+    "network_requests": 0,
+    "new_crypto": false,
+    "plan_edited": false,
+    "runtime_edited": false,
+    "runtime_imports": false,
+    "tests_executed": 0
+  },
+  "findings": [
+    {
+      "finding": "The selected review verifier authenticates a claim under independently selected registered keys/policy; it explicitly does not establish human identity, competence, independence or legal truth.",
+      "id": "APR-01",
+      "line": 100,
+      "requested_change": "Say signatures bind the declaration to a selected registered key under the supplied policy, with reviewer identity/independence/competence/correctness separately evidenced.",
+      "severity": "correction",
+      "source": "ipfs_datasets_py/logic/autoformal/legal_graph_review.py:1-9,428-435",
+      "status": "resolved_in_bound_draft"
+    },
+    {
+      "finding": "Local11a5 source-binding contracts record candidate structured declarations; they explicitly do not adopt governing law.",
+      "id": "APR-02",
+      "line": 23,
+      "requested_change": "Replace governing-binding owners with candidate structured source-binding declaration owners.",
+      "severity": "precision",
+      "source": "local11a5 ipfs_datasets_py/logic/autoformal/corpus_source_bindings.py:EFFECT,FALSE_FLAGS",
+      "status": "resolved_in_bound_draft"
+    },
+    {
+      "finding": "Exact artifact/manifest identities establish custody/integrity. Admission also requires verified evidence and policy; byte identities alone do not establish source, semantic or proof authority.",
+      "id": "APR-03",
+      "line": 209,
+      "requested_change": "Name exact artifact/manifest custody identities and separately verified policy/evidence as the admission inputs.",
+      "severity": "precision",
+      "source": "ipfs_datasets_py/logic/autoformal/corpus_qualification.py:1-7,151-158; legal_graph_review.py:428-435",
+      "status": "resolved_in_bound_draft"
+    }
+  ],
+  "overall": "All three reported trust/terminology corrections are present in the exact bound draft. No remaining concrete architecture blocker identified. This is a static plan review, not implementation or semantic qualification.",
+  "plan": {
+    "bytes": 39326,
+    "lines": 259,
+    "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+    "scope": "Exact observed draft only; subsequent owner edits require fresh digest and review disposition, not silent reuse of this hash.",
+    "sha256": "d9dca296551c92bb90498473384d41a957d9482e8da32c9920bd51d1ca95eb48"
+  },
+  "prior_draft_observation": {
+    "bytes": 38823,
+    "lines": 259,
+    "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+    "scope": "Exact observed draft only; subsequent owner edits require fresh digest and review disposition, not silent reuse of this hash.",
+    "sha256": "03998990b840488374589f684a36ef22a18d5a00906212c9ce7e5b3b6c836fbb"
+  },
+  "review_mode": "read_only_static_architecture_review",
+  "schema": "legal-ir-uscode-architecture-plan-review@1",
+  "source_revision": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+  "status": "pass_after_targeted_corrections",
+  "survey": {
+    "bytes": 48373,
+    "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/pipeline-and-integration-survey.json",
+    "sha256": "a777bcba3c155d063ff860f5416c9fc75c6be3da8cba72c33da94fb084b388c6"
+  }
+}
