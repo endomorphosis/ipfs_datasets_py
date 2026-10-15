@@ -88,9 +88,9 @@ established; do not substitute equal text for source identity.
 
 Then review title-wide definitions, uses and cross-references as ordered sets of
 multiple source occurrences. Preserve ambiguity, controls, unresolved dependencies,
-independent reviewer roles and explicit applicability decisions. Only separately
-reviewed interpretations should proceed to semantic AST construction, scoped
-entity/definition graphs, and the existing native Lean dependency/admission owners.
+independent reviewer roles and explicit applicability decisions. Unreviewed candidate ASTs may retain explicit declarations. Separately reviewed
+interpretations and the stage-specific gates are required for semantic graph
+admission and the existing native Lean dependency/admission owners.
 The broader [USCode corpus plan](legal_ir_uscode_corpus_improvement_plan_20261015.md)
 continues to govern model, corpus and evaluation work; this integration supplies
 one previously separate source-declaration stack toward that effort.

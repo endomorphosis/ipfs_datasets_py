@@ -21,6 +21,12 @@ its scope and the next reviewed definition/use component.
   `independent_probe_review.json` audits bytes and receipts without rerunning
   product owners; it does not perform a second legal or native proof review.
 
+The separate `reconciliation-v01` run passes 135 cases across six modules
+after the normal merge of main's standalone source-first review intake. Its
+405-input inventory and `independent_reconciliation.json` bind that combined
+generation. `main_reconciliation.json` records exact preservation of upstream
+files and the one historical-input difference (standard-library import order).
+
 Original local artifacts reside under
 `/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015`.
 Copied files retain their exact execution bytes and historical absolute paths.
@@ -35,6 +41,10 @@ requires a passing qualification whose input bytes, HEAD and index still match:
 python docs/autoencoders/evidence/legal-ir-definition-v2-integration-20261015/qualification_runner.py /absolute/new-qualification-directory
 python docs/autoencoders/evidence/legal-ir-definition-v2-integration-20261015/probe_launcher.py --qualification /absolute/new-qualification-directory --output-directory /absolute/new-probe-directory
 ```
+
+`reconciliation_runner.py` accepts the same exclusive output argument for the
+six-module combined-main check. Its output remains separate from the larger
+historical qualification.
 
 The qualification runner bounds tests to 1,200 seconds; the probe launcher uses
 300 seconds. Each strips ambient application variables and creates private

@@ -50,6 +50,28 @@ parameterization collected in different orders across workers. Its raw failure
 and executed driver are retained. The passing run fixes `PYTHONHASHSEED=0` in
 the runner without changing product or test behavior.
 
+## Concurrent main reconciliation
+
+Main advanced to `0b3ec5191` with the additive
+[source-first sampling review intake](legal_source_sampling_review.md).
+A normal merge preserves that contribution and both plan/review-guide updates.
+The [combined check](evidence/legal-ir-definition-v2-integration-20261015/reconciliation-v01/receipt.json)
+passes **135 cases across six modules**, with zero failures/errors/skips and
+405 listed inputs unchanged. It exercises intake, sampler, V2 bridge/adapter,
+public export and import controls together; the 732-case run remains separately
+attributable to its original generation.
+
+Of the older 402 listed inputs, only `corpus_source_bindings.py` differs, by
+standard-library import ordering from main. All seven imported V2 files and all
+explicit producer pins in the retained probe remain exact. The intake records
+unsigned declarations over all subjects; it does not authenticate them or
+substitute for the separate V2 meaning-review contract.
+
+Main subsequently advanced to `a313093cf` with the separate paired-census
+quality audit. Its three paths are preserved exactly in a further normal merge;
+all 405 tested inputs remain unchanged. This integration does not supply a new
+qualification of that audit.
+
 ## Retained source probe
 
 The [probe receipt](evidence/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/probe-receipt.json)
@@ -81,10 +103,11 @@ receipt custody and checkout-root agreement. Their raw results remain separate.
 
 ## Next connected component
 
-A parallel owner is implementing compatible V2 occurrence-context and
-meaning-review interfaces in its existing checkout. Qualify its committed,
-frozen contribution rather than creating another review engine. Its current
-uncommitted work is outside this increment. Parent/alignment requests still
+The parallel V2 occurrence-context and meaning-review contribution is now
+committed at `8f33492f4a639aa0ee3218653c63e467cd01d3ea` in its existing
+checkout. Qualify that frozen contribution and retained closeout evidence next
+rather than creating another review engine. Its eight-path source delta is
+outside this increment. Parent/alignment requests still
 require their original identities and request evidence; equal text cannot
 substitute for checked correspondence to the standalone sampler.
 

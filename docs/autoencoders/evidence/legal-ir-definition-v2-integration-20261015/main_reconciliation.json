@@ -1,0 +1,298 @@
+{
+  "all_seven_original_contribution_paths_exact": true,
+  "binding_module_inspection": "Identical parsed non-import statements and import-statement multiset; only stdlib import order moved.",
+  "full_import_closure_claimed": false,
+  "historical_402_input_differences": [
+    "ipfs_datasets_py/logic/autoformal/corpus_source_bindings.py"
+  ],
+  "intentionally_combined_shared_docs": [
+    "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+    "docs/autoencoders/legal_source_review_stack_integration_20261015.md"
+  ],
+  "late_main_preservation": {
+    "all_405_qualified_input_bytes_unchanged": true,
+    "main": "a313093cf7a9683b39a5c3fdfad0e996fa822b9e",
+    "merge_head": "fca40d2fa7a9572ccec7e7062d129e8ca5b18569",
+    "mode_and_blob_exact": true,
+    "overlap_with_qualified_input_inventory": [],
+    "paths": [
+      "docs/autoencoders/paired_census_quality_audit.md",
+      "scripts/ops/legal_ir/audit_paired_census_quality.py",
+      "tests/unit/logic/test_paired_census_quality_audit.py"
+    ],
+    "scope": "Incoming paired-census audit preserved; no qualification of its own behavior claimed by our suites. No test repeat needed for unchanged tested inputs."
+  },
+  "merged_main": "0b3ec5191d656d3b9cf3145bc5b208566dee5583",
+  "next_parallel_contribution_observation": {
+    "branch": "codex/legal-definition-v2-review-20261015-01",
+    "head": "8f33492f4a639aa0ee3218653c63e467cd01d3ea",
+    "meaning": "Source commit retained for separate next qualification; not merged here and no actual review/training/admission claimed.",
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets",
+    "porcelain": ""
+  },
+  "observed_utc": "2026-10-15T06:30:59.536630+00:00",
+  "qualification_scope": "135 cases / 6 modules; limited combined-main reconciliation, not a rerun of the historical 732 or 1565 cases.",
+  "qualified_merge_head": "c55222c3bbbdb3f0a47bc80c75333fbae6dde8ae",
+  "qualified_merge_parents": [
+    "1a9aaf1f4e42cf5e9eed2b85c16d5faf92ab4a88",
+    "0b3ec5191d656d3b9cf3145bc5b208566dee5583"
+  ],
+  "receipt_binding": {
+    "bytes": 77002,
+    "sha256": "e6dee87cd18a3508c3de42b3774cb5abc68d426fe147bec74c9e4be4bffbf653"
+  },
+  "retained_real_source_explicit_producer_maps_current": {
+    "fol": {
+      "adapter": 4,
+      "native": 24
+    },
+    "tdfol": {
+      "adapter": 4,
+      "native": 24
+    }
+  },
+  "schema": "legal-ir-definition-v2-main-reconciliation/v1",
+  "unchanged_upstream_paths": [
+    {
+      "bytes": 5845,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/README.md",
+      "sha256": "b6afbd3bd768431396820b22452a72baacdf69826344e826be5e3691c9a9ff82"
+    },
+    {
+      "bytes": 7274,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/evidence-index.json",
+      "sha256": "571c3610c390129250f03eb4b95475f489b9baf8811c591ba3f33ec6c8df906d"
+    },
+    {
+      "bytes": 2037,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/failed-v01-summary.json",
+      "sha256": "5f8ccc04e643e5f6551b960120dddc9d696e396ea6c6f685fbf4b2819b7c690a"
+    },
+    {
+      "bytes": 1029,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/failed-v01/failure.json",
+      "sha256": "1a6c1d3578b44412f431c004412ce3b7f6877f7248d655f6169eed3b954eeb51"
+    },
+    {
+      "bytes": 2206,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/failed-v01/integration-checks.json",
+      "sha256": "07a45925557a1a02904f4d761853398ca398b70d853e419b4340489641c2c278"
+    },
+    {
+      "bytes": 8066,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/independent-test-recount-v04.json",
+      "sha256": "95785a9ce95fa5ff034955dc952006e79b2050d888b2889a03cda6db56bc1772"
+    },
+    {
+      "bytes": 15133,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/independent-test-recount.json",
+      "sha256": "fe8c00fea2fe7f257b71d7caa9d8e02be04671d86896333deb666b992a09e81b"
+    },
+    {
+      "bytes": 567,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v03/execution.json",
+      "sha256": "c5ba10a15dda77a48d14bb7438c348bd85e5c8c0ea58cd5f7e10c414909f8760"
+    },
+    {
+      "bytes": 1584,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v03/integration-checks.json",
+      "sha256": "f2ea303c1c2eecc168934aa3d7f7991edafd3c6c762a38ab9b1506ab7c3aa30c"
+    },
+    {
+      "bytes": 14246,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v03/junit.xml",
+      "sha256": "cfb2bb5a19986b953e2a7b660d48e1a1d0fba4801cd3b22ddad1e45337e91014"
+    },
+    {
+      "bytes": 2855,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v03/real-source-preparation.json",
+      "sha256": "187e53a28136740612305ec284a79d99c64fd2e572950aff01097df0ac2f9f97"
+    },
+    {
+      "bytes": 717,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v03/result.json",
+      "sha256": "2ffb5ffef35f0cf032c6b29f608bca4135180a23b9da1cebc9421a1ec0a79379"
+    },
+    {
+      "bytes": 0,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v03/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 4245,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v03/stdout.log",
+      "sha256": "cf3f19c48e5f57e95665f13d1bc43f7628d85910f3a0cad1b50e9e7a3419d514"
+    },
+    {
+      "bytes": 3101,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v03/validation-durability.json",
+      "sha256": "75dfc46b1132de0763d15ac9923e43d8b3a5a8e6b1e1b70784d798edc6a65a5e"
+    },
+    {
+      "bytes": 568,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v04/execution.json",
+      "sha256": "f20583f7123d62cd285cc6e8c2f8a8e1930da70f22976a9ec5fbf9b0c946ef3e"
+    },
+    {
+      "bytes": 1584,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v04/integration-checks.json",
+      "sha256": "5c855dbe2e4789308713c24e51451f82a84b47b2831753809a017d77fcd2fad3"
+    },
+    {
+      "bytes": 14246,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v04/junit.xml",
+      "sha256": "ff7a2b70e970f4309c079205f1ba94c19c6cbf7de77e59633c38d06b15367d02"
+    },
+    {
+      "bytes": 717,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v04/result.json",
+      "sha256": "76aeee69c288c88257f02cfe75f5655f0d2c97c42b18113b11fa256bc6c77841"
+    },
+    {
+      "bytes": 0,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v04/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1642,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v04/stdout.log",
+      "sha256": "994d345e8238c278c98d8c201cc3123d91558389308f18451cafc81eb6f040e1"
+    },
+    {
+      "bytes": 1960,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/intake-v04/validation-durability.json",
+      "sha256": "5d20b9f962b74c8a4d577fc740f6c82c9bc83d5a7770c4a66f1366365e5c73b5"
+    },
+    {
+      "bytes": 888,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/integration-v02/execution.json",
+      "sha256": "f1eb655d34c81d5ad21a023071c4720ec21b40f5a2e7084d1c53912c00a63b2f"
+    },
+    {
+      "bytes": 2240,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/integration-v02/integration-checks.json",
+      "sha256": "50f5d5cd6a99866734e23ba1aa33858f90b9f8aedd824d12b60d8b01272b90e6"
+    },
+    {
+      "bytes": 1320039,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/integration-v02/junit.xml",
+      "sha256": "c97be0325b59d743eaae5070da6b9dc86c452dad22217710f0e3a575c72c3a94"
+    },
+    {
+      "bytes": 1047,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/integration-v02/result.json",
+      "sha256": "82a5560d9fd4571dca3623b56dc1ec4240b51f6a6180b51bdbc2452e74e817ea"
+    },
+    {
+      "bytes": 0,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/integration-v02/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 3239,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/integration-v02/stdout.log",
+      "sha256": "2860dc7483a00de4fbc480e6a0468a56d8100480edc1dc646b7c966e0ee77713"
+    },
+    {
+      "bytes": 7150,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/integration-v02/validation-durability.json",
+      "sha256": "4278222e49b3553bc38ebbd1bf2e8773b578b15af14b945d97723e7a6809f883"
+    },
+    {
+      "bytes": 17666,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/native-release-audit-v04.json",
+      "sha256": "40f821cfc384b8f036fdfc5cb69150258449cc06f859c50d3e5b67fb84580c2f"
+    },
+    {
+      "bytes": 42949,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/native-release-audit.json",
+      "sha256": "bf70ece5733feb610e2d734c7e916d79a500375e6f623c505bdd41ed0bf78f35"
+    },
+    {
+      "bytes": 17946,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/packet-fit-v01.json",
+      "sha256": "72b2f94b893f36d6021822e48849259ed11db7fb64645a745c802ec5f1f5fb4a"
+    },
+    {
+      "bytes": 1900,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/publication-static-checks.json",
+      "sha256": "c6c174538b53535d73aa8cd8bcb126ee7b3fb57a8cfe9a47be932bafa1b10a41"
+    },
+    {
+      "bytes": 7206,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/qualify_adapter_and_prepare.py.txt",
+      "sha256": "dd341439182f5a2549a41ed61580d5c498bbe094f56dc77ec53bdad8f6d179bf"
+    },
+    {
+      "bytes": 5427,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/qualify_integration-v01.py.txt",
+      "sha256": "a90905bbfd0976df766ec0a2f9828b4ebafd8e1d0024ef625e19869c436a3a0d"
+    },
+    {
+      "bytes": 5471,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/qualify_integration.py.txt",
+      "sha256": "f73b01ccb7c998e75aed92c289dd3e0db2a2fe6b2e017cddc600774349560de1"
+    },
+    {
+      "bytes": 1169,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/real-source-config-v01.json",
+      "sha256": "1e713434add778ea452a4106c2ebd50df28d61e58e63f2ccf61f482f1d50e818"
+    },
+    {
+      "bytes": 14092,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/source-integration-completion-v02.json",
+      "sha256": "ccf57f9509c42b782f99d5fde0591afd835dd079c910d1104bb1be17d7dc490c"
+    },
+    {
+      "bytes": 7644,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/source-integration-manifest-v01.json",
+      "sha256": "bd1abb153232d3ae17f3786ebf553fa75a5f5c273feff684e06ba7a19ebc3a06"
+    },
+    {
+      "bytes": 2984,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/test_temporary_profile.py.txt",
+      "sha256": "f8fbc6597a491972442c8f655ec8e46832fd527fe0b30b3fd629808a71d18e0a"
+    },
+    {
+      "bytes": 52052,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/validation-request-v01.json",
+      "sha256": "42d40d542bc4f00c23dff166d91633d08884bf39cd276d975d76b29e104cf261"
+    },
+    {
+      "bytes": 54415,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/validation-request-v02.json",
+      "sha256": "c35639026de8c3ffaf930414e9c1dacab89a9e694bec6ecdb5e92495f3decac5"
+    },
+    {
+      "bytes": 55257,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/validation-request-v03.json",
+      "sha256": "e57ef66bdb66a414e7926a915f584320502aea5a94fe154ba33b5100c2018aff"
+    },
+    {
+      "bytes": 55134,
+      "path": "docs/autoencoders/evidence/legal-source-review-integration-20261015-01/validation-request-v04.json",
+      "sha256": "301778e49668f8e0bd34fb0c0cdca88cac1c1c18f182815c220550a6b6086a6c"
+    },
+    {
+      "bytes": 5981,
+      "path": "docs/autoencoders/legal_source_sampling_review.md",
+      "sha256": "33c51c847852da5d5247eafb99a0261c8de381df3b47008d59d35d3d2a4f212b"
+    },
+    {
+      "bytes": 38723,
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_source_bindings.py",
+      "sha256": "6909ac7e9ebb260ff63cee90fea2d6a76a0cbd7618823d541a69dbd86d281fef"
+    },
+    {
+      "bytes": 33945,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+      "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+    },
+    {
+      "bytes": 24916,
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+      "sha256": "1ded7a9fbc841d2e9678c8a0b1f22b5ebe1b58d9b3aab9938960707c2e8b58c6"
+    }
+  ],
+  "upstream_delta_count": 50
+}
