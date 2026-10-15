@@ -1,0 +1,14 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-02/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-intake-20261015-02/logs/execution.json"
+  ],
+  "executed_checks": [
+    "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+    "tests/unit/logic/autoformal/test_legal_source_sampling.py"
+  ],
+  "request_sha256": "301778e49668f8e0bd34fb0c0cdca88cac1c1c18f182815c220550a6b6086a6c",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

@@ -12,7 +12,8 @@ that shared integration instead of publishing another copy of the five owners.
 | Run | Cases | Errors / failures / skips | Scope |
 | --- | ---: | --- | --- |
 | Integration v02 | 996 | 0 / 0 / 0 | Five unchanged owner suites (982), plus 14 private directory-profile controls |
-| Intake v03 | 76 | 0 / 0 / 0 | New intake (47) and complete existing sampler suite (29) |
+| Intake v03 | 76 | 0 / 0 / 0 | New intake (47) and complete existing sampler suite (29), plus separately declared real-source preparation |
+| Intake v04 | 76 | 0 / 0 / 0 | The same 76 cases after rebasing onto shared main; no repeated source preparation |
 
 These are selected local checks, not the entire repository suite. The executions
 used `--noconftest`, explicit import mode and the existing native validation
@@ -20,7 +21,7 @@ plugin. The private session directory factory matches the native owner's
 regular-file/directory output profile; it avoids pytest navigation symlinks.
 The product tests and their assertions were not weakened. Requests, exact helper
 source snapshots, JUnit, stdout, execution/results and native durability receipts
-are retained here. The pytest cases and source preparation are distinct steps.
+are retained here. The pytest cases and source preparation are distinct steps. The [combined independent recount](independent-test-recount.json) and [post-rebase recount](independent-test-recount-v04.json) preserve exact test identities and reported outcomes. The [initial native release audit](native-release-audit.json) binds both original successful closures; the [final native audit](native-release-audit-v04.json) records v04 separately.
 
 The failed v01 attempt omitted the actual processors package from its sparse
 checkout: 975 setup errors, one failure and 20 passes across the same 996 ordered
@@ -59,7 +60,7 @@ still records v02 as running. The completion manifest and independent recount
 record the final outcomes. Source-head metadata refers to the actual execution
 checkout; complete source-file hashes also bind the uncommitted new intake/test
 bytes used for v03. Rebasing the publication onto shared main does not rewrite
-historical execution inputs or qualification claims.
+historical execution inputs or qualification claims. The rebased pin audit found exactly one changed file in the overcomplete 227-file source inventory: the unrelated CUDA census launcher, adopted unchanged from main. Its memory-pressure waiting changes are outside this intake qualification. V04 refreshed every source pin and reran the complete 76-case intake/sampler selection; all source-owner, intake and test bodies retained their qualified bytes.
 
 The original thirteen definition-review question IDs/prompts are retained
 byte-for-byte in [packet-fit-v01.json](packet-fit-v01.json); the module adds two
@@ -68,7 +69,7 @@ nor authenticated/legal/formal review. Standalone sampler identities remain
 separate from historical parent/alignment requests and V2 meaning-review subjects.
 Prose context proposals are not machine-checked multi-occurrence assemblies.
 
-Both successful attempts ran through the existing native VALIDATION owner,
+All three successful attempts ran through the existing native VALIDATION owner,
 with fixed requests/policy, one CPU slot, 6,144 MB memory, two child-process slots
 and 256 MiB storage reservations. Their receipts describe cooperative admission
 and polled accounting; they do not claim kernel containment. Result files were
