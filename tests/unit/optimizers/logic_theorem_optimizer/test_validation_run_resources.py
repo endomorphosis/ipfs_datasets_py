@@ -145,7 +145,7 @@ def private_control(tmp_path):
     _write_json(ledger, {
         "schema": native_disk.SCHEMA,
         "roots": [native_disk._root_identity(root)],
-        "limit_bytes": 145_000_000_000,
+        "limit_bytes": 160_000_000_000,
         "reservations": {"foreign-retained": foreign},
     })
 
@@ -202,7 +202,7 @@ def private_control(tmp_path):
     # claims deliberately remain and are not administratively reconciled here.
     assert scheduler.snapshot()["allocated"]["cpu_slots"] == 0
     assert _json(scheduler.state_path)["config"] == policy
-    assert _json(ledger)["limit_bytes"] == 145_000_000_000
+    assert _json(ledger)["limit_bytes"] == 160_000_000_000
     assert _json(ledger)["reservations"]["foreign-retained"] == foreign
 
 
@@ -353,7 +353,7 @@ def test_existing_control_metadata_is_never_initialized_or_reconfigured(private_
         if fault == "missing_ledger":
             _write_json(c["ledger"], {"schema": native_disk.SCHEMA,
                 "roots": [native_disk._root_identity(c["root"])],
-                "limit_bytes": 145_000_000_000,
+                "limit_bytes": 160_000_000_000,
                 "reservations": {"foreign-retained": c["foreign"]}})
 
 
@@ -362,7 +362,7 @@ def test_full_retained_claims_refuse_new_capacity_without_changing_cap_or_rows(p
     _, _, _, kwargs = c["prepare"]()
     before = _json(c["ledger"])
     extra = {"reservation_id": "other-full-claim", "status": "retained", "owner_pid": os.getpid(),
-             "storage_bytes": 145_000_000_000, "external_charges": {}}
+             "storage_bytes": 160_000_000_000, "external_charges": {}}
     before["reservations"]["other-full-claim"] = extra
     _write_json(c["ledger"], before)
     raw = c["ledger"].read_bytes()
