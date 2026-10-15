@@ -1,0 +1,9 @@
+{
+  "schema": "legal-primary-export-storage-observer-failure/v1",
+  "stage": "post_observation_loaded_origin_guard",
+  "reason": "proof_resource_safety.py was loaded by existing resource observer but omitted from the declared 9-source pre-read cohort.",
+  "receipt_written": false,
+  "native_reservation_acquired": false,
+  "ledger_mutated_by_this_observer": false,
+  "capacity_claim_from_this_attempt": false
+}

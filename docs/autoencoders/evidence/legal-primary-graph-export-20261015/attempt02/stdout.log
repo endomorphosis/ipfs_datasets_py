@@ -1,0 +1,5 @@
+........................................................................ [ 45%]
+........................................................................ [ 90%]
+................                                                         [100%]
+160 passed in 6.80s
+{"receipt": {"bytes": 149013, "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-primary-graph-export-20261015-02/logs/qualification.json", "sha256": "fa711a5f96f6f4b84b90f6e3d1ab332717c6762a9ad9ffb0a2e7b93eabf1194c"}, "status": "pass", "test_cases": 160}
