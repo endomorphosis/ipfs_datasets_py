@@ -1,0 +1,139 @@
+{
+  "authority": {
+    "lean_executed": false,
+    "semantic_graph_admitted": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "created_at_utc": "2026-10-15 17:36:56 UTC",
+  "files": [
+    {
+      "bytes": 6043,
+      "path": "entity-cache-audit.json",
+      "sha256": "d8d8f07460d465071c8a83db512364dcddf09ce2ace8a8a647e331ea851fd877",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/logs/entity-cache-audit.json"
+    },
+    {
+      "bytes": 1221,
+      "path": "entity-hub-main-close.json",
+      "sha256": "639182e840301a2c154d9152a125dd501d5097354a887f57009bc0d910aa60ed",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/entity-hub-main-close.json"
+    },
+    {
+      "bytes": 1221,
+      "path": "entity-hub-main-open.json",
+      "sha256": "639182e840301a2c154d9152a125dd501d5097354a887f57009bc0d910aa60ed",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/entity-hub-main-open.json"
+    },
+    {
+      "bytes": 1534,
+      "path": "entity-hub-pinned.json",
+      "sha256": "a6e283701865a8a93cf88010f8f684a940750cfb3aa2c7ff82181de20576bd1b",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/entity-hub-pinned.json"
+    },
+    {
+      "bytes": 22401,
+      "path": "entity-index-census.json",
+      "sha256": "b6d23ce2cffc942a83115a7d0837ee897c4c9db3bb1ac022585660f00c7f026a",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/exports/entity-index-census.json"
+    },
+    {
+      "bytes": 576,
+      "path": "execution.json",
+      "sha256": "9f01539bbe4711e0dfb354c6a549f16f6aeefb278089951f7e7cc656361b1c66",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/logs/execution.json"
+    },
+    {
+      "bytes": 11591,
+      "path": "footer-population.json",
+      "sha256": "e83b8591a178f48b4ccacae51312196e865a52521acda6824735f9ff85aa66ea",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/exports/footer-population.json"
+    },
+    {
+      "bytes": 25265,
+      "path": "independent-metadata-review.json",
+      "sha256": "ce2598dbcca9cec74b173be351ce099931952fa380a5380a5a923a699dd2034a",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/independent-metadata-review.json"
+    },
+    {
+      "bytes": 2202,
+      "path": "input-descriptor-v01.json",
+      "sha256": "4cb4ac3e3d9fa5857fdc4f4ad288b7c1d565cf77da83a155fbf7e5f7a5317c85",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/input-descriptor-v01.json"
+    },
+    {
+      "bytes": 713,
+      "path": "input-refusal-controls.json",
+      "sha256": "4ade1ef21b8c2152ae319f84066683e1415e9cd539d947453bc3db2b30c0f7ad",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/exports/input-refusal-controls.json"
+    },
+    {
+      "bytes": 2771,
+      "path": "native-parent-closeout-observation.json",
+      "sha256": "6f6b5006bf23fe5fcf0d4d6ca9d4310273eab57d05725c10ca7ffba97bf84aec",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/native-parent-closeout-observation.json"
+    },
+    {
+      "bytes": 722,
+      "path": "result.json",
+      "sha256": "7bd2cda4402006de00b9c663b0e765db47f161c2683efa203b8e099f68eeb252",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/logs/result.json"
+    },
+    {
+      "bytes": 26328,
+      "path": "run_entity_cache_audit_v01.py",
+      "sha256": "ad4a7372def62c70d0f31b8771187b16dc22c25d7023c3e422a77fbf4d2a2134",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/run_entity_cache_audit_v01.py"
+    },
+    {
+      "bytes": 0,
+      "path": "stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/logs/stderr.log"
+    },
+    {
+      "bytes": 467,
+      "path": "stdout.log",
+      "sha256": "c3596a8d998087921603c0381712510cdee7458827fde67253fb559692b9ed63",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/logs/stdout.log"
+    },
+    {
+      "bytes": 1522,
+      "path": "storage-observation-v01.json",
+      "sha256": "8e958327b4cb98a63cf8623ed457d959718a7994ba0b7e50a9f2faca6037e04c",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/storage-observation-v01.json"
+    },
+    {
+      "bytes": 6464,
+      "path": "upstream-reconciliation.json",
+      "sha256": "da25e11eee75f343ff95493b6bf8407c83822c75b01e3f50c4e427ab433bff35",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/upstream-reconciliation.json"
+    },
+    {
+      "bytes": 1846,
+      "path": "validation-durability.json",
+      "sha256": "70b4f6a3dcbddda197e7a380e965ec694a228ff96f9a56a96a0376b0af733613",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/logs/validation-durability.json"
+    },
+    {
+      "bytes": 6543,
+      "path": "validation-request-v01.json",
+      "sha256": "604552941cc7a858f1c9c251ec7251552257d153ad775514d4ddbe4260c3d02b",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-entity-cache-audit-20261015-01/validation-request-v01.json"
+    }
+  ],
+  "limits": [
+    "Native source pins bind original absolute paths. Published driver/request are retained evidence, not a portable admission grant.",
+    "Release projection is explicitly transcribed from actual parent terminal JSON, not a fresh ledger query.",
+    "Census hashes include the original absolute input path; relocating the source changes the canonical report identity."
+  ],
+  "publication_scope": "Exact copies of selected metadata and derived evidence; no Parquet source body copied into Git.",
+  "retained_input": {
+    "bytes": 11139328,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/exports/entity-cache.parquet",
+    "published_body": false,
+    "sha256": "f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233"
+  },
+  "schema": "legal-entity-cache-audit-publication/v1",
+  "source_checkout_head": "832c9d3b28f68c55237c4af2e99dd9ec5c137db5"
+}

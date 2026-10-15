@@ -1,0 +1,21 @@
+{
+  "complete_censuses_repeated": 0,
+  "controls": [
+    {
+      "error_type": "EntityIndexIntakeError",
+      "expected_error": "source file differs from independently pinned SHA256",
+      "name": "wrong_expected_file_sha256",
+      "passed": true,
+      "source_row_traversal_calls": 0
+    },
+    {
+      "error_type": "EntityIndexIntakeError",
+      "expected_error": "footer row count differs from expected population",
+      "name": "wrong_expected_rows",
+      "passed": true,
+      "source_row_traversal_calls": 0
+    }
+  ],
+  "instrumentation": "Only refusal controls temporarily replace _rows with a traversal tripwire; restored afterward.",
+  "schema": "legal-entity-cache-input-refusal-controls/v1"
+}

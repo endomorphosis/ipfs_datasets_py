@@ -1,0 +1,994 @@
+{
+  "arrow_decoded_bytes": 171677058,
+  "authority": {
+    "admitted": false,
+    "formalized": false,
+    "globally_consistent": false,
+    "proof_authority": false,
+    "semantic_review_verified": false,
+    "source_occurrences_bound": false,
+    "source_semantics_verified": false,
+    "surface_labels_merged": false,
+    "training_qualified": false,
+    "typed_graph_assertions_generated": false
+  },
+  "census_sha256": "223b5e693635c8270650f6b15a7cbdfdbbe0a214382a5ed6e0d74ffed87dda0b",
+  "classification_observations": {
+    "known_declared_mapping": 1960850,
+    "no_declared_mapping": 26
+  },
+  "complete_section_coverage_verified": false,
+  "coverage_scope": "exact_pinned_parquet_rows_only",
+  "disposition_counts": {
+    "category_observation": 9,
+    "classification_rule_observation": 14,
+    "edge_observation_ambiguous_endpoint": 0,
+    "edge_observation_unique_declared_endpoints": 0,
+    "edge_observation_unresolved_endpoint": 1722395,
+    "logical_relation_observation": 6,
+    "node_observation": 119318,
+    "node_observation_missing_identity": 119134
+  },
+  "duplicate_node_identities": 0,
+  "duplicate_node_identity_extra_instances": 0,
+  "duplicate_raw_row_extra_instances": 1722389,
+  "duplicate_raw_row_groups": 6,
+  "edge_source_endpoint_missing_rows": 1722395,
+  "edge_target_endpoint_missing_rows": 1722395,
+  "empty_string_field_counts": {
+    "admitted": 0,
+    "dst": 1960870,
+    "formalized": 0,
+    "graph_kind": 14,
+    "in_formula": 0,
+    "label": 0,
+    "legal_id": 1872633,
+    "logic_role": 0,
+    "meta_category": 0,
+    "node_id": 1841558,
+    "record_kind": 0,
+    "src": 1960870
+  },
+  "legacy_boolean_observations": {
+    "admitted": [
+      {
+        "rows": 1960876,
+        "value": false
+      }
+    ],
+    "formalized": [
+      {
+        "rows": 1960876,
+        "value": false
+      }
+    ],
+    "in_formula": [
+      {
+        "rows": 1936487,
+        "value": false
+      },
+      {
+        "rows": 24389,
+        "value": true
+      }
+    ]
+  },
+  "limits": {
+    "batch_size": 512,
+    "max_batch_bytes": 16777216,
+    "max_decoded_bytes": 1073741824,
+    "max_file_bytes": 11139328,
+    "max_row_bytes": 131072,
+    "max_row_group_bytes": 134217728,
+    "max_rows": 3000000,
+    "max_scratch_bytes": 268435456
+  },
+  "lossless_rows_retained_in_immutable_source": true,
+  "null_field_counts": {
+    "admitted": 0,
+    "dst": 0,
+    "formalized": 0,
+    "graph_kind": 0,
+    "in_formula": 0,
+    "label": 0,
+    "legal_id": 0,
+    "logic_role": 0,
+    "meta_category": 0,
+    "node_id": 0,
+    "record_kind": 0,
+    "src": 0
+  },
+  "ordered_stream_encoding": "domain+canonical_source+ordinal_u64be+length_u64be+canonical_raw_row",
+  "ordered_stream_sha256": "b6f9ab124b3ed7793d23e0c44b9e0d84c2fe0a1b908069ffa6c11547bc1ac8be",
+  "original_task_acceptance": "preparatory_subset_only",
+  "population_complete": true,
+  "rows": 1960876,
+  "schema": "legal-materialized-entity-index-census/v1",
+  "source": {
+    "arrow_schema_sha256": "0566ae406e5051d01603ee3b8af268c468b8e6a2f0094a3ca09094e721331daa",
+    "expected_rows": 1960876,
+    "fields": [
+      {
+        "name": "record_kind",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "meta_category",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "graph_kind",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "label",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "legal_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "node_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "src",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "dst",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "logic_role",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "in_formula",
+        "nullable": true,
+        "type": "bool"
+      },
+      {
+        "name": "admitted",
+        "nullable": true,
+        "type": "bool"
+      },
+      {
+        "name": "formalized",
+        "nullable": true,
+        "type": "bool"
+      }
+    ],
+    "file_bytes": 11139328,
+    "file_sha256": "f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233",
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/exports/entity-cache.parquet",
+    "raw_row_file_byte_mapping_verified": false,
+    "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+    "revision_supplied": true,
+    "row_groups": [
+      {
+        "footer_uncompressed_bytes": 1138444,
+        "row_group": 0,
+        "rows": 20000,
+        "start_ordinal": 0
+      },
+      {
+        "footer_uncompressed_bytes": 1133195,
+        "row_group": 1,
+        "rows": 20000,
+        "start_ordinal": 20000
+      },
+      {
+        "footer_uncompressed_bytes": 1137704,
+        "row_group": 2,
+        "rows": 20000,
+        "start_ordinal": 40000
+      },
+      {
+        "footer_uncompressed_bytes": 1135970,
+        "row_group": 3,
+        "rows": 20000,
+        "start_ordinal": 60000
+      },
+      {
+        "footer_uncompressed_bytes": 1134429,
+        "row_group": 4,
+        "rows": 20000,
+        "start_ordinal": 80000
+      },
+      {
+        "footer_uncompressed_bytes": 1175736,
+        "row_group": 5,
+        "rows": 20000,
+        "start_ordinal": 100000
+      },
+      {
+        "footer_uncompressed_bytes": 2070793,
+        "row_group": 6,
+        "rows": 20000,
+        "start_ordinal": 120000
+      },
+      {
+        "footer_uncompressed_bytes": 2068222,
+        "row_group": 7,
+        "rows": 20000,
+        "start_ordinal": 140000
+      },
+      {
+        "footer_uncompressed_bytes": 2063305,
+        "row_group": 8,
+        "rows": 20000,
+        "start_ordinal": 160000
+      },
+      {
+        "footer_uncompressed_bytes": 2063090,
+        "row_group": 9,
+        "rows": 20000,
+        "start_ordinal": 180000
+      },
+      {
+        "footer_uncompressed_bytes": 2058021,
+        "row_group": 10,
+        "rows": 20000,
+        "start_ordinal": 200000
+      },
+      {
+        "footer_uncompressed_bytes": 1920628,
+        "row_group": 11,
+        "rows": 20000,
+        "start_ordinal": 220000
+      },
+      {
+        "footer_uncompressed_bytes": 36017,
+        "row_group": 12,
+        "rows": 20000,
+        "start_ordinal": 240000
+      },
+      {
+        "footer_uncompressed_bytes": 35890,
+        "row_group": 13,
+        "rows": 20000,
+        "start_ordinal": 260000
+      },
+      {
+        "footer_uncompressed_bytes": 35866,
+        "row_group": 14,
+        "rows": 20000,
+        "start_ordinal": 280000
+      },
+      {
+        "footer_uncompressed_bytes": 35906,
+        "row_group": 15,
+        "rows": 20000,
+        "start_ordinal": 300000
+      },
+      {
+        "footer_uncompressed_bytes": 35947,
+        "row_group": 16,
+        "rows": 20000,
+        "start_ordinal": 320000
+      },
+      {
+        "footer_uncompressed_bytes": 35724,
+        "row_group": 17,
+        "rows": 20000,
+        "start_ordinal": 340000
+      },
+      {
+        "footer_uncompressed_bytes": 35837,
+        "row_group": 18,
+        "rows": 20000,
+        "start_ordinal": 360000
+      },
+      {
+        "footer_uncompressed_bytes": 35954,
+        "row_group": 19,
+        "rows": 20000,
+        "start_ordinal": 380000
+      },
+      {
+        "footer_uncompressed_bytes": 35958,
+        "row_group": 20,
+        "rows": 20000,
+        "start_ordinal": 400000
+      },
+      {
+        "footer_uncompressed_bytes": 36173,
+        "row_group": 21,
+        "rows": 20000,
+        "start_ordinal": 420000
+      },
+      {
+        "footer_uncompressed_bytes": 36194,
+        "row_group": 22,
+        "rows": 20000,
+        "start_ordinal": 440000
+      },
+      {
+        "footer_uncompressed_bytes": 36180,
+        "row_group": 23,
+        "rows": 20000,
+        "start_ordinal": 460000
+      },
+      {
+        "footer_uncompressed_bytes": 36203,
+        "row_group": 24,
+        "rows": 20000,
+        "start_ordinal": 480000
+      },
+      {
+        "footer_uncompressed_bytes": 36187,
+        "row_group": 25,
+        "rows": 20000,
+        "start_ordinal": 500000
+      },
+      {
+        "footer_uncompressed_bytes": 36171,
+        "row_group": 26,
+        "rows": 20000,
+        "start_ordinal": 520000
+      },
+      {
+        "footer_uncompressed_bytes": 36179,
+        "row_group": 27,
+        "rows": 20000,
+        "start_ordinal": 540000
+      },
+      {
+        "footer_uncompressed_bytes": 36199,
+        "row_group": 28,
+        "rows": 20000,
+        "start_ordinal": 560000
+      },
+      {
+        "footer_uncompressed_bytes": 36189,
+        "row_group": 29,
+        "rows": 20000,
+        "start_ordinal": 580000
+      },
+      {
+        "footer_uncompressed_bytes": 36183,
+        "row_group": 30,
+        "rows": 20000,
+        "start_ordinal": 600000
+      },
+      {
+        "footer_uncompressed_bytes": 36194,
+        "row_group": 31,
+        "rows": 20000,
+        "start_ordinal": 620000
+      },
+      {
+        "footer_uncompressed_bytes": 36190,
+        "row_group": 32,
+        "rows": 20000,
+        "start_ordinal": 640000
+      },
+      {
+        "footer_uncompressed_bytes": 36166,
+        "row_group": 33,
+        "rows": 20000,
+        "start_ordinal": 660000
+      },
+      {
+        "footer_uncompressed_bytes": 36189,
+        "row_group": 34,
+        "rows": 20000,
+        "start_ordinal": 680000
+      },
+      {
+        "footer_uncompressed_bytes": 36173,
+        "row_group": 35,
+        "rows": 20000,
+        "start_ordinal": 700000
+      },
+      {
+        "footer_uncompressed_bytes": 36160,
+        "row_group": 36,
+        "rows": 20000,
+        "start_ordinal": 720000
+      },
+      {
+        "footer_uncompressed_bytes": 36187,
+        "row_group": 37,
+        "rows": 20000,
+        "start_ordinal": 740000
+      },
+      {
+        "footer_uncompressed_bytes": 36171,
+        "row_group": 38,
+        "rows": 20000,
+        "start_ordinal": 760000
+      },
+      {
+        "footer_uncompressed_bytes": 36168,
+        "row_group": 39,
+        "rows": 20000,
+        "start_ordinal": 780000
+      },
+      {
+        "footer_uncompressed_bytes": 36187,
+        "row_group": 40,
+        "rows": 20000,
+        "start_ordinal": 800000
+      },
+      {
+        "footer_uncompressed_bytes": 36191,
+        "row_group": 41,
+        "rows": 20000,
+        "start_ordinal": 820000
+      },
+      {
+        "footer_uncompressed_bytes": 36180,
+        "row_group": 42,
+        "rows": 20000,
+        "start_ordinal": 840000
+      },
+      {
+        "footer_uncompressed_bytes": 36187,
+        "row_group": 43,
+        "rows": 20000,
+        "start_ordinal": 860000
+      },
+      {
+        "footer_uncompressed_bytes": 36165,
+        "row_group": 44,
+        "rows": 20000,
+        "start_ordinal": 880000
+      },
+      {
+        "footer_uncompressed_bytes": 36164,
+        "row_group": 45,
+        "rows": 20000,
+        "start_ordinal": 900000
+      },
+      {
+        "footer_uncompressed_bytes": 36178,
+        "row_group": 46,
+        "rows": 20000,
+        "start_ordinal": 920000
+      },
+      {
+        "footer_uncompressed_bytes": 36192,
+        "row_group": 47,
+        "rows": 20000,
+        "start_ordinal": 940000
+      },
+      {
+        "footer_uncompressed_bytes": 36191,
+        "row_group": 48,
+        "rows": 20000,
+        "start_ordinal": 960000
+      },
+      {
+        "footer_uncompressed_bytes": 36175,
+        "row_group": 49,
+        "rows": 20000,
+        "start_ordinal": 980000
+      },
+      {
+        "footer_uncompressed_bytes": 36165,
+        "row_group": 50,
+        "rows": 20000,
+        "start_ordinal": 1000000
+      },
+      {
+        "footer_uncompressed_bytes": 36177,
+        "row_group": 51,
+        "rows": 20000,
+        "start_ordinal": 1020000
+      },
+      {
+        "footer_uncompressed_bytes": 36203,
+        "row_group": 52,
+        "rows": 20000,
+        "start_ordinal": 1040000
+      },
+      {
+        "footer_uncompressed_bytes": 36194,
+        "row_group": 53,
+        "rows": 20000,
+        "start_ordinal": 1060000
+      },
+      {
+        "footer_uncompressed_bytes": 36190,
+        "row_group": 54,
+        "rows": 20000,
+        "start_ordinal": 1080000
+      },
+      {
+        "footer_uncompressed_bytes": 36175,
+        "row_group": 55,
+        "rows": 20000,
+        "start_ordinal": 1100000
+      },
+      {
+        "footer_uncompressed_bytes": 36170,
+        "row_group": 56,
+        "rows": 20000,
+        "start_ordinal": 1120000
+      },
+      {
+        "footer_uncompressed_bytes": 36184,
+        "row_group": 57,
+        "rows": 20000,
+        "start_ordinal": 1140000
+      },
+      {
+        "footer_uncompressed_bytes": 36179,
+        "row_group": 58,
+        "rows": 20000,
+        "start_ordinal": 1160000
+      },
+      {
+        "footer_uncompressed_bytes": 36177,
+        "row_group": 59,
+        "rows": 20000,
+        "start_ordinal": 1180000
+      },
+      {
+        "footer_uncompressed_bytes": 36207,
+        "row_group": 60,
+        "rows": 20000,
+        "start_ordinal": 1200000
+      },
+      {
+        "footer_uncompressed_bytes": 36194,
+        "row_group": 61,
+        "rows": 20000,
+        "start_ordinal": 1220000
+      },
+      {
+        "footer_uncompressed_bytes": 36171,
+        "row_group": 62,
+        "rows": 20000,
+        "start_ordinal": 1240000
+      },
+      {
+        "footer_uncompressed_bytes": 36176,
+        "row_group": 63,
+        "rows": 20000,
+        "start_ordinal": 1260000
+      },
+      {
+        "footer_uncompressed_bytes": 36189,
+        "row_group": 64,
+        "rows": 20000,
+        "start_ordinal": 1280000
+      },
+      {
+        "footer_uncompressed_bytes": 36200,
+        "row_group": 65,
+        "rows": 20000,
+        "start_ordinal": 1300000
+      },
+      {
+        "footer_uncompressed_bytes": 36198,
+        "row_group": 66,
+        "rows": 20000,
+        "start_ordinal": 1320000
+      },
+      {
+        "footer_uncompressed_bytes": 36172,
+        "row_group": 67,
+        "rows": 20000,
+        "start_ordinal": 1340000
+      },
+      {
+        "footer_uncompressed_bytes": 36180,
+        "row_group": 68,
+        "rows": 20000,
+        "start_ordinal": 1360000
+      },
+      {
+        "footer_uncompressed_bytes": 36192,
+        "row_group": 69,
+        "rows": 20000,
+        "start_ordinal": 1380000
+      },
+      {
+        "footer_uncompressed_bytes": 36191,
+        "row_group": 70,
+        "rows": 20000,
+        "start_ordinal": 1400000
+      },
+      {
+        "footer_uncompressed_bytes": 36193,
+        "row_group": 71,
+        "rows": 20000,
+        "start_ordinal": 1420000
+      },
+      {
+        "footer_uncompressed_bytes": 36211,
+        "row_group": 72,
+        "rows": 20000,
+        "start_ordinal": 1440000
+      },
+      {
+        "footer_uncompressed_bytes": 36183,
+        "row_group": 73,
+        "rows": 20000,
+        "start_ordinal": 1460000
+      },
+      {
+        "footer_uncompressed_bytes": 36165,
+        "row_group": 74,
+        "rows": 20000,
+        "start_ordinal": 1480000
+      },
+      {
+        "footer_uncompressed_bytes": 36188,
+        "row_group": 75,
+        "rows": 20000,
+        "start_ordinal": 1500000
+      },
+      {
+        "footer_uncompressed_bytes": 36193,
+        "row_group": 76,
+        "rows": 20000,
+        "start_ordinal": 1520000
+      },
+      {
+        "footer_uncompressed_bytes": 36205,
+        "row_group": 77,
+        "rows": 20000,
+        "start_ordinal": 1540000
+      },
+      {
+        "footer_uncompressed_bytes": 36170,
+        "row_group": 78,
+        "rows": 20000,
+        "start_ordinal": 1560000
+      },
+      {
+        "footer_uncompressed_bytes": 36182,
+        "row_group": 79,
+        "rows": 20000,
+        "start_ordinal": 1580000
+      },
+      {
+        "footer_uncompressed_bytes": 36183,
+        "row_group": 80,
+        "rows": 20000,
+        "start_ordinal": 1600000
+      },
+      {
+        "footer_uncompressed_bytes": 36169,
+        "row_group": 81,
+        "rows": 20000,
+        "start_ordinal": 1620000
+      },
+      {
+        "footer_uncompressed_bytes": 36173,
+        "row_group": 82,
+        "rows": 20000,
+        "start_ordinal": 1640000
+      },
+      {
+        "footer_uncompressed_bytes": 36191,
+        "row_group": 83,
+        "rows": 20000,
+        "start_ordinal": 1660000
+      },
+      {
+        "footer_uncompressed_bytes": 36177,
+        "row_group": 84,
+        "rows": 20000,
+        "start_ordinal": 1680000
+      },
+      {
+        "footer_uncompressed_bytes": 36192,
+        "row_group": 85,
+        "rows": 20000,
+        "start_ordinal": 1700000
+      },
+      {
+        "footer_uncompressed_bytes": 36178,
+        "row_group": 86,
+        "rows": 20000,
+        "start_ordinal": 1720000
+      },
+      {
+        "footer_uncompressed_bytes": 36175,
+        "row_group": 87,
+        "rows": 20000,
+        "start_ordinal": 1740000
+      },
+      {
+        "footer_uncompressed_bytes": 36202,
+        "row_group": 88,
+        "rows": 20000,
+        "start_ordinal": 1760000
+      },
+      {
+        "footer_uncompressed_bytes": 36205,
+        "row_group": 89,
+        "rows": 20000,
+        "start_ordinal": 1780000
+      },
+      {
+        "footer_uncompressed_bytes": 36209,
+        "row_group": 90,
+        "rows": 20000,
+        "start_ordinal": 1800000
+      },
+      {
+        "footer_uncompressed_bytes": 36183,
+        "row_group": 91,
+        "rows": 20000,
+        "start_ordinal": 1820000
+      },
+      {
+        "footer_uncompressed_bytes": 36184,
+        "row_group": 92,
+        "rows": 20000,
+        "start_ordinal": 1840000
+      },
+      {
+        "footer_uncompressed_bytes": 36186,
+        "row_group": 93,
+        "rows": 20000,
+        "start_ordinal": 1860000
+      },
+      {
+        "footer_uncompressed_bytes": 36175,
+        "row_group": 94,
+        "rows": 20000,
+        "start_ordinal": 1880000
+      },
+      {
+        "footer_uncompressed_bytes": 36203,
+        "row_group": 95,
+        "rows": 20000,
+        "start_ordinal": 1900000
+      },
+      {
+        "footer_uncompressed_bytes": 36201,
+        "row_group": 96,
+        "rows": 20000,
+        "start_ordinal": 1920000
+      },
+      {
+        "footer_uncompressed_bytes": 36196,
+        "row_group": 97,
+        "rows": 20000,
+        "start_ordinal": 1940000
+      },
+      {
+        "footer_uncompressed_bytes": 5094,
+        "row_group": 98,
+        "rows": 876,
+        "start_ordinal": 1960000
+      }
+    ]
+  },
+  "status": "complete_observation_census",
+  "value_counts": {
+    "graph_kind": [
+      {
+        "rows": 14,
+        "value": ""
+      },
+      {
+        "rows": 24370,
+        "value": "CITES"
+      },
+      {
+        "rows": 13724,
+        "value": "CITES_UNRESOLVED"
+      },
+      {
+        "rows": 530696,
+        "value": "CODIFIES"
+      },
+      {
+        "rows": 111393,
+        "value": "CONTAINS"
+      },
+      {
+        "rows": 819457,
+        "value": "DERIVED_FROM"
+      },
+      {
+        "rows": 222761,
+        "value": "HAS_SOURCE"
+      },
+      {
+        "rows": 1,
+        "value": "act"
+      },
+      {
+        "rows": 1,
+        "value": "citation"
+      },
+      {
+        "rows": 2,
+        "value": "code"
+      },
+      {
+        "rows": 1,
+        "value": "deontic"
+      },
+      {
+        "rows": 1,
+        "value": "instrument"
+      },
+      {
+        "rows": 1,
+        "value": "object"
+      },
+      {
+        "rows": 1,
+        "value": "participant"
+      },
+      {
+        "rows": 1,
+        "value": "provenance"
+      },
+      {
+        "rows": 5614,
+        "value": "public_law"
+      },
+      {
+        "rows": 1,
+        "value": "release_point"
+      },
+      {
+        "rows": 1,
+        "value": "scope"
+      },
+      {
+        "rows": 88243,
+        "value": "section"
+      },
+      {
+        "rows": 88070,
+        "value": "source_package"
+      },
+      {
+        "rows": 1,
+        "value": "state"
+      },
+      {
+        "rows": 52118,
+        "value": "statutes_at_large"
+      },
+      {
+        "rows": 83,
+        "value": "title"
+      },
+      {
+        "rows": 4321,
+        "value": "unresolved_citation"
+      }
+    ],
+    "logic_role": [
+      {
+        "rows": 1,
+        "value": "authority"
+      },
+      {
+        "rows": 8,
+        "value": "bearer"
+      },
+      {
+        "rows": 530696,
+        "value": "codification"
+      },
+      {
+        "rows": 3,
+        "value": "condition"
+      },
+      {
+        "rows": 3,
+        "value": "conduct"
+      },
+      {
+        "rows": 1,
+        "value": "connector"
+      },
+      {
+        "rows": 111393,
+        "value": "containment"
+      },
+      {
+        "rows": 819457,
+        "value": "derivation"
+      },
+      {
+        "rows": 238452,
+        "value": "graph_node"
+      },
+      {
+        "rows": 24371,
+        "value": "reference"
+      },
+      {
+        "rows": 1,
+        "value": "scope"
+      },
+      {
+        "rows": 222762,
+        "value": "source"
+      },
+      {
+        "rows": 4,
+        "value": "thing"
+      },
+      {
+        "rows": 13724,
+        "value": "unresolved_reference"
+      }
+    ],
+    "meta_category": [
+      {
+        "rows": 3,
+        "value": "act"
+      },
+      {
+        "rows": 42416,
+        "value": "citation"
+      },
+      {
+        "rows": 1,
+        "value": "deontic"
+      },
+      {
+        "rows": 588429,
+        "value": "instrument"
+      },
+      {
+        "rows": 4,
+        "value": "object"
+      },
+      {
+        "rows": 8,
+        "value": "participant"
+      },
+      {
+        "rows": 1130289,
+        "value": "provenance"
+      },
+      {
+        "rows": 199723,
+        "value": "scope"
+      },
+      {
+        "rows": 3,
+        "value": "state"
+      }
+    ],
+    "record_kind": [
+      {
+        "rows": 9,
+        "value": "category"
+      },
+      {
+        "rows": 14,
+        "value": "classification_rule"
+      },
+      {
+        "rows": 1722395,
+        "value": "edge"
+      },
+      {
+        "rows": 6,
+        "value": "logical_relation"
+      },
+      {
+        "rows": 238452,
+        "value": "node"
+      }
+    ]
+  }
+}
