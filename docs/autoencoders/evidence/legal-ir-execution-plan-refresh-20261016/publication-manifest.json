@@ -1,0 +1,88 @@
+{
+  "base_upstream": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+  "exclusions": [
+    "publication-manifest.json self",
+    "final publication commit hash self-reference",
+    "private postpublication remote-ref and exact-body verification"
+  ],
+  "file_count": 11,
+  "files": [
+    {
+      "bytes": 2416,
+      "git_blob": "1a7c0150b5a535b0a79dbd76d1164e781bbbadbc",
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/README.md",
+      "sha256": "ae82702072a269cf7f4800d489a35b047136c4002a54c92c19857825c8259950"
+    },
+    {
+      "bytes": 12917,
+      "git_blob": "6d1fffe1f864df9de2bd75d0aa97034967623117",
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/decoder-roadmap-review.json",
+      "sha256": "b3a3618e556422a5009b0194c50d1fe1ad1a6368ffce966b35bf5462c53b6bb8"
+    },
+    {
+      "bytes": 2515,
+      "git_blob": "d4a99adcd957ef3835115129d652639692047dd1",
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/hub-metadata-summary.json",
+      "sha256": "9b8678f7c05a5a4061d9aab8fc319dd8b8111ce9e328e5dbc3aaa4159629c0cc"
+    },
+    {
+      "bytes": 11572,
+      "git_blob": "76946ee15be1e85776fd56d0e9bf292d725ad7d4",
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/metadata-independent-review.json",
+      "sha256": "e32535cdb396949188c29857a775aff87f7290038f6bdba999448ec1fdf131db"
+    },
+    {
+      "bytes": 21597,
+      "git_blob": "124aba79b43e0bd27a376b4f404229cf23c82256",
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/parallel-plan-review.json",
+      "sha256": "bf36fe1d9b61146100db3f3b691a586c35417feeace0ac03bb48973a16586bc3"
+    },
+    {
+      "bytes": 13242,
+      "git_blob": "905344400c9da7382a9731ac714baf7880ccf030",
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/roadmap-independent-review.json",
+      "sha256": "00314c60c9dc8103557e990f62f7f762c48ce89eb00da0bc02bb9865fa168431"
+    },
+    {
+      "bytes": 1534,
+      "git_blob": "4af3c01dbf61d4ed645869db5015a8566c8aa139",
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-entity-cache-api.json",
+      "sha256": "a6e283701865a8a93cf88010f8f684a940750cfb3aa2c7ff82181de20576bd1b"
+    },
+    {
+      "bytes": 581,
+      "git_blob": "30a529f324c3b8eb4d5212ae67d3e993ed96706b",
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-entity-cache-card.md",
+      "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4"
+    },
+    {
+      "bytes": 2510870,
+      "git_blob": "2ae50b6e94ff14934e5e52f1bcfa42ac5c27a93d",
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-span-cache-api.json",
+      "sha256": "f9263fe1a94cabd97f34852b510364aef5329c459a293d879742bc5b2c6c0b18"
+    },
+    {
+      "bytes": 13863,
+      "git_blob": "ce06ecb91419c806b8b109ab73ddaa9793508ce1",
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-span-cache-card.md",
+      "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6"
+    },
+    {
+      "bytes": 93411,
+      "git_blob": "3a6ff55128673bfbadb73a03ee7b22baa60d3140",
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "d113c7ca46f247571825e51ff03993acb549e41317d37a434cd824ec1a7530da"
+    }
+  ],
+  "method": "Exact ordinary staged Git bodies equal working-file bytes; documentation and public metadata only. Three independent static reviews bind the plan and its evidence.",
+  "model_or_dataset_payload_loaded": false,
+  "new_inference": false,
+  "new_lean_execution": false,
+  "new_model_weights": false,
+  "new_source_code": false,
+  "new_tests": false,
+  "new_training": false,
+  "schema": "legal-ir-roadmap-publication-manifest/v1",
+  "semantic_gold_or_model_promotion": false,
+  "total_bytes": 2684518
+}
