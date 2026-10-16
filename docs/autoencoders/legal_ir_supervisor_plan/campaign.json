@@ -1,0 +1,171 @@
+{
+  "schema": "legal-ir-supervisor-documentation-handoff/v1",
+  "status": "prepared_not_launched",
+  "board_namespace": "legal-ir-span-graph-lean-refinement-20261016",
+  "native_runtime": "ipfs_accelerate_py agent_supervisor",
+  "authoring_manifest": "tasks.json",
+  "authoring_manifest_is_native_ingest_schema": false,
+  "taskboard_path": "docs/autoencoders/legal_ir_supervisor_plan/tasks.todo.md",
+  "objectives_path": "docs/autoencoders/legal_ir_supervisor_plan/goals.objectives.md",
+  "task_header_prefix": "## LIR-",
+  "goal_prefix": "LIR-G",
+  "source_binding": {
+    "bootstrap_task_source": "legacy-markdown",
+    "planning_source_baseline": "source_baseline.json",
+    "runtime_source_tree_must_be_freshly_bound": true,
+    "historical_pins_are_current_runtime_authority": false
+  },
+  "first_planning_task_ids": [
+    "LIR-9001"
+  ],
+  "activation_gate_task_ids": [
+    "LIR-9001",
+    "LIR-9002",
+    "LIR-9003",
+    "LIR-9004"
+  ],
+  "task_import_started": false,
+  "launch_started": false,
+  "execution_authorized_by_this_file": false,
+  "is_activated_scheduler_config": false,
+  "actual_scheduler_config_requirement": "Materialize through the existing configured-board owner after reconciliation and purpose/capability qualification; do not reuse historical merge target/provider/database/resource authority.",
+  "completion_policy": "All initial modes manual and command fields empty. Bind exact per-task job/acceptance commands before setting auto completion in the execution copy. A diagnostic result does not establish semantic promotion.",
+  "initial_concurrency_proposal": {
+    "source_only_planning_lanes": 2,
+    "productive_native_jobs": 1,
+    "independent_acceptance_role": "separate from implementation; actual capability required"
+  },
+  "resource_profiles": {
+    "planning": {
+      "proposed_only": true,
+      "cpu_slots": 1,
+      "memory_mib": 1024,
+      "wall_seconds": 900,
+      "retained_storage_mib": 64,
+      "gpu_slots": 0,
+      "child_process_allowance": "bound in exact reviewed purpose-specific job packet",
+      "input_population": "bounded selected component/shard/cell; larger runs need a fresh explicit profile",
+      "native_admission_granted": false
+    },
+    "selected_corpus": {
+      "proposed_only": true,
+      "cpu_slots": 1,
+      "memory_mib": 4096,
+      "wall_seconds": 1800,
+      "retained_storage_mib": 512,
+      "gpu_slots": 0,
+      "child_process_allowance": "bound in exact reviewed purpose-specific job packet",
+      "input_population": "bounded selected component/shard/cell; larger runs need a fresh explicit profile",
+      "native_admission_granted": false
+    },
+    "validation": {
+      "proposed_only": true,
+      "cpu_slots": 1,
+      "memory_mib": 4096,
+      "wall_seconds": 1800,
+      "retained_storage_mib": 256,
+      "gpu_slots": 0,
+      "child_process_allowance": "bound in exact reviewed purpose-specific job packet",
+      "input_population": "bounded selected component/shard/cell; larger runs need a fresh explicit profile",
+      "native_admission_granted": false
+    },
+    "independent_review": {
+      "proposed_only": true,
+      "cpu_slots": 1,
+      "memory_mib": 1024,
+      "wall_seconds": 1800,
+      "retained_storage_mib": 64,
+      "gpu_slots": 0,
+      "child_process_allowance": "bound in exact reviewed purpose-specific job packet",
+      "input_population": "bounded selected component/shard/cell; larger runs need a fresh explicit profile",
+      "native_admission_granted": false
+    },
+    "training": {
+      "proposed_only": true,
+      "cpu_slots": 1,
+      "memory_mib": 4096,
+      "wall_seconds": 1800,
+      "retained_storage_mib": 512,
+      "gpu_slots": 0,
+      "child_process_allowance": "bound in exact reviewed purpose-specific job packet",
+      "input_population": "bounded selected component/shard/cell; larger runs need a fresh explicit profile",
+      "native_admission_granted": false
+    },
+    "inference": {
+      "proposed_only": true,
+      "cpu_slots": 1,
+      "memory_mib": 4096,
+      "wall_seconds": 1800,
+      "retained_storage_mib": 512,
+      "gpu_slots": 0,
+      "child_process_allowance": "bound in exact reviewed purpose-specific job packet",
+      "input_population": "bounded selected component/shard/cell; larger runs need a fresh explicit profile",
+      "native_admission_granted": false
+    },
+    "evaluation": {
+      "proposed_only": true,
+      "cpu_slots": 1,
+      "memory_mib": 4096,
+      "wall_seconds": 1800,
+      "retained_storage_mib": 512,
+      "gpu_slots": 0,
+      "child_process_allowance": "bound in exact reviewed purpose-specific job packet",
+      "input_population": "bounded selected component/shard/cell; larger runs need a fresh explicit profile",
+      "native_admission_granted": false
+    },
+    "lean": {
+      "proposed_only": true,
+      "cpu_slots": 1,
+      "memory_mib": 4096,
+      "wall_seconds": 1800,
+      "retained_storage_mib": 512,
+      "gpu_slots": 0,
+      "child_process_allowance": "bound in exact reviewed purpose-specific job packet",
+      "input_population": "bounded selected component/shard/cell; larger runs need a fresh explicit profile",
+      "native_admission_granted": false
+    },
+    "writer": {
+      "proposed_only": true,
+      "cpu_slots": 1,
+      "memory_mib": 1024,
+      "wall_seconds": 900,
+      "retained_storage_mib": 128,
+      "gpu_slots": 0,
+      "child_process_allowance": "bound in exact reviewed purpose-specific job packet",
+      "input_population": "bounded selected component/shard/cell; larger runs need a fresh explicit profile",
+      "native_admission_granted": false
+    },
+    "publication": {
+      "proposed_only": true,
+      "cpu_slots": 1,
+      "memory_mib": 4096,
+      "wall_seconds": 1800,
+      "retained_storage_mib": 512,
+      "gpu_slots": 0,
+      "child_process_allowance": "bound in exact reviewed purpose-specific job packet",
+      "input_population": "bounded selected component/shard/cell; larger runs need a fresh explicit profile",
+      "native_admission_granted": false
+    }
+  },
+  "writer_policy": "Exact task revision/input roots; native admitted attempt writes; serialized database/schema/checkpoint/publication writers; immutable output manifests and compare-and-swap.",
+  "legacy_parent_status_policy": "Preserve attributed prior LIR statuses and exact evidence. Stage missing child tasks only after identity reconciliation; no wholesale overwrite or automatic LAC equivalence.",
+  "native_qualification_claimed": false,
+  "purpose_mappings": {
+    "validation": "ValidationResourceReservation VALIDATION/canonical_validation",
+    "training": "DaemonResourceReservation HAMMER_LEAN/canonical_trainer with fresh training-purpose binding",
+    "inference": "Exact qualified model/input/codec owner; separate resource request",
+    "semantic_review": "Proposed stage requiring actual authorized independent reviewer capability",
+    "prover": "Exact selected existing Lean owner and pinned toolchain",
+    "publication": "Existing configured release writer; separate from model promotion"
+  },
+  "activation_policy": {
+    "reviewed_finite_bootstrap_allowlist_required": true,
+    "manual_completion_prevents_dispatch": false,
+    "is_schedulable_metadata_is_enforced": false,
+    "initial_proposed_allowlist": [
+      "LIR-9001"
+    ],
+    "automatic_goal_or_codebase_refill": false,
+    "live_activation_granted": false
+  }
+}

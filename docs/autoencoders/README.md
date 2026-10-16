@@ -16,6 +16,7 @@ belong to their named backend; they are not interchangeable across backends.
 | Record unsigned source/primary anchors with complete populations and unresolved evidence | [Sampled source / primary association](legal_sampled_primary_association_v2.md) |
 | Prepare a fresh definition-review subject that binds the primary association and its witnesses | [Association-bound definition review](legal_sampled_primary_definition_review_v2.md) |
 | Improve LegalIR on US Code spans and aggregate scoped semantic graphs into a shared Lean 4 corpus | [Current source, decoder, graph and Lean improvement plan](legal_ir_uscode_corpus_improvement_plan_20261015.md) |
+| Hand LegalIR work to the ipfs_accelerate_py agent supervisor | [Goals, subgoals, bounded tasks and supervisor handoff](legal_ir_supervisor_plan/README.md) |
 | Recover retained LegalIR checkpoints, native-conditioning assets and exact registration identities before another fit | [Asset and registration reconciliation](legal_ir_asset_reconciliation_20261016.md) |
 | Preserve richer typed norm hypotheses and original source scope before semantic training | [Typed semantic integration](legal_typed_semantic_integration_20261016.md) |
 | Replay selected normative Legal384/768 states on their original or separately bound retained native caches | [Original cached replay](normative_legal_ir_runtime.md), [retained native caches](normative_cached_legal_ir_runtime.md) |

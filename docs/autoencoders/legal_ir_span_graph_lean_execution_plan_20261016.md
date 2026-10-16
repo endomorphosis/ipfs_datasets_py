@@ -11,6 +11,11 @@ original execution scope. The latest [source-corpus research](evidence/legal-usc
 adds `justicedao/ipfs_uscode` to the existing span/entity-cache pipeline through
 bounded public metadata inspection, without payload processing or training.
 
+The [supervisor handoff](legal_ir_supervisor_plan/README.md) supplies the concrete
+goal hierarchy, bounded child tasks, dependency crosswalk, blockers, outputs and
+completion evidence for this design. Its native Markdown board and authoring
+manifest remain prepared until the existing supervisor's handoff gates pass.
+
 The objective is to learn complete, source-grounded legal meaning, aggregate it
 without losing scope, and deterministically generate one coherent Lean corpus.
 The first accepted component contains **one complete definition, one complete
