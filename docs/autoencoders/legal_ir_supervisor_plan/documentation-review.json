@@ -1,0 +1,59 @@
+{
+  "schema": "legal-ir-supervisor-documentation-review/v1",
+  "observed_at_utc": "2026-10-16T17:28:31.892958+00:00",
+  "scope": "Documentation structure, source-text/native-grammar review, local link and byte commitments only; no actual supervisor parser, queue, runtime or semantic/legal qualification.",
+  "tasks": 64,
+  "goals": 34,
+  "legacy_parents": 24,
+  "blocked_tasks": 43,
+  "source_pins_checked": 14,
+  "local_links_resolved": 90,
+  "handbook_new_entry_verified": true,
+  "unchanged_handbook_links_not_in_scope": true,
+  "independent_source_reviews": {
+    "supervisor_contracts": "No remaining documentation blocker; actual legacy grammar, metadata/empty-command behavior and activation/write-scope boundaries checked.",
+    "source_graph_lean": "Semantic nomination/review loop corrected; exact parent crosswalk, review-domain gap and source input roles checked.",
+    "training_and_conditioning": "E1 matched design, capture/evaluation roles, paired comparison, dimensional separation and distinct stage packets checked."
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 13524,
+      "sha256": "87ad482e07cc1e21e8b93467015588f500232ef397d9a1d67b3fd32ba09a2df8"
+    },
+    {
+      "path": "campaign.json",
+      "bytes": 7409,
+      "sha256": "37e78a51a9a70d0b1f3f2efb8f3e032d5872e63c6165b905e28861534912837f"
+    },
+    {
+      "path": "goals.objectives.md",
+      "bytes": 17303,
+      "sha256": "d2dd64a7565754fbd60513dd2c19adb0baca8f5c864b2eed3a0d782dbbd070a3"
+    },
+    {
+      "path": "source_baseline.json",
+      "bytes": 25721,
+      "sha256": "ebbec529f9f52a3ebce46c48c1b973d658a1880155c2daf631e4160b0f475a28"
+    },
+    {
+      "path": "tasks.json",
+      "bytes": 206904,
+      "sha256": "66ebc6a95adde4fc717dd19ffaf5f03387f909662d1a47eccbb5c2a51857e9e6"
+    },
+    {
+      "path": "tasks.todo.md",
+      "bytes": 131062,
+      "sha256": "a0ca9420e38a507cad4b8c2998a31a39b9b019c7b95bbbef2e4e710d0c37a7de"
+    },
+    {
+      "path": "validate_plan.py",
+      "bytes": 12171,
+      "sha256": "97b18bae969936a7449ad2a7265ff7bfbdc592375f03215c540efcbc5f4f90f4"
+    }
+  ],
+  "product_imports_or_tests": false,
+  "corpus_model_prediction_payload_reads": false,
+  "supervisor_import_enqueue_or_launch": false,
+  "training_or_lean_execution": false
+}

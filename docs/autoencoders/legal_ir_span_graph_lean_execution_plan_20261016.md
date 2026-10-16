@@ -6,6 +6,11 @@ and its [connected-component pilot](pilots/uscode_definition_component/README.md
 It preserves the existing LIR dependencies and the authored pilot's planning-time
 nulls. Proposed experiments, schemas and milestones below are not executed results.
 
+The [supervisor handoff](legal_ir_supervisor_plan/README.md) supplies the concrete
+goal hierarchy, bounded child tasks, dependency crosswalk, blockers, outputs and
+completion evidence for this design. Its native Markdown board and authoring
+manifest remain prepared until the existing supervisor's handoff gates pass.
+
 The objective is to learn complete, source-grounded legal meaning, aggregate it
 without losing scope, and deterministically generate one coherent Lean corpus.
 The first accepted component contains **one complete definition, one complete

@@ -1,0 +1,986 @@
+{
+  "schema": "legal-ir-supervisor-source-baseline/v1",
+  "observed_at_utc": "2026-10-16T17:25:31.433485+00:00",
+  "datasets_commit": "ff8a01fd04c741f892572e7f28cba777d4dfd472",
+  "accelerate_git_revision_claimed": false,
+  "source_file_pins": [
+    {
+      "repository": "ipfs_datasets_py",
+      "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "bytes": 40549,
+      "sha256": "fe4ec5697ad38b341116c0f6bac892fccff6e747a261a4d53079eb68068cf42a"
+    },
+    {
+      "repository": "ipfs_datasets_py",
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "bytes": 102284,
+      "sha256": "5f26e211cb2d4a7ecf62d81b4e40654bfacd09bda807a6e33de0b8ad957e4215"
+    },
+    {
+      "repository": "ipfs_datasets_py",
+      "path": "docs/autoencoders/pilots/uscode_definition_component/pilot_spec.json",
+      "bytes": 12979,
+      "sha256": "dd08f3de9ab0ea9cbf5a57cf52b1cdf8517ed41fa0d25f61a3e2753475a25279"
+    },
+    {
+      "repository": "ipfs_datasets_py",
+      "path": "docs/autoencoders/pilots/uscode_definition_component/pilot_spec.schema.json",
+      "bytes": 12928,
+      "sha256": "562d44725a0f83c3185e3afec3d402eda93e1fdd4b81ee2e86ecfd92b88ade18"
+    },
+    {
+      "repository": "ipfs_datasets_py",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/retained-typed-join-inputs.json",
+      "bytes": 8882,
+      "sha256": "f65694fd8e2c63e77fa24d2c36e08977e5f5156b62d06f464c539a8661ee125c"
+    },
+    {
+      "repository": "ipfs_datasets_py",
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/retained-inputs.json",
+      "bytes": 4737,
+      "sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736"
+    },
+    {
+      "repository": "ipfs_datasets_py",
+      "path": "docs/autoencoders/legal_relational_decoder_target_contract_v1.md",
+      "bytes": 12380,
+      "sha256": "c7b7c17c130605cc54de1c7417bdbf90fa1c9d57ae52d75e416d35fcbf19cdea"
+    },
+    {
+      "repository": "ipfs_datasets_py",
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/hub-metadata-summary-v01.json",
+      "bytes": 2652,
+      "sha256": "cbbfdb4a23a64ece3b61d394200eef27f43595f2b8bac22e68275016eb0e33b7"
+    },
+    {
+      "repository": "ipfs_accelerate_py",
+      "path": "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+      "bytes": 3270606,
+      "sha256": "bbe90c8862ea6019beee45cd7b36af9ef43d6b593ee4fa7534c19379fb5f7561"
+    },
+    {
+      "repository": "ipfs_accelerate_py",
+      "path": "ipfs_accelerate_py/agent_supervisor/objectives/objective_graph.py",
+      "bytes": 469802,
+      "sha256": "d83c55e354552e28f8792b675586b3cf741b704a1dfd31ced3d31702ebb6f41a"
+    },
+    {
+      "repository": "ipfs_accelerate_py",
+      "path": "ipfs_accelerate_py/agent_supervisor/task_sources/markdown_task_source.py",
+      "bytes": 68122,
+      "sha256": "bf916dc1b3287052234fdc319a0cd1fb6de9eee6aaa0d868cf0cc5ccb1a8287d"
+    },
+    {
+      "repository": "ipfs_accelerate_py",
+      "path": "ipfs_accelerate_py/agent_supervisor/task_sources/taskboard_ingest.py",
+      "bytes": 24309,
+      "sha256": "90c6a14d09f140fca4fc6837aeaba488d45e3ec2bacaa2bfbca5e9444a1036ca"
+    },
+    {
+      "repository": "ipfs_accelerate_py",
+      "path": "docs/architecture/legal_autoformalization_convergence/full_plan/tasks.json",
+      "bytes": 190570,
+      "sha256": "56917e387649c03a0d483b1d3a4592dc146edf37de892782431f991a47269fcb"
+    },
+    {
+      "repository": "ipfs_accelerate_py",
+      "path": "docs/architecture/legal_autoformalization_convergence/full_plan/campaign.json",
+      "bytes": 2740,
+      "sha256": "89a004163e6f8f30dbb4cd6121dce25a9d0f712a3a074b47a881db6e43b89d19"
+    }
+  ],
+  "legacy_backlog": {
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-comprehensive-review-20261013/implementation-backlog.json",
+    "bytes": 2304822,
+    "sha256": "3c83ed0540363d7501444b6319434789b69c877cf083cde611ba29d7753eeb81",
+    "tasks": [
+      {
+        "id": "LIR-01",
+        "title": "Preserve baselines and consumer capabilities",
+        "priority": "P0",
+        "status": "in_progress",
+        "depends_on": []
+      },
+      {
+        "id": "LIR-02",
+        "title": "Join source identities and declared context",
+        "priority": "P0",
+        "status": "in_progress",
+        "depends_on": [
+          "LIR-01"
+        ]
+      },
+      {
+        "id": "LIR-03",
+        "title": "Define qualification and legacy adapters",
+        "priority": "P0",
+        "status": "in_progress",
+        "depends_on": [
+          "LIR-01"
+        ]
+      },
+      {
+        "id": "LIR-04",
+        "title": "Specify and validate graph interchange",
+        "priority": "P0",
+        "status": "in_progress",
+        "depends_on": [
+          "LIR-02",
+          "LIR-03"
+        ]
+      },
+      {
+        "id": "LIR-05",
+        "title": "Select connected statutory pilot",
+        "priority": "P0",
+        "status": "proposed",
+        "depends_on": [
+          "LIR-02"
+        ]
+      },
+      {
+        "id": "LIR-06",
+        "title": "Complete source interpretation reviews",
+        "priority": "P0",
+        "status": "proposed",
+        "depends_on": [
+          "LIR-03",
+          "LIR-05"
+        ]
+      },
+      {
+        "id": "LIR-07",
+        "title": "Extend typed IR losslessly",
+        "priority": "P0",
+        "status": "in_progress",
+        "depends_on": [
+          "LIR-03",
+          "LIR-05"
+        ]
+      },
+      {
+        "id": "LIR-08",
+        "title": "Create scoped senses and typed assertions",
+        "priority": "P1",
+        "status": "in_progress",
+        "depends_on": [
+          "LIR-04",
+          "LIR-07"
+        ]
+      },
+      {
+        "id": "LIR-09",
+        "title": "Resolve definitions and dependency closure",
+        "priority": "P1",
+        "status": "in_progress",
+        "depends_on": [
+          "LIR-06",
+          "LIR-08"
+        ]
+      },
+      {
+        "id": "LIR-10",
+        "title": "Assemble complete provision interpretations",
+        "priority": "P1",
+        "status": "proposed",
+        "depends_on": [
+          "LIR-07",
+          "LIR-09"
+        ]
+      },
+      {
+        "id": "LIR-11",
+        "title": "Publish reconstructable local graph snapshot",
+        "priority": "P1",
+        "status": "proposed",
+        "depends_on": [
+          "LIR-04",
+          "LIR-10"
+        ]
+      },
+      {
+        "id": "LIR-12",
+        "title": "Define shared Lean interpretation library",
+        "priority": "P1",
+        "status": "in_progress",
+        "depends_on": [
+          "LIR-07"
+        ]
+      },
+      {
+        "id": "LIR-13",
+        "title": "Generate modular Lean corpus",
+        "priority": "P1",
+        "status": "in_progress",
+        "depends_on": [
+          "LIR-10",
+          "LIR-12",
+          "LIR-11"
+        ]
+      },
+      {
+        "id": "LIR-14",
+        "title": "Run source-bound corpus builds and obligations",
+        "priority": "P1",
+        "status": "in_progress",
+        "depends_on": [
+          "LIR-13"
+        ]
+      },
+      {
+        "id": "LIR-15",
+        "title": "Extend incremental invalidation and build keys",
+        "priority": "P1",
+        "status": "in_progress",
+        "depends_on": [
+          "LIR-11",
+          "LIR-14"
+        ]
+      },
+      {
+        "id": "LIR-16",
+        "title": "Reconcile temporal attention comparison",
+        "priority": "P2",
+        "status": "completed",
+        "depends_on": [
+          "LIR-01"
+        ]
+      },
+      {
+        "id": "LIR-17",
+        "title": "Train reviewed relation and binding heads",
+        "priority": "P2",
+        "status": "in_progress",
+        "depends_on": [
+          "LIR-06",
+          "LIR-07",
+          "LIR-09"
+        ]
+      },
+      {
+        "id": "LIR-18",
+        "title": "Compare context-sensitive modality adaptation",
+        "priority": "P2",
+        "status": "proposed",
+        "depends_on": [
+          "LIR-06",
+          "LIR-07"
+        ]
+      },
+      {
+        "id": "LIR-19",
+        "title": "Measure genuine representation benefit",
+        "priority": "P2",
+        "status": "proposed",
+        "depends_on": [
+          "LIR-06",
+          "LIR-17"
+        ]
+      },
+      {
+        "id": "LIR-20",
+        "title": "Evaluate scoped graph context and retrieval",
+        "priority": "P2",
+        "status": "proposed",
+        "depends_on": [
+          "LIR-09",
+          "LIR-11",
+          "LIR-17"
+        ]
+      },
+      {
+        "id": "LIR-21",
+        "title": "Seal cross-dataset and Lean release",
+        "priority": "P1",
+        "status": "proposed",
+        "depends_on": [
+          "LIR-11",
+          "LIR-14",
+          "LIR-15"
+        ]
+      },
+      {
+        "id": "LIR-22",
+        "title": "Classify repair feedback and admit training evidence",
+        "priority": "P2",
+        "status": "proposed",
+        "depends_on": [
+          "LIR-03",
+          "LIR-14",
+          "LIR-17"
+        ]
+      },
+      {
+        "id": "LIR-23",
+        "title": "Measure pipeline costs and coverage",
+        "priority": "P1",
+        "status": "proposed",
+        "depends_on": [
+          "LIR-14"
+        ]
+      },
+      {
+        "id": "LIR-24",
+        "title": "Expand corpus by qualified dependency components",
+        "priority": "P3",
+        "status": "proposed",
+        "depends_on": [
+          "LIR-20",
+          "LIR-21",
+          "LIR-22",
+          "LIR-23"
+        ]
+      }
+    ],
+    "status_is_attributed_snapshot_not_new_completion": true
+  },
+  "lac_campaign": {
+    "path": "docs/architecture/legal_autoformalization_convergence/full_plan/tasks.json",
+    "task_count": 60,
+    "goal_count": 41,
+    "related_links_are_not_equivalence": true,
+    "task_headers": [
+      {
+        "id": "LAC-001",
+        "title": "Freeze current repository authorities and effective trees",
+        "goal_id": "LAC-G013",
+        "depends_on": []
+      },
+      {
+        "id": "LAC-002",
+        "title": "Reconcile all training histories into an immutable lineage DAG",
+        "goal_id": "LAC-G012",
+        "depends_on": []
+      },
+      {
+        "id": "LAC-003",
+        "title": "Reconcile pinned span and entity cache denominators",
+        "goal_id": "LAC-G011",
+        "depends_on": []
+      },
+      {
+        "id": "LAC-004",
+        "title": "Replay current retained baseline checkpoints",
+        "goal_id": "LAC-G012",
+        "depends_on": [
+          "LAC-001",
+          "LAC-002",
+          "LAC-006",
+          "LAC-082"
+        ]
+      },
+      {
+        "id": "LAC-005",
+        "title": "Inventory representability and missing context across the corpus",
+        "goal_id": "LAC-G011",
+        "depends_on": [
+          "LAC-001",
+          "LAC-003"
+        ]
+      },
+      {
+        "id": "LAC-006",
+        "title": "Bind source and tool capability manifests",
+        "goal_id": "LAC-G013",
+        "depends_on": [
+          "LAC-001",
+          "LAC-003"
+        ]
+      },
+      {
+        "id": "LAC-010",
+        "title": "Extend complete statutory context packets",
+        "goal_id": "LAC-G021",
+        "depends_on": [
+          "LAC-001",
+          "LAC-003",
+          "LAC-005"
+        ]
+      },
+      {
+        "id": "LAC-011",
+        "title": "Build context aware source units and classification routes",
+        "goal_id": "LAC-G021",
+        "depends_on": [
+          "LAC-010",
+          "LAC-005"
+        ]
+      },
+      {
+        "id": "LAC-012",
+        "title": "Authenticate independent review and adjudication records",
+        "goal_id": "LAC-G022",
+        "depends_on": [
+          "LAC-010",
+          "LAC-006"
+        ]
+      },
+      {
+        "id": "LAC-013",
+        "title": "Freeze provision and dependency grouped splits",
+        "goal_id": "LAC-G023",
+        "depends_on": [
+          "LAC-003",
+          "LAC-010",
+          "LAC-012"
+        ]
+      },
+      {
+        "id": "LAC-014",
+        "title": "Adjudicate a first connected statutory supervision cohort",
+        "goal_id": "LAC-G022",
+        "depends_on": [
+          "LAC-011",
+          "LAC-012",
+          "LAC-013"
+        ]
+      },
+      {
+        "id": "LAC-015",
+        "title": "Build fresh semantic benchmarks and perturbation oracles",
+        "goal_id": "LAC-G023",
+        "depends_on": [
+          "LAC-013",
+          "LAC-014"
+        ]
+      },
+      {
+        "id": "LAC-020",
+        "title": "Version typed legal semantics and the evidence vector",
+        "goal_id": "LAC-G031",
+        "depends_on": [
+          "LAC-001",
+          "LAC-005",
+          "LAC-010"
+        ]
+      },
+      {
+        "id": "LAC-021",
+        "title": "Extend multi statement grammar and decoder representability",
+        "goal_id": "LAC-G032",
+        "depends_on": [
+          "LAC-020",
+          "LAC-011"
+        ]
+      },
+      {
+        "id": "LAC-022",
+        "title": "Bind qualifiers quantifiers and repeated occurrences",
+        "goal_id": "LAC-G032",
+        "depends_on": [
+          "LAC-020",
+          "LAC-010"
+        ]
+      },
+      {
+        "id": "LAC-023",
+        "title": "Measure complete source coverage and semantic preservation",
+        "goal_id": "LAC-G033",
+        "depends_on": [
+          "LAC-020",
+          "LAC-021",
+          "LAC-022",
+          "LAC-015"
+        ]
+      },
+      {
+        "id": "LAC-024",
+        "title": "Create adversarial cross layer regression fixtures",
+        "goal_id": "LAC-G033",
+        "depends_on": [
+          "LAC-020",
+          "LAC-022",
+          "LAC-015"
+        ]
+      },
+      {
+        "id": "LAC-030",
+        "title": "Implement the new temporal token attention comparison",
+        "goal_id": "LAC-G041",
+        "depends_on": [
+          "LAC-004",
+          "LAC-020"
+        ]
+      },
+      {
+        "id": "LAC-031",
+        "title": "Run finite temporal feature cells and replicate finalists",
+        "goal_id": "LAC-G041",
+        "depends_on": [
+          "LAC-030",
+          "LAC-014",
+          "LAC-015",
+          "LAC-081",
+          "LAC-082"
+        ]
+      },
+      {
+        "id": "LAC-032",
+        "title": "Diagnose and improve final role assignment",
+        "goal_id": "LAC-G042",
+        "depends_on": [
+          "LAC-004",
+          "LAC-014",
+          "LAC-015",
+          "LAC-022",
+          "LAC-081",
+          "LAC-082"
+        ]
+      },
+      {
+        "id": "LAC-033",
+        "title": "Train qualifier presence and ownership separately",
+        "goal_id": "LAC-G042",
+        "depends_on": [
+          "LAC-004",
+          "LAC-014",
+          "LAC-015",
+          "LAC-021",
+          "LAC-022",
+          "LAC-081",
+          "LAC-082"
+        ]
+      },
+      {
+        "id": "LAC-034",
+        "title": "Measure authentic autoencoder contribution under matched training",
+        "goal_id": "LAC-G043",
+        "depends_on": [
+          "LAC-004",
+          "LAC-006",
+          "LAC-014",
+          "LAC-015",
+          "LAC-021",
+          "LAC-081",
+          "LAC-082"
+        ]
+      },
+      {
+        "id": "LAC-035",
+        "title": "Train richer rule and definition output profiles",
+        "goal_id": "LAC-G043",
+        "depends_on": [
+          "LAC-021",
+          "LAC-022",
+          "LAC-014",
+          "LAC-015",
+          "LAC-081",
+          "LAC-082"
+        ]
+      },
+      {
+        "id": "LAC-036",
+        "title": "Calibrate abstention and select candidates by independent gates",
+        "goal_id": "LAC-G043",
+        "depends_on": [
+          "LAC-031",
+          "LAC-032",
+          "LAC-033",
+          "LAC-034",
+          "LAC-035",
+          "LAC-023",
+          "LAC-015"
+        ]
+      },
+      {
+        "id": "LAC-040",
+        "title": "Define graph identities and typed assertion envelopes",
+        "goal_id": "LAC-G051",
+        "depends_on": [
+          "LAC-020",
+          "LAC-010"
+        ]
+      },
+      {
+        "id": "LAC-041",
+        "title": "Resolve mentions and legal symbols with evidence",
+        "goal_id": "LAC-G051",
+        "depends_on": [
+          "LAC-040",
+          "LAC-022",
+          "LAC-014"
+        ]
+      },
+      {
+        "id": "LAC-042",
+        "title": "Extend definitions beyond bounded unary declarations",
+        "goal_id": "LAC-G052",
+        "depends_on": [
+          "LAC-040",
+          "LAC-021",
+          "LAC-014"
+        ]
+      },
+      {
+        "id": "LAC-043",
+        "title": "Compute resumable semantic dependency closure",
+        "goal_id": "LAC-G052",
+        "depends_on": [
+          "LAC-041",
+          "LAC-042",
+          "LAC-010"
+        ]
+      },
+      {
+        "id": "LAC-044",
+        "title": "Aggregate qualified spans into section semantic graphs",
+        "goal_id": "LAC-G053",
+        "depends_on": [
+          "LAC-040",
+          "LAC-041",
+          "LAC-042",
+          "LAC-043",
+          "LAC-023"
+        ]
+      },
+      {
+        "id": "LAC-045",
+        "title": "Invalidate derived graphs and train from verified failures",
+        "goal_id": "LAC-G053",
+        "depends_on": [
+          "LAC-044",
+          "LAC-081"
+        ]
+      },
+      {
+        "id": "LAC-046",
+        "title": "Evaluate graph resolution and composition independently",
+        "goal_id": "LAC-G053",
+        "depends_on": [
+          "LAC-044",
+          "LAC-045",
+          "LAC-015",
+          "LAC-024"
+        ]
+      },
+      {
+        "id": "LAC-050",
+        "title": "Define scoped legal theory and conflict profiles",
+        "goal_id": "LAC-G061",
+        "depends_on": [
+          "LAC-020",
+          "LAC-022"
+        ]
+      },
+      {
+        "id": "LAC-051",
+        "title": "Require actual applicability and precedence witnesses",
+        "goal_id": "LAC-G061",
+        "depends_on": [
+          "LAC-050",
+          "LAC-043",
+          "LAC-014"
+        ]
+      },
+      {
+        "id": "LAC-052",
+        "title": "Check consistency nonvacuity and counterexamples",
+        "goal_id": "LAC-G062",
+        "depends_on": [
+          "LAC-050",
+          "LAC-051",
+          "LAC-044",
+          "LAC-006",
+          "LAC-060"
+        ]
+      },
+      {
+        "id": "LAC-053",
+        "title": "Compose global closures across graph shards",
+        "goal_id": "LAC-G063",
+        "depends_on": [
+          "LAC-043",
+          "LAC-045",
+          "LAC-052",
+          "LAC-081"
+        ]
+      },
+      {
+        "id": "LAC-054",
+        "title": "Manage contradiction and interpretation review queues",
+        "goal_id": "LAC-G062",
+        "depends_on": [
+          "LAC-052",
+          "LAC-051",
+          "LAC-012"
+        ]
+      },
+      {
+        "id": "LAC-055",
+        "title": "Gate global semantic graph admission",
+        "goal_id": "LAC-G063",
+        "depends_on": [
+          "LAC-046",
+          "LAC-053",
+          "LAC-054",
+          "LAC-024",
+          "LAC-064"
+        ]
+      },
+      {
+        "id": "LAC-060",
+        "title": "Specify semantic Lean lowering contracts",
+        "goal_id": "LAC-G071",
+        "depends_on": [
+          "LAC-020",
+          "LAC-021",
+          "LAC-050",
+          "LAC-006"
+        ]
+      },
+      {
+        "id": "LAC-061",
+        "title": "Generate namespaced concept definition and rule modules",
+        "goal_id": "LAC-G071",
+        "depends_on": [
+          "LAC-060",
+          "LAC-040",
+          "LAC-043"
+        ]
+      },
+      {
+        "id": "LAC-062",
+        "title": "Attach proof obligations and audit kernel assumptions",
+        "goal_id": "LAC-G072",
+        "depends_on": [
+          "LAC-060",
+          "LAC-006",
+          "LAC-081"
+        ]
+      },
+      {
+        "id": "LAC-063",
+        "title": "Execute real bounded Lean builds",
+        "goal_id": "LAC-G072",
+        "depends_on": [
+          "LAC-061",
+          "LAC-062",
+          "LAC-044",
+          "LAC-082"
+        ]
+      },
+      {
+        "id": "LAC-064",
+        "title": "Check graph to Lean composition and incremental rebuilds",
+        "goal_id": "LAC-G073",
+        "depends_on": [
+          "LAC-063",
+          "LAC-053",
+          "LAC-045"
+        ]
+      },
+      {
+        "id": "LAC-070",
+        "title": "Define doctrine records and source authority boundaries",
+        "goal_id": "LAC-G081",
+        "depends_on": [
+          "LAC-020",
+          "LAC-050",
+          "LAC-012"
+        ]
+      },
+      {
+        "id": "LAC-071",
+        "title": "Prepare authoritative doctrine source packets",
+        "goal_id": "LAC-G081",
+        "depends_on": [
+          "LAC-070",
+          "LAC-010",
+          "LAC-013",
+          "LAC-014"
+        ]
+      },
+      {
+        "id": "LAC-072",
+        "title": "Compose doctrine candidates and counterexample obligations",
+        "goal_id": "LAC-G082",
+        "depends_on": [
+          "LAC-071",
+          "LAC-044",
+          "LAC-051",
+          "LAC-060"
+        ]
+      },
+      {
+        "id": "LAC-073",
+        "title": "Check doctrine derivations in separate legal theories",
+        "goal_id": "LAC-G082",
+        "depends_on": [
+          "LAC-072",
+          "LAC-055",
+          "LAC-063",
+          "LAC-062"
+        ]
+      },
+      {
+        "id": "LAC-074",
+        "title": "Evaluate and review doctrine fidelity",
+        "goal_id": "LAC-G083",
+        "depends_on": [
+          "LAC-073",
+          "LAC-071",
+          "LAC-015",
+          "LAC-054"
+        ]
+      },
+      {
+        "id": "LAC-075",
+        "title": "Propagate doctrinal change and regression evidence",
+        "goal_id": "LAC-G083",
+        "depends_on": [
+          "LAC-074",
+          "LAC-045",
+          "LAC-064"
+        ]
+      },
+      {
+        "id": "LAC-080",
+        "title": "Validate native supervisor planning and import compatibility",
+        "goal_id": "LAC-G091",
+        "depends_on": [
+          "LAC-001",
+          "LAC-006"
+        ]
+      },
+      {
+        "id": "LAC-081",
+        "title": "Bind executable jobs and evidence based completion",
+        "goal_id": "LAC-G091",
+        "depends_on": [
+          "LAC-080"
+        ]
+      },
+      {
+        "id": "LAC-082",
+        "title": "Admit resources and reviewer capabilities per stage",
+        "goal_id": "LAC-G092",
+        "depends_on": [
+          "LAC-080",
+          "LAC-006"
+        ]
+      },
+      {
+        "id": "LAC-083",
+        "title": "Prioritize bounded repair and corpus shard tasks",
+        "goal_id": "LAC-G093",
+        "depends_on": [
+          "LAC-081",
+          "LAC-082",
+          "LAC-003",
+          "LAC-005"
+        ]
+      },
+      {
+        "id": "LAC-084",
+        "title": "Test interruption stale leases and concurrent writes",
+        "goal_id": "LAC-G092",
+        "depends_on": [
+          "LAC-081",
+          "LAC-082",
+          "LAC-083"
+        ]
+      },
+      {
+        "id": "LAC-085",
+        "title": "Expose cross layer convergence metrics and repair queues",
+        "goal_id": "LAC-G093",
+        "depends_on": [
+          "LAC-023",
+          "LAC-046",
+          "LAC-052",
+          "LAC-081",
+          "LAC-083"
+        ]
+      },
+      {
+        "id": "LAC-090",
+        "title": "Run an early end to end constructed neighborhood",
+        "goal_id": "LAC-G101",
+        "depends_on": [
+          "LAC-020",
+          "LAC-022",
+          "LAC-040",
+          "LAC-050",
+          "LAC-060",
+          "LAC-070",
+          "LAC-081",
+          "LAC-082"
+        ]
+      },
+      {
+        "id": "LAC-091",
+        "title": "Qualify a connected real law pilot",
+        "goal_id": "LAC-G101",
+        "depends_on": [
+          "LAC-014",
+          "LAC-015",
+          "LAC-023",
+          "LAC-044",
+          "LAC-046",
+          "LAC-055",
+          "LAC-064",
+          "LAC-074",
+          "LAC-084",
+          "LAC-090"
+        ]
+      },
+      {
+        "id": "LAC-092",
+        "title": "Roll out by complete title and dependency neighborhoods",
+        "goal_id": "LAC-G102",
+        "depends_on": [
+          "LAC-091",
+          "LAC-036",
+          "LAC-083",
+          "LAC-085"
+        ]
+      },
+      {
+        "id": "LAC-093",
+        "title": "Run continuous amendment and authority refresh checks",
+        "goal_id": "LAC-G102",
+        "depends_on": [
+          "LAC-092",
+          "LAC-045",
+          "LAC-053",
+          "LAC-064",
+          "LAC-075",
+          "LAC-084"
+        ]
+      },
+      {
+        "id": "LAC-094",
+        "title": "Prepare reproducible corpus and model release manifests",
+        "goal_id": "LAC-G103",
+        "depends_on": [
+          "LAC-091",
+          "LAC-085",
+          "LAC-064",
+          "LAC-075"
+        ]
+      },
+      {
+        "id": "LAC-095",
+        "title": "Perform independent final acceptance and residual goal audit",
+        "goal_id": "LAC-G103",
+        "depends_on": [
+          "LAC-092",
+          "LAC-093",
+          "LAC-094",
+          "LAC-036",
+          "LAC-055",
+          "LAC-074"
+        ]
+      }
+    ]
+  },
+  "latest_adopted_work": [
+    "Merged PR1318 retained decoder compatibility and actual replay",
+    "Merged PR1319 comprehensive span/graph/Lean execution design",
+    "F15/F17/F18 genuine metadata registration, without semantic/runtime/teacher promotion",
+    "Main ff8a01fd0 fixed-byte relational target codec and candidate example adapter; not an AST-action head"
+  ],
+  "payload_or_product_execution": false,
+  "datasets_commit_role": "Reviewed base commit before these authored documentation changes; effective planning file bytes are separately pinned above.",
+  "source_file_pins_claim_complete_runtime_closure": false
+}

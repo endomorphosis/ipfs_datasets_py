@@ -20,6 +20,13 @@ refines this roadmap and the unchanged pilot specification; it does not enqueue
 jobs or establish new training, review or build results. Both Hub revisions were
 rechecked at 06:02 UTC in the [metadata-only refresh](evidence/legal-ir-span-graph-plan-20261016/hub-metadata-summary-v01.json).
 
+The [supervisor goals, subgoals and task board](legal_ir_supervisor_plan/README.md)
+decompose this plan into 64 bounded tasks and 34 goal records for the
+`ipfs_accelerate_py` supervisor. The handoff preserves the 24 existing LIR parent
+identities/dependencies, relates the broader LAC campaign, and separates reviewed
+statutory work from the matched E1 engineering experiment. It is prepared
+documentation; publication imports or launches no tasks.
+
 ```mermaid
 flowchart LR
     S[Versioned source occurrences and span cache] --> C[Complete provisions and permitted context]
