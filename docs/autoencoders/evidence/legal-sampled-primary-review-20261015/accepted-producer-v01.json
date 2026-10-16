@@ -1,0 +1,53 @@
+{
+  "captured_parent_stderr": {
+    "bytes": 0,
+    "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/associate-parent-stderr-v01.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "captured_parent_stdout": {
+    "bytes": 5534,
+    "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/associate-parent-stdout-v01.json",
+    "sha256": "5b19da266a538a92db015302b76d8097f2bb39ba2894a6cec5fb791c9b89a10b"
+  },
+  "expected_association_bytes": 336630,
+  "expected_association_file_count": 7,
+  "expected_replay_bytes": 10630440,
+  "expected_replay_file_count": 64,
+  "producer_attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01",
+  "producer_durability": {
+    "bytes": 13579,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/validation-durability.json",
+    "sha256": "a4ccf010b5cbe7b7db5ffdc9190a48a93c11e520b78dc4a8f4c34095567eb008"
+  },
+  "producer_execution": {
+    "bytes": 721,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/execution.json",
+    "sha256": "175d8f4e39ac7ee0409b8bbec72184a8959a3d399ae9413a1fd983a6de8de6fa"
+  },
+  "producer_receipt": {
+    "bytes": 49136,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/sampled-primary-associate-receipt.json",
+    "sha256": "bdfd190b215cafac03f99d19a7b592d3c2b616376531802fec1336c2d3d816fc"
+  },
+  "producer_request": {
+    "bytes": 55169,
+    "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-association-20261015-01/associate-request-v01.json",
+    "sha256": "88963d15fe5981bdc13ed1106c12fe005278c78ef8a034dbeac2faca2005e53c"
+  },
+  "producer_result": {
+    "bytes": 903,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/result.json",
+    "sha256": "bdb815924910535933892f7c1cf7f6a62ba60bae6ba880dcbe1055bc1028d437"
+  },
+  "replay_file_index": {
+    "bytes": 10872,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/exports/file-index.json",
+    "sha256": "9a462929515a1ce4735e3d1bd8870cd2f239a342e3b8cca5852ab96165c18e1a"
+  },
+  "replay_receipt": {
+    "bytes": 21218,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/exports/replay-receipt.json",
+    "sha256": "bffb49f77b9e551fd7901b3c0baf3f51956549cff6d176b987c8263bf01b6b5e"
+  },
+  "schema": "retained-sampled-primary-association-producer/v1"
+}

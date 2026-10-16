@@ -1,0 +1,17 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-consumer01/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-consumer01/logs/execution.json"
+  ],
+  "executed_checks": [
+    "retained_producer_original_inventory_and_native_closeout",
+    "full_original_primary_index_baseline",
+    "fol_fresh_retained_association_definition_review_subject",
+    "tdfol_fresh_retained_association_definition_review_subject",
+    "retained_producer_immutable_and_source_output_closing_guards"
+  ],
+  "request_sha256": "27a2629f343b40281dadb004ac4f18f24ee84bccb76ce6cf2af2a7cc62cc6635",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}
