@@ -1,7 +1,8 @@
 # LegalIR improvement plan for US Code graphs and Lean 4
 
-Updated October 16, 2026. Reviewed repository baseline: `643c01860` on `main`,
-including the merged decoder compatibility and numerical replay in PR #1318.
+Updated October 16, 2026. Reviewed repository baseline: `ff8a01fd0` on `main`,
+including the decoder replay, parallel execution design and qualified byte
+target/source-example interfaces. Earlier qualification scopes remain historical.
 The original research baseline and prior qualification updates are preserved in
 [the evidence history](#evidence-update-history). This roadmap refines the existing
 LIR milestones and pilot specification; it creates no competing task authority.
@@ -13,20 +14,32 @@ complete norm using it, and a second scope-valid use**, with exact source
 companions and checked consequences. Whole-cache inventory and controlled decoder
 research can proceed in parallel while that component is prepared.
 
+The source is the pinned [justicedao/ipfs_uscode release](https://huggingface.co/datasets/justicedao/ipfs_uscode/tree/91ca1838853ac82d7a12dd4ab47d9686f47667f9).
+Join its complete published provisions to physical occurrences and observations
+in the span cache, predict/review supported typed meanings, aggregate scoped
+entity/term/definition/norm assertions into the entity cache, then deterministically
+build a shared Lean corpus. Preserve exact original text through a separately
+measured surface/source channel. Existing retrieval graphs, candidate formulas
+and packaging admission are useful inputs, not reviewed legal assertions.
+
 The [span-to-graph-to-Lean execution design](legal_ir_span_graph_lean_execution_plan_20261016.md)
 specifies the proposed combined decoder, training ablations, cache/graph contracts,
 family support boundaries and ordered work packages against this baseline. It
 refines this roadmap and the unchanged pilot specification; it does not enqueue
-jobs or establish new training, review or build results. Both Hub revisions were
-rechecked at 06:02 UTC in the [metadata-only refresh](evidence/legal-ir-span-graph-plan-20261016/hub-metadata-summary-v01.json).
+jobs or establish new training, review or build results. The latest
+[three-repository metadata refresh](evidence/legal-uscode-source-corpus-plan-20261016/metadata-refresh.json)
+adds source-release reconciliation, reversible source/span joins, finite training
+inventories and explicit graph-view/profile gaps. It downloads no corpus payload.
 
 ```mermaid
 flowchart LR
-    S[Versioned source occurrences and span cache] --> C[Complete provisions and permitted context]
+    U[ipfs_uscode selected corpus family] --> S[Versioned occurrences and span cache]
+    S --> C[Complete provisions and permitted context]
     C --> E[Independent 8D / 384D / 768D paths]
     E --> I[Candidate typed LegalIR]
     I --> R[Source and meaning review]
     R --> G[Scoped terms definitions entities and norms]
+    G --> K[Versioned entity cache and exact AST companions]
     G --> L[Deterministic shared Lean modules]
     L --> P[Native builds and conditional proofs]
     S --> B[Exact source bytes and surface envelope]
@@ -45,7 +58,7 @@ the separately eligible reviewed targets and frozen evaluation design.
 | Stage | Concrete deliverable and reused work | Exit evidence |
 | --- | --- | --- |
 | 0. Reconcile assets and runtime | Inventory exact checkpoints, embeddings, codecs, saved predictions, source capsules and ModelManager aliases. Reuse compatible loaders, donor exports and current frozen-runtime protocol. | Immutable artifact/hash/role inventory; compatible numerical reload where required; every missing asset or incompatible interface explicit. Archive custody, reload qualification and promotion remain separate. |
-| 1. Inventory both caches | Freeze revisions; account for physical files/rows, source occurrences, observation generations, aliases and goals. Use existing bundle/CAS readers and complete-source sampler. | Every selected row has a disposition and traceable original bytes; counts distinguish observations from unique physical provisions. No heading/amendment fragment is silently treated as an operative norm. |
+| 1. Inventory source and both caches | Freeze three independent revisions and explicit artifact-family selections; use existing source inventory, bundle/CAS readers and complete-source sampler. Reconcile source control-plane discrepancies and physical span aliases. | Every selected source row/span has a disposition and traceable original bytes. Verify the 16 corpus shards/62,931 declared rows; counts distinguish source rows, occurrences and attempts. No mixed-family Viewer count or heading/amendment fragment becomes the law denominator. |
 | 2. Reconcile source and graph transport | Reuse the verified original-primary export, sampled-source association and new primary-bound review subject. Repair the malformed legacy entity export from original records while preserving multiplicity. | Exact endpoints, coordinate spaces, source versions and original-to-export joins; unrecoverable rows remain unresolved. Existing primary transport is reused, not rebuilt as a new semantic graph. |
 | 3. Review one connected component | Bind an execution manifest to the unchanged component specification; prepare source-first legal/formal decisions, complete dependencies, applicability, exposure and disagreements. | Complete definition + complete norm + second physical use; explicit trust and downstream gold-eligibility policy; zero material omission/addition in the accepted pilot. Candidate-bearing packets are shown only after any claimed blind target collection. |
 | 4. Represent and compose its meaning | Reuse source-scope, relational AST and typed-source join owners; add only the operators required by the reviewed meaning. Build scoped term senses, norms and per-occurrence governing-definition bindings. | Exact ordered AST/arguments/qualifiers, closed typed graph endpoints and companions, complete searched partitions and an explicit unsupported frontier. No label-similarity merge or representative lookup substitutes for all physical uses. |
@@ -88,15 +101,25 @@ in parallel with decoder experiments 5–6.
   not a generic cardinality engine, supported native TDFOL-equality route,
   reviewed §7214 interpretation or actual Lean build. Reuse these owners within
   their declared profiles; review determines required semantics and extensions.
+- **Training-target transport is prepared, semantic supervision is not.** The
+  142-case byte target/example qualification fixes source/label separation over
+  the existing typed request. It supplies no AST-action head or eligible reviewed
+  statutory population. Freeze actual target lengths, allowed supervision,
+  exposure/partitions and tensor compatibility before fitting. The legacy
+  auxiliary retention drop already appears before interface training; diagnose
+  the unfitted connector route before describing that gap as forgetting.
 
-## Pinned cache refresh
+## Pinned source and cache refresh
 
-The [October 16 metadata snapshot](evidence/legal-ir-execution-plan-refresh-20261016/hub-metadata-summary.json)
-retains exact public API responses and pinned cards. It downloaded no Parquet
-payloads and ran no model, compiler, training or Lean job.
+The [latest October 16 metadata snapshot](evidence/legal-uscode-source-corpus-plan-20261016/metadata-refresh.json)
+and [source research](evidence/legal-uscode-source-corpus-plan-20261016/source-research-summary.json)
+record exact public metadata commitments and selected control-plane observations.
+No Parquet/model/vector payload, training, compiler or Lean job ran. Earlier
+two-cache snapshots remain retained under their original scopes.
 
-| Cache | Immutable revision observed | What is established |
+| Repository | Immutable revision observed | What is established |
 | --- | --- | --- |
+| [Source corpus](https://huggingface.co/datasets/justicedao/ipfs_uscode/tree/91ca1838853ac82d7a12dd4ab47d9686f47667f9) | `91ca1838853ac82d7a12dd4ab47d9686f47667f9` | Manifest declares 62,931 corpus rows/16 shards and 62,931 GTE-small 384D vectors. These are declarations awaiting new corpus payload closure, not counts of reviewed laws. |
 | [Span cache](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/tree/60501f3e920f6c9050cfc452e0d9fcc2b7c184f3) | `60501f3e920f6c9050cfc452e0d9fcc2b7c184f3` | 7,962 file descriptors, including 5,070 Parquet paths. These are overlapping file/generation inventories, not unique-span counts or successful formalizations. |
 | [Entity cache](https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/tree/79d54378c5d6a89ab56e7a27e0f0ba867e800e19) | `79d54378c5d6a89ab56e7a27e0f0ba867e800e19` | Same 11,139,328-byte payload with LFS SHA256 `f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233` as the retained full census. That census accounts for 1,960,876 mixed rows with no uniquely resolved edge endpoints. |
 
@@ -106,6 +129,17 @@ those origins, complete artifacts and failed observations. A `train` storage
 split, syntax flag, cached status or compiler agreement cannot supply legal gold.
 The local verified primary export and malformed legacy entity cache remain
 separate populations until their original derivation/multiplicity is reconciled.
+
+The current source manifest is byte-identical to the one already pinned for the
+qualified 74-file original-primary graph selection: reuse that 297,825-record
+transport under its original provenance. Source metadata also exposes 412
+data/index paths outside the manifest, inconsistent artifact counters, a README
+size mismatch and an invalid Viewer config name. Reconcile those scopes and
+publish a coherent later metadata generation; retain unbound additions separately.
+Do not glob all Parquet families or treat the advertised 7,409,174 mixed `train`
+rows as provisions. The [execution design](legal_ir_span_graph_lean_execution_plan_20261016.md#2-make-the-source-corpus-and-both-caches-reliable-inputs)
+defines the source/occurrence inventory and reuse gates. Published 119-102 text
+and later OLRC release points remain distinct source versions.
 
 ## Immediate work packages
 
@@ -121,24 +155,31 @@ training gap, not statutory accuracy, a new teacher or a Lean build. Original
 refusals and failed startup attempts remain archived with proper closeout.
 
 1. **Asset and cache manifest.** Produce the joined compatibility inventory,
-   current physical-occurrence census, immutable cache pins and explicit
-   ModelManager status. Reuse matching vectors and weights; generate only missing
+   three-repository descriptor selection, actual selected source/occurrence
+   inventory and explicit ModelManager status. Reuse matching vectors and
+   weights, including the completed F15/F17/F18 imports. Resolve the remaining
+   full-8D exact hash match to actual weights; generate only genuinely missing
    compatible source/encoder/context entries through their own production jobs.
 2. **Owner-bound pilot and review packets.** Select actual complete provisions,
    bind source/context/roles and record reviewer trust, applicability, exposure,
    disagreements and eligibility policy. Keep the existing authored pilot
    specification unchanged and leave pending decisions pending.
 3. **Matched decoder experiment specification.** Freeze the chosen ranking or
-   attachment hypothesis, retained CE control, tensor-freeze mask, protected
-   cases, splits and budgets. Existing exposed diagnostics can guide engineering;
-   reserve genuinely untouched reviewed components for promotion.
+   attachment hypothesis, retained CE control, exact tensor reuse/freeze ledger,
+   protected cases, splits and budgets. First freeze a finite candidate/pending/
+   unsupported target inventory, measured output lengths and engineering-versus-
+   reviewed supervision policy. Reuse the byte codec and existing batch evaluator
+   with a byte-preserving failure bridge; a compact AST-action head remains a
+   separately specified task. Reserve untouched reviewed components for promotion.
 4. **Minimal semantic/profile gap list.** Derive required operators from the
    selected reviewed meaning; reuse typed joins and the counted-frame prototype
    where compatible. Do not weaken source text or invent passive agents,
    cardinalities, purposes, references or governing scope to fit a grammar.
 5. **Graph/Lean and release contract.** Specify typed endpoints, per-use
-   resolution, semantic-library/import closure, chosen native profile, conditional
-   assumptions, invalidation keys and coherent cross-cache/model/corpus release.
+   resolution and an explicit statutory view/eligibility contract: graph v1 is
+   candidate-only, and generic ordered-argument projection needs a qualified
+   extension. Bind semantic-library/import closure, native profile, assumptions,
+   invalidation and coherent source/span/entity/model/Lean release identities.
 
 These are deliverables, not claims that missing reviews or numerical runs have
 already happened. Do not put calendar pressure ahead of semantic acceptance.

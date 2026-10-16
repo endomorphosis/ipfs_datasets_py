@@ -1,10 +1,15 @@
 # LegalIR execution design: US Code spans, scoped graphs and Lean 4
 
-Prepared October 16, 2026 against `main` at `643c01860`. This is an execution
+Updated October 16, 2026 against `main` at `ff8a01fd0`, including the parallel
+span/graph plan and qualified relational target/example interfaces. This is an execution
 design for the [existing corpus roadmap](legal_ir_uscode_corpus_improvement_plan_20261015.md)
 and its [connected-component pilot](pilots/uscode_definition_component/README.md).
 It preserves the existing LIR dependencies and the authored pilot's planning-time
 nulls. Proposed experiments, schemas and milestones below are not executed results.
+The original design baseline was `643c01860`; subsequent evidence keeps its
+original execution scope. The latest [source-corpus research](evidence/legal-uscode-source-corpus-plan-20261016/source-research-summary.json)
+adds `justicedao/ipfs_uscode` to the existing span/entity-cache pipeline through
+bounded public metadata inspection, without payload processing or training.
 
 The objective is to learn complete, source-grounded legal meaning, aggregate it
 without losing scope, and deterministically generate one coherent Lean corpus.
@@ -16,7 +21,9 @@ to estimate statutory accuracy.
 
 ```mermaid
 flowchart LR
-    S[Versioned source occurrences] --> C[Complete provisions and allowed context]
+    U[ipfs_uscode pinned corpus family] --> S[Versioned source occurrences]
+    H[Span-cache occurrences and historical observations] --> S
+    S --> C[Complete provisions and allowed context]
     C --> P[Source features and source pointers]
     C --> E[Verified 8D / 384D / 768D producers]
     P --> D[Structured decoder with explicit input routes]
@@ -24,6 +31,7 @@ flowchart LR
     D --> I[Candidate typed AST and source alignments]
     I --> V[Structural validation and meaning review]
     V --> G[Scoped definitions entities and norms]
+    G --> K[Versioned entity-cache views and companions]
     G --> L[Shared symbols and deterministic Lean lowering]
     L --> B[Actual lake build legal and consequence checks]
     S --> R[Exact source-byte companion]
@@ -40,6 +48,8 @@ flowchart LR
 | F17/F18 retain 154/168 complete training IR and 0/36 on each exposed development/test panel; their latent input is disabled. F19 locates complete conditions within existing candidates but below shorter prefixes. | Reuse source pointers and diagnose ranking/attachment. These components are source-conditioned baselines, not proof of active 384D benefit. F18 remains an unsuccessful promotion candidate. |
 | Typed ASTs, relational reconstruction/batch evaluation, scoped definition lookup, graph exchange, shared/incremental Lean builders, a separate fixed counted-frame profile and selected paired-manifest inventory exist. | Extend exact supported interfaces. Avoid new competing readers, graph codecs, general ASTs or build engines. |
 | Latest main adds [owned runtime storage observations](owned_runtime_storage.md). | Reuse its bounded filesystem observations where applicable. It is not resource admission, archive/cleanup implementation, daemon containment or model/Lean execution qualification. |
+| The [relational target/example contract](legal_relational_decoder_target_contract_v1.md) passed 142 authored cases with native closeout. It fixes byte serialization and replays source/label separation, with null pending labels, unassigned splits and zero training/gold masks. | Reuse these interfaces. They are not the proposed AST-action head, a trained decoder, an authenticated embedding population or reviewed statutory targets. |
+| F15/F17/F18 now have exact retained ModelManager bindings within the 687-record catalog. The full historical 8D state still lacks its exact catalog hash match in the retained survey. | Reuse the completed three-component import; resolve the remaining actual 8D weights separately. A linguistic bundle manifest is not itself a checkpoint, and detached source-token components are not active 384D lanes. |
 
 Training loss, vector reconstruction, native syntax, graph integrity, Lean
 compilation and fidelity to a legal provision remain separate measurements.
@@ -47,18 +57,121 @@ Keep original-text restoration separate from semantic decoding: equivalent legal
 meaning does not preserve exact wording. Retained UTF-8 bytes supply the exact
 source companion without forcing semantic latents to encode typography.
 
-## 2. Make both caches reliable inputs
+## 2. Make the source corpus and both caches reliable inputs
 
-The [metadata refresh](evidence/legal-ir-span-graph-plan-20261016/hub-metadata-summary-v01.json)
-at 06:02 UTC observed unchanged immutable revisions:
+The [three-repository refresh](evidence/legal-uscode-source-corpus-plan-20261016/metadata-refresh.json)
+records the latest metadata observations. It supersedes the earlier two-cache
+refresh for source selection, while retaining that earlier evidence unchanged.
 
 | Dataset | Revision and observed inventory | Use |
 | --- | --- | --- |
+| [Source corpus](https://huggingface.co/datasets/justicedao/ipfs_uscode/tree/91ca1838853ac82d7a12dd4ab47d9686f47667f9) | `91ca1838853ac82d7a12dd4ab47d9686f47667f9`; 2,802 Hub descriptors. Its selected manifest declares 62,931 corpus rows in 16 shards and 62,931 GTE-small 384D vectors. | Published legal-text wrappers and reusable source/profile-compatible assets. Declared rows are not newly verified unique provisions or reviewed meanings. Select each artifact family explicitly. |
 | [Span cache](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/tree/60501f3e920f6c9050cfc452e0d9fcc2b7c184f3) | `60501f3e920f6c9050cfc452e0d9fcc2b7c184f3`; 7,962 file descriptors, 5,070 Parquet paths | Versioned observations, source evidence, compiler outputs, model outputs and repair goals, preserving their different origins. File counts are not unique spans. |
 | [Entity cache](https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/tree/79d54378c5d6a89ab56e7a27e0f0ba867e800e19) | `79d54378c5d6a89ab56e7a27e0f0ba867e800e19`; one advertised 11,139,328-byte Parquet payload, LFS SHA256 `f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233` | Historical graph observations to reconcile against originals before semantic aggregation. |
 
-Only public metadata and pinned README cards were fetched for this plan; no
+Only public metadata, small control-plane JSON and pinned README cards were fetched for this plan; no
 Parquet, model, vector or generated-output body was downloaded or executed.
+
+### Select the source release before scanning spans
+
+The source [manifest](https://huggingface.co/datasets/justicedao/ipfs_uscode/raw/91ca1838853ac82d7a12dd4ab47d9686f47667f9/manifest.json)
+declares upstream revision `006dd603185b283c54648dd4aef3c2cbe650981a`, release
+point `us/pl/119/102`, and GTE-small revision
+`17e1f347d17fe144873b1201da91788898c639cd` with mean pooling and L2 normalization.
+Published Hub commit, upstream source revision, source-byte hash, legal release
+point and effective interval remain separate identities. A packaging report's
+`admitted_count=62931` is not statutory review or training eligibility.
+
+The [OLRC download page](https://uscode.house.gov/download.html), checked during
+this review, identifies the current release as Public Law 119-121, October 9,
+2026. Preserve the selected 119-102 source generation for reproducibility;
+matching historical official-source acquisition and a later version-delta
+campaign are separate jobs. Never replace an older occurrence with present-day
+text under the same source identity. The [prior-release service](https://uscode.house.gov/priorreleasepoints.html)
+is an acquisition starting point, not evidence that this review obtained the
+required 119-102 title bodies.
+
+Metadata exposes concrete reconciliation work:
+
+| Observation | Required disposition |
+| --- | --- |
+| The manifest has 1,826 artifact descriptors, the quality report says 1,818, and the build summary says 1,827. | Reconcile each count's scope and generation before a whole-release integrity claim. Do not guess that different counters are interchangeable. |
+| 412 current data/index paths are outside this manifest: 377 extra edge shards, 30 extra node shards and five indexes. | Keep them outside the selected ingestion population until attributed to an explicit generation. Retain them and their identities; no automatic deletion or label-based merge. |
+| Selected paths exist in Hub metadata and selected LFS sizes/hashes agree, but README is 3,476 bytes against its 3,140-byte descriptor. | Retain the exact old manifest and mismatch evidence. A corrected metadata release needs coherent regeneration and readback; metadata agreement alone does not verify Parquet bodies. |
+| The advertised config `publicus-ir-graphrag/v2` currently triggers `InvalidConfigName`; `train` advertises 7,409,174 mixed rows. | Give Viewer configs valid names and explicit artifact-family selections while preserving the internal profile ID where contracts require it. A config rename alone does not repair counts or bind extra files. Never use the mixed count as the legal-source denominator. |
+
+Use manifest-selected `corpus` shards for legal source inventory. Corpus,
+vectors, BM25 documents/postings, primary graph nodes/edges, adjacency, receipts,
+recovery and legacy compatibility files have different purposes. Do not glob
+`data/**/*.parquet` as a single law table. Global publication discrepancies do
+not erase an independently qualified unchanged selection; declare the exact
+selected scope and unresolved global discrepancies for each operation.
+
+Reuse `optimizers/logic_theorem_optimizer/autoencoder_uscode_import.py`,
+`autoencoder_uscode_inventory.py` and
+`scripts/ops/legal_ir/inventory_pinned_uscode_sources.py`. The current inventory
+ceiling of 65,536 rows covers the 62,931 declared rows, but actual shard hydration,
+schema/hash checks and full disposition counting still require their existing
+native execution owner and measured budgets. The inventory must preserve invalid
+wrappers, record-hash failures, duplicate identities, empty/missing source and
+unresolved claims in the selected denominator. A row count is not a unique-section
+count. Exact published `text` is one coordinate space; original official
+HTML/USLM and normalized visible text are separate spaces requiring explicit
+correspondence.
+
+There is a concrete reuse result: the current manifest is 852,161 bytes with
+SHA256 `0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6`,
+exactly matching the [original-primary input descriptor](evidence/legal-primary-corpus-export-20261015/input-descriptor-v01.json).
+Reuse the already qualified 74-file selection and 297,825 node/edge occurrences
+under their original `5016b86a273ce5e4ffd066c5ae9f5fe494dd417e` provenance. This
+metadata join is not a new payload replay or proof of complete release equality.
+Do not rebuild that structural export solely because the Hub head changed. The
+16 corpus shards, newly added files and official-source correspondence remain
+separate populations and jobs.
+
+### Bind physical spans reversibly to source rows
+
+The first new data deliverable is a coordinated source/span/entity selection
+manifest and a source-to-span correspondence inventory, using existing owners.
+These field groups describe required evidence; they are not a newly implemented
+schema or another identity authority:
+
+| Binding group | Preserve |
+| --- | --- |
+| Published source | Repository/release commit, upstream revision, manifest/shard hashes, physical row ordinal, wrapper/`record_json` hash, `entry_cid`, `legal_id` and exact text hash. |
+| Source view and occurrence | Source version, extraction/coordinate profile, character and UTF-8 selectors, exact span bytes, hierarchy and physical occurrence identity. |
+| Full interpretation context | Complete provision, list introduction, inherited qualifiers, definitions/references, source applicability and every missing context obligation. |
+| Historical observations | Original span aliases, producer/version, historical ordinal/query/release recipe, ordered outputs/goals/failures and actual exposure. |
+| New interpretation | Complete/partial/pending/disputed/unsupported status, exact typed profile, alternatives, review dependencies and authorized uses. |
+
+Historical whitespace normalization and invocation-dependent span-ID recipes
+must be recovered explicitly. Retain old IDs as aliases; changing batch order
+must not silently create new historical identities. Equal text, a citation,
+`entry_cid`, source-version CID and graph node-record CID are not interchangeable.
+Repeated physical occurrences survive deduplication of identical payload bodies.
+
+Reuse source inventory, `legal_span_cache_intake`, `legal_primary_section_index`,
+`legal_span_section_bridge` and sampled-primary association/review owners within
+their actual profiles. The selected paired inventory's sixteen-manifest scope
+and the old flat bridge's 128-row bound do not authorize a whole-cache scan or
+the separate 560-subject sampled-source generation. Expand through declared
+bounded selections and resumable acknowledgements, preserving original limits.
+
+Build legal meaning units from source structure, including inherited lists,
+exceptions and definitions. Keep headings, citations, amendment/history notes,
+repealed text and uncertain roles in explicit strata. If the published text lacks
+required markup/context, preserve that gap and acquire the matching official
+view; do not invent boundaries or shorten the law to fit a model. Whole-corpus
+inventory can proceed while the first reviewed connected component is prepared.
+
+Join cached vectors only when actual input/context bytes, encoder/tokenizer
+revision, pooling, normalization, precision and truncation agree. A whole-section
+vector is not a clause-plus-context vector. The manifest's legal lexical tokenizer
+label is not authentication of the numerical encoder tokenizer. Reuse matching
+assets first; generate only genuinely missing native producer/input profiles.
+
+### Preserve the two cache roles
+
 The [span card](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/60501f3e920f6c9050cfc452e0d9fcc2b7c184f3/README.md)
 explicitly distinguishes compiler/guided-compiler outputs from learned formula
 outputs and calls the readable formula audit diagnostic. Its legacy
@@ -141,6 +254,28 @@ structures instead.
 
 ## 4. Train in attributable stages
 
+Freeze a finite example inventory before selecting another head or fit. Reuse
+`legal_relational_decoder_example_v1`, complete original source/typed joins,
+existing eligibility validators, `autoencoder_source_partitions` and
+`autoencoder_corpus_index`. The adapter's unassigned split and zero masks are
+unchanged; any later supervision policy is an explicitly qualified downstream
+binding, not a caller switch in that adapter.
+
+| Inventory group | Required content before fitting |
+| --- | --- |
+| Complete population | Complete, partial, conflicting, pending and unsupported units; source/context hashes and obligations; every failed/ineligible disposition. |
+| Supervision and partition | Reviewed, compiler/weak, authored or unresolved origin; authorized use; actual exposure; physical-source, version, duplicate and semantic dependency groups. Alternatives over one physical paragraph stay in one group. |
+| Output feasibility | Exact typed profile; canonical byte lengths, artifact-ID overhead, practical output limit and overflow; comparison with any proposed compact action codec. Input-token and output-ID budgets remain separate. |
+| Asset/tensor reuse | Actual checkpoint/runtime and vector producer/input hashes; tensor name, shape and semantic role; copied/frozen/fitted/new status, vocabulary order, parent lineage and optimizer reset/resume. |
+
+The fixed 259-entry byte/control codec supplies an exact reference serialization
+of the existing typed request. Its 524,290-ID safety ceiling is not a numerical
+decoder budget or a semantic-action grammar. A compact action codec, if length
+measurements justify it, needs its own task/profile/version and exact typed
+meaning/identity correspondence. Reuse `TypedExpression` and `TypedLogicCodec`;
+do not invent another general AST. Preserve old heads and use compatible learned
+bodies/adapters before declaring any genuinely new output-layer initialization.
+
 Keep the source encoder frozen for the initial decoder comparison. Reuse existing
 compatible embeddings; produce only missing source/context/producer combinations.
 Start from compatible, numerically replay-qualified experimental interfaces. Record fresh
@@ -148,15 +283,22 @@ optimizer moments versus intentional resume, trainable tensor names, clipping,
 precision, seeds, output budgets, data exposure and native source/runtime pins.
 
 Before another interface fit, use a bounded new conditioning question: compare
-shared-condition and auxiliary-8D distances, first-BOS logit differences and
-argmax margins under correct/zero/swapped source vectors, without target prefixes.
+the original cached 8D input, shared condition and connector-produced 8D input,
+first-BOS logit differences and argmax margins under correct/zero/swapped source
+vectors. Include an explicitly diagnostic original-input bypass. Any later
+identical-prefix NLL/logit comparison must declare whether its prefix is
+self-generated or target-provided; target prefixes cannot become ordinary
+target-free inference evidence.
 This distinguishes weakened conditioning from unchanged greedy choices. Reuse
 retained receipts wherever sufficient instead of repeating the completed replay.
 Keep numerical comparisons within matched lineage/head/coordinate profiles;
 logit KL requires identical ordered vocabularies, not the old 18-entry versus
 32-entry heads.
-The auxiliary path through the primary shared condition is a concrete bottleneck
-to test, not a demonstrated cause of the current errors. Existing interface
+The auxiliary retention drop already appears in the initializers, before
+interface training. Aligned initialization fits the primary boundary while
+leaving `auxiliary_connector(shared_condition)` unfitted. Diagnose route/input
+compatibility before attributing that gap to forgetting. This is a concrete
+bottleneck to test, not a demonstrated cause of every reconstruction error. Existing interface
 training updates the primary input-adapter weight/bias and auxiliary-connector
 weight/bias while freezing 26 inherited tensors, using per-head eligible-token
 reference CE. Auxiliary-only updates, direct branches, alignment losses or other
@@ -227,6 +369,17 @@ ablated; fluent reconstruction does not prove preserved meaning.
 | 384D | Exact GTE-small producer/tokenizer/pooling/normalization/context plus compatible retained decoder. Detached disabled-latent components have a separate identity. | What semantic gain remains after controlling source pointers and retrieval? |
 | 768D | Genuine native multilingual vectors and compatible saved initializer/aligned/fitted interface; preserve outer historical runtime provenance. | Does native representation/context improve fidelity and coverage while retaining donor capabilities? |
 
+The publisher cards specify [GTE-small](https://huggingface.co/thenlper/gte-small)
+as 384D with a 512-token input limit, and
+[GTE-multilingual-base](https://huggingface.co/Alibaba-NLP/gte-multilingual-base)
+as 768D with an 8,192-token input limit. These limits describe those encoders,
+not every saved checkpoint, decoder output length or the historical 8D producer.
+Each lane retains its actual tokenizer/context/profile limits and independent
+decoder/checkpoint identity. Match source/context first when comparing lanes;
+increase context later as a separate factor. Lower-dimensional donor reuse is
+compatible initialization; prediction distillation needs a qualified teacher
+for the intended task/source/profile scope.
+
 Compare squared L2/cosine only as representation diagnostics; mean-coordinate MSE
 across dimensions is not semantic superiority. Preserve source-only controls even
 if they outperform a latent route. A useful source-conditioned model may qualify
@@ -262,6 +415,24 @@ Reuse `legal_relational_batch_evaluation_v1` for its exact supported profile and
 dispatch for new supported outputs rather than disguising them as existing ones.
 Keep native-output compatibility reporting alongside richer semantic metrics.
 
+The inference bridge remains unfinished: the new byte codec preserves generated
+IDs/bytes, invalid UTF-8, framing and incomplete outcomes, while the existing
+batch prediction intake accepts UTF-8 request strings. Extend the existing
+accounting path with a byte-preserving companion/adapter; retain every actual
+failure without manufacturing an empty request or calling it abstention. Seal
+target-free predictions from every declared input route and stop outcomes before
+reference scoring, and bind actual checkpoint/codec/input/runtime lineage. A receipt declaration alone is
+not numerical-execution authentication.
+
+Report three text routes separately: IR-only semantic rendering, IR plus an
+explicitly measured surface residual, and retained-source restoration. The
+[original-text round-trip analysis](legal_original_text_roundtrip.md) already
+shows collisions between equivalent IR and different authored wording. Exact
+original UTF-8, normalized equality, semantic fidelity and edit distance measure
+different outcomes. Count residual/source-channel bytes in any compression claim;
+successful copying of retained source is useful restoration, not demonstrated
+latent-only inversion.
+
 | Measure | Required reporting |
 | --- | --- |
 | Population and coverage | Selected occurrences N; source/context unresolved; references available; attempted; missing/duplicate/malformed/unverifiable/abstained/unsupported/overflow; valid comparable pairs K. Report correct/N and correct/K separately. |
@@ -290,6 +461,12 @@ unsupported by the tiny current panels.
 Reuse `corpus_graph`, `corpus_graph_exchange`, scoped definition resolution,
 source-scope/typed-source join owners and original-primary reconstruction.
 Keep candidate graph edges and accepted legal assertions as distinct statuses.
+Current graph v1 is explicitly candidate-only and rejects positive admitted,
+formalized or source-semantics flags. An accepted statutory view requires the
+actual downstream review/eligibility binding and a qualified versioned projection
+or view contract; setting those fields on a v1 snapshot is invalid. Existing
+`legal_review_admission` remains pending external verification, with training
+and admission false.
 
 | Record | Meaning and retained dependencies |
 | --- | --- |
@@ -301,9 +478,12 @@ Keep candidate graph edges and accepted legal assertions as distinct statuses.
 | Resolution / issue | Complete searched partitions and route, candidates, selected governing definition or ambiguity/unavailable state, decision evidence and invalidation dependencies. |
 
 Use existing schema edges where supported; version any additions explicitly.
-Candidate relationships include `MENTIONS`, `DENOTES`, `DEFINES`,
-`USES_DEFINITION`, `APPLIES_WITHIN`, `HAS_ARGUMENT`, `HAS_CONDITION`,
-`HAS_EXCEPTION` and version/change links. Reify ordered argument and qualifier
+Existing relationships include `MENTIONS`, `DENOTES`, `DEFINES`,
+`USES_DEFINITION`, `APPLIES_WITHIN`, `HAS_CONDITION`, `HAS_EXCEPTION` and declared
+version/change links. Generic `HAS_ARGUMENT` is a proposed extension, absent
+from graph v1. Preserve complete ordered predicate arguments and binders in the
+existing typed AST companion until an explicit projection supports them; coarse
+actor/action/object edges are insufficient. Reify ordered argument and qualifier
 ownership so triples do not flatten scope. Distinguish stable conceptual IDs,
 payload CIDs, node-record CIDs and external `entry_cid` identities.
 
@@ -322,6 +502,11 @@ source-bound relational norm/definition-use correspondence path** for the review
 pilot, reusing the existing TypedExpression and scope/join owners. Its versioned
 contract must preserve complete roles, operators, qualifiers and per-use binding;
 do not fit a richer law into the older alias profile.
+The current source-to-typed join leaves `formal_norm_ast`, `lowered_IR` and
+`native_output_for_source` null. Its partial correspondence and the byte codec
+do not close this complete-meaning/composition gap. Retain the primary transport's
+thirteen unresolved-citation placeholders as unresolved source dependencies,
+not accepted governing bindings.
 
 Preserve alternative interpretations as separate graph branches/theories.
 Assemble by physical hierarchy and occurrence order, not hashed span order.
@@ -426,6 +611,23 @@ preprocessing, pooling, normalization, precision and truncation profile; avoid
 repeating full artifact bodies in every observation. Reserve space for expanded lineage,
 temporary runs, native replay and durable evidence, not only compressed Parquet.
 
+Maintain the requested separate inventories and DuckDB/DuckLake catalogs for
+each IR family and native 8D/384D/768D lane, with schema/task/codec namespaces
+inside each lane. LegalIR, CodebaseIR, IntentIR, SecurityIR and UI/UX IR keep
+different decoders and checkpoints. Shared immutable source/body objects may be
+referenced through CAS and explicit cross-catalog joins without duplicating
+training identities or conflating authority. One controller owns each physical
+write connection; readers use pinned snapshots. DuckLake or Quack integration
+must preserve those contracts and be measured on its actual backend; a storage
+migration is not a prerequisite for the first legal component.
+
+Keep source occurrence, model attempt, interpretation/review, graph assertion
+and proof/build indexes separate and joined by exact identities. A proof-cache
+hit requires the matching statement, semantics, assumptions and all dependency
+versions, including negative definition partitions. The symbolic supervisor may
+plan missing context/review/repair jobs from these indexes; a candidate formula,
+queue completion or compile success cannot satisfy a proven legal precondition.
+
 Every work key includes source/context, task/schema/codec, family/profile,
 producer/checkpoint, settings and relevant compiler/checker dependencies. Preserve
 separate per-stage statuses for produced candidate, unresolved source/context,
@@ -447,13 +649,20 @@ donor lineage and exact hashes. Keep experimental, replay-qualified and promoted
 registry roles distinct. Verify ModelManager resolves the intended immutable
 artifact and a compatible cold numerical reload reproduces recorded behavior.
 
-Publish coordinated releases binding immutable span-cache and entity-cache
+Publish coordinated releases binding immutable `ipfs_uscode`, span-cache and entity-cache
 commits, source/interpretation/review companions, graph schema, model lineage,
 Lean corpus/toolchain and actual receipts. Verify remote bodies at immutable
 commits. Publish referenced artifacts first and a separate coordinating receipt
 afterward to avoid self-referential commit hashes. Keep the prior coherent
 release selected until every required upload/readback succeeds. Never relabel
 diagnostic rows as reviewed accepted rows.
+Reuse the existing public family/dimension model repositories and completed
+ModelManager bindings. Schema/version/decoder task/codec/profile identify
+separate checkpoints and ablations within them. Preserve aggregate archives and
+experimental/rejected roles; a successful upload is not promotion. A changed
+repository head alone is not a reason to regenerate byte-identical cached
+embeddings or weights. Requalification of a changed execution closure remains
+separate from regeneration of an unchanged asset.
 
 ## 11. Work packages and gates
 
@@ -464,10 +673,10 @@ waive source/review/graph/Lean acceptance.
 
 | Order | Deliverable | Gate before the dependent work |
 | --- | --- | --- |
-| P0: reconcile | Pin current main, review related branch/worktree evidence, bind retained assets and current cache revisions. Classify merged, published-only, local and superseded contributions. | No duplicate owner or discarded qualified lineage; exact capability/status inventory. Refresh before each later implementation campaign. |
-| P1: bind source | Owner-bound execution manifest referencing the unchanged pilot specification; three-layer selected inventory; complete source/context and split/exposure policy. | Every selected occurrence resolved or explicitly blocked; no invented source identity or applicability. |
+| P0: reconcile | Pin current main and all three Hub repositories; reconcile source control-plane discrepancies, related branch/worktree evidence and retained assets. Classify merged, published-only, local and superseded contributions. | Explicit selected families/denominators; exact capability/status inventory; unchanged primary selection reused. Refresh before each implementation campaign. |
+| P1: bind source | Inventory all 16 selected corpus shards through the existing owner, then bind physical span aliases and complete source/context; owner-bound pilot manifest and split/exposure policy. | Every declared source row and selected span has a resolved/blocked disposition; actual 62,931-row closure verified or discrepancy retained, never assumed. No invented official-source identity/applicability. |
 | P2: review meaning | Candidate-blind source-first targets, independent formal review, disagreements and actual eligibility policy. | Complete definition + complete norm + second scope-valid use with zero known material loss in the accepted component. |
-| P3: represent | Minimal relational/source correspondence extension and proposed AST-action codec, plus separate authored engineering controls. | Existing AST/profile parity; ordered arguments/qualifiers; exact unsupported frontier and per-use governing bindings. |
+| P3: represent | Reuse the qualified byte target/example contracts; freeze target/output-length/tensor inventories; extend narrow relational source/definition-use composition and only justified action/graph profiles. | Existing AST/profile parity; ordered arguments/qualifiers; explicit candidate-versus-accepted view contract; unsupported frontier and every governing use preserved. |
 | P4: close graph and Lean | Closed graph, complete source/interpretation/review companions, export/reimport and shared-module generation. | Actual `lake build legal`, every expected artifact, assumptions/consequence checks and changed-dependency versus clean agreement. |
 | P5: improve model | E1 ranking repair and E2–E5 staged comparisons with frozen budgets/controls, then untouched reviewed evaluation. | Predeclared complete-meaning/coverage/retention gates; no placeholder-latent or syntax-only promotion. |
 | P6: expand and release | 20–40 connected provisions, then 200–500 reviewed passages, then title/dependency rollout with whole-cache triage. | Measured review/compute/storage costs, representative audits and immutable coherent releases. Expansion follows evidence, not a date promise. |
@@ -480,13 +689,32 @@ to advance that graph/Lean pilot; it need not wait for a trained new AST-action
 head. A model-promotion claim additionally waits for eligible
 untouched evaluation; the initial component becomes a regression after exposure.
 
-The next concrete outputs are: (1) the owner-bound selected-component manifest
-and exposure policy, (2) source-first review packets, (3) the reviewed operator
-and correspondence gap list, (4) a preregistered E1 matched experiment using
-retained assets, and (5) an AST-action/E2 contract with authored controls. Define
-graph/Lean release and dependency keys alongside those outputs. Actual training,
-builds and publication are subsequent measured work, not results of writing
-this plan.
+The next concrete outputs, in dependency order, are:
+
+1. A coordinated source/span/entity descriptor selection with discrepancy
+   dispositions, followed by the actual selected corpus inventory and reversible
+   span/source correspondence. Retain original primary graph receipts unchanged.
+2. A finite target/eligibility/exposure/partition inventory and exact embedding,
+   checkpoint and tensor reuse ledger. Measure output lengths before choosing
+   the numerical structured head.
+3. An owner-bound connected-component manifest and source-first legal/formal
+   review packets, followed by actual complete meaning/applicability decisions.
+4. The reviewed operator and relational definition-use gap list, qualified
+   versioned graph projection/view contracts, and byte-preserving evaluation
+   bridge. Author engineering controls while statutory review proceeds.
+5. A bounded new conditioning diagnostic, preregistered E1 matched ranking
+   experiment, and measured E2 output-codec/head specification using retained
+   assets. Start fitting only after that experiment's supervision and compatibility
+   prerequisites; semantic teacher promotion has its additional reviewed gates.
+6. One scoped reviewed graph with exact AST/source companions and an actual
+   coherent Lean build/consequence/invalidation result, then its coordinated
+   release manifest and measured expansion decision.
+
+These deliverables refine existing task dependencies rather than enqueue a new
+campaign. Whole-cache triage and engineering comparisons can run in parallel;
+actual training, corpus migration, Hub data/model changes and Lean builds are
+subsequent measured work, not results of writing this plan. No new tests or
+numerical runs were performed for this documentation update.
 
 The open decisions are the actual first component, reviewer/eligibility policy,
 semantic/profile extensions it needs, and promotion thresholds/sample size.

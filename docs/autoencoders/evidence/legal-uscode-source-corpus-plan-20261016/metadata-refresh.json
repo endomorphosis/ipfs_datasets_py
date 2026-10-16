@@ -1,0 +1,130 @@
+{
+  "datasets": [
+    {
+      "entity_parquet_descriptors": null,
+      "file_descriptors": 7962,
+      "parquet_paths": 5070,
+      "private_api_body": {
+        "bytes": 2510870,
+        "sha256": "f31fb2102a4a8a78c51cd215787fd72046a762c9a65c98f2aa388d475ac589ad"
+      },
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+      "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache?blobs=true"
+    },
+    {
+      "entity_parquet_descriptors": [
+        {
+          "bytes": 11139328,
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233",
+            "size": 11139328
+          },
+          "path": "autoformal/uscode/kg-logic-index.parquet"
+        }
+      ],
+      "file_descriptors": 3,
+      "parquet_paths": 1,
+      "private_api_body": {
+        "bytes": 1534,
+        "sha256": "bfaa53783c3d4197c3da7dcb06afd24e0a76bcf6d2de0e6c884def90ed336ea7"
+      },
+      "repository_id": "justicedao/uscode-autoformal-entity-cache",
+      "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache?blobs=true"
+    }
+  ],
+  "encoder_card_observations": [
+    {
+      "dimension": 384,
+      "max_input_tokens": 512,
+      "url": "https://huggingface.co/thenlper/gte-small"
+    },
+    {
+      "dimension": 768,
+      "max_input_tokens": 8192,
+      "url": "https://huggingface.co/Alibaba-NLP/gte-multilingual-base"
+    }
+  ],
+  "observed_at_utc": "2026-10-16T17:14:03.792881+00:00",
+  "official_source_observation": {
+    "matching_119_102_official_bodies_acquired_now": false,
+    "observed_on_utc_date": "2026-10-16",
+    "prior_release_service": "https://uscode.house.gov/priorreleasepoints.html",
+    "published_current_release_date": "2026-10-09",
+    "published_current_release_point": "us/pl/119/121",
+    "url": "https://uscode.house.gov/download.html"
+  },
+  "schema": "legal-uscode-three-repository-metadata-refresh/v1",
+  "scope": "Public repository metadata, bounded control-plane JSON and publisher/OLRC page observations only. No corpus/model/vector payload downloads, product import, DB/native execution, training, review or Lean build. Encoder cards do not authenticate retained producer profiles.",
+  "source_repository": {
+    "corpus_payload_integrity_verified_now": false,
+    "declared_hub_bytes": 3809284224,
+    "file_descriptors": 2802,
+    "manifest": {
+      "artifact_descriptors": 1826,
+      "bytes": 852161,
+      "declared_families": {
+        "bm25_documents": {
+          "declared_bytes": 8612386,
+          "declared_rows": 62931,
+          "files": 16
+        },
+        "bm25_postings": {
+          "declared_bytes": 741233033,
+          "declared_rows": 6920744,
+          "files": 1690
+        },
+        "corpus": {
+          "declared_bytes": 52219760,
+          "declared_rows": 62931,
+          "files": 16
+        },
+        "graph_edges": {
+          "declared_bytes": 28970756,
+          "declared_rows": 178691,
+          "files": 44
+        },
+        "graph_nodes": {
+          "declared_bytes": 17270502,
+          "declared_rows": 119134,
+          "files": 30
+        },
+        "receipt": {
+          "declared_bytes": 4069,
+          "declared_rows": 0,
+          "files": 3
+        },
+        "release_metadata": {
+          "declared_bytes": 1392,
+          "declared_rows": 0,
+          "files": 1
+        },
+        "report": {
+          "declared_bytes": 1705356855,
+          "declared_rows": 0,
+          "files": 4
+        },
+        "routing_index": {
+          "declared_bytes": 399684,
+          "declared_rows": 1812,
+          "files": 6
+        },
+        "vectors": {
+          "declared_bytes": 226441759,
+          "declared_rows": 62931,
+          "files": 16
+        }
+      },
+      "sha256": "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6",
+      "url": "https://huggingface.co/datasets/justicedao/ipfs_uscode/raw/91ca1838853ac82d7a12dd4ab47d9686f47667f9/manifest.json"
+    },
+    "observed_at_utc": "2026-10-16T17:12:48.513712+00:00",
+    "release_point_claim": "us/pl/119/102",
+    "repository_id": "justicedao/ipfs_uscode",
+    "revision": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+    "upstream_source_revision": "006dd603185b283c54648dd4aef3c2cbe650981a",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  }
+}

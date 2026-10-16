@@ -1,0 +1,88 @@
+{
+  "schema": "legal-uscode-plan-static-review/v1",
+  "review_date_utc": "2026-10-16",
+  "reviewer": "/root/legal_graph_lean_plan",
+  "result": "pass",
+  "review_scope": "Documentation graph, Lean, dependencies and semantic-status claims against the existing source contracts and retained attributed evidence.",
+  "independence": "Reviewer contributed prior architecture recommendations but did not author or edit the reviewed documents.",
+  "documents": [
+    {
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "de459e4b7243f0a37efe216c76da9bb5ec8863edcaad46dacff47aa98b5edbb8"
+    },
+    {
+      "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "sha256": "d5e0ca717f66b6d32ccd3847f6148752bfcb4bf0ce8d26ddfbadaa40fbc17fb4"
+    }
+  ],
+  "checks": [
+    {
+      "id": "source-span-graph-lean-user-intent",
+      "status": "pass",
+      "finding": "The pinned ipfs_uscode source, span observations, scoped terms/entities/definitions/norms and shared Lean corpus are explicit successive stages; physical source, attempt and interpretation identities remain separate."
+    },
+    {
+      "id": "reviewed-component-does-not-wait-for-trained-head",
+      "status": "pass",
+      "finding": "Master roadmap stages 3-4 supply stage 7; execution design section 11 explicitly allows the reviewed graph/Lean pilot before a trained AST-action head. The complete definition, complete norm and second physical use remain the first accepted component."
+    },
+    {
+      "id": "candidate-v1-cannot-be-promoted-by-flags",
+      "status": "pass",
+      "finding": "Execution design section 7 explicitly retains corpus_graph v1 as candidate-only and requires a qualified versioned view/projection with downstream eligibility binding; legal_review_admission remains pending external verification."
+    },
+    {
+      "id": "schema-and-operator-extensions-explicit",
+      "status": "pass",
+      "finding": "HAS_ARGUMENT is identified as absent from graph v1; complete ordered arguments and binders remain in the existing TypedExpression companion. Import contracts, new operators and richer normative composition require versioned qualification."
+    },
+    {
+      "id": "complete-meaning-and-per-use-gap-preserved",
+      "status": "pass",
+      "finding": "The join's formal_norm_ast/lowered_IR/native_output_for_source remain null. The V2 alias profile is not a complete norm or all-occurrence governing lookup. Every physical use needs scope/applicability evidence and negative search-partition dependencies."
+    },
+    {
+      "id": "legacy-cache-repair-and-alternatives",
+      "status": "pass",
+      "finding": "The current entity defect population and selected primary transport are separate. Repair preserves identity, endpoints, original multiplicity and unresolved rows. Alternative theories are not indiscriminately unioned."
+    },
+    {
+      "id": "meaningful-lean-gates",
+      "status": "pass",
+      "finding": "Actual lake build legal, complete expected artifacts/imports, exact owner/profile, explicit hypotheses, declared axiom policy, no placeholders and meaningful consequence controls remain required. Conditional compilation does not prove statutory premises or legal correspondence."
+    },
+    {
+      "id": "invalidation-and-coherent-release",
+      "status": "pass",
+      "finding": "Source/context/review/applicability, definition partitions including negative results, AST/profile, semantic library/imports, emitter and toolchain invalidate their dependent statuses. The execution design binds all three Hub repositories and retains the prior coherent release after partial publication."
+    },
+    {
+      "id": "no-new-whole-corpus-proof-claim",
+      "status": "pass",
+      "finding": "Current source rows/vectors are manifest declarations awaiting payload closure; whole-cache triage is separate from reviewed semantic coverage. Historical native results are attributed at their original scopes. This documentation update claims no new tests, training or Lean builds."
+    },
+    {
+      "id": "parallel-dimension-and-storage-intent",
+      "status": "pass",
+      "finding": "Existing assets and separate 8D/384D/768D family/schema/task/codec identities are preserved. DuckDB/DuckLake catalogs remain explicit and a new storage engine is not a prerequisite for the reviewed legal component."
+    }
+  ],
+  "blockers": [],
+  "implementation_prerequisites_still_open": [
+    "Actual source-bound connected component, complete context and applicability evidence.",
+    "Independent legal/formal decisions and the downstream statutory eligibility policy.",
+    "Only the versioned correspondence, graph-view and logic-profile extensions required by that reviewed component.",
+    "Actual bounded native Lean build/consequence/invalidation evidence before corpus acceptance or release.",
+    "Untouched reviewed evaluation before semantic teacher or model promotion."
+  ],
+  "activities": {
+    "documentation_and_source_reading": true,
+    "authored_this_review_receipt_only": true,
+    "product_imports": false,
+    "tests_or_native_builds": false,
+    "model_or_embedding_access": false,
+    "database_access": false,
+    "corpus_payload_access": false,
+    "reviewed_document_edits": false
+  }
+}

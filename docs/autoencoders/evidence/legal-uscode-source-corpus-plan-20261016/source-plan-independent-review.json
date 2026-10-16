@@ -1,0 +1,70 @@
+{
+  "authority": {
+    "payload_integrity_verified": false,
+    "proof": false,
+    "semantic_admission": false,
+    "training_eligibility": false
+  },
+  "blocking_corrections": [],
+  "finalization_note": "Repinned current documents and root recount after wording cleanup and target-free per-route prediction clarification; source facts and review conclusion unchanged.",
+  "findings": [
+    "Both documents keep 62,931 corpus rows/16 shards as manifest declarations rather than verified unique provisions or reviewed meanings.",
+    "Three independent repository commits, upstream source revision, legal release point, source byte/view identity and applicability remain separate.",
+    "1819 manifest-selected LFS metadata hashes/sizes agree with Hub descriptors. No payload integrity is inferred.",
+    "Manifest descriptor counts, README size mismatch, invalid Viewer config and 412 unbound data/index paths have explicit reconciliation dispositions.",
+    "The prior manifest SHA256 matches the existing accepted input descriptor. Reuse retains original 5016b86 provenance and narrow 74-file, 297,825-row graph scope; no whole-release equality or new payload replay is claimed.",
+    "Existing importer/inventory and source bridge/association owners are reused. Inventory65,536-row ceiling covers declared62,931 rows; actual execution budgets and individual profiles remain required.",
+    "Exact Parquet UTF8, official HTML/USLM and normalized views have distinct coordinate spaces. Historical aliases, invocation recipes, ambiguity and physical multiplicity remain explicit.",
+    "Cached embedding reuse requires exact producer/input/context compatibility; section vectors are not relabeled as clause-plus-context inputs.",
+    "The current OLRC page independently supports Public Law 119-121 dated 2026-10-09; documents preserve selected 119-102 generation and do not claim matching official bodies were acquired.",
+    "Source-only pending examples and source custody do not authorize gold, semantic admission, training or proof."
+  ],
+  "independent_recounts": {
+    "families_equal_both_root_summaries": true,
+    "hub_descriptors": 2802,
+    "lfs_metadata_matches": 1819,
+    "manifest_descriptors": 1826,
+    "prior_manifest_sha256_join": true,
+    "reviewed_inputs_unchanged_during_review": true,
+    "source_summary_exact_private_copy": true,
+    "unbound_data_indexes_reports_paths": 412
+  },
+  "inputs": {
+    "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/metadata-refresh.json": {
+      "bytes": 4542,
+      "sha256": "bffdba5070db6de3bc9597e52e1aee9fea1d93eb39e6d22f3b7ed4f9571a69d0"
+    },
+    "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/root-metadata-recount.json": {
+      "bytes": 3291,
+      "sha256": "99039c45ce840032120fa7c02ecbe9c2cbec030c31c21c905ed76a7475745b20"
+    },
+    "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/source-research-summary.json": {
+      "bytes": 16303,
+      "sha256": "0175133a836705d7ab714477041baddda24d934a7f8dc5377b2abec4b0b8b684"
+    },
+    "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md": {
+      "bytes": 58521,
+      "sha256": "d5e0ca717f66b6d32ccd3847f6148752bfcb4bf0ce8d26ddfbadaa40fbc17fb4"
+    },
+    "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md": {
+      "bytes": 105419,
+      "sha256": "de459e4b7243f0a37efe216c76da9bb5ec8863edcaad46dacff47aa98b5edbb8"
+    }
+  },
+  "limits": [
+    "Span/entity API counts are attributed to root refresh; this review did not independently fetch their raw API bodies.",
+    "No Parquet/vector/model payload was read. No product imports, tests, DB/native execution, training, legal interpretation review or Lean execution occurred."
+  ],
+  "observed_at_utc": "2026-10-16T17:26:41.630603+00:00",
+  "official_page_observation": {
+    "current_release_point": "us/pl/119/121",
+    "date": "2026-10-09",
+    "matching119102_bodies_acquired": false,
+    "metadata_page_only": true,
+    "url": "https://uscode.house.gov/download.html"
+  },
+  "reviewer": "uscode_source_plan",
+  "schema": "legal-uscode-source-plan-independent-review/v1",
+  "scope": "Source sections and tables in the existing master roadmap/execution design, plus three public metadata summaries. This is a documentation/source-metadata review, not full-plan numerical or corpus qualification.",
+  "status": "pass_static_source_plan_review"
+}

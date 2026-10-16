@@ -1,0 +1,61 @@
+{
+  "bytes": 211071,
+  "file_count": 10,
+  "files": [
+    {
+      "bytes": 3489,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/README.md",
+      "sha256": "0a32aa0b1b2269a76a1df9ff5df5b7fe269fac975cd8342fe5b55241ae89359b"
+    },
+    {
+      "bytes": 2215,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/documentation-verification.json",
+      "sha256": "0076f5ad0f8e632a8be5789e991ec8cc406db54f02c2b906ffd76fc85ea2821f"
+    },
+    {
+      "bytes": 5310,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/graph-lean-plan-independent-review.json",
+      "sha256": "1b3d3d440304dbf2efcb543d5f2bb2253cb4280b92e7e0ce854f39f6f150d32a"
+    },
+    {
+      "bytes": 4542,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/metadata-refresh.json",
+      "sha256": "bffdba5070db6de3bc9597e52e1aee9fea1d93eb39e6d22f3b7ed4f9571a69d0"
+    },
+    {
+      "bytes": 3291,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/root-metadata-recount.json",
+      "sha256": "99039c45ce840032120fa7c02ecbe9c2cbec030c31c21c905ed76a7475745b20"
+    },
+    {
+      "bytes": 4424,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/source-plan-independent-review.json",
+      "sha256": "ba18a543dbf6cb2cd2126cbf57f46be8e6860a2a3ece313469467465a56a1c2c"
+    },
+    {
+      "bytes": 16303,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/source-research-summary.json",
+      "sha256": "0175133a836705d7ab714477041baddda24d934a7f8dc5377b2abec4b0b8b684"
+    },
+    {
+      "bytes": 7557,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/training-plan-independent-review.json",
+      "sha256": "44984c2a5f01225c32c3312575d1d83f7a9f07c651ba26c310f6ff760f02dfc2"
+    },
+    {
+      "bytes": 58521,
+      "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "sha256": "d5e0ca717f66b6d32ccd3847f6148752bfcb4bf0ce8d26ddfbadaa40fbc17fb4"
+    },
+    {
+      "bytes": 105419,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "de459e4b7243f0a37efe216c76da9bb5ec8863edcaad46dacff47aa98b5edbb8"
+    }
+  ],
+  "index_excludes_itself": true,
+  "repository_baseline": "ff8a01fd04c741f892572e7f28cba777d4dfd472",
+  "schema": "legal-uscode-source-plan-publication-index/v1",
+  "scope": "The two updated existing plans and their metadata/static review evidence. Full API/control-plane preimages and corpus/model payloads are excluded.",
+  "standalone_replay_bundle": false
+}
