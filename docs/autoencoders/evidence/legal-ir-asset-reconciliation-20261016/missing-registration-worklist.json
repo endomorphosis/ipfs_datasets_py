@@ -1,0 +1,119 @@
+{
+  "current_catalog_sha256": "c3aef6d860c3bcedb3154af13dcdc844fb0f48e8fa4d5aa2dfdcc2a761d7b235",
+  "entries": [
+    {
+      "format_id": null,
+      "inventory_key": "legal_ir:source_conditioned:F15_actor_parent",
+      "next_steps": [
+        "Authenticate exact checkpoint/parent/codec/loader and retained source provenance through existing owners.",
+        "Join immutable publication evidence to a complete native importer plan without inventing runtime or schema capabilities.",
+        "Review missing-only genuine ModelManager import against a new current baseline and preserve every existing row/activity field.",
+        "Execute through existing registration/resource owners, then cold exact catalog readback; numerical reload remains separate."
+      ],
+      "original_checkpoint_pin": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      },
+      "profile_id": null,
+      "proof_authority": false,
+      "proposed_component_identity": {
+        "asset_binding_schema": "ir-decoder-component-binding/v1",
+        "checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "external_lane_binding": null,
+        "ir_family_id": "legal_ir",
+        "role": "retained_source_conditioned_F15_actor_parent"
+      },
+      "proposed_record_id": "ir-model-component-binding/v1:a71cd3e104aa489008e1fd66d79fc488bfc03c09f2c0c2ea213375b9ca7ed9b6",
+      "proposed_task_id": "semantic_IR_reconstruction",
+      "runtime_ready": false,
+      "schema_version": null,
+      "status": "missing_strict_IR_declaration; offline proposal only",
+      "teacher_qualified": false
+    },
+    {
+      "format_id": null,
+      "inventory_key": "legal_ir:source_conditioned:F17",
+      "next_steps": [
+        "Authenticate exact checkpoint/parent/codec/loader and retained source provenance through existing owners.",
+        "Join immutable publication evidence to a complete native importer plan without inventing runtime or schema capabilities.",
+        "Review missing-only genuine ModelManager import against a new current baseline and preserve every existing row/activity field.",
+        "Execute through existing registration/resource owners, then cold exact catalog readback; numerical reload remains separate."
+      ],
+      "original_checkpoint_pin": {
+        "bytes": 20467217,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/joint-readout-retention-20261014-joint-readout-retention-hinge-01/results/cell-checkpoint.json",
+        "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+      },
+      "profile_id": null,
+      "proof_authority": false,
+      "proposed_component_identity": {
+        "asset_binding_schema": "ir-decoder-component-binding/v1",
+        "checkpoint_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "external_lane_binding": null,
+        "ir_family_id": "legal_ir",
+        "role": "retained_source_conditioned_F17"
+      },
+      "proposed_record_id": "ir-model-component-binding/v1:4b8174d50a374971020dd0c58cec951a3a37ff824bd12fb9204ba60c14d04880",
+      "proposed_task_id": "semantic_IR_reconstruction",
+      "runtime_ready": false,
+      "schema_version": null,
+      "status": "missing_strict_IR_declaration; offline proposal only",
+      "teacher_qualified": false
+    },
+    {
+      "format_id": null,
+      "inventory_key": "legal_ir:source_conditioned:F18",
+      "next_steps": [
+        "Authenticate exact checkpoint/parent/codec/loader and retained source provenance through existing owners.",
+        "Join immutable publication evidence to a complete native importer plan without inventing runtime or schema capabilities.",
+        "Review missing-only genuine ModelManager import against a new current baseline and preserve every existing row/activity field.",
+        "Execute through existing registration/resource owners, then cold exact catalog readback; numerical reload remains separate."
+      ],
+      "original_checkpoint_pin": {
+        "bytes": 21058430,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/modality-conditions-retention-20261014-modality-conditions-retention-ce-01/results/cell-checkpoint.json",
+        "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+      },
+      "profile_id": null,
+      "proof_authority": false,
+      "proposed_component_identity": {
+        "asset_binding_schema": "ir-decoder-component-binding/v1",
+        "checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "external_lane_binding": null,
+        "ir_family_id": "legal_ir",
+        "role": "retained_source_conditioned_F18"
+      },
+      "proposed_record_id": "ir-model-component-binding/v1:0b4dd36d92e5e99d01b45d32f5ddbdf872e8370702c3325209e8ba7d0a1ba9ad",
+      "proposed_task_id": "semantic_IR_reconstruction",
+      "runtime_ready": false,
+      "schema_version": null,
+      "status": "missing_strict_IR_declaration; offline proposal only",
+      "teacher_qualified": false
+    }
+  ],
+  "entry_count": 3,
+  "model_promoted": false,
+  "models_uploaded": false,
+  "other_selected_dispositions": [
+    {
+      "inventory_key": "legal_ir:legacy8:historical_sparse_core",
+      "next_action": "Resolve whole legacy-state provenance/current payload integrity and its own task identity before any import.",
+      "status": "not_found_in_selected_strict_IR_catalog"
+    },
+    {
+      "inventory_key": "legal_ir:legacy8:small_linguistic_bundle",
+      "next_action": "Resolve actual bundle weight/core-state identities; do not register the manifest as model weights.",
+      "status": "bundle_manifest_is_not_a_checkpoint_key"
+    }
+  ],
+  "registry_mutated": false,
+  "schema": "legal-ir-missing-component-registration-worklist/v1",
+  "scope": "Explicit current strict-IR catalog gaps for three retained source-token checkpoints; not absence of every possible generic manager row or other store. This file is neither an executable importer plan nor a registration receipt."
+}
