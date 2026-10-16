@@ -1,0 +1,21 @@
+{
+  "schema": "legal-ir-plan-metadata-curation/v1",
+  "scope": "Public metadata and dataset-card text only; raw API responses retained in the phase named by the summary. No payload/runtime authority.",
+  "files": [
+    {
+      "path": "hub-metadata-summary-v01.json",
+      "bytes": 2652,
+      "sha256": "cbbfdb4a23a64ece3b61d394200eef27f43595f2b8bac22e68275016eb0e33b7"
+    },
+    {
+      "path": "uscode-autoformal-entity-cache-README.md",
+      "bytes": 581,
+      "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4"
+    },
+    {
+      "path": "uscode-autoformal-span-cache-README.md",
+      "bytes": 13863,
+      "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6"
+    }
+  ]
+}
