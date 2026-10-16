@@ -1,0 +1,26 @@
+{
+  "accepted_producer_descriptor": {
+    "bytes": 3245,
+    "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/accepted-producer-v01.json",
+    "sha256": "ad8612cb9858c6ff4f5b17a6f6234c1a6192229ba2b2dae20b950111f7793802"
+  },
+  "expected_index_sha256": "82b8099255a93c5a22135229d9bcab8a7a8dd25f09074ca744155734a1d931e1",
+  "expected_reconstruction_full_canonical_sha256": "18d46ded43628d1ee96c4fa919de5d398aa058c3cc45ac0baaa917280380dcaa",
+  "expected_reconstruction_sha256": "b7b24bf24494df6f7afd82825512dbdd86491ef08f8f2609d80bf445465bf24c",
+  "index_baseline": {
+    "bytes": 2812,
+    "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-span-section-20261013-01/section-index-baseline.json",
+    "sha256": "da5b83b8d6401279ba89bc029a0a0d09a55918118c0609e86926dabfb0c8bcbf"
+  },
+  "primary_candidate": {
+    "bytes": 716898677,
+    "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/candidate.jsonl",
+    "sha256": "46986513582973996e4d69ecf0669ed7331e6cca07ca793f3b1c1ea2dcdec8f1"
+  },
+  "reconstruction_report": {
+    "bytes": 160983,
+    "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-primary-graph-20261013-01/reconstruction-baseline.json",
+    "sha256": "3368f3698f25ac66d3584f388ee0b6d52746443e142d423ed0b8a1ded31abfe2"
+  },
+  "schema": "legal-primary-association-definition-review-consumer-inputs/v1"
+}

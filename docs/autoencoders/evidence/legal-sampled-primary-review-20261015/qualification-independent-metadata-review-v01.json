@@ -1,0 +1,205 @@
+{
+  "Lean_executed": false,
+  "audit_scope": "retained request, stdout, closeout, receipt, JUnit, durability metadata and source bytes only; no fixture/corpus payload or ledger read",
+  "authority_granted": false,
+  "canonical_collected_nodeids_sha256": "b00e33becb3296b261b919130e1b721d647b6f6e275b9bc0a62ac20e6a428981",
+  "canonical_junit_identities_sha256": "a4f827a29b66864bc7422e2008dc408a81dca9daa1d92e70626baba2af6dd519",
+  "captured_parent_stderr": {
+    "bytes": 0,
+    "device": 66306,
+    "inode": 106841524,
+    "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/qualification-parent-stderr-v01.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "captured_parent_stdout": {
+    "bytes": 5520,
+    "device": 66306,
+    "inode": 106841523,
+    "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/qualification-parent-stdout-v01.json",
+    "sha256": "ee1fcea0efb77c9a5594bd97ab226e3e49cf034075e1579079a7aec58330fb1d"
+  },
+  "cases_by_module": {
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py": 50,
+    "tests/unit/logic/autoformal/test_legal_graph_dependencies.py": 18,
+    "tests/unit/logic/autoformal/test_legal_source_sampling_primary_association_v2.py": 88,
+    "tests/unit/logic/autoformal/test_legal_source_sampling_primary_review_v2.py": 51
+  },
+  "collected_count": 207,
+  "collected_successful_call_and_exact_junit_identities_equal": true,
+  "discovery_only_router_count": 1,
+  "durability": {
+    "bytes": 79756,
+    "device": 66306,
+    "inode": 69387179,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/validation-durability.json",
+    "sha256": "bbcf831493471ddb630297069bf73b1d49b4b13f335fca7b609845e42d8cdb04"
+  },
+  "execution": {
+    "bytes": 3386,
+    "device": 66306,
+    "inode": 69385892,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/execution.json",
+    "sha256": "632def5b11202bcf64eaa3b2ba27adc712f51d95ccc3001f92a4c4bb76f5e91b"
+  },
+  "failed_error_skipped_counts": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "fixture_payload_hashes_independently_replayed": false,
+  "junit": {
+    "bytes": 41645,
+    "device": 66306,
+    "inode": 69387169,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/exports/junit.xml",
+    "sha256": "dd3366f565c42d22d58de31774ca303849e7c2919ac19e17c7efed3f947a4b2f"
+  },
+  "junit_count": 207,
+  "ledger_or_scheduler_authentication_performed": false,
+  "limitations": [
+    "This is an independent metadata/source audit of an already completed native qualification; it does not reexecute tests.",
+    "Native durability commitments to fixture payloads were inspected as metadata; their payload bytes were not read or independently rehashed.",
+    "Captured native closeout reports a released claim and lease; this audit does not authenticate live scheduler/ledger state.",
+    "No legal meaning, source equivalence, training label or Lean authority is established."
+  ],
+  "loaded_checked_buffer_product_origins": 125,
+  "models_loaded": false,
+  "native_closeout": {
+    "artifacts_durable_asserted": true,
+    "attempt_directory_identity": {
+      "device": 66306,
+      "inode": 69385844,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01"
+    },
+    "attempt_exceeded_reservation": false,
+    "captured_parent_record_reviewed": true,
+    "child_returncode": 0,
+    "cleanup_error": null,
+    "live_group_processes": 0,
+    "metadata_files_join_native_seal": [
+      {
+        "bytes": 244273,
+        "device": 66306,
+        "inode": 69385891,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/qualification.json",
+        "relative_path": "logs/qualification.json",
+        "seal_matches": true,
+        "sha256": "e928c306f8dc0b9ec52979f17ab7a458c0428009c81c164fb793d1ea4dc05401"
+      },
+      {
+        "bytes": 3566,
+        "device": 66306,
+        "inode": 69387178,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/result.json",
+        "relative_path": "logs/result.json",
+        "seal_matches": true,
+        "sha256": "100b2062b0ab1dbf645cb245a9228420c43924c60aee959ce40f0b722cd0aa24"
+      },
+      {
+        "bytes": 3386,
+        "device": 66306,
+        "inode": 69385892,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/execution.json",
+        "relative_path": "logs/execution.json",
+        "seal_matches": true,
+        "sha256": "632def5b11202bcf64eaa3b2ba27adc712f51d95ccc3001f92a4c4bb76f5e91b"
+      },
+      {
+        "bytes": 620,
+        "device": 66306,
+        "inode": 69385889,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/stdout.log",
+        "relative_path": "logs/stdout.log",
+        "seal_matches": true,
+        "sha256": "bc2db27a6bae0633b24cbce6e398386713f25fb668d7933b073e4ecb176bf8d8"
+      },
+      {
+        "bytes": 0,
+        "device": 66306,
+        "inode": 69385890,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/stderr.log",
+        "relative_path": "logs/stderr.log",
+        "seal_matches": true,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 41645,
+        "device": 66306,
+        "inode": 69387169,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/exports/junit.xml",
+        "relative_path": "exports/junit.xml",
+        "seal_matches": true,
+        "sha256": "dd3366f565c42d22d58de31774ca303849e7c2919ac19e17c7efed3f947a4b2f"
+      }
+    ],
+    "native_lease_id": "6f7f06ec08d34a4ea14bcf3165707f46",
+    "native_seal_result_matches": true,
+    "request_identity_matches": true,
+    "reservation_id": "aaab263b8b2e4d3fa49d0ca85f713a93",
+    "resource_lease_released": true,
+    "storage_status": "released"
+  },
+  "native_execution_elapsed_seconds": 309.8882247589063,
+  "natural_namespace_count": 1,
+  "origin_pin_differences": [],
+  "receipt": {
+    "bytes": 244273,
+    "device": 66306,
+    "inode": 69385891,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/qualification.json",
+    "sha256": "e928c306f8dc0b9ec52979f17ab7a458c0428009c81c164fb793d1ea4dc05401"
+  },
+  "receipt_elapsed_seconds": 265.5517967559863,
+  "request": {
+    "bytes": 56983,
+    "device": 66306,
+    "inode": 106841521,
+    "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/qualification-request-v01.json",
+    "sha256": "64373f3b966df19be3e5399c8aa1f8bf58147c23b404409a1be8f172e1ce13f4"
+  },
+  "result": {
+    "bytes": 3566,
+    "device": 66306,
+    "inode": 69387178,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/result.json",
+    "sha256": "100b2062b0ab1dbf645cb245a9228420c43924c60aee959ce40f0b722cd0aa24"
+  },
+  "schema": "legal-primary-review-qualification-independent-metadata-audit/v1",
+  "selected_target_count": 22,
+  "selected_target_coverage": {
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_complete_v2_subject_retains_all_physical_contexts_without_norm": 2,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_context_population_has_exact_order_membership_and_closed_inputs": 4,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_current_complete_source_context_and_owner_dependencies_are_rechecked": 2,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_every_independent_original_input_namespace_is_required": 12,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_existing_auth_engine_rechecks_keys_roles_scope_revocation_and_time": 6,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_external_policy_wire_shape_still_has_no_human_or_semantic_authority": 1,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_missing_complete_signed_context_stays_blocking_even_with_valid_signatures": 1,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_missing_reviews_remain_pending_without_invented_authority": 1,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_old_definition_plus_norm_signed_domain_cannot_be_relabelled": 3,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_one_principal_with_two_keys_does_not_supply_independent_roles": 1,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_original_lowered_view_sampler_and_compiler_limits_replay_through_review": 1,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_oversized_original_inputs_refuse_before_owner_import_or_replay": 1,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_real_synthetic_signatures_authenticate_new_domain_but_never_meaning": 1,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_assessment_cannot_promote_semantic_or_accepted_authority": 1,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_rehashed_context_cannot_retarget_geometry_or_close_source_obligations": 4,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_candidate_still_requires_original_v2_source_and_declared_ast": 4,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_resealed_subject_and_resigned_claims_cannot_retarget_exact_context_population": 1,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_subject_requires_exact_complete_source_and_context_dependency_manifest": 3,
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py::test_transport_hash_cannot_replace_full_canonical_source_pin": 1,
+    "tests/unit/logic/autoformal/test_legal_graph_dependencies.py": 18,
+    "tests/unit/logic/autoformal/test_legal_source_sampling_primary_association_v2.py": 88,
+    "tests/unit/logic/autoformal/test_legal_source_sampling_primary_review_v2.py": 51
+  },
+  "source_pin_count": 225,
+  "source_pin_differences": [],
+  "source_roster_review": {
+    "bytes": 126337,
+    "device": 66306,
+    "inode": 106842074,
+    "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/qualification-source-roster-review-v01.json",
+    "sha256": "b13cbeb47846aef498aae1f060ecf517b2d1b463dc0cf1c914ea6d0697c35e2b"
+  },
+  "status": "PASS",
+  "successful_call_count": 207,
+  "training_performed": false
+}
