@@ -33,6 +33,34 @@ Manual completion is not a dispatch block. Any future bootstrap must use a
 reviewed finite task allowlist and current worker/resource policy; neither
 manual mode nor this template authorizes dispatch by itself.
 
+## Startup status, 2026-10-16
+
+The separate [accelerator bootstrap draft](https://github.com/endomorphosis/ipfs_accelerate_py/pull/290)
+preserves all 64 tasks and 34 goals, with only LIR-9001 eligible and the other
+63 tasks explicitly phase-blocked. Its native preflight passed real task/goal
+parsing, dependency/output/acceptance preservation and command rendering for
+Grok CLI `grok-4.7` with quota-only Codex `gpt-6.1-sol`/high fallback. The tested
+source commit and exact evidence hashes are in
+[startup_status_20261016.json](startup_status_20261016.json).
+
+**No supervisor or provider task launched.** Both CLI readiness checks passed,
+but both local Docker engines lacked `ubuntu:24.04` and the exact original
+authority-validation toolchain image recorded in the status file. Codex login
+does not prove target-model access. Restore a verifiable original image closure,
+or separately qualify a successor image/profile and its route integration.
+
+Native merged completion can succeed regardless of `Completion: manual`.
+The bootstrap report CLI therefore returns nonzero even for a structurally valid
+report until an independent acceptance capability is bound in a new reviewed
+revision. A worker-authored receipt cannot override this gate. Native preflight
+and report shape checks do not supply factual acceptance or legal fidelity.
+
+Newer accelerator main was observed after the pinned source was tested. Reconcile
+that progress and repeat native preflight on the final source binding before
+dispatch; preserve the specifically recorded generic Grok turn-limit refinement.
+The shared storage cap stayed unchanged. This operational status does not change
+the authoring plan, import tasks, complete LIR-9001 or activate later phases.
+
 ## Goal hierarchy
 
 | Goal | Subgoals and outcomes |

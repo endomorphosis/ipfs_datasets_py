@@ -1,0 +1,137 @@
+{
+  "schema": "legal-ir-supervisor-startup-status/v1",
+  "observed_at_utc": "2026-10-16T20:11:33.426195+00:00",
+  "status": "blocked_missing_approved_worker_images",
+  "supervisor_started": false,
+  "provider_task_dispatched": false,
+  "task_imported_or_claimed": false,
+  "codex_model_access_proven": false,
+  "route": {
+    "primary_provider": "grok_cli",
+    "primary_model": "grok-4.7",
+    "fallback_provider": "codex",
+    "fallback_model": "gpt-6.1-sol",
+    "fallback_reasoning_effort": "high",
+    "fallback_trigger": "primary_quota_exhausted",
+    "concurrency": 1
+  },
+  "native_preflight": {
+    "valid": true,
+    "source_commit": "7a0e6cb38f14668474f785e7fcf706eda011c1f7",
+    "source_ancestor": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+    "tasks": 64,
+    "goals": 34,
+    "legacy_parents": 24,
+    "phase_blocked_tasks": 63,
+    "initial_dependency_ready_tasks": [
+      "LIR-9001"
+    ],
+    "dependencies_outputs_acceptance_metadata_preserved": true,
+    "actual_launch_command_rendered": true
+  },
+  "cli_readiness": {
+    "grok_ready": true,
+    "codex_ready": true,
+    "effective_provider": "grok",
+    "reason_code": "grok_ready",
+    "failure_kind": null,
+    "grok_model": "grok-4.7",
+    "codex_model": "gpt-6.1-sol",
+    "codex_reasoning_effort": "high"
+  },
+  "image_observations": [
+    {
+      "host": "unix:///var/run/docker.sock",
+      "requested_image": "ubuntu:24.04",
+      "returncode": 1,
+      "status": "missing"
+    },
+    {
+      "host": "unix:///var/run/docker.sock",
+      "requested_image": "sha256:74c4a6ff67f397f8a10b058851d218896b2f1ee0f2cddf47741219b734de93a6",
+      "returncode": 1,
+      "status": "missing"
+    },
+    {
+      "host": "unix:///run/user/1000/docker.sock",
+      "requested_image": "ubuntu:24.04",
+      "returncode": 1,
+      "status": "missing"
+    },
+    {
+      "host": "unix:///run/user/1000/docker.sock",
+      "requested_image": "sha256:74c4a6ff67f397f8a10b058851d218896b2f1ee0f2cddf47741219b734de93a6",
+      "returncode": 1,
+      "status": "missing"
+    }
+  ],
+  "independent_acceptance": {
+    "bound": false,
+    "valid_report_cli_exit_code": 3,
+    "reason": "independent_acceptance_capability_not_bound",
+    "self_authored_receipt_override": false,
+    "future_reviewed_adapter_required": true
+  },
+  "source_reconciliation": {
+    "selected_sources_matching_canonical_working_tree": 6,
+    "selected_source_count": 7,
+    "deferred_exact_router_change": "12-line generic Grok explicit_max_turns change; supervised readiness/fallback/agent-route ASTs unchanged; no change adopted",
+    "committed_router_sha256": "3c8f1459992c557e41729d8d4c6e7b99daa6473e9b6408bf4c251fe69c751a70",
+    "canonical_working_router_sha256": "fa9edb968434eb46f8c46af70166cde55c7219d5625fb4b9c9cff78b5b9b726b",
+    "subsequently_observed_accelerator_main": "ff69c6dec3608b78aab7af48c053d0e984bb9ffe",
+    "new_main_must_be_reconciled_and_preflighted_before_launch": true
+  },
+  "storage": {
+    "shared_cap_bytes": 160000000000,
+    "shared_cap_changed": false,
+    "controller_measured_bytes_at_preparation": 465468219,
+    "controller_objects_shared_read_only": true,
+    "last_request_external_controller_allowance_bytes": 4294967296,
+    "limits": "cooperative native admission and measured/precharged named-root storage, not kernel quotas"
+  },
+  "next_actions": [
+    "Restore cached ubuntu:24.04 and exact original authority-validation image74c4 from a verifiable retained source; if unavailable, separately qualify a new minimal image/profile and reviewed route integration.",
+    "Reconcile current accelerator main and preserve the specifically recorded router refinement; repeat genuine native preflight on the final source binding.",
+    "Run one bounded LIR-9001 candidate with the requested route; verify actual provider/model outcome and separately smoke-test Codex model access in the qualified boundary.",
+    "Bind independent factual acceptance to the exact report/task revision/source/candidate using a new reviewed gate revision; do not clear all future task blockers."
+  ],
+  "evidence": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-supervisor-runs/legal-ir-start-20261016-readiness03/receipt.json",
+      "bytes": 632,
+      "sha256": "b1648868f334d10c76db3c930fd3f852277e29b52b17426dd46d30c66693db94"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-supervisor-runs/legal-ir-start-20261016-readiness03/child.sanitized.log",
+      "bytes": 1066,
+      "sha256": "43b85af1c274caca3b0636789ebc2137e7fec171eb746f038173b37c281a604b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-supervisor-runs/legal-ir-start-20261016-preflight01/receipt.json",
+      "bytes": 637,
+      "sha256": "58e0216de183fab88736d57025022b3327f84264f26b7b2f2d602932938d8459"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-supervisor-runs/legal-ir-start-20261016-preflight01/preflight.json",
+      "bytes": 12816,
+      "sha256": "e16495a567b9da0cd1dab7ccad744e457fd19a618ff9da4c979b21b0712065a8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-supervisor-start-20261016-01/engineering-closeout-review-v01.json",
+      "bytes": 7428,
+      "sha256": "582235698d75b3aaa8466d38a356065e795a2a8895e8d9f618ffefdc1d11979f"
+    }
+  ],
+  "limitations": [
+    "CLI authentication and model listing are not sandboxed task execution.",
+    "Native parsing/rendering is not task import, provider dispatch, independent acceptance, training qualification or legal fidelity.",
+    "No corpus/model/vector/prediction payloads, training or Lean jobs were executed.",
+    "Preflight is bound to its historical source commit; newer upstream main is not covered."
+  ],
+  "publication": {
+    "accelerator_draft_pr": "https://github.com/endomorphosis/ipfs_accelerate_py/pull/290",
+    "accelerator_published_head": "346b0991d5",
+    "runtime_configuration": "https://github.com/endomorphosis/ipfs_accelerate_py/blob/agent/legal-ir-supervisor-start-20261016/docs/architecture/legal_ir_supervisor_start_20261016/scheduler_config.json",
+    "authoring_plan_remains_unlaunched": true
+  }
+}
