@@ -1,6 +1,7 @@
 # LegalIR improvement plan for US Code graphs and Lean 4
 
-Updated October 16, 2026. Reviewed repository baseline: `a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1`.
+Updated October 16, 2026. Reviewed repository baseline: `643c01860` on `main`,
+including the merged decoder compatibility and numerical replay in PR #1318.
 The original research baseline and prior qualification updates are preserved in
 [the evidence history](#evidence-update-history). This roadmap refines the existing
 LIR milestones and pilot specification; it creates no competing task authority.
@@ -11,6 +12,13 @@ coherent Lean 4 corpus. The first acceptance is **one reviewed definition, one
 complete norm using it, and a second scope-valid use**, with exact source
 companions and checked consequences. Whole-cache inventory and controlled decoder
 research can proceed in parallel while that component is prepared.
+
+The [span-to-graph-to-Lean execution design](legal_ir_span_graph_lean_execution_plan_20261016.md)
+specifies the proposed combined decoder, training ablations, cache/graph contracts,
+family support boundaries and ordered work packages against this baseline. It
+refines this roadmap and the unchanged pilot specification; it does not enqueue
+jobs or establish new training, review or build results. Both Hub revisions were
+rechecked at 06:02 UTC in the [metadata-only refresh](evidence/legal-ir-span-graph-plan-20261016/hub-metadata-summary-v01.json).
 
 ```mermaid
 flowchart LR
@@ -151,7 +159,7 @@ The [reconstruction and asset survey](evidence/legal-ir-uscode-plan-20261015/rec
 | Typed graph exchange, scoped lookup, shared Lean modules and incremental compilation exist. The source definition bridge remains section-local and unary; the separately adopted relational fragment supports declared argument order, quantifiers and modal structure in partial unreviewed hypotheses. | Reuse both owners within their exact profiles. Preserve unsupported arguments, qualifiers and cross-section scope as explicit gaps before admitting actual reviewed provisions. |
 | The source sampler and the five retained response, adjudication, application, history and binding owners are integrated. The standalone sampling review intake is separately qualified. | Reuse these owners while preserving their exact request domains. Complete actual source/meaning reviews and explicit occurrence/context correspondence before semantic admission. |
 
-The [F18 report](../autoformalization/legal-modality-conditions-retention-20261015.md) distinguishes technical qualification, scientific failure, publication and remaining numerical limitations. The [completed F19 saved-score comparison](../autoformalization/legal-conditions-composition-20261015.md) and its separately authored counter agree on 60 panels, 54 scored sets, 81 comparison groups and six rank records. Both fixed combinations remain 154/168 complete training IR. Gold conditions spans already rank second or third within the actual top eight, with all six gold assignments feasible; the shorter prefix still outranks gold. This completes the diagnostic recount prerequisite below. The proposed F18 conditions-only freezing-plus-margin recipe is an engineering experiment, not the matched retained-CE causal comparison required in section 5. No composed checkpoint, new training, active-latent qualification or Lake build was executed by this diagnostic; its named old-tuning regression remains a promotion veto.
+The [archived F18 report](https://github.com/endomorphosis/ipfs_datasets_py/blob/c13e83f4e82d5839465744eef19d4240ca378be0/docs/autoformalization/legal-modality-conditions-retention-20261015.md) distinguishes technical qualification, scientific failure, publication and remaining numerical limitations. The [completed F19 saved-score comparison](../autoformalization/legal-conditions-composition-20261015.md) and its separately authored counter agree on 60 panels, 54 scored sets, 81 comparison groups and six rank records. Both fixed combinations remain 154/168 complete training IR. Gold conditions spans already rank second or third within the actual top eight, with all six gold assignments feasible; the shorter prefix still outranks gold. This completes the diagnostic recount prerequisite below. The proposed F18 conditions-only freezing-plus-margin recipe is an engineering experiment, not the matched retained-CE causal comparison required in section 5. No composed checkpoint, new training, active-latent qualification or Lake build was executed by this diagnostic; its named old-tuning regression remains a promotion veto.
 
 The retained [paired-census quality audit](paired_census_quality_audit.md) separates canonical typed compiler outputs, compiler views and autoencoder outputs by their actual origins. Use it as a bounded sidecar when choosing supervision and repair targets; guided compiler agreement, fallback frames and copied producer flags are not independent decoder fidelity or reviewed meaning. Preserve all original observations and goals alongside any review hypotheses.
 

@@ -1,0 +1,34 @@
+{
+  "schema": "legal-ir-plan-document-verification/v1",
+  "observed_at_utc": "2026-10-16T06:13:53.936453+00:00",
+  "scope": "Local documentation links, code-fence parity and metadata/curation byte commitments only. No product code, tests, corpus/model/predictions, training or Lean build.",
+  "documents": [
+    {
+      "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "bytes": 40230,
+      "sha256": "80fcffa00252dfde901e0373d240e63702d3e536dc7f11fb0e7d67d180205ca1",
+      "lines": 495,
+      "words": 5046
+    },
+    {
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "bytes": 99073,
+      "sha256": "99f1450f3de0ed719076997f6912937af211aa1749fc2e213c2648a010d193af",
+      "lines": 519,
+      "words": 12167
+    }
+  ],
+  "resolved_local_links": 76,
+  "curated_files_verified": 3,
+  "public_metadata_observations_verified": 2,
+  "source_only_independent_reviews": {
+    "architecture": "No blocking factual errors. Experimental-interface wording and matched-profile comparisons clarified.",
+    "cache_graph_storage": "No blockers. Graph/Lean independence from trained head and exact embedding reuse keys clarified.",
+    "graph_logic_lean": "Existing AST/graph reuse, unary-alias versus operative norm distinction, exact family profiles and real Lake target checked; closed graph imports and direct lean versus Lake clarified."
+  },
+  "inherited_broken_f18_link_repaired_to_published_commit": "c13e83f4e82d5839465744eef19d4240ca378be0",
+  "product_execution": false,
+  "test_execution": false,
+  "training": false,
+  "lean_execution": false
+}
