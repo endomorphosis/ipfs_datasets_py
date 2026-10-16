@@ -1,0 +1,110 @@
+{
+  "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-relational-target-contract-20261016-a-01",
+  "child": {
+    "collected_cases": 142,
+    "errors": 142,
+    "failure_reason": "Pytest ancestor Package.setup tried to import the repository bootstrap as datasets; the unchanged SDK-root guard refused it before test calls.",
+    "failure_stage": "selected_pytest_targets",
+    "failures": 0,
+    "sdk_import_guard_refused_checkout_basename": true,
+    "selected_modules": [
+      "tests/unit/logic/autoformal/test_legal_relational_target_codec_v1.py",
+      "tests/unit/logic/autoformal/test_legal_relational_decoder_example_v1.py",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py"
+    ],
+    "skipped": 0,
+    "source_or_test_assertions_changed_for_retry": false,
+    "source_pins_unchanged": true,
+    "successful_calls": 0
+  },
+  "native_operation_qualified": false,
+  "parent_result": {
+    "returncode": 1,
+    "seconds": 52.244138720910996,
+    "timed_out": false
+  },
+  "raw_operational_identifiers_published": false,
+  "recovery": {
+    "accounting_credit_bytes": 134217728,
+    "artifact_bytes": 984985,
+    "artifact_files": 10,
+    "artifacts_retained": [
+      {
+        "bytes": 37,
+        "path": "cache/pytest/.gitignore",
+        "sha256": "3ed731b65d06150c138e2dadb0be0697550888a6b47eb8c45ecc9adba8b8e9bd"
+      },
+      {
+        "bytes": 191,
+        "path": "cache/pytest/CACHEDIR.TAG",
+        "sha256": "37dc88ef9a0abeddbe81053a6dd8fdfb13afb613045ea1eb4a5c815a74a3bde4"
+      },
+      {
+        "bytes": 302,
+        "path": "cache/pytest/README.md",
+        "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad"
+      },
+      {
+        "bytes": 22202,
+        "path": "cache/pytest/v/cache/lastfailed",
+        "sha256": "175fa997baaacda6b2e61c6b5a3a6cc5d5befd39351f6e1cb977114368fbf3e1"
+      },
+      {
+        "bytes": 21350,
+        "path": "cache/pytest/v/cache/nodeids",
+        "sha256": "521664ed9250d684e8b9ea12534924569c5b565f57ef7e2b7b7fedd60694619b"
+      },
+      {
+        "bytes": 466506,
+        "path": "exports/junit.xml",
+        "sha256": "2fb145b6335a7d10be4894bee6b839fdc966971624fa7ca96f0efdf6cae898ea"
+      },
+      {
+        "bytes": 795,
+        "path": "logs/failure.json",
+        "sha256": "f0989ce88ec1ac9c31f032dd5873a54f68df531d2c7f6f58dafebc4b59f35cb3"
+      },
+      {
+        "bytes": 77235,
+        "path": "logs/qualification-failed.json",
+        "sha256": "cbee738cf455115d8f4903140513e2cd4184e240c598c131f784f222ac4ee4df"
+      },
+      {
+        "bytes": 681,
+        "path": "logs/stderr.log",
+        "sha256": "a650c6941d2c6e0678bdb00c6feced7576676f21518800644cb47d8823bcd6c8"
+      },
+      {
+        "bytes": 395686,
+        "path": "logs/stdout.log",
+        "sha256": "aabde34bc764fd9848cd430686ba341e4d9a74347f41dcc4f2f0bd200b2463bd"
+      }
+    ],
+    "automatic_expiry": false,
+    "exact_owned_attempt_only": true,
+    "existing_public_owner_reconciliation": true,
+    "new_reservation_acquired": false,
+    "new_resource_lease_acquired": false,
+    "other_reservations_sha256": "a921282a078dacfe8ed7b335768808f2e3fea70cf0f56fceaa7dbd6590e8dfef",
+    "outputs_deleted": false,
+    "parent_result": {
+      "returncode": 0,
+      "seconds": 39.66263627400622,
+      "timed_out": false
+    },
+    "raw_private_receipt": {
+      "bytes": 63213,
+      "path": "/home/barberb/lift_coding/artifacts/legal-relational-target-contract-20261016/recovery01/native-recovery-receipt.json",
+      "sha256": "df4f45b73b218654582ae7d9619a2d9eb57c1f12a8b76944c943da4589fddcb0"
+    },
+    "scheduler_lease_state_independently_authenticated": false,
+    "successful_test_claim": false
+  },
+  "request": {
+    "bytes": 58991,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/qualification-request-01.json",
+    "sha256": "503a5c79e0ae0dbf1806484b0d0f5e49e0c086308cca61a694cd02f832115d79"
+  },
+  "schema": "legal-relational-target-failed-qualification-and-recovery-audit/v1",
+  "semantic_or_model_authority": false
+}

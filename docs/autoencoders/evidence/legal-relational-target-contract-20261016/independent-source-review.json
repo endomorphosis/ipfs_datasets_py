@@ -1,0 +1,146 @@
+{
+  "adapter_contract": {
+    "actual_verified_encoding_producer_pin_union_and_closing_checks": true,
+    "complete_public_join_replay_before_export": true,
+    "embedding_payload_or_producer_authenticated": false,
+    "exact_source_and_declared_context_only_model_input": true,
+    "label_embedding_exposure_and_alternative_metadata_separate": true,
+    "pending_target_remains_null": true,
+    "review_gold_blindness_split_or_training_eligibility_inferred": false,
+    "same_physical_source_alternatives_grouped": true,
+    "typed_owner_report_hash_join_exact": true
+  },
+  "authorship_disclosure": {
+    "codec_portion_is_self_review_with_separate_root_and_test_author_review": "No claim of independent authorship for the codec itself.",
+    "reviewer_authored_codec": true,
+    "reviewer_independent_of_adapter_and_test_authors": true
+  },
+  "codec_contract": {
+    "all_authority_flags_false_and_masks_zero": true,
+    "candidate_ids_and_recoverable_transport_preserved_without_repair": true,
+    "exact_expression_signature_ids_arguments_binders_modal_payload_and_role_order_preserved": true,
+    "existing_typed_AST_and_relational_validator_reused": true,
+    "fixed_vocabulary": {
+      "BOS": 1,
+      "BYTE_COUNT": 256,
+      "BYTE_OFFSET": 3,
+      "EOS": 2,
+      "PAD": 0,
+      "size": 259
+    },
+    "original_transport_and_canonical_target_hash_namespaces_separate": true,
+    "overflow_truncated_or_reclassified": false,
+    "reference_input_to_candidate_decoder": false,
+    "same_physical_trusted_owner_file_fences": true,
+    "semantic_action_language_or_grammar_constrained_model_claimed": false,
+    "target_dependent_vocabulary": false
+  },
+  "guide_scope": {
+    "8D_384D_768D_paths_and_detached_source_token_components_separate": true,
+    "future_connector_retention_and_logit_diagnostics_labelled_future": true,
+    "new_byte_lengths_separate_from_encoder_tokens_and_inherited_output_caps": true,
+    "no_trained_head_or_improved_semantic_reconstruction_claim": true,
+    "old_seven_facet_and_legacy18_codec_routes_preserved": true,
+    "reviewed_statutory_target_population_not_established": true
+  },
+  "limitations": [
+    "This review does not establish a passing test or successful native closeout. Raw outcome and source/lease/durability audits remain separate.",
+    "Current candidates are authored unreviewed declarations; codec correctness does not prove statutory meaning, graph admission, teacher quality or Lean compilation.",
+    "Source hashes/physical observations do not authenticate arbitrary previously loaded bytecode or unsupported in-memory monkeypatches. The qualification worker supplies a separate fresh checked-buffer context."
+  ],
+  "observed_at_utc": "2026-10-16T06:45:03.471459+00:00",
+  "resolved_findings": [
+    {
+      "finding": "Bounded malformed generated JSON originally escaped candidate classification.",
+      "resolution": "Final codec preserves complete IDs/transport as rejected, while explicit private overflow exceptions retain hard whole-input refusal."
+    },
+    {
+      "finding": "Python dict equality permits bool/int equality in closed scalar fields.",
+      "resolution": "Fixed codec identity uses canonical-byte equality; encoding authority values must be literal False."
+    },
+    {
+      "finding": "Ambient typed-codec configuration could introduce an unselected extension registry.",
+      "resolution": "A fresh strict TypedLogicCodec instance has extension_registry=None and empty metadata."
+    },
+    {
+      "finding": "Adapter initially closed only direct/join producer pins after label encoding.",
+      "resolution": "Final adapter conflict-checks and joins the actual encoding producer closure into its flat report and every subsequent closing fence; encoded relational owner hash must equal the independently replayed original report hash."
+    },
+    {
+      "finding": "Guide understated canonical JSON transport normalization.",
+      "resolution": "Final guide preserves decoded values/array order and acknowledges changes to whitespace, object-key order and escape spelling."
+    }
+  ],
+  "review_method": "Source/JSON/hash/stat/AST/builtin compile only. No product imports, test execution, model or embedding payload loads, database connections, resource admissions or native calls.",
+  "reviewed_files": {
+    "adapter": {
+      "bytes": 22837,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_decoder_example_v1.py",
+      "sha256": "4aed1fde35efce9cdd6579be83be6901143003e996611850f6b35f0cce3f705c"
+    },
+    "adapter_tests": {
+      "bytes": 16863,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/tests/unit/logic/autoformal/test_legal_relational_decoder_example_v1.py",
+      "sha256": "e8327895dc0ac315168f3e8b40a962cf00617a0063db95e937d1f7a6637254d8"
+    },
+    "codec": {
+      "bytes": 23864,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_target_codec_v1.py",
+      "sha256": "66c2f4fb4280add56913d7629ad80b91c581aae54b2f832fa359f412d9d7bdf5"
+    },
+    "codec_tests": {
+      "bytes": 14223,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/tests/unit/logic/autoformal/test_legal_relational_target_codec_v1.py",
+      "sha256": "b7ae2900e5e8397c4773bf1316febf18c5e0abac165739abbc503fc06b1b1433"
+    },
+    "guide": {
+      "bytes": 9620,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/legal_relational_decoder_target_contract_v1.md",
+      "sha256": "64f36315c39708acc262d450ac992a5c15aa6255528a204eb0c6d4baddf68212"
+    },
+    "parent_observer": {
+      "bytes": 2718,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/run_original_validation.py",
+      "sha256": "eb7ea9e63a8acab96527c3637a5f959c8f6355150dfff17f7b17820646203825"
+    },
+    "worker": {
+      "bytes": 28529,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/run_qualification.py",
+      "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+    },
+    "worker_reuse": {
+      "bytes": 870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/qualification-driver-reuse.json",
+      "sha256": "77fd41878921edd6ce916990550b0c0c37f194327913245d2e6a821dc247965c"
+    }
+  },
+  "schema": "legal-relational-target-independent-source-review/v1",
+  "source_profile": {
+    "bytes_read": 6690393,
+    "candidate_roster_pin": {
+      "bytes": 38316,
+      "path": "/home/barberb/lift_coding/artifacts/legal-relational-target-contract-20261016/candidate-source-paths.json",
+      "sha256": "e6626ab615b60d0f5db5a861b6547a8f77f1fffeb6083ed4e6693f8f6b567b0a"
+    },
+    "canonical_path_to_sha256_digest": "b0c17532feda6e87955efd9ff11573630caf9ccc5327f87fe3d46a3f8269573c",
+    "expected_cases_parent_declared": 142,
+    "native_profile_is_cooperative_not_kernel_confinement": true,
+    "native_request_reviewed": false,
+    "new_resource_owner_or_policy": false,
+    "original_native_parent_owns_admission_supervision_seal_and_release": true,
+    "outcomes_observed_by_reviewer": false,
+    "planned_resource_envelope": {
+      "child_process_slots": 1,
+      "cpu_slots": 1,
+      "memory_mb": 2048,
+      "native_policy": "F07 unchanged",
+      "storage_bytes": 134217728,
+      "timeout_seconds": 300
+    },
+    "reused_worker_byte_exact": true,
+    "scope": "Finite declared causal sources, not complete installed-package/native-library closure.",
+    "selected_test_module_count": 3,
+    "source_files": 255
+  },
+  "status": "pass_static_bounded_scope"
+}

@@ -1,0 +1,132 @@
+{
+  "code_document_consistency": {
+    "8D_384D_768D_and_separate_source_token_components_preserved": true,
+    "all_authority_false_training_and_evaluation_gold_masks_zero": true,
+    "byte_lengths_not_encoder_token_lengths_or_inherited_output_budget": true,
+    "connector_retention_diagnostic_is_future_not_an_executed_result": true,
+    "embedding_references_declarations_only_no_payload_or_producer_authentication": true,
+    "exact_source_context_model_input_label_provenance_compartments": true,
+    "existing_authored_relational_subset_not_new_semantic_language": true,
+    "existing_batch_evaluator_reused_new_byte_preserving_inference_bridge_still_pending": true,
+    "fixed259_byte_control_serialization_not_trained_AST_action_head": true,
+    "old_codecs_and_tensor_reuse_require_explicit_compatibility": true,
+    "pending_label_null_and_unassigned_split": true,
+    "raw_transport_canonical_target_and_structural_alpha_metrics_separate": true,
+    "reviewed_statutory_targets_teacher_graph_or_Lean_authority_not_claimed": true
+  },
+  "frozen_product_and_test_pins": [
+    {
+      "bytes": 23864,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_target_codec_v1.py",
+      "sha256": "66c2f4fb4280add56913d7629ad80b91c581aae54b2f832fa359f412d9d7bdf5"
+    },
+    {
+      "bytes": 22837,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_decoder_example_v1.py",
+      "sha256": "4aed1fde35efce9cdd6579be83be6901143003e996611850f6b35f0cce3f705c"
+    },
+    {
+      "bytes": 14223,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/tests/unit/logic/autoformal/test_legal_relational_target_codec_v1.py",
+      "sha256": "b7ae2900e5e8397c4773bf1316febf18c5e0abac165739abbc503fc06b1b1433"
+    },
+    {
+      "bytes": 16863,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/tests/unit/logic/autoformal/test_legal_relational_decoder_example_v1.py",
+      "sha256": "e8327895dc0ac315168f3e8b40a962cf00617a0063db95e937d1f7a6637254d8"
+    }
+  ],
+  "limits": [
+    "This is a documentation/code consistency review, not an independent numerical or native closeout rerun.",
+    "The guide/master/README distinguish complete native qualification from the separate overlapping administrative controls and earlier failed attempt.",
+    "The parallel design link is verified in fetched origin/main. Its merge and the pending native-audit link must be checked before final publication."
+  ],
+  "native_independent_audit_link": {
+    "audit_outcome_independently_verified_by_this_review": false,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/native-qualification-independent-audit.json",
+    "pin": null,
+    "present_at_review": false,
+    "publication_must_require_actual_target_file_and_separate_outcome_audit": true
+  },
+  "observed_at_utc": "2026-10-16T07:05:54.396795+00:00",
+  "parallel_plan_link": {
+    "bytes": 40230,
+    "currently_materialized_in_owned_checkout": false,
+    "git_object_exists": true,
+    "merge_and_publication_link_verification_required": true,
+    "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+    "reviewed_origin_revision": "121d98e3ee5f829f3b3e76b80baa3710626e6db1",
+    "semantic_action_head_and_graph_Lean_work_remain_proposed": true,
+    "sha256": "80fcffa00252dfde901e0373d240e63702d3e536dc7f11fb0e7d67d180205ca1"
+  },
+  "qualification_claims": {
+    "administrative_cases_independently_read_from_metadata": 142,
+    "administrative_counts_overlap_native_not_aggregated": true,
+    "complete_selected_modules": 3,
+    "executed_product_source_origins_parent_reported": 104,
+    "existing_cases": 70,
+    "failed01_recovery_quantities_describe_retained_files_and_released_accounting_not_deletion": true,
+    "failed_native01_setup_is_preserved_not_promoted": true,
+    "native_cases_parent_reported": 142,
+    "native_durability_release_group_drain_and_cleanup_are_parent_reported_pending_separate_independent_audit": true,
+    "new_cases": 72,
+    "new_codec_cases": 36,
+    "new_example_cases": 36,
+    "pytest_elapsed_seconds_parent_reported": 22.428740442031994,
+    "qualification_is_authored_engineering_not_corpus_accuracy_or_new_numerical_replay": true,
+    "source_pin_count_not_misrepresented_as_executed_source_count": true,
+    "source_pins": 255
+  },
+  "review_method": "Read-only document/source/hash/JSON inspection and Git object reads only; no product imports, tests, model/vector/corpus loads, database or native calls. Existing master-plan review covers the changed reconstruction/status sections, not a new audit of every historical claim.",
+  "reviewed_documents": [
+    {
+      "bytes": 12380,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/legal_relational_decoder_target_contract_v1.md",
+      "sha256": "c7b7c17c130605cc54de1c7417bdbf90fa1c9d57ae52d75e416d35fcbf19cdea"
+    },
+    {
+      "bytes": 101120,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "a0473ea88ec6a9be5f6d748f3dbcaaee6fa8421cb30e513acfaa0dc410f07201"
+    },
+    {
+      "bytes": 9608,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/legal_relational_reconstruction_v1.md",
+      "sha256": "82761628cc91c3bc8632fbed07ca3bd1796e367e264ec0ee05d14b99c1e0b14f"
+    },
+    {
+      "bytes": 11574,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/legal_ir_asset_reconciliation_20261016.md",
+      "sha256": "cbe6857dcf9502401aacfd0799b76a31cbbce3803d0ea3bd892e524c423f6f4c"
+    },
+    {
+      "bytes": 3343,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/README.md",
+      "sha256": "4f404709bd1cbebfbe4774263e7ae51e46283c0b3c75201cd4ca0cc43d6c3c2f"
+    }
+  ],
+  "reviewed_supporting_metadata": [
+    {
+      "bytes": 8143,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/independent-source-review.json",
+      "sha256": "0eebeabb85e9671edcb2ce7b735eb544fa4f8d5f879670b1e68567aafab7a715"
+    },
+    {
+      "bytes": 6076,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/independent-collection-profile-v02-review.json",
+      "sha256": "572431519124efd481e5ab06ac1a32e4e4a36539cad94e2554ad80b74d18a7f7"
+    },
+    {
+      "bytes": 1054,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/administrative-controls-audit.json",
+      "sha256": "75f40cc7e7f1bbcfa64892e04c19e730c7d39eeea122876a351bac54ec42b402"
+    },
+    {
+      "bytes": 4229,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/qualification01-failure-recovery-audit.json",
+      "sha256": "0fbac04863d87fcdbe98a5eddde51df2dab0cb25193301beb295c3a03b61f06d"
+    }
+  ],
+  "schema": "legal-relational-target-final-documentation-static-review/v1",
+  "status": "pass_static_with_publication_dependencies_explicit"
+}

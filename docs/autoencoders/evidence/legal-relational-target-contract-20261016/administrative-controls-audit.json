@@ -1,0 +1,28 @@
+{
+  "address_space_bytes": 1073741824,
+  "before_after_source_hashes_and_identities_unchanged": true,
+  "cpu_seconds": 60,
+  "errors": 0,
+  "expected_cases": 142,
+  "failures": 0,
+  "junit": {
+    "bytes": 26567,
+    "path": "/home/barberb/lift_coding/artifacts/legal-relational-target-contract-20261016/administrative01/junit.xml",
+    "sha256": "c3996096c4c4cafb5ee6ad6e8944683a9af1ccce50d6b452fa8eb7eb10338ff3"
+  },
+  "junit_path": "/home/barberb/lift_coding/artifacts/legal-relational-target-contract-20261016/administrative01/junit.xml",
+  "native_grant_claimed": false,
+  "observed_cases": 142,
+  "returncode": 0,
+  "schema": "legal-relational-target-administrative-controls/v1",
+  "seconds": 19.176107208011672,
+  "selected_checks": [
+    "tests/unit/logic/autoformal/test_legal_relational_target_codec_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_decoder_example_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py"
+  ],
+  "skipped": 0,
+  "source_count": 255,
+  "timed_out": false,
+  "wall_seconds": 180
+}

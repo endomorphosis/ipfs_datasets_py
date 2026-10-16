@@ -1,0 +1,35 @@
+{
+  "change": "Only an explicit --confcutdir at the common directory containing all three selected complete test modules. Native owner, SDK/network/process guards, source-buffer loader, output guards, assertions, fixtures, case selection and resource limits remain unchanged.",
+  "expected_cases": 142,
+  "native_qualification_claimed": false,
+  "previous_worker": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/run_qualification.py",
+    "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+  },
+  "product_and_test_bodies_unchanged": true,
+  "reason": "Pytest Package.setup tried to import the checkout root under its basename datasets, which the unchanged SDK-name guard refused before any test calls.",
+  "request": {
+    "bytes": 58999,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/qualification-request-02.json",
+    "sha256": "ae07b1da724f4affe5989e9998266a5f76fae8a58fe62671491788e85a027380"
+  },
+  "resource_profile_unchanged": true,
+  "schema": "legal-relational-target-qualification-collection-profile/v1",
+  "selected_modules": [
+    "tests/unit/logic/autoformal/test_legal_relational_target_codec_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_decoder_example_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py"
+  ],
+  "source_basis": [
+    "Installed _pytest/main.py 924-928 bounds collector ancestors by _is_in_confcutdir.",
+    "Installed _pytest/config/__init__.py 669-682 excludes ancestors above confcutdir.",
+    "Installed _pytest/python.py 677 imports each collected Package initializer.",
+    "Common autoformal directory and its logic parent have no __init__.py. Importlib test names remain rooted in the existing pytest.ini root."
+  ],
+  "source_count": 255,
+  "worker": {
+    "bytes": 28602,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/run_qualification_v02.py",
+    "sha256": "9bf383fabeccda352496b2a9dd4bbcdfcaaa8861b5bed2f440721d538af6b266"
+  }
+}
