@@ -1,0 +1,118 @@
+{
+  "blocking_findings": [],
+  "exception_contract": {
+    "active_window": "discovery_open=True only around import torch, closed in finally before numerical generation.",
+    "allowed_subprocess": "Only audit subprocess.Popen executable /sbin/ldconfig with exact argv [/sbin/ldconfig,-p], cwdNone and exact LC_ALL=C/LANG=C environment, at Python3.12 stdlib subprocess._execute_child.",
+    "allowed_subprocess_options": "shellFalse, start_new_sessionFalse, preexec_fnNone, process_group-1, gid/gids/uidNone, umask-1, pass_fds(). Maximum4allowed calls; every allowed invocation is recorded separately from refused attempts.",
+    "executable_custody": "Pinned root-owned /usr/sbin/ldconfig wrapper, /usr/sbin/ldconfig.real binary and /usr/bin/dash interpreter are bounded/nofollow/singlelink snapshot-hashed at startup, before each allowed call and completion; fixed full file identities and known root-owned /sbin,/bin,/usr/bin/sh aliases are rechecked.",
+    "honest_scope": "Third-party Torch/NumPy/loader/binary dependency integrity remains explicitly unattested. This fixed helper exception plus cooperative process-group accounting is not arbitrary-code containment or an OS sandbox.",
+    "native_scope": "Native child_process_slots2 accounts for the numerical process plus ephemeral same-group ldconfig child. No changed session/processgroup/UID/GID/shell or arbitrary child is permitted. Native owner still supervises, reaps and establishes final group0/durable release.",
+    "null_sink": "Only exact root-owned /dev/null character device major1/minor3 with unchanged identity, only while discovery is open and only stdlib subprocess._get_devnull with modeNone and O_RDWR plus optional O_CLOEXEC. This is a standard I/O sink, not a persistent external writable storage location.",
+    "unchanged_refusals": "All other subprocess/fork/posix_spawn/exec/system and network events remain refused; persistent writes stay under the one native attempt. No Torch/model/source monkeypatch, new framework, no-model guard relaxation or model service/admission is introduced.",
+    "wrapper_source_review": "The actual pinned wrapper enters its dpkg-trigger branch only when $#=0. Exact -p skips that entire branch and execs /sbin/ldconfig.real with unchanged argv. No dpkg-trigger process is used in this accepted call."
+  },
+  "frozen_request": {
+    "cpu_slots": 1,
+    "memory_mb": 4096,
+    "native_child_process_slots": 2,
+    "old_nonnumerical_guard_unchanged": true,
+    "sha256": "58c19ddf8faee5a091c67bc0917703042d942a0c727756d9cdf45b1c929b559f",
+    "source_pins": 214,
+    "storage_bytes": 268435456,
+    "timeout_seconds": 1800
+  },
+  "observed_null_device_metadata": {
+    "device": 6,
+    "inode": 6,
+    "major": 1,
+    "minor": 3,
+    "mode": 8630,
+    "rdev": 259,
+    "uid": 0
+  },
+  "observed_system_alias_metadata": {
+    "/bin": {
+      "device": 66306,
+      "inode": 12,
+      "mode": 41471,
+      "target": "usr/bin",
+      "uid": 0
+    },
+    "/sbin": {
+      "device": 66306,
+      "inode": 14,
+      "mode": 41471,
+      "target": "usr/sbin",
+      "uid": 0
+    },
+    "/usr/bin/sh": {
+      "device": 66306,
+      "inode": 1310829,
+      "mode": 41471,
+      "target": "dash",
+      "uid": 0
+    }
+  },
+  "required_runtime_checks": [
+    "Actual native admission under the frozen2-child request, existing160GBcap and unchanged filesystemfree condition.",
+    "Every allowed library-discovery call recorded, count<=4, no refused child/network attempts; no calls after the import-only window.",
+    "All6named numerical checks including genuine fresh-private60sequence replay, original source/input/output custody, actual forward-step count and30compatibility cells.",
+    "Actual native stopped-group0/durable inventory/sealed result/released storage+lease/cleanupnull; prior failed Torch import and its exact own recovery remain separate history."
+  ],
+  "schema": "independent-numerical-worker-startup-profile-source-review/v1",
+  "scope": "Source/AST and fixed system executable/alias/device metadata only; no execution/imports, weights/latent/corpus/generated prediction/scoring/compatibility payloads, native ledger or private worktree bodies.",
+  "source_and_request_pins": [
+    {
+      "bytes": 28503,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v02.py",
+      "sha256": "10405c2111004b916af0e734ed5ffa5559365e2f5371aefa30402a0505660345"
+    },
+    {
+      "bytes": 32502,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v03.py",
+      "sha256": "5c20913510c14341f028fc608536abd866900333c06a01597e2d6864411f93fd"
+    },
+    {
+      "bytes": 49852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-replay-request-v02.json",
+      "sha256": "58c19ddf8faee5a091c67bc0917703042d942a0c727756d9cdf45b1c929b559f"
+    },
+    {
+      "bytes": 387,
+      "path": "/usr/sbin/ldconfig",
+      "sha256": "bfd5df90c7f070feab584435f106f254ffffaa268a04de5b5c3bd61d59c092f3"
+    },
+    {
+      "bytes": 865840,
+      "path": "/usr/sbin/ldconfig.real",
+      "sha256": "f2a4948219b81a153d8cafe85383acb2f734cdccac00b633891da1cc8532f8f9"
+    },
+    {
+      "bytes": 133608,
+      "path": "/usr/bin/dash",
+      "sha256": "c883d9c27228339580994a1d0ea960645368c7d1b960a712bd0c655860c2d0d7"
+    },
+    {
+      "bytes": 88725,
+      "path": "/usr/lib/python3.12/subprocess.py",
+      "sha256": "baa9f9138d8d20df6284f67e7d2e790f847f65e2c5370de322d54cccd737f2d9"
+    },
+    {
+      "bytes": 14584,
+      "path": "/usr/lib/python3.12/ctypes/util.py",
+      "sha256": "9cddec0d3640c812f023cf850107e38705a040fb22213181a8cd30cdd49ea0d1"
+    }
+  ],
+  "source_delta_review": {
+    "entire_numerical_generation_reload_scoring_compatibility_segment_ast_unchanged": true,
+    "meaning": "The new helper changes only explicit local Torch startup discovery custody and corresponding child budget/engineering accounting. Existing60first+60fresh generations, seal-before-scoring order, candidate adapter and all numerical call bodies are unchanged.",
+    "unchanged_function_asts": [
+      "module",
+      "save",
+      "fresh",
+      "generate_panel",
+      "adapt_candidate"
+    ]
+  },
+  "status": "SOURCE_REVIEW_PASS_RUNTIME_PENDING"
+}

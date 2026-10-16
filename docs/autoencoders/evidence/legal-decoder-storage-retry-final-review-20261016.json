@@ -1,0 +1,174 @@
+{
+  "blocking_findings": [],
+  "curation_verification": [
+    {
+      "all_original_copy_pins_match": true,
+      "copied_bytes": 848663,
+      "files": 41,
+      "index_bytes": 15284,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-decoder-storage-retry-20261016/index-v01.json",
+      "private_prediction_source_input_or_weight_payload_entries": [],
+      "sha256": "8ee29e08190c79ab1f307995d51160c95797e99a9891e902d84566461c27a2b5",
+      "structured_json_payload_key_findings": [],
+      "unlisted_files": []
+    },
+    {
+      "all_original_copy_pins_match": true,
+      "copied_bytes": 281224,
+      "files": 18,
+      "index_bytes": 7417,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-decoder-output-integration-20261016/index-v02.json",
+      "private_prediction_source_input_or_weight_payload_entries": [],
+      "sha256": "e057ef31a964ef836ce649f8155528eff52b198b2f4483a450d3e39322541bb8",
+      "structured_json_payload_key_findings": [],
+      "unlisted_files": []
+    }
+  ],
+  "file_pins": [
+    {
+      "bytes": 16834,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_decoder_output_integration_20261016.md",
+      "sha256": "c8fe81472f637cf99f30a9b8bc218b1a7d1fcd80982bfccdb8edc6fededea1a6"
+    },
+    {
+      "bytes": 98359,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "187cbef757c752722f03a2093f5f0b33be74a98a00eaddff37ac2023b6886437"
+    },
+    {
+      "bytes": 17510,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/README.md",
+      "sha256": "8cff1e5ba4b663663d130d593d0501756949c34935b5420ee29dbac6925ab757"
+    },
+    {
+      "bytes": 5576,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_counted_frame_v1.md",
+      "sha256": "565cbe4db68b1af183464534caf75b31b87511cc4209e8c179a64bf697fd7ca1"
+    },
+    {
+      "bytes": 4625,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_paired_manifest_inventory_v1.md",
+      "sha256": "3195a4ae58d81ab3d7ef6840a5bd919de99f8320e2e3df5e40b9b0164d8a1547"
+    },
+    {
+      "bytes": 21971,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_ir_decoder_output_compatibility_v1.py",
+      "sha256": "d2145191a898dd50b5bcc4b3d61a005cc6cc869b5c49db8c7db74d6452d1d12b"
+    },
+    {
+      "bytes": 29583,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py",
+      "sha256": "d75970f972051e729e4bca494a9f667c06f1610ebb41235aacf3abfcb6e27168"
+    },
+    {
+      "bytes": 33020,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v04.py",
+      "sha256": "25ffbdc7dc863f9129fd821cdf4ea8189b935a80f69e0f531c47d935b5751023"
+    },
+    {
+      "bytes": 1348,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/upstream-reconciliation-v01.json",
+      "sha256": "da5dbc653707d04e4157e16eb480176f0b8e1d30819b4e44cc3a8c1a5da4f9ec"
+    },
+    {
+      "bytes": 60624,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification-request-v02.json",
+      "sha256": "ee641863e1a34da3f193c3115d447693945c82c86383edfbc79088fc1ec3383b"
+    },
+    {
+      "bytes": 49852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-replay-request-v03.json",
+      "sha256": "265577bec114742e13558da0fce595ae69265a82391f45e9caf8e87a2d83ec66"
+    },
+    {
+      "bytes": 15284,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-decoder-storage-retry-20261016/index-v01.json",
+      "sha256": "8ee29e08190c79ab1f307995d51160c95797e99a9891e902d84566461c27a2b5"
+    },
+    {
+      "bytes": 7417,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-decoder-output-integration-20261016/index-v02.json",
+      "sha256": "e057ef31a964ef836ce649f8155528eff52b198b2f4483a450d3e39322541bb8"
+    }
+  ],
+  "final_guide_claim_review": {
+    "closeout": "Bothsuccessfulnativejobs durablysealed,releasedstorage+lease,group0,cleanupnull.21privatepayloadfiles2397930Bremainlocal and are not published.",
+    "cohorts": "Twoexposedprimaryvalidationrows andtwo syntheticlegacytrainingdiagnostics are explicitly distinct; no4or10reviewedlaws, heldoutaccuracy, dimensional superiority, trainingimprovement ornewteacher is claimed.",
+    "conditioning": "Primarycorrectsource0of2allfive; originallegacydonor2of2source,1of2zero,0of2cross; studentauxiliary1of2allcontrols andunchangedtokens. Primarycrosschangesnone,zerochangesbothfordonor/alignedinit/alignedtrained. Greedytokeninvarianceexplicitlydoesnotproveunusedvectors/logits.",
+    "failure_history": "Initialphysicalfree refusal preserved as history; first admittedcollectionmissing2pins andtwoTorchstartupfailures remainseparate. Threeownclaims671088640Breconciled,20files268890Bpreserved; noforeigncleanup/payloaddeletion.",
+    "native_grammar_vs_richer_logic": "60of60nativevalid/complete/EOS,0truncation and60of60richerrelationalunsupported are separate. Tagged canonicalization is explicitly not independently checked; zero flagged changes does not imply a60rowcanonicalnormalizationcheck.",
+    "numerical": "60firstpass+60freshprivate replay=120sequences/3240forwardsteps, all6checks,67.024numerical/154.143parentseconds,814events49origins21owned+28historical matches numerical-native-independent-audit-v01.json.",
+    "qualification": "173collected=173successful=173uniqueJUnit,104new+32contextual+37codec,0fail/error/skip,21checkedorigins matches qualification-native-independent-audit-v01.json.",
+    "resolved_wording_findings": [
+      "No-ledger-change statement scoped to the initial refusal before later legitimate own-claim recovery.",
+      "Completed section now records no optimizer step executed.",
+      "Training step1 reuses completed replay instead of requesting another completed comparison.",
+      "Roadmap uses tested candidate-only inspection rather than a generic semantic qualification claim."
+    ],
+    "resource_startup": "Existing160GBcapandphysicalfreecheck unchanged; finite replay childallowance1to2 for exactpinnedldconfiglookup.1allowedcall/5writingnullopens and0deniednet/child;32writingprobeopenbound and4exactldconfigcallbound remain explicit. Thirdparty/binarydependencies and arbitraryOScontainment remain outside sourceclaim.",
+    "runtime_boundaries": "Referencebearingparentadmission and sameconsumergeneration/reloadbeforescoring are explicit. Noclaimofsystemwide targetreaddenial, independentTorchreplication, training, encoderinference, download, weightpublication, Leanbuild orrichASTgeneration."
+  },
+  "metadata_evidence_refs": {
+    "numerical_audit": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-native-independent-audit-v01.json",
+      "sha256": "07586d2293b452b115cc8b69c667911163cf4036e8bdf0cc1dace2c0fe5cd417"
+    },
+    "qualification_audit": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification-native-independent-audit-v01.json",
+      "sha256": "52257c17ac75d5bef6c89600637acc6d082036bb1a1771b461f12ff0106ef0b8"
+    }
+  },
+  "owned_checkout_head_at_review": "487cb2784fdec51ac402cc068936666af6692bb0",
+  "postmerge_frozen_source_verification": {
+    "all_match_current_bytes": true,
+    "captured_successful_native_release_unix_seconds": [
+      1792125168.337684,
+      1792126542.3596685
+    ],
+    "distinct_union_source_config_system_files_rehashed": 360,
+    "incoming_upstream": "1211e6c17b3f5b8b1c9d838d6a5d94b53d9f5c4b",
+    "independently_confirmed_git_path_roster_matches_engineering_record": true,
+    "merge_after_both_native_closeouts": true,
+    "merge_committer_unix_seconds": 1792126850,
+    "numerical_request_pins": 214,
+    "qualification_request_pins": 253,
+    "qualified_numerical_worker_sha256": "25ffbdc7dc863f9129fd821cdf4ea8189b935a80f69e0f531c47d935b5751023",
+    "qualified_product_sha256": "d2145191a898dd50b5bcc4b3d61a005cc6cc869b5c49db8c7db74d6452d1d12b",
+    "qualified_test_sha256": "d75970f972051e729e4bca494a9f667c06f1610ebb41235aacf3abfcb6e27168",
+    "source_model_test_rerun_implied": false,
+    "source_pin_intersections": {
+      "numerical-replay-request-v03.json": [],
+      "qualification-request-v02.json": []
+    },
+    "upstream_changed_paths": [
+      "docs/autoencoders/container_execution_boundary.md",
+      "docs/autoencoders/legal_counted_frame_v1.md",
+      "docs/autoencoders/legal_paired_manifest_inventory_v1.md",
+      "docs/implementation/reports/evidence/legal_ir_container_boundary_20261016.json",
+      "ipfs_datasets_py/logic/autoformal/legal_counted_frame_v1.py",
+      "ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_container_boundary.py",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_kernel_custody.py",
+      "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py",
+      "tests/unit/logic/autoformal/test_legal_paired_manifest_inventory_v1.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_container_boundary.py"
+    ]
+  },
+  "publication_limits": [
+    "Curation is copied engineering/source metadata, not a self-contained model/corpus/prediction replay bundle.",
+    "Index hashes and counts are exact for the reviewed41file retry and18file historical selections before any later added audit/index version.",
+    "Normalpublication/merge must retain these exactsource/evidencebytes; nativevalidation establishes no legal fidelity/traininggold/modelpromotion/Leanauthority."
+  ],
+  "review_scope": "Read-only source/docs/AST-established contracts, owned Git commit/path metadata, and allowed engineering/copy metadata. No product/tests/models executed/imported; no weights/latents/corpus/fixture/generated prediction/source-input/scoring/compatibility/private source-event payload bodies, ledger or canonical Git/private worktree bodies opened.",
+  "roadmap_integration_review": {
+    "README_scope": "Existing navigation/source file retained unchanged by this increment and merge; comprehensive plan links current decoder guide and the new scoped upstream owners.",
+    "completed_decoder_increment_preserved": true,
+    "counted_frame_scope": "Authored fixedatmostthreeevent/timeframe, many-sortedFOLwithObjectequality and specializedLeantext; explicitly separate from current relational/join/TDFOLnativeequality, reviewedstatute, generalcardinality oractualLeanbuild.",
+    "incoming_counted_frame_and_selected_manifest_owners_reconciled": true,
+    "selected_manifest_inventory_scope": "Selected pinned manifest declarations only; physical table bytes/schema/rowidentity/reciprocalgoals and uniquesourceoccurrences unknown, legacybanks excluded; no graph/source/review/gold inferred.",
+    "training_graph_lean_gates_preserved": true,
+    "unchanged_asset_reference_and_older_lineages_preserved": true
+  },
+  "schema": "independent-decoder-retry-final-source-doc-curation-review/v1",
+  "status": "PASS"
+}

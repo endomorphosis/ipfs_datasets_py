@@ -3,15 +3,19 @@
 This increment of the [US Code improvement plan](legal_ir_uscode_corpus_improvement_plan_20261015.md)
 starts from `6b8b1346f888adbebbcf1d714e4ad0ab39a02052` and reuses the
 [reconciled assets](legal_ir_asset_reconciliation_20261016.md).
-Its implementation and numerical replay are **pending native validation**.
-No new training, model inference, legal review or Lean build has executed in
-this increment. Source inspection and authored test cases do not establish
-runtime correctness or higher autoformalization accuracy.
+The continuation passed **173 native test cases** and completed **60 generated
+sequences plus 60 exact fresh-model replays**, with 3,240 forward steps. All sixty
+first-pass outputs satisfy their retained grammar; all sixty remain unsupported
+as richer relational requests. No training, legal review, teacher promotion or
+Lean build follows from this validation.
 
 The [evidence index](evidence/legal-decoder-output-integration-20261016/index-v02.json)
 binds the source surveys, authored worker/configuration, frozen native requests,
 readonly capacity observations and actual admission refusal. It contains no
 checkpoint, latent, corpus or generated prediction payloads.
+The [completed retry evidence](evidence/legal-decoder-storage-retry-20261016/index-v01.json)
+adds native receipts, independent engineering audits and the exact startup
+profile. Original failed/refused evidence remains unchanged.
 
 ## Output compatibility is the immediate gap
 
@@ -48,7 +52,7 @@ validity, completeness and canonicalization are reported separately from
 a relational request, and an unsupported format is not called a model abstention.
 Capture descriptors intentionally have no fabricated encoder binding.
 
-## Prepared numerical comparison
+## Completed numerical comparison
 
 The private native worker reuses the existing source-only generator, retained
 parent admissions, original and aligned loaders, intervention selection and
@@ -76,15 +80,66 @@ generator, and generation/replay completes before reference scoring. It does not
 claim system-wide denial of reference-file reads. Zero coordinates leave model
 biases active and are not a disabled architecture branch.
 
-The prepared numerical budget is one CPU slot, one child slot, 4 GiB sampled
+The initial numerical budget was one CPU slot, one child slot, 4 GiB sampled
 resident accounting, 256 MiB storage and 1,800 seconds. A separate 16 GiB virtual
 address-space ceiling and 1,200 CPU-second process limit do not increase the
 native resident grant. The unchanged native owner supplies admission, startup
 barrier, supervision, durable output sealing and release. The old nonnumerical
 guard is not relaxed to permit Torch. No model download, encoder inference or
-optimizer step is planned.
+optimizer step was executed.
 
-## Storage prerequisite and validation status
+The installed `torch 2.13.0+cu130` imports CUDA library-discovery and optional
+Dill file-type probes even though the numerical tensors and operations use CPU
+float32. The first two numerical attempts stopped during this startup, before
+decoder generation. A separately frozen startup profile raised **this replay's
+process allowance from one to two**. It permits at most four exact
+`/sbin/ldconfig -p` calls during Torch import, with fixed C locale, no shell/new
+session/process-group changes and pinned wrapper, real executable and Dash
+interpreter. The wrapper's `-p` branch skips package triggers and replaces itself
+in the same PID. Known root-owned system aliases are checked explicitly.
+
+The same startup window permits at most 32 writable standard-I/O probe opens on
+the verified root-owned `/dev/null` character device `1:3`. It grants no regular
+file output path. The completed run observed one allowed discovery call and five
+writable null-device opens, with zero denied network or child-process attempts.
+CPU, memory, storage and global policy remain unchanged; all other subprocesses
+and persistent writes outside the native attempt remain denied.
+
+The replay segment took 67.024 seconds; complete native execution took 154.143
+seconds. These are validation timings, not an inference throughput benchmark.
+Fresh-load agreement covers complete generation receipt digests, including raw
+logit/prefix hashes and unchanged state, buffer, gradient and input checks.
+The run recorded 814 checked source execution events from 49 distinct origins
+(21 owned-checkout and 28 historical exact-path sources). All 21 private payload
+files, totaling 2,397,930 bytes, remain in their durable native attempt.
+
+| Correct-source variant | Primary exact stored target | Legacy exact stored target |
+| --- | --- | --- |
+| Original donors | 0/2 | 2/2 |
+| Original 768D initialization | 0/2 | 1/2 |
+| Aligned 768D initialization | 0/2 | 1/2 |
+| Original-start trained interfaces | 0/2 | 1/2 |
+| Aligned-start trained interfaces | 0/2 | 1/2 |
+
+The primary rows are exposed validation; the two legacy rows are synthetic
+training diagnostics. These repeated measurements are not ten independently
+reviewed laws. Native grammar validity and EOS completion are 60/60 across all
+variant/control observations, with no truncations or flagged canonicalization
+changes; tagged decoding does not independently check canonicalization.
+
+Cross-source inputs change no primary token sequence in this small panel. Zero
+inputs change both primary sequences for the donor, aligned initialization and
+aligned trained interfaces. All four student auxiliary heads keep their tokens
+unchanged under both interventions, while the original legacy donor changes one
+under zero input and both under cross-source input. Greedy-token invariance does
+not establish that latent vectors or logits are unused. The result supplies a
+specific discrimination/retention diagnostic, not dimensional superiority,
+held-out accuracy or legal fidelity. No new weights were fitted or published.
+
+## Storage history and native qualification
+
+The following initial refusal is preserved as history; the completed retry below
+supersedes its pending-execution status.
 
 The qualified readonly storage observer reported zero headroom. At the subsequent
 metadata snapshot, 21,442,281,472 bytes were available; 92 retained reservations
@@ -99,38 +154,63 @@ Its available-space observation had fallen to 19,653,750,784 bytes and reported
 a 13,666,887,232-byte free-space deficit for that test request. The 256 MiB
 numerical request would have needed 13,801,104,960 additional bytes at that
 snapshot. Plan for at least 15 GB of restored capacity, then obtain fresh native
-admission; the numerical request has not been submitted. The retained/active
+admission; at that point the numerical request had not been submitted. The retained/active
 commitments, rather than the configured 160 GB named-root accounting cap, caused
 this filesystem-capacity refusal.
 The [native closeout](evidence/legal-decoder-output-integration-20261016/capacity-closeout-v02.json)
 and [controller stderr](evidence/legal-decoder-output-integration-20261016/qualification01-controller-stderr.log)
 retain the refusal and its exact original commitment. The revised numerical
-request is prepared with 209 source pins, including the existing native scheduler
-facade; the refused qualification request has 251. The numerical request remains
-unsubmitted.
+request was prepared with 209 source pins, including the existing native scheduler
+facade; the refused qualification request had 251. That original request remained
+unsubmitted; the continuation used the separately versioned requests below.
 
 `retained` is an accounting status, not permission to reclaim another owner's
-reservation. The concrete options are additional filesystem capacity or
+reservation. The initial concrete options were additional filesystem capacity or
 owner-led durable finalization of historical retained reservations after their
-exact custody, liveness and retained-byte checks. This work has not edited the
-ledger, changed policy caps, released foreign reservations or deleted weights,
-corpora or evidence.
+exact custody, liveness and retained-byte checks. At the initial refusal no ledger
+or policy was changed, no foreign reservation was released and no weights,
+corpora or evidence were deleted.
 
 The selected qualification comprises the new compatibility tests and existing
 lexical-output and tagged-codec tests. The new cases are authored receipt
 consistency controls with uncomputed logit/state declarations; they do not attest
-model execution. Both the test job and numerical job require native admission.
-Source-only AST and independent contract reviews are recorded separately from
-executed qualification. Keep this change in draft until execution is available.
+model execution. Both jobs initially awaited native admission. Source-only AST
+and independent contract reviews remained separate from executed qualification,
+and the PR stayed in draft pending the execution reported below.
 The [independent source audit](evidence/legal-decoder-output-integration-20261016/source-helper-doc-audit-v02.json)
 reviews the frozen adapter, 104 authored cases and numerical worker. It reports
 source consistency only, and attributes the admission result to the root's
 retained native refusal rather than claiming a second execution.
 
+The later retry obtained native admission under the unchanged **160 GB campaign
+cap**, after outstanding commitments decreased. The cap itself had not been
+exceeded; increasing it would not have fixed the independent filesystem-free
+check. Only the replay's process allowance needed to increase for the observed
+startup helper described above.
+
+The first admitted test attempt failed collection because its frozen source
+roster omitted `legal_ir_family_evaluator.py` and `snapshot_evaluator.py`.
+Adding their exact hashes resolved collection without changing product code.
+The corrected 253-pin qualification executed 104 new compatibility cases, 32
+existing lexical-output cases and 37 existing tagged-codec cases: **173 collected
+= 173 successful calls = 173 unique JUnit cases**, with zero failures, errors or
+skips and 21 checked product origins. The numerical job used 214 source/config/
+system-file pins and completed all six declared checks.
+
+Both successful native jobs sealed durable outputs, released their storage and
+scheduler leases, closed with zero live group processes and reported null cleanup
+errors. Three exact owned failed claims were reconciled after custody/liveness/
+durability checks: 671,088,640 bytes of promises released, with all twenty files
+and 268,890 bytes retained. No foreign reservation or policy was changed and no
+payload was deleted. The numerical and qualification independent audits verify
+the engineering receipts; they do not open prediction/model/corpus payloads or
+grant semantic authority.
+
 ## Training work after this boundary is qualified
 
-1. **Replay before fitting.** Complete the prepared comparison and preserve every
-   generation and failure. Choose a retained initialization on declared
+1. **Reuse the completed replay before fitting.** Preserve every generation and
+   failure and diagnose the observed discrimination and auxiliary-retention
+   gaps. Choose a retained initialization on declared
    development criteria; do not select favorable control subsets or repeat the
    full historical 930-generation diagnostic merely to produce another score.
 2. **Freeze the target contract.** Use reviewed complete provisions and their

@@ -1,0 +1,1388 @@
+{
+  "Lean_executed": false,
+  "admitted": false,
+  "all_checks_complete": true,
+  "arrow_thread_limits": {
+    "cpu": 1,
+    "io": 1
+  },
+  "authority_granted": false,
+  "completed_checks": [
+    "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py",
+    "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py"
+  ],
+  "dependency_versions": {
+    "numpy": "1.26.4",
+    "pyarrow": "23.0.1",
+    "pytest": "9.1.1"
+  },
+  "elapsed_seconds": 1.002076409989968,
+  "formalized": false,
+  "guard_attempts": {
+    "child_process": 0,
+    "network": 0
+  },
+  "junit": {
+    "case_count": 173,
+    "counts_by_module": {
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py": 104,
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py": 32,
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py": 37
+    },
+    "errors": 0,
+    "failures": 0,
+    "file": {
+      "bytes": 32886,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/exports/junit.xml",
+      "sha256": "97c4b71fe3faf7b322c7397aec544c044622c890fb81aa3c65b4dc8b09ebee4e"
+    },
+    "selected_target_coverage": {
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py": 104,
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py": 32,
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py": 37
+    },
+    "skipped": 0,
+    "unique_testcase_ids": [
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_authored_fixtures_are_only_consistent_receipt_declarations[original-primary384]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_authored_fixtures_are_only_consistent_receipt_declarations[native768-primary]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_authored_fixtures_are_only_consistent_receipt_declarations[original-legacy8]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_authored_fixtures_are_only_consistent_receipt_declarations[native768-auxiliary]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[primary384-lexical]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[native768-lexical]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[legacy8-tagged]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[native768-tagged]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_original_raw_transports_are_committed_separately_from_parsed_content"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_source_and_checkpoint_are_committed_declarations_not_verified_assets"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_each_input_needs_its_independent_original_raw_pin[receipt-raw-pin]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_each_input_needs_its_independent_original_raw_pin[full-codec-raw-pin]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_each_input_needs_its_independent_original_raw_pin[capture-raw-pin]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[receipt-binding]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[codec-binding]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[input-width]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[boolean-width]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[head]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[variant]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[model-state]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[raw-input-vector]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[numerical-input-vector]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_closed_capture_does_not_accept_extra_provenance_or_target_channels[invented-encoder]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_closed_capture_does_not_accept_extra_provenance_or_target_channels[reference-channel]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_closed_capture_does_not_accept_extra_provenance_or_target_channels[execution-authority]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_closed_capture_does_not_accept_extra_provenance_or_target_channels[latent-verification]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_closed_capture_does_not_accept_extra_provenance_or_target_channels[invented-relational-request]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_original_full_codec_and_its_declared_profile_are_required[tagged-policy-required]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_original_full_codec_and_its_declared_profile_are_required[tagged-source-vocabulary-required]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_original_full_codec_and_its_declared_profile_are_required[tagged-policy-exact]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_original_full_codec_and_its_declared_profile_are_required[tagged-source-order-exact]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_original_full_codec_and_its_declared_profile_are_required[lexical-closed-schema]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_original_full_codec_and_its_declared_profile_are_required[lexical-token-uniqueness]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_original_full_codec_and_its_declared_profile_are_required[lexical-special-ids]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_original_full_codec_and_its_declared_profile_are_required[receipt-full-vocabulary-binding]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_other_heads_codec_is_not_reinterpreted_or_reconstructed[tagged-is-not-lexical]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_other_heads_codec_is_not_reinterpreted_or_reconstructed[lexical-is-not-tagged]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_profile_budget_overflow_remains_native_output_failure[lexical-inherited-budget]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_profile_budget_overflow_remains_native_output_failure[tagged-inherited-budget]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[lexical-interior-pad]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[lexical-interior-bos]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[tagged-interior-pad]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[tagged-interior-bos]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_cap_without_eos_cannot_become_a_complete_candidate[lexical-cap]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_cap_without_eos_cannot_become_a_complete_candidate[tagged-cap]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_eos_after_bos_retains_an_invalid_empty_output[lexical-early-eos]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_eos_after_bos_retains_an_invalid_empty_output[tagged-early-eos]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_lexical_canonicalization_changes_remain_separate_from_generated_payload"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_ordered_lexical_rule_sequence_is_not_replaced_by_native_sorted_order"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_tagged_duplicate_qualifiers_are_rejected_without_canonical_normalization"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_valid_json_with_invalid_native_modality_is_not_autoformalized"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[closed-receipt]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[bos-required]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[nothing-after-eos]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[integer-token-required]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[vocabulary-bound]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[prefix-chain]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[step-selected-token]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[step-input-binding]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[producer-source-pin]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[stop-consistency]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[unchanged-state]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[no-encoder-run]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[no-proof-authority]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[no-training-step]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_malformed_receipt_is_refused_without_repair[fixed-numerical-profile]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[receipt-utf8]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[codec-utf8]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[capture-utf8]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[receipt-duplicate-key]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[codec-duplicate-key]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[capture-duplicate-key]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[receipt-nan]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[codec-nan]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[capture-nan]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[receipt-object]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[codec-object]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[capture-object]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[receipt-byte-bound]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[codec-byte-bound]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[capture-byte-bound]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[receipt-depth-bound]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[codec-depth-bound]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_raw_input_bounds_and_json_shape_are_strict[capture-depth-bound]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_is_bounded_closed_metadata[nonempty-id]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_is_bounded_closed_metadata[bounded-id]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_is_bounded_closed_metadata[printable-id]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_is_bounded_closed_metadata[nonblank-control]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_is_bounded_closed_metadata[bounded-control]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_is_bounded_closed_metadata[lowercase-source-pin]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_is_bounded_closed_metadata[explicit-checkpoint-pin]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_capture_is_bounded_closed_metadata[exact-capture-schema]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_full_report_resealing_cannot_bypass_regeneration[authority-reseal]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_full_report_resealing_cannot_bypass_regeneration[execution-reseal]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_full_report_resealing_cannot_bypass_regeneration[training-mask-reseal]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_full_report_resealing_cannot_bypass_regeneration[gold-mask-reseal]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_full_report_resealing_cannot_bypass_regeneration[rich-support-reseal]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_full_report_resealing_cannot_bypass_regeneration[invented-request-reseal]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_full_report_resealing_cannot_bypass_regeneration[native-result-reseal]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_full_report_resealing_cannot_bypass_regeneration[raw-token-reseal]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_full_report_resealing_cannot_bypass_regeneration[capture-source-reseal]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_full_report_resealing_cannot_bypass_regeneration[unknown-report-field]"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_uncomputed_logit_hash_change_requires_changed_input_report_even_after_resealing"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1",
+        "name": "test_independent_report_pin_is_required_for_replay_validation"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_generated_rule_conforms_to_actual_contract_without_reference_or_source"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_rule_order_is_preserved_and_compared_separately_from_native_canonical_order"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_native_canonicalization_does_not_rewrite_duplicate_qualifiers_in_generated_output"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_missing_prediction_keeps_full_reference_denominators"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_valid_json_without_eos_is_incomplete_and_cannot_score_exact"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_missing_or_unsupported_status_cannot_be_scored_as_complete[None]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_missing_or_unsupported_status_cannot_be_scored_as_complete[True]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_missing_or_unsupported_status_cannot_be_scored_as_complete[finished]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_runtime_deadline_receipt_remains_an_unscorable_failure"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_invalid_generation_receipts_are_not_repaired[<lambda>0]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_invalid_generation_receipts_are_not_repaired[<lambda>1]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_invalid_generation_receipts_are_not_repaired[<lambda>2]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_invalid_generation_receipts_are_not_repaired[<lambda>3]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_invalid_generation_receipts_are_not_repaired[<lambda>4]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_duplicate_json_key_refuses_without_a_reference_fallback"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_syntactic_json_with_invalid_native_modality_remains_invalid"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_output_limit_is_independent_and_strictly_typed[True]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_output_limit_is_independent_and_strictly_typed[3]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_output_limit_is_independent_and_strictly_typed[513]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_output_limit_is_independent_and_strictly_typed[8192]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_output_limit_is_independent_and_strictly_typed[512.0]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_gold_or_authority_fields_cannot_be_injected_into_generated_rows"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_unknown_or_duplicate_candidate_identity_refuses_in_scoring"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_returned_ir_is_detached_from_all_caller_values"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_existing_source_withheld_realizer_receives_only_generated_ir"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_source_withheld_realizer_does_not_render_an_incomplete_candidate"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_text_metrics_distinguish_utf8_bytes_nfc_and_whitespace"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_text_normalization_preserves_case_punctuation_and_order[trustee SHALL approve.]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_text_normalization_preserves_case_punctuation_and_order[Trustee shall approve]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_text_normalization_preserves_case_punctuation_and_order[Approve shall Trustee.]"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_missing_text_prediction_is_a_failure_not_a_changed_denominator"
+      },
+      {
+        "classname": "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output",
+        "name": "test_text_evaluator_rejects_unknown_ids_or_hidden_data"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_actual_full_ir_roundtrip_preserves_all_seven_facets"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_vocabularies_are_deterministic_and_survive_json"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_source_ids_retain_content_and_negation_without_parser"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_identifiers_are_exact_not_historical_hash_buckets"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_scope_quantity_and_kind_are_distinct_exact_atoms"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_typed_atoms_cannot_collide_with_markers_or_other_fields"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_unknown_source_and_target_never_extend_training_vocab"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_empty_invalid_and_incomplete_sequences_never_decode[ids0]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_empty_invalid_and_incomplete_sequences_never_decode[ids1]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_empty_invalid_and_incomplete_sequences_never_decode[ids2]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_empty_invalid_and_incomplete_sequences_never_decode[ids3]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_empty_invalid_and_incomplete_sequences_never_decode[ids4]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_empty_invalid_and_incomplete_sequences_never_decode[ids5]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_empty_invalid_and_incomplete_sequences_never_decode[ids6]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_eos_never_appears_before_all_fields_and_cannot_be_padded"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values0]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values1]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values2]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values3]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values4]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_qualifier_limit_and_lexical_order_enforced_during_generation"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_extra_information_is_rejected_not_dropped[<lambda>0]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_extra_information_is_rejected_not_dropped[<lambda>1]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_extra_information_is_rejected_not_dropped[<lambda>2]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_extra_information_is_rejected_not_dropped[<lambda>3]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_extra_information_is_rejected_not_dropped[<lambda>4]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_pgir_placeholder_validation_is_reused"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_source_limit_never_truncates"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_target_prefix_limit_is_hard"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>0]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>1]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>2]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>3]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>4]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>5]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>6]"
+      },
+      {
+        "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec",
+        "name": "test_vocab_and_example_limits"
+      }
+    ]
+  },
+  "legal_meanings_reviewed": false,
+  "limitations": [
+    "This is test execution evidence, not legal meaning, review, training or Lean authority.",
+    "Test and fixture writes use explicit native paths and redirects; the native profile is cooperative, not a kernel filesystem quota or sandbox.",
+    "Python socket/process audit events are denied; this is not an OS network-isolation attestation.",
+    "Product Python modules execute checked source buffers; external dependency versions do not attest distribution integrity.",
+    "Only the native parent can assert final process closeout, artifact durability and resource release."
+  ],
+  "loaded_product_source_origins": {
+    "ipfs_datasets_py": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "ipfs_datasets_py.logic": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/__init__.py",
+      "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+    },
+    "ipfs_datasets_py.logic.formalization": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/__init__.py",
+      "sha256": "91c60c1dfbf9038b8271ae6b1495dbbaf0be8d6ce438524c33f4f7a586f17266"
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/__init__.py",
+      "sha256": "82206d6ca08b8626b2afd37534679ac3ea001005f934ed211aa0f1f4eb81f073"
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder.contextual_legal_ir_output": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder.decoder_source_fidelity": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder.gte_decoder_source_generation": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_generation.py",
+      "sha256": "3fe2bc54e36bd5b9f68bafe236193f2c377efa37090e2fe971a9a8e0bcc5aedf"
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder.legal_ir_decoder_output_compatibility_v1": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_ir_decoder_output_compatibility_v1.py",
+      "sha256": "d2145191a898dd50b5bcc4b3d61a005cc6cc869b5c49db8c7db74d6452d1d12b"
+    },
+    "ipfs_datasets_py.logic.legal_ir": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/__init__.py",
+      "sha256": "53ce51e56a292ea3210010fa17b352e9d40eb5b59cf15c5e732147000b40fee1"
+    },
+    "ipfs_datasets_py.logic.legal_ir.canonical_contracts": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "ipfs_datasets_py.logic.legal_ir.canonical_decompiler": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+    },
+    "ipfs_datasets_py.optimizers": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/__init__.py",
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+      "sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31"
+    },
+    "ipfs_datasets_py.router_deps": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/router_deps.py",
+      "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+    },
+    "ipfs_datasets_py.utils": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/__init__.py",
+      "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+    },
+    "ipfs_datasets_py.utils.cid_utils": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  },
+  "models_loaded": false,
+  "native_parent_owns_admission_supervision_seal_and_release": true,
+  "natural_product_namespaces": {},
+  "product_origin_diagnostics_before_guard": {
+    "actual_product_files": {
+      "ipfs_datasets_py": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/__init__.py",
+      "ipfs_datasets_py.logic": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/__init__.py",
+      "ipfs_datasets_py.logic.formalization": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/__init__.py",
+      "ipfs_datasets_py.logic.formalization.autoencoder": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/__init__.py",
+      "ipfs_datasets_py.logic.formalization.autoencoder.contextual_legal_ir_output": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "ipfs_datasets_py.logic.formalization.autoencoder.decoder_source_fidelity": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "ipfs_datasets_py.logic.formalization.autoencoder.gte_decoder_source_generation": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_generation.py",
+      "ipfs_datasets_py.logic.formalization.autoencoder.legal_ir_decoder_output_compatibility_v1": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_ir_decoder_output_compatibility_v1.py",
+      "ipfs_datasets_py.logic.legal_ir": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/__init__.py",
+      "ipfs_datasets_py.logic.legal_ir.canonical_contracts": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "ipfs_datasets_py.logic.legal_ir.canonical_decompiler": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "ipfs_datasets_py.optimizers": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/__init__.py",
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+      "ipfs_datasets_py.router_deps": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/router_deps.py",
+      "ipfs_datasets_py.utils": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/__init__.py",
+      "ipfs_datasets_py.utils.cid_utils": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/cid_utils.py"
+    },
+    "complete": true,
+    "counts": {
+      "actual_product_modules": 21,
+      "finder_loaded": 21,
+      "finder_refused": 0
+    },
+    "derived_origin_mismatches": [],
+    "finder_loaded": {
+      "ipfs_datasets_py": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/__init__.py",
+        "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+      },
+      "ipfs_datasets_py.logic": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/__init__.py",
+        "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+      },
+      "ipfs_datasets_py.logic.formalization": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/__init__.py",
+        "sha256": "91c60c1dfbf9038b8271ae6b1495dbbaf0be8d6ce438524c33f4f7a586f17266"
+      },
+      "ipfs_datasets_py.logic.formalization.autoencoder": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/__init__.py",
+        "sha256": "82206d6ca08b8626b2afd37534679ac3ea001005f934ed211aa0f1f4eb81f073"
+      },
+      "ipfs_datasets_py.logic.formalization.autoencoder.contextual_legal_ir_output": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+        "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+      },
+      "ipfs_datasets_py.logic.formalization.autoencoder.decoder_source_fidelity": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+        "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+      },
+      "ipfs_datasets_py.logic.formalization.autoencoder.gte_decoder_source_generation": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_generation.py",
+        "sha256": "3fe2bc54e36bd5b9f68bafe236193f2c377efa37090e2fe971a9a8e0bcc5aedf"
+      },
+      "ipfs_datasets_py.logic.formalization.autoencoder.legal_ir_decoder_output_compatibility_v1": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_ir_decoder_output_compatibility_v1.py",
+        "sha256": "d2145191a898dd50b5bcc4b3d61a005cc6cc869b5c49db8c7db74d6452d1d12b"
+      },
+      "ipfs_datasets_py.logic.legal_ir": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/__init__.py",
+        "sha256": "53ce51e56a292ea3210010fa17b352e9d40eb5b59cf15c5e732147000b40fee1"
+      },
+      "ipfs_datasets_py.logic.legal_ir.canonical_contracts": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+        "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+      },
+      "ipfs_datasets_py.logic.legal_ir.canonical_decompiler": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+        "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+      },
+      "ipfs_datasets_py.optimizers": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/__init__.py",
+        "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+      },
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+        "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+      },
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+        "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+      },
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+        "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+      },
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+        "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+      },
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+        "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+      },
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+        "sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31"
+      },
+      "ipfs_datasets_py.router_deps": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/router_deps.py",
+        "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+      },
+      "ipfs_datasets_py.utils": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/__init__.py",
+        "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+      },
+      "ipfs_datasets_py.utils.cid_utils": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+        "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      }
+    },
+    "finder_refused": [],
+    "max_entries_per_map_or_list": 256
+  },
+  "product_router_discovery_only": [
+    {
+      "module": "ipfs_datasets_py.ipfs_backend_router",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/ipfs_backend_router.py"
+    }
+  ],
+  "pytest_arguments": [
+    "-q",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-c",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/pytest.ini",
+    "-o",
+    "addopts=-q --tb=short --strict-markers --import-mode=importlib",
+    "--noconftest",
+    "--disable-warnings",
+    "-p",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest",
+    "--basetemp=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/pytest/basetemp",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/exports/junit.xml",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/cache/pytest",
+    "--assert=plain",
+    "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py",
+    "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py"
+  ],
+  "pytest_execution_evidence": {
+    "collected_nodeids": [
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_authored_fixtures_are_only_consistent_receipt_declarations[original-primary384]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_authored_fixtures_are_only_consistent_receipt_declarations[native768-primary]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_authored_fixtures_are_only_consistent_receipt_declarations[original-legacy8]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_authored_fixtures_are_only_consistent_receipt_declarations[native768-auxiliary]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[primary384-lexical]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[native768-lexical]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[legacy8-tagged]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[native768-tagged]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_raw_transports_are_committed_separately_from_parsed_content",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_source_and_checkpoint_are_committed_declarations_not_verified_assets",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_each_input_needs_its_independent_original_raw_pin[receipt-raw-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_each_input_needs_its_independent_original_raw_pin[full-codec-raw-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_each_input_needs_its_independent_original_raw_pin[capture-raw-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[receipt-binding]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[codec-binding]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[input-width]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[boolean-width]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[head]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[variant]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[model-state]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[raw-input-vector]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[numerical-input-vector]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_closed_capture_does_not_accept_extra_provenance_or_target_channels[invented-encoder]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_closed_capture_does_not_accept_extra_provenance_or_target_channels[reference-channel]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_closed_capture_does_not_accept_extra_provenance_or_target_channels[execution-authority]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_closed_capture_does_not_accept_extra_provenance_or_target_channels[latent-verification]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_closed_capture_does_not_accept_extra_provenance_or_target_channels[invented-relational-request]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[tagged-policy-required]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[tagged-source-vocabulary-required]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[tagged-policy-exact]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[tagged-source-order-exact]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[lexical-closed-schema]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[lexical-token-uniqueness]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[lexical-special-ids]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[receipt-full-vocabulary-binding]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_other_heads_codec_is_not_reinterpreted_or_reconstructed[tagged-is-not-lexical]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_other_heads_codec_is_not_reinterpreted_or_reconstructed[lexical-is-not-tagged]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_profile_budget_overflow_remains_native_output_failure[lexical-inherited-budget]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_profile_budget_overflow_remains_native_output_failure[tagged-inherited-budget]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[lexical-interior-pad]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[lexical-interior-bos]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[tagged-interior-pad]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[tagged-interior-bos]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_cap_without_eos_cannot_become_a_complete_candidate[lexical-cap]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_cap_without_eos_cannot_become_a_complete_candidate[tagged-cap]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_eos_after_bos_retains_an_invalid_empty_output[lexical-early-eos]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_eos_after_bos_retains_an_invalid_empty_output[tagged-early-eos]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_lexical_canonicalization_changes_remain_separate_from_generated_payload",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_ordered_lexical_rule_sequence_is_not_replaced_by_native_sorted_order",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_tagged_duplicate_qualifiers_are_rejected_without_canonical_normalization",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_valid_json_with_invalid_native_modality_is_not_autoformalized",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[closed-receipt]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[bos-required]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[nothing-after-eos]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[integer-token-required]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[vocabulary-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[prefix-chain]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[step-selected-token]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[step-input-binding]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[producer-source-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[stop-consistency]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[unchanged-state]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[no-encoder-run]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[no-proof-authority]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[no-training-step]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[fixed-numerical-profile]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-utf8]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-utf8]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-utf8]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-duplicate-key]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-duplicate-key]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-duplicate-key]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-nan]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-nan]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-nan]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-object]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-object]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-object]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-byte-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-byte-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-byte-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-depth-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-depth-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-depth-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[nonempty-id]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[bounded-id]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[printable-id]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[nonblank-control]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[bounded-control]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[lowercase-source-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[explicit-checkpoint-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[exact-capture-schema]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[authority-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[execution-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[training-mask-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[gold-mask-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[rich-support-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[invented-request-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[native-result-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[raw-token-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[capture-source-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[unknown-report-field]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_uncomputed_logit_hash_change_requires_changed_input_report_even_after_resealing",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_independent_report_pin_is_required_for_replay_validation",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_generated_rule_conforms_to_actual_contract_without_reference_or_source",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_rule_order_is_preserved_and_compared_separately_from_native_canonical_order",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_native_canonicalization_does_not_rewrite_duplicate_qualifiers_in_generated_output",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_missing_prediction_keeps_full_reference_denominators",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_valid_json_without_eos_is_incomplete_and_cannot_score_exact",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_missing_or_unsupported_status_cannot_be_scored_as_complete[None]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_missing_or_unsupported_status_cannot_be_scored_as_complete[True]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_missing_or_unsupported_status_cannot_be_scored_as_complete[finished]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_runtime_deadline_receipt_remains_an_unscorable_failure",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_invalid_generation_receipts_are_not_repaired[<lambda>0]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_invalid_generation_receipts_are_not_repaired[<lambda>1]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_invalid_generation_receipts_are_not_repaired[<lambda>2]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_invalid_generation_receipts_are_not_repaired[<lambda>3]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_invalid_generation_receipts_are_not_repaired[<lambda>4]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_duplicate_json_key_refuses_without_a_reference_fallback",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_syntactic_json_with_invalid_native_modality_remains_invalid",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_output_limit_is_independent_and_strictly_typed[True]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_output_limit_is_independent_and_strictly_typed[3]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_output_limit_is_independent_and_strictly_typed[513]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_output_limit_is_independent_and_strictly_typed[8192]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_output_limit_is_independent_and_strictly_typed[512.0]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_gold_or_authority_fields_cannot_be_injected_into_generated_rows",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_unknown_or_duplicate_candidate_identity_refuses_in_scoring",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_returned_ir_is_detached_from_all_caller_values",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_existing_source_withheld_realizer_receives_only_generated_ir",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_source_withheld_realizer_does_not_render_an_incomplete_candidate",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_text_metrics_distinguish_utf8_bytes_nfc_and_whitespace",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_text_normalization_preserves_case_punctuation_and_order[trustee SHALL approve.]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_text_normalization_preserves_case_punctuation_and_order[Trustee shall approve]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_text_normalization_preserves_case_punctuation_and_order[Approve shall Trustee.]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_missing_text_prediction_is_a_failure_not_a_changed_denominator",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_text_evaluator_rejects_unknown_ids_or_hidden_data",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_actual_full_ir_roundtrip_preserves_all_seven_facets",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_vocabularies_are_deterministic_and_survive_json",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_source_ids_retain_content_and_negation_without_parser",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_identifiers_are_exact_not_historical_hash_buckets",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_scope_quantity_and_kind_are_distinct_exact_atoms",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_typed_atoms_cannot_collide_with_markers_or_other_fields",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_unknown_source_and_target_never_extend_training_vocab",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids0]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids1]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids2]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids3]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids4]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids5]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids6]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_eos_never_appears_before_all_fields_and_cannot_be_padded",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values0]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values1]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values2]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values3]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values4]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_qualifier_limit_and_lexical_order_enforced_during_generation",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_extra_information_is_rejected_not_dropped[<lambda>0]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_extra_information_is_rejected_not_dropped[<lambda>1]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_extra_information_is_rejected_not_dropped[<lambda>2]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_extra_information_is_rejected_not_dropped[<lambda>3]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_extra_information_is_rejected_not_dropped[<lambda>4]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_pgir_placeholder_validation_is_reused",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_source_limit_never_truncates",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_target_prefix_limit_is_hard",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>0]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>1]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>2]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>3]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>4]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>5]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>6]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_vocab_and_example_limits"
+    ],
+    "complete": true,
+    "counts": {
+      "collected": 173,
+      "successful_calls": 173,
+      "unsuccessful_reports": 0
+    },
+    "max_entries_per_list": 20000,
+    "module_prefixes": {
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py": [
+        "tests.unit.logic.autoformal.test_legal_ir_decoder_output_compatibility_v1"
+      ],
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py": [
+        "autoencoder.test_contextual_legal_ir_output",
+        "tests.unit.logic.formalization.autoencoder.test_contextual_legal_ir_output"
+      ],
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py": [
+        "tests.unit.optimizers.logic_theorem_optimizer.test_legal_formula_codec"
+      ]
+    },
+    "result_unsuccessful": [],
+    "selected_target_coverage": {
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py": 104,
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py": 32,
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py": 37
+    },
+    "successful_call_nodeids": [
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_authored_fixtures_are_only_consistent_receipt_declarations[original-primary384]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_authored_fixtures_are_only_consistent_receipt_declarations[native768-primary]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_authored_fixtures_are_only_consistent_receipt_declarations[original-legacy8]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_authored_fixtures_are_only_consistent_receipt_declarations[native768-auxiliary]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[primary384-lexical]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[native768-lexical]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[legacy8-tagged]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_valid_existing_outputs_keep_native_and_rich_compatibility_separate[native768-tagged]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_raw_transports_are_committed_separately_from_parsed_content",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_source_and_checkpoint_are_committed_declarations_not_verified_assets",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_each_input_needs_its_independent_original_raw_pin[receipt-raw-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_each_input_needs_its_independent_original_raw_pin[full-codec-raw-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_each_input_needs_its_independent_original_raw_pin[capture-raw-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[receipt-binding]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[codec-binding]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[input-width]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[boolean-width]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[head]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[variant]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[model-state]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[raw-input-vector]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_cannot_disagree_with_receipt_or_independent_transport_pins[numerical-input-vector]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_closed_capture_does_not_accept_extra_provenance_or_target_channels[invented-encoder]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_closed_capture_does_not_accept_extra_provenance_or_target_channels[reference-channel]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_closed_capture_does_not_accept_extra_provenance_or_target_channels[execution-authority]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_closed_capture_does_not_accept_extra_provenance_or_target_channels[latent-verification]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_closed_capture_does_not_accept_extra_provenance_or_target_channels[invented-relational-request]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[tagged-policy-required]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[tagged-source-vocabulary-required]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[tagged-policy-exact]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[tagged-source-order-exact]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[lexical-closed-schema]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[lexical-token-uniqueness]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[lexical-special-ids]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_original_full_codec_and_its_declared_profile_are_required[receipt-full-vocabulary-binding]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_other_heads_codec_is_not_reinterpreted_or_reconstructed[tagged-is-not-lexical]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_other_heads_codec_is_not_reinterpreted_or_reconstructed[lexical-is-not-tagged]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_profile_budget_overflow_remains_native_output_failure[lexical-inherited-budget]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_profile_budget_overflow_remains_native_output_failure[tagged-inherited-budget]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[lexical-interior-pad]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[lexical-interior-bos]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[tagged-interior-pad]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_invalid_special_tokens_are_preserved_instead_of_filtered[tagged-interior-bos]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_cap_without_eos_cannot_become_a_complete_candidate[lexical-cap]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_cap_without_eos_cannot_become_a_complete_candidate[tagged-cap]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_eos_after_bos_retains_an_invalid_empty_output[lexical-early-eos]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_eos_after_bos_retains_an_invalid_empty_output[tagged-early-eos]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_lexical_canonicalization_changes_remain_separate_from_generated_payload",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_ordered_lexical_rule_sequence_is_not_replaced_by_native_sorted_order",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_tagged_duplicate_qualifiers_are_rejected_without_canonical_normalization",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_valid_json_with_invalid_native_modality_is_not_autoformalized",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[closed-receipt]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[bos-required]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[nothing-after-eos]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[integer-token-required]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[vocabulary-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[prefix-chain]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[step-selected-token]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[step-input-binding]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[producer-source-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[stop-consistency]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[unchanged-state]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[no-encoder-run]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[no-proof-authority]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[no-training-step]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_malformed_receipt_is_refused_without_repair[fixed-numerical-profile]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-utf8]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-utf8]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-utf8]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-duplicate-key]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-duplicate-key]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-duplicate-key]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-nan]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-nan]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-nan]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-object]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-object]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-object]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-byte-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-byte-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-byte-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[receipt-depth-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[codec-depth-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_raw_input_bounds_and_json_shape_are_strict[capture-depth-bound]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[nonempty-id]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[bounded-id]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[printable-id]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[nonblank-control]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[bounded-control]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[lowercase-source-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[explicit-checkpoint-pin]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_capture_is_bounded_closed_metadata[exact-capture-schema]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[authority-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[execution-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[training-mask-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[gold-mask-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[rich-support-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[invented-request-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[native-result-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[raw-token-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[capture-source-reseal]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_full_report_resealing_cannot_bypass_regeneration[unknown-report-field]",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_uncomputed_logit_hash_change_requires_changed_input_report_even_after_resealing",
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py::test_independent_report_pin_is_required_for_replay_validation",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_generated_rule_conforms_to_actual_contract_without_reference_or_source",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_rule_order_is_preserved_and_compared_separately_from_native_canonical_order",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_native_canonicalization_does_not_rewrite_duplicate_qualifiers_in_generated_output",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_missing_prediction_keeps_full_reference_denominators",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_valid_json_without_eos_is_incomplete_and_cannot_score_exact",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_missing_or_unsupported_status_cannot_be_scored_as_complete[None]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_missing_or_unsupported_status_cannot_be_scored_as_complete[True]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_missing_or_unsupported_status_cannot_be_scored_as_complete[finished]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_runtime_deadline_receipt_remains_an_unscorable_failure",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_invalid_generation_receipts_are_not_repaired[<lambda>0]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_invalid_generation_receipts_are_not_repaired[<lambda>1]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_invalid_generation_receipts_are_not_repaired[<lambda>2]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_invalid_generation_receipts_are_not_repaired[<lambda>3]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_invalid_generation_receipts_are_not_repaired[<lambda>4]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_duplicate_json_key_refuses_without_a_reference_fallback",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_syntactic_json_with_invalid_native_modality_remains_invalid",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_output_limit_is_independent_and_strictly_typed[True]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_output_limit_is_independent_and_strictly_typed[3]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_output_limit_is_independent_and_strictly_typed[513]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_output_limit_is_independent_and_strictly_typed[8192]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_output_limit_is_independent_and_strictly_typed[512.0]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_gold_or_authority_fields_cannot_be_injected_into_generated_rows",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_unknown_or_duplicate_candidate_identity_refuses_in_scoring",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_returned_ir_is_detached_from_all_caller_values",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_existing_source_withheld_realizer_receives_only_generated_ir",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_source_withheld_realizer_does_not_render_an_incomplete_candidate",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_text_metrics_distinguish_utf8_bytes_nfc_and_whitespace",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_text_normalization_preserves_case_punctuation_and_order[trustee SHALL approve.]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_text_normalization_preserves_case_punctuation_and_order[Trustee shall approve]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_text_normalization_preserves_case_punctuation_and_order[Approve shall Trustee.]",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_missing_text_prediction_is_a_failure_not_a_changed_denominator",
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py::test_text_evaluator_rejects_unknown_ids_or_hidden_data",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_actual_full_ir_roundtrip_preserves_all_seven_facets",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_vocabularies_are_deterministic_and_survive_json",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_source_ids_retain_content_and_negation_without_parser",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_identifiers_are_exact_not_historical_hash_buckets",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_scope_quantity_and_kind_are_distinct_exact_atoms",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_typed_atoms_cannot_collide_with_markers_or_other_fields",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_unknown_source_and_target_never_extend_training_vocab",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids0]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids1]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids2]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids3]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids4]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids5]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_empty_invalid_and_incomplete_sequences_never_decode[ids6]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_eos_never_appears_before_all_fields_and_cannot_be_padded",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values0]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values1]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values2]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values3]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_lossy_or_unbounded_qualifiers_rejected_not_normalized[values4]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_qualifier_limit_and_lexical_order_enforced_during_generation",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_extra_information_is_rejected_not_dropped[<lambda>0]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_extra_information_is_rejected_not_dropped[<lambda>1]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_extra_information_is_rejected_not_dropped[<lambda>2]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_extra_information_is_rejected_not_dropped[<lambda>3]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_extra_information_is_rejected_not_dropped[<lambda>4]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_pgir_placeholder_validation_is_reused",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_source_limit_never_truncates",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_target_prefix_limit_is_hard",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>0]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>1]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>2]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>3]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>4]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>5]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_codec_tampering_is_rejected_even_after_cached_validation[<lambda>6]",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py::test_vocab_and_example_limits"
+    ]
+  },
+  "pytest_exit_code": 0,
+  "request_sha256": "ee641863e1a34da3f193c3115d447693945c82c86383edfbc79088fc1ec3383b",
+  "schema": "legal-primary-graph-export-qualification/v1",
+  "scope": "selected standalone synthetic-fixture pytest targets only; no original corpus acquisition",
+  "selected_checks": [
+    "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py",
+    "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py"
+  ],
+  "source_semantics_verified": false,
+  "status": "pass",
+  "training_performed": false,
+  "writable_path_redirections": {
+    "HF_DATASETS_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/cache",
+    "HF_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/cache",
+    "HF_HUB_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/cache",
+    "HUGGINGFACE_HUB_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/cache",
+    "SENTENCE_TRANSFORMERS_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/cache",
+    "SQLITE_TMPDIR": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/db",
+    "TEMP": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/tmp",
+    "TMP": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/tmp",
+    "TMPDIR": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/tmp",
+    "TRANSFORMERS_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/cache",
+    "XDG_CACHE_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/cache"
+  }
+}
