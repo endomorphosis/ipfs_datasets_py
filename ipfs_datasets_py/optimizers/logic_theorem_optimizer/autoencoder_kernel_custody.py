@@ -404,6 +404,8 @@ class BoundCgroup:
                 "expected_root": str(self._root), "root_identity": copy.deepcopy(self._root_identity),
                 "mount_directory_identity": copy.deepcopy(self._mount_identity),
                 "directory_identity": copy.deepcopy(leaf["identity"]),
+                "expected_root": str(self._root),
+                "root_identity": copy.deepcopy(self._root_identity),
                 "control_identities": copy.deepcopy(leaf["control_identities"]),
                 "group_tree": [{"path": path, "directory_identity": copy.deepcopy(group["identity"]),
                     "children": list(group["children"])} for path, group in self._groups.items()],
