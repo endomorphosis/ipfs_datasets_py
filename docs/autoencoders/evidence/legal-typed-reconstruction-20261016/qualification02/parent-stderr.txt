@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_owned_validation.py", line 326, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_owned_validation.py", line 276, in main
+    raise RuntimeError('validation command failed with returncode '+str(child.returncode))
+RuntimeError: validation command failed with returncode 1

@@ -1,0 +1,10 @@
+{
+  "foreign_cleanup": false,
+  "observed_at_utc": "2026-10-16T00:47:05.739666+00:00",
+  "product_or_tests_executed": false,
+  "reason": "Owner admission requires the existing attempt directory to be empty and creates its own output layout. Removed only the six still-empty directories created in the first prelaunch correction. Retried the unchanged request.",
+  "reservation_acquired": false,
+  "schema": "legal-typed-reconstruction-prelaunch-layout-failure/v1",
+  "source_or_request_changed": false,
+  "stderr_sha256": "e1787a2fccd6a5b6d22353a483e670a4ea829f83b7bd8338171b8b448dd0e4a7"
+}

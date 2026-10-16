@@ -1,0 +1,355 @@
+{
+  "Lean_executed": false,
+  "authority_granted": false,
+  "blocking_findings": [],
+  "checkout_temporal_scope": {
+    "HEAD": "c6c95c5d88417b5c3ca436951f8716528707c863",
+    "note": "Current unpublished local contribution remains based on c6c95c5d8. Incoming41bca8099 source/docs path overlap was separately audited; that future merge is outside this final local-source audit.",
+    "origin_main": "41bca809929493f922095090cc3b0726adda759f",
+    "upstream_merged_into_current_worktree": false
+  },
+  "edits_performed": [
+    "This audit artifact only"
+  ],
+  "findings": [
+    {
+      "detail": "Product/new tests/helper/config exactly match their reviewed final frozen hashes. The product uses existing public relational replay and typed expression/algebra owners, complete bounded reference-first ordered path union and independent original input/output hashes; no new AST or trust owner is introduced.",
+      "status": "pass",
+      "topic": "source and API remain frozen"
+    },
+    {
+      "detail": "Final guide and local plan accurately report187=84+70+33,240pins/89origins,4.84s qualification and7 named artifact checks including2 refusal operations,243pins/86origins,0.80s retained comparison. The6 payload outputs sum335738B; the2 retained authored typed requests sum33548B. These are two competing hypotheses for one retained paragraph, not decoder predictions or four independent legal examples.",
+      "status": "pass",
+      "topic": "docs reflect qualified outcomes"
+    },
+    {
+      "detail": "Receipt summaries support19-row self comparisons with all six comparison booleans true. Cross directions preserve31 union rows with7 shared and12 unique per side, one shared declared disagreement, matching family/profile/signature/roles, and false exact/declared/lexical-alpha outcomes. Matching structure supplies no legal equivalence or statutory truth verdict.",
+      "status": "pass",
+      "topic": "comparison structure"
+    },
+    {
+      "detail": "Fresh native consumer guards selected original/export requests and metadata plus full physical identities before/after and exactly six final outputs. Public saved-comparison revalidation occurs in that same consumer. It does not call the old producer main or replay HTML/scope/join, inspect the complete old tree, authenticate an old live ledger, or resolve pending7214.",
+      "status": "pass",
+      "topic": "custody and revalidation scope"
+    },
+    {
+      "detail": "Both captured parent result fields are path strings. Result/execution metadata report completed/returncode0; captured storage records and leases released, durable assertion true, live process group0, cleanup null. Both memory reservations are2048MiB; storage reservations are1GiB qualification and256MiB comparison. These are captured cooperative native-owner outcomes, not independent live scheduler authentication or kernel enforcement.",
+      "status": "pass",
+      "topic": "native closeout and budgets"
+    },
+    {
+      "detail": "The entire legacy module AST is unchanged after removal of only the new ten display IDs. Prior import-closure failures, all-test-pass/failed-JUnit qualification, and scheduler refusal remain historical failures/refusal. Four own reconciliation receipts retain outputs, grant no new lease/reservation, and make no successful-test or live-ledger-authentication claim.",
+      "status": "pass",
+      "topic": "legacy IDs and retained failures"
+    },
+    {
+      "detail": "All authority/review/model/training/Lean action flags remain false and training/evaluation-gold masks0. Valid paired authored-request diagnostics do not establish batch accuracy, malformed/missing/duplicate/abstention coverage, independently reviewed targets, source equivalence, applicability, or a Lean build.",
+      "status": "pass",
+      "topic": "authority and training boundaries"
+    },
+    {
+      "detail": "The curated evidence index is intentionally pending and will be checked separately. Current guide/README/local plan contribution is reviewed at c6 with incoming41bca still unmerged; final future merge and curated publication bytes require their own checks.",
+      "status": "pass",
+      "topic": "publication and upstream timing"
+    }
+  ],
+  "frozen_product_new_tests_helper_and_config_match_v01": true,
+  "legacy_test_ids_only_proof": {
+    "added_ids": [
+      "duplicate-top-key",
+      "duplicate-nested-key",
+      "nan",
+      "infinity",
+      "invalid-utf8",
+      "array",
+      "empty-object",
+      "wrong-pin",
+      "malformed-pin",
+      "request-byte-bound"
+    ],
+    "baseline_bytes": 21445,
+    "baseline_commit": "c6c95c5d88417b5c3ca436951f8716528707c863",
+    "baseline_sha256": "e3160f78b6db26c0d5e28885cb2bd6b8c0f5777a1597c79b447ed535379b6cf2",
+    "case_count": 10,
+    "entire_module_ast_equal_after_removing_only_added_ids_keyword": true,
+    "function": "test_preflight_rejections_happen_before_operation_owner_loading",
+    "inputs_assertions_cases_unchanged": true,
+    "method": "stdlib ast.parse of Git baseline and current source; remove the single new ids keyword, compare complete AST dumps without source-location attributes; no tests imported/executed.",
+    "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+    "reason": "Keep the byte-bound fixture from becoming a524359-byte JUnit case name, preserving all original test cases and strict qualification guards."
+  },
+  "legal_review_performed": false,
+  "limitations": [
+    "This review executes only independent stdlib source/AST/metadata inspection, not product/helpers/tests or training.",
+    "No original/export typed-request, current relational report, comparison payload, corpus/fixture, model/CID or source HTML body was read. Native receipt summaries and independent engineering audits support the reported execution outcomes.",
+    "Native sealed inventories remain owner evidence. No complete old tree inventory, private worktree, canonical Git, scheduler/ledger body, live scheduler state or OS sandbox authenticity was inspected.",
+    "Qualification counts refer only to final q05, counted once. Artifact checks and refusal operations are separate from pytest coverage.",
+    "Saved output validation occurred in the same new consumer interpreter; it is not a second fresh comparison-output consumer.",
+    "No independent legal/formal interpretation, official-primary equivalence, governing version/applicability, semantic review, training eligibility, decoder accuracy, or Lake build is established.",
+    "The evidence index is intentionally pending root curation, and incoming origin/main is not merged in the audited local base."
+  ],
+  "native_and_independent_metadata_pins": [
+    {
+      "bytes": 15291,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/source-helper-doc-audit-v01.json",
+      "sha256": "70569cfc420b31ba866e6c53befb83bbdfca796a332e66ab060ee18ef0c81d89"
+    },
+    {
+      "bytes": 18511,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/upstream-intersection-review-v01.json",
+      "sha256": "454e7d500225bfe415ffaf4b3dbd1b58835a87b3f23303a67349acced260f0f4"
+    },
+    {
+      "bytes": 57298,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-v05.json",
+      "sha256": "48782ef601fc0405c92ab312c66e1c7a521b73fd0e5ee3cb6e093e89b4d1d167"
+    },
+    {
+      "bytes": 58171,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-request-v05.json",
+      "sha256": "8a4cc1e54667e03c6dc858e68cc995eec1f4cd7cdc177d9d6d55faf8282babef"
+    },
+    {
+      "bytes": 1087,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/resource-plan-v02.json",
+      "sha256": "8ec2d3e75392a61d649a6eecc97bfbaa8d1fa860b4ec6adac0e652ada12df8b2"
+    },
+    {
+      "bytes": 3323,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/legacy-test-id-correction-v01.json",
+      "sha256": "aaa39a84396f8e577898c7faa56a2ff93c4c4b8e23b040f8f83e56a2bb041ad0"
+    },
+    {
+      "bytes": 5499,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stdout-v05.json",
+      "sha256": "76f71d2517f5db5b028f74abdd127250531e38ea1699c72ca739b19ef2cc1603"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stderr-v05.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 5452,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-parent-stdout-v05.json",
+      "sha256": "3aeefc9693d80ad97238477b84f1f6d6069fae480192792c0dd35c909f39a3f0"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-parent-stderr-v05.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 17348,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-independent-metadata-review-v05.json",
+      "sha256": "e62886be23f534ab8cf67583f68fb50208f7e641939d7702a41a6dda3f9f5e2c"
+    },
+    {
+      "bytes": 99254,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-independent-metadata-review-v05.json",
+      "sha256": "1e88ab22953c0dc4689a6887208ae92060db1a0985c1a5d969b66374b14eb0f9"
+    },
+    {
+      "bytes": 175054,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs/qualification.json",
+      "sha256": "0fb76e3002767289ee37985c8cdd796aa4e1d2063a60e8544439b7b13762b133"
+    },
+    {
+      "bytes": 804,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs/result.json",
+      "sha256": "ff875e29d7773ab91d6d2fbb75c368455cba9dd579f13646d7ae43a6c0927396"
+    },
+    {
+      "bytes": 627,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs/execution.json",
+      "sha256": "46a25d217715a6d42165d15b697a5cbc16b0e3cbef56e0e7adcf04a9ca81b46f"
+    },
+    {
+      "bytes": 1959,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs/validation-durability.json",
+      "sha256": "b0dd4eaabf7bf7e59db08ddbd80ff8eb7e82811408d1b1411b201b19270ee949"
+    },
+    {
+      "bytes": 99335,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/retained-comparison-receipt.json",
+      "sha256": "f55e8b0279eab049100a75d9d25cf06b6a6da2439326d7a11baf459234c5d1d3"
+    },
+    {
+      "bytes": 969,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/result.json",
+      "sha256": "8aefeec10ed7e0cbe68d81faeb6b5d6ec260a43fb7a2cde5a701de66858a6e6d"
+    },
+    {
+      "bytes": 805,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/execution.json",
+      "sha256": "6afd33de4a7c74a407f9a2ff2b7e857e7855da4cd89a1c882fa03f81107471b0"
+    },
+    {
+      "bytes": 2182,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/validation-durability.json",
+      "sha256": "6b7d7706ebea1d5fdbe169edb478f21ede8d213d179f4d57d2884bf1c87c724b"
+    },
+    {
+      "bytes": 59764,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification01-own-recovery-receipt-v01.json",
+      "sha256": "831a27908228aad78be8b8d9a65bf7d12b141ec477288d86b5d4e4be56ad9283"
+    },
+    {
+      "bytes": 61303,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification02-own-recovery-receipt-v01.json",
+      "sha256": "309650d13ad5710188c0e8d1d32a6cf219eb66233ce3d097c57b95e7578f16ea"
+    },
+    {
+      "bytes": 61556,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification03-own-recovery-receipt-v01.json",
+      "sha256": "222cd879344d4d464c8706fb0915da9721078ac80eadaef2c3dc5d05d4757de8"
+    },
+    {
+      "bytes": 60099,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification04-own-recovery-receipt-v01.json",
+      "sha256": "2e53aa7f5cd3c16e2663510d559c5cf954a2492d8f230432e1476d4d3feac3d8"
+    }
+  ],
+  "observed_at_utc": "2026-10-16T01:21:46.528594+00:00",
+  "payload_bodies_read": false,
+  "product_execution_performed": false,
+  "qualification": {
+    "attempt": "legal-typed-reconstruction-20261016-qualification05",
+    "checked_product_origins": 89,
+    "closeout": {
+      "artifacts_durable_asserted": true,
+      "attempt_exceeded_reservation": false,
+      "captured_parent_admitted_value": false,
+      "cleanup_error": null,
+      "memory_mb": 2048,
+      "parent_result_field_type": "string",
+      "recorded_group_live_processes": 0,
+      "reservation_record_status": "released",
+      "reservation_status": "released",
+      "resource_lease_released": true,
+      "result_completed": true,
+      "result_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs/result.json",
+      "result_returncode": 0,
+      "scope": "Captured native parent and sealed engineering metadata; no live scheduler/ledger authentication or kernel-quota assertion.",
+      "storage_bytes": 1073741824
+    },
+    "memory_mb": 2048,
+    "prior_attempts_not_summed_as_independent_coverage": true,
+    "receipt_elapsed_seconds": 4.844221220118925,
+    "selected_counts": {
+      "existing_expression_algebra": 33,
+      "existing_relational_norm": 70,
+      "new_reconstruction": 84
+    },
+    "source_pins": 240,
+    "status": "pass",
+    "storage_bytes": 1073741824,
+    "test_count": 187
+  },
+  "retained_comparison": {
+    "attempt": "legal-typed-reconstruction-20261016-compare05",
+    "checked_product_origins": 86,
+    "closeout": {
+      "artifacts_durable_asserted": true,
+      "attempt_exceeded_reservation": false,
+      "captured_parent_admitted_value": false,
+      "cleanup_error": null,
+      "memory_mb": 2048,
+      "parent_result_field_type": "string",
+      "recorded_group_live_processes": 0,
+      "reservation_record_status": "released",
+      "reservation_status": "released",
+      "resource_lease_released": true,
+      "result_completed": true,
+      "result_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/result.json",
+      "result_returncode": 0,
+      "scope": "Captured native parent and sealed engineering metadata; no live scheduler/ledger authentication or kernel-quota assertion.",
+      "storage_bytes": 268435456
+    },
+    "cross_pairs": {
+      "candidate_only_paths": 12,
+      "declared_structure_equal": false,
+      "exact_typed_expression_equal": false,
+      "lexical_alpha_structure_equal": false,
+      "reference_only_paths": 12,
+      "same_argument_roles": true,
+      "same_family_profile": true,
+      "same_signature_declarations": true,
+      "shared_declared_disagreement_count": 1,
+      "shared_paths": 7,
+      "union_feature_rows_each": 31
+    },
+    "hypothesis_pairs": [
+      "AA",
+      "BB",
+      "AB",
+      "BA"
+    ],
+    "memory_mb": 2048,
+    "named_artifact_checks": 7,
+    "original_retained_typed_request_bytes": 33548,
+    "original_retained_typed_request_count": 2,
+    "payload_output_bytes": 335738,
+    "payload_output_count": 6,
+    "receipt_elapsed_seconds": 0.796003005001694,
+    "refusal_names": [
+      "wrong_independent_original_request_pin",
+      "resealed_modal_disagreement_cannot_be_promoted"
+    ],
+    "refusal_operations": 2,
+    "self_pairs": {
+      "all_six_comparison_booleans": true,
+      "feature_rows_each": 19
+    },
+    "source_pins": 243,
+    "status": "pass",
+    "storage_bytes": 268435456
+  },
+  "reviewer": "/root/sampled_primary_docs_review_n10",
+  "schema": "legal-typed-reconstruction-source-helper-doc-audit/v2",
+  "scope": "Independent static source, AST, documentation and native engineering metadata review. Source/helper v01 findings retained; final documentation and native closeout claims checked without product execution or payload reads.",
+  "source_documentation_config_pins": [
+    {
+      "bytes": 29705,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_reconstruction_v1.py",
+      "sha256": "13d4279872d9cc3184d5796596b984193e49b51c7a56c4066857bce74b3e3723"
+    },
+    {
+      "bytes": 37168,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+      "sha256": "c07593c1c7a29c6cdea388072b586590f4a5b76ca4f7ee6d457663371043d84f"
+    },
+    {
+      "bytes": 21619,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+      "sha256": "caf36365fba7d081ad4ebf92a67506c249a08d9055339ce17a481aede0204ef4"
+    },
+    {
+      "bytes": 17064,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/run_retained_comparison_v01.py",
+      "sha256": "aad5df78a170ebcb03379e5247ad76a54df9d0a34a569bee6b11f6453fedbca0"
+    },
+    {
+      "bytes": 3326,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-inputs-v01.json",
+      "sha256": "ea81d7b3ae2266c075f79eb01d04b671f7b3da266dd176bb97ffc5691ae8d8a3"
+    },
+    {
+      "bytes": 9321,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_relational_reconstruction_v1.md",
+      "sha256": "b6981596c09e8104f33bb55ef81e8ccef6e2ad9b95b818fe2601aea95bfa6749"
+    },
+    {
+      "bytes": 17124,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/README.md",
+      "sha256": "a91175fc9c90bb1d0b3dcba45bd478c1094ea224488e2532dcaea036b56f03f5"
+    },
+    {
+      "bytes": 78339,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "eca6a23f0a183a4c0c1cd733576dc786ffdd9a412b9f6316a0e8cb7e53c4d17b"
+    }
+  ],
+  "status": "PASS",
+  "training_performed": false
+}

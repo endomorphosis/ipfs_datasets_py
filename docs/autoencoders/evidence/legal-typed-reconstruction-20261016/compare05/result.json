@@ -1,0 +1,19 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/execution.json"
+  ],
+  "executed_checks": [
+    "retained_original_request_and_native_export_custody",
+    "current_root_public_relational_replay",
+    "self_pair_identity_and_structure_controls",
+    "competing_modal_scope_hypotheses_remain_distinct",
+    "saved_comparison_public_revalidation",
+    "independent_pin_and_resealed_comparison_refusals",
+    "retained_selected_inputs_unchanged_and_final_source_guards"
+  ],
+  "request_sha256": "8a4cc1e54667e03c6dc858e68cc995eec1f4cd7cdc177d9d6d55faf8282babef",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

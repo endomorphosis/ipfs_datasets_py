@@ -1,0 +1,58 @@
+{
+  "ast_identical_after_removing_only_new_ids_keyword": true,
+  "authority_granted": false,
+  "exact_one_decorator_diff": "--- before/test_legal_relational_norm_v1.py\n+++ after/test_legal_relational_norm_v1.py\n@@ -368,6 +368,9 @@\n     (b'{\"value\":NaN}', None), (b'{\"value\":Infinity}', None), (b'\\xff', None),\n     (b'[]', None), (b'{}', None), (b'{}', \"0\" * 64), (b'{}', \"NOT_A_HASH\"),\n     (b\" \" * (bridge.MAX_REQUEST_BYTES + 1), None),\n+], ids=[\n+    \"duplicate-top-key\", \"duplicate-nested-key\", \"nan\", \"infinity\", \"invalid-utf8\",\n+    \"array\", \"empty-object\", \"wrong-pin\", \"malformed-pin\", \"request-byte-bound\",\n ])\n def test_preflight_rejections_happen_before_operation_owner_loading(monkeypatch, raw, expected):\n     monkeypatch.setattr(bridge, \"_owners\", lambda: pytest.fail(\"owner loaded before rejected preflight\"))\n",
+  "explicit_ids": [
+    "duplicate-top-key",
+    "duplicate-nested-key",
+    "nan",
+    "infinity",
+    "invalid-utf8",
+    "array",
+    "empty-object",
+    "wrong-pin",
+    "malformed-pin",
+    "request-byte-bound"
+  ],
+  "new_test_unchanged": {
+    "authored_cases": 84,
+    "bytes": 37168,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+    "sha256": "c07593c1c7a29c6cdea388072b586590f4a5b76ca4f7ee6d457663371043d84f"
+  },
+  "parameter_case_count_after": 10,
+  "parameter_case_count_before": 10,
+  "payload_or_ledger_reads": false,
+  "product_sources_changed": false,
+  "qualification03_junit_metadata": {
+    "actual_testcases": 187,
+    "bytes": 558352,
+    "longest_new_reconstruction_testcase_name_utf8_bytes": 115,
+    "oversized_testcase_names": [
+      {
+        "classname": "tests.unit.logic.autoformal.test_legal_relational_norm_v1",
+        "name_prefix": "test_preflight_rejections_happen_before_operation_owner_loading[                                    ",
+        "name_suffix": "                          -None]",
+        "name_utf8_bytes": 524359
+      }
+    ],
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification03/exports/junit.xml",
+    "sha256": "26b34f6381d1f1517a5e3235b25a78db90cf5af7066b862e7b75d87418d1b211"
+  },
+  "schema": "legal-relational-legacy-test-param-id-correction/v1",
+  "scope": "Exactly one existing pytest parametrize decorator gains ten bounded descriptive ids; every input, body, assertion and selected case remains unchanged.",
+  "source_after": {
+    "bytes": 21619,
+    "sha256": "caf36365fba7d081ad4ebf92a67506c249a08d9055339ce17a481aede0204ef4"
+  },
+  "source_before": {
+    "bytes": 21445,
+    "sha256": "e3160f78b6db26c0d5e28885cb2bd6b8c0f5777a1597c79b447ed535379b6cf2"
+  },
+  "source_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+  "status": "source_metadata_correction_ready_for_native_requalification",
+  "strict_junit_id_guard_bytes": 8192,
+  "target_function": "test_preflight_rejections_happen_before_operation_owner_loading",
+  "test_exclusions_added": false,
+  "tests_executed_by_this_correction": false
+}

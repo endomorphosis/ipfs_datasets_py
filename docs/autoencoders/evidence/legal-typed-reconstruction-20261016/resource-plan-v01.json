@@ -1,0 +1,22 @@
+{
+  "basis": "Existing readonly fleet observation supplies no admission; each native request separately acquires/finalizes existing owner. No model/checkpoint/large corpus or database creation.",
+  "new_output_cap_bytes": 8388608,
+  "observed_at_utc": "2026-10-16T00:40:40.229976+00:00",
+  "old_producer_reexecution": false,
+  "original_typed_request_bytes_readonly": 33548,
+  "qualification": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "memory_mb": 6144,
+    "storage_bytes": 1073741824,
+    "timeout_seconds": 1800
+  },
+  "retained_comparison": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "memory_mb": 6144,
+    "storage_bytes": 268435456,
+    "timeout_seconds": 1800
+  },
+  "schema": "legal-typed-reconstruction-resource-plan/v1"
+}

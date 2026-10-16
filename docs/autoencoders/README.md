@@ -11,6 +11,7 @@ belong to their named backend; they are not interchangeable across backends.
 
 | I need to… | Start here |
 | --- | --- |
+| Compare typed predicate arguments, lexical binders and modal scope before richer decoder evaluation | [Typed relational reconstruction diagnostics](legal_relational_reconstruction_v1.md) |
 | Record unsigned source/primary anchors with complete populations and unresolved evidence | [Sampled source / primary association](legal_sampled_primary_association_v2.md) |
 | Prepare a fresh definition-review subject that binds the primary association and its witnesses | [Association-bound definition review](legal_sampled_primary_definition_review_v2.md) |
 | Improve LegalIR on US Code spans and aggregate scoped semantic graphs into a shared Lean 4 corpus | [Current source, decoder, graph and Lean improvement plan](legal_ir_uscode_corpus_improvement_plan_20261015.md) |

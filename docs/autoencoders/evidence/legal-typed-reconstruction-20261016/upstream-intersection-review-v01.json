@@ -1,0 +1,302 @@
+{
+  "authority_granted": false,
+  "blocking_findings": [],
+  "changed_path_intersection": [
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/README.md",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/README.md",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/decoder-roadmap-review.json",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/decoder-roadmap-review.json",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/hub-metadata-summary.json",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/hub-metadata-summary.json",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/metadata-independent-review.json",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/metadata-independent-review.json",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/parallel-plan-review.json",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/parallel-plan-review.json",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/publication-manifest.json",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/publication-manifest.json",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/roadmap-independent-review.json",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/roadmap-independent-review.json",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-entity-cache-api.json",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-entity-cache-api.json",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-entity-cache-card.md",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-entity-cache-card.md",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-span-cache-api.json",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-span-cache-api.json",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-span-cache-card.md",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-span-cache-card.md",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/kernel_custody.md",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/kernel_custody.md",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "intersects_qualification_v05": false,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "qualification_pin": null,
+      "status": "M"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/implementation/reports/evidence/legal_ir_kernel_custody_20261015.json",
+      "intersects_qualification_v05": false,
+      "path": "docs/implementation/reports/evidence/legal_ir_kernel_custody_20261015.json",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_kernel_custody.py",
+      "intersects_qualification_v05": false,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_kernel_custody.py",
+      "qualification_pin": null,
+      "status": "A"
+    },
+    {
+      "absolute_path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_kernel_custody.py",
+      "intersects_qualification_v05": false,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_kernel_custody.py",
+      "qualification_pin": null,
+      "status": "A"
+    }
+  ],
+  "execution_performed": false,
+  "findings": [
+    {
+      "detail": "All16 upstream changed paths are absent from the240 frozen qualification v05 source pins. Incoming executable changes are a new held-cgroup observer and new observer test; the remaining changes are documentation/evidence and the roadmap. Existing pinned execution owners are not modified by this incoming diff. This establishes a declared-path intersection only, not a rerun or live-origin audit.",
+      "status": "pass",
+      "topic": "zero declared-source intersection"
+    },
+    {
+      "detail": "Owned checkout HEAD remainsc6 while origin/main advances througha4ee9f6a8 to41bca8099. This review performed no merge, checkout, source edit or active-request mutation. Complete native finalization must finish before integration.",
+      "status": "pass",
+      "topic": "native worktree remained frozen"
+    },
+    {
+      "detail": "Upstream README is byte-identical toc6; the local typed-reconstruction link therefore has no incoming README edit to conflict with. The new product/test/guide paths are absent from upstream changes. Existing association/review/typed-semantic links remain intact.",
+      "status": "pass",
+      "topic": "README and new-guide preservation"
+    },
+    {
+      "detail": "Incoming roadmap introduces active stages/current decision baseline/cache metadata/work packages and moves prior qualification narratives into an explicit evidence-history section, preserving their generation and nonadditive scope. It retains PR1315 source-review and typed-semantic milestones while leaving source equivalence, interpretations, context and gold open.",
+      "status": "pass",
+      "topic": "roadmap reconciliation"
+    },
+    {
+      "detail": "The exact promotion paragraph and following section6 heading around the local typed-reconstruction insertion remain in the incoming roadmap. Preserve the local diagnostic paragraph there during normal post-closeout merge; retain the full upstream roadmap/history instead of replacing it with the old local file. No actual merge simulation or merge was performed.",
+      "status": "pass",
+      "topic": "local diagnostic paragraph has preserved anchors"
+    },
+    {
+      "detail": "Static source/docs describe bind_cgroup/BoundCgroup observation and optionally authorized drain over held kernel descriptors. They do not create a scheduler/grant/cgroup or launch workers; reports keep native_admission/admitted false. close only closes descriptors. The observer is not imported, adopted or qualified by current typed reconstruction execution.",
+      "status": "pass",
+      "topic": "new custody owner is separate and unqualified here"
+    },
+    {
+      "detail": "Incoming guide attributes92 simulated observer tests and explicitly says the real service experiment refused native admission before a productive child. It claims no worker drain/normal/exception/container/GPU/Hub/training qualification. This review did not open its evidence report or rerun those tests/probes; no new observer qualification claim is made.",
+      "status": "pass",
+      "topic": "published custody status remains bounded"
+    },
+    {
+      "detail": "The refreshed plan preserves one reviewed definition/complete norm/second-use goal, attributable decoder controls, separate8D/384D/768D lineages, typed argument/binder/modal structure and actual native/Lean gates. It does not turn current valid-pair diagnostics into a batch malformed/missing/abstention denominator or reviewed training gold.",
+      "status": "pass",
+      "topic": "roadmap aligns with paired diagnostics"
+    },
+    {
+      "detail": "The request declares1073741824 storage bytes and2048MiB memory. Root confirmed the earlier2GiB description referred to memory, not storage; the current request pin is the intended one. Actual-comparison storage256MiB belongs to a separate request/profile and is not inferred from this qualification request.",
+      "status": "resolved",
+      "topic": "request budget wording"
+    }
+  ],
+  "frozen_qualification_request": {
+    "bytes": 57298,
+    "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-v05.json",
+    "sha256": "48782ef601fc0405c92ab312c66e1c7a521b73fd0e5ee3cb6e093e89b4d1d167"
+  },
+  "incoming_changed_path_count": 16,
+  "incoming_commits": [
+    {
+      "commit": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+      "parents": [
+        "c6c95c5d88417b5c3ca436951f8716528707c863"
+      ],
+      "subject": "Add held-cgroup custody observations for autoencoder qualification"
+    },
+    {
+      "commit": "41bca809929493f922095090cc3b0726adda759f",
+      "parents": [
+        "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1"
+      ],
+      "subject": "Refresh LegalIR roadmap from span caches to reviewed graphs and Lean"
+    }
+  ],
+  "incoming_source_documentation_pins": [
+    {
+      "bytes": 13513,
+      "git_blob": "6ebe15bc1e254fd9542e29760971885ed6415e73",
+      "path": "docs/autoencoders/kernel_custody.md",
+      "ref": "41bca809929493f922095090cc3b0726adda759f",
+      "sha256": "520e3607a341be3d343bc69eb4040c4a4a78f51328ef8f9a62939e82a8978f5f"
+    },
+    {
+      "bytes": 24294,
+      "git_blob": "a74099dc11080b19527702740701e88d4d4a9e26",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_kernel_custody.py",
+      "ref": "41bca809929493f922095090cc3b0726adda759f",
+      "sha256": "c4926f3deeb2c574edc21b9cc15a45156c3da0463aae23abb0b1968634db46c0"
+    },
+    {
+      "bytes": 20624,
+      "git_blob": "244d7fe4afa3e345ceb5dc5856a5136cbe06673d",
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_kernel_custody.py",
+      "ref": "41bca809929493f922095090cc3b0726adda759f",
+      "sha256": "74ab2b1dbee01e8a76d81cebf46051dc644e1b286cfe78d41b86c4816746e1dd"
+    },
+    {
+      "bytes": 93411,
+      "git_blob": "3a6ff55128673bfbadb73a03ee7b22baa60d3140",
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "ref": "41bca809929493f922095090cc3b0726adda759f",
+      "sha256": "d113c7ca46f247571825e51ff03993acb549e41317d37a434cd824ec1a7530da"
+    },
+    {
+      "bytes": 16933,
+      "git_blob": "04453f7e53702f0aad88a0e7de48234634a9818e",
+      "path": "docs/autoencoders/README.md",
+      "ref": "41bca809929493f922095090cc3b0726adda759f",
+      "sha256": "806d1551818646cc7bd0d603e6c481518127b1bec24883a6cc0991db5b86377d"
+    }
+  ],
+  "integration_recommendations": [
+    "Wait for native fixture qualification and any active retained comparison to complete their own source guards, durability, stopped-group and release checks before changing this checkout.",
+    "Commit the concrete typed reconstruction contribution, then normally merge the frozen incoming main ref or its current descendant; preserve both upstream commits and all prior evidence history.",
+    "Keep the new guide and README diagnostic link; retain the local diagnostic paragraph near the still-present section5 promotion anchor/section6 heading while adopting the refreshed roadmap.",
+    "After integration, compare qualified product/test/helper hashes to the frozen requests and rerun only if executed owners changed or new relevant failures require it. Preserve q04 admission refusal metadata and any failed attempts.",
+    "Treat the new cgroup observer as a separate optional custody foundation. Do not silently insert it into this qualified CPU validation/profile or infer productive worker/container/GPU custody from its simulation/docs.",
+    "Finalize counts and runtime limitations from completed engineering/native receipts later; this source-only intersection review neither certifies the running187-case roster nor grants release/admission."
+  ],
+  "intersecting_paths": [],
+  "limitations": [
+    "No incoming report/evidence/API/corpus payload bodies were read. New cache/card counts and custody outcomes were considered as attributed roadmap/guide claims only.",
+    "Zero path intersection is not a standalone execution attestation and does not authorize source-tree mutation during active native work.",
+    "No final q05 or retained-comparison receipt, durability seal, ledger status or scheduler state was independently inspected."
+  ],
+  "local_unpublished_source_documentation_pins": [
+    {
+      "bytes": 6068,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_relational_reconstruction_v1.md",
+      "sha256": "ccecad2f0285153eb795750e0d8905d99aeb7651d84fbecaae6c36e872a47e8c"
+    },
+    {
+      "bytes": 17124,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/README.md",
+      "sha256": "a91175fc9c90bb1d0b3dcba45bd478c1094ea224488e2532dcaea036b56f03f5"
+    },
+    {
+      "bytes": 77859,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "afaa728101e58d1d9cced243993a35ee8e9793c6af70e5b12567ab70be994988"
+    },
+    {
+      "bytes": 29705,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_reconstruction_v1.py",
+      "sha256": "13d4279872d9cc3184d5796596b984193e49b51c7a56c4066857bce74b3e3723"
+    },
+    {
+      "bytes": 37168,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+      "sha256": "c07593c1c7a29c6cdea388072b586590f4a5b76ca4f7ee6d457663371043d84f"
+    }
+  ],
+  "merge_performed": false,
+  "observed_at_utc": "2026-10-16T01:13:52.759236+00:00",
+  "observer_public_source_metadata": {
+    "new_simulated_test_file_added": true,
+    "public_functions": [
+      {
+        "args": "path, *, expected_root, expected_owner_uid, required_memory_max, required_pids_max, required_cpu_quota_us, required_cpu_period_us, expected_pid=None, allow_drain=False, _backend=None",
+        "line": 474,
+        "name": "bind_cgroup"
+      }
+    ],
+    "schema": "autoencoder-held-cgroup-v2/v1",
+    "source_review_only": true
+  },
+  "qualification_claimed": false,
+  "qualification_source_pin_count": 240,
+  "refs": {
+    "active_checkout_head": "c6c95c5d88417b5c3ca436951f8716528707c863",
+    "incoming_main": "41bca809929493f922095090cc3b0726adda759f",
+    "origin_main_at_review": "41bca809929493f922095090cc3b0726adda759f",
+    "review_base": "c6c95c5d88417b5c3ca436951f8716528707c863"
+  },
+  "resource_metadata": {
+    "child_process_slots": 1,
+    "clarification": "Root clarified2GiB refers to memory_mb2048; storage remains1GiB. No actual runtime usage, finalization or admission conclusion follows from these request fields.",
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "storage_bytes": 1073741824,
+    "storage_gib": 1,
+    "timeout_seconds": 1800
+  },
+  "reviewer": "/root/sampled_primary_docs_review_n10",
+  "schema": "typed-reconstruction-upstream-intersection-source-review/v1",
+  "scope": "Immutable Git path/commit/source/docs review and frozen request metadata only. No merge/edit, product/test/model execution or imports, corpus/report/evidence payload bodies, private worktrees, ledger or canonical Git access. Active native lifecycle and results were not audited.",
+  "source_or_docs_edits": false,
+  "status": "PASS_SOURCE_INTERSECTION_ONLY"
+}

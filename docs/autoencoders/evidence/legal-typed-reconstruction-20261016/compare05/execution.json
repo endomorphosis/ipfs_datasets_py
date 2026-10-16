@@ -1,0 +1,21 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 44.06613723002374,
+  "executed_checks": [
+    "retained_original_request_and_native_export_custody",
+    "current_root_public_relational_replay",
+    "self_pair_identity_and_structure_controls",
+    "competing_modal_scope_hypotheses_remain_distinct",
+    "saved_comparison_public_revalidation",
+    "independent_pin_and_resealed_comparison_refusals",
+    "retained_selected_inputs_unchanged_and_final_source_guards"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "8a4cc1e54667e03c6dc858e68cc995eec1f4cd7cdc177d9d6d55faf8282babef",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

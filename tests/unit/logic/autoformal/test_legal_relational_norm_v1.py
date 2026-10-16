@@ -368,6 +368,9 @@ def test_roles_are_complete_ordered_explicit_and_closed(mutation):
     (b'{"value":NaN}', None), (b'{"value":Infinity}', None), (b'\xff', None),
     (b'[]', None), (b'{}', None), (b'{}', "0" * 64), (b'{}', "NOT_A_HASH"),
     (b" " * (bridge.MAX_REQUEST_BYTES + 1), None),
+], ids=[
+    "duplicate-top-key", "duplicate-nested-key", "nan", "infinity", "invalid-utf8",
+    "array", "empty-object", "wrong-pin", "malformed-pin", "request-byte-bound",
 ])
 def test_preflight_rejections_happen_before_operation_owner_loading(monkeypatch, raw, expected):
     monkeypatch.setattr(bridge, "_owners", lambda: pytest.fail("owner loaded before rejected preflight"))

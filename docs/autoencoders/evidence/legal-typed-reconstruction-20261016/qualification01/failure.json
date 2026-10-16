@@ -1,0 +1,21 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": false,
+  "elapsed_seconds": 47.67865755292587,
+  "error": "validation command failed with returncode 1",
+  "error_type": "RuntimeError",
+  "executed_checks": [
+    "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+    "tests/unit/logic/syntax_core/test_algebra.py"
+  ],
+  "model_weights_downloaded": false,
+  "received_signals": [],
+  "request_sha256": "0dca850802494b76daa58783b01407b3bb9f86c093f27db4dc02e6ac582a44b4",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 1,
+  "schema": "owned-validation-result/v1",
+  "watchdog_errors": []
+}

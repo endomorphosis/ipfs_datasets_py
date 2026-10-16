@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py", line 543, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py", line 538, in main
+    raise QualificationFailure('export qualification failed at ' + stage
+QualificationFailure: export qualification failed at junit_and_closing_guards (QualificationFailure)
