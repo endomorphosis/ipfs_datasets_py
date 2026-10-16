@@ -1,0 +1,410 @@
+{
+  "graph_cache_and_model_status_reconciliation": {
+    "Hub_metadata": "No Hub/payload observation made by this Git survey. Parent separately refreshes immutable cache metadata; API listing/footer/census/payload validation remain distinct.",
+    "checkpoint_inventory": "Preserve separate IR family/schema/version/decoder task/dimension8D384D768D and actual encoder/token lineage; current F18 ModelManager/load-qualified status must not be inferred from old receipts.",
+    "fixed_view_retained_result": "Uniform7lane retained parent/structural heads, with zero stored supported view-logit rows, do not establish decoder saturation or teacher quality.",
+    "historical_flat_entity_cache": "Prior1960876rowcensus and1722395endpointlessedgeobservations/multiplicity remain a separate legacy repair; primary selection is not complete historical reconstruction.",
+    "model_changes_since763": "These published primary-review/kernel contributions add no decoder weights, encoder context, training run, exact-text reconstruction or latent-conditioned semantic quality.",
+    "published_primary_transport": "Complete selected original-primary297825occurrences=119134nodes+178691edges,586files1342890287bytes,acceptedmanifest5c94588706c54c8b8803e03971a18cc917aea754e31e7a9e1359f9c80b7021fd; independently original-boundconsumer retained under earlier published evidence.",
+    "unresolved_primary_citations": "13placeholdernodes and13CITES_UNRESOLVEDedges remain; endpoint closure is not reference/meaning resolution."
+  },
+  "method": "Read-only immutable Git object/path/hash/ancestry comparisons and published JSON/Markdown evidence review. No product imports, tests, source/corpus/model payload validation, model training, solver/Lean/native execution, source acquisition, uploads, fetch or ref/worktree mutation.",
+  "observed_at_utc": "2026-10-16T00:43:08.757467+00:00",
+  "plan_base": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+  "previous_qualified_typed_integration": "763f01c1996f3d369b7c969f5d90a964ed7bb006",
+  "published_kernel_custody_foundation": {
+    "actual_normal_or_exception_worker_cleanup_qualified": false,
+    "actual_service_bootstrap_controls_verified": true,
+    "actual_session_escape_worker_probe_qualified": false,
+    "attributed_simulated_unit_cases": 92,
+    "authority": {
+      "CUDA_qualified": false,
+      "Hub_qualified": false,
+      "Lean_admitted": false,
+      "admitted": false,
+      "fatal_owner_recovery_qualified": false,
+      "hostile_same_uid_migration_qualified": false,
+      "model_fidelity_qualified": false,
+      "productive_Docker_qualified": false,
+      "training_qualified": false
+    },
+    "commit": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+    "immutable_inputs": [
+      {
+        "bytes": 24294,
+        "git_blob": "a74099dc11080b19527702740701e88d4d4a9e26",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_kernel_custody.py",
+        "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+        "sha256": "c4926f3deeb2c574edc21b9cc15a45156c3da0463aae23abb0b1968634db46c0"
+      },
+      {
+        "bytes": 20624,
+        "git_blob": "244d7fe4afa3e345ceb5dc5856a5136cbe06673d",
+        "mode": "100644",
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_kernel_custody.py",
+        "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+        "sha256": "74ab2b1dbee01e8a76d81cebf46051dc644e1b286cfe78d41b86c4816746e1dd"
+      },
+      {
+        "bytes": 13513,
+        "git_blob": "6ebe15bc1e254fd9542e29760971885ed6415e73",
+        "mode": "100644",
+        "path": "docs/autoencoders/kernel_custody.md",
+        "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+        "sha256": "520e3607a341be3d343bc69eb4040c4a4a78f51328ef8f9a62939e82a8978f5f"
+      },
+      {
+        "bytes": 16447,
+        "git_blob": "afc96de06f874d8b66b2ddbe265cc4a2ef7234c5",
+        "mode": "100644",
+        "path": "docs/implementation/reports/evidence/legal_ir_kernel_custody_20261015.json",
+        "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+        "sha256": "196196290ffba4ff48af13f78de41f51dac1d27880aee1d321343a2f04abed4a"
+      }
+    ],
+    "native_refusal": {
+      "CPU_stall_limit_percent": 50,
+      "additional_request_MiB": 1536,
+      "conservative_memory_headroom_MiB": 24922,
+      "failure_storage_claim_retained": true,
+      "final_observed_CPU_stall_percent": 30.76,
+      "observed_available_memory_MiB": 1477,
+      "policy_or_fixed_limits_overridden": false,
+      "recorded_reason": "proof_pid_headroom",
+      "reported_global_root_reservations_MiB": 8192,
+      "required_available_PID_tasks": 128,
+      "service_task_limit": 64,
+      "service_total_memory_MiB": 1536,
+      "service_visible_available_PID_tasks": 63
+    },
+    "productive_child_started": false,
+    "productive_native_grant_obtained": false,
+    "profile": "autoencoder-held-cgroup-v2/v1",
+    "purpose": "Held kernel cgroup descriptors observe exact topology/controls and support explicit drain; supplements actual native owner rather than create or replace it.",
+    "remaining": "Explicit reviewed host-admission versus worker-confinement profile, actual worker drain/reap/closeout, fatal-owner recovery, actual Docker/container descendants and GPU/Hub custody. Do not make continuous production launch a completed milestone.",
+    "simulation_is_real_kernel_worker_qualification": false,
+    "state": "published on main; additive observer/test/guide/evidence only"
+  },
+  "published_primary_bound_review": {
+    "attributed_fixture_qualification": {
+      "actual_checked_buffer_product_origins": 125,
+      "association_cases": 88,
+      "cases_are_independent_legal_examples": false,
+      "dependency_cases": 18,
+      "fresh_interpreter_case_coverage_claimed": false,
+      "new_review_preparation_cases": 51,
+      "overlaps_prior_runs": true,
+      "recount_executed_by_this_survey": false,
+      "regular_definition_review_cases": 50,
+      "source_pins": 225,
+      "unique_cases": 207
+    },
+    "attributed_retained_source_consumer": {
+      "actual_reviews": 0,
+      "assessments_created": 0,
+      "authority": {
+        "Lean_admitted": false,
+        "authenticated_exposure": false,
+        "governing_applicability_verified": false,
+        "independent_formal_review_performed": false,
+        "independent_legal_review_performed": false,
+        "primary_source_correspondence_verified": false,
+        "published": false,
+        "source_authenticity_verified": false,
+        "source_package_content_identity_verified": false,
+        "training_qualified": false
+      },
+      "checked_buffer_product_origins": 119,
+      "child_seconds": 154.69071750203148,
+      "earlier17checks8refusals_rerun": false,
+      "earlier_producer_main_invoked": false,
+      "evaluation_gold_mask": 0,
+      "families": [
+        {
+          "actual_responses": 0,
+          "all_authority_false": true,
+          "all_old_manifest_artifacts_and_edges_preserved": true,
+          "all_primary_artifacts_reachable": true,
+          "context_slots": 36,
+          "evaluation_gold_mask": 0,
+          "family": "fol",
+          "native_binding_and_contexts_unchanged": true,
+          "new_artifacts": 96,
+          "new_edges": 95,
+          "new_required_dependencies": 96,
+          "old_subject_unchanged": true,
+          "original_artifacts": 40,
+          "original_edges": 39,
+          "original_required_dependencies": 40,
+          "primary_artifact_refs": 6,
+          "retained_population_pending": 560,
+          "retained_population_subjects": 560,
+          "retained_source_occurrences": 6,
+          "status": "unsigned_association_bound_definition_review_subject",
+          "training_mask": 0,
+          "unresolved_claims": [
+            "official_source_primary_package_equivalence",
+            "governing_version_and_applicability",
+            "independent_legal_interpretation",
+            "independent_formal_interpretation",
+            "authenticated_exposure"
+          ]
+        },
+        {
+          "actual_responses": 0,
+          "all_authority_false": true,
+          "all_old_manifest_artifacts_and_edges_preserved": true,
+          "all_primary_artifacts_reachable": true,
+          "context_slots": 36,
+          "evaluation_gold_mask": 0,
+          "family": "tdfol",
+          "native_binding_and_contexts_unchanged": true,
+          "new_artifacts": 96,
+          "new_edges": 95,
+          "new_required_dependencies": 96,
+          "old_subject_unchanged": true,
+          "original_artifacts": 40,
+          "original_edges": 39,
+          "original_required_dependencies": 40,
+          "primary_artifact_refs": 6,
+          "retained_population_pending": 560,
+          "retained_population_subjects": 560,
+          "retained_source_occurrences": 6,
+          "status": "unsigned_association_bound_definition_review_subject",
+          "training_mask": 0,
+          "unresolved_claims": [
+            "official_source_primary_package_equivalence",
+            "governing_version_and_applicability",
+            "independent_legal_interpretation",
+            "independent_formal_interpretation",
+            "authenticated_exposure"
+          ]
+        }
+      ],
+      "fresh_interpreter_retained_association_consumer": true,
+      "named_artifact_checks": 5,
+      "new_output_bytes": 1061778,
+      "new_outputs": 11,
+      "old77file_inventory_bytes": 11032562,
+      "old_inventory_unchanged": true,
+      "pytest_cases": 0,
+      "saved_NEW_envelope_validation_same_consumer_interpreter": true,
+      "signatures_created": 0,
+      "source_pins": 230,
+      "status": "pass",
+      "training_mask": 0
+    },
+    "closure": {
+      "added_artifacts": 56,
+      "added_edges": 56,
+      "all_old_artifacts_pins_edges_order_and_missing_targets_preserved": true,
+      "forward_reachable_dependencies": 96,
+      "new_artifacts": 96,
+      "new_edges": 95,
+      "old_artifacts": 40,
+      "old_edges": 39
+    },
+    "feature_commit": "7ce52f9a3abe40965fd8b45261d86ae16ea79bdb",
+    "immutable_inputs": [
+      {
+        "bytes": 23696,
+        "git_blob": "bd3d4248fa52907c5ccc3b3d9a9c62455213ec28",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_primary_review_v2.py",
+        "revision": "c6c95c5d88417b5c3ca436951f8716528707c863",
+        "sha256": "b447512be5211d873de6ea849266ca2a42c8705d584b2c4d00785489f7720d4e"
+      },
+      {
+        "bytes": 35036,
+        "git_blob": "d41d0c3a390fde5fa078f43a2309ee9ac6868e90",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_primary_review_v2.py",
+        "revision": "c6c95c5d88417b5c3ca436951f8716528707c863",
+        "sha256": "882cc1f98e7a33711b50b8b941806727e9f0083803669f58f03280a81dd608b8"
+      },
+      {
+        "bytes": 8619,
+        "git_blob": "e0f2bafaf67b8681749216396eb3ed2bd9495d5d",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_sampled_primary_definition_review_v2.md",
+        "revision": "c6c95c5d88417b5c3ca436951f8716528707c863",
+        "sha256": "444da62054f606b47242ffe599a5dc8069c2b07add52db2b994bdfbc7f510b90"
+      },
+      {
+        "bytes": 55002,
+        "git_blob": "58e441663e1251b43f863167a28010c51d1ea153",
+        "mode": "100644",
+        "path": "docs/autoencoders/evidence/legal-sampled-primary-review-20261015/consumer01/primary-review-consumer-receipt.json",
+        "revision": "c6c95c5d88417b5c3ca436951f8716528707c863",
+        "sha256": "f41b79b4e41977eb0d688dabad13d475c86d3156434e19b7626f57c6755d9ecd"
+      },
+      {
+        "bytes": 11863,
+        "git_blob": "cee03b57b1f53f454bae0368946d76942066b13b",
+        "mode": "100644",
+        "path": "docs/autoencoders/evidence/legal-sampled-primary-review-20261015/qualification-independent-metadata-review-v01.json",
+        "revision": "c6c95c5d88417b5c3ca436951f8716528707c863",
+        "sha256": "5acfa0cfd23312fb7f2cc70ba47ee184b62c2ac36c1552c55e3bdeb5cc0bb5ad"
+      },
+      {
+        "bytes": 99181,
+        "git_blob": "cae6de2cde3854b279d7900d8eff62f993b52d6e",
+        "mode": "100644",
+        "path": "docs/autoencoders/evidence/legal-sampled-primary-review-20261015/consumer-independent-metadata-review-v01.json",
+        "revision": "c6c95c5d88417b5c3ca436951f8716528707c863",
+        "sha256": "5df8ed375b5dd6717ecb95ce40570169b92cb4bb2e60bc63a207109293e7a9c6"
+      },
+      {
+        "bytes": 14012,
+        "git_blob": "6b3438c55f7dd43f14f8369ba38c5066ac3cc49e",
+        "mode": "100644",
+        "path": "docs/autoencoders/evidence/legal-sampled-primary-review-20261015/publication-copy-roster.json",
+        "revision": "c6c95c5d88417b5c3ca436951f8716528707c863",
+        "sha256": "a0ec48d1c4794fd6099c4261034b9a02209e3e887295c74bcad5b00cb06adfb5"
+      }
+    ],
+    "implementation": "legal_source_sampling_primary_review_v2 prepares a new unsigned V2 definition-review envelope using existing association/dependency/review owners.",
+    "mechanical_milestone_completed": "Declared primary evidence is now explicitly included in a fresh subject dependency closure; do not plan a duplicate adapter.",
+    "merge_commit": "c6c95c5d88417b5c3ca436951f8716528707c863",
+    "old_candidate_correspondence_preparation_subject_manifest_signatures_unchanged": true,
+    "public_contract": {
+      "blocked_unresolved_association": "named blocked status with null new companions",
+      "bounds": {
+        "envelope_bytes": 4194304,
+        "input_bytes": 134217728,
+        "manifest_artifacts": 4096,
+        "manifest_edges": 16384,
+        "sealed_preparation_bytes": 1048576
+      },
+      "digest": "primary_association_definition_review_sha256",
+      "envelope_companions": [
+        "sealed preparation",
+        "plain subject",
+        "plain dependency_manifest"
+      ],
+      "prepare": "prepare_primary_association_definition_review_v2",
+      "validation_expected_preparation_sha256_scope": "whole-envelope full canonical hash, not just sealed preparation record"
+    },
+    "semantic_limits": [
+      "The current V2 signing domain covers declared graph/AST/context interpretation but has no explicit official-source/primary-package equivalence verdict.",
+      "Primary package/content/version identity, governing applicability, independent legal/formal agreement and authenticated exposure remain unsupported; larger dependency closure alone closes none of these.",
+      "Old signatures cannot authenticate the larger new subject. Actual keys/policy/evidence and reviews are not selected or manufactured by preparation.",
+      "Collect independent source-blind interpretation targets before displaying candidate-bearing subjects; truthfully record later organizer/model/reviewer exposure.",
+      "The published curated metadata subset is not a self-contained replay corpus; originals and full envelopes remain in retained local attempts."
+    ],
+    "state": "published on main and ancestor of plan base"
+  },
+  "reviewed_plan_checkout": "/home/barberb/lift_coding/.worktrees/legal-ir-execution-plan-refresh-20261016",
+  "roadmap_adjustments": [
+    {
+      "action": "Reference latest published primary-review subject closure and kernel refusal; retain unmerged counted-profile inventory and original/adopted lineage. This is a prose/evidence update, not a new runtime integration.",
+      "milestone": "Reconcile and inventory"
+    },
+    {
+      "action": "Obtain exact original official/primary acquisition/version/content correspondence and appropriate explicit review coverage; do not use matching IDs, unchanged opaque definitions or signatures over a different subject as approval.",
+      "milestone": "Source and review authority"
+    },
+    {
+      "action": "Use existing definition, actual-norm scope/typed/join and graph owners for one definition+actual norm use+second scope-valid use; independently review modality, agency, argument order, approval direction, exceptions, time and applicability before gold. Exposed alternatives remain diagnostic.",
+      "milestone": "Reviewed connected component"
+    },
+    {
+      "action": "Select missing operators from reviewed component requirements. Reuse the existing counted-frame proposal after compatibility review; preserve pending states instead of inventing source law, generic counting or unsupported source-to-native lowering.",
+      "milestone": "Typed feature support"
+    },
+    {
+      "action": "Separate exact original UTF8/normalized surface, full typedAST/graph, fixed-view CE and embedding outcomes. Reuse compatible saved assets and existing correct/zero/rotated latent controls; withhold targets/loss caches/teacher forcing except named oracle baselines. Require useful latent dependence and independently held-out semantic improvement before task-specific teacher promotion or distillation.",
+      "milestone": "Reconstruction evaluation and transfer"
+    },
+    {
+      "action": "Materialize reviewed typed nodes and scoped definition-use/dependency edges with original physical occurrence/multiplicity identities; compile supported shared modules under explicit assumptions/toolchain and test invalidation/clean rebuild. Distinguish syntax generation and conditional proofs from faithful law and reviewed corpus admission.",
+      "milestone": "Graph and unified Lean corpus"
+    },
+    {
+      "action": "Keep independent8D384D768D lanes and per-family/schema/task inventories; stage token/context coverage and retraining by connected neighborhoods. Actual cgroup/container/GPU/Hub admission and resource recovery remain separate gates; do not override F07 to manufacture readiness.",
+      "milestone": "Scale and deployment"
+    }
+  ],
+  "schema": "legal-ir-execution-plan-parallel-review/v1",
+  "scope_and_authority_limits": {
+    "complete_GitHub_or_local_work_inventory_claimed": false,
+    "foreign_worktree_or_original_assets_modified": false,
+    "new_Lean_or_native_jobs": 0,
+    "new_implementation_or_branch_merges": 0,
+    "new_product_imports_or_tests_or_model_training": 0,
+    "new_review_or_semantic_admission": false,
+    "new_source_or_corpus_payload_downloads": 0,
+    "new_teacher_or_model_promotion": false,
+    "published_results_are_attributed_not_rerun": true
+  },
+  "status": "read-only-survey-complete",
+  "unmerged_authored_counted_frame": {
+    "accepted_relational_or_join_target": false,
+    "actual_Lean_build_or_kernel_proof_claimed": false,
+    "existing_owners_reused": [
+      "shared typed AST",
+      "elaboration",
+      "canonical FOL printer/parser",
+      "alpha-equivalence"
+    ],
+    "expansion": {
+      "equality_occurrences": 6,
+      "fixed_maximum": 3,
+      "membership_arguments_order": [
+        "object",
+        "event",
+        "time"
+      ],
+      "membership_occurrences": 4,
+      "physical_nodes": 49,
+      "quantifiers": 6,
+      "sorts": [
+        "Object",
+        "EventFrame",
+        "TimeFrame"
+      ]
+    },
+    "generated_output": "Canonical FOL syntax and a specialized Lean text template for this recognized formula; no general/native-TDFOL equality route.",
+    "immutable_inputs": [
+      {
+        "bytes": 22999,
+        "git_blob": "d56709a6236cfc0211f92b7d8df5a110fc72e25b",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_v1.py",
+        "revision": "2b9f325a080001272ac6dd3949cff5a4566281eb",
+        "sha256": "72501580048e73be95638c4d2d291ceaa5e026516b2d09ba8d747d5d356ccc31"
+      },
+      {
+        "bytes": 23504,
+        "git_blob": "6b94950c29e01b20941577a43a93bd1041ec3b26",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py",
+        "revision": "2b9f325a080001272ac6dd3949cff5a4566281eb",
+        "sha256": "f64884acc049cd6f50d00590fba467910c80ea787ddf7abdc1dde3878eb8dbf9"
+      },
+      {
+        "bytes": 5576,
+        "git_blob": "d3ec1ab4d6537f81b69ac121b6d5271ca2f26521",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_counted_frame_v1.md",
+        "revision": "2b9f325a080001272ac6dd3949cff5a4566281eb",
+        "sha256": "565cbe4db68b1af183464534caf75b31b87511cc4209e8c179a64bf697fd7ca1"
+      }
+    ],
+    "independent_current_main_execution_performed": false,
+    "limits": [
+      "Do not recreate this counting engine or call all cardinality support absent.",
+      "This fixed bound and arbitrary event/time index are not generic cardinality, temporal ordering, duration, lifetime/global/cumulative counting or a legal choice of Member/domain/frame.",
+      "Source-linked versioned correspondence, required sorts/equality/frame/native lowering and actual statutory review must be separately qualified before accepting this as a source target.",
+      "\u00a77214 remains source-only pending; \u00a77213 retains two exposed unreviewed alternatives. Purpose/anaphora/permission scope/applicability are not solved by counted syntax."
+    ],
+    "observed_branch": "codex/legal-counted-frame-20261015-01",
+    "observed_clean_head": "2b9f325a080001272ac6dd3949cff5a4566281eb",
+    "original_worktree": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets",
+    "profile_scope": "Strict caller-authored at-most-three DISTINCT Object members per explicitly declared EventFrame/TimeFrame; no inferred statutory meaning.",
+    "source_or_branch_mutated": false,
+    "state": "committed in separate local owner branch; not ancestor of current plan base and its three paths absent there",
+    "statutory_7214_correspondence_created": false
+  }
+}
