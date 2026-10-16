@@ -1,0 +1,52 @@
+{
+  "schema": "legal-ir-plan-hub-metadata-observation/v1",
+  "observed_at_utc": "2026-10-16T06:02:20.394892+00:00",
+  "scope": "Unauthenticated bounded public API and pinned README reads only. File descriptors are metadata, not payload validation or a corpus census.",
+  "raw_metadata_retained_directory": "/home/barberb/lift_coding/artifacts/legal-ir-span-graph-plan-20261016-01",
+  "parquet_or_model_payload_downloads": false,
+  "product_model_or_lean_execution": false,
+  "reviewed_gold_or_admission_granted": false,
+  "datasets": [
+    {
+      "id": "justicedao/uscode-autoformal-span-cache",
+      "revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+      "metadata_sha256": "f9263fe1a94cabd97f34852b510364aef5329c459a293d879742bc5b2c6c0b18",
+      "metadata_bytes": 2510870,
+      "file_descriptors": 7962,
+      "parquet_paths": 5070,
+      "parquet_descriptors": [],
+      "card_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/raw/60501f3e920f6c9050cfc452e0d9fcc2b7c184f3/README.md",
+      "card_sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6",
+      "card_bytes": 13863,
+      "api_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache?blobs=true",
+      "raw_metadata_filename": "uscode-autoformal-span-cache-metadata.json",
+      "published_card_filename": "uscode-autoformal-span-cache-README.md"
+    },
+    {
+      "id": "justicedao/uscode-autoformal-entity-cache",
+      "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "metadata_sha256": "a6e283701865a8a93cf88010f8f684a940750cfb3aa2c7ff82181de20576bd1b",
+      "metadata_bytes": 1534,
+      "file_descriptors": 3,
+      "parquet_paths": 1,
+      "parquet_descriptors": [
+        {
+          "rfilename": "autoformal/uscode/kg-logic-index.parquet",
+          "blobId": "0a55d8e7f3ab74d4f046c115a88ab20c102e3cdc",
+          "size": 11139328,
+          "lfs": {
+            "sha256": "f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233",
+            "size": 11139328,
+            "pointerSize": 133
+          }
+        }
+      ],
+      "card_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/raw/79d54378c5d6a89ab56e7a27e0f0ba867e800e19/README.md",
+      "card_sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4",
+      "card_bytes": 581,
+      "api_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache?blobs=true",
+      "raw_metadata_filename": "uscode-autoformal-entity-cache-metadata.json",
+      "published_card_filename": "uscode-autoformal-entity-cache-README.md"
+    }
+  ]
+}
