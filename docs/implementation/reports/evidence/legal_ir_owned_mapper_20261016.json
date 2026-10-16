@@ -1,0 +1,411 @@
+{
+  "CUDA_qualified": false,
+  "Constitution_formalized": false,
+  "Docker_qualified": false,
+  "Hub_qualified": false,
+  "Lean_admitted": false,
+  "actual_administrative_controller": {
+    "lane": "validation",
+    "lease_id": "02a05732188d4860a79202c04a83992e",
+    "new_native_lease_acquired_by_helper": false,
+    "owner_birth": "118884515",
+    "owner_pid": 1145587,
+    "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661"
+  },
+  "actual_container_execution_qualified": false,
+  "actual_native_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+  "admitted": false,
+  "arms": {
+    "cancel": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-owned-mapper-20261016/mapper-controlled-cancel-v3",
+      "fixed_external_charge_bytes": 134217728,
+      "fresh_original_row_digest_verified": true,
+      "guardian_native_lease_id": "edf1946a50c44fc494f5a1d3a3cbd4e2",
+      "historical_held_kernel_worker_empty": true,
+      "historical_independent_host_mapping_verified": true,
+      "host_ready": {
+        "bytes": 25226,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-owned-mapper-20261016/mapper-controlled-cancel-v3/logs/host-ready.json",
+        "sha256": "24c7084271e61428b488ea1d739740b130327225e904e95311427fe31125dbf9"
+      },
+      "live_kernel_capability_reconstructed_from_JSON": false,
+      "mode": "controlled_cancel",
+      "native_root_and_child_absent": true,
+      "original_owner_guardian_and_mapper_births_gone": true,
+      "private_PID_namespace_qualified": false,
+      "reservation_id": "c71fbeb9f87e47518c368f6723d978eb",
+      "root_native_lease_id": "c07a6e1429dd4309ba6f40dbe25762e3",
+      "status": "retained",
+      "terminal": {
+        "bytes": 5101,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-controlled-cancel-request-v3.terminal.json",
+        "sha256": "d70bce43913ecb0b459f8842043e9e76a0e88d391abc5def8ae853b11adeec65"
+      }
+    },
+    "normal": {
+      "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-owned-mapper-20261016/mapper-normal-v3",
+      "fixed_external_charge_bytes": 134217728,
+      "fresh_original_row_digest_verified": true,
+      "guardian_native_lease_id": "3e8b278a43104d1fb7d9481bdabc24f8",
+      "historical_held_kernel_worker_empty": true,
+      "historical_independent_host_mapping_verified": true,
+      "host_ready": {
+        "bytes": 25226,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-owned-mapper-20261016/mapper-normal-v3/logs/host-ready.json",
+        "sha256": "9b11889da7d887c62e6d6e39db9155a16df0b7cbe6a0d1fcd2723872b97a0894"
+      },
+      "live_kernel_capability_reconstructed_from_JSON": false,
+      "mode": "normal",
+      "native_root_and_child_absent": true,
+      "original_owner_guardian_and_mapper_births_gone": true,
+      "private_PID_namespace_qualified": false,
+      "reservation_id": "eabff4a8cc9d45e3af76385ae0ba8f1e",
+      "root_native_lease_id": "3b0e00ba53144267bfb9325d792fd88b",
+      "status": "released",
+      "terminal": {
+        "bytes": 4934,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-normal-request-v3.terminal.json",
+        "sha256": "f9e6b832806529d6933f09603e4091b939dc3109eadee8ed664a6dc9cf0c0002"
+      }
+    }
+  },
+  "claims_recovered": false,
+  "daemon_qualified": false,
+  "fresh_selected_ledger_observation": {
+    "bytes": 8011480,
+    "device": 66306,
+    "inode": 67025192,
+    "observation_mode": "bounded_shared_lock_existing_atomic_ledger_read_no_census_no_write",
+    "observed_at_unix": 1792170800.2379382,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "a138e5629b7dae77faaf7b700fc5a70ab05a916025dce8ddc87fe944a6ac1a27"
+  },
+  "global_census_performed": false,
+  "guardian_death_qualified": false,
+  "ledger_changed": false,
+  "live_kernel_capability_reconstructed_from_JSON": false,
+  "manifest": {
+    "bytes": 5366,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-terminal-inputs-v3.json",
+    "sha256": "2c79c1aa6dba17c482a86f8b8c513ec96c8104f6cc10e736fb11e153f05613d5"
+  },
+  "model_semantic_qualified": false,
+  "native12_unchanged": true,
+  "native_lease_reconstructed_from_JSON": false,
+  "observed_at_unix": 1792170800.2553895,
+  "ordinary_strict_live_runtime_profile_passed": false,
+  "private_PID_namespace_qualified": false,
+  "producer": {
+    "bytes": 23725,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/observe_mapper_terminal_v4.py",
+    "sha256": "fbf64b81c274b44a6f108c816290711a46d8c7223620bbad2a924c2d4cfbd423"
+  },
+  "protocol_unit_tests": {
+    "actual_namespace_execution": false,
+    "failed": 0,
+    "ordinary_strict_live_profile_passed": false,
+    "passed": 83,
+    "skipped": 0,
+    "static_roster": {
+      "test_changed_native_identity_lifetime_or_envelope_refuses_work": 30,
+      "test_coalesced_private_frames_preserve_order_without_extra_read": 1,
+      "test_empty_pipe_eof_is_a_distinct_control_event": 1,
+      "test_existing_destination_is_unchanged_and_temporary_is_preserved": 1,
+      "test_existing_temporary_is_never_opened_or_replaced": 3,
+      "test_fragmented_private_frame_is_not_read_before_complete_line": 1,
+      "test_fragmented_unterminated_frame_has_a_finite_byte_limit": 1,
+      "test_guardian_predicate_accepts_exact_live_full_envelope_without_mutation": 1,
+      "test_guardian_root_ancestry_cannot_be_changed": 3,
+      "test_missing_actual_native_root_or_child_cannot_authorize_work": 2,
+      "test_partial_frame_followed_by_eof_is_an_error": 1,
+      "test_private_frame_requires_a_typed_object": 5,
+      "test_publication_is_anchored_to_original_directory_descriptor": 2,
+      "test_receive_checks_guard_before_reading_available_frame": 1,
+      "test_receive_deadline_does_not_accept_eof_as_a_frame": 1,
+      "test_receive_empty_pipe_stops_at_finite_deadline": 1,
+      "test_regular_file_descriptor_is_not_a_runtime_directory": 1,
+      "test_release_publication_never_exposes_a_hardlink_window": 1,
+      "test_send_and_receive_roundtrip_uses_only_private_bounded_bytes": 1,
+      "test_send_rejects_oversize_or_nonfinite_before_any_write": 2,
+      "test_wrong_control_names_refuse_before_writes": 10,
+      "test_wrong_control_payload_refuses_before_writes": 13
+    },
+    "strict_durability": {
+      "reservation_id": "5faa3097c0d4421480825192d4975833",
+      "strict_seal_verified": true,
+      "verified_bytes": 102980,
+      "verified_files": 11
+    }
+  },
+  "publication_context": {
+    "Lean_admitted": false,
+    "actual_container_execution_qualified": false,
+    "actual_native_parent_after": {
+      "lane": "validation",
+      "lease_id": "ad1b25d4511c4aaf8a59c6648b4873df",
+      "new_native_lease_acquired_by_helper": false,
+      "owner_birth": "118906851",
+      "owner_pid": 1183921,
+      "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661"
+    },
+    "actual_native_parent_before": {
+      "lane": "validation",
+      "lease_id": "ad1b25d4511c4aaf8a59c6648b4873df",
+      "new_native_lease_acquired_by_helper": false,
+      "owner_birth": "118906851",
+      "owner_pid": 1183921,
+      "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661"
+    },
+    "admitted": false,
+    "main_native_authority_claimed_as_tested": false,
+    "main_native_generation_tested": false,
+    "original_observation": {
+      "bytes": 15092,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-terminal-evidence-v3.json",
+      "sha256": "51357bedce248692a52f812f10bcb2974706cce870622c080c8bda4f322d42f2"
+    },
+    "physical_native_authority": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/canonical-native-authority-runtime-v4.json",
+      "sha256": "50b8d8d0eda355f3cb4880fb5222dd71c002fd5663189d14cb75499fe2074ee9"
+    },
+    "physical_runtime_authority_retaged": false,
+    "portable_mapper_runtime_published": false,
+    "qualification_scope": "finite known UID/GID mapping and normal/cancel cleanup only; no Docker, private container PID, model, Hub or Lean qualification",
+    "reviewed_main_native_delta": {
+      "diagnostic_only_review": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/native-main-delta-review-v1.json",
+      "path_in_repository": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "reviewed_main_sha256": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed",
+      "sha256": "69e16954339bfa4e9d8e12d7b31e67a0b9fcf320cf83dd517f8a92d3349aa47f",
+      "tested_source_sha256": "aaf67b9f37c4df7b15e1b9d08b9441290a5179dfce0ec01d21d25ae86423beb0"
+    },
+    "source_read_lease": {
+      "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+      "cooperative": true,
+      "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+      "mode": "read",
+      "schema_version": "autoencoder-source-lease/v1",
+      "waited_seconds": 3.865617327392101e-05
+    },
+    "startup_failure_history": {
+      "dependency_visibility_fix": {
+        "audit_is_static_historical_observation": true,
+        "audit_runtime_qualified": false,
+        "canonical_tree_first": true,
+        "canonical_tree_or_native_policy_changed": false,
+        "environment": {
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "PYTHONNOUSERSITE": "1",
+          "PYTHONPATH": "/home/barberb/lift_coding/external/ipfs_datasets:/home/barberb/.local/lib/python3.12/site-packages"
+        },
+        "launcher": {
+          "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/launch_owned_mapper_service_v5.py",
+          "sha256": "bb946d471dc2ae28d2c898928de660a75bf1943cc53ad63615cb1acb8c021c28"
+        },
+        "no_download_or_install": true,
+        "user_site_pth_processing_enabled": false
+      },
+      "first_failure": {
+        "failure_phase_unresolved": true,
+        "no_completed_mapper_result_available": true,
+        "observer_released_native_or_disk_claims": false,
+        "original_attempt_empty": true,
+        "original_owner_birth_gone": true,
+        "past_native_grant_history_authenticated": false,
+        "runtime_absent": true,
+        "targeted_outstanding_native_and_disk_owner_absence_observed": true
+      },
+      "references": {
+        "dependency_visibility_audit": {
+          "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/owned-mapper-dependency-visibility-audit-v1.json",
+          "sha256": "d7c2ab1c6aa206edeb3ffec57e7bc5761c2d76be380b0a2af5c6d0ef0635d98d"
+        },
+        "normal1_closure_control": {
+          "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/owned-mapper-failure1-closure-v1.lease.json",
+          "sha256": "6ccac9d3888e0789ab3e600432a7329fdeb55a7b4aa2151bf442623bedcdfd97"
+        },
+        "normal1_independent_closure": {
+          "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/failed-normal1-closure-v1.json",
+          "sha256": "20283674fa071445727b0d809fa2aede376a09001ee4c3a1c5fbeadc63181214"
+        },
+        "normal2_early_exception": {
+          "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-normal-request-v2.bootstrap-failure.json",
+          "sha256": "36ab19e29c80da9edd1478886d00d4a22c774f082f405f5f00114ee970737020"
+        }
+      },
+      "second_failure": {
+        "actual_native_grant_absence_verified": false,
+        "error": "No module named 'multiformats'",
+        "error_type": "ModuleNotFoundError",
+        "guardian_fork_started": false,
+        "native_admission_state_unknown": true,
+        "native_open_started": false,
+        "phase": "canonical_imports",
+        "qualification_claimed": false
+      }
+    },
+    "training_executed": false
+  },
+  "qualification_scope": "finite_known_RootlessKit_host_PID_mapping_and_original_held_worker_drain_evidence_only",
+  "schema": "owned-mapper-independent-terminal-observation/v2",
+  "source_read_lease": {
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "cooperative": true,
+    "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+    "mode": "read",
+    "schema_version": "autoencoder-source-lease/v1",
+    "waited_seconds": 3.723194822669029e-05
+  },
+  "source_tree": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "training_executed": false,
+  "unit_tests": {
+    "actual_namespace_execution": false,
+    "failed": 0,
+    "ordinary_strict_live_profile_passed": false,
+    "passed": 73,
+    "skipped": 0,
+    "static_roster": {
+      "test_abort_payload_is_exact_and_grants_no_release_or_native_capability": 1,
+      "test_aliased_parent_or_hardlinked_source_cannot_be_pinned": 1,
+      "test_close_is_idempotent_and_does_not_release_or_delete": 1,
+      "test_duplicate_nonfinite_or_invalid_json_is_rejected": 5,
+      "test_duplicate_status_key_is_refused": 1,
+      "test_invalid_inside_or_outside_overlapping_maps_fail_closed": 10,
+      "test_json_like_or_incomplete_constructor_inputs_do_not_open_proc": 5,
+      "test_malformed_reused_or_dead_stat_is_not_live_authority": 6,
+      "test_map_row_bound_is_enforced": 1,
+      "test_mapped_decision_requires_host_pid_and_new_user_mount_net": 1,
+      "test_missing_or_nested_namespace_status_is_not_host_pid_proof": 6,
+      "test_missing_report_field_cannot_pass": 1,
+      "test_owned_regular_bytes_are_bound_without_following_a_file_alias": 1,
+      "test_pid_reuse_or_forged_ancestry_in_hint_is_rejected": 6,
+      "test_release_payload_requires_prior_independent_ready": 1,
+      "test_report_wrong_nonce_source_or_claims_cannot_pass": 7,
+      "test_reported_state_can_change_but_actual_process_identity_must_match": 1,
+      "test_stat_uses_final_parenthesis_and_exact_original_birth": 1,
+      "test_status_requires_host_pid_group_and_session_mapping": 1,
+      "test_uid_gid_map_preserves_both_ranges_and_zero_mapping": 1,
+      "test_unsafe_control_names_cannot_be_generated": 6,
+      "test_wrong_mapping_or_namespace_cannot_be_a_ready_observation": 9
+    },
+    "strict_durability": {
+      "reservation_id": "78f54fb2cd744d609a3fe4c2ccacae3c",
+      "strict_seal_verified": true,
+      "verified_bytes": 31671,
+      "verified_files": 11
+    }
+  },
+  "verified_artifacts": {
+    "cancel_bootstrap": {
+      "bytes": 3522,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-controlled-cancel-bootstrap-result-v3.json",
+      "sha256": "3f1569c845eea6921ac3329d8d3cb609d82d427f36903ce5a6180d3c49337959"
+    },
+    "cancel_guardian": {
+      "bytes": 14025,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-owned-mapper-20261016/mapper-controlled-cancel-v3/logs/guardian-before-release.json",
+      "sha256": "1d8b2deb34f166d31a8d3b1733c4ce1df5ebf47b3f67dcf2b38163213ecbf20c"
+    },
+    "cancel_owner": {
+      "bytes": 45815,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-owned-mapper-20261016/mapper-controlled-cancel-v3/logs/failure.json",
+      "sha256": "d4d4b55ad651ea17c896ada25159a104da589009a250af3a1517a92a0cc455a6"
+    },
+    "cancel_ready": {
+      "bytes": 25226,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-owned-mapper-20261016/mapper-controlled-cancel-v3/logs/host-ready.json",
+      "sha256": "24c7084271e61428b488ea1d739740b130327225e904e95311427fe31125dbf9"
+    },
+    "cancel_request": {
+      "bytes": 22156,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-controlled-cancel-request-v3.json",
+      "sha256": "f802dae8698cebb2592fd89888647eca84c5ad76a4101e7985f07d05ce80c43a"
+    },
+    "cancel_terminal": {
+      "bytes": 5101,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-controlled-cancel-request-v3.terminal.json",
+      "sha256": "d70bce43913ecb0b459f8842043e9e76a0e88d391abc5def8ae853b11adeec65"
+    },
+    "control_unit_control": {
+      "bytes": 1707,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/owned-mapper-protocol-unit-tests-v2.lease.json",
+      "sha256": "9ca8bdd87ad0945c985ad7c42e3f941fceeb5af35a018194616431221a362e3a"
+    },
+    "control_unit_durability": {
+      "bytes": 2105,
+      "path": "/tmp/pytest-of-barberb/um2373c5b2e3a8/logs/validation-durability.json",
+      "sha256": "f23512298037a6ce6bca1636a2115d8b769ba4f607dcc92c09effef6e9db0652"
+    },
+    "control_unit_request": {
+      "bytes": 19471,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/control-unit-profile-v2/mapper-unit-request-v1.json",
+      "sha256": "04a153f0fdeadffd011376dcbee83f2fdfe0c454e5cf7dbd3b3df2d3dc852d80"
+    },
+    "control_unit_result": {
+      "bytes": 490,
+      "path": "/tmp/pytest-of-barberb/um2373c5b2e3a8/logs/result.json",
+      "sha256": "7ef1d6e55fba747106d6f417e923132c0355f810bd06a836bc424525812911cd"
+    },
+    "control_unit_xml": {
+      "bytes": 36220,
+      "path": "/tmp/pytest-of-barberb/um2373c5b2e3a8/exports/pytest.xml",
+      "sha256": "2c967324c9586db43708e6236e17b65561088b2c8489df959067b4c01da298f8"
+    },
+    "normal_bootstrap": {
+      "bytes": 3500,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-normal-bootstrap-result-v3.json",
+      "sha256": "75d95b52f577346fea9e9a6431dab8e3e28db43f12addb62e213074730b3441c"
+    },
+    "normal_guardian": {
+      "bytes": 13445,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-owned-mapper-20261016/mapper-normal-v3/logs/guardian-before-release.json",
+      "sha256": "682d5e96bb27f4e54e8dd2a12fe1a9285f609ee5c432917c7e5893eaac7e7a80"
+    },
+    "normal_owner": {
+      "bytes": 44314,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-owned-mapper-20261016/mapper-normal-v3/logs/execution.json",
+      "sha256": "7974bba05b5067f4479581353b0b2e1de2887503823b971f80ce36d2e32d6af1"
+    },
+    "normal_ready": {
+      "bytes": 25226,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-owned-mapper-20261016/mapper-normal-v3/logs/host-ready.json",
+      "sha256": "9b11889da7d887c62e6d6e39db9155a16df0b7cbe6a0d1fcd2723872b97a0894"
+    },
+    "normal_request": {
+      "bytes": 22134,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-normal-request-v3.json",
+      "sha256": "7db4ff570610323fe996323715fbc9a705a7cc491238a0652f48d489f9f004c3"
+    },
+    "normal_terminal": {
+      "bytes": 4934,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-normal-request-v3.terminal.json",
+      "sha256": "f9e6b832806529d6933f09603e4091b939dc3109eadee8ed664a6dc9cf0c0002"
+    },
+    "unit_control": {
+      "bytes": 1632,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/owned-mapper-unit-tests-v2.lease.json",
+      "sha256": "98fde0c2e9c349e21984afd66aca20f9c2ada83d8faeeef3b138f1407792626d"
+    },
+    "unit_durability": {
+      "bytes": 2103,
+      "path": "/tmp/pytest-of-barberb/um5f57b2950f01/logs/validation-durability.json",
+      "sha256": "dcd8b511654d34851e265308d5fe0d2977ca6293adb9846838c71db5a4fd0ab9"
+    },
+    "unit_request": {
+      "bytes": 19380,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-owned-mapper-20261016/mapper-unit-request-v2.json",
+      "sha256": "2eb71bfa943dfbdd5ded7bab12a2ca7dc4c54b4c7b83e2338c960435680962d7"
+    },
+    "unit_result": {
+      "bytes": 490,
+      "path": "/tmp/pytest-of-barberb/um5f57b2950f01/logs/result.json",
+      "sha256": "820fef1293b2c678ab9c1716950aa92eef382a2a2227f16d5ea6b9ffca1e8825"
+    },
+    "unit_xml": {
+      "bytes": 14112,
+      "path": "/tmp/pytest-of-barberb/um5f57b2950f01/exports/pytest.xml",
+      "sha256": "88f236ac1450f500a6e4ff8b3c41fba92a41987cb6e869303d651ad6b71290ea"
+    }
+  },
+  "weights_downloaded": false
+}
