@@ -1,0 +1,45 @@
+{
+  "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-output-integration-20261016-qualification01",
+  "attempt_entries": [],
+  "controller_exit_code": 1,
+  "controller_stderr": {
+    "bytes": 2047,
+    "path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/qualification01-controller-stderr.log",
+    "sha256": "6bf2162fb5065a9ba35c192ba6790fda7da72bd5940cbf54f19e5cd97db4bb99"
+  },
+  "foreign_cleanup_performed": false,
+  "independent_attestation": false,
+  "minimum_extra_bytes_for_numerical_at_native_snapshot": 13801104960,
+  "model_payloads_opened": false,
+  "native_child_started": false,
+  "native_refusal": {
+    "error": "storage reservation capacity exceeded",
+    "error_type": "DaemonResourceError",
+    "observation": {
+      "additional_requested_bytes": 134217728,
+      "charged_bytes": 136535200372,
+      "filesystem_free_deficit_bytes": 13666887232,
+      "filesystem_free_insufficient": true,
+      "limit_bytes": 160000000000,
+      "minimum_filesystem_free_bytes": 19653750784,
+      "observed_apparent_bytes": 103214562356,
+      "outstanding_full_reservations_bytes": 33186420288,
+      "schema": "daemon-resource-capacity-observation/v1",
+      "scope": "named_roots_only_apparent_bytes",
+      "storage_capacity_deficit_bytes": 0,
+      "storage_capacity_exceeded": false
+    },
+    "schema": "owned-validation-capacity-refusal/v1",
+    "stage": "owner.open"
+  },
+  "native_reservation_acquired": false,
+  "native_scheduler_lease_acquired": false,
+  "numerical_executed": false,
+  "numerical_request_submitted": false,
+  "recorded_at_utc": "2026-10-16T03:39:52.956615+00:00",
+  "request_sha256": "99e81f26d38b15992766d0446ec717a9dc935cddad93e9ed7600e5a29343492d",
+  "request_source_pin_count": 251,
+  "schema": "legal-decoder-native-capacity-closeout/v1",
+  "suggested_available_capacity_increase_bytes": 15000000000,
+  "tests_executed": false
+}

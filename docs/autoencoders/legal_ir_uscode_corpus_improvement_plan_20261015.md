@@ -97,6 +97,14 @@ separate populations until their original derivation/multiplicity is reconciled.
 
 ## Immediate work packages
 
+The [retained decoder output increment](legal_ir_decoder_output_integration_20261016.md)
+prepares candidate-only inspection with the original lexical/tagged codecs and a
+small five-variant numerical replay. The retained heads emit seven-facet IR,
+which remains outside the richer relational-request profile. Native admission
+refused the new test job on filesystem capacity before execution; its draft
+implementation, authored cases and replay are not runtime or accuracy evidence.
+Owner-led storage accounting/finalization or additional capacity precedes retry.
+
 1. **Asset and cache manifest.** Produce the joined compatibility inventory,
    current physical-occurrence census, immutable cache pins and explicit
    ModelManager status. Reuse matching vectors and weights; generate only missing
