@@ -1,0 +1,359 @@
+{
+  "CUDA_qualified": false,
+  "Constitution_formalized": false,
+  "Docker_qualified": false,
+  "Hub_qualified": false,
+  "Lean_admitted": false,
+  "actual_administrative_controller_after": {
+    "lane": "validation",
+    "lease_id": "335b911d8c4341b88da62ffd5cc62b14",
+    "new_native_lease_acquired_by_helper": false,
+    "owner_birth": "114198529",
+    "owner_pid": 1219334,
+    "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661"
+  },
+  "actual_administrative_controller_before": {
+    "lane": "validation",
+    "lease_id": "335b911d8c4341b88da62ffd5cc62b14",
+    "new_native_lease_acquired_by_helper": false,
+    "owner_birth": "114198529",
+    "owner_pid": 1219334,
+    "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661"
+  },
+  "actual_container_execution_qualified": false,
+  "actual_native_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+  "admitted": false,
+  "container_started": false,
+  "core_source_sha256": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/container_execution_boundary.md": "d31a37214e8789705d36baf9b9042e45e28cda25337d554923dd5c1ed1c668c2",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_container_boundary.py": "924ac5efe82386d0dabb8de5856189eb5d51e12b6d000d4ba546a433185ab1e6",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_kernel_custody.py": "da2b95ede17486d61a03b692fd22ca01c11e03b398f5e220bbc4af975444ec5e",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_container_boundary.py": "ae271f5ae91f178f9dd84c636a65467f1c413cdf48c27b66da4115e12588b2b2"
+  },
+  "fresh_terminal_ledger_observation": {
+    "bytes": 7936250,
+    "device": 66306,
+    "inode": 67028743,
+    "observation_mode": "bounded_shared_lock_existing_atomic_ledger_read_no_census_no_write",
+    "observed_at_unix": 1792123980.4608183,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "7faafc7a6349ce46cb6d1e18e7c25f6b1c91fcbd659931cb4bb60fddb6b20f16"
+  },
+  "fresh_unit_claim": {
+    "native_lease_absent": true,
+    "native_lease_id": "dfaaaec5a0e840f19968810a0c7a6ac2",
+    "original_owner_and_child_births_gone": true,
+    "reservation_id": "1839910d59b94c23804cb35f557afbc9",
+    "status": "released",
+    "strict_artifacts_durable": true
+  },
+  "image_imported": false,
+  "live_adapters": {
+    "Lean_admitted": false,
+    "actual_direct_dockerd_peer_verified": true,
+    "actual_process_security_adapter_verified": true,
+    "admitted": false,
+    "container_execution_qualified": false,
+    "elapsed_seconds": 0.14627363183535635,
+    "image_imported": false,
+    "live_host_process_correctly_not_quiescent": true,
+    "private_container_pid_namespace_qualified": false,
+    "timing_scope": "daemon/helper metadata only; not a legal-IR or training benchmark",
+    "warm_peer_observation_seconds": 9.812903590500355e-05
+  },
+  "manifest": {
+    "bytes": 5735,
+    "device": 66306,
+    "inode": 107136978,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-container-boundary-20261016/evidence-inputs-v1.json",
+    "sha256": "d53a4601b2446059266a41a1ca4deec8a3912e3c6ccec78271bbdf16e16698e1"
+  },
+  "model_semantic_qualified": false,
+  "next_required_qualification": "supported_named_root_image_storage_then_distinct_finite_container_kernel_custody_profile",
+  "observed_at_unix": 1792123980.4831133,
+  "offline_bundles": {
+    "Lean_admitted": false,
+    "actual_archive_bytes_equal": true,
+    "actual_manifest_values_equal": true,
+    "admitted": false,
+    "container_started": false,
+    "execution_ready": false,
+    "image_imported": false,
+    "preparations": [
+      {
+        "archive_bytes": 1925120,
+        "archive_sha256": "6e411d8085d087ca1c41c13c0633b33680be9a8cd9f7e1c26760fe0220f40f72",
+        "elapsed_seconds": 0.03127426095306873,
+        "name": "busybox-a"
+      },
+      {
+        "archive_bytes": 1925120,
+        "archive_sha256": "6e411d8085d087ca1c41c13c0633b33680be9a8cd9f7e1c26760fe0220f40f72",
+        "elapsed_seconds": 0.01922382810153067,
+        "name": "busybox-b"
+      }
+    ],
+    "profile": "legal-ir-container-custody-busybox/v2",
+    "timing_scope": "owned regular-file preparation only; not per-span/bridge/training timing",
+    "unresolved_prerequisites": [
+      "image store must be covered by a supported named-root storage owner",
+      "rootless container UID0 mapping to the host caller must be verified",
+      "fresh systemd slice and container scope placement must be qualified"
+    ]
+  },
+  "private_container_PID_qualified": false,
+  "producer": {
+    "bytes": 29928,
+    "device": 66306,
+    "inode": 107136929,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-container-boundary-20261016/build_container_boundary_evidence_v1.py",
+    "sha256": "e1d9d824e2b96a1b75eba0ea86c5b95958079be22e649813629f1031d0d327a0"
+  },
+  "publication_context": {
+    "actual_container_execution_qualified": false,
+    "complete_unit_validation_passed": true,
+    "main_native_authority_claimed_as_tested": false,
+    "ordinary_strict_filesystem_profile_passed": false,
+    "original_observation": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-container-boundary-20261016/qualification-evidence-v1.json",
+      "sha256": "6349969fc28cf0f2e48930ebb9eae9200a689aa0d79f88eab3f6de02af3f54fb"
+    },
+    "physical_native_authority": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/canonical-native-authority-runtime-v4.json",
+      "sha256": "50b8d8d0eda355f3cb4880fb5222dd71c002fd5663189d14cb75499fe2074ee9"
+    },
+    "physical_runtime_authority_retaged": false,
+    "productive_container_runtime_enabled": false,
+    "qualification_scope": "258 actual complete unit fixtures, strictly sealed outputs, two deterministic offline bundles and real live metadata adapters only",
+    "reviewed_main_native_delta": {
+      "diagnostic_only_review": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/native-main-delta-review-v1.json",
+      "path_in_repository": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "reviewed_main_sha256": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed",
+      "sha256": "69e16954339bfa4e9d8e12d7b31e67a0b9fcf320cf83dd517f8a92d3349aa47f",
+      "tested_source_sha256": "aaf67b9f37c4df7b15e1b9d08b9441290a5179dfce0ec01d21d25ae86423beb0"
+    }
+  },
+  "qualification_scope": "complete_unit_fixtures_offline_regular_file_bundles_and_live_metadata_adapters_only",
+  "real_deleted_container_scope_cleanup_qualified": false,
+  "schema": "container-boundary-observation-evidence/v1",
+  "source_and_policy_unchanged": true,
+  "source_read_lease": {
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "cooperative": true,
+    "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+    "mode": "read",
+    "schema_version": "autoencoder-source-lease/v1",
+    "waited_seconds": 3.702403046190739e-05
+  },
+  "source_tree": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "tested_dependency_sha256": {
+    "/home/barberb/lift_coding/artifacts/legal-ir-container-boundary-20261016/prepare_offline_busybox_fixture_v2.py": "5109164c7218fc64eb8f6eb23ee285caa40dbee99c930216dc298fa1f2f9b42b",
+    "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/runtime/process_security.py": "5bf693ae0eb41bac1d30fcaf8c168bec5fd17b29accbdf7d527afa84e38d42e3",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_controller_worker.py": "339d7a06b6c459c7d3086d323cc7198f0050e3edc372ff538f12f50d3a1644a2",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_kernel_fence.py": "27e073bb25f2d8bf4932094575f2c84c313bab44e2206a7d9255b37affb0c82b",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_controller_worker.py": "7ebd40966420e354d4bb4228e49dd89986dd3febaa6e6a0aecedc5c3c7d48e78",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_kernel_custody.py": "74ab2b1dbee01e8a76d81cebf46051dc644e1b286cfe78d41b86c4816746e1dd",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_kernel_fence.py": "e631ad9825dec75c0532281bb845fdd2597247428b63632f3733ed254c32cdf1",
+    "/usr/bin/busybox": "52151e7f322f926b64049cdaa1410dc3ea6485525e0624b05813791c219ae933"
+  },
+  "training_executed": false,
+  "unit_tests": {
+    "administrative_wrapper_wall_seconds": 63.325665186857805,
+    "container_execution_qualified": false,
+    "counts_source": "actual_strictly_sealed_pytest_xml",
+    "errors": 0,
+    "failures": 0,
+    "fixture_profile": "explicit_private_pytest_alias_readonly_directory_cleanup_profile/v2",
+    "new_static_expanded_roster": {
+      "test_adapter_requires_exact_live_module_origin_and_source_digest": 1,
+      "test_birth_change_between_capture_and_confirmation_is_rejected": 1,
+      "test_changed_helper_source_invalidates_previously_constructed_adapter": 1,
+      "test_changed_limits_are_not_productive_budget_approval_during_cleanup": 1,
+      "test_cleanup_observation_does_not_require_original_root_owner_alive": 1,
+      "test_cleanup_observation_still_requires_exact_live_kernel_identities": 7,
+      "test_closed_held_scope_cannot_be_replaced_by_cached_json_success": 1,
+      "test_closed_socket_and_proxy_executable_are_refused": 1,
+      "test_deleted_container_child_still_requires_original_namespace_empty": 1,
+      "test_deleted_executed_child_allows_cleanup_observation_but_no_productive_adoption": 1,
+      "test_deleted_worker_itself_never_becomes_a_successful_cleanup_observation": 1,
+      "test_direct_daemon_identity_and_pid_mapping_must_remain_exact": 5,
+      "test_disappearance_before_capture_never_becomes_inert_success": 1,
+      "test_empty_namespace_and_container_cgroup_do_not_hide_other_worker_processes": 1,
+      "test_exact_init_may_live_in_an_original_frozen_worker_descendant": 1,
+      "test_historical_receipt_is_a_copy_and_cannot_reconstitute_custody": 1,
+      "test_inspect_capture_inspect_race_is_closed": 2,
+      "test_malformed_helper_function_bindings_are_refused": 4,
+      "test_mixed_simulated_and_real_adapter_cannot_attest_actual_custody": 1,
+      "test_namespace_and_container_cgroup_quiescence_are_both_required": 3,
+      "test_new_populated_descendant_cannot_be_hidden_by_cleanup_topology_tolerance": 1,
+      "test_paused_container_can_bind_before_productive_barrier": 1,
+      "test_pipe_source_descriptor_is_refused_without_creating_a_filesystem_fifo": 1,
+      "test_population_change_between_cleanup_reads_is_refused": 1,
+      "test_real_dedicated_socket_refuses_eof_or_pending_data": 2,
+      "test_real_idle_socket_with_positive_timeout_never_blocks_in_recv": 1,
+      "test_rootless_daemon_in_another_pid_namespace_is_refused_before_inspect": 1,
+      "test_scope_must_match_host_birth_private_namespace_and_held_subtree": 8,
+      "test_simulation_binds_exact_identity_without_any_admission_or_release": 1,
+      "test_source_aliases_are_refused": 4,
+      "test_source_must_be_bounded_regular_and_single_link": 3,
+      "test_source_mutation_during_hash_is_refused": 1,
+      "test_source_request_nonce_labels_are_each_required_exactly": 3,
+      "test_successful_quiescence_does_not_release_or_drain_native_or_kernel_state": 1,
+      "test_unknown_namespace_quiescence_keeps_cleanup_unqualified": 1,
+      "test_unmarked_backend_and_unverified_source_module_are_refused": 1,
+      "test_worker_anchored_outside_its_actual_controller_is_refused": 1,
+      "test_worker_repopulation_between_quiescence_reads_is_refused": 2,
+      "test_wrong_container_identity_or_execution_state_fails_closed": 16,
+      "test_wrong_controller_anchor_or_closed_binding_is_refused": 1,
+      "test_zero_pid_after_executed_container_does_not_mint_posthoc_binding": 1
+    },
+    "ordinary_strict_filesystem_profile_passed": false,
+    "owner_execution_wall_seconds": 46.16807615198195,
+    "passed": 258,
+    "pytest_reported_seconds": 3.36,
+    "skipped": 0,
+    "strict_durability": {
+      "reservation_id": "1839910d59b94c23804cb35f557afbc9",
+      "strict_seal_verified": true,
+      "verified_bytes": 4042451,
+      "verified_files": 22
+    },
+    "tests_by_class": {
+      "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_container_boundary": 88,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_controller_worker": 33,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_kernel_custody": 92,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_kernel_fence": 45
+    }
+  },
+  "verified_artifacts": {
+    "bundle_a_manifest": {
+      "bytes": 1688,
+      "device": 66306,
+      "inode": 75251531,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-container-boundary-20261016/unit-tests-v2/exports/busybox-a/manifest.json",
+      "sha256": "86f4a69f267ca9ebbaf01121563ac81f63be6d41125ff3991aef2f6d9084d2e8"
+    },
+    "bundle_a_plan": {
+      "bytes": 2094,
+      "device": 66306,
+      "inode": 75251532,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-container-boundary-20261016/unit-tests-v2/exports/busybox-a/docker-import-plan.json",
+      "sha256": "eadb1f11042e267664b59534fe908e8cf2754008a52f141ffe0a2363b94cdeb6"
+    },
+    "bundle_a_tar": {
+      "bytes": 1925120,
+      "device": 66306,
+      "inode": 75251300,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-container-boundary-20261016/unit-tests-v2/exports/busybox-a/rootfs.tar",
+      "sha256": "6e411d8085d087ca1c41c13c0633b33680be9a8cd9f7e1c26760fe0220f40f72"
+    },
+    "bundle_b_manifest": {
+      "bytes": 1688,
+      "device": 66306,
+      "inode": 75251535,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-container-boundary-20261016/unit-tests-v2/exports/busybox-b/manifest.json",
+      "sha256": "86f4a69f267ca9ebbaf01121563ac81f63be6d41125ff3991aef2f6d9084d2e8"
+    },
+    "bundle_b_plan": {
+      "bytes": 2094,
+      "device": 66306,
+      "inode": 75251536,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-container-boundary-20261016/unit-tests-v2/exports/busybox-b/docker-import-plan.json",
+      "sha256": "c9c4f6f60d88acd9b5131dd480b75cd4a4c14d9c88fc91833c579b8677964faf"
+    },
+    "bundle_b_tar": {
+      "bytes": 1925120,
+      "device": 66306,
+      "inode": 75251534,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-container-boundary-20261016/unit-tests-v2/exports/busybox-b/rootfs.tar",
+      "sha256": "6e411d8085d087ca1c41c13c0633b33680be9a8cd9f7e1c26760fe0220f40f72"
+    },
+    "live_adapter_control": {
+      "bytes": 1862,
+      "device": 66306,
+      "inode": 106611770,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/container-live-adapters-v1.lease.json",
+      "sha256": "99d743c2a2004abb41af60f4d99c5811ab58fd1dd946fc65be3f41b6e9d66b3d"
+    },
+    "live_adapter_report": {
+      "bytes": 3674,
+      "device": 66306,
+      "inode": 107136911,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-container-boundary-20261016/live-boundary-adapters-v1.json",
+      "sha256": "4976b71e5bd7a33ba7f484bfe97af09a80516fdf244b4fe4a608a64e9334ef2b"
+    },
+    "offline_comparison": {
+      "bytes": 1034,
+      "device": 66306,
+      "inode": 75251537,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-container-boundary-20261016/unit-tests-v2/exports/offline-bundle-comparison.json",
+      "sha256": "3d691c1e0d2b863c768cacfaacf5dcd3b09985d2c0837ab16d82b270114eb452"
+    },
+    "peer_control": {
+      "bytes": 1091,
+      "device": 66306,
+      "inode": 106611761,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/container-peer-metadata-v1.lease.json",
+      "sha256": "5ec8f795d582f93937a8ff057aae13efeb902d24e59c871719ade830da903330"
+    },
+    "peer_metadata": {
+      "bytes": 6448,
+      "device": 66306,
+      "inode": 107114149,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-container-boundary-20261016/local-docker-peer-capability-v1.json",
+      "sha256": "6ddc4e9e81f80a6c66d5a16a80205a9825f9e80f690defa2ee0fc82355b54f0b"
+    },
+    "promotion": {
+      "bytes": 2326,
+      "device": 66306,
+      "inode": 107136902,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-container-boundary-20261016/canonical-promote-observation-v1.json",
+      "sha256": "ef860d6db660fbe56536102d38c7aebd1c644ab3f4e4fa11679a93f0c7456051"
+    },
+    "unit_control": {
+      "bytes": 1546,
+      "device": 66306,
+      "inode": 106561554,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/container-boundary-units-v2.lease.json",
+      "sha256": "1204e626221176fad5e4c1dc2393a31437d45a333995546ca77e71a5a12e0ca9"
+    },
+    "unit_durability": {
+      "bytes": 3950,
+      "device": 66306,
+      "inode": 75251312,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-container-boundary-20261016/unit-tests-v2/logs/validation-durability.json",
+      "sha256": "733a297ece8fb14a34399dac51663ffeec2b18b85b6b00645718d592973adacc"
+    },
+    "unit_execution": {
+      "bytes": 973,
+      "device": 66306,
+      "inode": 75251310,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-container-boundary-20261016/unit-tests-v2/logs/execution.json",
+      "sha256": "84e832587b919073a10c712085c6ee9de191d427c778cc5310b6c568ec3620bc"
+    },
+    "unit_request": {
+      "bytes": 19101,
+      "device": 66306,
+      "inode": 107136970,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-container-boundary-20261016/container-unit-request-unit-tests-v2.json",
+      "sha256": "622948e16e49d221abd2898434160f8ec1e437dbfa34bff72fba0d6e83b01fb9"
+    },
+    "unit_result": {
+      "bytes": 933,
+      "device": 66306,
+      "inode": 75251311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-container-boundary-20261016/unit-tests-v2/logs/result.json",
+      "sha256": "90f381bdab92b03eec0d0457fdd59ea3b4e98c48a3516368f000fe9f2f4c4927"
+    },
+    "unit_xml": {
+      "bytes": 50428,
+      "device": 66306,
+      "inode": 75251528,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-container-boundary-20261016/unit-tests-v2/exports/pytest.xml",
+      "sha256": "1add71e8bb1ec7319e1f111ad6c02014fc1a42433e75ee379a96a9dec0dffe0b"
+    }
+  },
+  "weights_downloaded": false
+}

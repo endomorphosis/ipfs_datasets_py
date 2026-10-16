@@ -1,0 +1,369 @@
+{
+  "actual_weights_latents_source_requests_predictions_read": false,
+  "base_head": "6b8b1346f888adbebbcf1d714e4ad0ab39a02052",
+  "compatibility_matrix": [
+    {
+      "candidate_only_public_decode": "contextual_legal_ir_output.inspect_contextual_legal_predictions([exact generated content/status/EOS row], codec=full original lexical codec, output_limit=512)",
+      "declared_output": "Original stored typed-json-lexical/v1 vocabulary; raw generated_ids includes BOS/EOS,512-token inherited budget. Lexical content spells JSON {rules:[seven-facet rule]}.",
+      "generation_owner": "gte_decoder_source_generation.generate_source_only(model, variant, head=primary384, input_vector, max_new_tokens, inherited_max_target_tokens)",
+      "lineage": "Original384 donor / native768 primary head, including aligned/trained interfaces",
+      "native_compatible_if": "Codec/schema exact and candidate complete/valid; preserve original raw sequence, stop status and ordered generated JSON before any canonical normalization.",
+      "rich_relational_compatible": false,
+      "source_refs": [
+        "gte_bridge_teacher.py:201",
+        "gte_decoder_transfer_batch.py:145",
+        "gte_decoder_source_generation.py:225",
+        "contextual_legal_ir_output.py:79"
+      ],
+      "unsupported_reason": "Missing exact TypedExpression/signature/ordered role ledger/explicit bound variables; raw7facet canonical object is not legal-relational-norm-request/v1."
+    },
+    {
+      "candidate_only_public_decode": "legal_formula_codec.decode_target(exact_full_original_codec, generated_ids)",
+      "declared_output": "legal-source-formula-codec/v1 tagged field/atom/end grammar, exactly one seven-facet rule;64-token inherited budget. Native768 auxiliary still receives its own connector output and retains original head codec.",
+      "generation_owner": "gte_decoder_source_generation.generate_source_only(model, variant=legacy8|student768, head=legacy8, ...)",
+      "lineage": "Separate learned8D sidecar / native768 auxiliary legacy8 head",
+      "native_compatible_if": "Full exact original codec/policy, valid complete BOS/content/EOS, native rule survives exact validation with no normalization. Never fit a new codec or reconstruct missing source_vocabulary/policy.",
+      "rich_relational_compatible": false,
+      "source_refs": [
+        "gte_legacy8_decoder_donor.py:140",
+        "legal_formula_codec.py:157",
+        "legal_formula_codec.py:301",
+        "gte_decoder_transfer_batch.py:163"
+      ],
+      "unsupported_reason": "Tagged grammar encodes flat facets, no rich AST/signature/binders/roles. Historical linguistic8D model itself has no neural formula head; parser-feature raw8 sidecar is a separate lineage, not a GTE8 embedding control."
+    },
+    {
+      "candidate_only_public_decode": "contextual_legal_ir_output.inspect_contextual_legal_predictions",
+      "declared_output": "contextual-legal-ir-numeric-inference/v1 predictions{id,token_ids,generation_status,eos_reached};32-entry lexical codec,ordered multirule JSON, paragraph+ordered clause vectors,512 cap.",
+      "generation_owner": "contextual_legal_ir_numeric.infer_contextual_legal_model; contextual/normative cached handle.infer_cached",
+      "lineage": "Contextual384/768 and normative retained cached contextual variants",
+      "native_compatible_if": "Preserve ordered_generated_ir and canonical_contract_ir separately: native constructor sorts rules and deduplicates/sorts qualifiers, exposed by canonicalization_changed_payload. Null schema/profile/format selectors must not be filled merely because parsing succeeds.",
+      "rich_relational_compatible": false,
+      "source_refs": [
+        "contextual_legal_ir_numeric.py:210",
+        "contextual_legal_ir_runtime.py:559",
+        "normative_cached_legal_ir_runtime.py:403",
+        "contextual_legal_ir_output.py:79"
+      ],
+      "unsupported_reason": "32-value seven-facet decoder cannot express exact relational signature/binders, role ledger, arbitrary nested formulas or independently interpreted qualifiers."
+    },
+    {
+      "declared_output": "bounded-modality-conditions-retention-adapter-inference/v1; source-span copied actor/action/object/qualifier strings, modality and same-forward heads; one seven-facet rule, not autoregressive generated token IDs.",
+      "generation_owner": "legal_span_modality_conditions_retention.SpanModalityConditionsRetentionAdapterDecoder.decode_formal_logic / captured_inference",
+      "lineage": "F18 source-token modality/conditions retention component",
+      "native_compatible_if": "Use exact F18 report/schema/checkpoint owner and its copied-span output consistency; source/text and pointer heads are actual conditioning. Preserve raw and separately recomputed joint readouts.",
+      "rich_relational_compatible": false,
+      "source_refs": [
+        "legal_span_modality_conditions_retention.py:95",
+        "legal_span_modality_conditions_retention.py:340",
+        "legal_span_modality_conditions_retention.py:616",
+        "legal_span_modality_conditions_retention.py:673",
+        "legal_span_formula.py:454"
+      ],
+      "unsupported_reason": "latent_enabled=False with declared384-value placeholder is not an active384 encoder. Current typed batch decoder_declared requires encoder hash/dimension, so missing evidence cannot be filled with fake encoder or authored_control label. Different schema/lineage from saved_span_family_adapter RAW_SCHEMA."
+    },
+    {
+      "declared_output": "ground-null-context/v1 native deontic AST with Object constants and caller-declared qualifier expressions/source cue bindings.",
+      "generation_owner": "No decoder: legal_source_family_bridge.prepare_source_family and saved_span_family_adapter.prepare_pending/prepare_family",
+      "lineage": "Existing explicitly declared ground native family bridge",
+      "native_compatible_if": "All complete candidate fields, explicit interpretations and physical occurrence/modality bindings supplied; no temporal facet in null-context profile; saved span report must match its exact objective_resumed_source_span_v1 lineage.",
+      "rich_relational_compatible": false,
+      "source_refs": [
+        "legal_source_family_bridge.py:123",
+        "legal_source_family_bridge.py:255",
+        "legal_source_family_bridge.py:306",
+        "saved_span_family_adapter.py:389",
+        "saved_span_family_adapter.py:502"
+      ],
+      "unsupported_reason": "Current relational owner forbids Constant nodes, requires explicit nonshadowing quantified Object variables and ordered roles. Ground constants must not be existentially/universally abstracted or assigned new roles to fit."
+    },
+    {
+      "declared_output": "Fixed259-byte alphabet, canonical-anchored-byte-wire/v1 with complete source anchors, single rule.",
+      "generation_owner": "canonical_byte_codec.decode_proposal(token_ids, source_text)",
+      "lineage": "Opt-in anchored byte codec",
+      "native_compatible_if": "Only if the decoder actually emitted this exact wire/alphabet and original source anchors exist.",
+      "rich_relational_compatible": false,
+      "source_refs": [
+        "canonical_byte_codec.py:16",
+        "canonical_byte_codec.py:232"
+      ],
+      "unsupported_reason": "Existing donors emit lexical/tagged vocabulary, not259-byte anchor wire. Re-encoding an output into this codec would be transport postprocessing, not learned byte reconstruction."
+    }
+  ],
+  "conclusion": "Existing trained outputs inspected here are native seven-facet canonical rules, not the exact quantified typed relational request. Reuse candidate-only native codec inspection, keep exact original generated token/byte evidence and separate existing reference scoring, and report rich relational format unsupported. No lossless conversion can recover omitted roles, variables, quantification or qualifiers from these outputs.",
+  "edits": [
+    "This local source survey report only"
+  ],
+  "existing_adapter_limits": [
+    "LegalFormalizationAdapter@2 and route_legal_view route family/profile/authority labels; they do not derive omitted variables, roles or quantification.",
+    "LegalIRFormalizationAdapter.adapt_legal_sample requires established modal IR/training sample fields; it is not a raw seven-facet-to-TypedExpression conversion. Do not forge a sample/frame/parser report to use it.",
+    "logic_slice_v2 connector builds a nullary propositional TypedExpression from a claim action. Its separate axes preserve declaration lineage, but cannot stand in for full relational argument/binder fidelity and fails the present nonzero-arity relational request profile.",
+    "TypedDeonticCanonicalCompiler compiles source-derived LegalNormIR to canonical rules, the reverse direction of the desired richer conversion. Recompiling original source as a candidate would substitute compiler output for learned prediction.",
+    "CanonicalRoundTripIR.from_dict sorts rule order and qualifier sets. Keep its result separate from exact generated JSON; successful constructor parsing is not proof the model emitted an already canonical payload."
+  ],
+  "legal_review_or_training_or_Lean_performed": false,
+  "minimal_missing_code": {
+    "input_commitments": [
+      "exact complete generation report raw bytes+independent hash",
+      "exact full original codec bytes+independent hash",
+      "closed known variant/head/output-format descriptor",
+      "original occurrence/observation index and independent source/input/context/settings references"
+    ],
+    "later_integration": "Numerical replay and full selected native scores can run first. Genuine richer relational decoder training needs a versioned output codec and independently authored/reviewed exact rich supervision; representation omissions cannot be repaired by an evaluation adapter.",
+    "must_not_add": [
+      "seven-facet-to-quantified relational role/binder synthesis",
+      "new vocabulary fitting or grammar masking",
+      "automatic qualifier interpretation, modality anchors or source lookup",
+      "false F18 active encoder hash/dimension claims",
+      "fresh numerical execution or proof inferred from offline receipt shape"
+    ],
+    "output": [
+      "original raw transport references, original full token sequence and exact codec commitments",
+      "derived lexical/token-piece byte references with explicit derivation role",
+      "native-only decode status/diagnostics, ordered payload and separately observed canonical payload/change flag",
+      "rich relational compatibility/disposition=unsupported_format unless an actual exact rich request was generated",
+      "execution/declarations authority distinction, all training/gold/proof masks0false"
+    ],
+    "recommended_scope": "One additive pure output-observation adapter over existing candidate-only codecs, separate from inference and existing rich relational owner. No new AST or logic-family semantics."
+  },
+  "observed_at_utc": "2026-10-16T03:15:30.347182+00:00",
+  "product_import_or_execution": false,
+  "pure_candidate_decoding_protocol": [
+    "Independently bind complete original numerical generation receipt bytes and exact full original codec bytes; bound/detach finite JSON before lazy fixed-owner operations. Inspect known generate_source_only receipt structure without references; no offered producer filenames/callbacks determine imports.",
+    "Preserve exact complete generated_ids and original full codec; retain source/model/input/settings/stop/prefix/logit receipts. If materializing text, distinguish derived lexical UTF8/token-piece bytes from authoritative model-emitted token IDs. Tagged grammar tokens are not a model-emitted canonical JSON string.",
+    "Primary lexical route removes only actual external BOS and actual trailing EOS to form public inspector content rows. It retains PAD/extraBOS/internal bad values rather than filtering. NonEOS/length limits remain incomplete failures. Call inspector per retained observation if duplicates would otherwise be globally rejected by its row wrapper; preserve original arrival indices and IDs in outer ledger.",
+    "Legacy tagged grammar uses public decode_target on full original codec+complete IDs. MissingEOS/invalid special tokens/unsupported codec remain native decode failures with original evidence retained; no target/encoder/AST repair.",
+    "Keep native contract parse, ordered generated payload, canonical normalized payload and richer relational disposition separate. Successful7facet validation still has rich_relational_status=unsupported_format and null rich request unless actual model output already satisfies exact original relational request schema.",
+    "Seal original predictions before existing gte_decoder_source_evaluation.score_generation/reference access. Reuse that public scorer for strict inherited native7facet exactness/edit distance; do not use its required target to help candidate parsing. Preserve selected/unavailable rows and all variants as exposed regression/legacy training diagnostics.",
+    "Offline inspectors explicitly do not authenticate numerical execution. A separately qualified current native runner/fresh numerical reload-repeat supplies actual execution evidence, exact tokens/prefix/logit/model/input identities and before/after unchanged state; flags alone do not. No cache/payload archive can grant fresh holdout/source-withholding/legal gold authority."
+  ],
+  "reviewer": "/root/sampled_primary_docs_review_n10",
+  "schema": "legal-decoder-output-contract-source-survey/v1",
+  "scope": "Read-only source/docs survey and local report only. No actual checkpoint, latent, corpus, request, generated prediction/catalog/evidence payload body, import/model/test/product execution, ledger or canonical Git.",
+  "source_fixture_reuse": [
+    {
+      "builders": [
+        "CODEC",
+        "rule",
+        "prediction",
+        "reference"
+      ],
+      "controls": [
+        "candidate-only native contract without source/reference",
+        "ordered versus sorted native rules",
+        "duplicate qualifier canonicalization observation",
+        "noEOS/PAD/BOS/unknown/duplicate-key/invalidmodality"
+      ],
+      "path": "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py"
+    },
+    {
+      "builders": [
+        "example",
+        "examples"
+      ],
+      "controls": [
+        "full7facet decode_target roundtrip",
+        "unknown vocabulary refuses",
+        "incomplete/raw invalid IDs",
+        "typed atom marker collisions",
+        "exact qualifier atoms"
+      ],
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py"
+    },
+    {
+      "builders": [
+        "model_for",
+        "arguments",
+        "manual"
+      ],
+      "controls": [
+        "target-free numerical API",
+        "raw prefix/logit chain",
+        "unmaskedPAD/BOS",
+        "EOS/lengthcap",
+        "parameters/buffers/gradient/RNG preservation"
+      ],
+      "path": "tests/unit/logic/formalization/autoencoder/test_gte_decoder_source_generation.py"
+    },
+    {
+      "builders": [
+        "original.decoder_native_fixture",
+        "generation",
+        "score"
+      ],
+      "controls": [
+        "source-only original validation versus legacy training diagnostics",
+        "exact independent native embeddings missing/available",
+        "strict native score after generation"
+      ],
+      "path": "tests/unit/logic/formalization/autoencoder/test_gte_decoder_source_evaluation.py"
+    }
+  ],
+  "source_pins": [
+    {
+      "bytes": 17669,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_generation.py",
+      "sha256": "3fe2bc54e36bd5b9f68bafe236193f2c377efa37090e2fe971a9a8e0bcc5aedf"
+    },
+    {
+      "bytes": 19197,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_comparison.py",
+      "sha256": "acf245266bb83393a321fc92f9f338e0d8e626baa6907451fdbc4f8397822915"
+    },
+    {
+      "bytes": 16406,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_evaluation.py",
+      "sha256": "7a73a16a3beca5ac819c87d6d94a807f51b77cada42f8c69114d8729b68922f1"
+    },
+    {
+      "bytes": 25849,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_transfer_batch.py",
+      "sha256": "e7cd0134df183df54dd56822e8e72d042076a206d2527322e7e64122a85e50d6"
+    },
+    {
+      "bytes": 19456,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_bridge_teacher.py",
+      "sha256": "657de3e47e4d1031692c4280bd69f206dc8d388c3d8f4e064f6657f96d4c6c47"
+    },
+    {
+      "bytes": 30102,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_legacy8_decoder_donor.py",
+      "sha256": "1f09e5975e808e5f1afcd5fec25cd5c412524f89db691d0ab7c107e17f9a8f71"
+    },
+    {
+      "bytes": 13756,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+    },
+    {
+      "bytes": 15840,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+      "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+    },
+    {
+      "bytes": 37249,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    {
+      "bytes": 9228,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/normative_legal_ir_runtime.py",
+      "sha256": "98058fa6479a7be9a4ab599aeffaedef2be764314056d7504a35ca5bafff87d4"
+    },
+    {
+      "bytes": 28302,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/normative_cached_legal_ir_runtime.py",
+      "sha256": "017adb2cd955f84b049bb483100be5b8b3742bac1ddc0084a9d106c9a3d3da07"
+    },
+    {
+      "bytes": 14622,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    {
+      "bytes": 35427,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py",
+      "sha256": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36"
+    },
+    {
+      "bytes": 35294,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    {
+      "bytes": 83852,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+    },
+    {
+      "bytes": 35564,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py",
+      "sha256": "bbc54ccbc783d2ee1111c43864aafa8be176de3cc36149eb37871b1fac28e5b9"
+    },
+    {
+      "bytes": 109257,
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 12983,
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_byte_codec.py",
+      "sha256": "e2e1859fb2c71c2c2b758516dc35149e7a742d39f6950be76b0962e226d7cafb"
+    },
+    {
+      "bytes": 36925,
+      "path": "ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py",
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+    },
+    {
+      "bytes": 21178,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py",
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    {
+      "bytes": 66185,
+      "path": "ipfs_datasets_py/logic/legal_ir/typed_adapter.py",
+      "sha256": "80204883247be10831b6d2c3f831336a80bab2a00f427f6dc35f363edd96fbb2"
+    },
+    {
+      "bytes": 51421,
+      "path": "ipfs_datasets_py/logic/legal_ir/adapter.py",
+      "sha256": "fd38de52f0d159a6f417e5a7d50b0a8967dc7280a760950fd479a81be5922c06"
+    },
+    {
+      "bytes": 93186,
+      "path": "ipfs_datasets_py/logic/legal_ir/logic_slice_v2.py",
+      "sha256": "0054d223d89bc0c5cba0ef491aec7ef1ec7103cd59892e6fa269077d68461cb1"
+    },
+    {
+      "bytes": 18562,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+    },
+    {
+      "bytes": 35317,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py",
+      "sha256": "b8517dc440827ebd0fbde89acdc80c92a4fb65bfc80cbdb577cd6ebbae378bc6"
+    },
+    {
+      "bytes": 10987,
+      "path": "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+      "sha256": "7e2ed28f2795b0736eac77a550d9cecfecc37aa711b532c574b94b7a5da92cea"
+    },
+    {
+      "bytes": 9056,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py",
+      "sha256": "3d28183dca0f563a054f9daaf64531670bca79f1adcafb539dea2ece9bf8db2d"
+    },
+    {
+      "bytes": 15897,
+      "path": "tests/unit/logic/formalization/autoencoder/test_gte_decoder_source_generation.py",
+      "sha256": "0465ff67ce89f803ebf3406a796aa44b5e073f044c7eab01bc74d99babdfc2bc"
+    },
+    {
+      "bytes": 15316,
+      "path": "tests/unit/logic/formalization/autoencoder/test_gte_decoder_source_evaluation.py",
+      "sha256": "3dd5ed1848c44afa417c52d30535282b4a569884463dd378337af385f7b7119a"
+    },
+    {
+      "bytes": 20373,
+      "path": "tests/unit/logic/formalization/autoencoder/test_gte_decoder_source_comparison.py",
+      "sha256": "19830852690e1390a78bb6664b592a5fcd7f686bb0a6b14aa9ca12dcbc18e75d"
+    },
+    {
+      "bytes": 18363,
+      "path": "docs/autoencoders/legal_relational_batch_evaluation_v1.md",
+      "sha256": "d1d2f6b2b1500602a58d78821b2d3af6d41b697f7319666ec2b674a79fe16d24"
+    },
+    {
+      "bytes": 9680,
+      "path": "docs/autoencoders/legal_ir_asset_reconciliation_20261016.md",
+      "sha256": "5d5f30382142ee58cd16a79ed72daf9e5a7e88d96e367d9c89bf787c344785f3"
+    }
+  ],
+  "status": "SOURCE_SURVEY_COMPLETE",
+  "unsupported_referenced_doc": {
+    "path": "docs/autoformalization/legal-modality-conditions-retention-20261015.md",
+    "status": "Referenced by current roadmap but absent in this owned checkout; F18 contracts surveyed from present source, no external private workspace or payload fallback."
+  }
+}

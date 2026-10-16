@@ -1,0 +1,10 @@
+{
+  "max_legacy_rows": 2,
+  "max_primary_rows": 2,
+  "retained_config": {
+    "bytes": 1082,
+    "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/configs/source-controls-01.json",
+    "sha256": "055a8d63357ff3724c94114166b0caee3010fc60f8fc0beb38a3c8790fb25d6a"
+  },
+  "schema": "legal-decoder-small-numerical-replay/v1"
+}

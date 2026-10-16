@@ -423,6 +423,43 @@ class BoundCgroup:
         except OSError as error:
             raise KernelCustodyError("cgroup observation unavailable") from error
 
+    def observe_cleanup(self):
+        """Read original hierarchical population without adopting a new tree.
+
+        Cleanup can follow removal of a former descendant by Docker/systemd.
+        The original mount, root, leaf and all leaf control identities must
+        still match held descriptors and current paths. The original leaf
+        itself cannot disappear. Productive observe() remains unchanged and
+        continues to reject changed descendant topology.
+
+        This reports no process inventory, resource budget or stopped-process
+        decision. A false population is not native release authority; callers
+        still establish original process/namespace quiescence and guard the
+        actual guardian/fence before explicit closeout.
+        """
+        try:
+            self._verify(tree=False)
+            populated = self._population()
+            self._verify(tree=False)
+            _need(self._population() == populated,
+                  "cgroup population changed during cleanup observation")
+            return {"schema": "autoencoder-kernel-cleanup-observation/v1",
+                "simulation": self._backend.simulation,
+                "path": str(self._path), "boot_id": self._boot,
+                "mount": copy.deepcopy(self._mount),
+                "expected_root": str(self._root),
+                "root_identity": copy.deepcopy(self._root_identity),
+                "mount_directory_identity": copy.deepcopy(self._mount_identity),
+                "directory_identity": copy.deepcopy(self._leaf["identity"]),
+                "control_identities": copy.deepcopy(self._leaf["control_identities"]),
+                "populated": bool(populated),
+                "population_scope": "original_hierarchical_cgroup",
+                "cleanup_only": True, "productive_observation": False,
+                "frozen_tree_revalidated": False, "observation_atomic": False,
+                "native_admission": False, "admitted": False, "Lean_admitted": False}
+        except OSError as error:
+            raise KernelCustodyError("cgroup cleanup observation unavailable") from error
+
     def drain(self, timeout_seconds):
         """Kill the original held scope and require hierarchical populated=0.
 

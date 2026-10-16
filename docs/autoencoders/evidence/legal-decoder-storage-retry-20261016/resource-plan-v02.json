@@ -1,0 +1,41 @@
+{
+  "execution_qualified": false,
+  "global_storage_cap_bytes": 160000000000,
+  "global_storage_cap_changed": false,
+  "lean_planned": false,
+  "native_controller": "scripts/ops/legal_ir/run_owned_validation.py",
+  "numerical": {
+    "child_process_slots": 2,
+    "controls": 3,
+    "cpu_slots": 1,
+    "extra_child": "At most four exact read-only /sbin/ldconfig -p invocations during installed Torch import; pinned wrapper, real executable and dash interpreter; same process group; exact C locale; fixed/dev/null1:3 standard IO only; all other subprocesses denied.",
+    "first_pass_generation_sequences": 60,
+    "fresh_private_reload_replay_sequences": 60,
+    "memory_mb": 4096,
+    "new_token_caps": {
+      "legacy": 63,
+      "primary": 511
+    },
+    "output_cap_bytes": 67108864,
+    "process_cpu_time_limit_seconds": 1200,
+    "process_virtual_address_space_cap_mib": 16384,
+    "profile": "finite saved-weight numerical reproducibility validation; no service/teacher/inference admission",
+    "selected_source_rows": 4,
+    "storage_bytes": 268435456,
+    "timeout_seconds": 1800,
+    "variants": 5
+  },
+  "numerical_runtime_pending": true,
+  "qualification": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "storage_bytes": 134217728,
+    "timeout_seconds": 1800
+  },
+  "qualification_case_count": 173,
+  "qualification_completed": true,
+  "rationale": "Storage160GBcap not exceeded; actual native retry admitted after outstanding commitments decreased. Keep filesystem guard and global policy unchanged. Increase only this numerical replay process allowance from1to2 to accommodate installed Torch library discovery. 4GiB sampled resident grant,16GiB AS cap, CPU1 and256MiB storage remain unchanged.",
+  "schema": "legal-decoder-storage-retry-resource-plan/v1",
+  "training_planned": false
+}

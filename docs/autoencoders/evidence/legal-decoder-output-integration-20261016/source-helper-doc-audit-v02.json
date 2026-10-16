@@ -1,0 +1,350 @@
+{
+  "authored_test_source_review": {
+    "ast_declared_cases": 104,
+    "ast_test_functions": 23,
+    "executed_by_reviewer": false,
+    "limits": "This source roster is not a pytest pass count, model generation, numerical attestation, legal review or semantic accuracy result.",
+    "meaningful_controls": [
+      "Four existing head/variant routes are explicit authored receipt consistency fixtures with uncomputed logit/state declarations.",
+      "Raw transport encoding differences remain independently committed.",
+      "Capture/source/checkpoint declarations are not promoted to verified assets.",
+      "Every input pin and capture binding, closed provenance channels, complete codec/policy/schema/special IDs and vocabulary geometry are challenged.",
+      "Profile caps, PAD/BOS, truncation/noEOS/earlyEOS, invalid modality and tagged duplicate qualifiers preserve generated failures and original diagnostics.",
+      "Lexical duplicate/order canonicalization remains separately observable.",
+      "Malformed receipt/prefix/state/optimizer/encoder/authority declarations refuse.",
+      "Invalid UTF8, duplicate keys, nonfinite/root-shape/byte/depth overflows refuse.",
+      "Full report resealing, altered logit declarations and wrong independent report pin cannot bypass original-bound regeneration."
+    ],
+    "roster": [
+      {
+        "declared_cases": 4,
+        "name": "test_authored_fixtures_are_only_consistent_receipt_declarations"
+      },
+      {
+        "declared_cases": 4,
+        "name": "test_valid_existing_outputs_keep_native_and_rich_compatibility_separate"
+      },
+      {
+        "declared_cases": 1,
+        "name": "test_original_raw_transports_are_committed_separately_from_parsed_content"
+      },
+      {
+        "declared_cases": 1,
+        "name": "test_capture_source_and_checkpoint_are_committed_declarations_not_verified_assets"
+      },
+      {
+        "declared_cases": 3,
+        "name": "test_each_input_needs_its_independent_original_raw_pin"
+      },
+      {
+        "declared_cases": 9,
+        "name": "test_capture_cannot_disagree_with_receipt_or_independent_transport_pins"
+      },
+      {
+        "declared_cases": 5,
+        "name": "test_closed_capture_does_not_accept_extra_provenance_or_target_channels"
+      },
+      {
+        "declared_cases": 8,
+        "name": "test_original_full_codec_and_its_declared_profile_are_required"
+      },
+      {
+        "declared_cases": 2,
+        "name": "test_other_heads_codec_is_not_reinterpreted_or_reconstructed"
+      },
+      {
+        "declared_cases": 2,
+        "name": "test_profile_budget_overflow_remains_native_output_failure"
+      },
+      {
+        "declared_cases": 4,
+        "name": "test_raw_invalid_special_tokens_are_preserved_instead_of_filtered"
+      },
+      {
+        "declared_cases": 2,
+        "name": "test_cap_without_eos_cannot_become_a_complete_candidate"
+      },
+      {
+        "declared_cases": 2,
+        "name": "test_eos_after_bos_retains_an_invalid_empty_output"
+      },
+      {
+        "declared_cases": 1,
+        "name": "test_lexical_canonicalization_changes_remain_separate_from_generated_payload"
+      },
+      {
+        "declared_cases": 1,
+        "name": "test_ordered_lexical_rule_sequence_is_not_replaced_by_native_sorted_order"
+      },
+      {
+        "declared_cases": 1,
+        "name": "test_tagged_duplicate_qualifiers_are_rejected_without_canonical_normalization"
+      },
+      {
+        "declared_cases": 1,
+        "name": "test_valid_json_with_invalid_native_modality_is_not_autoformalized"
+      },
+      {
+        "declared_cases": 15,
+        "name": "test_malformed_receipt_is_refused_without_repair"
+      },
+      {
+        "declared_cases": 18,
+        "name": "test_raw_input_bounds_and_json_shape_are_strict"
+      },
+      {
+        "declared_cases": 8,
+        "name": "test_capture_is_bounded_closed_metadata"
+      },
+      {
+        "declared_cases": 10,
+        "name": "test_full_report_resealing_cannot_bypass_regeneration"
+      },
+      {
+        "declared_cases": 1,
+        "name": "test_uncomputed_logit_hash_change_requires_changed_input_report_even_after_resealing"
+      },
+      {
+        "declared_cases": 1,
+        "name": "test_independent_report_pin_is_required_for_replay_validation"
+      }
+    ]
+  },
+  "base_commit": "6b8b1346f888adbebbcf1d714e4ad0ab39a02052",
+  "blocking_findings": [],
+  "file_pins": [
+    {
+      "ast_parsed": true,
+      "bytes": 21971,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_ir_decoder_output_compatibility_v1.py",
+      "sha256": "d2145191a898dd50b5bcc4b3d61a005cc6cc869b5c49db8c7db74d6452d1d12b"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 29583,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py",
+      "sha256": "d75970f972051e729e4bca494a9f667c06f1610ebb41235aacf3abfcb6e27168"
+    },
+    {
+      "bytes": 11244,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_decoder_output_integration_20261016.md",
+      "sha256": "92520e6f1cac2910ccc798ef78dc379a20ca1ba944fa34d2e0cbd1d8aa0f961a"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 27423,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/run_numerical_replay_v01.py",
+      "sha256": "1e2d5df8ad453fb697ae957f8ac565254cf155b8ddc6a966157fd4a19d9c0d3e"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 17669,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_generation.py",
+      "sha256": "3fe2bc54e36bd5b9f68bafe236193f2c377efa37090e2fe971a9a8e0bcc5aedf"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 13756,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 17329,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 14622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 146870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 42137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 38995,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 15958,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_owned_validation.py",
+      "sha256": "2d7a250e4c5237d24bf1b9328b059a71854d613a568de55f08c83b8e045e41b4"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 27271,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py",
+      "sha256": "8ed63a0dd0510ed5f5eaf453491616d65f5cad681fde8adca4a528a5d0fed72b"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 40999,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 5038,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_controller_worker.py",
+      "sha256": "339d7a06b6c459c7d3086d323cc7198f0050e3edc372ff538f12f50d3a1644a2"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 13861,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_worker_contract.py",
+      "sha256": "2e8af403f437ec335a58d7b7c1a3a2771f3c047b6e41d55ce2e080dfb5187747"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 20727,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/autoencoder/evaluate_gte_native_source_controls.py",
+      "sha256": "720eb342888d73369be44a79fdf6590922f2c2235b4b1604625cb82c42bc8471"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 17438,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/autoencoder/gte_source_evaluation_parent.py",
+      "sha256": "19633ec93028e954364ebd8353a4ac047c092ad8637fa0e5c3ead17b14b2570a"
+    },
+    {
+      "ast_parsed": true,
+      "bytes": 28529,
+      "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py",
+      "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+    }
+  ],
+  "guide_scope_review": {
+    "actual_refusal_statement": {
+      "arithmetic_checks": [
+        true,
+        true
+      ],
+      "guide_margin_recommendation_bytes": 15000000000,
+      "native_owner_configured_accounting_cap_bytes": 160000000000,
+      "numerical_projected_free_space_deficit_bytes": 13801104960,
+      "numerical_projected_storage_request_bytes": 268435456,
+      "numerical_request_submitted": false,
+      "observed_filesystem_free_bytes": 19653750784,
+      "outstanding_full_reservations_bytes": 33186420288,
+      "qualification_exit_code_reported": 1,
+      "qualification_free_space_deficit_bytes": 13666887232,
+      "qualification_storage_request_bytes": 134217728,
+      "reported_attempt_empty": true,
+      "reported_no_durable_reservation_lease_or_child": true,
+      "scope": "Filesystem availability did not cover outstanding commitments plus the requested allowance; the configured named-root cap was not the stated cause. A fresh real native admission is still required after capacity restoration.",
+      "source": "Final guide and root-reported engineering metadata only; this reviewer did not read native receipts or ledger.",
+      "stage": "owner.open"
+    },
+    "evidence_link_scope": "Guide links planned curated index and retained actual refusal/closeout. This source audit does not authenticate their runtime bodies or certify publication copy completeness; root/independent metadata curator must verify the copied link targets before draft publication.",
+    "lineages_separate": true,
+    "native_and_worker_memory_namespaces_distinct": true,
+    "no_runtime_accuracy_training_or_lean_claim": true,
+    "pending_native_explicit": true,
+    "planned_source_pin_counts": {
+      "numerical_prepared_request": 208,
+      "qualification_refused_request": 251,
+      "scope": "Root-provided guide declarations only; frozen request bodies were not independently replayed in this static audit."
+    },
+    "publication_scope": "Guide directs draft status until execution is available. Capacity refusal must be retained as admission evidence and cannot be described as qualification or model execution.",
+    "reference_access_limitation_explicit": true,
+    "storage_statement_arithmetic": {
+      "check_scope": "Arithmetic of root-supplied guide metadata only; original observer/ledger/runtime receipts were not read or authenticated.",
+      "derived_extra_free_bytes_required": 12012574272,
+      "planned_replay_storage_bytes": 268435456,
+      "reported_active_reservation_bytes": 8388608,
+      "reported_free_bytes": 21442281472,
+      "reported_retained_reservations_bytes": 33178031680
+    },
+    "training_next_steps": "Freeze reviewed eligible target contracts; register new typed AST head/codec when output language changes; compare declared source/latent/combined input routes with matched budgets; preserve unavailable outputs; aggregate governing semantic graph uses and require actual lake build legal before a build claim."
+  },
+  "nonblocking_notes": [],
+  "numerical_worker_source_review": {
+    "before_import_guards": "Own helper/guard/config pins and exact argv/layout are required. Canonical product namespace must be fresh; offline/cache/temp/db redirects and thread/CUDA policy precede model imports.",
+    "candidate_companion": "Actual generated receipt bytes and exact stored codec bytes are serialized without retargeting. Closed capture binds actual head/dimension/input/model-state and admitted checkpoint reference. Public adapter builder and validator run candidate-only; richer relational unsupported remains explicit.",
+    "counting": "generation_calls=120 is separate from actual decoder_forward_calls, computed by summing step_count across both passes.",
+    "generation_boundary": "Existing admission reads reference-bearing files. Source-only generate_source_only receives only the private model, input vector and fixed head/budgets; no reference or source text is supplied to that numerical API. First60 sequences are frozen before scoring; all60 fresh-private reload repeats complete and full panel digests agree before scoring starts.",
+    "historical_admission": "The exact historical aligned training CLI path and hash are selected from retained implementation_files. Its genuine external native/helper paths are used so unchanged manifest implementation_paths checks retain their original domain. No old manifest path or hash is retagged.",
+    "native_route": "One unchanged native validation controller/lease/storage owner launches one isolated child behind its existing startup barrier; the numerical wrapper starts no extra scheduler or child. The existing native route samples owner+child RSS/processes/storage, seals/fsyncs exact stopped-group artifacts and finalizes only after inventory replay.",
+    "output_custody": "Exclusive bounded payload writes fsync/readback and share64MiB total cap. Full local JSON first-open identities plus every admitted closure raw byte/hash and exact expected21-export population are rechecked at completion. Source events are a separate bounded payload referenced by the <=1MiB summary, avoiding the earlier late-bound risk. Native parent independently seals the complete actual output inventory only after child exit.",
+    "resources": "Prepared numerical native policy is1CPU/1child/4GiB sampled resident/256MiB storage/1800s. Worker16GiB address-space and1200CPU-second POSIX limits are separately named and do not enlarge the native grant. Third-party Torch/binary integrity is not attested; isolated cooperative process-group sampling is not kernel quota/arbitrary-tree containment.",
+    "runtime_not_observed": "No numerical job, admission, generation, forward count, score, output inventory or native closeout was executed or read by this reviewer.",
+    "selected_scope": "Two original exposed primary validation rows and two auxiliary legacy training diagnostics; five retained variants times three source/zero/cycliccrosssource interventions times four selected rows gives60 first-pass sequences and60 fresh repeats. This is not four independently reviewed laws, fresh holdout evaluation, a disabled architecture, or training improvement.",
+    "source_execution": "The numerical profile preserves the old nonnumerical guard unchanged. It allows installed Torch/NumPy, intercepts SourceFileLoader.get_code under two explicit physically distinct nonoverlapping roots, compiles checked bounded frozen bytes and strongly binds code objects to audited execution. Private historical aliases retain their exact real source origins; canonical product modules must come from the owned checkout and checked execution records."
+  },
+  "product_contract_review": {
+    "asset_errors": "Original receipt refusal, codec/head/schema/policy mismatch and vocabulary size mismatch refuse the operation rather than being accounted as generated grammar failure.",
+    "authority": "All authority flags false, execution_authenticated false, integer training/evaluation_gold masks0. Receipt chain structure cannot authenticate actual numerical execution.",
+    "binding": "Closed capture binds receipt and codec raw transport hashes plus exact head/variant/input dimension, model-state hash and source/numerical input hashes. Source/checkpoint identities remain unverified caller declarations; no offered path, target, model or encoder body is read.",
+    "candidate_decoding": "The existing public generation receipt inspector validates original IDs/BOS/EOS/steps/state declarations. Primary lexical inspection removes only actual outer BOS/emitted EOS, preserves interior invalid special tokens and uses the exact full stored lexical codec. Tagged legacy decoding uses validate_codec and decode_target with complete source+target vocabulary and fixed policy, without fitting/repair.",
+    "errors": "Stable reason codes remain separate from bounded existing public inspection_errors. Incomplete or malformed native output remains visible; codec assets are not repaired.",
+    "ordered_vs_canonical": "Lexical ordered_generated_ir is separate from canonical_contract_ir; canonicalization_changed_payload is explicit. Tagged valid output is not assigned a fabricated canonicalization result.",
+    "preflight": "Three original bytes transports are independently hash-pinned, duplicate-free finite UTF8 JSON and bounded before lazy operation imports. Receipt/codec each4MiB, capture128KiB, report4MiB, aggregate500000 input nodes, depth96, abs(integer)<=2**63-1, finite floats. Complete overflow refuses without truncation.",
+    "public_api": [
+      "prepare_legal_ir_decoder_output_compatibility_v1(receipt_raw, codec_raw, capture_binding_raw, *, expected_receipt_sha256, expected_codec_sha256, expected_capture_binding_sha256)",
+      "legal_ir_decoder_output_compatibility_sha256(report)",
+      "validate_legal_ir_decoder_output_compatibility_v1(report, receipt_raw, codec_raw, capture_binding_raw, *, expected_report_sha256, expected_receipt_sha256, expected_codec_sha256, expected_capture_binding_sha256)"
+    ],
+    "regeneration": "Full report canonical hash includes all companions; validation requires independent report pin and exact regeneration from all three original raw transports. Resealing altered output cannot bypass replay.",
+    "rich_boundary": "Every output explicitly remains unsupported for the richer relational request; request_utf8/request_sha256 are null and no predicate signature, role, quantifier, variable, source-binding or encoder identity is manufactured.",
+    "source_fences": "Fixed self+9 owner source snapshots are bounded/nofollow/physical/singlelink, include full identity, cache import/first-use pins and fence lazy imports, public inspector errors, candidate decoding and completion. General preloaded unanchored bytecode remains an explicit limitation; native fresh checked-buffer profile is separate."
+  },
+  "remaining_required_work": [
+    "Keep publication in draft; the actual native qualification admission refused before a child, so 104 authored tests are not an executed pass count and the prepared60+60 numerical comparison has not run.",
+    "Restore sufficient filesystem capacity or use existing owner-led durable finalization of eligible historical reservations after their exact custody/liveness/retained-byte checks; do not infer authority to release foreign claims or delete assets.",
+    "After fresh native admission succeeds, execute selected qualification, then the small prepared numerical replay, retaining complete failures/source custody/output inventory and native closeout.",
+    "Verify curated evidence bytes and linked source/metadata inventory before draft publication; this source-only review does not substitute for independent publication metadata verification."
+  ],
+  "resolved_draft_findings": [
+    "Own worker source pin required.",
+    "Fresh canonical product namespace required and final canonical product origins checked.",
+    "Actual neural forward-step count separated from sequence-generation calls.",
+    "Exact output filename population and final byte/hash/JSON-identity checks added.",
+    "Historical external source paths retained without old manifest retagging, checked as distinct roots.",
+    "Full repeated source execution events moved out of small engineering summary into bounded payload.",
+    "Adapter placeholder replaced by public builder plus exact regeneration validator.",
+    "Guide now explicitly distinguishes legal-source-formula-codec/v1 asset schema from typed-deontic-rule/v1 emitted grammar."
+  ],
+  "review_scope": {
+    "canonical_git_or_private_worktree_access": false,
+    "ledger_access": false,
+    "model_or_product_import_execution": false,
+    "product_or_doc_edits_by_reviewer": false,
+    "runtime_receipt_read": false,
+    "source_ast_and_authored_test_source_only": true,
+    "weights_latents_corpus_prediction_payload_read": false
+  },
+  "schema": "independent-decoder-output-source-helper-doc-audit/v1",
+  "status": "SOURCE_REVIEW_PASS_NATIVE_ADMISSION_REFUSED_RUNTIME_UNEXECUTED_DRAFT",
+  "supersedes_review": {
+    "bytes": 21375,
+    "path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/source-helper-doc-audit-v01.json",
+    "reason": "Final guide explicitly retains the actual native owner.open refusal; no qualification or numerical child ran. Source/product/test/helper pins remain identical to v01.",
+    "sha256": "52ff3d60892e6cbe02ecf515578ba0e0d6c1a67464acd44c8a01d799e0e9aa7f"
+  }
+}

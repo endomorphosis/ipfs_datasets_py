@@ -1,0 +1,144 @@
+{
+  "file_pins": [
+    {
+      "bytes": 60624,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification-request-v02.json",
+      "sha256": "ee641863e1a34da3f193c3115d447693945c82c86383edfbc79088fc1ec3383b"
+    },
+    {
+      "bytes": 116542,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/logs/qualification.json",
+      "sha256": "a22f61885f9a51f4c6f6a395d4ebfd195955d5c92e6428699c27822d4f74ea43"
+    },
+    {
+      "bytes": 680,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/logs/execution.json",
+      "sha256": "2732d1a291880607ba5ac667911cf1d95075b843466d47baefd8fbb1f61d7b19"
+    },
+    {
+      "bytes": 858,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/logs/result.json",
+      "sha256": "c213d99cca704b7b51297051592243552f6d8f1d676fdb1e8b9fe887f913f6f5"
+    },
+    {
+      "bytes": 1959,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/logs/validation-durability.json",
+      "sha256": "85fd9e41c54157064e4fe28790b5f5e476ba515fae325707b94d95261ccfddb4"
+    },
+    {
+      "bytes": 5505,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification02-controller-stdout.log",
+      "sha256": "9b6a1ccfa05f66cc3dd6f0a971a6308dcb1364720d5c056733676a479466cb3f"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification02-controller-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 64483,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification01-own-recovery-receipt-v01.json",
+      "sha256": "effb97719e9084588321065bf9c22314a5782f6f3fd77f6678229a918bbfef8d"
+    },
+    {
+      "bytes": 21971,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_ir_decoder_output_compatibility_v1.py",
+      "sha256": "d2145191a898dd50b5bcc4b3d61a005cc6cc869b5c49db8c7db74d6452d1d12b"
+    },
+    {
+      "bytes": 29583,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py",
+      "sha256": "d75970f972051e729e4bca494a9f667c06f1610ebb41235aacf3abfcb6e27168"
+    },
+    {
+      "bytes": 10987,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+      "sha256": "7e2ed28f2795b0736eac77a550d9cecfecc37aa711b532c574b94b7a5da92cea"
+    },
+    {
+      "bytes": 9056,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py",
+      "sha256": "3d28183dca0f563a054f9daaf64531670bca79f1adcafb539dea2ece9bf8db2d"
+    },
+    {
+      "bytes": 40999,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed"
+    },
+    {
+      "bytes": 13056,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+      "sha256": "2f3cbbeaac77ca71531b4f844ef522d909677f3ee78a6d6d21412299d9cddb8c"
+    },
+    {
+      "bytes": 15958,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_owned_validation.py",
+      "sha256": "2d7a250e4c5237d24bf1b9328b059a71854d613a568de55f08c83b8e045e41b4"
+    }
+  ],
+  "limitations": [
+    "173authored controls establish selected contract behavior, not numerical decoder execution, reviewed statutory fidelity, generalization, training improvement, rich relational output or Lean build.",
+    "Actual filesystem availability and outstanding commitments changed since the historical refused admission. This successful run retained the existing160GBcap; no cap migration is established or needed by this result.",
+    "The failed first retry collection is distinct history, not an additional173passingcases.",
+    "RawJUnit/bodyandfixturefileswerenotopened; JUnit roster/hash metadata was crosschecked against the native sealed inventory.",
+    "Numerical01laterfailed during installed Torch startup before anymodelgeneration; its source-input/plan payloads are outside this qualification audit and were not opened."
+  ],
+  "native_closeout": {
+    "artifacts_durable_asserted": true,
+    "cleanup_error": null,
+    "completed": true,
+    "controller_result_is_expected_path_string": true,
+    "controller_stderr_bytes": 0,
+    "final_attempt_bytes": 180545,
+    "final_filesystem_free_bytes": 32089108480,
+    "final_full_reservations_bytes": 15410259520,
+    "lease_released": true,
+    "live_recorded_group_processes": 0,
+    "memory_mb": 2048,
+    "native_cap_bytes": 160000000000,
+    "qualification_and_junit_refs_match_native_durability_inventory": true,
+    "result_bound_by_native_durability_hash": true,
+    "returncode": 0,
+    "scope": "Metadata crosschecks of captured native owner closeout; not a fresh live ledger/process observation.",
+    "storage_bytes": 134217728,
+    "storage_status": "released"
+  },
+  "own_qualification01_recovery": {
+    "artifact_bytes": 33583,
+    "artifact_files": 10,
+    "claim_reduction_bytes": 134217728,
+    "new_lease": false,
+    "new_reservation": false,
+    "outputs_deleted": false,
+    "receipt_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification01-own-recovery-receipt-v01.json",
+    "scheduler_lease_state_independently_authenticated": false,
+    "scope": "Existing public recovery result records the exact prior selected claim and complete durable artifact inventory; this audit checks metadata bindings/arithmetic and does not reread artifacts or live/foreign ledger rows.",
+    "successful_test_claim": false
+  },
+  "qualification": {
+    "all_semantic_model_training_legal_lean_authority_false": true,
+    "checked_product_origins": 21,
+    "child_process_attempts": 0,
+    "collected_unique_cases": 173,
+    "current_source_files_independently_rehashed": 253,
+    "errors": 0,
+    "failures": 0,
+    "native_parent_execution_elapsed_seconds": 47.36344314087182,
+    "natural_product_namespaces": 0,
+    "network_attempts": 0,
+    "per_selected_module_cases": {
+      "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py": 104,
+      "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py": 32,
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py": 37
+    },
+    "qualification_receipt_elapsed_seconds": 1.002076409989968,
+    "request_sha256": "ee641863e1a34da3f193c3115d447693945c82c86383edfbc79088fc1ec3383b",
+    "skipped": 0,
+    "source_pin_count": 253,
+    "successful_calls": 173,
+    "unique_junit_cases": 173
+  },
+  "schema": "independent-decoder-retry-qualification-native-metadata-audit/v1",
+  "scope": "Source and explicitly allowed engineering/native metadata only. No product/test execution/imports, model/weights/latents/corpus/source-inputs/prediction/compatibility payloads, fixture bodies, ledger or canonical Git read.",
+  "status": "PASS"
+}

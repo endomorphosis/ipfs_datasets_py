@@ -1,0 +1,286 @@
+{
+  "allowed_readonly_startup_calls": 1,
+  "campaign_storage_cap_bytes": 160000000000,
+  "campaign_storage_cap_changed": false,
+  "copied_bytes": 848663,
+  "decoder_forward_steps": 3240,
+  "encoder_inference_executed": false,
+  "files": [
+    {
+      "bytes": 60125,
+      "path": "qualification-request-v01.json",
+      "sha256": "d91a5f60f3a5571e65a26202bdeb616ec3ff0544ac3ed0d7aecfefc025d2d5f0",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification-request-v01.json"
+    },
+    {
+      "bytes": 60624,
+      "path": "qualification-request-v02.json",
+      "sha256": "ee641863e1a34da3f193c3115d447693945c82c86383edfbc79088fc1ec3383b",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification-request-v02.json"
+    },
+    {
+      "bytes": 49570,
+      "path": "numerical-replay-request-v01.json",
+      "sha256": "993d813d2975ea2d9efdf19412a0134b18da133118cdfff0e475521c52566077",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-replay-request-v01.json"
+    },
+    {
+      "bytes": 49852,
+      "path": "numerical-replay-request-v02.json",
+      "sha256": "58c19ddf8faee5a091c67bc0917703042d942a0c727756d9cdf45b1c929b559f",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-replay-request-v02.json"
+    },
+    {
+      "bytes": 49852,
+      "path": "numerical-replay-request-v03.json",
+      "sha256": "265577bec114742e13558da0fce595ae69265a82391f45e9caf8e87a2d83ec66",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-replay-request-v03.json"
+    },
+    {
+      "bytes": 371,
+      "path": "numerical-inputs-v01.json",
+      "sha256": "f01cdbae362dcffbe306107498c492611a3afa6452c0fd8cc1eac5cc30ea0caa",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-inputs-v01.json"
+    },
+    {
+      "bytes": 1836,
+      "path": "resource-plan-v02.json",
+      "sha256": "72691919f3dd91cbfa413098aab6594cd4dc35ec538866c0191d5f04fac1d815",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/resource-plan-v02.json"
+    },
+    {
+      "bytes": 28503,
+      "path": "run_numerical_replay_v02.py",
+      "sha256": "10405c2111004b916af0e734ed5ffa5559365e2f5371aefa30402a0505660345",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v02.py"
+    },
+    {
+      "bytes": 32502,
+      "path": "run_numerical_replay_v03.py",
+      "sha256": "5c20913510c14341f028fc608536abd866900333c06a01597e2d6864411f93fd",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v03.py"
+    },
+    {
+      "bytes": 33020,
+      "path": "run_numerical_replay_v04.py",
+      "sha256": "25ffbdc7dc863f9129fd821cdf4ea8189b935a80f69e0f531c47d935b5751023",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v04.py"
+    },
+    {
+      "bytes": 5480,
+      "path": "recover_own_failed_qualification01_v01.py",
+      "sha256": "ef2c0a46878318536e736c027c019fc118e9d53016488cc486b538eb4aa88164",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/recover_own_failed_qualification01_v01.py"
+    },
+    {
+      "bytes": 5478,
+      "path": "recover_own_failed_numerical01_v01.py",
+      "sha256": "921ad157e1567be82111bab703ecb2aa3c9a1344106934feffa193ad9d87e435",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/recover_own_failed_numerical01_v01.py"
+    },
+    {
+      "bytes": 5478,
+      "path": "recover_own_failed_numerical02_v01.py",
+      "sha256": "f4b60c3f8d361a7ad37c54ad2648fc2d840e4ef7c0b8a994fff14cb91a0d5ed0",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/recover_own_failed_numerical02_v01.py"
+    },
+    {
+      "bytes": 64483,
+      "path": "qualification01-own-recovery-receipt-v01.json",
+      "sha256": "effb97719e9084588321065bf9c22314a5782f6f3fd77f6678229a918bbfef8d",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification01-own-recovery-receipt-v01.json"
+    },
+    {
+      "bytes": 53163,
+      "path": "numerical01-own-recovery-receipt-v01.json",
+      "sha256": "5842ae9c043354ebd569996a2ced4e82177577142d76d33f325dacccefe6e6a9",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical01-own-recovery-receipt-v01.json"
+    },
+    {
+      "bytes": 53445,
+      "path": "numerical02-own-recovery-receipt-v01.json",
+      "sha256": "b7f9c8ac81841ea9866f88ba0d445009c21c6023aa6754986bdf6723f68351cb",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical02-own-recovery-receipt-v01.json"
+    },
+    {
+      "bytes": 8146,
+      "path": "qualification-native-independent-audit-v01.json",
+      "sha256": "52257c17ac75d5bef6c89600637acc6d082036bb1a1771b461f12ff0106ef0b8",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification-native-independent-audit-v01.json"
+    },
+    {
+      "bytes": 15759,
+      "path": "numerical-native-independent-audit-v01.json",
+      "sha256": "07586d2293b452b115cc8b69c667911163cf4036e8bdf0cc1dace2c0fe5cd417",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-native-independent-audit-v01.json"
+    },
+    {
+      "bytes": 21602,
+      "path": "numerical-metric-independent-review-v01.json",
+      "sha256": "e86fb573fdb0f7bed7f5a2b30cffb3c9a7eb8ac19c1e6fac407dc7fa4f83762b",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-metric-independent-review-v01.json"
+    },
+    {
+      "bytes": 4661,
+      "path": "numerical-worker-static-review-v01.json",
+      "sha256": "4743e3480499fa1e5c4c7cf7140ef30d762374c3895901197b86d948ae9c512f",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-worker-static-review-v01.json"
+    },
+    {
+      "bytes": 6318,
+      "path": "numerical-worker-static-review-v02.json",
+      "sha256": "c76611179eb3826a6f2f390d6096b2e6d0d6385ef1cc62402eda49970b2c3b0f",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-worker-static-review-v02.json"
+    },
+    {
+      "bytes": 4020,
+      "path": "numerical-worker-static-review-v03.json",
+      "sha256": "e8f345daea9b6b9f1d809c4ac3dd5e28b6bdb8e79e5d4e1e4d66360a4e149a1d",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-worker-static-review-v03.json"
+    },
+    {
+      "bytes": 1348,
+      "path": "upstream-reconciliation-v01.json",
+      "sha256": "da5dbc653707d04e4157e16eb480176f0b8e1d30819b4e44cc3a8c1a5da4f9ec",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/upstream-reconciliation-v01.json"
+    },
+    {
+      "bytes": 5505,
+      "path": "qualification02-controller-stdout.txt",
+      "sha256": "9b6a1ccfa05f66cc3dd6f0a971a6308dcb1364720d5c056733676a479466cb3f",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification02-controller-stdout.log"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification02-controller-stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification02-controller-stderr.log"
+    },
+    {
+      "bytes": 5534,
+      "path": "numerical03-controller-stdout.txt",
+      "sha256": "b6c2c5cdd69d4ef65603734bd59b474b31c7bde686e2fb94215c8cf1fa251c00",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical03-controller-stdout.log"
+    },
+    {
+      "bytes": 0,
+      "path": "numerical03-controller-stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical03-controller-stderr.log"
+    },
+    {
+      "bytes": 116542,
+      "path": "qualification02-qualification.json",
+      "sha256": "a22f61885f9a51f4c6f6a395d4ebfd195955d5c92e6428699c27822d4f74ea43",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/logs/qualification.json"
+    },
+    {
+      "bytes": 680,
+      "path": "qualification02-execution.json",
+      "sha256": "2732d1a291880607ba5ac667911cf1d95075b843466d47baefd8fbb1f61d7b19",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/logs/execution.json"
+    },
+    {
+      "bytes": 858,
+      "path": "qualification02-result.json",
+      "sha256": "c213d99cca704b7b51297051592243552f6d8f1d676fdb1e8b9fe887f913f6f5",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/logs/result.json"
+    },
+    {
+      "bytes": 1959,
+      "path": "qualification02-validation-durability.json",
+      "sha256": "85fd9e41c54157064e4fe28790b5f5e476ba515fae325707b94d95261ccfddb4",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/logs/validation-durability.json"
+    },
+    {
+      "bytes": 85400,
+      "path": "numerical03-numerical-replay.json",
+      "sha256": "e50e34358738bb2b70a1c2b0465fb2158d58ad44adfd6dc4f86ec8840f37d1ed",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay03/logs/numerical-replay.json"
+    },
+    {
+      "bytes": 718,
+      "path": "numerical03-execution.json",
+      "sha256": "d34c909254a946bdb14e68dd7cf2a7d9ac260eaa3865f3677f566464009ba0ec",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay03/logs/execution.json"
+    },
+    {
+      "bytes": 901,
+      "path": "numerical03-result.json",
+      "sha256": "5ae40128e19e17a7ac761fcc1df1f0b855594ffa5de4898ad3b44d260eb23345",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay03/logs/result.json"
+    },
+    {
+      "bytes": 4926,
+      "path": "numerical03-validation-durability.json",
+      "sha256": "b3e37f5a7d5538971a45023a6bc6885bfbe11890aaaf3e075dac3e00867b45cf",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay03/logs/validation-durability.json"
+    },
+    {
+      "bytes": 822,
+      "path": "qualification01-failure.json",
+      "sha256": "56725eae90c7998cbc23d81667faa68bc7c2f4ac6acdcf91b92ca7aed8418685",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification01/logs/failure.json"
+    },
+    {
+      "bytes": 539,
+      "path": "qualification01-stderr.txt",
+      "sha256": "3c1244f679ced1c35d2073037feb07d0aeaa4630a1f374a70cba7018c0798692",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification01/logs/stderr.log"
+    },
+    {
+      "bytes": 859,
+      "path": "numerical01-failure.json",
+      "sha256": "ccf9c06638d042924720449bff366b6bce2db418a4a18ddb349e548ec34870c2",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay01/logs/failure.json"
+    },
+    {
+      "bytes": 3095,
+      "path": "numerical01-stderr.txt",
+      "sha256": "bf64eaf76160764d68e64be779e54d45b50d212c2696e8415e9eae4b009ab9ab",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay01/logs/stderr.log"
+    },
+    {
+      "bytes": 858,
+      "path": "numerical02-failure.json",
+      "sha256": "c3e57ab3e4d29243c33ee4194b11e3767f3df26fb66acdc9b0a220cda7cd0ee8",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay02/logs/failure.json"
+    },
+    {
+      "bytes": 3831,
+      "path": "numerical02-stderr.txt",
+      "sha256": "7dad088dc3215523ed589438a6fa46e21b58d429670e29de8e365cfbd193c7e3",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay02/logs/stderr.log"
+    }
+  ],
+  "first_pass_sequences": 60,
+  "foreign_reservations_changed": false,
+  "fresh_private_replay_sequences": 60,
+  "grammar_valid_first_pass": 60,
+  "heldout_legal_accuracy_established": false,
+  "lean_executed": false,
+  "model_download_executed": false,
+  "model_service_or_teacher_admitted": false,
+  "native_test_cases": 173,
+  "native_test_count_sources": {
+    "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py": 104,
+    "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py": 32,
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py": 37
+  },
+  "numerical_child_process_allowance": 2,
+  "own_failed_promises_reconciled_bytes": 671088640,
+  "own_failure_bytes_preserved": 268890,
+  "own_failure_files_preserved": 20,
+  "private_payload_bytes": 2397930,
+  "private_payload_files": 21,
+  "recorded_at_utc": "2026-10-16T05:14:21.530901+00:00",
+  "rich_relational_unsupported_first_pass": 60,
+  "schema": "legal-decoder-storage-retry-evidence-index/v1",
+  "scope": "source, native engineering receipts, audits, aggregate metrics and resource accounting only; no model/checkpoint/corpus/latent/generated prediction payload bodies",
+  "successful_native_closeouts": "durable/released/group0/cleanupnull",
+  "training_executed": false,
+  "upstream_integrated": "1211e6c17b3f5b8b1c9d838d6a5d94b53d9f5c4b",
+  "upstream_pin_intersection": [],
+  "weights_published_this_increment": false,
+  "writable_null_startup_events": 5
+}
