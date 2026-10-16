@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_owned_validation.py", line 326, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_owned_validation.py", line 168, in main
+    value, raw = request(args.request,args.expected_request_sha256)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_owned_validation.py", line 45, in request
+    raise ValueError('request hash differs')
+ValueError: request hash differs

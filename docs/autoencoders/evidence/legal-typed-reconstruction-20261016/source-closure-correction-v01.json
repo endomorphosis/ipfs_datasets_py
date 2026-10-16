@@ -1,0 +1,20 @@
+{
+  "added_sources": [
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/extensions.py",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/registry.py",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/lexer.py",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/diagnostics.py",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/codec.py",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/elaboration.py",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/artifacts_v2.py"
+  ],
+  "comparison_v01_executed": false,
+  "guards_relaxed": false,
+  "observed_at_utc": "2026-10-16T00:52:24.850547+00:00",
+  "product_or_test_bodies_changed": false,
+  "qualification01_outcome": "failed; import guard refused unpinned syntax_core.registry;187collected/50passedcalls/137failed_or_error_reports; not successful qualification",
+  "qualification01_retained_for_audit": true,
+  "qualification02_expected_unique_cases": 187,
+  "schema": "legal-typed-reconstruction-source-closure-correction/v1",
+  "selected_roster_changed": false
+}

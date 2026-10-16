@@ -1,0 +1,248 @@
+{
+  "authority_granted": false,
+  "branch_metadata_limit": "One named origin/agent tracking ref was not locally installed; the final survey records remote observed SHA and bounded object ancestry where available instead of fetching or inspecting private worktrees.",
+  "conclusion": "No existing public owner directly captures and authenticates explicit official-source/primary equivalence, governing version and applicability decisions bound to PR1315. Existing question/signature owners retain their exact populations and domains. One additive unsigned intake could collect independently supplied declarations but could not alone establish reviewed training targets.",
+  "current_turn_priority": {
+    "boundaries": "No duplicate AST, inferred gold, legal-equivalence score or eligibility promotion. Keep source-text fidelity, fixed-view CE, native latent controls and typed diagnostics separate; no training/Lake execution claim.",
+    "compare": [
+      "Whole typed identity separately from structure reconstruction.",
+      "Ordered predicate arguments/roles and exact lexical variable binding.",
+      "Quantifier/connective structure, implication direction and O/P/F placement.",
+      "Complete explicit hypotheses and pending/unsupported provisions without omitting source obligations."
+    ],
+    "decision": "Do not implement another unsigned evidence-intake adapter this turn. Prioritize paired typed reconstruction diagnostics through existing relational/typed owners.",
+    "purpose": "Close a measurable richer decoder-comparison gap while independent reviewed source/meaning evidence remains absent."
+  },
+  "execution_performed": false,
+  "existing_capabilities": [
+    {
+      "apis": [
+        "record_sampling_review_response",
+        "validate_sampling_review_response",
+        "summarize_sampling_review_population"
+      ],
+      "owner": "legal_source_sampling_review",
+      "reuse": "Fixed15-question sampler catalog already has authority_edition and scope_applicability. It retains all seven source/eight meaning answers, reviewer/process/exposure declarations and disagreements.",
+      "unsupported": "Evidence refs must be from the original exact subject/shared-view guide. PR1315 envelope/primary-package evidence cannot simply be added. Responses authenticate nothing and supply no source equivalence or gold."
+    },
+    {
+      "apis": [
+        "prepare_source_review_requests",
+        "validate_source_review_requests",
+        "assess_source_review_groups",
+        "validate_source_review_assessment"
+      ],
+      "owner": "corpus_source_review",
+      "reuse": "Existing fixed source/context Ed25519/trust/dependency domain has nine active source-evidence slots (six context, historical source correspondence, official edition, region classification), seven deferred semantic/proof slots and full original source replay.",
+      "unsupported": "Requires genuine complete parent/alignment corpus manifest/pages/records, nested original replay, source context/handoff reports and every queue group. Sampler/PR1315 envelopes are incompatible. Its authorized parent-field scope does not itself establish governing applicability."
+    },
+    {
+      "apis": [
+        "record_source_review_response",
+        "assess_source_review_responses",
+        "record_source_adjudication_declaration"
+      ],
+      "owner": "corpus_source_review_responses and corpus_source_adjudication",
+      "reuse": "Typed answers bind the exact source request/subject, reviewer/process/exposure, all nine ordered active slots and exact raw evidence. Signed dispositions bind the typed response body; disagreements and considered answer variants remain explicit.",
+      "unsupported": "The request is validated against the original16/9-slot profile; adjudication requires the entire genuine prior response lineage. Do not invent compatible requests, responses or variants to feed these APIs."
+    },
+    {
+      "apis": [
+        "record_reviews",
+        "validate_recording",
+        "record_adjudications",
+        "validate_adjudication_recording"
+      ],
+      "owner": "statutory_source_review and statutory_review_recording",
+      "reuse": "Separate raw-section packet accepts authority/currentness evidence, reviewed facets, context and explicit caller adjudication declarations.",
+      "unsupported": "Exact archived raw-section/Parquet provenance and copied-span profile are distinct from official-HTML/primary identities. No signatures are verified and authority/masks stay false/zero."
+    },
+    {
+      "apis": [
+        "build_definition_review_subject_v2",
+        "assess_definition_reviews_v2",
+        "validate_definition_review_assessment_v2"
+      ],
+      "owner": "corpus_definition_review_v2 and legal_graph_review",
+      "reuse": "Existing PR1315 graph/AST/context fixed domain authenticates exact new subjects with independent registry/policy/review pins, role/principal/scope/time/revocation/evidence/dependency checks and existing ProfileG crypto.",
+      "unsupported": "The claim has no explicit source-equivalence or governing-applicability verdict. Private _ReviewDomain/_assess_reviews are not a public generic-domain interface. Bare ProfileG signature validity would not replace scoped trust and source replay."
+    }
+  ],
+  "existing_signed_source_domain": {
+    "action": "record_source_context_review_evidence/v1",
+    "audience": "legal-autoformalization-source-context-review/v1",
+    "claim_schema": "legal-corpus-source-context-review-signed-claim/v1",
+    "subject_schema": "legal-corpus-source-review-subject/v1"
+  },
+  "findings": [
+    "No direct published PR1315 equivalence/applicability adapter surfaced in the source/branch survey.",
+    "The substantive gap is independent evidence and scoped human decisions, not missing self-hashes or another checkpoint.",
+    "Richer symbolic reconstruction diagnostics are actionable while reviewed-target admission stays unavailable."
+  ],
+  "independent_prerequisites": [
+    "Historical primary acquisition/transformation evidence connecting original package/record bytes to official source/version. IDs, locators, CIDs and Git revisions cannot supply this.",
+    "Explicit legal-time/scope and independently supported applicability. Historical edition, primary Git revision, release point and current law remain separate.",
+    "Actual independently supplied legal/formal interpretations and disagreements; generated proposals and transport tests are not review.",
+    "Source-first blind meaning targets and recorded later exposure. Candidate-bearing PR1315 evidence is not a blind source packet.",
+    "Separate source/semantic/proof/gold admission after authenticated scoped evidence, complete supported representations and actual native/Lean checks. Unsigned intake alone unlocks collection, not training eligibility."
+  ],
+  "legal_review_performed": false,
+  "minimal_future_intake_if_needed": {
+    "api": "record_primary_source_decisions_v2(review_envelope, association, correspondence, binding_result, previous_subject, primary_index, *, expected_preparation_sha256, expected_association_sha256, association_replay_inputs, declaration_raw, expected_declaration_file_sha256, evidence_inputs, expected_evidence_population)",
+    "authentication_boundary": "Later V2 signing of a closure that includes decision bytes authenticates those bytes in its existing graph/AST/context scope, not an explicit equivalence endorsement. A future explicit signed approval would require a separately specified fixed claim scope reusing existing trust/signature machinery; never invent production keys or bypass current domains.",
+    "closed_contents": [
+      "Full envelope/association/old subject/source identity/primary witness commitments.",
+      "Caller-supplied reviewer principal/role/time, identity/independence/process evidence and candidate/organizer exposure declarations.",
+      "Three distinct typed claims: official-source/primary correspondence, version correspondence, governing applicability. Preserve support/rejection/dispute/unresolved/outside-scope, rationale and exact evidence; no affirmative defaults.",
+      "Exact immutable evidence bytes with independent ordered artifact ID/hash/size/role population, including available original acquisition/transformation/version evidence; unavailable remains explicit.",
+      "Reuse authority_edition/scope_applicability question references only where semantics match. Explicit primary equivalence needs a closed new meaning, not a renamed old catalog question or a new parallel global catalog.",
+      "Retain full source-population references/counts, all original primary/context witnesses and every conflicting supplied declaration."
+    ],
+    "output": "Unsigned recorded declarations/evidence only, exact raw/canonical namespaces, explicit unresolved obligations, all authority false/masks integer zero; no signature, assessment, adjudication or gold.",
+    "replay": "Call the PUBLIC PR1315 validator on exact originals and live independently pinned index; companion validation regenerates the entire independently pinned declaration/intake. No alternate validator callback or private domain plumbing.",
+    "smallest_scope": "One declared official source/version and original primary section/package/release witness set, exact ordered selected physical occurrences and an explicit bounded legal-time/scope question. Do not infer package-wide/560-subject equivalence from six selected occurrences.",
+    "status": "Recommendation only; no implementation this turn."
+  },
+  "observed_at_utc": "2026-10-16T00:37:56.650998+00:00",
+  "payload_bodies_read": false,
+  "product_edits": false,
+  "relevant_published_branch_metadata": [
+    {
+      "already_ancestor_of_reviewed_main": true,
+      "commit": "cdd6bb60e6ed9d670e39b0a77d9387816c1ea0e5",
+      "local_ancestry_available": true,
+      "observed_remote_head": "refs/heads/codex/legal-source-pilot-review-20261015"
+    },
+    {
+      "already_ancestor_of_reviewed_main": true,
+      "commit": "82d8abb5d1809ca11bf58675c915c69ed0226011",
+      "local_ancestry_available": true,
+      "observed_remote_head": "refs/heads/codex/legal-reviewed-component-next-20261015"
+    },
+    {
+      "already_ancestor_of_reviewed_main": true,
+      "commit": "334c03b285022ecdfbee2aebf177126c1ffaee50",
+      "local_ancestry_available": true,
+      "observed_remote_head": "refs/heads/agent/legal-ir-source-review-integration-20261015"
+    }
+  ],
+  "reviewed_main": "c6c95c5d88417b5c3ca436951f8716528707c863",
+  "reviewer": "/root/sampled_primary_docs_review_n10",
+  "schema": "independent-primary-source-review-gap-source-survey/v1",
+  "scope": "Static source/docs and immutable Git/remote-head metadata only. No product/test/model/CID imports or execution, source/corpus/fixture/lookup/association/envelope/report payload reads, ledger/canonical Git access or code/documentation edits.",
+  "source_documentation_pins": [
+    {
+      "bytes": 33945,
+      "git_blob": "7a6fdece5dd56b28d5d02a7f367edce55892a5cd",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+    },
+    {
+      "bytes": 23696,
+      "git_blob": "bd3d4248fa52907c5ccc3b3d9a9c62455213ec28",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_primary_review_v2.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "b447512be5211d873de6ea849266ca2a42c8705d584b2c4d00785489f7720d4e"
+    },
+    {
+      "bytes": 47062,
+      "git_blob": "f0a0ead877eeb3f30b3b4d81ca2088bc2f4889cb",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_source_review.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "308a1955f4d8705369c1a4d25e4b02cc308a4c3d1032085122d7801a9d30f53e"
+    },
+    {
+      "bytes": 31940,
+      "git_blob": "f48770f68e72fc55f2bdf9bd0226dcc4e5af361c",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_source_review_responses.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "519f91a39f0f6f3fb0b7226042fe75642833588f31af8eeea9c5a488d603c7e9"
+    },
+    {
+      "bytes": 32429,
+      "git_blob": "41a44d2fc0bcb4f47d111c056d526493402880cc",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_source_adjudication.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "0d658081521bc737ff17ec38f82d34122863b7b2b3094e8d1fabf4eef0caf2b9"
+    },
+    {
+      "bytes": 30521,
+      "git_blob": "4249a46631b438ade9f64263aae4218d1ff053a8",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_graph_review.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "32abecbf17bc3d10b59d1bd08fde3e8b6bfa58f73b17e31e817fe0f4e910af9e"
+    },
+    {
+      "bytes": 29833,
+      "git_blob": "6df03384fa14c391b7970f0a00c7c6e310797792",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190"
+    },
+    {
+      "bytes": 12974,
+      "git_blob": "2a69f751d587473bfc72adc815c0ef22e7c1e6bf",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8"
+    },
+    {
+      "bytes": 11539,
+      "git_blob": "685094a14848c9cf926dddd626aa57ff3d8d0a0e",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "b519e81ec84958ea36934c9201ca7bb8b4eaccf943bd77096c07d05262d9b479"
+    },
+    {
+      "bytes": 42670,
+      "git_blob": "ad5b688e386995a287a2170e6fd9e8f4256f7405",
+      "path": "ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+    },
+    {
+      "bytes": 34663,
+      "git_blob": "c6e57a6989cfa2d72ed87a30247cc7fafd037915",
+      "path": "ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c"
+    },
+    {
+      "bytes": 21097,
+      "git_blob": "376b9093756e66a2e0fcd7a201278b00b0662b52",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_binding_review.py",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "658bce8569101e36852702ceb53f1bc0ab61d6a00ed071e73d7044f39765d59d"
+    },
+    {
+      "bytes": 8477,
+      "git_blob": "ed1c20429ed74f43daa9bdc80cd028fd67238dc6",
+      "path": "docs/autoencoders/legal_source_sampling_review.md",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "034220aa392539c74d350f66d7e44c27846298a9c86576b4c98aa4be15967fcb"
+    },
+    {
+      "bytes": 7363,
+      "git_blob": "48e0fabc3626dfcc92d86601b9d7fd6cf1a1003a",
+      "path": "docs/autoencoders/corpus_source_review.md",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "67538cf91c4cf4211d2fdacebb211e78aa0795b9535aaa6fd2baf8ce6443cda1"
+    },
+    {
+      "bytes": 8619,
+      "git_blob": "e0f2bafaf67b8681749216396eb3ed2bd9495d5d",
+      "path": "docs/autoencoders/legal_sampled_primary_definition_review_v2.md",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "444da62054f606b47242ffe599a5dc8069c2b07add52db2b994bdfbc7f510b90"
+    },
+    {
+      "bytes": 8254,
+      "git_blob": "87706b2c4f4957f879a23153f902582f64683cce",
+      "path": "docs/autoencoders/legal_typed_semantic_integration_20261016.md",
+      "ref": "c6c95c5d88417b5c3ca436951f8716528707c863",
+      "sha256": "18a01e090c1cc3f3f38068bfbb1783c6a96bda72aefac6f4fd13bd1c5a7a89f5"
+    }
+  ],
+  "training_performed": false
+}

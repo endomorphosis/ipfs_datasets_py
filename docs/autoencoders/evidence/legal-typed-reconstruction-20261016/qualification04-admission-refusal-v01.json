@@ -1,0 +1,8 @@
+{
+  "new_resource_policy_or_fake_lease": false,
+  "next_request_memory_mb": 2048,
+  "reason": "Existing native scheduler refused6GiB request before child attachment (LeaseTimeoutError); empty bound own attempt retained and explicitly recovered through allow_empty_failed_admission public API.",
+  "schema": "legal-typed-reconstruction-admission-refusal/v1",
+  "source_or_test_changed": false,
+  "test_execution": false
+}

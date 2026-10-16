@@ -1,0 +1,10 @@
+{
+  "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification01",
+  "observed_at_utc": "2026-10-16T00:46:37.653760+00:00",
+  "product_or_tests_executed": false,
+  "reason": "Native owner constructor requires an existing private attempt directory. Initial invocation stopped before owner entry or child launch. Created only the declared empty attempt layout before retrying unchanged frozen request.",
+  "reservation_acquired": false,
+  "schema": "legal-typed-reconstruction-prelaunch-failure/v1",
+  "source_or_request_changed": false,
+  "stderr_sha256": "48d3354086ab50b96ad4ae3c41d9922f9efbb3737a4b670a7d5ee1f3c96831b4"
+}

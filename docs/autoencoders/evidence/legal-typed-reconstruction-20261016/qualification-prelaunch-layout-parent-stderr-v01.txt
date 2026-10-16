@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_owned_validation.py", line 326, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/scripts/ops/legal_ir/run_owned_validation.py", line 206, in main
+    owner.open()
+  File "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py", line 264, in open
+    super().__enter__()
+  File "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py", line 463, in __enter__
+    self._validate_new_reservation(ledger)
+  File "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py", line 245, in _validate_new_reservation
+    _need(not any(self.directory.iterdir()), "validation attempt must initially be empty")
+  File "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py", line 48, in _need
+    raise ValidationResourceError(message)
+ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources.ValidationResourceError: validation attempt must initially be empty

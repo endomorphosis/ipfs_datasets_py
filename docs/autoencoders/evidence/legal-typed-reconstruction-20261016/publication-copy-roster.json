@@ -1,0 +1,557 @@
+{
+  "Lean_executed": false,
+  "bytes_excluding_this_index": 2079618,
+  "files": [
+    {
+      "bytes": 805,
+      "path": "compare05/execution.json",
+      "sha256": "6afd33de4a7c74a407f9a2ff2b7e857e7855da4cd89a1c882fa03f81107471b0",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/execution.json"
+    },
+    {
+      "bytes": 0,
+      "path": "compare05/parent-stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-parent-stderr-v05.txt"
+    },
+    {
+      "bytes": 5452,
+      "path": "compare05/parent-stdout.json",
+      "sha256": "3aeefc9693d80ad97238477b84f1f6d6069fae480192792c0dd35c909f39a3f0",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-parent-stdout-v05.json"
+    },
+    {
+      "bytes": 969,
+      "path": "compare05/result.json",
+      "sha256": "8aefeec10ed7e0cbe68d81faeb6b5d6ec260a43fb7a2cde5a701de66858a6e6d",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/result.json"
+    },
+    {
+      "bytes": 99335,
+      "path": "compare05/retained-comparison-receipt.json",
+      "sha256": "f55e8b0279eab049100a75d9d25cf06b6a6da2439326d7a11baf459234c5d1d3",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/retained-comparison-receipt.json"
+    },
+    {
+      "bytes": 0,
+      "path": "compare05/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/stderr.log"
+    },
+    {
+      "bytes": 390,
+      "path": "compare05/stdout.log",
+      "sha256": "c33fb73458f2bb0378b9c7c71a91215580810ba1ed1f03a20002145fe25bdc41",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/stdout.log"
+    },
+    {
+      "bytes": 2182,
+      "path": "compare05/validation-durability.json",
+      "sha256": "6b7d7706ebea1d5fdbe169edb478f21ede8d213d179f4d57d2884bf1c87c724b",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-compare05/logs/validation-durability.json"
+    },
+    {
+      "bytes": 99254,
+      "path": "comparison-independent-metadata-review-v05.json",
+      "sha256": "1e88ab22953c0dc4689a6887208ae92060db1a0985c1a5d969b66374b14eb0f9",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-independent-metadata-review-v05.json"
+    },
+    {
+      "bytes": 3326,
+      "path": "comparison-inputs-v01.json",
+      "sha256": "ea81d7b3ae2266c075f79eb01d04b671f7b3da266dd176bb97ffc5691ae8d8a3",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-inputs-v01.json"
+    },
+    {
+      "bytes": 58171,
+      "path": "comparison-request-v05.json",
+      "sha256": "8a4cc1e54667e03c6dc858e68cc995eec1f4cd7cdc177d9d6d55faf8282babef",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-request-v05.json"
+    },
+    {
+      "bytes": 65,
+      "path": "comparison-request-v05.sha256",
+      "sha256": "9d7f6f25d00b7664d6a68d54e0705dd6701662857af5590614cedc2cc914a632",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-request-v05.sha256"
+    },
+    {
+      "bytes": 7069,
+      "path": "curate_publication_v01.py",
+      "sha256": "38e25c2c837b0c0884338557e24537f8c12c6072261333e073b2fb7d2119c2c4",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/curate_publication_v01.py"
+    },
+    {
+      "bytes": 16022,
+      "path": "independent-review-gap-survey-v01.json",
+      "sha256": "8e5de4866288349c3f41d131a2f3af7440fd315b979246ff9155de8a1698ad30",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/independent-review-gap-survey-v01.json"
+    },
+    {
+      "bytes": 3323,
+      "path": "legacy-test-id-correction-v01.json",
+      "sha256": "aaa39a84396f8e577898c7faa56a2ff93c4c4b8e23b040f8f83e56a2bb041ad0",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/legacy-test-id-correction-v01.json"
+    },
+    {
+      "bytes": 2589,
+      "path": "observe_storage_v01.py",
+      "sha256": "eabaaf61e10539115da46f799d57d08f9f6705fbf72ded16f5881b11348bac18",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/observe_storage_v01.py"
+    },
+    {
+      "bytes": 907,
+      "path": "parser-closure-correction-v01.json",
+      "sha256": "05fcd9c3b1bd8046589502bca853031a61c66876a68d5ee7679328657ea8dc99",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/parser-closure-correction-v01.json"
+    },
+    {
+      "bytes": 1087,
+      "path": "postqualification-test-format-reconciliation-v01.json",
+      "sha256": "7862f96eeaa8c7eef583dfca4a37550c00db8537dadd89994d6a857186e0bb8a",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/postqualification-test-format-reconciliation-v01.json"
+    },
+    {
+      "bytes": 5932,
+      "path": "product-contract-v01.md",
+      "sha256": "589eced1ae74c19100e42af57f9543f6b6da492b5978d313fa10bc50fddd2f6d",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/product-contract-v01.md"
+    },
+    {
+      "bytes": 17348,
+      "path": "qualification-independent-metadata-review-v05.json",
+      "sha256": "e62886be23f534ab8cf67583f68fb50208f7e641939d7702a41a6dda3f9f5e2c",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-independent-metadata-review-v05.json"
+    },
+    {
+      "bytes": 750,
+      "path": "qualification-prelaunch-failure-v01.json",
+      "sha256": "ee8f2af67bda4be02ae008300ab997d8fadb2c896ffa07eee080ff043c254815",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-prelaunch-failure-v01.json"
+    },
+    {
+      "bytes": 591,
+      "path": "qualification-prelaunch-layout-failure-v01.json",
+      "sha256": "e17de498b24248aad886e1f8c7aa312e7f9fdd297d7b6b16605e9a4f611eb427",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-prelaunch-layout-failure-v01.json"
+    },
+    {
+      "bytes": 1649,
+      "path": "qualification-prelaunch-layout-parent-stderr-v01.txt",
+      "sha256": "e1787a2fccd6a5b6d22353a483e670a4ea829f83b7bd8338171b8b448dd0e4a7",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-prelaunch-layout-parent-stderr-v01.txt"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification-prelaunch-layout-parent-stdout-v01.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-prelaunch-layout-parent-stdout-v01.json"
+    },
+    {
+      "bytes": 2010,
+      "path": "qualification-prelaunch-parent-stderr-v01.txt",
+      "sha256": "48d3354086ab50b96ad4ae3c41d9922f9efbb3737a4b670a7d5ee1f3c96831b4",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-prelaunch-parent-stderr-v01.txt"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification-prelaunch-parent-stdout-v01.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-prelaunch-parent-stdout-v01.json"
+    },
+    {
+      "bytes": 487,
+      "path": "qualification-prelaunch-request-pin-failure-v01.json",
+      "sha256": "e5f3687d77f37d95d18110a99cb1d725f8bad330adbbe746c439a41f95f1c772",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-prelaunch-request-pin-failure-v01.json"
+    },
+    {
+      "bytes": 822,
+      "path": "qualification-prelaunch-request-pin-parent-stderr-v04.txt",
+      "sha256": "f234e3b9733634ee0b829b5157514a625df6140d27a2d6de535fa25ccdc14126",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-prelaunch-request-pin-parent-stderr-v04.txt"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification-prelaunch-request-pin-parent-stdout-v04.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-prelaunch-request-pin-parent-stdout-v04.json"
+    },
+    {
+      "bytes": 5263,
+      "path": "qualification-request-transition-review-v05.json",
+      "sha256": "20e04ef134343daae6e980c0bcf190ff544dfc1c6a33b309b334ce3f5d6e01ba",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-transition-review-v05.json"
+    },
+    {
+      "bytes": 55326,
+      "path": "qualification-request-v01.json",
+      "sha256": "0dca850802494b76daa58783b01407b3bb9f86c093f27db4dc02e6ac582a44b4",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-v01.json"
+    },
+    {
+      "bytes": 56865,
+      "path": "qualification-request-v02.json",
+      "sha256": "70ddc2cc3785b5988a59b88ba96ef4026119f4cf72456e74409c5162398d0541",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-v02.json"
+    },
+    {
+      "bytes": 57298,
+      "path": "qualification-request-v03.json",
+      "sha256": "6e80bb0939ba6887aa8668b5e85ed2db6427529dddd690edc9585cbd9ff9ee42",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-v03.json"
+    },
+    {
+      "bytes": 57298,
+      "path": "qualification-request-v04.json",
+      "sha256": "a08f10e39e294a84f1dc9573ce74d018aa2a8f3813926d57470cb9ea1a58f46e",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-v04.json"
+    },
+    {
+      "bytes": 57298,
+      "path": "qualification-request-v05.json",
+      "sha256": "48782ef601fc0405c92ab312c66e1c7a521b73fd0e5ee3cb6e093e89b4d1d167",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-v05.json"
+    },
+    {
+      "bytes": 85855,
+      "path": "qualification-source-roster-review-v01.json",
+      "sha256": "019a03ad5d571b0344083dc4eb576b6a5a0582f30431dfe488243af0d291eb45",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-source-roster-review-v01.json"
+    },
+    {
+      "bytes": 70939,
+      "path": "qualification-source-roster-review-v03.json",
+      "sha256": "d7133f9432f4e5951beb66136909e50c318c91f19b90cde1a3c3d356afc1ce22",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-source-roster-review-v03.json"
+    },
+    {
+      "bytes": 73747,
+      "path": "qualification-source-roster-review-v04.json",
+      "sha256": "484ad692a1fddae7cc68b1a50055518ff025aaf8ffcd4fe2fec71d1d866b50d0",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-source-roster-review-v04.json"
+    },
+    {
+      "bytes": 59764,
+      "path": "qualification01-own-recovery-receipt-v01.json",
+      "sha256": "831a27908228aad78be8b8d9a65bf7d12b141ec477288d86b5d4e4be56ad9283",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification01-own-recovery-receipt-v01.json"
+    },
+    {
+      "bytes": 770,
+      "path": "qualification01/failure.json",
+      "sha256": "6a3390265b7af5556686fd33e656efaaab75a3488956c7e44c3e6844bf93922d",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification01/logs/failure.json"
+    },
+    {
+      "bytes": 585,
+      "path": "qualification01/parent-stderr.txt",
+      "sha256": "0173681456fdad868f54024674df88c48314a6f025c78360fa18b586eb08aacf",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stderr-v01.txt"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification01/parent-stdout.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stdout-v01.json"
+    },
+    {
+      "bytes": 18365,
+      "path": "qualification01/qualification-failed.json",
+      "sha256": "fd7f5697774bc9c62d2ed1e25af9b1c2f3ac2fdb054ca15005e3a1428e58a1ab",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification01/logs/qualification-failed.json"
+    },
+    {
+      "bytes": 539,
+      "path": "qualification01/stderr.log",
+      "sha256": "3c1244f679ced1c35d2073037feb07d0aeaa4630a1f374a70cba7018c0798692",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification01/logs/stderr.log"
+    },
+    {
+      "bytes": 229399,
+      "path": "qualification01/stdout.log",
+      "sha256": "8f015a3694a3a6b71f8739ed3c88f5e7f0a8b2c5f14dc1db99227fefb460de74",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification01/logs/stdout.log"
+    },
+    {
+      "bytes": 61303,
+      "path": "qualification02-own-recovery-receipt-v01.json",
+      "sha256": "309650d13ad5710188c0e8d1d32a6cf219eb66233ce3d097c57b95e7578f16ea",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification02-own-recovery-receipt-v01.json"
+    },
+    {
+      "bytes": 769,
+      "path": "qualification02/failure.json",
+      "sha256": "f46041522e46bf35e518a0c3f32f65a25c8e8e53103bb6fd1f143f2b27f23d78",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/logs/failure.json"
+    },
+    {
+      "bytes": 585,
+      "path": "qualification02/parent-stderr.txt",
+      "sha256": "0173681456fdad868f54024674df88c48314a6f025c78360fa18b586eb08aacf",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stderr-v02.txt"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification02/parent-stdout.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stdout-v02.json"
+    },
+    {
+      "bytes": 19554,
+      "path": "qualification02/qualification-failed.json",
+      "sha256": "e39b0878036728982ef0d11533bad1a48aa0ff0fbb66ed6d31fbe18163fcfb2c",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/logs/qualification-failed.json"
+    },
+    {
+      "bytes": 539,
+      "path": "qualification02/stderr.log",
+      "sha256": "3c1244f679ced1c35d2073037feb07d0aeaa4630a1f374a70cba7018c0798692",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/logs/stderr.log"
+    },
+    {
+      "bytes": 230221,
+      "path": "qualification02/stdout.log",
+      "sha256": "57e1c567afe63c0f3fe7be56f4da564195fffa1be3efc18284edfe5497a19f71",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/logs/stdout.log"
+    },
+    {
+      "bytes": 61556,
+      "path": "qualification03-own-recovery-receipt-v01.json",
+      "sha256": "222cd879344d4d464c8706fb0915da9721078ac80eadaef2c3dc5d05d4757de8",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification03-own-recovery-receipt-v01.json"
+    },
+    {
+      "bytes": 769,
+      "path": "qualification03/failure.json",
+      "sha256": "054473e37ddcde4bb59587c46329923f4ce7a1856106b37cc894d587323584f5",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification03/logs/failure.json"
+    },
+    {
+      "bytes": 585,
+      "path": "qualification03/parent-stderr.txt",
+      "sha256": "0173681456fdad868f54024674df88c48314a6f025c78360fa18b586eb08aacf",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stderr-v03.txt"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification03/parent-stdout.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stdout-v03.json"
+    },
+    {
+      "bytes": 52152,
+      "path": "qualification03/qualification-failed.json",
+      "sha256": "a14115d7b5c4b1a2956ff629d2a7b678b3729246bb7d6e9e2928f50d9e6f0a4e",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification03/logs/qualification-failed.json"
+    },
+    {
+      "bytes": 540,
+      "path": "qualification03/stderr.log",
+      "sha256": "ad6dccf6b89be16ac14e1a9bf6576d2accd5b3a2842f3807906949d810ea4c05",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification03/logs/stderr.log"
+    },
+    {
+      "bytes": 260,
+      "path": "qualification03/stdout.log",
+      "sha256": "c89da7eba8da11e9e99ddf1a7218f5fcae1d0a0b038d607a898dc7621b4bc46b",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification03/logs/stdout.log"
+    },
+    {
+      "bytes": 421,
+      "path": "qualification04-admission-refusal-v01.json",
+      "sha256": "a0eaa514b4dc28e44ed1451bf3e4843f14ad1fdefb4527704e6a038a97d8d347",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification04-admission-refusal-v01.json"
+    },
+    {
+      "bytes": 60099,
+      "path": "qualification04-own-recovery-receipt-v01.json",
+      "sha256": "2e53aa7f5cd3c16e2663510d559c5cf954a2492d8f230432e1476d4d3feac3d8",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification04-own-recovery-receipt-v01.json"
+    },
+    {
+      "bytes": 1802,
+      "path": "qualification04/parent-stderr.txt",
+      "sha256": "96254d87d5e2452184074f00ac7ae89aa873e87ea080b38d39ef656976f09494",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stderr-v04.txt"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification04/parent-stdout.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stdout-v04.json"
+    },
+    {
+      "bytes": 627,
+      "path": "qualification05/execution.json",
+      "sha256": "46a25d217715a6d42165d15b697a5cbc16b0e3cbef56e0e7adcf04a9ca81b46f",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs/execution.json"
+    },
+    {
+      "bytes": 33905,
+      "path": "qualification05/junit.xml",
+      "sha256": "48b0cad1467e3cbd68b16efca4bfbafcf1385895bbddb8058fae58971527a63f",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/exports/junit.xml"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification05/parent-stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stderr-v05.txt"
+    },
+    {
+      "bytes": 5499,
+      "path": "qualification05/parent-stdout.json",
+      "sha256": "76f71d2517f5db5b028f74abdd127250531e38ea1699c72ca739b19ef2cc1603",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-parent-stdout-v05.json"
+    },
+    {
+      "bytes": 175054,
+      "path": "qualification05/qualification.json",
+      "sha256": "0fb76e3002767289ee37985c8cdd796aa4e1d2063a60e8544439b7b13762b133",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs/qualification.json"
+    },
+    {
+      "bytes": 804,
+      "path": "qualification05/result.json",
+      "sha256": "ff875e29d7773ab91d6d2fbb75c368455cba9dd579f13646d7ae43a6c0927396",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs/result.json"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification05/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs/stderr.log"
+    },
+    {
+      "bytes": 606,
+      "path": "qualification05/stdout.log",
+      "sha256": "025c17f069f63d0c295476c9c3957d8dd8f13ff6e323d9fd943c427a12d7d680",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs/stdout.log"
+    },
+    {
+      "bytes": 1959,
+      "path": "qualification05/validation-durability.json",
+      "sha256": "b0dd4eaabf7bf7e59db08ddbd80ff8eb7e82811408d1b1411b201b19270ee949",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs/validation-durability.json"
+    },
+    {
+      "bytes": 21445,
+      "path": "qualified-legacy-test-before-ids.py.txt",
+      "sha256": "e3160f78b6db26c0d5e28885cb2bd6b8c0f5777a1597c79b447ed535379b6cf2",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualified-legacy-test-before-ids.py.txt"
+    },
+    {
+      "bytes": 49783,
+      "path": "qualified-reconstruction-test-before-eof-format.json",
+      "sha256": "d57c6a8b54653063c53cc85715fe6f39a896adb4c3bf073df839d963dd4b9b2b",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualified-reconstruction-test-before-eof-format.json"
+    },
+    {
+      "bytes": 5391,
+      "path": "recover_own_empty_qualification04_v01.py",
+      "sha256": "8f14119dc3aa36e745ee8e40182137940d760789922eabd1e3b0e0e24f71a582",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/recover_own_empty_qualification04_v01.py"
+    },
+    {
+      "bytes": 5303,
+      "path": "recover_own_failed_qualification02_v01.py",
+      "sha256": "8896d67b3055bd456a6ca100442e8f7bda99dba0c06a857b623378b558d97c59",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/recover_own_failed_qualification02_v01.py"
+    },
+    {
+      "bytes": 5303,
+      "path": "recover_own_failed_qualification03_v01.py",
+      "sha256": "b0c28563857fa0374db5c94dda1a07c4bc9ab3a4c80ad43940cf6ad3745dc091",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/recover_own_failed_qualification03_v01.py"
+    },
+    {
+      "bytes": 5303,
+      "path": "recover_own_failed_qualification_v01.py",
+      "sha256": "1c96e83bb239162423791454103a8325ca79900e5be761bf07d6e5272741c491",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/recover_own_failed_qualification_v01.py"
+    },
+    {
+      "bytes": 760,
+      "path": "resource-plan-v01.json",
+      "sha256": "8cd777f9f145b099c8cf6ede4da699bd6ab97919de862895b6abe101aecd1ba7",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/resource-plan-v01.json"
+    },
+    {
+      "bytes": 1087,
+      "path": "resource-plan-v02.json",
+      "sha256": "8ec2d3e75392a61d649a6eecc97bfbaa8d1fa860b4ec6adac0e652ada12df8b2",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/resource-plan-v02.json"
+    },
+    {
+      "bytes": 28529,
+      "path": "retained-qualification-driver-v03.py",
+      "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py"
+    },
+    {
+      "bytes": 17064,
+      "path": "run_retained_comparison_v01.py",
+      "sha256": "aad5df78a170ebcb03379e5247ad76a54df9d0a34a569bee6b11f6453fedbca0",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/run_retained_comparison_v01.py"
+    },
+    {
+      "bytes": 1630,
+      "path": "source-closure-correction-v01.json",
+      "sha256": "4cb46e1b1cf48a4c33e90cc82bf45476953954eecfa3037e778eb589efc727b6",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/source-closure-correction-v01.json"
+    },
+    {
+      "bytes": 15291,
+      "path": "source-helper-doc-audit-v01.json",
+      "sha256": "70569cfc420b31ba866e6c53befb83bbdfca796a332e66ab060ee18ef0c81d89",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/source-helper-doc-audit-v01.json"
+    },
+    {
+      "bytes": 19543,
+      "path": "source-helper-doc-audit-v02.json",
+      "sha256": "9bbf65e86ca36941f3e1e72d5c079a7105967de25b7e95c5f7e45bc8e0ecaf46",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/source-helper-doc-audit-v02.json"
+    },
+    {
+      "bytes": 7165,
+      "path": "source-implementation-audit-v01.json",
+      "sha256": "d3c20d49cc7994769578c3be87f81b7993254641212364862fa4bedbd07f6473",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/source-implementation-audit-v01.json"
+    },
+    {
+      "bytes": 5799,
+      "path": "storage-observation-v01.json",
+      "sha256": "68d2de76f7a0d1c34697ffba4007ef34cb6bf5f37b025156f2a01e8cae4593dc",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/storage-observation-v01.json"
+    },
+    {
+      "bytes": 2256,
+      "path": "storage-observer-pins-v01.json",
+      "sha256": "7159058842086a52eb022d284464bccebf9c9579afe659ca11a1e88aeef92efa",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/storage-observer-pins-v01.json"
+    },
+    {
+      "bytes": 18511,
+      "path": "upstream-intersection-review-v01.json",
+      "sha256": "454e7d500225bfe415ffaf4b3dbd1b58835a87b3f23303a67349acced260f0f4",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/upstream-intersection-review-v01.json"
+    }
+  ],
+  "files_excluding_this_index": 89,
+  "limitations": [
+    "Final187-case qualification is84new+70relational+33algebra; repeated earlier runs are not additive coverage.",
+    "Final retained comparison has seven named artifact checks including two refusal operations, separate from pytest counts.",
+    "Only two retained authored typed requests are exercised; old producer/source HTML/scope/join and complete old tree are not replayed.",
+    "Fresh interpreter over retained originals; newly saved comparison validation is in that same interpreter.",
+    "Published reconstruction test removes exactly one final LF after completed native work; full AST including attributes is identical. Exact executed test bytes and reconciliation proof are included.",
+    "Only this phase's own failed reservations were explicitly reconciled. No foreign cleanup, new recovery grant or deletion.",
+    "Native captures and administrative recovery receipts do not independently authenticate live scheduler state.",
+    "No legal correctness, source equivalence, reviewed gold, learned accuracy, training, Hub upload or Lean build is established."
+  ],
+  "new_relational_or_comparison_payloads_copied": false,
+  "observed_at_utc": "2026-10-16T01:25:14.206113+00:00",
+  "schema": "legal-typed-reconstruction-publication-copy-roster/v1",
+  "scope": "Exact curated source/metadata copies from final native jobs plus failed/refused and explicit own-recovery history. Absolute original paths are provenance, not portable replay inputs. No original typed request, source corpus, relational report or comparison payload bodies are copied. Failed raw JUnit and fixture exports remain local under their recovery inventory commitments.",
+  "source_payloads_copied": false,
+  "training_performed": false
+}
