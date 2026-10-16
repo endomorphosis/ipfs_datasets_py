@@ -131,3 +131,5 @@ Its successful pairs do not account for missing/malformed decoder outputs or
 abstentions. A future batch evaluation must retain those failures and the full
 requested population. The separately owned paired-manifest inventory branch is
 also preserved; this asset reconciliation creates no competing cache owner.
+
+The subsequent [typed relational batch evaluator](legal_relational_batch_evaluation_v1.md) now supplies complete selected-population accounting around that paired diagnostic. Its 299-case native qualification and retained authored controls preserve missing, duplicate, invalid and abstained observations, with full-selected and comparable-pair denominators kept separate. It does not consume these checkpoint weights or authenticate their generation lineage. Reuse this inventory for the next compatible numerical replay and inference integration; the batch controls create no new fit, reviewed legal target or model accuracy result.
