@@ -70,12 +70,14 @@ refresh for source selection, while retaining that earlier evidence unchanged.
 
 | Dataset | Revision and observed inventory | Use |
 | --- | --- | --- |
-| [Source corpus](https://huggingface.co/datasets/justicedao/ipfs_uscode/tree/91ca1838853ac82d7a12dd4ab47d9686f47667f9) | `91ca1838853ac82d7a12dd4ab47d9686f47667f9`; 2,802 Hub descriptors. Its selected manifest declares 62,931 corpus rows in 16 shards and 62,931 GTE-small 384D vectors. | Published legal-text wrappers and reusable source/profile-compatible assets. Declared rows are not newly verified unique provisions or reviewed meanings. Select each artifact family explicitly. |
+| [Source corpus](https://huggingface.co/datasets/justicedao/ipfs_uscode/tree/91ca1838853ac82d7a12dd4ab47d9686f47667f9) | `91ca1838853ac82d7a12dd4ab47d9686f47667f9`; 2,802 Hub descriptors. Its selected manifest declares 62,931 corpus rows in 16 shards and 62,931 GTE-small 384D vectors. The exact manifest already has qualified source inventory/export under original `5016b86a273ce5e4ffd066c5ae9f5fe494dd417e` provenance. | Reuse the retained source inventory, frozen partitions and portable package with fresh verification before consumption. Physical rows are separate from unique provisions, reviewed meanings and measured embedding coverage. Select each artifact family explicitly. |
 | [Span cache](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/tree/60501f3e920f6c9050cfc452e0d9fcc2b7c184f3) | `60501f3e920f6c9050cfc452e0d9fcc2b7c184f3`; 7,962 file descriptors, 5,070 Parquet paths | Versioned observations, source evidence, compiler outputs, model outputs and repair goals, preserving their different origins. File counts are not unique spans. |
 | [Entity cache](https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/tree/79d54378c5d6a89ab56e7a27e0f0ba867e800e19) | `79d54378c5d6a89ab56e7a27e0f0ba867e800e19`; one advertised 11,139,328-byte Parquet payload, LFS SHA256 `f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233` | Historical graph observations to reconcile against originals before semantic aggregation. |
 
-Only public metadata, small control-plane JSON and pinned README cards were fetched for this plan; no
-Parquet, model, vector or generated-output body was downloaded or executed.
+For the earlier three-repository refresh, only public metadata, small control-plane
+JSON and pinned README cards were fetched; no Parquet, model, vector or generated
+output body was downloaded. Fresh retained-source verification is reported
+separately in the [reuse guide](legal_ir_retained_source_reuse_20261016.md).
 
 ### Select the source release before scanning spans
 
@@ -113,16 +115,33 @@ not erase an independently qualified unchanged selection; declare the exact
 selected scope and unresolved global discrepancies for each operation.
 
 Reuse `optimizers/logic_theorem_optimizer/autoencoder_uscode_import.py`,
-`autoencoder_uscode_inventory.py` and
-`scripts/ops/legal_ir/inventory_pinned_uscode_sources.py`. The current inventory
-ceiling of 65,536 rows covers the 62,931 declared rows, but actual shard hydration,
-schema/hash checks and full disposition counting still require their existing
-native execution owner and measured budgets. The inventory must preserve invalid
-wrappers, record-hash failures, duplicate identities, empty/missing source and
-unresolved claims in the selected denominator. A row count is not a unique-section
-count. Exact published `text` is one coordinate space; original official
-HTML/USLM and normalized visible text are separate spaces requiring explicit
-correspondence.
+`autoencoder_uscode_inventory.py`, `autoencoder_source_partitions.py` and
+`SourceCorpusBinding`. The
+[historical source reuse reconciliation](evidence/legal-source-corpus-reuse-20261016/historical-reuse-reconciliation.json)
+recovers a completed qualification already published in the repository:
+
+| Existing result | Retained scope and reuse boundary |
+| --- | --- |
+| [Source inventory](../implementation/reports/evidence/autoencoder_control_plane_plan/uscode-source-inventory-closeout-20260926-r1.json) | All 16 selected shards, 62,931 physical rows and 52,219,760 compressed bytes; 275 historical tests passed. The retained inventory has SHA256 `38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef`. It preserves source dispositions and grants no statutory review or training eligibility. |
+| [Frozen source partitions](../implementation/reports/evidence/autoencoder_control_plane_plan/source-partitions-closeout-20260926-r1.json) | 62,839 unique eligible source inputs, 59,511 source groups and 92 alias rows; 362 historical tests passed. Preserve train 50,282 / validation 6,358 / canary 3,147 / holdout 3,144 membership. Source-group disjointness leaves semantic/dependency isolation, checkpoint exposure and global holdout unverified. |
+| [Portable export and isolated native DuckLake delivery](../implementation/reports/source_corpus_delivery.md) | 103 files / 263,671,066 bytes, all 62,931 rows and 33 original columns preserved; 783 historical delivery tests passed. Native reopen/readback passed at that capture. Reuse the portable package without opening/rebuilding the archived catalog or activating a production namespace. |
+
+The [retained-source reuse guide](legal_ir_retained_source_reuse_20261016.md)
+records the fresh read-only consumption gate. The initial metadata reconciliation
+checked retained paths and declared lengths without reopening Parquet payloads.
+Subsequent native attempt 04 now verifies the original 103-file closure and complete
+ordered 62,931-row digest, with independent durable closeout and release audit.
+It preserves original splits and embedding dispositions: 51 embedded, 13
+token-limit exclusions and 62,867 unattempted. The published vector-family count
+is a separate claim. Do not repeat completed acquisition, inventory, export or
+database materialization solely because the Hub head changed.
+
+Future genuinely changed source selections still use the existing inventory
+owner and its 65,536-row ceiling. Preserve invalid wrappers, record-hash failures,
+duplicate identities, empty/missing source and unresolved claims in the selected
+denominator. A physical row count is separate from a unique-section count.
+Exact published `text` is one coordinate space; original official HTML/USLM and
+normalized visible text require explicit correspondence.
 
 There is a concrete reuse result: the current manifest is 852,161 bytes with
 SHA256 `0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6`,
@@ -130,9 +149,10 @@ exactly matching the [original-primary input descriptor](evidence/legal-primary-
 Reuse the already qualified 74-file selection and 297,825 node/edge occurrences
 under their original `5016b86a273ce5e4ffd066c5ae9f5fe494dd417e` provenance. This
 metadata join is not a new payload replay or proof of complete release equality.
-Do not rebuild that structural export solely because the Hub head changed. The
-16 corpus shards, newly added files and official-source correspondence remain
-separate populations and jobs.
+Retain the completed source inventory/package under that same original release
+provenance. Do not rebuild either selection solely because the Hub head changed.
+Fresh retained-package verification, newly added files and official-source
+correspondence remain separate operations and claims.
 
 ### Bind physical spans reversibly to source rows
 
@@ -679,7 +699,7 @@ waive source/review/graph/Lean acceptance.
 | Order | Deliverable | Gate before the dependent work |
 | --- | --- | --- |
 | P0: reconcile | Pin current main and all three Hub repositories; reconcile source control-plane discrepancies, related branch/worktree evidence and retained assets. Classify merged, published-only, local and superseded contributions. | Explicit selected families/denominators; exact capability/status inventory; unchanged primary selection reused. Refresh before each implementation campaign. |
-| P1: bind source | Inventory all 16 selected corpus shards through the existing owner, then bind physical span aliases and complete source/context; owner-bound pilot manifest and split/exposure policy. | Every declared source row and selected span has a resolved/blocked disposition; actual 62,931-row closure verified or discrepancy retained, never assumed. No invented official-source identity/applicability. |
+| P1: bind source | Reuse the completed 16-shard inventory, frozen partitions and 103-file package through a fresh read-only owner binding, then bind physical span aliases and complete source/context; owner-bound pilot manifest and split/exposure policy. | Current retained-package bytes and complete ordered 62,931-row digest verified before consumption; historical original membership preserved. Every selected span has a resolved/blocked correspondence. Source groups supply neither semantic gold nor global holdout; official-source applicability remains separately evidenced. |
 | P2: review meaning | Candidate-blind source-first targets, independent formal review, disagreements and actual eligibility policy. | Complete definition + complete norm + second scope-valid use with zero known material loss in the accepted component. |
 | P3: represent | Reuse the qualified byte target/example contracts; freeze target/output-length/tensor inventories; extend narrow relational source/definition-use composition and only justified action/graph profiles. | Existing AST/profile parity; ordered arguments/qualifiers; explicit candidate-versus-accepted view contract; unsupported frontier and every governing use preserved. |
 | P4: close graph and Lean | Closed graph, complete source/interpretation/review companions, export/reimport and shared-module generation. | Actual `lake build legal`, every expected artifact, assumptions/consequence checks and changed-dependency versus clean agreement. |
@@ -697,8 +717,9 @@ untouched evaluation; the initial component becomes a regression after exposure.
 The next concrete outputs, in dependency order, are:
 
 1. A coordinated source/span/entity descriptor selection with discrepancy
-   dispositions, followed by the actual selected corpus inventory and reversible
-   span/source correspondence. Retain original primary graph receipts unchanged.
+   dispositions, adopting the completed source inventory, partitions and portable
+   package. Fresh read-only package verification precedes reversible span/source
+   correspondence. Retain original source and primary graph receipts unchanged.
 2. A finite target/eligibility/exposure/partition inventory and exact embedding,
    checkpoint and tensor reuse ledger. Measure output lengths before choosing
    the numerical structured head.

@@ -77,8 +77,17 @@ flowchart LR
    and the new byte target codec/example adapter before scheduling fresh work.
 2. **Source and reviewed pilot:** complete LIR-01/02/03/05 refinements, prepare
    source-first packets, and obtain the real LIR-06 legal/formal decisions.
-   Reuse retained candidate source populations; do not manufacture a selection,
-   reviewer, effective date or governing-definition decision.
+   Adopt the completed 16-shard/62,931-row source inventory, frozen partitions
+   and 103-file portable package through the
+   [retained-source reuse gate](../legal_ir_retained_source_reuse_20261016.md).
+   Fresh read-only package binding precedes new bounded span/source candidates;
+   no source acquisition, inventory, export or database rebuild is required
+   merely to recover that completed work. Preserve original release provenance,
+   splits and embedding dispositions. Source-group disjointness grants no
+   semantic gold or global holdout. Span joins, original-document/version
+   correspondence, context and review remain open under LIR-02/05/06; do not
+   manufacture a selection, reviewer, effective date or governing-definition
+   decision.
 3. **Typed component and graph:** LIR-07/08/09/10/11 refine the exact supported
    representations, bind every physical use and close graph/companion integrity.
    The existing two-definition alias profile is not the complete norm milestone.
@@ -211,3 +220,11 @@ touch databases/leases or claim native execution compatibility was run.
 Use `--render` only when deliberately updating the authoring JSON and its Markdown
 projections together. After changing upstream inputs, refresh the recorded source
 baseline and reconciliation before using old execution evidence.
+
+The retained-source reuse refinement changes prepared task descriptions and
+crosswalk scope notes only. It preserves all 64 task IDs, 34 goals, dependencies,
+statuses and activation gates; no task is imported, enqueued or completed by this
+update. `source_baseline.json` and `documentation-review.json` retain their
+original snapshots and byte commitments, rather than claiming to review the new
+descriptions. Current reuse evidence and later execution packets must be bound
+separately before activation.

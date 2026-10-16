@@ -1,0 +1,32 @@
+{
+  "captured_version_report": {
+    "bytes": 6972,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926-r3/capture-r3/catalog/cli-report.json",
+    "sha256": "0fd50f208a51fb598536de8d325b950c1003c26aaed998cc547823e32553d490"
+  },
+  "inventory": {
+    "bytes": 47531987,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/scan-r2/inventory/inventory.json",
+    "sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef"
+  },
+  "package": {
+    "expected_file_count": 103,
+    "expected_total_bytes": 263671066,
+    "manifest": {
+      "bytes": 31640,
+      "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+    },
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package"
+  },
+  "partitions": {
+    "bytes": 12187351,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-partitions-20260926/freeze-r2/partitions/source-partitions.json",
+    "sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d"
+  },
+  "schema": "legal-retained-source-corpus-reuse-inputs/v1",
+  "selected_legal_ids": [
+    "usc:us:10:101",
+    "usc:us:10:7213",
+    "usc:us:10:7214"
+  ]
+}

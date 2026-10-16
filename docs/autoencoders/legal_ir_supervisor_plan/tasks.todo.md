@@ -136,15 +136,15 @@ Validation fields remain empty until exact reviewed job packets exist.
 - Legacy parent task: LIR-01
 - Related LAC tasks: LAC-001, LAC-002, LAC-004, LAC-006
 - Owning repository: ipfs_datasets_py
-- Objective: Inventory main, relevant published branches/worktrees, retained model lineages and their exact tasks/codecs; adopt completed work before proposing another run.
+- Objective: Inventory main, relevant published branches/worktrees, retained model lineages and exact tasks/codecs; adopt the completed source inventory, frozen partitions and portable package under original release provenance before proposing another run.
 - Depends on: LIR-9004
 - Input roles: source_metadata
-- Inputs: docs/autoencoders/legal_ir_asset_reconciliation_20261016.md, docs/autoencoders/legal_ir_decoder_output_integration_20261016.md
+- Inputs: docs/autoencoders/legal_ir_asset_reconciliation_20261016.md, docs/autoencoders/legal_ir_decoder_output_integration_20261016.md, docs/autoencoders/legal_ir_retained_source_reuse_20261016.md, docs/autoencoders/evidence/legal-source-corpus-reuse-20261016/historical-reuse-reconciliation.json
 - Denied input roles:
 - Outputs: data/legal_ir_span_graph_lean_20261016/LIR-0101/asset-and-contribution-inventory.json
 - Validation:
-- Acceptance: Every selected asset has immutable identity, owner, task, producer and evidence scope.; F15/F17/F18 registrations and the five-variant replay are reused; published or binding counts are not model/accuracy counts.
-- Existing owners: docs/autoencoders/legal_ir_asset_reconciliation_20261016.md, docs/autoencoders/legal_ir_decoder_output_integration_20261016.md
+- Acceptance: Every selected asset has immutable identity, owner, task, producer and evidence scope.; F15/F17/F18 registrations and the five-variant replay are reused; published or binding counts are not model/accuracy counts.; Reuse historical 16-shard/62,931-row inventory, frozen source partitions and 103-file package; original 5016 release provenance survives current 91 manifest equality. Fresh package verification is separately evidenced, not inferred from metadata or a historical receipt.
+- Existing owners: docs/autoencoders/legal_ir_asset_reconciliation_20261016.md, docs/autoencoders/legal_ir_decoder_output_integration_20261016.md, docs/autoencoders/legal_ir_retained_source_reuse_20261016.md, docs/autoencoders/evidence/legal-source-corpus-reuse-20261016/historical-reuse-reconciliation.json
 - Owned paths: data/legal_ir_span_graph_lean_20261016/LIR-0101; logical results only; code/test edit allowlist must be bound in job packet
 - Resource stage: analysis
 - Stage packets: analysis; distinct admitted owners and role separation
@@ -185,7 +185,7 @@ Validation fields remain empty until exact reviewed job packets exist.
 - Execution authorization: none from this planning file; task-specific native admission required
 - Evidence subset: Exact task/source/input/context/profile/checkpoint/toolchain roots, output ownership, complete coverage, actual commands/native closeout and independent acceptance
 
-## LIR-0201 Freeze occurrence and observation inventories
+## LIR-0201 Reuse source closure and freeze span occurrence inventory
 
 - Status: blocked
 - Completion: manual
@@ -196,15 +196,15 @@ Validation fields remain empty until exact reviewed job packets exist.
 - Legacy parent task: LIR-02
 - Related LAC tasks: LAC-003, LAC-010, LAC-011
 - Owning repository: ipfs_datasets_py
-- Objective: Use existing cache feed/census owners to bind a bounded selected manifest population and distinguish physical occurrences, attempts and assertions.
+- Objective: Use the completed source inventory, unchanged frozen partitions and retained portable package through a fresh read-only SourceCorpusBinding, then bind a bounded cache manifest/physical row selection and enumerate source-to-span correspondence candidates within the explicitly searched source population.
 - Depends on: LIR-9004, LIR-0102
 - Input roles: pinned_source, declared_context, provenance_metadata
-- Inputs: ipfs_datasets_py/logic/autoformal/span_cache_feed.py, ipfs_datasets_py/logic/autoformal/paired_span_census.py, ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py
+- Inputs: ipfs_datasets_py/logic/autoformal/span_cache_feed.py, ipfs_datasets_py/logic/autoformal/paired_span_census.py, ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py, docs/autoencoders/legal_ir_retained_source_reuse_20261016.md, docs/autoencoders/evidence/legal-source-corpus-reuse-20261016/historical-reuse-reconciliation.json, ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_inventory.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_partitions.py, ipfs_datasets_py/duckdb_control/source_corpus_binding.py, ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py
 - Denied input roles:
 - Outputs: data/legal_ir_span_graph_lean_20261016/LIR-0201/source-occurrence-inventory.json
 - Validation:
-- Acceptance: All selected rows have a disposition and exact physical source selectors.; Repeated text, overlapping generations, missing rows and historical aliases remain visible; file counts are not unique spans.
-- Existing owners: ipfs_datasets_py/logic/autoformal/span_cache_feed.py, ipfs_datasets_py/logic/autoformal/paired_span_census.py, ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py
+- Acceptance: Fresh owner-controlled read-only package binding verifies the captured complete ordered 62,931-row digest and original 103-file closure before consumption; preserve existing partitions and 51 embedded/13 token-limit/62,867 unattempted dispositions without rescan, export or database rebuild.; Every selected cache row remains in the disposition population; enumerate every matching physical source occurrence and overlapping exact substring position within the declared searched source selection, retaining missing, ambiguous and unsupported results.; Preserve repeated text, overlapping generations, original record hashes and historical aliases; keep published-text coordinates separate from original-document/view selectors. Matching bytes or a literal legal ID does not supply official-source correspondence, reviewed meaning, training gold or global holdout.
+- Existing owners: ipfs_datasets_py/logic/autoformal/span_cache_feed.py, ipfs_datasets_py/logic/autoformal/paired_span_census.py, ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py, docs/autoencoders/legal_ir_retained_source_reuse_20261016.md, docs/autoencoders/evidence/legal-source-corpus-reuse-20261016/historical-reuse-reconciliation.json, ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_inventory.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_partitions.py, ipfs_datasets_py/duckdb_control/source_corpus_binding.py, ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py
 - Owned paths: data/legal_ir_span_graph_lean_20261016/LIR-0201; logical results only; code/test edit allowlist must be bound in job packet
 - Resource stage: corpus
 - Stage packets: corpus; distinct admitted owners and role separation
@@ -226,15 +226,15 @@ Validation fields remain empty until exact reviewed job packets exist.
 - Legacy parent task: LIR-02
 - Related LAC tasks: LAC-003, LAC-010, LAC-011
 - Owning repository: ipfs_datasets_py
-- Objective: Reuse retained source sampling and correspondence inputs; retain introductions, list inheritance, definitions and missing references.
+- Objective: Reuse freshly bound retained source rows and original source sampling/correspondence inputs; reconcile published-text and official document/view namespaces explicitly while retaining introductions, list inheritance, definitions, applicability and missing references.
 - Depends on: LIR-0201
 - Input roles: pinned_source, declared_context, provenance_metadata
-- Inputs: ipfs_datasets_py/logic/autoformal/corpus_span_adapter.py, ipfs_datasets_py/logic/autoformal/corpus_source.py, docs/autoencoders/legal_statutory_definition_correspondence_pilot.md
+- Inputs: ipfs_datasets_py/logic/autoformal/corpus_span_adapter.py, ipfs_datasets_py/logic/autoformal/corpus_source.py, docs/autoencoders/legal_statutory_definition_correspondence_pilot.md, docs/autoencoders/legal_ir_retained_source_reuse_20261016.md
 - Denied input roles:
 - Outputs: data/legal_ir_span_graph_lean_20261016/LIR-0202/source-context-manifest.json
 - Validation:
-- Acceptance: Unicode/UTF-8 coordinates round-trip under the actual original cohort descriptors.; Edition/publication, legal applicability and event time remain separate; incomplete contexts block dependent acceptance.
-- Existing owners: ipfs_datasets_py/logic/autoformal/corpus_span_adapter.py, ipfs_datasets_py/logic/autoformal/corpus_source.py, docs/autoencoders/legal_statutory_definition_correspondence_pilot.md
+- Acceptance: Unicode/UTF-8 coordinates round-trip under the actual original cohort descriptors.; Edition/publication, legal applicability and event time remain separate; incomplete contexts block dependent acceptance.; Published-text substring candidates remain candidate correspondence until original document/view, selectors and version/applicability evidence close; the source inventory/reuse gate alone does not complete LIR-02 or the statutory pilot.
+- Existing owners: ipfs_datasets_py/logic/autoformal/corpus_span_adapter.py, ipfs_datasets_py/logic/autoformal/corpus_source.py, docs/autoencoders/legal_statutory_definition_correspondence_pilot.md, docs/autoencoders/legal_ir_retained_source_reuse_20261016.md
 - Owned paths: data/legal_ir_span_graph_lean_20261016/LIR-0202; logical results only; code/test edit allowlist must be bound in job packet
 - Resource stage: corpus
 - Stage packets: corpus; distinct admitted owners and role separation
@@ -413,7 +413,7 @@ Validation fields remain empty until exact reviewed job packets exist.
 - Denied input roles:
 - Outputs: data/legal_ir_span_graph_lean_20261016/LIR-0502/pilot-population-exposure-and-splits.json
 - Validation:
-- Acceptance: Every selected physical occurrence/control has a disposition.; Group revisions, near duplicates, derivatives and actual semantic dependencies; source-only context is distinguished from withheld interpretations.
+- Acceptance: Every selected physical occurrence/control has a disposition.; Group revisions, near duplicates, derivatives and actual semantic dependencies; source-only context is distinguished from withheld interpretations.; Retain the frozen source-group split assignments as historical membership; source grouping alone does not establish semantic/dependency isolation, unseen checkpoint lineage or global held-out legal evaluation.
 - Existing owners: docs/autoencoders/pilots/uscode_definition_component/README.md, ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_decoder_example_v1.py
 - Owned paths: data/legal_ir_span_graph_lean_20261016/LIR-0502; logical results only; code/test edit allowlist must be bound in job packet
 - Resource stage: analysis

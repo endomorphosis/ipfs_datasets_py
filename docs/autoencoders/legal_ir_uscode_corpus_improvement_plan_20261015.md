@@ -65,7 +65,7 @@ the separately eligible reviewed targets and frozen evaluation design.
 | Stage | Concrete deliverable and reused work | Exit evidence |
 | --- | --- | --- |
 | 0. Reconcile assets and runtime | Inventory exact checkpoints, embeddings, codecs, saved predictions, source capsules and ModelManager aliases. Reuse compatible loaders, donor exports and current frozen-runtime protocol. | Immutable artifact/hash/role inventory; compatible numerical reload where required; every missing asset or incompatible interface explicit. Archive custody, reload qualification and promotion remain separate. |
-| 1. Inventory source and both caches | Freeze three independent revisions and explicit artifact-family selections; use existing source inventory, bundle/CAS readers and complete-source sampler. Reconcile source control-plane discrepancies and physical span aliases. | Every selected source row/span has a disposition and traceable original bytes. Verify the 16 corpus shards/62,931 declared rows; counts distinguish source rows, occurrences and attempts. No mixed-family Viewer count or heading/amendment fragment becomes the law denominator. |
+| 1. Reuse source inventory and reconcile both caches | Freeze three independent revisions and explicit artifact-family selections. Reuse the completed 16-shard source inventory, frozen partitions and 103-file portable package through the existing binding owner, bundle/CAS readers and complete-source sampler. Reconcile source control-plane discrepancies and physical span aliases. | Fresh read-only package binding before consumption; historical 62,931-row closure and original splits remain attributable. Every selected span has a resolved/blocked source correspondence. Counts distinguish source rows, occurrences and attempts; source grouping alone does not establish semantic gold or global holdout. |
 | 2. Reconcile source and graph transport | Reuse the verified original-primary export, sampled-source association and new primary-bound review subject. Repair the malformed legacy entity export from original records while preserving multiplicity. | Exact endpoints, coordinate spaces, source versions and original-to-export joins; unrecoverable rows remain unresolved. Existing primary transport is reused, not rebuilt as a new semantic graph. |
 | 3. Review one connected component | Bind an execution manifest to the unchanged component specification; prepare source-first legal/formal decisions, complete dependencies, applicability, exposure and disagreements. | Complete definition + complete norm + second physical use; explicit trust and downstream gold-eligibility policy; zero material omission/addition in the accepted pilot. Candidate-bearing packets are shown only after any claimed blind target collection. |
 | 4. Represent and compose its meaning | Reuse source-scope, relational AST and typed-source join owners; add only the operators required by the reviewed meaning. Build scoped term senses, norms and per-occurrence governing-definition bindings. | Exact ordered AST/arguments/qualifiers, closed typed graph endpoints and companions, complete searched partitions and an explicit unsupported frontier. No label-similarity merge or representative lookup substitutes for all physical uses. |
@@ -121,12 +121,14 @@ in parallel with decoder experiments 5–6.
 The [latest October 16 metadata snapshot](evidence/legal-uscode-source-corpus-plan-20261016/metadata-refresh.json)
 and [source research](evidence/legal-uscode-source-corpus-plan-20261016/source-research-summary.json)
 record exact public metadata commitments and selected control-plane observations.
-No Parquet/model/vector payload, training, compiler or Lean job ran. Earlier
-two-cache snapshots remain retained under their original scopes.
+That metadata refresh downloaded no Parquet/model/vector payload and ran no
+training, compiler or Lean job. Fresh retained-source verification is reported
+separately in the [reuse guide](legal_ir_retained_source_reuse_20261016.md).
+Earlier two-cache snapshots remain retained under their original scopes.
 
 | Repository | Immutable revision observed | What is established |
 | --- | --- | --- |
-| [Source corpus](https://huggingface.co/datasets/justicedao/ipfs_uscode/tree/91ca1838853ac82d7a12dd4ab47d9686f47667f9) | `91ca1838853ac82d7a12dd4ab47d9686f47667f9` | Manifest declares 62,931 corpus rows/16 shards and 62,931 GTE-small 384D vectors. These are declarations awaiting new corpus payload closure, not counts of reviewed laws. |
+| [Source corpus](https://huggingface.co/datasets/justicedao/ipfs_uscode/tree/91ca1838853ac82d7a12dd4ab47d9686f47667f9) | `91ca1838853ac82d7a12dd4ab47d9686f47667f9` | Manifest declares 62,931 corpus rows/16 shards and 62,931 GTE-small 384D vectors. The same manifest already has qualified source inventory/export under original `5016b86a273ce5e4ffd066c5ae9f5fe494dd417e` provenance. That historical source closure is separate from reviewed meaning, embedding coverage and fresh retained-package verification. |
 | [Span cache](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/tree/60501f3e920f6c9050cfc452e0d9fcc2b7c184f3) | `60501f3e920f6c9050cfc452e0d9fcc2b7c184f3` | 7,962 file descriptors, including 5,070 Parquet paths. These are overlapping file/generation inventories, not unique-span counts or successful formalizations. |
 | [Entity cache](https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/tree/79d54378c5d6a89ab56e7a27e0f0ba867e800e19) | `79d54378c5d6a89ab56e7a27e0f0ba867e800e19` | Same 11,139,328-byte payload with LFS SHA256 `f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233` as the retained full census. That census accounts for 1,960,876 mixed rows with no uniquely resolved edge endpoints. |
 
@@ -137,9 +139,33 @@ split, syntax flag, cached status or compiler agreement cannot supply legal gold
 The local verified primary export and malformed legacy entity cache remain
 separate populations until their original derivation/multiplicity is reconciled.
 
-The current source manifest is byte-identical to the one already pinned for the
-qualified 74-file original-primary graph selection: reuse that 297,825-record
-transport under its original provenance. Source metadata also exposes 412
+The [retained-source reuse reconciliation](legal_ir_retained_source_reuse_20261016.md)
+and its [historical metadata inventory](evidence/legal-source-corpus-reuse-20261016/historical-reuse-reconciliation.json)
+recover the completed source work already published in the repository. The
+[original inventory closeout](../implementation/reports/evidence/autoencoder_control_plane_plan/uscode-source-inventory-closeout-20260926-r1.json)
+records all 16 shards and 62,931 physical rows; the
+[frozen partitions](../implementation/reports/evidence/autoencoder_control_plane_plan/source-partitions-closeout-20260926-r1.json)
+retain 62,839 unique eligible source inputs, 59,511 source groups and 92 alias
+rows. Preserve their existing train/validation/canary/holdout membership rather
+than creating another split. Source-group disjointness does not establish
+semantic/dependency isolation, checkpoint exposure, legal gold or global holdout.
+
+The [portable source export and isolated DuckLake delivery](../implementation/reports/source_corpus_delivery.md)
+already preserve 62,931 rows and all 33 original columns in a 103-file,
+263,671,066-byte package, with original embedding dispositions of 51 embedded,
+13 token-limit exclusions and 62,867 unattempted. Reuse that package through
+`SourceCorpusBinding`; [native attempt 04](legal_ir_retained_source_reuse_20261016.md)
+now verifies the retained closure and complete ordered row digest, with independent
+durability/release audit. New consumption still requires current owner binding. Do not repeat acquisition, inventory, export
+or database materialization merely to recover this progress. Historical native
+delivery is separate from production activation and current verification.
+
+The current source manifest is byte-identical to the original source manifest
+and the one already pinned for the qualified 74-file original-primary graph
+selection. Retain the source inventory/package and 297,825-record primary
+transport under their original `5016b86a273ce5e4ffd066c5ae9f5fe494dd417e`
+provenance; manifest equality does not establish whole-repository equality or
+fresh payload closure. Source metadata also exposes 412
 data/index paths outside the manifest, inconsistent artifact counters, a README
 size mismatch and an invalid Viewer config name. Reconcile those scopes and
 publish a coherent later metadata generation; retain unbound additions separately.
@@ -162,8 +188,8 @@ training gap, not statutory accuracy, a new teacher or a Lean build. Original
 refusals and failed startup attempts remain archived with proper closeout.
 
 1. **Asset and cache manifest.** Produce the joined compatibility inventory,
-   three-repository descriptor selection, actual selected source/occurrence
-   inventory and explicit ModelManager status. Reuse matching vectors and
+   three-repository descriptor selection, reuse of the completed source inventory
+   and preparation of the new source-to-span correspondence inventory and explicit ModelManager status. Reuse matching vectors and
    weights, including the completed F15/F17/F18 imports. Resolve the remaining
    full-8D exact hash match to actual weights; generate only genuinely missing
    compatible source/encoder/context entries through their own production jobs.
@@ -569,3 +595,20 @@ This is a plan and evidence review, with the separately recorded native entity a
 The subsequent [retained-component registration](evidence/legal-ir-missing-component-import-20261016/README.md) closes three concrete availability gaps: F15, F17 and F18 now have exact ModelManager bindings to their existing checkpoint files and immutable public releases. The genuine manager and cold native readbacks retain the same three source-record identities in 687 records after a 684-record baseline; their canonical catalog projection IDs differ. All baseline metadata, activity, schema and indexes are preserved. These source-token components have no active embedding dimension, and their runtime, teacher and proof qualification remains false. The operation reuses saved assets and creates no training, inference or legal-accuracy result. Adopt the separately published [five-variant numerical replay](legal_ir_decoder_output_integration_20261016.md) before further fitting; its output-format and 0/2 primary-reference findings identify the next structured-head and discrimination work. Authenticate complete runtime closures for other selected lineages, and keep exact text reconstruction, semantic IR fidelity and selected-population coverage separate.
 
 The [relational target and example contract](legal_relational_decoder_target_contract_v1.md) now qualifies fixed byte/control serialization of the existing typed request and candidate-only, original-input-replayed source/label separation. Native attempt02 passed 142 unique cases across three complete modules, with 255 source pins and completed native durability/release. These are authored engineering controls, not legal examples or a trained AST-action head. Every example keeps an unassigned split and zero training/evaluation-gold masks; pending source-only cases retain a null label. Optional 8D/384D/768D references preserve declared cache identities without opening vectors or authenticating producers. Freeze complete example populations, physical/component grouping, conflicting alternatives, exposure, actual output lengths and tensor/route/codec compatibility before fitting. Reuse the existing batch evaluator with a byte-preserving inference bridge for malformed framing/UTF-8 and incomplete outputs. Diagnose the initialization-time auxiliary connector with cached inputs and identical-prefix logits before attributing its retention gap to forgetting. The completed 60+60 replay remains the baseline; this increment repeats no model inference and changes no weights, reviews, graph admission or Lean artifacts.
+
+The [retained-source reconciliation and native replay](legal_ir_retained_source_reuse_20261016.md)
+recover the completed September source inventory, frozen partitions and isolated
+DuckLake delivery that the earlier metadata plan missed. Against source baseline
+`134e4f45bad2bdeb83cbfe1cd383732583fb99fd`, attempt 04 passed six named checks
+and four public-owner refusals, freshly verified the original 103-file/62,931-row
+package and preserved original splits, aliases and embedding dispositions. Three
+selected physical source companions are now available with zero training/gold
+masks. The independent audit confirms durable closeout and resource release;
+failed setup/import attempts remain retained with exact owned recovery. The
+explicit genuine urllib3 local capability probe is separately accounted, with
+no SDK/product/native-policy substitution. This avoids another source scan,
+export or database rebuild; the next source gap is bounded wrapped-source/cache
+correspondence, followed by original-document/applicability and semantic review.
+The prepared supervisor handoff retains all 64 task IDs, 34 goals, dependencies
+and statuses while adopting this reuse requirement. No decoder/model/Lean result
+or task activation follows from source integrity alone.

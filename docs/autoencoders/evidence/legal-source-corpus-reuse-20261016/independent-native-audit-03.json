@@ -1,0 +1,128 @@
+{
+  "actual_runtime_denial": {
+    "all_denials_remained_disqualifying": true,
+    "bounded_event_evidence_complete": true,
+    "count": 1,
+    "does_not_retroactively_identify_attempt02_missing_event_details": true,
+    "event": "socket.__new__",
+    "interpretation": "The denied operation is the actual requests dependency import-time IPv6 capability socket probe. No probe was permitted by this attempt.",
+    "journal_matches_worker_event_exactly": true,
+    "kind": "network",
+    "module_call_line": 137,
+    "other_denial_counts": {
+      "child_process": 0,
+      "database": 0,
+      "external_write": 0
+    },
+    "source_function": "urllib3.util.connection._has_ipv6",
+    "source_line": 126
+  },
+  "artifact_inventory": [
+    {
+      "bytes": 796,
+      "relative_path": "logs/failure.json",
+      "sha256": "2a6509b3d34a1543cf5f696543a1ea194e617a934b3853de484d5bc744985bb6"
+    },
+    {
+      "bytes": 1390,
+      "relative_path": "logs/runtime-denials.jsonl",
+      "sha256": "5ea9617164a92b062bc5b0e4d4d060787303205a7abe7bb00cdb7aec1588fdc2"
+    },
+    {
+      "bytes": 29293,
+      "relative_path": "logs/source-corpus-reuse-failed.json",
+      "sha256": "d050cd359e51b0750d9fbaf86268175df967a1794b4b9dac11ae515d0b487150"
+    },
+    {
+      "bytes": 705,
+      "relative_path": "logs/stderr.log",
+      "sha256": "7a13a161c89fdb5adc4ea1f730bcbf27f23135bcf99a948e528ee6ea9bdc49dc"
+    },
+    {
+      "bytes": 0,
+      "relative_path": "logs/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "attempt": "03",
+  "audit_status": "pass",
+  "authority": {
+    "Lean_admitted": false,
+    "formalized": false,
+    "proof_authority": false,
+    "source_authority_authenticated": false,
+    "source_semantics_verified": false,
+    "training_gold_qualified": false
+  },
+  "large_inventory_loading_and_package_binding_not_reached": true,
+  "named_checks_not_run": 6,
+  "native_completed": false,
+  "native_elapsed_seconds": 105.15865619992837,
+  "native_failure": {
+    "bytes": 796,
+    "sha256": "2a6509b3d34a1543cf5f696543a1ea194e617a934b3853de484d5bc744985bb6"
+  },
+  "native_returncode": 1,
+  "next_step": "Independently review an explicit source-pinned once-only offline IPv6 loopback capability-probe profile before a fresh request. Preserve original owner/resource policy and every failed attempt.",
+  "no_success_exports": true,
+  "profile": {
+    "denied_counters_not_cleared_or_ignored": true,
+    "expected_scheduler_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+    "optional_huggingface_hub_definition_import_exception_explicit": true,
+    "os_network_isolation_attested": false,
+    "python_audit_is_cooperative": true,
+    "seccomp_invoked": false
+  },
+  "qualification_passed": false,
+  "recovery": {
+    "all_failed_outputs_retained": true,
+    "artifacts_durable_asserted": true,
+    "current_matching_ledger_records": 1,
+    "current_status": "released",
+    "final_external_charged_bytes": 0,
+    "four_literal_substitutions_reverse_to_actual_reviewed02_script": true,
+    "new_reservation_acquired": false,
+    "new_resource_lease_acquired": false,
+    "original_storage_bytes": 67108864,
+    "outputs_deleted": false,
+    "previous_retained_record_hash_matches_independent_reconstruction": true,
+    "private_receipt": {
+      "bytes": 25796,
+      "sha256": "fc3bab2ab8648451dc603870aec9da7ccc9c9d7690e7dde8d4bc0be503c2a3e0"
+    },
+    "reconciliation_receipt_matches_exact_current_ledger_record": true,
+    "retained_artifact_bytes": 32184,
+    "scheduler_lease_state_independently_authenticated": false,
+    "static_reuse_review": {
+      "bytes": 1010,
+      "sha256": "e35c0efdeaa1022ddb0a7d823cd20e0b9b4b0d16f257f5e771a9751c532344e9"
+    },
+    "successful_workload_claim": false
+  },
+  "request": {
+    "bytes": 22559,
+    "sha256": "d64514f04b751dd4aeb67f454a162e5d8fc7ca9ef25404fb441e919ca0aea54f"
+  },
+  "reviewer": "/root/span_correspondence_gap",
+  "reviewer_execution": {
+    "database_opened": false,
+    "model_opened": false,
+    "native_workload_executed": false,
+    "original_corpus_payload_opened": false,
+    "product_imported": false,
+    "tests_run": false
+  },
+  "schema": "legal-source-corpus-reuse-independent-failed-native-audit/v1",
+  "scope": "Actual strict early-import diagnostic failure and exact owned reservation reconciliation; no source-reuse qualification.",
+  "source_custody": {
+    "all_original_request_pins_still_match_current_bytes": true,
+    "source_control_count": 88,
+    "worker_final_source_pins_unchanged": true
+  },
+  "worker_elapsed_seconds": 0.3548987989779562,
+  "worker_failure": {
+    "bytes": 29293,
+    "sha256": "d050cd359e51b0750d9fbaf86268175df967a1794b4b9dac11ae515d0b487150"
+  },
+  "worker_failure_stage": "cold_source_binding_owner_import"
+}

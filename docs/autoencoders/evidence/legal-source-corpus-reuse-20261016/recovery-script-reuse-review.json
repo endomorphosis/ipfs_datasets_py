@@ -1,0 +1,41 @@
+{
+  "adapted": {
+    "bytes": 5506,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-source-corpus-reuse-20261016/recover_own_failed_qualification02_v01.py",
+    "sha256": "ef6ba648e93323972ce6facd9e90a030c0dfe5ecbe392633b01f6cdb7c3b00d4"
+  },
+  "execution_performed": false,
+  "literal_substitutions": [
+    {
+      "new": "GUARD = ROOT / 'docs/autoencoders/evidence/legal-relational-target-contract-20261016/run_qualification.py'",
+      "old": "GUARD = PHASE / 'run_qualification.py'"
+    },
+    {
+      "new": "owned-validation-runs/legal-source-corpus-reuse-20261016-a-02",
+      "old": "owned-validation-runs/legal-relational-target-contract-20261016-a-01"
+    },
+    {
+      "new": "PHASE / 'qualification-request-02.json'",
+      "old": "PHASE / 'qualification-request-01.json'"
+    },
+    {
+      "new": "0b72c9bb47f84afecc2dd7e4bf8280de9a8d8694bf3d43ac1b378ef519a3686d",
+      "old": "503a5c79e0ae0dbf1806484b0d0f5e49e0c086308cca61a694cd02f832115d79"
+    },
+    {
+      "new": "legal-source-corpus-reuse-own-failed-qualification-recovery/v1",
+      "old": "legal-relational-target-contract-own-failed-qualification-recovery/v1"
+    },
+    {
+      "new": "Path('/home/barberb/lift_coding/artifacts/legal-source-corpus-reuse-20261016/qualification02-own-recovery-receipt-v01.json')",
+      "old": "(PHASE / 'qualification01-own-recovery-receipt-v01.json')"
+    }
+  ],
+  "original": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/recover_own_failed_qualification01_v01.py",
+    "sha256": "5e0d0c1ce0882d499dbb52d11fe251e4d700b6743c3215d0f901df4045312872"
+  },
+  "reverse_substitutions_reproduce_original_bytes": true,
+  "schema": "legal-source-corpus-reuse-recovery-script-review/v1",
+  "scope": "exact current failed a02 only; no workload, lease, reservation, foreign cleanup or output deletion"
+}

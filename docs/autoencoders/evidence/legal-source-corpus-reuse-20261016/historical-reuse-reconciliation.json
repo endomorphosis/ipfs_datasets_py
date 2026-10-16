@@ -1,0 +1,578 @@
+{
+  "schema": "legal-source-corpus-historical-reuse-reconciliation/v1",
+  "observed_at_utc": "2026-10-16T19:28:26.253357+00:00",
+  "scope": "bounded historical receipt/source metadata reconciliation and stat-only retained data availability",
+  "source_checkout": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets",
+  "source_checkout_commit": "134e4f45bad2bdeb83cbfe1cd383732583fb99fd",
+  "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "decision": "Reuse the completed source inventory, frozen partitions and portable source package. Fresh consumption must verify retained package bytes through the existing SourceCorpusBinding owner; do not repeat acquisition, full inventory, source export or database materialization solely because the Hub head changed.",
+  "historical_receipts": [
+    {
+      "repository_path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/uscode-source-inventory-closeout-20260926-r1.json",
+      "bytes": 7148,
+      "sha256": "6de700ca1d32e9e0660cf38f2658650217b30fa3185b9b0322282a120a86ed47",
+      "git_blob_sha1": "a72e9d21f2ffc9eeb203928c1772593523f6bca1",
+      "current_read_matches_git_blob": true
+    },
+    {
+      "repository_path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/source-partitions-closeout-20260926-r1.json",
+      "bytes": 6851,
+      "sha256": "7b8c9135eafccc59f5726f393ba9f998bcae983df40ac319bf7d72827612396d",
+      "git_blob_sha1": "76e094c1d838233c1090cb810a043efe23dbe6ea",
+      "current_read_matches_git_blob": true
+    },
+    {
+      "repository_path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/uscode-corpus-export-audit-20260926-r2.json",
+      "bytes": 141874,
+      "sha256": "1d35dfc5dcf760c8d7a465b8c47916e30579bbe2d1ef58e19e372415f206d28c",
+      "git_blob_sha1": "51c0f1d84dda910556e78cb856e0733e6eb5d983",
+      "current_read_matches_git_blob": true
+    },
+    {
+      "repository_path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/uscode-corpus-export-export-20260926-r2.json",
+      "bytes": 121726,
+      "sha256": "ef69994c2f5dbff0e9c68fce79ef4cac8483b8008ff2654e159dcfffa3c58d62",
+      "git_blob_sha1": "eeefc54e773accac8ff75192639bec16d1125f1f",
+      "current_read_matches_git_blob": true
+    },
+    {
+      "repository_path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/source-corpus-delivery-audit.json",
+      "bytes": 160162,
+      "sha256": "8e26dfe36cc1e955cba9cf61e8d98a93c3061ddbf372cdbd048fe7f6fd2387ff",
+      "git_blob_sha1": "fd50d6997dd8e67ec8a6f59a58930c0af9ae7b07",
+      "current_read_matches_git_blob": true
+    },
+    {
+      "repository_path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/source-corpus-delivery-delivery.json",
+      "bytes": 52682,
+      "sha256": "afcc9a673a1b5f08c61bb799c450ed82c1f5def9409a64154209d7346a99160a",
+      "git_blob_sha1": "a2f47821f4f446e260d19c998beda765f620e8d2",
+      "current_read_matches_git_blob": true
+    },
+    {
+      "repository_path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/source-corpus-delivery-native-query.json",
+      "bytes": 464,
+      "sha256": "7f01e5af86cd180e841510d489deb13be877f4a9af8ae738a89a653af8f471ea",
+      "git_blob_sha1": "9011d9b175b822503ae0ddf1ac8120dad41ccd89",
+      "current_read_matches_git_blob": true
+    },
+    {
+      "repository_path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/source-corpus-delivery-native-commit.json",
+      "bytes": 1720,
+      "sha256": "c1c9447848d6387ef1ed693ab4fef278f23af5a9f7ae2f446b0d575323b1efda",
+      "git_blob_sha1": "3b8c04e66b45bae4089e56de78a3091a616f8869",
+      "current_read_matches_git_blob": true
+    },
+    {
+      "repository_path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/source-corpus-catalog-cli-20260926-r3.json",
+      "bytes": 6972,
+      "sha256": "0fd50f208a51fb598536de8d325b950c1003c26aaed998cc547823e32553d490",
+      "git_blob_sha1": "65c1a86e11f98f683a83fd08acef0e9838f78ec5",
+      "current_read_matches_git_blob": true
+    }
+  ],
+  "manifest_equivalence": {
+    "repository": "justicedao/ipfs_uscode",
+    "original_release_commit": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+    "current_observed_release_commit": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+    "manifest_sha256": "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6",
+    "manifest_bytes": 852161,
+    "original_manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources/manifest.json",
+    "current_metadata_snapshot_path": "/home/barberb/lift_coding/artifacts/legal-uscode-source-plan-20261016/manifest.json",
+    "current_metadata_snapshot_equals_original_manifest_bytes": true,
+    "scope": "Exact selected manifest byte equality only; original artifacts retain original release provenance. This is not complete repository equality or fresh selected payload verification. Global control-plane discrepancies and extra files remain separate."
+  },
+  "qualified_inventory": {
+    "historical_tests": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 275
+    },
+    "summary": {
+      "admitted": false,
+      "closure_verification_scope": "recorded build-time shard bytes; reopening verifies metadata integrity only",
+      "complete": true,
+      "current_all_shard_bytes_reverified": false,
+      "declared_compressed_bytes": 52219760,
+      "declared_corpus_closure_verified": true,
+      "declared_corpus_shards": 16,
+      "declared_row_count": 62931,
+      "duplicate_entry_cid_count": 0,
+      "eligible_input_count": 62931,
+      "full_federal_corpus_complete": false,
+      "global_holdout_verified": false,
+      "grouping_metadata_complete": true,
+      "inventory_bytes": 47531987,
+      "inventory_sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef",
+      "original_official_source_bytes_verified": false,
+      "original_status_counts": {
+        "ready_published_text": 62931
+      },
+      "release_id": "hf:justicedao/ipfs_uscode@5016b86a273ce5e4ffd066c5ae9f5fe494dd417e#manifest-sha256:0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6",
+      "rows_scanned": 62931,
+      "schema_version": "autoencoder-uscode-source-inventory-v1",
+      "scope": "declared_corpus_family_only",
+      "shard_status_counts": {
+        "verified": 16
+      },
+      "source_authority_authenticated": false,
+      "source_text_storage": "unmaterialized_exact_published_text_utf8",
+      "status_counts": {
+        "ready_published_text": 62931
+      },
+      "training_eligible": false
+    },
+    "historical_build_seconds": 18.615990123944357,
+    "current_metadata_report_sha256": "03f76af4edb6d538fddec9c74090389532f8f84f93f417edf2154fa790d00d62",
+    "current_metadata_report_matches_historical_pin": true
+  },
+  "qualified_partitions": {
+    "historical_tests": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 362
+    },
+    "summary": {
+      "admitted": false,
+      "complete_declared_inventory_bound": true,
+      "current_source_bytes_verified": false,
+      "eligible_partition_counts": {
+        "canary": 3147,
+        "holdout": 3144,
+        "train": 50282,
+        "validation": 6358
+      },
+      "eligible_row_count": 62931,
+      "eligible_unique_input_count": 62839,
+      "embedding_producer_authenticated": false,
+      "global_holdout_verified": false,
+      "group_count": 59511,
+      "inventory_sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef",
+      "partition_counts": {
+        "canary": 3147,
+        "holdout": 3144,
+        "train": 50282,
+        "validation": 6358
+      },
+      "physical_row_count": 62931,
+      "schema_version": "autoencoder-source-partitions-v1",
+      "scope": "declared_corpus_family_only",
+      "semantic_duplicate_isolation_verified": false,
+      "source_authority_authenticated": false,
+      "source_group_partition_disjoint_verified": true,
+      "source_partitions_bytes": 12187351,
+      "source_partitions_sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d",
+      "training_eligible": false,
+      "unseen_checkpoint_lineage_verified": false
+    },
+    "same_input_alias_rows": 92,
+    "current_metadata_report_sha256": "a315122b949acf10dd7c13108a3003b2f19c36c9ed5bf748ffe2e4fde0887c75",
+    "current_metadata_report_matches_historical_pin": true,
+    "reuse_boundary": "Preserve existing membership; semantic/dependency connected-component isolation and historical checkpoint exposure require additional evidence before legal held-out evaluation."
+  },
+  "unchanged_source_pins": [
+    {
+      "repository_path": "scripts/ops/legal_ir/inventory_pinned_uscode_sources.py",
+      "bytes": 7614,
+      "sha256": "689d972154afb2c3ad4e9a55ccc452ef175799ab8d3e1737f89fdbc4d318ce50",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "uscode-source-inventory-closeout-20260926-r1.json",
+        "source-partitions-closeout-20260926-r1.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_import.py",
+      "bytes": 31233,
+      "sha256": "3ead6dbe0014be69a11c1a9f6c203d62c012a3dd5f5913aa9471eda91574bb70",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "uscode-source-inventory-closeout-20260926-r1.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_inventory.py",
+      "bytes": 33754,
+      "sha256": "6aa7330cd20a2eb256561382b78bc4465d3b7607827f53d0b644d9e89afb1f21",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "uscode-source-inventory-closeout-20260926-r1.json",
+        "source-partitions-closeout-20260926-r1.json"
+      ]
+    },
+    {
+      "repository_path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_uscode_inventory.py",
+      "bytes": 34103,
+      "sha256": "f439b9be4ee5f54bc4017baed66b6cbacef03625e25328687edafa65b55bc904",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "uscode-source-inventory-closeout-20260926-r1.json"
+      ]
+    },
+    {
+      "repository_path": "scripts/ops/legal_ir/freeze_uscode_source_partitions.py",
+      "bytes": 7806,
+      "sha256": "6408ca794a8cc8974c233d1ddb40c1d54be107ab37581c93b6ce8cf4e91d36cb",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "source-partitions-closeout-20260926-r1.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_partitions.py",
+      "bytes": 17973,
+      "sha256": "d696c3af565d09be1825a00bdbf979ff97c12bb1a6ab1054564a9946b824875a",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "source-partitions-closeout-20260926-r1.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_index.py",
+      "bytes": 21099,
+      "sha256": "f4b71d03e6341602631387262d0efffb61c95bca40ad5307ecfcda3eb1d169b9",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "source-partitions-closeout-20260926-r1.json"
+      ]
+    },
+    {
+      "repository_path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_partitions.py",
+      "bytes": 28661,
+      "sha256": "b9c333de6f0e9e6a2e653c04d401e20ed8a0e34b00ac2643b8996ba9ff4430cd",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "source-partitions-closeout-20260926-r1.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_corpus_export.py",
+      "bytes": 36275,
+      "sha256": "78f5afba6c8ebcd4d649c07ca59749065e280f8255054121574d878740edeafa",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "uscode-corpus-export-audit-20260926-r2.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_corpus_rows.py",
+      "bytes": 20961,
+      "sha256": "80f22247facf6be0ca3ab2f582826985b888308cd8662bab3327421dbf35db43",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "uscode-corpus-export-audit-20260926-r2.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/duckdb_control/source_corpus_catalog.py",
+      "bytes": 41791,
+      "sha256": "014ccabff3d5adc6e87b2ddd947ade8f85fa7902a44a704445f3cebe5a965322",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "source-corpus-delivery-audit.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/duckdb_control/autoencoder_quack.py",
+      "bytes": 25535,
+      "sha256": "fe4890f7390ebdfb4e7f55db1e5709f581583d4d6ab6f87e7330bb43ef608df9",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "source-corpus-delivery-audit.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/duckdb_control/source_corpus_quack.py",
+      "bytes": 3558,
+      "sha256": "2d70e08f989d6a915dd3d086212e1a6d006485b9d5a4a3a55c137643f31fce42",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "source-corpus-delivery-audit.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/duckdb_control/source_corpus_control.py",
+      "bytes": 14790,
+      "sha256": "85468284c09121b4b399309e4073547ab3805cacb53f28113b54927fab7920d9",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "source-corpus-delivery-audit.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/duckdb_control/source_corpus_binding.py",
+      "bytes": 11705,
+      "sha256": "c647a5341d3607fc2b10311e76bf4ea3be8f1dba81667bc7ba72ae686c8f5315",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "source-corpus-delivery-audit.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/huggingface/source_corpus_release.py",
+      "bytes": 6213,
+      "sha256": "5ed35e6dd76192ccd46bf112d40ec34543b240cc77955ea5370977ed1336c856",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "source-corpus-delivery-audit.json"
+      ]
+    },
+    {
+      "repository_path": "ipfs_datasets_py/ducklake/source_corpus.py",
+      "bytes": 26338,
+      "sha256": "e283a77caf60762372bc52c2a97608a98e4a28456f5ce79cd4e6a2da51adf975",
+      "current_bytes_equal_captured": true,
+      "captured_by": [
+        "source-corpus-delivery-audit.json"
+      ]
+    }
+  ],
+  "retained_artifacts": [
+    {
+      "kind": "inventory",
+      "canonical_relative_path": "workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/scan-r2/inventory/inventory.json",
+      "sha256": "38734c403fa9b7bbba8b80f8d4c0ac0529327ae4bc9534b9cf56dd59f4d6caef",
+      "bytes": 47531987,
+      "sha256_source": "original qualified closeout descriptor",
+      "current_check": "stat-only regular file and exact length; body not reopened"
+    },
+    {
+      "kind": "partitions",
+      "canonical_relative_path": "workspace/test-logs/federal-corpus-audits/source-partitions-20260926/freeze-r2/partitions/source-partitions.json",
+      "sha256": "12700969970aac52107eb570167fc09da6e326536335d9e1c00c61b73c9bf45d",
+      "bytes": 12187351,
+      "sha256_source": "original qualified closeout descriptor",
+      "current_check": "stat-only regular file and exact length; body not reopened"
+    },
+    {
+      "kind": "embedding_receipt_set",
+      "canonical_relative_path": "workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package/provenance/embedding-receipt-set.json",
+      "sha256": "fdeb6de13bfa66914baad8703f2caa85694d17c2d2c6a3024e275f5984cf95c7",
+      "bytes": 9557340,
+      "sha256_source": "qualified source-export manifest descriptor",
+      "current_check": "stat-only regular file and exact length; body not reopened"
+    }
+  ],
+  "original_corpus_shard_availability": {
+    "source_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r2/sources",
+    "shards": [
+      {
+        "relative_path": "data/corpus/part-000000.parquet",
+        "sha256": "006b173b020f973fad27b7e1aef3a3df6ae77d01b233f241fbf8444776b24131",
+        "bytes": 3356154,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000001.parquet",
+        "sha256": "04f3f95ff2a7962363dcbc3760d3a62ee068619e9ee089c775842430b781cc15",
+        "bytes": 3270567,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000002.parquet",
+        "sha256": "edf647c3a7c56d989b84c76c1a2031d033ca98612a2bca778e1b560c6bc68248",
+        "bytes": 3312692,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000003.parquet",
+        "sha256": "da395636e01f91a8cec0d77b3d1b8411b18feb7a5641173e084f7ee315f9ac62",
+        "bytes": 3313853,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000004.parquet",
+        "sha256": "5c9e9e096cdce671eceb0b2dd882a220594162690652863a0a8de7e082815635",
+        "bytes": 3564013,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000005.parquet",
+        "sha256": "3f90103ff5fd2645b4123553193e9d6adb74331f2bff0cc0c6887aa9c245c553",
+        "bytes": 3472609,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000006.parquet",
+        "sha256": "612f8a966638d9707ea241bbf945d3cd5673f86fe78bcc6dbb9e5cac2809e4c8",
+        "bytes": 3301002,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000007.parquet",
+        "sha256": "4dabf0b1cf29651bde0f7cb48b78664190289dc667eb8b1eb2686769c7ed871f",
+        "bytes": 3589877,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000008.parquet",
+        "sha256": "cad48e8ae51c73bf4f0c8052b4668531a4b8c4299f87b2afd3086935aeb87848",
+        "bytes": 3237071,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000009.parquet",
+        "sha256": "dabcef786908f2310fabc442d88ae543da8189224bdfa76c851dfc2a78911961",
+        "bytes": 3476873,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000010.parquet",
+        "sha256": "eefabd2b1877e9ecc2457eeecc36b1ecd308705a431a5ecc3511e4e33b625bf3",
+        "bytes": 3325739,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000011.parquet",
+        "sha256": "07dd8437262e238fedf5ef48ceca650fc042fad1075d04b919a19348f7e0e828",
+        "bytes": 3391991,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000012.parquet",
+        "sha256": "439b43fc526ba347736f905c80973dcf74035c1fab58682af11ce70fcc83fd10",
+        "bytes": 3428237,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000013.parquet",
+        "sha256": "8ff341ff05104db0d1dce1259c060f2a566c9481158968cfd4d2d6ddd9b6d660",
+        "bytes": 3373426,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000014.parquet",
+        "sha256": "5efa52d8f414a3e742dbb2ba4545fb9881d9f90aeb640b7f085490586bc7ed5a",
+        "bytes": 3515455,
+        "rows": 4096,
+        "stat_only_regular_size_matches": true
+      },
+      {
+        "relative_path": "data/corpus/part-000015.parquet",
+        "sha256": "9a7693e41011a2e55cd7d31b15273cfbb5ec29ce900b7536df54c3ec5cc94cba",
+        "bytes": 1290201,
+        "rows": 1491,
+        "stat_only_regular_size_matches": true
+      }
+    ],
+    "shard_count": 16,
+    "declared_rows": 62931,
+    "declared_bytes": 52219760,
+    "current_check": "stat-only regular files and exact declared lengths; Parquet bodies not opened or hashed"
+  },
+  "portable_source_package": {
+    "package_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package",
+    "manifest_sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+    "manifest_bytes": 31640,
+    "metadata_manifest_currently_hashed": true,
+    "qualified_file_count_including_manifest": 103,
+    "qualified_package_bytes": 263671066,
+    "qualified_row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+    "original_columns": 33,
+    "stat_only_availability": {
+      "listed_member_count": 102,
+      "matching_regular_file_count": 102,
+      "missing_or_mismatched": [],
+      "observed_bytes_including_manifest": 263671066,
+      "payload_hashes_reverified": false
+    }
+  },
+  "captured_version_for_binding": {
+    "original_report": {
+      "bytes": 6972,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926-r3/capture-r3/catalog/cli-report.json",
+      "sha256": "0fd50f208a51fb598536de8d325b950c1003c26aaed998cc547823e32553d490"
+    },
+    "original_report_current_bytes_match_pin": true,
+    "independent_descriptor_owner": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/source-corpus-delivery-audit.json#input_artifacts",
+    "version_json_pointer": "/version_after_reopen",
+    "current_package_json_pointer": "/input_package",
+    "version_contains_historical_package_directory": true,
+    "input_package": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926-r2/capture-r2/export/run/package",
+    "source_version": {
+      "dataset": {
+        "jurisdiction": "us",
+        "namespace": "uscode",
+        "profile": "uscode-source-export-v1",
+        "source_language": "en"
+      },
+      "dataset_id": "sha256:a025ad694036805bb0ddad541cd02a87d26c4b9039534ab1c6032d7398c090d9",
+      "package_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926-r3/capture-r3/catalog/packages/02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+      "package_manifest_artifact": {
+        "bytes": 31640,
+        "sha256": "02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c"
+      },
+      "qualification": {
+        "admitted": false,
+        "formalized": false,
+        "language_verified": false,
+        "publication_performed": false,
+        "source_authority_authenticated": false
+      },
+      "release_id": "sha256:02e7534050b95e5971e30767e3d1a4a85b266ee6ea4f0fd4c8a0207d8bfcd19c",
+      "row_count": 62931,
+      "row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+      "schema_version": "source-corpus-version-v1",
+      "version_id": "sha256:87e740ca0794cd6fea6dd997a308e6ace4ed5880a308d1b33a9f05fdb51e061e"
+    },
+    "contract_note": "Use the unchanged captured version record including package_directory, and explicitly pass the retained current portable package directory. SourceCorpusBinding does not open the archived catalog or historical package_directory. Detached delivery source_version omits package_directory and is not the captured input contract."
+  },
+  "embedding_dispositions": {
+    "physical_rows": 62931,
+    "embedded": 51,
+    "token_limit_exceeded": 13,
+    "unattempted": 62867,
+    "source": "original qualified source-export coverage and independent native query",
+    "published_vector_family_claim_is_separate": true,
+    "new_embeddings_generated": false
+  },
+  "historical_native_delivery": {
+    "tests": 783,
+    "passed": true,
+    "complete_rows": 62931,
+    "all_original_33_fields_preserved": true,
+    "native_rows_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+    "production_activated": false,
+    "live_hub_publication_performed": false,
+    "current_native_store_opened": false
+  },
+  "fresh_execution": {
+    "product_imported": false,
+    "tests_run": false,
+    "native_resource_owner_invoked": false,
+    "corpus_parquet_opened": false,
+    "vectors_opened": false,
+    "database_opened": false,
+    "model_opened": false,
+    "training_performed": false,
+    "download_performed": false,
+    "payload_requalification_claimed": false,
+    "metadata_and_selected_source_bytes_hashed": true
+  },
+  "authority": {
+    "source_authenticity_verified": false,
+    "official_source_correspondence_verified": false,
+    "legal_semantics_reviewed": false,
+    "training_gold_qualified": false,
+    "formalized": false,
+    "proof_authority": false,
+    "lean_build_performed": false
+  },
+  "next_operation": "Fresh owner-controlled read-only binding of the retained 103-file package and original captured version, complete 62931-row digest comparison, immutable original split/embedding-disposition preservation, independent output/closeout audit; then bounded source-to-span correspondence without rebuilding a source database."
+}

@@ -2,7 +2,7 @@
   "schema": "legal-ir-supervisor-refinement/v1",
   "title": "LegalIR span-to-graph-to-Lean supervisor backlog",
   "board_namespace": "legal-ir-span-graph-lean-refinement-20261016",
-  "plan_revision": "20261016-v1",
+  "plan_revision": "20261016-v2-retained-source-reuse",
   "status": "prepared_not_launched",
   "root_goal_id": "LIR-G000",
   "authoring_manifest_is_native_ingest_schema": false,
@@ -395,7 +395,8 @@
         "LAC-004",
         "LAC-006"
       ],
-      "related_lac_equivalence": "unreviewed_related_scope_only"
+      "related_lac_equivalence": "unreviewed_related_scope_only",
+      "refinement_scope_note": "Adopt completed source inventory, partitions and portable package alongside model assets, preserving original release provenance and historical evidence; current consumption verification is a separate scope."
     },
     {
       "id": "LIR-02",
@@ -416,7 +417,8 @@
         "LAC-010",
         "LAC-011"
       ],
-      "related_lac_equivalence": "unreviewed_related_scope_only"
+      "related_lac_equivalence": "unreviewed_related_scope_only",
+      "refinement_scope_note": "Reuse existing source closure through fresh read-only binding before new bounded span correspondence/context work. Neither recovered inventory nor package verification completes source/span joins, official-source correspondence or semantic review."
     },
     {
       "id": "LIR-03",
@@ -1161,14 +1163,16 @@
         "LIR-9004"
       ],
       "repository": "ipfs_datasets_py",
-      "objective": "Inventory main, relevant published branches/worktrees, retained model lineages and their exact tasks/codecs; adopt completed work before proposing another run.",
+      "objective": "Inventory main, relevant published branches/worktrees, retained model lineages and exact tasks/codecs; adopt the completed source inventory, frozen partitions and portable package under original release provenance before proposing another run.",
       "inputs": {
         "roles": [
           "source_metadata"
         ],
         "references": [
           "docs/autoencoders/legal_ir_asset_reconciliation_20261016.md",
-          "docs/autoencoders/legal_ir_decoder_output_integration_20261016.md"
+          "docs/autoencoders/legal_ir_decoder_output_integration_20261016.md",
+          "docs/autoencoders/legal_ir_retained_source_reuse_20261016.md",
+          "docs/autoencoders/evidence/legal-source-corpus-reuse-20261016/historical-reuse-reconciliation.json"
         ],
         "required_dependency_results": [
           "LIR-9004"
@@ -1179,13 +1183,16 @@
       ],
       "acceptance_criteria": [
         "Every selected asset has immutable identity, owner, task, producer and evidence scope.",
-        "F15/F17/F18 registrations and the five-variant replay are reused; published or binding counts are not model/accuracy counts."
+        "F15/F17/F18 registrations and the five-variant replay are reused; published or binding counts are not model/accuracy counts.",
+        "Reuse historical 16-shard/62,931-row inventory, frozen source partitions and 103-file package; original 5016 release provenance survives current 91 manifest equality. Fresh package verification is separately evidenced, not inferred from metadata or a historical receipt."
       ],
-      "acceptance": "Every selected asset has immutable identity, owner, task, producer and evidence scope.; F15/F17/F18 registrations and the five-variant replay are reused; published or binding counts are not model/accuracy counts.",
+      "acceptance": "Every selected asset has immutable identity, owner, task, producer and evidence scope.; F15/F17/F18 registrations and the five-variant replay are reused; published or binding counts are not model/accuracy counts.; Reuse historical 16-shard/62,931-row inventory, frozen source partitions and 103-file package; original 5016 release provenance survives current 91 manifest equality. Fresh package verification is separately evidenced, not inferred from metadata or a historical receipt.",
       "validation": [],
       "existing_owners": [
         "docs/autoencoders/legal_ir_asset_reconciliation_20261016.md",
-        "docs/autoencoders/legal_ir_decoder_output_integration_20261016.md"
+        "docs/autoencoders/legal_ir_decoder_output_integration_20261016.md",
+        "docs/autoencoders/legal_ir_retained_source_reuse_20261016.md",
+        "docs/autoencoders/evidence/legal-source-corpus-reuse-20261016/historical-reuse-reconciliation.json"
       ],
       "resource_stage": "analysis",
       "resource_profile": "planning",
@@ -1274,7 +1281,7 @@
     },
     {
       "task_id": "LIR-0201",
-      "title": "Freeze occurrence and observation inventories",
+      "title": "Reuse source closure and freeze span occurrence inventory",
       "goal_id": "LIR-G102",
       "legacy_parent_task": "LIR-02",
       "related_lac_tasks": [
@@ -1291,7 +1298,7 @@
         "LIR-0102"
       ],
       "repository": "ipfs_datasets_py",
-      "objective": "Use existing cache feed/census owners to bind a bounded selected manifest population and distinguish physical occurrences, attempts and assertions.",
+      "objective": "Use the completed source inventory, unchanged frozen partitions and retained portable package through a fresh read-only SourceCorpusBinding, then bind a bounded cache manifest/physical row selection and enumerate source-to-span correspondence candidates within the explicitly searched source population.",
       "inputs": {
         "roles": [
           "pinned_source",
@@ -1301,7 +1308,13 @@
         "references": [
           "ipfs_datasets_py/logic/autoformal/span_cache_feed.py",
           "ipfs_datasets_py/logic/autoformal/paired_span_census.py",
-          "ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py"
+          "ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py",
+          "docs/autoencoders/legal_ir_retained_source_reuse_20261016.md",
+          "docs/autoencoders/evidence/legal-source-corpus-reuse-20261016/historical-reuse-reconciliation.json",
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_inventory.py",
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_partitions.py",
+          "ipfs_datasets_py/duckdb_control/source_corpus_binding.py",
+          "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py"
         ],
         "required_dependency_results": [
           "LIR-9004",
@@ -1312,15 +1325,22 @@
         "data/legal_ir_span_graph_lean_20261016/LIR-0201/source-occurrence-inventory.json"
       ],
       "acceptance_criteria": [
-        "All selected rows have a disposition and exact physical source selectors.",
-        "Repeated text, overlapping generations, missing rows and historical aliases remain visible; file counts are not unique spans."
+        "Fresh owner-controlled read-only package binding verifies the captured complete ordered 62,931-row digest and original 103-file closure before consumption; preserve existing partitions and 51 embedded/13 token-limit/62,867 unattempted dispositions without rescan, export or database rebuild.",
+        "Every selected cache row remains in the disposition population; enumerate every matching physical source occurrence and overlapping exact substring position within the declared searched source selection, retaining missing, ambiguous and unsupported results.",
+        "Preserve repeated text, overlapping generations, original record hashes and historical aliases; keep published-text coordinates separate from original-document/view selectors. Matching bytes or a literal legal ID does not supply official-source correspondence, reviewed meaning, training gold or global holdout."
       ],
-      "acceptance": "All selected rows have a disposition and exact physical source selectors.; Repeated text, overlapping generations, missing rows and historical aliases remain visible; file counts are not unique spans.",
+      "acceptance": "Fresh owner-controlled read-only package binding verifies the captured complete ordered 62,931-row digest and original 103-file closure before consumption; preserve existing partitions and 51 embedded/13 token-limit/62,867 unattempted dispositions without rescan, export or database rebuild.; Every selected cache row remains in the disposition population; enumerate every matching physical source occurrence and overlapping exact substring position within the declared searched source selection, retaining missing, ambiguous and unsupported results.; Preserve repeated text, overlapping generations, original record hashes and historical aliases; keep published-text coordinates separate from original-document/view selectors. Matching bytes or a literal legal ID does not supply official-source correspondence, reviewed meaning, training gold or global holdout.",
       "validation": [],
       "existing_owners": [
         "ipfs_datasets_py/logic/autoformal/span_cache_feed.py",
         "ipfs_datasets_py/logic/autoformal/paired_span_census.py",
-        "ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py"
+        "ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py",
+        "docs/autoencoders/legal_ir_retained_source_reuse_20261016.md",
+        "docs/autoencoders/evidence/legal-source-corpus-reuse-20261016/historical-reuse-reconciliation.json",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_inventory.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_partitions.py",
+        "ipfs_datasets_py/duckdb_control/source_corpus_binding.py",
+        "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py"
       ],
       "resource_stage": "corpus",
       "resource_profile": "selected_corpus",
@@ -1360,7 +1380,7 @@
         "LIR-0201"
       ],
       "repository": "ipfs_datasets_py",
-      "objective": "Reuse retained source sampling and correspondence inputs; retain introductions, list inheritance, definitions and missing references.",
+      "objective": "Reuse freshly bound retained source rows and original source sampling/correspondence inputs; reconcile published-text and official document/view namespaces explicitly while retaining introductions, list inheritance, definitions, applicability and missing references.",
       "inputs": {
         "roles": [
           "pinned_source",
@@ -1370,7 +1390,8 @@
         "references": [
           "ipfs_datasets_py/logic/autoformal/corpus_span_adapter.py",
           "ipfs_datasets_py/logic/autoformal/corpus_source.py",
-          "docs/autoencoders/legal_statutory_definition_correspondence_pilot.md"
+          "docs/autoencoders/legal_statutory_definition_correspondence_pilot.md",
+          "docs/autoencoders/legal_ir_retained_source_reuse_20261016.md"
         ],
         "required_dependency_results": [
           "LIR-0201"
@@ -1381,14 +1402,16 @@
       ],
       "acceptance_criteria": [
         "Unicode/UTF-8 coordinates round-trip under the actual original cohort descriptors.",
-        "Edition/publication, legal applicability and event time remain separate; incomplete contexts block dependent acceptance."
+        "Edition/publication, legal applicability and event time remain separate; incomplete contexts block dependent acceptance.",
+        "Published-text substring candidates remain candidate correspondence until original document/view, selectors and version/applicability evidence close; the source inventory/reuse gate alone does not complete LIR-02 or the statutory pilot."
       ],
-      "acceptance": "Unicode/UTF-8 coordinates round-trip under the actual original cohort descriptors.; Edition/publication, legal applicability and event time remain separate; incomplete contexts block dependent acceptance.",
+      "acceptance": "Unicode/UTF-8 coordinates round-trip under the actual original cohort descriptors.; Edition/publication, legal applicability and event time remain separate; incomplete contexts block dependent acceptance.; Published-text substring candidates remain candidate correspondence until original document/view, selectors and version/applicability evidence close; the source inventory/reuse gate alone does not complete LIR-02 or the statutory pilot.",
       "validation": [],
       "existing_owners": [
         "ipfs_datasets_py/logic/autoformal/corpus_span_adapter.py",
         "ipfs_datasets_py/logic/autoformal/corpus_source.py",
-        "docs/autoencoders/legal_statutory_definition_correspondence_pilot.md"
+        "docs/autoencoders/legal_statutory_definition_correspondence_pilot.md",
+        "docs/autoencoders/legal_ir_retained_source_reuse_20261016.md"
       ],
       "resource_stage": "corpus",
       "resource_profile": "selected_corpus",
@@ -1790,9 +1813,10 @@
       ],
       "acceptance_criteria": [
         "Every selected physical occurrence/control has a disposition.",
-        "Group revisions, near duplicates, derivatives and actual semantic dependencies; source-only context is distinguished from withheld interpretations."
+        "Group revisions, near duplicates, derivatives and actual semantic dependencies; source-only context is distinguished from withheld interpretations.",
+        "Retain the frozen source-group split assignments as historical membership; source grouping alone does not establish semantic/dependency isolation, unseen checkpoint lineage or global held-out legal evaluation."
       ],
-      "acceptance": "Every selected physical occurrence/control has a disposition.; Group revisions, near duplicates, derivatives and actual semantic dependencies; source-only context is distinguished from withheld interpretations.",
+      "acceptance": "Every selected physical occurrence/control has a disposition.; Group revisions, near duplicates, derivatives and actual semantic dependencies; source-only context is distinguished from withheld interpretations.; Retain the frozen source-group split assignments as historical membership; source grouping alone does not establish semantic/dependency isolation, unseen checkpoint lineage or global held-out legal evaluation.",
       "validation": [],
       "existing_owners": [
         "docs/autoencoders/pilots/uscode_definition_component/README.md",
