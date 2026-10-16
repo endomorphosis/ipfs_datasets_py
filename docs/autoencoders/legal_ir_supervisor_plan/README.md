@@ -55,9 +55,12 @@ report until an independent acceptance capability is bound in a new reviewed
 revision. A worker-authored receipt cannot override this gate. Native preflight
 and report shape checks do not supply factual acceptance or legal fidelity.
 
-Newer accelerator main was observed after the pinned source was tested. Reconcile
-that progress and repeat native preflight on the final source binding before
-dispatch; preserve the specifically recorded generic Grok turn-limit refinement.
+Published accelerator main `ff69c6dec3608b78aab7af48c053d0e984bb9ffe` was merged
+normally into the isolated controller, including the generic Grok turn-limit
+refinement. Fresh native preflight passed on the resulting source binding;
+the required ancestor now names that upstream commit. The advanced datasets
+gitlink is an ancestor of the explicitly held runtime checkout. Recheck exact
+source and toolchain identities before dispatch if upstream changes again.
 The shared storage cap stayed unchanged. This operational status does not change
 the authoring plan, import tasks, complete LIR-9001 or activate later phases.
 
