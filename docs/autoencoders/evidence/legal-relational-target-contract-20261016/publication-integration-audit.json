@@ -1,0 +1,94 @@
+{
+  "baseline": "d56fd69c4d3a3aa3ef23f0e1c21dd11b692e5c8c",
+  "both_parent_lineages_are_ancestors": true,
+  "final_documentation_review": {
+    "bytes": 7974,
+    "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/final-documentation-review.json",
+    "sha256": "5e6bb2aae35e355ff6304d9141b108fd8ec6efd459b79b341868a70738c5d621"
+  },
+  "final_publication_commit_self_reference": false,
+  "incoming_added_files_preserved_byte_for_byte": [
+    {
+      "bytes": 2652,
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/hub-metadata-summary-v01.json",
+      "sha256": "cbbfdb4a23a64ece3b61d394200eef27f43595f2b8bac22e68275016eb0e33b7"
+    },
+    {
+      "bytes": 732,
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/index-v01.json",
+      "sha256": "68065439a0f8d38ec9bd1dbcf50da4350598a616e8ba148d54dd0449fc2c38dd"
+    },
+    {
+      "bytes": 581,
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/uscode-autoformal-entity-cache-README.md",
+      "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4"
+    },
+    {
+      "bytes": 13863,
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/uscode-autoformal-span-cache-README.md",
+      "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6"
+    },
+    {
+      "bytes": 1629,
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-review-20261016.json",
+      "sha256": "243ccf9e9b5b7c059956211bc0e604d7155d57bd3d19b192c8e5b9d69c754cfe"
+    },
+    {
+      "bytes": 40230,
+      "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "sha256": "80fcffa00252dfde901e0373d240e63702d3e536dc7f11fb0e7d67d180205ca1"
+    }
+  ],
+  "incoming_changes_documentation_only": true,
+  "incoming_main_commit": "121d98e3ee5f829f3b3e76b80baa3710626e6db1",
+  "integration_merge_commit": "47867d6cbcd381293e2e5d9249252de147a16e2a",
+  "master_plan_preserves_both_contributions": true,
+  "missing_local_document_links": [],
+  "native_audit": {
+    "bytes": 15001,
+    "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/native-qualification-independent-audit.json",
+    "sha256": "1727c9f991cfb719a975402fd4d2f88f6f1c1936a95e50c6d50e29837e81c187"
+  },
+  "new_local_document_links_resolved": 117,
+  "owned_code_commit": "eeebda0df007a32e1f5e474bf908c8a4c3ea7cd0",
+  "parallel_main_review": {
+    "bytes": 7802,
+    "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/parallel-main-integration-review.json",
+    "sha256": "1cbbc27e125da013b41bebe756e06d015d54686ac9ca6de8ca3497e81e94091e"
+  },
+  "qualified_sources_unchanged_after_merge": {
+    "all_match": true,
+    "hashes_and_physical_witnesses": 255
+  },
+  "raw_operational_identifiers_published": false,
+  "reviewed_documents": [
+    {
+      "bytes": 101834,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "6bde854e0b07e7b0516ce3681bb903272e0cf794d94dbf98829531b83ef2e9ee"
+    },
+    {
+      "bytes": 9608,
+      "path": "docs/autoencoders/legal_relational_reconstruction_v1.md",
+      "sha256": "82761628cc91c3bc8632fbed07ca3bd1796e367e264ec0ee05d14b99c1e0b14f"
+    },
+    {
+      "bytes": 11574,
+      "path": "docs/autoencoders/legal_ir_asset_reconciliation_20261016.md",
+      "sha256": "cbe6857dcf9502401aacfd0799b76a31cbbce3803d0ea3bd892e524c423f6f4c"
+    },
+    {
+      "bytes": 12380,
+      "path": "docs/autoencoders/legal_relational_decoder_target_contract_v1.md",
+      "sha256": "c7b7c17c130605cc54de1c7417bdbf90fa1c9d57ae52d75e416d35fcbf19cdea"
+    },
+    {
+      "bytes": 3343,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/README.md",
+      "sha256": "4f404709bd1cbebfbe4774263e7ae51e46283c0b3c75201cd4ca0cc43d6c3c2f"
+    }
+  ],
+  "runtime_or_semantic_authority_added": false,
+  "schema": "legal-relational-target-publication-integration/v1",
+  "scope": "Repository source/documentation integration after completed native qualification; no new model, corpus, database, training or compiler execution."
+}

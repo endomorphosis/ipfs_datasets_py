@@ -1,0 +1,173 @@
+{
+  "baseline": "d56fd69c4d3a3aa3ef23f0e1c21dd11b692e5c8c",
+  "bytes": 520409,
+  "file_count": 32,
+  "files": [
+    {
+      "bytes": 2652,
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/hub-metadata-summary-v01.json",
+      "sha256": "cbbfdb4a23a64ece3b61d394200eef27f43595f2b8bac22e68275016eb0e33b7"
+    },
+    {
+      "bytes": 732,
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/index-v01.json",
+      "sha256": "68065439a0f8d38ec9bd1dbcf50da4350598a616e8ba148d54dd0449fc2c38dd"
+    },
+    {
+      "bytes": 581,
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/uscode-autoformal-entity-cache-README.md",
+      "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4"
+    },
+    {
+      "bytes": 13863,
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/uscode-autoformal-span-cache-README.md",
+      "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6"
+    },
+    {
+      "bytes": 1629,
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-review-20261016.json",
+      "sha256": "243ccf9e9b5b7c059956211bc0e604d7155d57bd3d19b192c8e5b9d69c754cfe"
+    },
+    {
+      "bytes": 3343,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/README.md",
+      "sha256": "4f404709bd1cbebfbe4774263e7ae51e46283c0b3c75201cd4ca0cc43d6c3c2f"
+    },
+    {
+      "bytes": 1054,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/administrative-controls-audit.json",
+      "sha256": "75f40cc7e7f1bbcfa64892e04c19e730c7d39eeea122876a351bac54ec42b402"
+    },
+    {
+      "bytes": 2315,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/collection-profile-v02-review.json",
+      "sha256": "8ee5a6b679fded72fb5a3da65c0c35069a8d0ce5c9aff778a8de2679ba04d061"
+    },
+    {
+      "bytes": 7974,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/final-documentation-review.json",
+      "sha256": "5e6bb2aae35e355ff6304d9141b108fd8ec6efd459b79b341868a70738c5d621"
+    },
+    {
+      "bytes": 6076,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/independent-collection-profile-v02-review.json",
+      "sha256": "572431519124efd481e5ab06ac1a32e4e4a36539cad94e2554ad80b74d18a7f7"
+    },
+    {
+      "bytes": 8143,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/independent-source-review.json",
+      "sha256": "0eebeabb85e9671edcb2ce7b735eb544fa4f8d5f879670b1e68567aafab7a715"
+    },
+    {
+      "bytes": 15001,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/native-qualification-independent-audit.json",
+      "sha256": "1727c9f991cfb719a975402fd4d2f88f6f1c1936a95e50c6d50e29837e81c187"
+    },
+    {
+      "bytes": 7802,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/parallel-main-integration-review.json",
+      "sha256": "1cbbc27e125da013b41bebe756e06d015d54686ac9ca6de8ca3497e81e94091e"
+    },
+    {
+      "bytes": 4161,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/publication-integration-audit.json",
+      "sha256": "b466a242fa28fa8dea2eb708690476627a0fc5c87bd9fb80450f0034de507e84"
+    },
+    {
+      "bytes": 870,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/qualification-driver-reuse.json",
+      "sha256": "77fd41878921edd6ce916990550b0c0c37f194327913245d2e6a821dc247965c"
+    },
+    {
+      "bytes": 58991,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/qualification-request-01.json",
+      "sha256": "503a5c79e0ae0dbf1806484b0d0f5e49e0c086308cca61a694cd02f832115d79"
+    },
+    {
+      "bytes": 58999,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/qualification-request-02.json",
+      "sha256": "ae07b1da724f4affe5989e9998266a5f76fae8a58fe62671491788e85a027380"
+    },
+    {
+      "bytes": 4229,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/qualification01-failure-recovery-audit.json",
+      "sha256": "0fbac04863d87fcdbe98a5eddde51df2dab0cb25193301beb295c3a03b61f06d"
+    },
+    {
+      "bytes": 5385,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/recover_own_failed_qualification01_v01.py",
+      "sha256": "5e0d0c1ce0882d499dbb52d11fe251e4d700b6743c3215d0f901df4045312872"
+    },
+    {
+      "bytes": 3347,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/recovery-script-reuse-review.json",
+      "sha256": "5726004808336179c9e8535b050a2cbb1bb8a90bc7649ea85cd8b5ded76160d9"
+    },
+    {
+      "bytes": 2718,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/run_original_validation.py",
+      "sha256": "eb7ea9e63a8acab96527c3637a5f959c8f6355150dfff17f7b17820646203825"
+    },
+    {
+      "bytes": 28529,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/run_qualification.py",
+      "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+    },
+    {
+      "bytes": 28602,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/run_qualification_v02.py",
+      "sha256": "9bf383fabeccda352496b2a9dd4bbcdfcaaa8861b5bed2f440721d538af6b266"
+    },
+    {
+      "bytes": 11574,
+      "path": "docs/autoencoders/legal_ir_asset_reconciliation_20261016.md",
+      "sha256": "cbe6857dcf9502401aacfd0799b76a31cbbce3803d0ea3bd892e524c423f6f4c"
+    },
+    {
+      "bytes": 40230,
+      "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "sha256": "80fcffa00252dfde901e0373d240e63702d3e536dc7f11fb0e7d67d180205ca1"
+    },
+    {
+      "bytes": 101834,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "6bde854e0b07e7b0516ce3681bb903272e0cf794d94dbf98829531b83ef2e9ee"
+    },
+    {
+      "bytes": 12380,
+      "path": "docs/autoencoders/legal_relational_decoder_target_contract_v1.md",
+      "sha256": "c7b7c17c130605cc54de1c7417bdbf90fa1c9d57ae52d75e416d35fcbf19cdea"
+    },
+    {
+      "bytes": 9608,
+      "path": "docs/autoencoders/legal_relational_reconstruction_v1.md",
+      "sha256": "82761628cc91c3bc8632fbed07ca3bd1796e367e264ec0ee05d14b99c1e0b14f"
+    },
+    {
+      "bytes": 22837,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_decoder_example_v1.py",
+      "sha256": "4aed1fde35efce9cdd6579be83be6901143003e996611850f6b35f0cce3f705c"
+    },
+    {
+      "bytes": 23864,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_target_codec_v1.py",
+      "sha256": "66c2f4fb4280add56913d7629ad80b91c581aae54b2f832fa359f412d9d7bdf5"
+    },
+    {
+      "bytes": 16863,
+      "path": "tests/unit/logic/autoformal/test_legal_relational_decoder_example_v1.py",
+      "sha256": "e8327895dc0ac315168f3e8b40a962cf00617a0063db95e937d1f7a6637254d8"
+    },
+    {
+      "bytes": 14223,
+      "path": "tests/unit/logic/autoformal/test_legal_relational_target_codec_v1.py",
+      "sha256": "b7ae2900e5e8397c4773bf1316febf18c5e0abac165739abbc503fc06b1b1433"
+    }
+  ],
+  "integration_commit_before_this_inventory": "47867d6cbcd381293e2e5d9249252de147a16e2a",
+  "inventory_excludes_itself": true,
+  "private_payload_and_operational_id_captures_included": false,
+  "schema": "legal-relational-target-publication-inventory/v1",
+  "scope": "Own target/example increment and the newly integrated parallel span/graph/Lean documentation; hashes describe current file bodies.",
+  "standalone_replay_bundle": false
+}
