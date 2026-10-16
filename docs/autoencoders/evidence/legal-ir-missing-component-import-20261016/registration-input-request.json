@@ -1,0 +1,247 @@
+{
+  "accelerate_head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+  "accelerate_root": "/home/barberb/lift_coding/external/ipfs_accelerate",
+  "authentication_pin": {
+    "bytes": 29061,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-component-authentication-20261016-e-05/exports/published-components-authentication.json",
+    "sha256": "c2d0403e2a4990116cc4b9a4d556ff9e9b480db94708fd30b51291073a8f1364"
+  },
+  "custody_pin": {
+    "bytes": 2714,
+    "path": "/home/barberb/lift_coding/artifacts/normative-checkpoint-availability-20261006/registration/custody.py",
+    "sha256": "c3b355c2b3e4743a839a721b61c1d2868fe25c609b8da562a6b302fbe0cb6864"
+  },
+  "datasets_head": "6b8b1346f888adbebbcf1d714e4ad0ab39a02052",
+  "datasets_root": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets",
+  "guard_pin": {
+    "bytes": 35576,
+    "path": "/home/barberb/lift_coding/artifacts/normative-checkpoint-availability-20261006/registration/register_normative_states.py",
+    "sha256": "ba8f50acd731ae42ba1883b1289395fdc108e0ece1045b39f8afd0b785598309"
+  },
+  "output_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-model-manager-runs/legal-ir-missing-components-20261016-b-02/exports",
+  "plan_pin": {
+    "bytes": 29929,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/model-manager-import-plan.json",
+    "sha256": "b5d027bd36d455688eb9ec04fd92279f9d2732deaf776d443f6e917805b9846b"
+  },
+  "release_receipt_pins": [
+    {
+      "bytes": 3701,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-component-authentication-20261016-e-05/exports/f15-hub-publication-receipt.json",
+      "sha256": "5dd438403c1c73751ef39ffeb91b319d8e90fb028b26b6026822e52748e95489"
+    },
+    {
+      "bytes": 3557,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-component-authentication-20261016-e-05/exports/f17-hub-publication-receipt.json",
+      "sha256": "8f6fe5ec8cb19bb5da8984d4b3a08f18a685521cbaa6b14677779212999fb679"
+    },
+    {
+      "bytes": 3876,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-component-authentication-20261016-e-05/exports/f18-hub-publication-receipt.json",
+      "sha256": "dd324bf97b3280af1fa73bbd75b5cff7f9f45666703e05246486187822c22449"
+    }
+  ],
+  "resource_scope_pin": {
+    "bytes": 30235,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_resource_scope.py",
+    "sha256": "704f6a37e8eaae4aec9064fa24123a48a41b162ac597d80d0ada1b087b74a8f5"
+  },
+  "review_pin": {
+    "bytes": 12402,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-driver-review.json",
+    "sha256": "9aa7ffb1e6b5fb081940c382952d7980aa576e6e1d67901c51322f2b8dc83ccd"
+  },
+  "schema": "legal-ir-missing-component-registration-request/v1",
+  "source_owners": [
+    {
+      "head": "6b8b1346f888adbebbcf1d714e4ad0ab39a02052",
+      "pin": {
+        "bytes": 29300,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py",
+        "sha256": "5d50f879d6e1e80fc68a29060680fcac9e234f62a3732f7c697f31360ca9506b"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 40208,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/__init__.py",
+        "sha256": "5083369f823be18cd467346f6f3b955925ec65bedafe9eb28a61ca8897997c03"
+      },
+      "relative_path": "ipfs_accelerate_py/__init__.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 176248,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_manager.py",
+        "sha256": "cd65b2e91c05a603ad984ddcef0e2967b90362f90ee212c1849f9e5bc81631d4"
+      },
+      "relative_path": "ipfs_accelerate_py/model_manager.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 1596,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/__init__.py",
+        "sha256": "ecd4d6099e267ee2b65284691a298285f44d5443da4a1142e8bb260ae530ffd0"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/__init__.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 26636,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/cache.py",
+        "sha256": "c8ae37197dad0db6e3e3a6788cb05b53bd20bc515206316138a18ada46af9534"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/cache.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 40317,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/catalog.py",
+        "sha256": "badb30612917fa7f71deb036b2b1f0cf710161de11af61f02e4b07189f6397a5"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/catalog.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 20160,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/events.py",
+        "sha256": "a5839de4c2e76fcba58be4060a549dd38492396874dc2d7c28fce310af386365"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/events.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 8918,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/identity.py",
+        "sha256": "fbaf013ad8dd3035cfe04e9bfbb841aa72f8581ed04eb6a543abcd3d579caf44"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/identity.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 27067,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/receipts.py",
+        "sha256": "3a956d2b9d2c35793a615ae0fb3e5a2f2709a489114624f974827c406facc487"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/receipts.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 30232,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/registry.py",
+        "sha256": "2ba8aae587f5838016da8a71370b84e5b50b1985cd49c95682b02a8189e55284"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/registry.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 27779,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/resolver.py",
+        "sha256": "17bfcbfdfc029ccca6458a3c11ae5bc2418c3dfc7ba423a942930edc6c8407a5"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/resolver.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 36178,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/schema.py",
+        "sha256": "e1fa8ec5f8e9f856f626b40aa896df0bde490055978bddea0e4b8a9885b89f49"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/schema.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 30098,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/security.py",
+        "sha256": "93a5b4dc3e6b1d119fcdc8af48d81f881ef1a89401dc21d1e2fe1253d64c9d0d"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/security.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 11886,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/snapshot.py",
+        "sha256": "c17817f2c770103677e0a2880b8355d134df4c533590fd4824cf283ba4c4ef6a"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/snapshot.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 1043,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/__init__.py",
+        "sha256": "b771d4d00b5cf8f167e9bb7aa3951e25a8d5a225b78b0e872c1a21eabf5672f4"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/sources/__init__.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 47700,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/deployments.py",
+        "sha256": "31272b5b22b3c7a6a9934a338fc45d0587015deeeedc24d74959626fea665d2c"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/sources/deployments.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 19952,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/ir_persistent.py",
+        "sha256": "2cfdb2ad61c9bb1f2fe1c64cf6c70ca45c932d0ec53ccdd08640600d5730beed"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/sources/ir_persistent.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 27224,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/peers.py",
+        "sha256": "eebce1b7b560f7ee6e3dbaefdf00222234c7e02820dcd328570d3eec41eaa773"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/sources/peers.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 3331,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/persistent.py",
+        "sha256": "be262df4374f2fdcb08e8e517b7e05570bc524e94d79bcb47201bedff12edfa8"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/sources/persistent.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 7333,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/routers.py",
+        "sha256": "6cf638e7076b078a648dcbea288279db3763e735f5e772193bf40f9340fee5da"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/sources/routers.py"
+    },
+    {
+      "head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "pin": {
+        "bytes": 37159,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/static.py",
+        "sha256": "4f9b658aecc00820e2d87866445f298c248e6d9a39161b1499a884f6451281cf"
+      },
+      "relative_path": "ipfs_accelerate_py/model_catalog/sources/static.py"
+    }
+  ],
+  "store_path": "/home/barberb/lift_coding/external/ipfs_accelerate/model_manager.duckdb"
+}

@@ -1,0 +1,810 @@
+{
+  "all_closing_witnesses_unchanged": true,
+  "all_six_payloads_opaque_sha256_verified": true,
+  "authority": {
+    "inference_executed": false,
+    "model_loaded": false,
+    "network_verified_current": false,
+    "proof_authority": false,
+    "runtime_admitted": false,
+    "teacher_qualified": false,
+    "training_executed": false
+  },
+  "checkpoint_tensor_json_parsed": false,
+  "completed": true,
+  "components": [
+    {
+      "checkpoint_pin": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      },
+      "checkpoint_serialization_schema": "bounded-actor-refinement-adapter-checkpoint/v1",
+      "configured_latent_dimension": 384,
+      "label": "F15",
+      "latent_conditioning_enabled": false,
+      "loader_source_pin": {
+        "bytes": 56952,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+        "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+      },
+      "publication_receipt_pin": {
+        "bytes": 3701,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-component-authentication-20261016-e-05/exports/f15-hub-publication-receipt.json",
+        "sha256": "5dd438403c1c73751ef39ffeb91b319d8e90fb028b26b6026822e52748e95489"
+      },
+      "release": {
+        "checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+        "path_in_repo": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4"
+      },
+      "serialization_schema_scope": "Expected by the original pinned loader source; current tensor JSON intentionally not parsed.",
+      "source_parent_checkpoint": {
+        "bytes": 9337558,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-checkpoint.json",
+        "sha256": "34080a8ad491e5a351aeea0adfc6f3e29e76d0ae93c1f8a8cee3ebf536a7b9fd"
+      },
+      "source_parent_model_state_sha256": "b3b6fdb2eeb7653265930660d3a4eaae7b1a93db22b09e71a2276367c1b156a9",
+      "verified_download_pin": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-verified-download-v02/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      }
+    },
+    {
+      "checkpoint_pin": {
+        "bytes": 20467217,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/joint-readout-retention-20261014-joint-readout-retention-hinge-01/results/cell-checkpoint.json",
+        "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+      },
+      "checkpoint_serialization_schema": "bounded-joint-readout-retention-adapter-checkpoint/v1",
+      "configured_latent_dimension": 384,
+      "label": "F17",
+      "latent_conditioning_enabled": false,
+      "loader_source_pin": {
+        "bytes": 80912,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+        "sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502"
+      },
+      "publication_receipt_pin": {
+        "bytes": 3557,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-component-authentication-20261016-e-05/exports/f17-hub-publication-receipt.json",
+        "sha256": "8f6fe5ec8cb19bb5da8984d4b3a08f18a685521cbaa6b14677779212999fb679"
+      },
+      "release": {
+        "checkpoint_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+        "path_in_repo": "releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "290c266d72b8c298ec21db0f9b0857b008914caf"
+      },
+      "serialization_schema_scope": "Expected by the original pinned loader source; current tensor JSON intentionally not parsed.",
+      "source_parent_checkpoint": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      },
+      "source_parent_model_state_sha256": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42",
+      "verified_download_pin": {
+        "bytes": 20467217,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-verified-download-v01/releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+        "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+      }
+    },
+    {
+      "checkpoint_pin": {
+        "bytes": 21058430,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/modality-conditions-retention-20261014-modality-conditions-retention-ce-01/results/cell-checkpoint.json",
+        "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+      },
+      "checkpoint_serialization_schema": "bounded-modality-conditions-retention-adapter-checkpoint/v1",
+      "configured_latent_dimension": 384,
+      "label": "F18",
+      "latent_conditioning_enabled": false,
+      "loader_source_pin": {
+        "bytes": 83852,
+        "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+        "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+      },
+      "publication_receipt_pin": {
+        "bytes": 3876,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-component-authentication-20261016-e-05/exports/f18-hub-publication-receipt.json",
+        "sha256": "dd324bf97b3280af1fa73bbd75b5cff7f9f45666703e05246486187822c22449"
+      },
+      "release": {
+        "checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+        "path_in_repo": "releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "c9cce4586dd96518088662fb12831173e98e36cc"
+      },
+      "serialization_schema_scope": "Expected by the original pinned loader source; current tensor JSON intentionally not parsed.",
+      "source_parent_checkpoint": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      },
+      "source_parent_model_state_sha256": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42",
+      "verified_download_pin": {
+        "bytes": 21058430,
+        "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-verified-download-v01/releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+        "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+      }
+    }
+  ],
+  "custody_source_pin": {
+    "bytes": 2714,
+    "path": "/home/barberb/lift_coding/artifacts/normative-checkpoint-availability-20261006/registration/custody.py",
+    "sha256": "c3b355c2b3e4743a839a721b61c1d2868fe25c609b8da562a6b302fbe0cb6864"
+  },
+  "driver_pin": {
+    "bytes": 21322,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authenticate_published_components.py",
+    "sha256": "4e40833a0ec4bc3d19c64c84f9afcee60472948527917ad72da006f324501691"
+  },
+  "file_witnesses": [
+    {
+      "closing_witness": [
+        66306,
+        98435081,
+        33152,
+        1,
+        56952,
+        1792127707083917038,
+        1792127707083917038
+      ],
+      "opening_witness": [
+        66306,
+        98435081,
+        33152,
+        1,
+        56952,
+        1792127707083917038,
+        1792127707083917038
+      ],
+      "pin": {
+        "bytes": 56952,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+        "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        98481147,
+        33060,
+        1,
+        1520692,
+        1791973815984244133,
+        1791973815988343124
+      ],
+      "opening_witness": [
+        66306,
+        98481147,
+        33060,
+        1,
+        1520692,
+        1791973815984244133,
+        1791973815988343124
+      ],
+      "pin": {
+        "bytes": 1520692,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-final-immutable-independent-v01.json",
+        "sha256": "57911acda7e1aa3cc260ba455c0e56af7d10f08745adb4ac82acd36ce2856890"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        98481178,
+        33060,
+        1,
+        220073,
+        1791974042532772574,
+        1791974042536959295
+      ],
+      "opening_witness": [
+        66306,
+        98481178,
+        33060,
+        1,
+        220073,
+        1791974042532772574,
+        1791974042536959295
+      ],
+      "pin": {
+        "bytes": 220073,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-actual-independent-review-v01.json",
+        "sha256": "3097b700479052acffcc3a601e0cacc376247871b67c01cfac357da5a51fcaab"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        98481145,
+        33060,
+        1,
+        93478,
+        1791973770240125675,
+        1791973770252824970
+      ],
+      "opening_witness": [
+        66306,
+        98481145,
+        33060,
+        1,
+        93478,
+        1791973770240125675,
+        1791973770252824970
+      ],
+      "pin": {
+        "bytes": 93478,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-verification-v02.json",
+        "sha256": "cd28b9794addba489c67efa971b02242a6bf28aa9b475967f4a142ed5709f357"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        98480569,
+        33204,
+        1,
+        12230969,
+        1791973738709469975,
+        1791973738715283608
+      ],
+      "opening_witness": [
+        66306,
+        98480569,
+        33204,
+        1,
+        12230969,
+        1791973738709469975,
+        1791973738715283608
+      ],
+      "pin": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-verified-download-v02/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        98479961,
+        33060,
+        1,
+        89145,
+        1791972734239470799,
+        1791972734243470818
+      ],
+      "opening_witness": [
+        66306,
+        98479961,
+        33060,
+        1,
+        89145,
+        1791972734239470799,
+        1791972734243470818
+      ],
+      "pin": {
+        "bytes": 89145,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/release-manifest-v01.json",
+        "sha256": "115b420d31f48957760a45436fe84a3153376ed9ad51022469166dfbe86315c2"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        107361726,
+        33152,
+        1,
+        21322,
+        1792127537763706930,
+        1792127537763706930
+      ],
+      "opening_witness": [
+        66306,
+        107361726,
+        33152,
+        1,
+        21322,
+        1792127537763706930,
+        1792127537763706930
+      ],
+      "pin": {
+        "bytes": 21322,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authenticate_published_components.py",
+        "sha256": "4e40833a0ec4bc3d19c64c84f9afcee60472948527917ad72da006f324501691"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        107361725,
+        33152,
+        1,
+        13218,
+        1792127537751210082,
+        1792127537751210082
+      ],
+      "opening_witness": [
+        66306,
+        107361725,
+        33152,
+        1,
+        13218,
+        1792127537751210082,
+        1792127537751210082
+      ],
+      "pin": {
+        "bytes": 13218,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/publication-provenance.json",
+        "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        99483655,
+        33152,
+        1,
+        80912,
+        1792127707114743503,
+        1792127707114743503
+      ],
+      "opening_witness": [
+        66306,
+        99483655,
+        33152,
+        1,
+        80912,
+        1792127707114743503,
+        1792127707114743503
+      ],
+      "pin": {
+        "bytes": 80912,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+        "sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        99534633,
+        33060,
+        1,
+        456653,
+        1792005766896119454,
+        1792005766900119537
+      ],
+      "opening_witness": [
+        66306,
+        99534633,
+        33060,
+        1,
+        456653,
+        1792005766896119454,
+        1792005766900119537
+      ],
+      "pin": {
+        "bytes": 456653,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-publication-completion-independent-review-v01.json",
+        "sha256": "b7ffabdd4e91faa2678fc577b493104454c7109686cedb9b3a59a28479670833"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        99534623,
+        33060,
+        1,
+        3296177,
+        1792005390431280650,
+        1792005390438701119
+      ],
+      "opening_witness": [
+        66306,
+        99534623,
+        33060,
+        1,
+        3296177,
+        1792005390431280650,
+        1792005390438701119
+      ],
+      "pin": {
+        "bytes": 3296177,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-publication-verification-v01.json",
+        "sha256": "316295ee4d1461b62ce292cd1a7004cae50e015bb8c229716d4384158536a652"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        101233229,
+        33152,
+        1,
+        20467217,
+        1792005342987524322,
+        1792005342994927084
+      ],
+      "opening_witness": [
+        66306,
+        101233229,
+        33152,
+        1,
+        20467217,
+        1792005342987524322,
+        1792005342994927084
+      ],
+      "pin": {
+        "bytes": 20467217,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-verified-download-v01/releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+        "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        99534581,
+        33060,
+        1,
+        109306,
+        1792004954352498193,
+        1792004954356363276
+      ],
+      "opening_witness": [
+        66306,
+        99534581,
+        33060,
+        1,
+        109306,
+        1792004954352498193,
+        1792004954356363276
+      ],
+      "pin": {
+        "bytes": 109306,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/release-manifest-v01.json",
+        "sha256": "532a706486d03333fc97bf4d9d6d814f2408d6d65f87ec78b2e4da72c05980ba"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        102105093,
+        33152,
+        1,
+        83852,
+        1792127707158536389,
+        1792127707158536389
+      ],
+      "opening_witness": [
+        66306,
+        102105093,
+        33152,
+        1,
+        83852,
+        1792127707158536389,
+        1792127707158536389
+      ],
+      "pin": {
+        "bytes": 83852,
+        "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+        "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        102158270,
+        33060,
+        1,
+        77425,
+        1792034037080524249,
+        1792034037083919740
+      ],
+      "opening_witness": [
+        66306,
+        102158270,
+        33060,
+        1,
+        77425,
+        1792034037080524249,
+        1792034037083919740
+      ],
+      "pin": {
+        "bytes": 77425,
+        "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-completion-independent-review-v01.json",
+        "sha256": "1ade89eda52fe2424bdf1944497d8787b6cbcadad76a77f09302491bb81b2d40"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        102158267,
+        33060,
+        1,
+        3533809,
+        1792033885173852614,
+        1792033885177830340
+      ],
+      "opening_witness": [
+        66306,
+        102158267,
+        33060,
+        1,
+        3533809,
+        1792033885173852614,
+        1792033885177830340
+      ],
+      "pin": {
+        "bytes": 3533809,
+        "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-verification-v02.json",
+        "sha256": "64ab8d2d395d067285c35b0cc437c113351f23c358335df58b8f9d6c7a155f41"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        103163973,
+        33204,
+        1,
+        21058430,
+        1792033788891325185,
+        1792033788972297045
+      ],
+      "opening_witness": [
+        66306,
+        103163973,
+        33204,
+        1,
+        21058430,
+        1792033788891325185,
+        1792033788972297045
+      ],
+      "pin": {
+        "bytes": 21058430,
+        "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-verified-download-v01/releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+        "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        102157896,
+        33060,
+        1,
+        98083,
+        1792025415947120535,
+        1792025415958527198
+      ],
+      "opening_witness": [
+        66306,
+        102157896,
+        33060,
+        1,
+        98083,
+        1792025415947120535,
+        1792025415958527198
+      ],
+      "pin": {
+        "bytes": 98083,
+        "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-plan-v01.json",
+        "sha256": "7b797b0d68903b411de4e46a8f4ba99772f1ef5390356e480b6777bdac4f4e59"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        102158051,
+        33060,
+        1,
+        204043,
+        1792029203102793170,
+        1792029203106793220
+      ],
+      "opening_witness": [
+        66306,
+        102158051,
+        33060,
+        1,
+        204043,
+        1792029203102793170,
+        1792029203106793220
+      ],
+      "pin": {
+        "bytes": 204043,
+        "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/release-manifest-v01.json",
+        "sha256": "37c1305837c11fef6dd95eba5fbef17344a8443e39bad92def1a4418e78993b2"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        66492722,
+        33204,
+        1,
+        2714,
+        1791300355032424263,
+        1791300355032424263
+      ],
+      "opening_witness": [
+        66306,
+        66492722,
+        33204,
+        1,
+        2714,
+        1791300355032424263,
+        1791300355032424263
+      ],
+      "pin": {
+        "bytes": 2714,
+        "path": "/home/barberb/lift_coding/artifacts/normative-checkpoint-availability-20261006/registration/custody.py",
+        "sha256": "c3b355c2b3e4743a839a721b61c1d2868fe25c609b8da562a6b302fbe0cb6864"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        74317958,
+        33060,
+        1,
+        12230969,
+        1791971556534258163,
+        1791971815954996945
+      ],
+      "opening_witness": [
+        66306,
+        74317958,
+        33060,
+        1,
+        12230969,
+        1791971556534258163,
+        1791971815954996945
+      ],
+      "pin": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        74318115,
+        33060,
+        1,
+        20467217,
+        1792001306927529767,
+        1792004384003880837
+      ],
+      "opening_witness": [
+        66306,
+        74318115,
+        33060,
+        1,
+        20467217,
+        1792001306927529767,
+        1792004384003880837
+      ],
+      "pin": {
+        "bytes": 20467217,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/joint-readout-retention-20261014-joint-readout-retention-hinge-01/results/cell-checkpoint.json",
+        "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+      }
+    },
+    {
+      "closing_witness": [
+        66306,
+        74318194,
+        33060,
+        1,
+        21058430,
+        1792025704210936078,
+        1792025832296358894
+      ],
+      "opening_witness": [
+        66306,
+        74318194,
+        33060,
+        1,
+        21058430,
+        1792025704210936078,
+        1792025832296358894
+      ],
+      "pin": {
+        "bytes": 21058430,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/modality-conditions-retention-20261014-modality-conditions-retention-ce-01/results/cell-checkpoint.json",
+        "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+      }
+    }
+  ],
+  "method": "historical-receipt-derivation",
+  "model_restored": false,
+  "opaque_checkpoint_bytes": 107513232,
+  "opaque_checkpoint_files": 6,
+  "provenance_pin": {
+    "bytes": 13218,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/publication-provenance.json",
+    "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+  },
+  "schema": "legal-ir-missing-source-components-authentication/v1",
+  "scope": "Three retained source-token components only. No live ModelManager import, model/runtime qualification, current Hub refresh, semantic review, teacher promotion, training or Lean. Parent checkpoints are metadata references, not newly authenticated bodies.",
+  "source_and_metadata_pins": [
+    {
+      "bytes": 21322,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authenticate_published_components.py",
+      "sha256": "4e40833a0ec4bc3d19c64c84f9afcee60472948527917ad72da006f324501691"
+    },
+    {
+      "bytes": 1520692,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-final-immutable-independent-v01.json",
+      "sha256": "57911acda7e1aa3cc260ba455c0e56af7d10f08745adb4ac82acd36ce2856890"
+    },
+    {
+      "bytes": 220073,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-actual-independent-review-v01.json",
+      "sha256": "3097b700479052acffcc3a601e0cacc376247871b67c01cfac357da5a51fcaab"
+    },
+    {
+      "bytes": 89145,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/release-manifest-v01.json",
+      "sha256": "115b420d31f48957760a45436fe84a3153376ed9ad51022469166dfbe86315c2"
+    },
+    {
+      "bytes": 93478,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-verification-v02.json",
+      "sha256": "cd28b9794addba489c67efa971b02242a6bf28aa9b475967f4a142ed5709f357"
+    },
+    {
+      "bytes": 56952,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+      "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+    },
+    {
+      "bytes": 456653,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-publication-completion-independent-review-v01.json",
+      "sha256": "b7ffabdd4e91faa2678fc577b493104454c7109686cedb9b3a59a28479670833"
+    },
+    {
+      "bytes": 109306,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/release-manifest-v01.json",
+      "sha256": "532a706486d03333fc97bf4d9d6d814f2408d6d65f87ec78b2e4da72c05980ba"
+    },
+    {
+      "bytes": 3296177,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-publication-verification-v01.json",
+      "sha256": "316295ee4d1461b62ce292cd1a7004cae50e015bb8c229716d4384158536a652"
+    },
+    {
+      "bytes": 80912,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+      "sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502"
+    },
+    {
+      "bytes": 77425,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-completion-independent-review-v01.json",
+      "sha256": "1ade89eda52fe2424bdf1944497d8787b6cbcadad76a77f09302491bb81b2d40"
+    },
+    {
+      "bytes": 204043,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/release-manifest-v01.json",
+      "sha256": "37c1305837c11fef6dd95eba5fbef17344a8443e39bad92def1a4418e78993b2"
+    },
+    {
+      "bytes": 98083,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-plan-v01.json",
+      "sha256": "7b797b0d68903b411de4e46a8f4ba99772f1ef5390356e480b6777bdac4f4e59"
+    },
+    {
+      "bytes": 3533809,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-verification-v02.json",
+      "sha256": "64ab8d2d395d067285c35b0cc437c113351f23c358335df58b8f9d6c7a155f41"
+    },
+    {
+      "bytes": 83852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+    }
+  ],
+  "status": "pass"
+}

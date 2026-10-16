@@ -1,0 +1,259 @@
+{
+  "authentication": {
+    "all23_current_stat_witnesses_match_native_opening_and_closing": true,
+    "authority": {
+      "inference_executed": false,
+      "model_loaded": false,
+      "network_verified_current": false,
+      "proof_authority": false,
+      "runtime_admitted": false,
+      "teacher_qualified": false,
+      "training_executed": false
+    },
+    "checkpoint_body_hashes_repeated_by_this_audit": 0,
+    "classification_scope": "Detached dimensionNone/source_tokens components; configured384 and latentFalse do not establish a384D embedding/latent lane or8D/768D transfer qualification.",
+    "components": [
+      {
+        "checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+        "configured_latent_dimension": 384,
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "immutable_historical_LFS_manifest_and_review_joins_verified": true,
+        "label": "F15",
+        "latent_conditioning_enabled": false,
+        "loader_source_sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e",
+        "opaque_bytes_per_original_or_readback": 12230969,
+        "original_and_distinct_readback_commitments_match": true,
+        "parent_checkpoint_body_authenticated": false,
+        "path_in_repo": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+        "reported_loader_schema": "bounded-actor-refinement-adapter-checkpoint/v1",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4"
+      },
+      {
+        "checkpoint_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+        "configured_latent_dimension": 384,
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "immutable_historical_LFS_manifest_and_review_joins_verified": true,
+        "label": "F17",
+        "latent_conditioning_enabled": false,
+        "loader_source_sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502",
+        "opaque_bytes_per_original_or_readback": 20467217,
+        "original_and_distinct_readback_commitments_match": true,
+        "parent_checkpoint_body_authenticated": false,
+        "path_in_repo": "releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+        "reported_loader_schema": "bounded-joint-readout-retention-adapter-checkpoint/v1",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "290c266d72b8c298ec21db0f9b0857b008914caf"
+      },
+      {
+        "checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+        "configured_latent_dimension": 384,
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "immutable_historical_LFS_manifest_and_review_joins_verified": true,
+        "label": "F18",
+        "latent_conditioning_enabled": false,
+        "loader_source_sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823",
+        "opaque_bytes_per_original_or_readback": 21058430,
+        "original_and_distinct_readback_commitments_match": true,
+        "parent_checkpoint_body_authenticated": false,
+        "path_in_repo": "releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+        "reported_loader_schema": "bounded-modality-conditions-retention-adapter-checkpoint/v1",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "c9cce4586dd96518088662fb12831173e98e36cc"
+      }
+    ],
+    "current_Hub_refresh_or_new_publication": false,
+    "metadata_source_pin_count": 15,
+    "models_registered_by_this_stage": false,
+    "models_restored": false,
+    "native_opaque_SHA_verification_recorded": true,
+    "opaque_original_and_readback_bytes": 107513232,
+    "opaque_original_and_readback_files": 6,
+    "serialization_scope": "Schema reported by pinned original loader; tensor JSON was not parsed. Parent checkpoints remain metadata references, not newly authenticated bodies.",
+    "source_and_historical_metadata_hashes_independently_checked": true,
+    "status": "pass",
+    "tensor_JSON_parsed": false
+  },
+  "authentication_driver_pin": {
+    "bytes": 21322,
+    "path": "authenticate_published_components.py",
+    "sha256": "4e40833a0ec4bc3d19c64c84f9afcee60472948527917ad72da006f324501691"
+  },
+  "independence": {
+    "authored_authentication_driver": false,
+    "authored_prior_storage_inventories": true,
+    "authored_publication_provenance": false,
+    "executed_native_authentication": false,
+    "storage_input_authorship_is_separate_from_this_stage": true
+  },
+  "limits": [
+    "Native opaque-hash results are independently joined as retained evidence, without repeating checkpoint-body hashing outside the completed grant.",
+    "Original historical immutable publication evidence is reused; no current HTTP claim or new publication.",
+    "No live ModelManager import, model/runtime/teacher qualification, training, semantic review or Lean admission.",
+    "No raw reservation IDs, PIDs, lease IDs or private ledger rows are published."
+  ],
+  "method": "Read-only stdlib audit of actual native closeout, six-field result, execution/durability manifests,9 retained metadata files,30 current source hashes,15 metadata/source pins,23 current stat witnesses, original immutable LFS/manifest/review/loader/parent joins, and current exact released ledger/absent lease/process-group observations. No product imports, DB operations, model loads or checkpoint-body hashes by this audit.",
+  "native_artifact_pins": [
+    {
+      "bytes": 3693,
+      "native_relative_path": "exports/f15-hub-publication-receipt.json",
+      "raw_contains_private_native_identifier": false,
+      "sha256": "fff7629d5722236997de6cce06a406d7a7b8f54468b9c8cbbff4c4e9c9a577db"
+    },
+    {
+      "bytes": 3549,
+      "native_relative_path": "exports/f17-hub-publication-receipt.json",
+      "raw_contains_private_native_identifier": false,
+      "sha256": "3f3887c2d727c1b1461d867a9ac5f2621effedf5d86ef882d4569ba52f97198c"
+    },
+    {
+      "bytes": 3868,
+      "native_relative_path": "exports/f18-hub-publication-receipt.json",
+      "raw_contains_private_native_identifier": false,
+      "sha256": "20771f6b3b7286afbc7b3c1ed29c0cb748d6ae7c7990c62e4cab465281183d78"
+    },
+    {
+      "bytes": 29021,
+      "native_relative_path": "exports/published-components-authentication.json",
+      "raw_contains_private_native_identifier": false,
+      "sha256": "95dc9da243d07bc83ff31f178f26d60d277405830d75b45054203c04cb1ecdc4"
+    },
+    {
+      "bytes": 615,
+      "native_relative_path": "logs/execution.json",
+      "raw_contains_private_native_identifier": false,
+      "sha256": "ffc22c163feba9f7df1fd6040bb7e31bf88aa68ea1741655ec2a1646bedfb5f6"
+    },
+    {
+      "bytes": 599,
+      "native_relative_path": "logs/result.json",
+      "raw_contains_private_native_identifier": false,
+      "sha256": "6ad42a9d9d6c2490a287e209587cc14c8ae799f6544ccb846e60dd56f431495c"
+    },
+    {
+      "bytes": 0,
+      "native_relative_path": "logs/stderr.log",
+      "raw_contains_private_native_identifier": false,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 0,
+      "native_relative_path": "logs/stdout.log",
+      "raw_contains_private_native_identifier": false,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1722,
+      "native_relative_path": "logs/validation-durability.json",
+      "raw_contains_private_native_identifier": true,
+      "sha256": "1eb0e1e1a9c16f04c7de0b2d70bdba0acaef611eda6cc683c5383d1500053b55"
+    }
+  ],
+  "native_outcome": {
+    "arbitrary_descendant_containment_claimed": false,
+    "artifacts_durable_asserted": true,
+    "attempt_exceeded_reservation": false,
+    "child_process_slots": 1,
+    "cleanup_error": null,
+    "complete_file_bytes": 43067,
+    "complete_files": 9,
+    "controller_returncode": 0,
+    "controller_seconds": 54.67762513202615,
+    "cpu_slots": 1,
+    "current_exact_released_ledger_record_matches": true,
+    "current_recorded_live_group_members": 0,
+    "durability_receipts": 1,
+    "exact_six_field_result_completed": true,
+    "execution_seconds": 38.30459838407114,
+    "final_admitted_false_is_no_authority_not_gate_failure": true,
+    "final_admitted_flag": false,
+    "final_attempt_bytes": 43067,
+    "final_external_charged_bytes": 0,
+    "memory_mb": 2048,
+    "native_final_live_group_members": 0,
+    "native_lease_cancelled": true,
+    "native_lease_currently_absent": true,
+    "native_lease_released": true,
+    "original_owner_PID_and_birth_joined_privately": true,
+    "original_owner_PID_currently_absent": true,
+    "recorded_child_groups": 1,
+    "recorded_group_leaders_currently_absent": true,
+    "reservation_status": "released",
+    "reserved_storage_bytes": 67108864,
+    "sealed_files": 8,
+    "selected_checks_completed": 3
+  },
+  "observed_at_utc": "2026-10-16T04:29:31.481203+00:00",
+  "private_controller_evidence": {
+    "raw_contents_published_by_this_audit": false,
+    "result": {
+      "bytes": 701,
+      "path": "authentication-launch-04/result.json",
+      "sha256": "289310c2c28d1b689bd2debf4772c5e55ec6619dcf895d4114687ef071e7610e"
+    },
+    "stderr": {
+      "bytes": 0,
+      "path": "authentication-launch-04/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout": {
+      "bytes": 5459,
+      "path": "authentication-launch-04/stdout.txt",
+      "sha256": "7eecf13c87010baf1eb294b5858fe6eea6ff62fabfaafc1e73ad2ff9295846cd"
+    }
+  },
+  "provenance_pin": {
+    "bytes": 13218,
+    "path": "publication-provenance.json",
+    "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+  },
+  "public_export_copy_pins": [
+    {
+      "bytes": 29021,
+      "native_relative_path": "exports/published-components-authentication.json",
+      "public_copy_byte_identical": true,
+      "public_phase_path": "published-components-authentication.json",
+      "sha256": "95dc9da243d07bc83ff31f178f26d60d277405830d75b45054203c04cb1ecdc4"
+    },
+    {
+      "bytes": 3693,
+      "native_relative_path": "exports/f15-hub-publication-receipt.json",
+      "public_copy_byte_identical": true,
+      "public_phase_path": "f15-hub-publication-receipt.json",
+      "sha256": "fff7629d5722236997de6cce06a406d7a7b8f54468b9c8cbbff4c4e9c9a577db"
+    },
+    {
+      "bytes": 3549,
+      "native_relative_path": "exports/f17-hub-publication-receipt.json",
+      "public_copy_byte_identical": true,
+      "public_phase_path": "f17-hub-publication-receipt.json",
+      "sha256": "3f3887c2d727c1b1461d867a9ac5f2621effedf5d86ef882d4569ba52f97198c"
+    },
+    {
+      "bytes": 3868,
+      "native_relative_path": "exports/f18-hub-publication-receipt.json",
+      "public_copy_byte_identical": true,
+      "public_phase_path": "f18-hub-publication-receipt.json",
+      "sha256": "20771f6b3b7286afbc7b3c1ed29c0cb748d6ae7c7990c62e4cab465281183d78"
+    }
+  ],
+  "request": {
+    "all_current_source_hashes_match": true,
+    "bytes": 9558,
+    "public_phase_path": "authentication-validation-request-04.json",
+    "scheduler_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+    "selected_checks": [
+      "six_opaque_original_and_immutable_readback_hashes",
+      "historical_publication_loader_and_parent_metadata_joins",
+      "complete_source_input_closing_fences_and_derived_receipts"
+    ],
+    "sha256": "57c9b8e3760e317f3491cd513ada25c5a48fddcfa38c7077dfb85fd07aaa6352",
+    "source_map_sha256": "e948a3bbc9731a99297e2ac435a605c91fd89c768d0c788abdbd626de7159b74",
+    "source_pin_count": 30
+  },
+  "schema": "legal-ir-native-component-authentication-independent-audit/v1",
+  "status": "pass"
+}

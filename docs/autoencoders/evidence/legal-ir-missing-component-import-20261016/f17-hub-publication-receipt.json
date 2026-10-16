@@ -1,0 +1,74 @@
+{
+  "authority": {
+    "inference_executed": false,
+    "model_loaded": false,
+    "network_verified_current": false,
+    "proof_authority": false,
+    "runtime_admitted": false,
+    "teacher_qualified": false,
+    "training_executed": false
+  },
+  "checkpoint_tensor_json_parsed": false,
+  "files": [
+    {
+      "bytes": 20467217,
+      "file_pin": {
+        "bytes": 20467217,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-verified-download-v01/releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+        "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+      },
+      "path_in_repo": "releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+      "remote_identity": {
+        "bytes": 20467217,
+        "scheme": "lfs-payload-sha256",
+        "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+      },
+      "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+      "verified": true
+    }
+  ],
+  "files_verified": true,
+  "historical_metadata_pins": {
+    "immutable_snapshot": null,
+    "independent_review": {
+      "bytes": 456653,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-publication-completion-independent-review-v01.json",
+      "sha256": "b7ffabdd4e91faa2678fc577b493104454c7109686cedb9b3a59a28479670833"
+    },
+    "release_manifest": {
+      "bytes": 109306,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/release-manifest-v01.json",
+      "sha256": "532a706486d03333fc97bf4d9d6d814f2408d6d65f87ec78b2e4da72c05980ba"
+    },
+    "training_plan": null,
+    "verification": {
+      "bytes": 3296177,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-publication-verification-v01.json",
+      "sha256": "316295ee4d1461b62ce292cd1a7004cae50e015bb8c229716d4384158536a652"
+    }
+  },
+  "manifest_pin": {
+    "bytes": 109306,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/release-manifest-v01.json",
+    "sha256": "532a706486d03333fc97bf4d9d6d814f2408d6d65f87ec78b2e4da72c05980ba"
+  },
+  "method": "historical-receipt-derivation",
+  "model_restored": false,
+  "network_verified_current": false,
+  "original_checkpoint_pin": {
+    "bytes": 20467217,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/joint-readout-retention-20261014-joint-readout-retention-hinge-01/results/cell-checkpoint.json",
+    "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+  },
+  "provenance_pin": {
+    "bytes": 13218,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/publication-provenance.json",
+    "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+  },
+  "publisher_invoked": false,
+  "repository_id": "Publicus/legal-ir-autoencoder",
+  "repository_supplied_python_executed": false,
+  "revision": "290c266d72b8c298ec21db0f9b0857b008914caf",
+  "schema": "ir-model-hub-publication-receipt/v1",
+  "verification_scope": "Current opaque original/readback SHA and length, joined to independently pinned historical immutable LFS/publication records; no current HTTP or publisher call."
+}

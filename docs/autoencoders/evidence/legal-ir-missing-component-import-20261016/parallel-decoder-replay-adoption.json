@@ -1,0 +1,98 @@
+{
+  "attributed_completed_results": {
+    "correct_source_primary_exact_stored_reference_by_variant": {
+      "aligned_768_initialization": {
+        "matched": 0,
+        "selected": 2
+      },
+      "aligned_start_trained_interfaces": {
+        "matched": 0,
+        "selected": 2
+      },
+      "original_768_initialization": {
+        "matched": 0,
+        "selected": 2
+      },
+      "original_donors": {
+        "matched": 0,
+        "selected": 2
+      },
+      "original_start_trained_interfaces": {
+        "matched": 0,
+        "selected": 2
+      }
+    },
+    "first_pass_eos_complete": 60,
+    "first_pass_native_grammar_valid": 60,
+    "first_pass_sequences": 60,
+    "forward_steps": 3240,
+    "fresh_load_sequences": 60,
+    "legacy_source_training_diagnostic": {
+      "each_of_four_student_variants": "1/2",
+      "original_donor": "2/2"
+    },
+    "native_tests": 173,
+    "outside_richer_relational_request_profile": 60,
+    "primary_references_exposed": true,
+    "statutory_gold_or_holdout_claimed": false
+  },
+  "boundary": {
+    "F15_F17_F18_qualified_by_this_replay": false,
+    "all_same_width_decoders_qualified": false,
+    "current_operation_numerical_reexecution": false,
+    "full_historical_8d_state_qualified_by_this_replay": false,
+    "graph_or_lean_admission_created": false,
+    "legal_meaning_verified": false,
+    "new_weights_fit_or_published": false,
+    "teacher_promoted": false
+  },
+  "method": "Published Git source/engineering-evidence review with a separate static peer review; no execution or private prediction/model payload reads",
+  "pull_request": 1318,
+  "reuse_decision": {
+    "adopt_candidate_only_output_compatibility_owner": true,
+    "do_not_coerce_seven_facet_output_into_relational_requests": true,
+    "next_work": [
+      "Predeclare source-contrast and auxiliary-retention diagnostics, including logits and latent interventions",
+      "Freeze independently reviewed typed targets and source-bound symbol/mention identities",
+      "Train a new structured AST head/codec using compatible learned bodies/adapters and existing cached embeddings",
+      "Compare matched source-only, latent-only and combined architectures separately for each input contract"
+    ],
+    "preserve_original_codecs_and_variant_input_contracts": true,
+    "repeat_completed_small_panel": false,
+    "repeat_historical_930_generations": false
+  },
+  "reviewed_git_files": [
+    {
+      "bytes": 16834,
+      "git_revision": "64d5bf61f0a9894f0c12fc66c942a84d78a34e50",
+      "repository_path": "docs/autoencoders/legal_ir_decoder_output_integration_20261016.md",
+      "sha256": "c8fe81472f637cf99f30a9b8bc218b1a7d1fcd80982bfccdb8edc6fededea1a6"
+    },
+    {
+      "bytes": 21971,
+      "git_revision": "64d5bf61f0a9894f0c12fc66c942a84d78a34e50",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_ir_decoder_output_compatibility_v1.py",
+      "sha256": "d2145191a898dd50b5bcc4b3d61a005cc6cc869b5c49db8c7db74d6452d1d12b"
+    },
+    {
+      "bytes": 21602,
+      "git_revision": "64d5bf61f0a9894f0c12fc66c942a84d78a34e50",
+      "repository_path": "docs/autoencoders/evidence/legal-decoder-storage-retry-20261016/numerical-metric-independent-review-v01.json",
+      "sha256": "e86fb573fdb0f7bed7f5a2b30cffb3c9a7eb8ac19c1e6fac407dc7fa4f83762b"
+    },
+    {
+      "bytes": 15759,
+      "git_revision": "64d5bf61f0a9894f0c12fc66c942a84d78a34e50",
+      "repository_path": "docs/autoencoders/evidence/legal-decoder-storage-retry-20261016/numerical-native-independent-audit-v01.json",
+      "sha256": "07586d2293b452b115cc8b69c667911163cf4036e8bdf0cc1dace2c0fe5cd417"
+    },
+    {
+      "bytes": 8146,
+      "git_revision": "64d5bf61f0a9894f0c12fc66c942a84d78a34e50",
+      "repository_path": "docs/autoencoders/evidence/legal-decoder-storage-retry-20261016/qualification-native-independent-audit-v01.json",
+      "sha256": "52257c17ac75d5bef6c89600637acc6d082036bb1a1771b461f12ff0106ef0b8"
+    }
+  ],
+  "schema": "legal-ir-parallel-decoder-replay-adoption/v1",
+  "upstream_main": "64d5bf61f0a9894f0c12fc66c942a84d78a34e50"
+}

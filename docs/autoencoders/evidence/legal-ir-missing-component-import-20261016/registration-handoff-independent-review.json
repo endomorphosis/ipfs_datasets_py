@@ -1,0 +1,141 @@
+{
+  "admission_and_store_contract": {
+    "attempt_storage_bytes": 4294967296,
+    "configured_admission_wait_seconds": 60,
+    "conservative_external_growth_reserve_bytes": 268435456,
+    "cooperative_writer_lock_and_sampled_guards": true,
+    "cpu_slots": 1,
+    "external_DB_max_bytes": 4294967296,
+    "external_WAL_max_bytes": 134217728,
+    "kernel_containment_claimed": false,
+    "memory_mb": 2048,
+    "native_policy_lane_caps_and_sampler_unchanged": true,
+    "outer_deadline_seconds": 1200,
+    "persistent_store_update_explicit_and_separate_from_named_root_census": true,
+    "productive_deadline_seconds": 600,
+    "purpose": "Metadata registration only",
+    "read_only_Git_child_slots": 1,
+    "readonly_Git_operations": {
+      "ls-files": 1,
+      "rev-parse": 2,
+      "show": 21
+    },
+    "same_process_live_scope_required": true,
+    "serialized_or_authentication_lease_reused": false
+  },
+  "joins": {
+    "all_four_current_root_device_inode_witnesses_match_ledger": true,
+    "approved_review_exact": true,
+    "authentication_plan_release_receipts_and_owners_exact": true,
+    "committed_selected_owner_count": 21,
+    "entry_scope_driver_request_pins_exact": true,
+    "exports_exact_owned_attempt_subdirectory": true,
+    "resource_or_launch_self_hash_cycle": false,
+    "root_ledger_written_by_reviewer": false,
+    "selected_model_ids_preserved": true
+  },
+  "limited_authentication_evidence": {
+    "actual_public_driver_checkpoint_join_requires_content_checks_not_resource_closeout_success": true,
+    "assessment": "Completed child byte-identity observations remain usable despite subsequent accounting-finalization failure. This does not qualify the failed resource operation or release its claim. The registration operation must acquire and fence its own fresh genuine scope.",
+    "child_authority_flags_all_false": true,
+    "child_report_status_and_six_opaque_hash_and_closing_flags_checked": true,
+    "current_opaque_payloads_rehashed_by_reviewer": false,
+    "failure_disclosure_in_exact_approved_review": {
+      "failed_claim_remains_accounted": true,
+      "full_native_closeout_failure_disclosed": true,
+      "lease_reused": false,
+      "native_operation_closeout_qualified": false,
+      "successful_child_identity_evidence": true
+    },
+    "parent_reported_independent_audit": {
+      "child_completed_returncode_zero": true,
+      "current_physical_witnesses": 23,
+      "current_request_source_hashes": 30,
+      "failed_claim_still_accounted": true,
+      "full_native_closeout_qualified": false,
+      "old_grant_reused": false,
+      "outer_operation_failed": true
+    },
+    "raw_child_report_pin": {
+      "bytes": 29061,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-component-authentication-20261016-e-05/exports/published-components-authentication.json",
+      "sha256": "c2d0403e2a4990116cc4b9a4d556ff9e9b480db94708fd30b51291073a8f1364"
+    }
+  },
+  "observed_at_utc": "2026-10-16T05:46:47.415123+00:00",
+  "operational_source_pins": [
+    {
+      "bytes": 9267,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_entry.py",
+      "sha256": "6b47d0659d654a1ac54556f1733c69b12455268252d17293992f340562d1fde3"
+    },
+    {
+      "bytes": 30235,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_resource_scope.py",
+      "sha256": "704f6a37e8eaae4aec9064fa24123a48a41b162ac597d80d0ada1b087b74a8f5"
+    },
+    {
+      "bytes": 36296,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_driver.py",
+      "sha256": "a20b6d875ab84b0563d3808fa6d07b0ba865a926dcec9de8da3f1fc05f5cba23"
+    },
+    {
+      "bytes": 13822,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_launcher.py",
+      "sha256": "8bdd253f0f7f52dc06f3855c98b6973c64eb69abf4ea46cddc61815b56777867"
+    }
+  ],
+  "outcome_scope": {
+    "actual_native_or_Database_result_must_use_separate_closeout_audit": true,
+    "new_model_numerical_reload_teacher_training_inference_or_semantic_authority_claimed": false,
+    "registration_database_or_rows_read_by_reviewer": false,
+    "registration_runtime_outcome_independently_audited_here": false
+  },
+  "practical_refusal_and_cleanup_review": {
+    "caller_owned_original_process_group_cleanup_retained": true,
+    "complete_baseline_backup_and_cold_population_preservation_retained": true,
+    "live_watchdog_not_drained_retains_lease_claim_lock_for_outer_cleanup": true,
+    "native49_test_qualification_claimed": false,
+    "preconstructor_save_guard_and_no_JSON_fallback_retained": true,
+    "stable_source_and_log_identity_excludes_atime": true,
+    "three_absent_only_records_and_F15_parent_lineage_preserved": true,
+    "unknown_schema_profile_format_and_source_tokens_off_matrix_identity_preserved": true
+  },
+  "review_method": "Independent read-only stdlib source/JSON/hash/stat checks and static API review; no runtime/product imports, tests, native resource APIs, model payload reads or database connections.",
+  "reviewed_request_pins": [
+    {
+      "bytes": 12402,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-driver-review.json",
+      "sha256": "9aa7ffb1e6b5fb081940c382952d7980aa576e6e1d67901c51322f2b8dc83ccd"
+    },
+    {
+      "bytes": 11900,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-input-request.json",
+      "sha256": "952e8132b61ee36f2b4b24798487019f28c29cda15adcd50eb889f88c389c130"
+    },
+    {
+      "bytes": 20691,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-resource-request.json",
+      "sha256": "ad040ef3fffc65c872e2d380224f8d1567ecc629f714f4e945c86d5cb41161ec"
+    },
+    {
+      "bytes": 1883,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-launch-request.json",
+      "sha256": "24af340381d73e2be2c14a6fbe981d190168228938def82ef63d418d247450fa"
+    }
+  ],
+  "schema": "legal-ir-registration-handoff-independent-static-review/v1",
+  "source_cohort": {
+    "bytes": 11285850,
+    "canonical_source_sha256_map_digest": "b54cb9ec8da36141636bdd5acd295887caca469322b7400384325861c3550904",
+    "current_source_heads": {
+      "accelerate": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+      "datasets": "6b8b1346f888adbebbcf1d714e4ad0ab39a02052"
+    },
+    "files": 65,
+    "opening_and_closing_body_and_physical_witness_checks_passed": true,
+    "scope": "Exact finite declared sources and metadata inputs, not complete installed-package or native-library import closure.",
+    "source_files_modified": false
+  },
+  "status": "pass_with_explicit_evidence_scope"
+}

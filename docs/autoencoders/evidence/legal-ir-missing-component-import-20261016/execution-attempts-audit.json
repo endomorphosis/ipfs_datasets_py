@@ -1,0 +1,161 @@
+{
+  "administrative_controls_03": {
+    "before_after_source_fences_passed": true,
+    "errors": 0,
+    "failed": 0,
+    "native_resource_grant_claimed": false,
+    "passed": 50,
+    "production_database_opened": false,
+    "result_pin": {
+      "bytes": 4837,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/administrative-controls-03/result.json",
+      "sha256": "b47ebcfb08e3c4a63d7ce7dc1178db121c39b45a628fbb73524b9959a4709b6b"
+    },
+    "skipped": 0,
+    "source_count": 29
+  },
+  "authentication_attempts": [
+    {
+      "actual_exception_pin": {
+        "bytes": 282,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/authentication-launch-05/native-exception.json",
+        "sha256": "e63f80b7cd9a7519d8ef8690cbeb27eaa3299f0a489b3fd923f38373ab5a39ea"
+      },
+      "attempt": "authentication-05",
+      "child_authentication_pin": {
+        "bytes": 29061,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/published-components-authentication.json",
+        "sha256": "c2d0403e2a4990116cc4b9a4d556ff9e9b480db94708fd30b51291073a8f1364"
+      },
+      "child_completed": true,
+      "child_returncode": 0,
+      "exception_type": "DaemonResourceError",
+      "lease_reused": false,
+      "ledger_artifacts_durable_asserted_observed": false,
+      "ledger_status_observed": "active",
+      "limited_identity_evidence_reused": true,
+      "model_restored": false,
+      "native_closeout_qualified": false,
+      "parent_failure_stage": "native final accounting inventory; configured pytest root absent",
+      "parent_result_pin": {
+        "bytes": 737,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/authentication-launch-05/result.json",
+        "sha256": "acced47b9c1f85fc8e9265f99a6cb121772c5c574f29d8ca2615b1e21792a125"
+      },
+      "parent_returncode": 1,
+      "parent_seconds": 55.69510914199054,
+      "request_pin": {
+        "bytes": 9702,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authentication-validation-request-05.json",
+        "sha256": "beb14df36f657bf70afb2c7a2f4a744ec56b857c59c931f31a6f1e99be23dee0"
+      },
+      "six_opaque_hashes_and_closing_witnesses_verified": true,
+      "unreleased_storage_claim_bytes": 67108864
+    },
+    {
+      "actual_exception_pin": {
+        "bytes": 5278,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/authentication-launch-06/native-exception.json",
+        "sha256": "7024b09500dc92e904848d9470f77bfeb37033704684dc3e9a019fcff78bcff1"
+      },
+      "attempt": "authentication-06",
+      "child_started": false,
+      "cpu_stall_threshold_percent": 50.0,
+      "exception_type": "LeaseTimeoutError",
+      "model_restored": false,
+      "native_closeout_qualified": false,
+      "observed_cpu_stall_percent": 53.77,
+      "parent_result_pin": {
+        "bytes": 738,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/authentication-launch-06/result.json",
+        "sha256": "6e5fa70fe112639bd5156d6cd734d9d2e2f85d8767259c1a1d23e437a434b260"
+      },
+      "parent_returncode": 1,
+      "parent_seconds": 15.758265536976978,
+      "policy_or_sampler_changed": false,
+      "proof_observation_matches_actual_timeout_request": true,
+      "proof_refusal_observation_reason": "proof_cpu_stall",
+      "request_pin": {
+        "bytes": 9702,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authentication-validation-request-06.json",
+        "sha256": "df0860bae351dbe4da8a5513d02ff05809b0da40a5a3480c8e29ac8db3851062"
+      },
+      "terminal_exact_blocking_cause": null
+    },
+    {
+      "actual_exception_pin": {
+        "bytes": 5274,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/authentication-launch-07/native-exception.json",
+        "sha256": "878907a68c5776796127c288d73b1c42955519d491988f904ee962685fa6156a"
+      },
+      "attempt": "authentication-07",
+      "child_started": false,
+      "cpu_stall_threshold_percent": 50.0,
+      "exception_type": "LeaseTimeoutError",
+      "model_restored": false,
+      "native_closeout_qualified": false,
+      "observed_cpu_stall_percent": 50.64,
+      "parent_result_pin": {
+        "bytes": 738,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/authentication-launch-07/result.json",
+        "sha256": "3920dc7effb553f0eb2ca5feea93f8f3b439788001b1e2aaeef28af7f6bae85d"
+      },
+      "parent_returncode": 1,
+      "parent_seconds": 16.172801454085857,
+      "policy_or_sampler_changed": false,
+      "proof_observation_matches_actual_timeout_request": true,
+      "proof_refusal_observation_reason": "proof_cpu_stall",
+      "request_pin": {
+        "bytes": 9702,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authentication-validation-request-07.json",
+        "sha256": "e6c8283a005734f18717eaa2d86d34ba1557f5a3d0fb33e57d36ee01e39cddfa"
+      },
+      "terminal_exact_blocking_cause": null
+    },
+    {
+      "actual_exception_pin": {
+        "bytes": 5277,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/authentication-launch-08/native-exception.json",
+        "sha256": "0a4e124c81439ac8134ce4bb5cc799914d006e2b84893ba6be02b302a9fca729"
+      },
+      "attempt": "authentication-08",
+      "child_started": false,
+      "cpu_stall_threshold_percent": 50.0,
+      "exception_type": "LeaseTimeoutError",
+      "model_restored": false,
+      "native_closeout_qualified": false,
+      "observed_cpu_stall_percent": 57.67,
+      "parent_result_pin": {
+        "bytes": 738,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/authentication-launch-08/result.json",
+        "sha256": "12be433a2a8a9f87a1b88443d64166b716a4eb5d2b791c442bf1093d8facb2fb"
+      },
+      "parent_returncode": 1,
+      "parent_seconds": 15.861155021004379,
+      "policy_or_sampler_changed": false,
+      "proof_observation_matches_actual_timeout_request": true,
+      "proof_refusal_observation_reason": "proof_cpu_stall",
+      "request_pin": {
+        "bytes": 9702,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authentication-validation-request-08.json",
+        "sha256": "43a3b2733a2fed5a28a78cccdc6174777fe5b6d25ce9033d30cc1996e2d2f307"
+      },
+      "terminal_exact_blocking_cause": null
+    }
+  ],
+  "current_registration_uses_new_original_grant": true,
+  "earlier_native_authentication_04": {
+    "historical_qualified_audit": "history/native-authentication-audit.json",
+    "relabelled_as_current_generation": false
+  },
+  "earlier_native_controls_02": {
+    "deletion_actor": "unknown",
+    "deselected": 1,
+    "failure": "active source checkout disappeared during closeout",
+    "native_closeout_qualified": false,
+    "raw_tests_passed": 49
+  },
+  "native_ids_or_full_registry_rows_published": false,
+  "schema": "legal-ir-component-operation-attempts-audit/v1",
+  "source_recovery_review": "source-relocation-review.json"
+}

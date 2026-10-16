@@ -1,0 +1,123 @@
+{
+  "current_source_observation": {
+    "all30_current_source_body_hashes_match_original_request": true,
+    "changed_source_stat_witness_count": 2,
+    "changed_source_stat_witnesses": [
+      {
+        "byte_hash_unchanged": true,
+        "bytes": 21322,
+        "filesystem_identity_unchanged": false,
+        "native_original_stat_witness": [
+          66306,
+          107136845,
+          33204,
+          1,
+          21322,
+          1792120832214322292,
+          1792120832214322292
+        ],
+        "public_phase_path": "authenticate_published_components.py",
+        "restored_current_stat_witness": [
+          66306,
+          107264706,
+          33204,
+          1,
+          21322,
+          1792126044257721259,
+          1792126044257721259
+        ],
+        "sha256": "4e40833a0ec4bc3d19c64c84f9afcee60472948527917ad72da006f324501691"
+      },
+      {
+        "byte_hash_unchanged": true,
+        "bytes": 13218,
+        "filesystem_identity_unchanged": false,
+        "native_original_stat_witness": [
+          66306,
+          107129107,
+          33188,
+          1,
+          13218,
+          1792120568466763881,
+          1792120568466763881
+        ],
+        "public_phase_path": "publication-provenance.json",
+        "restored_current_stat_witness": [
+          66306,
+          107264709,
+          33204,
+          1,
+          13218,
+          1792126044258006062,
+          1792126044258006062
+        ],
+        "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+      }
+    ],
+    "checkpoint_body_hashes_repeated": 0,
+    "checkpoint_tensor_JSON_parsed": false,
+    "exact_authentication_request_sha256": "57c9b8e3760e317f3491cd513ada25c5a48fddcfa38c7077dfb85fd07aaa6352",
+    "other_original_stat_witnesses_unchanged": 21,
+    "six_opaque_original_and_readback_stat_witnesses_unchanged": true
+  },
+  "exact_recovered_files": [
+    {
+      "bytes": 36288,
+      "exact_original_bytes_recovered": true,
+      "path": "registration_driver.py",
+      "sha256": "85b15551714cf1912d8922a84208ab9b040263192e8504e219219ff8c2445720",
+      "test_driver_recovered_by_other_agent": false
+    },
+    {
+      "bytes": 18452,
+      "exact_original_bytes_recovered": true,
+      "path": "test_registration_driver.py",
+      "sha256": "bb1beb7f2e94a75ebd4160915e2f6cf538821d5f0c85d0a30247a940dbca83d4",
+      "test_driver_recovered_by_other_agent": true
+    },
+    {
+      "bytes": 14431,
+      "exact_original_bytes_recovered": true,
+      "path": "storage-recovery-audit.json",
+      "sha256": "904e6508270fe7944d26e71b08cea972deaa962ed7271472a5c1962cc4988379",
+      "test_driver_recovered_by_other_agent": false
+    },
+    {
+      "bytes": 11945,
+      "exact_original_bytes_recovered": true,
+      "path": "native-authentication-audit.json",
+      "sha256": "9a0477c5fba9420d53cdcb4d758e25cccdd218ffcb00d621a2982bf37c2b562b",
+      "test_driver_recovered_by_other_agent": false
+    }
+  ],
+  "historical_audits": {
+    "native_authentication_all23_current_stat_witnesses_claim_is_historical_only": true,
+    "native_authentication_original_observed_at_utc": "2026-10-16T04:29:31.481203+00:00",
+    "new_observations_are_not_assigned_old_timestamps": true,
+    "original_hashes_and_timestamps_preserved": true,
+    "storage_recovery_original_observed_at_utc": "2026-10-16T04:12:08.876971+00:00"
+  },
+  "limits": [
+    "Byte-exact restored source files have new filesystem stat witnesses; the original native authentication remains evidence for its original run, not a fresh execution on the restored checkout.",
+    "The six opaque files retain their original stat witnesses. This is metadata continuity, not a new payload hash verification outside a grant.",
+    "Original private evidence and both byte-exact historical audits remain preserved."
+  ],
+  "observed_at_utc": "2026-10-16T04:58:56.030027+00:00",
+  "reason": "The active checkout was removed externally and restored. This is a fresh metadata observation; original native results and recovered historical audits are unchanged.",
+  "recovery_method": "Exact registration heredoc plus literal-string correction from original tool history; historical report data expressions from retained actual evidence and original timestamps, each gated by its complete original byte length and SHA256. No original product/driver execution.",
+  "retained_native_authentication_output": {
+    "bytes": 29021,
+    "path": "owned-native-attempt/exports/published-components-authentication.json",
+    "sha256": "95dc9da243d07bc83ff31f178f26d60d277405830d75b45054203c04cb1ecdc4"
+  },
+  "schema": "legal-ir-source-restoration-addendum/v1",
+  "scope": {
+    "ModelManager_opened_or_database_modified_by_this_addendum": false,
+    "current_source_inode_identity_equated_to_historical": false,
+    "metadata_or_model_bytes_fabricated": false,
+    "new_native_qualification_claimed": false,
+    "original_native_attempt_reexecuted": false,
+    "original_native_authentication_body_modified_or_resealed": false
+  },
+  "status": "pass_with_explicit_historical_witness_limit"
+}

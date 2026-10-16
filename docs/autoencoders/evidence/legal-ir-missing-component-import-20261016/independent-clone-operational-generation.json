@@ -1,0 +1,108 @@
+{
+  "checkpoint_payload_read": false,
+  "database_or_native_resource_called": false,
+  "fresh_authentication_request": {
+    "all_current_source_body_hashes_verified": true,
+    "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-component-authentication-20261016-e-05",
+    "native_authentication_not_launched_by_this_author": true,
+    "new_pin": {
+      "bytes": 9702,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authentication-validation-request-05.json",
+      "sha256": "beb14df36f657bf70afb2c7a2f4a744ec56b857c59c931f31a6f1e99be23dee0"
+    },
+    "old_raw_request_sha256": "57c9b8e3760e317f3491cd513ada25c5a48fddcfa38c7077dfb85fd07aaa6352",
+    "policy_caps_sampler_lanes_and_envelope_unchanged": true,
+    "source_count": 30
+  },
+  "historical_loader_restoration_receipt_pin": {
+    "bytes": 6881,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/historical-loader-source-restoration.json",
+    "sha256": "32805ac0b0a6a01130d91d29f8c74d03c120a7054770fcf342243541f5dcfd82"
+  },
+  "historical_outcomes_relabelled": false,
+  "immutable_base_head": "6b8b1346f888adbebbcf1d714e4ad0ab39a02052",
+  "models_or_embeddings_regenerated": false,
+  "new_independent_clone": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets",
+  "old_deleted_root": "/home/barberb/lift_coding/.worktrees/legal-ir-missing-component-import-20261016",
+  "old_worktree_recreated": false,
+  "physical_identity_scope": "Independent clone and new source inodes, including the three exact restored receipt-bound loader source files. Exact copied bodies do not preserve original live file identities or grants. Old requests and receipts remain historical private records; fresh native authentication required.",
+  "plan_generation": {
+    "changed_source_pin_paths": 6,
+    "model_ids_checkpoints_releases_identity_status_unchanged": true,
+    "new_pin": {
+      "bytes": 29929,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/model-manager-import-plan.json",
+      "sha256": "b5d027bd36d455688eb9ec04fd92279f9d2732deaf776d443f6e917805b9846b"
+    },
+    "old_sha256": "0b3ca1af15ac124aae297efd04df4699b6e96ba79cb7c0880601b58d8f5f43c4",
+    "only_publication_provenance_and_historical_worklist_local_path_prefix_rebound": true
+  },
+  "schema": "legal-ir-independent-clone-operational-generation/v1",
+  "sourceagent_owned_driver_pin": {
+    "bytes": 36296,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_driver.py",
+    "sha256": "a20b6d875ab84b0563d3808fa6d07b0ba865a926dcec9de8da3f1fc05f5cba23"
+  },
+  "unchanged_copied_files": [
+    {
+      "body_unchanged": true,
+      "bytes": 13218,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/publication-provenance.json",
+      "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+    },
+    {
+      "body_unchanged": true,
+      "bytes": 21322,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authenticate_published_components.py",
+      "sha256": "4e40833a0ec4bc3d19c64c84f9afcee60472948527917ad72da006f324501691"
+    },
+    {
+      "body_unchanged": true,
+      "bytes": 9267,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_entry.py",
+      "sha256": "6b47d0659d654a1ac54556f1733c69b12455268252d17293992f340562d1fde3"
+    },
+    {
+      "body_unchanged": true,
+      "bytes": 13822,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_launcher.py",
+      "sha256": "8bdd253f0f7f52dc06f3855c98b6973c64eb69abf4ea46cddc61815b56777867"
+    },
+    {
+      "body_unchanged": true,
+      "bytes": 30235,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_resource_scope.py",
+      "sha256": "704f6a37e8eaae4aec9064fa24123a48a41b162ac597d80d0ada1b087b74a8f5"
+    },
+    {
+      "body_unchanged": true,
+      "bytes": 2772,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_resource_scope.py",
+      "sha256": "508f4dc8677c12e952a20cdd75a939d9b0a558d425cd6efaa158b655fecb26a4"
+    },
+    {
+      "body_unchanged": true,
+      "bytes": 2289,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_launcher.py",
+      "sha256": "f811d658c127068dcd50d246ec0d8ae650731900af78231a8c26ea1f3527552e"
+    },
+    {
+      "body_unchanged": true,
+      "bytes": 18452,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_driver.py",
+      "sha256": "bb1beb7f2e94a75ebd4160915e2f6cf538821d5f0c85d0a30247a940dbca83d4"
+    },
+    {
+      "body_unchanged": true,
+      "bytes": 1958,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/run_component_controls.py",
+      "sha256": "96a646a3947de8fc21bbf9805f05da5d4f1feb75e4429ca1ee71d1c667b41d37"
+    },
+    {
+      "body_unchanged": true,
+      "bytes": 2719,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/run_original_validation.py",
+      "sha256": "408679dc80a063b0275d09dfca319ae520788852f7569c06dbbcdabcbd5bb50f"
+    }
+  ]
+}

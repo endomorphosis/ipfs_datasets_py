@@ -1,0 +1,484 @@
+{
+  "models": [
+    {
+      "checkpoint_pin": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      },
+      "model_metadata": {
+        "architecture": "SpanActorRefinementAdapterDecoder",
+        "description": "Retained F15 trained source-conditioned adapter component, imported under the historical worklist identity. Latent conditioning is disabled and external dimension/schema/profile/format remain unbound. This record does not promote model quality, numerical runtime, teacher status, legal meaning, proof or exact legal-text reconstruction.",
+        "huggingface_config": {
+          "complete_runtime_io_contract": false,
+          "ir_checkpoint": {
+            "asset_binding_schema": "ir-decoder-component-binding/v1",
+            "checkpoint_serialization_schema": "bounded-actor-refinement-adapter-checkpoint/v1",
+            "codec_sha256": null,
+            "configured_latent_dimension": 384,
+            "dimension": null,
+            "dimension_role": "source_tokens",
+            "donor": null,
+            "external_lane_binding": null,
+            "format_id": null,
+            "initialization_only": false,
+            "ir_family_id": "legal_ir",
+            "latent_conditioning_enabled": false,
+            "original_checkpoint_pin": {
+              "bytes": 12230969,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+              "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+            },
+            "profile_id": null,
+            "proof_authority": false,
+            "record_id": "ir-model-component-binding/v1:a71cd3e104aa489008e1fd66d79fc488bfc03c09f2c0c2ea213375b9ca7ed9b6",
+            "role": "retained_source_conditioned_F15_actor_parent",
+            "runtime_ready": false,
+            "schema_version": null,
+            "task_id": "semantic_IR_reconstruction",
+            "teacher_qualified": false,
+            "trained": true
+          },
+          "metadata_import_scope": "Retained source-token checkpoint component metadata; no model construction, numerical reload, encoder, inference or teacher qualification.",
+          "metadata_provenance": {
+            "checkpoint_body_read_by_plan_author": false,
+            "checkpoint_tensor_json_parsed": false,
+            "current_network_authentication_performed": false,
+            "historical_publication_metadata_pins": {
+              "immutable_snapshot": {
+                "bytes": 1520692,
+                "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-final-immutable-independent-v01.json",
+                "sha256": "57911acda7e1aa3cc260ba455c0e56af7d10f08745adb4ac82acd36ce2856890"
+              },
+              "independent_review": {
+                "bytes": 220073,
+                "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-actual-independent-review-v01.json",
+                "sha256": "3097b700479052acffcc3a601e0cacc376247871b67c01cfac357da5a51fcaab"
+              },
+              "release_manifest": {
+                "bytes": 89145,
+                "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/release-manifest-v01.json",
+                "sha256": "115b420d31f48957760a45436fe84a3153376ed9ad51022469166dfbe86315c2"
+              },
+              "training_plan": null,
+              "verification": {
+                "bytes": 93478,
+                "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-verification-v02.json",
+                "sha256": "cd28b9794addba489c67efa971b02242a6bf28aa9b475967f4a142ed5709f357"
+              }
+            },
+            "historical_registration_worklist_pin": {
+              "bytes": 6636,
+              "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/missing-registration-worklist.json",
+              "sha256": "ad7cf6097fa2f5cfc90d8d2133cc10b440b7e928b1e09bf43a5b8c1c12c5a18a"
+            },
+            "immutable_loader_source_pin": {
+              "bytes": 56952,
+              "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+              "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+            },
+            "loader_path_in_repo": "releases/20261014-actor-refinement-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+            "model_restored": false,
+            "parent_checkpoint_body_verified_by_plan_author": false,
+            "publication_authentication_required_before_import": true,
+            "publication_evidence_method": "historical-receipt-derivation",
+            "publication_provenance_pin": {
+              "bytes": 13218,
+              "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/publication-provenance.json",
+              "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+            },
+            "remote_identity": {
+              "bytes": 12230969,
+              "scheme": "lfs-payload-sha256",
+              "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+            },
+            "remote_pointer_blob_sha1": "6ab7f4c04583def1d47f48aa181f884362d35ed7",
+            "reported_checkpoint_serialization_schema": "bounded-actor-refinement-adapter-checkpoint/v1",
+            "reported_loader_class": "SpanActorRefinementAdapterDecoder",
+            "retained_readback_pin": {
+              "bytes": 12230969,
+              "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-verified-download-v02/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+              "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+            },
+            "source_parent_checkpoint_pin": {
+              "bytes": 9337558,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-checkpoint.json",
+              "sha256": "34080a8ad491e5a351aeea0adfc6f3e29e76d0ae93c1f8a8cee3ebf536a7b9fd"
+            },
+            "source_parent_model_state_sha256": "b3b6fdb2eeb7653265930660d3a4eaae7b1a93db22b09e71a2276367c1b156a9"
+          },
+          "quality_scope": {
+            "authenticated_context_token_limit": null,
+            "encoder_revision": null,
+            "gold": false,
+            "native_8d_384d_768d_lane_binding": false,
+            "native_gte_decoder": false,
+            "original_legal_text_reconstruction_qualified": false,
+            "portable_numerical_reload_qualified": false,
+            "reported_trained_state": true,
+            "scope_note": "Historical trained source-conditioned adapter with disabled latent conditioning; configured 384 is a placeholder, not an external embedding dimension. Published checkpoint presence does not establish semantic reconstruction quality or portable numerical reload.",
+            "semantic_quality_admitted": false,
+            "source_text_conditioned": true,
+            "tokenizer_revision": null,
+            "trained_state_is_teacher_qualification": false
+          }
+        },
+        "inputs": [
+          {
+            "data_type": "text",
+            "description": "Legal source text for the retained source-conditioned adapter; preprocessing and complete callable IO are not runtime-qualified.",
+            "name": "source_text"
+          }
+        ],
+        "model_id": "ir-model-component-binding/v1:a71cd3e104aa489008e1fd66d79fc488bfc03c09f2c0c2ea213375b9ca7ed9b6",
+        "model_name": "LegalIR F15 retained source-token adapter",
+        "model_revision": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+        "model_type": "decoder_only",
+        "outputs": [
+          {
+            "data_type": "text",
+            "description": "Reported canonical seven-field LegalIR candidate text; no gold, legal meaning, proof or exact original-prose reconstruction qualification.",
+            "name": "legal_ir_candidate"
+          }
+        ],
+        "parent_model_id": null,
+        "revision_id": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+        "source_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/blob/1622817fd804ff5333fce7dc8d04433e4acef2e4/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+        "tags": [
+          "legal_ir",
+          "source_tokens",
+          "retained_checkpoint",
+          "F15",
+          "metadata_only",
+          "runtime_unqualified",
+          "teacher_unqualified"
+        ]
+      },
+      "release": {
+        "checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+        "path_in_repo": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4"
+      }
+    },
+    {
+      "checkpoint_pin": {
+        "bytes": 20467217,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/joint-readout-retention-20261014-joint-readout-retention-hinge-01/results/cell-checkpoint.json",
+        "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+      },
+      "model_metadata": {
+        "architecture": "SpanJointReadoutRetentionAdapterDecoder",
+        "description": "Retained F17 trained source-conditioned adapter component, imported under the historical worklist identity. Latent conditioning is disabled and external dimension/schema/profile/format remain unbound. This record does not promote model quality, numerical runtime, teacher status, legal meaning, proof or exact legal-text reconstruction.",
+        "huggingface_config": {
+          "complete_runtime_io_contract": false,
+          "ir_checkpoint": {
+            "asset_binding_schema": "ir-decoder-component-binding/v1",
+            "checkpoint_serialization_schema": "bounded-joint-readout-retention-adapter-checkpoint/v1",
+            "codec_sha256": null,
+            "configured_latent_dimension": 384,
+            "dimension": null,
+            "dimension_role": "source_tokens",
+            "donor": null,
+            "external_lane_binding": null,
+            "format_id": null,
+            "initialization_only": false,
+            "ir_family_id": "legal_ir",
+            "latent_conditioning_enabled": false,
+            "original_checkpoint_pin": {
+              "bytes": 20467217,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/joint-readout-retention-20261014-joint-readout-retention-hinge-01/results/cell-checkpoint.json",
+              "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+            },
+            "profile_id": null,
+            "proof_authority": false,
+            "record_id": "ir-model-component-binding/v1:4b8174d50a374971020dd0c58cec951a3a37ff824bd12fb9204ba60c14d04880",
+            "role": "retained_source_conditioned_F17",
+            "runtime_ready": false,
+            "schema_version": null,
+            "task_id": "semantic_IR_reconstruction",
+            "teacher_qualified": false,
+            "trained": true
+          },
+          "metadata_import_scope": "Retained source-token checkpoint component metadata; no model construction, numerical reload, encoder, inference or teacher qualification.",
+          "metadata_provenance": {
+            "checkpoint_body_read_by_plan_author": false,
+            "checkpoint_tensor_json_parsed": false,
+            "current_network_authentication_performed": false,
+            "historical_publication_metadata_pins": {
+              "immutable_snapshot": null,
+              "independent_review": {
+                "bytes": 456653,
+                "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-publication-completion-independent-review-v01.json",
+                "sha256": "b7ffabdd4e91faa2678fc577b493104454c7109686cedb9b3a59a28479670833"
+              },
+              "release_manifest": {
+                "bytes": 109306,
+                "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/release-manifest-v01.json",
+                "sha256": "532a706486d03333fc97bf4d9d6d814f2408d6d65f87ec78b2e4da72c05980ba"
+              },
+              "training_plan": null,
+              "verification": {
+                "bytes": 3296177,
+                "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-publication-verification-v01.json",
+                "sha256": "316295ee4d1461b62ce292cd1a7004cae50e015bb8c229716d4384158536a652"
+              }
+            },
+            "historical_registration_worklist_pin": {
+              "bytes": 6636,
+              "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/missing-registration-worklist.json",
+              "sha256": "ad7cf6097fa2f5cfc90d8d2133cc10b440b7e928b1e09bf43a5b8c1c12c5a18a"
+            },
+            "immutable_loader_source_pin": {
+              "bytes": 80912,
+              "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+              "sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502"
+            },
+            "loader_path_in_repo": "releases/20261014-joint-readout-retention-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+            "model_restored": false,
+            "parent_checkpoint_body_verified_by_plan_author": false,
+            "publication_authentication_required_before_import": true,
+            "publication_evidence_method": "historical-receipt-derivation",
+            "publication_provenance_pin": {
+              "bytes": 13218,
+              "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/publication-provenance.json",
+              "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+            },
+            "remote_identity": {
+              "bytes": 20467217,
+              "scheme": "lfs-payload-sha256",
+              "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+            },
+            "remote_pointer_blob_sha1": "c30d42745d0231cfad59824c03afb3df92d4f9b7",
+            "reported_checkpoint_serialization_schema": "bounded-joint-readout-retention-adapter-checkpoint/v1",
+            "reported_loader_class": "SpanJointReadoutRetentionAdapterDecoder",
+            "retained_readback_pin": {
+              "bytes": 20467217,
+              "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-verified-download-v01/releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+              "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e"
+            },
+            "source_parent_checkpoint_pin": {
+              "bytes": 12230969,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+              "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+            },
+            "source_parent_model_state_sha256": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42"
+          },
+          "quality_scope": {
+            "authenticated_context_token_limit": null,
+            "encoder_revision": null,
+            "gold": false,
+            "native_8d_384d_768d_lane_binding": false,
+            "native_gte_decoder": false,
+            "original_legal_text_reconstruction_qualified": false,
+            "portable_numerical_reload_qualified": false,
+            "reported_trained_state": true,
+            "scope_note": "Historical trained source-conditioned adapter with disabled latent conditioning; configured 384 is a placeholder, not an external embedding dimension. Published checkpoint presence does not establish semantic reconstruction quality or portable numerical reload.",
+            "semantic_quality_admitted": false,
+            "source_text_conditioned": true,
+            "tokenizer_revision": null,
+            "trained_state_is_teacher_qualification": false
+          }
+        },
+        "inputs": [
+          {
+            "data_type": "text",
+            "description": "Legal source text for the retained source-conditioned adapter; preprocessing and complete callable IO are not runtime-qualified.",
+            "name": "source_text"
+          }
+        ],
+        "model_id": "ir-model-component-binding/v1:4b8174d50a374971020dd0c58cec951a3a37ff824bd12fb9204ba60c14d04880",
+        "model_name": "LegalIR F17 retained source-token adapter",
+        "model_revision": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+        "model_type": "decoder_only",
+        "outputs": [
+          {
+            "data_type": "text",
+            "description": "Reported canonical seven-field LegalIR candidate text; no gold, legal meaning, proof or exact original-prose reconstruction qualification.",
+            "name": "legal_ir_candidate"
+          }
+        ],
+        "parent_model_id": "ir-model-component-binding/v1:a71cd3e104aa489008e1fd66d79fc488bfc03c09f2c0c2ea213375b9ca7ed9b6",
+        "revision_id": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+        "source_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/blob/290c266d72b8c298ec21db0f9b0857b008914caf/releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+        "tags": [
+          "legal_ir",
+          "source_tokens",
+          "retained_checkpoint",
+          "F17",
+          "metadata_only",
+          "runtime_unqualified",
+          "teacher_unqualified"
+        ]
+      },
+      "release": {
+        "checkpoint_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+        "path_in_repo": "releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "290c266d72b8c298ec21db0f9b0857b008914caf"
+      }
+    },
+    {
+      "checkpoint_pin": {
+        "bytes": 21058430,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/modality-conditions-retention-20261014-modality-conditions-retention-ce-01/results/cell-checkpoint.json",
+        "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+      },
+      "model_metadata": {
+        "architecture": "SpanModalityConditionsRetentionAdapterDecoder",
+        "description": "Retained F18 trained source-conditioned adapter component, imported under the historical worklist identity. Latent conditioning is disabled and external dimension/schema/profile/format remain unbound. This record does not promote model quality, numerical runtime, teacher status, legal meaning, proof or exact legal-text reconstruction.",
+        "huggingface_config": {
+          "complete_runtime_io_contract": false,
+          "ir_checkpoint": {
+            "asset_binding_schema": "ir-decoder-component-binding/v1",
+            "checkpoint_serialization_schema": "bounded-modality-conditions-retention-adapter-checkpoint/v1",
+            "codec_sha256": null,
+            "configured_latent_dimension": 384,
+            "dimension": null,
+            "dimension_role": "source_tokens",
+            "donor": null,
+            "external_lane_binding": null,
+            "format_id": null,
+            "initialization_only": false,
+            "ir_family_id": "legal_ir",
+            "latent_conditioning_enabled": false,
+            "original_checkpoint_pin": {
+              "bytes": 21058430,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/modality-conditions-retention-20261014-modality-conditions-retention-ce-01/results/cell-checkpoint.json",
+              "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+            },
+            "profile_id": null,
+            "proof_authority": false,
+            "record_id": "ir-model-component-binding/v1:0b4dd36d92e5e99d01b45d32f5ddbdf872e8370702c3325209e8ba7d0a1ba9ad",
+            "role": "retained_source_conditioned_F18",
+            "runtime_ready": false,
+            "schema_version": null,
+            "task_id": "semantic_IR_reconstruction",
+            "teacher_qualified": false,
+            "trained": true
+          },
+          "metadata_import_scope": "Retained source-token checkpoint component metadata; no model construction, numerical reload, encoder, inference or teacher qualification.",
+          "metadata_provenance": {
+            "checkpoint_body_read_by_plan_author": false,
+            "checkpoint_tensor_json_parsed": false,
+            "current_network_authentication_performed": false,
+            "historical_publication_metadata_pins": {
+              "immutable_snapshot": null,
+              "independent_review": {
+                "bytes": 77425,
+                "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-completion-independent-review-v01.json",
+                "sha256": "1ade89eda52fe2424bdf1944497d8787b6cbcadad76a77f09302491bb81b2d40"
+              },
+              "release_manifest": {
+                "bytes": 204043,
+                "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/release-manifest-v01.json",
+                "sha256": "37c1305837c11fef6dd95eba5fbef17344a8443e39bad92def1a4418e78993b2"
+              },
+              "training_plan": {
+                "bytes": 98083,
+                "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-ce-plan-v01.json",
+                "sha256": "7b797b0d68903b411de4e46a8f4ba99772f1ef5390356e480b6777bdac4f4e59"
+              },
+              "verification": {
+                "bytes": 3533809,
+                "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-verification-v02.json",
+                "sha256": "64ab8d2d395d067285c35b0cc437c113351f23c358335df58b8f9d6c7a155f41"
+              }
+            },
+            "historical_registration_worklist_pin": {
+              "bytes": 6636,
+              "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/missing-registration-worklist.json",
+              "sha256": "ad7cf6097fa2f5cfc90d8d2133cc10b440b7e928b1e09bf43a5b8c1c12c5a18a"
+            },
+            "immutable_loader_source_pin": {
+              "bytes": 83852,
+              "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+              "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+            },
+            "loader_path_in_repo": "releases/20261015-modality-conditions-retention-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+            "model_restored": false,
+            "parent_checkpoint_body_verified_by_plan_author": false,
+            "publication_authentication_required_before_import": true,
+            "publication_evidence_method": "historical-receipt-derivation",
+            "publication_provenance_pin": {
+              "bytes": 13218,
+              "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/publication-provenance.json",
+              "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+            },
+            "remote_identity": {
+              "bytes": 21058430,
+              "scheme": "lfs-payload-sha256",
+              "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+            },
+            "remote_pointer_blob_sha1": "9732a8f75bf1239bc9365b4dce4f074896c28313",
+            "reported_checkpoint_serialization_schema": "bounded-modality-conditions-retention-adapter-checkpoint/v1",
+            "reported_loader_class": "SpanModalityConditionsRetentionAdapterDecoder",
+            "retained_readback_pin": {
+              "bytes": 21058430,
+              "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-verified-download-v01/releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+              "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+            },
+            "source_parent_checkpoint_pin": {
+              "bytes": 12230969,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+              "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+            },
+            "source_parent_model_state_sha256": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42"
+          },
+          "quality_scope": {
+            "authenticated_context_token_limit": null,
+            "encoder_revision": null,
+            "gold": false,
+            "native_8d_384d_768d_lane_binding": false,
+            "native_gte_decoder": false,
+            "original_legal_text_reconstruction_qualified": false,
+            "portable_numerical_reload_qualified": false,
+            "reported_trained_state": true,
+            "scope_note": "Historical trained source-conditioned adapter with disabled latent conditioning; configured 384 is a placeholder, not an external embedding dimension. Published checkpoint presence does not establish semantic reconstruction quality or portable numerical reload.",
+            "semantic_quality_admitted": false,
+            "source_text_conditioned": true,
+            "tokenizer_revision": null,
+            "trained_state_is_teacher_qualification": false
+          }
+        },
+        "inputs": [
+          {
+            "data_type": "text",
+            "description": "Legal source text for the retained source-conditioned adapter; preprocessing and complete callable IO are not runtime-qualified.",
+            "name": "source_text"
+          }
+        ],
+        "model_id": "ir-model-component-binding/v1:0b4dd36d92e5e99d01b45d32f5ddbdf872e8370702c3325209e8ba7d0a1ba9ad",
+        "model_name": "LegalIR F18 retained source-token adapter",
+        "model_revision": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+        "model_type": "decoder_only",
+        "outputs": [
+          {
+            "data_type": "text",
+            "description": "Reported canonical seven-field LegalIR candidate text; no gold, legal meaning, proof or exact original-prose reconstruction qualification.",
+            "name": "legal_ir_candidate"
+          }
+        ],
+        "parent_model_id": "ir-model-component-binding/v1:a71cd3e104aa489008e1fd66d79fc488bfc03c09f2c0c2ea213375b9ca7ed9b6",
+        "revision_id": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+        "source_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/blob/c9cce4586dd96518088662fb12831173e98e36cc/releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+        "tags": [
+          "legal_ir",
+          "source_tokens",
+          "retained_checkpoint",
+          "F18",
+          "metadata_only",
+          "runtime_unqualified",
+          "teacher_unqualified"
+        ]
+      },
+      "release": {
+        "checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+        "path_in_repo": "releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "c9cce4586dd96518088662fb12831173e98e36cc"
+      }
+    }
+  ],
+  "schema": "ir-model-manager-import-plan/v1"
+}

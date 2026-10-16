@@ -1,0 +1,411 @@
+{
+  "authentication_05_distinction": {
+    "fresh_registration_grant_acquired": true,
+    "full_parent_native_operation_qualified": false,
+    "identity_audit_pin": {
+      "bytes": 10984,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/native-authentication-identity-audit-05.json",
+      "sha256": "671f787838f306ef866c7c50c9083d252348669d7776cbfbf97cd647b34f520e"
+    },
+    "network_or_Hub_publication_performed_now": false,
+    "old_grant_reused": false,
+    "parent_failure": "Native finalization encountered a missing configured named root after the successful child; the original claim remained unreleased.",
+    "six_original_and_readback_payloads_current_stat_witnesses_match_native05": true,
+    "six_payload_bytes_rehashed_by_this_audit": false,
+    "six_payload_bytes_rehashed_inside_fresh_registration_scope_before_Manager_construction": true,
+    "successful_child_identity_stage": true
+  },
+  "authority": {
+    "Hub_updated": false,
+    "gold_eligible": false,
+    "inference_executed": false,
+    "metadata_registration_verified": true,
+    "model_restored": false,
+    "native_GTE_decoder_qualified": false,
+    "proof_authority": false,
+    "runtime_ready": false,
+    "source_meaning_verified": false,
+    "teacher_qualified": false,
+    "training_executed": false
+  },
+  "catalog": {
+    "all_exact_resolution_authority_flags_false": true,
+    "catalog_checkpoint_payload_authentication_claimed": false,
+    "components": [
+      {
+        "checkpoint_bytes": 12230969,
+        "checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+        "cold_exact_catalog_model_id": "model_9f0ce6faee02bd1134e9f5e8b5aa1ee1fd7231b0235de7a70cbfb7455dab941e",
+        "cold_genuine_catalog_model_id": "model_73317d5aad707df4736e7d83771d23a8d83891b98c64ead76ef47b130b392c46",
+        "configured_latent_dimension": 384,
+        "decoder_task": "semantic_IR_reconstruction",
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "family": "legal_ir",
+        "format_id": null,
+        "label": "F15",
+        "latent_conditioning_enabled": false,
+        "parent_source_record_id": null,
+        "profile_id": null,
+        "proof_authority": false,
+        "release": {
+          "checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+          "path_in_repo": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+          "repository_id": "Publicus/legal-ir-autoencoder",
+          "revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4"
+        },
+        "role": "retained_source_conditioned_F15_actor_parent",
+        "runtime_ready": false,
+        "schema_version": null,
+        "serialization_schema": "bounded-actor-refinement-adapter-checkpoint/v1",
+        "source_record_id": "ir-model-component-binding/v1:a71cd3e104aa489008e1fd66d79fc488bfc03c09f2c0c2ea213375b9ca7ed9b6",
+        "teacher_qualified": false,
+        "trained_metadata": true
+      },
+      {
+        "checkpoint_bytes": 20467217,
+        "checkpoint_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+        "cold_exact_catalog_model_id": "model_a5f53c30799b7613e6b421ffcef931016828d474c5fe9dc249761e923cc32654",
+        "cold_genuine_catalog_model_id": "model_7422690eca02b92a0637a40bf7492db9aa6e212e34e03a655e79305cdb41e7d9",
+        "configured_latent_dimension": 384,
+        "decoder_task": "semantic_IR_reconstruction",
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "family": "legal_ir",
+        "format_id": null,
+        "label": "F17",
+        "latent_conditioning_enabled": false,
+        "parent_source_record_id": "ir-model-component-binding/v1:a71cd3e104aa489008e1fd66d79fc488bfc03c09f2c0c2ea213375b9ca7ed9b6",
+        "profile_id": null,
+        "proof_authority": false,
+        "release": {
+          "checkpoint_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+          "path_in_repo": "releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+          "repository_id": "Publicus/legal-ir-autoencoder",
+          "revision": "290c266d72b8c298ec21db0f9b0857b008914caf"
+        },
+        "role": "retained_source_conditioned_F17",
+        "runtime_ready": false,
+        "schema_version": null,
+        "serialization_schema": "bounded-joint-readout-retention-adapter-checkpoint/v1",
+        "source_record_id": "ir-model-component-binding/v1:4b8174d50a374971020dd0c58cec951a3a37ff824bd12fb9204ba60c14d04880",
+        "teacher_qualified": false,
+        "trained_metadata": true
+      },
+      {
+        "checkpoint_bytes": 21058430,
+        "checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+        "cold_exact_catalog_model_id": "model_a512e6a84f1ca186ce5cec661a99d6713b201211cc6b9b513a6a84cf5c7e2014",
+        "cold_genuine_catalog_model_id": "model_23012828a745712327e7cf925975cbb39064da1235aa94119964967532d71e75",
+        "configured_latent_dimension": 384,
+        "decoder_task": "semantic_IR_reconstruction",
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "family": "legal_ir",
+        "format_id": null,
+        "label": "F18",
+        "latent_conditioning_enabled": false,
+        "parent_source_record_id": "ir-model-component-binding/v1:a71cd3e104aa489008e1fd66d79fc488bfc03c09f2c0c2ea213375b9ca7ed9b6",
+        "profile_id": null,
+        "proof_authority": false,
+        "release": {
+          "checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+          "path_in_repo": "releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+          "repository_id": "Publicus/legal-ir-autoencoder",
+          "revision": "c9cce4586dd96518088662fb12831173e98e36cc"
+        },
+        "role": "retained_source_conditioned_F18",
+        "runtime_ready": false,
+        "schema_version": null,
+        "serialization_schema": "bounded-modality-conditions-retention-adapter-checkpoint/v1",
+        "source_record_id": "ir-model-component-binding/v1:0b4dd36d92e5e99d01b45d32f5ddbdf872e8370702c3325209e8ba7d0a1ba9ad",
+        "teacher_qualified": false,
+        "trained_metadata": true
+      }
+    ],
+    "exact_binding_snapshot_revision": "f3e67efbb49b87ebed00870de80dec21ffdea5cc3f39540407e70b81bc147334",
+    "exact_catalog_revision": "bafkreibp6g3aincoasl4b3x2hag2qksl57zvrvdsqv6jfvq6y3wxpxfuvi",
+    "genuine_catalog_revision": "bafkreig5em2kqk2cvl3454phsl36pi5kylrtrcpujzwfvc5hfki572k3h4",
+    "matching_source_records_per_catalog": 3,
+    "namespace_scope": "cold_exact_catalog.record_id maps to its catalog_model_id; cold_genuine_catalog.source_record_id maps to its canonical_model_id. These are distinct projection namespaces. Agreement is on the three underlying source IDs and declared component metadata, not equality of projected IDs.",
+    "projected_ID_equality_claimed": false,
+    "source_record_id_agreement": true
+  },
+  "durability": {
+    "all_6_nonbackup_sealed_artifact_bytes_and_hashes_independently_verified": true,
+    "backup": {
+      "backup_body_rehashed_by_this_audit": false,
+      "current_stat_only": {
+        "bytes": 2980851712,
+        "ctime_ns": 1792129438468794629,
+        "device": 66306,
+        "inode": 75119055,
+        "link_count": 1,
+        "mtime_ns": 1792129438468794629,
+        "regular_file": true
+      },
+      "historical_backup_inode_continuity_claimed": false,
+      "native_durability_SHA_and_size_equal_backup": true,
+      "native_original_store_SHA_and_size_equal_backup": true,
+      "native_pin": {
+        "bytes": 2980851712,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-model-manager-runs/legal-ir-missing-components-20261016-b-02/exports/model-manager-before.duckdb",
+        "sha256": "7daa07ea3ebeb6775029863b53949ebc70abf9ac8a9bec4c1de1d1486d2435da"
+      },
+      "original_store_or_backup_opened_by_this_audit": false,
+      "scope": "The full backup SHA was produced and sealed inside the live grant. This audit verifies agreement of those native evidence records and current regular-file size/link custody, not a fresh outside-grant backup digest."
+    },
+    "complete_attempt_bytes": 2994810278,
+    "complete_files_including_receipt": 8,
+    "current_file_membership_exact": true,
+    "files": [
+      {
+        "bytes": 6959032,
+        "path": "exports/after-records.json",
+        "sha256": "bee122ca247255f9cd3c7c0a758aec2f32f2e23f5ad07e5b0cf3d821059d9acb"
+      },
+      {
+        "bytes": 6935695,
+        "path": "exports/before-records.json",
+        "sha256": "5543dbf8f37b4995291974de1c040cb6a5c694b50a42f3d3932c2fd18fbd3713"
+      },
+      {
+        "bytes": 2603,
+        "path": "exports/before-schema.json",
+        "sha256": "ce42d3fb27880b6bf5998b3828844c622741406de935ce56f5eb8645632a0859"
+      },
+      {
+        "bytes": 23563,
+        "path": "exports/missing-only-import-plan.json",
+        "sha256": "5be235b516be25c5c7d1634de44c8886fb8f9b78f7a132f6d0a520a524bb1a29"
+      },
+      {
+        "bytes": 2980851712,
+        "path": "exports/model-manager-before.duckdb",
+        "sha256": "7daa07ea3ebeb6775029863b53949ebc70abf9ac8a9bec4c1de1d1486d2435da"
+      },
+      {
+        "bytes": 12204,
+        "path": "exports/preflight.json",
+        "sha256": "3b0b87e01a6a7eeefd17fc12bc1eabf0f9a3a4aa3a8593a703c951b7bf5a8e42"
+      },
+      {
+        "bytes": 22302,
+        "path": "exports/registration-result.json",
+        "sha256": "d81a884d89b18b0ca5563a49194ed860dde89d2431878b797a14f8a7f4e50cf2"
+      }
+    ],
+    "receipt_pin": {
+      "bytes": 3167,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-model-manager-runs/legal-ir-missing-components-20261016-b-02/registration-resource-durability.json",
+      "sha256": "8a6096ce0028d5d1f4ccc7d2b9b7ebb753a18f7b6da21063dd36d087e4867342"
+    },
+    "sealed_files_before_receipt": 7
+  },
+  "import": {
+    "JSON_fallback_absent_in_result_and_current_path": true,
+    "all_outcomes_registered_verified": true,
+    "already_present_count": 0,
+    "close_population_empty": true,
+    "fresh_connections_may_share_engine_cache": true,
+    "genuine_save_guard_before_constructor": true,
+    "native_importer_metadata_verification_flag": true,
+    "no_automatic_retry": true,
+    "other_live_Manager_process_refreshed": false,
+    "per_insert_fresh_native_readbacks": 3,
+    "per_insert_readbacks_did_not_use_Manager_models": true,
+    "persisted_metadata_matched_count": 3,
+    "public_importer_schema": "ir-model-manager-import-result/v1",
+    "registered_count": 3,
+    "save_population_absent_only": true
+  },
+  "independence": {
+    "actual_native_registration_executed_by_root": true,
+    "additional_tests_or_native_jobs_executed_for_this_audit": 0,
+    "administrative_controls_03_authored_and_executed_by_this_reviewer": true,
+    "authentication_driver_authored_by_this_reviewer": false,
+    "registration_driver_authored_by_this_reviewer": true,
+    "registration_execution_by_this_reviewer": false,
+    "source_review_and_result_recount_are_independent_of_root_execution": true
+  },
+  "limitations": [
+    "Retained under-grant record snapshots establish the exact 684-to-687 transition; this audit did not reopen the DB and does not certify a later concurrent DB state.",
+    "No separately retained after-schema file exists; postwrite schema equality is checked in the frozen native driver and asserted by its successful result.",
+    "The 3GB backup and checkpoint payloads were not rehashed outside the live grant.",
+    "Catalog projected IDs and revision namespaces differ; there is no projected-ID equivalence claim.",
+    "F15/F17/F18 are source-token components with dimension null and disabled latent conditioning; configured latent dimension 384 does not register native 8D/384D/768D GTE decoder lanes.",
+    "The metadata importer verifies local persisted fields, not remote publication or model numerical quality. Existing immutable Hub references and prior opaque payload evidence are retained.",
+    "The original auth05 closeout remains failed and its separate retained claim is not made successful by this registration.",
+    "No human semantic review, source-to-meaning admission, gold admission, new training, inference, numerical reload or proof qualification occurred."
+  ],
+  "metadata_evidence_pins": [
+    {
+      "bytes": 8131,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/registration-launch-02/launcher-result.json",
+      "sha256": "29e9aac7cc4a5d00512e3b05b7d21bb96f1170b98b13644fa8642cd313406c1b"
+    },
+    {
+      "bytes": 1883,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-launch-request.json",
+      "sha256": "24af340381d73e2be2c14a6fbe981d190168228938def82ef63d418d247450fa"
+    },
+    {
+      "bytes": 20691,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-resource-request.json",
+      "sha256": "ad040ef3fffc65c872e2d380224f8d1567ecc629f714f4e945c86d5cb41161ec"
+    },
+    {
+      "bytes": 11900,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-input-request.json",
+      "sha256": "952e8132b61ee36f2b4b24798487019f28c29cda15adcd50eb889f88c389c130"
+    },
+    {
+      "bytes": 36296,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_driver.py",
+      "sha256": "a20b6d875ab84b0563d3808fa6d07b0ba865a926dcec9de8da3f1fc05f5cba23"
+    },
+    {
+      "bytes": 30235,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_resource_scope.py",
+      "sha256": "704f6a37e8eaae4aec9064fa24123a48a41b162ac597d80d0ada1b087b74a8f5"
+    },
+    {
+      "bytes": 29929,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/model-manager-import-plan.json",
+      "sha256": "b5d027bd36d455688eb9ec04fd92279f9d2732deaf776d443f6e917805b9846b"
+    },
+    {
+      "bytes": 12402,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-driver-review.json",
+      "sha256": "9aa7ffb1e6b5fb081940c382952d7980aa576e6e1d67901c51322f2b8dc83ccd"
+    },
+    {
+      "bytes": 7555,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-handoff-independent-review.json",
+      "sha256": "a5aa8606247091f30d7b44237c914411245543e324484f51c02c058fe8785017"
+    },
+    {
+      "bytes": 10984,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/native-authentication-identity-audit-05.json",
+      "sha256": "671f787838f306ef866c7c50c9083d252348669d7776cbfbf97cd647b34f520e"
+    },
+    {
+      "bytes": 3167,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-model-manager-runs/legal-ir-missing-components-20261016-b-02/registration-resource-durability.json",
+      "sha256": "8a6096ce0028d5d1f4ccc7d2b9b7ebb753a18f7b6da21063dd36d087e4867342"
+    }
+  ],
+  "native_closeout": {
+    "artifacts_durable_asserted": true,
+    "attached_native_child_record": null,
+    "attempt_exceeded_reservation": false,
+    "attempt_storage_budget_bytes": 4294967296,
+    "cleanup_error": null,
+    "enforcement": "cooperative sampled existing native owner and registration scope",
+    "entry_complete": true,
+    "final_attempt_bytes": 2994810278,
+    "final_external_charged_bytes": 0,
+    "final_resource_observation_finalized": true,
+    "final_total_charged_bytes": 2994810278,
+    "kernel_containment": false,
+    "launcher_complete": true,
+    "launcher_elapsed_seconds": 121.94914820301346,
+    "live_original_owner_group_members": 0,
+    "native_lease_cancelled": true,
+    "native_lease_currently_absent": true,
+    "native_lease_released": true,
+    "native_resource_mapping": "hammer_lean/canonical_trainer",
+    "native_resource_mapping_scope": "Existing budget mapping name; no Lean, model training or inference ran.",
+    "original_native_grant_created_in_actual_entry_process": true,
+    "original_owner_currently_absent": true,
+    "owned_group_drained_by_launcher": true,
+    "prior_native_child_records": 0,
+    "process_scope": "actual_owner_process_group_including_owner_once",
+    "purpose": "metadata_registration_no_training",
+    "resource_profile": "model-manager-in-process-metadata-registration/v1",
+    "returncode": 0,
+    "selected_current_ledger_record_exactly_equals_retained_closeout": true,
+    "serialized_resource_capability_used": false,
+    "status": "released",
+    "total_storage_budget_bytes": 4563402752
+  },
+  "observed_at_utc": "2026-10-16T05:59:41.353048+00:00",
+  "population": {
+    "IO_default_scope": "These generic stored defaults do not establish a tensor, embedding or qualified runtime interface.",
+    "activity_and_timestamp_fields_included": true,
+    "after_count": 687,
+    "after_unique_ids": 687,
+    "all_33_stored_fields_equal_for_each_of_684_baseline_records": true,
+    "baseline_ids_removed": 0,
+    "baseline_records_changed": 0,
+    "baseline_unique_ids": 684,
+    "before_count": 684,
+    "complete_before_and_after_json_independently_parsed": true,
+    "exact_added_source_record_ids": [
+      "ir-model-component-binding/v1:a71cd3e104aa489008e1fd66d79fc488bfc03c09f2c0c2ea213375b9ca7ed9b6",
+      "ir-model-component-binding/v1:4b8174d50a374971020dd0c58cec951a3a37ff824bd12fb9204ba60c14d04880",
+      "ir-model-component-binding/v1:0b4dd36d92e5e99d01b45d32f5ddbdf872e8370702c3325209e8ba7d0a1ba9ad"
+    ],
+    "foreign_records_published": false,
+    "genuine_IO_dataclass_defaults_added": {
+      "dtype": "float32",
+      "optional": false,
+      "shape": null
+    },
+    "plan_metadata_preserved_for_all_3_additions": true
+  },
+  "privacy": {
+    "foreign_record_bodies_published": false,
+    "process_identifiers_published": false,
+    "raw_native_identifiers_published": false,
+    "secret_configuration_published": false
+  },
+  "schema": "legal-ir-model-manager-registration-independent-audit/v1",
+  "schema_preservation": {
+    "after_schema_artifact_retained": false,
+    "before_snapshot_pin": {
+      "bytes": 2603,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-model-manager-runs/legal-ir-missing-components-20261016-b-02/exports/before-schema.json",
+      "sha256": "ce42d3fb27880b6bf5998b3828844c622741406de935ce56f5eb8645632a0859"
+    },
+    "columns": 33,
+    "constructor_required_columns_and_types_match_before_snapshot": true,
+    "constructor_required_indexes_match_before_snapshot": true,
+    "evidence_scope": "Frozen driver checks schema equality after backup, constructor, each insert, cold native read, cold genuine Manager read and final empty close. This audit checks that guarded source and the emitted result, not a second direct DB observation.",
+    "independent_after_schema_file_comparison_performed": false,
+    "indexes": 3,
+    "migration_required": false,
+    "native_schema_and_indexes_unchanged_reported": true,
+    "tables": 1
+  },
+  "scope": "Independent standard-library audit of the completed missing-only metadata registration and retained native evidence; no DB connection or model restoration by this audit.",
+  "source_fences": {
+    "accelerate_head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+    "all_65_current_selected_bytes_match_request": true,
+    "all_loaded_origins_checked_source_buffers_and_in_selected_cohort": true,
+    "current_scheduler_policy_digest_unchanged": true,
+    "datasets_head": "6b8b1346f888adbebbcf1d714e4ad0ab39a02052",
+    "loaded_module_names": [
+      "ipfs_accelerate_py",
+      "ipfs_accelerate_py.model_catalog",
+      "ipfs_accelerate_py.model_catalog.catalog",
+      "ipfs_accelerate_py.model_catalog.identity",
+      "ipfs_accelerate_py.model_catalog.registry",
+      "ipfs_accelerate_py.model_catalog.resolver",
+      "ipfs_accelerate_py.model_catalog.schema",
+      "ipfs_accelerate_py.model_catalog.snapshot",
+      "ipfs_accelerate_py.model_catalog.sources",
+      "ipfs_accelerate_py.model_catalog.sources.ir_persistent",
+      "ipfs_accelerate_py.model_catalog.sources.persistent",
+      "ipfs_accelerate_py.model_catalog.sources.static",
+      "ipfs_accelerate_py.model_manager"
+    ],
+    "loaded_product_origins": 13,
+    "pinned_committed_product_owners": 21,
+    "scheduler_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+    "selected_count": 65,
+    "source_cohort_contains_no_DB_backup_or_checkpoint_payload": true,
+    "source_sha256_map_canonical_digest": "b54cb9ec8da36141636bdd5acd295887caca469322b7400384325861c3550904"
+  },
+  "status": "pass"
+}

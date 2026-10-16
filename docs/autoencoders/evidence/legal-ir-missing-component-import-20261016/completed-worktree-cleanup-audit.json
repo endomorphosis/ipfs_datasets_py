@@ -1,0 +1,24 @@
+{
+  "allocated_bytes_before_removal": 4201488384,
+  "branches_preserved": true,
+  "checkpoint_or_embedding_assets_selected": false,
+  "completed": true,
+  "filesystem_free_bytes_after": 23878029312,
+  "filesystem_free_bytes_before": 19632783360,
+  "force_used": false,
+  "foreign_worktrees_selected": false,
+  "free_delta_attribution_limited_by_concurrent_activity": true,
+  "history_on_origin_main_preserved": true,
+  "limitations": [
+    "Disk allocation is measured at the read-only observation, not a promise of an exact subsequent df increase. Common repository object storage is outside these worktrees and remains retained.",
+    "All selected trees are locked owned worktrees; root should independently recheck HEAD, complete status, ancestor and live references before ordinary unlock/remove without --force.",
+    "No foreign or currently active worktree is selected. No git reset/clean, branch deletion, object pruning, checkpoint removal or native validation cleanup is recommended."
+  ],
+  "method": "Read-only Git porcelain including ignored paths, exact HEAD/branch/common-owner checks, immutable ancestor check against locally cached origin/main, du allocated-byte observation, regular-file metadata hardlink scan, and bounded current-import/proc path-reference observations. No payload hashing, imports, validation execution, native owner calls, Git mutations or removals.",
+  "observed_at_epoch": 1792122565.923215,
+  "removed_count": 8,
+  "review_sha256": "f7130b6b807d75adf689dda8f18985a64df88b17b8543fcb1f7afba2e3edf373",
+  "schema": "legal-ir-completed-worktree-cleanup/v1",
+  "selected_count": 8,
+  "unattributed_later_active_source_deletions_are_separate_incidents": true
+}

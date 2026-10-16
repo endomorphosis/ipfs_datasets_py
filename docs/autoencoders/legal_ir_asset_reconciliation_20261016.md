@@ -101,13 +101,23 @@ trained interface states, the original dual-donor initializer, both contextual
 states and the retained wording bindings. Hash joins use reported artifact pins;
 they do not freshly authenticate checkpoint contents.
 
-The three selected F15/F17/F18 checkpoint hashes have no matching declaration
-in this strict IR snapshot. The
+The three selected F15/F17/F18 checkpoint hashes had no matching declaration
+in that snapshot. The subsequent
+[missing-component import](evidence/legal-ir-missing-component-import-20261016/README.md)
+has registered all three through the genuine ModelManager, increasing the
+complete registry from 684 to 687 records. Cold native and genuine-manager
+readbacks return the same three source-record identities; their catalog
+projections assign different canonical IDs. Every existing record, activity
+field, schema and index was preserved. The import reuses the retained checkpoint files and their existing
+immutable Hugging Face releases.
+
+These are separate source-token components with no active embedding dimension;
+the historical 384-value placeholder does not make them 384D embedding models.
+Unknown schema/profile/format remain null, and runtime, teacher and proof
+qualification remain false. The original
 [missing-registration worklist](evidence/legal-ir-asset-reconciliation-20261016/missing-registration-worklist.json)
-prepares separate source-token component identities with false authority and
-unknown schema/profile/format left null. It is an offline proposal, not an
-executable importer plan or completed registration. The full historical 8D
-state also lacks this exact hash match. The linguistic bundle manifest is not
+remains the earlier offline proposal. The full historical 8D state still lacks
+its exact hash match in that survey. The linguistic bundle manifest is not
 itself a checkpoint key; resolve its actual weights before treating that entry
 as an import gap.
 
@@ -119,12 +129,20 @@ coverage remains distinct from every possible generic manager row or running
 process. The existing cooperative process-group profile does not establish
 kernel containment or broader model-execution qualification.
 
-The next numerical replay should authenticate the later compatible fitted
-interface, its original donor tensors, exact native source receipts and required
-outer runtime provenance. Compare it with its original-start control and retained
-initializer. Reuse matching vectors; generate only entries missing from the
-chosen exact source/encoder/context profile. Keep prediction-distillation masks
-zero until the applicable semantic teacher scope qualifies.
+The separately published
+[retained decoder replay](legal_ir_decoder_output_integration_20261016.md)
+now compares the selected donors, original/aligned initializers and fitted
+interfaces under source, zero and cross-source interventions. Reuse its 173
+native controls and 60 generated plus 60 exact fresh-load sequences. Every
+primary variant scores 0/2 on the two exposed stored references; all sixty
+outputs satisfy the old grammar but remain outside the richer relational
+request profile. These are engineering diagnostics, not statutory accuracy.
+The next increment should freeze reviewed targets and train the required
+structured output head using compatible retained bodies, adapters and vectors.
+Authenticate the complete runtime closure for other selected lineages before
+executing them. Generate only entries missing from the chosen exact
+source/encoder/context profile, and keep prediction-distillation masks zero
+until the applicable semantic teacher scope qualifies.
 
 The new typed relational comparison on main is a paired structural diagnostic.
 Its successful pairs do not account for missing/malformed decoder outputs or

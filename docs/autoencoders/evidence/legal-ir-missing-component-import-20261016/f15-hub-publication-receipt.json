@@ -1,0 +1,78 @@
+{
+  "authority": {
+    "inference_executed": false,
+    "model_loaded": false,
+    "network_verified_current": false,
+    "proof_authority": false,
+    "runtime_admitted": false,
+    "teacher_qualified": false,
+    "training_executed": false
+  },
+  "checkpoint_tensor_json_parsed": false,
+  "files": [
+    {
+      "bytes": 12230969,
+      "file_pin": {
+        "bytes": 12230969,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-verified-download-v02/releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      },
+      "path_in_repo": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+      "remote_identity": {
+        "bytes": 12230969,
+        "scheme": "lfs-payload-sha256",
+        "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+      },
+      "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+      "verified": true
+    }
+  ],
+  "files_verified": true,
+  "historical_metadata_pins": {
+    "immutable_snapshot": {
+      "bytes": 1520692,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-final-immutable-independent-v01.json",
+      "sha256": "57911acda7e1aa3cc260ba455c0e56af7d10f08745adb4ac82acd36ce2856890"
+    },
+    "independent_review": {
+      "bytes": 220073,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-actual-independent-review-v01.json",
+      "sha256": "3097b700479052acffcc3a601e0cacc376247871b67c01cfac357da5a51fcaab"
+    },
+    "release_manifest": {
+      "bytes": 89145,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/release-manifest-v01.json",
+      "sha256": "115b420d31f48957760a45436fe84a3153376ed9ad51022469166dfbe86315c2"
+    },
+    "training_plan": null,
+    "verification": {
+      "bytes": 93478,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-verification-v02.json",
+      "sha256": "cd28b9794addba489c67efa971b02242a6bf28aa9b475967f4a142ed5709f357"
+    }
+  },
+  "manifest_pin": {
+    "bytes": 89145,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/release-manifest-v01.json",
+    "sha256": "115b420d31f48957760a45436fe84a3153376ed9ad51022469166dfbe86315c2"
+  },
+  "method": "historical-receipt-derivation",
+  "model_restored": false,
+  "network_verified_current": false,
+  "original_checkpoint_pin": {
+    "bytes": 12230969,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+    "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+  },
+  "provenance_pin": {
+    "bytes": 13218,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/publication-provenance.json",
+    "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+  },
+  "publisher_invoked": false,
+  "repository_id": "Publicus/legal-ir-autoencoder",
+  "repository_supplied_python_executed": false,
+  "revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4",
+  "schema": "ir-model-hub-publication-receipt/v1",
+  "verification_scope": "Current opaque original/readback SHA and length, joined to independently pinned historical immutable LFS/publication records; no current HTTP or publisher call."
+}
