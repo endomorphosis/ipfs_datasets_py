@@ -1,0 +1,439 @@
+{
+  "all_parametrizations_have_explicit_bounded_descriptive_ids": true,
+  "authored_case_count": 112,
+  "authority_granted": false,
+  "corpus_payload_or_ledger_reads": false,
+  "exact_path_authored_fixture_closure": [
+    {
+      "bytes": 37167,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+      "sha256": "240d655936efe8ee00c7b7d1e7843fe6d5f8d97ca2e9deb704b48c7968873592"
+    },
+    {
+      "bytes": 21619,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+      "sha256": "caf36365fba7d081ad4ebf92a67506c249a08d9055339ce17a481aede0204ef4"
+    }
+  ],
+  "exactly_one_final_lf": true,
+  "existing_test_files_edited": false,
+  "function_count": 29,
+  "no_trailing_whitespace": true,
+  "notes": [
+    "Mixed authored population covers all9 terminal outcomes and keeps unknown/unidentifiable observations.",
+    "Coverage and reference/validity fractions are separate from full-population and conditional structural agreement.",
+    "Four first-use mismatch controls exercise relational/pair import anchors and caches with no available references; no source files are changed.",
+    "Real existing AST/relational/pair owners are used only during future root-owned native qualification.",
+    "No fixture or runtime objects are imported or instantiated while creating this roster."
+  ],
+  "roster": [
+    {
+      "case_count": 1,
+      "function": "test_mixed_population_accounts_every_terminal_outcome_and_every_submitted_row",
+      "parameters": []
+    },
+    {
+      "case_count": 4,
+      "function": "test_zero_comparable_pairs_never_produce_optimistic_conditional_agreement",
+      "parameters": [
+        {
+          "authored_values_ast": "['missing', 'abstained', 'unsupported', 'invalid']",
+          "count": 4,
+          "explicit_descriptive_ids": [
+            "all-missing",
+            "all-abstained",
+            "all-unsupported",
+            "all-invalid"
+          ],
+          "parameter_names": "kind"
+        }
+      ]
+    },
+    {
+      "case_count": 1,
+      "function": "test_valid_candidates_without_references_remain_visible_and_are_lowered",
+      "parameters": []
+    },
+    {
+      "case_count": 2,
+      "function": "test_identical_source_commitments_do_not_merge_distinct_physical_occurrence_ids",
+      "parameters": [
+        {
+          "authored_values_ast": "['original', 'reverse']",
+          "count": 2,
+          "explicit_descriptive_ids": [
+            "arrival-order",
+            "reversed-arrival"
+          ],
+          "parameter_names": "order"
+        }
+      ]
+    },
+    {
+      "case_count": 4,
+      "function": "test_duplicate_ids_never_select_a_favorable_candidate",
+      "parameters": [
+        {
+          "authored_values_ast": "['identical', 'favorable-first', 'favorable-last', 'malformed-first']",
+          "count": 4,
+          "explicit_descriptive_ids": [
+            "identical-duplicates",
+            "matching-first",
+            "matching-last",
+            "malformed-first"
+          ],
+          "parameter_names": "kind"
+        }
+      ]
+    },
+    {
+      "case_count": 4,
+      "function": "test_unknown_and_unidentifiable_observations_cannot_supply_a_missing_occurrence",
+      "parameters": [
+        {
+          "authored_values_ast": "['unknown-id', 'scalar', 'null-id', 'blank-id']",
+          "count": 4,
+          "explicit_descriptive_ids": [
+            "unknown-id",
+            "scalar-observation",
+            "null-id",
+            "blank-id"
+          ],
+          "parameter_names": "observation"
+        }
+      ]
+    },
+    {
+      "case_count": 1,
+      "function": "test_repeated_unexpected_id_keeps_all_indices_without_changing_expected_denominator",
+      "parameters": []
+    },
+    {
+      "case_count": 1,
+      "function": "test_real_public_pair_controls_separate_exact_declared_and_alpha_agreement",
+      "parameters": []
+    },
+    {
+      "case_count": 3,
+      "function": "test_decoder_generation_declarations_do_not_authenticate_model_execution",
+      "parameters": [
+        {
+          "authored_values_ast": "[8, 384, 768]",
+          "count": 3,
+          "explicit_descriptive_ids": [
+            "latent-8",
+            "latent-384",
+            "latent-768"
+          ],
+          "parameter_names": "dimension"
+        }
+      ]
+    },
+    {
+      "case_count": 12,
+      "function": "test_bad_generation_preserves_rows_and_withholds_comparable_credit",
+      "parameters": [
+        {
+          "authored_values_ast": "[('missing', 'generation_missing'), ('scalar', 'generation_not_object'), ('fields', 'generation_fields_mismatch'), ('kind', 'generation_kind_invalid'), ('population', 'generation_population_mismatch'), ('settings', 'generation_settings_sha256_invalid'), ('teacher', 'generation_teacher_forcing_not_false'), ('target', 'generation_target_access_not_false'), ('dimension', 'generation_decoder_dimension_invalid'), ('checkpoint', 'generation_decoder_checkpoint_invalid'), ('encoder', 'generation_decoder_encoder_invalid'), ('authored-binding', 'generation_authored_binding_nonnull')]",
+          "count": 12,
+          "explicit_descriptive_ids": [
+            "missing-declaration",
+            "scalar-declaration",
+            "extra-generation-field",
+            "unknown-kind",
+            "wrong-population",
+            "invalid-settings",
+            "teacher-forcing",
+            "target-access",
+            "invalid-dimension",
+            "missing-checkpoint",
+            "missing-encoder",
+            "authored-with-model-binding"
+          ],
+          "parameter_names": "mutation,code"
+        }
+      ]
+    },
+    {
+      "case_count": 10,
+      "function": "test_row_provenance_contradictions_withhold_credit_and_retain_declared_status",
+      "parameters": [
+        {
+          "authored_values_ast": "['decoded', 'abstained']",
+          "count": 2,
+          "explicit_descriptive_ids": [
+            "decoded-provenance",
+            "abstention-provenance"
+          ],
+          "parameter_names": "status"
+        },
+        {
+          "authored_values_ast": "['source', 'context', 'teacher', 'target', 'boolean-zero']",
+          "count": 5,
+          "explicit_descriptive_ids": [
+            "source-mismatch",
+            "context-mismatch",
+            "teacher-forcing",
+            "target-access",
+            "zero-is-not-false"
+          ],
+          "parameter_names": "mutation"
+        }
+      ]
+    },
+    {
+      "case_count": 7,
+      "function": "test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport",
+      "parameters": [
+        {
+          "authored_values_ast": "['unknown-field', 'missing-field', 'unknown-status', 'decoded-reason', 'abstention-payload', 'unsupported-no-reason', 'candidate-pin']",
+          "count": 7,
+          "explicit_descriptive_ids": [
+            "unknown-row-field",
+            "missing-row-field",
+            "unknown-status",
+            "decoded-with-reason",
+            "abstention-with-payload",
+            "unsupported-without-reason",
+            "candidate-pin-mismatch"
+          ],
+          "parameter_names": "mutation"
+        }
+      ]
+    },
+    {
+      "case_count": 6,
+      "function": "test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures",
+      "parameters": [
+        {
+          "authored_values_ast": "['invalid-json', 'duplicate-key', 'nonfinite', 'wrong-schema', 'source-binding', 'free-variable']",
+          "count": 6,
+          "explicit_descriptive_ids": [
+            "invalid-candidate-json",
+            "duplicate-candidate-key",
+            "candidate-nan",
+            "unsupported-schema",
+            "unsupported-source-binding",
+            "unbound-variable"
+          ],
+          "parameter_names": "mutation"
+        }
+      ]
+    },
+    {
+      "case_count": 1,
+      "function": "test_oversized_candidate_request_is_accounted_without_calling_relational_lowering",
+      "parameters": []
+    },
+    {
+      "case_count": 1,
+      "function": "test_precedence_preserves_missing_duplicate_and_shape_facts_when_generation_is_bad",
+      "parameters": []
+    },
+    {
+      "case_count": 4,
+      "function": "test_every_available_reference_is_validated_even_without_comparable_prediction",
+      "parameters": [
+        {
+          "authored_values_ast": "['missing', 'abstained', 'duplicate', 'bad-generation']",
+          "count": 4,
+          "explicit_descriptive_ids": [
+            "invalid-reference-missing-output",
+            "invalid-reference-abstention",
+            "invalid-reference-duplicate-output",
+            "invalid-reference-bad-generation"
+          ],
+          "parameter_names": "predictions"
+        }
+      ]
+    },
+    {
+      "case_count": 6,
+      "function": "test_reference_envelope_cannot_drop_or_retarget_the_population",
+      "parameters": [
+        {
+          "authored_values_ast": "['drop', 'duplicate', 'unknown', 'reorder', 'population-pin', 'unavailable-payload']",
+          "count": 6,
+          "explicit_descriptive_ids": [
+            "missing-reference-row",
+            "duplicate-reference-row",
+            "unknown-reference-id",
+            "reordered-reference-rows",
+            "wrong-reference-population",
+            "unavailable-with-payload"
+          ],
+          "parameter_names": "mutation"
+        }
+      ]
+    },
+    {
+      "case_count": 3,
+      "function": "test_three_independent_transport_pins_refuse_before_lazy_owners",
+      "parameters": [
+        {
+          "authored_values_ast": "['expected_population_sha256', 'expected_references_sha256', 'expected_predictions_sha256']",
+          "count": 3,
+          "explicit_descriptive_ids": [
+            "population-transport-pin",
+            "references-transport-pin",
+            "predictions-transport-pin"
+          ],
+          "parameter_names": "pin"
+        }
+      ]
+    },
+    {
+      "case_count": 10,
+      "function": "test_whole_transport_and_population_intake_failures_refuse_before_operation_imports",
+      "parameters": [
+        {
+          "authored_values_ast": "['duplicate-key', 'nonfinite', 'invalid-utf8', 'mutable-bytes', 'unknown-envelope', 'rows-not-list', 'population-empty', 'population-duplicate', 'population-bound', 'observation-bound']",
+          "count": 10,
+          "explicit_descriptive_ids": [
+            "duplicate-outer-key",
+            "outer-nonfinite",
+            "outer-invalid-utf8",
+            "mutable-transport",
+            "unknown-prediction-envelope-field",
+            "nonlist-observations",
+            "empty-population",
+            "duplicate-population-id",
+            "population-over-64",
+            "observations-over-256"
+          ],
+          "parameter_names": "mutation"
+        }
+      ]
+    },
+    {
+      "case_count": 3,
+      "function": "test_outer_transport_byte_ceiling_refuses_without_clipping",
+      "parameters": [
+        {
+          "authored_values_ast": "['population', 'references', 'predictions']",
+          "count": 3,
+          "explicit_descriptive_ids": [
+            "population-byte-ceiling",
+            "references-byte-ceiling",
+            "predictions-byte-ceiling"
+          ],
+          "parameter_names": "which"
+        }
+      ]
+    },
+    {
+      "case_count": 3,
+      "function": "test_nested_reference_and_ordinary_json_bounds_refuse_before_lazy_owners",
+      "parameters": [
+        {
+          "authored_values_ast": "['request', 'report', 'depth']",
+          "count": 3,
+          "explicit_descriptive_ids": [
+            "reference-request-bound",
+            "reference-report-bound",
+            "outer-json-depth-bound"
+          ],
+          "parameter_names": "which"
+        }
+      ]
+    },
+    {
+      "case_count": 3,
+      "function": "test_operational_candidate_failures_are_never_reported_as_invalid_model_output",
+      "parameters": [
+        {
+          "authored_values_ast": "[OSError, ImportError, RuntimeError]",
+          "count": 3,
+          "explicit_descriptive_ids": [
+            "os-error",
+            "import-error",
+            "runtime-error"
+          ],
+          "parameter_names": "error_type"
+        }
+      ]
+    },
+    {
+      "case_count": 1,
+      "function": "test_public_pair_replay_failure_refuses_instead_of_becoming_a_candidate_failure",
+      "parameters": []
+    },
+    {
+      "case_count": 1,
+      "function": "test_source_fence_failure_refuses_instead_of_becoming_invalid_candidate_output",
+      "parameters": []
+    },
+    {
+      "case_count": 4,
+      "function": "test_first_use_owner_identity_failure_refuses_even_with_all_references_unavailable",
+      "parameters": [
+        {
+          "authored_values_ast": "[('relational', '_SELF_PIN'), ('relational', '_OWNER_PINS'), ('paired', '_SELF_PIN'), ('paired', '_OPERATION_PINS')]",
+          "count": 4,
+          "explicit_descriptive_ids": [
+            "first-use-relational-import-anchor",
+            "first-use-relational-cache",
+            "first-use-pair-import-anchor",
+            "first-use-pair-cache"
+          ],
+          "parameter_names": "trusted_owner,field"
+        }
+      ]
+    },
+    {
+      "case_count": 1,
+      "function": "test_complete_report_ceiling_refuses_without_dropping_rows",
+      "parameters": []
+    },
+    {
+      "case_count": 13,
+      "function": "test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration",
+      "parameters": [
+        {
+          "authored_values_ast": "['drop-occurrence', 'reorder-occurrences', 'terminal-count', 'denominator', 'conditional-denominator', 'observation-digest', 'drop-observation', 'generation-claim', 'authority', 'training-boolean', 'gold-float', 'pair-disagreement', 'unknown-key']",
+          "count": 13,
+          "explicit_descriptive_ids": [
+            "omitted-occurrence",
+            "reordered-occurrences",
+            "altered-terminal-count",
+            "reduced-population-denominator",
+            "reduced-comparable-denominator",
+            "altered-observation-digest",
+            "omitted-observation",
+            "promoted-generation-claim",
+            "promoted-authority",
+            "boolean-mask",
+            "float-mask",
+            "promoted-pair-disagreement",
+            "unknown-output-field"
+          ],
+          "parameter_names": "damage"
+        }
+      ]
+    },
+    {
+      "case_count": 1,
+      "function": "test_wrong_independent_whole_report_pin_refuses_before_regeneration",
+      "parameters": []
+    },
+    {
+      "case_count": 1,
+      "function": "test_public_import_is_standard_library_only_and_writes_nothing",
+      "parameters": []
+    }
+  ],
+  "schema": "legal-relational-batch-authored-test-source-roster/v1",
+  "scope": "Source bytes and stdlib AST only; this is not pytest collection or execution.",
+  "supersedes": {
+    "bytes": 14566,
+    "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/authored-test-source-roster-v01.json",
+    "reason": "Add four first-use fixed-owner import-anchor/cache refusal regressions with all references unavailable.",
+    "sha256": "f295b04549d7ea09325a94836a6c44242b899fa01b584f3643f4163fa3463330"
+  },
+  "test_source": {
+    "bytes": 47319,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py",
+    "sha256": "a3667587c9b767af40bf6bffeeb98c652ef52ca47c2871749710b2d39b2ac0c7"
+  },
+  "tests_or_product_executed": false
+}

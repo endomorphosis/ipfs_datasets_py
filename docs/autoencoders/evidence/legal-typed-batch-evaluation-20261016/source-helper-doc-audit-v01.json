@@ -1,0 +1,610 @@
+{
+  "Lean_executed": false,
+  "authored_test_AST_roster": {
+    "authored_case_count": 112,
+    "function_count": 29,
+    "method": "stdlib AST inspection only, literal parametrization list lengths and explicit descriptive IDs; no test import/collection/execution.",
+    "roster": [
+      {
+        "authored_case_count": 1,
+        "function": "test_mixed_population_accounts_every_terminal_outcome_and_every_submitted_row",
+        "parameters": []
+      },
+      {
+        "authored_case_count": 4,
+        "function": "test_zero_comparable_pairs_never_produce_optimistic_conditional_agreement",
+        "parameters": [
+          {
+            "ids": [
+              "all-missing",
+              "all-abstained",
+              "all-unsupported",
+              "all-invalid"
+            ],
+            "names": "kind",
+            "values_count": 4
+          }
+        ]
+      },
+      {
+        "authored_case_count": 1,
+        "function": "test_valid_candidates_without_references_remain_visible_and_are_lowered",
+        "parameters": []
+      },
+      {
+        "authored_case_count": 2,
+        "function": "test_identical_source_commitments_do_not_merge_distinct_physical_occurrence_ids",
+        "parameters": [
+          {
+            "ids": [
+              "arrival-order",
+              "reversed-arrival"
+            ],
+            "names": "order",
+            "values_count": 2
+          }
+        ]
+      },
+      {
+        "authored_case_count": 4,
+        "function": "test_duplicate_ids_never_select_a_favorable_candidate",
+        "parameters": [
+          {
+            "ids": [
+              "identical-duplicates",
+              "matching-first",
+              "matching-last",
+              "malformed-first"
+            ],
+            "names": "kind",
+            "values_count": 4
+          }
+        ]
+      },
+      {
+        "authored_case_count": 4,
+        "function": "test_unknown_and_unidentifiable_observations_cannot_supply_a_missing_occurrence",
+        "parameters": [
+          {
+            "ids": [
+              "unknown-id",
+              "scalar-observation",
+              "null-id",
+              "blank-id"
+            ],
+            "names": "observation",
+            "values_count": 4
+          }
+        ]
+      },
+      {
+        "authored_case_count": 1,
+        "function": "test_repeated_unexpected_id_keeps_all_indices_without_changing_expected_denominator",
+        "parameters": []
+      },
+      {
+        "authored_case_count": 1,
+        "function": "test_real_public_pair_controls_separate_exact_declared_and_alpha_agreement",
+        "parameters": []
+      },
+      {
+        "authored_case_count": 3,
+        "function": "test_decoder_generation_declarations_do_not_authenticate_model_execution",
+        "parameters": [
+          {
+            "ids": [
+              "latent-8",
+              "latent-384",
+              "latent-768"
+            ],
+            "names": "dimension",
+            "values_count": 3
+          }
+        ]
+      },
+      {
+        "authored_case_count": 12,
+        "function": "test_bad_generation_preserves_rows_and_withholds_comparable_credit",
+        "parameters": [
+          {
+            "ids": [
+              "missing-declaration",
+              "scalar-declaration",
+              "extra-generation-field",
+              "unknown-kind",
+              "wrong-population",
+              "invalid-settings",
+              "teacher-forcing",
+              "target-access",
+              "invalid-dimension",
+              "missing-checkpoint",
+              "missing-encoder",
+              "authored-with-model-binding"
+            ],
+            "names": "mutation,code",
+            "values_count": 12
+          }
+        ]
+      },
+      {
+        "authored_case_count": 10,
+        "function": "test_row_provenance_contradictions_withhold_credit_and_retain_declared_status",
+        "parameters": [
+          {
+            "ids": [
+              "decoded-provenance",
+              "abstention-provenance"
+            ],
+            "names": "status",
+            "values_count": 2
+          },
+          {
+            "ids": [
+              "source-mismatch",
+              "context-mismatch",
+              "teacher-forcing",
+              "target-access",
+              "zero-is-not-false"
+            ],
+            "names": "mutation",
+            "values_count": 5
+          }
+        ]
+      },
+      {
+        "authored_case_count": 7,
+        "function": "test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport",
+        "parameters": [
+          {
+            "ids": [
+              "unknown-row-field",
+              "missing-row-field",
+              "unknown-status",
+              "decoded-with-reason",
+              "abstention-with-payload",
+              "unsupported-without-reason",
+              "candidate-pin-mismatch"
+            ],
+            "names": "mutation",
+            "values_count": 7
+          }
+        ]
+      },
+      {
+        "authored_case_count": 6,
+        "function": "test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures",
+        "parameters": [
+          {
+            "ids": [
+              "invalid-candidate-json",
+              "duplicate-candidate-key",
+              "candidate-nan",
+              "unsupported-schema",
+              "unsupported-source-binding",
+              "unbound-variable"
+            ],
+            "names": "mutation",
+            "values_count": 6
+          }
+        ]
+      },
+      {
+        "authored_case_count": 1,
+        "function": "test_oversized_candidate_request_is_accounted_without_calling_relational_lowering",
+        "parameters": []
+      },
+      {
+        "authored_case_count": 1,
+        "function": "test_precedence_preserves_missing_duplicate_and_shape_facts_when_generation_is_bad",
+        "parameters": []
+      },
+      {
+        "authored_case_count": 4,
+        "function": "test_every_available_reference_is_validated_even_without_comparable_prediction",
+        "parameters": [
+          {
+            "ids": [
+              "invalid-reference-missing-output",
+              "invalid-reference-abstention",
+              "invalid-reference-duplicate-output",
+              "invalid-reference-bad-generation"
+            ],
+            "names": "predictions",
+            "values_count": 4
+          }
+        ]
+      },
+      {
+        "authored_case_count": 6,
+        "function": "test_reference_envelope_cannot_drop_or_retarget_the_population",
+        "parameters": [
+          {
+            "ids": [
+              "missing-reference-row",
+              "duplicate-reference-row",
+              "unknown-reference-id",
+              "reordered-reference-rows",
+              "wrong-reference-population",
+              "unavailable-with-payload"
+            ],
+            "names": "mutation",
+            "values_count": 6
+          }
+        ]
+      },
+      {
+        "authored_case_count": 3,
+        "function": "test_three_independent_transport_pins_refuse_before_lazy_owners",
+        "parameters": [
+          {
+            "ids": [
+              "population-transport-pin",
+              "references-transport-pin",
+              "predictions-transport-pin"
+            ],
+            "names": "pin",
+            "values_count": 3
+          }
+        ]
+      },
+      {
+        "authored_case_count": 10,
+        "function": "test_whole_transport_and_population_intake_failures_refuse_before_operation_imports",
+        "parameters": [
+          {
+            "ids": [
+              "duplicate-outer-key",
+              "outer-nonfinite",
+              "outer-invalid-utf8",
+              "mutable-transport",
+              "unknown-prediction-envelope-field",
+              "nonlist-observations",
+              "empty-population",
+              "duplicate-population-id",
+              "population-over-64",
+              "observations-over-256"
+            ],
+            "names": "mutation",
+            "values_count": 10
+          }
+        ]
+      },
+      {
+        "authored_case_count": 3,
+        "function": "test_outer_transport_byte_ceiling_refuses_without_clipping",
+        "parameters": [
+          {
+            "ids": [
+              "population-byte-ceiling",
+              "references-byte-ceiling",
+              "predictions-byte-ceiling"
+            ],
+            "names": "which",
+            "values_count": 3
+          }
+        ]
+      },
+      {
+        "authored_case_count": 3,
+        "function": "test_nested_reference_and_ordinary_json_bounds_refuse_before_lazy_owners",
+        "parameters": [
+          {
+            "ids": [
+              "reference-request-bound",
+              "reference-report-bound",
+              "outer-json-depth-bound"
+            ],
+            "names": "which",
+            "values_count": 3
+          }
+        ]
+      },
+      {
+        "authored_case_count": 3,
+        "function": "test_operational_candidate_failures_are_never_reported_as_invalid_model_output",
+        "parameters": [
+          {
+            "ids": [
+              "os-error",
+              "import-error",
+              "runtime-error"
+            ],
+            "names": "error_type",
+            "values_count": 3
+          }
+        ]
+      },
+      {
+        "authored_case_count": 1,
+        "function": "test_public_pair_replay_failure_refuses_instead_of_becoming_a_candidate_failure",
+        "parameters": []
+      },
+      {
+        "authored_case_count": 1,
+        "function": "test_source_fence_failure_refuses_instead_of_becoming_invalid_candidate_output",
+        "parameters": []
+      },
+      {
+        "authored_case_count": 4,
+        "function": "test_first_use_owner_identity_failure_refuses_even_with_all_references_unavailable",
+        "parameters": [
+          {
+            "ids": [
+              "first-use-relational-import-anchor",
+              "first-use-relational-cache",
+              "first-use-pair-import-anchor",
+              "first-use-pair-cache"
+            ],
+            "names": "trusted_owner,field",
+            "values_count": 4
+          }
+        ]
+      },
+      {
+        "authored_case_count": 1,
+        "function": "test_complete_report_ceiling_refuses_without_dropping_rows",
+        "parameters": []
+      },
+      {
+        "authored_case_count": 13,
+        "function": "test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration",
+        "parameters": [
+          {
+            "ids": [
+              "omitted-occurrence",
+              "reordered-occurrences",
+              "altered-terminal-count",
+              "reduced-population-denominator",
+              "reduced-comparable-denominator",
+              "altered-observation-digest",
+              "omitted-observation",
+              "promoted-generation-claim",
+              "promoted-authority",
+              "boolean-mask",
+              "float-mask",
+              "promoted-pair-disagreement",
+              "unknown-output-field"
+            ],
+            "names": "damage",
+            "values_count": 13
+          }
+        ]
+      },
+      {
+        "authored_case_count": 1,
+        "function": "test_wrong_independent_whole_report_pin_refuses_before_regeneration",
+        "parameters": []
+      },
+      {
+        "authored_case_count": 1,
+        "function": "test_public_import_is_standard_library_only_and_writes_nothing",
+        "parameters": []
+      }
+    ]
+  },
+  "authority_granted": false,
+  "base_head": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+  "blocking_findings": [],
+  "edits_performed": [
+    "Owned new guide only",
+    "This audit artifact only"
+  ],
+  "findings": [
+    {
+      "detail": "Raw exact bytes and independent whole pins are checked before lazy operation imports. Duplicate outer keys, nonfinite/out-of-profile ordinary values, bounds and invalid envelopes refuse. Finite detached ordinary inputs and request/report hashes preserve original raw-vs-canonical distinctions; no untrusted offered path is read.",
+      "status": "pass",
+      "topic": "three original transports and safe preflight"
+    },
+    {
+      "detail": "Population IDs are unique ordered occurrence identities; repeated source/context commitments remain separate. All prediction observations retain canonical complete-row digests and arrival indices. Expected duplicates never select a favorable candidate; unknown/unidentifiable rows remain visible and invalidate coverage. Terminal counts sum N.",
+      "status": "pass",
+      "topic": "complete occurrence and observation populations"
+    },
+    {
+      "detail": "Every available original is independently publicly replayed before candidates, even if candidate missing/duplicated/abstained/unverified. Invalid original refuses batch. Explicit unavailable rows retain N and valid candidates are still prepared and publicly validated as valid_without_reference.",
+      "status": "pass",
+      "topic": "reference availability and asset boundary"
+    },
+    {
+      "detail": "Precedence matches contract while separate shape/provenance ledgers retain overlapping facts. Full selected six-boolean rates use N and failures/unavailable references receive zero agreement. Separate comparable rates use K with null at zero. Matching family/signature/roles is not legal fidelity. Full pair hashes/feature counts/exclusive paths are retained without accumulating all full pairs.",
+      "status": "pass",
+      "topic": "nine outcomes and six honest metrics"
+    },
+    {
+      "detail": "Public prepare/validate relational and prepare/hash pair owners are reused. Existing typed AST/algebra remains authoritative; no seven-facet flattening or new logic equivalence owner. Exact tdfol/tdfol_default1.0.0 Object-predicate fragment remains source_binding=null; wider logic families and source meaning remain unsupported/unverified.",
+      "status": "pass",
+      "topic": "existing representation owners only"
+    },
+    {
+      "detail": "Trusted fixed nofollow regular source snapshots preserve bytes and full physical identity, own import identity and fixed owner import/cached anchors. Source fence runs before and after candidate rejection. Only candidate ValueError is accounted as typed rejection after fence; OSError/ImportError/RuntimeError are not swallowed. Reference/public pair failures refuse.",
+      "status": "pass",
+      "topic": "source and operational failure boundary"
+    },
+    {
+      "detail": "Full closed bounded output canonical hash includes every ledger/occurrence/denominator/claim. Validator requires independent output pin and regenerates complete report from3 originals; rehashing edited counts, omission, authority or masks cannot replace replay.",
+      "status": "pass",
+      "topic": "independent whole output replay"
+    },
+    {
+      "detail": "Statically inspected112 authored cases across29 test functions. Coverage includes9 outcomes, all6 structural comparisons, first-use/mid-candidate source controls, reference/pair/operational refusal, all-absent/abstain/invalid/unsupported/null-K cases, repeated sources/unknown repeated IDs, raw-vs-canonical pins, pre-import refusal and resealed complete-output tampering. This is an authored AST roster, not a native result.",
+      "status": "pass",
+      "topic": "authored tests and source-only inspection"
+    },
+    {
+      "detail": "Helper uses unchanged qualifiedV03 guard with bounded nofollow single-link/full-identity bootstrap; exact own/guard/argv/config pins, fresh product namespace, current native output/redirect guards, denied network/extra child and bounded exclusive outputs. It checks exactly retained A/B original+sealed export bytes and selected metadata before/after, not entire old tree or live ledger.",
+      "status": "pass",
+      "topic": "native helper bootstrap and custody"
+    },
+    {
+      "detail": "Two retained authored hypotheses supply10 authored accounting queries with12 submitted observations covering all9 states, not10 laws or learned predictions. Intended7 named checks include2 refusals. It builds current relational references and a batch, same-consumer saved output validation, source/physical closing checks and exactly4 payload files. HTML/scope hashes are retained metadata declarations, not HTML/scope/join or old producer-main replay.",
+      "status": "pass",
+      "topic": "helper intended accounting scope"
+    },
+    {
+      "detail": "Guide accurately records APIs, transport/row limits, unavailable-target denominator, false generation authority and text/frozen-import limits. It explicitly marks new native qualification/retained consumer pending; no actual test result, model/inference/training, statutory interpretation, gold admission or Lean build is claimed.",
+      "status": "pass",
+      "topic": "guide scope and pending native claims"
+    }
+  ],
+  "guide_review_independence": "Consistency review of this reviewer authored guide; product/tests/native helper were authored by other agents.",
+  "ledger_read": false,
+  "limitations": [
+    "No product/helper/test import or execution, test collection, model/CID, corpus/fixture/sidecar/lookup body, retained typed-request/export body, generated batch/report body, source HTML or ledger/private-worktree/canonical-Git read was performed.",
+    "All planned consumer counts/checks/outcomes are assertions in reviewed source, not measurements until root-qualified execution.",
+    "File and import-anchor consistency does not authenticate arbitrary preloaded unanchored bytecode; native checked-buffer execution evidence remains separate.",
+    "Source/selection/context/partition/checkpoint/encoder/settings fields remain caller declarations, no independently reviewed statutory targets or gold authority.",
+    "Source-review findings do not establish mathematical correctness, semantic accuracy, latent dependence, generalization or actual lake build."
+  ],
+  "native_execution_pending": true,
+  "observed_at_utc": "2026-10-16T02:34:52.348499+00:00",
+  "payload_bodies_read": false,
+  "planned_native_metadata_pins": [
+    {
+      "bytes": 57900,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-request-v01.json",
+      "sha256": "9c44d60070948e2a2f251e28354cf648f781690a2f9057c5ae5b93fa3db5fe29"
+    },
+    {
+      "bytes": 58770,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/retained-batch-request-v01.json",
+      "sha256": "02c11e88edf67683d7767cb12dde3f737ef44e6c620d3de76a18d56a24ac0149"
+    },
+    {
+      "bytes": 15730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/authored-test-source-roster-v02.json",
+      "sha256": "f91e2ee384b89688d3b63a72309cb34201a2370e7bf9581dd99af8c9124b15af"
+    },
+    {
+      "bytes": 1028,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/resource-plan-v01.json",
+      "sha256": "c0fa5e8f2bcda4c499f81413f731c30b8758ce03154a142c4233af9b6730172a"
+    }
+  ],
+  "planned_native_scope": {
+    "qualification-request-v01.json": {
+      "child_process_slots": 1,
+      "cpu_slots": 1,
+      "memory_mb": 2048,
+      "selected_checks": [
+        "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py",
+        "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+        "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+        "tests/unit/logic/syntax_core/test_algebra.py"
+      ],
+      "source_pin_count": 242,
+      "storage_bytes": 1073741824,
+      "timeout_seconds": 1800
+    },
+    "retained-batch-request-v01.json": {
+      "child_process_slots": 1,
+      "cpu_slots": 1,
+      "memory_mb": 2048,
+      "selected_checks": [
+        "retained_original_request_and_native_export_custody",
+        "current_root_public_relational_reference_replay",
+        "complete_selected_and_submitted_accounting_controls",
+        "self_and_competing_scope_structural_metrics",
+        "saved_batch_public_original_bound_revalidation",
+        "independent_pin_and_resealed_denominator_refusals",
+        "retained_selected_inputs_unchanged_and_final_source_guards"
+      ],
+      "source_pin_count": 245,
+      "storage_bytes": 268435456,
+      "timeout_seconds": 1800
+    }
+  },
+  "product_execution_performed": false,
+  "product_public_import_static_top_level_imports": [
+    "__future__",
+    "hashlib",
+    "json",
+    "math",
+    "os",
+    "pathlib",
+    "re",
+    "stat"
+  ],
+  "remaining_publication_followups": [
+    "Root README/roadmap links and any actual native-result paragraph will be reviewed after root reports execution outcomes.",
+    "Curated evidence inventory/publication and subsequent upstream integration are outside this preexecution audit."
+  ],
+  "resolved_preexecution_findings": [
+    {
+      "resolution": "Overbound decoded request inside safe outer transport is invalid_typed_output without lowering; overbound reference/whole outer intake refuses. Guide records exact bounds.",
+      "topic": "candidate versus aggregate bound"
+    },
+    {
+      "resolution": "Output generation_claims_are_declarations_only and kind authored_control preserve no actual decoder claim; numerical/model/latent verification flags remain false.",
+      "topic": "authored generation labeling"
+    },
+    {
+      "resolution": "Product and guide explicitly exclude arbitrary nonUTF8 model byte streams. Malformed candidate JSON text is accounted; invalid outerUTF8 refuses intake.",
+      "topic": "text transport scope"
+    },
+    {
+      "resolution": "Helper now uses reference_availability available/unavailable/total/fraction and valid_typed_output count/total/fraction; agreement cells keep matched/total/fraction, matching product/tests.",
+      "topic": "availability/count schema mismatch"
+    },
+    {
+      "resolution": "Bounded own import snapshot preserves hash and full physical identity. Trusted fixed relational/pair import anchors and cached source identities must match trusted snapshots before candidate ValueError boundary; unavailable-reference first-use controls refuse before lowering. No private operation helper or offered source path is called.",
+      "topic": "first-use stale imported relational owner"
+    },
+    {
+      "resolution": "Guide and contract explicitly bound integer magnitude to2**63-1, require finite floats, and share500000 input JSON nodes across all3 transports. Out-of-profile ordinary outer values refuse pre-import.",
+      "topic": "ordinary numerical intake scope"
+    }
+  ],
+  "reviewer": "/root/sampled_primary_docs_review_n10",
+  "reviewer_authored_guide": true,
+  "schema": "legal-typed-batch-source-helper-doc-review/v1",
+  "scope": "Static product/test/helper source, AST, declared native request metadata and contract/guide review before native execution. No runtime outcome established.",
+  "source_contract_guide_config_pins": [
+    {
+      "bytes": 35189,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py",
+      "sha256": "12dbd712e49ab8d8f9fc7e83d088ea1161d7c68c6715ad9a7f53cad6c52f3474"
+    },
+    {
+      "bytes": 47319,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py",
+      "sha256": "a3667587c9b767af40bf6bffeeb98c652ef52ca47c2871749710b2d39b2ac0c7"
+    },
+    {
+      "bytes": 13567,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_relational_batch_evaluation_v1.md",
+      "sha256": "df07f0323854df3b78594c43277e5be963fc3b508f42c32c51a03c0d9749cdb3"
+    },
+    {
+      "bytes": 21781,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/run_retained_batch_v01.py",
+      "sha256": "7e0a28124903393561cc8b746bcb4cebab7f27ca1105f9478e09d2a68ca87dca"
+    },
+    {
+      "bytes": 3326,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/comparison-inputs-v01.json",
+      "sha256": "ea81d7b3ae2266c075f79eb01d04b671f7b3da266dd176bb97ffc5691ae8d8a3"
+    },
+    {
+      "bytes": 12683,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/product-contract-v01.md",
+      "sha256": "219ebc86bff4084bb6aa2c2bb5fee604d25c8831004d0345416fe1a6ec4bef15"
+    },
+    {
+      "bytes": 18562,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+    },
+    {
+      "bytes": 29705,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_reconstruction_v1.py",
+      "sha256": "13d4279872d9cc3184d5796596b984193e49b51c7a56c4066857bce74b3e3723"
+    },
+    {
+      "bytes": 28529,
+      "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py",
+      "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+    }
+  ],
+  "status": "PASS",
+  "training_performed": false
+}

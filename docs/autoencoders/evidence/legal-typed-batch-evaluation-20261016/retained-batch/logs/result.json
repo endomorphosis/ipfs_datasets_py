@@ -1,0 +1,19 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-retained-batch02/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-retained-batch02/logs/execution.json"
+  ],
+  "executed_checks": [
+    "retained_original_request_and_native_export_custody",
+    "current_root_public_relational_reference_replay",
+    "complete_selected_and_submitted_accounting_controls",
+    "self_and_competing_scope_structural_metrics",
+    "saved_batch_public_original_bound_revalidation",
+    "independent_pin_and_resealed_denominator_refusals",
+    "retained_selected_inputs_unchanged_and_final_source_guards"
+  ],
+  "request_sha256": "df3a15cadede9829209cfcbe92746cf898ef3419f008ec330a11241c5be77c7b",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

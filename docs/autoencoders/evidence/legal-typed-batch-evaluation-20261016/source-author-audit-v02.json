@@ -1,0 +1,163 @@
+{
+  "Lean_executed": false,
+  "actual_payloads_read": false,
+  "bounds": {
+    "MAX_JSON_DEPTH": 96,
+    "MAX_JSON_NODES": 500000,
+    "MAX_OBSERVATIONS": 256,
+    "MAX_POPULATION_ROWS": 64,
+    "MAX_REQUEST_BYTES": 524288
+  },
+  "comparison_booleans": [
+    "exact_typed_expression_equal",
+    "family_profile_equal",
+    "signature_declarations_equal",
+    "argument_roles_equal",
+    "declared_structure_equal",
+    "lexical_alpha_structure_equal"
+  ],
+  "contract": {
+    "bytes": 12389,
+    "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/product-contract-v01.md",
+    "sha256": "7f1292b0540bfeb642a8c7e248eef094382055b5fb5a532166c58854ff3aa649"
+  },
+  "correction": {
+    "exact_change": "Remove natural namespace families from the fixed source-file import/tuple; retain its concrete namespaces.py owner and all other concrete syntax/parser/native owners. Add explanatory comment only.",
+    "existing_owner_or_test_changed": false,
+    "full_module_AST_invariant_except_two_namespace_entries": true,
+    "natural_namespace_preserved": true,
+    "package_initializer_created": false,
+    "previous_frozen_bytes": 35189,
+    "previous_frozen_sha256": "12dbd712e49ab8d8f9fc7e83d088ea1161d7c68c6715ad9a7f53cad6c52f3474",
+    "reverse_text_change_recovers_exact_v01_source_pin": true,
+    "root_reported_qualification01": {
+      "collected": 299,
+      "common_reason": "RelationalBatchEvaluationError: trusted module source required",
+      "diagnosis": "Natural namespace families has no concrete __file__; source-file snapshot tuple incorrectly included it.",
+      "failed_reports": 76,
+      "source_metadata_only_attribution": "Native counts supplied by root; this source-author correction does not independently audit failure artifacts.",
+      "status": "FAILED",
+      "successful_calls": 223
+    },
+    "source_guards_relaxed": false,
+    "test_source": {
+      "bytes": 47319,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py",
+      "reported_cases": 112,
+      "sha256": "a3667587c9b767af40bf6bffeeb98c652ef52ca47c2871749710b2d39b2ac0c7"
+    }
+  },
+  "implementation_executed": false,
+  "limitations": [
+    "This is an implementation-author review, not an independent correctness proof.",
+    "No test pass, actual decoded batch, accuracy, reviewed legal target, numerical execution or native durability is claimed.",
+    "New tests remain exact frozen47319B/a3667587... and112 cases; no product or test execution by this author."
+  ],
+  "models_loaded": false,
+  "native_qualification_status": "QUALIFICATION01_FAILED; CORRECTED_SOURCE_AWAITING_ROOT_QUALIFICATION02",
+  "observed_at_utc": "2026-10-16T02:38:29.303539+00:00",
+  "operation_imports_lazy": [
+    "from . import legal_relational_norm_v1, legal_relational_reconstruction_v1, legal_family_routes",
+    "from .. import syntax_core, parsers",
+    "from ..syntax_core import ast, algebra, contracts, signatures, diagnostics, lexer, registry",
+    "from ..families import namespaces",
+    "from ..parsers import legacy_modal, modal, event_calculus",
+    "from ..TDFOL import tdfol_core",
+    "from ..intent_ir.formalize import modal_projections"
+  ],
+  "output_top_fields": [
+    "authority",
+    "comparable_pair_structure_diagnostics",
+    "coverage",
+    "evaluation_gold_mask",
+    "full_selected_structure_diagnostics",
+    "generation",
+    "generation_claims_are_declarations_only",
+    "generation_issues",
+    "inputs",
+    "limitations",
+    "metric_reference_access",
+    "observation_ledger",
+    "occurrences",
+    "population",
+    "producer_pins",
+    "profile",
+    "reference_availability",
+    "schema",
+    "status",
+    "terminal_counts",
+    "training_mask",
+    "valid_typed_output"
+  ],
+  "public_APIs": [
+    {
+      "line": 416,
+      "name": "prepare_relational_batch_evaluation_v1",
+      "signature": "population_raw, references_raw, predictions_raw, *, expected_population_sha256, expected_references_sha256, expected_predictions_sha256"
+    },
+    {
+      "line": 580,
+      "name": "relational_batch_evaluation_sha256",
+      "signature": "report"
+    },
+    {
+      "line": 589,
+      "name": "validate_relational_batch_evaluation_v1",
+      "signature": "report, population_raw, references_raw, predictions_raw, *, expected_evaluation_sha256, expected_population_sha256, expected_references_sha256, expected_predictions_sha256"
+    }
+  ],
+  "public_existing_owner_calls": [
+    "paired.prepare_relational_reconstruction_comparison_v1",
+    "paired.relational_reconstruction_comparison_sha256",
+    "relational.prepare_relational_norm_v1",
+    "relational.relational_norm_report_sha256",
+    "relational.validate_relational_norm_v1"
+  ],
+  "reviewer": "sampled_primary_metadata_review_n10",
+  "schema": "legal-typed-batch-source-author-audit/v2",
+  "scope": "Author source/AST review only. This audit does not execute/import the product or tests, read corpus/fixture/model/payload bodies, or authenticate a live scheduler/ledger.",
+  "source": {
+    "bytes": 35317,
+    "lines": 605,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py",
+    "sha256": "b8517dc440827ebd0fbde89acdc80c92a4fb65bfc80cbdb577cd6ebbae378bc6"
+  },
+  "source_freeze": "Final revised source frozen; exactly one final LF and no trailing horizontal whitespace.",
+  "source_review_findings": [
+    "Three exact bytes transports are independently pinned, duplicate-key/nonfinite/UTF8/node/depth/aggregate-byte checked and detached before operation imports. Candidate request text and pin failures remain per-observation outcomes inside safe outer envelopes.",
+    "Every available reference is publicly replayed before any candidate, including rows with missing/duplicate/abstained observations. Missing reference rows refuse; declared unavailable references remain in denominator.",
+    "All submitted observations preserve arrival ordinal and full canonical row digest; valid IDs associate even malformed rows; duplicate IDs select no candidate. Unknown and unidentifiable observations remain a separate complete ledger.",
+    "Nine exhaustive terminal outcomes retain the fixed occurrence denominator, with independent shape/provenance diagnostics and declared status. Expected-count and valid-pair rates remain separate; compared disagreements stay valid comparisons.",
+    "Existing public relational lowering/validation and pair comparison/digest own typed syntax, lexical alpha and declared structure. No replacement AST, alpha implementation, inference or seven-facet score is added.",
+    "Only bounded nofollow single-link regular trusted sources are read. Full stat identities and byte pins fence own import/current state, fixed trusted source closure and known relational/pair import/cached anchors before/after operations, including candidate ValueError paths. Offered producer paths are never followed.",
+    "Private trusted import/cache constants are inspected solely to distinguish stale loaded owner failure from invalid candidate output; no private operation helpers are invoked. Unanchored preloaded bytecode is not generally authenticated by file hashes; qualified fresh checked-buffer execution remains separate.",
+    "Candidate preparation alone catches ValueError; independent source fences run on exception paths. Candidate public-validation or paired replay failure refuses the batch. Operational OSError/ImportError/RuntimeError is not converted to candidate-invalid credit.",
+    "One candidate and one complete pair are held at a time; retained occurrence summaries and final output have complete bounds and refuse overflow. The original bounded transports identify all omitted payload text.",
+    "All authority claims remain false, including numerical_execution_authenticated and latent_only_verified; masks are integer zero. Declared dimensions8/384/768 do not establish model execution, latent-only input or accuracy.",
+    "Current scope remains exact tdfol/tdfol_default@1.0.0, source_binding=null and existing bounded Object-predicate fragment. request_utf8 covers bounded valid UTF8 text, including bad JSON, rather than arbitrary nonUTF8 model byte streams."
+  ],
+  "status": "SOURCE_REVIEW_COMPLETE_PENDING_NATIVE_QUALIFICATION",
+  "terminal_statuses": [
+    "missing",
+    "duplicate",
+    "malformed",
+    "unverifiable_generation",
+    "abstained",
+    "unsupported",
+    "invalid_typed_output",
+    "valid_without_reference",
+    "compared"
+  ],
+  "tests_executed": false,
+  "top_level_imports": [
+    "from __future__ import annotations",
+    "import hashlib",
+    "import json",
+    "import math",
+    "import os",
+    "from pathlib import Path",
+    "import re",
+    "import stat"
+  ],
+  "training_performed": false
+}

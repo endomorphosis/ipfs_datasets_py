@@ -1,0 +1,794 @@
+{
+  "Lean_executed": false,
+  "authority_granted": false,
+  "captured_native_closeout": {
+    "artifacts_durable_asserted": true,
+    "attempt_exceeded_reservation": false,
+    "cleanup_error": null,
+    "final_attempt_bytes": 350456,
+    "final_external_charged_bytes": 0,
+    "group_RSS_bytes": 0,
+    "lease_released": true,
+    "live_group_processes": 0,
+    "parent_result_path_string": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/logs/result.json",
+    "reservation_id": "0ddf2ea440b44e839300457ffafc4fbe",
+    "storage_status": "released"
+  },
+  "captured_parent_stderr": {
+    "bytes": 0,
+    "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-parent-stderr-v02.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "captured_parent_stdout": {
+    "bytes": 5514,
+    "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-parent-stdout-v02.json",
+    "sha256": "1cf08ce452efe08555d0a3cd64fec1267042001b6819493c90107bb7295c5f8b"
+  },
+  "checkout_source_pin_count": 241,
+  "child_qualification_elapsed_seconds": 19.71599748893641,
+  "collected_nodeids_full_canonical_sha256": "455ff7fab252f73a5a64951a73cf2ef2a1c2b9e5059d00b5d944da8dfb5c1f48",
+  "complete_selected_module_targets": [
+    "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+    "tests/unit/logic/syntax_core/test_algebra.py"
+  ],
+  "current_source_pin_mismatches": [],
+  "durability": {
+    "bytes": 1959,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/logs/validation-durability.json",
+    "sha256": "66f12d775d2fc3e6ffb16460a4be477fe6ea3b76d2519a13d04ba020575e0530"
+  },
+  "errors": [],
+  "exact_ordered_collection_call_XML_and_receipt_identity_join": true,
+  "execution": {
+    "bytes": 708,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/logs/execution.json",
+    "sha256": "9ec2ddcd69369a0f1a5cf7d62e1f114dc70cb9ad54adba40203706f3fe106531"
+  },
+  "external_source_pin_count": 1,
+  "external_sources": [
+    "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py"
+  ],
+  "final_new_tests": {
+    "bytes": 47319,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py",
+    "sha256": "a3667587c9b767af40bf6bffeeb98c652ef52ca47c2871749710b2d39b2ac0c7"
+  },
+  "final_product": {
+    "bytes": 35317,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py",
+    "sha256": "b8517dc440827ebd0fbde89acdc80c92a4fb65bfc80cbdb577cd6ebbae378bc6"
+  },
+  "final_request_resources": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "storage_bytes": 1073741824,
+    "timeout_seconds": 1800
+  },
+  "finder_refused_attempts": 0,
+  "guard_attempts": {
+    "child_process": 0,
+    "network": 0
+  },
+  "historical_failed_qualification01": {
+    "collected": 299,
+    "correction": "Remove natural namespace families from concrete source-file import/tuple, keep concrete namespaces.py and source guards; no test/representation/accounting edits.",
+    "exact_minimal_reverse_patch_and_AST_invariance": true,
+    "failed_fixture_or_XML_bodies_read": false,
+    "failure": {
+      "bytes": 850,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/logs/failure.json",
+      "sha256": "33a28774bad722a46cb6efcf4ac556ad5830a10db23362fcffa91cf66911cdf5"
+    },
+    "native_completed": false,
+    "new_grant_or_lease_or_output_deletion": false,
+    "old_product_source_archive": {
+      "bytes": 35189,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification01-original-product-source.py.txt",
+      "sha256": "12dbd712e49ab8d8f9fc7e83d088ea1161d7c68c6715ad9a7f53cad6c52f3474"
+    },
+    "own_recovery": {
+      "bytes": 62228,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification01-own-recovery-receipt-v01.json",
+      "sha256": "7756834c4e883053d6ebc677a2881e73d53ba3f4f8aaacdab80ab6dae69ddcc1"
+    },
+    "own_recovery_metadata_entries_rehashed": [
+      "logs/failure.json",
+      "logs/qualification-failed.json",
+      "logs/stderr.log",
+      "logs/stdout.log"
+    ],
+    "own_recovery_retained_bytes": 481667,
+    "own_recovery_retained_files": 10,
+    "receipt": {
+      "bytes": 155737,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/logs/qualification-failed.json",
+      "sha256": "2c31c765f0198ff2e8da143a745fa35a068bf4c5f19da31d5535bcfc27906809"
+    },
+    "request": {
+      "bytes": 57900,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-request-v01.json",
+      "sha256": "9c44d60070948e2a2f251e28354cf648f781690a2f9057c5ae5b93fa3db5fe29"
+    },
+    "roster_identical_to_final": true,
+    "scheduler_or_ledger_state_independently_authenticated": false,
+    "source_pin_difference_paths": [
+      "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py"
+    ],
+    "successful_calls": 223,
+    "successful_test_claim": false,
+    "unsuccessful_reports": 76
+  },
+  "independent_AST_roster": [
+    {
+      "cases": 112,
+      "function_roster": [
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_mixed_population_accounts_every_terminal_outcome_and_every_submitted_row"
+        },
+        {
+          "axis_counts": [
+            4
+          ],
+          "cases": 4,
+          "function": "test_zero_comparable_pairs_never_produce_optimistic_conditional_agreement"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_valid_candidates_without_references_remain_visible_and_are_lowered"
+        },
+        {
+          "axis_counts": [
+            2
+          ],
+          "cases": 2,
+          "function": "test_identical_source_commitments_do_not_merge_distinct_physical_occurrence_ids"
+        },
+        {
+          "axis_counts": [
+            4
+          ],
+          "cases": 4,
+          "function": "test_duplicate_ids_never_select_a_favorable_candidate"
+        },
+        {
+          "axis_counts": [
+            4
+          ],
+          "cases": 4,
+          "function": "test_unknown_and_unidentifiable_observations_cannot_supply_a_missing_occurrence"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_repeated_unexpected_id_keeps_all_indices_without_changing_expected_denominator"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_real_public_pair_controls_separate_exact_declared_and_alpha_agreement"
+        },
+        {
+          "axis_counts": [
+            3
+          ],
+          "cases": 3,
+          "function": "test_decoder_generation_declarations_do_not_authenticate_model_execution"
+        },
+        {
+          "axis_counts": [
+            12
+          ],
+          "cases": 12,
+          "function": "test_bad_generation_preserves_rows_and_withholds_comparable_credit"
+        },
+        {
+          "axis_counts": [
+            2,
+            5
+          ],
+          "cases": 10,
+          "function": "test_row_provenance_contradictions_withhold_credit_and_retain_declared_status"
+        },
+        {
+          "axis_counts": [
+            7
+          ],
+          "cases": 7,
+          "function": "test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport"
+        },
+        {
+          "axis_counts": [
+            6
+          ],
+          "cases": 6,
+          "function": "test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_oversized_candidate_request_is_accounted_without_calling_relational_lowering"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_precedence_preserves_missing_duplicate_and_shape_facts_when_generation_is_bad"
+        },
+        {
+          "axis_counts": [
+            4
+          ],
+          "cases": 4,
+          "function": "test_every_available_reference_is_validated_even_without_comparable_prediction"
+        },
+        {
+          "axis_counts": [
+            6
+          ],
+          "cases": 6,
+          "function": "test_reference_envelope_cannot_drop_or_retarget_the_population"
+        },
+        {
+          "axis_counts": [
+            3
+          ],
+          "cases": 3,
+          "function": "test_three_independent_transport_pins_refuse_before_lazy_owners"
+        },
+        {
+          "axis_counts": [
+            10
+          ],
+          "cases": 10,
+          "function": "test_whole_transport_and_population_intake_failures_refuse_before_operation_imports"
+        },
+        {
+          "axis_counts": [
+            3
+          ],
+          "cases": 3,
+          "function": "test_outer_transport_byte_ceiling_refuses_without_clipping"
+        },
+        {
+          "axis_counts": [
+            3
+          ],
+          "cases": 3,
+          "function": "test_nested_reference_and_ordinary_json_bounds_refuse_before_lazy_owners"
+        },
+        {
+          "axis_counts": [
+            3
+          ],
+          "cases": 3,
+          "function": "test_operational_candidate_failures_are_never_reported_as_invalid_model_output"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_public_pair_replay_failure_refuses_instead_of_becoming_a_candidate_failure"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_source_fence_failure_refuses_instead_of_becoming_invalid_candidate_output"
+        },
+        {
+          "axis_counts": [
+            4
+          ],
+          "cases": 4,
+          "function": "test_first_use_owner_identity_failure_refuses_even_with_all_references_unavailable"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_complete_report_ceiling_refuses_without_dropping_rows"
+        },
+        {
+          "axis_counts": [
+            13
+          ],
+          "cases": 13,
+          "function": "test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_wrong_independent_whole_report_pin_refuses_before_regeneration"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_public_import_is_standard_library_only_and_writes_nothing"
+        }
+      ],
+      "functions": 29,
+      "module": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py"
+    },
+    {
+      "cases": 84,
+      "function_roster": [
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_self_pair_retains_complete_authoritative_mapping_and_zero_authority"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_id_only_changes_are_exactly_distinguished_from_declared_and_alpha_structure"
+        },
+        {
+          "axis_counts": [
+            2
+          ],
+          "cases": 2,
+          "function": "test_consistent_lexical_binder_renaming_preserves_alpha_without_erasing_names"
+        },
+        {
+          "axis_counts": [
+            4
+          ],
+          "cases": 4,
+          "function": "test_signature_and_role_row_declaration_order_is_normalized_without_reordering_arguments"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_raw_transport_hashes_remain_separate_from_full_typed_expression_identity"
+        },
+        {
+          "axis_counts": [
+            5
+          ],
+          "cases": 5,
+          "function": "test_valid_bound_relational_changes_are_not_lexical_alpha_variants"
+        },
+        {
+          "axis_counts": [
+            3
+          ],
+          "cases": 3,
+          "function": "test_actual_signature_and_ordered_argument_roles_gate_alpha_comparison"
+        },
+        {
+          "axis_counts": [
+            6
+          ],
+          "cases": 6,
+          "function": "test_direction_modal_operators_and_operator_ownership_remain_distinct"
+        },
+        {
+          "axis_counts": [
+            3
+          ],
+          "cases": 3,
+          "function": "test_even_commutative_connectives_keep_declared_child_order"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_double_negation_is_not_erased_as_a_lexical_alpha_rename"
+        },
+        {
+          "axis_counts": [
+            2
+          ],
+          "cases": 2,
+          "function": "test_complete_mapping_union_keeps_every_path_for_added_or_dropped_structure"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_binder_and_ordered_argument_roles_belong_to_their_exact_existing_paths"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_modal_extension_and_connective_ancestry_keep_actual_operator_ownership"
+        },
+        {
+          "axis_counts": [
+            4
+          ],
+          "cases": 4,
+          "function": "test_each_independent_request_and_full_report_pin_is_required_before_lazy_owners"
+        },
+        {
+          "axis_counts": [
+            2,
+            8
+          ],
+          "cases": 16,
+          "function": "test_self_rehashed_full_input_reports_still_require_original_authoritative_replay"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_unproved_offered_producer_filename_is_never_opened"
+        },
+        {
+          "axis_counts": [
+            8
+          ],
+          "cases": 8,
+          "function": "test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator"
+        },
+        {
+          "axis_counts": [
+            8
+          ],
+          "cases": 8,
+          "function": "test_finite_detached_preflight_refuses_before_operation_imports"
+        },
+        {
+          "axis_counts": [
+            12
+          ],
+          "cases": 12,
+          "function": "test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_wrong_independent_comparison_pin_refuses_before_regeneration"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_complete_output_ceiling_refuses_without_clipping_or_mutating_originals"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_changed_self_source_pin_refuses_without_editing_a_source_file"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_public_import_uses_only_standard_library_and_writes_nothing"
+        }
+      ],
+      "functions": 23,
+      "module": "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py"
+    },
+    {
+      "cases": 70,
+      "function_roster": [
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_full_public_replay_retains_existing_ast_ledger_and_no_authority"
+        },
+        {
+          "axis_counts": [
+            2
+          ],
+          "cases": 2,
+          "function": "test_necessary_approval_and_sufficient_permission_have_explicit_countermodels"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_activation_outside_modality_differs_from_guard_inside_under_declared_two_world_model"
+        },
+        {
+          "axis_counts": [
+            3
+          ],
+          "cases": 3,
+          "function": "test_o_p_f_are_independent_parameters_with_no_inserted_duality"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_action_disjunction_differs_from_conjunction_and_dropped_alternative"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_permission_of_disjunction_is_not_silently_distributed_under_arbitrary_modal_parameters"
+        },
+        {
+          "axis_counts": [
+            2
+          ],
+          "cases": 2,
+          "function": "test_actor_recipient_swaps_and_direction_reversal_change_structure_and_finite_truth"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_quantifier_order_is_preserved_and_detectable"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_boolean_not_iff_and_exact_binary_connectives_retain_finite_truth"
+        },
+        {
+          "axis_counts": [
+            8
+          ],
+          "cases": 8,
+          "function": "test_repaired_report_hash_does_not_hide_mutation"
+        },
+        {
+          "axis_counts": [
+            12
+          ],
+          "cases": 12,
+          "function": "test_resealed_requests_still_refuse_out_of_profile_declarations"
+        },
+        {
+          "axis_counts": [
+            18
+          ],
+          "cases": 18,
+          "function": "test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse"
+        },
+        {
+          "axis_counts": [
+            7
+          ],
+          "cases": 7,
+          "function": "test_roles_are_complete_ordered_explicit_and_closed"
+        },
+        {
+          "axis_counts": [
+            10
+          ],
+          "cases": 10,
+          "function": "test_preflight_rejections_happen_before_operation_owner_loading"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_independent_request_and_report_identities_are_required"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_report_hash_rejects_nonordinary_values_without_loading_owners"
+        }
+      ],
+      "functions": 16,
+      "module": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py"
+    },
+    {
+      "cases": 33,
+      "function_roster": [
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_module_version_and_interface"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_free_and_bound_variables_basic"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_free_variables_shadowing_and_let"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_free_variables_nested_binders"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_alpha_equivalent_renamed_binders"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_alpha_equivalent_nested_and_shadowing"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_alpha_equivalent_let_and_connectives"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_semantic_identity_ignores_node_ids_and_is_stable"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_alpha_rename_binder_preserves_semantic_identity"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_alpha_rename_binder_avoids_nested_capture"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_substitute_simple_and_idempotent"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_substitute_under_binder_no_capture"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_substitute_shadowed_variable_unchanged"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_substitute_let_capture_avoidance"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_substitute_nested_binders_adversarial"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_substitute_many_simultaneous"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_substitute_rejects_non_term_replacement"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_substitute_connectives_and_equality"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_substitute_extension_children"
+        },
+        {
+          "axis_counts": [
+            4
+          ],
+          "cases": 4,
+          "function": "test_property_substitution_never_captures"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_property_alpha_equivalent_share_semantic_identity"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_property_semantic_identity_distinguishes_structure"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_walk_and_size_depth"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_traversal_respects_node_limit"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_traversal_respects_depth_limit"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_limits_reject_unbounded_and_over_ceiling"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_substitute_and_alpha_under_tight_but_sufficient_limits"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_walk_bounded_module_helper"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_true_false_and_constants_stable_under_subst"
+        },
+        {
+          "axis_counts": [],
+          "cases": 1,
+          "function": "test_application_free_vars_and_subst"
+        }
+      ],
+      "functions": 30,
+      "module": "tests/unit/logic/syntax_core/test_algebra.py"
+    }
+  ],
+  "independent_AST_total_cases": 299,
+  "junit_ids_full_canonical_sha256": "722c53f91169e54a1051e404583525387962fba5d1bd466e31efd1b942ea4ba6",
+  "limitations": [
+    "299=112new+84paired+70relational+33algebra contract cases; retries overlap exactly and are not598independent cases.",
+    "Current source pins all match exact frozen final bytes; source correction after qualification01 is preserved as failed historical evidence and was fully rerun in qualification02.",
+    "Ten native seal records are retained; six metadata/XML/log entries were independently rehashed with physical identity. Other cache/fixture entries were not opened.",
+    "Captured released/durable/group0/native metadata and exact-own recovery do not authenticate a live scheduler or ledger.",
+    "Passing synthetic/contract tests does not establish decoder execution, learned accuracy, legal correctness, reviewed gold, source equivalence, latent-only inference or Lean compilation.",
+    "Actual retained batch consumer has a separate request/result and is outside this qualification audit."
+  ],
+  "loaded_checked_buffer_product_origins": 90,
+  "loaded_origins_full_canonical_sha256": "ddf5538b7e558a5fc2ef36a3f7d6fc057ed4dbb370a2aaa9d961b368608be51b",
+  "maximum_collected_nodeid_characters": 192,
+  "metadata_seal_entries_independently_rehashed": [
+    "exports/junit.xml",
+    "logs/execution.json",
+    "logs/qualification.json",
+    "logs/result.json",
+    "logs/stderr.log",
+    "logs/stdout.log"
+  ],
+  "models_loaded": false,
+  "native_completed": true,
+  "native_execution_elapsed_seconds": 63.00158656295389,
+  "native_returncode": 0,
+  "natural_product_namespaces": {
+    "ipfs_datasets_py.logic.families": [
+      "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/families"
+    ],
+    "ipfs_datasets_py.logic.intent_ir.formalize": [
+      "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/formalize"
+    ]
+  },
+  "observed_at_utc": "2026-10-16T02:45:35.369188+00:00",
+  "origin_mismatches": [],
+  "plain_assertions": true,
+  "pytest_errors": 0,
+  "pytest_failures": 0,
+  "pytest_skips": 0,
+  "receipt": {
+    "bytes": 241690,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/logs/qualification.json",
+    "sha256": "f13b5b3f0d92f41d3c0b548cd0cd5c8ea0d17cf5432183070027d608c96fa0fb"
+  },
+  "request": {
+    "bytes": 57900,
+    "path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-request-v02.json",
+    "sha256": "28159ac07f73016b05f18a74e693cce97763da7a3a0eb85d913449c57fd2710a"
+  },
+  "result": {
+    "bytes": 888,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/logs/result.json",
+    "sha256": "1772bda67afbafb0a55530da8da7865eca338383bcf68edb7b85b55153433d33"
+  },
+  "retry_case_populations_not_additive": true,
+  "reviewer": "sampled_primary_metadata_review_n10",
+  "runtime_per_module_cases": {
+    "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py": 112,
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py": 70,
+    "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py": 84,
+    "tests/unit/logic/syntax_core/test_algebra.py": 33
+  },
+  "schema": "legal-typed-batch-qualification-independent-metadata-review/v2",
+  "scope": "Read-only source/AST and native metadata audit independent of root execution. Auditor authored product, so not author-independent implementation proof. No product/test imports or execution, actual fixture/corpus/model/request/report/comparison payload bodies, ledger or canonical Git.",
+  "source_pin_count": 242,
+  "source_pin_map_full_canonical_sha256": "1b4888be6ebd0d03f9273f778fe745d07930c42c0adef27a174dcd43d1799ea5",
+  "status": "PASS",
+  "strict_native_sealed_files": 10,
+  "training_performed": false,
+  "unique_collected_successful_JUnit_cases": 299
+}
