@@ -1,0 +1,1475 @@
+{
+  "Lean_executed": false,
+  "admitted": false,
+  "all_checks_complete": false,
+  "authority_granted": false,
+  "completed_checks": [],
+  "elapsed_seconds": 7.7252346619497985,
+  "error": "Qualification failed; arbitrary product exception values omitted from metadata.",
+  "error_type": "QualificationFailure",
+  "failure_closing_guard": null,
+  "failure_controlled_message": "selected pytest targets failed",
+  "failure_stage": "selected_pytest_targets",
+  "final_source_pins_unchanged": true,
+  "formalized": false,
+  "guard_attempts": {
+    "child_process": 0,
+    "network": 0
+  },
+  "legal_meanings_reviewed": false,
+  "models_loaded": false,
+  "native_parent_owns_admission_supervision_seal_and_release": true,
+  "product_origin_diagnostics_at_failure": {
+    "actual_product_files": {
+      "ipfs_datasets_py": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/__init__.py",
+      "ipfs_datasets_py.logic": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/__init__.py",
+      "ipfs_datasets_py.logic.CEC": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/__init__.py",
+      "ipfs_datasets_py.logic.CEC.native": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/__init__.py",
+      "ipfs_datasets_py.logic.CEC.native.cec_proof_cache": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/cec_proof_cache.py",
+      "ipfs_datasets_py.logic.CEC.native.cec_zkp_integration": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/cec_zkp_integration.py",
+      "ipfs_datasets_py.logic.CEC.native.dcec_cleaning": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py",
+      "ipfs_datasets_py.logic.CEC.native.dcec_core": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py",
+      "ipfs_datasets_py.logic.CEC.native.dcec_english_grammar": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_english_grammar.py",
+      "ipfs_datasets_py.logic.CEC.native.dcec_integration": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_integration.py",
+      "ipfs_datasets_py.logic.CEC.native.dcec_namespace": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_namespace.py",
+      "ipfs_datasets_py.logic.CEC.native.dcec_parsing": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py",
+      "ipfs_datasets_py.logic.CEC.native.dcec_prototypes": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py",
+      "ipfs_datasets_py.logic.CEC.native.exceptions": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/exceptions.py",
+      "ipfs_datasets_py.logic.CEC.native.grammar_engine": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/grammar_engine.py",
+      "ipfs_datasets_py.logic.CEC.native.inference_rules": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/__init__.py",
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.base": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/base.py",
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.cognitive": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/cognitive.py",
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.deontic": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/deontic.py",
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.modal": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/modal.py",
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.propositional": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/propositional.py",
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.resolution": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/resolution.py",
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.specialized": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/specialized.py",
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.temporal": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/temporal.py",
+      "ipfs_datasets_py.logic.CEC.native.legal_ir_lifecycle": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/legal_ir_lifecycle.py",
+      "ipfs_datasets_py.logic.CEC.native.modal_tableaux": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/modal_tableaux.py",
+      "ipfs_datasets_py.logic.CEC.native.nl_converter": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/nl_converter.py",
+      "ipfs_datasets_py.logic.CEC.native.problem_parser": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/problem_parser.py",
+      "ipfs_datasets_py.logic.CEC.native.prover_core": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/prover_core.py",
+      "ipfs_datasets_py.logic.CEC.native.prover_core_extended_rules": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/prover_core_extended_rules.py",
+      "ipfs_datasets_py.logic.CEC.native.shadow_prover": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/shadow_prover.py",
+      "ipfs_datasets_py.logic.TDFOL": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/TDFOL/__init__.py",
+      "ipfs_datasets_py.logic.TDFOL.compiler_repairs": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/TDFOL/compiler_repairs.py",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_parser": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+      "ipfs_datasets_py.logic.autoformal": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+      "ipfs_datasets_py.logic.autoformal.family_qualification": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py",
+      "ipfs_datasets_py.logic.autoformal.legal_canonical_calendar": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py",
+      "ipfs_datasets_py.logic.autoformal.legal_canonical_qualified": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py",
+      "ipfs_datasets_py.logic.autoformal.legal_family_routes": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py",
+      "ipfs_datasets_py.logic.autoformal.legal_relational_batch_evaluation_v1": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py",
+      "ipfs_datasets_py.logic.autoformal.legal_relational_norm_v1": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_reconstruction_v1.py",
+      "ipfs_datasets_py.logic.autoformal.tree_pin": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/tree_pin.py",
+      "ipfs_datasets_py.logic.common": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/__init__.py",
+      "ipfs_datasets_py.logic.common.bounded_cache": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/bounded_cache.py",
+      "ipfs_datasets_py.logic.common.converters": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/converters.py",
+      "ipfs_datasets_py.logic.common.errors": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/errors.py",
+      "ipfs_datasets_py.logic.common.feature_detection": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/feature_detection.py",
+      "ipfs_datasets_py.logic.common.proof_cache": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/proof_cache.py",
+      "ipfs_datasets_py.logic.common.utility_monitor": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/utility_monitor.py",
+      "ipfs_datasets_py.logic.common.validators": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/validators.py",
+      "ipfs_datasets_py.logic.families": null,
+      "ipfs_datasets_py.logic.families.namespaces": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/families/namespaces.py",
+      "ipfs_datasets_py.logic.formalization": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/__init__.py",
+      "ipfs_datasets_py.logic.formalization.autoencoder": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/__init__.py",
+      "ipfs_datasets_py.logic.formalization.autoencoder.native_family_lean_emitters": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
+      "ipfs_datasets_py.logic.formalization.autoencoder.native_legal_qualified_lean": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py",
+      "ipfs_datasets_py.logic.formalization.autoencoder.native_qualified_lean": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py",
+      "ipfs_datasets_py.logic.intent_ir": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/__init__.py",
+      "ipfs_datasets_py.logic.intent_ir.autoencoder": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/autoencoder.py",
+      "ipfs_datasets_py.logic.intent_ir.canonicalize": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/canonicalize.py",
+      "ipfs_datasets_py.logic.intent_ir.decoder": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/decoder.py",
+      "ipfs_datasets_py.logic.intent_ir.formalize": null,
+      "ipfs_datasets_py.logic.intent_ir.formalize.modal_projections": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py",
+      "ipfs_datasets_py.logic.intent_ir.protocols": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/protocols.py",
+      "ipfs_datasets_py.logic.intent_ir.schema": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/schema.py",
+      "ipfs_datasets_py.logic.ir_core": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/__init__.py",
+      "ipfs_datasets_py.logic.ir_core.canonical": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/canonical.py",
+      "ipfs_datasets_py.logic.ir_core.provenance": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/provenance.py",
+      "ipfs_datasets_py.logic.ir_core.schema_registry": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/schema_registry.py",
+      "ipfs_datasets_py.logic.legal_ir": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/__init__.py",
+      "ipfs_datasets_py.logic.legal_ir.canonical_contracts": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "ipfs_datasets_py.logic.parsers": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/__init__.py",
+      "ipfs_datasets_py.logic.parsers.event_calculus": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/event_calculus.py",
+      "ipfs_datasets_py.logic.parsers.legacy_modal": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/legacy_modal.py",
+      "ipfs_datasets_py.logic.parsers.modal": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/modal.py",
+      "ipfs_datasets_py.logic.syntax_core": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/__init__.py",
+      "ipfs_datasets_py.logic.syntax_core.algebra": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/algebra.py",
+      "ipfs_datasets_py.logic.syntax_core.ast": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/ast.py",
+      "ipfs_datasets_py.logic.syntax_core.contracts": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/contracts.py",
+      "ipfs_datasets_py.logic.syntax_core.diagnostics": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/diagnostics.py",
+      "ipfs_datasets_py.logic.syntax_core.lexer": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/lexer.py",
+      "ipfs_datasets_py.logic.syntax_core.registry": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/registry.py",
+      "ipfs_datasets_py.logic.syntax_core.signatures": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/signatures.py",
+      "ipfs_datasets_py.logic.zkp": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/zkp/__init__.py",
+      "ipfs_datasets_py.optimizers": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/__init__.py",
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+      "ipfs_datasets_py.router_deps": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/router_deps.py",
+      "ipfs_datasets_py.utils": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/__init__.py",
+      "ipfs_datasets_py.utils.cid_utils": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/cid_utils.py"
+    },
+    "complete": true,
+    "counts": {
+      "actual_product_modules": 92,
+      "finder_loaded": 90,
+      "finder_refused": 0
+    },
+    "derived_origin_mismatches": [],
+    "finder_loaded": {
+      "ipfs_datasets_py": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/__init__.py",
+        "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+      },
+      "ipfs_datasets_py.logic": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/__init__.py",
+        "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+      },
+      "ipfs_datasets_py.logic.CEC": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/__init__.py",
+        "sha256": "8f4f1468b80c29eb7f6af4c02907adccc6bad5df1c7f22de5be7731a52b04b6b"
+      },
+      "ipfs_datasets_py.logic.CEC.native": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/__init__.py",
+        "sha256": "7c467c25a9abdc899a46266ed21582443dbd412fb07acf129d5fb34a90be9dc6"
+      },
+      "ipfs_datasets_py.logic.CEC.native.cec_proof_cache": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/cec_proof_cache.py",
+        "sha256": "8a40f17c0b82d7f8b9dfb8654d53c5f9472852acbcc830fdb3f3d98221f71bf3"
+      },
+      "ipfs_datasets_py.logic.CEC.native.cec_zkp_integration": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/cec_zkp_integration.py",
+        "sha256": "8284720a83162918a9785ec31d2e44dfbb2dd948a0f653b451745b0f8e3ab962"
+      },
+      "ipfs_datasets_py.logic.CEC.native.dcec_cleaning": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py",
+        "sha256": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0"
+      },
+      "ipfs_datasets_py.logic.CEC.native.dcec_core": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py",
+        "sha256": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14"
+      },
+      "ipfs_datasets_py.logic.CEC.native.dcec_english_grammar": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_english_grammar.py",
+        "sha256": "2b87f9e7d256dd236c65147eabfc55bd3d481e74be63c80c23f6720d33cba0b2"
+      },
+      "ipfs_datasets_py.logic.CEC.native.dcec_integration": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_integration.py",
+        "sha256": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82"
+      },
+      "ipfs_datasets_py.logic.CEC.native.dcec_namespace": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_namespace.py",
+        "sha256": "9e6903c74d3b95634f86f4f67392ca61bf9a284b577294d2b12ff001d9fbeb24"
+      },
+      "ipfs_datasets_py.logic.CEC.native.dcec_parsing": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py",
+        "sha256": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70"
+      },
+      "ipfs_datasets_py.logic.CEC.native.dcec_prototypes": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py",
+        "sha256": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e"
+      },
+      "ipfs_datasets_py.logic.CEC.native.exceptions": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/exceptions.py",
+        "sha256": "cbbbafacf70d1c7355d7c930f48c5f71fc711765aa4789a817e5c229c8e60622"
+      },
+      "ipfs_datasets_py.logic.CEC.native.grammar_engine": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/grammar_engine.py",
+        "sha256": "df787f7656894c063eaad5e16bc78168f1fd7c301a0907639dfb466b5f286293"
+      },
+      "ipfs_datasets_py.logic.CEC.native.inference_rules": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/__init__.py",
+        "sha256": "46d1d7677be5038b9006cfa6738940dd306aa404736295cf58d201a4a398c641"
+      },
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.base": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/base.py",
+        "sha256": "5776e79206eb65fc3d2e898e48c374cba6fde09dbc48661d1ffb8417f2d99646"
+      },
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.cognitive": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/cognitive.py",
+        "sha256": "329334034ecfbb55fcb306c0d084a2a31f658a85af2ecb1edaef1c6ad7de7813"
+      },
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.deontic": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/deontic.py",
+        "sha256": "8ef29a48e2e132f595ead529d446f7180745920ffae790feac985c121b4a6ddb"
+      },
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.modal": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/modal.py",
+        "sha256": "4ddf941cb2c2920699ec0e7f48d34b68a727da40a8868bd161c56eb315c2e4ef"
+      },
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.propositional": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/propositional.py",
+        "sha256": "feb45f9807bc2d1cd38738006cb98cc553aa652918ee1158e8b106131ccd86bb"
+      },
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.resolution": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/resolution.py",
+        "sha256": "8a5078e2e5ed25c350b8d28d6173f0013c6f78d075bfe5ca4b0516d46cbfcd82"
+      },
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.specialized": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/specialized.py",
+        "sha256": "6a3d14356a1b076c7c943d7bd30da7d7694c03bae9da0d3ccf5a8bf848e7de96"
+      },
+      "ipfs_datasets_py.logic.CEC.native.inference_rules.temporal": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/inference_rules/temporal.py",
+        "sha256": "08d09c5be78e72168a4f4edef74840e766f65e1b9a9e4601f3000308254b9eaf"
+      },
+      "ipfs_datasets_py.logic.CEC.native.legal_ir_lifecycle": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/legal_ir_lifecycle.py",
+        "sha256": "0e70084ecacfed64efa46716d13e5ecfd6a44686df5546a67716eb5cadc4a7fd"
+      },
+      "ipfs_datasets_py.logic.CEC.native.modal_tableaux": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/modal_tableaux.py",
+        "sha256": "5910e250b1aa61221f22318e6cea6858df3ee1701fe631634f9e1977ae671235"
+      },
+      "ipfs_datasets_py.logic.CEC.native.nl_converter": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/nl_converter.py",
+        "sha256": "016b8e4893b9825e2f3b0a95d331691736433a1cdae430dde2d831862e0bf254"
+      },
+      "ipfs_datasets_py.logic.CEC.native.problem_parser": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/problem_parser.py",
+        "sha256": "fd946d11ca07fcf09db67f91f3a90680f8b7024c373be09c514ff91a957682d3"
+      },
+      "ipfs_datasets_py.logic.CEC.native.prover_core": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/prover_core.py",
+        "sha256": "c734b6cfbd05cd73bb5836d0635c1d9bb95ce3d722567e5afd082a4edb963487"
+      },
+      "ipfs_datasets_py.logic.CEC.native.prover_core_extended_rules": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/prover_core_extended_rules.py",
+        "sha256": "07e26b65dba0a2f6be6bf7f36424a25da28d4c1e440e703b6985044684d9b253"
+      },
+      "ipfs_datasets_py.logic.CEC.native.shadow_prover": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/CEC/native/shadow_prover.py",
+        "sha256": "90049debb68b2ae19238ee4637bd3b5a3124a7f06bb9448cd3567621df95d496"
+      },
+      "ipfs_datasets_py.logic.TDFOL": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/TDFOL/__init__.py",
+        "sha256": "42c252ba4fb85301b649bc3afe497a2799d27460b9556e57c7398b5441ba13e8"
+      },
+      "ipfs_datasets_py.logic.TDFOL.compiler_repairs": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/TDFOL/compiler_repairs.py",
+        "sha256": "c0306a55184bc6baabf7528bf7a255604ff8c49d2c510afde13eae2e8108ff88"
+      },
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+        "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7"
+      },
+      "ipfs_datasets_py.logic.TDFOL.tdfol_parser": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+        "sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3"
+      },
+      "ipfs_datasets_py.logic.autoformal": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+        "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+      },
+      "ipfs_datasets_py.logic.autoformal.family_qualification": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py",
+        "sha256": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_canonical_calendar": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py",
+        "sha256": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_canonical_qualified": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py",
+        "sha256": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_family_routes": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py",
+        "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_relational_batch_evaluation_v1": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py",
+        "sha256": "12dbd712e49ab8d8f9fc7e83d088ea1161d7c68c6715ad9a7f53cad6c52f3474"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_relational_norm_v1": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+        "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_reconstruction_v1.py",
+        "sha256": "13d4279872d9cc3184d5796596b984193e49b51c7a56c4066857bce74b3e3723"
+      },
+      "ipfs_datasets_py.logic.autoformal.tree_pin": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/tree_pin.py",
+        "sha256": "ec43fd9379f3c9198451e8d62d98db53826dcf115e6858039a73c3da7d72a1c2"
+      },
+      "ipfs_datasets_py.logic.common": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/__init__.py",
+        "sha256": "e574c74067e7059cc506b32c780bc0444de89c63b55dade3df00ae9fd563431e"
+      },
+      "ipfs_datasets_py.logic.common.bounded_cache": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/bounded_cache.py",
+        "sha256": "29a450b5fc08c5577964774035717dc5d7be85c159cfd502fba5252c4ec9c9fa"
+      },
+      "ipfs_datasets_py.logic.common.converters": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/converters.py",
+        "sha256": "f530c453775f2c1a4a2f8a26aa647df1f725be109078df258288eab33a427fde"
+      },
+      "ipfs_datasets_py.logic.common.errors": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/errors.py",
+        "sha256": "10d21acd8d0fd6049297a1b36d10db1fcc09146095f1dabfe5a686b887f4b8cf"
+      },
+      "ipfs_datasets_py.logic.common.feature_detection": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/feature_detection.py",
+        "sha256": "a285d84f9b13ee3c2c54023e07ccf9da94ce93e6736362c1881421db9e509d76"
+      },
+      "ipfs_datasets_py.logic.common.proof_cache": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/proof_cache.py",
+        "sha256": "b68c36ff934ba6ee7a308162ee7035c78f4c522a5483e85e536b428db8485b36"
+      },
+      "ipfs_datasets_py.logic.common.utility_monitor": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/utility_monitor.py",
+        "sha256": "ef23631a622dfd555cefcdf69793e78a7c64a115c7451aea4dfff5389b014985"
+      },
+      "ipfs_datasets_py.logic.common.validators": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/common/validators.py",
+        "sha256": "e58dbba7d3f346545e2ff572928ed9c7bb9adc71b20e8cc8dc816a7fc060e0c7"
+      },
+      "ipfs_datasets_py.logic.families.namespaces": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/families/namespaces.py",
+        "sha256": "ba097e653158a812d66ead978d6405d61adaa293521305333579b19bd69a432d"
+      },
+      "ipfs_datasets_py.logic.formalization": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/__init__.py",
+        "sha256": "91c60c1dfbf9038b8271ae6b1495dbbaf0be8d6ce438524c33f4f7a586f17266"
+      },
+      "ipfs_datasets_py.logic.formalization.autoencoder": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/__init__.py",
+        "sha256": "82206d6ca08b8626b2afd37534679ac3ea001005f934ed211aa0f1f4eb81f073"
+      },
+      "ipfs_datasets_py.logic.formalization.autoencoder.native_family_lean_emitters": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
+        "sha256": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe"
+      },
+      "ipfs_datasets_py.logic.formalization.autoencoder.native_legal_qualified_lean": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py",
+        "sha256": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a"
+      },
+      "ipfs_datasets_py.logic.formalization.autoencoder.native_qualified_lean": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py",
+        "sha256": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408"
+      },
+      "ipfs_datasets_py.logic.intent_ir": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/__init__.py",
+        "sha256": "acf68a7215af95b4a7d4e4dc883cb7577e2129e7bbadf49c1fc2c404848bc641"
+      },
+      "ipfs_datasets_py.logic.intent_ir.autoencoder": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/autoencoder.py",
+        "sha256": "ff944970bd24db83b6851fe4b84db62fe00128ed6ee0019c17cd941f2feb2e91"
+      },
+      "ipfs_datasets_py.logic.intent_ir.canonicalize": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/canonicalize.py",
+        "sha256": "3609047cc8c99437d77461b4f7ea0e05d193a31bf0d20a7e80b7b0c10a8cff87"
+      },
+      "ipfs_datasets_py.logic.intent_ir.decoder": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/decoder.py",
+        "sha256": "7bab5781c07e00b54b0283d3a2962926f75935caedc80eceb23264cb388be257"
+      },
+      "ipfs_datasets_py.logic.intent_ir.formalize.modal_projections": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py",
+        "sha256": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d"
+      },
+      "ipfs_datasets_py.logic.intent_ir.protocols": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/protocols.py",
+        "sha256": "adb0ae8eaf2e55bf587ac76baa90d8303b61e0df246c03c30b56cb31a9643780"
+      },
+      "ipfs_datasets_py.logic.intent_ir.schema": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/intent_ir/schema.py",
+        "sha256": "93d38e4724c5f34aab7f39f050742e98ef0c8d80e2ff70459d2401541505fc56"
+      },
+      "ipfs_datasets_py.logic.ir_core": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/__init__.py",
+        "sha256": "4c0070482e009dd7cb9875e91124d48683da37d53f691cccb306ec50f23c946c"
+      },
+      "ipfs_datasets_py.logic.ir_core.canonical": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/canonical.py",
+        "sha256": "339b5778581c19525a7685edf432aaf124cd12e02d37cd0eca88cb25ab86c0d0"
+      },
+      "ipfs_datasets_py.logic.ir_core.provenance": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/provenance.py",
+        "sha256": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe"
+      },
+      "ipfs_datasets_py.logic.ir_core.schema_registry": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/ir_core/schema_registry.py",
+        "sha256": "1b214ea190a41c6a451377a03bc71ea84f6703314293ef78c5f269082eee4fbe"
+      },
+      "ipfs_datasets_py.logic.legal_ir": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/__init__.py",
+        "sha256": "53ce51e56a292ea3210010fa17b352e9d40eb5b59cf15c5e732147000b40fee1"
+      },
+      "ipfs_datasets_py.logic.legal_ir.canonical_contracts": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+        "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+      },
+      "ipfs_datasets_py.logic.parsers": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/__init__.py",
+        "sha256": "e75f0c2ffea0f0706a3d1768a794849e6c013b6647dc59ba331f44797c233386"
+      },
+      "ipfs_datasets_py.logic.parsers.event_calculus": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/event_calculus.py",
+        "sha256": "8bd7217febef6daf86f76bae7e03ab0cbf7eb22a1b64f3040fd26a3d2ebfc390"
+      },
+      "ipfs_datasets_py.logic.parsers.legacy_modal": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/legacy_modal.py",
+        "sha256": "7b18812ea6fcba8b65ed7dc5c3407e0ad06ac9760c5c66441e9677463f9eb66e"
+      },
+      "ipfs_datasets_py.logic.parsers.modal": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/modal.py",
+        "sha256": "3131ff1dd516ebdf52071215c2c7983f9cf317d86bb138ff9437faae9b227942"
+      },
+      "ipfs_datasets_py.logic.syntax_core": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/__init__.py",
+        "sha256": "20dd418d90360cdb42c64ba8b87bedcdb640228b460ef6c6ae60312365130e81"
+      },
+      "ipfs_datasets_py.logic.syntax_core.algebra": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/algebra.py",
+        "sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7"
+      },
+      "ipfs_datasets_py.logic.syntax_core.ast": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/ast.py",
+        "sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4"
+      },
+      "ipfs_datasets_py.logic.syntax_core.contracts": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/contracts.py",
+        "sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8"
+      },
+      "ipfs_datasets_py.logic.syntax_core.diagnostics": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/diagnostics.py",
+        "sha256": "a291db3c2cea04ae8dd9221a5e5ddbebd419679c02a5a008034e3755e7650d8f"
+      },
+      "ipfs_datasets_py.logic.syntax_core.lexer": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/lexer.py",
+        "sha256": "f666e9759323508f4e90964c0d71164645af9ce1de60bed778e5f64f7f4a3aea"
+      },
+      "ipfs_datasets_py.logic.syntax_core.registry": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/registry.py",
+        "sha256": "eff5ca12d748eff1e9463b737a8243c97d89cac51e1b604fe2c765aed885cb44"
+      },
+      "ipfs_datasets_py.logic.syntax_core.signatures": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/signatures.py",
+        "sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf"
+      },
+      "ipfs_datasets_py.logic.zkp": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/zkp/__init__.py",
+        "sha256": "ea2eb0e91ae023d2b2180189c26fda4bf9fac3a9d0b1189cbe415676b2af3151"
+      },
+      "ipfs_datasets_py.optimizers": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/__init__.py",
+        "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+      },
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+        "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+      },
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+        "sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31"
+      },
+      "ipfs_datasets_py.router_deps": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/router_deps.py",
+        "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+      },
+      "ipfs_datasets_py.utils": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/__init__.py",
+        "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+      },
+      "ipfs_datasets_py.utils.cid_utils": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+        "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      }
+    },
+    "finder_refused": [],
+    "max_entries_per_map_or_list": 256
+  },
+  "pytest_arguments": [
+    "-q",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-c",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/pytest.ini",
+    "-o",
+    "addopts=-q --tb=short --strict-markers --import-mode=importlib",
+    "--noconftest",
+    "--disable-warnings",
+    "-p",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest",
+    "--basetemp=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/pytest/basetemp",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/exports/junit.xml",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/cache/pytest",
+    "--assert=plain",
+    "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+    "tests/unit/logic/syntax_core/test_algebra.py"
+  ],
+  "pytest_execution_evidence": {
+    "collected_nodeids": [
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_mixed_population_accounts_every_terminal_outcome_and_every_submitted_row",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_zero_comparable_pairs_never_produce_optimistic_conditional_agreement[all-missing]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_zero_comparable_pairs_never_produce_optimistic_conditional_agreement[all-abstained]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_zero_comparable_pairs_never_produce_optimistic_conditional_agreement[all-unsupported]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_zero_comparable_pairs_never_produce_optimistic_conditional_agreement[all-invalid]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_valid_candidates_without_references_remain_visible_and_are_lowered",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_identical_source_commitments_do_not_merge_distinct_physical_occurrence_ids[arrival-order]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_identical_source_commitments_do_not_merge_distinct_physical_occurrence_ids[reversed-arrival]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_duplicate_ids_never_select_a_favorable_candidate[identical-duplicates]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_duplicate_ids_never_select_a_favorable_candidate[matching-first]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_duplicate_ids_never_select_a_favorable_candidate[matching-last]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_duplicate_ids_never_select_a_favorable_candidate[malformed-first]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_unknown_and_unidentifiable_observations_cannot_supply_a_missing_occurrence[unknown-id]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_unknown_and_unidentifiable_observations_cannot_supply_a_missing_occurrence[scalar-observation]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_unknown_and_unidentifiable_observations_cannot_supply_a_missing_occurrence[null-id]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_unknown_and_unidentifiable_observations_cannot_supply_a_missing_occurrence[blank-id]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_repeated_unexpected_id_keeps_all_indices_without_changing_expected_denominator",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_real_public_pair_controls_separate_exact_declared_and_alpha_agreement",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_decoder_generation_declarations_do_not_authenticate_model_execution[latent-8]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_decoder_generation_declarations_do_not_authenticate_model_execution[latent-384]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_decoder_generation_declarations_do_not_authenticate_model_execution[latent-768]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[missing-declaration]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[scalar-declaration]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[extra-generation-field]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[unknown-kind]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[wrong-population]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[invalid-settings]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[teacher-forcing]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[target-access]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[invalid-dimension]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[missing-checkpoint]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[missing-encoder]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[authored-with-model-binding]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[source-mismatch-decoded-provenance]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[source-mismatch-abstention-provenance]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[context-mismatch-decoded-provenance]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[context-mismatch-abstention-provenance]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[teacher-forcing-decoded-provenance]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[teacher-forcing-abstention-provenance]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[target-access-decoded-provenance]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[target-access-abstention-provenance]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[zero-is-not-false-decoded-provenance]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[zero-is-not-false-abstention-provenance]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[unknown-row-field]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[missing-row-field]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[unknown-status]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[decoded-with-reason]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[abstention-with-payload]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[unsupported-without-reason]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[candidate-pin-mismatch]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[invalid-candidate-json]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[duplicate-candidate-key]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[candidate-nan]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[unsupported-schema]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[unsupported-source-binding]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[unbound-variable]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_oversized_candidate_request_is_accounted_without_calling_relational_lowering",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_precedence_preserves_missing_duplicate_and_shape_facts_when_generation_is_bad",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_every_available_reference_is_validated_even_without_comparable_prediction[invalid-reference-missing-output]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_every_available_reference_is_validated_even_without_comparable_prediction[invalid-reference-abstention]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_every_available_reference_is_validated_even_without_comparable_prediction[invalid-reference-duplicate-output]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_every_available_reference_is_validated_even_without_comparable_prediction[invalid-reference-bad-generation]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[missing-reference-row]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[duplicate-reference-row]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[unknown-reference-id]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[reordered-reference-rows]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[wrong-reference-population]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[unavailable-with-payload]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_three_independent_transport_pins_refuse_before_lazy_owners[population-transport-pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_three_independent_transport_pins_refuse_before_lazy_owners[references-transport-pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_three_independent_transport_pins_refuse_before_lazy_owners[predictions-transport-pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[duplicate-outer-key]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[outer-nonfinite]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[outer-invalid-utf8]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[mutable-transport]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[unknown-prediction-envelope-field]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[nonlist-observations]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[empty-population]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[duplicate-population-id]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[population-over-64]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[observations-over-256]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_outer_transport_byte_ceiling_refuses_without_clipping[population-byte-ceiling]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_outer_transport_byte_ceiling_refuses_without_clipping[references-byte-ceiling]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_outer_transport_byte_ceiling_refuses_without_clipping[predictions-byte-ceiling]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_nested_reference_and_ordinary_json_bounds_refuse_before_lazy_owners[reference-request-bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_nested_reference_and_ordinary_json_bounds_refuse_before_lazy_owners[reference-report-bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_nested_reference_and_ordinary_json_bounds_refuse_before_lazy_owners[outer-json-depth-bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_operational_candidate_failures_are_never_reported_as_invalid_model_output[os-error]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_operational_candidate_failures_are_never_reported_as_invalid_model_output[import-error]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_operational_candidate_failures_are_never_reported_as_invalid_model_output[runtime-error]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_public_pair_replay_failure_refuses_instead_of_becoming_a_candidate_failure",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_source_fence_failure_refuses_instead_of_becoming_invalid_candidate_output",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_first_use_owner_identity_failure_refuses_even_with_all_references_unavailable[first-use-relational-import-anchor]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_first_use_owner_identity_failure_refuses_even_with_all_references_unavailable[first-use-relational-cache]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_first_use_owner_identity_failure_refuses_even_with_all_references_unavailable[first-use-pair-import-anchor]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_first_use_owner_identity_failure_refuses_even_with_all_references_unavailable[first-use-pair-cache]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_complete_report_ceiling_refuses_without_dropping_rows",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[omitted-occurrence]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[reordered-occurrences]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[altered-terminal-count]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[reduced-population-denominator]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[reduced-comparable-denominator]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[altered-observation-digest]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[omitted-observation]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[promoted-generation-claim]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[promoted-authority]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[boolean-mask]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[float-mask]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[promoted-pair-disagreement]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[unknown-output-field]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_wrong_independent_whole_report_pin_refuses_before_regeneration",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_public_import_is_standard_library_only_and_writes_nothing",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_pair_retains_complete_authoritative_mapping_and_zero_authority",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_id_only_changes_are_exactly_distinguished_from_declared_and_alpha_structure",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_consistent_lexical_binder_renaming_preserves_alpha_without_erasing_names[rename0]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_consistent_lexical_binder_renaming_preserves_alpha_without_erasing_names[rename1]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_signature_and_role_row_declaration_order_is_normalized_without_reordering_arguments[sorts]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_signature_and_role_row_declaration_order_is_normalized_without_reordering_arguments[predicates]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_signature_and_role_row_declaration_order_is_normalized_without_reordering_arguments[role_rows]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_signature_and_role_row_declaration_order_is_normalized_without_reordering_arguments[all]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_raw_transport_hashes_remain_separate_from_full_typed_expression_identity",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_valid_bound_relational_changes_are_not_lexical_alpha_variants[argument_swap]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_valid_bound_relational_changes_are_not_lexical_alpha_variants[binding_capture]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_valid_bound_relational_changes_are_not_lexical_alpha_variants[quantifier_kind]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_valid_bound_relational_changes_are_not_lexical_alpha_variants[quantifier_order]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_valid_bound_relational_changes_are_not_lexical_alpha_variants[negation]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_actual_signature_and_ordered_argument_roles_gate_alpha_comparison[predicate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_actual_signature_and_ordered_argument_roles_gate_alpha_comparison[arity]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_actual_signature_and_ordered_argument_roles_gate_alpha_comparison[role_values]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[implication_direction]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[modal_placement]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[modal_O]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[modal_F]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[connective]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[distributed_modal]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_even_commutative_connectives_keep_declared_child_order[and]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_even_commutative_connectives_keep_declared_child_order[or]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_even_commutative_connectives_keep_declared_child_order[iff]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_double_negation_is_not_erased_as_a_lexical_alpha_rename",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_complete_mapping_union_keeps_every_path_for_added_or_dropped_structure[False]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_complete_mapping_union_keeps_every_path_for_added_or_dropped_structure[True]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_binder_and_ordered_argument_roles_belong_to_their_exact_existing_paths",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_modal_extension_and_connective_ancestry_keep_actual_operator_ownership",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_each_independent_request_and_full_report_pin_is_required_before_lazy_owners[expected_reference_request_sha256]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_each_independent_request_and_full_report_pin_is_required_before_lazy_owners[expected_candidate_request_sha256]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_each_independent_request_and_full_report_pin_is_required_before_lazy_owners[expected_reference_report_sha256]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_each_independent_request_and_full_report_pin_is_required_before_lazy_owners[expected_candidate_report_sha256]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[native_ast-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[native_ast-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[lean_body-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[lean_body-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[structural_mapping-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[structural_mapping-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[argument_roles-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[argument_roles-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[authority-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[authority-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[typed_expression-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[typed_expression-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[counts-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[counts-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[training_mask-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[training_mask-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_unproved_offered_producer_filename_is_never_opened",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[source_binding]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[free_variable]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[shadowing]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[family]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[profile]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[unknown_request_field]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[duplicate_json_key]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[invalid_utf8]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[raw_type]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[raw_bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[report_bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[dict_subclass]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[nonfinite]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[deep]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[ordinary_object]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[boolean_pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[structure_boolean]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[alpha_boolean]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[feature_row]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[missing_path]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[path_order]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[reference_hash]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[source_pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[authority]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[training_boolean]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[gold_float]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[unknown_field]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[missing_field]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_wrong_independent_comparison_pin_refuses_before_regeneration",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_complete_output_ceiling_refuses_without_clipping_or_mutating_originals",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_changed_self_source_pin_refuses_without_editing_a_source_file",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_public_import_uses_only_standard_library_and_writes_nothing",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_full_public_replay_retains_existing_ast_ledger_and_no_authority",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_necessary_approval_and_sufficient_permission_have_explicit_countermodels[False-True]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_necessary_approval_and_sufficient_permission_have_explicit_countermodels[True-False]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_activation_outside_modality_differs_from_guard_inside_under_declared_two_world_model",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_o_p_f_are_independent_parameters_with_no_inserted_duality[O]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_o_p_f_are_independent_parameters_with_no_inserted_duality[P]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_o_p_f_are_independent_parameters_with_no_inserted_duality[F]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_action_disjunction_differs_from_conjunction_and_dropped_alternative",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_permission_of_disjunction_is_not_silently_distributed_under_arbitrary_modal_parameters",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_actor_recipient_swaps_and_direction_reversal_change_structure_and_finite_truth[swapped]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_actor_recipient_swaps_and_direction_reversal_change_structure_and_finite_truth[reversed_direction]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_quantifier_order_is_preserved_and_detectable",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_boolean_not_iff_and_exact_binary_connectives_retain_finite_truth",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[native_ast]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[lean_body]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[structural_mapping]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[argument_roles]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[authority]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[typed_expression]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[source_binding]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[counts]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[free_variable]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[duplicate_id]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[metadata]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[features]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[wrong_modal_kind]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[unknown_modal_payload]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[unknown_extension]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[unused_predicate]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[predicate_binder_collision]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[nary_connective]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[multiple_binders]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[shadowing]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[extra_request]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[extra_expression]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[extra_node]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[extra_signature]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[missing_field]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[wrong_source]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[wrong_status]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[wrong_schema]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[sort]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[arity]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[constant]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[function]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[equality]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[true]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[false]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[unsafe_name]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[reserved_name]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[namespace_version]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[missing]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[duplicate]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[arity]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[duplicate_labels]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[unknown]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[extra]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[unsafe]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[duplicate-top-key]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[duplicate-nested-key]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[nan]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[infinity]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[invalid-utf8]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[array]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[empty-object]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[wrong-pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[malformed-pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[request-byte-bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_independent_request_and_report_identities_are_required",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_report_hash_rejects_nonordinary_values_without_loading_owners",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_module_version_and_interface",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_free_and_bound_variables_basic",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_free_variables_shadowing_and_let",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_free_variables_nested_binders",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_alpha_equivalent_renamed_binders",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_alpha_equivalent_nested_and_shadowing",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_alpha_equivalent_let_and_connectives",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_semantic_identity_ignores_node_ids_and_is_stable",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_alpha_rename_binder_preserves_semantic_identity",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_alpha_rename_binder_avoids_nested_capture",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_simple_and_idempotent",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_under_binder_no_capture",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_shadowed_variable_unchanged",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_let_capture_avoidance",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_nested_binders_adversarial",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_many_simultaneous",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_rejects_non_term_replacement",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_connectives_and_equality",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_extension_children",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_substitution_never_captures[binder_names0-x-term_frees0]",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_substitution_never_captures[binder_names1-x-term_frees1]",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_substitution_never_captures[binder_names2-x-term_frees2]",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_substitution_never_captures[binder_names3-x-term_frees3]",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_alpha_equivalent_share_semantic_identity",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_semantic_identity_distinguishes_structure",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_walk_and_size_depth",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_traversal_respects_node_limit",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_traversal_respects_depth_limit",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_limits_reject_unbounded_and_over_ceiling",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_and_alpha_under_tight_but_sufficient_limits",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_walk_bounded_module_helper",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_true_false_and_constants_stable_under_subst",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_application_free_vars_and_subst"
+    ],
+    "complete": true,
+    "counts": {
+      "collected": 299,
+      "successful_calls": 223,
+      "unsuccessful_reports": 76
+    },
+    "max_entries_per_list": 20000,
+    "module_prefixes": {
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py": [
+        "tests.unit.logic.autoformal.test_legal_relational_batch_evaluation_v1"
+      ],
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py": [
+        "tests.unit.logic.autoformal.test_legal_relational_norm_v1"
+      ],
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py": [
+        "tests.unit.logic.autoformal.test_legal_relational_reconstruction_v1"
+      ],
+      "tests/unit/logic/syntax_core/test_algebra.py": [
+        "tests.unit.logic.syntax_core.test_algebra"
+      ]
+    },
+    "result_unsuccessful": [
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_mixed_population_accounts_every_terminal_outcome_and_every_submitted_row",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_zero_comparable_pairs_never_produce_optimistic_conditional_agreement[all-missing]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_zero_comparable_pairs_never_produce_optimistic_conditional_agreement[all-abstained]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_zero_comparable_pairs_never_produce_optimistic_conditional_agreement[all-unsupported]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_zero_comparable_pairs_never_produce_optimistic_conditional_agreement[all-invalid]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_valid_candidates_without_references_remain_visible_and_are_lowered",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_identical_source_commitments_do_not_merge_distinct_physical_occurrence_ids[arrival-order]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_identical_source_commitments_do_not_merge_distinct_physical_occurrence_ids[reversed-arrival]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_duplicate_ids_never_select_a_favorable_candidate[identical-duplicates]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_duplicate_ids_never_select_a_favorable_candidate[matching-first]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_duplicate_ids_never_select_a_favorable_candidate[matching-last]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_duplicate_ids_never_select_a_favorable_candidate[malformed-first]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_unknown_and_unidentifiable_observations_cannot_supply_a_missing_occurrence[unknown-id]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_unknown_and_unidentifiable_observations_cannot_supply_a_missing_occurrence[scalar-observation]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_unknown_and_unidentifiable_observations_cannot_supply_a_missing_occurrence[null-id]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_unknown_and_unidentifiable_observations_cannot_supply_a_missing_occurrence[blank-id]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_repeated_unexpected_id_keeps_all_indices_without_changing_expected_denominator",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_real_public_pair_controls_separate_exact_declared_and_alpha_agreement",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_decoder_generation_declarations_do_not_authenticate_model_execution[latent-8]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_decoder_generation_declarations_do_not_authenticate_model_execution[latent-384]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_decoder_generation_declarations_do_not_authenticate_model_execution[latent-768]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[missing-declaration]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[scalar-declaration]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[extra-generation-field]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[unknown-kind]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[wrong-population]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[invalid-settings]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[teacher-forcing]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[target-access]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[invalid-dimension]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[missing-checkpoint]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[missing-encoder]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_bad_generation_preserves_rows_and_withholds_comparable_credit[authored-with-model-binding]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[source-mismatch-decoded-provenance]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[source-mismatch-abstention-provenance]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[context-mismatch-decoded-provenance]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[context-mismatch-abstention-provenance]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[teacher-forcing-decoded-provenance]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[teacher-forcing-abstention-provenance]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[target-access-decoded-provenance]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[target-access-abstention-provenance]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[zero-is-not-false-decoded-provenance]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_row_provenance_contradictions_withhold_credit_and_retain_declared_status[zero-is-not-false-abstention-provenance]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[unknown-row-field]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[missing-row-field]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[unknown-status]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[decoded-with-reason]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[abstention-with-payload]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[unsupported-without-reason]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_candidate_rows_are_accounted_without_poisoning_outer_transport[candidate-pin-mismatch]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[invalid-candidate-json]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[duplicate-candidate-key]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[candidate-nan]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[unsupported-schema]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[unsupported-source-binding]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_malformed_json_and_unsupported_fragments_are_terminal_candidate_failures[unbound-variable]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_oversized_candidate_request_is_accounted_without_calling_relational_lowering",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_precedence_preserves_missing_duplicate_and_shape_facts_when_generation_is_bad",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_operational_candidate_failures_are_never_reported_as_invalid_model_output[os-error]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_operational_candidate_failures_are_never_reported_as_invalid_model_output[import-error]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_operational_candidate_failures_are_never_reported_as_invalid_model_output[runtime-error]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_complete_report_ceiling_refuses_without_dropping_rows",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[omitted-occurrence]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[reordered-occurrences]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[altered-terminal-count]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[reduced-population-denominator]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[reduced-comparable-denominator]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[altered-observation-digest]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[omitted-observation]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[promoted-generation-claim]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[promoted-authority]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[boolean-mask]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[float-mask]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[promoted-pair-disagreement]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_rehashed_batch_tampering_cannot_replace_complete_original_regeneration[unknown-output-field]",
+        "outcome": "failed",
+        "when": "call"
+      },
+      {
+        "nodeid": "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_wrong_independent_whole_report_pin_refuses_before_regeneration",
+        "outcome": "failed",
+        "when": "call"
+      }
+    ],
+    "selected_target_coverage": {
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py": 112,
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py": 70,
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py": 84,
+      "tests/unit/logic/syntax_core/test_algebra.py": 33
+    },
+    "successful_call_nodeids": [
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_every_available_reference_is_validated_even_without_comparable_prediction[invalid-reference-missing-output]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_every_available_reference_is_validated_even_without_comparable_prediction[invalid-reference-abstention]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_every_available_reference_is_validated_even_without_comparable_prediction[invalid-reference-duplicate-output]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_every_available_reference_is_validated_even_without_comparable_prediction[invalid-reference-bad-generation]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[missing-reference-row]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[duplicate-reference-row]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[unknown-reference-id]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[reordered-reference-rows]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[wrong-reference-population]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_reference_envelope_cannot_drop_or_retarget_the_population[unavailable-with-payload]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_three_independent_transport_pins_refuse_before_lazy_owners[population-transport-pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_three_independent_transport_pins_refuse_before_lazy_owners[references-transport-pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_three_independent_transport_pins_refuse_before_lazy_owners[predictions-transport-pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[duplicate-outer-key]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[outer-nonfinite]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[outer-invalid-utf8]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[mutable-transport]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[unknown-prediction-envelope-field]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[nonlist-observations]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[empty-population]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[duplicate-population-id]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[population-over-64]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_whole_transport_and_population_intake_failures_refuse_before_operation_imports[observations-over-256]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_outer_transport_byte_ceiling_refuses_without_clipping[population-byte-ceiling]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_outer_transport_byte_ceiling_refuses_without_clipping[references-byte-ceiling]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_outer_transport_byte_ceiling_refuses_without_clipping[predictions-byte-ceiling]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_nested_reference_and_ordinary_json_bounds_refuse_before_lazy_owners[reference-request-bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_nested_reference_and_ordinary_json_bounds_refuse_before_lazy_owners[reference-report-bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_nested_reference_and_ordinary_json_bounds_refuse_before_lazy_owners[outer-json-depth-bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_public_pair_replay_failure_refuses_instead_of_becoming_a_candidate_failure",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_source_fence_failure_refuses_instead_of_becoming_invalid_candidate_output",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_first_use_owner_identity_failure_refuses_even_with_all_references_unavailable[first-use-relational-import-anchor]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_first_use_owner_identity_failure_refuses_even_with_all_references_unavailable[first-use-relational-cache]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_first_use_owner_identity_failure_refuses_even_with_all_references_unavailable[first-use-pair-import-anchor]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_first_use_owner_identity_failure_refuses_even_with_all_references_unavailable[first-use-pair-cache]",
+      "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py::test_public_import_is_standard_library_only_and_writes_nothing",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_pair_retains_complete_authoritative_mapping_and_zero_authority",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_id_only_changes_are_exactly_distinguished_from_declared_and_alpha_structure",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_consistent_lexical_binder_renaming_preserves_alpha_without_erasing_names[rename0]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_consistent_lexical_binder_renaming_preserves_alpha_without_erasing_names[rename1]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_signature_and_role_row_declaration_order_is_normalized_without_reordering_arguments[sorts]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_signature_and_role_row_declaration_order_is_normalized_without_reordering_arguments[predicates]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_signature_and_role_row_declaration_order_is_normalized_without_reordering_arguments[role_rows]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_signature_and_role_row_declaration_order_is_normalized_without_reordering_arguments[all]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_raw_transport_hashes_remain_separate_from_full_typed_expression_identity",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_valid_bound_relational_changes_are_not_lexical_alpha_variants[argument_swap]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_valid_bound_relational_changes_are_not_lexical_alpha_variants[binding_capture]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_valid_bound_relational_changes_are_not_lexical_alpha_variants[quantifier_kind]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_valid_bound_relational_changes_are_not_lexical_alpha_variants[quantifier_order]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_valid_bound_relational_changes_are_not_lexical_alpha_variants[negation]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_actual_signature_and_ordered_argument_roles_gate_alpha_comparison[predicate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_actual_signature_and_ordered_argument_roles_gate_alpha_comparison[arity]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_actual_signature_and_ordered_argument_roles_gate_alpha_comparison[role_values]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[implication_direction]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[modal_placement]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[modal_O]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[modal_F]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[connective]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_direction_modal_operators_and_operator_ownership_remain_distinct[distributed_modal]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_even_commutative_connectives_keep_declared_child_order[and]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_even_commutative_connectives_keep_declared_child_order[or]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_even_commutative_connectives_keep_declared_child_order[iff]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_double_negation_is_not_erased_as_a_lexical_alpha_rename",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_complete_mapping_union_keeps_every_path_for_added_or_dropped_structure[False]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_complete_mapping_union_keeps_every_path_for_added_or_dropped_structure[True]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_binder_and_ordered_argument_roles_belong_to_their_exact_existing_paths",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_modal_extension_and_connective_ancestry_keep_actual_operator_ownership",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_each_independent_request_and_full_report_pin_is_required_before_lazy_owners[expected_reference_request_sha256]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_each_independent_request_and_full_report_pin_is_required_before_lazy_owners[expected_candidate_request_sha256]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_each_independent_request_and_full_report_pin_is_required_before_lazy_owners[expected_reference_report_sha256]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_each_independent_request_and_full_report_pin_is_required_before_lazy_owners[expected_candidate_report_sha256]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[native_ast-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[native_ast-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[lean_body-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[lean_body-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[structural_mapping-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[structural_mapping-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[argument_roles-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[argument_roles-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[authority-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[authority-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[typed_expression-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[typed_expression-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[counts-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[counts-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[training_mask-reference]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_self_rehashed_full_input_reports_still_require_original_authoritative_replay[training_mask-candidate]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_unproved_offered_producer_filename_is_never_opened",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[source_binding]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[free_variable]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[shadowing]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[family]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[profile]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[unknown_request_field]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[duplicate_json_key]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_invalid_or_unsupported_inputs_refuse_instead_of_entering_comparison_denominator[invalid_utf8]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[raw_type]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[raw_bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[report_bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[dict_subclass]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[nonfinite]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[deep]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[ordinary_object]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_finite_detached_preflight_refuses_before_operation_imports[boolean_pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[structure_boolean]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[alpha_boolean]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[feature_row]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[missing_path]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[path_order]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[reference_hash]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[source_pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[authority]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[training_boolean]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[gold_float]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[unknown_field]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_rehashed_comparison_cannot_replace_complete_original_bound_regeneration[missing_field]",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_wrong_independent_comparison_pin_refuses_before_regeneration",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_complete_output_ceiling_refuses_without_clipping_or_mutating_originals",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_changed_self_source_pin_refuses_without_editing_a_source_file",
+      "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py::test_public_import_uses_only_standard_library_and_writes_nothing",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_full_public_replay_retains_existing_ast_ledger_and_no_authority",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_necessary_approval_and_sufficient_permission_have_explicit_countermodels[False-True]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_necessary_approval_and_sufficient_permission_have_explicit_countermodels[True-False]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_activation_outside_modality_differs_from_guard_inside_under_declared_two_world_model",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_o_p_f_are_independent_parameters_with_no_inserted_duality[O]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_o_p_f_are_independent_parameters_with_no_inserted_duality[P]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_o_p_f_are_independent_parameters_with_no_inserted_duality[F]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_action_disjunction_differs_from_conjunction_and_dropped_alternative",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_permission_of_disjunction_is_not_silently_distributed_under_arbitrary_modal_parameters",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_actor_recipient_swaps_and_direction_reversal_change_structure_and_finite_truth[swapped]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_actor_recipient_swaps_and_direction_reversal_change_structure_and_finite_truth[reversed_direction]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_quantifier_order_is_preserved_and_detectable",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_boolean_not_iff_and_exact_binary_connectives_retain_finite_truth",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[native_ast]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[lean_body]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[structural_mapping]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[argument_roles]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[authority]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[typed_expression]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[source_binding]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_repaired_report_hash_does_not_hide_mutation[counts]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[free_variable]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[duplicate_id]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[metadata]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[features]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[wrong_modal_kind]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[unknown_modal_payload]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[unknown_extension]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[unused_predicate]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[predicate_binder_collision]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[nary_connective]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[multiple_binders]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_resealed_requests_still_refuse_out_of_profile_declarations[shadowing]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[extra_request]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[extra_expression]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[extra_node]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[extra_signature]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[missing_field]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[wrong_source]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[wrong_status]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[wrong_schema]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[sort]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[arity]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[constant]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[function]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[equality]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[true]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[false]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[unsafe_name]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[reserved_name]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_closed_fields_schemas_sorts_and_unsupported_constructs_refuse[namespace_version]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[missing]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[duplicate]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[arity]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[duplicate_labels]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[unknown]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[extra]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_roles_are_complete_ordered_explicit_and_closed[unsafe]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[duplicate-top-key]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[duplicate-nested-key]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[nan]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[infinity]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[invalid-utf8]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[array]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[empty-object]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[wrong-pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[malformed-pin]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_preflight_rejections_happen_before_operation_owner_loading[request-byte-bound]",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_independent_request_and_report_identities_are_required",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py::test_report_hash_rejects_nonordinary_values_without_loading_owners",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_module_version_and_interface",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_free_and_bound_variables_basic",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_free_variables_shadowing_and_let",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_free_variables_nested_binders",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_alpha_equivalent_renamed_binders",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_alpha_equivalent_nested_and_shadowing",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_alpha_equivalent_let_and_connectives",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_semantic_identity_ignores_node_ids_and_is_stable",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_alpha_rename_binder_preserves_semantic_identity",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_alpha_rename_binder_avoids_nested_capture",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_simple_and_idempotent",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_under_binder_no_capture",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_shadowed_variable_unchanged",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_let_capture_avoidance",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_nested_binders_adversarial",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_many_simultaneous",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_rejects_non_term_replacement",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_connectives_and_equality",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_extension_children",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_substitution_never_captures[binder_names0-x-term_frees0]",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_substitution_never_captures[binder_names1-x-term_frees1]",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_substitution_never_captures[binder_names2-x-term_frees2]",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_substitution_never_captures[binder_names3-x-term_frees3]",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_alpha_equivalent_share_semantic_identity",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_property_semantic_identity_distinguishes_structure",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_walk_and_size_depth",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_traversal_respects_node_limit",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_traversal_respects_depth_limit",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_limits_reject_unbounded_and_over_ceiling",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_substitute_and_alpha_under_tight_but_sufficient_limits",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_walk_bounded_module_helper",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_true_false_and_constants_stable_under_subst",
+      "tests/unit/logic/syntax_core/test_algebra.py::test_application_free_vars_and_subst"
+    ]
+  },
+  "pytest_exit_code": 1,
+  "request_sha256": "9c44d60070948e2a2f251e28354cf648f781690a2f9057c5ae5b93fa3db5fe29",
+  "schema": "legal-primary-graph-export-qualification/v1",
+  "scope": "selected standalone synthetic-fixture pytest targets only; no original corpus acquisition",
+  "selected_checks": [
+    "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+    "tests/unit/logic/syntax_core/test_algebra.py"
+  ],
+  "source_semantics_verified": false,
+  "status": "failed",
+  "training_performed": false,
+  "writable_path_redirections": {
+    "HF_DATASETS_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/cache",
+    "HF_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/cache",
+    "HF_HUB_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/cache",
+    "HUGGINGFACE_HUB_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/cache",
+    "SENTENCE_TRANSFORMERS_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/cache",
+    "SQLITE_TMPDIR": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/db",
+    "TEMP": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/tmp",
+    "TMP": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/tmp",
+    "TMPDIR": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/tmp",
+    "TRANSFORMERS_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/cache",
+    "XDG_CACHE_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/cache"
+  }
+}
