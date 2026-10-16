@@ -1,0 +1,185 @@
+{
+  "inputs": [
+    {
+      "bytes": 10878,
+      "name": "join_manifest",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/manifest.json",
+      "sha256": "5ea709a31a71ce9f90fb7fe8988dc8d0b4364872311f864308171424fcf87fc6"
+    },
+    {
+      "bytes": 10207,
+      "name": "scope_manifest",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/manifest.json",
+      "sha256": "481aa642384c5a9f186251907f8cb0c722e1233ee8e898615d9c19ad5b0beeb6"
+    },
+    {
+      "bytes": 76924,
+      "name": "statutory_manifest",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/manifest.json",
+      "sha256": "3c035af7fbaebb49d6657122931068370ddf729f701c10bb7231af0e9f67f2a4"
+    },
+    {
+      "bytes": 19761,
+      "name": "join_implementation_receipt",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/implementation-receipt.json",
+      "sha256": "ea06e29f5361ea572fe433d88f7b939741019febff7c0404f4999740afde7cca"
+    },
+    {
+      "bytes": 17775,
+      "name": "scope_implementation_receipt",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/implementation-receipt.json",
+      "sha256": "568a423db242760b088c966f7329bcbc4881f1fb33826f7e215ad75059213fe1"
+    },
+    {
+      "bytes": 17372,
+      "name": "relational_implementation_receipt",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/implementation-receipt.json",
+      "sha256": "4ca405ee1731588b42095eecac2ee92f73d5b7a83a9cfd2ee02f5e766adc3c67"
+    },
+    {
+      "bytes": 4049,
+      "name": "7213_html",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/source.html",
+      "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+    },
+    {
+      "bytes": 134030,
+      "name": "7213_sampling",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/sampling-report.json",
+      "sha256": "7a0c92ddbb93469fd7d5ce4512f3dec55511791ff904e001050f9614ed1637c3"
+    },
+    {
+      "bytes": 1326,
+      "name": "7213_replay",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/replay-inputs.json",
+      "sha256": "3a5e29ad7b2724a9214f6bd924c813ba66d3e58446136a93e40128ff21ee9e55"
+    },
+    {
+      "bytes": 942,
+      "name": "7213_descriptor",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/descriptor.json",
+      "sha256": "eab40b8e87203484173f69dc7656d559ef0ebcefa8192fdb65fb1f5e034612c6"
+    },
+    {
+      "bytes": 390,
+      "name": "7213_scope_request",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7213/request.json",
+      "sha256": "474c9d9b0d242c436d1379c3775c8d36ab6d5d4fb472d80586b94aa7df4906fb"
+    },
+    {
+      "bytes": 5884,
+      "name": "7213_scope_declaration",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7213/declaration.json",
+      "sha256": "6f147887db64786e6d25c00996e8354a4de225f59e0de3cbe9fdf0d2d074f176"
+    },
+    {
+      "bytes": 61547,
+      "name": "7213_scope_report",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7213/report.json",
+      "sha256": "b4b63f59873968e41873daa32bd64a09fb887c06885dd57891a5b4c0105fc7ba"
+    },
+    {
+      "bytes": 7017,
+      "name": "7214_html",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/source.html",
+      "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+    },
+    {
+      "bytes": 209925,
+      "name": "7214_sampling",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/sampling-report.json",
+      "sha256": "335181759ba447324c17b6249201d5395dce8f7bdfd7dd69f5cb2add7535a4b0"
+    },
+    {
+      "bytes": 1326,
+      "name": "7214_replay",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/replay-inputs.json",
+      "sha256": "970105b184c7a1703e75c56c5b714e0c712f543d315baf2412625ab3cb80c8a8"
+    },
+    {
+      "bytes": 942,
+      "name": "7214_descriptor",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/descriptor.json",
+      "sha256": "e2d91953a2fbbf3d165ccf960f16d94a8eec29a5915d1097d1a334f6fa526e77"
+    },
+    {
+      "bytes": 360,
+      "name": "7214_scope_request",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7214/request.json",
+      "sha256": "411cb0e8b3045a30a3201e157553b6e0890b665194153d7d8755d8ecb2773ed5"
+    },
+    {
+      "bytes": 5549,
+      "name": "7214_scope_declaration",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7214/declaration.json",
+      "sha256": "0e717c00702ba1f975e88efa616db2cb957e829224cc402ba03762d3fb384a3b"
+    },
+    {
+      "bytes": 60058,
+      "name": "7214_scope_report",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7214/report.json",
+      "sha256": "6f3cc36cf5dd7af7b834211d9231fee4409acd10fb8bc6323e795ed24f7e59a0"
+    },
+    {
+      "bytes": 16684,
+      "name": "7213A_typed_request",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7213-A/typed-request.json",
+      "sha256": "4fbdc25cf494a5ab00f0ceff2c7ef6a0f1ba7998969a4e8b9ccee5f0eb299f89"
+    },
+    {
+      "bytes": 77022,
+      "name": "7213A_typed_report",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7213-A/typed-syntax-report.json",
+      "sha256": "fe994aa06448eb34d891c2265f9c0f15f700bac41bcb0350fb46745d48df82e3"
+    },
+    {
+      "bytes": 11576,
+      "name": "7213A_join_request",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7213-A/join-request.json",
+      "sha256": "d35a71510c65e51f399097a94a37c189fca9c2a281be308b5a219d21c3dff469"
+    },
+    {
+      "bytes": 175372,
+      "name": "7213A_join_report",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7213-A/join-report.json",
+      "sha256": "a0cf48fce1714c24e5c5ee881b76d2aeefc3ac058f7c9542ed1e048b13fbbcd8"
+    },
+    {
+      "bytes": 16864,
+      "name": "7213B_typed_request",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7213-B/typed-request.json",
+      "sha256": "210fb6e56f4e10be42e35ea6fb8b48c32168c7de105c806a1563d7138c7eaa33"
+    },
+    {
+      "bytes": 77700,
+      "name": "7213B_typed_report",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7213-B/typed-syntax-report.json",
+      "sha256": "7b3517a80564c69fe5b2883fbaa46ab553749b174fcc84e5311c3af3d1a774b2"
+    },
+    {
+      "bytes": 11696,
+      "name": "7213B_join_request",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7213-B/join-request.json",
+      "sha256": "339dd35adbdf1a87666218742d026c723dcfadc24378bea940f01c5e1ac1742f"
+    },
+    {
+      "bytes": 176024,
+      "name": "7213B_join_report",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7213-B/join-report.json",
+      "sha256": "a8246c872065bba09e980f1bd5f940bda15ae4d8767f7de834d1a2e69c6ca0ed"
+    },
+    {
+      "bytes": 539,
+      "name": "7214pending_join_request",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7214-source-only-pending/join-request.json",
+      "sha256": "ab7959a2264ce54d98b1c9686fb5d8c95f771c989d6c68ac9790c4b1eb4cd0f8"
+    },
+    {
+      "bytes": 89174,
+      "name": "7214pending_join_report",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7214-source-only-pending/join-report.json",
+      "sha256": "8e620e1fc1571a6fa12e0d8a1d5a18009054a88f344ab43202d50474ded7e1d0"
+    }
+  ],
+  "schema": "retained-source-typed-norm-join-inputs/v1"
+}

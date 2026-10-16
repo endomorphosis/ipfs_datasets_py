@@ -1,0 +1,3539 @@
+{
+  "accepted_lookup": null,
+  "admissions": 0,
+  "alternative_id": "A",
+  "authority": {
+    "Lean_admitted": false,
+    "accepted": false,
+    "admitted": false,
+    "applicability_verified": false,
+    "backend_executed": false,
+    "context_closure_verified": false,
+    "declared_issues_exhaustive": false,
+    "dependency_inventory_exhaustive": false,
+    "evaluation_gold_qualified": false,
+    "formal_norm_semantics_encoded": false,
+    "formalized": false,
+    "governing_use_verified": false,
+    "independently_reviewed": false,
+    "legal_roles_verified": false,
+    "lowering_authorized": false,
+    "model_executed": false,
+    "proof_authority": false,
+    "semantic_graph_admitted": false,
+    "singular_plural_identity_verified": false,
+    "source_bound": false,
+    "source_context_resolved": false,
+    "source_semantics_verified": false,
+    "training_executed": false,
+    "training_gold_qualified": false,
+    "training_qualified": false
+  },
+  "component_id": "title10-2024-officer-definition-two-uses",
+  "declared_semantic_coverage": "partial",
+  "evaluation_gold_mask": 0,
+  "external_context_nominations_applied": false,
+  "external_relational_source_binding": null,
+  "formal_norm_ast": null,
+  "governing_definition_use": null,
+  "governing_use": null,
+  "graph": null,
+  "human_reviews": 0,
+  "input_pins": {
+    "join_request_canonical_sha256": "dec0088de0e8c836147ed101e29f4df33a0daaa7b3b6783287148cfcf8daebc4",
+    "join_request_raw_bytes": 11576,
+    "join_request_raw_sha256": "d35a71510c65e51f399097a94a37c189fca9c2a281be308b5a219d21c3dff469",
+    "relational_report_full_canonical_sha256": "c45a96c4cd85b4feb55c853a1608dd1102291912a9d45721f974b76c30b0bf63",
+    "relational_request_raw_bytes": 16684,
+    "relational_request_raw_sha256": "4fbdc25cf494a5ab00f0ceff2c7ef6a0f1ba7998969a4e8b9ccee5f0eb299f89",
+    "scope_report_full_canonical_sha256": "0d16291769e634292df8a4974357650ed2aa103a285814e8c0b3a6702a754642",
+    "source_scope_input_pins": {
+      "sampler_replay_inputs": {
+        "descriptor": {
+          "edition": 2024,
+          "granule_id": "USCODE-2024-title10-subtitleB-partII-chap723-sec7213",
+          "http_provenance": {
+            "content_type": "text/html",
+            "etag": null,
+            "final_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm",
+            "last_modified": "Fri, 22 Aug 2025 18:43:47 GMT",
+            "requested_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm",
+            "status_code": 200
+          },
+          "legal_id": "usc:us:10:7213",
+          "package_id": "USCODE-2024-title10",
+          "raw_bytes": 4049,
+          "raw_sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "retrieved_at": "2026-10-15T16:42:18.541223+00:00",
+          "schema": "legal-official-source-acquisition/v1",
+          "url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm"
+        },
+        "expected_descriptor_sha256": "e386d40efaebace111cc5c7893ad305480df2bc85ef7e92f7cfff9d7970feb2a",
+        "expected_raw_bytes": 4049,
+        "expected_raw_sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+      },
+      "sampling_report_full_canonical_sha256": "7a0c92ddbb93469fd7d5ce4512f3dec55511791ff904e001050f9614ed1637c3",
+      "scope_declaration_canonical_sha256": "b8604d464edd7a2bf83538be3854da2165ed689f3f35846ef5522c945bbbbb15",
+      "scope_declaration_raw_bytes": 5884,
+      "scope_declaration_raw_sha256": "6f147887db64786e6d25c00996e8354a4de225f59e0de3cbe9fdf0d2d074f176",
+      "scope_request_canonical_sha256": "4cd741facd7012fc813050beec89620e7bd5c9b89740fb931e80b1fb6c497871",
+      "scope_request_raw_bytes": 390,
+      "scope_request_raw_sha256": "474c9d9b0d242c436d1379c3775c8d36ab6d5d4fb472d80586b94aa7df4906fb",
+      "selected_unit_ref": {
+        "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+      }
+    }
+  },
+  "introduced_unresolved": [
+    {
+      "affected_typed_paths": [
+        "/root",
+        "/root/binders/0",
+        "/root/arguments/0",
+        "/root/arguments/0/binders/0",
+        "/root/arguments/0/arguments/0",
+        "/root/arguments/0/arguments/0/binders/0",
+        "/root/arguments/0/arguments/0/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/1",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/1",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/1"
+      ],
+      "code": "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+      "rationale": "All quantifier/domain, predicate arity, actor omission, recipient/duties/approver parameter identities and modal implication choices are caller hypotheses. They are not reviewed statutory meanings. The source action agent, direction, approval scope and definition applicability remain open."
+    }
+  ],
+  "join_request": {
+    "alternative_id": "A",
+    "component_id": "title10-2024-officer-definition-two-uses",
+    "interpretation_status": "unreviewed_correspondence_proposal",
+    "introduced_unresolved": [
+      {
+        "affected_typed_paths": [
+          "/root",
+          "/root/binders/0",
+          "/root/arguments/0",
+          "/root/arguments/0/binders/0",
+          "/root/arguments/0/arguments/0",
+          "/root/arguments/0/arguments/0/binders/0",
+          "/root/arguments/0/arguments/0/arguments/0",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/0",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/0",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/1",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/1",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/0",
+          "/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/1"
+        ],
+        "code": "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "rationale": "All quantifier/domain, predicate arity, actor omission, recipient/duties/approver parameter identities and modal implication choices are caller hypotheses. They are not reviewed statutory meanings. The source action agent, direction, approval scope and definition applicability remain open."
+      }
+    ],
+    "node_correspondences": [
+      {
+        "disposition": "introduced_unresolved",
+        "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+        "source_anchor_paths": [],
+        "typed_path": "/root",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+        ]
+      },
+      {
+        "disposition": "introduced_unresolved",
+        "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+        "source_anchor_paths": [],
+        "typed_path": "/root/binders/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+        ]
+      },
+      {
+        "disposition": "introduced_unresolved",
+        "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+        "source_anchor_paths": [],
+        "typed_path": "/root/arguments/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+        ]
+      },
+      {
+        "disposition": "introduced_unresolved",
+        "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+        "source_anchor_paths": [],
+        "typed_path": "/root/arguments/0/binders/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+        ]
+      },
+      {
+        "disposition": "introduced_unresolved",
+        "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+        "source_anchor_paths": [],
+        "typed_path": "/root/arguments/0/arguments/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+        ]
+      },
+      {
+        "disposition": "introduced_unresolved",
+        "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+        "source_anchor_paths": [],
+        "typed_path": "/root/arguments/0/arguments/0/binders/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "Only-with approval anchors a proposed implication whose direction and modal placement remain unreviewed; no sufficient permission is inferred.",
+        "source_anchor_paths": [
+          "/unresolved/3/span"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "necessary_approval_and_modal_scope"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "The exact may cue anchors a proposed P node; implication placement relative to this modality remains an alternative hypothesis.",
+        "source_anchor_paths": [
+          "/occurrences/1/anchor"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "necessary_approval_and_modal_scope"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "The exact may cue anchors a proposed P node; implication placement relative to this modality remains an alternative hypothesis.",
+        "source_anchor_paths": [
+          "/occurrences/1/anchor"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "necessary_approval_and_modal_scope"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "The whole assigned-or-transferred phrase anchors proposed disjunction without resolving direction, modal distribution or event structure.",
+        "source_anchor_paths": [
+          "/occurrences/2/anchor"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "assignment_transfer_coordination"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning.",
+        "source_anchor_paths": [
+          "/occurrences/2/anchor"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "assignment_transfer_coordination"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity.",
+        "source_anchor_paths": [
+          "/occurrences/0/anchor"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "passive_subject_is_not_resolved_action_agent"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "Unreviewed duties parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved.",
+        "source_anchor_paths": [
+          "/occurrences/3/anchor"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "direction_and_duties_attachment"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning.",
+        "source_anchor_paths": [
+          "/occurrences/2/anchor"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "assignment_transfer_coordination"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity.",
+        "source_anchor_paths": [
+          "/occurrences/0/anchor"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "passive_subject_is_not_resolved_action_agent"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "Unreviewed duties parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved.",
+        "source_anchor_paths": [
+          "/occurrences/3/anchor"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/1",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "direction_and_duties_attachment"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning.",
+        "source_anchor_paths": [
+          "/unresolved/3/span"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/1",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "necessary_approval_and_modal_scope"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "Unreviewed approver parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved.",
+        "source_anchor_paths": [
+          "/unresolved/3/span"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/0",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "necessary_approval_and_modal_scope"
+        ]
+      },
+      {
+        "disposition": "lexical_hypothesis",
+        "rationale": "The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity.",
+        "source_anchor_paths": [
+          "/occurrences/0/anchor"
+        ],
+        "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/1",
+        "unresolved_codes": [
+          "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+          "passive_subject_is_not_resolved_action_agent"
+        ]
+      }
+    ],
+    "schema": "legal-source-typed-norm-join-request/v1",
+    "selected_unit_ref": {
+      "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+      "schema": "legal-source-structured-sample-unit/v1",
+      "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+    }
+  },
+  "join_request_raw_utf8": "{\n  \"schema\": \"legal-source-typed-norm-join-request/v1\",\n  \"interpretation_status\": \"unreviewed_correspondence_proposal\",\n  \"component_id\": \"title10-2024-officer-definition-two-uses\",\n  \"alternative_id\": \"A\",\n  \"selected_unit_ref\": {\n    \"record_cid\": \"baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq\",\n    \"schema\": \"legal-source-structured-sample-unit/v1\",\n    \"sha256\": \"14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e\"\n  },\n  \"node_correspondences\": [\n    {\n      \"typed_path\": \"/root\",\n      \"source_anchor_paths\": [],\n      \"disposition\": \"introduced_unresolved\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\"\n      ],\n      \"rationale\": \"Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.\"\n    },\n    {\n      \"typed_path\": \"/root/binders/0\",\n      \"source_anchor_paths\": [],\n      \"disposition\": \"introduced_unresolved\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\"\n      ],\n      \"rationale\": \"Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0\",\n      \"source_anchor_paths\": [],\n      \"disposition\": \"introduced_unresolved\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\"\n      ],\n      \"rationale\": \"Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/binders/0\",\n      \"source_anchor_paths\": [],\n      \"disposition\": \"introduced_unresolved\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\"\n      ],\n      \"rationale\": \"Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0\",\n      \"source_anchor_paths\": [],\n      \"disposition\": \"introduced_unresolved\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\"\n      ],\n      \"rationale\": \"Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/binders/0\",\n      \"source_anchor_paths\": [],\n      \"disposition\": \"introduced_unresolved\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\"\n      ],\n      \"rationale\": \"Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0\",\n      \"source_anchor_paths\": [\n        \"/unresolved/3/span\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"necessary_approval_and_modal_scope\"\n      ],\n      \"rationale\": \"Only-with approval anchors a proposed implication whose direction and modal placement remain unreviewed; no sufficient permission is inferred.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/0\",\n      \"source_anchor_paths\": [\n        \"/occurrences/1/anchor\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"necessary_approval_and_modal_scope\"\n      ],\n      \"rationale\": \"The exact may cue anchors a proposed P node; implication placement relative to this modality remains an alternative hypothesis.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension\",\n      \"source_anchor_paths\": [\n        \"/occurrences/1/anchor\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"necessary_approval_and_modal_scope\"\n      ],\n      \"rationale\": \"The exact may cue anchors a proposed P node; implication placement relative to this modality remains an alternative hypothesis.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0\",\n      \"source_anchor_paths\": [\n        \"/occurrences/2/anchor\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"assignment_transfer_coordination\"\n      ],\n      \"rationale\": \"The whole assigned-or-transferred phrase anchors proposed disjunction without resolving direction, modal distribution or event structure.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0\",\n      \"source_anchor_paths\": [\n        \"/occurrences/2/anchor\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"assignment_transfer_coordination\"\n      ],\n      \"rationale\": \"Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0\",\n      \"source_anchor_paths\": [\n        \"/occurrences/0/anchor\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"passive_subject_is_not_resolved_action_agent\"\n      ],\n      \"rationale\": \"The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1\",\n      \"source_anchor_paths\": [\n        \"/occurrences/3/anchor\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"direction_and_duties_attachment\"\n      ],\n      \"rationale\": \"Unreviewed duties parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1\",\n      \"source_anchor_paths\": [\n        \"/occurrences/2/anchor\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"assignment_transfer_coordination\"\n      ],\n      \"rationale\": \"Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/0\",\n      \"source_anchor_paths\": [\n        \"/occurrences/0/anchor\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"passive_subject_is_not_resolved_action_agent\"\n      ],\n      \"rationale\": \"The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/1\",\n      \"source_anchor_paths\": [\n        \"/occurrences/3/anchor\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"direction_and_duties_attachment\"\n      ],\n      \"rationale\": \"Unreviewed duties parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/1\",\n      \"source_anchor_paths\": [\n        \"/unresolved/3/span\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"necessary_approval_and_modal_scope\"\n      ],\n      \"rationale\": \"Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/0\",\n      \"source_anchor_paths\": [\n        \"/unresolved/3/span\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"necessary_approval_and_modal_scope\"\n      ],\n      \"rationale\": \"Unreviewed approver parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved.\"\n    },\n    {\n      \"typed_path\": \"/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/1\",\n      \"source_anchor_paths\": [\n        \"/occurrences/0/anchor\"\n      ],\n      \"disposition\": \"lexical_hypothesis\",\n      \"unresolved_codes\": [\n        \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n        \"passive_subject_is_not_resolved_action_agent\"\n      ],\n      \"rationale\": \"The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity.\"\n    }\n  ],\n  \"introduced_unresolved\": [\n    {\n      \"code\": \"typed_parameter_roles_quantifiers_and_predicates_unreviewed\",\n      \"rationale\": \"All quantifier/domain, predicate arity, actor omission, recipient/duties/approver parameter identities and modal implication choices are caller hypotheses. They are not reviewed statutory meanings. The source action agent, direction, approval scope and definition applicability remain open.\",\n      \"affected_typed_paths\": [\n        \"/root\",\n        \"/root/binders/0\",\n        \"/root/arguments/0\",\n        \"/root/arguments/0/binders/0\",\n        \"/root/arguments/0/arguments/0\",\n        \"/root/arguments/0/arguments/0/binders/0\",\n        \"/root/arguments/0/arguments/0/arguments/0\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/0\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/0\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/1\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/1\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/0\",\n        \"/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/1\"\n      ]\n    }\n  ]\n}\n",
+  "limitations": [
+    "Correspondence records caller hypotheses and exact source custody; it does not establish natural-language semantics.",
+    "Every typed node has declared provenance; that inventory does not prove exhaustive legal dependencies or interpretation choices.",
+    "Predicate argument roles, lexical binding, quantifier order and modal/connective structure are syntax facts, not resolved legal entities.",
+    "All original unresolved source issues remain unchanged, including those touched by a typed hypothesis.",
+    "Unanchored structure requires an explicitly introduced unresolved assumption; anchored hypotheses remain unreviewed.",
+    "The external relational preparation remains source-unbound and its generated code is not supplied as statutory output.",
+    "Original open context, source coverage and external contextual nominations are not adjudicated or promoted.",
+    "Related alternatives share source material and cannot constitute independent training or evaluation cases.",
+    "No source meaning selection, review, signer, governing-use edge, admitted graph, native execution or qualified target is supplied."
+  ],
+  "literal_accounting_complete": true,
+  "lookup": null,
+  "lowered_IR": null,
+  "masks": {
+    "contrastive_supervision": 0,
+    "fidelity_evaluation": 0,
+    "proof_supervision": 0,
+    "strong_semantic_fit": 0,
+    "weak_decoder_fit": 0
+  },
+  "model_calls": 0,
+  "native_build_executed": false,
+  "native_output_for_source": null,
+  "native_processes": 0,
+  "original_context_preserved": true,
+  "original_unresolved": [
+    {
+      "code": "passive_subject_is_not_resolved_action_agent",
+      "reason": "The legacy actor slot records a lexical proposal; the passive recipient and action agent remain unresolved.",
+      "span": {
+        "end": 34,
+        "offset_unit": "unicode_character_half_open",
+        "origin": "source",
+        "start": 0,
+        "text": "Officers of the Corps of Engineers"
+      }
+    },
+    {
+      "code": "assignment_transfer_coordination",
+      "reason": "Assignment and transfer alternatives need an explicit relational and modal interpretation.",
+      "span": {
+        "end": 65,
+        "offset_unit": "unicode_character_half_open",
+        "origin": "source",
+        "start": 39,
+        "text": "be assigned or transferred"
+      }
+    },
+    {
+      "code": "direction_and_duties_attachment",
+      "reason": "The to/from direction and civil-functions restriction require explicit attachment and argument decisions.",
+      "span": {
+        "end": 140,
+        "offset_unit": "unicode_character_half_open",
+        "origin": "source",
+        "start": 66,
+        "text": "to and from duties involving the civil functions of the Corps of Engineers"
+      }
+    },
+    {
+      "code": "necessary_approval_and_modal_scope",
+      "reason": "Approval wording requires explicit necessity and modal-scope decisions; it is not compiled as a sufficient guard.",
+      "span": {
+        "end": 192,
+        "offset_unit": "unicode_character_half_open",
+        "origin": "source",
+        "start": 141,
+        "text": "only with the approval of the Secretary of the Army"
+      }
+    },
+    {
+      "code": "plural_to_definition_identity",
+      "reason": "The literal plural Officers is not a resolved singular officer definition binding.",
+      "span": {
+        "end": 8,
+        "offset_unit": "unicode_character_half_open",
+        "origin": "source",
+        "start": 0,
+        "text": "Officers"
+      }
+    },
+    {
+      "code": "applicability_authority_and_remaining_context",
+      "reason": "The original context requirements remain open. Separate retained definition/scope nominations are available but are not applied or adjudicated by this source-only request.",
+      "span": {
+        "end": 193,
+        "offset_unit": "unicode_character_half_open",
+        "origin": "source",
+        "start": 0,
+        "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+      }
+    }
+  ],
+  "producer_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_integration.py": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_contracts.py": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_source.py": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_context_obligations.py": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_official_document_views.py": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py": "30343ada53f17b7c39c4b1ce1fbc5bc14234396b5d28fb753e14141423d17039",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling.py": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py": "92d0c1a46b86b9cdecdc42477f67e6a2141481379498f8ebd90369f9d3b65f11",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/families/namespaces.py": "ba097e653158a812d66ead978d6405d61adaa293521305333579b19bd69a432d",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/ir_core/provenance.py": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py": "7e74f5ea2230549165fd0cb0230b2b8baaa0016cc2352d5a422c70c20f5e4da8",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/parsers/legacy_modal.py": "7b18812ea6fcba8b65ed7dc5c3407e0ad06ac9760c5c66441e9677463f9eb66e",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/syntax_core/ast.py": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/syntax_core/contracts.py": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/syntax_core/signatures.py": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/utils/cid_utils.py": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+  },
+  "profile": "whole-source-partial-typed-correspondence/v1",
+  "provenance_ledger": [
+    {
+      "binder_typed_path": "/root/binders/0",
+      "disposition": "introduced_unresolved",
+      "kind": "forall",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "",
+      "node_id": "partial-A-14",
+      "quantifier_kind": "forall",
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+      "scope_body_typed_path": "/root/arguments/0",
+      "source_anchor_paths": [],
+      "source_anchors": [],
+      "source_meaning_verified": false,
+      "typed_path": "/root",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ],
+      "variable_name": "r"
+    },
+    {
+      "binder_name": "r",
+      "binder_sort": {
+        "arguments": [],
+        "kind": "atomic",
+        "name": "Object",
+        "schema_version": "syntax-logic-sort/v1"
+      },
+      "binding_quantifier": {
+        "binder_typed_path": "/root/binders/0",
+        "quantifier_kind": "forall",
+        "quantifier_node_id": "partial-A-14",
+        "quantifier_typed_path": "/root",
+        "scope_body_typed_path": "/root/arguments/0",
+        "variable_name": "r"
+      },
+      "disposition": "introduced_unresolved",
+      "kind": "binder",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/variable",
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+      "source_anchor_paths": [],
+      "source_anchors": [],
+      "source_meaning_verified": false,
+      "typed_path": "/root/binders/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ]
+    },
+    {
+      "binder_typed_path": "/root/arguments/0/binders/0",
+      "disposition": "introduced_unresolved",
+      "kind": "forall",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula",
+      "node_id": "partial-A-13",
+      "quantifier_kind": "forall",
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+      "scope_body_typed_path": "/root/arguments/0/arguments/0",
+      "source_anchor_paths": [],
+      "source_anchors": [],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ],
+      "variable_name": "d"
+    },
+    {
+      "binder_name": "d",
+      "binder_sort": {
+        "arguments": [],
+        "kind": "atomic",
+        "name": "Object",
+        "schema_version": "syntax-logic-sort/v1"
+      },
+      "binding_quantifier": {
+        "binder_typed_path": "/root/arguments/0/binders/0",
+        "quantifier_kind": "forall",
+        "quantifier_node_id": "partial-A-13",
+        "quantifier_typed_path": "/root/arguments/0",
+        "scope_body_typed_path": "/root/arguments/0/arguments/0",
+        "variable_name": "d"
+      },
+      "disposition": "introduced_unresolved",
+      "kind": "binder",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/variable",
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+      "source_anchor_paths": [],
+      "source_anchors": [],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/binders/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ]
+    },
+    {
+      "binder_typed_path": "/root/arguments/0/arguments/0/binders/0",
+      "disposition": "introduced_unresolved",
+      "kind": "forall",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula",
+      "node_id": "partial-A-12",
+      "quantifier_kind": "forall",
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+      "scope_body_typed_path": "/root/arguments/0/arguments/0/arguments/0",
+      "source_anchor_paths": [],
+      "source_anchors": [],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ],
+      "variable_name": "s"
+    },
+    {
+      "binder_name": "s",
+      "binder_sort": {
+        "arguments": [],
+        "kind": "atomic",
+        "name": "Object",
+        "schema_version": "syntax-logic-sort/v1"
+      },
+      "binding_quantifier": {
+        "binder_typed_path": "/root/arguments/0/arguments/0/binders/0",
+        "quantifier_kind": "forall",
+        "quantifier_node_id": "partial-A-12",
+        "quantifier_typed_path": "/root/arguments/0/arguments/0",
+        "scope_body_typed_path": "/root/arguments/0/arguments/0/arguments/0",
+        "variable_name": "s"
+      },
+      "disposition": "introduced_unresolved",
+      "kind": "binder",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/variable",
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence.",
+      "source_anchor_paths": [],
+      "source_anchors": [],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/binders/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ]
+    },
+    {
+      "connective_operator": "implies",
+      "disposition": "lexical_hypothesis",
+      "kind": "implies",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula",
+      "node_id": "partial-A-10",
+      "ordered_child_paths": [
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/1"
+      ],
+      "rationale": "Only-with approval anchors a proposed implication whose direction and modal placement remain unreviewed; no sufficient permission is inferred.",
+      "source_anchor_paths": [
+        "/unresolved/3/span"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/unresolved/3/span",
+          "document_selector": {
+            "char_end": 623,
+            "char_start": 572,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:22b161bf2fe67b4c714de530c7b04c1452f68a0d43e269cf2125418b995d2a97",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "only with the approval of the Secretary of the Army",
+            "text_sha256": "a5e018e2a6e7ddfa9ff62bd42ebad8b21507de845d335d885ea47e7316ff78bd",
+            "utf8_byte_end": 624,
+            "utf8_byte_start": 573,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 192,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 141,
+            "text": "only with the approval of the Secretary of the Army"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "necessary_approval_and_modal_scope"
+      ]
+    },
+    {
+      "disposition": "lexical_hypothesis",
+      "extension_typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension",
+      "kind": "extension",
+      "modal_child_typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0",
+      "modal_operator": "P",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/left",
+      "node_id": "partial-A-11",
+      "rationale": "The exact may cue anchors a proposed P node; implication placement relative to this modality remains an alternative hypothesis.",
+      "source_anchor_paths": [
+        "/occurrences/1/anchor"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/occurrences/1/anchor",
+          "document_selector": {
+            "char_end": 469,
+            "char_start": 466,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:6ed41be92b4790c4113bdde06b9de551226835bd2388552b78c9e6c1a937f102",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "may",
+            "text_sha256": "ee4d988c65de860fabbfbcd27f73d50bbebe3fba37fe419284f4811389c30bdc",
+            "utf8_byte_end": 470,
+            "utf8_byte_start": 467,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 38,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 35,
+            "text": "may"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "necessary_approval_and_modal_scope"
+      ]
+    },
+    {
+      "disposition": "lexical_hypothesis",
+      "kind": "legacy.deontic/v1",
+      "modal_child_typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0",
+      "modal_operator": "P",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/left",
+      "node_id": "partial-A-11:ext",
+      "payload_schema": "legacy.deontic/v1",
+      "rationale": "The exact may cue anchors a proposed P node; implication placement relative to this modality remains an alternative hypothesis.",
+      "source_anchor_paths": [
+        "/occurrences/1/anchor"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/occurrences/1/anchor",
+          "document_selector": {
+            "char_end": 469,
+            "char_start": 466,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:6ed41be92b4790c4113bdde06b9de551226835bd2388552b78c9e6c1a937f102",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "may",
+            "text_sha256": "ee4d988c65de860fabbfbcd27f73d50bbebe3fba37fe419284f4811389c30bdc",
+            "utf8_byte_end": 470,
+            "utf8_byte_start": 467,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 38,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 35,
+            "text": "may"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "necessary_approval_and_modal_scope"
+      ]
+    },
+    {
+      "connective_operator": "or",
+      "disposition": "lexical_hypothesis",
+      "kind": "or",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/left/formula",
+      "node_id": "partial-A-0",
+      "ordered_child_paths": [
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1"
+      ],
+      "rationale": "The whole assigned-or-transferred phrase anchors proposed disjunction without resolving direction, modal distribution or event structure.",
+      "source_anchor_paths": [
+        "/occurrences/2/anchor"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/occurrences/2/anchor",
+          "document_selector": {
+            "char_end": 496,
+            "char_start": 470,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:779d9af29b2c3bd3c772a26d7ce945747d6b605418dc78c559339fc7cc2a1aeb",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "be assigned or transferred",
+            "text_sha256": "eaeb727393491ccd28bf19d12e25bf99d21d41c46d125712259d0832bb0d4ee1",
+            "utf8_byte_end": 497,
+            "utf8_byte_start": 471,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 65,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 39,
+            "text": "be assigned or transferred"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "assignment_transfer_coordination"
+      ]
+    },
+    {
+      "argument_roles": [
+        "recipient",
+        "duties"
+      ],
+      "argument_typed_paths": [
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1"
+      ],
+      "disposition": "lexical_hypothesis",
+      "kind": "predicate",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/left/formula/left",
+      "node_id": "partial-A-1",
+      "predicate_symbol": "Assign",
+      "rationale": "Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning.",
+      "source_anchor_paths": [
+        "/occurrences/2/anchor"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/occurrences/2/anchor",
+          "document_selector": {
+            "char_end": 496,
+            "char_start": 470,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:779d9af29b2c3bd3c772a26d7ce945747d6b605418dc78c559339fc7cc2a1aeb",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "be assigned or transferred",
+            "text_sha256": "eaeb727393491ccd28bf19d12e25bf99d21d41c46d125712259d0832bb0d4ee1",
+            "utf8_byte_end": 497,
+            "utf8_byte_start": 471,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 65,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 39,
+            "text": "be assigned or transferred"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "assignment_transfer_coordination"
+      ]
+    },
+    {
+      "binding_quantifier": {
+        "binder_typed_path": "/root/binders/0",
+        "quantifier_kind": "forall",
+        "quantifier_node_id": "partial-A-14",
+        "quantifier_typed_path": "/root",
+        "scope_body_typed_path": "/root/arguments/0",
+        "variable_name": "r"
+      },
+      "disposition": "lexical_hypothesis",
+      "kind": "variable",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/left/formula/left/arguments/0",
+      "node_id": "partial-A-2",
+      "predicate_argument": {
+        "argument_index": 0,
+        "declared_role": "recipient",
+        "predicate_symbol": "Assign",
+        "predicate_typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0"
+      },
+      "rationale": "The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity.",
+      "source_anchor_paths": [
+        "/occurrences/0/anchor"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/occurrences/0/anchor",
+          "document_selector": {
+            "char_end": 465,
+            "char_start": 431,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:3819bd6815f4b609a778df1d6d6b6044bcfb4c34c7b5b1c8065c554eab4f86c1",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "Officers of the Corps of Engineers",
+            "text_sha256": "e1b9028cc58671eb047a62f5a14d44b0717c94630deb591e75fa512e29f802fd",
+            "utf8_byte_end": 466,
+            "utf8_byte_start": 432,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 34,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 0,
+            "text": "Officers of the Corps of Engineers"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "passive_subject_is_not_resolved_action_agent"
+      ],
+      "variable_name": "r",
+      "variable_sort": {
+        "arguments": [],
+        "kind": "atomic",
+        "name": "Object",
+        "schema_version": "syntax-logic-sort/v1"
+      }
+    },
+    {
+      "binding_quantifier": {
+        "binder_typed_path": "/root/arguments/0/binders/0",
+        "quantifier_kind": "forall",
+        "quantifier_node_id": "partial-A-13",
+        "quantifier_typed_path": "/root/arguments/0",
+        "scope_body_typed_path": "/root/arguments/0/arguments/0",
+        "variable_name": "d"
+      },
+      "disposition": "lexical_hypothesis",
+      "kind": "variable",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/left/formula/left/arguments/1",
+      "node_id": "partial-A-3",
+      "predicate_argument": {
+        "argument_index": 1,
+        "declared_role": "duties",
+        "predicate_symbol": "Assign",
+        "predicate_typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0"
+      },
+      "rationale": "Unreviewed duties parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved.",
+      "source_anchor_paths": [
+        "/occurrences/3/anchor"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/occurrences/3/anchor",
+          "document_selector": {
+            "char_end": 571,
+            "char_start": 497,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:3fde536de4616bd1750d36a2c9dbcd29aa60b409ba8746eda377bd639c3122df",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "to and from duties involving the civil functions of the Corps of Engineers",
+            "text_sha256": "59371a935d854692e39ed7b5d9632c1844ac2934a1b7652f0257f864d83b3a05",
+            "utf8_byte_end": 572,
+            "utf8_byte_start": 498,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 140,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 66,
+            "text": "to and from duties involving the civil functions of the Corps of Engineers"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "direction_and_duties_attachment"
+      ],
+      "variable_name": "d",
+      "variable_sort": {
+        "arguments": [],
+        "kind": "atomic",
+        "name": "Object",
+        "schema_version": "syntax-logic-sort/v1"
+      }
+    },
+    {
+      "argument_roles": [
+        "recipient",
+        "duties"
+      ],
+      "argument_typed_paths": [
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/1"
+      ],
+      "disposition": "lexical_hypothesis",
+      "kind": "predicate",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/left/formula/right",
+      "node_id": "partial-A-4",
+      "predicate_symbol": "Transfer",
+      "rationale": "Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning.",
+      "source_anchor_paths": [
+        "/occurrences/2/anchor"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/occurrences/2/anchor",
+          "document_selector": {
+            "char_end": 496,
+            "char_start": 470,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:779d9af29b2c3bd3c772a26d7ce945747d6b605418dc78c559339fc7cc2a1aeb",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "be assigned or transferred",
+            "text_sha256": "eaeb727393491ccd28bf19d12e25bf99d21d41c46d125712259d0832bb0d4ee1",
+            "utf8_byte_end": 497,
+            "utf8_byte_start": 471,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 65,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 39,
+            "text": "be assigned or transferred"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "assignment_transfer_coordination"
+      ]
+    },
+    {
+      "binding_quantifier": {
+        "binder_typed_path": "/root/binders/0",
+        "quantifier_kind": "forall",
+        "quantifier_node_id": "partial-A-14",
+        "quantifier_typed_path": "/root",
+        "scope_body_typed_path": "/root/arguments/0",
+        "variable_name": "r"
+      },
+      "disposition": "lexical_hypothesis",
+      "kind": "variable",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/left/formula/right/arguments/0",
+      "node_id": "partial-A-5",
+      "predicate_argument": {
+        "argument_index": 0,
+        "declared_role": "recipient",
+        "predicate_symbol": "Transfer",
+        "predicate_typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1"
+      },
+      "rationale": "The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity.",
+      "source_anchor_paths": [
+        "/occurrences/0/anchor"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/occurrences/0/anchor",
+          "document_selector": {
+            "char_end": 465,
+            "char_start": 431,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:3819bd6815f4b609a778df1d6d6b6044bcfb4c34c7b5b1c8065c554eab4f86c1",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "Officers of the Corps of Engineers",
+            "text_sha256": "e1b9028cc58671eb047a62f5a14d44b0717c94630deb591e75fa512e29f802fd",
+            "utf8_byte_end": 466,
+            "utf8_byte_start": 432,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 34,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 0,
+            "text": "Officers of the Corps of Engineers"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "passive_subject_is_not_resolved_action_agent"
+      ],
+      "variable_name": "r",
+      "variable_sort": {
+        "arguments": [],
+        "kind": "atomic",
+        "name": "Object",
+        "schema_version": "syntax-logic-sort/v1"
+      }
+    },
+    {
+      "binding_quantifier": {
+        "binder_typed_path": "/root/arguments/0/binders/0",
+        "quantifier_kind": "forall",
+        "quantifier_node_id": "partial-A-13",
+        "quantifier_typed_path": "/root/arguments/0",
+        "scope_body_typed_path": "/root/arguments/0/arguments/0",
+        "variable_name": "d"
+      },
+      "disposition": "lexical_hypothesis",
+      "kind": "variable",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/left/formula/right/arguments/1",
+      "node_id": "partial-A-6",
+      "predicate_argument": {
+        "argument_index": 1,
+        "declared_role": "duties",
+        "predicate_symbol": "Transfer",
+        "predicate_typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1"
+      },
+      "rationale": "Unreviewed duties parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved.",
+      "source_anchor_paths": [
+        "/occurrences/3/anchor"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/occurrences/3/anchor",
+          "document_selector": {
+            "char_end": 571,
+            "char_start": 497,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:3fde536de4616bd1750d36a2c9dbcd29aa60b409ba8746eda377bd639c3122df",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "to and from duties involving the civil functions of the Corps of Engineers",
+            "text_sha256": "59371a935d854692e39ed7b5d9632c1844ac2934a1b7652f0257f864d83b3a05",
+            "utf8_byte_end": 572,
+            "utf8_byte_start": 498,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 140,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 66,
+            "text": "to and from duties involving the civil functions of the Corps of Engineers"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/1",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "direction_and_duties_attachment"
+      ],
+      "variable_name": "d",
+      "variable_sort": {
+        "arguments": [],
+        "kind": "atomic",
+        "name": "Object",
+        "schema_version": "syntax-logic-sort/v1"
+      }
+    },
+    {
+      "argument_roles": [
+        "approver",
+        "recipient"
+      ],
+      "argument_typed_paths": [
+        "/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/1"
+      ],
+      "disposition": "lexical_hypothesis",
+      "kind": "predicate",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/right",
+      "node_id": "partial-A-7",
+      "predicate_symbol": "Approve",
+      "rationale": "Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning.",
+      "source_anchor_paths": [
+        "/unresolved/3/span"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/unresolved/3/span",
+          "document_selector": {
+            "char_end": 623,
+            "char_start": 572,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:22b161bf2fe67b4c714de530c7b04c1452f68a0d43e269cf2125418b995d2a97",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "only with the approval of the Secretary of the Army",
+            "text_sha256": "a5e018e2a6e7ddfa9ff62bd42ebad8b21507de845d335d885ea47e7316ff78bd",
+            "utf8_byte_end": 624,
+            "utf8_byte_start": 573,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 192,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 141,
+            "text": "only with the approval of the Secretary of the Army"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/1",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "necessary_approval_and_modal_scope"
+      ]
+    },
+    {
+      "binding_quantifier": {
+        "binder_typed_path": "/root/arguments/0/arguments/0/binders/0",
+        "quantifier_kind": "forall",
+        "quantifier_node_id": "partial-A-12",
+        "quantifier_typed_path": "/root/arguments/0/arguments/0",
+        "scope_body_typed_path": "/root/arguments/0/arguments/0/arguments/0",
+        "variable_name": "s"
+      },
+      "disposition": "lexical_hypothesis",
+      "kind": "variable",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/right/arguments/0",
+      "node_id": "partial-A-8",
+      "predicate_argument": {
+        "argument_index": 0,
+        "declared_role": "approver",
+        "predicate_symbol": "Approve",
+        "predicate_typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/1"
+      },
+      "rationale": "Unreviewed approver parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved.",
+      "source_anchor_paths": [
+        "/unresolved/3/span"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/unresolved/3/span",
+          "document_selector": {
+            "char_end": 623,
+            "char_start": 572,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:22b161bf2fe67b4c714de530c7b04c1452f68a0d43e269cf2125418b995d2a97",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "only with the approval of the Secretary of the Army",
+            "text_sha256": "a5e018e2a6e7ddfa9ff62bd42ebad8b21507de845d335d885ea47e7316ff78bd",
+            "utf8_byte_end": 624,
+            "utf8_byte_start": 573,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 192,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 141,
+            "text": "only with the approval of the Secretary of the Army"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/0",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "necessary_approval_and_modal_scope"
+      ],
+      "variable_name": "s",
+      "variable_sort": {
+        "arguments": [],
+        "kind": "atomic",
+        "name": "Object",
+        "schema_version": "syntax-logic-sort/v1"
+      }
+    },
+    {
+      "binding_quantifier": {
+        "binder_typed_path": "/root/binders/0",
+        "quantifier_kind": "forall",
+        "quantifier_node_id": "partial-A-14",
+        "quantifier_typed_path": "/root",
+        "scope_body_typed_path": "/root/arguments/0",
+        "variable_name": "r"
+      },
+      "disposition": "lexical_hypothesis",
+      "kind": "variable",
+      "native_mapping_scope": "syntax_metadata_only",
+      "native_path": "/formula/formula/formula/right/arguments/1",
+      "node_id": "partial-A-9",
+      "predicate_argument": {
+        "argument_index": 1,
+        "declared_role": "recipient",
+        "predicate_symbol": "Approve",
+        "predicate_typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/1"
+      },
+      "rationale": "The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity.",
+      "source_anchor_paths": [
+        "/occurrences/0/anchor"
+      ],
+      "source_anchors": [
+        {
+          "declaration_path": "/occurrences/0/anchor",
+          "document_selector": {
+            "char_end": 465,
+            "char_start": 431,
+            "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+            "occurrence_id": "legal-official-markup-occurrence:sha256:3819bd6815f4b609a778df1d6d6b6044bcfb4c34c7b5b1c8065c554eab4f86c1",
+            "schema": "legal-official-markup-occurrence-selector/v2",
+            "text": "Officers of the Corps of Engineers",
+            "text_sha256": "e1b9028cc58671eb047a62f5a14d44b0717c94630deb591e75fa512e29f802fd",
+            "utf8_byte_end": 466,
+            "utf8_byte_start": 432,
+            "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+          },
+          "local_anchor": {
+            "end": 34,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 0,
+            "text": "Officers of the Corps of Engineers"
+          }
+        }
+      ],
+      "source_meaning_verified": false,
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/arguments/1/arguments/1",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "passive_subject_is_not_resolved_action_agent"
+      ],
+      "variable_name": "r",
+      "variable_sort": {
+        "arguments": [],
+        "kind": "atomic",
+        "name": "Object",
+        "schema_version": "syntax-logic-sort/v1"
+      }
+    }
+  ],
+  "schema": "legal-source-typed-norm-join-proposal/v1",
+  "signatures_constructed": 0,
+  "source_custody": {
+    "selected_unit_ref": {
+      "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+      "schema": "legal-source-structured-sample-unit/v1",
+      "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+    },
+    "source_context_packet": {
+      "authority": {
+        "Lean_admitted": false,
+        "Lean_kernel_admission": false,
+        "admitted": false,
+        "context_closure_verified": false,
+        "css_rendering_verified": false,
+        "dependency_inventory_exhaustive": false,
+        "formalized": false,
+        "global_consistency_verified": false,
+        "governing_source_binding_verified": false,
+        "independently_reviewed": false,
+        "legal_currentness_verified": false,
+        "legal_review_verified": false,
+        "legal_roles_verified": false,
+        "original_source_body_mapping_verified": false,
+        "producer_edition_correspondence_verified": false,
+        "producer_revision_correspondence_verified": false,
+        "proof_authority": false,
+        "publisher_authenticity_verified": false,
+        "raw_html_coordinate_mapping_verified": false,
+        "semantic_attachments_inferred": false,
+        "semantic_graph_admitted": false,
+        "source_occurrence_selected": false,
+        "source_semantics_verified": false,
+        "training_qualified": false
+      },
+      "context_closure_verified": false,
+      "dependency_inventory_exhaustive": false,
+      "dependency_slots": [
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "definition",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:2fd12274abc0234c31e74e6dc053149dbc6ee116da58a720006fd285ba0629cf",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "authority",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:1d6935d5dcc8906d6d8c64b8720dbaaaaf55ad56ed47370f81e7d1084f54107a",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "antecedent",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:faeee9532c873fc5d6a4f60e5a96aeb31283dafdc3edc9d8013ef952413eb339",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "shared_qualifier",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:fe9b1b98bbd0cbea8d594470ff01b46afefe4a90efb327a816d6f392ef5bb6e5",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "temporal_origin",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:6e8a2af2b9fd6bbe943f63d65dade3bcfb852581275c14cf2ba3e4affe01242a",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "referenced_provision",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:da069729cff082b8d0afc2182e7cef4d1e40e792a18810805dc9f2dcc684a0d4",
+          "status": "open_missing"
+        }
+      ],
+      "independently_reviewed": false,
+      "packet_id": "legal-official-markup-context-packet:sha256:fe386f2a665da64be54b402c5acef1a672e7c5191db5c3fec72dd89a9e1688bc",
+      "proof_authority": false,
+      "raw_html_coordinate_mapping_verified": false,
+      "schema": "legal-official-markup-context-obligations/v1",
+      "selection": {
+        "char_end": 624,
+        "char_start": 431,
+        "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+        "occurrence_id": "legal-official-markup-occurrence:sha256:77d283163644da6ca1f737d41ec0b55e1c88ad0f88619e554cfe775203626eea",
+        "schema": "legal-official-markup-occurrence-selector/v2",
+        "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+        "text_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+        "utf8_byte_end": 625,
+        "utf8_byte_start": 432,
+        "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+      },
+      "semantic_attachments_inferred": false,
+      "source_semantics_verified": false,
+      "source_view_binding": {
+        "descriptor_sha256": "e386d40efaebace111cc5c7893ad305480df2bc85ef7e92f7cfff9d7970feb2a",
+        "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+        "document_text_sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963",
+        "edition": 2024,
+        "legal_id": "usc:us:10:7213",
+        "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+        "normalized_view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13",
+        "raw_bytes": 4049,
+        "raw_sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+        "view_report_sha256": "e3359aec9b6d637b1d73e3d7b589640d6878e067424a46ff5d1011030d363c98"
+      },
+      "training_qualified": false
+    },
+    "source_records": {
+      "context": {
+        "availability": "required_unavailable",
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_references": [
+          {
+            "purpose": "complete normalized source view retained, not dependency closure",
+            "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+            "record_kind": "source_version"
+          }
+        ],
+        "dependency_verification": "declaration_only",
+        "missing_requirements": [
+          "definition",
+          "authority",
+          "antecedent",
+          "shared_qualifier",
+          "temporal_origin",
+          "referenced_provision"
+        ],
+        "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+        "record_cid": "baguqeerarwgueicrqclip7qv7vwvnt3gd7mpedlhdmpl2sgxlh4ojg3d76pq",
+        "schema": "legal-corpus-context-declaration/v1",
+        "source_occurrence_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda"
+      },
+      "source_occurrence": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+        "end_char": 624,
+        "end_utf8": 625,
+        "historical_aliases": [],
+        "record_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+        "schema": "legal-corpus-source-occurrence/v1",
+        "source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+        "span_cid": "bafkreia476xedqoqlpdycozp2v4olmdplbyeeirbzgn4hgujqa6kizcoki",
+        "span_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+        "span_text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+        "start_char": 431,
+        "start_utf8": 432
+      },
+      "source_version": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "edition": "2024",
+        "extracted_view": {
+          "byte_length": 1912,
+          "character_length": 1887,
+          "cid": "bafkreidlbqygngg2tzpeijrootq7ctnmcupa67ue6rtliqufxvkezvjjmm",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "extraction_profile": "legal-official-markup-document/v2",
+          "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+          "sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963"
+        },
+        "historical_aliases": [],
+        "provision_id": "usc:us:10:7213",
+        "raw_artifact": {
+          "cid": "bafkreidhdesrctvnu5zrunk6gpeao25knetp5unxzm24scumjryfyvnq54",
+          "media_type": "text/html",
+          "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+        },
+        "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+        "release_id": "govinfo-markup-v2-edition:2024",
+        "schema": "legal-corpus-source-version/v1",
+        "source_id": "usc:us:10:7213"
+      },
+      "unit": {
+        "authority": {
+          "Lean_admitted": false,
+          "Lean_kernel_admission": false,
+          "context_closure_verified": false,
+          "css_rendering_verified": false,
+          "definition_operator_interpreted": false,
+          "formalized": false,
+          "global_consistency_verified": false,
+          "governing_source_binding_verified": false,
+          "legal_currentness_verified": false,
+          "legal_hierarchy_verified": false,
+          "legal_review_verified": false,
+          "legal_roles_verified": false,
+          "original_source_body_mapping_verified": false,
+          "producer_edition_correspondence_verified": false,
+          "producer_revision_correspondence_verified": false,
+          "proof_authority": false,
+          "publisher_authenticity_verified": false,
+          "raw_html_coordinate_mapping_verified": false,
+          "semantic_graph_admitted": false,
+          "source_occurrence_selected": false,
+          "source_semantics_verified": false,
+          "training_gold_qualified": false,
+          "training_qualified": false
+        },
+        "candidate_input": true,
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_ref": {
+          "record_cid": "baguqeerarwgueicrqclip7qv7vwvnt3gd7mpedlhdmpl2sgxlh4ojg3d76pq",
+          "schema": "legal-corpus-context-declaration/v1",
+          "sha256": "9b957a2c7496cca1ce9768ee764f52da501cb327cdf0d38ed6994c526bb9e51b"
+        },
+        "evaluation_gold_mask": 0,
+        "formal_outputs": [],
+        "markup_block_ref": {
+          "block_id": "legal-markup-block:sha256:273550c4d2ddd0de722382b2eace236d0959c101b704e4fdf65603151c67c062",
+          "block_index": 9,
+          "sha256": "8761867999be50a009443bedee774d449493b2babc82c1e59bad6b6028e1385c"
+        },
+        "meaning_target": null,
+        "normalized_view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13",
+        "ordinal": 9,
+        "paragraph_fragment_withheld": false,
+        "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+        "sampling_stratum": "candidate_statute_paragraph",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "semantic_assertions": [],
+        "source_occurrence_ref": {
+          "record_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "sha256": "63f8c88c633e433f9ca75f8493a1299b947c3bd07aa8122433a5a07422dc6322"
+        },
+        "source_version_ref": {
+          "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+          "schema": "legal-corpus-source-version/v1",
+          "sha256": "02ff7c1a16969273029e272439cd567dac58a33624ea21c3d93b6f6a1d63f572"
+        },
+        "training_mask": 0
+      }
+    },
+    "source_selector": {
+      "char_end": 624,
+      "char_start": 431,
+      "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+      "occurrence_id": "legal-official-markup-occurrence:sha256:77d283163644da6ca1f737d41ec0b55e1c88ad0f88619e554cfe775203626eea",
+      "schema": "legal-official-markup-occurrence-selector/v2",
+      "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+      "text_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+      "utf8_byte_end": 625,
+      "utf8_byte_start": 432,
+      "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+    }
+  },
+  "source_custody_linked": true,
+  "source_meaning_selected": false,
+  "source_scope_report": {
+    "accepted_lookup": null,
+    "anchor_mappings": [
+      {
+        "declaration_path": "/occurrences/0/anchor",
+        "document_selector": {
+          "char_end": 465,
+          "char_start": 431,
+          "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "occurrence_id": "legal-official-markup-occurrence:sha256:3819bd6815f4b609a778df1d6d6b6044bcfb4c34c7b5b1c8065c554eab4f86c1",
+          "schema": "legal-official-markup-occurrence-selector/v2",
+          "text": "Officers of the Corps of Engineers",
+          "text_sha256": "e1b9028cc58671eb047a62f5a14d44b0717c94630deb591e75fa512e29f802fd",
+          "utf8_byte_end": 466,
+          "utf8_byte_start": 432,
+          "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+        },
+        "local_anchor": {
+          "end": 34,
+          "offset_unit": "unicode_character_half_open",
+          "origin": "source",
+          "start": 0,
+          "text": "Officers of the Corps of Engineers"
+        }
+      },
+      {
+        "declaration_path": "/occurrences/1/anchor",
+        "document_selector": {
+          "char_end": 469,
+          "char_start": 466,
+          "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "occurrence_id": "legal-official-markup-occurrence:sha256:6ed41be92b4790c4113bdde06b9de551226835bd2388552b78c9e6c1a937f102",
+          "schema": "legal-official-markup-occurrence-selector/v2",
+          "text": "may",
+          "text_sha256": "ee4d988c65de860fabbfbcd27f73d50bbebe3fba37fe419284f4811389c30bdc",
+          "utf8_byte_end": 470,
+          "utf8_byte_start": 467,
+          "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+        },
+        "local_anchor": {
+          "end": 38,
+          "offset_unit": "unicode_character_half_open",
+          "origin": "source",
+          "start": 35,
+          "text": "may"
+        }
+      },
+      {
+        "declaration_path": "/occurrences/2/anchor",
+        "document_selector": {
+          "char_end": 496,
+          "char_start": 470,
+          "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "occurrence_id": "legal-official-markup-occurrence:sha256:779d9af29b2c3bd3c772a26d7ce945747d6b605418dc78c559339fc7cc2a1aeb",
+          "schema": "legal-official-markup-occurrence-selector/v2",
+          "text": "be assigned or transferred",
+          "text_sha256": "eaeb727393491ccd28bf19d12e25bf99d21d41c46d125712259d0832bb0d4ee1",
+          "utf8_byte_end": 497,
+          "utf8_byte_start": 471,
+          "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+        },
+        "local_anchor": {
+          "end": 65,
+          "offset_unit": "unicode_character_half_open",
+          "origin": "source",
+          "start": 39,
+          "text": "be assigned or transferred"
+        }
+      },
+      {
+        "declaration_path": "/occurrences/3/anchor",
+        "document_selector": {
+          "char_end": 571,
+          "char_start": 497,
+          "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "occurrence_id": "legal-official-markup-occurrence:sha256:3fde536de4616bd1750d36a2c9dbcd29aa60b409ba8746eda377bd639c3122df",
+          "schema": "legal-official-markup-occurrence-selector/v2",
+          "text": "to and from duties involving the civil functions of the Corps of Engineers",
+          "text_sha256": "59371a935d854692e39ed7b5d9632c1844ac2934a1b7652f0257f864d83b3a05",
+          "utf8_byte_end": 572,
+          "utf8_byte_start": 498,
+          "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+        },
+        "local_anchor": {
+          "end": 140,
+          "offset_unit": "unicode_character_half_open",
+          "origin": "source",
+          "start": 66,
+          "text": "to and from duties involving the civil functions of the Corps of Engineers"
+        }
+      },
+      {
+        "declaration_path": "/coverage/segments/0/span",
+        "document_selector": {
+          "char_end": 624,
+          "char_start": 431,
+          "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "occurrence_id": "legal-official-markup-occurrence:sha256:77d283163644da6ca1f737d41ec0b55e1c88ad0f88619e554cfe775203626eea",
+          "schema": "legal-official-markup-occurrence-selector/v2",
+          "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+          "text_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+          "utf8_byte_end": 625,
+          "utf8_byte_start": 432,
+          "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+        },
+        "local_anchor": {
+          "end": 193,
+          "offset_unit": "unicode_character_half_open",
+          "origin": "source",
+          "start": 0,
+          "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+        }
+      },
+      {
+        "declaration_path": "/unresolved/0/span",
+        "document_selector": {
+          "char_end": 465,
+          "char_start": 431,
+          "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "occurrence_id": "legal-official-markup-occurrence:sha256:3819bd6815f4b609a778df1d6d6b6044bcfb4c34c7b5b1c8065c554eab4f86c1",
+          "schema": "legal-official-markup-occurrence-selector/v2",
+          "text": "Officers of the Corps of Engineers",
+          "text_sha256": "e1b9028cc58671eb047a62f5a14d44b0717c94630deb591e75fa512e29f802fd",
+          "utf8_byte_end": 466,
+          "utf8_byte_start": 432,
+          "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+        },
+        "local_anchor": {
+          "end": 34,
+          "offset_unit": "unicode_character_half_open",
+          "origin": "source",
+          "start": 0,
+          "text": "Officers of the Corps of Engineers"
+        }
+      },
+      {
+        "declaration_path": "/unresolved/1/span",
+        "document_selector": {
+          "char_end": 496,
+          "char_start": 470,
+          "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "occurrence_id": "legal-official-markup-occurrence:sha256:779d9af29b2c3bd3c772a26d7ce945747d6b605418dc78c559339fc7cc2a1aeb",
+          "schema": "legal-official-markup-occurrence-selector/v2",
+          "text": "be assigned or transferred",
+          "text_sha256": "eaeb727393491ccd28bf19d12e25bf99d21d41c46d125712259d0832bb0d4ee1",
+          "utf8_byte_end": 497,
+          "utf8_byte_start": 471,
+          "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+        },
+        "local_anchor": {
+          "end": 65,
+          "offset_unit": "unicode_character_half_open",
+          "origin": "source",
+          "start": 39,
+          "text": "be assigned or transferred"
+        }
+      },
+      {
+        "declaration_path": "/unresolved/2/span",
+        "document_selector": {
+          "char_end": 571,
+          "char_start": 497,
+          "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "occurrence_id": "legal-official-markup-occurrence:sha256:3fde536de4616bd1750d36a2c9dbcd29aa60b409ba8746eda377bd639c3122df",
+          "schema": "legal-official-markup-occurrence-selector/v2",
+          "text": "to and from duties involving the civil functions of the Corps of Engineers",
+          "text_sha256": "59371a935d854692e39ed7b5d9632c1844ac2934a1b7652f0257f864d83b3a05",
+          "utf8_byte_end": 572,
+          "utf8_byte_start": 498,
+          "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+        },
+        "local_anchor": {
+          "end": 140,
+          "offset_unit": "unicode_character_half_open",
+          "origin": "source",
+          "start": 66,
+          "text": "to and from duties involving the civil functions of the Corps of Engineers"
+        }
+      },
+      {
+        "declaration_path": "/unresolved/3/span",
+        "document_selector": {
+          "char_end": 623,
+          "char_start": 572,
+          "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "occurrence_id": "legal-official-markup-occurrence:sha256:22b161bf2fe67b4c714de530c7b04c1452f68a0d43e269cf2125418b995d2a97",
+          "schema": "legal-official-markup-occurrence-selector/v2",
+          "text": "only with the approval of the Secretary of the Army",
+          "text_sha256": "a5e018e2a6e7ddfa9ff62bd42ebad8b21507de845d335d885ea47e7316ff78bd",
+          "utf8_byte_end": 624,
+          "utf8_byte_start": 573,
+          "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+        },
+        "local_anchor": {
+          "end": 192,
+          "offset_unit": "unicode_character_half_open",
+          "origin": "source",
+          "start": 141,
+          "text": "only with the approval of the Secretary of the Army"
+        }
+      },
+      {
+        "declaration_path": "/unresolved/4/span",
+        "document_selector": {
+          "char_end": 439,
+          "char_start": 431,
+          "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "occurrence_id": "legal-official-markup-occurrence:sha256:78a33b5f7745ae1a2a43e435c12c1b2b56b74b5d46fbdb9176e5023476667f73",
+          "schema": "legal-official-markup-occurrence-selector/v2",
+          "text": "Officers",
+          "text_sha256": "ffc77e8b8be4d0ced796e7b4aac39664f5194340b6580ff2de541a58fdf7d0a2",
+          "utf8_byte_end": 440,
+          "utf8_byte_start": 432,
+          "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+        },
+        "local_anchor": {
+          "end": 8,
+          "offset_unit": "unicode_character_half_open",
+          "origin": "source",
+          "start": 0,
+          "text": "Officers"
+        }
+      },
+      {
+        "declaration_path": "/unresolved/5/span",
+        "document_selector": {
+          "char_end": 624,
+          "char_start": 431,
+          "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "occurrence_id": "legal-official-markup-occurrence:sha256:77d283163644da6ca1f737d41ec0b55e1c88ad0f88619e554cfe775203626eea",
+          "schema": "legal-official-markup-occurrence-selector/v2",
+          "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+          "text_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+          "utf8_byte_end": 625,
+          "utf8_byte_start": 432,
+          "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+        },
+        "local_anchor": {
+          "end": 193,
+          "offset_unit": "unicode_character_half_open",
+          "origin": "source",
+          "start": 0,
+          "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+        }
+      }
+    ],
+    "authority": {
+      "Lean_admitted": false,
+      "accepted": false,
+      "admitted": false,
+      "applicability_verified": false,
+      "backend_executed": false,
+      "context_closure_verified": false,
+      "declared_issues_exhaustive": false,
+      "dependency_inventory_exhaustive": false,
+      "evaluation_gold_qualified": false,
+      "formal_norm_semantics_encoded": false,
+      "formalized": false,
+      "governing_use_verified": false,
+      "independently_reviewed": false,
+      "legal_roles_verified": false,
+      "lowering_authorized": false,
+      "model_executed": false,
+      "proof_authority": false,
+      "semantic_graph_admitted": false,
+      "singular_plural_identity_verified": false,
+      "source_context_resolved": false,
+      "source_semantics_verified": false,
+      "training_executed": false,
+      "training_gold_qualified": false,
+      "training_qualified": false
+    },
+    "declared_semantic_coverage": "partial",
+    "evaluation_gold_mask": 0,
+    "external_context_nominations_applied": false,
+    "flat_compatibility": {
+      "accepted": false,
+      "binder_terms_typechecked": false,
+      "byte_encoding_capacity": {
+        "assessment_scope": "legacy_facet_encoding_capacity_only",
+        "checked": false,
+        "configured_output_cap": 4096,
+        "payload_bytes": null,
+        "required_token_count": null
+      },
+      "content_sha256": "cb85437dd91c000ee22899b07cef349361613d8260b34439f7bad6946f4233c3",
+      "declaration_content_sha256": "188096e260218185a83b34739e712c8022c0822de7f2fe3b3e4722299d189abb",
+      "input_pin_scope": "embedded_input_self_binding_only",
+      "input_sha256": "4cd741facd7012fc813050beec89620e7bd5c9b89740fb931e80b1fb6c497871",
+      "issues": [
+        {
+          "code": "occurrence_ids_and_anchors_not_in_flat_ir",
+          "disposition": "sidecar_required",
+          "path": "/occurrences",
+          "targets": [
+            "canonical_roundtrip_ir_v1"
+          ]
+        },
+        {
+          "code": "coverage_and_scope_declaration_not_in_legacy_payload",
+          "disposition": "sidecar_required",
+          "path": "/coverage",
+          "targets": [
+            "canonical_roundtrip_ir_v1",
+            "byte_proposal_v1"
+          ]
+        },
+        {
+          "code": "context_has_no_qualified_flat_transport",
+          "disposition": "unavailable",
+          "path": "/input/context",
+          "targets": [
+            "canonical_roundtrip_ir_v1",
+            "byte_proposal_v1"
+          ]
+        },
+        {
+          "code": "source_coverage_partial_unassessed_or_unresolved",
+          "disposition": "unavailable",
+          "path": "/coverage",
+          "targets": [
+            "canonical_roundtrip_ir_v1",
+            "byte_proposal_v1"
+          ]
+        }
+      ],
+      "lowered_ir": null,
+      "lowering_authorized": false,
+      "masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "model_calls": 0,
+      "model_executed": false,
+      "normalization_approved": false,
+      "profiles": {
+        "byte_proposal_v1": {
+          "complete_legacy_encoding_qualified": false,
+          "facet_transport_compatible_without_normalization": false,
+          "issues": [
+            {
+              "code": "coverage_and_scope_declaration_not_in_legacy_payload",
+              "disposition": "sidecar_required",
+              "path": "/coverage",
+              "targets": [
+                "canonical_roundtrip_ir_v1",
+                "byte_proposal_v1"
+              ]
+            },
+            {
+              "code": "context_has_no_qualified_flat_transport",
+              "disposition": "unavailable",
+              "path": "/input/context",
+              "targets": [
+                "canonical_roundtrip_ir_v1",
+                "byte_proposal_v1"
+              ]
+            },
+            {
+              "code": "source_coverage_partial_unassessed_or_unresolved",
+              "disposition": "unavailable",
+              "path": "/coverage",
+              "targets": [
+                "canonical_roundtrip_ir_v1",
+                "byte_proposal_v1"
+              ]
+            }
+          ],
+          "scope_sidecar_required": true,
+          "standalone_scope_roundtrip_lossless": false,
+          "status": "unavailable"
+        },
+        "canonical_roundtrip_ir_v1": {
+          "complete_legacy_encoding_qualified": false,
+          "facet_transport_compatible_without_normalization": false,
+          "issues": [
+            {
+              "code": "occurrence_ids_and_anchors_not_in_flat_ir",
+              "disposition": "sidecar_required",
+              "path": "/occurrences",
+              "targets": [
+                "canonical_roundtrip_ir_v1"
+              ]
+            },
+            {
+              "code": "coverage_and_scope_declaration_not_in_legacy_payload",
+              "disposition": "sidecar_required",
+              "path": "/coverage",
+              "targets": [
+                "canonical_roundtrip_ir_v1",
+                "byte_proposal_v1"
+              ]
+            },
+            {
+              "code": "context_has_no_qualified_flat_transport",
+              "disposition": "unavailable",
+              "path": "/input/context",
+              "targets": [
+                "canonical_roundtrip_ir_v1",
+                "byte_proposal_v1"
+              ]
+            },
+            {
+              "code": "source_coverage_partial_unassessed_or_unresolved",
+              "disposition": "unavailable",
+              "path": "/coverage",
+              "targets": [
+                "canonical_roundtrip_ir_v1",
+                "byte_proposal_v1"
+              ]
+            }
+          ],
+          "scope_sidecar_required": true,
+          "standalone_scope_roundtrip_lossless": false,
+          "status": "unavailable"
+        }
+      },
+      "proof_authority": false,
+      "prover_calls": 0,
+      "qualified": false,
+      "schema": "canonical-normative-flat-compatibility/v1",
+      "semantic_equivalence_assessed": false,
+      "semantic_profile_validated": false,
+      "source_fidelity_established": false,
+      "source_semantics_verified": false,
+      "status": "assessed_transport_gaps_only",
+      "target_access": false,
+      "training_executed": false
+    },
+    "formal_norm_ast": null,
+    "governing_definition_use": null,
+    "graph": null,
+    "input_pins": {
+      "sampler_replay_inputs": {
+        "descriptor": {
+          "edition": 2024,
+          "granule_id": "USCODE-2024-title10-subtitleB-partII-chap723-sec7213",
+          "http_provenance": {
+            "content_type": "text/html",
+            "etag": null,
+            "final_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm",
+            "last_modified": "Fri, 22 Aug 2025 18:43:47 GMT",
+            "requested_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm",
+            "status_code": 200
+          },
+          "legal_id": "usc:us:10:7213",
+          "package_id": "USCODE-2024-title10",
+          "raw_bytes": 4049,
+          "raw_sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "retrieved_at": "2026-10-15T16:42:18.541223+00:00",
+          "schema": "legal-official-source-acquisition/v1",
+          "url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm"
+        },
+        "expected_descriptor_sha256": "e386d40efaebace111cc5c7893ad305480df2bc85ef7e92f7cfff9d7970feb2a",
+        "expected_raw_bytes": 4049,
+        "expected_raw_sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+      },
+      "sampling_report_full_canonical_sha256": "7a0c92ddbb93469fd7d5ce4512f3dec55511791ff904e001050f9614ed1637c3",
+      "scope_declaration_canonical_sha256": "b8604d464edd7a2bf83538be3854da2165ed689f3f35846ef5522c945bbbbb15",
+      "scope_declaration_raw_bytes": 5884,
+      "scope_declaration_raw_sha256": "6f147887db64786e6d25c00996e8354a4de225f59e0de3cbe9fdf0d2d074f176",
+      "scope_request_canonical_sha256": "4cd741facd7012fc813050beec89620e7bd5c9b89740fb931e80b1fb6c497871",
+      "scope_request_raw_bytes": 390,
+      "scope_request_raw_sha256": "474c9d9b0d242c436d1379c3775c8d36ab6d5d4fb472d80586b94aa7df4906fb",
+      "selected_unit_ref": {
+        "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+      }
+    },
+    "limitations": [
+      "Caller lexical roles and attachment are unreviewed; transport validation does not establish legal meaning.",
+      "The legacy actor slot does not resolve a passive grammatical subject to the agent of an action.",
+      "Full literal accounting includes unresolved and unsupported text; it is not complete semantic coverage.",
+      "Original required-unavailable context remains open; separate source-context nominations are retained elsewhere and are not applied here.",
+      "The six context obligations and caller-declared issues are not exhaustive dependency or ambiguity inventories.",
+      "No approval necessity, cardinality frame, purpose, antecedent, plural identity, applicability or governing definition use is decided.",
+      "No formal norm AST, lowering, graph, lookup, native process, learned target, review or admission is supplied."
+    ],
+    "literal_accounting_complete": true,
+    "literal_accounting_scope": "every selected source character assigned a caller coverage disposition; not semantic completeness",
+    "lowered_ir": null,
+    "masks": {
+      "contrastive_supervision": 0,
+      "fidelity_evaluation": 0,
+      "proof_supervision": 0,
+      "strong_semantic_fit": 0,
+      "weak_decoder_fit": 0
+    },
+    "model_calls": 0,
+    "native_processes": 0,
+    "original_context_preserved": true,
+    "producer_pins": {
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_contracts.py": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_source.py": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_context_obligations.py": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_official_document_views.py": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py": "30343ada53f17b7c39c4b1ce1fbc5bc14234396b5d28fb753e14141423d17039",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling.py": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py": "7e74f5ea2230549165fd0cb0230b2b8baaa0016cc2352d5a422c70c20f5e4da8",
+      "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/utils/cid_utils.py": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "profile": "whole-sampled-block-unreviewed-lexical-scope/v1",
+    "report_sha256": "ff14554101d144752f7594102ec792b3fabc2a78edace689c51af1560b599e54",
+    "schema": "legal-source-norm-scope-proposal/v1",
+    "scope_bridge_validation": {
+      "accepted": false,
+      "admission_status": "pending",
+      "binder_terms_typechecked": false,
+      "content_sha256": "a5ca49c69a50fa4bb5a0d3683a16005b01485431ac05bc8266102d1902fba765",
+      "content_sha256_scope": "complete_summary_without_content_sha256",
+      "context_resolved": false,
+      "coverage_scope": "canonical_deontic_declared_profile_only_not_all_catalog_families",
+      "declaration_content_sha256": "188096e260218185a83b34739e712c8022c0822de7f2fe3b3e4722299d189abb",
+      "declaration_preserved_exactly": true,
+      "declaration_schema": "canonical-normative-scope-declaration/v1",
+      "domain_logic_slice_projected": false,
+      "family": "deontic",
+      "input_sha256": "4cd741facd7012fc813050beec89620e7bd5c9b89740fb931e80b1fb6c497871",
+      "limits_scope": "complete_serialized_view_including_wrapper",
+      "lowering_authorized": false,
+      "masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "model_calls": 0,
+      "model_executed": false,
+      "normalization_approved": false,
+      "profile": "normative-occurrence-scope/v1",
+      "proof_authority": false,
+      "prover_calls": 0,
+      "qualified": false,
+      "schema": "canonical-normative-scope-bridge-validation/v1",
+      "semantic_equivalence_assessed": false,
+      "semantic_profile_validated": false,
+      "serialized_view_bytes": 4746,
+      "source_fidelity_established": false,
+      "source_semantics_verified": false,
+      "status": "validated_scope_bridge_transport_only",
+      "target_access": false,
+      "training_executed": false,
+      "truncation_performed": false,
+      "typed_bridge_created": false,
+      "verification_status": "pending",
+      "view_byte_limit": 65536,
+      "view_depth_limit": 20,
+      "view_kind": "family_extension",
+      "view_name": "statement_scope_v1",
+      "view_payload_cid": "baguqeeraxbqe2rso3v5cx6bvhc7dqvg2efs622e7h42yi3xvkiwjiw53xmkq"
+    },
+    "scope_bridge_view": {
+      "family_id": "deontic",
+      "kind": "family_extension",
+      "name": "statement_scope_v1",
+      "payload": {
+        "binders": [],
+        "content_sha256": "188096e260218185a83b34739e712c8022c0822de7f2fe3b3e4722299d189abb",
+        "coverage": {
+          "declared_status": "partial",
+          "segments": [
+            {
+              "disposition": "unresolved",
+              "occurrence_ids": [],
+              "reason": "Every source character is retained; lexical slot proposals do not establish complete legal interpretation.",
+              "rule_ids": [
+                "surface-rule-7213"
+              ],
+              "span": {
+                "end": 193,
+                "offset_unit": "unicode_character_half_open",
+                "origin": "source",
+                "start": 0,
+                "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+              }
+            }
+          ]
+        },
+        "family": "deontic",
+        "input": {
+          "context": {
+            "bindings": {},
+            "role": "required_unavailable",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "text": ""
+          },
+          "source_text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+        },
+        "input_sha256": "4cd741facd7012fc813050beec89620e7bd5c9b89740fb931e80b1fb6c497871",
+        "occurrences": [
+          {
+            "anchor": {
+              "end": 34,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 0,
+              "text": "Officers of the Corps of Engineers"
+            },
+            "canonical_symbol": "Officers of the Corps of Engineers",
+            "facet": "actor",
+            "occurrence_id": "lexical-actor"
+          },
+          {
+            "anchor": {
+              "end": 38,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 35,
+              "text": "may"
+            },
+            "canonical_symbol": "P",
+            "facet": "modality",
+            "occurrence_id": "lexical-modality"
+          },
+          {
+            "anchor": {
+              "end": 65,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 39,
+              "text": "be assigned or transferred"
+            },
+            "canonical_symbol": "be assigned or transferred",
+            "facet": "action",
+            "occurrence_id": "lexical-action"
+          },
+          {
+            "anchor": {
+              "end": 140,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 66,
+              "text": "to and from duties involving the civil functions of the Corps of Engineers"
+            },
+            "canonical_symbol": "to and from duties involving the civil functions of the Corps of Engineers",
+            "facet": "object",
+            "occurrence_id": "lexical-object"
+          }
+        ],
+        "profile": "normative-occurrence-scope/v1",
+        "rules": [
+          {
+            "body": {
+              "action": "lexical-action",
+              "actor": "lexical-actor",
+              "modality": "lexical-modality",
+              "object": "lexical-object"
+            },
+            "qualifiers": {
+              "conditions": null,
+              "exceptions": null,
+              "temporal": null
+            },
+            "rule_id": "surface-rule-7213"
+          }
+        ],
+        "schema": "canonical-normative-scope-declaration/v1",
+        "statement_structure": {
+          "op": "rule",
+          "rule_id": "surface-rule-7213"
+        },
+        "unresolved": [
+          {
+            "code": "passive_subject_is_not_resolved_action_agent",
+            "reason": "The legacy actor slot records a lexical proposal; the passive recipient and action agent remain unresolved.",
+            "span": {
+              "end": 34,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 0,
+              "text": "Officers of the Corps of Engineers"
+            }
+          },
+          {
+            "code": "assignment_transfer_coordination",
+            "reason": "Assignment and transfer alternatives need an explicit relational and modal interpretation.",
+            "span": {
+              "end": 65,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 39,
+              "text": "be assigned or transferred"
+            }
+          },
+          {
+            "code": "direction_and_duties_attachment",
+            "reason": "The to/from direction and civil-functions restriction require explicit attachment and argument decisions.",
+            "span": {
+              "end": 140,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 66,
+              "text": "to and from duties involving the civil functions of the Corps of Engineers"
+            }
+          },
+          {
+            "code": "necessary_approval_and_modal_scope",
+            "reason": "Approval wording requires explicit necessity and modal-scope decisions; it is not compiled as a sufficient guard.",
+            "span": {
+              "end": 192,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 141,
+              "text": "only with the approval of the Secretary of the Army"
+            }
+          },
+          {
+            "code": "plural_to_definition_identity",
+            "reason": "The literal plural Officers is not a resolved singular officer definition binding.",
+            "span": {
+              "end": 8,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 0,
+              "text": "Officers"
+            }
+          },
+          {
+            "code": "applicability_authority_and_remaining_context",
+            "reason": "The original context requirements remain open. Separate retained definition/scope nominations are available but are not applied or adjudicated by this source-only request.",
+            "span": {
+              "end": 193,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 0,
+              "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+            }
+          }
+        ]
+      },
+      "payload_cid": "baguqeeraxbqe2rso3v5cx6bvhc7dqvg2efs622e7h42yi3xvkiwjiw53xmkq",
+      "schema_id": "canonical-normative-scope-declaration/v1"
+    },
+    "scope_declaration": {
+      "binders": [],
+      "content_sha256": "188096e260218185a83b34739e712c8022c0822de7f2fe3b3e4722299d189abb",
+      "coverage": {
+        "declared_status": "partial",
+        "segments": [
+          {
+            "disposition": "unresolved",
+            "occurrence_ids": [],
+            "reason": "Every source character is retained; lexical slot proposals do not establish complete legal interpretation.",
+            "rule_ids": [
+              "surface-rule-7213"
+            ],
+            "span": {
+              "end": 193,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 0,
+              "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+            }
+          }
+        ]
+      },
+      "family": "deontic",
+      "input": {
+        "context": {
+          "bindings": {},
+          "role": "required_unavailable",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "text": ""
+        },
+        "source_text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+      },
+      "input_sha256": "4cd741facd7012fc813050beec89620e7bd5c9b89740fb931e80b1fb6c497871",
+      "occurrences": [
+        {
+          "anchor": {
+            "end": 34,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 0,
+            "text": "Officers of the Corps of Engineers"
+          },
+          "canonical_symbol": "Officers of the Corps of Engineers",
+          "facet": "actor",
+          "occurrence_id": "lexical-actor"
+        },
+        {
+          "anchor": {
+            "end": 38,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 35,
+            "text": "may"
+          },
+          "canonical_symbol": "P",
+          "facet": "modality",
+          "occurrence_id": "lexical-modality"
+        },
+        {
+          "anchor": {
+            "end": 65,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 39,
+            "text": "be assigned or transferred"
+          },
+          "canonical_symbol": "be assigned or transferred",
+          "facet": "action",
+          "occurrence_id": "lexical-action"
+        },
+        {
+          "anchor": {
+            "end": 140,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 66,
+            "text": "to and from duties involving the civil functions of the Corps of Engineers"
+          },
+          "canonical_symbol": "to and from duties involving the civil functions of the Corps of Engineers",
+          "facet": "object",
+          "occurrence_id": "lexical-object"
+        }
+      ],
+      "profile": "normative-occurrence-scope/v1",
+      "rules": [
+        {
+          "body": {
+            "action": "lexical-action",
+            "actor": "lexical-actor",
+            "modality": "lexical-modality",
+            "object": "lexical-object"
+          },
+          "qualifiers": {
+            "conditions": null,
+            "exceptions": null,
+            "temporal": null
+          },
+          "rule_id": "surface-rule-7213"
+        }
+      ],
+      "schema": "canonical-normative-scope-declaration/v1",
+      "statement_structure": {
+        "op": "rule",
+        "rule_id": "surface-rule-7213"
+      },
+      "unresolved": [
+        {
+          "code": "passive_subject_is_not_resolved_action_agent",
+          "reason": "The legacy actor slot records a lexical proposal; the passive recipient and action agent remain unresolved.",
+          "span": {
+            "end": 34,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 0,
+            "text": "Officers of the Corps of Engineers"
+          }
+        },
+        {
+          "code": "assignment_transfer_coordination",
+          "reason": "Assignment and transfer alternatives need an explicit relational and modal interpretation.",
+          "span": {
+            "end": 65,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 39,
+            "text": "be assigned or transferred"
+          }
+        },
+        {
+          "code": "direction_and_duties_attachment",
+          "reason": "The to/from direction and civil-functions restriction require explicit attachment and argument decisions.",
+          "span": {
+            "end": 140,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 66,
+            "text": "to and from duties involving the civil functions of the Corps of Engineers"
+          }
+        },
+        {
+          "code": "necessary_approval_and_modal_scope",
+          "reason": "Approval wording requires explicit necessity and modal-scope decisions; it is not compiled as a sufficient guard.",
+          "span": {
+            "end": 192,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 141,
+            "text": "only with the approval of the Secretary of the Army"
+          }
+        },
+        {
+          "code": "plural_to_definition_identity",
+          "reason": "The literal plural Officers is not a resolved singular officer definition binding.",
+          "span": {
+            "end": 8,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 0,
+            "text": "Officers"
+          }
+        },
+        {
+          "code": "applicability_authority_and_remaining_context",
+          "reason": "The original context requirements remain open. Separate retained definition/scope nominations are available but are not applied or adjudicated by this source-only request.",
+          "span": {
+            "end": 193,
+            "offset_unit": "unicode_character_half_open",
+            "origin": "source",
+            "start": 0,
+            "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+          }
+        }
+      ]
+    },
+    "scope_request": {
+      "context": {
+        "bindings": {},
+        "role": "required_unavailable",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "text": ""
+      },
+      "source_text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+    },
+    "scope_validation": {
+      "accepted": false,
+      "admission_status": "pending",
+      "binder_count": 0,
+      "binder_terms_typechecked": false,
+      "content_sha256": "eecb3dc899d681ef455e76779a78e2bb28cecfb234ed9f9c64b4c0a3ca155596",
+      "content_sha256_scope": "summary_excluding_declaration_and_content_sha256",
+      "context_resolved": false,
+      "declaration": {
+        "binders": [],
+        "content_sha256": "188096e260218185a83b34739e712c8022c0822de7f2fe3b3e4722299d189abb",
+        "coverage": {
+          "declared_status": "partial",
+          "segments": [
+            {
+              "disposition": "unresolved",
+              "occurrence_ids": [],
+              "reason": "Every source character is retained; lexical slot proposals do not establish complete legal interpretation.",
+              "rule_ids": [
+                "surface-rule-7213"
+              ],
+              "span": {
+                "end": 193,
+                "offset_unit": "unicode_character_half_open",
+                "origin": "source",
+                "start": 0,
+                "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+              }
+            }
+          ]
+        },
+        "family": "deontic",
+        "input": {
+          "context": {
+            "bindings": {},
+            "role": "required_unavailable",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "text": ""
+          },
+          "source_text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+        },
+        "input_sha256": "4cd741facd7012fc813050beec89620e7bd5c9b89740fb931e80b1fb6c497871",
+        "occurrences": [
+          {
+            "anchor": {
+              "end": 34,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 0,
+              "text": "Officers of the Corps of Engineers"
+            },
+            "canonical_symbol": "Officers of the Corps of Engineers",
+            "facet": "actor",
+            "occurrence_id": "lexical-actor"
+          },
+          {
+            "anchor": {
+              "end": 38,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 35,
+              "text": "may"
+            },
+            "canonical_symbol": "P",
+            "facet": "modality",
+            "occurrence_id": "lexical-modality"
+          },
+          {
+            "anchor": {
+              "end": 65,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 39,
+              "text": "be assigned or transferred"
+            },
+            "canonical_symbol": "be assigned or transferred",
+            "facet": "action",
+            "occurrence_id": "lexical-action"
+          },
+          {
+            "anchor": {
+              "end": 140,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 66,
+              "text": "to and from duties involving the civil functions of the Corps of Engineers"
+            },
+            "canonical_symbol": "to and from duties involving the civil functions of the Corps of Engineers",
+            "facet": "object",
+            "occurrence_id": "lexical-object"
+          }
+        ],
+        "profile": "normative-occurrence-scope/v1",
+        "rules": [
+          {
+            "body": {
+              "action": "lexical-action",
+              "actor": "lexical-actor",
+              "modality": "lexical-modality",
+              "object": "lexical-object"
+            },
+            "qualifiers": {
+              "conditions": null,
+              "exceptions": null,
+              "temporal": null
+            },
+            "rule_id": "surface-rule-7213"
+          }
+        ],
+        "schema": "canonical-normative-scope-declaration/v1",
+        "statement_structure": {
+          "op": "rule",
+          "rule_id": "surface-rule-7213"
+        },
+        "unresolved": [
+          {
+            "code": "passive_subject_is_not_resolved_action_agent",
+            "reason": "The legacy actor slot records a lexical proposal; the passive recipient and action agent remain unresolved.",
+            "span": {
+              "end": 34,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 0,
+              "text": "Officers of the Corps of Engineers"
+            }
+          },
+          {
+            "code": "assignment_transfer_coordination",
+            "reason": "Assignment and transfer alternatives need an explicit relational and modal interpretation.",
+            "span": {
+              "end": 65,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 39,
+              "text": "be assigned or transferred"
+            }
+          },
+          {
+            "code": "direction_and_duties_attachment",
+            "reason": "The to/from direction and civil-functions restriction require explicit attachment and argument decisions.",
+            "span": {
+              "end": 140,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 66,
+              "text": "to and from duties involving the civil functions of the Corps of Engineers"
+            }
+          },
+          {
+            "code": "necessary_approval_and_modal_scope",
+            "reason": "Approval wording requires explicit necessity and modal-scope decisions; it is not compiled as a sufficient guard.",
+            "span": {
+              "end": 192,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 141,
+              "text": "only with the approval of the Secretary of the Army"
+            }
+          },
+          {
+            "code": "plural_to_definition_identity",
+            "reason": "The literal plural Officers is not a resolved singular officer definition binding.",
+            "span": {
+              "end": 8,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 0,
+              "text": "Officers"
+            }
+          },
+          {
+            "code": "applicability_authority_and_remaining_context",
+            "reason": "The original context requirements remain open. Separate retained definition/scope nominations are available but are not applied or adjudicated by this source-only request.",
+            "span": {
+              "end": 193,
+              "offset_unit": "unicode_character_half_open",
+              "origin": "source",
+              "start": 0,
+              "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army."
+            }
+          }
+        ]
+      },
+      "declaration_content_sha256": "188096e260218185a83b34739e712c8022c0822de7f2fe3b3e4722299d189abb",
+      "declared_coverage_status": "partial",
+      "input_digest_recipe": "sha256_sorted_compact_utf8_source_text_and_context/v1",
+      "input_sha256": "4cd741facd7012fc813050beec89620e7bd5c9b89740fb931e80b1fb6c497871",
+      "lowering_authorized": false,
+      "masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "model_calls": 0,
+      "model_executed": false,
+      "normalization_approved": false,
+      "occurrence_count": 4,
+      "proof_authority": false,
+      "prover_calls": 0,
+      "qualified": false,
+      "rule_count": 1,
+      "schema": "canonical-normative-scope-validation/v1",
+      "semantic_equivalence_assessed": false,
+      "semantic_profile_validated": false,
+      "source_fidelity_established": false,
+      "source_semantics_verified": false,
+      "status": "validated_scope_transport_only",
+      "target_access": false,
+      "training_executed": false,
+      "verification_status": "pending"
+    },
+    "source_context_packet": {
+      "authority": {
+        "Lean_admitted": false,
+        "Lean_kernel_admission": false,
+        "admitted": false,
+        "context_closure_verified": false,
+        "css_rendering_verified": false,
+        "dependency_inventory_exhaustive": false,
+        "formalized": false,
+        "global_consistency_verified": false,
+        "governing_source_binding_verified": false,
+        "independently_reviewed": false,
+        "legal_currentness_verified": false,
+        "legal_review_verified": false,
+        "legal_roles_verified": false,
+        "original_source_body_mapping_verified": false,
+        "producer_edition_correspondence_verified": false,
+        "producer_revision_correspondence_verified": false,
+        "proof_authority": false,
+        "publisher_authenticity_verified": false,
+        "raw_html_coordinate_mapping_verified": false,
+        "semantic_attachments_inferred": false,
+        "semantic_graph_admitted": false,
+        "source_occurrence_selected": false,
+        "source_semantics_verified": false,
+        "training_qualified": false
+      },
+      "context_closure_verified": false,
+      "dependency_inventory_exhaustive": false,
+      "dependency_slots": [
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "definition",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:2fd12274abc0234c31e74e6dc053149dbc6ee116da58a720006fd285ba0629cf",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "authority",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:1d6935d5dcc8906d6d8c64b8720dbaaaaf55ad56ed47370f81e7d1084f54107a",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "antecedent",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:faeee9532c873fc5d6a4f60e5a96aeb31283dafdc3edc9d8013ef952413eb339",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "shared_qualifier",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:fe9b1b98bbd0cbea8d594470ff01b46afefe4a90efb327a816d6f392ef5bb6e5",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "temporal_origin",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:6e8a2af2b9fd6bbe943f63d65dade3bcfb852581275c14cf2ba3e4affe01242a",
+          "status": "open_missing"
+        },
+        {
+          "attachments": [],
+          "availability": "missing",
+          "candidate_selector": null,
+          "expected_view_id": null,
+          "kind": "referenced_provision",
+          "locator": null,
+          "open": true,
+          "semantic_attachment_verified": false,
+          "slot_id": "legal-official-markup-context-slot:sha256:da069729cff082b8d0afc2182e7cef4d1e40e792a18810805dc9f2dcc684a0d4",
+          "status": "open_missing"
+        }
+      ],
+      "independently_reviewed": false,
+      "packet_id": "legal-official-markup-context-packet:sha256:fe386f2a665da64be54b402c5acef1a672e7c5191db5c3fec72dd89a9e1688bc",
+      "proof_authority": false,
+      "raw_html_coordinate_mapping_verified": false,
+      "schema": "legal-official-markup-context-obligations/v1",
+      "selection": {
+        "char_end": 624,
+        "char_start": 431,
+        "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+        "occurrence_id": "legal-official-markup-occurrence:sha256:77d283163644da6ca1f737d41ec0b55e1c88ad0f88619e554cfe775203626eea",
+        "schema": "legal-official-markup-occurrence-selector/v2",
+        "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+        "text_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+        "utf8_byte_end": 625,
+        "utf8_byte_start": 432,
+        "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+      },
+      "semantic_attachments_inferred": false,
+      "source_semantics_verified": false,
+      "source_view_binding": {
+        "descriptor_sha256": "e386d40efaebace111cc5c7893ad305480df2bc85ef7e92f7cfff9d7970feb2a",
+        "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+        "document_text_sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963",
+        "edition": 2024,
+        "legal_id": "usc:us:10:7213",
+        "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+        "normalized_view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13",
+        "raw_bytes": 4049,
+        "raw_sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+        "view_report_sha256": "e3359aec9b6d637b1d73e3d7b589640d6878e067424a46ff5d1011030d363c98"
+      },
+      "training_qualified": false
+    },
+    "source_context_validation": {
+      "context_closure_verified": false,
+      "open_dependency_slots": 6,
+      "packet_id": "legal-official-markup-context-packet:sha256:fe386f2a665da64be54b402c5acef1a672e7c5191db5c3fec72dd89a9e1688bc",
+      "proof_authority": false,
+      "schema": "legal-official-markup-context-obligations-validation/v1",
+      "selector_occurrence_id": "legal-official-markup-occurrence:sha256:77d283163644da6ca1f737d41ec0b55e1c88ad0f88619e554cfe775203626eea",
+      "semantic_attachments_verified": false,
+      "source_geometry_verified": true,
+      "source_semantics_verified": false,
+      "training_qualified": false,
+      "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+    },
+    "source_records": {
+      "context": {
+        "availability": "required_unavailable",
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_references": [
+          {
+            "purpose": "complete normalized source view retained, not dependency closure",
+            "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+            "record_kind": "source_version"
+          }
+        ],
+        "dependency_verification": "declaration_only",
+        "missing_requirements": [
+          "definition",
+          "authority",
+          "antecedent",
+          "shared_qualifier",
+          "temporal_origin",
+          "referenced_provision"
+        ],
+        "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+        "record_cid": "baguqeerarwgueicrqclip7qv7vwvnt3gd7mpedlhdmpl2sgxlh4ojg3d76pq",
+        "schema": "legal-corpus-context-declaration/v1",
+        "source_occurrence_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda"
+      },
+      "source_occurrence": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+        "end_char": 624,
+        "end_utf8": 625,
+        "historical_aliases": [],
+        "record_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+        "schema": "legal-corpus-source-occurrence/v1",
+        "source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+        "span_cid": "bafkreia476xedqoqlpdycozp2v4olmdplbyeeirbzgn4hgujqa6kizcoki",
+        "span_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+        "span_text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+        "start_char": 431,
+        "start_utf8": 432
+      },
+      "source_version": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "edition": "2024",
+        "extracted_view": {
+          "byte_length": 1912,
+          "character_length": 1887,
+          "cid": "bafkreidlbqygngg2tzpeijrootq7ctnmcupa67ue6rtliqufxvkezvjjmm",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "extraction_profile": "legal-official-markup-document/v2",
+          "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+          "sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963"
+        },
+        "historical_aliases": [],
+        "provision_id": "usc:us:10:7213",
+        "raw_artifact": {
+          "cid": "bafkreidhdesrctvnu5zrunk6gpeao25knetp5unxzm24scumjryfyvnq54",
+          "media_type": "text/html",
+          "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+        },
+        "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+        "release_id": "govinfo-markup-v2-edition:2024",
+        "schema": "legal-corpus-source-version/v1",
+        "source_id": "usc:us:10:7213"
+      },
+      "unit": {
+        "authority": {
+          "Lean_admitted": false,
+          "Lean_kernel_admission": false,
+          "context_closure_verified": false,
+          "css_rendering_verified": false,
+          "definition_operator_interpreted": false,
+          "formalized": false,
+          "global_consistency_verified": false,
+          "governing_source_binding_verified": false,
+          "legal_currentness_verified": false,
+          "legal_hierarchy_verified": false,
+          "legal_review_verified": false,
+          "legal_roles_verified": false,
+          "original_source_body_mapping_verified": false,
+          "producer_edition_correspondence_verified": false,
+          "producer_revision_correspondence_verified": false,
+          "proof_authority": false,
+          "publisher_authenticity_verified": false,
+          "raw_html_coordinate_mapping_verified": false,
+          "semantic_graph_admitted": false,
+          "source_occurrence_selected": false,
+          "source_semantics_verified": false,
+          "training_gold_qualified": false,
+          "training_qualified": false
+        },
+        "candidate_input": true,
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_ref": {
+          "record_cid": "baguqeerarwgueicrqclip7qv7vwvnt3gd7mpedlhdmpl2sgxlh4ojg3d76pq",
+          "schema": "legal-corpus-context-declaration/v1",
+          "sha256": "9b957a2c7496cca1ce9768ee764f52da501cb327cdf0d38ed6994c526bb9e51b"
+        },
+        "evaluation_gold_mask": 0,
+        "formal_outputs": [],
+        "markup_block_ref": {
+          "block_id": "legal-markup-block:sha256:273550c4d2ddd0de722382b2eace236d0959c101b704e4fdf65603151c67c062",
+          "block_index": 9,
+          "sha256": "8761867999be50a009443bedee774d449493b2babc82c1e59bad6b6028e1385c"
+        },
+        "meaning_target": null,
+        "normalized_view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13",
+        "ordinal": 9,
+        "paragraph_fragment_withheld": false,
+        "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+        "sampling_stratum": "candidate_statute_paragraph",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "semantic_assertions": [],
+        "source_occurrence_ref": {
+          "record_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "sha256": "63f8c88c633e433f9ca75f8493a1299b947c3bd07aa8122433a5a07422dc6322"
+        },
+        "source_version_ref": {
+          "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+          "schema": "legal-corpus-source-version/v1",
+          "sha256": "02ff7c1a16969273029e272439cd567dac58a33624ea21c3d93b6f6a1d63f572"
+        },
+        "training_mask": 0
+      }
+    },
+    "source_selector": {
+      "char_end": 624,
+      "char_start": 431,
+      "document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+      "occurrence_id": "legal-official-markup-occurrence:sha256:77d283163644da6ca1f737d41ec0b55e1c88ad0f88619e554cfe775203626eea",
+      "schema": "legal-official-markup-occurrence-selector/v2",
+      "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+      "text_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+      "utf8_byte_end": 625,
+      "utf8_byte_start": 432,
+      "view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13"
+    },
+    "status": "unreviewed_lexical_scope_transport_retained",
+    "training_calls": 0,
+    "training_mask": 0
+  },
+  "source_translation_performed": false,
+  "status": "unreviewed_partial_interpretation_correspondence_retained",
+  "training_calls": 0,
+  "training_mask": 0,
+  "typed_candidate": {
+    "argument_roles": [
+      {
+        "roles": [
+          "recipient",
+          "duties"
+        ],
+        "symbol": "Assign"
+      },
+      {
+        "roles": [
+          "recipient",
+          "duties"
+        ],
+        "symbol": "Transfer"
+      },
+      {
+        "roles": [
+          "approver",
+          "recipient"
+        ],
+        "symbol": "Approve"
+      }
+    ],
+    "counts": {
+      "modal_nodes": 1,
+      "nodes": 15,
+      "predicate_occurrences": 3,
+      "quantifiers": 3
+    },
+    "expression": {
+      "content_digest": "5783bcc42e86631eb1eb99445ce9c3120ba35deabd7caa6c7f69529afdcc9a8d",
+      "expression_id": "partial-7213-A",
+      "family": {
+        "interface": "LogicIdentityNamespaces@1",
+        "namespace": "family",
+        "schema_version": "logic-identity-namespaces/v1",
+        "value": "tdfol",
+        "version": "1.0.0"
+      },
+      "interface": "TypedExpression@1",
+      "metadata": {},
+      "profile": {
+        "interface": "LogicIdentityNamespaces@1",
+        "namespace": "profile",
+        "schema_version": "logic-identity-namespaces/v1",
+        "value": "tdfol_default",
+        "version": "1.0.0"
+      },
+      "root": {
+        "arguments": [
+          {
+            "arguments": [
+              {
+                "arguments": [
+                  {
+                    "arguments": [
+                      {
+                        "arguments": [],
+                        "binders": [],
+                        "extension": {
+                          "children": [
+                            {
+                              "arguments": [
+                                {
+                                  "arguments": [
+                                    {
+                                      "arguments": [],
+                                      "binders": [],
+                                      "kind": "variable",
+                                      "metadata": {},
+                                      "node_id": "partial-A-2",
+                                      "schema_version": "syntax-logic-node/v1",
+                                      "sort": {
+                                        "arguments": [],
+                                        "kind": "atomic",
+                                        "name": "Object",
+                                        "schema_version": "syntax-logic-sort/v1"
+                                      },
+                                      "symbol": "r"
+                                    },
+                                    {
+                                      "arguments": [],
+                                      "binders": [],
+                                      "kind": "variable",
+                                      "metadata": {},
+                                      "node_id": "partial-A-3",
+                                      "schema_version": "syntax-logic-node/v1",
+                                      "sort": {
+                                        "arguments": [],
+                                        "kind": "atomic",
+                                        "name": "Object",
+                                        "schema_version": "syntax-logic-sort/v1"
+                                      },
+                                      "symbol": "d"
+                                    }
+                                  ],
+                                  "binders": [],
+                                  "kind": "predicate",
+                                  "metadata": {},
+                                  "node_id": "partial-A-1",
+                                  "schema_version": "syntax-logic-node/v1",
+                                  "sort": {
+                                    "arguments": [],
+                                    "kind": "bool",
+                                    "name": "Bool",
+                                    "schema_version": "syntax-logic-sort/v1"
+                                  },
+                                  "symbol": "Assign"
+                                },
+                                {
+                                  "arguments": [
+                                    {
+                                      "arguments": [],
+                                      "binders": [],
+                                      "kind": "variable",
+                                      "metadata": {},
+                                      "node_id": "partial-A-5",
+                                      "schema_version": "syntax-logic-node/v1",
+                                      "sort": {
+                                        "arguments": [],
+                                        "kind": "atomic",
+                                        "name": "Object",
+                                        "schema_version": "syntax-logic-sort/v1"
+                                      },
+                                      "symbol": "r"
+                                    },
+                                    {
+                                      "arguments": [],
+                                      "binders": [],
+                                      "kind": "variable",
+                                      "metadata": {},
+                                      "node_id": "partial-A-6",
+                                      "schema_version": "syntax-logic-node/v1",
+                                      "sort": {
+                                        "arguments": [],
+                                        "kind": "atomic",
+                                        "name": "Object",
+                                        "schema_version": "syntax-logic-sort/v1"
+                                      },
+                                      "symbol": "d"
+                                    }
+                                  ],
+                                  "binders": [],
+                                  "kind": "predicate",
+                                  "metadata": {},
+                                  "node_id": "partial-A-4",
+                                  "schema_version": "syntax-logic-node/v1",
+                                  "sort": {
+                                    "arguments": [],
+                                    "kind": "bool",
+                                    "name": "Bool",
+                                    "schema_version": "syntax-logic-sort/v1"
+                                  },
+                                  "symbol": "Transfer"
+                                }
+                              ],
+                              "binders": [],
+                              "kind": "or",
+                              "metadata": {},
+                              "node_id": "partial-A-0",
+                              "schema_version": "syntax-logic-node/v1",
+                              "sort": {
+                                "arguments": [],
+                                "kind": "bool",
+                                "name": "Bool",
+                                "schema_version": "syntax-logic-sort/v1"
+                              },
+                              "symbol": ""
+                            }
+                          ],
+                          "family": {
+                            "interface": "LogicIdentityNamespaces@1",
+                            "namespace": "family",
+                            "schema_version": "logic-identity-namespaces/v1",
+                            "value": "tdfol",
+                            "version": "1.0.0"
+                          },
+                          "features": [
+                            "legacy.classic_letter",
+                            "legacy.permission"
+                          ],
+                          "interface": "LogicExtensionNode@1",
+                          "metadata": {},
+                          "node_id": "partial-A-11:ext",
+                          "payload": {
+                            "kind": "permission",
+                            "letter": "P",
+                            "resolution": "deontic",
+                            "schema_version": "legacy.deontic/v1"
+                          },
+                          "payload_schema": "legacy.deontic/v1",
+                          "profile": {
+                            "interface": "LogicIdentityNamespaces@1",
+                            "namespace": "profile",
+                            "schema_version": "logic-identity-namespaces/v1",
+                            "value": "tdfol_default",
+                            "version": "1.0.0"
+                          },
+                          "schema_version": "syntax-logic-extension-node/v1"
+                        },
+                        "kind": "extension",
+                        "metadata": {},
+                        "node_id": "partial-A-11",
+                        "schema_version": "syntax-logic-node/v1",
+                        "sort": {
+                          "arguments": [],
+                          "kind": "bool",
+                          "name": "Bool",
+                          "schema_version": "syntax-logic-sort/v1"
+                        },
+                        "symbol": ""
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "arguments": [],
+                            "binders": [],
+                            "kind": "variable",
+                            "metadata": {},
+                            "node_id": "partial-A-8",
+                            "schema_version": "syntax-logic-node/v1",
+                            "sort": {
+                              "arguments": [],
+                              "kind": "atomic",
+                              "name": "Object",
+                              "schema_version": "syntax-logic-sort/v1"
+                            },
+                            "symbol": "s"
+                          },
+                          {
+                            "arguments": [],
+                            "binders": [],
+                            "kind": "variable",
+                            "metadata": {},
+                            "node_id": "partial-A-9",
+                            "schema_version": "syntax-logic-node/v1",
+                            "sort": {
+                              "arguments": [],
+                              "kind": "atomic",
+                              "name": "Object",
+                              "schema_version": "syntax-logic-sort/v1"
+                            },
+                            "symbol": "r"
+                          }
+                        ],
+                        "binders": [],
+                        "kind": "predicate",
+                        "metadata": {},
+                        "node_id": "partial-A-7",
+                        "schema_version": "syntax-logic-node/v1",
+                        "sort": {
+                          "arguments": [],
+                          "kind": "bool",
+                          "name": "Bool",
+                          "schema_version": "syntax-logic-sort/v1"
+                        },
+                        "symbol": "Approve"
+                      }
+                    ],
+                    "binders": [],
+                    "kind": "implies",
+                    "metadata": {},
+                    "node_id": "partial-A-10",
+                    "schema_version": "syntax-logic-node/v1",
+                    "sort": {
+                      "arguments": [],
+                      "kind": "bool",
+                      "name": "Bool",
+                      "schema_version": "syntax-logic-sort/v1"
+                    },
+                    "symbol": ""
+                  }
+                ],
+                "binders": [
+                  {
+                    "name": "s",
+                    "schema_version": "syntax-binder/v1",
+                    "sort": {
+                      "arguments": [],
+                      "kind": "atomic",
+                      "name": "Object",
+                      "schema_version": "syntax-logic-sort/v1"
+                    }
+                  }
+                ],
+                "kind": "forall",
+                "metadata": {},
+                "node_id": "partial-A-12",
+                "schema_version": "syntax-logic-node/v1",
+                "sort": {
+                  "arguments": [],
+                  "kind": "bool",
+                  "name": "Bool",
+                  "schema_version": "syntax-logic-sort/v1"
+                },
+                "symbol": ""
+              }
+            ],
+            "binders": [
+              {
+                "name": "d",
+                "schema_version": "syntax-binder/v1",
+                "sort": {
+                  "arguments": [],
+                  "kind": "atomic",
+                  "name": "Object",
+                  "schema_version": "syntax-logic-sort/v1"
+                }
+              }
+            ],
+            "kind": "forall",
+            "metadata": {},
+            "node_id": "partial-A-13",
+            "schema_version": "syntax-logic-node/v1",
+            "sort": {
+              "arguments": [],
+              "kind": "bool",
+              "name": "Bool",
+              "schema_version": "syntax-logic-sort/v1"
+            },
+            "symbol": ""
+          }
+        ],
+        "binders": [
+          {
+            "name": "r",
+            "schema_version": "syntax-binder/v1",
+            "sort": {
+              "arguments": [],
+              "kind": "atomic",
+              "name": "Object",
+              "schema_version": "syntax-logic-sort/v1"
+            }
+          }
+        ],
+        "kind": "forall",
+        "metadata": {},
+        "node_id": "partial-A-14",
+        "schema_version": "syntax-logic-node/v1",
+        "sort": {
+          "arguments": [],
+          "kind": "bool",
+          "name": "Bool",
+          "schema_version": "syntax-logic-sort/v1"
+        },
+        "symbol": ""
+      },
+      "schema_version": "syntax-typed-expression/v1",
+      "signature": {
+        "family": {
+          "interface": "LogicIdentityNamespaces@1",
+          "namespace": "family",
+          "schema_version": "logic-identity-namespaces/v1",
+          "value": "tdfol",
+          "version": "1.0.0"
+        },
+        "features": [],
+        "interface": "LogicSignature@1",
+        "metadata": {},
+        "profile": {
+          "interface": "LogicIdentityNamespaces@1",
+          "namespace": "profile",
+          "schema_version": "logic-identity-namespaces/v1",
+          "value": "tdfol_default",
+          "version": "1.0.0"
+        },
+        "schema_version": "syntax-logic-signature/v1",
+        "signature_id": "partial-7213-A",
+        "sorts": [
+          {
+            "arguments": [],
+            "kind": "bool",
+            "name": "Bool",
+            "schema_version": "syntax-logic-sort/v1"
+          },
+          {
+            "arguments": [],
+            "kind": "atomic",
+            "name": "Object",
+            "schema_version": "syntax-logic-sort/v1"
+          }
+        ],
+        "symbols": [
+          {
+            "domain": [
+              {
+                "arguments": [],
+                "kind": "atomic",
+                "name": "Object",
+                "schema_version": "syntax-logic-sort/v1"
+              },
+              {
+                "arguments": [],
+                "kind": "atomic",
+                "name": "Object",
+                "schema_version": "syntax-logic-sort/v1"
+              }
+            ],
+            "kind": "predicate",
+            "metadata": {},
+            "name": "Assign",
+            "range": {
+              "arguments": [],
+              "kind": "bool",
+              "name": "Bool",
+              "schema_version": "syntax-logic-sort/v1"
+            },
+            "schema_version": "syntax-symbol-declaration/v1"
+          },
+          {
+            "domain": [
+              {
+                "arguments": [],
+                "kind": "atomic",
+                "name": "Object",
+                "schema_version": "syntax-logic-sort/v1"
+              },
+              {
+                "arguments": [],
+                "kind": "atomic",
+                "name": "Object",
+                "schema_version": "syntax-logic-sort/v1"
+              }
+            ],
+            "kind": "predicate",
+            "metadata": {},
+            "name": "Transfer",
+            "range": {
+              "arguments": [],
+              "kind": "bool",
+              "name": "Bool",
+              "schema_version": "syntax-logic-sort/v1"
+            },
+            "schema_version": "syntax-symbol-declaration/v1"
+          },
+          {
+            "domain": [
+              {
+                "arguments": [],
+                "kind": "atomic",
+                "name": "Object",
+                "schema_version": "syntax-logic-sort/v1"
+              },
+              {
+                "arguments": [],
+                "kind": "atomic",
+                "name": "Object",
+                "schema_version": "syntax-logic-sort/v1"
+              }
+            ],
+            "kind": "predicate",
+            "metadata": {},
+            "name": "Approve",
+            "range": {
+              "arguments": [],
+              "kind": "bool",
+              "name": "Bool",
+              "schema_version": "syntax-logic-sort/v1"
+            },
+            "schema_version": "syntax-symbol-declaration/v1"
+          }
+        ]
+      }
+    },
+    "interpretation_status": "unreviewed_partial_fragment_hypothesis",
+    "schema": "legal-source-typed-norm-candidate/v1",
+    "source_binding": null,
+    "source_meaning_verified": false,
+    "source_translation_performed": false,
+    "typed_expression_content_digest": "5783bcc42e86631eb1eb99445ce9c3120ba35deabd7caa6c7f69529afdcc9a8d",
+    "typed_expression_sha256": "10cbe2589659caa3336e8d37550b4cad140c608445a4940507696f1ed33ec426"
+  }
+}

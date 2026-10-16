@@ -1,0 +1,644 @@
+{
+  "adopted_head": "1cbc313236a546fbbacae38635c88fa8072b6087",
+  "already_existing_identical_file_count": 8,
+  "already_existing_identical_files": [
+    {
+      "adopted": {
+        "bytes": 7973,
+        "git_blob": "2b13514776f0e0f80fbf391d55d55fc69e99b7ec",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "585714e88fed858ee3d1a2f6fa7538d91dc01909c800d52547a2b9ad57a7ecce"
+      },
+      "already_existing_main": {
+        "bytes": 7973,
+        "git_blob": "2b13514776f0e0f80fbf391d55d55fc69e99b7ec",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "585714e88fed858ee3d1a2f6fa7538d91dc01909c800d52547a2b9ad57a7ecce"
+      },
+      "original": {
+        "bytes": 7973,
+        "git_blob": "2b13514776f0e0f80fbf391d55d55fc69e99b7ec",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "585714e88fed858ee3d1a2f6fa7538d91dc01909c800d52547a2b9ad57a7ecce"
+      },
+      "path": "docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+      "working_file": {
+        "bytes": 7973,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+        "sha256": "585714e88fed858ee3d1a2f6fa7538d91dc01909c800d52547a2b9ad57a7ecce"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 8477,
+        "git_blob": "ed1c20429ed74f43daa9bdc80cd028fd67238dc6",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_source_sampling_review.md",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "034220aa392539c74d350f66d7e44c27846298a9c86576b4c98aa4be15967fcb"
+      },
+      "already_existing_main": {
+        "bytes": 8477,
+        "git_blob": "ed1c20429ed74f43daa9bdc80cd028fd67238dc6",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_source_sampling_review.md",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "034220aa392539c74d350f66d7e44c27846298a9c86576b4c98aa4be15967fcb"
+      },
+      "original": {
+        "bytes": 8477,
+        "git_blob": "ed1c20429ed74f43daa9bdc80cd028fd67238dc6",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_source_sampling_review.md",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "034220aa392539c74d350f66d7e44c27846298a9c86576b4c98aa4be15967fcb"
+      },
+      "path": "docs/autoencoders/legal_source_sampling_review.md",
+      "working_file": {
+        "bytes": 8477,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/docs/autoencoders/legal_source_sampling_review.md",
+        "sha256": "034220aa392539c74d350f66d7e44c27846298a9c86576b4c98aa4be15967fcb"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 22701,
+        "git_blob": "780afbf171b850c4cb413dd6b525e2fe8ef8a6e6",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417"
+      },
+      "already_existing_main": {
+        "bytes": 22701,
+        "git_blob": "780afbf171b850c4cb413dd6b525e2fe8ef8a6e6",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417"
+      },
+      "original": {
+        "bytes": 22701,
+        "git_blob": "780afbf171b850c4cb413dd6b525e2fe8ef8a6e6",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417"
+      },
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+      "working_file": {
+        "bytes": 22701,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+        "sha256": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 28166,
+        "git_blob": "9717d9adc38babfade00d34f688c50ccb30a54db",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567"
+      },
+      "already_existing_main": {
+        "bytes": 28166,
+        "git_blob": "9717d9adc38babfade00d34f688c50ccb30a54db",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567"
+      },
+      "original": {
+        "bytes": 28166,
+        "git_blob": "9717d9adc38babfade00d34f688c50ccb30a54db",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567"
+      },
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+      "working_file": {
+        "bytes": 28166,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+        "sha256": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 33945,
+        "git_blob": "7a6fdece5dd56b28d5d02a7f367edce55892a5cd",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+      },
+      "already_existing_main": {
+        "bytes": 33945,
+        "git_blob": "7a6fdece5dd56b28d5d02a7f367edce55892a5cd",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+      },
+      "original": {
+        "bytes": 33945,
+        "git_blob": "7a6fdece5dd56b28d5d02a7f367edce55892a5cd",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+      },
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+      "working_file": {
+        "bytes": 33945,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+        "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 37587,
+        "git_blob": "47bd14cec65d455231170c0593346ece2f1e059a",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "bc7e401a591f53abe666e025daa908542c250d66fe61a5db51e3a13d5c21d009"
+      },
+      "already_existing_main": {
+        "bytes": 37587,
+        "git_blob": "47bd14cec65d455231170c0593346ece2f1e059a",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "bc7e401a591f53abe666e025daa908542c250d66fe61a5db51e3a13d5c21d009"
+      },
+      "original": {
+        "bytes": 37587,
+        "git_blob": "47bd14cec65d455231170c0593346ece2f1e059a",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "bc7e401a591f53abe666e025daa908542c250d66fe61a5db51e3a13d5c21d009"
+      },
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+      "working_file": {
+        "bytes": 37587,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+        "sha256": "bc7e401a591f53abe666e025daa908542c250d66fe61a5db51e3a13d5c21d009"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 25031,
+        "git_blob": "8e3fc90b203f3ace8f04d6c81fbde96f524ffbc4",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "d4bd0a34ae71a9c833ea9469e0f2478ef6a6d791f7b49c4566292def247f12c7"
+      },
+      "already_existing_main": {
+        "bytes": 25031,
+        "git_blob": "8e3fc90b203f3ace8f04d6c81fbde96f524ffbc4",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "d4bd0a34ae71a9c833ea9469e0f2478ef6a6d791f7b49c4566292def247f12c7"
+      },
+      "original": {
+        "bytes": 25031,
+        "git_blob": "8e3fc90b203f3ace8f04d6c81fbde96f524ffbc4",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "d4bd0a34ae71a9c833ea9469e0f2478ef6a6d791f7b49c4566292def247f12c7"
+      },
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py",
+      "working_file": {
+        "bytes": 25031,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py",
+        "sha256": "d4bd0a34ae71a9c833ea9469e0f2478ef6a6d791f7b49c4566292def247f12c7"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 24916,
+        "git_blob": "dc0b2818742276ba6ba3bef83647c0e95c37d3b2",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "1ded7a9fbc841d2e9678c8a0b1f22b5ebe1b58d9b3aab9938960707c2e8b58c6"
+      },
+      "already_existing_main": {
+        "bytes": 24916,
+        "git_blob": "dc0b2818742276ba6ba3bef83647c0e95c37d3b2",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "1ded7a9fbc841d2e9678c8a0b1f22b5ebe1b58d9b3aab9938960707c2e8b58c6"
+      },
+      "original": {
+        "bytes": 24916,
+        "git_blob": "dc0b2818742276ba6ba3bef83647c0e95c37d3b2",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "1ded7a9fbc841d2e9678c8a0b1f22b5ebe1b58d9b3aab9938960707c2e8b58c6"
+      },
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+      "working_file": {
+        "bytes": 24916,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+        "sha256": "1ded7a9fbc841d2e9678c8a0b1f22b5ebe1b58d9b3aab9938960707c2e8b58c6"
+      }
+    }
+  ],
+  "authority": {
+    "Lean_admission": false,
+    "model_improvement": false,
+    "semantic_review": false,
+    "source_meaning": false,
+    "training_gold": false
+  },
+  "base": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+  "commit_mapping": [
+    {
+      "adopted_commit": "7ce99394fb8e07d440ec24cfee5eab4198e72e7e",
+      "cherry_pick_x_footer_present": true,
+      "original_changed_paths": [
+        "docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+        "docs/autoencoders/legal_source_sampling_review.md",
+        "docs/autoencoders/legal_statutory_definition_correspondence_pilot.md",
+        "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+        "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+        "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+        "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+        "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py",
+        "tests/unit/logic/autoformal/test_legal_source_sampling_review.py"
+      ],
+      "original_commit": "e25c119bc668fcdaa9157ef94faca5a1f882ac1f"
+    },
+    {
+      "adopted_commit": "eda5029c8ed3d57b7312ecd3d3de17d8f2d78ce2",
+      "cherry_pick_x_footer_present": true,
+      "original_changed_paths": [
+        "docs/autoencoders/legal_source_norm_scope_v1.md",
+        "ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+        "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py"
+      ],
+      "original_commit": "886e578d35a487b061fabe876c27992b850dc88f"
+    },
+    {
+      "adopted_commit": "f277c4024a9b0a8889255a8f9b5c5e39fffbdcc3",
+      "cherry_pick_x_footer_present": true,
+      "original_changed_paths": [
+        "docs/autoencoders/legal_relational_norm_v1.md",
+        "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+        "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py"
+      ],
+      "original_commit": "52e9007ac32980e85a38faa36a8dfb978c89a079"
+    },
+    {
+      "adopted_commit": "1cbc313236a546fbbacae38635c88fa8072b6087",
+      "cherry_pick_x_footer_present": true,
+      "original_changed_paths": [
+        "docs/autoencoders/legal_source_typed_norm_join_v1.md",
+        "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+        "tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py"
+      ],
+      "original_commit": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742"
+    }
+  ],
+  "historical_receipts_relabelled": false,
+  "new_checkout_tests_or_product_execution_performed_by_this_survey": false,
+  "new_file_count": 10,
+  "new_files": [
+    {
+      "adopted": {
+        "bytes": 6604,
+        "git_blob": "bf45464d72ab3b2fb5fa468adb2d10980787dd65",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_statutory_definition_correspondence_pilot.md",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "866a094791476f22058a743e039d10cb47367e717b7f0605465e3f13a71f1a4b"
+      },
+      "original": {
+        "bytes": 6604,
+        "git_blob": "bf45464d72ab3b2fb5fa468adb2d10980787dd65",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_statutory_definition_correspondence_pilot.md",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "866a094791476f22058a743e039d10cb47367e717b7f0605465e3f13a71f1a4b"
+      },
+      "path": "docs/autoencoders/legal_statutory_definition_correspondence_pilot.md",
+      "working_file": {
+        "bytes": 6604,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/docs/autoencoders/legal_statutory_definition_correspondence_pilot.md",
+        "sha256": "866a094791476f22058a743e039d10cb47367e717b7f0605465e3f13a71f1a4b"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 4789,
+        "git_blob": "872a89bf0819f37859fb8d616eb266f9ac03239c",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_source_norm_scope_v1.md",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "8db02a5f561d8e6ba75f6192bed1776ee6526636b8ebd640068734fb0ac4188b"
+      },
+      "original": {
+        "bytes": 4789,
+        "git_blob": "872a89bf0819f37859fb8d616eb266f9ac03239c",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_source_norm_scope_v1.md",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "8db02a5f561d8e6ba75f6192bed1776ee6526636b8ebd640068734fb0ac4188b"
+      },
+      "path": "docs/autoencoders/legal_source_norm_scope_v1.md",
+      "working_file": {
+        "bytes": 4789,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/docs/autoencoders/legal_source_norm_scope_v1.md",
+        "sha256": "8db02a5f561d8e6ba75f6192bed1776ee6526636b8ebd640068734fb0ac4188b"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 19640,
+        "git_blob": "3ed073eb84be1791b6e42c7763f80e99191aba56",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "30343ada53f17b7c39c4b1ce1fbc5bc14234396b5d28fb753e14141423d17039"
+      },
+      "original": {
+        "bytes": 19640,
+        "git_blob": "3ed073eb84be1791b6e42c7763f80e99191aba56",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "30343ada53f17b7c39c4b1ce1fbc5bc14234396b5d28fb753e14141423d17039"
+      },
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+      "working_file": {
+        "bytes": 19640,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+        "sha256": "30343ada53f17b7c39c4b1ce1fbc5bc14234396b5d28fb753e14141423d17039"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 23401,
+        "git_blob": "a1128ae9120493e8555c75d28083af3cb9eb2dea",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "538b70505780cdf61cc64e837e145ec4fa76140a5e28a57bdded3649831bb7b1"
+      },
+      "original": {
+        "bytes": 23401,
+        "git_blob": "a1128ae9120493e8555c75d28083af3cb9eb2dea",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "538b70505780cdf61cc64e837e145ec4fa76140a5e28a57bdded3649831bb7b1"
+      },
+      "path": "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+      "working_file": {
+        "bytes": 23401,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+        "sha256": "538b70505780cdf61cc64e837e145ec4fa76140a5e28a57bdded3649831bb7b1"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 4232,
+        "git_blob": "cd102a477a7b2af5d844554320ed16a5afbb46a2",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_relational_norm_v1.md",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "c702832d0f8f52bf6dca3872589db1d278440e7fbb685fdfdd8916068c430e2b"
+      },
+      "original": {
+        "bytes": 4232,
+        "git_blob": "cd102a477a7b2af5d844554320ed16a5afbb46a2",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_relational_norm_v1.md",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "c702832d0f8f52bf6dca3872589db1d278440e7fbb685fdfdd8916068c430e2b"
+      },
+      "path": "docs/autoencoders/legal_relational_norm_v1.md",
+      "working_file": {
+        "bytes": 4232,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/docs/autoencoders/legal_relational_norm_v1.md",
+        "sha256": "c702832d0f8f52bf6dca3872589db1d278440e7fbb685fdfdd8916068c430e2b"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 18562,
+        "git_blob": "dc0142cb407fc40d09558021386572efe10f792e",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+      },
+      "original": {
+        "bytes": 18562,
+        "git_blob": "dc0142cb407fc40d09558021386572efe10f792e",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+      },
+      "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "working_file": {
+        "bytes": 18562,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+        "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 21445,
+        "git_blob": "42baecbb1896142428c3a29bd1b30d9f926195ff",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "e3160f78b6db26c0d5e28885cb2bd6b8c0f5777a1597c79b447ed535379b6cf2"
+      },
+      "original": {
+        "bytes": 21445,
+        "git_blob": "42baecbb1896142428c3a29bd1b30d9f926195ff",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "e3160f78b6db26c0d5e28885cb2bd6b8c0f5777a1597c79b447ed535379b6cf2"
+      },
+      "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+      "working_file": {
+        "bytes": 21445,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+        "sha256": "e3160f78b6db26c0d5e28885cb2bd6b8c0f5777a1597c79b447ed535379b6cf2"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 5322,
+        "git_blob": "9bad4a89e116ed79695f0dd660bbb8be201f5684",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_source_typed_norm_join_v1.md",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "c2daa5e5667942c6d4ee2796dd2068177eda1ab487aa44bfadc6da4e6cab94a2"
+      },
+      "original": {
+        "bytes": 5322,
+        "git_blob": "9bad4a89e116ed79695f0dd660bbb8be201f5684",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_source_typed_norm_join_v1.md",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "c2daa5e5667942c6d4ee2796dd2068177eda1ab487aa44bfadc6da4e6cab94a2"
+      },
+      "path": "docs/autoencoders/legal_source_typed_norm_join_v1.md",
+      "working_file": {
+        "bytes": 5322,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/docs/autoencoders/legal_source_typed_norm_join_v1.md",
+        "sha256": "c2daa5e5667942c6d4ee2796dd2068177eda1ab487aa44bfadc6da4e6cab94a2"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 28971,
+        "git_blob": "605430c7c2b6b3424cc6ee17a726451aa9475a05",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "92d0c1a46b86b9cdecdc42477f67e6a2141481379498f8ebd90369f9d3b65f11"
+      },
+      "original": {
+        "bytes": 28971,
+        "git_blob": "605430c7c2b6b3424cc6ee17a726451aa9475a05",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "92d0c1a46b86b9cdecdc42477f67e6a2141481379498f8ebd90369f9d3b65f11"
+      },
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+      "working_file": {
+        "bytes": 28971,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+        "sha256": "92d0c1a46b86b9cdecdc42477f67e6a2141481379498f8ebd90369f9d3b65f11"
+      }
+    },
+    {
+      "adopted": {
+        "bytes": 36968,
+        "git_blob": "2a43e98a87277a077075733ee845a53cdb1716c3",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py",
+        "revision": "1cbc313236a546fbbacae38635c88fa8072b6087",
+        "sha256": "3c12e9731d0be90447e00c1fee9439b7b60f66b10928f5b7222fb21a26d2318b"
+      },
+      "original": {
+        "bytes": 36968,
+        "git_blob": "2a43e98a87277a077075733ee845a53cdb1716c3",
+        "mode": "100644",
+        "path": "tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py",
+        "revision": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+        "sha256": "3c12e9731d0be90447e00c1fee9439b7b60f66b10928f5b7222fb21a26d2318b"
+      },
+      "path": "tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py",
+      "working_file": {
+        "bytes": 36968,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py",
+        "sha256": "3c12e9731d0be90447e00c1fee9439b7b60f66b10928f5b7222fb21a26d2318b"
+      }
+    }
+  ],
+  "observed_at_utc": "2026-10-16T00:04:40.185466+00:00",
+  "original_assets_or_foreign_worktree_mutated": false,
+  "original_qualification": [
+    {
+      "JUnit": {
+        "bytes": 565377,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/focused-tests-v02.xml",
+        "sha256": "0bcb46f7033438ef95bebc769db2d9486e5e278a57a39d2068a7acadc5a44c63"
+      },
+      "author_receipt": {
+        "bytes": 19761,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/implementation-receipt.json",
+        "sha256": "ea06e29f5361ea572fe433d88f7b939741019febff7c0404f4999740afde7cca"
+      },
+      "counts_by_module": {
+        "tests.unit.logic.autoformal.test_legal_relational_norm_v1": 70,
+        "tests.unit.logic.autoformal.test_legal_source_norm_scope_v1": 50,
+        "tests.unit.logic.autoformal.test_legal_source_typed_norm_join_v1": 98
+      },
+      "errors": 0,
+      "failures": 0,
+      "new_current_tree_execution": false,
+      "skipped": 0,
+      "source_commit": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+      "unique_cases": 218
+    },
+    {
+      "JUnit": {
+        "bytes": 555828,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/focused-tests-v01.xml",
+        "sha256": "015714e03ef433ee46e49cb0fc3d65a88b03a607ee30dd1977f7fdec8a803017"
+      },
+      "author_receipt": {
+        "bytes": 17372,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/implementation-receipt.json",
+        "sha256": "4ca405ee1731588b42095eecac2ee92f73d5b7a83a9cfd2ee02f5e766adc3c67"
+      },
+      "counts_by_module": {
+        "tests.unit.logic.autoformal.test_legal_family_routes": 32,
+        "tests.unit.logic.autoformal.test_legal_relational_norm_v1": 70,
+        "tests.unit.logic.autoformal.test_legal_source_norm_scope_v1": 50,
+        "tests.unit.logic.syntax_core.test_ast": 27
+      },
+      "errors": 0,
+      "failures": 0,
+      "new_current_tree_execution": false,
+      "skipped": 0,
+      "source_commit": "52e9007ac32980e85a38faa36a8dfb978c89a079",
+      "unique_cases": 179
+    },
+    {
+      "JUnit": {
+        "bytes": 39774,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/focused-tests-v02.xml",
+        "sha256": "2c84798aab7c55dfa209aa08cb3cc3439ff82dedb5ea0755282685a8efb561a0"
+      },
+      "author_receipt": {
+        "bytes": 17775,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/implementation-receipt.json",
+        "sha256": "568a423db242760b088c966f7329bcbc4881f1fb33826f7e215ad75059213fe1"
+      },
+      "counts_by_module": {
+        "tests.unit.logic.autoformal.test_legal_source_norm_scope_v1": 50,
+        "tests.unit.logic.autoformal.test_legal_source_sampling": 29,
+        "tests.unit.logic.autoformal.test_legal_statutory_context_v2": 23,
+        "tests.unit.logic.legal_ir.test_canonical_statement_scope": 97,
+        "tests.unit.logic.legal_ir.test_canonical_statement_scope_bridge": 18
+      },
+      "errors": 0,
+      "failures": 0,
+      "new_current_tree_execution": false,
+      "skipped": 0,
+      "source_commit": "886e578d35a487b061fabe876c27992b850dc88f",
+      "unique_cases": 217
+    }
+  ],
+  "original_tip": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+  "original_worktree": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets",
+  "schema": "legal-ir-typed-semantic-adoption-provenance/v1",
+  "status": "exact-source-adoption-observed",
+  "strategy": "Four explicit oldest-first cherry-picks with original -x footers; preserve existing independently adopted owners rather than merge inherited old topology."
+}

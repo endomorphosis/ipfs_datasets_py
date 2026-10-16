@@ -1,0 +1,114 @@
+{
+  "method": "Parsed original fields except reservation_id; original bytes retained and independently hashed.",
+  "native_receipt": {
+    "admitted": false,
+    "arbitrary_descendant_containment": false,
+    "files": [
+      {
+        "bytes": 37,
+        "device": 66306,
+        "inode": 69387204,
+        "path": "cache/pytest/.gitignore",
+        "sha256": "3ed731b65d06150c138e2dadb0be0697550888a6b47eb8c45ecc9adba8b8e9bd"
+      },
+      {
+        "bytes": 191,
+        "device": 66306,
+        "inode": 69387205,
+        "path": "cache/pytest/CACHEDIR.TAG",
+        "sha256": "37dc88ef9a0abeddbe81053a6dd8fdfb13afb613045ea1eb4a5c815a74a3bde4"
+      },
+      {
+        "bytes": 302,
+        "device": 66306,
+        "inode": 69387203,
+        "path": "cache/pytest/README.md",
+        "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad"
+      },
+      {
+        "bytes": 584276,
+        "device": 66306,
+        "inode": 69387213,
+        "path": "cache/pytest/v/cache/nodeids",
+        "sha256": "60c3df3ec9527d6e5588eb0bcd1bbd4a6a2808e6b637abaaeef3bf40f9d178c7"
+      },
+      {
+        "bytes": 42,
+        "device": 66306,
+        "inode": 69387207,
+        "path": "cache/pytest/v/commit_hash",
+        "sha256": "8e3a4b503bf6e288e20e36ffc1d792ddcb54f5c08db3c2035e0bcc00dfa16e41"
+      },
+      {
+        "bytes": 42,
+        "device": 66306,
+        "inode": 69387209,
+        "path": "cache/pytest/v/last_run_commit",
+        "sha256": "8e3a4b503bf6e288e20e36ffc1d792ddcb54f5c08db3c2035e0bcc00dfa16e41"
+      },
+      {
+        "bytes": 4,
+        "device": 66306,
+        "inode": 69387210,
+        "path": "cache/pytest/v/last_run_uncommitted",
+        "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      },
+      {
+        "bytes": 4,
+        "device": 66306,
+        "inode": 69387208,
+        "path": "cache/pytest/v/uncommitted_changes",
+        "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      },
+      {
+        "bytes": 967,
+        "device": 66306,
+        "inode": 69387200,
+        "path": "logs/execution.json",
+        "sha256": "7bd6d7295e369be05849b8298724d3a1cff0a60e3ac3d94a4061bd07dac438ff"
+      },
+      {
+        "bytes": 599087,
+        "device": 66306,
+        "inode": 69387211,
+        "path": "logs/junit.xml",
+        "sha256": "b0e294b5e2b23e79298b3a9496c3119576fa00312179d972b114c57f99d51b45"
+      },
+      {
+        "bytes": 1139,
+        "device": 66306,
+        "inode": 69387201,
+        "path": "logs/result.json",
+        "sha256": "cb4251217e76e8449267d321a00c63715f2225d0b39531c3a9fe9a29590efbe4"
+      },
+      {
+        "bytes": 0,
+        "device": 66306,
+        "inode": 69387191,
+        "path": "logs/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 2285,
+        "device": 66306,
+        "inode": 69387190,
+        "path": "logs/stdout.log",
+        "sha256": "4c490571f19e27b7b0933f040a315b6e9d6215c0dc8d95071119d11d494cc23e"
+      }
+    ],
+    "request_sha256": "20eaf018f77cac2c69bf05172ca3417f286ae78fa8cae22936633b8859fad0d4",
+    "result_path": "logs/result.json",
+    "result_sha256": "cb4251217e76e8449267d321a00c63715f2225d0b39531c3a9fe9a29590efbe4",
+    "schema": "owned-validation-durability/v1",
+    "scope": "owned_files_fsynced_after_recorded_group_observed_stopped"
+  },
+  "omitted_fields": [
+    "reservation_id"
+  ],
+  "original": {
+    "bytes": 2449,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01/logs/validation-durability.json",
+    "sha256": "40f7599e513ce9452c71ab965661a828ba7a0f60f9070c964d9c04a28b1c2d96"
+  },
+  "schema": "typed-semantic-durability-public-projection/v1"
+}

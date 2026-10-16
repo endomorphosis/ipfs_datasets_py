@@ -1,0 +1,402 @@
+{
+  "adoption": {
+    "adopted_commits": [
+      "7ce99394f",
+      "eda5029c8",
+      "f277c4024",
+      "1cbc31323"
+    ],
+    "already_identical_shared_paths": [
+      "docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+      "docs/autoencoders/legal_source_sampling_review.md",
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+      "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+      "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py",
+      "tests/unit/logic/autoformal/test_legal_source_sampling_review.py"
+    ],
+    "existing_shared_files_changed_by_adoption": 0,
+    "new_paths": [
+      {
+        "bytes": 4232,
+        "exact_author_and_adopted_git_bytes": true,
+        "path": "docs/autoencoders/legal_relational_norm_v1.md",
+        "sha256": "c702832d0f8f52bf6dca3872589db1d278440e7fbb685fdfdd8916068c430e2b"
+      },
+      {
+        "bytes": 4789,
+        "exact_author_and_adopted_git_bytes": true,
+        "path": "docs/autoencoders/legal_source_norm_scope_v1.md",
+        "sha256": "8db02a5f561d8e6ba75f6192bed1776ee6526636b8ebd640068734fb0ac4188b"
+      },
+      {
+        "bytes": 5322,
+        "exact_author_and_adopted_git_bytes": true,
+        "path": "docs/autoencoders/legal_source_typed_norm_join_v1.md",
+        "sha256": "c2daa5e5667942c6d4ee2796dd2068177eda1ab487aa44bfadc6da4e6cab94a2"
+      },
+      {
+        "bytes": 6604,
+        "exact_author_and_adopted_git_bytes": true,
+        "path": "docs/autoencoders/legal_statutory_definition_correspondence_pilot.md",
+        "sha256": "866a094791476f22058a743e039d10cb47367e717b7f0605465e3f13a71f1a4b"
+      },
+      {
+        "bytes": 18562,
+        "exact_author_and_adopted_git_bytes": true,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+        "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+      },
+      {
+        "bytes": 19640,
+        "exact_author_and_adopted_git_bytes": true,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+        "sha256": "30343ada53f17b7c39c4b1ce1fbc5bc14234396b5d28fb753e14141423d17039"
+      },
+      {
+        "bytes": 28971,
+        "exact_author_and_adopted_git_bytes": true,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+        "sha256": "92d0c1a46b86b9cdecdc42477f67e6a2141481379498f8ebd90369f9d3b65f11"
+      },
+      {
+        "bytes": 21445,
+        "exact_author_and_adopted_git_bytes": true,
+        "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+        "sha256": "e3160f78b6db26c0d5e28885cb2bd6b8c0f5777a1597c79b447ed535379b6cf2"
+      },
+      {
+        "bytes": 23401,
+        "exact_author_and_adopted_git_bytes": true,
+        "path": "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+        "sha256": "538b70505780cdf61cc64e837e145ec4fa76140a5e28a57bdded3649831bb7b1"
+      },
+      {
+        "bytes": 36968,
+        "exact_author_and_adopted_git_bytes": true,
+        "path": "tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py",
+        "sha256": "3c12e9731d0be90447e00c1fee9439b7b60f66b10928f5b7222fb21a26d2318b"
+      }
+    ],
+    "original_commits": [
+      "e25c119bc668fcdaa9157ef94faca5a1f882ac1f",
+      "886e578d35a487b061fabe876c27992b850dc88f",
+      "52e9007ac32980e85a38faa36a8dfb978c89a079",
+      "49bf6d67f7617cecd59bcd9bb09e4602a56ec742"
+    ]
+  },
+  "contracts": [
+    {
+      "limits": [
+        "Caller-declared coverage is literal accounting, not semantic completeness, exhaustive dependencies or legal review.",
+        "Six original context obligations remain open; external nominations are not applied.",
+        "No formal norm AST, lowered IR, graph, lookup, governing-use edge, model training or native execution is supplied."
+      ],
+      "owner": "legal_source_norm_scope_v1",
+      "profile": "whole-sampled-block-unreviewed-lexical-scope/v1",
+      "public_api": [
+        "prepare_sampled_norm_scope_v1",
+        "sampled_norm_scope_report_sha256",
+        "validate_sampled_norm_scope_v1"
+      ],
+      "schema": "legal-source-norm-scope-proposal/v1",
+      "verified_static": [
+        "Duplicate-free independently pinned request/declaration bytes and bounded ordinary report/descriptor inputs precede lazy owner imports.",
+        "Full sampler replay joins the exact sealed selected unit, source version, physical occurrence and original required-unavailable context; equal text at another occurrence or edition does not substitute.",
+        "Scope source equals the entire selected paragraph. Every declared anchor maps local Unicode positions to normalized-document characters and UTF8 positions using the V2 selector; raw HTML offsets are not equated.",
+        "Existing scope validator and bridge remain owners; coverage segments account for all selected source characters, including unsupported or unresolved text.",
+        "Required-unavailable context, partial/unassessed coverage, unresolved issues, unavailable legacy routes and zero masks remain; passive grammatical subject is not inferred to be action agent.",
+        "Closing own/operation producer hash comparison and detached serialized output retain finite file-generation checks."
+      ]
+    },
+    {
+      "limits": [
+        "No constants, functions, equality, additional sorts, cardinality/counting frame, purpose, anaphora, temporal operators or unsupported annotations.",
+        "Role labels are authored names, not verified semantic types. Finite countermodels distinguish authored structures only.",
+        "Generated Lean text is not a Lake build, legal interpretation or proof admission.",
+        "Standalone relational preparation captures producer pins at entry; it does not add a uniform final _owners replay. End-to-end join explicitly closes producer maps after owner replay and after serialization. No general filesystem writer lease or atomic execution attestation is claimed."
+      ],
+      "owner": "legal_relational_norm_v1",
+      "profile": "authored-object-relational-deontic/v1",
+      "public_api": [
+        "prepare_relational_norm_v1",
+        "relational_norm_report_sha256",
+        "validate_relational_norm_v1"
+      ],
+      "schema": "legal-relational-norm-report/v1",
+      "verified_static": [
+        "Exact existing TypedExpression roundtrip retains namespace/version/content identity and rejects unknown normalized-away fields.",
+        "Single atomic Object carrier, predicates over ordered bound variables, exactly binary Boolean connectives, unary negation, one globally nonshadowing binder per quantifier and exact legacy.deontic/v1 O/P/F extensions only.",
+        "All predicates are used, all variables explicitly bound, predicate arity and ordered per-predicate role ledger are exact; shared AST owners enforce connective arities and signature uniqueness.",
+        "Each supported node/binder/extension has an ordered native structural path, and existing native family route verifies full AST equality through strict original and print/reparse paths before Lean text rendering.",
+        "Source binding remains null; O/P/F are independent parameters, with no hidden modal duality or statutory meaning selection."
+      ]
+    },
+    {
+      "limits": [
+        "Exhaustive typed-node provenance is not exhaustive semantic correspondence or bidirectional disposition of every source anchor. The retained source scope provides complete literal accounting separately.",
+        "Coverage/unresolved source anchors may be cited as unreviewed hypotheses; anchor custody does not establish denotation, predicate meaning, logical necessity or legal applicability.",
+        "No signing/review domain is extended; actual review, accepted meaning, signatures, admissions, training/evaluation eligibility and execution authority remain false/zero."
+      ],
+      "owner": "legal_source_typed_norm_join_v1",
+      "profile": "whole-source-partial-typed-correspondence/v1",
+      "public_api": [
+        "prepare_source_typed_norm_join_v1",
+        "source_typed_norm_join_sha256",
+        "validate_source_typed_norm_join_v1"
+      ],
+      "schema": "legal-source-typed-norm-join-proposal/v1",
+      "verified_static": [
+        "Closed request and detached independently pinned original reports/replay structures precede lazy operation imports. Relational report/request and both pins must all be present or all null.",
+        "Discovers trusted actual producer maps before offered map keys can influence file reads; checks map identity before, between and after existing owner replay and after output serialization.",
+        "Replays both owners with original complete inputs. Raw request-file SHA, canonical JSON SHA and typed content identity remain distinct.",
+        "Derives every authoritative typed path exactly once in original order, including lexical binding quantifier, argument index/role, modal child placement and connective child order.",
+        "Every proposed typed node retains original or introduced unresolved codes. Unanchored structure requires explicit introduced issues naming each affected path; introduced issues must all be used.",
+        "All original source unresolved issues and the complete source scope/context remain unchanged. Source-only pending retains the source without fabricating typed structure.",
+        "External relational preparation stays source-unbound. Join exposes a partial typed hypothesis and syntax provenance, while full-source formal_norm_ast/lowered_IR/native_output_for_source/graph/lookup/governing_use remain absent."
+      ]
+    }
+  ],
+  "execution_counts_here": {
+    "models": 0,
+    "native_compilers": 0,
+    "native_resource_mutations": 0,
+    "product_imports": 0,
+    "solvers": 0,
+    "source_edits": 0,
+    "tests": 0,
+    "training": 0
+  },
+  "finite_operation_producer_correspondence": {
+    "basis": "Static reconstruction of actual _owners/_pins/producer_pins declarations; each listed existing body matches original author, merged main base, adopted Git and local bytes. This is not complete installed-package import closure or runtime attestation.",
+    "existing_files": [
+      {
+        "bytes": 7279,
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_contracts.py",
+        "sha256": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa"
+      },
+      {
+        "bytes": 16185,
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_source.py",
+        "sha256": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257"
+      },
+      {
+        "bytes": 13827,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling.py",
+        "sha256": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489"
+      },
+      {
+        "bytes": 8241,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py",
+        "sha256": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d"
+      },
+      {
+        "bytes": 4026,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_context_obligations.py",
+        "sha256": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482"
+      },
+      {
+        "bytes": 19956,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py",
+        "sha256": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7"
+      },
+      {
+        "bytes": 24944,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_official_document_views.py",
+        "sha256": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4"
+      },
+      {
+        "bytes": 21940,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+        "sha256": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53"
+      },
+      {
+        "bytes": 29993,
+        "path": "ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py",
+        "sha256": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a"
+      },
+      {
+        "bytes": 4214,
+        "path": "ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py",
+        "sha256": "7e74f5ea2230549165fd0cb0230b2b8baaa0016cc2352d5a422c70c20f5e4da8"
+      },
+      {
+        "bytes": 109257,
+        "path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+        "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+      },
+      {
+        "bytes": 4428,
+        "path": "ipfs_datasets_py/utils/cid_utils.py",
+        "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      },
+      {
+        "bytes": 56966,
+        "path": "ipfs_datasets_py/logic/syntax_core/ast.py",
+        "sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4"
+      },
+      {
+        "bytes": 75291,
+        "path": "ipfs_datasets_py/logic/syntax_core/contracts.py",
+        "sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8"
+      },
+      {
+        "bytes": 30488,
+        "path": "ipfs_datasets_py/logic/syntax_core/signatures.py",
+        "sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf"
+      },
+      {
+        "bytes": 34262,
+        "path": "ipfs_datasets_py/logic/families/namespaces.py",
+        "sha256": "ba097e653158a812d66ead978d6405d61adaa293521305333579b19bd69a432d"
+      },
+      {
+        "bytes": 71642,
+        "path": "ipfs_datasets_py/logic/parsers/legacy_modal.py",
+        "sha256": "7b18812ea6fcba8b65ed7dc5c3407e0ad06ac9760c5c66441e9677463f9eb66e"
+      },
+      {
+        "bytes": 28721,
+        "path": "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+        "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7"
+      },
+      {
+        "bytes": 29788,
+        "path": "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+        "sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3"
+      },
+      {
+        "bytes": 22238,
+        "path": "ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py",
+        "sha256": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d"
+      },
+      {
+        "bytes": 7838,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_family_routes.py",
+        "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+      },
+      {
+        "bytes": 37698,
+        "path": "ipfs_datasets_py/logic/autoformal/family_qualification.py",
+        "sha256": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8"
+      },
+      {
+        "bytes": 16905,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py",
+        "sha256": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501"
+      },
+      {
+        "bytes": 19295,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py",
+        "sha256": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902"
+      },
+      {
+        "bytes": 18642,
+        "path": "ipfs_datasets_py/logic/CEC/native/dcec_integration.py",
+        "sha256": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82"
+      },
+      {
+        "bytes": 57189,
+        "path": "ipfs_datasets_py/logic/CEC/native/dcec_core.py",
+        "sha256": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14"
+      },
+      {
+        "bytes": 14204,
+        "path": "ipfs_datasets_py/logic/CEC/native/dcec_parsing.py",
+        "sha256": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70"
+      },
+      {
+        "bytes": 9131,
+        "path": "ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py",
+        "sha256": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0"
+      },
+      {
+        "bytes": 15038,
+        "path": "ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py",
+        "sha256": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e"
+      },
+      {
+        "bytes": 29000,
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
+        "sha256": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe"
+      },
+      {
+        "bytes": 16858,
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py",
+        "sha256": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a"
+      },
+      {
+        "bytes": 18936,
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py",
+        "sha256": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408"
+      },
+      {
+        "bytes": 31891,
+        "path": "ipfs_datasets_py/logic/ir_core/provenance.py",
+        "sha256": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe"
+      }
+    ],
+    "existing_files_compared": 33,
+    "new_runtime_owners": 3,
+    "relational_declared_pins": 23,
+    "source_only_pending_join_declared_pins": 14,
+    "source_scope_declared_pins": 13,
+    "typed_join_declared_pin_union": 36
+  },
+  "known_documentation_limits": [
+    "Original author guides reference local retained artifact directories outside repository distribution. Preserve them as original historical provenance; use repository integration evidence for published claims.",
+    "No original author numerical or native-build results are rerun or aggregated by this review."
+  ],
+  "merged_main_base": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+  "original_author_tip": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+  "parallel_unadopted_contract_observation": {
+    "adopted": false,
+    "bytes": 23125,
+    "differences": [
+      "Requires present relational candidate and complete bidirectional ordered source_rows/typed_rows; the adopted join also supports source-only pending.",
+      "Distinguishes literal coverage-accounting anchors from proposed semantic mappings; adopted join retains full scope but exhaustively accounts typed paths only.",
+      "Uses a different request/output/API contract; no schema/profile alias, migration or coverage aggregation is justified."
+    ],
+    "limitations": "Mutable foreign observation only. Original bytes/worktree remain untouched; this review does not qualify that separate implementation.",
+    "observed_untracked_foreign_file": true,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_norm_scope_correspondence_v1.py",
+    "qualified_here": false,
+    "schema": "legal-norm-scope-correspondence-report/v1",
+    "sha256": "8cc9645ed1ec3c35d80e876f4cefe74e37c49ff72b99d563ddbb013182735422"
+  },
+  "qualification_status_at_review": "pending; no passing test count or native lifecycle outcome inferred",
+  "reconstruction_implications": {
+    "component_pilot_gates_remaining": "Actual complete source component, independent source/meaning review, complete supported norm interpretation, governing-definition uses, applicable contexts, accepted/gold eligibility and actual authorized Lean builds remain separate gates.",
+    "current_increment": "Extends representable source-linked partial relational hypotheses; it does not implement or measure a learned decoder, original-text reconstruction, semantic agreement, accepted norm or token savings.",
+    "existing_scorers_reused": [
+      "logic/formalization/autoencoder/ir_legal_text_roundtrip.py:score_legal_original_text_roundtrip",
+      "logic/formalization/autoencoder/contextual_legal_ir_output.py:score_contextual_legal_predictions",
+      "logic/formalization/autoencoder/contextual_legal_ir_output.py:score_legal_text_reconstructions"
+    ],
+    "parallel_model_paths": "No model/checkpoint/training assets change. Existing IR-family, 8D/384D/768D, schema/version and decoder-task distinctions remain.",
+    "retained_actual_pilot_followup": "If run separately, replay original source/declarations/candidates with explicit old/new producer generations and original independent commitments. Preserve competing unreviewed hypotheses and source-only pending cases; do not relabel them as blind or reviewed targets."
+  },
+  "review_kind": "read_only_source_and_git_object_review_not_execution",
+  "reviewed_at_utc": "2026-10-16T00:05:02.515175+00:00",
+  "reviewed_checkout": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015",
+  "reviewed_head": "1cbc313236a546fbbacae38635c88fa8072b6087",
+  "schema": "legal-ir-typed-semantic-implementation-static-review/v1",
+  "status": "no_concrete_blocker_for_bounded_native_qualification",
+  "tests_static_review": {
+    "case_count_claimed_here": null,
+    "executed_here": false,
+    "meaningful_controls": [
+      "Exact whole selected occurrence and edition, Unicode/UTF8 geometry, omitted suffix/gaps, unavailable context, malformed/duplicate/nonfinite/oversized structures, raw versus canonical commitments, detached outputs and complete regeneration.",
+      "Necessity versus sufficiency, modal placement, O/P/F independence, conjunction/disjunction, ordered actor/recipient/direction arguments and quantifier order, with explicitly authored finite countermodels.",
+      "Complete typed mapping coverage, duplicate/unknown paths, changed roles/binders/modal operators, original unresolved retention, introduced assumption usage, source-only pending and partial-null refusals.",
+      "Trusted producer-map nomination refusal and producer changes during replay or before closing serialization."
+    ],
+    "new_test_paths": [
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+      "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+      "tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py"
+    ],
+    "ordinary_files_profile": "No symlink/FIFO/link/chown/chmod fixture calls found in these three authored modules. Two stdlib-only cold-import checks use Python -I -S -B with 20-second subprocess deadlines; these are not compiler/model/solver execution."
+  }
+}

@@ -1,0 +1,463 @@
+{
+  "schema": "legal-relational-norm-request/v1",
+  "interpretation_status": "authored_unreviewed_declaration",
+  "expression": {
+    "content_digest": "b3eb24ad94c5fcb597a2c4194a7936aace26532ec3761788b3e31f86dc3b6876",
+    "expression_id": "partial-7213-B",
+    "family": {
+      "interface": "LogicIdentityNamespaces@1",
+      "namespace": "family",
+      "schema_version": "logic-identity-namespaces/v1",
+      "value": "tdfol",
+      "version": "1.0.0"
+    },
+    "interface": "TypedExpression@1",
+    "metadata": {},
+    "profile": {
+      "interface": "LogicIdentityNamespaces@1",
+      "namespace": "profile",
+      "schema_version": "logic-identity-namespaces/v1",
+      "value": "tdfol_default",
+      "version": "1.0.0"
+    },
+    "root": {
+      "arguments": [
+        {
+          "arguments": [
+            {
+              "arguments": [
+                {
+                  "arguments": [],
+                  "binders": [],
+                  "kind": "extension",
+                  "metadata": {},
+                  "node_id": "partial-B-11",
+                  "schema_version": "syntax-logic-node/v1",
+                  "symbol": "",
+                  "sort": {
+                    "arguments": [],
+                    "kind": "bool",
+                    "name": "Bool",
+                    "schema_version": "syntax-logic-sort/v1"
+                  },
+                  "extension": {
+                    "children": [
+                      {
+                        "arguments": [
+                          {
+                            "arguments": [
+                              {
+                                "arguments": [
+                                  {
+                                    "arguments": [],
+                                    "binders": [],
+                                    "kind": "variable",
+                                    "metadata": {},
+                                    "node_id": "partial-B-2",
+                                    "schema_version": "syntax-logic-node/v1",
+                                    "symbol": "r",
+                                    "sort": {
+                                      "arguments": [],
+                                      "kind": "atomic",
+                                      "name": "Object",
+                                      "schema_version": "syntax-logic-sort/v1"
+                                    }
+                                  },
+                                  {
+                                    "arguments": [],
+                                    "binders": [],
+                                    "kind": "variable",
+                                    "metadata": {},
+                                    "node_id": "partial-B-3",
+                                    "schema_version": "syntax-logic-node/v1",
+                                    "symbol": "d",
+                                    "sort": {
+                                      "arguments": [],
+                                      "kind": "atomic",
+                                      "name": "Object",
+                                      "schema_version": "syntax-logic-sort/v1"
+                                    }
+                                  }
+                                ],
+                                "binders": [],
+                                "kind": "predicate",
+                                "metadata": {},
+                                "node_id": "partial-B-1",
+                                "schema_version": "syntax-logic-node/v1",
+                                "symbol": "Assign",
+                                "sort": {
+                                  "arguments": [],
+                                  "kind": "bool",
+                                  "name": "Bool",
+                                  "schema_version": "syntax-logic-sort/v1"
+                                }
+                              },
+                              {
+                                "arguments": [
+                                  {
+                                    "arguments": [],
+                                    "binders": [],
+                                    "kind": "variable",
+                                    "metadata": {},
+                                    "node_id": "partial-B-5",
+                                    "schema_version": "syntax-logic-node/v1",
+                                    "symbol": "r",
+                                    "sort": {
+                                      "arguments": [],
+                                      "kind": "atomic",
+                                      "name": "Object",
+                                      "schema_version": "syntax-logic-sort/v1"
+                                    }
+                                  },
+                                  {
+                                    "arguments": [],
+                                    "binders": [],
+                                    "kind": "variable",
+                                    "metadata": {},
+                                    "node_id": "partial-B-6",
+                                    "schema_version": "syntax-logic-node/v1",
+                                    "symbol": "d",
+                                    "sort": {
+                                      "arguments": [],
+                                      "kind": "atomic",
+                                      "name": "Object",
+                                      "schema_version": "syntax-logic-sort/v1"
+                                    }
+                                  }
+                                ],
+                                "binders": [],
+                                "kind": "predicate",
+                                "metadata": {},
+                                "node_id": "partial-B-4",
+                                "schema_version": "syntax-logic-node/v1",
+                                "symbol": "Transfer",
+                                "sort": {
+                                  "arguments": [],
+                                  "kind": "bool",
+                                  "name": "Bool",
+                                  "schema_version": "syntax-logic-sort/v1"
+                                }
+                              }
+                            ],
+                            "binders": [],
+                            "kind": "or",
+                            "metadata": {},
+                            "node_id": "partial-B-0",
+                            "schema_version": "syntax-logic-node/v1",
+                            "symbol": "",
+                            "sort": {
+                              "arguments": [],
+                              "kind": "bool",
+                              "name": "Bool",
+                              "schema_version": "syntax-logic-sort/v1"
+                            }
+                          },
+                          {
+                            "arguments": [
+                              {
+                                "arguments": [],
+                                "binders": [],
+                                "kind": "variable",
+                                "metadata": {},
+                                "node_id": "partial-B-8",
+                                "schema_version": "syntax-logic-node/v1",
+                                "symbol": "s",
+                                "sort": {
+                                  "arguments": [],
+                                  "kind": "atomic",
+                                  "name": "Object",
+                                  "schema_version": "syntax-logic-sort/v1"
+                                }
+                              },
+                              {
+                                "arguments": [],
+                                "binders": [],
+                                "kind": "variable",
+                                "metadata": {},
+                                "node_id": "partial-B-9",
+                                "schema_version": "syntax-logic-node/v1",
+                                "symbol": "r",
+                                "sort": {
+                                  "arguments": [],
+                                  "kind": "atomic",
+                                  "name": "Object",
+                                  "schema_version": "syntax-logic-sort/v1"
+                                }
+                              }
+                            ],
+                            "binders": [],
+                            "kind": "predicate",
+                            "metadata": {},
+                            "node_id": "partial-B-7",
+                            "schema_version": "syntax-logic-node/v1",
+                            "symbol": "Approve",
+                            "sort": {
+                              "arguments": [],
+                              "kind": "bool",
+                              "name": "Bool",
+                              "schema_version": "syntax-logic-sort/v1"
+                            }
+                          }
+                        ],
+                        "binders": [],
+                        "kind": "implies",
+                        "metadata": {},
+                        "node_id": "partial-B-10",
+                        "schema_version": "syntax-logic-node/v1",
+                        "symbol": "",
+                        "sort": {
+                          "arguments": [],
+                          "kind": "bool",
+                          "name": "Bool",
+                          "schema_version": "syntax-logic-sort/v1"
+                        }
+                      }
+                    ],
+                    "family": {
+                      "interface": "LogicIdentityNamespaces@1",
+                      "namespace": "family",
+                      "schema_version": "logic-identity-namespaces/v1",
+                      "value": "tdfol",
+                      "version": "1.0.0"
+                    },
+                    "features": [
+                      "legacy.classic_letter",
+                      "legacy.permission"
+                    ],
+                    "interface": "LogicExtensionNode@1",
+                    "metadata": {},
+                    "node_id": "partial-B-11:ext",
+                    "payload": {
+                      "kind": "permission",
+                      "letter": "P",
+                      "resolution": "deontic",
+                      "schema_version": "legacy.deontic/v1"
+                    },
+                    "payload_schema": "legacy.deontic/v1",
+                    "profile": {
+                      "interface": "LogicIdentityNamespaces@1",
+                      "namespace": "profile",
+                      "schema_version": "logic-identity-namespaces/v1",
+                      "value": "tdfol_default",
+                      "version": "1.0.0"
+                    },
+                    "schema_version": "syntax-logic-extension-node/v1"
+                  }
+                }
+              ],
+              "binders": [
+                {
+                  "name": "s",
+                  "schema_version": "syntax-binder/v1",
+                  "sort": {
+                    "arguments": [],
+                    "kind": "atomic",
+                    "name": "Object",
+                    "schema_version": "syntax-logic-sort/v1"
+                  }
+                }
+              ],
+              "kind": "forall",
+              "metadata": {},
+              "node_id": "partial-B-12",
+              "schema_version": "syntax-logic-node/v1",
+              "symbol": "",
+              "sort": {
+                "arguments": [],
+                "kind": "bool",
+                "name": "Bool",
+                "schema_version": "syntax-logic-sort/v1"
+              }
+            }
+          ],
+          "binders": [
+            {
+              "name": "d",
+              "schema_version": "syntax-binder/v1",
+              "sort": {
+                "arguments": [],
+                "kind": "atomic",
+                "name": "Object",
+                "schema_version": "syntax-logic-sort/v1"
+              }
+            }
+          ],
+          "kind": "forall",
+          "metadata": {},
+          "node_id": "partial-B-13",
+          "schema_version": "syntax-logic-node/v1",
+          "symbol": "",
+          "sort": {
+            "arguments": [],
+            "kind": "bool",
+            "name": "Bool",
+            "schema_version": "syntax-logic-sort/v1"
+          }
+        }
+      ],
+      "binders": [
+        {
+          "name": "r",
+          "schema_version": "syntax-binder/v1",
+          "sort": {
+            "arguments": [],
+            "kind": "atomic",
+            "name": "Object",
+            "schema_version": "syntax-logic-sort/v1"
+          }
+        }
+      ],
+      "kind": "forall",
+      "metadata": {},
+      "node_id": "partial-B-14",
+      "schema_version": "syntax-logic-node/v1",
+      "symbol": "",
+      "sort": {
+        "arguments": [],
+        "kind": "bool",
+        "name": "Bool",
+        "schema_version": "syntax-logic-sort/v1"
+      }
+    },
+    "schema_version": "syntax-typed-expression/v1",
+    "signature": {
+      "family": {
+        "interface": "LogicIdentityNamespaces@1",
+        "namespace": "family",
+        "schema_version": "logic-identity-namespaces/v1",
+        "value": "tdfol",
+        "version": "1.0.0"
+      },
+      "features": [],
+      "interface": "LogicSignature@1",
+      "metadata": {},
+      "profile": {
+        "interface": "LogicIdentityNamespaces@1",
+        "namespace": "profile",
+        "schema_version": "logic-identity-namespaces/v1",
+        "value": "tdfol_default",
+        "version": "1.0.0"
+      },
+      "schema_version": "syntax-logic-signature/v1",
+      "signature_id": "partial-7213-B",
+      "sorts": [
+        {
+          "arguments": [],
+          "kind": "bool",
+          "name": "Bool",
+          "schema_version": "syntax-logic-sort/v1"
+        },
+        {
+          "arguments": [],
+          "kind": "atomic",
+          "name": "Object",
+          "schema_version": "syntax-logic-sort/v1"
+        }
+      ],
+      "symbols": [
+        {
+          "domain": [
+            {
+              "arguments": [],
+              "kind": "atomic",
+              "name": "Object",
+              "schema_version": "syntax-logic-sort/v1"
+            },
+            {
+              "arguments": [],
+              "kind": "atomic",
+              "name": "Object",
+              "schema_version": "syntax-logic-sort/v1"
+            }
+          ],
+          "kind": "predicate",
+          "metadata": {},
+          "name": "Assign",
+          "schema_version": "syntax-symbol-declaration/v1",
+          "range": {
+            "arguments": [],
+            "kind": "bool",
+            "name": "Bool",
+            "schema_version": "syntax-logic-sort/v1"
+          }
+        },
+        {
+          "domain": [
+            {
+              "arguments": [],
+              "kind": "atomic",
+              "name": "Object",
+              "schema_version": "syntax-logic-sort/v1"
+            },
+            {
+              "arguments": [],
+              "kind": "atomic",
+              "name": "Object",
+              "schema_version": "syntax-logic-sort/v1"
+            }
+          ],
+          "kind": "predicate",
+          "metadata": {},
+          "name": "Transfer",
+          "schema_version": "syntax-symbol-declaration/v1",
+          "range": {
+            "arguments": [],
+            "kind": "bool",
+            "name": "Bool",
+            "schema_version": "syntax-logic-sort/v1"
+          }
+        },
+        {
+          "domain": [
+            {
+              "arguments": [],
+              "kind": "atomic",
+              "name": "Object",
+              "schema_version": "syntax-logic-sort/v1"
+            },
+            {
+              "arguments": [],
+              "kind": "atomic",
+              "name": "Object",
+              "schema_version": "syntax-logic-sort/v1"
+            }
+          ],
+          "kind": "predicate",
+          "metadata": {},
+          "name": "Approve",
+          "schema_version": "syntax-symbol-declaration/v1",
+          "range": {
+            "arguments": [],
+            "kind": "bool",
+            "name": "Bool",
+            "schema_version": "syntax-logic-sort/v1"
+          }
+        }
+      ]
+    }
+  },
+  "source_binding": null,
+  "argument_roles": [
+    {
+      "symbol": "Assign",
+      "roles": [
+        "recipient",
+        "duties"
+      ]
+    },
+    {
+      "symbol": "Transfer",
+      "roles": [
+        "recipient",
+        "duties"
+      ]
+    },
+    {
+      "symbol": "Approve",
+      "roles": [
+        "approver",
+        "recipient"
+      ]
+    }
+  ]
+}

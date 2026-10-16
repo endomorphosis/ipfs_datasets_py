@@ -1,0 +1,25 @@
+{
+  "descriptor": {
+    "edition": 2024,
+    "granule_id": "USCODE-2024-title10-subtitleB-partII-chap723-sec7214",
+    "http_provenance": {
+      "content_type": "text/html",
+      "etag": null,
+      "final_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm",
+      "last_modified": "Fri, 22 Aug 2025 18:43:47 GMT",
+      "requested_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm",
+      "status_code": 200
+    },
+    "legal_id": "usc:us:10:7214",
+    "package_id": "USCODE-2024-title10",
+    "raw_bytes": 7017,
+    "raw_sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e",
+    "retrieved_at": "2026-10-15T16:42:18.675126+00:00",
+    "schema": "legal-official-source-acquisition/v1",
+    "url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm"
+  },
+  "expected_descriptor_sha256": "541c5995627c3a38a77f0ab487848615f96a835bff4e08294c1da3e35df2414c",
+  "expected_raw_bytes": 7017,
+  "expected_raw_sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e",
+  "expected_sampling_report_sha256": "335181759ba447324c17b6249201d5395dce8f7bdfd7dd69f5cb2add7535a4b0"
+}

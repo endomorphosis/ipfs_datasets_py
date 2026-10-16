@@ -1,0 +1,13 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/logs/execution.json"
+  ],
+  "executed_checks": [
+    "retained-two-source-three-typed-norm-join-cases"
+  ],
+  "request_sha256": "8e84774d8b456188e94ec1deb5117cf448e770eede652d037daf13215bc3a948",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}
