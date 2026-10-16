@@ -1,0 +1,56 @@
+{
+  "blocking_findings": [],
+  "changes_reviewed": {
+    "compatibility_panels": "Fivevariants x3controls x2heads creates30cells. Each selects the existing first-pass candidate reports for that exact tuple and counts grammar_valid, complete_candidate, literalTrue canonicalization change and literalFalse rich relational support. All60candidate reports remain preserved; this adds no generation, target use, model/encoder call or scoring path.",
+    "output_custody": "Expected21exports,64MiB payloadcap, exact exclusive byte/hash readback, localJSON physical identities, retainedclosure final byte/hash checks, separate bounded source-event export and small engineering summary remain unchanged.",
+    "reference_boundary": "Parent admission still reads reference-bearing provenance. No source text/reference enters generate_source_only; every first-pass sequence is sealed and every fresh replay completes before scoring. The job remains2exposed primary validation rows plus2legacy training diagnostics.",
+    "sequence_counting": "60first-pass plus60fresh-private repeated sequence generations remain unchanged; actual autoregressive forward calls sum original+repeat step_count.",
+    "source_custody": "Historical exact source roots/CLI and current canonical product roots retain their prior bounded checked-buffer, code-object execution binding and final origin checks. No old owner or guard source was edited.",
+    "workload": "finite_saved_weight_numerical_reproducibility_validation explicitly labels finite existing-state replay; inference_service_or_model_admission remainsFalse. This does not confer model or legal authority."
+  },
+  "inherited_static_review": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/source-helper-doc-audit-v02.json",
+    "scope": "Prior exact product/test/guide/helper static review; native refusal there remains historical and is not overwritten by this new retry.",
+    "sha256": "3554fe4456678b67a33a06b927250eb2f292fa11dd0f59c0fb1186b91b06d948"
+  },
+  "required_runtime_audit": [
+    "Actual qualificationPASS and native fullcloseout before numerical launch.",
+    "Actual numerical owner admission and all6namedchecks; no cap or diskfree cutoff relaxation.",
+    "Engineering metadata only can verify60+60, actualforwardstepcount,30scorecells,30compatibilitycells, source/network/child/output inventory and stopped/durable/released nativecloseout. No raw predictions needed for this limited audit.",
+    "No independentholdout/statutoryfidelity/trainingimprovement/richrelationalcompatibility/Lean/modeladmissionclaim follows from exact saved-weight reproducibility."
+  ],
+  "review_scope": "Source and AST only. No weights, latents, corpus, generation/scoring/compatibility payloads, receipts or ledger read; no product imports, execution, code edits or native admission by this reviewer.",
+  "root_reported_retry_metadata_not_independently_read": {
+    "actual_admission_now_succeeded_without_cap_change": true,
+    "corrected_qualification_request_source_pins": 253,
+    "existing_cap_bytes": 160000000000,
+    "first_retry_qualification": "Failed during collection because two concrete owner source pins were absent; root recovered only its exact new134217728-byte claim after stopped owner/group and fsync of10files/33583B. No foreign record change reported.",
+    "outstanding_commitments_fell_since_prior_snapshot": true,
+    "prepared_numerical_request_source_pins": 211,
+    "scope": "Root-reported metadata only; this source audit independently authenticates none of those native outcomes."
+  },
+  "schema": "independent-numerical-worker-retry-static-source-review/v1",
+  "source_pins": [
+    {
+      "bytes": 27423,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/run_numerical_replay_v01.py",
+      "sha256": "1e2d5df8ad453fb697ae957f8ac565254cf155b8ddc6a966157fd4a19d9c0d3e"
+    },
+    {
+      "bytes": 28503,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v02.py",
+      "sha256": "10405c2111004b916af0e734ed5ffa5559365e2f5371aefa30402a0505660345"
+    }
+  ],
+  "status": "SOURCE_REVIEW_PASS_RUNTIME_PENDING",
+  "whole_ast_delta_proof": {
+    "meaning": "Only the new compatibility-panel aggregate construction and three explicit summary fields distinguish the new helper AST from the prior reviewed helper.",
+    "reduced_new_ast_equals_prior_reviewed_whole_ast": true,
+    "removed_main_statements": 2,
+    "removed_summary_fields": [
+      "workload",
+      "inference_service_or_model_admission",
+      "compatibility_panels"
+    ]
+  }
+}

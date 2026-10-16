@@ -70,12 +70,16 @@ in parallel with decoder experiments 5–6.
   hypotheses and pending §7214. The newly published primary-bound review owner
   supplies a fresh dependency-closed definition-review subject; actual source
   equivalence, interpretation decisions, context closure and gold remain open.
-- **Richer counting already has a separate local prototype.** Original commit
+- **Richer counting is now reconciled as a separate authored profile.** Original commit
   `2b9f325a080001272ac6dd3949cff5a4566281eb` supplies an authored fixed-at-most-three
-  event/time-frame profile. It is not integrated here, a generic cardinality
-  engine, a supported TDFOL-equality route, a reviewed §7214 interpretation or an
-  actual Lean build. Reconcile that contribution before implementing duplicate
-  support; review determines which semantics and extensions are needed.
+  event/time-frame profile. Its [counted-frame owner](legal_counted_frame_v1.md)
+  and the [selected paired-manifest inventory](legal_paired_manifest_inventory_v1.md)
+  are now present through upstream `1211e6c17b3f5b8b1c9d838d6a5d94b53d9f5c4b`.
+  The counted profile uses many-sorted FOL equality and specialized Lean text;
+  it remains separate from the current relational request/join contract. It is
+  not a generic cardinality engine, supported native TDFOL-equality route,
+  reviewed §7214 interpretation or actual Lean build. Reuse these owners within
+  their declared profiles; review determines required semantics and extensions.
 
 ## Pinned cache refresh
 
@@ -96,6 +100,17 @@ The local verified primary export and malformed legacy entity cache remain
 separate populations until their original derivation/multiplicity is reconciled.
 
 ## Immediate work packages
+
+The [retained decoder output increment](legal_ir_decoder_output_integration_20261016.md)
+now supplies tested candidate-only inspection with the original lexical/tagged
+codecs and a small five-variant numerical replay. The continuation passed 173
+native cases and 60+60 exact fresh-load sequences under the unchanged 160 GB
+campaign cap, with a two-process replay allowance for pinned Torch startup.
+All sixty first-pass outputs satisfy the retained grammar; all remain outside
+the richer relational-request profile. Every primary variant is 0/2 against its
+two exposed stored references. This establishes reproducibility and a specific
+training gap, not statutory accuracy, a new teacher or a Lean build. Original
+refusals and failed startup attempts remain archived with proper closeout.
 
 1. **Asset and cache manifest.** Produce the joined compatibility inventory,
    current physical-occurrence census, immutable cache pins and explicit

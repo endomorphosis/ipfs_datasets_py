@@ -1,0 +1,25 @@
+{
+  "changed_paths": [
+    "docs/autoencoders/container_execution_boundary.md",
+    "docs/autoencoders/legal_counted_frame_v1.md",
+    "docs/autoencoders/legal_paired_manifest_inventory_v1.md",
+    "docs/implementation/reports/evidence/legal_ir_container_boundary_20261016.json",
+    "ipfs_datasets_py/logic/autoformal/legal_counted_frame_v1.py",
+    "ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_container_boundary.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_kernel_custody.py",
+    "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py",
+    "tests/unit/logic/autoformal/test_legal_paired_manifest_inventory_v1.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_container_boundary.py"
+  ],
+  "head_before_merge": "d8637a1bd37aef67bc5299de2dd4264ca3296bf1",
+  "observed_main": "1211e6c17b3f5b8b1c9d838d6a5d94b53d9f5c4b",
+  "previous_main_base": "6b8b1346f888adbebbcf1d714e4ad0ab39a02052",
+  "qualified_sources_unchanged_before_merge": true,
+  "schema": "legal-decoder-retry-upstream-source-reconciliation/v1",
+  "source_pin_intersections": {
+    "numerical-replay-request-v03.json": [],
+    "qualification-request-v02.json": []
+  },
+  "upstream_payloads_executed_by_reconciliation": false
+}

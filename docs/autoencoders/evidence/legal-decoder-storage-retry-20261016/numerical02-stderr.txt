@@ -1,0 +1,50 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v03.py", line 474, in <module>
+    main()
+  File "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v03.py", line 291, in main
+    import torch
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/__init__.py", line 2254, in <module>
+    from torch import _VF as _VF, functional as functional  # usort: skip
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/functional.py", line 8, in <module>
+    import torch.nn.functional as F
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/nn/__init__.py", line 8, in <module>
+    from torch.nn.modules import *  # usort: skip # noqa: F403
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 1, in <module>
+    from .module import Module  # usort: skip
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/nn/modules/module.py", line 17, in <module>
+    from torch.utils._python_dispatch import is_traceable_wrapper_subclass
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/utils/__init__.py", line 8, in <module>
+    from torch.utils import (
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/utils/data/__init__.py", line 1, in <module>
+    from torch.utils.data.dataloader import (
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 27, in <module>
+    import torch.utils.data.graph_settings
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/utils/data/graph_settings.py", line 8, in <module>
+    from torch.utils.data.datapipes.iter.sharding import (
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/utils/data/datapipes/__init__.py", line 1, in <module>
+    from torch.utils.data.datapipes import dataframe as dataframe, iter as iter, map as map
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/utils/data/datapipes/dataframe/__init__.py", line 1, in <module>
+    from torch.utils.data.datapipes.dataframe.dataframes import (
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/utils/data/datapipes/dataframe/dataframes.py", line 4, in <module>
+    from torch.utils.data.datapipes._decorator import functional_datapipe
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/utils/data/datapipes/_decorator.py", line 8, in <module>
+    from torch.utils.data.datapipes.datapipe import IterDataPipe, MapDataPipe
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/utils/data/datapipes/datapipe.py", line 17, in <module>
+    dill = import_dill()
+           ^^^^^^^^^^^^^
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/utils/_import_utils.py", line 30, in import_dill
+    import dill
+  File "/home/barberb/.local/lib/python3.12/site-packages/dill/__init__.py", line 26, in <module>
+    from ._dill import (
+  File "/home/barberb/.local/lib/python3.12/site-packages/dill/_dill.py", line 174, in <module>
+    BufferedRandomType = None if IS_PYODIDE else get_file_type('r+b', buffering=-1)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/.local/lib/python3.12/site-packages/dill/_dill.py", line 165, in get_file_type
+    f = open(os.devnull, *args, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v03.py", line 182, in audit
+    raise RuntimeError('write outside current native attempt refused')
+RuntimeError: write outside current native attempt refused

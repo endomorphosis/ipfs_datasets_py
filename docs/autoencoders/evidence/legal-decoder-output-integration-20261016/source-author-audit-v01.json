@@ -1,0 +1,39 @@
+{
+  "checks": {
+    "ast_parses": true,
+    "no_trailing_whitespace": true,
+    "one_final_lf": true,
+    "stdlib_top_level_imports_only": true
+  },
+  "generated_at_utc": "2026-10-16T03:38:39.451334+00:00",
+  "implementation_scope": [
+    "Three independently raw-pinned duplicate-free bounded finite UTF8 JSON transports; detached originals and complete output bound.",
+    "Closed capture declarations match receipt variant/head/dimension, model state and raw/numerical input pins; no invented encoder identity or offered path reads.",
+    "Fixed bounded nofollow source-file snapshots before lazy imports and across public owner calls; own import pin and physical identity retained.",
+    "Existing public source-only receipt inspector; existing public lexical candidate inspector or full stored legacy codec validate_codec/decode_target. No target/reference inputs.",
+    "Raw generated IDs, invalid special tokens, truncation and native public inspection_errors retained; stable reason_codes separate from diagnostics.",
+    "Original ordered lexical IR separate from canonical contract IR/change observation; tagged legacy decoder policy receives no replacement fit or canonical repair.",
+    "Rich relational profile always unsupported with null request fields; all authority false and training/evaluation masks exact integer zero.",
+    "Complete-output hash and independent-pin validator regenerate from exact original transports."
+  ],
+  "limits": [
+    "Source/AST audit only: no product/test import or execution, numerical API, model/latent/corpus/request/prediction payload or ledger read.",
+    "Authored receipt consistency cannot authenticate numerical execution, checkpoint/source contents, target withholding, latent-only conditioning or legal fidelity.",
+    "Fixed source-file binding does not generally authenticate preloaded unanchored bytecode; native checked-buffer context remains separate.",
+    "Native qualification and actual numerical output integration pending root resource admission; this audit records no runtime result.",
+    "Legacy emitted-format label typed-deontic-rule/v1 is separate from full supplied codec schema legal-source-formula-codec/v1."
+  ],
+  "public_api": [
+    "prepare_legal_ir_decoder_output_compatibility_v1",
+    "legal_ir_decoder_output_compatibility_sha256",
+    "validate_legal_ir_decoder_output_compatibility_v1"
+  ],
+  "schema": "legal-ir-decoder-output-compatibility-source-author-audit/v1",
+  "source": {
+    "bytes": 21971,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_ir_decoder_output_compatibility_v1.py",
+    "sha256": "d2145191a898dd50b5bcc4b3d61a005cc6cc869b5c49db8c7db74d6452d1d12b"
+  },
+  "source_frozen": true,
+  "status": "source_ast_only_complete_native_execution_pending"
+}

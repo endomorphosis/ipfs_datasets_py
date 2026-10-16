@@ -1,0 +1,24 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": false,
+  "elapsed_seconds": 86.1173674359452,
+  "error": "validation command failed with returncode 1",
+  "error_type": "RuntimeError",
+  "executed_checks": [
+    "retained_parent_and_donor_admission",
+    "bounded_four_row_source_controls",
+    "all_generation_frozen_before_reference_scoring",
+    "fresh_private_reload_exact_numerical_replay",
+    "candidate_only_output_compatibility",
+    "final_inputs_sources_and_native_layout_unchanged"
+  ],
+  "model_weights_downloaded": false,
+  "received_signals": [],
+  "request_sha256": "58c19ddf8faee5a091c67bc0917703042d942a0c727756d9cdf45b1c929b559f",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 1,
+  "schema": "owned-validation-result/v1",
+  "watchdog_errors": []
+}

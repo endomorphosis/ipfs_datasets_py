@@ -1,0 +1,17 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 47.36344314087182,
+  "executed_checks": [
+    "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py",
+    "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "ee641863e1a34da3f193c3115d447693945c82c86383edfbc79088fc1ec3383b",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

@@ -1,0 +1,18 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay03/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay03/logs/execution.json"
+  ],
+  "executed_checks": [
+    "retained_parent_and_donor_admission",
+    "bounded_four_row_source_controls",
+    "all_generation_frozen_before_reference_scoring",
+    "fresh_private_reload_exact_numerical_replay",
+    "candidate_only_output_compatibility",
+    "final_inputs_sources_and_native_layout_unchanged"
+  ],
+  "request_sha256": "265577bec114742e13558da0fce595ae69265a82391f45e9caf8e87a2d83ec66",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}
