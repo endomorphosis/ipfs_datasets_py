@@ -1,0 +1,321 @@
+{
+  "CUDA_qualified": false,
+  "Constitution_formalized": false,
+  "Docker_qualified": false,
+  "Hub_qualified": false,
+  "Lean_admitted": false,
+  "actual_administrative_controller_after": {
+    "lane": "validation",
+    "lease_id": "814a5d47fe7c4dff8006a0b4419edb8a",
+    "new_native_lease_acquired_by_helper": false,
+    "owner_birth": "113161220",
+    "owner_pid": 3434122,
+    "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661"
+  },
+  "actual_administrative_controller_before": {
+    "lane": "validation",
+    "lease_id": "814a5d47fe7c4dff8006a0b4419edb8a",
+    "new_native_lease_acquired_by_helper": false,
+    "owner_birth": "113161220",
+    "owner_pid": 3434122,
+    "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661"
+  },
+  "actual_native_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+  "admitted": false,
+  "controller_capacity_reserved": false,
+  "core_source_sha256": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/controller_worker_admission.md": "795494e0fee00e4be19ff72a0673040a84ab825437d3d5282157d63746604f83",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_controller_worker.py": "339d7a06b6c459c7d3086d323cc7198f0050e3edc372ff538f12f50d3a1644a2",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_kernel_custody.py": "16aad02231f423a8f15b5e36344f545d9805a946e15ba272cc7181ba924506bb",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_controller_worker.py": "7ebd40966420e354d4bb4228e49dd89986dd3febaa6e6a0aecedc5c3c7d48e78"
+  },
+  "fatal_owner_recovery_qualified": false,
+  "fresh_terminal_claims": {
+    "1e2cb292c3ae43e2a052555101a3c3ac": {
+      "native_lease_absent": true,
+      "native_lease_id": "4c82f045a4bc4ab48efa9d64126286de",
+      "original_owner_birth_gone": true,
+      "status": "released"
+    },
+    "29948bb9e1694bfba45a43e76f1a7475": {
+      "native_lease_absent": true,
+      "native_lease_id": "a28f6d0e592849ff864db92c5db7941b",
+      "original_owner_birth_gone": true,
+      "status": "released"
+    },
+    "357c4bcede254fe6b06e08f9ef7ecfe3": {
+      "native_lease_absent": true,
+      "native_lease_id": "25f3173f20544be2b53c9a2830e16d63",
+      "original_owner_birth_gone": true,
+      "status": "retained"
+    }
+  },
+  "fresh_terminal_ledger_observation": {
+    "bytes": 7430181,
+    "device": 66306,
+    "inode": 67028278,
+    "observation_mode": "bounded_shared_lock_existing_atomic_ledger_read_no_census_no_write",
+    "observed_at_unix": 1792113539.2017598,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "60cf6f8dbb9446aa53ad86cda701b0e50065de18b55609bb685ac002d9b294f6"
+  },
+  "hostile_same_uid_confinement_qualified": false,
+  "injected_exception_probe": {
+    "Lean_admitted": false,
+    "actual_native_root_grant_observed": true,
+    "admitted": false,
+    "controller_capacity_reserved": false,
+    "controller_lifetime_peak_bytes": 109932544,
+    "disk_claim_status": "retained",
+    "exact_worker_drain_seconds": 0.05082652508281171,
+    "failure_evidence_profile": "pinned_producer_fsynced_failure_unsealed_retained_claim",
+    "mode": "injected_failure",
+    "native_lease_absent": true,
+    "native_lease_id": "25f3173f20544be2b53c9a2830e16d63",
+    "native_reservation_id": "357c4bcede254fe6b06e08f9ef7ecfe3",
+    "owner_and_tracked_births_gone": true,
+    "owner_wall_includes_admission": true,
+    "owner_wall_seconds": 75.86850663088262,
+    "strict_result_sealed": false,
+    "whole_unit_native_memory_hard_confinement": false,
+    "worker_max_observed_charge_bytes": 34746368
+  },
+  "manifest": {
+    "bytes": 5379,
+    "device": 66306,
+    "inode": 106969479,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-admission-scopes-20261016/evidence-inputs-v1.json",
+    "sha256": "1e4fea4dcbbf62d4c452a992241aecde7206e71c47d7dacf6aaa3b911732464f"
+  },
+  "model_semantic_qualified": false,
+  "next_required_qualification": "productive_container_kernel_scope_and_owner_death_custody_before_model_work",
+  "normal_probe": {
+    "Lean_admitted": false,
+    "actual_native_root_grant_observed": true,
+    "admitted": false,
+    "controller_capacity_reserved": false,
+    "controller_lifetime_peak_bytes": 109125632,
+    "disk_claim_status": "released",
+    "exact_worker_drain_seconds": 0.05086402897723019,
+    "failure_evidence_profile": null,
+    "mode": "normal",
+    "native_lease_absent": true,
+    "native_lease_id": "4c82f045a4bc4ab48efa9d64126286de",
+    "native_reservation_id": "1e2cb292c3ae43e2a052555101a3c3ac",
+    "owner_and_tracked_births_gone": true,
+    "owner_wall_includes_admission": true,
+    "owner_wall_seconds": 32.17485371395014,
+    "strict_durability": {
+      "reservation_id": "1e2cb292c3ae43e2a052555101a3c3ac",
+      "strict_seal_verified": true,
+      "verified_bytes": 60032,
+      "verified_files": 6
+    },
+    "strict_result_sealed": true,
+    "whole_unit_native_memory_hard_confinement": false,
+    "worker_max_observed_charge_bytes": 34689024
+  },
+  "observed_at_unix": 1792113539.215764,
+  "producer": {
+    "bytes": 31602,
+    "device": 66306,
+    "inode": 106984491,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-admission-scopes-20261016/build_controller_evidence_v2.py",
+    "sha256": "bf05e84a9448e45956549cd3c9bbdef1031d111ad4ce21cb9d5a46b7a5048415"
+  },
+  "profile": {
+    "controller_limit_role": "unreserved_capacity_ceiling",
+    "controller_limits_change_after_admission": false,
+    "controller_memory_capacity_reserved": false,
+    "controller_memory_max_bytes": 68719476736,
+    "controller_tasks_max": 512,
+    "native_child_process_slots": 4,
+    "native_cpu_slots": 1,
+    "native_memory_enforcement": "sampled_hierarchical_charged_memory",
+    "native_memory_mb": 1536,
+    "schema": "stable-controller-worker-custody/v1",
+    "whole_unit_native_memory_hard_confinement": false,
+    "worker_hard_confinement": true,
+    "worker_memory_max_bytes": 536870912,
+    "worker_tasks_max": 32
+  },
+  "publication_main_native_source_delta_review": {
+    "admitted": false,
+    "assessment": "Adds detached bounded storage-capacity diagnostics on the existing refusal. Success predicates, scheduler admission, cgroup logic and the new stdlib-only observer are unchanged. Preserve this other-agent change. No native suite against this newer diagnostic source is claimed.",
+    "diff": "--- tested/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py\n+++ main/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py\n@@ -51,6 +51,15 @@\n \n class DaemonResourceError(RuntimeError):\n     \"\"\"Admission, accounting, or explicit release could not be verified.\"\"\"\n+\n+    @property\n+    def capacity_observation(self):\n+        \"\"\"Return a detached aggregate snapshot, when capacity caused refusal.\n+\n+        The captured observation has no inventory or reservation records. Each\n+        access returns a copy so a diagnostic consumer cannot change it.\n+        \"\"\"\n+        return copy.deepcopy(getattr(self, \"_capacity_observation\", None))\n \n \n def _integer(value, name, *, minimum=1, maximum=None):\n@@ -420,7 +429,19 @@\n                   \"limit_bytes\": MAX_STORAGE_BYTES, \"minimum_filesystem_free_bytes\": free,\n                   \"scope\": \"named_roots_only_apparent_bytes\", \"inventory\": inventory}\n         if charged > MAX_STORAGE_BYTES or free < outstanding + additional:\n-            raise DaemonResourceError(\"storage reservation capacity exceeded\")\n+            error = DaemonResourceError(\"storage reservation capacity exceeded\")\n+            error._capacity_observation = copy.deepcopy({\n+                \"schema\": \"daemon-resource-capacity-observation/v1\",\n+                **{key: result[key] for key in (\n+                    \"observed_apparent_bytes\", \"outstanding_full_reservations_bytes\",\n+                    \"additional_requested_bytes\", \"charged_bytes\", \"limit_bytes\",\n+                    \"minimum_filesystem_free_bytes\", \"scope\")},\n+                \"storage_capacity_exceeded\": charged > MAX_STORAGE_BYTES,\n+                \"filesystem_free_insufficient\": free < outstanding + additional,\n+                \"storage_capacity_deficit_bytes\": max(0, charged - MAX_STORAGE_BYTES),\n+                \"filesystem_free_deficit_bytes\": max(0, outstanding + additional - free),\n+            })\n+            raise error\n         self._verify_owner_roots()\n         return result\n \n",
+    "main_at_review": "c6c95c5d88417b5c3ca436951f8716528707c863",
+    "other_eleven_native_sources_match": true,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+    "reviewed_main_sha256": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed",
+    "runtime_authority_retaged": false,
+    "schema": "kernel-custody-main-delta-review/v1",
+    "tested_source_sha256": "aaf67b9f37c4df7b15e1b9d08b9441290a5179dfce0ec01d21d25ae86423beb0"
+  },
+  "qualification_evidence_sha256": "2647e8ff5b49bf510b6d9f8c15d3ca34903a621c10d57040c32001468ac1ecd2",
+  "qualification_scope": "finite_benign_setsid_worker_normal_and_explicit_exception_drain",
+  "schema": "controller-worker-admission-qualification-evidence/v1",
+  "selected_producer_count": 24,
+  "source_and_policy_unchanged": true,
+  "source_tree": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "tested_native_sources_sha256": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/__init__.py": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/__init__.py": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": "aaf67b9f37c4df7b15e1b9d08b9441290a5179dfce0ec01d21d25ae86423beb0",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py": "e19dbd913e30c6960d4a848bc2b2f15236944e55bc7718598e047fbdf664f18d",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_campaign_resources.py": "44e526791ee667c90d4ff65ef8b7aa4a004a52ada4903b9901a78752482d28ae",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/parented_phase_resources.py": "d23e7f8a55d2563897b558502f05b11f89daa10f0ee6ff7dd2f142966ef7bce9",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": "7c889bc858ff092e18bd2e97ff5a6407973e226eae33cddc9e5eef1d21f35986",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py": "8ed63a0dd0510ed5f5eaf453491616d65f5cad681fde8adca4a528a5d0fed72b",
+    "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_legacy_span_cuda.py": "4f84d5740f5bdbed97cf124793da80ef5c5d5354f056c6236468e3556e2c4aaf"
+  },
+  "training_executed": false,
+  "unit_tests": {
+    "administrative_wrapper_wall_seconds": 72.57905919291079,
+    "counts_source": "actual_strictly_sealed_pytest_xml",
+    "errors": 0,
+    "failures": 0,
+    "fixture_profile": "explicit_private_pytest_alias_readonly_directory_cleanup_profile/v2",
+    "ordinary_strict_filesystem_profile_passed": false,
+    "owner_execution_wall_seconds": 41.07256809086539,
+    "passed": 125,
+    "pytest_reported_seconds": 0.396,
+    "skipped": 0,
+    "strict_durability": {
+      "reservation_id": "29948bb9e1694bfba45a43e76f1a7475",
+      "strict_seal_verified": true,
+      "verified_bytes": 46561,
+      "verified_files": 13
+    },
+    "test_cases": 125,
+    "tests_by_class": {
+      "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_controller_worker": 33,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_kernel_custody": 92
+    }
+  },
+  "verified_artifacts": {
+    "injected_bootstrap": {
+      "bytes": 3138,
+      "device": 66306,
+      "inode": 106969236,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-admission-scopes-20261016/controller-probe-injected-failure-v1.bootstrap-result.json",
+      "sha256": "2c910fdafa9a7e48ebd594f325960eb7babf4aa8fc42912f98e4bd44d51c2c64"
+    },
+    "injected_closeout": {
+      "bytes": 6579,
+      "device": 66306,
+      "inode": 106969448,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-admission-scopes-20261016/exception-closeout-v1.json",
+      "sha256": "755f2b72eeab0fabeea9b10ec4860bbdeb0a3b9a35c23925eb58d399d8bd7d72"
+    },
+    "injected_failure": {
+      "bytes": 39065,
+      "device": 66306,
+      "inode": 75251250,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-admission-scopes-20261016/controller-probe-injected-failure-v1/logs/failure.json",
+      "sha256": "bca23debad385fcadb2ca6fb53f4dd5f8cacf69e5e76b87448e450ba2b0b5765"
+    },
+    "injected_request": {
+      "bytes": 6512,
+      "device": 66306,
+      "inode": 106969231,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-admission-scopes-20261016/controller-probe-injected-failure-v1.request.json",
+      "sha256": "72d5c670bfa793d1286279be2c653597e6b6d13671eb5a9ff3f1ccbe33a9a8ec"
+    },
+    "normal_bootstrap": {
+      "bytes": 3127,
+      "device": 66306,
+      "inode": 106969198,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-admission-scopes-20261016/controller-probe-normal-v1.bootstrap-result.json",
+      "sha256": "dc474cbed1c5b74d8cb8e41146136a451fa83646088813de4a62da1c092b65db"
+    },
+    "normal_closeout": {
+      "bytes": 7617,
+      "device": 66306,
+      "inode": 106969206,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-admission-scopes-20261016/normal-closeout-v1.json",
+      "sha256": "f6584e4c5d6114b7d6f9df49527a11c6ffe7baa13c57dea38cee5f7ebab417f3"
+    },
+    "normal_durability": {
+      "bytes": 1330,
+      "device": 66306,
+      "inode": 75251238,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-admission-scopes-20261016/controller-probe-normal-v1/logs/validation-durability.json",
+      "sha256": "727e4163697fb414f6a2540e05ab852ca3aab56816a2504b54ade9f3b62be2c6"
+    },
+    "normal_execution": {
+      "bytes": 48674,
+      "device": 66306,
+      "inode": 75251236,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-admission-scopes-20261016/controller-probe-normal-v1/logs/execution.json",
+      "sha256": "30351ec8ff508bff31dd81051a2b2cdd94bf29adf3ba3fcdbef43bb7ccd02978"
+    },
+    "normal_request": {
+      "bytes": 6422,
+      "device": 66306,
+      "inode": 106969181,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-admission-scopes-20261016/controller-probe-normal-v1.request.json",
+      "sha256": "1b8d166a3e3faf5097111c318087933ab261dad31401e2b9d89ec73f6871552d"
+    },
+    "normal_result": {
+      "bytes": 1031,
+      "device": 66306,
+      "inode": 75251237,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-admission-scopes-20261016/controller-probe-normal-v1/logs/result.json",
+      "sha256": "fcf566d5ab485811300fd50d4aeab818d024d2eb2c87eb464363788b64426ac4"
+    },
+    "promotion": {
+      "bytes": 1309,
+      "device": 66306,
+      "inode": 106968827,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-admission-scopes-20261016/canonical-promote-observation-v1.json",
+      "sha256": "bb24e515f4099c2eb311b2fd55099a341d8661f43f94c31887d05c844f2ab2b9"
+    },
+    "unit_control": {
+      "bytes": 1540,
+      "device": 66306,
+      "inode": 106611713,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/controller-worker-units-v1.lease.json",
+      "sha256": "fb4b50e1b0ca30aeea735b7139d8978a49f30a5383bfa5aafcac205e6e590ac9"
+    },
+    "unit_durability": {
+      "bytes": 2449,
+      "device": 66306,
+      "inode": 75251224,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-admission-scopes-20261016/unit-tests-v1/logs/validation-durability.json",
+      "sha256": "c49b502e5d75c5dbac3a149fa9879e59abef6ade74f8ef3fe016862d386bf33e"
+    },
+    "unit_execution": {
+      "bytes": 818,
+      "device": 66306,
+      "inode": 75251210,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-admission-scopes-20261016/unit-tests-v1/logs/execution.json",
+      "sha256": "b202c705edc383d88d3faf2d17d098bf0f0eaf2e0581cc98927ef8b845482a7a"
+    },
+    "unit_request": {
+      "bytes": 17623,
+      "device": 66306,
+      "inode": 106968980,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-admission-scopes-20261016/controller-unit-request-unit-tests-v1.json",
+      "sha256": "d315ff4386aa51aa6b641ad846c93d7177ddbf48e39bec0ca80b545d6e840e3b"
+    },
+    "unit_result": {
+      "bytes": 774,
+      "device": 66306,
+      "inode": 75251211,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-admission-scopes-20261016/unit-tests-v1/logs/result.json",
+      "sha256": "9fadf7c98095f5656ffe47991e4bd8656dad853c8585bfe0a2b3bea60eaab048"
+    },
+    "unit_xml": {
+      "bytes": 24393,
+      "device": 66306,
+      "inode": 75251221,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-admission-scopes-20261016/unit-tests-v1/exports/pytest.xml",
+      "sha256": "f94efd05f756b817667c656fbd1d8e1c5ce38663e6b8a7e329bd10881a724bf0"
+    }
+  },
+  "weights_downloaded": false,
+  "whole_unit_native_memory_hard_confinement": false
+}
