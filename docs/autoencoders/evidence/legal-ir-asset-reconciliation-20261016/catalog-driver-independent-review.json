@@ -1,0 +1,220 @@
+{
+  "authority": {
+    "checkpoint_bytes_authenticated": false,
+    "current_registration_observed": false,
+    "native_execution_passed": false,
+    "proof_authority": false,
+    "runtime_ready": false,
+    "source_semantics_verified": false,
+    "teacher_qualified": false
+  },
+  "claim_scope_review": {
+    "F18_presence_or_absence_scope": "Exact checkpointSHA within the strict IR declaration catalog only. A malformed/over-bound/unavailable store causes refusal, not an absence result.",
+    "catalog_count_not_total_database_row_count": true,
+    "checkpoint_hash_declaration_not_byte_authentication": true,
+    "declared_readiness_not_runtime_observation": true,
+    "missing_query_means": "No exact unique ten-selector binding in this one complete successfully loaded bounded strict IR declaration snapshot; not absence from generic ModelManager rows, another store, another process or every checkpoint inventory.",
+    "no_model_manager_construction_registration_or_active_process_refresh": true
+  },
+  "concrete_blockers": [],
+  "custody_and_output_review": {
+    "database_and_wal": "Before/after leaf lstat witnesses compare device/inode/mode/link-count/size/mtime/ctime for fixed database and optional fixed .wal. Database whole-file hash is explicitly not performed. The public reader also checks selected-store endpoint identity across its read.",
+    "double_close_issue_found": false,
+    "export_projection": "Only explicit selectors, record/catalogIDs, projected display_name/aliases, declared status fields and original checkpoint pin are exported. Arbitrary declaration/config extras and generic manager rows are not dumped.",
+    "failure_retention": "Nonzero refusal contains phase/type and bounded safe diagnostics. Final version retains source-pin roster and best-effort database/WAL closing witnesses, with successful_closing_fences_completed=False; witness observation errors remain explicit. No fallback SQL, mutation, retry or overwrite is attempted.",
+    "optional_owner_exclusion": "Preloaded product/provider modules refuse; unselected accelerator imports refuse. ModelManager/decoder/provider/encoder/datasets/kit/network imports are excluded by the checked loader. Subprocess/fork/spawn/system and socket audit events refuse; bytecode writes are disabled.",
+    "scope": "These are cooperative endpoint and checked-source-buffer contracts. They do not claim an atomic database/filesystem snapshot, installed DuckDB binary authentication, host confinement, current runtime readiness or semantic authority.",
+    "source_and_request_reads": "Bounded O_RDONLY|O_NOFOLLOW descriptor reads with parent-component directory traversal; exact expected hashes/lengths; descriptor and reopened path identity checks. All eight product modules execute only their checked source buffers, and final retained module/path/source identity is rechecked.",
+    "write_scope": "One exclusive0600 regular JSON file in the native TMPDIR sibling exports directory, whose owner/mode0700/empty population and parent identity are checked. Output is bounded to8MiB; writes, file and directory are fsynced. Driver neither creates a new arbitrary output root nor overwrites an existing export."
+  },
+  "driver": {
+    "bytes": 22151,
+    "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/read_current_ir_catalog.py",
+    "sha256": "7ff80387e1674c0b94416af3e1a9d59ff58dedd73620755cec342aaefe2aa278"
+  },
+  "historical_registration_survey": {
+    "bytes": 22384,
+    "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/historical-registration-survey.json",
+    "sha256": "267d8756c4a0d587bcda3f0bb0cb0411bbf8d4aee2e62ef1b665d4767a1f0e5b"
+  },
+  "method": "Independent complete source read plus Python standard-library AST and byte-hash inspection of the frozen driver, request and eight actual product source bodies. No driver/product import, DuckDB open, native job, inference, test, network operation or model payload access.",
+  "observed_at_utc": "2026-10-16T02:35:12.332156+00:00",
+  "public_api_review": {
+    "ModelDescriptor_display_name_aliases_provenance_fields_exist": true,
+    "bounded_public_model_metadata_select": true,
+    "driver_public_load_call_sites": 1,
+    "explicit_absolute_path_required": true,
+    "no_handwritten_SQL_or_fallback_in_driver": true,
+    "no_per_query_source_reload": true,
+    "owner": "ipfs_accelerate_py.model_catalog.sources.ir_persistent.IRPersistentCatalogSource",
+    "public_connection_closes_in_finally": true,
+    "query_uses_already_loaded_result_resolver": true,
+    "result_models_revision_ir_bindings_attributes_exist": true,
+    "underlying_connect_read_only_true": true
+  },
+  "request": {
+    "bytes": 6507,
+    "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/catalog-input-request.json",
+    "sha256": "19eeaab68a6349fa024791f831b45c20017df3a113f0b6edce4e231511b0754c"
+  },
+  "request_review": {
+    "all_queries_equal_historical_survey": true,
+    "closed_request_schema": "legal-ir-current-catalog-read-request/v1",
+    "exact_query_count": 8,
+    "exact_selected_store": "/home/barberb/lift_coding/external/ipfs_accelerate/model_manager.duckdb",
+    "output_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-current-catalog-20261016-a-01/exports/current-legal-ir-catalog.json",
+    "queries": [
+      {
+        "checkpoint_sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00",
+        "dimension": 384,
+        "equals_historical_ten_selector_query": true,
+        "record_id": "ir-model-asset-binding/v1:10485c538f0f4a64e9ec0b6fa1c62e06af1f368446cd2c0e8e342e127e9055d9",
+        "record_id_recomputed_from_declared_identity": true,
+        "role": "selected_contextual_semantic_decoder_state",
+        "unknown_schema_profile_format_preserved": true
+      },
+      {
+        "checkpoint_sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4",
+        "dimension": 768,
+        "equals_historical_ten_selector_query": true,
+        "record_id": "ir-model-asset-binding/v1:c992440d87ae57cffb689aa37fe2f3b63e9ae4c251a9ad65697148e576f840e2",
+        "record_id_recomputed_from_declared_identity": true,
+        "role": "selected_contextual_semantic_decoder_state",
+        "unknown_schema_profile_format_preserved": true
+      },
+      {
+        "checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+        "dimension": 384,
+        "equals_historical_ten_selector_query": true,
+        "record_id": "ir-model-asset-binding/v1:f758fb82fd2041d57af0b60a7dcf6d3cb27154315bd74a72c0c132645e5fabff",
+        "record_id_recomputed_from_declared_identity": true,
+        "role": "control_wording_ce_selected_semantic_decoder_state",
+        "unknown_schema_profile_format_preserved": true
+      },
+      {
+        "checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+        "dimension": 384,
+        "equals_historical_ten_selector_query": true,
+        "record_id": "ir-model-asset-binding/v1:48c8077b2266bb1972652f7517643d664dc166429df63bf0b687df441b12e787",
+        "record_id_recomputed_from_declared_identity": true,
+        "role": "control_wording_ce_last_attempt_semantic_decoder_state",
+        "unknown_schema_profile_format_preserved": true
+      },
+      {
+        "checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+        "dimension": 384,
+        "equals_historical_ten_selector_query": true,
+        "record_id": "ir-model-asset-binding/v1:8a90a70566137b0a0eccb89bb5c922bf323eadc9637b1a4a28f0c97117bab580",
+        "record_id_recomputed_from_declared_identity": true,
+        "role": "balanced_wording_ce_selected_semantic_decoder_state",
+        "unknown_schema_profile_format_preserved": true
+      },
+      {
+        "checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+        "dimension": 384,
+        "equals_historical_ten_selector_query": true,
+        "record_id": "ir-model-asset-binding/v1:ba797ef100d2132650683b2cd80709a563bad78fa21b2563de9aaba16326efab",
+        "record_id_recomputed_from_declared_identity": true,
+        "role": "balanced_wording_ce_last_attempt_semantic_decoder_state",
+        "unknown_schema_profile_format_preserved": true
+      },
+      {
+        "checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+        "dimension": 384,
+        "equals_historical_ten_selector_query": true,
+        "record_id": "ir-model-asset-binding/v1:6ad44e541dabf272b043ee6545551164aced8886fa14fe5b21d3cef28dd16c3c",
+        "record_id_recomputed_from_declared_identity": true,
+        "role": "dual_bank_retention_ce_selected_semantic_decoder_state",
+        "unknown_schema_profile_format_preserved": true
+      },
+      {
+        "checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+        "dimension": 384,
+        "equals_historical_ten_selector_query": true,
+        "record_id": "ir-model-asset-binding/v1:c743be38f98deb5e5c6c6348a9a573d84111f062c820f3689a50afde6e703b16",
+        "record_id_recomputed_from_declared_identity": true,
+        "role": "dual_bank_retention_ce_last_attempt_semantic_decoder_state",
+        "unknown_schema_profile_format_preserved": true
+      }
+    ],
+    "record_limit": 1000,
+    "request_is_a_retained_declaration_not_resource_admission": true,
+    "source_pins": [
+      {
+        "bytes": 40208,
+        "current_bytes_match": true,
+        "method": "read-only source SHA/size and AST inspection; not executed",
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/__init__.py",
+        "sha256": "5083369f823be18cd467346f6f3b955925ec65bedafe9eb28a61ca8897997c03"
+      },
+      {
+        "bytes": 1596,
+        "current_bytes_match": true,
+        "method": "read-only source SHA/size and AST inspection; not executed",
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/__init__.py",
+        "sha256": "ecd4d6099e267ee2b65284691a298285f44d5443da4a1142e8bb260ae530ffd0"
+      },
+      {
+        "bytes": 8918,
+        "current_bytes_match": true,
+        "method": "read-only source SHA/size and AST inspection; not executed",
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/identity.py",
+        "sha256": "fbaf013ad8dd3035cfe04e9bfbb841aa72f8581ed04eb6a543abcd3d579caf44"
+      },
+      {
+        "bytes": 36178,
+        "current_bytes_match": true,
+        "method": "read-only source SHA/size and AST inspection; not executed",
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/schema.py",
+        "sha256": "e1fa8ec5f8e9f856f626b40aa896df0bde490055978bddea0e4b8a9885b89f49"
+      },
+      {
+        "bytes": 1043,
+        "current_bytes_match": true,
+        "method": "read-only source SHA/size and AST inspection; not executed",
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/__init__.py",
+        "sha256": "b771d4d00b5cf8f167e9bb7aa3951e25a8d5a225b78b0e872c1a21eabf5672f4"
+      },
+      {
+        "bytes": 37159,
+        "current_bytes_match": true,
+        "method": "read-only source SHA/size and AST inspection; not executed",
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/static.py",
+        "sha256": "4f9b658aecc00820e2d87866445f298c248e6d9a39161b1499a884f6451281cf"
+      },
+      {
+        "bytes": 3331,
+        "current_bytes_match": true,
+        "method": "read-only source SHA/size and AST inspection; not executed",
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/persistent.py",
+        "sha256": "be262df4374f2fdcb08e8e517b7e05570bc524e94d79bcb47201bedff12edfa8"
+      },
+      {
+        "bytes": 19952,
+        "current_bytes_match": true,
+        "method": "read-only source SHA/size and AST inspection; not executed",
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/ir_persistent.py",
+        "sha256": "2cfdb2ad61c9bb1f2fe1c64cf6c70ca45c932d0ec53ccdd08640600d5730beed"
+      }
+    ]
+  },
+  "reviewer_execution": {
+    "driver_executions": 0,
+    "duckdb_opens": 0,
+    "git_mutations": 0,
+    "http_requests": 0,
+    "inference_calls": 0,
+    "model_loads": 0,
+    "native_admissions": 0,
+    "product_imports": 0,
+    "tests": 0,
+    "training_runs": 0
+  },
+  "schema": "legal-ir-current-catalog-driver-independent-review/v1",
+  "selected_checkpoint_survey": {
+    "bytes": 71465,
+    "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/checkpoint-asset-survey.json",
+    "sha256": "410e979608202840d032f1a932c27095ffaf1cf2c00ff57afd72b0b2fbb541d2"
+  },
+  "status": "pass_static_review"
+}

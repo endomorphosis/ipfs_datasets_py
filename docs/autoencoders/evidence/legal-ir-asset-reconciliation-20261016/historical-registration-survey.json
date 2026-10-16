@@ -1,0 +1,453 @@
+{
+  "F18": {
+    "checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+    "current_live_registration": "not observed",
+    "matches_in_Oct7_snapshot": 0,
+    "missing_registration_mapping": "If independently established missing, append a separate ir-decoder-component-binding/v1 with dimension=None and dimension_role=source_tokens; retain disabled-latent/source-conditioned lineage, never infer a native384D input lane from its placeholder."
+  },
+  "historical_legal_ir_counts": {
+    "all_runtime_teacher_proof_flags_false": true,
+    "by_dimension": {
+      "384": 101,
+      "768": 15,
+      "8": 17,
+      "None": 388
+    },
+    "by_dimension_role": {
+      "input_embedding": 117,
+      "latent": 16,
+      "source_tokens": 363,
+      "unbound_component": 25
+    },
+    "distinct_checkpoint_byte_shas": 521,
+    "explicit_alias_fields": 0,
+    "records": 521
+  },
+  "historical_snapshot": {
+    "attributed_registration_date": "2026-10-07",
+    "bytes": 11652843,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/after-records.json",
+    "records": 684,
+    "sha256": "f407269a635903ba67d7a8ecc8228dfe48806ddd9ef8ccab6a8392014ca04d40"
+  },
+  "important_corrections": [
+    "The two full contextual states absent in the October6survey are present in this later October7snapshot; do not duplicate-import without a current readback.",
+    "The six wording selected/last-attempt serialization records represent three fitted tensor endpoints, not six independent fits.",
+    "Explicit schema/profile/format fields remain null for these historical LegalIR bindings; serialization schema does not fill them.",
+    "Persisted model_id/source_record_id, exact IR canonical ID and generic canonical ID belong to distinct namespaces.",
+    "No current live presence, remote readback, numerical reload, teacher quality or semantic admission is newly established."
+  ],
+  "observed_at_utc": "2026-10-16T02:28:36.147712+00:00",
+  "queries": [
+    {
+      "checkpoint_sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:10485c538f0f4a64e9ec0b6fa1c62e06af1f368446cd2c0e8e342e127e9055d9",
+      "role": "selected_contextual_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4",
+      "dimension": 768,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:c992440d87ae57cffb689aa37fe2f3b63e9ae4c251a9ad65697148e576f840e2",
+      "role": "selected_contextual_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:f758fb82fd2041d57af0b60a7dcf6d3cb27154315bd74a72c0c132645e5fabff",
+      "role": "control_wording_ce_selected_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:48c8077b2266bb1972652f7517643d664dc166429df63bf0b687df441b12e787",
+      "role": "control_wording_ce_last_attempt_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:8a90a70566137b0a0eccb89bb5c922bf323eadc9637b1a4a28f0c97117bab580",
+      "role": "balanced_wording_ce_selected_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:ba797ef100d2132650683b2cd80709a563bad78fa21b2563de9aaba16326efab",
+      "role": "balanced_wording_ce_last_attempt_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:6ad44e541dabf272b043ee6545551164aced8886fa14fe5b21d3cef28dd16c3c",
+      "role": "dual_bank_retention_ce_selected_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    {
+      "checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:c743be38f98deb5e5c6c6348a9a573d84111f062c820f3689a50afde6e703b16",
+      "role": "dual_bank_retention_ce_last_attempt_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    }
+  ],
+  "query_count": 8,
+  "schema": "legal-ir-historical-registration-survey/v1",
+  "scope": "Standard-library review of authenticated retained metadata and producer receipts only; no live database/catalog connection, product imports, model loads, network or writes outside this survey.",
+  "selected_historical_bindings": [
+    {
+      "current_live_binding_observed": false,
+      "declaration": {
+        "donor": null,
+        "initialization_only": false,
+        "proof_authority": false,
+        "runtime_ready": false,
+        "teacher_qualified": false,
+        "trained": true
+      },
+      "display_name": "LegalIR 384D retained contextual selected decoder",
+      "display_name_is_registered_alias": false,
+      "historical_metadata_row_sha256": "e5fe4592c64ff4046efcfb26831a4c05703b20a5eef47c558974fdc22170529b",
+      "immutable_release": {
+        "checkpoint_sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00",
+        "path_in_repo": "releases/20261004-additional-decoder-cutoff-v1/checkpoints/decoder-selected-continuation-20261004/384-selected-followup-lr0001-1729/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "49839a5e55e2ef8ab3815f4e2650dc69ee72d5b8"
+      },
+      "model_id": "ir-model-asset-binding/v1:10485c538f0f4a64e9ec0b6fa1c62e06af1f368446cd2c0e8e342e127e9055d9",
+      "original_checkpoint_pin": {
+        "bytes": 2799098,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+        "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+      },
+      "selectors": {
+        "checkpoint_sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:10485c538f0f4a64e9ec0b6fa1c62e06af1f368446cd2c0e8e342e127e9055d9",
+        "role": "selected_contextual_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      }
+    },
+    {
+      "current_live_binding_observed": false,
+      "declaration": {
+        "donor": null,
+        "initialization_only": false,
+        "proof_authority": false,
+        "runtime_ready": false,
+        "teacher_qualified": false,
+        "trained": true
+      },
+      "display_name": "LegalIR 768D retained contextual selected decoder",
+      "display_name_is_registered_alias": false,
+      "historical_metadata_row_sha256": "82d0d7a0f5ec6f350b3a7597afa9cf86e1930a88eab1146494cbb124ff25072f",
+      "immutable_release": {
+        "checkpoint_sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4",
+        "path_in_repo": "releases/20261004-additional-decoder-cutoff-v1/checkpoints/decoder-selected-continuation-20261004/768-selected-followup-lr0001-1729/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "49839a5e55e2ef8ab3815f4e2650dc69ee72d5b8"
+      },
+      "model_id": "ir-model-asset-binding/v1:c992440d87ae57cffb689aa37fe2f3b63e9ae4c251a9ad65697148e576f840e2",
+      "original_checkpoint_pin": {
+        "bytes": 4781613,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+        "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+      },
+      "selectors": {
+        "checkpoint_sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4",
+        "dimension": 768,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:c992440d87ae57cffb689aa37fe2f3b63e9ae4c251a9ad65697148e576f840e2",
+        "role": "selected_contextual_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      }
+    },
+    {
+      "current_live_binding_observed": false,
+      "declaration": {
+        "donor": null,
+        "initialization_only": false,
+        "proof_authority": false,
+        "runtime_ready": false,
+        "teacher_qualified": false,
+        "trained": true
+      },
+      "display_name": "LegalIR384 retained control-wording-ce selected",
+      "display_name_is_registered_alias": false,
+      "historical_metadata_row_sha256": "a1cf7d18b9612547c1f341123d7a98ba98001fbf442682ac269b59e2fab8d9fd",
+      "immutable_release": {
+        "checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "model_id": "ir-model-asset-binding/v1:f758fb82fd2041d57af0b60a7dcf6d3cb27154315bd74a72c0c132645e5fabff",
+      "original_checkpoint_pin": {
+        "bytes": 2797024,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected-state.json",
+        "sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff"
+      },
+      "selectors": {
+        "checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:f758fb82fd2041d57af0b60a7dcf6d3cb27154315bd74a72c0c132645e5fabff",
+        "role": "control_wording_ce_selected_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      }
+    },
+    {
+      "current_live_binding_observed": false,
+      "declaration": {
+        "donor": null,
+        "initialization_only": false,
+        "proof_authority": false,
+        "runtime_ready": false,
+        "teacher_qualified": false,
+        "trained": true
+      },
+      "display_name": "LegalIR384 retained control-wording-ce last-attempt",
+      "display_name_is_registered_alias": false,
+      "historical_metadata_row_sha256": "56fdf39373185ec73553c4bb45bc0171a3b065b3ad85070ab70cc2fc0676ef7e",
+      "immutable_release": {
+        "checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "model_id": "ir-model-asset-binding/v1:48c8077b2266bb1972652f7517643d664dc166429df63bf0b687df441b12e787",
+      "original_checkpoint_pin": {
+        "bytes": 2797028,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt-state.json",
+        "sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26"
+      },
+      "selectors": {
+        "checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:48c8077b2266bb1972652f7517643d664dc166429df63bf0b687df441b12e787",
+        "role": "control_wording_ce_last_attempt_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      }
+    },
+    {
+      "current_live_binding_observed": false,
+      "declaration": {
+        "donor": null,
+        "initialization_only": false,
+        "proof_authority": false,
+        "runtime_ready": false,
+        "teacher_qualified": false,
+        "trained": true
+      },
+      "display_name": "LegalIR384 retained balanced-wording-ce selected",
+      "display_name_is_registered_alias": false,
+      "historical_metadata_row_sha256": "9a51ac05dea203aa4ca00bd24483a073d8575b825901cde9f4257f58fef012cc",
+      "immutable_release": {
+        "checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "model_id": "ir-model-asset-binding/v1:8a90a70566137b0a0eccb89bb5c922bf323eadc9637b1a4a28f0c97117bab580",
+      "original_checkpoint_pin": {
+        "bytes": 2797399,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/balanced-wording-ce/selected-state.json",
+        "sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05"
+      },
+      "selectors": {
+        "checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:8a90a70566137b0a0eccb89bb5c922bf323eadc9637b1a4a28f0c97117bab580",
+        "role": "balanced_wording_ce_selected_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      }
+    },
+    {
+      "current_live_binding_observed": false,
+      "declaration": {
+        "donor": null,
+        "initialization_only": false,
+        "proof_authority": false,
+        "runtime_ready": false,
+        "teacher_qualified": false,
+        "trained": true
+      },
+      "display_name": "LegalIR384 retained balanced-wording-ce last-attempt",
+      "display_name_is_registered_alias": false,
+      "historical_metadata_row_sha256": "3e8d9839ebaffa10b8601014fd3d429830806361843ee8ff70664efdc9c2736f",
+      "immutable_release": {
+        "checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "model_id": "ir-model-asset-binding/v1:ba797ef100d2132650683b2cd80709a563bad78fa21b2563de9aaba16326efab",
+      "original_checkpoint_pin": {
+        "bytes": 2797403,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/balanced-wording-ce/last-attempt-state.json",
+        "sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1"
+      },
+      "selectors": {
+        "checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:ba797ef100d2132650683b2cd80709a563bad78fa21b2563de9aaba16326efab",
+        "role": "balanced_wording_ce_last_attempt_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      }
+    },
+    {
+      "current_live_binding_observed": false,
+      "declaration": {
+        "donor": null,
+        "initialization_only": false,
+        "proof_authority": false,
+        "runtime_ready": false,
+        "teacher_qualified": false,
+        "trained": true
+      },
+      "display_name": "LegalIR384 retained dual-bank-retention-ce selected",
+      "display_name_is_registered_alias": false,
+      "historical_metadata_row_sha256": "32f7beb2f983dbb743d884e00ac44ca1d72c9243dead302ee7a9457244d6c58f",
+      "immutable_release": {
+        "checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "model_id": "ir-model-asset-binding/v1:6ad44e541dabf272b043ee6545551164aced8886fa14fe5b21d3cef28dd16c3c",
+      "original_checkpoint_pin": {
+        "bytes": 2797164,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected-state.json",
+        "sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e"
+      },
+      "selectors": {
+        "checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:6ad44e541dabf272b043ee6545551164aced8886fa14fe5b21d3cef28dd16c3c",
+        "role": "dual_bank_retention_ce_selected_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      }
+    },
+    {
+      "current_live_binding_observed": false,
+      "declaration": {
+        "donor": null,
+        "initialization_only": false,
+        "proof_authority": false,
+        "runtime_ready": false,
+        "teacher_qualified": false,
+        "trained": true
+      },
+      "display_name": "LegalIR384 retained dual-bank-retention-ce last-attempt",
+      "display_name_is_registered_alias": false,
+      "historical_metadata_row_sha256": "ed2cfa309ad68b7cc1eee3bccd77cf0296ece7f3c0ddd5c7a80774e80fa633e0",
+      "immutable_release": {
+        "checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "model_id": "ir-model-asset-binding/v1:c743be38f98deb5e5c6c6348a9a573d84111f062c820f3689a50afde6e703b16",
+      "original_checkpoint_pin": {
+        "bytes": 2797168,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt-state.json",
+        "sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f"
+      },
+      "selectors": {
+        "checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:c743be38f98deb5e5c6c6348a9a573d84111f062c820f3689a50afde6e703b16",
+        "role": "dual_bank_retention_ce_last_attempt_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      }
+    }
+  ],
+  "supporting_availability": {
+    "bytes": 16223,
+    "path": "/home/barberb/lift_coding/.worktrees/legal-ir-execution-plan-refresh-20261016/docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+    "sha256": "551ce13fe7a1d1956383a71abb145adab67afaab6d0b96aa316345d0aba20fce"
+  }
+}

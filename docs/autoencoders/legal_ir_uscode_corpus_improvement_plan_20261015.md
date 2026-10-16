@@ -287,6 +287,13 @@ The additive [typed relational batch evaluator](legal_relational_batch_evaluatio
 
 ## 6 Keep 8D 384D and 768D paths parallel
 
+The [current asset reconciliation](legal_ir_asset_reconciliation_20261016.md)
+locates later native-conditioning receipts, a 360/120-pair affine fit and saved
+aligned/original-start interface checkpoints. The older zero-ready preparation
+reports describe their own generations, not the latest saved work. Reuse the
+compatible fitted generation after authenticating its exact native sources and
+required outer runtime provenance; a fresh numerical reload remains separate.
+
 The target model is **768D**, rather than 786D. The [gte-multilingual-base model card](https://huggingface.co/Alibaba-NLP/gte-multilingual-base) specifies 768 dimensions and an 8,192-token input ceiling. That ceiling is not evidence that the existing decoder reconstructs 8,192-token statutes. Input context, latent geometry, output token budget and rule cardinality are independent versioned capabilities.
 
 | Lane | Preserve | Next qualification |
@@ -380,9 +387,9 @@ Separate semantic JSON/AST, original-text reconstruction, span proposal, grouped
 
 Use separate LegalIR8D/384D/768D inventories and physical registry/index databases with serialized writers. The shared source CAS can be deduplicated by immutable reference. Keep candidate, reviewed, proof and operational status namespaces separate. Start from proven DuckDB plus immutable Parquet/CAS; the retained DuckLake adapter/layout is not evidence of a qualified production lake. Qualify transaction, snapshot and restart behavior before adopting it. Quack metadata may project status and joins. Exact artifact/manifest identities establish custody; admission also requires the independently verified policy and evidence for that stage.
 
-Reuse existing family repositories where present; proposed missing cells follow `Publicus/legal-ir-autoencoder-{8d,384d,768d}` after verifying current ownership and identities. Preserve the aggregate `Publicus/legal-ir-autoencoder` archive and previous releases. New repositories use the user's selected public visibility; existing visibility stays unchanged. Version schemas/tasks/profiles inside each dimension repository.
+Reuse existing family repositories where present; the October 16 [asset reconciliation](legal_ir_asset_reconciliation_20261016.md) now verifies public metadata for all three `Publicus/legal-ir-autoencoder-{8d,384d,768d}` repositories at immutable commits. Preserve the aggregate `Publicus/legal-ir-autoencoder` archive and previous releases. New repositories use the user's selected public visibility; existing visibility stays unchanged. Version schemas/tasks/profiles inside each dimension repository.
 
-Import exact releases into ModelManager as retained, replay-qualified, experimental or promoted roles with accurate capabilities and immutable Hub commit/path/hash. Keep aliases from silently selecting another schema/task or unpromoted F18 state. Verify a cold resolver retrieves the exact artifact and a compatible isolated numerical reload reproduces recorded outputs before marking it load-qualified. Current F18 registration was not established by this review; make that a reconciliation work item, not a presumed completion.
+Import exact releases into ModelManager as retained, replay-qualified, experimental or promoted roles with accurate capabilities and immutable Hub commit/path/hash. Keep aliases from silently selecting another schema/task or unpromoted F18 state. Verify a cold resolver retrieves the exact artifact and a compatible isolated numerical reload reproduces recorded outputs before marking it load-qualified. The later read-only catalog reconciliation resolves all eight selected contextual/wording bindings and locates the fitted bridge/interface states, while the three selected F15/F17/F18 checkpoint hashes have no strict IR declaration match. Prepare their missing-only source-token component imports through the existing owner; a disabled 384-value placeholder must not create an active 384D lane. This observation changes no registry record or runtime selection.
 
 Extend both caches additively with versioned `source_units`, `interpretations`, `reviews` and graph `mentions`, `nodes`, `edges`, `definitions`, `assertions`, `resolutions`, `issues` and `build_receipts` tables. Do not rewrite diagnostic rows into accepted rows. A coordinated release manifest binds exact span-cache commit, entity/graph-cache commit, model lineage and Lean corpus/toolchain outputs. Verify remote bodies at immutable commits before advancing the selected release. Resolve uncertain upload outcomes before retrying; retain the prior coherent release after a partial upload. Avoid a self-referential manifest commit hash by publishing referenced data first and storing the coordinator receipt separately.
 
