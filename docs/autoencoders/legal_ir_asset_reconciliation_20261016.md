@@ -18,7 +18,7 @@ not discovery of every model on the machine.
 | 8D | Full historical sparse state, separate small linguistic bundle, and learned 18-entry formula sidecar | These are three distinct artifacts/tasks. The formula sidecar's two synthetic examples do not qualify statutory supervision. |
 | 384D | Original 32-entry source-v2 GRU, contextual selected state and six retained-wording run/role records | Preserve task, codec, preprocessing, source cohort and selected/last identity. Shared width does not establish interchangeability. |
 | 768D | Original dual-donor initializer, later fitted affine/interface generations and contextual selected state | The unaligned initializer is not the latest saved conditioning work. Fitted interfaces and contextual models remain separate lineages. |
-| Detached source-token components | F15, F17 and F18 | Their declared 384-value placeholder and disabled latent do not bind an active 384D embedding lane. Use the existing detached component identity when registering them. |
+| Detached source-token components | F15, F17 and F18 | Their declared 384-value placeholder and disabled latent do not bind an active 384D embedding lane. Preserve their registered detached component identities. |
 
 F19 supplies saved-score diagnostics, not a new composed checkpoint in the
 inspected evidence. None of these inventory observations grants teacher,
@@ -122,9 +122,9 @@ itself a checkpoint key; resolve its actual weights before treating that entry
 as an import gap.
 
 The [independent native audit](evidence/legal-ir-asset-reconciliation-20261016/catalog-native-independent-audit.json)
-checks the result and durable closeout. This operation used the public read-only
-IR catalog source without constructing ModelManager or loading a model.
-Registry records and active processes were not updated. Strict IR catalog
+checks the earlier catalog survey and its durable closeout. That survey used
+the public read-only IR catalog source without constructing ModelManager or
+loading a model; it updated no registry records or active processes. Strict IR catalog
 coverage remains distinct from every possible generic manager row or running
 process. The existing cooperative process-group profile does not establish
 kernel containment or broader model-execution qualification.
