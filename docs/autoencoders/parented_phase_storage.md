@@ -74,3 +74,37 @@ and arbitrary external writers require a separately qualified profile.
 Resource receipts, successful tests and compiler output are not formalization
 or Lean admission. Only `lake build <Lib>` admits Lean. The Constitution remains
 unformalized, and training/decoder fidelity gates are unchanged.
+
+## Retained foreign coordinator custody
+
+`RetainedForeignPhaseResourceReservation` is a separate qualified profile for
+one predeclared external DuckDB coordinator. It uses the same existing ledger,
+named roots, storage limit and actual native phase child. Its closed
+`foreign_scope` declaration contains `schema="retained-foreign-duckdb-scope/v1"`,
+an exact absolute `database_path`, the existing parent's `parent_identity`
+(`path`, `device`, `inode`), and `retained_bytes`. The only foreign files covered
+are that database, its `.wal`, and the two derived native lock files
+`.<database>.lock` and `.<database>.serialized-coordinator.lock`. It rejects
+redirected parents, symlinks, hard links, undeclared database companions and
+growth beyond the retained bound. It grants no database write or task authority.
+
+The entire job promise remains charged during execution. Watchdog samples add
+actual foreign bytes to the attempt's usage and enforce both bounds. After
+children stop and artifacts become durable, explicit `finalize` releases the
+actual native compute child but retains a real bounded disk reservation while
+foreign files persist. Named-root outputs remain in the fresh global census.
+Original external charges are archived and removed from the now foreign-only
+live charge inventory. Existing v1 consumers already include this retained
+reservation in their outstanding total; neither ledger schema nor root scope
+is modified. A finalized foreign record is persistent custody, not a released
+disk claim, and must not be discarded by generic stale-attempt cleanup.
+
+A later actual native phase can transfer only exact, stopped, durable custody
+whose original native child release was recorded. Both promises are charged
+before the atomic transfer; the predecessor retains its original owner/lease
+identities and links to the genuine successor. Interrupted or active custody
+refuses reuse. Ordinary context failure retains the full original job promise.
+Disk `release` refuses while any covered foreign file exists. Empty-scope
+retirement requires a fresh admitted native phase and a fresh empty-file check
+under the ledger lock. Monitoring is cooperative and runs only while the
+current finite owner is active; the persistent bound stays charged afterward.
