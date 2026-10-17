@@ -367,13 +367,13 @@ def _supervise(config, reservation, *, child_argv=None):
 
 
 def execute(args, expected):
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources import DaemonResourceReservation
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources import DaemonResourceReservation, MAX_LEDGER_BYTES
     helpers = _helpers()
     directory = args.output_directory
     directory.mkdir(parents=True, exist_ok=False)
     ledger = args.resource_ledger
     if ledger.exists():
-        roots = [row["path"] for row in json.loads(_read_regular(ledger, 8 * 1024 * 1024))["roots"]]
+        roots = [row["path"] for row in json.loads(_read_regular(ledger, MAX_LEDGER_BYTES))["roots"]]
     else:
         roots = [str(path) for path in args.resource_root] or [str(directory)]
     if not any(directory == Path(root) or Path(root) in directory.parents for root in roots):
