@@ -1,0 +1,16 @@
+{
+  "case_inputs_assertions_and_ids_unchanged": true,
+  "exact_change": "Removed exactly one final LF outside every Python statement; qualified_bytes == published_bytes + one LF.",
+  "full_AST_including_attributes_identical": true,
+  "native_work_completed_before_change": true,
+  "observed_at_utc": "2026-10-16T01:23:47.677450+00:00",
+  "path": "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+  "product_owner_or_helper_changed": false,
+  "published_bytes": 37167,
+  "published_sha256": "240d655936efe8ee00c7b7d1e7843fe6d5f8d97ca2e9deb704b48c7968873592",
+  "qualification_or_comparison_rerun": false,
+  "qualified_bytes": 37168,
+  "qualified_sha256": "c07593c1c7a29c6cdea388072b586590f4a5b76ca4f7ee6d457663371043d84f",
+  "schema": "legal-typed-reconstruction-postqualification-test-format-reconciliation/v1",
+  "validation_scope": "Native receipts keep their exact executed-byte identities. Published test differs only by this separately proved trailing whitespace removal; no blanket claim that every historical source pin equals the final test transport."
+}

@@ -1,0 +1,21 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": false,
+  "elapsed_seconds": 45.99810462188907,
+  "error": "validation command failed with returncode 1",
+  "error_type": "RuntimeError",
+  "executed_checks": [
+    "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py",
+    "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py"
+  ],
+  "model_weights_downloaded": false,
+  "received_signals": [],
+  "request_sha256": "d91a5f60f3a5571e65a26202bdeb616ec3ff0544ac3ed0d7aecfefc025d2d5f0",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 1,
+  "schema": "owned-validation-result/v1",
+  "watchdog_errors": []
+}

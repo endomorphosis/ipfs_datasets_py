@@ -1,0 +1,27 @@
+{
+  "adapted_sha256": "de732af8e8c4e327a3fd06ea0b709b4e8b62096048f5d387b05bdc607466f4f1",
+  "bytes": 5506,
+  "literal_substitutions": [
+    {
+      "new": "legal-source-corpus-reuse-20261016-a-03",
+      "old": "legal-source-corpus-reuse-20261016-a-02"
+    },
+    {
+      "new": "qualification-request-03.json",
+      "old": "qualification-request-02.json"
+    },
+    {
+      "new": "d64514f04b751dd4aeb67f454a162e5d8fc7ca9ef25404fb441e919ca0aea54f",
+      "old": "0b72c9bb47f84afecc2dd7e4bf8280de9a8d8694bf3d43ac1b378ef519a3686d"
+    },
+    {
+      "new": "qualification03-own-recovery-receipt-v01.json",
+      "old": "qualification02-own-recovery-receipt-v01.json"
+    }
+  ],
+  "native_recovery_executed": false,
+  "reverse_substitutions_reproduce_original_bytes": true,
+  "schema": "legal-source-reuse-recovery03-static-review/v1",
+  "scope": "exact failed03 only; no workload/lease/reservation/delete/foreigncleanup",
+  "source_sha256": "ef6ba648e93323972ce6facd9e90a030c0dfe5ecbe392633b01f6cdb7c3b00d4"
+}

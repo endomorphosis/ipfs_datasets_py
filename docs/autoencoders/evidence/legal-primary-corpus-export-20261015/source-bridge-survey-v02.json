@@ -1,0 +1,594 @@
+{
+  "schema": "legal-primary-source-bridge-source-survey/v1",
+  "observed_at_utc": "2026-10-15T21:24:06Z",
+  "method": "Read-only bounded Git filename/ref metadata, committed source/guides and named committed evidence metadata; no product or numerical execution, corpus/fixture body reads, private bridge artifact reads, foreign worktree inspection, ledger access, ref updates or checkout mutation.",
+  "scope": "Static reuse and upstream reconciliation recommendations; runtime claims below are attributed to immutable contributed evidence, not independently reexecuted or a recount of all artifact bodies.",
+  "checkout": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets",
+    "frozen_base": "90662a4c6e0f12059c9900ba94ae80a4c86a0e25",
+    "current_worktree_product_modified_by_this_survey": false,
+    "active_producer_consumer_requests_not_modified": true
+  },
+  "upstream": {
+    "branch": "refs/heads/agent/legal-ir-retained-source-correspondence-20261015",
+    "revision": "0ae59458167b3438bc4d112d0ffb3bf63a7f30c0",
+    "public_main_observed_same_revision": true,
+    "owned_remote_tracking_main_at_review": "90662a4c6e0f12059c9900ba94ae80a4c86a0e25",
+    "merge_base": "90662a4c6e0f12059c9900ba94ae80a4c86a0e25",
+    "is_descendant_of_frozen_base": true,
+    "incoming_commits": [
+      "de95d23980725e857ebdb2c98fd989fb15635f6e",
+      "6ece63e4da70596c223779e804136968ccebe124",
+      "79b9af7e00e3b32b673e6b2b14484dfd27aa5401",
+      "7a6e5743560b5fbf95cbe1dbb393a29a3c9fd6a1",
+      "0ae59458167b3438bc4d112d0ffb3bf63a7f30c0"
+    ],
+    "changed_path_count": 97,
+    "changed_paths": [
+      {
+        "status": "M",
+        "path": "docs/autoencoders/README.md"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/README.md"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-binding-result.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-candidate-input.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-00.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-01.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-02.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-03.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-04.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-05.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-index.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-correspondence.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-dependency-manifest.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-original-input-custody.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-replay-index.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-report-input.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-review-preparation.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-review-subject.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-source-generation-comparison.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-binding-result.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-candidate-input.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-00.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-01.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-02.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-03.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-04.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-05.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-index.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-correspondence.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-dependency-manifest.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-original-input-custody.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-replay-index.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-report-input.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-review-preparation.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-review-subject.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-source-generation-comparison.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/file-index.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/input-descriptor.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-control-results.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-incomplete-dependency-closure-control.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-independent-link-pin-control.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-missing-context-context-index.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-missing-context-control.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-mixed-family-candidate-control.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-omitted-unselected-link.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-omitted-unselected-population-control.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-pretty-report-input.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-pretty-report-transport-control.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-reordered-context-context-index.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-reordered-context-control.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-swapped-context-packet-context-index.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-swapped-context-packet-control.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/replay-receipt.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-durability-projection.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-execution.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-independent-audit.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-junit.xml"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-result.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-stderr.log"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-stdout.log"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-terminal-observation.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-01-failed-audit.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-01-failure.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-01-stderr.log"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-01-stdout.log"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-durability-projection.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-execution.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-independent-audit.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-result.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-stderr.log"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-stdout.log"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-terminal-observation.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/correction-review.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/failed-driver-b-01.py"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/final-audit.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/final-docs-review.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/implementation-review.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/namespace-independent-review.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/parallel-adoption.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/prelaunch-reconciliation.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/publication-manifest.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/receipt.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/recovery-b-01-audit.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/recovery-b-01-terminal-observation.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/retained-inputs-provenance-audit.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/retained-inputs.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/upstream-reconciliation.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/validation-request-a-01.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/validation-request-b-01.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/validation-request-b-02.json"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/legal_corpus_v2_public_handoffs.md"
+      },
+      {
+        "status": "M",
+        "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md"
+      },
+      {
+        "status": "A",
+        "path": "docs/autoencoders/legal_retained_source_correspondence_20261015.md"
+      },
+      {
+        "status": "M",
+        "path": "docs/autoencoders/legal_source_definition_review_correspondence_integration_20261015.md"
+      },
+      {
+        "status": "M",
+        "path": "ipfs_datasets_py/logic/integration/reasoning/__init__.py"
+      },
+      {
+        "status": "A",
+        "path": "scripts/ops/legal_ir/replay_retained_definition_correspondence.py"
+      },
+      {
+        "status": "M",
+        "path": "tests/unit/logic/integration/test_reasoning_lazy_imports.py"
+      }
+    ],
+    "executable_and_test_paths": [
+      {
+        "status": "M",
+        "path": "ipfs_datasets_py/logic/integration/reasoning/__init__.py",
+        "purpose": "Preserve explicit caller override before same-named lazy child module first loads."
+      },
+      {
+        "status": "A",
+        "path": "scripts/ops/legal_ir/replay_retained_definition_correspondence.py",
+        "purpose": "Standalone bounded actual-source replay through existing sampled binding, context, review-subject and unsigned correspondence owners."
+      },
+      {
+        "status": "M",
+        "path": "tests/unit/logic/integration/test_reasoning_lazy_imports.py",
+        "purpose": "Sixteen early-override controls added to complete twenty-one-case module."
+      }
+    ],
+    "incoming_primary_owner_changes": [],
+    "integration_recommendation": "After both frozen native runs close, reconcile all actual frozen source pins before adopting the descendant main. Do not mutate current source during execution. Preserve existing exporter profile changes and all previous evidence; namespace initializer is an existing modified import path and must not be assumed disjoint from the frozen cohort."
+  },
+  "contributed_actual_source_replay": {
+    "guide": "docs/autoencoders/legal_retained_source_correspondence_20261015.md",
+    "metadata_receipt": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/receipt.json",
+    "driver_source_commit": "6ece63e4da70596c223779e804136968ccebe124",
+    "driver": {
+      "path": "scripts/ops/legal_ir/replay_retained_definition_correspondence.py",
+      "bytes": 39684,
+      "sha256": "a580d10c33539058ff5019a6edd1b48a14b65adac4597567629573998f5a9d8b"
+    },
+    "actual_source_description": "Retained 98,879-byte section101 HTML and original FOL/TDFOL requests plus original historical sampler bytes; no new statutory sample.",
+    "attempt": "b-02",
+    "named_probe_checks": 17,
+    "refused_controls": 8,
+    "source_pins_reported": 227,
+    "native_seconds_reported": 320.49554496607743,
+    "response_and_review_counts": 0,
+    "complete_source_population": {
+      "subjects": 560,
+      "candidate_statutory_paragraphs": 134,
+      "controls": 426,
+      "blank_question_slots": 8400,
+      "original_open_context_obligations": 3360
+    },
+    "each_family": {
+      "families": [
+        "fol",
+        "tdfol"
+      ],
+      "selected_subjects": 2,
+      "physical_context_occurrences": 6,
+      "selected_open_slots": 36,
+      "graph_nodes": 15,
+      "graph_edges": 26,
+      "whole_population_pending": 560
+    },
+    "fol_correspondence_sha256": "1429c6c73ba2ec3b973ea3402803e3632df0d185ff08761647abcacad366822d",
+    "tdfol_correspondence_sha256": "eafaed34bbb88abaa69f2ba8e8b2a28082f589e29781a62d62b83cfb36f8d7d3",
+    "saved_readback": "Same driver process; not separate fresh-interpreter replay.",
+    "closes": "Actual retained-source engineering replay of the existing unsigned sampled-binding-to-plain-V2-definition-review-subject correspondence, preserving complete pending population and selected role/context geometry.",
+    "does_not_close": [
+      "Primary physical row or entry_cid to official source/candidate correspondence.",
+      "Historical flat-cache original derivation or multiplicity.",
+      "Source/exposure authentication, semantic agreement, independent review or assessment.",
+      "Governing applicability, richer norms, training/gold or Lean/corpus admission."
+    ],
+    "original_transport_constraints": [
+      "Preserve original sealed input_binding keyword population: absent view_limits/sampling_limits remain absent.",
+      "Current producer origins yield a new binding/report/candidate/context/subject generation; historical artifacts and pins remain unchanged comparison evidence.",
+      "Candidate commits compact report transport; historical trailing-newline report is not interchangeable even when decoded JSON equals.",
+      "Original sampler newline transport is retained exactly."
+    ],
+    "publication": {
+      "complete_exports": 64,
+      "complete_export_bytes": 10620287,
+      "curated_files": 51,
+      "curated_bytes": 1621925,
+      "omitted_duplicate_historical_input_files": 13,
+      "warning": "Published file-index describes all64 exports; curated directory is not a self-contained closed64-file bundle. Obtain separately pinned original inputs via their owner."
+    },
+    "failure_preservation": "b-01 failed exact request-shape replay; existing owner was not weakened. Failed evidence and exact recovery remain separate.",
+    "namespace_qualification": {
+      "attempt": "a-01",
+      "pytest_cases": 21,
+      "source_pins": 256,
+      "distinct_from_named_probe": true
+    },
+    "execution_attribution": "Published committed guide and receipt record passed checks and durability/release. This survey did not rerun, inspect live ledger, or independently authenticate historical processes."
+  },
+  "current_primary_owners": [
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_primary_section_index.py",
+      "sha256": "c05eb53d6b3c3d5b652085da4c5da61a3fcff95b6b58fbf3f49d415f38b4215d",
+      "source_commit": "3f81ee869d13b3da39a84570bb735d724abe2d45",
+      "entrypoints": [
+        "PrimarySectionIndex:108",
+        "PrimarySectionIndex.__enter__:158",
+        "PrimarySectionIndex.lookup_sections:326",
+        "reconstruction_report_sha256:97"
+      ],
+      "input_format": "Complete original legal-primary-graph-candidate-header/v1 then legal-primary-graph-candidate-row/v1 JSONL, plus independently pinned reconstruction report/internal seal and candidate bytes hash.",
+      "distinct_from_export": "Does not accept legal-primary-graph-export-lineage or exported five-field Parquet directly.",
+      "behavior": "Streams every candidate into bounded temporary SQLite, validates complete ordered population/pins, returns every literal section candidate and directed HAS_SOURCE witness; section/package/release-point target kinds remain separate.",
+      "authority": "No source authenticity, primary-to-official correspondence or semantic admission.",
+      "original_input_fit": "Retained original candidate716898677B is under index1GiB candidate ceiling; new2GiB export lineage must not be relabeled as that candidate."
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_span_section_bridge.py",
+      "sha256": "e9b1ead32b40c6fe20b6614a1d10041714adeac0856e00399137a264d80e44d4",
+      "entrypoints": [
+        "reconcile_span_sections:133",
+        "validate_span_section_bridge:234"
+      ],
+      "input_format": "At most128 supplied physical flat span-export/evidence or observation-only paired-v1/v2 rows, exact ordered row/record pins, guarded live PrimarySectionIndex, complete pinned identity policy and explicit source_bindings.",
+      "explicit_mapping_fields": [
+        "record_sha256",
+        "source_span_id",
+        "source_sha256",
+        "legal_id",
+        "primary_revision",
+        "source_revision",
+        "document_revision",
+        "document_view_id",
+        "section_entry_cid",
+        "source_package_entry_cid"
+      ],
+      "behavior": "Existing SpanCache intake owns formal/source graph preparation; unique literal section and matching declared source/package witnesses only permit an unreviewed proposal when every prerequisite fits.",
+      "revision_boundary": "Full Git source revisions required; document/source revision equality and equality to primary declared source_revision are enforced. Do not expand aliases or fake official source versions to satisfy this legacy profile.",
+      "authority": "Per-record mapping is declared correspondence only; primary_source_correspondence_verified and source_package_content_identity_verified remain false."
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_graph_proposals.py",
+      "sha256": "d1d66781633b187008b2d5efac0ab0e7dedcc12671e8cc588ee605b9e755d8c7",
+      "entrypoints": [
+        "required_primary_artifacts:61",
+        "prepare_source_graph_proposals:133",
+        "validate_source_graph_proposals:217"
+      ],
+      "behavior": "Preserves one ordered sidecar per supplied physical span and explicit gaps; reuses semantic graph/context/dependency/review owners. Links explicit source-scoped entity/assertion proposals to primary section/package anchors and all recognized typed relationship witnesses.",
+      "hash_boundary": "Primary artifact hashes address original record_json UTF8; canonical export hashes can differ. Use original raw-wrapper/record commitments and declared original-to-export lineage, not the new canonical hash as an implicit alias.",
+      "authority": "Review requests preserve open context slots; no authenticated review, governing meaning or entity merge."
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+      "sha256": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567",
+      "entrypoints": [
+        "prepare_definition_review_correspondence_v2:385",
+        "validate_definition_review_correspondence_v2:534"
+      ],
+      "input_format": "Exact sampled-source binding+replay inputs, six original candidate byte inputs, complete contexts, unchanged plain definition-review subject/manifest, and independently expected whole pins.",
+      "behavior": "Replays full unsigned binding-to-existing-subject identity without rewriting signed domain or creating assessment; now has contributed actual-source replay in0ae59458.",
+      "primary_anchor_support": "No PrimarySectionIndex/entry_cid/original primary row input is consumed by this owner."
+    }
+  ],
+  "visible_sampled_primary_bridge": {
+    "result": "No distinct published sampled-primary adapter was located in current owned Git source filenames or public ref-name metadata. A private phase name is not implementation evidence and was not inspected.",
+    "public_progress_preserved": "The separate0ae59458 actual-source unsigned correspondence contribution is identified and must not be reported still pending.",
+    "caution": "Do not duplicate an in-progress private sampled-primary contribution; obtain its owner-published commit/ref and review exact source once available."
+  },
+  "next_reuse_path": [
+    "Close current producer/consumer jobs and independently accept their original-bound transport receipts before adopting latest main.",
+    "Reuse the existing independently pinned original reconstruction candidate/report for PrimarySectionIndex, or regenerate with the unchanged reconstruction owner under the consumer grant. Do not parse new lineage as original candidate JSONL.",
+    "Adopt0ae59458 with original evidence and exact frozen-pin reconciliation; reuse its strict original-input/request-shape and compact-report handling for actual-source correspondence.",
+    "For a sampled-V2-to-primary association, reuse live literal section lookup and required_primary_artifacts instead of a second census/index. A small separately versioned adapter is needed only for the missing sampled-source input/correspondence boundary; do not force560subject sampled input through the128row legacy flat-span profile.",
+    "Bind accepted original selection/candidate/index and new exportmanifest pins, original physical shard/row+raw-wrapper/record/custody commitments, exact source document/version/acquisition/view/intervals, ordered role/context multiplicity, V2 candidate/review-subject pins, and explicit mapping disposition. Match full identities and hashes, not ordinal/legalID/label alone.",
+    "Retain all560 pending subjects and explicit unresolved associations; independently prove primary package-to-official-source derivation before claiming more than unsigned declared association.",
+    "Keep historical flat-cache provenance/multiplicity, authenticated exposure/semantic review, governing scope, training and Lean admission as independent remaining obligations."
+  ],
+  "authority": {
+    "source_semantics_verified": false,
+    "primary_source_correspondence_verified": false,
+    "historical_flat_cache_lineage_verified": false,
+    "independent_process_execution_authenticated": false,
+    "training_qualified": false,
+    "proof_authority": false,
+    "accepted_graph_view_enabled": false,
+    "published_corpus_admitted": false
+  }
+}

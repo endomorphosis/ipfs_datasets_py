@@ -1,0 +1,156 @@
+{
+  "Git_repositories_or_worktrees_created": false,
+  "all30_fresh_authentication_source_body_hashes_currently_verified": true,
+  "authentication_executed": false,
+  "checkpoint_payload_read": false,
+  "copied_source_bytes": 221716,
+  "database_opened": false,
+  "fresh_authentication_request_pin": {
+    "bytes": 9702,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authentication-validation-request-05.json",
+    "sha256": "beb14df36f657bf70afb2c7a2f4a744ec56b857c59c931f31a6f1e99be23dee0"
+  },
+  "fresh_authentication_required": true,
+  "historical_physical_source_identity_preserved": false,
+  "historical_source_bodies_preserved": true,
+  "method": "Copy exact independently receipt-pinned retained published source bytes into only three missing original receipt-bound regular-file paths. Original Git/worktree repositories are not recreated. No existing source or dirty foreign file overwritten.",
+  "models_or_embeddings_touched": false,
+  "native_resource_called": false,
+  "observed_at_utc": "2026-10-16T05:15:07.187732+00:00",
+  "restored_count": 3,
+  "restored_sources": [
+    {
+      "body_exact": true,
+      "created_parent_directories": [
+        "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets",
+        "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py",
+        "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers",
+        "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer"
+      ],
+      "existing_file_overwritten": false,
+      "label": "F15",
+      "missing_file_restored": true,
+      "restored_current_witness": [
+        66306,
+        98435081,
+        33152,
+        1,
+        1000,
+        1000,
+        56952,
+        1792127707083917038,
+        1792127707083917038
+      ],
+      "restored_receipt_bound_source_pin": {
+        "bytes": 56952,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+        "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+      },
+      "retained_published_source_pin": {
+        "bytes": 56952,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-verified-download-v02/releases/20261014-actor-refinement-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+        "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+      },
+      "retained_source_witness": [
+        66306,
+        98481096,
+        33204,
+        1,
+        1000,
+        1000,
+        56952,
+        1791973768023799818,
+        1791973768025281835
+      ]
+    },
+    {
+      "body_exact": true,
+      "created_parent_directories": [
+        "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/datasets",
+        "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/datasets/ipfs_datasets_py",
+        "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/datasets/ipfs_datasets_py/optimizers",
+        "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer"
+      ],
+      "existing_file_overwritten": false,
+      "label": "F17",
+      "missing_file_restored": true,
+      "restored_current_witness": [
+        66306,
+        99483655,
+        33152,
+        1,
+        1000,
+        1000,
+        80912,
+        1792127707114743503,
+        1792127707114743503
+      ],
+      "restored_receipt_bound_source_pin": {
+        "bytes": 80912,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+        "sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502"
+      },
+      "retained_published_source_pin": {
+        "bytes": 80912,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-retention-20261014-01/hf-verified-download-v01/releases/20261014-joint-readout-retention-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+        "sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502"
+      },
+      "retained_source_witness": [
+        66306,
+        101319235,
+        33152,
+        1,
+        1000,
+        1000,
+        80912,
+        1792005388329649507,
+        1792005388332906915
+      ]
+    },
+    {
+      "body_exact": true,
+      "created_parent_directories": [
+        "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets",
+        "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py",
+        "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers",
+        "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer"
+      ],
+      "existing_file_overwritten": false,
+      "label": "F18",
+      "missing_file_restored": true,
+      "restored_current_witness": [
+        66306,
+        102105093,
+        33152,
+        1,
+        1000,
+        1000,
+        83852,
+        1792127707158536389,
+        1792127707158536389
+      ],
+      "restored_receipt_bound_source_pin": {
+        "bytes": 83852,
+        "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+        "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+      },
+      "retained_published_source_pin": {
+        "bytes": 83852,
+        "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-verified-download-v01/releases/20261015-modality-conditions-retention-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+        "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+      },
+      "retained_source_witness": [
+        66306,
+        103286681,
+        33204,
+        1,
+        1000,
+        1000,
+        83852,
+        1792033883127798353,
+        1792033883130042260
+      ]
+    }
+  ],
+  "schema": "legal-ir-receipt-bound-historical-loader-source-restoration/v1"
+}

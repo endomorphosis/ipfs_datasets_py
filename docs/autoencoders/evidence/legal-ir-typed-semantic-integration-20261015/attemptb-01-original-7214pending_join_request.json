@@ -1,0 +1,13 @@
+{
+  "schema": "legal-source-typed-norm-join-request/v1",
+  "interpretation_status": "unreviewed_correspondence_proposal",
+  "component_id": "title10-2024-officer-definition-two-uses",
+  "alternative_id": "source-only-pending",
+  "selected_unit_ref": {
+    "record_cid": "baguqeera632lzwmnhvsgkmnw6ydcqxmhepnxg7nssnnq2ayxcihfgevvlbrq",
+    "schema": "legal-source-structured-sample-unit/v1",
+    "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+  },
+  "node_correspondences": [],
+  "introduced_unresolved": []
+}

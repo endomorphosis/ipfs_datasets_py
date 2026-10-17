@@ -1,0 +1,264 @@
+{
+  "administrative03": {
+    "all29_current_source_body_hashes_match": true,
+    "by_source": {
+      "test_autoencoder_external_resource_recovery.py": 35,
+      "test_registration_driver.py": 11,
+      "test_registration_launcher.py": 1,
+      "test_registration_resource_scope.py": 3
+    },
+    "cases": 50,
+    "controller_seconds": 5.345346569083631,
+    "errors": 0,
+    "failures": 0,
+    "junit_pin": {
+      "bytes": 6374,
+      "path": "administrative-controls-03/junit.xml",
+      "sha256": "afdc6131ce6a2958b6f8e87b49771c637c1bdcbbcf2402c666b23abf41a26300"
+    },
+    "junit_seconds": 5.229,
+    "limits": {
+      "address_space_bytes": 1073741824,
+      "cpu_seconds": 60,
+      "threads": 1,
+      "wall_seconds": 90
+    },
+    "native_admitted": false,
+    "result_pin": {
+      "bytes": 4837,
+      "path": "administrative-controls-03/result.json",
+      "sha256": "b47ebcfb08e3c4a63d7ce7dc1178db121c39b45a628fbb73524b9959a4709b6b"
+    },
+    "scope": "Full administrative local/inert controls; no shared native grant/production registry selected.",
+    "skips": 0,
+    "source_bindings_unchanged_before_after": 29,
+    "unique_cases": 50
+  },
+  "authority": {
+    "inference_executed": false,
+    "model_loaded": false,
+    "network_verified_current": false,
+    "proof_authority": false,
+    "runtime_admitted": false,
+    "teacher_qualified": false,
+    "training_executed": false
+  },
+  "child_identity_stage": {
+    "all23_current_stat_witnesses_match_native_opening_and_closing": true,
+    "all30_current_source_hashes_match_request": true,
+    "checkpoint_body_hashes_repeated_by_this_audit": 0,
+    "completed": true,
+    "components": [
+      {
+        "configured_latent_dimension": 384,
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "distinct_original_and_readback_commitments_match": true,
+        "label": "F15",
+        "latent_conditioning_enabled": false,
+        "opaque_original_bytes": 12230969,
+        "release": {
+          "checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+          "path_in_repo": "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+          "repository_id": "Publicus/legal-ir-autoencoder",
+          "revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4"
+        },
+        "same_immutable_component_and_parent_metadata_as_independently_audited_04": true
+      },
+      {
+        "configured_latent_dimension": 384,
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "distinct_original_and_readback_commitments_match": true,
+        "label": "F17",
+        "latent_conditioning_enabled": false,
+        "opaque_original_bytes": 20467217,
+        "release": {
+          "checkpoint_sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+          "path_in_repo": "releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+          "repository_id": "Publicus/legal-ir-autoencoder",
+          "revision": "290c266d72b8c298ec21db0f9b0857b008914caf"
+        },
+        "same_immutable_component_and_parent_metadata_as_independently_audited_04": true
+      },
+      {
+        "configured_latent_dimension": 384,
+        "dimension": null,
+        "dimension_role": "source_tokens",
+        "distinct_original_and_readback_commitments_match": true,
+        "label": "F18",
+        "latent_conditioning_enabled": false,
+        "opaque_original_bytes": 21058430,
+        "release": {
+          "checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+          "path_in_repo": "releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+          "repository_id": "Publicus/legal-ir-autoencoder",
+          "revision": "c9cce4586dd96518088662fb12831173e98e36cc"
+        },
+        "same_immutable_component_and_parent_metadata_as_independently_audited_04": true
+      }
+    ],
+    "exact_named_checks_completed": 3,
+    "immutable_history_basis": "Exact component/original-readback/release/loader/parent metadata equals original04 evidence, whose complete historical LFS/manifest/independent-review joins were audited at retained SHA9a0477c5fba9420d53cdcb4d758e25cccdd218ffcb00d621a2982bf37c2b562b; all15 metadata/source file hashes are independently rechecked here.",
+    "metadata_source_pins_verified": 15,
+    "native_bounded_opaque_SHA_stream_results_retained": true,
+    "opaque_original_and_readback_bytes": 107513232,
+    "opaque_original_and_readback_files": 6,
+    "returncode": 0
+  },
+  "independence": {
+    "administrative03_executed_by_auditor": true,
+    "administrative03_raw_results_recounted_here": true,
+    "authentication_driver_or_provenance_authored_by_auditor": false,
+    "authentication_executed_by_auditor": false
+  },
+  "local_artifacts": {
+    "current_file_count": 10,
+    "durability_receipts": 1,
+    "later_unsealed_failure_files": 1,
+    "local_durability_does_not_establish_successful_parent_finalization": true,
+    "pins": [
+      {
+        "bytes": 3701,
+        "path": "exports/f15-hub-publication-receipt.json",
+        "sha256": "5dd438403c1c73751ef39ffeb91b319d8e90fb028b26b6026822e52748e95489"
+      },
+      {
+        "bytes": 3557,
+        "path": "exports/f17-hub-publication-receipt.json",
+        "sha256": "8f6fe5ec8cb19bb5da8984d4b3a08f18a685521cbaa6b14677779212999fb679"
+      },
+      {
+        "bytes": 3876,
+        "path": "exports/f18-hub-publication-receipt.json",
+        "sha256": "dd324bf97b3280af1fa73bbd75b5cff7f9f45666703e05246486187822c22449"
+      },
+      {
+        "bytes": 29061,
+        "path": "exports/published-components-authentication.json",
+        "sha256": "c2d0403e2a4990116cc4b9a4d556ff9e9b480db94708fd30b51291073a8f1364"
+      },
+      {
+        "bytes": 616,
+        "path": "logs/execution.json",
+        "sha256": "16d385840d6545eb18b0beba076a5be67abc5d96586ae5ad71cd64086a60b7a7"
+      },
+      {
+        "bytes": 767,
+        "path": "logs/failure.json",
+        "sha256": "b592c27816889c404d909a886f353b58c3c77efc12f85425c23ad40d01bd2e55"
+      },
+      {
+        "bytes": 599,
+        "path": "logs/result.json",
+        "sha256": "55681a8ece2bbba56ec0b443738297f680bf4131765ce5d6b957282a70ecb6e9"
+      },
+      {
+        "bytes": 0,
+        "path": "logs/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 0,
+        "path": "logs/stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 1722,
+        "path": "logs/validation-durability.json",
+        "sha256": "25b1bacc520261493e10fa644013f3cce0ecdf03eb0fc967b4bc3243aef2634d"
+      }
+    ],
+    "sealed_manifest_files": 8
+  },
+  "observed_at_utc": "2026-10-16T05:47:08.694977+00:00",
+  "outer_native_operation": {
+    "completed": false,
+    "current_recorded_live_group_members": 0,
+    "failure_log_child_returncode_0_is_not_outer_success": true,
+    "failure_reason": "missing configured root /tmp/pytest-of-barberb",
+    "failure_stage": "parent native finalize global named-root census after successful child and local durability",
+    "failure_type": "DaemonResourceError",
+    "fully_qualified": false,
+    "ledger_artifacts_durable_asserted": false,
+    "no_grant_reuse": true,
+    "original_claim_requires_separate_explicit_closeout": true,
+    "original_native_lease_currently_absent": true,
+    "original_owner_PID_currently_absent": true,
+    "original_storage_claim_status": "active",
+    "original_storage_promise_bytes": 67108864,
+    "recorded_group_leaders_currently_absent": true,
+    "returncode": 1,
+    "scheduler_policy_matches_original_request": true,
+    "storage_claim_released": false
+  },
+  "privacy": {
+    "raw_reservation_PID_or_lease_identifiers_published": false
+  },
+  "private_failure_evidence_pins": [
+    {
+      "bytes": 737,
+      "path": "authentication-launch-05/result.json",
+      "sha256": "acced47b9c1f85fc8e9265f99a6cb121772c5c574f29d8ca2615b1e21792a125"
+    },
+    {
+      "bytes": 0,
+      "path": "authentication-launch-05/stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 3255,
+      "path": "authentication-launch-05/stderr.txt",
+      "sha256": "64dff983b3c07f0536138343c1d7b359223669d321559a6bdf74f689ea52ba6f"
+    },
+    {
+      "bytes": 282,
+      "path": "authentication-launch-05/native-exception.json",
+      "sha256": "e63f80b7cd9a7519d8ef8690cbeb27eaa3299f0a489b3fd923f38373ab5a39ea"
+    }
+  ],
+  "public_export_copy_pins": [
+    {
+      "byte_identical_public_copy": true,
+      "bytes": 29061,
+      "native_relative_path": "exports/published-components-authentication.json",
+      "public_phase_path": "published-components-authentication.json",
+      "sha256": "c2d0403e2a4990116cc4b9a4d556ff9e9b480db94708fd30b51291073a8f1364"
+    },
+    {
+      "byte_identical_public_copy": true,
+      "bytes": 3701,
+      "native_relative_path": "exports/f15-hub-publication-receipt.json",
+      "public_phase_path": "f15-hub-publication-receipt.json",
+      "sha256": "5dd438403c1c73751ef39ffeb91b319d8e90fb028b26b6026822e52748e95489"
+    },
+    {
+      "byte_identical_public_copy": true,
+      "bytes": 3557,
+      "native_relative_path": "exports/f17-hub-publication-receipt.json",
+      "public_phase_path": "f17-hub-publication-receipt.json",
+      "sha256": "8f6fe5ec8cb19bb5da8984d4b3a08f18a685521cbaa6b14677779212999fb679"
+    },
+    {
+      "byte_identical_public_copy": true,
+      "bytes": 3876,
+      "native_relative_path": "exports/f18-hub-publication-receipt.json",
+      "public_phase_path": "f18-hub-publication-receipt.json",
+      "sha256": "dd324bf97b3280af1fa73bbd75b5cff7f9f45666703e05246486187822c22449"
+    }
+  ],
+  "request": {
+    "bytes": 9702,
+    "path": "authentication-validation-request-05.json",
+    "sha256": "beb14df36f657bf70afb2c7a2f4a744ec56b857c59c931f31a6f1e99be23dee0"
+  },
+  "reuse_assessment": {
+    "not_usable_as": "Completed native operation, released resource claim, new grant, runtime/teacher/proof qualification.",
+    "registration_result_evaluated_by_this_audit": false,
+    "required_next_boundary": "A separate genuine registration scope must freshly acquire and guard its own resources/store/source custody. Frozena20b driver independently rehashes all6 opaque original/readback payloads inside that live scope before Manager construction.",
+    "specific_risk": "Parent accounting/root continuity and storage closeout failed; releasing or reusing its resource authority would be invalid.",
+    "usable_as": "Bounded successful-child checkpoint identity and historical publication evidence only."
+  },
+  "schema": "legal-ir-native-authentication-limited-identity-audit/v1",
+  "status": "identity_evidence_pass_operation_failed_closeout"
+}

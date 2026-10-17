@@ -1,0 +1,151 @@
+{
+  "curated_bytes": 281224,
+  "document_review_note": "Independent audit pins the earlier guide. Subsequent edits add evidence links and the209-pin prepared-request revision, without changing the frozen adapter/tests/worker.",
+  "files": [
+    {
+      "bytes": 2006,
+      "path": "capacity-closeout-v02.json",
+      "sha256": "5ae01f0f070ddfe4e45e8e93059fe3d241af9a5e83dc8bcbac24673bc134f4ac",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/capacity-closeout-v02.json"
+    },
+    {
+      "bytes": 22485,
+      "path": "decoder-output-contract-survey-v01.json",
+      "sha256": "7fc7ee47be3fe6b89833cc5a7db61be6634d9b3b0ad90f5e0bd93007bf364686",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/decoder-output-contract-survey-v01.json"
+    },
+    {
+      "bytes": 5368,
+      "path": "make_native_requests_v01.py",
+      "sha256": "eaa0b3e44ca3e43365930291ca512e0f666d12e1d9af8cd5708e0f5418582b33",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/make_native_requests_v01.py"
+    },
+    {
+      "bytes": 5462,
+      "path": "make_native_requests_v02.py",
+      "sha256": "7fff74bbcc70b13247add05638e0104d0f78654b47a8af6689aec03987bdd09f",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/make_native_requests_v02.py"
+    },
+    {
+      "bytes": 371,
+      "path": "numerical-inputs-v01.json",
+      "sha256": "f01cdbae362dcffbe306107498c492611a3afa6452c0fd8cc1eac5cc30ea0caa",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/numerical-inputs-v01.json"
+    },
+    {
+      "bytes": 48876,
+      "path": "numerical-replay-request-v01.json",
+      "sha256": "eaa1615ab46bb9b37bdbe927df2c559fbda84beae24390a731a4bbdabba27f8e",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/numerical-replay-request-v01.json"
+    },
+    {
+      "bytes": 49131,
+      "path": "numerical-replay-request-v02.json",
+      "sha256": "9250e843a26a3d72f4f192a7b6324b0e98795d3c4832d80ff82070a7872af802",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/numerical-replay-request-v02.json"
+    },
+    {
+      "bytes": 12495,
+      "path": "numerical-worker-design-source-review-v01.json",
+      "sha256": "2ab94e3eea9d8091b1be1bec7dc29c6feecaa99260d2537663d9224eeebe69ac",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/numerical-worker-design-source-review-v01.json"
+    },
+    {
+      "bytes": 2601,
+      "path": "observe_storage_v01.py",
+      "sha256": "5900b22a2ab71b68189148b180fc1bd4ed22a35fb5ca97f1b38dcc6d383506b1",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/observe_storage_v01.py"
+    },
+    {
+      "bytes": 60165,
+      "path": "qualification-request-v01.json",
+      "sha256": "99e81f26d38b15992766d0446ec717a9dc935cddad93e9ed7600e5a29343492d",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/qualification-request-v01.json"
+    },
+    {
+      "bytes": 2047,
+      "path": "qualification01-controller-stderr.log",
+      "sha256": "6bf2162fb5065a9ba35c192ba6790fda7da72bd5940cbf54f19e5cd97db4bb99",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/qualification01-controller-stderr.log"
+    },
+    {
+      "bytes": 1297,
+      "path": "resource-plan-v01.json",
+      "sha256": "0100fdc8f703c5e43cb0880b31f22c48a78a52bb55d72497841d78b38fcc6964",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/resource-plan-v01.json"
+    },
+    {
+      "bytes": 27423,
+      "path": "run_numerical_replay_v01.py",
+      "sha256": "1e2d5df8ad453fb697ae957f8ac565254cf155b8ddc6a966157fd4a19d9c0d3e",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/run_numerical_replay_v01.py"
+    },
+    {
+      "bytes": 2872,
+      "path": "source-author-audit-v01.json",
+      "sha256": "a8b88bc96e4e455bd8fc3ea91984073af00cb997faaf9c4112611bced952c748",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/source-author-audit-v01.json"
+    },
+    {
+      "bytes": 23680,
+      "path": "source-helper-doc-audit-v02.json",
+      "sha256": "3554fe4456678b67a33a06b927250eb2f292fa11dd0f59c0fb1186b91b06d948",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/source-helper-doc-audit-v02.json"
+    },
+    {
+      "bytes": 5795,
+      "path": "storage-observation-v01.json",
+      "sha256": "bcd0f72652619e9e9f90e5ebfc0df503904ceb41ac6e5ba3c20302ada4da47d6",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/storage-observation-v01.json"
+    },
+    {
+      "bytes": 2256,
+      "path": "storage-observer-pins-v01.json",
+      "sha256": "7159058842086a52eb022d284464bccebf9c9579afe659ca11a1e88aeef92efa",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/storage-observer-pins-v01.json"
+    },
+    {
+      "bytes": 6894,
+      "path": "storage-prerequisite-audit-v01.json",
+      "sha256": "2df02ea3298568536d02fc3fac0c949bbb74f4855c6dc72c6879123f451ee040",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-decoder-output-integration-20261016-01/storage-prerequisite-audit-v01.json"
+    }
+  ],
+  "lean_executed": false,
+  "main_base_commit": "6b8b1346f888adbebbcf1d714e4ad0ab39a02052",
+  "native_refusal_at_owner_open": true,
+  "numerical_executed": false,
+  "prepared_numerical_request": "numerical-replay-request-v02.json",
+  "prepared_numerical_request_source_pins": 209,
+  "product_and_documentation": [
+    {
+      "bytes": 21971,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_ir_decoder_output_compatibility_v1.py",
+      "sha256": "d2145191a898dd50b5bcc4b3d61a005cc6cc869b5c49db8c7db74d6452d1d12b"
+    },
+    {
+      "bytes": 29583,
+      "path": "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py",
+      "sha256": "d75970f972051e729e4bca494a9f667c06f1610ebb41235aacf3abfcb6e27168"
+    },
+    {
+      "bytes": 11679,
+      "path": "docs/autoencoders/legal_ir_decoder_output_integration_20261016.md",
+      "sha256": "e9c7213c119d9c5d328528d2cd6fa543cd0a7c61c52b9d21f6e9b13767c702ff"
+    },
+    {
+      "bytes": 97793,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "dafe619987c7a4bf4d11c4c432306cc139721d0a9aa09c239547456a583712a6"
+    }
+  ],
+  "recorded_at_utc": "2026-10-16T03:44:49.443030+00:00",
+  "refused_qualification_request": "qualification-request-v01.json",
+  "refused_qualification_request_source_pins": 251,
+  "remote_model_update_performed": false,
+  "schema": "legal-decoder-output-integration-evidence-index/v1",
+  "scope": "source, preparation, independent static reviews and resource-admission metadata only; no checkpoint, source corpus, latent vector or generated prediction bodies",
+  "source_review_is_runtime_qualification": false,
+  "tests_executed": false,
+  "training_executed": false
+}

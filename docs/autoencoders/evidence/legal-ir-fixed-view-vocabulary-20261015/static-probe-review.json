@@ -1,0 +1,67 @@
+{
+  "authority": {
+    "gold_admitted": false,
+    "legal_meaning_verified": false,
+    "model_promoted": false,
+    "native_probe_pass_observed_by_this_review": false,
+    "proof_admitted": false,
+    "review_performed": false,
+    "semantic_reconstruction_verified": false
+  },
+  "execution_observations_by_this_review": {
+    "models_or_compilers": 0,
+    "native_api_calls": 0,
+    "probe_invocations": 0,
+    "product_imports": 0,
+    "tests": 0
+  },
+  "fixed_before_native_launch": {
+    "finding": "The earlier draft read TargetBundle.statistics[requested_targets_fully_exhausted], a field absent from the current owner API.",
+    "resolution": "Final source checks existing singleton counters decompressed_shards=1, unique_decompressed_shards=1 and decompressed_bytes against the pinned expanded target length. Successful targets_for eagerly exhausts the existing iterator; the emitted requested-target exhaustion flag is explicitly a controller observation, not an invented native statistics field."
+  },
+  "input_descriptor": {
+    "bytes": 9050,
+    "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/retained-head-inputs.json",
+    "sha256": "3ed669866f03b34098877f6e5e94ea5b8ec3766510bb2e4d6638058a27d608b5"
+  },
+  "limitations": [
+    "Static agreement with current APIs and retained metadata does not establish that the subsequently launched probe completed; actual outcomes must be independently read from its native result and durable artifact observations.",
+    "Existing source/custody checks are sequential observations, not a writer lease or complete installed-package import-closure proof.",
+    "Fixed diagnostic CE and existing clamped dynamic-support CE remain separately identified; this review performs no historical rescoring, acceptance promotion or new semantic evaluation."
+  ],
+  "probe": {
+    "bytes": 32621,
+    "path": "scripts/ops/legal_ir/probe_retained_fixed_view_vocabulary.py",
+    "sha256": "9d0f9f8378c117627625b54845f4eea76c5e0bd6c18c01d308f3769428de7a06"
+  },
+  "review_scope": "Read-only source/API/retained-metadata review completed before native probe execution; no runtime import or execution by reviewer.",
+  "schema": "legal-ir-fixed-view-vocabulary-static-probe-review/v1",
+  "status": "no_concrete_static_blocker_after_prelaunch_statistics_fix",
+  "used_for_acceptance": false,
+  "verified_contracts": [
+    {
+      "details": "Nineteen ordered independently SHA/length-pinned original references are closed and bounded. Descriptor and all inputs are rechecked before/after each observed operation. Existing receipt chains join the published observation, original head/preparation/constructor reports, source records, historical request/driver, both singleton bundles and original checkpoint bytes. Old driver receipt Path/hash constants are inspected through a restricted AST-only evaluator.",
+      "scope": "Original inputs"
+    },
+    {
+      "details": "Calls match current SourceSampleRecord.from_dict, build_us_code_sample, TargetSnapshotConfig.from_dict, load_target_bundle, TargetBundle.targets_for/close, ModalAutoencoderTrainingState.from_dict, existing full model constructor and private supplied-target/cache/readout helpers. The full historical constructor field set matches the current signature. Payload uses target_view_distributions_by_sample, target_losses_by_sample, target_hashes and target_count.",
+      "scope": "Actual API compatibility"
+    },
+    {
+      "details": "The probe preserves historical target configuration instead of generating a new current-source target configuration. Both requested singleton targets fully hydrate under existing 64MiB shard limits, with independently retained expanded-byte/hash commitments and an aggregate128MiB bound. Exact two original rows and target supports4/6 are required. Complete supplied targets prevent fresh bridge generation through the inspected payload branch.",
+      "scope": "Retained target reuse"
+    },
+    {
+      "details": "Parent and accepted structural384 checkpoints use the same original constructor and copied full compiler target/loss context; equal evaluator_context_sha256 is required. The fixed-seven diagnostic runs first on its isolated copy, then the unchanged dynamic-support/clamped CE readout runs separately. Actual loaded-state identities are checked after readout. Caller checkpoint context is explicitly a declaration; the probe preserves externally pinned source/checkpoint references and does not infer authenticated metadata from the diagnostic.",
+      "scope": "Matched context and state"
+    },
+    {
+      "details": "The probe requires an empty native-owned private exports directory, exclusive flat0600 files, aggregate16MiB output bound, readback hashes, closed inventory and fsync. Source/sample, target/context, profile, paired checkpoint reports, receipt and self-excluded file index are retained. Native durability, process lifecycle and resource release remain owner responsibilities.",
+      "scope": "Output custody"
+    },
+    {
+      "details": "The probe reads two repeatedly inspected tuning rows and saved parent/accepted structural state. It does not recover rejected view proposals, train, encode, call a full decoder, execute a native compiler/solver, authenticate legal meaning or supply independent holdout evidence. Official acceptance/training/Pareto/rollback and original artifacts remain unchanged.",
+      "scope": "Claim limits"
+    }
+  ]
+}

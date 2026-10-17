@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01/cache/pytest
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 412 items
+
+tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py .... [  0%]
+........................................................................ [ 18%]
+......................                                                   [ 23%]
+tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py ......... [ 25%]
+.........................................                                [ 35%]
+tests/unit/logic/autoformal/test_legal_relational_norm_v1.py ........... [ 38%]
+...........................................................              [ 52%]
+tests/unit/logic/autoformal/test_legal_source_sampling.py .............. [ 56%]
+...............                                                          [ 59%]
+tests/unit/logic/autoformal/test_legal_statutory_context_v2.py ......... [ 62%]
+..............                                                           [ 65%]
+tests/unit/logic/legal_ir/test_canonical_statement_scope.py ............ [ 68%]
+........................................................................ [ 85%]
+.............                                                            [ 89%]
+tests/unit/logic/legal_ir/test_canonical_statement_scope_bridge.py ..... [ 90%]
+.............                                                            [ 93%]
+tests/unit/logic/syntax_core/test_ast.py ...........................     [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01/logs/junit.xml -
+============================= 412 passed in 11.74s =============================

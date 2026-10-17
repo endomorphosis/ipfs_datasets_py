@@ -1,0 +1,456 @@
+{
+  "check_count": 49,
+  "checks": [
+    {
+      "check": "selected passing qualification bound by original raw receipt",
+      "passed": true
+    },
+    {
+      "check": "launcher captured exact driver and itself",
+      "passed": true
+    },
+    {
+      "check": "actual launcher/probe completion without timeout",
+      "passed": true
+    },
+    {
+      "check": "launcher roots and qualified closing guard asserted",
+      "passed": true
+    },
+    {
+      "check": "actual qualified checkout identity retained",
+      "passed": true
+    },
+    {
+      "check": "current index matches qualified tree",
+      "passed": true
+    },
+    {
+      "check": "402 qualified listed byte bindings current",
+      "passed": true
+    },
+    {
+      "check": "qualification raw output binding: junit.xml",
+      "passed": true
+    },
+    {
+      "check": "qualification raw output binding: run-inputs.json",
+      "passed": true
+    },
+    {
+      "check": "qualification raw output binding: stderr.txt",
+      "passed": true
+    },
+    {
+      "check": "qualification raw output binding: stdout.txt",
+      "passed": true
+    },
+    {
+      "check": "qualification original input snapshot exactly bound",
+      "passed": true
+    },
+    {
+      "check": "raw qualification XML independently recounts 732 distinct clean cases",
+      "passed": true
+    },
+    {
+      "check": "launcher actual log/probe receipt bytes exact",
+      "passed": true
+    },
+    {
+      "check": "all 27 probe checks report true without error fields",
+      "passed": true
+    },
+    {
+      "check": "all 18 probe outputs exactly inventoried without duplicate or foreign paths",
+      "passed": true
+    },
+    {
+      "check": "private probe and launcher descendant permissions",
+      "passed": true
+    },
+    {
+      "check": "historical before/after source pins and copied outputs exact",
+      "passed": true
+    },
+    {
+      "check": "fresh complete sampler canonical commitment and source records match historical",
+      "passed": true
+    },
+    {
+      "check": "complete source population and open frontier retained",
+      "passed": true
+    },
+    {
+      "check": "all original 3360 dependency obligations remain explicitly open",
+      "passed": true
+    },
+    {
+      "check": "fol: exact real source declaration retains one opaque post-means atom",
+      "passed": true
+    },
+    {
+      "check": "fol: universal biconditional has exactly two unary predicates without list lowering",
+      "passed": true
+    },
+    {
+      "check": "fol: report/companion input bindings use exact retained bytes",
+      "passed": true
+    },
+    {
+      "check": "fol: all authority and lexical-completeness flags remain false",
+      "passed": true
+    },
+    {
+      "check": "fol: six retained physical contexts remain open",
+      "passed": true
+    },
+    {
+      "check": "fol: complete JSON graph has exact node-record endpoints and no norm/entity/use invention",
+      "passed": true
+    },
+    {
+      "check": "fol: public snapshot JSON exactly retains companion graph",
+      "passed": true
+    },
+    {
+      "check": "fol: exported manifest file hash edges.parquet",
+      "passed": true
+    },
+    {
+      "check": "fol: exported manifest file hash nodes.parquet",
+      "passed": true
+    },
+    {
+      "check": "fol: exported manifest file hash snapshot.json",
+      "passed": true
+    },
+    {
+      "check": "fol: manifest/companion identities match probe receipt",
+      "passed": true
+    },
+    {
+      "check": "fol: exported graph remains candidate and externally unverified",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exact real source declaration retains one opaque post-means atom",
+      "passed": true
+    },
+    {
+      "check": "tdfol: universal biconditional has exactly two unary predicates without list lowering",
+      "passed": true
+    },
+    {
+      "check": "tdfol: report/companion input bindings use exact retained bytes",
+      "passed": true
+    },
+    {
+      "check": "tdfol: all authority and lexical-completeness flags remain false",
+      "passed": true
+    },
+    {
+      "check": "tdfol: six retained physical contexts remain open",
+      "passed": true
+    },
+    {
+      "check": "tdfol: complete JSON graph has exact node-record endpoints and no norm/entity/use invention",
+      "passed": true
+    },
+    {
+      "check": "tdfol: public snapshot JSON exactly retains companion graph",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exported manifest file hash edges.parquet",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exported manifest file hash nodes.parquet",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exported manifest file hash snapshot.json",
+      "passed": true
+    },
+    {
+      "check": "tdfol: manifest/companion identities match probe receipt",
+      "passed": true
+    },
+    {
+      "check": "tdfol: exported graph remains candidate and externally unverified",
+      "passed": true
+    },
+    {
+      "check": "own read-only review retains actual checkout HEAD and raw index",
+      "passed": true
+    },
+    {
+      "check": "all qualified listed source bytes still match after readback",
+      "passed": true
+    },
+    {
+      "check": "all reviewed scripts and raw receipts/logs unchanged",
+      "passed": true
+    },
+    {
+      "check": "all output and original historical bytes unchanged at closing",
+      "passed": true
+    }
+  ],
+  "families": {
+    "fol": {
+      "companion_cid": "baguqeerag5wo6mgiqyj7c6xfwivenrma4fkr3metl7rrwwmks5hrid4dm3uq",
+      "graph_edges": 26,
+      "graph_nodes": 15,
+      "graph_snapshot_cid": "baguqeera2kt7wkqzvk3mmft4mech2capbfqehryjdczrblfidqtd6576dfwa",
+      "native_formula_shape": "forall x, head(x) iff opaque_whole_post_means_body(x)",
+      "open_selected_obligations": 36,
+      "physical_occurrences": 6,
+      "source_context_frontier": {
+        "derived_role_occurrences": 4,
+        "original_blocks": 560,
+        "original_context_declarations": 560,
+        "original_open_context_obligations": 3360,
+        "original_units": 560,
+        "selected_open_context_obligations": 36,
+        "selected_original_occurrences": 2,
+        "selected_physical_occurrences": 6,
+        "unselected_original_occurrences": 558,
+        "whole_source_context_retained_externally": true
+      }
+    },
+    "tdfol": {
+      "companion_cid": "baguqeeraxsafg3ob7z2bokmb3pvy7j4q6nkxihopn4dphxqf53yrchaylava",
+      "graph_edges": 26,
+      "graph_nodes": 15,
+      "graph_snapshot_cid": "baguqeerat4wmwqhkdwatzdjjzrcazij22f2oo3imikbbpjyacnmqdaevcmhq",
+      "native_formula_shape": "forall x, head(x) iff opaque_whole_post_means_body(x)",
+      "open_selected_obligations": 36,
+      "physical_occurrences": 6,
+      "source_context_frontier": {
+        "derived_role_occurrences": 4,
+        "original_blocks": 560,
+        "original_context_declarations": 560,
+        "original_open_context_obligations": 3360,
+        "original_units": 560,
+        "selected_open_context_obligations": 36,
+        "selected_original_occurrences": 2,
+        "selected_physical_occurrences": 6,
+        "unselected_original_occurrences": 558,
+        "whole_source_context_retained_externally": true
+      }
+    }
+  },
+  "git_read_guard": {
+    "after": {
+      "head": "0ee2872d085f57128b14f952fa1916734522e991",
+      "index": {
+        "bytes": 5279183,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/worktrees/legal-ir-definition-v2-integration-20261015/index",
+        "sha256": "2a1e335a88e276d7b1cb7afca3fa8392d983a299506edf986f5340f66ee73170"
+      }
+    },
+    "before": {
+      "head": "0ee2872d085f57128b14f952fa1916734522e991",
+      "index": {
+        "bytes": 5279183,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/worktrees/legal-ir-definition-v2-integration-20261015/index",
+        "sha256": "2a1e335a88e276d7b1cb7afca3fa8392d983a299506edf986f5340f66ee73170"
+      }
+    },
+    "current_index_matches_qualification_tree": true
+  },
+  "historical_inputs": {
+    "acquisition-descriptor.json": {
+      "bytes": 926,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/official-section101-acquisition-descriptor-v01.json",
+      "sha256": "00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe"
+    },
+    "historical-sampling-report.json": {
+      "bytes": 2790275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/sampling-report.json",
+      "sha256": "173e3995b8628c76fbffcff1e1d77aad8d22d32ef84c3335e3ccc1c05af836d6"
+    },
+    "source.html": {
+      "bytes": 98879,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/official-2024-title10-section101.html",
+      "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+    }
+  },
+  "observed_at_utc": "2026-10-15T06:26:28.175842+00:00",
+  "output_inventory": [
+    {
+      "bytes": 926,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/acquisition-descriptor.json",
+      "sha256": "00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe"
+    },
+    {
+      "bytes": 57137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/fol/companion.json",
+      "sha256": "473dcc6accdf26adf4c030d2fd09a94416d8f44280c6305e194273989f4f72f5"
+    },
+    {
+      "bytes": 17858,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/fol/graph-bundle/edges.parquet",
+      "sha256": "04def633c86b494a957bae9ebaa8ff4b6aead65cb02b51dfbd475a3a8aad4d36"
+    },
+    {
+      "bytes": 861,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/fol/graph-bundle/manifest.json",
+      "sha256": "97d9bb27a5b2edba3032513b73d1e97ac2efa009eb6a5f4a8986ba97da4e5a56"
+    },
+    {
+      "bytes": 14782,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/fol/graph-bundle/nodes.parquet",
+      "sha256": "0273427e4de3146ff862c5e52b3372058646482706c36dc145b4ef060a803ae0"
+    },
+    {
+      "bytes": 22292,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/fol/graph-bundle/snapshot.json",
+      "sha256": "8951865bf371c68431b0721f56576392357e796022e8f9e7574b6beaf1bf2187"
+    },
+    {
+      "bytes": 31807,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/fol/report.json",
+      "sha256": "e39bdbbba98212357f172a31e98532c05ab71efcce3a5c846761788d5f790923"
+    },
+    {
+      "bytes": 1698,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/fol/request.json",
+      "sha256": "0b599e4c220cc7c85de3396c88cd6f9e2097765e85478616e2b816fc2beacc33"
+    },
+    {
+      "bytes": 2790275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/historical-sampling-report.json",
+      "sha256": "173e3995b8628c76fbffcff1e1d77aad8d22d32ef84c3335e3ccc1c05af836d6"
+    },
+    {
+      "bytes": 2790274,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/sampling-report.json",
+      "sha256": "be524c7822f5e19a16ee56740560b19b0311001c553bd7ca9c2c9ed989af98b1"
+    },
+    {
+      "bytes": 98879,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/source.html",
+      "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+    },
+    {
+      "bytes": 57145,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/tdfol/companion.json",
+      "sha256": "44c30fd8f36bf75784c9d7171736f177d9689be2e434b26a953f5f04c421cd99"
+    },
+    {
+      "bytes": 17858,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/tdfol/graph-bundle/edges.parquet",
+      "sha256": "8c665bfe5d07fe65cd0168331d733574f260d42c639b6daaa7ea7d067387ba7d"
+    },
+    {
+      "bytes": 861,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/tdfol/graph-bundle/manifest.json",
+      "sha256": "5a08441d85af1453c60ad14bac9e8fcb4a7190f466cc46371d6d6612147cfb7e"
+    },
+    {
+      "bytes": 14782,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/tdfol/graph-bundle/nodes.parquet",
+      "sha256": "20a0d9e55d71cf3064ad8a481236834130061369679e602a7feab3bf64a58157"
+    },
+    {
+      "bytes": 22292,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/tdfol/graph-bundle/snapshot.json",
+      "sha256": "d3ddfd685242afb7a588a07e688effe5ff2e5be9b80088a6c1b775529904057b"
+    },
+    {
+      "bytes": 31845,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/tdfol/report.json",
+      "sha256": "30493925d8727366c0c040c7fb4c334d56e490cfdaf6f17f1268aa3a30965ffb"
+    },
+    {
+      "bytes": 1700,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/tdfol/request.json",
+      "sha256": "3d514076dae4c0fd82ff9ab78c2b9d28a4b53d005bbaa51ca0225c7876168aef"
+    }
+  ],
+  "qualification": {
+    "complete_import_closure_claimed": false,
+    "inventory_canonical_sha256": "6db52c4debbd26c3ab07b8627fb932fa87857833e3db10a38e803a891024d9d3",
+    "listed_input_count": 402,
+    "outcomes": {
+      "error": 0,
+      "failure": 0,
+      "skipped": 0
+    },
+    "receipt": {
+      "bytes": 78801,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v02/receipt.json",
+      "sha256": "63d0071bb7f4012435a78cc4db6eec7edd0add178f8312fe2a561b77be96f774"
+    },
+    "tests": 732
+  },
+  "read_bindings": [
+    {
+      "bytes": 13764,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-integration-20261015/docs/autoencoders/evidence/legal-ir-definition-v2-integration-20261015/real_source_probe.py",
+      "sha256": "0703a0729a53514048dbfc3389eb878c114b20ac49f6fcfe89454e4cacd9279f"
+    },
+    {
+      "bytes": 5395,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-integration-20261015/docs/autoencoders/evidence/legal-ir-definition-v2-integration-20261015/probe_launcher.py",
+      "sha256": "af300ee09b093d6ba6defb27a15e0cba17f55681c0788dc7d8a720719a171b3b"
+    },
+    {
+      "bytes": 78801,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v02/receipt.json",
+      "sha256": "63d0071bb7f4012435a78cc4db6eec7edd0add178f8312fe2a561b77be96f774"
+    },
+    {
+      "bytes": 1797,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02-launch/receipt.json",
+      "sha256": "b471864f7b4d1a6b7ab1ef455f0b88522d8cac71968edb6faa52ee1eae661450"
+    },
+    {
+      "bytes": 154,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02-launch/stdout.txt",
+      "sha256": "740a6bcc5a61500078e325438a78ed966da0f8a103cad744c3bf6ef7d3349cd6"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02-launch/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 10454,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/real-source-probe-v02/probe-receipt.json",
+      "sha256": "9277c3e213a15c62fdf26366251c335c98846b72ac1d8bc9995dff1d6f2d4d70"
+    }
+  ],
+  "review_method": "Static Python source review and stdlib-only retained JSON/XML/byte-hash readback; no product imports or execution",
+  "reviewer_runtime_execution": {
+    "Lean_or_solver_processes": 0,
+    "models_or_training": 0,
+    "parquet_parser_reruns": 0,
+    "product_imports": 0,
+    "public_graph_reader_reruns": 0,
+    "tests": 0
+  },
+  "schema": "legal-ir-definition-v2-independent-probe-review/v1",
+  "scope_limits": [
+    "Real-source public Parquet cold-load and companion regeneration are reported executions in one probe interpreter; this review hashes retained Parquet and compares public snapshot JSON without rerunning the reader.",
+    "A separate authored-fixture fresh-interpreter integration test does not establish fresh-interpreter reconstruction of these real-source artifacts.",
+    "The whole post-means text is one opaque unary atom; no list union, legal sort, attachment, governing applicability or complete definition semantics is inferred.",
+    "All 560 blocks, 134 candidate inputs, 426 controls and 3360 original context obligations remain present; all selected six contexts also remain open.",
+    "No genuine legal/formal review, compatible V2 review subject, source-review correspondence, definition-use or norm assertion, training gold/admission, Lean build/admission or proof authority is supplied.",
+    "Sanitized application environment/offline flags/private directories are process setup measures, not an OS network or worker-UID sandbox.",
+    "Record CID identity joins were compared; this review does not rerun product CID/Parquet codecs.",
+    "The prior v01 probe and its original executed launcher remain historical evidence; this review selects corrected v02 only."
+  ],
+  "selected_attempt": "real-source-probe-v02",
+  "static_fixes_verified": [
+    "Restrictive umask077 before owned output creation",
+    "No-torch-only check label matches its actual test",
+    "Guarded checkout root must equal probe script repository",
+    "Qualification raw commitment captured before parse and compared after execution",
+    "Launcher and probe driver byte bindings compared after execution"
+  ],
+  "status": "pass"
+}

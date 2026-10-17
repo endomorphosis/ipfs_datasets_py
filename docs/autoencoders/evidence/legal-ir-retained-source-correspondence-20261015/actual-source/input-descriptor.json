@@ -1,0 +1,83 @@
+{
+  "inputs": [
+    {
+      "bytes": 11149,
+      "name": "c02_receipt",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/replay-receipt.json",
+      "sha256": "3e2b421aed87627b540712de89d7d8cfc00b7fd1dcb9966ac54044d62383c82b"
+    },
+    {
+      "bytes": 7705,
+      "name": "source_review_receipt",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/prior-replay-receipt.json",
+      "sha256": "10e6cf392bfe00fa175de5d3dc931a20a63517594ea3eed89d40a5a5c185ec93"
+    },
+    {
+      "bytes": 3343,
+      "name": "sampler_receipt",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/integration-receipt.json",
+      "sha256": "90152d5f2226955929392dd24d514e80ca19e313b7d3a7c3be28ec8972aaf2b8"
+    },
+    {
+      "bytes": 5664497,
+      "name": "bundle",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/review-bundle.json",
+      "sha256": "2c2bb4ce302568feb014cc6abb28501bd3b453600d696a19588bbb14b55d2846"
+    },
+    {
+      "bytes": 98879,
+      "name": "raw_html",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/source.html",
+      "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+    },
+    {
+      "bytes": 926,
+      "name": "descriptor",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/acquisition-descriptor.json",
+      "sha256": "00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe"
+    },
+    {
+      "bytes": 1069,
+      "name": "acquisition_receipt",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/acquisition-receipt.json",
+      "sha256": "7d9852fd175ae48dc057f2b879ed176e7b26a394e92e6ae13f4824df894228bf"
+    },
+    {
+      "bytes": 2790275,
+      "name": "sampling_report",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01/actual-section101-01/sampling-report.json",
+      "sha256": "173e3995b8628c76fbffcff1e1d77aad8d22d32ef84c3335e3ccc1c05af836d6"
+    },
+    {
+      "bytes": 1645,
+      "name": "fol_request",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/actual-fol-request.json",
+      "sha256": "53401d0500b5277f15158a7737425eb44f1553d5edcd48dc73fec741a1971bae"
+    },
+    {
+      "bytes": 1647,
+      "name": "tdfol_request",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/actual-tdfol-request.json",
+      "sha256": "50a2e256aeb8db5cbc813e037dafba5f2cb6fe7b567837472942e36eb18830d7"
+    },
+    {
+      "bytes": 208589,
+      "name": "fol_result",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/actual-fol-result.json",
+      "sha256": "03736e22b07923ee3661d629c6252d0a64fd36ac4ef41f55b4c36af9a89b978d"
+    },
+    {
+      "bytes": 208635,
+      "name": "tdfol_result",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/actual-tdfol-result.json",
+      "sha256": "197d44d44f074e381a9ee6908aea3f2fa57c5d8c7d0ce2cdb81cf90fe1acf49f"
+    },
+    {
+      "bytes": 3,
+      "name": "actual_responses",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-c-02/exports/actual-responses.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    }
+  ],
+  "schema": "retained-definition-correspondence-inputs/v1"
+}

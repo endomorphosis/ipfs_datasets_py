@@ -1,0 +1,249 @@
+{
+  "generated_native_projects": {
+    "actual_statutory_reviews_claim": false,
+    "authority_flags_checked_per_project": 29,
+    "fresh_process_handoffs": 3,
+    "native_builds_executed": 0,
+    "original_byte_inputs_verified_per_handoff": 12,
+    "project_count": 4,
+    "projects": [
+      {
+        "all_authority_flags_false": true,
+        "authority_flags_checked": 29,
+        "exact_17_field_public_handoff_and_12_original_byte_pins_checked": true,
+        "generated_files": 9,
+        "manifest_sha256": "8762e25ea711d61d58236a9a9cd953b53ea0d13cec41c3b48088ff2cb56e87cd",
+        "native_build_executed": false,
+        "native_modules": 6,
+        "project_name": "candidate-project",
+        "review_prerequisites_satisfied_under_selected_trust": true
+      },
+      {
+        "all_authority_flags_false": true,
+        "authority_flags_checked": 29,
+        "exact_17_field_public_handoff_and_12_original_byte_pins_checked": true,
+        "generated_files": 9,
+        "manifest_sha256": "0105d22b30475411e80567903c3de265c76177e9c4ee1d81db2f99b259b6e275",
+        "native_build_executed": false,
+        "native_modules": 6,
+        "project_name": "candidate-project",
+        "review_prerequisites_satisfied_under_selected_trust": true
+      },
+      {
+        "all_authority_flags_false": true,
+        "authority_flags_checked": 29,
+        "exact_17_field_public_handoff_and_12_original_byte_pins_checked": true,
+        "generated_files": 9,
+        "manifest_sha256": "43d894cfe045ef7202c8ff2c9e2e33b9b6cffc450ef3efac61bf3fbc1c116edf",
+        "native_build_executed": false,
+        "native_modules": 6,
+        "project_name": "blocked-project",
+        "review_prerequisites_satisfied_under_selected_trust": false
+      },
+      {
+        "all_authority_flags_false": true,
+        "authority_flags_checked": 29,
+        "exact_17_field_public_handoff_and_12_original_byte_pins_checked": false,
+        "generated_files": 9,
+        "manifest_sha256": "859b6bd894b2467ca3bba94966d8cd88d999912fec8d8ae682b40dbb82f69ea3",
+        "native_build_executed": false,
+        "native_modules": 6,
+        "project_name": "original-project",
+        "review_prerequisites_satisfied_under_selected_trust": true
+      }
+    ],
+    "proof_kernel_execution_claim": false,
+    "public_review_input_fields_per_handoff": 17
+  },
+  "limitations": [
+    "The316 cases are one selected qualification; the8 new cases are included in316. Historical author42/121 and earlier overlapping qualifications are not aggregated. The author42 module is source-bound but not a selected target in03.",
+    "Generated projects and synthetic authenticated review fixtures remain candidate-only. Valid fixture signatures and selected-trust prerequisites do not establish actual human review, source exposure authentication, semantic agreement, legal truth, corpus/gold admission or an unconditional proven alias.",
+    "Generated Lean source, declared toolchain, expected outputs and conditional theorem text do not establish an installed toolchain, actual Lean compilation, proof-kernel checking or a registered native build/execution handoff.",
+    "No model fit/load/training, asset upload, decoder improvement, GPU usage, official benchmark or measured whole-session token saving is established.",
+    "The source cohort is explicit and finite, not a complete dynamic import closure. Native process/resource enforcement retains the existing sampled cooperative scope, not arbitrary-descendant containment.",
+    "Original raw durability bytes contain native identity metadata; this report publishes their binding and aggregate verification only, without ledger rows, reservation/lease identities, owner PIDs or process arguments. The terminal observation is explicitly a selected transcription."
+  ],
+  "method": "Independent standard-library read-only byte/hash/Git-object/JUnit/regular-file metadata checks against native attempt03. No product imports, tests, native admission, grants, cleanup, attempt writes or ledger mutation were performed by this audit.",
+  "native_closeout": {
+    "Lean_admitted": false,
+    "admitted": false,
+    "artifacts_durable_asserted": true,
+    "authority_granted": false,
+    "cleanup_error": null,
+    "complete_regular_files_including_durability_receipt": 145,
+    "durability_original_bytes": {
+      "bytes": 35745,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-03/logs/validation-durability.json",
+      "sha256": "0044a5416aeaab4067ae54ce7d24532f5af6cf477432c15f13b8742fe362605f"
+    },
+    "durability_receipt_bytes": 35745,
+    "exact_file_membership_hash_size_device_inode_and_unaliased_owner_checks": true,
+    "exact_six_field_result_verified": true,
+    "exceeded_reservation": false,
+    "execution": {
+      "bytes": 1342,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-03/logs/execution.json",
+      "sha256": "5766b36472bd13b6211502755a91ec7464ce9f0256322cb082745ff335ae3cd6"
+    },
+    "execution_and_result_included_in_sealed_inventory": true,
+    "final_attempt_bytes": 8983664,
+    "inventory_excludes_only_its_own_durability_receipt": true,
+    "launcher_exit_code": 0,
+    "model_weights_downloaded": false,
+    "native_execution_elapsed_seconds": 176.86492826696485,
+    "raw_stderr": {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-03/logs/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "raw_stdout": {
+      "bytes": 2750,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-03/logs/stdout.log",
+      "sha256": "234368e7943f0ea75ac2123d4d88f1b7979db2f378d94fa28c1e1d21225d8b50"
+    },
+    "request_result_execution_and_durability_bindings_exact": true,
+    "sealed_payload_bytes": 8947919,
+    "sealed_regular_files": 144,
+    "selected_native_lease_absent_at_audit": true,
+    "selected_storage_status": "released",
+    "six_field_result": {
+      "bytes": 1547,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-03/logs/result.json",
+      "sha256": "9af12d7da6fb008ea3df097c65ecee370cae5f5eed24710548dd8e1c69b3aee1"
+    },
+    "storage_budget_bytes": 268435456,
+    "terminal_closeout_observation": {
+      "bytes": 815,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/native-closeout-observation.json",
+      "sha256": "5716e1484e85adf3c5f1d5d3d2aa463b0ab4554f4040463e94dc26e6468a060e"
+    },
+    "terminal_observation_is_selected_transcription_not_raw_stdout": true
+  },
+  "observed_at_utc": "2026-10-15T17:57:03.014630+00:00",
+  "observed_checkout_head": "72c4bb353f03682f34a694f3f476fa59c186f8b0",
+  "preserved_failed_attempt02_audit": {
+    "bytes": 7318,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-native-preparation-integration-20261015/independent-result-audit.json",
+    "sha256": "aac4539b649ed9d138150a961c51de7279c93bf53d27f450ed57c5ba6f5c31cf"
+  },
+  "pytest": {
+    "class_aware_unique_cases": 316,
+    "duplicate_case_ids": 0,
+    "errors": 0,
+    "exact_selected_module_roster": true,
+    "failures": 0,
+    "imported_author_42_case_module_selected_in_this_run": false,
+    "junit": {
+      "bytes": 60695,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-03/logs/junit.xml",
+      "sha256": "81bfe5f7632e7fae124e11b1deab2b383d737109597960177c02b4b502a3df27"
+    },
+    "junit_suite_seconds": [
+      134.86
+    ],
+    "module_counts": {
+      "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py": 51,
+      "tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py": 49,
+      "tests/unit/logic/autoformal/test_corpus_definition_use_v2.py": 44,
+      "tests/unit/logic/autoformal/test_corpus_imports.py": 7,
+      "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py": 3,
+      "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py": 3,
+      "tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py": 3,
+      "tests/unit/logic/autoformal/test_legal_graph_dependencies.py": 18,
+      "tests/unit/logic/autoformal/test_legal_graph_review.py": 48,
+      "tests/unit/logic/autoformal/test_scoped_definition_resolution.py": 74,
+      "tests/unit/logic/integration/test_legal_ir_source_maps.py": 4,
+      "tests/unit/logic/integration/test_legal_ir_symbols.py": 7,
+      "tests/unit/logic/integration/test_reasoning_lazy_imports.py": 5
+    },
+    "new_case_count": 8,
+    "new_joined_and_lazy_cases": [
+      {
+        "classname": "tests.unit.logic.autoformal.test_definition_use_v2_native_project_exchange",
+        "name": "test_public_native_project_fresh_process_load_preserves_exact_review_and_sources[fol]",
+        "outcome": "pass"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_definition_use_v2_native_project_exchange",
+        "name": "test_public_native_project_fresh_process_load_preserves_exact_review_and_sources[tdfol]",
+        "outcome": "pass"
+      },
+      {
+        "classname": "tests.unit.logic.autoformal.test_definition_use_v2_native_project_exchange",
+        "name": "test_real_competing_table_invalidates_old_assessment_and_replays_blocked_project",
+        "outcome": "pass"
+      },
+      {
+        "classname": "tests.unit.logic.integration.test_reasoning_lazy_imports",
+        "name": "test_reasoning_public_names_dir_and_unknown_attribute_are_inert",
+        "outcome": "pass"
+      },
+      {
+        "classname": "tests.unit.logic.integration.test_reasoning_lazy_imports",
+        "name": "test_pure_legal_leaf_imports_preserve_real_public_objects[symbols]",
+        "outcome": "pass"
+      },
+      {
+        "classname": "tests.unit.logic.integration.test_reasoning_lazy_imports",
+        "name": "test_pure_legal_leaf_imports_preserve_real_public_objects[source_maps]",
+        "outcome": "pass"
+      },
+      {
+        "classname": "tests.unit.logic.integration.test_reasoning_lazy_imports",
+        "name": "test_legacy_public_functions_survive_actual_owner_import_order[direct_owner_first]",
+        "outcome": "pass"
+      },
+      {
+        "classname": "tests.unit.logic.integration.test_reasoning_lazy_imports",
+        "name": "test_legacy_public_functions_survive_actual_owner_import_order[public_export_first]",
+        "outcome": "pass"
+      }
+    ],
+    "passed": 316,
+    "raw_cases": 316,
+    "skips": 0,
+    "stdout_reported_seconds": 134.86,
+    "unique_modules": 13
+  },
+  "request": {
+    "bytes": 65098,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-use-native-preparation-integration-20261015/validation-request-03.json",
+    "sha256": "56974a0e61b2b58a69195368cd958c273f24fee9424598d017275a91c63925cb"
+  },
+  "schema": "legal-ir-v2-native-preparation-independent-audit/v1",
+  "source_preservation": {
+    "adopted_commit": "e58337e4b371c9b16fb2451234f7497882e0c4c4",
+    "author_files": [
+      {
+        "author_and_index_mode_blob_exact": true,
+        "bytes": 21600,
+        "original_adopted_current_exact": true,
+        "original_mode_blob": "100644 blob b116b636e06191098e1a9128fadc15cc9ce73374",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+        "sha256": "306ab6481b78db8046e3f4eeae7cb917002c4a50b227204c6d4692123914b47e"
+      },
+      {
+        "author_and_index_mode_blob_exact": true,
+        "bytes": 23236,
+        "original_adopted_current_exact": true,
+        "original_mode_blob": "100644 blob b5d90f392dfd4cd62926493d80524ae0422b490b",
+        "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py",
+        "sha256": "3f915be198be0d67133d7b07f5ae4c28b6738de94331a7c099c2783d27b0810e"
+      },
+      {
+        "author_and_index_mode_blob_exact": true,
+        "bytes": 8773,
+        "original_adopted_current_exact": true,
+        "original_mode_blob": "100644 blob d236320fe037baa723f985317e8760626cea4ff5",
+        "path": "docs/autoencoders/legal_corpus_definition_use_lake_v2.md",
+        "sha256": "59aada044248343ae81583bd88e2ecbab995574fa80017ad72538bc42ec2165c"
+      }
+    ],
+    "changed_paths": [],
+    "cohort_is_complete_dynamic_import_closure": false,
+    "currently_matching": 256,
+    "original_contribution": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+    "source_pins": 256
+  },
+  "status": "pass"
+}

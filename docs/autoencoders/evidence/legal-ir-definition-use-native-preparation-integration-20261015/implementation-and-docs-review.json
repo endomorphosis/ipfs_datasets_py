@@ -1,0 +1,144 @@
+{
+  "checks_completed": 41,
+  "documentation_review": {
+    "conditional_alias_remains_explicit_unproved_assumption": true,
+    "five_IR_families_and_parallel_8d_384d_768d_schema_task_paths_preserved": true,
+    "historical_and_current_counts_kept_separate": true,
+    "native_admission_refusal_and_executed_failure_distinguished": true,
+    "no_claim_of_model_training_decoder_gain_human_review_or_Lean_proof": true,
+    "source_pin_cohort_not_claimed_complete_import_closure": true,
+    "source_to_subject_exposure_independence_and_gold_gates_still_open": true,
+    "v2_execution_adapter_installed_toolchain_and_observed_kernel_results_still_absent": true
+  },
+  "files_edited_by_reviewer": [
+    "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/implementation-and-docs-review.json"
+  ],
+  "implementation": {
+    "duplicate_constant_final_owner": "legal_ir_schema_evolution",
+    "effective_public_exports": 553,
+    "initializer": {
+      "bytes": 47365,
+      "path": "ipfs_datasets_py/logic/integration/reasoning/__init__.py",
+      "sha256": "df45e300fd07d6e9f1297f59ba0d03e9822bf1cf2f4faa20250501024b31b8da"
+    },
+    "module_function_collision_exports": [
+      "legal_ir_rule_distillation",
+      "legal_ir_view_contracts",
+      "legal_ir_build_manifest",
+      "legal_ir_semantic_diff"
+    ],
+    "ordered_original_import_groups": 38,
+    "ordered_public_names_sha256": "a44ecf830d0e118dda180866b6f4e95e8acdbfd620f7d4ff0e3725f883dee54d",
+    "original_all_source_tail_byte_exact": true,
+    "original_initializer_sha256": "83380d7c173252bfec336a913a928a277ebee40d55d0e18d9f34c6ab3c8325ea",
+    "original_parallel_contribution": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+    "original_three_files": [
+      {
+        "bytes": 21600,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+        "sha256": "306ab6481b78db8046e3f4eeae7cb917002c4a50b227204c6d4692123914b47e"
+      },
+      {
+        "bytes": 23236,
+        "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py",
+        "sha256": "3f915be198be0d67133d7b07f5ae4c28b6738de94331a7c099c2783d27b0810e"
+      },
+      {
+        "bytes": 8773,
+        "path": "docs/autoencoders/legal_corpus_definition_use_lake_v2.md",
+        "sha256": "59aada044248343ae81583bd88e2ecbab995574fa80017ad72538bc42ec2165c"
+      }
+    ],
+    "regression_tests": {
+      "bytes": 11384,
+      "path": "tests/unit/logic/integration/test_reasoning_lazy_imports.py",
+      "sha256": "7d137bcda54692a20de292318731becd95431560bed5e849b6938108baa245e2"
+    },
+    "reported_blocker": {
+      "fix": "Restore only missing slots or the exact installed child-module object; leave other current values intact.",
+      "issue": "Restoring collision exports after an unrelated lazy load overwrote explicit caller overrides.",
+      "regression": "Both actual import orders now include explicit overrides followed by another previously unloaded owner.",
+      "status": "resolved"
+    },
+    "static_api_proof": {
+      "bytes": 1442,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/lazy-public-api-static-proof.json",
+      "sha256": "41de26785710e86acd0d762bb8af29c2be9ab7cce6185f5eea07165210396af0"
+    }
+  },
+  "limits": [
+    "This is a finite static compatibility and documentation review, not exhaustive behavioral compatibility across all 553 optional exports, import cycles, arbitrary monkeypatches, reloads or concurrent imports.",
+    "The five cold-import regressions and whole selected native suites belong to the separately executed qualification; this reviewer did not rerun them.",
+    "The native terminal release observation is explicitly transcribed; the separate raw durability receipt is hash-bound and its public projection was compared without promoting it to a live capability.",
+    "The final coordinating phase receipt and publication manifest are created later and are not authenticated by this review."
+  ],
+  "method": "Read-only source/AST/Git-object and retained JSON/XML byte inspection. No product imports, runtime tests, native API calls, model or Lean execution.",
+  "new_findings": [],
+  "retained_outcome_review": {
+    "declared_source_pins": 256,
+    "durability_projection_exact_except_declared_reservation_id": true,
+    "evidence": [
+      {
+        "bytes": 1547,
+        "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt03-result.json",
+        "sha256": "9af12d7da6fb008ea3df097c65ecee370cae5f5eed24710548dd8e1c69b3aee1"
+      },
+      {
+        "bytes": 1342,
+        "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt03-execution.json",
+        "sha256": "5766b36472bd13b6211502755a91ec7464ce9f0256322cb082745ff335ae3cd6"
+      },
+      {
+        "bytes": 60695,
+        "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt03-junit.xml",
+        "sha256": "81bfe5f7632e7fae124e11b1deab2b383d737109597960177c02b4b502a3df27"
+      },
+      {
+        "bytes": 815,
+        "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/native-closeout-observation.json",
+        "sha256": "5716e1484e85adf3c5f1d5d3d2aa463b0ab4554f4040463e94dc26e6468a060e"
+      },
+      {
+        "bytes": 45603,
+        "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt03-durability-projection.json",
+        "sha256": "5b78417f3e9efc7a9c00b87ddee52a90878e7f738812ab642a5a2f96efc9a6e1"
+      },
+      {
+        "bytes": 65098,
+        "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/validation-request-03.json",
+        "sha256": "56974a0e61b2b58a69195368cd958c273f24fee9424598d017275a91c63925cb"
+      }
+    ],
+    "junit_independently_parsed": true,
+    "live_ledger_or_process_custody_revalidated_by_this_review": false,
+    "module_namespaces": 13,
+    "pytest_and_launcher_intervals_kept_distinct": true,
+    "terminal_release_fields_basis": "Retained transcription from the actual terminal owner result; not independent live-ledger authentication.",
+    "tests": 316
+  },
+  "reviewed_at_utc": "2026-10-15T17:58:38.648344+00:00",
+  "reviewed_documents": [
+    {
+      "bytes": 13210,
+      "path": "docs/autoencoders/legal_definition_use_native_preparation_integration_20261015.md",
+      "sha256": "25b5291af3c6f2bd2fa941d270145404b608caa406fa1ae0cd59178c7859c8a3"
+    },
+    {
+      "bytes": 55933,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "e73b1178ea04786bddd74595fe34ea68eb7f36c32e1ebf56a4dc8be84c99698f"
+    },
+    {
+      "bytes": 14805,
+      "path": "docs/autoencoders/README.md",
+      "sha256": "e18c6f34a618f315a9bd91242f587f799b302401125f4f6eec254d4705b40b79"
+    },
+    {
+      "bytes": 12542,
+      "path": "docs/autoencoders/legal_definition_use_review_v2_integration_20261015.md",
+      "sha256": "ef88626885caaf98d2e56ae2c0c018e306a54dabc6cefba78b6f56bf2d5d1895"
+    }
+  ],
+  "schema": "legal-ir-native-preparation-implementation-docs-static-review/v1",
+  "status": "no_concrete_blocker_within_reviewed_scope"
+}

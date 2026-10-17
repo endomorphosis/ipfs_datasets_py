@@ -1,0 +1,13 @@
+{
+  "admitted": false,
+  "all_sealed_paths_sizes_hashes_device_inode_exact": true,
+  "completed": true,
+  "final_bytes": 53237,
+  "final_files": 15,
+  "method": "Selected-field transcription of native launcher completion; not a copy of raw launcher stdout. Private resource identifiers omitted. Exact native logs and seal retained in declared attempt.",
+  "native_elapsed_seconds": 41.96363989007659,
+  "returncode": 0,
+  "schema": "retained-fixed-view-native-terminal-observation/v1",
+  "selected_storage_status": "released",
+  "source_pins_rehashed": 146
+}

@@ -1,0 +1,1165 @@
+{
+  "admissions": 0,
+  "adopted_owners_exact_source_pins": {
+    "legal_source_sampling_definition_binding_v2.py": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417",
+    "legal_source_sampling_definition_review_v2.py": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567",
+    "legal_source_sampling_review.py": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+  },
+  "alternatives": [
+    {
+      "alternative": "A",
+      "candidate_cid": "baguqeeraax6ambtzbjfpsttn4k35ilrvr3dlgujb6ov6vbki3iwrvoubrqpq",
+      "contexts": 6,
+      "correspondence_cid": "baguqeerag7ou23e3q66v5he4vjgcpfx5lomw3hg6qkonpijqxmcdispbjceq",
+      "correspondence_sha256": "57f5533f9040f8f4204804dd339b981f73348b84a661616e7f84074995f6da46",
+      "dependency_artifacts": 40,
+      "dependency_edges": 39,
+      "distinct_sealed_records_in_candidate": 67,
+      "graph_cid": "baguqeera6cdzg3xnggqt7k6otjy4vduztjablnatmxa5of6egv3y5ipcvnna",
+      "graph_edges": 26,
+      "graph_nodes": 15,
+      "open_context_slots": 36,
+      "producer_pins": {
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_integration.py": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_contracts.py": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py": "2e0eed594cbfa256f54d229e2c9e006eada04263aae17c5d330c79741047f087",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_graph.py": "da2bef54beca29d0d613d46a81241f6f1b7f049e1c9bf9cf1c118d9942374061",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_source.py": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_context_obligations.py": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_definition_boolean.py": "719169f57f549800dfaa40394203c5bb056e549f3f4aa783d3e5354beba3bb2b",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py": "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_graph_review.py": "32abecbf17bc3d10b59d1bd08fde3e8b6bfa58f73b17e31e817fe0f4e910af9e",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_official_document_views.py": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py": "dc4448d3cb8dbbc23f7686674bb5b2b56d04cfbdb74b817b9e22b180ee7ee36a",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling.py": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/ir_core/provenance.py": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/profile_g.py": "4ca5dcc601f30c723467f425a6a03a7c5b1f644c2239a0f4a489705f1b715f03",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/utils/cid_utils.py": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      },
+      "public_prepare_and_validate_replayed": true,
+      "record_files": {
+        "candidate": {
+          "bytes": 68913,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/candidate.json",
+          "sha256": "de4e8aeee515561663fa4d2c918e8e49598757e1204c99b0280e688ea0432cd2"
+        },
+        "definition_report": {
+          "bytes": 31495,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/report.json",
+          "sha256": "6a9fc92d61cb3fcf36de0e4f76e28d9ea76b762d2f1b1085724b85ebce2c06e9"
+        },
+        "dependency_manifest": {
+          "bytes": 45229,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/dependency-manifest.json",
+          "sha256": "25002c1270afae7f4c927e898c366d497fb42ad1f1df2e3fec1cc072ad44e400"
+        },
+        "review_subject": {
+          "bytes": 127970,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/review-subject.json",
+          "sha256": "966972954531cdf18aa72557443d371d4ec864f9497024c532a504066e5f70b8"
+        },
+        "source_binding": {
+          "bytes": 207613,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/source-binding.json",
+          "sha256": "de3e97d3473134a63ba443ddf1a97ccb0d8c401ce02f7ccee26e38f3e625387f"
+        },
+        "unsigned_correspondence": {
+          "bytes": 190852,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/unsigned-correspondence.json",
+          "sha256": "52feacd0a87ce5b0799329d19eb304239854e4ffd25931d372f8aa0676745716"
+        }
+      },
+      "required_original_source_review_subjects": 2,
+      "review_subject_sha256": "d61ac3855faaaeaedbc33e9e4a0a2a6c7b9e0dc5042ab14cd8f21fb17a7129a1",
+      "selected_as_gold": false,
+      "source_binding_cid": "baguqeerazcsnpj5zmwa5u32ol5jz65rzd3lirnseh7ky6766q5ggynt5v2ea",
+      "source_bindings": 6,
+      "source_occurrences": 6,
+      "stage": "complete",
+      "status": "pending_unsigned_correspondence_retained",
+      "unreviewed": true,
+      "whole_source_review_population_subjects": 560
+    },
+    {
+      "alternative": "B",
+      "candidate_cid": "baguqeerarfepwobe6lbcouueprzpf6lil4c2qap4fkzml3tgkw2xyzctcyta",
+      "contexts": 7,
+      "correspondence_cid": "baguqeeran7l4gud3cnas5jpfdrftyf2ltyrkdymbyxmon4kdenzxfri32brq",
+      "correspondence_sha256": "56484f0b2288a09fe4f38b8764f54c1f9851670abfac6982d5b9307297fc8e77",
+      "dependency_artifacts": 43,
+      "dependency_edges": 42,
+      "distinct_sealed_records_in_candidate": 72,
+      "graph_cid": "baguqeerack7re4cvye56tql3gzoxjt6dcrgszodx3wufz7u7uzlqkfgi6aea",
+      "graph_edges": 28,
+      "graph_nodes": 16,
+      "open_context_slots": 42,
+      "producer_pins": {
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_integration.py": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_contracts.py": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py": "2e0eed594cbfa256f54d229e2c9e006eada04263aae17c5d330c79741047f087",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_graph.py": "da2bef54beca29d0d613d46a81241f6f1b7f049e1c9bf9cf1c118d9942374061",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_source.py": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_context_obligations.py": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_definition_boolean.py": "719169f57f549800dfaa40394203c5bb056e549f3f4aa783d3e5354beba3bb2b",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py": "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_graph_review.py": "32abecbf17bc3d10b59d1bd08fde3e8b6bfa58f73b17e31e817fe0f4e910af9e",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_official_document_views.py": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py": "dc4448d3cb8dbbc23f7686674bb5b2b56d04cfbdb74b817b9e22b180ee7ee36a",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling.py": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/ir_core/provenance.py": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/profile_g.py": "4ca5dcc601f30c723467f425a6a03a7c5b1f644c2239a0f4a489705f1b715f03",
+        "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/utils/cid_utils.py": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      },
+      "public_prepare_and_validate_replayed": true,
+      "record_files": {
+        "candidate": {
+          "bytes": 75915,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/candidate.json",
+          "sha256": "85dfec7ad1f330633f1fd9225b68a060960b89fa9994ad8ecc3307f51cc37f4d"
+        },
+        "definition_report": {
+          "bytes": 35003,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/report.json",
+          "sha256": "1f4bff5fe551b57189fe2db9715e24d190865a213a9767ed6d89a1be1a1c5f4b"
+        },
+        "dependency_manifest": {
+          "bytes": 47709,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/dependency-manifest.json",
+          "sha256": "fb66269dfc81f7a50e3d4921cec28fb35004f61a0a8cc394715504ddbc4657e5"
+        },
+        "review_subject": {
+          "bytes": 140365,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/review-subject.json",
+          "sha256": "7feb50d15850a611a45b6ffa05b6b1b8a51d2fbf9cd90451c1fe7b6a01bf32a0"
+        },
+        "source_binding": {
+          "bytes": 216909,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/source-binding.json",
+          "sha256": "dd20b8389f9cdd620688fe225e4379bd368f3fd1c5861bfca00ab0fbac887e6b"
+        },
+        "unsigned_correspondence": {
+          "bytes": 193758,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/unsigned-correspondence.json",
+          "sha256": "6ede7d2f87e7efabe20d7ed1c229fd998003dea04a12b0847a0f9e8e6a8945f3"
+        }
+      },
+      "required_original_source_review_subjects": 2,
+      "review_subject_sha256": "d52d4a28fcfd8d2a17071b8d9e36e47c94cce165a27623ac38ee45c907075a91",
+      "selected_as_gold": false,
+      "source_binding_cid": "baguqeeragkxytsdjrrldg56azupo4c24qjfwspzocdiqlunfqujrfkl6c4la",
+      "source_bindings": 7,
+      "source_occurrences": 7,
+      "stage": "complete",
+      "status": "pending_unsigned_correspondence_retained",
+      "unreviewed": true,
+      "whole_source_review_population_subjects": 560
+    }
+  ],
+  "authority": {
+    "Lean_admitted": false,
+    "accepted_lookup": false,
+    "actual_source_meaning_selected": false,
+    "applicability_verified": false,
+    "evaluation_gold_qualified": false,
+    "governing_use_verified": false,
+    "graph_admitted": false,
+    "human_review_performed": false,
+    "norm_AST_created": false,
+    "signature_created": false,
+    "training_gold_qualified": false
+  },
+  "blocked_process_or_network_attempts": [],
+  "compiled_definition_candidate_count": 2,
+  "complete_use_proposal_files": [
+    {
+      "bytes": 28166,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/uses/1.json",
+      "sha256": "60ad3d29b303cc26b22cf4406fb35669e2825e192808cbff5b6b3b66b8e9776d"
+    },
+    {
+      "bytes": 28136,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/uses/2.json",
+      "sha256": "3b93101b08869826b22dd42809b3af0acf35b2ccb27eb89651095085a2ef72b2"
+    }
+  ],
+  "completed_pending_candidates": 2,
+  "created_at_utc": "2026-10-15T20:56:32.677721+00:00",
+  "cross_alternative_physical_custody": {
+    "actual_reviews_or_selected_gold": 0,
+    "distinct_open_context_slot_ids": 48,
+    "distinct_physical_context_packets_across_alternatives": 8,
+    "distinct_physical_occurrences_across_alternatives": 8,
+    "joint_AST_or_combined_review_subject_created": false,
+    "open_context_slot_ids_shared_by_both_alternatives": 30,
+    "per_alternative": {
+      "A": {
+        "graph_edges": 26,
+        "graph_nodes": 15,
+        "open_context_slot_entries": 36,
+        "physical_context_packets": 6,
+        "physical_occurrence_entries": 6,
+        "source_binding_role_assignments": 6
+      },
+      "B": {
+        "graph_edges": 28,
+        "graph_nodes": 16,
+        "open_context_slot_entries": 42,
+        "physical_context_packets": 7,
+        "physical_occurrence_entries": 7,
+        "source_binding_role_assignments": 7
+      }
+    },
+    "physical_occurrence_membership": [
+      {
+        "end_char": 6527,
+        "end_utf8": 6551,
+        "occurrence_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a",
+        "roles_by_alternative": {
+          "A": [
+            "scope_block"
+          ],
+          "B": [
+            "scope_block"
+          ]
+        },
+        "source_text": "(b) Personnel Generally.—The following definitions relating to military personnel apply in this title:",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "start_char": 6425,
+        "start_utf8": 6447
+      },
+      {
+        "end_char": 6591,
+        "end_utf8": 6615,
+        "occurrence_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera",
+        "roles_by_alternative": {
+          "A": [
+            "definition_contributor/0000"
+          ],
+          "B": [
+            "definition_contributor/0000"
+          ]
+        },
+        "source_text": "(1) The term \"officer\" means a commissioned or warrant officer.",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "start_char": 6528,
+        "start_utf8": 6552
+      },
+      {
+        "end_char": 6556,
+        "end_utf8": 6580,
+        "occurrence_cid": "baguqeeraen4o4e7pmhkwglsne76gpn7bhlwkcmjfbf37xinefne74x7o277q",
+        "roles_by_alternative": {
+          "A": [
+            "definition_cue"
+          ],
+          "B": [
+            "definition_cue"
+          ]
+        },
+        "source_text": "means",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "start_char": 6551,
+        "start_utf8": 6575
+      },
+      {
+        "end_char": 6549,
+        "end_utf8": 6573,
+        "occurrence_cid": "baguqeerannmre56yxs5yoquwde7omoaedal4a6v773mt5gohenraqb5c56na",
+        "roles_by_alternative": {
+          "A": [
+            "definition_head"
+          ],
+          "B": [
+            "definition_head"
+          ]
+        },
+        "source_text": "officer",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "start_char": 6542,
+        "start_utf8": 6566
+      },
+      {
+        "end_char": 6571,
+        "end_utf8": 6595,
+        "occurrence_cid": "baguqeerasrrnciyw7dycwu6rdcvx5tajiubdtmu5cfjmthhiknjtuihxu3kq",
+        "roles_by_alternative": {
+          "B": [
+            "definition_body/0000"
+          ]
+        },
+        "source_text": "commissioned",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "start_char": 6559,
+        "start_utf8": 6583
+      },
+      {
+        "end_char": 6590,
+        "end_utf8": 6614,
+        "occurrence_cid": "baguqeerauoyg25mwuvizhkhmx573jpzkvilvhw3n7igcnapscb6hgqkqzzba",
+        "roles_by_alternative": {
+          "B": [
+            "definition_body/0001"
+          ]
+        },
+        "source_text": "warrant officer",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "start_char": 6575,
+        "start_utf8": 6599
+      },
+      {
+        "end_char": 6591,
+        "end_utf8": 6615,
+        "occurrence_cid": "baguqeerayedt52vpqunefovrwyk2y4q44eseb4vezhili2xeoci777wgnbga",
+        "roles_by_alternative": {
+          "A": [
+            "definition_body/0000"
+          ]
+        },
+        "source_text": "a commissioned or warrant officer.",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "start_char": 6557,
+        "start_utf8": 6581
+      },
+      {
+        "end_char": 6527,
+        "end_utf8": 6551,
+        "occurrence_cid": "baguqeerazqktid7i5cld5rafr6wijmgrajou4t3szrn7zmdwzdgbfrdpknza",
+        "roles_by_alternative": {
+          "A": [
+            "scope_literal"
+          ],
+          "B": [
+            "scope_literal"
+          ]
+        },
+        "source_text": "in this title:",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "start_char": 6513,
+        "start_utf8": 6537
+      }
+    ],
+    "physical_occurrences_shared_by_both_alternatives": 5,
+    "schema": "statutory-proposal-cross-alternative-physical-custody-summary/v1",
+    "scope": "Counts describe two alternatives for one retained source definition, not two reviewed statutory definitions or a governing definition-use graph.",
+    "summed_context_packet_entries": 13,
+    "summed_open_context_slot_entries": 78,
+    "summed_physical_occurrence_entries": 13,
+    "summed_source_binding_role_assignments": 13
+  },
+  "cross_alternative_physical_custody_file": {
+    "bytes": 5166,
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/cross-alternative-custody-summary.json",
+    "sha256": "a8479cc5bcb1779ae007c5d9637ee074c1027c788b9b6b5051c2b89247adf66b"
+  },
+  "current_success_and_historical_attempt_scope": {
+    "current_public_owner_refusals": [],
+    "historical_shell_launch_attempts": [
+      {
+        "bytes": 665,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/definition-bootstrap-attempt-v01.json",
+        "sha256": "c06c41bfe1119254038502c8e1b08abac7f620c821b706e70175503fcb294257"
+      }
+    ],
+    "history_note": "The wrong interpreter-path attempt exited127 before Python or public owners started; it is not a failure of either alternative.",
+    "supported_current_alternatives": [
+      "A",
+      "B"
+    ],
+    "two_alternatives_for_one_definition_not_two_reviewed_definitions": true,
+    "two_complete_source_use_proposals_not_two_norm_ASTs": true
+  },
+  "driver": {
+    "bytes": 34133,
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/prepare_real_definition_v01.py",
+    "sha256": "6f65c995412ef9b85a9e029fdd90ede929dabb550cc3e792b1fd75fc5773adf5"
+  },
+  "evaluation_gold_mask": 0,
+  "external_full_packet_scope": "Previously retained source/blank-review custody input; this preparation replays only the exact sources required by public APIs, not its foreign campaign/runtime/resource history.",
+  "external_inputs": [
+    {
+      "bytes": 10750968,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-sampling-review-context-20261015-01/qualification/run-03/context_replay/context-packet.json",
+      "sha256": "f37e7294eeab39578683b4da91883abb8bfb63386e5789d3ec890c5757b59f32"
+    },
+    {
+      "bytes": 98879,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-review-packets-20261015-01/section101-review-01/source.html",
+      "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+    },
+    {
+      "bytes": 4049,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-source-custody-20261013-01/official-10-7213.html",
+      "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+    },
+    {
+      "bytes": 7017,
+      "path": "/home/barberb/lift_coding/artifacts/legal-autoformalization-source-custody-20261013-01/official-10-7214.html",
+      "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+    }
+  ],
+  "file_count_excluding_manifest": 67,
+  "files": [
+    {
+      "bytes": 1032,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/candidate-pins.json",
+      "relative_path": "alternatives/A/candidate-pins.json",
+      "sha256": "58d648fb620505d922935b0ed7d290dc62df462e36bd67b66c3c1168021d55ab"
+    },
+    {
+      "bytes": 68913,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/candidate.json",
+      "relative_path": "alternatives/A/candidate.json",
+      "sha256": "de4e8aeee515561663fa4d2c918e8e49598757e1204c99b0280e688ea0432cd2"
+    },
+    {
+      "bytes": 2829,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/context-index.json",
+      "relative_path": "alternatives/A/context-index.json",
+      "sha256": "414d2dbe4a21e8f565a3339fbc2be7cfa169f04d929be822fcfc6d4e842eed17"
+    },
+    {
+      "bytes": 1149,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/context-population.json",
+      "relative_path": "alternatives/A/context-population.json",
+      "sha256": "6274d25421906c85836c80e93bbca7b2ba9ccfb0691a2bbc5e2bd93177bac1d6"
+    },
+    {
+      "bytes": 5559,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/contexts/0000.json",
+      "relative_path": "alternatives/A/contexts/0000.json",
+      "sha256": "5243fe4511ac95acd7d4fd8513cafda4f99765dd8ae91712739ac3f693cdf1a1"
+    },
+    {
+      "bytes": 5520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/contexts/0001.json",
+      "relative_path": "alternatives/A/contexts/0001.json",
+      "sha256": "8ec46eb525250897829ffe1ed1579a68a055d81be697a7388a727910d23b2897"
+    },
+    {
+      "bytes": 5469,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/contexts/0002.json",
+      "relative_path": "alternatives/A/contexts/0002.json",
+      "sha256": "8ababbe347c149ec65dd38fbef32da2a53d9d53833689481c8bc730aaf6177e4"
+    },
+    {
+      "bytes": 5462,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/contexts/0003.json",
+      "relative_path": "alternatives/A/contexts/0003.json",
+      "sha256": "7fe4fc823b9accdaefea20ab14459a760fbc36fc55a3bbea4b8ec83427ad00df"
+    },
+    {
+      "bytes": 5460,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/contexts/0004.json",
+      "relative_path": "alternatives/A/contexts/0004.json",
+      "sha256": "99494d3b6a177056be0fa460509d2f3d01b83d41a3577222417ed1f19d3388c6"
+    },
+    {
+      "bytes": 5489,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/contexts/0005.json",
+      "relative_path": "alternatives/A/contexts/0005.json",
+      "sha256": "9e0ce662afe51001f6a52b9ec958efb96333907f62ad5010f6b1e56c888309fd"
+    },
+    {
+      "bytes": 45229,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/dependency-manifest.json",
+      "relative_path": "alternatives/A/dependency-manifest.json",
+      "sha256": "25002c1270afae7f4c927e898c366d497fb42ad1f1df2e3fec1cc072ad44e400"
+    },
+    {
+      "bytes": 1517,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/replay-index.json",
+      "relative_path": "alternatives/A/replay-index.json",
+      "sha256": "7f206ebb43cc9cb8ab842641d4b8cbe777011b5212a91038d2e4ee9530b2adc2"
+    },
+    {
+      "bytes": 31495,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/report.json",
+      "relative_path": "alternatives/A/report.json",
+      "sha256": "6a9fc92d61cb3fcf36de0e4f76e28d9ea76b762d2f1b1085724b85ebce2c06e9"
+    },
+    {
+      "bytes": 1993,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/request.json",
+      "relative_path": "alternatives/A/request.json",
+      "sha256": "9ed95fcca7d13eba8e116e54d55cef6a9aa241ee387e357b4340a54e301f3239"
+    },
+    {
+      "bytes": 10800,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/result.json",
+      "relative_path": "alternatives/A/result.json",
+      "sha256": "c7f07fc6bc6f58705e8650db6462d1cfd2a935e6d921c2e7860014e3e25a7a00"
+    },
+    {
+      "bytes": 94361,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/review-preparation.json",
+      "relative_path": "alternatives/A/review-preparation.json",
+      "sha256": "fcda35a486f1d835b7a85522571c7782b13f0339eee220834d1abb22c79cc979"
+    },
+    {
+      "bytes": 127970,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/review-subject.json",
+      "relative_path": "alternatives/A/review-subject.json",
+      "sha256": "966972954531cdf18aa72557443d371d4ec864f9497024c532a504066e5f70b8"
+    },
+    {
+      "bytes": 207613,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/source-binding.json",
+      "relative_path": "alternatives/A/source-binding.json",
+      "sha256": "de3e97d3473134a63ba443ddf1a97ccb0d8c401ce02f7ccee26e38f3e625387f"
+    },
+    {
+      "bytes": 190852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/A/unsigned-correspondence.json",
+      "relative_path": "alternatives/A/unsigned-correspondence.json",
+      "sha256": "52feacd0a87ce5b0799329d19eb304239854e4ffd25931d372f8aa0676745716"
+    },
+    {
+      "bytes": 1032,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/candidate-pins.json",
+      "relative_path": "alternatives/B/candidate-pins.json",
+      "sha256": "c2e5a98f35b508219acb18d03214757ee2cd3616a09b5c5c1b5dbf29fde857eb"
+    },
+    {
+      "bytes": 75915,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/candidate.json",
+      "relative_path": "alternatives/B/candidate.json",
+      "sha256": "85dfec7ad1f330633f1fd9225b68a060960b89fa9994ad8ecc3307f51cc37f4d"
+    },
+    {
+      "bytes": 3300,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/context-index.json",
+      "relative_path": "alternatives/B/context-index.json",
+      "sha256": "df7c48abd7491acc7294bd60127a03123f7108bfa0ccda67d354a6fe90e5b629"
+    },
+    {
+      "bytes": 1340,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/context-population.json",
+      "relative_path": "alternatives/B/context-population.json",
+      "sha256": "36fd4eccde4793b6f57f49024f25360da04009e8fa6473e7fcb77caa5efe5f1a"
+    },
+    {
+      "bytes": 5559,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/contexts/0000.json",
+      "relative_path": "alternatives/B/contexts/0000.json",
+      "sha256": "5243fe4511ac95acd7d4fd8513cafda4f99765dd8ae91712739ac3f693cdf1a1"
+    },
+    {
+      "bytes": 5520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/contexts/0001.json",
+      "relative_path": "alternatives/B/contexts/0001.json",
+      "sha256": "8ec46eb525250897829ffe1ed1579a68a055d81be697a7388a727910d23b2897"
+    },
+    {
+      "bytes": 5469,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/contexts/0002.json",
+      "relative_path": "alternatives/B/contexts/0002.json",
+      "sha256": "8ababbe347c149ec65dd38fbef32da2a53d9d53833689481c8bc730aaf6177e4"
+    },
+    {
+      "bytes": 5462,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/contexts/0003.json",
+      "relative_path": "alternatives/B/contexts/0003.json",
+      "sha256": "7fe4fc823b9accdaefea20ab14459a760fbc36fc55a3bbea4b8ec83427ad00df"
+    },
+    {
+      "bytes": 5460,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/contexts/0004.json",
+      "relative_path": "alternatives/B/contexts/0004.json",
+      "sha256": "99494d3b6a177056be0fa460509d2f3d01b83d41a3577222417ed1f19d3388c6"
+    },
+    {
+      "bytes": 5467,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/contexts/0005.json",
+      "relative_path": "alternatives/B/contexts/0005.json",
+      "sha256": "7116cbb2efd633817381c7841ab37c91a01b79d3797bd6396e0721dcbed51af7"
+    },
+    {
+      "bytes": 5470,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/contexts/0006.json",
+      "relative_path": "alternatives/B/contexts/0006.json",
+      "sha256": "87eb0e13d15ba0ec40f7187e005cadd8d892d21fe5e35a2b6b4373bba4b70af2"
+    },
+    {
+      "bytes": 47709,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/dependency-manifest.json",
+      "relative_path": "alternatives/B/dependency-manifest.json",
+      "sha256": "fb66269dfc81f7a50e3d4921cec28fb35004f61a0a8cc394715504ddbc4657e5"
+    },
+    {
+      "bytes": 1517,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/replay-index.json",
+      "relative_path": "alternatives/B/replay-index.json",
+      "sha256": "85006568b085d17d4adad954aba5d0046f8c59c07acfefb98f894d4ed78d8c17"
+    },
+    {
+      "bytes": 35003,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/report.json",
+      "relative_path": "alternatives/B/report.json",
+      "sha256": "1f4bff5fe551b57189fe2db9715e24d190865a213a9767ed6d89a1be1a1c5f4b"
+    },
+    {
+      "bytes": 2239,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/request.json",
+      "relative_path": "alternatives/B/request.json",
+      "sha256": "a6a51c9caf924dc664a94d2154da5ffe44c48308861c6e0b2343646339660e9c"
+    },
+    {
+      "bytes": 10800,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/result.json",
+      "relative_path": "alternatives/B/result.json",
+      "sha256": "dec0dc78bcd4f16c981cf4ae6da29d68facf136da6629dfcd073318261b55420"
+    },
+    {
+      "bytes": 103789,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/review-preparation.json",
+      "relative_path": "alternatives/B/review-preparation.json",
+      "sha256": "422485b279b172328d0dbd2f894dbf79757ab3cbae34f5151920efef67a64bbf"
+    },
+    {
+      "bytes": 140365,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/review-subject.json",
+      "relative_path": "alternatives/B/review-subject.json",
+      "sha256": "7feb50d15850a611a45b6ffa05b6b1b8a51d2fbf9cd90451c1fe7b6a01bf32a0"
+    },
+    {
+      "bytes": 216909,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/source-binding.json",
+      "relative_path": "alternatives/B/source-binding.json",
+      "sha256": "dd20b8389f9cdd620688fe225e4379bd368f3fd1c5861bfca00ab0fbac887e6b"
+    },
+    {
+      "bytes": 193758,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/alternatives/B/unsigned-correspondence.json",
+      "relative_path": "alternatives/B/unsigned-correspondence.json",
+      "sha256": "6ede7d2f87e7efabe20d7ed1c229fd998003dea04a12b0847a0f9e8e6a8945f3"
+    },
+    {
+      "bytes": 5166,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/cross-alternative-custody-summary.json",
+      "relative_path": "cross-alternative-custody-summary.json",
+      "sha256": "a8479cc5bcb1779ae007c5d9637ee074c1027c788b9b6b5051c2b89247adf66b"
+    },
+    {
+      "bytes": 49059,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/original-attachments.json",
+      "relative_path": "original-attachments.json",
+      "sha256": "b69b08131f47a713f2e491cdabe931f3669f96cf4f9cc285998649f920da11ea"
+    },
+    {
+      "bytes": 988,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/proposal-exposure-metadata.json",
+      "relative_path": "proposal-exposure-metadata.json",
+      "sha256": "3cb5d6039cf32534d2616fe406b3dcbb916a366dad732b03cd8935b3488d0323"
+    },
+    {
+      "bytes": 1493,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/proposal-policy.json",
+      "relative_path": "proposal-policy.json",
+      "sha256": "09e489669366776ce277e62693088a970c21b0fd201a772e185079ddb220209d"
+    },
+    {
+      "bytes": 3,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/responses.json",
+      "relative_path": "responses.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "bytes": 926,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/descriptor.json",
+      "relative_path": "sources/101/descriptor.json",
+      "sha256": "50536560e7de00eba947e1420acf1ef8e2b6441babfe091f7437f7b6cf5df072"
+    },
+    {
+      "bytes": 1311,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/replay-inputs.json",
+      "relative_path": "sources/101/replay-inputs.json",
+      "sha256": "61ee704b354b9520111286728e13d636a1806f4a01feb005f1529faeabea1408"
+    },
+    {
+      "bytes": 5664496,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/review-bundle.json",
+      "relative_path": "sources/101/review-bundle.json",
+      "sha256": "62bbead449c5e1d10cbdb23957f3a6325ad6cb830b86106086fd1ccd66134b33"
+    },
+    {
+      "bytes": 2790274,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/sampling-report.json",
+      "relative_path": "sources/101/sampling-report.json",
+      "sha256": "be524c7822f5e19a16ee56740560b19b0311001c553bd7ca9c2c9ed989af98b1"
+    },
+    {
+      "bytes": 59083,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/selected-evidence.json",
+      "relative_path": "sources/101/selected-evidence.json",
+      "sha256": "c8be609111dd142a15b2181138d7fda5880960686c0bb33c3e0a06f59761bd5d"
+    },
+    {
+      "bytes": 98879,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/source.html",
+      "relative_path": "sources/101/source.html",
+      "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+    },
+    {
+      "bytes": 599801,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/view-report.json",
+      "relative_path": "sources/101/view-report.json",
+      "sha256": "26ac99daae8452bfa43f799da7f455b6f4f228b3636712dbde203f6705b94192"
+    },
+    {
+      "bytes": 942,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/descriptor.json",
+      "relative_path": "sources/7213/descriptor.json",
+      "sha256": "eab40b8e87203484173f69dc7656d559ef0ebcefa8192fdb65fb1f5e034612c6"
+    },
+    {
+      "bytes": 1326,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/replay-inputs.json",
+      "relative_path": "sources/7213/replay-inputs.json",
+      "sha256": "3a5e29ad7b2724a9214f6bd924c813ba66d3e58446136a93e40128ff21ee9e55"
+    },
+    {
+      "bytes": 274339,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/review-bundle.json",
+      "relative_path": "sources/7213/review-bundle.json",
+      "sha256": "3f7a77f2de922c0fd116c990af1bafedaa14464ae4b84939d8d6189fa6d7a5e5"
+    },
+    {
+      "bytes": 134030,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/sampling-report.json",
+      "relative_path": "sources/7213/sampling-report.json",
+      "sha256": "7a0c92ddbb93469fd7d5ce4512f3dec55511791ff904e001050f9614ed1637c3"
+    },
+    {
+      "bytes": 18215,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/selected-evidence.json",
+      "relative_path": "sources/7213/selected-evidence.json",
+      "sha256": "f7ed1753af645c19cf76fae3a940a1ccd488cae18c6cc268a4307c7c7aa71b05"
+    },
+    {
+      "bytes": 4049,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/source.html",
+      "relative_path": "sources/7213/source.html",
+      "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+    },
+    {
+      "bytes": 31140,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/view-report.json",
+      "relative_path": "sources/7213/view-report.json",
+      "sha256": "e3359aec9b6d637b1d73e3d7b589640d6878e067424a46ff5d1011030d363c98"
+    },
+    {
+      "bytes": 942,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/descriptor.json",
+      "relative_path": "sources/7214/descriptor.json",
+      "sha256": "e2d91953a2fbbf3d165ccf960f16d94a8eec29a5915d1097d1a334f6fa526e77"
+    },
+    {
+      "bytes": 1326,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/replay-inputs.json",
+      "relative_path": "sources/7214/replay-inputs.json",
+      "sha256": "970105b184c7a1703e75c56c5b714e0c712f543d315baf2412625ab3cb80c8a8"
+    },
+    {
+      "bytes": 426953,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/review-bundle.json",
+      "relative_path": "sources/7214/review-bundle.json",
+      "sha256": "a3f9027b690d583ff8f63fea6a138be4e867060eb2ce83873644fad9aa07d522"
+    },
+    {
+      "bytes": 209925,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/sampling-report.json",
+      "relative_path": "sources/7214/sampling-report.json",
+      "sha256": "335181759ba447324c17b6249201d5395dce8f7bdfd7dd69f5cb2add7535a4b0"
+    },
+    {
+      "bytes": 18225,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/selected-evidence.json",
+      "relative_path": "sources/7214/selected-evidence.json",
+      "sha256": "2f7b039e2b19384d0210057580e4da61b120a64b723726825d64311840ae6e25"
+    },
+    {
+      "bytes": 7017,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/source.html",
+      "relative_path": "sources/7214/source.html",
+      "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+    },
+    {
+      "bytes": 48483,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/view-report.json",
+      "relative_path": "sources/7214/view-report.json",
+      "sha256": "59c6d6abd3b93dda95f92b44f8ecbfc30974bd1b85109f328b004cecc7fe290a"
+    },
+    {
+      "bytes": 28166,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/uses/1.json",
+      "relative_path": "uses/1.json",
+      "sha256": "60ad3d29b303cc26b22cf4406fb35669e2825e192808cbff5b6b3b66b8e9776d"
+    },
+    {
+      "bytes": 28136,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/uses/2.json",
+      "relative_path": "uses/2.json",
+      "sha256": "3b93101b08869826b22dd42809b3af0acf35b2ccb27eb89651095085a2ef72b2"
+    }
+  ],
+  "historical_bootstrap_attempts": [
+    {
+      "bytes": 665,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/definition-bootstrap-attempt-v01.json",
+      "sha256": "c06c41bfe1119254038502c8e1b08abac7f620c821b706e70175503fcb294257"
+    }
+  ],
+  "human_reviews": 0,
+  "imported_optional_runtime_packages": [],
+  "metadata_finalization": {
+    "all_original_public_owner_payload_files_unchanged": true,
+    "initial_public_preparation_manifest": {
+      "bytes": 56092,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-initial-preparation-manifest-v01.json",
+      "sha256": "f3468076585627f6ca06866376b156a3a3f6c0ed1a898bae794cfa0b83b4639d"
+    },
+    "only_added_payload_after_original_file_inventory": [
+      "cross-alternative-custody-summary.json"
+    ],
+    "scope": "Organizer exposure and exact cross-alternative counts only. No candidate, binding, subject, manifest, response, context packet or correspondence was rewritten.",
+    "script": {
+      "bytes": 4386,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/finalize_real_definition_manifest_v01.py",
+      "sha256": "f6e33a6bf3f8e91835d7edbb0707a10abe2b1c3bf0d344bfedbcacd47a941b64"
+    }
+  },
+  "native_processes_or_probes": 0,
+  "network_or_resource_actions": 0,
+  "norm_ASTs_or_governing_USE_edges_created": 0,
+  "normal_public_imports": true,
+  "opening": {
+    "bytes": 4954,
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/opening.json",
+    "sha256": "de03b5c8ac68e36cfcc3da64fad04d7ca2c65eeeff33cab1c564eb539fac34a8"
+  },
+  "organizer_proposal_exposure": {
+    "actual_reviewer_declarations": [],
+    "admissions": 0,
+    "candidate_blind_reviewer_or_holdout_claim": false,
+    "existing_packet_status": "blank_not_a_review",
+    "future_candidate_blind_meaning_target_collection": "Use independently retained unchanged source-only blank guides before showing these alternatives to any future target author; this record is not a reviewer declaration.",
+    "human_reviews": 0,
+    "learned_decoder_outputs": false,
+    "metadata_origin": "Explicit organizer task instruction before final artifact seal; this sidecar does not alter any candidate/subject/dependency input.",
+    "organizer_or_team_has_seen_proposed_AST_alternatives": true,
+    "organizer_or_team_has_seen_selected_source": true,
+    "proposal_origin": "caller_authored_source_grounded",
+    "schema": "statutory-proposal-exposure-and-review-boundary/v1",
+    "selected_gold_alternative": null,
+    "signatures_created": 0,
+    "source_only_blank_guides_retained_byte_equivalent_in_complete_bundles": true
+  },
+  "original_attachment_nominations": 8,
+  "original_source_intakes": [
+    {
+      "replay_inputs": {
+        "descriptor": {
+          "edition": 2024,
+          "granule_id": "USCODE-2024-title10-subtitleA-partI-chap1-sec101",
+          "http_provenance": {
+            "content_type": "text/html",
+            "etag": null,
+            "final_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleA-partI-chap1-sec101.htm",
+            "last_modified": "Fri, 22 Aug 2025 18:43:41 GMT",
+            "requested_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleA-partI-chap1-sec101.htm",
+            "status_code": 200
+          },
+          "legal_id": "usc:us:10:101",
+          "package_id": "USCODE-2024-title10",
+          "raw_bytes": 98879,
+          "raw_sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b",
+          "retrieved_at": "2026-10-15T04:12:21.976249+00:00",
+          "schema": "legal-official-source-acquisition/v1",
+          "url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleA-partI-chap1-sec101.htm"
+        },
+        "expected_descriptor_sha256": "431a4da4edc59bed35841256a9e13a56c52715b227e5d0a036b55ae255df07c8",
+        "expected_raw_bytes": 98879,
+        "expected_raw_sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b",
+        "expected_sampling_report_sha256": "be524c7822f5e19a16ee56740560b19b0311001c553bd7ca9c2c9ed989af98b1"
+      },
+      "retained_files": {
+        "descriptor.json": {
+          "bytes": 926,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/descriptor.json",
+          "sha256": "50536560e7de00eba947e1420acf1ef8e2b6441babfe091f7437f7b6cf5df072"
+        },
+        "replay-inputs.json": {
+          "bytes": 1311,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/replay-inputs.json",
+          "sha256": "61ee704b354b9520111286728e13d636a1806f4a01feb005f1529faeabea1408"
+        },
+        "review-bundle.json": {
+          "bytes": 5664496,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/review-bundle.json",
+          "sha256": "62bbead449c5e1d10cbdb23957f3a6325ad6cb830b86106086fd1ccd66134b33"
+        },
+        "sampling-report.json": {
+          "bytes": 2790274,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/sampling-report.json",
+          "sha256": "be524c7822f5e19a16ee56740560b19b0311001c553bd7ca9c2c9ed989af98b1"
+        },
+        "source.html": {
+          "bytes": 98879,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/source.html",
+          "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+        },
+        "view-report.json": {
+          "bytes": 599801,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/view-report.json",
+          "sha256": "26ac99daae8452bfa43f799da7f455b6f4f228b3636712dbde203f6705b94192"
+        }
+      },
+      "source": "101"
+    },
+    {
+      "replay_inputs": {
+        "descriptor": {
+          "edition": 2024,
+          "granule_id": "USCODE-2024-title10-subtitleB-partII-chap723-sec7213",
+          "http_provenance": {
+            "content_type": "text/html",
+            "etag": null,
+            "final_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm",
+            "last_modified": "Fri, 22 Aug 2025 18:43:47 GMT",
+            "requested_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm",
+            "status_code": 200
+          },
+          "legal_id": "usc:us:10:7213",
+          "package_id": "USCODE-2024-title10",
+          "raw_bytes": 4049,
+          "raw_sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+          "retrieved_at": "2026-10-15T16:42:18.541223+00:00",
+          "schema": "legal-official-source-acquisition/v1",
+          "url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm"
+        },
+        "expected_descriptor_sha256": "e386d40efaebace111cc5c7893ad305480df2bc85ef7e92f7cfff9d7970feb2a",
+        "expected_raw_bytes": 4049,
+        "expected_raw_sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+        "expected_sampling_report_sha256": "7a0c92ddbb93469fd7d5ce4512f3dec55511791ff904e001050f9614ed1637c3"
+      },
+      "retained_files": {
+        "descriptor.json": {
+          "bytes": 942,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/descriptor.json",
+          "sha256": "eab40b8e87203484173f69dc7656d559ef0ebcefa8192fdb65fb1f5e034612c6"
+        },
+        "replay-inputs.json": {
+          "bytes": 1326,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/replay-inputs.json",
+          "sha256": "3a5e29ad7b2724a9214f6bd924c813ba66d3e58446136a93e40128ff21ee9e55"
+        },
+        "review-bundle.json": {
+          "bytes": 274339,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/review-bundle.json",
+          "sha256": "3f7a77f2de922c0fd116c990af1bafedaa14464ae4b84939d8d6189fa6d7a5e5"
+        },
+        "sampling-report.json": {
+          "bytes": 134030,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/sampling-report.json",
+          "sha256": "7a0c92ddbb93469fd7d5ce4512f3dec55511791ff904e001050f9614ed1637c3"
+        },
+        "source.html": {
+          "bytes": 4049,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/source.html",
+          "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+        },
+        "view-report.json": {
+          "bytes": 31140,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/view-report.json",
+          "sha256": "e3359aec9b6d637b1d73e3d7b589640d6878e067424a46ff5d1011030d363c98"
+        }
+      },
+      "source": "7213"
+    },
+    {
+      "replay_inputs": {
+        "descriptor": {
+          "edition": 2024,
+          "granule_id": "USCODE-2024-title10-subtitleB-partII-chap723-sec7214",
+          "http_provenance": {
+            "content_type": "text/html",
+            "etag": null,
+            "final_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm",
+            "last_modified": "Fri, 22 Aug 2025 18:43:47 GMT",
+            "requested_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm",
+            "status_code": 200
+          },
+          "legal_id": "usc:us:10:7214",
+          "package_id": "USCODE-2024-title10",
+          "raw_bytes": 7017,
+          "raw_sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e",
+          "retrieved_at": "2026-10-15T16:42:18.675126+00:00",
+          "schema": "legal-official-source-acquisition/v1",
+          "url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm"
+        },
+        "expected_descriptor_sha256": "541c5995627c3a38a77f0ab487848615f96a835bff4e08294c1da3e35df2414c",
+        "expected_raw_bytes": 7017,
+        "expected_raw_sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e",
+        "expected_sampling_report_sha256": "335181759ba447324c17b6249201d5395dce8f7bdfd7dd69f5cb2add7535a4b0"
+      },
+      "retained_files": {
+        "descriptor.json": {
+          "bytes": 942,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/descriptor.json",
+          "sha256": "e2d91953a2fbbf3d165ccf960f16d94a8eec29a5915d1097d1a334f6fa526e77"
+        },
+        "replay-inputs.json": {
+          "bytes": 1326,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/replay-inputs.json",
+          "sha256": "970105b184c7a1703e75c56c5b714e0c712f543d315baf2412625ab3cb80c8a8"
+        },
+        "review-bundle.json": {
+          "bytes": 426953,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/review-bundle.json",
+          "sha256": "a3f9027b690d583ff8f63fea6a138be4e867060eb2ce83873644fad9aa07d522"
+        },
+        "sampling-report.json": {
+          "bytes": 209925,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/sampling-report.json",
+          "sha256": "335181759ba447324c17b6249201d5395dce8f7bdfd7dd69f5cb2add7535a4b0"
+        },
+        "source.html": {
+          "bytes": 7017,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/source.html",
+          "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+        },
+        "view-report.json": {
+          "bytes": 48483,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/view-report.json",
+          "sha256": "59c6d6abd3b93dda95f92b44f8ecbfc30974bd1b85109f328b004cecc7fe290a"
+        }
+      },
+      "source": "7214"
+    }
+  ],
+  "package_stubs_or_test_fixture_imports": false,
+  "pending_source_binding_count": 2,
+  "producer_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_integration.py": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_contracts.py": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py": "2e0eed594cbfa256f54d229e2c9e006eada04263aae17c5d330c79741047f087",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_graph.py": "da2bef54beca29d0d613d46a81241f6f1b7f049e1c9bf9cf1c118d9942374061",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/corpus_source.py": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_context_obligations.py": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_definition_boolean.py": "719169f57f549800dfaa40394203c5bb056e549f3f4aa783d3e5354beba3bb2b",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py": "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_graph_review.py": "32abecbf17bc3d10b59d1bd08fde3e8b6bfa58f73b17e31e817fe0f4e910af9e",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_official_document_views.py": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py": "dc4448d3cb8dbbc23f7686674bb5b2b56d04cfbdb74b817b9e22b180ee7ee36a",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling.py": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/ir_core/provenance.py": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/profile_g.py": "4ca5dcc601f30c723467f425a6a03a7c5b1f644c2239a0f4a489705f1b715f03",
+    "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/utils/cid_utils.py": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+  },
+  "proposal_exposure_metadata": {
+    "bytes": 988,
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/proposal-exposure-metadata.json",
+    "sha256": "3cb5d6039cf32534d2616fe406b3dcbb916a366dad732b03cd8935b3488d0323"
+  },
+  "runtime_interpreter": "/home/barberb/lift_coding/.venv/bin/python",
+  "schema": "real-statutory-definition-pending-alternatives-example/v1",
+  "selected_original_subjects": 6,
+  "selected_source_evidence_files": [
+    {
+      "bytes": 59083,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/selected-evidence.json",
+      "sha256": "c8be609111dd142a15b2181138d7fda5880960686c0bb33c3e0a06f59761bd5d"
+    },
+    {
+      "bytes": 18215,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/selected-evidence.json",
+      "sha256": "f7ed1753af645c19cf76fae3a940a1ccd488cae18c6cc268a4307c7c7aa71b05"
+    },
+    {
+      "bytes": 18225,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/selected-evidence.json",
+      "sha256": "2f7b039e2b19384d0210057580e4da61b120a64b723726825d64311840ae6e25"
+    }
+  ],
+  "signatures_or_keys_constructed": 0,
+  "source_commit_at_preparation": "e25c119bc668fcdaa9157ef94faca5a1f882ac1f",
+  "source_only_actual_use_proposals": 2,
+  "source_parent_before_selective_additions": "4a88f05b1feb35c77db11c8442b2ccfd714ba672",
+  "source_review_responses": 0,
+  "source_worktree": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets",
+  "supporting_original_subjects": 4,
+  "target_original_subjects": 2,
+  "training_mask": 0,
+  "training_or_model_calls": 0,
+  "unsigned_correspondence_count": 2,
+  "unsigned_review_subject_count": 2,
+  "whole_original_candidate_paragraphs": 136,
+  "whole_original_controls": 491,
+  "whole_original_source_units": 627
+}

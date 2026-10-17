@@ -1,0 +1,16 @@
+........................................................................ [  7%]
+........................................................................ [ 14%]
+........................................................................ [ 21%]
+........................................................................ [ 28%]
+........................................................................ [ 36%]
+........................................................................ [ 43%]
+........................................................................ [ 50%]
+........................................................................ [ 57%]
+........................................................................ [ 65%]
+........................................................................ [ 72%]
+........................................................................ [ 79%]
+........................................................................ [ 86%]
+........................................................................ [ 93%]
+............................................................             [100%]
+996 passed in 1833.07s (0:30:33)
+{"cases": 996, "checks": ["/home/barberb/lift_coding/artifacts/legal-corpus-source-integration-20261015-01/test_temporary_profile.py", "tests/unit/logic/autoformal/test_corpus_source_review_responses.py", "tests/unit/logic/autoformal/test_corpus_source_adjudication.py", "tests/unit/logic/autoformal/test_corpus_source_application.py", "tests/unit/logic/autoformal/test_corpus_source_history.py", "tests/unit/logic/autoformal/test_corpus_source_bindings.py"], "counts": {"error": 0, "failure": 0, "skipped": 0}, "exit_code": 0, "gold_admitted": false, "models_loaded": false, "native_Lean_executed": false, "passed": true, "pytest_arguments": ["--noconftest", "--import-mode=importlib", "-o", "addopts=", "-q", "--maxfail=1", "--tb=short", "-p", "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest", "--basetemp=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-integration-20261015-02/pytest/basetemp", "-o", "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-integration-20261015-02/cache/pytest", "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-source-review-integration-20261015-02/logs/junit.xml", "/home/barberb/lift_coding/artifacts/legal-corpus-source-integration-20261015-01/test_temporary_profile.py", "tests/unit/logic/autoformal/test_corpus_source_review_responses.py", "tests/unit/logic/autoformal/test_corpus_source_adjudication.py", "tests/unit/logic/autoformal/test_corpus_source_application.py", "tests/unit/logic/autoformal/test_corpus_source_history.py", "tests/unit/logic/autoformal/test_corpus_source_bindings.py"], "request_sha256": "c35639026de8c3ffaf930414e9c1dacab89a9e694bec6ecdb5e92495f3decac5", "reviews_created": false, "schema": "legal-source-review-integration-checks/v1", "temporary_profile": "unique-regular-directory-factory/v1", "unchanged_product_and_suite_inputs": true}

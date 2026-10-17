@@ -1,0 +1,13 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-a-01/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-a-01/logs/execution.json"
+  ],
+  "executed_checks": [
+    "tests/unit/logic/integration/test_reasoning_lazy_imports.py"
+  ],
+  "request_sha256": "b96f146e6a59cc40fc90bf58a8b40c228d3ed68ae739cba770b2d63dabf93a43",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

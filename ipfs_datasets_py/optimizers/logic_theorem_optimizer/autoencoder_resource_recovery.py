@@ -80,7 +80,7 @@ def _administrative_census(helper, ledger):
 
 def reconcile_retained_reservation(ledger_path, *, roots, reservation_id,
         expected_record_sha256, attempt_directory, expected_artifacts, artifacts_durable=False,
-        capacity_policy="require_capacity"):
+        capacity_policy="require_capacity", allow_empty_failed_admission=False):
     """Release exactly one retained claim after explicit, verified closeout.
 
     The previous owner PID must be absent (a reused PID also blocks recovery).
@@ -91,12 +91,18 @@ def reconcile_retained_reservation(ledger_path, *, roots, reservation_id,
     or changes the cap. Its final accounting is a fresh prewrite projection with
     only this claim released, and needs an independent actual postwrite census.
     External charges are deliberately unsupported here: their disposition needs
-    a separate recovery design.
+    a separate recovery design. The explicit empty-failure opt-in accepts only
+    a genuinely empty, bound validation attempt that failed before recorded
+    native custody/outputs or child attachment; it never invents check results.
     """
     if type(capacity_policy) is not str or capacity_policy not in {
             "require_capacity", "administrative_closeout"}:
         raise resources.DaemonResourceError("invalid reconciliation capacity policy")
-    if artifacts_durable is not True or not expected_artifacts:
+    if type(allow_empty_failed_admission) is not bool:
+        raise resources.DaemonResourceError("invalid empty failed admission opt-in")
+    if allow_empty_failed_admission and (type(expected_artifacts) is not list or expected_artifacts != []):
+        raise resources.DaemonResourceError("empty failed admission requires an exact empty inventory list")
+    if artifacts_durable is not True or (not allow_empty_failed_admission and not expected_artifacts):
         raise resources.DaemonResourceError("explicit durable artifact inventory required")
     helper = resources.DaemonResourceReservation(ledger_path, roots=roots,
         storage_bytes=1, memory_mb=1, ledger_lock_timeout_seconds=30)
@@ -108,6 +114,17 @@ def reconcile_retained_reservation(ledger_path, *, roots, reservation_id,
         record = ledger["reservations"].get(reservation_id)
         if record is None or _digest(record) != expected_record_sha256 or record["status"] != "retained":
             raise resources.DaemonResourceError("retained reservation identity changed")
+        if allow_empty_failed_admission:
+            # Admission writes only these fields before attempting a native grant.
+            # Reject custody/output field presence even when its value is None.
+            fields = set("artifacts_durable_asserted attempt_directory child child_process_slots cpu_slots "
+                "created_at external_charges last_usage memory_mb owner_pid prior_children reservation_id "
+                "retention_reason scheduler_lane status storage_bytes workload".split())
+            if (set(record) != fields or record["retention_reason"] != "scheduler_admission_failed"
+                    or record["scheduler_lane"] != "validation" or record["workload"] != "canonical_validation"
+                    or record["child"] is not None or record["prior_children"] != []
+                    or record["artifacts_durable_asserted"] is not False):
+                raise resources.DaemonResourceError("empty failed admission record has custody, outputs or other history")
         if resources._external_charges(record):
             raise resources.DaemonResourceError("external charges require separate recovery")
         if record.get("attempt_directory") != resources._root_identity(attempt):
@@ -122,8 +139,15 @@ def reconcile_retained_reservation(ledger_path, *, roots, reservation_id,
             for child in [record.get("child"), *record.get("prior_children", ())]:
                 if resources._group_usage(child)["live_processes"]:
                     raise resources.DaemonResourceError("retained child group is still alive")
+        def durable_inventory():
+            if allow_empty_failed_admission and any(attempt.iterdir()):
+                raise resources.DaemonResourceError("empty failed admission attempt has entries")
+            value = _durable_inventory(attempt)  # Also fsyncs the existing empty directory.
+            if allow_empty_failed_admission and any(attempt.iterdir()):
+                raise resources.DaemonResourceError("empty failed admission attempt changed")
+            return value
         stopped()
-        inventory = _durable_inventory(attempt)
+        inventory = durable_inventory()
         if inventory != expected_artifacts:
             raise resources.DaemonResourceError("durable recovery inventory differs")
         if capacity_policy == "administrative_closeout":
@@ -134,7 +158,7 @@ def reconcile_retained_reservation(ledger_path, *, roots, reservation_id,
         else:
             accounting = helper._account(ledger)
         stopped()
-        if resources._root_identity(attempt) != record["attempt_directory"] or _durable_inventory(attempt) != inventory:
+        if resources._root_identity(attempt) != record["attempt_directory"] or durable_inventory() != inventory:
             raise resources.DaemonResourceError("recovery attempt changed during census")
         attempt_bytes = sum(row["bytes"] for row in inventory)
         if attempt_bytes > record["storage_bytes"]:
@@ -150,7 +174,7 @@ def reconcile_retained_reservation(ledger_path, *, roots, reservation_id,
             unchanged_selected()
             stopped()
             if (resources._root_identity(attempt) != record["attempt_directory"]
-                    or _durable_inventory(attempt) != inventory):
+                    or durable_inventory() != inventory):
                 raise resources.DaemonResourceError("recovery attempt changed during final census")
             if (accounting["outstanding_full_reservations_bytes"]
                     - final["outstanding_full_reservations_bytes"] != record["storage_bytes"]
@@ -170,6 +194,8 @@ def reconcile_retained_reservation(ledger_path, *, roots, reservation_id,
             "artifacts": inventory, "other_reservations_sha256": before_sha,
             "full_claim_accounting": accounting, "final_accounting": final,
             "outputs_deleted": False, "automatic_expiry": False, "admitted": False}
+        if allow_empty_failed_admission:
+            recovery["allow_empty_failed_admission"] = True
         if capacity_policy == "administrative_closeout":
             recovery.update(schema="explicit-retained-reservation-reconciliation/v2",
                 capacity_policy=capacity_policy, cap_changed=False,

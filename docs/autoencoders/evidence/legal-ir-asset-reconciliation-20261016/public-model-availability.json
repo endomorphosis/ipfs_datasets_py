@@ -1,0 +1,864 @@
+{
+  "claims": "Public repository metadata and historical inventory bodies only. File paths and unique advertised payload hashes are not distinct trained models, successful reconstructions, load qualification, native encoder receipts or current ModelManager persistence.",
+  "current_model_or_checkpoint_payload_downloads": 0,
+  "model_execution": false,
+  "mutations": false,
+  "observations": [
+    {
+      "file_descriptors": 6471,
+      "gated": false,
+      "observed_at_utc": "2026-10-16T02:21:56.946446+00:00",
+      "payload_downloaded": false,
+      "private": false,
+      "raw_api_response_commitment": {
+        "bytes": 1435883,
+        "sha256": "f22f66eea95fedf78b9d7f689b4d636bd69c69e44a1d7fadb2846c7311009560"
+      },
+      "raw_api_retention": "Private local metadata archive; immutable API revision and selected descriptors retained here.",
+      "repo": "Publicus/legal-ir-autoencoder",
+      "revision": "c9cce4586dd96518088662fb12831173e98e36cc",
+      "selected_checkpoint_descriptors": [
+        {
+          "blobId": "c30d42745d0231cfad59824c03afb3df92d4f9b7",
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "d38f6481f8cdb35d996d5231d15331855043f20a258180b0af9b1143d477d42e",
+            "size": 20467217
+          },
+          "rfilename": "releases/20261014-joint-readout-retention-v1/cells/joint-readout-retention-hinge/results/cell-checkpoint.json",
+          "size": 20467217
+        },
+        {
+          "blobId": "9732a8f75bf1239bc9365b4dce4f074896c28313",
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+            "size": 21058430
+          },
+          "rfilename": "releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json",
+          "size": 21058430
+        }
+      ],
+      "selected_checkpoint_lfs_hash_count": 2,
+      "selected_checkpoint_path_count": 2,
+      "status": 200,
+      "url": "https://huggingface.co/api/models/Publicus/legal-ir-autoencoder/revision/main?blobs=true"
+    },
+    {
+      "file_descriptors": 51,
+      "gated": false,
+      "historical_lane_inventory": {
+        "api_git_blob_verified": true,
+        "bytes": 7495,
+        "current_runtime_state_established": false,
+        "path": "legal-ir-autoencoder-8d-lane-inventory.json",
+        "remote_path": "releases/20261004-retained-checkpoints-v1/original-lane-inventory.json",
+        "sha256": "6c5515387d1280ff0dbe55270bd655b612cc6ae2c76293f1c7bc3e77f4f49b0f"
+      },
+      "observed_at_utc": "2026-10-16T02:21:56.711989+00:00",
+      "payload_downloaded": false,
+      "private": false,
+      "raw_api_response_commitment": {
+        "bytes": 11947,
+        "sha256": "ac0353389bf33306eee56dc54684e9bdcf4308298662eaf01718640681513ff8"
+      },
+      "raw_api_retention": "Private local metadata archive; immutable API revision and selected descriptors retained here.",
+      "repo": "Publicus/legal-ir-autoencoder-8d",
+      "revision": "815e070fbb2cd22599a1f960364d66b90560a391",
+      "selected_checkpoint_descriptors": [
+        {
+          "blobId": "7effba0bdfe05890969a1d5e39d645a3cc1cb09f",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/00f0c603857c7133ce09e9a2e9f6f2b38de090305fbe48f9d41a552f433be8d7/checkpoint.json",
+          "size": 497667
+        },
+        {
+          "blobId": "a5b7aeb2163717174b4154e11c63b5486a9520dd",
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "2a80eb59622b93929f306dd91df06642fc026d19724c15a48850806d453c7c7c",
+            "size": 17393371
+          },
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/2a80eb59622b93929f306dd91df06642fc026d19724c15a48850806d453c7c7c/checkpoint.json",
+          "size": 17393371
+        },
+        {
+          "blobId": "bb94e1f37d4d8e1cbcf400a993d91e0907b90633",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/658e96835bd3b06a0a12a8aa3ad391701e2df24fcafaecb81635aa83d0af929c/checkpoint.json",
+          "size": 575642
+        },
+        {
+          "blobId": "19f31bb6f9f2eb29ab73138dc63c3b824b28d8ba",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/7f380ac73278467bd8e2ad5079eb3fb85582ee79389a3d2496ff2f25adca1894/checkpoint.json",
+          "size": 497666
+        },
+        {
+          "blobId": "64f90108879986ca84330bf22ce6460dd741c3e8",
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "806a6d84f9851641094f27957701354b12ed955406c2f73deabe092bf8eee3e1",
+            "size": 17391669
+          },
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/806a6d84f9851641094f27957701354b12ed955406c2f73deabe092bf8eee3e1/checkpoint.json",
+          "size": 17391669
+        },
+        {
+          "blobId": "2a4f2359971f8412daa1e7269ab1d79f71c98621",
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "82821eb7167c378e403801f14d5f9abd402893e9a8bc6f98d60a096d803a8086",
+            "size": 17392573
+          },
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/82821eb7167c378e403801f14d5f9abd402893e9a8bc6f98d60a096d803a8086/checkpoint.json",
+          "size": 17392573
+        },
+        {
+          "blobId": "8c21b6e590682315607145fc4d2a2f07a365f349",
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "8ea65abb09638c7a432f4d473dcb9a0f3db470bd547621f914d057415c9aee2f",
+            "size": 17393366
+          },
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/8ea65abb09638c7a432f4d473dcb9a0f3db470bd547621f914d057415c9aee2f/checkpoint.json",
+          "size": 17393366
+        },
+        {
+          "blobId": "8140272df76513ddc098e0cd489ad9e995b2fdca",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/92ca541952218f31b6ebdae27725b8892b193fe2ce0e7b2d59d2b9d32c38c916/checkpoint.json",
+          "size": 574719
+        },
+        {
+          "blobId": "505a0df3744c5c4b3ebc85556432fc3d90c97713",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/a36623f6d12c4b8a1f59fbf82365987b9ff226238cf8001260d238ab982fb2d1/checkpoint.json",
+          "size": 574741
+        },
+        {
+          "blobId": "5e90344ad4b97fdf8d1a2740c5fe9f065561f23b",
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "aea0ffa6fc6c47da025a3adce9ba97b31dc8112a8511548367c3a44d85951bb5",
+            "size": 17393368
+          },
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/aea0ffa6fc6c47da025a3adce9ba97b31dc8112a8511548367c3a44d85951bb5/checkpoint.json",
+          "size": 17393368
+        },
+        {
+          "blobId": "a466aaef3bb9ab4f7d214a4d926e6eb4667a7a4c",
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "b395f592a9e2b55959c9d9b8f2a3780bd9b2961dffab069b81f420d81a750dd1",
+            "size": 17392574
+          },
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/b395f592a9e2b55959c9d9b8f2a3780bd9b2961dffab069b81f420d81a750dd1/checkpoint.json",
+          "size": 17392574
+        },
+        {
+          "blobId": "ea80705a0aad428b0f6060cd4baadd75546402cf",
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "df41abe4bfe03ea2976ac1d48405eda145c0ff15a8a406bf2d432ee644f73885",
+            "size": 17392574
+          },
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/df41abe4bfe03ea2976ac1d48405eda145c0ff15a8a406bf2d432ee644f73885/checkpoint.json",
+          "size": 17392574
+        },
+        {
+          "blobId": "a5f5a406da96fdd56bfa63ecead4cb079f5d3610",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/e054ba4ec7ea9d41734b5b1de098f82aaab365f4590b2cd9e97bd113dd01581a/checkpoint.json",
+          "size": 570214
+        },
+        {
+          "blobId": "ce6a6f7b4a32e20490e854463723bd49b65c3e4e",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/edde7c0542bd69933c954bdead7a99c5e07ff953b1638c7cbce5fc8cd604fba2/checkpoint.json",
+          "size": 497667
+        },
+        {
+          "blobId": "338dfc21c37caaa17c5665bc43c24e950fafdfa3",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/f08c3530686c78d3da861fa9dbcf295111096752314ff315cf685232a41bcb36/checkpoint.json",
+          "size": 497666
+        },
+        {
+          "blobId": "f7c62fe32162d109f88dea8bec015168029c4e79",
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "f935783682acbcc8b8dbdb206824ff8ac8916393681974f18f0c2ce62e8296ec",
+            "size": 17392574
+          },
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/f935783682acbcc8b8dbdb206824ff8ac8916393681974f18f0c2ce62e8296ec/checkpoint.json",
+          "size": 17392574
+        },
+        {
+          "blobId": "0c1180e9b45d98967373e9a52f757be27743c094",
+          "rfilename": "releases/retained-checkpoints/ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe/checkpoint.json",
+          "size": 128924
+        }
+      ],
+      "selected_checkpoint_lfs_hash_count": 8,
+      "selected_checkpoint_path_count": 17,
+      "status": 200,
+      "url": "https://huggingface.co/api/models/Publicus/legal-ir-autoencoder-8d/revision/main?blobs=true"
+    },
+    {
+      "file_descriptors": 526,
+      "gated": false,
+      "historical_lane_inventory": {
+        "api_git_blob_verified": true,
+        "bytes": 10568,
+        "current_runtime_state_established": false,
+        "path": "legal-ir-autoencoder-384d-lane-inventory.json",
+        "remote_path": "releases/20261004-retained-checkpoints-v1/original-lane-inventory.json",
+        "sha256": "77492b849bd2fa75a55a5d4f79de8eb5a3f6059346ab931df9ed5ccda75e1776"
+      },
+      "observed_at_utc": "2026-10-16T02:21:56.960602+00:00",
+      "payload_downloaded": false,
+      "private": false,
+      "raw_api_response_commitment": {
+        "bytes": 127112,
+        "sha256": "853db7e693e15601787b6813cfb0f5e8b6fd0d22fe6675f3e05b1b887b572f95"
+      },
+      "raw_api_retention": "Private local metadata archive; immutable API revision and selected descriptors retained here.",
+      "repo": "Publicus/legal-ir-autoencoder-384d",
+      "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747",
+      "selected_checkpoint_descriptors": [
+        {
+          "blobId": "047e6a586fb11258e364de385cfa40c30a6fd687",
+          "rfilename": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/last-attempt-state.json",
+          "size": 2797403
+        },
+        {
+          "blobId": "adbf430b5e50f8d2021c76f793b4aec51d9f7324",
+          "rfilename": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/selected-state.json",
+          "size": 2797399
+        },
+        {
+          "blobId": "5e7765a5e6894d5c043d474a6b73f27bf8c1ba8c",
+          "rfilename": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/last-attempt-state.json",
+          "size": 2797028
+        },
+        {
+          "blobId": "988e04a0253f11edac267089430094572c43e5fd",
+          "rfilename": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/selected-state.json",
+          "size": 2797024
+        },
+        {
+          "blobId": "13fb9707138b687fe3c1356beab873d241cdab7d",
+          "rfilename": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/last-attempt-state.json",
+          "size": 2797168
+        },
+        {
+          "blobId": "4d5ece9c92d455b80bf1b8f0d3a93a6a8a88fd04",
+          "rfilename": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/selected-state.json",
+          "size": 2797164
+        },
+        {
+          "blobId": "f110691172777a38f3826ffebdda5db9ec1ead90",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/01fd0540beefd5c3420bb48947fa1ec91f7c0698a1bed651280c0a1d3bb16cec/checkpoint.json",
+          "size": 1646128
+        },
+        {
+          "blobId": "0c42d39617bc3ca793f79547c666be29533d00d1",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/106e77560a78b0d848a26c09c0de97ed95bf728d9390bda3a97f46c4069c8b3c/checkpoint.json",
+          "size": 3027429
+        },
+        {
+          "blobId": "ad3bb928f6e909d84127f2fa6ff401a8148de3e1",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/164686f991c04bf86449d5abcaf05640d5d1e657ccfdd854d1ee90fba38af332/checkpoint.json",
+          "size": 3026417
+        },
+        {
+          "blobId": "0b00001b5b2e4705217421441aa72b39f7481d3b",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/1679a1e6c3a4cb24bf502781447757f0c373661d3b097dc4f3230b8b7d329b39/checkpoint.json",
+          "size": 381157
+        },
+        {
+          "blobId": "e8a64bdde1a14cf3bb2dc4b7c217a46e1d66584b",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/16902a51c15048df219fda239b62a2e03b23e323ab5e49216b987f4f48340623/checkpoint.json",
+          "size": 3027121
+        },
+        {
+          "blobId": "5943d0f51215ec3871f1dbe7fad6f5d1f43abc60",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/17577596c084f09d088b1d550dea04312af9048becd2c2c43b29f3fa54d19978/checkpoint.json",
+          "size": 447445
+        },
+        {
+          "blobId": "418c77b07ee43b6c2a16d98bf0686fc19ad54615",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/176173124c47af1cdab8f17d847b455fc65102ec6f5d43e34e0921fe4b72ed18/checkpoint.json",
+          "size": 1653714
+        },
+        {
+          "blobId": "9998097482aea33fa15d0d9b68374f5590edf570",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/18208d046fcbb63dd1b3166b8d2301d4e344e03189dc5ae8c94cfd30cf65ab9b/checkpoint.json",
+          "size": 3028655
+        },
+        {
+          "blobId": "de60a39cb6013b95084949d1f9eafb69a1e2453f",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/1ac605e1a8e91ea98ffe1eba8feffd0a899c682e1e1d4f6778b90ffc1c753c95/checkpoint.json",
+          "size": 3306398
+        },
+        {
+          "blobId": "04337bfc592b9502f87931f05402da460a3bd66e",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0/checkpoint.json",
+          "size": 3027735
+        },
+        {
+          "blobId": "f7a02d77b2705818923050c31dfbac2a56fae37a",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/239d3dcc3875637f9b1ce221bd06fb43f964c402353f9c07cb6576e1127d23ff/checkpoint.json",
+          "size": 3306077
+        },
+        {
+          "blobId": "964de939064f821e2d46d34c490f530d2d84deb7",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/27df2b105d7a85a1004e11a34a920f99f0fa9ff6a9a0509ead7eb77c90a3ea22/checkpoint.json",
+          "size": 447442
+        },
+        {
+          "blobId": "101ed11661e989446a937572503ec3154c9d96fa",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/2a4b8eac696e4c0d1ae20463c76c423b8d2c7beb81262791d261933a96152d3a/checkpoint.json",
+          "size": 3023158
+        },
+        {
+          "blobId": "8e60a21272decf5ea0222b2a3f217769e220adc7",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/2ac54a5c3789d7c7a29d6b6a0db5e3a3a69e41c8b335e7ada62e80ecc845f8f3/checkpoint.json",
+          "size": 357773
+        },
+        {
+          "blobId": "cf3cab3d6af751e32600da8e9bc913dab8b6388a",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/2f1a54b7b98b309f66f7ddb84fe0177b59b1ddd755e89a661a3b8ede48892753/checkpoint.json",
+          "size": 1653562
+        },
+        {
+          "blobId": "c718f74ed21a6bef103569967690ab6d74966339",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/40b4e36970b2830106a61d8df1884734c25c90fa10ab381e67eaafbec57ace84/checkpoint.json",
+          "size": 3026747
+        },
+        {
+          "blobId": "680367a352480c947a8974c39da820089be74bed",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/4117033b3de556d16e98bf7a261f27112114e1a5c42856c881cadfb70e9a497a/checkpoint.json",
+          "size": 3028919
+        },
+        {
+          "blobId": "69f25b38d4dc9ba833285a018c0af10394546063",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/434032c5d49392715442aa873f17e075442066343894713d2974e107bcc4eb9f/checkpoint.json",
+          "size": 3026787
+        },
+        {
+          "blobId": "6d6c50a960ab9cdb505beb347fdc9db06ca1321a",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/44dc5c64ecf91776b6b25e7bcae90925057155d871439a791ecaa6cb3b63f220/checkpoint.json",
+          "size": 3308255
+        },
+        {
+          "blobId": "61d6a35b245156af66828a786c089c9418ee571a",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/51425b4fa908af399127e2258745432196e4c90c39c4ffab18f6a1e9803a7f50/checkpoint.json",
+          "size": 3027852
+        },
+        {
+          "blobId": "6838afd933fedbcd6d43537b71927680b0e4a66d",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/5221f413df12ce103d01f6339deebd74b76809173eacd4b60c4b6105af5324ff/checkpoint.json",
+          "size": 3027262
+        },
+        {
+          "blobId": "d7a06df1a89856d264be320cc4610fb21d8e9b82",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/5459535b7fc8142e102c1c438b603c003a7e8480053a575f91a6b0a8036aeb8c/checkpoint.json",
+          "size": 381157
+        },
+        {
+          "blobId": "026eb24f11da6f73e8954ad7f47b290baf3a845a",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/58195d58d7e012919066834d81aac9179369fa2bc8f0764849f6f8fcc74e0205/checkpoint.json",
+          "size": 3028988
+        },
+        {
+          "blobId": "17766cf7e5b43bd6b8931092f7fc10d711e1f8f5",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/5c17eaac81e3cdc3fe8dcc97a3bb7406130f873ac673cd2141438697daa6e8b7/checkpoint.json",
+          "size": 3026750
+        },
+        {
+          "blobId": "1da6069fc5618789dc60fb86dff686d2f579177e",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/5f14658454c8e705847c8685a569ad8395ec0f6019133fa43717217ee036d398/checkpoint.json",
+          "size": 3028991
+        },
+        {
+          "blobId": "aa29c7cc90c50e69e364117b16a2c3d62ec25f19",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/5fec489b38138f79673883da89fe57abb441cefef5d6365e3e2acfec2eb54f65/checkpoint.json",
+          "size": 3025171
+        },
+        {
+          "blobId": "9e133120ff6ec6bcecae0b0ebebaef514068b5b1",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/5ff69f9e8df146a101682e818f2591b842ca5001d7a59c688641760533f4e53d/checkpoint.json",
+          "size": 1654237
+        },
+        {
+          "blobId": "5a8bf0c86e7757842dc1b0920908d02153f55ac2",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/60d84abc8b3228ad10c7f4ec4f500b50aa688eb694bc7d0e003c281e6574422e/checkpoint.json",
+          "size": 381156
+        },
+        {
+          "blobId": "d504dc1e6bc45eadd58489e91bd3991434d5cf45",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/61078418fa6b0b93edc91c0b3bb5e85cf863190cc08288ecc3abb5e9431dadf3/checkpoint.json",
+          "size": 3026812
+        },
+        {
+          "blobId": "1b4207700f1bf52aaff1612b53dc85fcf5d1c99c",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/65ff2e7cf99e9b7a602fa19c4ff1e05d72ff76e991b120f4293a4b13bdc494d9/checkpoint.json",
+          "size": 3027664
+        },
+        {
+          "blobId": "ed98ca945a9bbb75859e0e62a2e23af6afee9f7b",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/666a64e20f7925a6dc42e47019460466298614299a828f4748442ce216a5b09d/checkpoint.json",
+          "size": 381155
+        },
+        {
+          "blobId": "cfe2f2af95540b9a37339260986780d46ee47723",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/68ef76cab71fd57ac681db55c47f7c89f4d8c1417ab27f30dae13ffcf1773a84/checkpoint.json",
+          "size": 3028534
+        },
+        {
+          "blobId": "0c11177c5c42b07b3774f79f33bb2a7f56da7b12",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/69fe91a8ad2d3f87a2e6135b777cc6fa3574261e04a75c480ed8f86d1ab4b6aa/checkpoint.json",
+          "size": 1653821
+        },
+        {
+          "blobId": "f4c7f892153a8f9fe85ac16e1435ecdeaf7cb41b",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/6c8c14bd9ef4617929dc2816d96c8345d4f8e078602c77acb430d51d433076d1/checkpoint.json",
+          "size": 1645336
+        },
+        {
+          "blobId": "496fe4b612d3af159fd26484321e041789109cd6",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/6e0d484859e260df26eb9a86ea53f5d2eadb8ed93226b78aa74992e657c2e6de/checkpoint.json",
+          "size": 3026826
+        },
+        {
+          "blobId": "faa96cd6fc2ad4d0120605f28b4484c40f25502c",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/703dbbe8fb3cc81656d3681d63a269dd7e04173b3a4a982a8d504df381363f38/checkpoint.json",
+          "size": 3027260
+        },
+        {
+          "blobId": "c28e247596f5f3718e3a52118e698e7cc9812042",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/72e2b5ff030435c8fed8e1d63d16bb951ba0dc0bff460e4caf75fe96b81da1fa/checkpoint.json",
+          "size": 1653814
+        },
+        {
+          "blobId": "a8dd24cbc53781a2f6ab93c5c4b72e89eeb96ffe",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/7531b824cab7d2200e24b7d93a4859ca495dab177ec6c6e3be19d0397fa0886f/checkpoint.json",
+          "size": 3028237
+        },
+        {
+          "blobId": "f6c932f44f230e6ecdcbc4de79a80eae52223c1a",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/78f800851aea0d14366d026ce24e2b7190d2bb9b295578128427346a8dd819f0/checkpoint.json",
+          "size": 1648030
+        },
+        {
+          "blobId": "f09de5c60e10561986db1bb582da4654476b98c9",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/79a76eaa0eff7d7706e8292959c1a056f372bfce53707071a24fd4fe03ccb697/checkpoint.json",
+          "size": 3027546
+        },
+        {
+          "blobId": "3b0f2627f12829ce47a1efb82e3be863e7b073c5",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/7dc73056ebeccc3a9d14895f8d6ac6b2f0a9ad659d49b4481ccfc810f9a348c4/checkpoint.json",
+          "size": 1648249
+        },
+        {
+          "blobId": "cae648c0afab63b6aab466fa2b01b74ee8806395",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/80b8804d17b378e0fff18dd69c33dae5819c4c6582b581911c56a1636eee0d7e/checkpoint.json",
+          "size": 381157
+        },
+        {
+          "blobId": "696a716f260549d8d6538e613edf9d0dfa06f6e4",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/8556dbd8ec5a8fc91a74afc1d74933a3f813e73a878ae5d6659c0d1822ac6502/checkpoint.json",
+          "size": 3027036
+        },
+        {
+          "blobId": "88b30cbf020b8edc8b410a36d73489804729b791",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/879808f2d939b66ced7788340b7ddf51325b9e51d76ef30f8f1a6b0b76eb1096/checkpoint.json",
+          "size": 3028318
+        },
+        {
+          "blobId": "6f1813db21c3eb085afa7e3b1a8fa75749465834",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/8c11bc41c0a9bd40ea53e18b491bbd784b547c24bc419851fea1f3204b1b982b/checkpoint.json",
+          "size": 3027962
+        },
+        {
+          "blobId": "892faaa29c460ddb9f14f7e8f202fcfc44abe1d4",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/8c42b4b9cca46b4e8c0cf7071503bb580b93badbd8aff21d70b106da8b3fbecb/checkpoint.json",
+          "size": 3024210
+        },
+        {
+          "blobId": "ddc40cd1a51b56ba9130394941d450a42172cb4c",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/8f3c36a3f318c0e04138c2019822a4556ee7a490cc949b5a5f8ec76a1e904bc4/checkpoint.json",
+          "size": 3027508
+        },
+        {
+          "blobId": "eaf8874a3d289ad613262b193bd13a3c37d43028",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/90b7cd28a9f677a28f220bca33f57dc65a480e0f73e6b128a9d6dbdde16dbe4a/checkpoint.json",
+          "size": 3026864
+        },
+        {
+          "blobId": "2730cdeb1a6b2281f1ba3e8f59da45e9a9cae8ae",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/91e6e00c777a8f006100380e23f40af367c4f6d4fbb9ae271e6c697b432349ed/checkpoint.json",
+          "size": 447443
+        },
+        {
+          "blobId": "c008fd5fc7442ef15d9eb758cb4bb7ecfc570a55",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/928e39a16d1934551c4d78898e834277f57bbaf6a884e7248753cadd65169740/checkpoint.json",
+          "size": 381155
+        },
+        {
+          "blobId": "770622dffc9dbfe0720fb1f3402d97dcb260dc1b",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/95d08972368ea00837ef3a0ecdb96c5e60103d94a28cc4d01c00f3b8bcaebdb4/checkpoint.json",
+          "size": 447446
+        },
+        {
+          "blobId": "74bd99bd76c9885f44db3079a72937cee0b25611",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/98129ac4f59458256c9a17eddfc7bb6125c449d325d36a547438d367dacaa396/checkpoint.json",
+          "size": 526355
+        },
+        {
+          "blobId": "92c8de1aefc2a0af074c3eb30658f9bf67ac782b",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/9a3977a28b359432244397a2dfbbc39bf977f06aba8d4e9dc6987a3d3f388eed/checkpoint.json",
+          "size": 3026867
+        },
+        {
+          "blobId": "b35bd1c87cd2a4451640613b40714e5e5394c967",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/a044f22dca29c4262d25143038c93c734de3f489134918e767dbe10fc2379d0d/checkpoint.json",
+          "size": 1653497
+        },
+        {
+          "blobId": "806651bfe0d03dc923a1f69dab8706eed4136f6c",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/a80533bbbabb7d8b0c0ed6ebeaea26d2d7b6d47a367c3c5fe3733577e78d3d3c/checkpoint.json",
+          "size": 1654051
+        },
+        {
+          "blobId": "91e34fffb0be4231ae6a5894e651c6f1a0b17fb3",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/a8ee7779cde2ab6e3a0522f774c44622af261aa12374efbe897948017d9674eb/checkpoint.json",
+          "size": 3307204
+        },
+        {
+          "blobId": "b16fa1ca740f3437e35d4f3ff31f8f02aaeef733",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/b05775a76bec8bce981044d614d8bb5f65792d8a56fa46c0d3a3239acbc533a7/checkpoint.json",
+          "size": 1644983
+        },
+        {
+          "blobId": "be9dfc4cdae73958b21fca0303f1c6a3b01b60a0",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/b5b4426e4acd0953ea4a2c1f9a25bd55e8978d7e23305cd88a78b4480ccbc9d1/checkpoint.json",
+          "size": 3028187
+        },
+        {
+          "blobId": "9e79858d48433759c2bf36316de7613d947ff33c",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/be3cb720df1aa7c6f900123bd3428b0f364a084a7992241d2f06eaf82018562b/checkpoint.json",
+          "size": 3027450
+        },
+        {
+          "blobId": "580c98c91ac2f6c5ad4b4fda8cf2f3afa0c80bfb",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/c27e633af788d519d7ffba27455a07b58783d3392c84bbe3df230ca754e50d28/checkpoint.json",
+          "size": 3027643
+        },
+        {
+          "blobId": "477f17ab055912c97eb3a2ef1793fd8ad754c606",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/c54fcac41d95d40e020a342c8c63cfab2f9552a7ae35c6c087fd429402970b7d/checkpoint.json",
+          "size": 3308744
+        },
+        {
+          "blobId": "4a7b5be9dbb48d1ad088826017fa5c200b378044",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/cc14d10cdf83c72a5cd9ba684f851e860c8b817c2c3a23374806602c2f45e957/checkpoint.json",
+          "size": 3027852
+        },
+        {
+          "blobId": "9a6fb4a350bf8f4b38ee1140a760373ecdc1ac4c",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/cd8aa07c8847f2c885e0889b987f28d97b7171a487890125d1556e5061fa18a4/checkpoint.json",
+          "size": 3306877
+        },
+        {
+          "blobId": "421bf1e09424db804e4f1e8b14d3e46b0a55428f",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/d86b95dad8e5ad8c87ccec3879329ab2657ad254ff370d853e1b8c0fb338d3e4/checkpoint.json",
+          "size": 3026658
+        },
+        {
+          "blobId": "a18d5382cbfe38a05944f37d3cb86576bb6ab000",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/d95b3d148328bf826d00c1cd70137ede346ddf91a0a44ae31bc0be7ed28a21dc/checkpoint.json",
+          "size": 3028235
+        },
+        {
+          "blobId": "b0030264d911b2f8fc52028f22e914a5dbaafda7",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/da19ec169cdeb9fe550d98954a9c3da05747051548f11a8071e35c0da8aa7c04/checkpoint.json",
+          "size": 3027950
+        },
+        {
+          "blobId": "610396bc6553911ae0f5797f625fbabac5007491",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/dbe2e5cfbc9bd87f8a7ae32c621365e315f7eca20412195d44f6f5d01b473b22/checkpoint.json",
+          "size": 3027571
+        },
+        {
+          "blobId": "6c46f72e9d6d167a091ca6161264ab6ace9c7098",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/dc4491d1aab26cc2278375068826261224204476386d5384748b44b2e0e2cff3/checkpoint.json",
+          "size": 526586
+        },
+        {
+          "blobId": "f4257eaa992287c042505eb4729b79f5923a5481",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/dd3789c1ca068fcb7a688cfdd51f395d6781161907e07dbd7d250c540326e296/checkpoint.json",
+          "size": 3028168
+        },
+        {
+          "blobId": "d9d121af145a254e281af9857a0473a080563917",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/ddc71055c20290c3da85cc1c48b6ec1209daff54ba0ace9d0f4972b996606402/checkpoint.json",
+          "size": 447445
+        },
+        {
+          "blobId": "eb0b7f44c43133a667ae05524d76c40299c1fd28",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/e24f6f62263e048f9de40a0b417d0971811a680738e112325c62068b5d4879e6/checkpoint.json",
+          "size": 3028302
+        },
+        {
+          "blobId": "690227dfaeb909e6fa8ee30e9bcf9ab9fc115593",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/e505c41bb9f7bcf7820dbaf3285fd9cd83e2765fc743fc07a14144351c32d808/checkpoint.json",
+          "size": 3027620
+        },
+        {
+          "blobId": "eac0686a6f782838ff8ed4a6e5a7631f3d30d6c8",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/e9cfc9e74579d2b4fae54be31fec9c97a12d7331353e91772b4ddbf023c7d20e/checkpoint.json",
+          "size": 526612
+        },
+        {
+          "blobId": "40fb1ba7aa8849b70153263d1201a752d37c08f1",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/ec6e810e1f77b93ffb63c896c0d603a31d845c2feae8f6d55d45e4bb4d0fdd49/checkpoint.json",
+          "size": 1647749
+        },
+        {
+          "blobId": "4f9390b553c21c657fc8fb13731aa97a4b1a3550",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/f02fab1b278c8ec2da00f0a850cada711b428dfa95bb66589554e0c3b1201849/checkpoint.json",
+          "size": 1653884
+        },
+        {
+          "blobId": "a32e882bb1fcd854f1d5ec8a8cc4ce6c416b0580",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/f201a34cec2a9f346a581ff09eff23d3f9ba89fb490040138cbb0d3ced69c049/checkpoint.json",
+          "size": 1653924
+        },
+        {
+          "blobId": "a512254b7ab036cd56770fdeabde0c515a555d40",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/f5ac0509592a733331004903a67e5b767ecc4b350a8471527627e4e6c054265b/checkpoint.json",
+          "size": 1653857
+        },
+        {
+          "blobId": "f7aab2c7ec944e49a1e7fde3ecbcf291e6cb3264",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/f9371ceaab49ce6f00a23999c95a989bb202d5adabefbaeca4aa2ea6d25c7e91/checkpoint.json",
+          "size": 3027828
+        },
+        {
+          "blobId": "09e1d6a083fed9b2c3f81400b5a8a720308c79ef",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/f95a0ad5e16dd4ee87e731388db5ff9abeb31dcddc13bfec630f75c872f3957b/checkpoint.json",
+          "size": 3026939
+        },
+        {
+          "blobId": "8929943d0ba0f1f3db4dd709c08aa076c35b71a7",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/fc47234f18d94ca0714b311073e17f204f6df10e9a653705b9d4236635ccc27d/checkpoint.json",
+          "size": 1653721
+        },
+        {
+          "blobId": "4ad50c1109f6fb870a0d7fb3189a31adda1fb168",
+          "rfilename": "releases/20261004-retained-checkpoints-v1/original-legal-replay/26cb6d77947b5b8e1e6c08e68ff8c6ce1c8f23002d56bfc1ebbd024c55a0c2da/checkpoint.json",
+          "size": 1715990
+        },
+        {
+          "blobId": "133591e3646e7b8dd77428694015ec5ba7020257",
+          "rfilename": "releases/20261006-contextual-selected-v1/checkpoints/decoder-selected-continuation-20261004/384-selected-followup-lr0001-1729/selected-state.json",
+          "size": 2799098
+        },
+        {
+          "blobId": "052d0ce812125473467d255388accffd6adf4225",
+          "rfilename": "releases/20261006-normative-wording-checkpoints-v1/checkpoints/384d/normative-wording-ce/last-attempt-state.json",
+          "size": 2797396
+        },
+        {
+          "blobId": "5b024901302817bdafc8e38be703d52f090da45b",
+          "rfilename": "releases/20261006-normative-wording-checkpoints-v1/checkpoints/384d/normative-wording-ce/selected-state.json",
+          "size": 2797392
+        },
+        {
+          "blobId": "738b660a775d90df23a477154b093cfaf0640ca5",
+          "rfilename": "releases/20261006-normative-wording-checkpoints-v1/checkpoints/384d/normative-wording-zero/last-attempt-state.json",
+          "size": 2798246
+        },
+        {
+          "blobId": "57e3eb7158c0f3f51ebb687242f936331c95fc87",
+          "rfilename": "releases/20261006-normative-wording-checkpoints-v1/checkpoints/384d/normative-wording-zero/selected-state.json",
+          "size": 2798242
+        },
+        {
+          "blobId": "3a077544ca17aa267dcd0a90e71e98bdf441ca27",
+          "rfilename": "releases/continuations/430bb5b605fad4fe1b4f8fec2af69fad4db97e377f91c74d566a178c96b8f655/checkpoint.json",
+          "size": 945341
+        },
+        {
+          "blobId": "53ed07979b58c4fe48b85ced5accafe467f9ef7b",
+          "rfilename": "releases/continuations/94cfcc99120e3ff32066bf5945a207bfd6bc49234d95f897052ac20031da24a4/checkpoint.json",
+          "size": 933296
+        },
+        {
+          "blobId": "ccbb03600ece1f257bb57935caeb0d49621e16fc",
+          "rfilename": "releases/continuations/d98bb5a142de56414017b9e936bbe7aafd0dad8e8db6b1d1ee31bc5f257f9b9c/checkpoint.json",
+          "size": 945326
+        },
+        {
+          "blobId": "4ad50c1109f6fb870a0d7fb3189a31adda1fb168",
+          "rfilename": "releases/retained-checkpoints/26cb6d77947b5b8e1e6c08e68ff8c6ce1c8f23002d56bfc1ebbd024c55a0c2da/checkpoint.json",
+          "size": 1715990
+        },
+        {
+          "blobId": "4ad50c1109f6fb870a0d7fb3189a31adda1fb168",
+          "rfilename": "releases/retained-checkpoints/26cb6d77947b5b8e1e6c08e68ff8c6ce1c8f23002d56bfc1ebbd024c55a0c2da/original-package/checkpoint.json",
+          "size": 1715990
+        },
+        {
+          "blobId": "5129b955d4ededd2dd9d505bbe52ad35e10c7c9c",
+          "rfilename": "releases/retained-checkpoints/36b6b3a5a31ce88748a7ff69f1ab55f16dae79a78bfb635436a7b13a34c9cbf2/checkpoint.json",
+          "size": 621716
+        },
+        {
+          "blobId": "ba90fc0990217ca7ac0e899141c9c0b140d13310",
+          "rfilename": "releases/retained-checkpoints/562d59c076e421bf27c3db5e140c33036937811161dc553241dd365188125454/checkpoint.json",
+          "size": 1715320
+        },
+        {
+          "blobId": "ba90fc0990217ca7ac0e899141c9c0b140d13310",
+          "rfilename": "releases/retained-checkpoints/562d59c076e421bf27c3db5e140c33036937811161dc553241dd365188125454/original-package/checkpoint.json",
+          "size": 1715320
+        },
+        {
+          "blobId": "d858406bdd268fc4c29f227222a9d3e18cf78be5",
+          "rfilename": "releases/retained-checkpoints/6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61/checkpoint.json",
+          "size": 614534
+        },
+        {
+          "blobId": "131c101872cfa20c7e6b23e2bf481af60347ec9d",
+          "rfilename": "releases/retained-checkpoints/969461ab82a2806e54ad33ba242a1eb62d032fa1b3cfc808b77c66dcc965aa62/checkpoint.json",
+          "size": 1678190
+        },
+        {
+          "blobId": "4824e47599b8b3696fa16a827a5bf84bfa10acab",
+          "rfilename": "releases/retained-checkpoints/c8e42b07f5a6a5374e96d2e2334fb5daf7a2c66ad8d0eccaf06e990425424e08/checkpoint.json",
+          "size": 447442
+        },
+        {
+          "blobId": "4824e47599b8b3696fa16a827a5bf84bfa10acab",
+          "rfilename": "releases/retained-checkpoints/c8e42b07f5a6a5374e96d2e2334fb5daf7a2c66ad8d0eccaf06e990425424e08/original-package/checkpoint.json",
+          "size": 447442
+        },
+        {
+          "blobId": "693f86f0a567784c7746159b4be959face479b6e",
+          "rfilename": "releases/retained-checkpoints/d1412b839029db3e4f69cc3b0c3d77cdae0a358776ce81afbcee05db60a0d0ba/checkpoint.json",
+          "size": 621893
+        }
+      ],
+      "selected_checkpoint_lfs_hash_count": 0,
+      "selected_checkpoint_path_count": 105,
+      "status": 200,
+      "url": "https://huggingface.co/api/models/Publicus/legal-ir-autoencoder-384d/revision/main?blobs=true"
+    },
+    {
+      "file_descriptors": 154,
+      "gated": false,
+      "historical_lane_inventory": {
+        "api_git_blob_verified": true,
+        "bytes": 7577,
+        "current_runtime_state_established": false,
+        "path": "legal-ir-autoencoder-768d-lane-inventory.json",
+        "remote_path": "releases/20261004-retained-checkpoints-v1/original-lane-inventory.json",
+        "sha256": "7c48396a3d0332b0dacbb248fdd5c6ab037080475ebde137aa2217973d514595"
+      },
+      "observed_at_utc": "2026-10-16T02:21:57.262670+00:00",
+      "payload_downloaded": false,
+      "private": false,
+      "raw_api_response_commitment": {
+        "bytes": 43114,
+        "sha256": "48e131028a9ca8c9269a8cae770c25bc3ed955ce69e6182699eec82cecc3bd3a"
+      },
+      "raw_api_retention": "Private local metadata archive; immutable API revision and selected descriptors retained here.",
+      "repo": "Publicus/legal-ir-autoencoder-768d",
+      "revision": "1cc315894142c9d3b05c6fff90556cde7a2578fe",
+      "selected_checkpoint_descriptors": [
+        {
+          "blobId": "3deba5b615c86c87d2abbcbdcaa98985653f08fb",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/1ffa63c4f95ff93ce40b16fee63eb766e0baf412f58b837b3addeb6b55154b00/checkpoint.json",
+          "size": 6347807
+        },
+        {
+          "blobId": "e1d2eec339a9c963a9b39ed878011daed9e682d5",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/4557e89d0a8f9c77ceed13b8df9b4e0c247a32b37003e7f559d2e195a23230ef/checkpoint.json",
+          "size": 6360717
+        },
+        {
+          "blobId": "ff9b5749db5a7b75af10da8312b98e995c2118fe",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/6a70108d76a548c04076d3cfb35eaa8e29f1b325ffafdd13a5fb5cf099205a0b/checkpoint.json",
+          "size": 3432437
+        },
+        {
+          "blobId": "b57ac32ddc107fdfb4d3ca9a5bb1fe8730be25c2",
+          "lfs": {
+            "pointerSize": 133,
+            "sha256": "a674bacba91df270a0baff11fc92909c0277d31c8a93c08af30454c358095c24",
+            "size": 25545829
+          },
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/a674bacba91df270a0baff11fc92909c0277d31c8a93c08af30454c358095c24/checkpoint.json",
+          "size": 25545829
+        },
+        {
+          "blobId": "db46d5f1135a898a7a45617c37d5caa989765d75",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/a6d0c8e1428358be6f5601ff75eb62962611184f4b5cbae1747a31253640ccbe/checkpoint.json",
+          "size": 3430828
+        },
+        {
+          "blobId": "deb8310a71e615460da49c687b9226642605179c",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/adb17a04854ea865ee0433d75405e15f62c1e7dedd4c60f8c889ed087958a2ef/checkpoint.json",
+          "size": 3432783
+        },
+        {
+          "blobId": "46cf6d4dcc066a513c365bf691434614143ff1ed",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/be269a0b0648063fe14ce0a291c474dd6c3aefbf3465b8adb2573346dc2315ba/checkpoint.json",
+          "size": 3431987
+        },
+        {
+          "blobId": "2daa0005cb6de32e3cee119ee8a4e5e0ca77921d",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/fd6bd55ba3a7698401c7b8201f8ebe195f364f8295e98a13d833f420c0add2fc/checkpoint.json",
+          "size": 3433326
+        },
+        {
+          "blobId": "ac2bdac8f9abda954fd8bc76b76d25ca040402f7",
+          "rfilename": "releases/20261004-all-retained-v1/checkpoints/ff41c3199ca3b84f10e4d3574103cf01051a42b33639fc50e748f1ae19bea3a0/checkpoint.json",
+          "size": 3431123
+        },
+        {
+          "blobId": "f5813c6d46f1a2e0ec3aeafe6506462757537361",
+          "rfilename": "releases/20261006-contextual-selected-v1/checkpoints/decoder-selected-continuation-20261004/768-selected-followup-lr0001-1729/selected-state.json",
+          "size": 4781613
+        },
+        {
+          "blobId": "043f255928364adf746130b699535f1a9edc330f",
+          "rfilename": "releases/20261006-normative-wording-checkpoints-v1/checkpoints/768d/normative-wording-ce/last-attempt-state.json",
+          "size": 4779953
+        },
+        {
+          "blobId": "18620846144965cb4218b095258903401ff78a66",
+          "rfilename": "releases/20261006-normative-wording-checkpoints-v1/checkpoints/768d/normative-wording-ce/selected-state.json",
+          "size": 4779949
+        },
+        {
+          "blobId": "49a63e7ef0a49248b849bdb35216fa7001989f73",
+          "rfilename": "releases/20261006-normative-wording-checkpoints-v1/checkpoints/768d/normative-wording-zero/last-attempt-state.json",
+          "size": 4778678
+        },
+        {
+          "blobId": "72735705e9c500a786b09b8abb1c92978145f520",
+          "rfilename": "releases/20261006-normative-wording-checkpoints-v1/checkpoints/768d/normative-wording-zero/selected-state.json",
+          "size": 4778674
+        },
+        {
+          "blobId": "e37208a1fbbd777ff0511964f312bde5b4053e95",
+          "rfilename": "releases/retained-checkpoints/7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12/checkpoint.json",
+          "size": 6873498
+        }
+      ],
+      "selected_checkpoint_lfs_hash_count": 1,
+      "selected_checkpoint_path_count": 15,
+      "status": 200,
+      "url": "https://huggingface.co/api/models/Publicus/legal-ir-autoencoder-768d/revision/main?blobs=true"
+    }
+  ],
+  "schema": "legal-ir-public-model-availability/v1",
+  "selection_scope": "Dimension repositories: only checkpoint.json, selected-state.json, last-attempt-state.json suffixes. Aggregate repository: F17/F18 cell-checkpoint.json. Other naming formats are not included."
+}

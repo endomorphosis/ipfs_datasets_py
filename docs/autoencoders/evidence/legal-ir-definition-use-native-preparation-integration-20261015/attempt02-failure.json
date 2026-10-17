@@ -1,0 +1,28 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": false,
+  "elapsed_seconds": 181.1622777590528,
+  "error": "validation command failed with returncode 1",
+  "error_type": "RuntimeError",
+  "executed_checks": [
+    "tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py",
+    "tests/unit/logic/autoformal/test_corpus_definition_use_v2.py",
+    "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py",
+    "tests/unit/logic/autoformal/test_legal_graph_review.py",
+    "tests/unit/logic/autoformal/test_scoped_definition_resolution.py",
+    "tests/unit/logic/autoformal/test_legal_graph_dependencies.py",
+    "tests/unit/logic/autoformal/test_corpus_imports.py",
+    "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py",
+    "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py",
+    "tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py"
+  ],
+  "model_weights_downloaded": false,
+  "received_signals": [],
+  "request_sha256": "76823fd3c9d55563ecd06fc3f42a3ad3b896799bec3079ebcfbda2af73a00bd3",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 1,
+  "schema": "owned-validation-result/v1",
+  "watchdog_errors": []
+}

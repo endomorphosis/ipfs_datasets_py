@@ -1,0 +1,132 @@
+{
+  "attempts": [
+    {
+      "attempt": "01",
+      "classification": "missing_attempt_directory_before_successful_native_owner_construction_and_admission",
+      "matching_ledger_reservations": 0,
+      "native_attempt_directory_present": false,
+      "parent_failure": {
+        "bytes": 282,
+        "sha256": "e63f80b7cd9a7519d8ef8690cbeb27eaa3299f0a489b3fd923f38373ab5a39ea"
+      },
+      "parent_stderr": {
+        "bytes": 2302,
+        "sha256": "53141b3c8f5f2d3ad4c7e20e8783f941bd20a8935ef1ad71ce60d0720f7928cc"
+      },
+      "qualified": false,
+      "request": {
+        "bytes": 22559,
+        "sha256": "5f135a48bb7e6a3c1294926ac1375832eeb1351e0ce3fb3366474bee9a0ac186"
+      }
+    },
+    {
+      "artifact_inventory": [
+        {
+          "bytes": 795,
+          "relative_path": "logs/failure.json",
+          "sha256": "001f02db47c6f1f5aad8c028f480c16e2aafbcd645b2fc0eeba1fa8ce621f27a"
+        },
+        {
+          "bytes": 0,
+          "relative_path": "logs/source-corpus-reuse-failed.json",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 2173,
+          "relative_path": "logs/stderr.log",
+          "sha256": "a95da6dbc2b5cddac9bfb7628d83630139acd6e968e2c9343d94085694f2781e"
+        },
+        {
+          "bytes": 0,
+          "relative_path": "logs/stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "attempt": "02",
+      "classification": "admitted_child_failed_runtime_guard_and_failure_receipt_write",
+      "closing_runtime_guard_refusal_observed": true,
+      "completed": false,
+      "elapsed_seconds": 150.7368817939423,
+      "failure_detail_bytes": 0,
+      "native_failure": {
+        "bytes": 795,
+        "sha256": "001f02db47c6f1f5aad8c028f480c16e2aafbcd645b2fc0eeba1fa8ce621f27a"
+      },
+      "native_selected_check_names_recorded": 6,
+      "owned_integer_fdopen_misclassified_as_external_write_observed": true,
+      "qualified": false,
+      "recorded_names_are_not_successful_check_evidence": true,
+      "request": {
+        "bytes": 22559,
+        "sha256": "0b72c9bb47f84afecc2dd7e4bf8280de9a8d8694bf3d43ac1b378ef519a3686d"
+      },
+      "returncode": 1,
+      "stdout_bytes": 0,
+      "successful_output_artifacts": 0,
+      "suppressed_runtime_attempt_category_and_count_not_recoverable": true
+    }
+  ],
+  "audit_status": "pass",
+  "authority": {
+    "Lean_admitted": false,
+    "formalized": false,
+    "proof_authority": false,
+    "source_authority_authenticated": false,
+    "source_semantics_verified": false,
+    "training_gold_qualified": false
+  },
+  "next_diagnostic": "A fresh instrumented worker must preserve denied event details before classifying causes. Installed urllib3 import-time IPv6 capability probe is a static suspect only; attempt02 has no surviving event details.",
+  "profile": {
+    "denied_attempts_not_ignored": true,
+    "expected_scheduler_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+    "os_network_isolation_claimed": false,
+    "python_audit_is_cooperative": true,
+    "worker_definition_import_exception": "Only huggingface_hub removed from historical forbidden SDK roots; genuine optional definitions, no shim or product-owner body substitution."
+  },
+  "qualification_passed": false,
+  "recovery": {
+    "all_failed_outputs_retained": true,
+    "artifacts_durable_asserted": true,
+    "artifacts_unchanged_since_failed_attempt": true,
+    "attempt_exceeded_reservation": false,
+    "current_matching_ledger_records": 1,
+    "current_status": "released",
+    "exact_previous_record_hash_matches_independent_before_observation": true,
+    "final_external_charged_bytes": 0,
+    "literal_substitutions": 6,
+    "new_reservation_acquired": false,
+    "new_resource_lease_acquired": false,
+    "original_storage_bytes": 67108864,
+    "outputs_deleted": false,
+    "private_receipt": {
+      "bytes": 25622,
+      "sha256": "375440fa18feeadaba5e46496ebac0c99a1e6b21d628e5c924035cf559ff3a33"
+    },
+    "reconciliation_receipt_matches_exact_current_ledger_record": true,
+    "retained_artifact_bytes": 2968,
+    "reverse_substitutions_reproduce_actual_original": true,
+    "scheduler_lease_state_independently_authenticated": false,
+    "script_reuse_review": {
+      "bytes": 2016,
+      "sha256": "6f8e6af6036826856fc2f20e551b683978f72bdb2aa7deb9cf67b192d4945ae3"
+    },
+    "successful_workload_claim": false
+  },
+  "reviewer": "/root/span_correspondence_gap",
+  "reviewer_execution": {
+    "database_opened": false,
+    "model_opened": false,
+    "native_workload_executed": false,
+    "original_corpus_payload_opened": false,
+    "product_imported": false,
+    "tests_run": false
+  },
+  "schema": "legal-source-corpus-reuse-independent-failed-native-audit/v1",
+  "scope": "Preserved setup failure and admitted failed source-reuse attempt, followed by exact owned storage-reservation reconciliation. No successful source-reuse qualification.",
+  "source_custody": {
+    "all_original_request_pins_still_match_current_bytes": true,
+    "mismatches": [],
+    "source_control_bytes": 2650483,
+    "source_control_count": 88
+  }
+}

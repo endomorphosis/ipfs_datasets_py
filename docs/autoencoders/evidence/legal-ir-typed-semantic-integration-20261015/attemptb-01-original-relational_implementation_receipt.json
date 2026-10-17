@@ -1,0 +1,482 @@
+{
+  "schema": "legal-relational-norm-implementation-receipt/v1",
+  "closed_at_utc": "2026-10-15T22:03:44.665713+00:00",
+  "all_checks_passed": true,
+  "check_count": 57,
+  "checks": [
+    {
+      "name": "exact committed clean owned checkout",
+      "passed": true
+    },
+    {
+      "name": "exact branch and direct source parent",
+      "passed": true
+    },
+    {
+      "name": "31399 original mode and OID entries unchanged",
+      "passed": true
+    },
+    {
+      "name": "three additive paths and 31402 closing entries",
+      "passed": true
+    },
+    {
+      "name": "ten existing gitlinks unchanged",
+      "passed": true
+    },
+    {
+      "name": "canonical raw HEAD and index fences unchanged",
+      "passed": true
+    },
+    {
+      "name": "canonical resolved HEAD unchanged",
+      "passed": true
+    },
+    {
+      "name": "canonical stage mapping unchanged",
+      "passed": true
+    },
+    {
+      "name": "prior sampled norm scope closure exact",
+      "passed": true
+    },
+    {
+      "name": "all six prior actual statutory scope payloads exact",
+      "passed": true
+    },
+    {
+      "name": "earlier real definition alternative manifest exact",
+      "passed": true
+    },
+    {
+      "name": "committed byte-identical pretest source: ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "passed": true
+    },
+    {
+      "name": "committed byte-identical pretest source: tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+      "passed": true
+    },
+    {
+      "name": "committed byte-identical pretest source: docs/autoencoders/legal_relational_norm_v1.md",
+      "passed": true
+    },
+    {
+      "name": "source pins cover exactly three additions",
+      "passed": true
+    },
+    {
+      "name": "final focused qualification exact source and passes",
+      "passed": true
+    },
+    {
+      "name": "unique passing selected JUnit cohort",
+      "passed": true
+    },
+    {
+      "name": "native build test explicitly excluded",
+      "passed": true
+    },
+    {
+      "name": "eight authored fixture reports at committed source",
+      "passed": true
+    },
+    {
+      "name": "seventeen retained authored payloads",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: ast.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: contracts.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: signatures.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: namespaces.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: legacy_modal.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: tdfol_core.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: modal_projections.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: legal_family_routes.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: legal_relational_norm_v1.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: native_legal_qualified_lean.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: native_qualified_lean.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: native_family_lean_emitters.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: provenance.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: canonical_contracts.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: legal_canonical_qualified.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: legal_canonical_calendar.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: family_qualification.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: tdfol_parser.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: dcec_integration.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: dcec_core.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: dcec_parsing.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: dcec_cleaning.py",
+      "passed": true
+    },
+    {
+      "name": "producer bytes exact: dcec_prototypes.py",
+      "passed": true
+    },
+    {
+      "name": "nine explicit finite countermodel witnesses retained",
+      "passed": true
+    },
+    {
+      "name": "no authored statutory source binding or authority",
+      "passed": true
+    },
+    {
+      "name": "truthful organizer exposure without blind review",
+      "passed": true
+    },
+    {
+      "name": "no native model review admission resource or network operation",
+      "passed": true
+    },
+    {
+      "name": "fresh original-manifest replay of eight reports and nine witnesses",
+      "passed": true
+    },
+    {
+      "name": "original Markdown preserved: legal-ir-span-graph-lean4-implementation-plan-2026-10-13.md",
+      "passed": true
+    },
+    {
+      "name": "original Markdown preserved: legal-ir-training-review-and-corpus-plan-2026-10-13.md",
+      "passed": true
+    },
+    {
+      "name": "original Markdown preserved: legal-ir-connected-statutory-pilot-spec-2026-10-15.md",
+      "passed": true
+    },
+    {
+      "name": "original Markdown preserved: legal-ir-definition-profile-extension-spec-2026-10-15.md",
+      "passed": true
+    },
+    {
+      "name": "backlog exactly reconstructed with declared changes",
+      "passed": true
+    },
+    {
+      "name": "all 24 statuses and dependency lists exact",
+      "passed": true
+    },
+    {
+      "name": "entire LIR-17 unchanged",
+      "passed": true
+    },
+    {
+      "name": "training evidence pointers and science unchanged",
+      "passed": true
+    },
+    {
+      "name": "final combined independent readback passed",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "unresolved_findings": [],
+  "source": {
+    "worktree": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets",
+    "branch": "codex/legal-relational-norm-20261015-01",
+    "commit": "52e9007ac32980e85a38faa36a8dfb978c89a079",
+    "parent": "886e578d35a487b061fabe876c27992b850dc88f",
+    "clean": true,
+    "existing_entries_preserved": 31399,
+    "closing_entries": 31402,
+    "unchanged_gitlinks": 10,
+    "added_paths": [
+      "docs/autoencoders/legal_relational_norm_v1.md",
+      "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py"
+    ],
+    "source_pins": [
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+        "bytes": 18562,
+        "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+      },
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+        "bytes": 21445,
+        "sha256": "e3160f78b6db26c0d5e28885cb2bd6b8c0f5777a1597c79b447ed535379b6cf2"
+      },
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/docs/autoencoders/legal_relational_norm_v1.md",
+        "bytes": 4232,
+        "sha256": "c702832d0f8f52bf6dca3872589db1d278440e7fbb685fdfdd8916068c430e2b"
+      }
+    ]
+  },
+  "opening": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/opening.json",
+    "bytes": 4831,
+    "sha256": "d1a57383804069fbbc1da9e3e47e643bdf8e032155f227c432e5f2ea35db9a7f"
+  },
+  "previous_closure": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/implementation-receipt.json",
+    "bytes": 17775,
+    "sha256": "568a423db242760b088c966f7329bcbc4881f1fb33826f7e215ad75059213fe1"
+  },
+  "progress": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/implementation-plan-progress-v01.json",
+    "bytes": 6841,
+    "sha256": "e5d905d837fce45adc9e32506af109252524d3125c6eff2d62a6e19a9c6b2fc5"
+  },
+  "evidence": {
+    "opening": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/opening.json",
+      "bytes": 4831,
+      "sha256": "d1a57383804069fbbc1da9e3e47e643bdf8e032155f227c432e5f2ea35db9a7f"
+    },
+    "previous_closure": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/implementation-receipt.json",
+      "bytes": 17775,
+      "sha256": "568a423db242760b088c966f7329bcbc4881f1fb33826f7e215ad75059213fe1"
+    },
+    "guide": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/docs/autoencoders/legal_relational_norm_v1.md",
+      "bytes": 4232,
+      "sha256": "c702832d0f8f52bf6dca3872589db1d278440e7fbb685fdfdd8916068c430e2b"
+    },
+    "test_qualification": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/focused-test-qualification-v01.json",
+      "bytes": 3021,
+      "sha256": "d18ac558eb40483c05a10e801b54d41443d7bd4760c9de3bfc59133b5dffc228"
+    },
+    "authored_examples": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/authored-relational-01/manifest.json",
+      "bytes": 11867,
+      "sha256": "83e7bd0999a86871c995ae5d4e9a25aadd32a95ebd164e4860e88dbb0b1569d5"
+    },
+    "fresh_replay": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/fresh-relational-replay-v01.json",
+      "bytes": 1660,
+      "sha256": "8c551fbfcd62f500326a387fc898a0ae07e735e9cff56ccff7cbdc94a1431e88"
+    },
+    "README": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/README.md",
+      "bytes": 4220,
+      "sha256": "3b73a3f3b58f95891229598f211eb092d31e555120534c3115e8e2c677fc4d0f"
+    },
+    "prior_fixed_training_freshness_carried_forward": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/training-freshness-v01.json",
+      "bytes": 32631,
+      "sha256": "1395fe75786731236cc95e0fb3280ff45c48d97ddb064fb519817f0d802eb718"
+    }
+  },
+  "plan_reconstruction": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/plan-reconstruction-v01.json",
+    "bytes": 77779,
+    "sha256": "0ac8d535cf30714b78c33409edfd765cfdec7e225fec774f489ecd6dcae75728"
+  },
+  "final_plans": [
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-span-graph-lean4-implementation-plan-2026-10-13.md",
+      "bytes": 230201,
+      "sha256": "e5cd9dddc44542cf08105b52ea6de2c47e1b60f3d964765f790024c14f5c99d4"
+    },
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-training-review-and-corpus-plan-2026-10-13.md",
+      "bytes": 201158,
+      "sha256": "9d9abec2ffb0c0963e81c852e071cb20e9df49b8ebbd5fe0e4fcf61dceaafa9d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-connected-statutory-pilot-spec-2026-10-15.md",
+      "bytes": 75818,
+      "sha256": "c203a80d1240f1e5d2b3e6f29af27cfd38ac1d5f95ed4430b9469206656c55ea"
+    },
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-definition-profile-extension-spec-2026-10-15.md",
+      "bytes": 69795,
+      "sha256": "3dfe688a524d6fa274a6dd9760b74f20b20c17ca53b3eb5c72a11d5cc2a44dab"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-comprehensive-review-20261013/implementation-backlog.json",
+      "bytes": 2278917,
+      "sha256": "e2e54589c8cd7c26271a07ba8e807c6badb8decbab55979376507f8c691e7fd2"
+    }
+  ],
+  "final_JUnit": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/focused-tests-v01.xml",
+    "bytes": 555828,
+    "sha256": "015714e03ef433ee46e49cb0fc3d65a88b03a607ee30dd1977f7fdec8a803017"
+  },
+  "independent_readback": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/independent-relational-readback-v01.json",
+    "bytes": 89740,
+    "sha256": "e9fbe6f262c39e5ac9a1b832d040cb69481bf817555a70797bd3ab847a7eb76d"
+  },
+  "implemented": {
+    "new_general_AST": false,
+    "existing_typed_expression_to_existing_native_route": true,
+    "native_family": "deontic_fol",
+    "core_family_profile": [
+      "tdfol",
+      "tdfol_default"
+    ],
+    "single_carrier": "Object",
+    "bound_variable_arguments_only": true,
+    "ordered_role_ledger": true,
+    "exact_binary_Boolean_structure": true,
+    "one_binder_per_quantifier": true,
+    "modal_operators": [
+      "O",
+      "P",
+      "F"
+    ],
+    "native_parse_print_reparse": true,
+    "generated_Lean_text": true,
+    "actual_Lean_build": false
+  },
+  "authored_evidence": {
+    "fixtures": 8,
+    "finite_countermodels": 9,
+    "source_bindings": 0,
+    "scope": "Separate authored structural/finite-model technical evidence; no statutory translation or unbounded proof.",
+    "contrasts": [
+      "necessary versus sufficient approval",
+      "modal implication scope",
+      "disjunctive versus conjunctive actions",
+      "actor/recipient swap",
+      "origin/destination swap",
+      "O/P/F distinction"
+    ],
+    "finite_model_semantics": "Explicit two-object/two-world fixture models; existential P, universal O, universal-negation F. Native/Lean modal interpretation remains parameterized."
+  },
+  "actual_statutory_state": {
+    "prior_definition_candidate_AST_alternatives": 2,
+    "prior_inert_scope_proposals": 2,
+    "new_statutory_norm_ASTs": 0,
+    "accepted_statutory_meanings": 0,
+    "actual_reviews_signatures_admissions": 0,
+    "accepted_lookup_or_governing_edges": 0,
+    "prior_source_and_scope_artifacts_unchanged": true,
+    "training_mask": 0,
+    "evaluation_gold_mask": 0
+  },
+  "training_background": {
+    "inventory_refreshed_this_slice": false,
+    "carried_forward_cutoff_utc": "2026-10-15T20:38:47+00:00",
+    "latest_qualified_formalization_control": "F18",
+    "F18_disposition": "scientific failure/no promotion",
+    "latest_completed_saved_score_diagnostic": "F19",
+    "previously_reported_auxiliary_embedding_epochs": 1,
+    "new_training_or_scoring_operations": 0,
+    "new_qualified_control_or_F20_inferred": false
+  },
+  "operations": {
+    "native_builds_or_probes": 0,
+    "model_training_scoring": 0,
+    "human_reviews_signatures_keys": 0,
+    "admissions": 0,
+    "resource_scheduler_mutation": 0,
+    "source_acquisition_or_publication": 0
+  },
+  "canonical_guard": {
+    "raw_fences": [
+      {
+        "path": "/home/barberb/lift_coding/.git/HEAD",
+        "bytes": 37,
+        "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+      },
+      {
+        "path": "/home/barberb/lift_coding/.git/index",
+        "bytes": 692628,
+        "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+      },
+      {
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD",
+        "bytes": 21,
+        "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+      },
+      {
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+        "bytes": 5251025,
+        "sha256": "8bd28a44ae0a0425cfaba561c3bf8c13f25bbf7e61cbf12c05708c9563dceda8"
+      }
+    ],
+    "resolved_HEAD": "74f5d98c8ffff3c284cffddf430091b5fc4c6f8c",
+    "stage_rows": 32220,
+    "stage_mapping_sha256": "b025665e177920ec3ec22e04c7a06afcb70f80e4e40bebdde18937aab2d6d922",
+    "scope": "HEAD/index metadata only; no canonical working-source qualification",
+    "all_unchanged": true
+  },
+  "scope": "Authored typed relational/modal syntax to existing native parser and Lean text route. No actual statutory meaning selection, native execution or learned improvement.",
+  "remaining_limits": [
+    "No constants/functions/equality/additional sorts/free variables/shadowing/n-ary normalization in this first profile",
+    "No event/time counting frame, cardinality, purpose or anaphora semantics",
+    "No actual source-role/meaning selection or statutory review/admission",
+    "Lean text generation only; no new native process, build or version probe"
+  ],
+  "next_work_in_order": [
+    "Define a separately versioned source-to-typed interpretation join over the existing complete source/scope proposals and this strict typed fragment, retaining exact role/argument/modal/binder correspondence, alternatives and unresolved material.",
+    "Require explicit event/time counting frame and distinctness before specifying cardinality and checked lowering; purpose/anaphora and unsupported legal constructs remain pending.",
+    "Collect actual independent source/formal meaning review with truthful proposal exposure, resolve plural identity and applicability, then qualify governing definition use.",
+    "Qualify actual supported statutory Lean builds and reviewed graph/cache/corpus release, then admit dependency/exposure-aware training targets while preserving F18/F19 controls."
+  ],
+  "closeout_driver": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-relational-norm-20261015-01/closeout_v01.py",
+    "bytes": 11223,
+    "sha256": "a7ee2387f12a4452922ee6796bf1c82bc92a976514c35d132dfd669dac5edcb6"
+  }
+}

@@ -1,0 +1,234 @@
+{
+  "accelerate_execution_head": "90acc9b21c214e2f4c3a6c84769fd891cfdbd627",
+  "adopted_parallel_main": "64d5bf61f0a9894f0c12fc66c942a84d78a34e50",
+  "checkpoint_or_embedding_payloads_included": false,
+  "datasets_execution_head": "6b8b1346f888adbebbcf1d714e4ad0ab39a02052",
+  "file_count": 44,
+  "files": [
+    {
+      "bytes": 9630,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/README.md",
+      "sha256": "ad7b776b0fcf460e3316430cf4f4942225b1d0e94fe50257a8712a8181c110bb"
+    },
+    {
+      "bytes": 21322,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authenticate_published_components.py",
+      "sha256": "4e40833a0ec4bc3d19c64c84f9afcee60472948527917ad72da006f324501691"
+    },
+    {
+      "bytes": 9702,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authentication-validation-request-05.json",
+      "sha256": "beb14df36f657bf70afb2c7a2f4a744ec56b857c59c931f31a6f1e99be23dee0"
+    },
+    {
+      "bytes": 9702,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authentication-validation-request-06.json",
+      "sha256": "df0860bae351dbe4da8a5513d02ff05809b0da40a5a3480c8e29ac8db3851062"
+    },
+    {
+      "bytes": 9702,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authentication-validation-request-07.json",
+      "sha256": "e6c8283a005734f18717eaa2d86d34ba1557f5a3d0fb33e57d36ee01e39cddfa"
+    },
+    {
+      "bytes": 9702,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authentication-validation-request-08.json",
+      "sha256": "43a3b2733a2fed5a28a78cccdc6174777fe5b6d25ce9033d30cc1996e2d2f307"
+    },
+    {
+      "bytes": 1698,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/completed-worktree-cleanup-audit.json",
+      "sha256": "158a9c0fdd268d8c8a2140e10e753446726840f7d39ca82188dd47ed5cfc4237"
+    },
+    {
+      "bytes": 10943,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/controls-validation-request-03.json",
+      "sha256": "4d2e05505fe0b6bb04f3d5af41b744b6b696cdd4171d9fc2e2441207702c97db"
+    },
+    {
+      "bytes": 7706,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/execution-attempts-audit.json",
+      "sha256": "24f8c7c2b060e5918539d1e499e81f18965de01499c1d6944c86fda1c072200d"
+    },
+    {
+      "bytes": 3701,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/f15-hub-publication-receipt.json",
+      "sha256": "5dd438403c1c73751ef39ffeb91b319d8e90fb028b26b6026822e52748e95489"
+    },
+    {
+      "bytes": 3557,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/f17-hub-publication-receipt.json",
+      "sha256": "8f6fe5ec8cb19bb5da8984d4b3a08f18a685521cbaa6b14677779212999fb679"
+    },
+    {
+      "bytes": 3876,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/f18-hub-publication-receipt.json",
+      "sha256": "dd324bf97b3280af1fa73bbd75b5cff7f9f45666703e05246486187822c22449"
+    },
+    {
+      "bytes": 6881,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/historical-loader-source-restoration.json",
+      "sha256": "32805ac0b0a6a01130d91d29f8c74d03c120a7054770fcf342243541f5dcfd82"
+    },
+    {
+      "bytes": 11945,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/history/native-authentication-audit.json",
+      "sha256": "9a0477c5fba9420d53cdcb4d758e25cccdd218ffcb00d621a2982bf37c2b562b"
+    },
+    {
+      "bytes": 5066,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/history/source-restoration-addendum.json",
+      "sha256": "e48095c2cf6bd7b02dc4eefd59837cce0f804dcb52c1bbc2576d615932b6e16e"
+    },
+    {
+      "bytes": 14431,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/history/storage-recovery-audit.json",
+      "sha256": "904e6508270fe7944d26e71b08cea972deaa962ed7271472a5c1962cc4988379"
+    },
+    {
+      "bytes": 6662,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/independent-clone-operational-generation.json",
+      "sha256": "78b3600e984e4b4b216bfe421eccfca6792b4473a42d2d95425c68c1734b750c"
+    },
+    {
+      "bytes": 29929,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/model-manager-import-plan.json",
+      "sha256": "b5d027bd36d455688eb9ec04fd92279f9d2732deaf776d443f6e917805b9846b"
+    },
+    {
+      "bytes": 10984,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/native-authentication-identity-audit-05.json",
+      "sha256": "671f787838f306ef866c7c50c9083d252348669d7776cbfbf97cd647b34f520e"
+    },
+    {
+      "bytes": 4089,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/parallel-decoder-replay-adoption.json",
+      "sha256": "877a36e72d26d0cfa4c0142c6c6794539c5231aea604d822de9de8efaed6bde8"
+    },
+    {
+      "bytes": 13218,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/publication-provenance.json",
+      "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+    },
+    {
+      "bytes": 29061,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/published-components-authentication.json",
+      "sha256": "c2d0403e2a4990116cc4b9a4d556ff9e9b480db94708fd30b51291073a8f1364"
+    },
+    {
+      "bytes": 12402,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-driver-review.json",
+      "sha256": "9aa7ffb1e6b5fb081940c382952d7980aa576e6e1d67901c51322f2b8dc83ccd"
+    },
+    {
+      "bytes": 7555,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-handoff-independent-review.json",
+      "sha256": "a5aa8606247091f30d7b44237c914411245543e324484f51c02c058fe8785017"
+    },
+    {
+      "bytes": 11900,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-input-request.json",
+      "sha256": "952e8132b61ee36f2b4b24798487019f28c29cda15adcd50eb889f88c389c130"
+    },
+    {
+      "bytes": 1883,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-launch-request.json",
+      "sha256": "24af340381d73e2be2c14a6fbe981d190168228938def82ef63d418d247450fa"
+    },
+    {
+      "bytes": 18783,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-metadata-join-review.json",
+      "sha256": "6cc8e1ffec637b894caf206649ed70b067680f69d5ae94286f04d96751454612"
+    },
+    {
+      "bytes": 21883,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-native-independent-audit.json",
+      "sha256": "cbee0c6f87ae3ebf811d03c9a95d676b5983917eefb6c887a22954bc255159f3"
+    },
+    {
+      "bytes": 20691,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-resource-request.json",
+      "sha256": "ad040ef3fffc65c872e2d380224f8d1567ecc629f714f4e945c86d5cb41161ec"
+    },
+    {
+      "bytes": 36296,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_driver.py",
+      "sha256": "a20b6d875ab84b0563d3808fa6d07b0ba865a926dcec9de8da3f1fc05f5cba23"
+    },
+    {
+      "bytes": 9267,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_entry.py",
+      "sha256": "6b47d0659d654a1ac54556f1733c69b12455268252d17293992f340562d1fde3"
+    },
+    {
+      "bytes": 13822,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_launcher.py",
+      "sha256": "8bdd253f0f7f52dc06f3855c98b6973c64eb69abf4ea46cddc61815b56777867"
+    },
+    {
+      "bytes": 30235,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_resource_scope.py",
+      "sha256": "704f6a37e8eaae4aec9064fa24123a48a41b162ac597d80d0ada1b087b74a8f5"
+    },
+    {
+      "bytes": 1958,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/run_component_controls.py",
+      "sha256": "96a646a3947de8fc21bbf9805f05da5d4f1feb75e4429ca1ee71d1c667b41d37"
+    },
+    {
+      "bytes": 2719,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/run_original_validation.py",
+      "sha256": "408679dc80a063b0275d09dfca319ae520788852f7569c06dbbcdabcbd5bb50f"
+    },
+    {
+      "bytes": 7947,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/source-owners.json",
+      "sha256": "fb731813f2dc1c049b272a843f020066000c6724c9a647a88af9a1b6b4e7caa0"
+    },
+    {
+      "bytes": 13496,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/source-relocation-review.json",
+      "sha256": "eb3a6c2dc7c1b4d8e25be0c825737b91f1ad299c525c0094688f40da519fda9f"
+    },
+    {
+      "bytes": 18452,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_driver.py",
+      "sha256": "bb1beb7f2e94a75ebd4160915e2f6cf538821d5f0c85d0a30247a940dbca83d4"
+    },
+    {
+      "bytes": 2289,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_launcher.py",
+      "sha256": "f811d658c127068dcd50d246ec0d8ae650731900af78231a8c26ea1f3527552e"
+    },
+    {
+      "bytes": 2772,
+      "repository_path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_resource_scope.py",
+      "sha256": "508f4dc8677c12e952a20cdd75a939d9b0a558d425cd6efaa158b655fecb26a4"
+    },
+    {
+      "bytes": 10854,
+      "repository_path": "docs/autoencoders/legal_ir_asset_reconciliation_20261016.md",
+      "sha256": "536b689213fd6184b191083b40ac9a45a0f3077bd362385379af6f8dea5a1576"
+    },
+    {
+      "bytes": 98398,
+      "repository_path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "513e997cd8cf66898a044a9ed92aa5bdb2bf5b8e6a0887fa6be195990db7eb67"
+    },
+    {
+      "bytes": 23191,
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_external_resource_recovery.py",
+      "sha256": "239c9355cc1fe4396edee7a126e85194d45be960e43d0966bb99de8afbc27cff"
+    },
+    {
+      "bytes": 14303,
+      "repository_path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_external_resource_recovery.py",
+      "sha256": "a6dc35b74ea9bd01acce8d7a4150323c03cea543a8df6587097d574b93888f11"
+    }
+  ],
+  "private_database_backup_or_full_registry_records_included": false,
+  "raw_native_identifiers_included": false,
+  "schema": "legal-ir-missing-component-publication-inventory/v1",
+  "scope": "Own staged contribution before merging upstream; excludes this inventory and any publication commit self-reference",
+  "total_bytes": 614603
+}

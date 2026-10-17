@@ -1,0 +1,22 @@
+{
+  "base": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+  "existing_owners_modified": false,
+  "existing_owners_reused": [
+    "legal_source_sampling_primary_association_v2",
+    "legal_graph_dependencies",
+    "corpus_definition_review_v2",
+    "corpus_contracts",
+    "legal_primary_section_index"
+  ],
+  "observed_at_utc": "2026-10-16T00:11:24.019606+00:00",
+  "parallel_progress_preserved": [
+    "fixed-view vocabulary diagnostic and training observer",
+    "frozen-source runtime protocol/policy binding"
+  ],
+  "private_worktree_bodies_inspected": false,
+  "published_prerequisite": "https://github.com/endomorphosis/ipfs_datasets_py/pull/1314",
+  "published_review_adapter_found": false,
+  "relevant_open_prs_at_opening": [],
+  "schema": "sampled-primary-review-upstream-reconciliation/v1",
+  "unsupported_claim": "Existing graph/AST/context signing domain does not expressly decide official-source/primary-package equivalence."
+}

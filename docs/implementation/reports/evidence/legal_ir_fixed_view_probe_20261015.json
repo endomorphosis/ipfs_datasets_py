@@ -1,0 +1,351 @@
+{
+  "authority": {
+    "Constitution_formalized": false,
+    "Lean_admitted": false,
+    "acceptance_criteria_changed": false,
+    "admitted": false,
+    "encoder_context_increased": false,
+    "formalized": false,
+    "independent_holdout": false,
+    "semantic_qualified": false,
+    "weights_downloaded": false
+  },
+  "canaries": {
+    "admitted": false,
+    "bridge_evaluate_performed": false,
+    "cases": [
+      {
+        "compiler_seconds": 0.018462813924998045,
+        "decompiled": "Company A must submit backup report within 10 days unless emergency.",
+        "modality": "O",
+        "name": "deadline",
+        "pattern": null,
+        "vocabulary_seconds": 0.12548241904005408,
+        "wall_seconds_per_span": 0.14394523296505213
+      },
+      {
+        "compiler_seconds": 0.011856243945658207,
+        "decompiled": "Agency must not disclose records.",
+        "modality": "F",
+        "name": "prohibition",
+        "pattern": null,
+        "vocabulary_seconds": 0.004991238936781883,
+        "wall_seconds_per_span": 0.01684748288244009
+      },
+      {
+        "compiler_seconds": 0.0202025449834764,
+        "decompiled": "Officer must retain the file for at least 20 days.",
+        "modality": "O",
+        "name": "minimum",
+        "pattern": {
+          "fail": 19,
+          "kind": "threshold",
+          "meet": 20
+        },
+        "vocabulary_seconds": 0.005110007943585515,
+        "wall_seconds_per_span": 0.025312552927061915
+      }
+    ],
+    "cold_fresh_process": true,
+    "empty_vocabulary_abstained_all": true,
+    "import_and_parser_initialization_seconds": 0.28703640797175467,
+    "mean_wall_seconds_per_span": 0.062035089591518044,
+    "metric_disk_cache": 0,
+    "sample_count": 3,
+    "source_stable": true,
+    "workers": 1
+  },
+  "container_snapshot": {
+    "continuous_CUDA_Hub_profile_qualified": false,
+    "exact_image_cached": false,
+    "native_container_custody_qualified": false,
+    "older_capsule_policy_acknowledgement_gap": true,
+    "rootless_server_observed": true,
+    "source_snapshot_binding_patch_applied": false
+  },
+  "fixed_view_profile": {
+    "basis": "pinned producer core plus preserved tail, not observed sample support",
+    "changes_acceptance": false,
+    "declaration": {
+      "embedding_dimensions": 384,
+      "lineage_id": "proof_aware_auxiliary_heads_v2/gte-small384/4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+      "modality_id": "legal_ir",
+      "profile_id": "legal-bridge-canonical-components-384-diagnostic/v1",
+      "schema_id": "legal-bridge-canonical-components-plus-preserved-tail/v1",
+      "schema_version": "fixed-view-vocabulary/v1",
+      "view_ids": [
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+        "external_provers.router",
+        "modal.frame_logic",
+        "zkp.circuits"
+      ]
+    },
+    "schema_coverage_certified": false,
+    "sha256": "0e74add921c50b9eced04b54b1df62a0aac503ca6ce0577e598a781c13105d1c",
+    "source": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/bridge/multiview.py",
+      "sha256": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa"
+    },
+    "target_scope": "explicit distributions copied from these fresh verified complete targets"
+  },
+  "limitations": [
+    "This tests the recorded dirty canonical working generation; it is not a full qualification of the eventual origin/main dependency tree.",
+    "The seven raw IDs are an explicit declaration based on pinned core plus preserved tail; full legal-family schema coverage is not certified.",
+    "A better fixed-view sidecar does not accept a native rejected proposal; all native gates and losses remain unchanged.",
+    "Native parser/bridge generation does not prove semantic equivalence, learned formula fidelity, Lake admission or Constitution formalization.",
+    "No independent heldout gain, parallel CUDA campaign restart, Hub upload or end-to-end speedup is claimed."
+  ],
+  "observed_at_utc": "2026-10-15T21:57:29.197576+00:00",
+  "preparation": {
+    "OS_and_dependency_caches_controlled": false,
+    "adapter_workers": 1,
+    "all_five_supervision_complete": true,
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "bridge_seconds": 49.20054620318115,
+    "bridge_seconds_per_span": 6.1500682753976434,
+    "cold_metric_and_multiview": true,
+    "full_worker_seconds": 239.8388397761155,
+    "full_worker_seconds_per_span": 29.979854972014436,
+    "metric_disk_cache": 0,
+    "new_target_pipeline_seconds": 120.60323790227994,
+    "new_target_pipeline_seconds_per_span": 15.075404737784993,
+    "new_targets": 8,
+    "parallel_workers": 1,
+    "provers": false,
+    "sample_count": 8,
+    "use_sample_memory": false
+  },
+  "probe": {
+    "accepted_epochs": 1,
+    "arms": [
+      {
+        "accepted_epochs": 1,
+        "bridge_on_timing": {
+          "OS_dependency_caches_controlled": false,
+          "after_wall_seconds": 1.4721640069037676,
+          "after_wall_seconds_per_span": 0.7360820034518838,
+          "before_wall_seconds": 1.6267633840907365,
+          "before_wall_seconds_per_span": 0.8133816920453683,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "legal_ir_evaluate_provers": false,
+          "legal_ir_parallel_workers": 1,
+          "metric_disk_cache": 0,
+          "sample_count_per_call": 2,
+          "target_source": "reused fully verified eight singleton targets; target compilation cost excluded"
+        },
+        "candidate": {
+          "bytes": 13402647,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-vocabulary-20261015/head-probe-v1/exports/structural.candidate.state.json",
+          "sha256": "dadf1964dc6dbf9c89dbe360dd06908e24d299b5f80f5b6e2014967361932312"
+        },
+        "cosine": {
+          "after": 0.8475307002247241,
+          "before": 0.827653239228652
+        },
+        "fixed_view_cross_entropy": {
+          "before": 1.945910149055313,
+          "committed": 1.945910149055313,
+          "proposed": 1.945910149055313
+        },
+        "name": "structural",
+        "native_view_cross_entropy": {
+          "before": 1.5890269151739727,
+          "committed": 1.5890269151739727,
+          "proposed": 1.5890269151739727
+        },
+        "operator": "decoded_embedding_structural",
+        "reconstruction": {
+          "after": 0.0019177031657274055,
+          "before": 0.0019724909690556148,
+          "relative_improvement": 0.02777594634790162
+        },
+        "state_changed": true,
+        "training_seconds": 14.224018031964079
+      },
+      {
+        "accepted_epochs": 0,
+        "bridge_on_timing": {
+          "OS_dependency_caches_controlled": false,
+          "after_wall_seconds": 1.2314935741014779,
+          "after_wall_seconds_per_span": 0.6157467870507389,
+          "before_wall_seconds": 1.3172190678305924,
+          "before_wall_seconds_per_span": 0.6586095339152962,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "legal_ir_evaluate_provers": false,
+          "legal_ir_parallel_workers": 1,
+          "metric_disk_cache": 0,
+          "sample_count_per_call": 2,
+          "target_source": "reused fully verified eight singleton targets; target compilation cost excluded"
+        },
+        "candidate": {
+          "bytes": 7204344,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-vocabulary-20261015/head-probe-v1/exports/global_view.candidate.state.json",
+          "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+        },
+        "cosine": {
+          "after": 0.827653239228652,
+          "before": 0.827653239228652
+        },
+        "fixed_view_cross_entropy": {
+          "before": 1.945910149055313,
+          "committed": 1.945910149055313,
+          "proposed": 1.9005269451286178
+        },
+        "name": "global_view",
+        "native_view_cross_entropy": {
+          "before": 1.5890269151739727,
+          "committed": 1.5890269151739727,
+          "proposed": 1.7470878838489052
+        },
+        "operator": "legal_ir_view_global_logits",
+        "reconstruction": {
+          "after": 0.0019724909690556148,
+          "before": 0.0019724909690556148,
+          "relative_improvement": 0.0
+        },
+        "state_changed": false,
+        "training_seconds": 12.94695741403848
+      },
+      {
+        "accepted_epochs": 0,
+        "bridge_on_timing": {
+          "OS_dependency_caches_controlled": false,
+          "after_wall_seconds": 1.29534518904984,
+          "after_wall_seconds_per_span": 0.64767259452492,
+          "before_wall_seconds": 1.310360245872289,
+          "before_wall_seconds_per_span": 0.6551801229361445,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "legal_ir_evaluate_provers": false,
+          "legal_ir_parallel_workers": 1,
+          "metric_disk_cache": 0,
+          "sample_count_per_call": 2,
+          "target_source": "reused fully verified eight singleton targets; target compilation cost excluded"
+        },
+        "candidate": {
+          "bytes": 7204344,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-vocabulary-20261015/head-probe-v1/exports/feature_view.candidate.state.json",
+          "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+        },
+        "cosine": {
+          "after": 0.827653239228652,
+          "before": 0.827653239228652
+        },
+        "fixed_view_cross_entropy": {
+          "before": 1.945910149055313,
+          "committed": 1.945910149055313,
+          "proposed": 1.8975647294940672
+        },
+        "name": "feature_view",
+        "native_view_cross_entropy": {
+          "before": 1.5890269151739727,
+          "committed": 1.5890269151739727,
+          "proposed": 1.7442272839927504
+        },
+        "operator": "legal_ir_view_logits",
+        "reconstruction": {
+          "after": 0.0019724909690556148,
+          "before": 0.0019724909690556148,
+          "relative_improvement": 0.0
+        },
+        "state_changed": false,
+        "training_seconds": 14.206966870930046
+      }
+    ],
+    "checkpoint": {
+      "bytes": 7204344,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/4f/4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+      "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+    },
+    "checkpoint_modified": false,
+    "completed_arms": 3,
+    "peak_self_rss_bytes": 1099366400,
+    "repeated_tuning_count": 2,
+    "training_count": 6,
+    "worker_seconds": 114.9359937121626
+  },
+  "references": {
+    "canaries": {
+      "bytes": 20302,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/three-clause-gate-v7.json",
+      "sha256": "731882382140476bc85796cafc9fd5b7709b202bdbd6761dfdbd87d2140a0e16"
+    },
+    "docker": {
+      "bytes": 5155,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-vocabulary-20261015/local-source-snapshot-docker-capability-v1.json",
+      "sha256": "b56136495003af0c7ed7eff3d774ccff2c4e92a54c36e2b1b31361903d243e99"
+    },
+    "prep_durability": {
+      "bytes": 9426,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-vocabulary-20261015/shared-targets-v1/logs/validation-durability.json",
+      "sha256": "8ce8694dc7e95d34990dfb8111f8bc4887a5f08f8f877d1c60186037fcba5b8e"
+    },
+    "preparation": {
+      "bytes": 32683,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-vocabulary-20261015/shared-targets-v1/exports/report.json",
+      "sha256": "ada3cc569a4c59c2891654b2715d0abfe49716e67b34359f714d5df0a2cca9b5"
+    },
+    "probe": {
+      "bytes": 524534,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-vocabulary-20261015/head-probe-v1/exports/report.json",
+      "sha256": "05d535650100b0d90872ff8299d115d990c7a2c878fe3e212a420cbe95a7c9a3"
+    },
+    "probe_durability": {
+      "bytes": 1710,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-vocabulary-20261015/head-probe-v1/logs/validation-durability.json",
+      "sha256": "e2a613bafbb25520f1a3b9c14c55d16db69d3968a5f53cc662353e8ca62b6189"
+    },
+    "unit": {
+      "bytes": 2592,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-vocabulary-20261015/fixed-view-unit-observation-v1.json",
+      "sha256": "a60075a8fe1ba73a5a054b3475e8deeed507dc33d0850f30fd497f083415a3a8"
+    },
+    "unit_durability": {
+      "bytes": 2772,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-vocabulary-20261015/unit-tests-v2/logs/validation-durability.json",
+      "sha256": "8d2e3985c508d2725a88f29e7cf14093bc0774c56fab4dba12bbc7e4aa3f9f6e"
+    }
+  },
+  "schema": "legal-ir-fixed-view-diagnostic-observation/v1",
+  "scope": "current native384 feature-head diagnostic; two repeated tuning rows, not independent holdout",
+  "source_generation": {
+    "package_root": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py",
+    "python_file_count": 8767,
+    "sha256": "301f5086fe0d0915b045572887c3efe38cdf87ab03027e2fbc6b10ff041f7fc7"
+  },
+  "source_unchanged": true,
+  "unit_tests": {
+    "failed": 0,
+    "fixture_profile": "explicit_private_pytest_alias_profile/v1",
+    "full_suite_files": 6,
+    "passed": 240,
+    "pytest_wall_seconds": 3.79,
+    "strict_profile_passed": false
+  }
+}

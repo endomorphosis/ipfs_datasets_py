@@ -1,0 +1,405 @@
+{
+  "actual_payload_bodies_copied": false,
+  "authority_granted": false,
+  "evaluation_gold_mask": 0,
+  "files": [
+    {
+      "bytes": 12683,
+      "kind": "source_or_metadata",
+      "path": "product-contract-v01.md",
+      "sha256": "219ebc86bff4084bb6aa2c2bb5fee604d25c8831004d0345416fe1a6ec4bef15",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/product-contract-v01.md"
+    },
+    {
+      "bytes": 1028,
+      "kind": "source_or_metadata",
+      "path": "resource-plan-v01.json",
+      "sha256": "c0fa5e8f2bcda4c499f81413f731c30b8758ce03154a142c4233af9b6730172a",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/resource-plan-v01.json"
+    },
+    {
+      "bytes": 3887,
+      "kind": "source_or_metadata",
+      "path": "source-design-survey-v01.json",
+      "sha256": "611bb4495123bc563b082743efc39f3c1e6f554977a1665bd45927a119fa8def",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/source-design-survey-v01.json"
+    },
+    {
+      "bytes": 2593,
+      "kind": "source_or_metadata",
+      "path": "observe_storage_v01.py",
+      "sha256": "61a9c6c68e2c87c4a5b41f9b1358cad277210dae9cd27766eec3901bbe51ffdb",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/observe_storage_v01.py"
+    },
+    {
+      "bytes": 2256,
+      "kind": "source_or_metadata",
+      "path": "storage-observer-pins-v01.json",
+      "sha256": "7159058842086a52eb022d284464bccebf9c9579afe659ca11a1e88aeef92efa",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/storage-observer-pins-v01.json"
+    },
+    {
+      "bytes": 5800,
+      "kind": "source_or_metadata",
+      "path": "storage-observation-v01.json",
+      "sha256": "7344ac4caa2f334d39f34d9933eb509a5c75d96d4d57b328e3c356daec4e2e89",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/storage-observation-v01.json"
+    },
+    {
+      "bytes": 3949,
+      "kind": "source_or_metadata",
+      "path": "make_native_requests_v01.py",
+      "sha256": "eddf4ad291de46bda0164a2b997c3011f649f13dfca6f7941e4982d4d139d4a7",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/make_native_requests_v01.py"
+    },
+    {
+      "bytes": 21781,
+      "kind": "source_or_metadata",
+      "path": "run_retained_batch_v01.py",
+      "sha256": "7e0a28124903393561cc8b746bcb4cebab7f27ca1105f9478e09d2a68ca87dca",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/run_retained_batch_v01.py"
+    },
+    {
+      "bytes": 3326,
+      "kind": "source_or_metadata",
+      "path": "comparison-inputs-v01.json",
+      "sha256": "ea81d7b3ae2266c075f79eb01d04b671f7b3da266dd176bb97ffc5691ae8d8a3",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/comparison-inputs-v01.json"
+    },
+    {
+      "bytes": 7380,
+      "kind": "source_or_metadata",
+      "path": "source-author-audit-v01.json",
+      "sha256": "2fe1bfa7c3fe206104e802663bc839e7c378af36e44c2695aaff10678f1b34ac",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/source-author-audit-v01.json"
+    },
+    {
+      "bytes": 8947,
+      "kind": "source_or_metadata",
+      "path": "source-author-audit-v02.json",
+      "sha256": "5bb002188fd7b151bc41954a9431b2766c64a98b9544cc1e5c785fe877453569",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/source-author-audit-v02.json"
+    },
+    {
+      "bytes": 15730,
+      "kind": "source_or_metadata",
+      "path": "authored-test-source-roster-v02.json",
+      "sha256": "f91e2ee384b89688d3b63a72309cb34201a2370e7bf9581dd99af8c9124b15af",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/authored-test-source-roster-v02.json"
+    },
+    {
+      "bytes": 753,
+      "kind": "source_or_metadata",
+      "path": "namespace-correction-proof-v01.json",
+      "sha256": "12069900be368aaa4ce1184c0917d33a3e2149b3d06288c474cc1fa498545c29",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/namespace-correction-proof-v01.json"
+    },
+    {
+      "bytes": 8692,
+      "kind": "source_or_metadata",
+      "path": "namespace-source-correction-static-review-v01.json",
+      "sha256": "6f5e94bec1911798c5062ef446f7b9fce8aa5f5465831a02d92d0848e3d186b2",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/namespace-source-correction-static-review-v01.json"
+    },
+    {
+      "bytes": 35189,
+      "kind": "source_or_metadata",
+      "path": "qualification01-original-product-source.py.txt",
+      "sha256": "12dbd712e49ab8d8f9fc7e83d088ea1161d7c68c6715ad9a7f53cad6c52f3474",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification01-original-product-source.py.txt"
+    },
+    {
+      "bytes": 5482,
+      "kind": "source_or_metadata",
+      "path": "recover_own_failed_qualification01_v01.py",
+      "sha256": "83e66433b458a60b669425e924055074744920d23e65dbcc31850fdefadb916f",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/recover_own_failed_qualification01_v01.py"
+    },
+    {
+      "bytes": 62228,
+      "kind": "source_or_metadata",
+      "path": "qualification01-own-recovery-receipt-v01.json",
+      "sha256": "7756834c4e883053d6ebc677a2881e73d53ba3f4f8aaacdab80ab6dae69ddcc1",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification01-own-recovery-receipt-v01.json"
+    },
+    {
+      "bytes": 185523,
+      "kind": "source_or_metadata",
+      "path": "qualification-source-roster-review-v01.json",
+      "sha256": "be674942a2e7e0eca57734906c79e62545dc62d4392e1e763340478fe403156e",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-source-roster-review-v01.json"
+    },
+    {
+      "bytes": 173103,
+      "kind": "source_or_metadata",
+      "path": "qualification-source-roster-review-v02.json",
+      "sha256": "e9faa4b23aa0050623d3c17c342d9d2be9a4bce590548c465bf4f57480c17cbc",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-source-roster-review-v02.json"
+    },
+    {
+      "bytes": 25429,
+      "kind": "source_or_metadata",
+      "path": "source-helper-doc-audit-v01.json",
+      "sha256": "ab0f420ee23d1a4cd81cabca40e980eeb47fc06fd4d55e3634725fe5e614c0d0",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/source-helper-doc-audit-v01.json"
+    },
+    {
+      "bytes": 36474,
+      "kind": "source_or_metadata",
+      "path": "source-helper-doc-audit-v02.json",
+      "sha256": "d147eafa4367062413b94d78413c42e61ac36bd6c9477b43b8672ee1045c028a",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/source-helper-doc-audit-v02.json"
+    },
+    {
+      "bytes": 61538,
+      "kind": "source_or_metadata",
+      "path": "source-helper-doc-audit-v03.json",
+      "sha256": "ddc7692ad628f3d4b3db9c9f80da39408e6104bfb6b40ae4ddad3794da9d4d39",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/source-helper-doc-audit-v03.json"
+    },
+    {
+      "bytes": 27715,
+      "kind": "source_or_metadata",
+      "path": "qualification-independent-metadata-review-v02.json",
+      "sha256": "1013eeb52ce8f0d22fa001c0bb210339985000efad2ea2b6d14fa7a88999fc0c",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-independent-metadata-review-v02.json"
+    },
+    {
+      "bytes": 94850,
+      "kind": "source_or_metadata",
+      "path": "retained-batch-independent-metadata-review-v02.json",
+      "sha256": "e96f2d2331470af48c173343cba399156f40b1d731a99ac4519e39e8c2e7d756",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/retained-batch-independent-metadata-review-v02.json"
+    },
+    {
+      "bytes": 57900,
+      "kind": "source_or_metadata",
+      "path": "qualification-request-v01.json",
+      "sha256": "9c44d60070948e2a2f251e28354cf648f781690a2f9057c5ae5b93fa3db5fe29",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-request-v01.json"
+    },
+    {
+      "bytes": 65,
+      "kind": "source_or_metadata",
+      "path": "qualification-request-v01.sha256",
+      "sha256": "569bd1648b33e2da1218ba78af2e00f8f53fadac713fed08bfed379a53619882",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-request-v01.sha256"
+    },
+    {
+      "bytes": 57900,
+      "kind": "source_or_metadata",
+      "path": "qualification-request-v02.json",
+      "sha256": "28159ac07f73016b05f18a74e693cce97763da7a3a0eb85d913449c57fd2710a",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-request-v02.json"
+    },
+    {
+      "bytes": 65,
+      "kind": "source_or_metadata",
+      "path": "qualification-request-v02.sha256",
+      "sha256": "9c3f79bf48321dfc4489ed0e5ad79e5ba2c25d06077d49077e1c718210536604",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-request-v02.sha256"
+    },
+    {
+      "bytes": 58770,
+      "kind": "source_or_metadata",
+      "path": "retained-batch-request-v01.json",
+      "sha256": "02c11e88edf67683d7767cb12dde3f737ef44e6c620d3de76a18d56a24ac0149",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/retained-batch-request-v01.json"
+    },
+    {
+      "bytes": 65,
+      "kind": "source_or_metadata",
+      "path": "retained-batch-request-v01.sha256",
+      "sha256": "248a5041cb2abb847390691fd3e0088ebe50cfc815792be008c2829361430366",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/retained-batch-request-v01.sha256"
+    },
+    {
+      "bytes": 58770,
+      "kind": "source_or_metadata",
+      "path": "retained-batch-request-v02.json",
+      "sha256": "df3a15cadede9829209cfcbe92746cf898ef3419f008ec330a11241c5be77c7b",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/retained-batch-request-v02.json"
+    },
+    {
+      "bytes": 65,
+      "kind": "source_or_metadata",
+      "path": "retained-batch-request-v02.sha256",
+      "sha256": "df140b2745db94e8ed255f857b20238be7f02e244cc5c0fb7c1e1a22a047caa2",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/retained-batch-request-v02.sha256"
+    },
+    {
+      "bytes": 0,
+      "kind": "source_or_metadata",
+      "path": "qualification-parent-stdout-v01.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-parent-stdout-v01.json"
+    },
+    {
+      "bytes": 585,
+      "kind": "source_or_metadata",
+      "path": "qualification-parent-stderr-v01.txt",
+      "sha256": "0173681456fdad868f54024674df88c48314a6f025c78360fa18b586eb08aacf",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-parent-stderr-v01.txt"
+    },
+    {
+      "bytes": 5514,
+      "kind": "source_or_metadata",
+      "path": "qualification-parent-stdout-v02.json",
+      "sha256": "1cf08ce452efe08555d0a3cd64fec1267042001b6819493c90107bb7295c5f8b",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-parent-stdout-v02.json"
+    },
+    {
+      "bytes": 0,
+      "kind": "source_or_metadata",
+      "path": "qualification-parent-stderr-v02.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/qualification-parent-stderr-v02.txt"
+    },
+    {
+      "bytes": 5518,
+      "kind": "source_or_metadata",
+      "path": "retained-batch-parent-stdout-v02.json",
+      "sha256": "41bc50582b87d18d9f61e389994d390d06805d2990feed9e0e9bcd9c00d57355",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/retained-batch-parent-stdout-v02.json"
+    },
+    {
+      "bytes": 0,
+      "kind": "source_or_metadata",
+      "path": "retained-batch-parent-stderr-v02.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/retained-batch-parent-stderr-v02.txt"
+    },
+    {
+      "bytes": 6618,
+      "kind": "source_or_metadata",
+      "path": "curate_publication_v01.py",
+      "sha256": "a6b83d6526a795441d064f3cb4be0376c172bfc13ebb9e191769014f8a12a8b1",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-typed-batch-evaluation-20261016-01/curate_publication_v01.py"
+    },
+    {
+      "bytes": 28529,
+      "kind": "source",
+      "path": "checked_buffer_qualification_guard_v03.py",
+      "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854",
+      "source_path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py"
+    },
+    {
+      "bytes": 708,
+      "kind": "native_metadata",
+      "path": "qualification/logs/execution.json",
+      "sha256": "9ec2ddcd69369a0f1a5cf7d62e1f114dc70cb9ad54adba40203706f3fe106531",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/logs/execution.json"
+    },
+    {
+      "bytes": 888,
+      "kind": "native_metadata",
+      "path": "qualification/logs/result.json",
+      "sha256": "1772bda67afbafb0a55530da8da7865eca338383bcf68edb7b85b55153433d33",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/logs/result.json"
+    },
+    {
+      "bytes": 1959,
+      "kind": "native_metadata",
+      "path": "qualification/logs/validation-durability.json",
+      "sha256": "66f12d775d2fc3e6ffb16460a4be477fe6ea3b76d2519a13d04ba020575e0530",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/logs/validation-durability.json"
+    },
+    {
+      "bytes": 769,
+      "kind": "native_metadata",
+      "path": "qualification/logs/stdout.log",
+      "sha256": "c08badcf6cf2c157116a1aa24277b4988d845ec08fa82338c88bf1b84ee0d945",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/logs/stdout.log"
+    },
+    {
+      "bytes": 0,
+      "kind": "native_metadata",
+      "path": "qualification/logs/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/logs/stderr.log"
+    },
+    {
+      "bytes": 241690,
+      "kind": "native_metadata",
+      "path": "qualification/logs/qualification.json",
+      "sha256": "f13b5b3f0d92f41d3c0b548cd0cd5c8ea0d17cf5432183070027d608c96fa0fb",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/logs/qualification.json"
+    },
+    {
+      "bytes": 57312,
+      "kind": "native_metadata",
+      "path": "qualification/exports/junit.xml",
+      "sha256": "598452433a35de81971091328713339d02cc86260ef87f68d8feb9757b672d40",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification02/exports/junit.xml"
+    },
+    {
+      "bytes": 832,
+      "kind": "native_metadata",
+      "path": "retained-batch/logs/execution.json",
+      "sha256": "39deaea3231e2839424d0524c0728da41dfb6e5b062cbc2e4b1467e42ec4d0ec",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-retained-batch02/logs/execution.json"
+    },
+    {
+      "bytes": 1013,
+      "kind": "native_metadata",
+      "path": "retained-batch/logs/result.json",
+      "sha256": "6466e4a39b286573a1690fd3a295f8b62dd7990f81867e21ea2d5c5d3cbdec29",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-retained-batch02/logs/result.json"
+    },
+    {
+      "bytes": 1826,
+      "kind": "native_metadata",
+      "path": "retained-batch/logs/validation-durability.json",
+      "sha256": "7eba61adae9284f4bb470b7b5d777c5877a48c7523f7de1d25d8b0ce311e5ab3",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-retained-batch02/logs/validation-durability.json"
+    },
+    {
+      "bytes": 394,
+      "kind": "native_metadata",
+      "path": "retained-batch/logs/stdout.log",
+      "sha256": "2fb0997f6620ac4c65bf283f0f869bc9881835952edb9d5d1f0b25c1e425968b",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-retained-batch02/logs/stdout.log"
+    },
+    {
+      "bytes": 0,
+      "kind": "native_metadata",
+      "path": "retained-batch/logs/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-retained-batch02/logs/stderr.log"
+    },
+    {
+      "bytes": 95335,
+      "kind": "native_metadata",
+      "path": "retained-batch/logs/retained-batch-receipt.json",
+      "sha256": "db5b4168afa6c669e3574f0a7a7a75e291bab38d7ad0fcd45daa6904283f7507",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-retained-batch02/logs/retained-batch-receipt.json"
+    },
+    {
+      "bytes": 850,
+      "kind": "failed_native_metadata",
+      "path": "failed-qualification01/failure.json",
+      "sha256": "33a28774bad722a46cb6efcf4ac556ad5830a10db23362fcffa91cf66911cdf5",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/logs/failure.json"
+    },
+    {
+      "bytes": 155737,
+      "kind": "failed_native_metadata",
+      "path": "failed-qualification01/qualification-failed.json",
+      "sha256": "2c31c765f0198ff2e8da143a745fa35a068bf4c5f19da31d5535bcfc27906809",
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01/logs/qualification-failed.json"
+    }
+  ],
+  "limitations": [
+    "The failed first run retained299collected/223successful/76namespace-source failures separately; the unchanged299case roster was rerun after an exact proven two-entry namespace correction. Only this phase own failed storage claim was reconciled; no failed output deletion or foreign cleanup.",
+    "Only explicit source and native metadata copies are published; original typed requests and new population/reference/prediction/evaluation payloads remain local.",
+    "This subset is not a self-contained payload replay corpus or a decoder inference/accuracy/Lean result.",
+    "The 299-case qualification includes the112new and187existingcases, with no additive historical coverage claim.",
+    "The native retained exercise is10authoredaccountingqueries from2retainedhypotheses, not10laws or modelpredictions.",
+    "Saved batch revalidation runs in the same consumer; original producer/sourceHTML/scope/join/wholeoldtree were not replayed.",
+    "Only native parent closeout metadata asserts sealing and resource release; producer artifacts do not grant live resource authority."
+  ],
+  "listed_bytes": 1646013,
+  "listed_files": 55,
+  "schema": "legal-typed-batch-evaluation-publication-copy-roster/v1",
+  "training_mask": 0
+}

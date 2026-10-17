@@ -1,0 +1,44 @@
+[
+  {
+    "bytes": 7705,
+    "driver_rechecks_exact_bytes_before_and_after": true,
+    "native_source_pin": true,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/replay-receipt.json",
+    "sha256": "10e6cf392bfe00fa175de5d3dc931a20a63517594ea3eed89d40a5a5c185ec93"
+  },
+  {
+    "bytes": 5664497,
+    "driver_rechecks_exact_bytes_before_and_after": true,
+    "native_source_pin": false,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/review-bundle.json",
+    "sha256": "2c2bb4ce302568feb014cc6abb28501bd3b453600d696a19588bbb14b55d2846"
+  },
+  {
+    "bytes": 98879,
+    "driver_rechecks_exact_bytes_before_and_after": true,
+    "native_source_pin": true,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/source.html",
+    "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+  },
+  {
+    "bytes": 926,
+    "driver_rechecks_exact_bytes_before_and_after": true,
+    "native_source_pin": true,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/acquisition-descriptor.json",
+    "sha256": "00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe"
+  },
+  {
+    "bytes": 1069,
+    "driver_rechecks_exact_bytes_before_and_after": true,
+    "native_source_pin": true,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/acquisition-receipt.json",
+    "sha256": "7d9852fd175ae48dc057f2b879ed176e7b26a394e92e6ae13f4824df894228bf"
+  },
+  {
+    "bytes": 7311,
+    "driver_rechecks_exact_bytes_before_and_after": true,
+    "native_source_pin": true,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-sampled-source-review-20261015-01/actual-source-review-01/exports/synthetic-diagnostic-block-0054-unresolved-response.json",
+    "sha256": "1dec69d5b92f46d03feb1b692cd95826111edaf04d3353566f0be99804a3cc7a"
+  }
+]

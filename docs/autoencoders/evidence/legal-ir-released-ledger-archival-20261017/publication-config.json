@@ -1,0 +1,17 @@
+{
+  "expected_branch": "agent/legal-ir-dead-owner-closeout-20261017",
+  "expected_head": "3ef9d9b11d865fd1b65500b3166843b0f049ee78",
+  "public_request_metadata": {
+    "bytes": 3914,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-completion-recovery-20261017-01/ledger-archival-request-v02.json",
+    "sha256": "9ed83c7212b40da6864b7d439769eb1b8b74be0fd7860e5c1ac99ae6889d8f9f"
+  },
+  "public_result": {
+    "bytes": 1990,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-completion-recovery-20261017-01/ledger-archival-r02-root-observation.json",
+    "sha256": "b384ea9cc4860a4dffe5a3556a30289f3c0e06b62e86b15dc2a3bf4c69c3f726"
+  },
+  "push": true,
+  "pytest_root": "/tmp/pytest-of-barberb/legal-ir-ledger-archive-sdk-20261017-tests01",
+  "schema": "legal-ir-ledger-archival-publication-config@1"
+}

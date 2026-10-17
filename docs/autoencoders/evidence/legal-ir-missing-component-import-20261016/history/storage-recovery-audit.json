@@ -1,0 +1,338 @@
+{
+  "administrative_controls": {
+    "actual_cases": 49,
+    "controller_seconds": 4.878501964034513,
+    "errors": 0,
+    "failures": 0,
+    "identity_method": "JUnit classnames are blank; names are unique and their function prefixes map unambiguously to the three pinned selected source modules.",
+    "junit_seconds": 4.722,
+    "model_loaded": false,
+    "must_be_repeated_in_separately_admitted_job_for_native_qualification": true,
+    "native_shared_grant_admission": false,
+    "production_registry_selected": false,
+    "selected_source_pins": [
+      {
+        "bytes": 14303,
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_external_resource_recovery.py",
+        "sha256": "a6dc35b74ea9bd01acce8d7a4150323c03cea543a8df6587097d574b93888f11"
+      },
+      {
+        "bytes": 18452,
+        "path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_driver.py",
+        "sha256": "bb1beb7f2e94a75ebd4160915e2f6cf538821d5f0c85d0a30247a940dbca83d4"
+      },
+      {
+        "bytes": 2772,
+        "path": "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_resource_scope.py",
+        "sha256": "2d1db3e788f19bd6d7a4eeeab855a34d9b38a61a2f5d43ad1ae10dc210346725"
+      }
+    ],
+    "shared_scheduler_or_ledger_selected": false,
+    "skips": 0,
+    "stdout_seconds_rounded": 4.72,
+    "unique_case_identities": 49,
+    "whole_selected_module_case_counts": {
+      "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_driver.py": 11,
+      "docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_resource_scope.py": 3,
+      "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_external_resource_recovery.py": 35
+    }
+  },
+  "audit_method": "Read-only stdlib verification of exact plans, actual genuine recovery receipts, current bounded disk-ledger snapshot, current source/policy pins, raw JUnit, and cleanup Git/path metadata. No product import, recovery invocation, global census, DB/model read, lease acquisition or cleanup execution by this audit.",
+  "batch": {
+    "claim_count": 57,
+    "current_selected_ledger_lineages_verified": 57,
+    "empty_failed_validation_claim_count": 2,
+    "exact_native_artifact_inventories_match_authored_plans": true,
+    "exact_selected_prior_record_digests_verified": 57,
+    "external_claim_count": 13,
+    "external_paths": "Thirteen explicitly declared leaves under the original named roots; each absent at native closeout with exact direct-parent identities. No historical external payload inventory is claimed.",
+    "final_accounting_is_prewrite_projection": true,
+    "native_admission": false,
+    "native_atomic_ledger_write_count": 1,
+    "native_global_census_count": 2,
+    "new_lease_acquired": false,
+    "original_charge_maps_and_other_original_record_fields_preserved": true,
+    "plain_existing_claim_count": 44,
+    "receipt_associations": {
+      "same_declared_inputs": 9,
+      "same_receipt": 4
+    },
+    "released_full_promise_bytes": 16660378496,
+    "root_execution_seconds": 57.55151175800711
+  },
+  "combined": {
+    "all_original_fifty_existing_claims_closed": true,
+    "artifact_bytes_in_original_bound_attempts": 1537440525,
+    "artifact_files_in_original_bound_attempts": 1894,
+    "external_claims_closed": 13,
+    "large_fixture_individual_bound_bytes": 536870912,
+    "large_fixture_parsed_or_model_loaded": false,
+    "opaque_large_fixture_bytes": 244854784,
+    "released_claims": 63,
+    "released_full_promise_bytes": 18178813952,
+    "retained_artifacts_rehashed_by_this_outcome_audit": false
+  },
+  "foreign_row_observation": {
+    "current_whole_nonbatch_digest_equals_native_before_digest": false,
+    "equals_after_excluding_one_known_later_authentication_row": false,
+    "independent_present_day_foreign_row_equality_established": false,
+    "known_later_authentication_rows_observed": 1,
+    "limit": "No full original/postwrite ledger snapshot was retained by the batch wrapper. Current unrelated rows are mutable and the present nonbatch digest differs; this audit does not attribute that difference or independently reconstruct every foreign row at batch write time.",
+    "native_under_lock_digest_and_prewrite_preservation_checks_present": true,
+    "native_under_lock_foreign_digest_preservation_check_passed": true
+  },
+  "independence": {
+    "auditor_authored_candidate_inventories": true,
+    "auditor_authored_external_disposition_inputs": true,
+    "auditor_authored_recovery_product": false,
+    "auditor_executed_closeouts": false,
+    "auditor_executed_controls": false,
+    "independent_of_root_execution_and_helper_authorship": true,
+    "input_authorship_is_not_independent": true
+  },
+  "observed_at_utc": "2026-10-16T04:12:08.876971+00:00",
+  "postwrite_census": {
+    "capacity_satisfied_at_that_observation": true,
+    "charged_bytes": 118222562307,
+    "does_not_grant_later_admission": true,
+    "independently_checked_receipt_and_arithmetic_by_this_audit": true,
+    "limit_bytes": 160000000000,
+    "minimum_filesystem_free_bytes": 23853006848,
+    "observed_named_root_apparent_bytes": 103214955971,
+    "outstanding_full_reservations_bytes": 15007606336,
+    "performed_by_root_after_native_batch_return": true,
+    "repeated_by_this_audit": false
+  },
+  "prior_six": {
+    "count": 6,
+    "current_exact_original_record_and_receipt_lineages_verified": 6,
+    "old_fifty_claim_plan_retained_unchanged": true,
+    "released_full_promise_bytes": 1518435456,
+    "seventh_sequential_closeout_stopped_before_write": true
+  },
+  "privacy": {
+    "lease_tokens_or_private_ledger_rows_published": false,
+    "private_payloads_published": false,
+    "raw_process_identifiers_published": false,
+    "raw_reservation_identifiers_published": false
+  },
+  "private_evidence_pins": [
+    {
+      "bytes": 491950,
+      "name": "storage-candidates.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "916954eae60d4166f06ddb1926ccabb457e807f09a89a91cd7f3b1aa4f0f713d"
+    },
+    {
+      "bytes": 569480,
+      "name": "storage-closeout-existing-plan.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "3bcb5e03ada66a6ce9fa57a8498324a15890c0fbe7e409f27590d38b03a9c4e6"
+    },
+    {
+      "bytes": 126616,
+      "name": "storage-closeout-external-receipt-plan.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "ad0b78fd877bc0b25f7a9e17faa4a9c908344134fdd2f1ad9846fbbd0bfa1295"
+    },
+    {
+      "bytes": 388214,
+      "name": "storage-closeout-batch-plan.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "f0d3b506965c771445ecb7a8ab385df83183d38b05f45593f8af2ed9a7379743"
+    },
+    {
+      "bytes": 366462,
+      "name": "batch-closeout-native-receipt.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "3e9d74f4e522d491702dafb7a9d3071b0fdd30c2b458de7c93cfbee036400ae2"
+    },
+    {
+      "bytes": 3035,
+      "name": "batch-closeout-result.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "2d5cbf5322abca655d5b784807f7765d0d5584504d90e19a6f196cecc87ea6b7"
+    },
+    {
+      "bytes": 527,
+      "name": "existing-claims-partial-result.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "a8959c668427d8202ee5cac3c5079a06a646bcd7b5b9ef893651b0f0ed00ee75"
+    },
+    {
+      "bytes": 8795,
+      "name": "cleanup-review.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "f7130b6b807d75adf689dda8f18985a64df88b17b8543fcb1f7afba2e3edf373"
+    },
+    {
+      "bytes": 2932,
+      "name": "worktree-cleanup-result.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "2e7d00b2b6403633e507c9f8f92017369854030ed9342ced47373d4423e22a91"
+    },
+    {
+      "bytes": 4287,
+      "name": "close_batch_claims.py",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "d818d1f686459959f33f421e2e52a9700165e9f693535c55699cc13888ffa7c5"
+    },
+    {
+      "bytes": 4363,
+      "name": "close_existing_claims.py",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "3fe216ab6f1c1c78e0e7bb523c733ef09b2c4475504f109c16f9896f6572d288"
+    },
+    {
+      "bytes": 2581,
+      "name": "administrative-controls-01/result.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "32092f9709b1d4ecae01f2ec65b868a58b86c6a069639ce14b31c1dd8e857206"
+    },
+    {
+      "bytes": 6247,
+      "name": "administrative-controls-01/junit.xml",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "0e718441c118fd1e59c453e5e161f71db72b08fb6bd4a2f84bd087f3c82d48c2"
+    },
+    {
+      "bytes": 99,
+      "name": "administrative-controls-01/stdout.txt",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "16b2cc1d49b2ed743897bb0adec2d28e2b26ac8f816ca73017db7929739d285f"
+    },
+    {
+      "bytes": 0,
+      "name": "administrative-controls-01/stderr.txt",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 3750,
+      "name": "existing-claim-closeouts-02/closeout-01.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "54ab2c83e4e7140e9d6e41b0d8eac4ee36e22d6753412d5489f4e7945057cd66"
+    },
+    {
+      "bytes": 31117,
+      "name": "existing-claim-closeouts-02/closeout-02.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "e9006825117f1681a1f2edb5ed6e97a5fb163c6f9c85d3d330f278966758ae33"
+    },
+    {
+      "bytes": 13544,
+      "name": "existing-claim-closeouts-02/closeout-03.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "c24e71c742470f33013db29be8bbe41a28049c40b3fd0ea6277be9c1742e9d56"
+    },
+    {
+      "bytes": 4129,
+      "name": "existing-claim-closeouts-02/closeout-04.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "ccf06baa1cab61eacd7fdcc535bbfcbc872c5d076ee0d9118ebf28294c9de235"
+    },
+    {
+      "bytes": 6805,
+      "name": "existing-claim-closeouts-02/closeout-05.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "99326871ee720be43df9e5f165699a79230f048b5b5475586c8225fbe71378f4"
+    },
+    {
+      "bytes": 3156,
+      "name": "existing-claim-closeouts-02/closeout-06.json",
+      "raw_contents_published_by_this_audit": false,
+      "retained_privately": true,
+      "sha256": "7b4d269ce66559eeaa3f74322b717cdb40366f0f7d1d47ab4a918ebe4627fe0c"
+    }
+  ],
+  "schema": "legal-ir-storage-recovery-independent-audit/v1",
+  "scope": {
+    "authentication_job_result_claimed": false,
+    "automatic_expiry": false,
+    "charge_labels_treated_as_physical_inventory": false,
+    "historical_external_payloads_authenticated": false,
+    "models_loaded_or_training_performed": false,
+    "named_roots_changed": false,
+    "outputs_deleted_by_claim_recovery": false,
+    "proof_or_legal_authority_claimed": false,
+    "registration_performed_claimed": false,
+    "storage_cap_changed": false
+  },
+  "status": "pass_with_explicit_observation_limits",
+  "storage_and_scheduler_policy": {
+    "batch_selected_source_pins": [
+      {
+        "bytes": 53075,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+        "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+      },
+      {
+        "bytes": 15543,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+        "sha256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633"
+      },
+      {
+        "bytes": 121503,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+        "sha256": "7c889bc858ff092e18bd2e97ff5a6407973e226eae33cddc9e5eef1d21f35986"
+      },
+      {
+        "bytes": 40999,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+        "sha256": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed"
+      },
+      {
+        "bytes": 13056,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+        "sha256": "2f3cbbeaac77ca71531b4f844ef522d909677f3ee78a6d6d21412299d9cddb8c"
+      },
+      {
+        "bytes": 23191,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_external_resource_recovery.py",
+        "sha256": "239c9355cc1fe4396edee7a126e85194d45be960e43d0966bb99de8afbc27cff"
+      }
+    ],
+    "current_native_scheduler_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+    "matches_frozen_authentication_request_policy": true,
+    "original_four_named_root_identity_objects_unchanged": true,
+    "original_recovery_source_unchanged": true,
+    "proof_safety_enabled": true,
+    "scheduler_policy_mutated_by_this_audit": false,
+    "six_batch_source_bodies_currently_match_execution_pins": true,
+    "storage_cap_bytes": 160000000000
+  },
+  "worktree_cleanup": {
+    "allocated_bytes_before_removal": 4201488384,
+    "checkpoint_or_embedding_assets_selected": false,
+    "commits_ancestor_of_recorded_origin_main_verified": 8,
+    "current_paths_absent": 8,
+    "force_used": false,
+    "foreign_worktrees_selected": false,
+    "free_delta_is_not_exclusively_attributed_to_cleanup": true,
+    "history_and_branches_preserved": true,
+    "observed_filesystem_free_delta_bytes": 4245245952,
+    "original_clean_no_untracked_no_ignored_status_bound_to_review": true,
+    "original_commit_objects_and_exact_branch_heads_verified": 8,
+    "selected_completed_owned_worktrees": 8
+  }
+}

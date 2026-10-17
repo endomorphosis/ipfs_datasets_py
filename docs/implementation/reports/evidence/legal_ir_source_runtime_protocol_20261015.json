@@ -1,0 +1,156 @@
+{
+  "authority": {
+    "Constitution_formalized": false,
+    "Docker_execution_performed": false,
+    "Hub_upload_performed": false,
+    "Lean_admitted": false,
+    "admitted": false,
+    "continuous_CUDA_census_restarted": false,
+    "encoder_context_increased": false,
+    "formalized": false,
+    "training_executed": false,
+    "weights_downloaded": false
+  },
+  "behavior": {
+    "default_scheduler_resolution_removed": true,
+    "explicit_existing_scheduler_and_policy_required": true,
+    "formalization_acceptance_criteria_changed": false,
+    "host_hashes_same_preflight_bytes_validated": true,
+    "incompatible_runtime_refused_before_run_claim": true,
+    "old_capsules_archive_verifiable": true,
+    "preflight_configuration_and_scheduler_binding_required": true,
+    "protocol_label_cannot_certify_old_runtime_bytes": true
+  },
+  "capture": {
+    "capture_seconds": 45.5964241491165,
+    "finalization_profile": {
+      "global_accounting_seconds": 15.24085666006431,
+      "global_inventory_count": 1,
+      "ledger_lock_wait_seconds": 12.583081217017025,
+      "process_check_seconds": 0.017187331104651093,
+      "schema_version": "daemon-resource-finalization-profile/v1",
+      "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+      "strict_attempt_inventory_count": 1,
+      "strict_attempt_inventory_seconds": 0.1330554650630802
+    },
+    "full_source_inventory_and_git_before_after_verified": true,
+    "manifest": {
+      "admitted": false,
+      "file_count": 11144,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-source-protocol-20261015/capture-v1/exports/capsule/manifest.json",
+      "sha256": "4149e8d122b2448a4021598b2f4b5f0d7a022df1889048af6a4fa44ca793b8a0",
+      "source_bytes": 421011653
+    },
+    "parent_execution_seconds_before_durable_closeout": 102.34151386609301,
+    "passed": true,
+    "release_evidence_kind": "read-only observation of released ledger record after finalize, not an invented original receipt",
+    "reservation_seconds_through_release": 136.0922417640686,
+    "reservation_status": "released",
+    "retained_attempt_bytes": 429218675,
+    "runtime_contract": {
+      "producers": {
+        "sources/package/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py": {
+          "bytes": 50325,
+          "sha256": "0490667bf1825a2cc21b27829428bf861149789f8ad69fb9be65fc6601b628f5"
+        },
+        "sources/scripts/run_frozen_autoencoder_source.py": {
+          "bytes": 4102,
+          "sha256": "9526773c8869fa1b19a6ca07c2b20dfa467d8f3564e618123a8b8c9d8493522f"
+        }
+      },
+      "protocol": "autoencoder-frozen-source-run/v2"
+    },
+    "shared_source_artifact_not_container_execution": true,
+    "source_bytes": 421011653,
+    "source_files": 11144,
+    "source_lease": {
+      "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+      "cooperative": true,
+      "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+      "mode": "read",
+      "schema_version": "autoencoder-source-lease/v1",
+      "waited_seconds": 3.9601000025868416e-05
+    },
+    "verify_seconds": 2.5489430220331997,
+    "worker_seconds": 63.42952727084048
+  },
+  "evidence_revision": 2,
+  "first_failed_unit_attempt_retained": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-source-protocol-20261015/unit-tests-v1",
+  "observed_at_utc": "2026-10-15T22:34:12.861034+00:00",
+  "references": {
+    "capture": {
+      "bytes": 1901,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-source-protocol-20261015/capture-v1/exports/report.json",
+      "sha256": "a0c53ba1f41a8821945f18ad7ae52f1e7b99be94b833ab477fb1536ea659203d"
+    },
+    "capture_closeout_observation": {
+      "bytes": 4934,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-source-protocol-20261015/capture-native-closeout-observation-v1.json",
+      "sha256": "7793d0f61897dd4cbbcd25e00bae99741f4b8ea6bf13b02ab4b701e641bdd708"
+    },
+    "capture_durability": {
+      "bytes": 2600482,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-source-protocol-20261015/capture-v1/logs/validation-durability.json",
+      "sha256": "1b27c539cc737decbc17a8b19fd15885042826056278e70599c5d6cd502609f0"
+    },
+    "capture_execution": {
+      "bytes": 594,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-source-protocol-20261015/capture-v1/logs/execution.json",
+      "sha256": "65075c0833e28ce51939f6530c2e2bfa0d530d62578e1978956780ffed2bcf24"
+    },
+    "capture_result": {
+      "bytes": 667,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-source-protocol-20261015/capture-v1/logs/result.json",
+      "sha256": "e05bc29eec483d34cfd966502d22be8d8ef7cdedf8878a6eed034d14b73d9525"
+    },
+    "unit_durability": {
+      "bytes": 2778,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-source-protocol-20261015/unit-tests-v2/logs/validation-durability.json",
+      "sha256": "f22ffc0adee0556007494ac46a070898e73f5f91a81e782b413f83dcdd391048"
+    },
+    "unit_result": {
+      "bytes": 730,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-source-protocol-20261015/unit-tests-v2/logs/result.json",
+      "sha256": "c35f790710258c87b5bc55e534aa8ff00fd9aa9b43939c997d2e18a4edb4e4a9"
+    },
+    "unit_xml": {
+      "bytes": 17183,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-source-protocol-20261015/unit-tests-v2/exports/pytest.xml",
+      "sha256": "7aec92fea499b2d1ef97804f716ac36ee31ab2d3195f93f3d2bd17a709dcce89"
+    }
+  },
+  "remaining": [
+    "Docker container descendants and aggregate RAM need qualified native custody and drain",
+    "continuous CUDA and Hub networking/deadline profile remains unqualified",
+    "pinned Docker image absent at last local metadata probe; not downloaded here",
+    "generic native pre-directory admission-failure recovery remains separate"
+  ],
+  "resources": {
+    "cap_changed": false,
+    "capture_child_process_slots": 4,
+    "capture_cpu_slots": 1,
+    "capture_memory_mb": 1536,
+    "capture_promised_bytes": 1000000000,
+    "capture_seconds_limit": 300,
+    "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+    "storage_cap_bytes": 160000000000
+  },
+  "runtime_protocol": "autoencoder-frozen-source-run/v2",
+  "schema": "legal-ir-source-runtime-protocol-observation/v1",
+  "source_sha256": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py": "0490667bf1825a2cc21b27829428bf861149789f8ad69fb9be65fc6601b628f5",
+    "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_frozen_autoencoder_source.py": "9526773c8869fa1b19a6ca07c2b20dfa467d8f3564e618123a8b8c9d8493522f",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_source_snapshot.py": "5ec4cac902c00abcc239886fb16e09cd5c2ea2dee8a3f4a9738cb6c4d329aa29"
+  },
+  "unit_tests": {
+    "complete_snapshot_suite": true,
+    "errors": 0,
+    "failed": 0,
+    "fixture_profile": "explicit_private_pytest_alias_readonly_directory_cleanup_profile/v2",
+    "merge_lease_legacy_suite_coverage_claimed": false,
+    "ordinary_strict_profile_passed": false,
+    "passed": 90,
+    "pytest_seconds": 3.12,
+    "skipped": 0
+  }
+}

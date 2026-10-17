@@ -1,0 +1,108 @@
+{
+  "concrete_blockers_found": [],
+  "correspondence_contract": {
+    "all_ordered_roles_grouped_per_unique_physical_occurrence": true,
+    "assessment_created": false,
+    "authentication_exposure_semantic_agreement_review_independence_gold_and_admission_authority": false,
+    "closed_bounded_detached_inputs_before_operation_owners": true,
+    "complete_binding_subject_and_dependency_replay_required": true,
+    "complete_original_context_packet_population_and_slots_preserved": true,
+    "existing_public_binding_and_review_owners_reused": true,
+    "full_ordered_global_source_roles_preserved": true,
+    "link_unsigned": true,
+    "original_manifest_subject_fields_and_signing_domain_unchanged": true,
+    "original_transport_hashes_canonical_hashes_internal_digests_and_CIDs_remain_distinct": true,
+    "plain_subject_reference_has_schema_and_existing_verifier_digest_without_invented_CID": true,
+    "report_transport_boundary": "Changing only report JSON formatting still changes its captured report_record, interpretation and graph identity. Equal decoded report values do not authorize that alternate candidate; this version refuses it.",
+    "same_existing_candidate_graph_and_subject_required": true,
+    "stdlib_only_public_import": true,
+    "withheld_parents_selected_subjects_and_full_unselected_population_preserved": true
+  },
+  "method": "Read-only source/AST/Git-object inspection and previously reported static peer review; no production imports, tests, compilers, models or native API execution.",
+  "parallel_build_adoption": {
+    "adopted_commit": "8c79995d781c4d964cdcc1af08cdc34f98b3d57c",
+    "authored_cases_static": 59,
+    "authored_runner_observations": "simulated; no compiler evidence supplied by those unit cases",
+    "original_commit": "d00ace8bd0ac96c30cf4a4e12b1d442876390539",
+    "original_files": [
+      {
+        "current_bytes_exact": true,
+        "original_mode_blob": "100644 blob 5156ad433ba31274639b2ef2abf359f9b18b3272",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_build_v2.py"
+      },
+      {
+        "current_bytes_exact": true,
+        "original_mode_blob": "100644 blob 7ab6d46d5d6532b4fc579956452c12fe5e7ae59c",
+        "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_build_v2.py"
+      },
+      {
+        "current_bytes_exact": true,
+        "original_mode_blob": "100644 blob c521d75100ff802e354264462c3705b696139bc6",
+        "path": "docs/autoencoders/legal_corpus_definition_use_build_v2.md"
+      }
+    ],
+    "whole_authored_module_in_strict_native_roster": false,
+    "whole_module_exclusion": "Persistent deliberate symlink refusal control; original author source remains intact."
+  },
+  "qualification_at_review": {
+    "declared_source_pins_reported_by_coordinator": 213,
+    "expected_cases_reported_by_coordinator": 306,
+    "expected_whole_modules_reported_by_coordinator": 9,
+    "passing_result_inferred": false,
+    "prior_historical_actual_FOL_TDFOL_builds_aggregated_into_current_tests": false,
+    "status": "pending_active_native_attempt01"
+  },
+  "reviewed_at_utc": "2026-10-15T20:11:37.729293+00:00",
+  "reviewed_files": [
+    {
+      "bytes": 28166,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+      "sha256": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567"
+    },
+    {
+      "bytes": 25031,
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py",
+      "sha256": "d4bd0a34ae71a9c833ea9469e0f2478ef6a6d791f7b49c4566292def247f12c7"
+    },
+    {
+      "bytes": 7162,
+      "path": "tests/unit/logic/autoformal/test_definition_use_v2_build_exchange.py",
+      "sha256": "bb9bb7e006e8393ad268245a7620a756efba44410cd24f0b6efb50aa1c32ae63"
+    },
+    {
+      "bytes": 28371,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_build_v2.py",
+      "sha256": "1b4c03f9af40603f66df3f0e702ddd492a942badd533213e087c5fbf78cd855f"
+    },
+    {
+      "bytes": 23933,
+      "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_build_v2.py",
+      "sha256": "3d26768a4402d4fe5942ab9f370361c8c1513e4c26af8cd03d42ab980eb4b7a6"
+    },
+    {
+      "bytes": 9848,
+      "path": "docs/autoencoders/legal_corpus_definition_use_build_v2.md",
+      "sha256": "db24d817c33610c6da3b99e1799e6737c3c351034c2419f7cd894246e27fee7f"
+    }
+  ],
+  "schema": "legal-ir-source-review-correspondence-static-implementation-review/v1",
+  "scope_limits": [
+    "Finite static review is not exhaustive behavioral, import-closure, process-custody or security qualification.",
+    "Mechanical source/subject correspondence does not authenticate unsigned reviewer or exposure declarations and does not establish agreement with a candidate AST, human independence, legal truth or training eligibility.",
+    "Adding manifest evidence or changing the signed subject would require a new independently bound subject; this increment silently adds neither evidence nor signing semantics.",
+    "Historical author-retained native FOL/TDFOL observations retain their original source and evidence scope; this review neither reruns nor independently authenticates historical process execution."
+  ],
+  "source_tests_or_original_author_files_modified_by_reviewer": false,
+  "status": "no_concrete_blocker_within_finite_reviewed_scope",
+  "test_review": {
+    "build_dependency_negative_scope": "Changes supplied current dependency observations; it is not a newly rebuilt competing-table experiment.",
+    "build_exchange_cold_loader_refuses_processes_and_has_no_live_binaries": true,
+    "build_exchange_uses_clearly_simulated_artifacts_and_runner_observations": true,
+    "correspondence_cases_static": 36,
+    "correspondence_successes_use_real_owners_over_fictional_authored_sources": true,
+    "ordinary_file_build_exchange_cases_static": 3,
+    "report_pretty_transport_is_a_refusal_control": true,
+    "runtime_cases_executed_by_reviewer": 0,
+    "shared_geometry_parent_population_response_state_and_cold_public_replay_controls_present": true
+  }
+}

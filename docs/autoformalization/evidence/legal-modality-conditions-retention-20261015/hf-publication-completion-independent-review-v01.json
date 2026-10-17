@@ -1,0 +1,1291 @@
+{
+  "all395_forced_immutable_downloads_independently_rawhashed": true,
+  "all_final_payload_Git_or_LFS_identities_match_downloaded_rawbytes": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-action-publish-invocation-v01.json": {
+      "bytes": 3016,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-action-publish-invocation-v01.json",
+      "sha256": "971108260a32d46b83fb5b433643f40125c745bf567921b894bd47b17b13ba9f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-action-resume-intent-v01.json": {
+      "bytes": 1934,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-action-resume-intent-v01.json",
+      "sha256": "19868e81eb00feeff37d14a8fa5261508877d7e4065be3941b7cfa9877c75757"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-action-resume-invocation-v01.json": {
+      "bytes": 3644,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-action-resume-invocation-v01.json",
+      "sha256": "8162086428b7fe21807d1c85c21eee2796d9cf7d15b078016d79781ecce793f8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-attributes-verified-readback-v01/.gitattributes": {
+      "bytes": 2531,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-attributes-verified-readback-v01/.gitattributes",
+      "sha256": "c549d10e915300862841c56973c868e0c320c02a15d0fc91272d12d1235c966d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-attributes-verified-v01.json": {
+      "bytes": 840,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-attributes-verified-v01.json",
+      "sha256": "e04c6aa1b6032fbcbf940f56601f60f8bbaff270119d841f13091f4ea19aafbe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-baseline-attributes-v01/.gitattributes": {
+      "bytes": 2376,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-baseline-attributes-v01/.gitattributes",
+      "sha256": "7971a3c53d68815c50babfe03a098abbc9eccc2b041acdcdccc897d2af0ddb06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-before-file-identities-v01.json": {
+      "bytes": 3238638,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-before-file-identities-v01.json",
+      "sha256": "dda8df60ea15d33fef7761d8c45a6eba43cc18017d57f5223bb0e09909bffb8f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-central-resume-custody-port-v01.json": {
+      "bytes": 2491,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-central-resume-custody-port-v01.json",
+      "sha256": "5eb480b9cba9ccbf37297ab7a243464a7231201c78c1a437c751133c1096b73c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk-01-unknown-outcome-v01.json": {
+      "bytes": 2580,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk-01-unknown-outcome-v01.json",
+      "sha256": "4d5749424f42220669c36a0768e26def30184af14f80b38255c927f81f014d15"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-actual-independent-review-v01.json": {
+      "bytes": 9697,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-actual-independent-review-v01.json",
+      "sha256": "36ce657f7f8e71a0db63051fd1c872c7dff79dbd2344dd28f4cef1f860cf5b32"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-v01.json": {
+      "bytes": 31488,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-chunk01-reconciliation-v01.json",
+      "sha256": "974aa14eae86f171c0ff91ce8116e5c1c781100292db1f7a838b466b4b4e3802"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-completion-independent-review-plan-v01.json": {
+      "bytes": 5747,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-completion-independent-review-plan-v01.json",
+      "sha256": "782451bc1eac87a0a6f177f2b2aa732924124dfdfa6885f8d387a8260e764b51"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-isolated-sdk-context-v03.json": {
+      "bytes": 3444,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-isolated-sdk-context-v03.json",
+      "sha256": "ebd7889ac99b483076b3604b48e903ae8ca8f7c933d7e0690a6d1b7e870c7f50"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-planned-attributes-v01/.gitattributes": {
+      "bytes": 2531,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-planned-attributes-v01/.gitattributes",
+      "sha256": "c549d10e915300862841c56973c868e0c320c02a15d0fc91272d12d1235c966d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-postattributes-identities-v01.json": {
+      "bytes": 1618950,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-postattributes-identities-v01.json",
+      "sha256": "b4a5a9c6eef539446ea2d4d0be0455e661ed0b3cc365f4e6726d919f911fad64"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-preparation-receipt-v01.json": {
+      "bytes": 204607,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-preparation-receipt-v01.json",
+      "sha256": "8dd6c9c81fa78ebdafb35309211eb7e56d04a0993e5dbb41cb5d8d7b00e7d4a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-resume-independent-review-v01.json": {
+      "bytes": 286545,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-resume-independent-review-v01.json",
+      "sha256": "d529d8b10a3fd1145e0e0ba00b9d5316c95be8c5b31e604e7742dd2d93afdf7f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-verification-v02.json": {
+      "bytes": 3533809,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-verification-v02.json",
+      "sha256": "64ab8d2d395d067285c35b0cc437c113351f23c358335df58b8f9d6c7a155f41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-release-spec-v01.json": {
+      "bytes": 180210,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-release-spec-v01.json",
+      "sha256": "381b27890e81c2066bcb746cba0a1c5f0ca299c980679afebb8f5427f057df2e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-001-created-v01.json": {
+      "bytes": 624,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-001-created-v01.json",
+      "sha256": "30cbae5ea59fde4f66c527405444eac7bf0c79bcb8c005db07d952875915ac36"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-001-preupload-v01.json": {
+      "bytes": 724,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-001-preupload-v01.json",
+      "sha256": "fb7e12e6c29f3f6f3b45cb23f830a945f6ab627fbe5bad61b7351a375d3a8c92"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-001-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-001-verified-v01.json",
+      "sha256": "919a699a38819578cc0d4033d17e20eaeb4106ff2f42f2c61154d067e63a96eb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-002-created-v01.json": {
+      "bytes": 828,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-002-created-v01.json",
+      "sha256": "fb1ae727e097c731e685c30cecce14d5964612413fa4321fff7d1141f0efd08d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-002-preupload-v01.json": {
+      "bytes": 928,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-002-preupload-v01.json",
+      "sha256": "92b427c1dbef92a2ef858792516b6b6c0872e66c8698919ff46f4db81e7222d9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-002-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-002-verified-v01.json",
+      "sha256": "2173527582e00e5960644868449a96feae2aa175ae05c00af8de89e40de1397a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-003-created-v01.json": {
+      "bytes": 1082,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-003-created-v01.json",
+      "sha256": "f9b66a754a76e6511f678b8ffdacdea4ae3638b9617c97b837c11fe5c310c409"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-003-preupload-v01.json": {
+      "bytes": 1182,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-003-preupload-v01.json",
+      "sha256": "aca112aee3a671e5a9d71f7d0d266671ee22576cbaea45b06c869effc96ada57"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-003-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-003-verified-v01.json",
+      "sha256": "c0315362bee2a6ecee0d66f1a280f8c0d8f88e883fe96022b18979aebcfdf990"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-004-created-v01.json": {
+      "bytes": 418,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-004-created-v01.json",
+      "sha256": "f2eeae7ab6d6c266bd676995815f56f2d5aa638191b7e1f9fd14a526667a698d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-004-preupload-v01.json": {
+      "bytes": 518,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-004-preupload-v01.json",
+      "sha256": "4e17fdbe461a9107f10a677ae9b821f046fcd0c31b0256849cbd0e97dda23ca9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-004-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-004-verified-v01.json",
+      "sha256": "1e922f06e427620774b2ac1b9a2385ff7b5a600e9a8c9ad787fab18cef45e33b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-005-created-v01.json": {
+      "bytes": 275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-005-created-v01.json",
+      "sha256": "c2549ed77f40b15223cd3e8589d851a7494cbd3fe7f9ab29447c7d387e558451"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-005-preupload-v01.json": {
+      "bytes": 375,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-005-preupload-v01.json",
+      "sha256": "7988554b3120b17a11ea8b6446ab98de65aa41a4c38dbd593e4fc30175f0c6ba"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-005-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-005-verified-v01.json",
+      "sha256": "a465578352b38b95e854db56040311f0e6832a906e5dd571f1dc88f88772b406"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-006-created-v01.json": {
+      "bytes": 269,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-006-created-v01.json",
+      "sha256": "4c0bbc63a63b0dc40b0915ebfbd07389c973c8a5d8fa6c51fe5bfff32bee0b99"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-006-preupload-v01.json": {
+      "bytes": 370,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-006-preupload-v01.json",
+      "sha256": "c5223964dd43e9a0c5cf6cd8a088deaec2f6341243ceb197bc852b872e683ce4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-006-verified-v01.json": {
+      "bytes": 274,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-006-verified-v01.json",
+      "sha256": "80a1daf82a04723bba05cb74b149c2700b2491145401aaf82fc2ad531bee811b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-007-created-v01.json": {
+      "bytes": 267,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-007-created-v01.json",
+      "sha256": "60f0f4c86c1c4968385da3c89f30baf63daff79d9ad9e009146c52854d521d6f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-007-preupload-v01.json": {
+      "bytes": 367,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-007-preupload-v01.json",
+      "sha256": "ca72f0616db8a023e74f8b90ffe2574281629287b3495ca4605b2681bf370170"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-007-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-007-verified-v01.json",
+      "sha256": "79f9c22af6d2206664310269c5268036a9bfeeb88fc3ad171028b6d9f17ee26c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-008-created-v01.json": {
+      "bytes": 1238,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-008-created-v01.json",
+      "sha256": "b34c1706cdcd2c5a9a3730f20d812a0c56df8a012a38aea6d1e2596049eeb216"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-008-preupload-v01.json": {
+      "bytes": 1338,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-008-preupload-v01.json",
+      "sha256": "f189e400b419afe7c0f7354fed8983fabf62a578b2bf92bcc7f9852520e85873"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-008-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-008-verified-v01.json",
+      "sha256": "9b232a798d533336ced883222979dcc490df56e2cf2f836b053ec712f7035fa3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-009-created-v01.json": {
+      "bytes": 410,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-009-created-v01.json",
+      "sha256": "b72b681d41e9b03dabe173a47267878dfcf2323d19c9174d8e0558a2d72d3971"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-009-preupload-v01.json": {
+      "bytes": 510,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-009-preupload-v01.json",
+      "sha256": "4f9a3afe272f8bd74bf89cbb9a45a8559855644b5504f74aa73b638154405fa7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-009-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-009-verified-v01.json",
+      "sha256": "33310d4109a9f49b1aa714a406b46f5d4b8fcbec84051a81e07206d7a0903b7a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-010-created-v01.json": {
+      "bytes": 540,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-010-created-v01.json",
+      "sha256": "2bd1741406f686e5b5471b5efee2362119554a22f9f95b81b34228aea0d37ff7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-010-preupload-v01.json": {
+      "bytes": 640,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-010-preupload-v01.json",
+      "sha256": "66a1bcc3822ecf5c2d4b7c198161f7cf5c482df7bea9960cf02c8ff13fe681f1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-010-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-010-verified-v01.json",
+      "sha256": "e9b36505622f8b80b14b8d4902a96fbcbb54b8c9ee823d6bfd4d2bc900f78907"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-011-created-v01.json": {
+      "bytes": 278,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-011-created-v01.json",
+      "sha256": "2cab619d4097d8c90bf2fd4263d037962b2882767d26a8d184f635edc7683f4b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-011-preupload-v01.json": {
+      "bytes": 378,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-011-preupload-v01.json",
+      "sha256": "7588b8e3647528a37801a7f7555cb00bb919417dc38d198a07a747445492353a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-011-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-011-verified-v01.json",
+      "sha256": "7276f90912ab9fec0d670b6763919d6ee1cc0b0b66465d8e5ef73271d8dde2f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-012-created-v01.json": {
+      "bytes": 394,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-012-created-v01.json",
+      "sha256": "9c35506c1e84c4014053556af03804e14a17042b1c8e9b30bfc250238e3765ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-012-preupload-v01.json": {
+      "bytes": 494,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-012-preupload-v01.json",
+      "sha256": "5c6f46faef315f700d4d009bcfac52cb43d0b75ba43c60b9c319e86556bad43b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-012-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-012-verified-v01.json",
+      "sha256": "ecebfcec77f21130ec0682150ee543ab0577475d52d7d0d1e0a0ff28b237e393"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-013-created-v01.json": {
+      "bytes": 553,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-013-created-v01.json",
+      "sha256": "477e320b05cc4998c35481f3100858d77be57bee27a6d8290c88e34cf1d730c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-013-preupload-v01.json": {
+      "bytes": 653,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-013-preupload-v01.json",
+      "sha256": "bad236d6ce4869bedd36d45b4acbb4452b872808a4da83cb2ee238c1c2336ed1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-013-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-013-verified-v01.json",
+      "sha256": "70f543fab415cab4c401f46be4dffbe671fb3bd077b16a5302c1ac2cb71a970c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-014-created-v01.json": {
+      "bytes": 823,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-014-created-v01.json",
+      "sha256": "371b40fbcd35193084bb21d5b05ce74922e12e53480f633c7336454813811db1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-014-preupload-v01.json": {
+      "bytes": 923,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-014-preupload-v01.json",
+      "sha256": "9200488279eda5e130d744cd31783ef94a2e8183d58aa6de0d6fa163c5926c31"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-014-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-014-verified-v01.json",
+      "sha256": "500887df227788f44cde9f84a8fa47385f661b1f433e4ef0c979db319665703b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-015-created-v01.json": {
+      "bytes": 1215,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-015-created-v01.json",
+      "sha256": "1cd713b1daf4dd782162043bbf63b611a23a70462fae5009c09d7cb9392d6ba6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-015-preupload-v01.json": {
+      "bytes": 1315,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-015-preupload-v01.json",
+      "sha256": "d2d6b4eafb641adcfccdcd6b5ad4bde63285ee108c537aac06e5d6594d716b57"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-015-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-015-verified-v01.json",
+      "sha256": "459cb6201c3a8e6a231f253cfef94e77c115e7931e1de39f2d48478063a8512e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-016-created-v01.json": {
+      "bytes": 416,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-016-created-v01.json",
+      "sha256": "d92f8c1b21e2c80c44e5b048492dccf113a85419493063889da7bd2bc93e7c3f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-016-preupload-v01.json": {
+      "bytes": 516,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-016-preupload-v01.json",
+      "sha256": "64849d18be3ee6ded04b44d0b3ef0c3db7d404bbab3f278605c4667a82c8b8ca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-016-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-016-verified-v01.json",
+      "sha256": "365c62d179c816b8ad4060d556269950581728774b5260f1bd290e6430493f21"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-017-created-v01.json": {
+      "bytes": 958,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-017-created-v01.json",
+      "sha256": "37f58a51f1cf82d21099cb9d475b64c11de44ae2dc3ab00eb084e37d7cb03562"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-017-preupload-v01.json": {
+      "bytes": 1058,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-017-preupload-v01.json",
+      "sha256": "a6e8bd136bfefbac82617090ec7e1e64f94429ece7cf3b3bbbc9abadaa7a824f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-017-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-017-verified-v01.json",
+      "sha256": "20bc31adc0e222830ccbc41ec07ed64e108368d86b6ba57dd19f4d8c6b025036"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-018-created-v01.json": {
+      "bytes": 279,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-018-created-v01.json",
+      "sha256": "708e85dbbb728711c3a23bf7de5c1720508070b508cfe43cf04cc7add815c7f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-018-preupload-v01.json": {
+      "bytes": 379,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-018-preupload-v01.json",
+      "sha256": "54aa9cd9793c149d411bf7e8cef8c4d87d8427642f83188930e620c656218bbd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-018-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-018-verified-v01.json",
+      "sha256": "4ecbf6d362d726ca6f69b22a9ee1b176ab5c652495e2b73a6ae3bb98189b3838"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-019-created-v01.json": {
+      "bytes": 1994,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-019-created-v01.json",
+      "sha256": "f6daa212f2bd5af5d039da68466afb5df61a7f2b90f2e862a112cf9da6c021a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-019-preupload-v01.json": {
+      "bytes": 2094,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-019-preupload-v01.json",
+      "sha256": "df311977ac7fba581a38d543f41a094b1a0675dd78bc2d586657b1ed348c893f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-019-verified-v01.json": {
+      "bytes": 274,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-019-verified-v01.json",
+      "sha256": "546fee91c2b0daa9104eb89e4b007fc1945fa3385fe88ec27d77255c528e9bda"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-020-created-v01.json": {
+      "bytes": 1887,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-020-created-v01.json",
+      "sha256": "2f612857b37686e3475a0a235017b46e5a5e51e86236104a16e5fc239f384b16"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-020-preupload-v01.json": {
+      "bytes": 1987,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-020-preupload-v01.json",
+      "sha256": "d94544c501923850db0e4dd844e06067d3741905bf5d26bda25812435f10f375"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-020-verified-v01.json": {
+      "bytes": 274,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-020-verified-v01.json",
+      "sha256": "a94a383da29f14b846704c9fbbd953e5ef5cee4db03990e628f9c41d33d120cf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-021-created-v01.json": {
+      "bytes": 1431,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-021-created-v01.json",
+      "sha256": "3affa059c69788c9a5a211aad240d27c5ce843aef0c5d31c0f51f77844f41cac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-021-preupload-v01.json": {
+      "bytes": 1530,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-021-preupload-v01.json",
+      "sha256": "c27008d2c7f5393c2175b249cfc50c75cfeacacaacb05891562802393c6f07ba"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-021-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-021-verified-v01.json",
+      "sha256": "5d7622325cbc4f5acc757167f5cc117b31486bccdb45b261fc026af7c51f4401"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-022-created-v01.json": {
+      "bytes": 269,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-022-created-v01.json",
+      "sha256": "5483ba09ba835607ce55821e958e5239045c819adcc3372923dfe14442d8406d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-022-preupload-v01.json": {
+      "bytes": 369,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-022-preupload-v01.json",
+      "sha256": "aeb180e64789c4efc0036cd36872bfcd2615581c067c9f068df438426f9f1c5e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-022-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-022-verified-v01.json",
+      "sha256": "37091733663c9c6007c5c85d9ebc5605b1ddc7c274675fa8fbc579d52432b3c2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-023-created-v01.json": {
+      "bytes": 265,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-023-created-v01.json",
+      "sha256": "1c5296cac5496e7e8e806b678b4c00f2afd78d89f1dec5d0c840d6b6fd2db676"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-023-preupload-v01.json": {
+      "bytes": 363,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-023-preupload-v01.json",
+      "sha256": "fb15fef0a3ba8e7d43b4933bb8a08966900bb78c32ef9b32a31c0de6056a5ebe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-023-verified-v01.json": {
+      "bytes": 271,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-023-verified-v01.json",
+      "sha256": "8ed99b99b4a95dffa24bf414ef8df98c45c6c269777f1b6626c5855fe104ccd9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-024-created-v01.json": {
+      "bytes": 265,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-024-created-v01.json",
+      "sha256": "a4064f640612d799132d9a26db65a465ee715be716d53fb8e8547b782c8f1c32"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-024-preupload-v01.json": {
+      "bytes": 365,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-024-preupload-v01.json",
+      "sha256": "0f62f440f7b2e4c40b7829b80189935f1a21ebfb2c37ad96376773a7a4308f4f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-024-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-024-verified-v01.json",
+      "sha256": "64b4130845739b068f87ad4f774961eabc082afad1e91b010a6f076cf949cecd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-025-created-v01.json": {
+      "bytes": 1996,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-025-created-v01.json",
+      "sha256": "0e76f31e2b9cde64eb4ac14c3c88977c7e3ddfd55dfcebb83f148610756f0668"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-025-preupload-v01.json": {
+      "bytes": 2096,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-025-preupload-v01.json",
+      "sha256": "e4aa0745be38589725d3b95ec2af68d63aadc0120adfdc88f9b25dce6468c628"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-025-verified-v01.json": {
+      "bytes": 274,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-025-verified-v01.json",
+      "sha256": "0ada0438c2357817fb35a98f09c979db48d9b7a07da64a7d5bacd04581dec310"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-026-created-v01.json": {
+      "bytes": 1859,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-026-created-v01.json",
+      "sha256": "beb33ced5623c588021f4f9662d93da8a81e431c2d1bf9124b15314b26063912"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-026-preupload-v01.json": {
+      "bytes": 1958,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-026-preupload-v01.json",
+      "sha256": "c62d3af4b92b66af8cf143752a6e2b06c4c7b6f5791c502a6821880c1e8799a7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-026-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-026-verified-v01.json",
+      "sha256": "9b30731813f2f90a01d82fcf9fedc8a7cdec43084f1884eeb219a6dd56a8c65a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-027-created-v01.json": {
+      "bytes": 1891,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-027-created-v01.json",
+      "sha256": "a24f589e1e09f08b805a0c11e2ded44d30bb70881e116b51017ef6dab6cb0329"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-027-preupload-v01.json": {
+      "bytes": 1990,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-027-preupload-v01.json",
+      "sha256": "eb7204356bbf06ba5e508f405e3d068b9b91190881eaf1acf1fe223600c2c268"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-027-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-027-verified-v01.json",
+      "sha256": "14093419778ea2741f81ddac344070344e9f0bedc27c13265b24b7e4300834c7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-028-created-v01.json": {
+      "bytes": 1956,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-028-created-v01.json",
+      "sha256": "464933674d89798d9f638ac228b56b89a6357e2711f863827f81e27403068ebd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-028-preupload-v01.json": {
+      "bytes": 2055,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-028-preupload-v01.json",
+      "sha256": "53ba89a0abd2d9653fe232861ef9d9e568d26985765687840cc565612e1b8bd1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-028-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-028-verified-v01.json",
+      "sha256": "879dfe614a4d3ee29cdf882243ed2463b862d0ec826071495dcaeb2afaa0bd28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-029-created-v01.json": {
+      "bytes": 1943,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-029-created-v01.json",
+      "sha256": "4318df971041f6a5e1d3922aaab194040ac234b50218afe4342659d67f855f25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-029-preupload-v01.json": {
+      "bytes": 2041,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-029-preupload-v01.json",
+      "sha256": "116eb3bfdd7eb3c4113cf08a84589fc35b776bc65ce73db69447037b23ce0fca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-029-verified-v01.json": {
+      "bytes": 272,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-029-verified-v01.json",
+      "sha256": "43d283ec5e13b6c8a7ca20a13e437b1f6ba789ee30139523a9a1f079f4040df6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-030-created-v01.json": {
+      "bytes": 1866,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-030-created-v01.json",
+      "sha256": "815ca10f78264ee78921f71a19cd142dc4b3ee252dfcd3324ae3c6339d52ab73"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-030-preupload-v01.json": {
+      "bytes": 1965,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-030-preupload-v01.json",
+      "sha256": "9f1315bda99b24b6919972b590bada2a951d7faab76f6b253ba5d113170de77c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-030-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-030-verified-v01.json",
+      "sha256": "85cde2507776ad535b0e5e33f146fd812fa405f8d3bef875ce28fa7157ff3dc4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-031-created-v01.json": {
+      "bytes": 1949,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-031-created-v01.json",
+      "sha256": "b52ddd90a77faa3a6afcf88f85c2807a41aa1ed81bc87ef32b5c732479604035"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-031-preupload-v01.json": {
+      "bytes": 2047,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-031-preupload-v01.json",
+      "sha256": "4565e5fcda6cac5220f89304b2182f52e7b10aadacd55bca7fa1bbb20ad419de"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-031-verified-v01.json": {
+      "bytes": 272,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-031-verified-v01.json",
+      "sha256": "c7940867156c437dd67939597c2aaf2c0bdb3418929103bbe872d6d831991129"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-032-created-v01.json": {
+      "bytes": 1852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-032-created-v01.json",
+      "sha256": "a9a966c3a3ed34428e34571e8e28eb95afeb7fae1c70ed554f525c1407995c86"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-032-preupload-v01.json": {
+      "bytes": 1951,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-032-preupload-v01.json",
+      "sha256": "cb908bbbff351a84a987104f016233b02c69feec1d629bfefa0fe17fb28a53c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-032-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-032-verified-v01.json",
+      "sha256": "9d63f5d58a2c9f0b361d8f4ab8a10039d7ca0b2d7e2d12ab152f859502c66ce5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-033-created-v01.json": {
+      "bytes": 1931,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-033-created-v01.json",
+      "sha256": "fb10199ac59389099755d86985cee9a181cc1b29f2e3a8a7290a5f19fbe13d02"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-033-preupload-v01.json": {
+      "bytes": 2029,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-033-preupload-v01.json",
+      "sha256": "a9b8b65cc24b90d59d058c8c90766952c76181d214b6a3cfc49ba206b22fa7b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-033-verified-v01.json": {
+      "bytes": 272,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-033-verified-v01.json",
+      "sha256": "8b285dc016226da3e5b39e678896fc6e11249c6aea0a703e976cdb3b16b8c042"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-034-created-v01.json": {
+      "bytes": 1950,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-034-created-v01.json",
+      "sha256": "c74665bfe0b5c9436281cbcab07a6aa30e38fd97d79b9303abf5dd426a4ff8ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-034-preupload-v01.json": {
+      "bytes": 2048,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-034-preupload-v01.json",
+      "sha256": "645a31b823ed7760d1a2976c7c0227dacf13ca68c7f42224f806cc7ed07d5a98"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-034-verified-v01.json": {
+      "bytes": 272,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-034-verified-v01.json",
+      "sha256": "affd957901a98b667ed863e05e7589ebf029eb95b565562330d339a203ba2503"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-035-created-v01.json": {
+      "bytes": 1983,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-035-created-v01.json",
+      "sha256": "e5faf75e1b9a0116b7577194af1f0b94c8354f7690aaa84be92b9f28d3a50bea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-035-preupload-v01.json": {
+      "bytes": 2082,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-035-preupload-v01.json",
+      "sha256": "537a0f659bd6ce4734048e3838e1b697edb6a89a54479606035d0f8cfe89edfa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-035-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-035-verified-v01.json",
+      "sha256": "dde23481004e2498907a05fa2293967fb2ce3b4a8c5a14a77c01366ddcbec967"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-036-created-v01.json": {
+      "bytes": 1955,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-036-created-v01.json",
+      "sha256": "347ffd167c1387818316f85777268135d1abd7595660b1a16a416d246580216d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-036-preupload-v01.json": {
+      "bytes": 2054,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-036-preupload-v01.json",
+      "sha256": "36ed89f6f4399fccc496cbcc5ae2ea5d167cc89548075353779fca58d62bc590"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-036-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-036-verified-v01.json",
+      "sha256": "e270177ad4f3e73e866527476af5d3fc14b59f42c46b479b6bb48f4b88a6a6bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-037-created-v01.json": {
+      "bytes": 2010,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-037-created-v01.json",
+      "sha256": "3ab69c29d03ebf53121cb16cba4c64f1a473a922751ed8432c48cd3f28049819"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-037-preupload-v01.json": {
+      "bytes": 2109,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-037-preupload-v01.json",
+      "sha256": "60e4d9f227925dcf8eab6982f2911c42a7dceb74ffb0352f9f45bc2d57ee5ff3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-037-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-037-verified-v01.json",
+      "sha256": "67503e2f4d8b65f4a8907345475bba3abca94db7800a47825ca3784610281243"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-038-created-v01.json": {
+      "bytes": 2018,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-038-created-v01.json",
+      "sha256": "43d8ab82e8fc8f0e74e94592dad649c49f9110f5140a02a6d8095ed120c6eea8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-038-preupload-v01.json": {
+      "bytes": 2117,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-038-preupload-v01.json",
+      "sha256": "9c7c1b52b1e3bad3ecb3a3fa0b06858b382380331affb27a976a0b9a18b5d909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-038-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-038-verified-v01.json",
+      "sha256": "d0491ed50b2c5495351b4a60638f9ac9fccd7c05140627de616955698d75a60b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-039-created-v01.json": {
+      "bytes": 2066,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-039-created-v01.json",
+      "sha256": "1fdcc8b8ada5956bd4f8c7c36f37c456b93d845a28c9cf00474a46fb6ddc575f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-039-preupload-v01.json": {
+      "bytes": 2165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-039-preupload-v01.json",
+      "sha256": "8eccee4467c0f36bfa3496d43fd1cc1d6254251ff7e17518d8cf624524893565"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-039-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-039-verified-v01.json",
+      "sha256": "fa22d11dbad625b595c55809954a9c5729b96c47b62f100c736b475a0167a8f7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-040-created-v01.json": {
+      "bytes": 2289,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-040-created-v01.json",
+      "sha256": "adc3c3ac10fe56af1801cef8f16045f1ea096bdd78e1b3b8d53aeb605ba6f1e9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-040-preupload-v01.json": {
+      "bytes": 2388,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-040-preupload-v01.json",
+      "sha256": "8377969407e2181f0c6b6c6fb22f7631ad485ba88581d0a51fae1416b71c4c40"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-040-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-040-verified-v01.json",
+      "sha256": "51d5429871298ba2c65efc177b83e6c49f4fd4e38180174745975dc8b7c489e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-041-created-v01.json": {
+      "bytes": 2438,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-041-created-v01.json",
+      "sha256": "6e26b5ffdf727a7b20985d4ac413406b80b4295e7639b377510615ede95ee459"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-041-preupload-v01.json": {
+      "bytes": 2537,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-041-preupload-v01.json",
+      "sha256": "799de304c673daed31928348387bdeba5bb51afcfb26782fa1203cc88e508b64"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-041-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-041-verified-v01.json",
+      "sha256": "c5a5978f211465675f933d85f1aba6619ae85847ed8a80df9a73afe8afde734a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-042-created-v01.json": {
+      "bytes": 2201,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-042-created-v01.json",
+      "sha256": "5ca9287f05ea80b92a6607051d31999d24f8b807e01a9ef61ac3d6157653a64f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-042-preupload-v01.json": {
+      "bytes": 2300,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-042-preupload-v01.json",
+      "sha256": "498433e361e2fdbac6ff8bf6497e8ecf32388e3ae424428a8982aa139c645fac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-042-verified-v01.json": {
+      "bytes": 273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-chunk-042-verified-v01.json",
+      "sha256": "e9aac6e3bf7acde24dc40ec1810e9b33f8f5925b5c0d8c68c23306c705babf34"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-commit-created-v01.json": {
+      "bytes": 14161,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-commit-created-v01.json",
+      "sha256": "7170e014842d29abaf2f1402e5519ada259c08627bfc9af3e3641e239948f32a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-helper-source-independent-review-v01.json": {
+      "bytes": 12734,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-helper-source-independent-review-v01.json",
+      "sha256": "73f836ab0cb4360d1eb7cf469c453d9ed2a553ab527b802f19b16783033a8a8d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-invocation-source-independent-review-v04.json": {
+      "bytes": 17780,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-invocation-source-independent-review-v04.json",
+      "sha256": "fd438eb08c77578af822bd085121ccae81f5a4fd25d44d3f8d9a7b0a22874394"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/invoke_modality_conditions_hf_resume_v04.py": {
+      "bytes": 21656,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/invoke_modality_conditions_hf_resume_v04.py",
+      "sha256": "809e6b1ff0c6599f44cb65c8045cd303cf9328df7dab33eaee4a43fad74b1d19"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-result-independent-review-v01.json": {
+      "bytes": 181847,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-retention-result-independent-review-v01.json",
+      "sha256": "0c9d1105006f3d5a6cd92a219a49c8a421e6ecf799ac3c4f83e8aba5dce60d30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/model-card-v01.md": {
+      "bytes": 4461,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/model-card-v01.md",
+      "sha256": "6cb7127709b55263678de86a5da7f5dfccd10bd09e69eba75d1b3a38692097a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/public-result-summary-v01.json": {
+      "bytes": 15638,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/public-result-summary-v01.json",
+      "sha256": "2cbb3f6ea668bdfa86680ac627840b7515d5a63620486b4d842d190547582490"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/resume_modality_conditions_hf_v03.py": {
+      "bytes": 35482,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/resume_modality_conditions_hf_v03.py",
+      "sha256": "d12077a0d191b5c798a0105acc24d0d006432b2e59cfcf015c221e1c8b6d5849"
+    }
+  },
+  "attributes": {
+    "after_bytes": 2531,
+    "all6076_postattributes_identities_exact": true,
+    "all_other6075_original_identities_exact": true,
+    "append_bytes": 155,
+    "before_bytes": 2376,
+    "exact_baseline_plus_checkpoint_rule": true,
+    "overall_protocol_additions_only": false,
+    "payload_operations_additions_only": true,
+    "resume_attributes_operations": 0,
+    "sole_prior_modified_path": ".gitattributes"
+  },
+  "authorship": {
+    "authored_archive_or_resume_upload_helper": false,
+    "authored_cold_invocation_wrappers": true,
+    "final_wrapper_custody_port_authored_by_root": true,
+    "performed_upload_or_network": false,
+    "reviewed_helper_source_and_concrete_payload": true
+  },
+  "automatic_Git_LFS_clone_materialization_qualified": false,
+  "chain": [
+    {
+      "attributes_unchanged": true,
+      "index": 1,
+      "new_byte_identities_exact": true,
+      "new_files": 4,
+      "old_identities_exact": true,
+      "parent_revision": "675e0c346005d8cd853d4f0d90b0506c572ad9fe",
+      "payload_bytes": 3501061,
+      "revision": "b64324fd0ec3955888ee2e282dcc434b1c32ea03"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 2,
+      "new_byte_identities_exact": true,
+      "new_files": 5,
+      "old_identities_exact": true,
+      "parent_revision": "b64324fd0ec3955888ee2e282dcc434b1c32ea03",
+      "payload_bytes": 3982472,
+      "revision": "bc0bbef8f2c75d562bcea64e04fafcdaee849140"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 3,
+      "new_byte_identities_exact": true,
+      "new_files": 7,
+      "old_identities_exact": true,
+      "parent_revision": "bc0bbef8f2c75d562bcea64e04fafcdaee849140",
+      "payload_bytes": 3855989,
+      "revision": "ca0b1f73bcb28baac6399eb0ad221a45391b29fc"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 4,
+      "new_byte_identities_exact": true,
+      "new_files": 2,
+      "old_identities_exact": true,
+      "parent_revision": "ca0b1f73bcb28baac6399eb0ad221a45391b29fc",
+      "payload_bytes": 2915192,
+      "revision": "6c02e842764450a67d9f351c2e156dba0178ac8a"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 5,
+      "new_byte_identities_exact": true,
+      "new_files": 1,
+      "old_identities_exact": true,
+      "parent_revision": "6c02e842764450a67d9f351c2e156dba0178ac8a",
+      "payload_bytes": 2292103,
+      "revision": "8c3ee3ba5b01c67a9704a4e6233b83e3d81953eb"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 6,
+      "new_byte_identities_exact": true,
+      "new_files": 1,
+      "old_identities_exact": true,
+      "parent_revision": "8c3ee3ba5b01c67a9704a4e6233b83e3d81953eb",
+      "payload_bytes": 21058430,
+      "revision": "e3ccb140dca02d90235cbecadecd640c59952f44"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 7,
+      "new_byte_identities_exact": true,
+      "new_files": 1,
+      "old_identities_exact": true,
+      "parent_revision": "e3ccb140dca02d90235cbecadecd640c59952f44",
+      "payload_bytes": 4885005,
+      "revision": "645add1c04ce6805d3d84b6df3eb8d7e6184e6cb"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 8,
+      "new_byte_identities_exact": true,
+      "new_files": 8,
+      "old_identities_exact": true,
+      "parent_revision": "645add1c04ce6805d3d84b6df3eb8d7e6184e6cb",
+      "payload_bytes": 2795298,
+      "revision": "0b0182af6e312a8f9a38e18685d26678277a60dd"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 9,
+      "new_byte_identities_exact": true,
+      "new_files": 2,
+      "old_identities_exact": true,
+      "parent_revision": "0b0182af6e312a8f9a38e18685d26678277a60dd",
+      "payload_bytes": 4116500,
+      "revision": "d1496b1556da780d9c08b93b7420292db7ca03a1"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 10,
+      "new_byte_identities_exact": true,
+      "new_files": 3,
+      "old_identities_exact": true,
+      "parent_revision": "d1496b1556da780d9c08b93b7420292db7ca03a1",
+      "payload_bytes": 2084011,
+      "revision": "0347f5954ed1d6d7c0f81fd95edb41f402a8cf3f"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 11,
+      "new_byte_identities_exact": true,
+      "new_files": 1,
+      "old_identities_exact": true,
+      "parent_revision": "0347f5954ed1d6d7c0f81fd95edb41f402a8cf3f",
+      "payload_bytes": 2491266,
+      "revision": "f103d4030f76434aabe4dc3b2c9e8c8e3c7d1916"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 12,
+      "new_byte_identities_exact": true,
+      "new_files": 2,
+      "old_identities_exact": true,
+      "parent_revision": "f103d4030f76434aabe4dc3b2c9e8c8e3c7d1916",
+      "payload_bytes": 3681964,
+      "revision": "e42e32a54b16cea35eeac21deca44d38bdee5c8d"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 13,
+      "new_byte_identities_exact": true,
+      "new_files": 3,
+      "old_identities_exact": true,
+      "parent_revision": "e42e32a54b16cea35eeac21deca44d38bdee5c8d",
+      "payload_bytes": 3490996,
+      "revision": "4f1a09d798d953fd3e4d5b915dfd9f00c47e2cf5"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 14,
+      "new_byte_identities_exact": true,
+      "new_files": 5,
+      "old_identities_exact": true,
+      "parent_revision": "4f1a09d798d953fd3e4d5b915dfd9f00c47e2cf5",
+      "payload_bytes": 3983761,
+      "revision": "e211c5bf31348ed7130fa9432c6a822ccb129f81"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 15,
+      "new_byte_identities_exact": true,
+      "new_files": 8,
+      "old_identities_exact": true,
+      "parent_revision": "e211c5bf31348ed7130fa9432c6a822ccb129f81",
+      "payload_bytes": 4032014,
+      "revision": "893f93df121f73176b8e7f9632044ab7689ae870"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 16,
+      "new_byte_identities_exact": true,
+      "new_files": 2,
+      "old_identities_exact": true,
+      "parent_revision": "893f93df121f73176b8e7f9632044ab7689ae870",
+      "payload_bytes": 2915677,
+      "revision": "f694d1a2b24fead0021835d246c6163104dcd8eb"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 17,
+      "new_byte_identities_exact": true,
+      "new_files": 6,
+      "old_identities_exact": true,
+      "parent_revision": "f694d1a2b24fead0021835d246c6163104dcd8eb",
+      "payload_bytes": 2389454,
+      "revision": "3bfb9f194ef8a5d882ea92682aedb4aff433ef63"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 18,
+      "new_byte_identities_exact": true,
+      "new_files": 1,
+      "old_identities_exact": true,
+      "parent_revision": "3bfb9f194ef8a5d882ea92682aedb4aff433ef63",
+      "payload_bytes": 2491256,
+      "revision": "29e0afa2f4634e4012f4397be9d32311194ef70f"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 19,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "29e0afa2f4634e4012f4397be9d32311194ef70f",
+      "payload_bytes": 3951013,
+      "revision": "2d2f8d5fc3843902f88dc195d7996e7feb974102"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 20,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "2d2f8d5fc3843902f88dc195d7996e7feb974102",
+      "payload_bytes": 3345477,
+      "revision": "73aaeb0b4c74b48e2eba6909ef3360afa5d1a0d6"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 21,
+      "new_byte_identities_exact": true,
+      "new_files": 12,
+      "old_identities_exact": true,
+      "parent_revision": "73aaeb0b4c74b48e2eba6909ef3360afa5d1a0d6",
+      "payload_bytes": 608690,
+      "revision": "5aaadfd2e7047729bfbaa6f8d6787899eb906534"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 22,
+      "new_byte_identities_exact": true,
+      "new_files": 1,
+      "old_identities_exact": true,
+      "parent_revision": "5aaadfd2e7047729bfbaa6f8d6787899eb906534",
+      "payload_bytes": 6956192,
+      "revision": "e9533efad0cafe9789dcab19c11bef75bdbcf64e"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 23,
+      "new_byte_identities_exact": true,
+      "new_files": 1,
+      "old_identities_exact": true,
+      "parent_revision": "e9533efad0cafe9789dcab19c11bef75bdbcf64e",
+      "payload_bytes": 35957,
+      "revision": "ec237f52ba1c5125ce4d3147aeb984df19361fbc"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 24,
+      "new_byte_identities_exact": true,
+      "new_files": 1,
+      "old_identities_exact": true,
+      "parent_revision": "ec237f52ba1c5125ce4d3147aeb984df19361fbc",
+      "payload_bytes": 5202480,
+      "revision": "11060e320b29898f6d85d7f30782dbf56f74ab81"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 25,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "11060e320b29898f6d85d7f30782dbf56f74ab81",
+      "payload_bytes": 2471345,
+      "revision": "73d97d8bd0f7d0804550148afa8c2118ce4aca17"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 26,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "73d97d8bd0f7d0804550148afa8c2118ce4aca17",
+      "payload_bytes": 126213,
+      "revision": "e23135000767c318602e0c9be5ce6f7bfcbd5342"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 27,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "e23135000767c318602e0c9be5ce6f7bfcbd5342",
+      "payload_bytes": 656677,
+      "revision": "314914ec0c57ce9b568e1ba411eb417e62973dba"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 28,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "314914ec0c57ce9b568e1ba411eb417e62973dba",
+      "payload_bytes": 202523,
+      "revision": "56cd35fac89485c8ec82f3cb54f68919c451161c"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 29,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "56cd35fac89485c8ec82f3cb54f68919c451161c",
+      "payload_bytes": 93874,
+      "revision": "f7be3928051e233a52a08289303242a72de2e876"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 30,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "f7be3928051e233a52a08289303242a72de2e876",
+      "payload_bytes": 628306,
+      "revision": "b5a76b7069f2ba9979aaeda2814b4513b0c6cd6b"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 31,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "b5a76b7069f2ba9979aaeda2814b4513b0c6cd6b",
+      "payload_bytes": 79621,
+      "revision": "6c0305cbe77fdac79ebe4c11d64a8568cf127ce9"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 32,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "6c0305cbe77fdac79ebe4c11d64a8568cf127ce9",
+      "payload_bytes": 167082,
+      "revision": "eda7582d26ed6849c5b584d58d39ca16c24b80c1"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 33,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "eda7582d26ed6849c5b584d58d39ca16c24b80c1",
+      "payload_bytes": 85334,
+      "revision": "d6a14ca94e2957ea4beb1f79dc19330c27e2a3c4"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 34,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "d6a14ca94e2957ea4beb1f79dc19330c27e2a3c4",
+      "payload_bytes": 66120,
+      "revision": "0e9d10d84102e07450bfd98ac36b22ba383eed25"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 35,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "0e9d10d84102e07450bfd98ac36b22ba383eed25",
+      "payload_bytes": 400226,
+      "revision": "63fed613aaac72e3c7ff1f3a3176a56320efe270"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 36,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "63fed613aaac72e3c7ff1f3a3176a56320efe270",
+      "payload_bytes": 511624,
+      "revision": "09882a910836c167a616ecb85f574d8dc436d3fe"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 37,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "09882a910836c167a616ecb85f574d8dc436d3fe",
+      "payload_bytes": 248641,
+      "revision": "3549998683a1da68e0941a3963c22b57e0f30a98"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 38,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "3549998683a1da68e0941a3963c22b57e0f30a98",
+      "payload_bytes": 274226,
+      "revision": "39e77c3facbd23505f6b26a1e6c169b28ec91fc0"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 39,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "39e77c3facbd23505f6b26a1e6c169b28ec91fc0",
+      "payload_bytes": 303284,
+      "revision": "0c46fcf008df68f67b3eb32656bdeec978e59ca0"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 40,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "0c46fcf008df68f67b3eb32656bdeec978e59ca0",
+      "payload_bytes": 416858,
+      "revision": "451d91fceb0c803d4608938f6e8094f75c158613"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 41,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "451d91fceb0c803d4608938f6e8094f75c158613",
+      "payload_bytes": 759220,
+      "revision": "4acb0873ebebb0b41828019a90d30f6d16392a3c"
+    },
+    {
+      "attributes_unchanged": true,
+      "index": 42,
+      "new_byte_identities_exact": true,
+      "new_files": 14,
+      "old_identities_exact": true,
+      "parent_revision": "4acb0873ebebb0b41828019a90d30f6d16392a3c",
+      "payload_bytes": 597942,
+      "revision": "c9cce4586dd96518088662fb12831173e98e36cc"
+    }
+  ],
+  "check_count": 170740,
+  "checkpoint_opaque": {
+    "bytes": 21058430,
+    "sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555"
+  },
+  "counts": {
+    "cold_CLI_child_attempts": 1,
+    "cold_CLI_validated_proof_descriptors": 1,
+    "cold_helper_calls": 1,
+    "final_paths": 6471,
+    "new_CAS_groups": 42,
+    "new_Git_files": 394,
+    "new_LFS_files": 1,
+    "new_bytes": 105151374,
+    "new_files": 395,
+    "numerical_model_CID_import_attempts": 0,
+    "old_other_than_attributes_exact": 6075,
+    "original_files": 6076,
+    "package_relative_algorithm_sources": 43,
+    "postattributes_identities_exact": 6076,
+    "public_runtime_files": 7,
+    "required_current_runtime_recipes": 3,
+    "result_files": 62,
+    "test_files": 1
+  },
+  "created": {
+    "bytes": 14161,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-resume-commit-created-v01.json",
+    "sha256": "7170e014842d29abaf2f1402e5519ada259c08627bfc9af3e3641e239948f32a"
+  },
+  "default_promotion": false,
+  "final_revision": "c9cce4586dd96518088662fb12831173e98e36cc",
+  "findings": [],
+  "invocation": {
+    "bytes": 3644,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-action-resume-invocation-v01.json",
+    "sha256": "8162086428b7fe21807d1c85c21eee2796d9cf7d15b078016d79781ecce793f8"
+  },
+  "limitations": [
+    "No freshSDK/network query or independent remote commitgraph/parent lookup. SavedCASparentchain and sourcequalified producer verification are checked; intermediate completeidentitymaps were not separately captured.",
+    "No originalscore/reference/checkpoint JSON parsed and no numerical/modelcalls. Downloads were opaquely hashed,including checkpoint.",
+    "Privatecombinedlog andprivateCLIproof bodies remained unopened; zeroattempt/onechild checks derive from independently qualified publiccold invocation receipt.",
+    "SDK transitive rawsourceclosure and internaltransportretry behavior remain unqualified.",
+    "Full395descriptors and6471identitymap are retained in bound3.53MBverification; this compactreceipt duplicates onlydigests/counts/42chain."
+  ],
+  "map_digests": {
+    "all395_download_descriptor_map_sha256": "4c0bc1aff83f2ff96c4a99d406300f201f83ad48367a1b95d96c9a0340275037",
+    "all395_payload_identity_map_sha256": "96d7697c631eac361f71f9412eb66d0990b5625e68f890e8a7034dde577763a4",
+    "all42_declared_groups_sha256": "efb806cac13bdee8ab354289b4c476d07381ca52595b8367d939035fdd44c852",
+    "canonical_method": "SHA256 json.dumps(sort_keys=True,separators comma colon,allow_nanFalse).encode UTF8",
+    "final_identity_map_sha256": "8fb069ad00f47cbebe4fba59ec580a72e0fb1eff3600777b8f9a23bedc8acbb2",
+    "original_identity_map_sha256": "326082888f1c94241ba9487523658388bb3e7d3173c37ac067e0b2e303573806",
+    "postattributes_identity_map_sha256": "a97067f9535aca28918e5a192c9b590dfcc8caa360b2720aa8bd91dea1e462f8"
+  },
+  "no_resume_unknown_outcomes": true,
+  "numerical_reload_qualified": false,
+  "original_failed_invocation": {
+    "bytes": 3016,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-action-publish-invocation-v01.json",
+    "sha256": "971108260a32d46b83fb5b433643f40125c745bf567921b894bd47b17b13ba9f"
+  },
+  "original_failed_publication_preserved": true,
+  "original_publisher_rerun": false,
+  "parent_ablation_signal": false,
+  "passed": true,
+  "release_prefix": "releases/20261015-modality-conditions-retention-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "review_scope": "Independent local rawdownload/fileidentity review plus publicsavedreceipt/source/linearCASparent joins; no independent freshremote observation.",
+  "reviewer": "/root/runtime_protocol_n9",
+  "saved42_preupload_created_verified_receipts_join_exact_finitegroups_and_linearparents": true,
+  "schema": "modality-conditions-retention-Hub-publication-completion-independent-review/v1",
+  "scientific_success": false,
+  "statutory_scoring_qualified": false,
+  "verification": {
+    "bytes": 3533809,
+    "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/hf-publication-verification-v02.json",
+    "sha256": "64ab8d2d395d067285c35b0cc437c113351f23c358335df58b8f9d6c7a155f41"
+  }
+}

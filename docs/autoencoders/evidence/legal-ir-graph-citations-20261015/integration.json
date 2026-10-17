@@ -1,0 +1,97 @@
+{
+  "authority": {
+    "production_graph_repaired": false,
+    "proof_authority": false,
+    "published": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "exact_imported_files": {
+    "docs/autoencoders/legal_source_sampling.md": {
+      "bytes": 4888,
+      "sha256": "290a6320bd0522109df593af4fd4a6e0a52b80c375a6cde1511c27c6c5ae0f62"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_sampling.py": {
+      "bytes": 13827,
+      "sha256": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_sampling.py": {
+      "bytes": 15837,
+      "sha256": "961ea149d94d155b402884a9857e24e5255690301ea1891017f0b0fb2707aeec"
+    }
+  },
+  "final_input_inventory_matches_initial_qualification": true,
+  "final_qualified_cases_by_class": {
+    "tests.security.test_uscode_hf_release": 47,
+    "tests.unit.logic.autoformal.test_legal_primary_graph_manifest": 47,
+    "tests.unit.logic.autoformal.test_legal_primary_graph_reconstruction": 27,
+    "tests.unit.logic.autoformal.test_legal_primary_graph_records": 45,
+    "tests.unit.logic.autoformal.test_legal_source_sampling": 29,
+    "tests.unit.logic.test_entity_cache": 90,
+    "tests.unit.logic.test_ingest_ipfs_uscode_entities": 47,
+    "tests.unit.logic.test_kg_graph_citation_identity": 38,
+    "tests.unit.logic.test_law_package": 11,
+    "tests.unit.logic.test_meta_ontology": 6,
+    "tests.unit.processors.legal_data.test_uscode_hf_release": 19
+  },
+  "final_qualified_composition_head": "d1d087ef9388f75cef193dd56bf03fcb8cb4affb",
+  "final_qualified_receipt": "qualification-v02/receipt.json",
+  "incoming_main_paths_preserved_exactly": true,
+  "incoming_overlaps_listed_qualified_inputs": false,
+  "incoming_paths": [
+    "docs/autoencoders/campaign_storage_allocation.md",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py"
+  ],
+  "initial_qualified_receipt": "qualification-v01/receipt.json",
+  "main_observed_after_qualification": "fc8d69444b3161277c922ea837459d67e29a5b4d",
+  "parallel_sampler_integrated_commit": "4c9e20741ee2165405c12f2c6bd3bb25117e32e1",
+  "parallel_sampler_original_checkout_clean_and_unchanged": true,
+  "parallel_sampler_original_commit": "c5149abeac4c4f5f735125c190d324efe19ab7c4",
+  "qualified_base": "6deae26e98452669b32b256794b18affb1155c16",
+  "review_observations": [
+    {
+      "result": "pass; no execution",
+      "reviewer": "/root/signed_scope_architecture",
+      "scope": "read-only static runtime/profile/custody/memory and exact sampler provenance"
+    },
+    {
+      "result": "406 unique, zero failures/errors/skips; baseline exactly one intended failure; no rerun",
+      "reviewer": "/root/source_delivery_tests",
+      "scope": "raw JUnit unique-case/count and output/input hash recount"
+    },
+    {
+      "result": "406 unique cases, zero failures/errors/skips; all23 input bindings and case identities/order unchanged; no rerun",
+      "reviewer": "/root/source_delivery_tests",
+      "scope": "final merged-composition raw JUnit, output and listed input hashes, case identities vs initial passing run"
+    }
+  ],
+  "schema": "legal-graph-citation-integration/v1",
+  "unchanged_sampler_dependencies": {
+    "ipfs_datasets_py/logic/autoformal/corpus_contracts.py": {
+      "bytes": 7279,
+      "sha256": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_source.py": {
+      "bytes": 16185,
+      "sha256": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_official_document_views.py": {
+      "bytes": 24944,
+      "sha256": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py": {
+      "bytes": 19956,
+      "sha256": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py": {
+      "bytes": 23949,
+      "sha256": "1f1e607c7c8d1e479ae5b79e17f928571e3da49f0ad4180dfc93e609d0d47dc2"
+    },
+    "ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  }
+}

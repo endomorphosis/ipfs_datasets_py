@@ -1,0 +1,17 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 42.63100290996954,
+  "executed_checks": [
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_nonview_projection.py",
+    "tests/unit/logic/integration/test_legal_ir_view_contracts.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_vocabulary_diagnostic.py"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "cc03ebcfaff655647572c44ad70b8182b3156f92c94856a5448da6c4d8f6db1c",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

@@ -1,0 +1,15 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 49.52158011589199,
+  "executed_checks": [
+    "retained-two-source-three-typed-norm-join-cases"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "8e84774d8b456188e94ec1deb5117cf448e770eede652d037daf13215bc3a948",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

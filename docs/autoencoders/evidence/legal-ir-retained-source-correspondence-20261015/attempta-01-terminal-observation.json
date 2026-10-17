@@ -1,0 +1,9 @@
+{
+  "attempt": "a-01",
+  "cleanup_error": null,
+  "durable_result_verified": true,
+  "launcher_exit_code": 0,
+  "method": "Selected transcription of tool terminal status and independent retained result readback; not original raw native stdout.",
+  "schema": "retained-source-correspondence-terminal-observation/v1",
+  "selected_storage_status": "released"
+}

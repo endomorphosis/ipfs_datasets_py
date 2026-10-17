@@ -1,0 +1,404 @@
+{
+  "Git_operations": 0,
+  "Lake_executed": false,
+  "active_8D_384D_768D_semantics_qualified": false,
+  "already_merged_reuse_paths": [
+    {
+      "entry": "legal_source_family_bridge.prepare_source_family(candidate, interpretation, occurrence_bindings, family=...)",
+      "input": "Closed source-hashed canonical candidate, explicit per-qualifier typed interpretation, ordered occurrence/facet spans and explicit modality cue. Capture schema is not an input.",
+      "limitations": "No modal agent/context; temporal/calendar facets refused; no source-meaning, cross-family or registered-family qualification asserted.",
+      "preservation": "Actual native AST parse/print/reparse, modal/action/argument inversion and ordered qualifier ledger; exact canonical reconstruction.",
+      "profiles": {
+        "dcec": "Ground Object O/P/F, qualifier-free only.",
+        "deontic_fol": "Ground Boolean/deontic O/P/F with explicit all-conditions / any-exception-waives declarations.",
+        "tdfol": "Same bounded ground non-temporal deontic subset; no quantifiers or temporal operators."
+      }
+    },
+    {
+      "entry": "saved_span_native_views.prepare_native_view(...)",
+      "input": "Validated historical pending packet and declaration; calls old saved_span_family_adapter.prepare_family(... family=deontic) first.",
+      "profiles": [
+        "tdfol",
+        "dcec"
+      ],
+      "scope": "Alternate bounded native parser views. Sealed legal family remains deontic; does not solve the F15/F17/F18 capture transport gap."
+    },
+    {
+      "actual_build_in_this_review": false,
+      "entry": "legal_source_family_lake.prepare_source_family_legal / validate_preparation / build_source_family_legal",
+      "input": "Original candidate+interpretation+occurrence_bindings+family requests, never caller-supplied emitted Lean.",
+      "scope": "Regenerates existing source bridge, uses exact lake build legal target, checks complete candidate/module/olean artifact coverage, explicit pinned toolchain/binaries, bounded runner and unsupported-row blocking."
+    },
+    {
+      "entry": "legal_family_routes.route_canonical / legal_canonical_calendar / legal_calendar_lake",
+      "scope": "Separate deontic canonical duration/calendar route under explicit interpretation; broader canonical family equivalence remains refused. Native predicate naming/cardinality/profile limits still apply."
+    },
+    {
+      "entry": "duration_bound_qualified.prepare_duration_bound_qualified",
+      "scope": "Existing exact duration/clock/source/scope custody wrapper around qualified lowering. none_required empty context and direct source anchors only; does not import a new capture schema."
+    },
+    {
+      "entry": "canonical_source_grounding.assess_decoder_transport",
+      "scope": "Static source-constructed proposal/output-profile compatibility only. Explicitly generated_candidate_assessed=False; not a saved decoder report consumer."
+    },
+    {
+      "entry": "legal_ir_canonical_adapter.compiler_request_from_legal_ir_source",
+      "scope": "Structured compiler delegation requires caller atom vocabulary and source text. It does not authenticate or wrap learned saved capture output."
+    },
+    {
+      "entry": "legal_source_definition_bridge / legal_source_definition_norm_bridge",
+      "scope": "Separate explicitly declared statutory definition and section-local norm composition profiles already exist. They are not generic F15/F17/F18 capture consumers; do not duplicate or conflate them with canonical O/P/F transport."
+    }
+  ],
+  "assessment_kind": "Source-only owned-intake compatibility and duplication review; no runtime acceptance or legal semantics qualification.",
+  "default_promotion": false,
+  "encoder_calls": 0,
+  "findings": [],
+  "frozen_primary_shared_plumbing_assumption_check": {
+    "actual_primary_or_counter_main_runs": 0,
+    "expected_five_function_names_present": true,
+    "no_expected_shared_signature_change_observed": true,
+    "primary_source": {
+      "bytes": 40929,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyze_conditions_composition_v01.py",
+      "sha256": "b5e946babffb41834d4b95e5700201d50b957991b17e7b44551130df12446553"
+    }
+  },
+  "important_refinement_to_root_gap_review": "A generic source-bound canonical bridge and its Lake gate are already merged, so the transport gap does not require a new family compiler, parser or Lake runner. The historical saved adapter remains old-schema-only.",
+  "input_root_gap_review": {
+    "bytes": 2599,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/family-compatibility-source-gap-review-v01.json",
+    "sha256": "c67e3d334486225ace6dd0688c15debe386d0d22949c0e121826086d49896887"
+  },
+  "minimal_next_change": {
+    "needed_for_authenticated_new_capture_to_family_workflow": true,
+    "needed_for_manually_supplied_canonical_requests": false,
+    "proposal": "A separately versioned thin saved-adapter transport with a closed enum of the three new donor schema/lineage pairs; reuse existing candidate/request bridge and existing Lake gate.",
+    "requirements": [
+      "Keep complete original capture/inference/joint envelopes, source order, all refusal rows and lane identity unchanged. Do not fabricate the historical objective-resumed schema.",
+      "Bind exact externally pinned raw file identities separately from canonical content digests and checkpoint-owner digest conventions; no checkpoint tensor/JSON parsing is needed.",
+      "Join row IDs/source hashes/context declarations/checkpoint and model-state descriptors; authenticate original frozen membership and saved score geometry before extracting any candidate.",
+      "Replay original partial greedy refusal behavior and exact fixed joint top8/50000 policy from source-pinned saved heads; distinguish raw and joint outputs.",
+      "Emit pending/noncandidate dispositions for refusals. For accepted rows, construct the existing closed candidate and facet geometry; leave qualifier interpretations, modality cue and legal occurrence declarations unfilled.",
+      "Route the ground non-temporal request through existing legal_source_family_bridge and its Lake gate. Retain sealed deontic family authority limits and label alternate native parser views as views.",
+      "Dispatch temporal/calendar candidates only through the existing explicitly declared duration/calendar/context contracts, or return unsupported. Never erase a temporal facet or invent a clock.",
+      "Require an actual separately qualified lake build legal run and family-specific AST checks before reporting build validity; source-only review proves neither statutory fidelity nor legal correctness."
+    ]
+  },
+  "model_calls": 0,
+  "network_calls": 0,
+  "new_donor_capture_transport": {
+    "literal_scan_scope": "Owned checkout ipfs_datasets_py/**/*.py; focused broader capture-key/dynamic-schema scans under logic/legal_ir and logic/autoformal. No canonical Git or filesystem index inspected.",
+    "matching_consumers_found_in_family_modules": false,
+    "matching_product_references": "Three optimizer producer modules; F17 module also validates its fixed F15 teacher capture. No new raw-schema family consumer found in reviewed source scope.",
+    "no_schemas_relabelled_or_old_contract_weakened": true,
+    "old_adapter_accepts_new_capture": false,
+    "old_adapter_schema_and_lineage": [
+      "objective-resumed-source-span-inference/v1",
+      "objective_resumed_source_span_v1"
+    ],
+    "old_joint_schema": "structured-span-exposed-law-joint-diagnostic/v1",
+    "recognized_new_inference_schemas": [
+      "bounded-actor-refinement-adapter-inference/v1",
+      "bounded-joint-readout-retention-adapter-inference/v1",
+      "bounded-modality-conditions-retention-adapter-inference/v1"
+    ],
+    "recognized_new_raw_schemas": [
+      "actor-refinement-adapter-target-free-head-capture/v1",
+      "joint-readout-retention-adapter-target-free-head-capture/v1",
+      "modality-conditions-retention-adapter-target-free-head-capture/v1"
+    ],
+    "saved_native_views_still_depend_on_old_adapter_prepare_family": true
+  },
+  "original_capture_reference_teacher_export_checkpoint_private_body_reads": 0,
+  "owned_intake_commit": "12dd975181fed9f5a0ba3589f842b3055bb7b162",
+  "passed": true,
+  "product_source_edits": 0,
+  "production_or_numeric_imports": 0,
+  "schema": "legal-decoder-existing-family-bridge-independent-source-review/v1",
+  "source_function_locations": {
+    "ipfs_datasets_py/logic/autoformal/legal_calendar_lake.py": [
+      {
+        "AST_sha256": "616e4697648abb565a2f0f4b25a5ccb8168e19b8e17455107e74f9e1a38e2142",
+        "end_line": 125,
+        "function": "prepare_qualified_legal",
+        "line": 81
+      }
+    ],
+    "ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": [
+      {
+        "AST_sha256": "0dddb45b3e4c579e6a6916454f7a33726fab9330b82779ceddf1bbe72cb0a4bf",
+        "end_line": 254,
+        "function": "prepare_canonical_qualified",
+        "line": 181
+      }
+    ],
+    "ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py": [
+      {
+        "AST_sha256": "14f30bcbe1d3c7f31411cfbec6d4adb13fb07c767d576c4ed08c6cdc81ff4122",
+        "end_line": 313,
+        "function": "prepare_canonical_qualified",
+        "line": 255
+      }
+    ],
+    "ipfs_datasets_py/logic/autoformal/legal_family_routes.py": [
+      {
+        "AST_sha256": "6cabbad11b78baf10dc69937060833febc7769b2f0ec197b28aa804301f490c8",
+        "end_line": 48,
+        "function": "route_canonical",
+        "line": 43
+      },
+      {
+        "AST_sha256": "c4850815a8ea1c6ee6d1691dae5b2eb5270376251376f928675fa45c63da7b13",
+        "end_line": 121,
+        "function": "prepare_native_fragment",
+        "line": 76
+      },
+      {
+        "AST_sha256": "847f282d661ab46d32770738f2be1d6f6948bfd1669d1beb9d8b3353f33a1777",
+        "end_line": 139,
+        "function": "capability_matrix",
+        "line": 124
+      }
+    ],
+    "ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge.py": [
+      {
+        "AST_sha256": "2bad8375d59d5e3e2d20f5899caba73630828348f86ba76aecfcfe80569913e8",
+        "end_line": 168,
+        "function": "prepare_definition",
+        "line": 70
+      }
+    ],
+    "ipfs_datasets_py/logic/autoformal/legal_source_definition_norm_bridge.py": [
+      {
+        "AST_sha256": "d006a239f378803f2f571ef1925225c21fe81bcc853f533a2d4d5ee3eefd17a5",
+        "end_line": 150,
+        "function": "prepare_definition_norm",
+        "line": 40
+      }
+    ],
+    "ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py": [
+      {
+        "AST_sha256": "066ba53a791146de3cd0a0e6475b3776dcf2ecbc703a7e0d385b89bbf095006b",
+        "end_line": 134,
+        "function": "interpretation_skeleton",
+        "line": 123
+      },
+      {
+        "AST_sha256": "e84ddb111bf16a8672e160567f86fc7dc6e7dd78e6dbc6554edd7c7005bf31c3",
+        "end_line": 368,
+        "function": "prepare_source_family",
+        "line": 304
+      },
+      {
+        "AST_sha256": "861eb34a99c6873df89a29621dcd3dc1ece26956422fafa21e35167d9a81dceb",
+        "end_line": 376,
+        "function": "validate_source_family",
+        "line": 371
+      }
+    ],
+    "ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py": [
+      {
+        "AST_sha256": "f79106cc736899d337ba7b16b44ced2da44abdf14b48cbf42a010a8688725980",
+        "end_line": 146,
+        "function": "prepare_source_family_legal",
+        "line": 89
+      },
+      {
+        "AST_sha256": "27ac29d6b382aa52f1869fec6f5b48a7a660db08330c7fd0eca42450fe706466",
+        "end_line": 155,
+        "function": "validate_preparation",
+        "line": 149
+      },
+      {
+        "AST_sha256": "d46b917a28913c3c8106a8c47e392d37d85f41e030ad62149bb7122aa720a9fa",
+        "end_line": 216,
+        "function": "build_source_family_legal",
+        "line": 158
+      }
+    ],
+    "ipfs_datasets_py/logic/integration/reasoning/legal_ir_canonical_adapter.py": [
+      {
+        "AST_sha256": "4db0fc43fd067ab5bf55549dd501102956e7bd4d8bc341fa76961b3299df4565",
+        "end_line": 99,
+        "function": "compiler_request_from_legal_ir_source",
+        "line": 64
+      },
+      {
+        "AST_sha256": "0e366f99eacc1e09e3a72df4f90ffc71e6eea5e4c14923f9f253a8caf1210cdb",
+        "end_line": 130,
+        "function": "compile_legal_ir_canonical",
+        "line": 121
+      }
+    ],
+    "ipfs_datasets_py/logic/legal_ir/canonical_source_grounding.py": [
+      {
+        "AST_sha256": "009b6d868994c437836797c497e6c4d2c78d559abe2bacd60922ce8d7494826a",
+        "end_line": 204,
+        "function": "construct_grounded_source",
+        "line": 180
+      },
+      {
+        "AST_sha256": "a3c670f58c7944e48687dca8ffcbd5e07986402c4ba79d46e4a6d07746a26c60",
+        "end_line": 305,
+        "function": "assess_decoder_transport",
+        "line": 242
+      }
+    ],
+    "ipfs_datasets_py/logic/legal_ir/duration_bound_qualified.py": [
+      {
+        "AST_sha256": "ddea23f0cb49c2a83390a711b212ee737fc4d3281fba3c070f0155c4ee3dd6e0",
+        "end_line": 95,
+        "function": "prepare_duration_bound_qualified",
+        "line": 47
+      }
+    ],
+    "ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py": [
+      {
+        "AST_sha256": "687ea0e9bff5a3f51b0aea022bd3fdddc918550d885deee5ec158bf1a74b98ad",
+        "end_line": 469,
+        "function": "prepare_pending",
+        "line": 389
+      },
+      {
+        "AST_sha256": "3ca16be471bc5ff71f5cc1a5f9e3266dc9a9d75fcafd805bf34086dc4c40515b",
+        "end_line": 488,
+        "function": "validate_pending",
+        "line": 472
+      },
+      {
+        "AST_sha256": "6e3f069e776e25615721dd495e0a9c584ddd55e7b80bf418399ce5525ec6daa5",
+        "end_line": 556,
+        "function": "prepare_family",
+        "line": 502
+      },
+      {
+        "AST_sha256": "603471f43c93be177e8e1db3cad1148a173c54690c37ef2a9129dd8cb0b223ba",
+        "end_line": 563,
+        "function": "validate_family",
+        "line": 559
+      }
+    ],
+    "ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py": [
+      {
+        "AST_sha256": "66b2f4517df04c7cb0b215794e3774b9baad059b10a5960958c74a46e6870b87",
+        "end_line": 225,
+        "function": "prepare_native_view",
+        "line": 147
+      },
+      {
+        "AST_sha256": "48f0c250b342f7ebae707fa2d99f0ad46ecf72b573d6d265ca683d1ca247a85c",
+        "end_line": 238,
+        "function": "validate_native_view",
+        "line": 228
+      }
+    ],
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py": [
+      {
+        "AST_sha256": "e3d587fceb69b1570faada6ebb2e4f08f756b305194efca36abf566a945ec8b5",
+        "end_line": 696,
+        "function": "captured_inference",
+        "line": 644
+      }
+    ],
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py": [
+      {
+        "AST_sha256": "d5df35faf5caf881b89d734e4b50346285b0a4c36d9c62beecb1cb3721de0b7a",
+        "end_line": 755,
+        "function": "captured_inference",
+        "line": 703
+      }
+    ],
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py": [
+      {
+        "AST_sha256": "ece9fc785501b46b4d388f4758e962a39e44d8b0d8ada516355cba4fe0294d78",
+        "end_line": 725,
+        "function": "captured_inference",
+        "line": 673
+      }
+    ]
+  },
+  "source_pins": [
+    {
+      "bytes": 36925,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py",
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+    },
+    {
+      "bytes": 13297,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py",
+      "sha256": "049260f3a683d58a906290436667804f410d4839161cfe7e2202b37b7f892d6d"
+    },
+    {
+      "bytes": 7838,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py",
+      "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+    },
+    {
+      "bytes": 21178,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py",
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    {
+      "bytes": 11880,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py",
+      "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+    },
+    {
+      "bytes": 19295,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py",
+      "sha256": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902"
+    },
+    {
+      "bytes": 16905,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py",
+      "sha256": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501"
+    },
+    {
+      "bytes": 10566,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_calendar_lake.py",
+      "sha256": "912f94c971e656db35a7b17b9c6dddd0379fecac687d6c35f5272aa8cdc38168"
+    },
+    {
+      "bytes": 6908,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/duration_bound_qualified.py",
+      "sha256": "02e7d7ef02bbade94d4b6e66237488df71ec2166823d1b829a91d2f04200fd10"
+    },
+    {
+      "bytes": 16508,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_grounding.py",
+      "sha256": "3e3a2afdeda600bf47745790f76e76fd76998522185ac87d61df2257bcd0cada"
+    },
+    {
+      "bytes": 5341,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/integration/reasoning/legal_ir_canonical_adapter.py",
+      "sha256": "4fd3fe388e0092916e053cefe8c483010774af18586cc26310a969586137aad7"
+    },
+    {
+      "bytes": 10069,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge.py",
+      "sha256": "2956a408cf767243f16944e4eb5dad425d26e1b09fd1979fbbbfa8fb4701a812"
+    },
+    {
+      "bytes": 11020,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_definition_norm_bridge.py",
+      "sha256": "fc658de41226117e096a7e003ffd73edcf32b7ee7ead141c9804db8064a2b18c"
+    },
+    {
+      "bytes": 56952,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+      "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+    },
+    {
+      "bytes": 80912,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+      "sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502"
+    },
+    {
+      "bytes": 83852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+    }
+  ],
+  "statutory_semantic_accuracy": null
+}

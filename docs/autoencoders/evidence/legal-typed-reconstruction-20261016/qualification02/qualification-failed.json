@@ -1,0 +1,280 @@
+{
+  "Lean_executed": false,
+  "admitted": false,
+  "all_checks_complete": false,
+  "authority_granted": false,
+  "completed_checks": [],
+  "elapsed_seconds": 5.305411559063941,
+  "error": "Qualification failed; arbitrary product exception values omitted from metadata.",
+  "error_type": "QualificationFailure",
+  "failure_closing_guard": null,
+  "failure_controlled_message": "selected pytest targets failed",
+  "failure_stage": "selected_pytest_targets",
+  "final_source_pins_unchanged": true,
+  "formalized": false,
+  "guard_attempts": {
+    "child_process": 0,
+    "network": 0
+  },
+  "legal_meanings_reviewed": false,
+  "models_loaded": false,
+  "native_parent_owns_admission_supervision_seal_and_release": true,
+  "product_origin_diagnostics_at_failure": {
+    "actual_product_files": {
+      "ipfs_datasets_py": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/__init__.py",
+      "ipfs_datasets_py.logic": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/__init__.py",
+      "ipfs_datasets_py.logic.autoformal": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+      "ipfs_datasets_py.logic.autoformal.legal_relational_norm_v1": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_reconstruction_v1.py",
+      "ipfs_datasets_py.logic.families": null,
+      "ipfs_datasets_py.logic.families.namespaces": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/families/namespaces.py",
+      "ipfs_datasets_py.logic.parsers": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/__init__.py",
+      "ipfs_datasets_py.logic.syntax_core": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/__init__.py",
+      "ipfs_datasets_py.logic.syntax_core.algebra": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/algebra.py",
+      "ipfs_datasets_py.logic.syntax_core.ast": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/ast.py",
+      "ipfs_datasets_py.logic.syntax_core.contracts": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/contracts.py",
+      "ipfs_datasets_py.logic.syntax_core.registry": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/registry.py",
+      "ipfs_datasets_py.logic.syntax_core.signatures": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/signatures.py",
+      "ipfs_datasets_py.optimizers": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/__init__.py",
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+      "ipfs_datasets_py.router_deps": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/router_deps.py"
+    },
+    "complete": true,
+    "counts": {
+      "actual_product_modules": 18,
+      "finder_loaded": 17,
+      "finder_refused": 100
+    },
+    "derived_origin_mismatches": [],
+    "finder_loaded": {
+      "ipfs_datasets_py": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/__init__.py",
+        "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+      },
+      "ipfs_datasets_py.logic": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/__init__.py",
+        "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+      },
+      "ipfs_datasets_py.logic.autoformal": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+        "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_relational_norm_v1": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+        "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_reconstruction_v1.py",
+        "sha256": "13d4279872d9cc3184d5796596b984193e49b51c7a56c4066857bce74b3e3723"
+      },
+      "ipfs_datasets_py.logic.families.namespaces": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/families/namespaces.py",
+        "sha256": "ba097e653158a812d66ead978d6405d61adaa293521305333579b19bd69a432d"
+      },
+      "ipfs_datasets_py.logic.parsers": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/__init__.py",
+        "sha256": "e75f0c2ffea0f0706a3d1768a794849e6c013b6647dc59ba331f44797c233386"
+      },
+      "ipfs_datasets_py.logic.syntax_core": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/__init__.py",
+        "sha256": "20dd418d90360cdb42c64ba8b87bedcdb640228b460ef6c6ae60312365130e81"
+      },
+      "ipfs_datasets_py.logic.syntax_core.algebra": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/algebra.py",
+        "sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7"
+      },
+      "ipfs_datasets_py.logic.syntax_core.ast": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/ast.py",
+        "sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4"
+      },
+      "ipfs_datasets_py.logic.syntax_core.contracts": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/contracts.py",
+        "sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8"
+      },
+      "ipfs_datasets_py.logic.syntax_core.registry": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/registry.py",
+        "sha256": "eff5ca12d748eff1e9463b737a8243c97d89cac51e1b604fe2c765aed885cb44"
+      },
+      "ipfs_datasets_py.logic.syntax_core.signatures": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/signatures.py",
+        "sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf"
+      },
+      "ipfs_datasets_py.optimizers": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/__init__.py",
+        "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+      },
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+        "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+      },
+      "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+        "sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31"
+      },
+      "ipfs_datasets_py.router_deps": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/router_deps.py",
+        "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+      }
+    },
+    "finder_refused": [
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus",
+      "ipfs_datasets_py.logic.parsers.event_calculus"
+    ],
+    "max_entries_per_map_or_list": 256
+  },
+  "pytest_arguments": [
+    "-q",
+    "--tb=short",
+    "--strict-markers",
+    "--import-mode=importlib",
+    "-c",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/pytest.ini",
+    "-o",
+    "addopts=-q --tb=short --strict-markers --import-mode=importlib",
+    "--noconftest",
+    "--disable-warnings",
+    "-p",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest",
+    "--basetemp=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/pytest/basetemp",
+    "--junitxml=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/exports/junit.xml",
+    "-o",
+    "cache_dir=/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/cache/pytest",
+    "--assert=plain",
+    "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+    "tests/unit/logic/syntax_core/test_algebra.py"
+  ],
+  "pytest_execution_evidence": {
+    "complete": false,
+    "omitted_reason": "diagnostic byte bound exceeded",
+    "summary": {
+      "collected": 187,
+      "successful_calls": 50,
+      "unsuccessful_reports": 137
+    }
+  },
+  "pytest_exit_code": 1,
+  "request_sha256": "70ddc2cc3785b5988a59b88ba96ef4026119f4cf72456e74409c5162398d0541",
+  "schema": "legal-primary-graph-export-qualification/v1",
+  "scope": "selected standalone synthetic-fixture pytest targets only; no original corpus acquisition",
+  "selected_checks": [
+    "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+    "tests/unit/logic/syntax_core/test_algebra.py"
+  ],
+  "source_semantics_verified": false,
+  "status": "failed",
+  "training_performed": false,
+  "writable_path_redirections": {
+    "HF_DATASETS_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/cache",
+    "HF_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/cache",
+    "HF_HUB_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/cache",
+    "HUGGINGFACE_HUB_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/cache",
+    "SENTENCE_TRANSFORMERS_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/cache",
+    "SQLITE_TMPDIR": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/db",
+    "TEMP": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/tmp",
+    "TMP": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/tmp",
+    "TMPDIR": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/tmp",
+    "TRANSFORMERS_CACHE": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/cache",
+    "XDG_CACHE_HOME": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification02/cache"
+  }
+}

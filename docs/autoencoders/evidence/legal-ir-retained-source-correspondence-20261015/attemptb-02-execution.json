@@ -1,0 +1,15 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 320.49554496607743,
+  "executed_checks": [
+    "retained-section101-definition-review-correspondence-fol-tdfol-with-eight-refusals"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "40f7c340044279f430589f287ac18e63fc5e157e40f4e69e031ea4f955665f27",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

@@ -1,0 +1,50 @@
+{
+  "all_authority_flags_false": true,
+  "all_sealed_paths_sizes_hashes_device_inode_exact": true,
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01",
+  "durability": {
+    "bytes": 2449,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01/logs/validation-durability.json",
+    "sha256": "40f7599e513ce9452c71ab965661a828ba7a0f60f9070c964d9c04a28b1c2d96"
+  },
+  "final_bytes": 1190825,
+  "final_files": 14,
+  "method": "Independent stdlib read-only request/source/ordinary-file/native-seal/exact-selected-ledger-row inspection. No product imports, tests, resource acquisition, recovery or attempt writes.",
+  "native_elapsed_seconds": 70.94225736591034,
+  "observed_at_utc": "2026-10-16T00:07:44.906044+00:00",
+  "pytest": {
+    "cases": 412,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "suite_seconds": [
+      11.741
+    ],
+    "unique_class_aware": true
+  },
+  "request": {
+    "bytes": 46267,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-typed-semantic-integration-20261015/validation-request-a-01.json",
+    "sha256": "20eaf018f77cac2c69bf05172ca3417f286ae78fa8cae22936633b8859fad0d4"
+  },
+  "result": {
+    "bytes": 1139,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01/logs/result.json",
+    "sha256": "cb4251217e76e8449267d321a00c63715f2225d0b39531c3a9fe9a29590efbe4"
+  },
+  "schema": "typed-semantic-native-independent-audit/v1",
+  "sealed_files": 13,
+  "selected_checks": [
+    "tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py",
+    "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+    "tests/unit/logic/autoformal/test_legal_source_sampling.py",
+    "tests/unit/logic/autoformal/test_legal_statutory_context_v2.py",
+    "tests/unit/logic/legal_ir/test_canonical_statement_scope.py",
+    "tests/unit/logic/legal_ir/test_canonical_statement_scope_bridge.py",
+    "tests/unit/logic/syntax_core/test_ast.py"
+  ],
+  "selected_storage_status": "released",
+  "source_pins_rehashed": 200,
+  "storage_budget": 268435456
+}

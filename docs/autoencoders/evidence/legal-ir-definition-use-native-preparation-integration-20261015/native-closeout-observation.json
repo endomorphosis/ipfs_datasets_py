@@ -1,0 +1,13 @@
+{
+  "cleanup_error": null,
+  "final_admitted_field": false,
+  "final_admitted_field_is_not_a_success_or_admission_test": true,
+  "launcher_exit_code": 0,
+  "method": "Selected non-identity fields transcribed from actual run_owned_validation terminal result, retained in tool session95298; not a byte-identical stdout capture or an independent live-ledger authentication.",
+  "native_lease_cancelled": true,
+  "native_lease_released": true,
+  "record_artifacts_durable_asserted": true,
+  "reservation_status": "released",
+  "result_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-03/logs/result.json",
+  "schema": "legal-ir-native-preparation-terminal-closeout-observation/v1"
+}

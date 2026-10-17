@@ -1,0 +1,33 @@
+{
+  "all_authority_flags_false": true,
+  "all_sealed_paths_sizes_hashes_device_inode_exact": true,
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01",
+  "durability": {
+    "bytes": 8265,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/logs/validation-durability.json",
+    "sha256": "411660c8f49ba35fb78ddedc90428a5ce06fc4a226a8861e8ed1c56b8e62c673"
+  },
+  "final_bytes": 1896204,
+  "final_files": 47,
+  "method": "Independent stdlib read-only request/source/ordinary-file/native-seal/exact-selected-ledger-row inspection. No product imports, tests, resource acquisition, recovery or attempt writes.",
+  "native_elapsed_seconds": 49.52158011589199,
+  "observed_at_utc": "2026-10-16T00:13:30.159403+00:00",
+  "request": {
+    "bytes": 51481,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-typed-semantic-integration-20261015/validation-request-b-01.json",
+    "sha256": "8e84774d8b456188e94ec1deb5117cf448e770eede652d037daf13215bc3a948"
+  },
+  "result": {
+    "bytes": 657,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/logs/result.json",
+    "sha256": "a6a0c612bf3edd3b0c7e1afbec182f3720cb9d1ab3a57570e1b9a853ebf34f0f"
+  },
+  "schema": "typed-semantic-native-independent-audit/v1",
+  "sealed_files": 46,
+  "selected_checks": [
+    "retained-two-source-three-typed-norm-join-cases"
+  ],
+  "selected_storage_status": "released",
+  "source_pins_rehashed": 232,
+  "storage_budget": 268435456
+}

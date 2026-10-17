@@ -1,0 +1,59 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/barberb/.local/bin/python
+cachedir: /home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v01/private/pytest-cache
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-integration-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+created: 3/3 workers
+3 workers [732 items]
+
+scheduling tests via LoadFileScheduling
+
+==================================== ERRORS ====================================
+_____________________________ ERROR collecting gw1 _____________________________
+Different tests were collected between gw0 and gw1. The difference is:
+--- gw0
+
++++ gw1
+
+@@ -673,10 +673,10 @@
+
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_payload_tampering_refuses_before_payload_parsing[edges.parquet]
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_payload_tampering_refuses_before_payload_parsing[snapshot.json]
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_existing_directory_is_never_overwritten
++tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[nodes.parquet]
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[edges.parquet]
+-tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[nodes.parquet]
++tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[snapshot.json]
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[manifest.json]
+-tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[snapshot.json]
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_unknown_filename_is_not_silently_ignored
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_directory_parent_and_file_symlinks_refuse
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_traversal_refuses_even_when_it_resolves_to_existing_bundle
+To see why this happens see 'Known limitations' in documentation for pytest-xdist
+_____________________________ ERROR collecting gw2 _____________________________
+Different tests were collected between gw0 and gw2. The difference is:
+--- gw0
+
++++ gw2
+
+@@ -674,8 +674,8 @@
+
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_payload_tampering_refuses_before_payload_parsing[snapshot.json]
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_existing_directory_is_never_overwritten
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[edges.parquet]
++tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[manifest.json]
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[nodes.parquet]
+-tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[manifest.json]
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_incomplete_bundle_refuses[snapshot.json]
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_unknown_filename_is_not_silently_ignored
+ tests/unit/logic/autoformal/test_corpus_graph_exchange.py::test_directory_parent_and_file_symlinks_refuse
+To see why this happens see 'Known limitations' in documentation for pytest-xdist
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/qualification-v01/junit.xml -
+================================== Cache Info ==================================
+Commit hash: 0ee2872d
+Note: Uncommitted changes present
+=========================== short test summary info ============================
+ERROR gw1 - Different tests were collected between gw0 and gw1. The differenc...
+ERROR gw2 - Different tests were collected between gw0 and gw2. The differenc...
+============================== 2 errors in 1.64s ===============================

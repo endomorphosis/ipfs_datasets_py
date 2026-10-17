@@ -1,0 +1,14 @@
+{
+  "additional_sources": [
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/event_calculus.py",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/parsers/modal.py"
+  ],
+  "comparison_v01_v02_executed": false,
+  "guards_relaxed": false,
+  "method": "Static AST traversal of entire legacy_modal product import closure identifies both missing event_calculus and modal source bodies before another run.",
+  "observed_at_utc": "2026-10-16T00:54:16.738274+00:00",
+  "product_or_test_bodies_changed": false,
+  "qualification02_outcome": "failed; import guard refused unpinned parsers.event_calculus;187collected/50successfulcalls/137unsuccessfulreports",
+  "roster_changed": false,
+  "schema": "legal-typed-reconstruction-parser-closure-correction/v1"
+}

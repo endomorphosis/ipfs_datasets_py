@@ -5,8 +5,9 @@ record_json``. Current graph bodies use entry_cid and, for edges, explicit
 source_entry_cid/target_entry_cid. This is distinct from retained flat shards
 and GraphNodeRecord/GraphEdgeRecord's alternative node_cid/edge_cid schema.
 Nothing here selects shards, verifies files, resolves endpoints, reviews legal
-meaning, or turns legacy admission flags into authority. Caller-owned immutable
-custody and raw-row pins are mandatory; the iterator owns their file checks.
+meaning, or turns legacy admission flags into authority. The physical record
+decoder requires caller-owned custody and raw-row pins. The payload decoder
+only observes internal transport consistency; it cannot establish file custody.
 """
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ from ...processors.legal_data.uscode_release_schema import (
 )
 
 SCHEMA = "legal-primary-wrapped-graph-record-observation/v1"
+PAYLOAD_SCHEMA = "legal-primary-wrapped-graph-payload-observation/v1"
 TRANSPORT_PROFILE = "uscode-hf-release/v1:versionless-entry-cid-graph-wrapper"
 MAX_ROW_BYTES = 1024 * 1024
 MAX_ENVELOPE_BYTES = 4 * 1024 * 1024
@@ -165,22 +167,24 @@ def _aliases(body, raw_row, canonical, alternatives, value, issues):
                                "alias": key, "required_field": canonical})
 
 
-def decode_primary_graph_record(raw_row, *, custody, expected_raw_row_sha256, expected_custody_sha256):
-    """Decode one raw record without choosing aliases or projecting its body.
+def decode_primary_graph_payload(raw_row, *, family, expected_raw_row_sha256):
+    """Observe one payload without choosing aliases or projecting its body.
 
-    Wrong independent pins or finite bounds fail the call. Row-specific syntax,
+    Wrong row pins or finite bounds fail the call. Row-specific syntax,
     parity and identity problems produce a lossless unresolved envelope. Only
     the explicit current identity fields can populate declared_identity, and
     any unresolved problem leaves all three identity values null. A blank
     wrapper legal_id is the producer's explicit transport of absent/null body
     legal_id; it does not manufacture a legal citation for structural nodes.
+
+    A caller computing the row pin from the same in-memory observation has
+    established self-consistency only. This API has no physical custody input
+    and cannot replace the manifest-selected physical record decoder.
     """
-    _sha(expected_raw_row_sha256); _sha(expected_custody_sha256)
-    bound = _custody(custody)
+    _sha(expected_raw_row_sha256)
+    _need(family in FAMILIES, "explicit supported graph family required")
     row_digest = raw_row_sha256(raw_row)
-    custody_digest = custody_sha256(bound)
     _need(row_digest == expected_raw_row_sha256, "independently pinned raw graph row differs")
-    _need(custody_digest == expected_custody_sha256, "independently pinned physical graph custody differs")
     raw_row = json.loads(_wire(raw_row, MAX_ROW_BYTES))
     issues = []
     for key in WRAPPER_FIELDS:
@@ -206,7 +210,7 @@ def decode_primary_graph_record(raw_row, *, custody, expected_raw_row_sha256, ex
         issues.append({"code": "unsupported_non_object_graph_body"})
     else:
         for origin, mapping in (("body", body), ("wrapper", raw_row)):
-            if mapping.get("family") != bound["family"]:
+            if mapping.get("family") != family:
                 issues.append({"code": "family_parity_mismatch", "origin": origin})
             if "schema_version" in mapping:
                 issues.append({"code": "unsupported_graph_schema_version", "origin": origin,
@@ -225,7 +229,7 @@ def decode_primary_graph_record(raw_row, *, custody, expected_raw_row_sha256, ex
         if raw_row.get("legal_id") != (declared_legal or ""):
             issues.append({"code": "legal_id_parity_mismatch"})
         _aliases(body, raw_row, "legal_id", ("legalID", "legalId"), legal_id, issues)
-        if bound["family"] == "graph_nodes":
+        if family == "graph_nodes":
             _aliases(body, raw_row, "entry_cid", ("node_cid", "node_id", "id", "record_id"), entry, issues)
             kind = body.get("node_type")
         else:
@@ -243,15 +247,35 @@ def decode_primary_graph_record(raw_row, *, custody, expected_raw_row_sha256, ex
     identity = {"entry_cid": entry, "source_entry_cid": source, "target_entry_cid": target}
     if issues:
         identity = dict.fromkeys(identity, None)
-    report = {"schema": SCHEMA, "transport_profile": TRANSPORT_PROFILE, "custody": bound,
-        "custody_sha256": custody_digest, "raw_row": raw_row, "raw_row_sha256": row_digest,
+    report = {"schema": PAYLOAD_SCHEMA, "transport_profile": TRANSPORT_PROFILE,
+        "raw_row": raw_row, "raw_row_sha256": row_digest,
         "record_json": raw_json, "record_json_utf8_base64": base64.b64encode(raw_bytes).decode("ascii") if raw_bytes is not None else None,
         "record_sha256": record_digest, "record_sha256_verified": hash_verified,
-        "original_body": original_body, "declared_identity": identity, "family": bound["family"],
+        "original_body": original_body, "declared_identity": identity, "family": family,
         "legal_id": legal_id, "disposition": "unresolved" if issues else
-            "decoded_unreviewed_node" if bound["family"] == "graph_nodes" else "decoded_unreviewed_edge",
-        "issues": issues, "coverage_scope": "exact_independently_pinned_physical_record_only",
+            "decoded_unreviewed_node" if family == "graph_nodes" else "decoded_unreviewed_edge",
+        "issues": issues, "coverage_scope": "pinned_payload_only_no_physical_custody",
         "authority": dict(FALSE_AUTHORITY)}
+    report["envelope_sha256"] = hashlib.sha256(_wire(report)).hexdigest()
+    return json.loads(_wire(report))
+
+
+def decode_primary_graph_record(raw_row, *, custody, expected_raw_row_sha256, expected_custody_sha256):
+    """Decode one physical observation with mandatory independent custody pins.
+
+    The payload rules are shared with the read-only citation consumer. This
+    API still requires the original closed custody declaration and both pins;
+    neither a row hash nor a payload observation substitutes for file checks.
+    """
+    _sha(expected_raw_row_sha256); _sha(expected_custody_sha256)
+    bound = _custody(custody)
+    custody_digest = custody_sha256(bound)
+    _need(custody_digest == expected_custody_sha256, "independently pinned physical graph custody differs")
+    report = decode_primary_graph_payload(raw_row, family=bound["family"],
+        expected_raw_row_sha256=expected_raw_row_sha256)
+    del report["envelope_sha256"]
+    report.update(schema=SCHEMA, custody=bound, custody_sha256=custody_digest,
+                  coverage_scope="exact_independently_pinned_physical_record_only")
     report["envelope_sha256"] = hashlib.sha256(_wire(report)).hexdigest()
     return json.loads(_wire(report))
 
@@ -264,4 +288,4 @@ def validate_primary_graph_record(envelope, raw_row, **trusted_inputs):
 
 
 __all__ = ["PrimaryGraphRecordError", "raw_row_sha256", "custody_sha256",
-           "decode_primary_graph_record", "validate_primary_graph_record"]
+           "decode_primary_graph_payload", "decode_primary_graph_record", "validate_primary_graph_record"]

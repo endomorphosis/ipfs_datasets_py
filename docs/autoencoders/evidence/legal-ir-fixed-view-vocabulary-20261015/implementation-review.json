@@ -1,0 +1,132 @@
+{
+  "authority": {
+    "gold_admitted": false,
+    "legal_meaning_verified": false,
+    "model_promoted": false,
+    "native_gate_pass_observed_by_this_review": false,
+    "proof_admitted": false,
+    "review_performed": false,
+    "semantic_equivalence": false,
+    "source_authenticated": false
+  },
+  "checks": [
+    {
+      "details": "Only one new production module is added. Public profile/hash/pure-score/model-adapter APIs are distinct from existing evaluation and training APIs. The module import surface is standard library only; owner imports are deferred to API calls. Profiles and independent profile/target/state commitments are checked before scoring.",
+      "scope": "Public boundaries",
+      "status": "pass_static"
+    },
+    {
+      "details": "Seven prediction classes are derived independently of target-row support and sparse state keys. Inputs require bounded ordinary JSON, unique ordered row IDs and known lane labels. Unknown labels are refused even at zero weight and in inactive stored view heads; legitimate modal-family keys remain allowed in the legacy feature-family bucket. Supported adapter is exact model/state types, Python backend, no feature codec, no legacy plugin, dimensions 8/384/768 and no active state transaction.",
+      "scope": "Vocabulary and bounds",
+      "status": "pass_static"
+    },
+    {
+      "details": "Sparse known logits default to zero over all seven classes. Diagnostic CE uses shifted log-sum-exp, normalized finite nonnegative target mass, target entropy and a declared 1e-12 excess roundoff tolerance. It does not replace the existing probability-floor CE or place diagnostic metrics in official loss fields. Entirely scale-disabled heads retain the uniform seven-class reference; head activity reports describe configured scale enablement, not proof or legal reconstruction.",
+      "scope": "Numerical meaning",
+      "status": "pass_static"
+    },
+    {
+      "details": "An objectnew clone retains scalar configuration, copies original training state and existing target/loss contexts, and receives fresh feature/candidate caches. Caller caches are not used for feature selection or modified. Original state object/revision/digest/content, cache objects/content, sample objects/ordered fields, target values, declaration and producer sources are rechecked. A short nonblocking adapter guard refuses concurrent/reentrant adapter calls and clears on exceptions.",
+      "scope": "Isolation and currentness",
+      "status": "pass_static"
+    },
+    {
+      "details": "Existing feature extraction uses cached compiler target/loss context. The adapter preserves that context on its isolated clone and binds its digest explicitly. Warm/cold feature-cache equality requires equal compiler context; the report makes no claim that arbitrary target/loss cache contents are irrelevant.",
+      "scope": "Compiler context",
+      "status": "pass_static"
+    },
+    {
+      "details": "Expected state identity is matched to the actual loaded state. Family/schema/task/dimension and checkpoint byte SHA are explicit external declarations; optional legacy encoder/token metadata may be null instead of fabricated. Non-null encoder metadata and declared dimensions are checked against actual samples. The report explicitly denies independent checkpoint-file authentication.",
+      "scope": "Checkpoint declaration",
+      "status": "pass_static"
+    },
+    {
+      "details": "The 44 authored cases include independent math oracle/extreme logits/epsilon tests, strict input/profile refusals, actual mock-8D readout and scale checks, known zero-key neutrality, stale support cache and cold-state replay, caller state/cache preservation, ordered formula controls, unknown inactive heads, nonfinite state, explicit unknown metadata, producer-change refusal and a guarded fresh-process pure diagnostic. They have not been run by this reviewer.",
+      "scope": "Authored tests",
+      "status": "pass_static"
+    }
+  ],
+  "existing_producer_sources_confirmed_identical_to_head_git": [
+    {
+      "bytes": 1425600,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "ad1a964c1b6b15592aaabe5550af331cb97721b6d362f768c148a62cfd442990"
+    },
+    {
+      "bytes": 188632,
+      "path": "ipfs_datasets_py/logic/bridge/multiview.py",
+      "sha256": "089adb25bc018e9bddf41af3be05ca7036f13ec2e9bb792fd8b78845e82fe2aa"
+    },
+    {
+      "bytes": 14516,
+      "path": "ipfs_datasets_py/logic/bridge/registry.py",
+      "sha256": "267d5065864c6778601fc8ebb23a5b4c57ef74856fc1b1b974b96bf283e47569"
+    },
+    {
+      "bytes": 6258,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py",
+      "sha256": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87"
+    },
+    {
+      "bytes": 7283,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
+      "sha256": "697b8e183fb966f01a0b81e4241154c38d2785277739518cbdfcc8db37695743"
+    },
+    {
+      "bytes": 519367,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+      "sha256": "e8a79d5612f50d3a842b72e618fc1903094dc4dd225688d9cb2d67bb4b0cb00a"
+    },
+    {
+      "bytes": 22278,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "sha256": "136756e14822dcec8158fb2718417972096842de74c4e841f08df28f1c7a028e"
+    }
+  ],
+  "module": {
+    "bytes": 27402,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_view_vocabulary_diagnostic.py",
+    "sha256": "71de47401a54d9374691ebd5fe5e50db38a4d741883e12ec1c7fbe4734292104"
+  },
+  "official_evaluation_training_pareto_rollback_checkpoint_bytes_changed": false,
+  "performed": {
+    "ast_parse_new_module_and_test": true,
+    "authored_parameterized_cases": 44,
+    "authored_test_functions": 22,
+    "existing_production_git_byte_comparisons": 7,
+    "models_or_compilers_executed": 0,
+    "native_calls": 0,
+    "product_imports": 0,
+    "public_api_signature_and_test_alignment": true,
+    "tests_executed": 0
+  },
+  "qualification_limits": [
+    "No new runtime execution, pytest collection or native qualification was performed by this review. Actual test outcomes, dependency closure, resource lifecycle, durable artifacts and release must come from the subsequent native gate.",
+    "The strong-bad-head test invokes the existing official guard on an explicitly authored AutoencoderEvaluation carrying numerical CE values. It is a guard fixture, not a new actual before/after full official evaluation or training run. Existing official regression/rollback suites remain separate.",
+    "Checkpoint file SHA and family/schema/task metadata are declared by the caller. External custody must be independently supplied by a pinned launcher/asset descriptor; this API does not authenticate those files.",
+    "The profile/source pins and native source inventory are finite reviewed cohorts, not assertions of complete installed-package or dynamic import closure. Trusted module monkeypatching and arbitrary malicious same-process memory replacement are not authentication boundaries.",
+    "Source and state fences are sequential observations, not a writer lease. Unsupported codecs, optional backends, fallback namespaces and arbitrary plugins are deliberately refused.",
+    "The diagnostic measures view classification against existing compiler observations. It establishes no text roundtrip, reviewed legal meaning, gold labels, holdout performance, trained-model gain, semantic proof or measured token saving."
+  ],
+  "repository_head_at_review": "0ae59458167b3438bc4d112d0ffb3bf63a7f30c0",
+  "resolved_findings": [
+    {
+      "finding": "Wrong classification namespace in initial architectural recommendation",
+      "resolution": "The standalone profile derives the actual multiview optimizer lane declarations: six core lanes plus preserved zkp.circuits tail, minus declared exclusions. It binds multiview and bridge registry source hashes. Payload modal.ir_decompiler is not an additional optimizer class; existing modal.* mapping collapses it into modal.frame_logic. The earlier payload-registry recommendation was corrected before implementation."
+    },
+    {
+      "finding": "Sorted sample serialization hid formula-order changes",
+      "resolution": "Existing ModalIRDocument.to_dict sorts formulas by formula_id, while actual view feature extraction uses original adjacent family/operator order. The bounded sample traversal now returns ordinary JSON from dataclass fields and preserves every original list/tuple order. Both sample digest and closing witness use this snapshot. Added tests keep existing sample.to_dict equal while demonstrating changed actual transition-weight readout and refusal after caller formula reversal during the real isolated readout."
+    }
+  ],
+  "review_scope": "Static implementation and authored-test review before native qualification; the reviewer authored the standalone module and this is not an independent runtime qualification.",
+  "schema": "legal-ir-fixed-view-vocabulary-implementation-review/v1",
+  "status": "no_concrete_static_blocker_after_ordered_sample_fix",
+  "tests": {
+    "bytes": 24209,
+    "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_vocabulary_diagnostic.py",
+    "sha256": "8b344f6feb6cde3c90598ab4585a7d9e8d8d83a721573d74ce27eb67031947b4"
+  },
+  "tracked_existing_file_changes_at_review": [],
+  "used_for_acceptance": false
+}

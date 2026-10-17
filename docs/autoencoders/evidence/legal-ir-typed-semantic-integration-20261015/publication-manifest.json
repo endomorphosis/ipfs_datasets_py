@@ -1,0 +1,611 @@
+{
+  "adopted_source_head": "1cbc313236a546fbbacae38635c88fa8072b6087",
+  "base_upstream": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+  "current_native_cohorts": [
+    {
+      "current_exact_pins": 200,
+      "request_path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/validation-request-a-01.json",
+      "request_sha256": "20eaf018f77cac2c69bf05172ca3417f286ae78fa8cae22936633b8859fad0d4"
+    },
+    {
+      "current_exact_pins": 232,
+      "request_path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/validation-request-b-01.json",
+      "request_sha256": "8e84774d8b456188e94ec1deb5117cf448e770eede652d037daf13215bc3a948"
+    }
+  ],
+  "exclusions": [
+    "publication-manifest.json self",
+    "final publication commit hash self-reference",
+    "private native resource IDs, ledger rows and raw launcher stdout",
+    "unselected full historical corpus and payloads referenced by original manifests"
+  ],
+  "file_count": 84,
+  "files": [
+    {
+      "bytes": 16747,
+      "git_blob": "e78752d73c0ae2ae8f3f1c6ebb664c92c9481775",
+      "path": "docs/autoencoders/README.md",
+      "sha256": "093646c36a3f192cdf0e13e7e7a84d1f4d7eda0c81b4ca82b9dc91c123b2ff3d"
+    },
+    {
+      "bytes": 3603,
+      "git_blob": "f8e5117e5d622b9c0997726fdd376a6aa9266bca",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/README.md",
+      "sha256": "dd979632c6d375d70e4f2667a5f82d4659fa7a1391a606898b9b396651912eec"
+    },
+    {
+      "bytes": 30521,
+      "git_blob": "07f9812be999a6b67d801059930304a80a184637",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/adoption-provenance.json",
+      "sha256": "d4f1dd890965f523e4940ef9e3133f03cef261a88aa76cfe424dbd85a28f830b"
+    },
+    {
+      "bytes": 3861,
+      "git_blob": "fd8b147e695be8298fc5040210ee7bb6ae2469ec",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attempta-01-durability-projection.json",
+      "sha256": "c09a461ecf16198de6ee9b528947d98298495d7688d77ad508dcd286d21b39a3"
+    },
+    {
+      "bytes": 967,
+      "git_blob": "1bd94f83f43f96be7505703079c613fab99f32d1",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attempta-01-execution.json",
+      "sha256": "7bd6d7295e369be05849b8298724d3a1cff0a60e3ac3d94a4061bd07dac438ff"
+    },
+    {
+      "bytes": 2435,
+      "git_blob": "eaa2c2e3ea7b616f4df6bb56559561656a4d413b",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attempta-01-independent-audit.json",
+      "sha256": "c4f9ada71ac807bcffba3e68de0d5c8a57a8fbbcae6d2907ab54bced42889f0f"
+    },
+    {
+      "bytes": 599087,
+      "git_blob": "5270368b1e966590edbf852b957bffc5c1003668",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attempta-01-junit.xml",
+      "sha256": "b0e294b5e2b23e79298b3a9496c3119576fa00312179d972b114c57f99d51b45"
+    },
+    {
+      "bytes": 1139,
+      "git_blob": "3f70ed4e023426cb32769b108595a4c0e0a18a74",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attempta-01-result.json",
+      "sha256": "cb4251217e76e8449267d321a00c63715f2225d0b39531c3a9fe9a29590efbe4"
+    },
+    {
+      "bytes": 0,
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attempta-01-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2285,
+      "git_blob": "39ae99212a26c2eeb31a47af5c030edb42a096ac",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attempta-01-stdout.log",
+      "sha256": "4c490571f19e27b7b0933f040a315b6e9d6215c0dc8d95071119d11d494cc23e"
+    },
+    {
+      "bytes": 478,
+      "git_blob": "f41e2e91499b76c64904a9facc2c08b2c3357035",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attempta-01-terminal-observation.json",
+      "sha256": "a9b496dfbb32ff0067b0d93320b14fc23c6612dcf4d3ca7a511ee34d1a82818f"
+    },
+    {
+      "bytes": 48283,
+      "git_blob": "9e6157ff54c87fedfcf1cbc01949b5078280491d",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-7213-current-scope-report.json",
+      "sha256": "273d86c79f5366ad2c45bff049c4e0d110a9caef7521a438c88374d2a55e8247"
+    },
+    {
+      "bytes": 133562,
+      "git_blob": "1a9af30a77969f17001ce63532e25ad7c650f366",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-7213A-current-join-report.json",
+      "sha256": "ad9a6ec0a2ca91a52b6c64793d62419ae5f53b8c3f6273e308088068a2c09624"
+    },
+    {
+      "bytes": 52058,
+      "git_blob": "357480bfd87526df4d693b44ea0b53bdcb8f55c5",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-7213A-current-typed-report.json",
+      "sha256": "2e56313899ff235be81a3bebd51357f45d9ab016c089fb4dbc8a764acc04a742"
+    },
+    {
+      "bytes": 134034,
+      "git_blob": "b6f560785969cab83264318836310c3a0bbb5efc",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-7213B-current-join-report.json",
+      "sha256": "9c47832facc7dffb1dba6c8501e57cb0a6d3935547d6b72b9fa052cb09ac14ba"
+    },
+    {
+      "bytes": 52320,
+      "git_blob": "794d041b316556ecbeb34644102b6502683f9007",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-7213B-current-typed-report.json",
+      "sha256": "9c10630f0cde492c9f49123c1a98fc572ef0dcd2069eea04f376c3ac02908043"
+    },
+    {
+      "bytes": 46794,
+      "git_blob": "ef9bcc685357d9b7b9c0bcc638c0788821898a50",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-7214-current-scope-report.json",
+      "sha256": "97a93c792fb4c316ed768909be79350d1de40bcec1ea985a8a50720c87e5f6a6"
+    },
+    {
+      "bytes": 68657,
+      "git_blob": "4f69c2b2ef1ad11d9afbd0de64d613347db0c757",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-7214pending-current-join-report.json",
+      "sha256": "3d223ea205324e4f9d72458aaf8b66024e600f7d8629706fdb5548b4fc511a6a"
+    },
+    {
+      "bytes": 11789,
+      "git_blob": "eb82e541fdc04dac37ee45110a2938c8c05caf91",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-durability-projection.json",
+      "sha256": "647cb60d1973bd3a1f93fc031463604e77790f7e40a4428e39f18d97ab56722d"
+    },
+    {
+      "bytes": 485,
+      "git_blob": "2b3caeb088845011997a96dd11437b13d2cbff76",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-execution.json",
+      "sha256": "95fb73fd9e0daf05f6d39f9dd59d7881fe65d384b6bb0963ec11a9c5bf82b194"
+    },
+    {
+      "bytes": 7043,
+      "git_blob": "c2fdf5f8e94ed834d77f0860d1bdab3e17fb6fa3",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-file-index.json",
+      "sha256": "b7e89f6385e09eb3542e71648ed2119f9b91de246a22b3e2e6e76aa3d7377370"
+    },
+    {
+      "bytes": 1787,
+      "git_blob": "48589f2c90ac97cffe05394b17f62c0613db97ca",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-independent-audit.json",
+      "sha256": "f0fd18b0290b4053502bde70c8e3a9e0b985ef98897f144fcf39e4da1e2a6918"
+    },
+    {
+      "bytes": 175372,
+      "git_blob": "cf5fe27d653f566da1f7de995cbeff411ba88d13",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213A_join_report.json",
+      "sha256": "a0cf48fce1714c24e5c5ee881b76d2aeefc3ac058f7c9542ed1e048b13fbbcd8"
+    },
+    {
+      "bytes": 11576,
+      "git_blob": "6a27ccf01d0d733e9f1a823cdb32759064692ee9",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213A_join_request.json",
+      "sha256": "d35a71510c65e51f399097a94a37c189fca9c2a281be308b5a219d21c3dff469"
+    },
+    {
+      "bytes": 77022,
+      "git_blob": "280f81c0f442cac377f7ddbdc73f70ff46aefc08",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213A_typed_report.json",
+      "sha256": "fe994aa06448eb34d891c2265f9c0f15f700bac41bcb0350fb46745d48df82e3"
+    },
+    {
+      "bytes": 16684,
+      "git_blob": "0f1e0778812a3210d040f2aed5c74cfc833b3b6e",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213A_typed_request.json",
+      "sha256": "4fbdc25cf494a5ab00f0ceff2c7ef6a0f1ba7998969a4e8b9ccee5f0eb299f89"
+    },
+    {
+      "bytes": 176024,
+      "git_blob": "26d633e215be9ca9b809373927b89360edaf1e6e",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213B_join_report.json",
+      "sha256": "a8246c872065bba09e980f1bd5f940bda15ae4d8767f7de834d1a2e69c6ca0ed"
+    },
+    {
+      "bytes": 11696,
+      "git_blob": "929bf6d0a23eb90b24bad37e741db541eb44cd82",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213B_join_request.json",
+      "sha256": "339dd35adbdf1a87666218742d026c723dcfadc24378bea940f01c5e1ac1742f"
+    },
+    {
+      "bytes": 77700,
+      "git_blob": "4b31ca0f1389668e829a8a7cf21441000be0170c",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213B_typed_report.json",
+      "sha256": "7b3517a80564c69fe5b2883fbaa46ab553749b174fcc84e5311c3af3d1a774b2"
+    },
+    {
+      "bytes": 16864,
+      "git_blob": "0fa1ea903be752ad72c251db5d32a98496abc530",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213B_typed_request.json",
+      "sha256": "210fb6e56f4e10be42e35ea6fb8b48c32168c7de105c806a1563d7138c7eaa33"
+    },
+    {
+      "bytes": 942,
+      "git_blob": "47ad882c7a1d23307a99b504e9e5cec0a2d04384",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213_descriptor.json",
+      "sha256": "eab40b8e87203484173f69dc7656d559ef0ebcefa8192fdb65fb1f5e034612c6"
+    },
+    {
+      "bytes": 4049,
+      "git_blob": "a43dc7e8d49ea431d60bdd52cfac4786a16af9cf",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213_html.html",
+      "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+    },
+    {
+      "bytes": 1326,
+      "git_blob": "1ef317782c6ae8bb9154ebbefccdd2abfd4ab393",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213_replay.json",
+      "sha256": "3a5e29ad7b2724a9214f6bd924c813ba66d3e58446136a93e40128ff21ee9e55"
+    },
+    {
+      "bytes": 134030,
+      "git_blob": "c4af651f840a2386d0486874951e723ed48325a8",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213_sampling.json",
+      "sha256": "7a0c92ddbb93469fd7d5ce4512f3dec55511791ff904e001050f9614ed1637c3"
+    },
+    {
+      "bytes": 5884,
+      "git_blob": "b6a224db4e757550536572da36dbaf3f22f94733",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213_scope_declaration.json",
+      "sha256": "6f147887db64786e6d25c00996e8354a4de225f59e0de3cbe9fdf0d2d074f176"
+    },
+    {
+      "bytes": 61547,
+      "git_blob": "d740b44ed64b6f9cdfb6d5907a0c07fb435aceef",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213_scope_report.json",
+      "sha256": "b4b63f59873968e41873daa32bd64a09fb887c06885dd57891a5b4c0105fc7ba"
+    },
+    {
+      "bytes": 390,
+      "git_blob": "0c8a83abbd6f66bf92872967e1a408047ba51e8b",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7213_scope_request.json",
+      "sha256": "474c9d9b0d242c436d1379c3775c8d36ab6d5d4fb472d80586b94aa7df4906fb"
+    },
+    {
+      "bytes": 942,
+      "git_blob": "441544323304a756513ddb2b85bc0383eebb09ff",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7214_descriptor.json",
+      "sha256": "e2d91953a2fbbf3d165ccf960f16d94a8eec29a5915d1097d1a334f6fa526e77"
+    },
+    {
+      "bytes": 7017,
+      "git_blob": "3cab64e66b5b09e301b29b3b9e0cf9efb86e11f1",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7214_html.html",
+      "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+    },
+    {
+      "bytes": 1326,
+      "git_blob": "a954097fb6186cb4b9f165bc3d3d344ebf34beba",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7214_replay.json",
+      "sha256": "970105b184c7a1703e75c56c5b714e0c712f543d315baf2412625ab3cb80c8a8"
+    },
+    {
+      "bytes": 209925,
+      "git_blob": "fce72093d40d9935ee11e55153e6f2b47d8a4c95",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7214_sampling.json",
+      "sha256": "335181759ba447324c17b6249201d5395dce8f7bdfd7dd69f5cb2add7535a4b0"
+    },
+    {
+      "bytes": 5549,
+      "git_blob": "e9d8d969e05dda72a9a207b2887664a0cacae879",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7214_scope_declaration.json",
+      "sha256": "0e717c00702ba1f975e88efa616db2cb957e829224cc402ba03762d3fb384a3b"
+    },
+    {
+      "bytes": 60058,
+      "git_blob": "7465f3e495d4c109829f922fb3a2ed62b45732db",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7214_scope_report.json",
+      "sha256": "6f3cc36cf5dd7af7b834211d9231fee4409acd10fb8bc6323e795ed24f7e59a0"
+    },
+    {
+      "bytes": 360,
+      "git_blob": "3ec753a5fb16129388a9a8937965c11d429c3570",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7214_scope_request.json",
+      "sha256": "411cb0e8b3045a30a3201e157553b6e0890b665194153d7d8755d8ecb2773ed5"
+    },
+    {
+      "bytes": 89174,
+      "git_blob": "6fda9d022c27a5e9d1c10304dc65b27c9201dfb7",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7214pending_join_report.json",
+      "sha256": "8e620e1fc1571a6fa12e0d8a1d5a18009054a88f344ab43202d50474ded7e1d0"
+    },
+    {
+      "bytes": 539,
+      "git_blob": "99ecb09446c11c1f77a4858a31c9868e32a7b7a6",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-7214pending_join_request.json",
+      "sha256": "ab7959a2264ce54d98b1c9686fb5d8c95f771c989d6c68ac9790c4b1eb4cd0f8"
+    },
+    {
+      "bytes": 19761,
+      "git_blob": "ec4f3e9f9ea996e254c6f0f0580ce95d1327cd33",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-join_implementation_receipt.json",
+      "sha256": "ea06e29f5361ea572fe433d88f7b939741019febff7c0404f4999740afde7cca"
+    },
+    {
+      "bytes": 10878,
+      "git_blob": "ced4b78467ef04cc2c3b326740e1f8725284c985",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-join_manifest.json",
+      "sha256": "5ea709a31a71ce9f90fb7fe8988dc8d0b4364872311f864308171424fcf87fc6"
+    },
+    {
+      "bytes": 17372,
+      "git_blob": "0a910dc0e190da143267c0dd1753e884a9532fdf",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-relational_implementation_receipt.json",
+      "sha256": "4ca405ee1731588b42095eecac2ee92f73d5b7a83a9cfd2ee02f5e766adc3c67"
+    },
+    {
+      "bytes": 17775,
+      "git_blob": "6392c1d8b26e7dd46f29eff4b18ba7a2ba4cdc24",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-scope_implementation_receipt.json",
+      "sha256": "568a423db242760b088c966f7329bcbc4881f1fb33826f7e215ad75059213fe1"
+    },
+    {
+      "bytes": 10207,
+      "git_blob": "8e06882e37d7243cdf47d78b19129cef970d57d8",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-scope_manifest.json",
+      "sha256": "481aa642384c5a9f186251907f8cb0c722e1233ee8e898615d9c19ad5b0beeb6"
+    },
+    {
+      "bytes": 76924,
+      "git_blob": "55623287b56f7e02622f0a42ea7a6f5c38c4095c",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-original-statutory_manifest.json",
+      "sha256": "3c035af7fbaebb49d6657122931068370ddf729f701c10bb7231af0e9f67f2a4"
+    },
+    {
+      "bytes": 28787,
+      "git_blob": "cf1a000a5213a6412475ee68935e6e16cfef934a",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-probe-receipt.json",
+      "sha256": "e3e4d2387a2ca6566c14ad2e5ae89bf85824f9d48c6325d959405bd65b9f1ae6"
+    },
+    {
+      "bytes": 4971,
+      "git_blob": "6546fb0a12b7895737b65ae4ff976d1bafb13558",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-producer-generation-comparison.json",
+      "sha256": "290a7bf1b2003bd82f737d0d036013271576a456a4a8138d5555ce15e2608dd3"
+    },
+    {
+      "bytes": 1462,
+      "git_blob": "764acdda0ee97c585179e16ce60a7d7562c81d22",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-refusal-controls.json",
+      "sha256": "db51666b59ba00111ebcc4d608f31fe04d082c4236f0c22145258919aadc0a7d"
+    },
+    {
+      "bytes": 657,
+      "git_blob": "343ffeb235dee97dc9a503ab28717330cda0b9b3",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-result.json",
+      "sha256": "a6a0c612bf3edd3b0c7e1afbec182f3720cb9d1ab3a57570e1b9a853ebf34f0f"
+    },
+    {
+      "bytes": 8882,
+      "git_blob": "f502cbf99adfc4d28e0377da286f07953e719e5b",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-retained-input-descriptor.json",
+      "sha256": "f65694fd8e2c63e77fa24d2c36e08977e5f5156b62d06f464c539a8661ee125c"
+    },
+    {
+      "bytes": 0,
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1031,
+      "git_blob": "5dd6770bda62f89e2ef65093e508dab3a945a2c6",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-stdout.log",
+      "sha256": "9a74ace6664ee02f7ba6289208dd5ba283df701217d324cd8a2fc1a5508b18ab"
+    },
+    {
+      "bytes": 478,
+      "git_blob": "2145f345047f63c4cac310c7c9df427deffdac32",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-terminal-observation.json",
+      "sha256": "d1dfca15074ddc4016247647652f9f84870813a851cfa470192b976a64829b8b"
+    },
+    {
+      "bytes": 10616,
+      "git_blob": "26e0a1a3e1946515ed1bcdbbfef3928da3903b2b",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/final-documentation-review.json",
+      "sha256": "28fba13cb23d36e195143b75573a3e1aa7525f37682092bf05ad7a9dea224161"
+    },
+    {
+      "bytes": 22244,
+      "git_blob": "13cd8cd4ccf5921d12da21c5db4717dca9f4f666",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/implementation-review.json",
+      "sha256": "1b58c447744301390e5877e53c536c9fbecfa4f13215da1a024081ae7fd96f7b"
+    },
+    {
+      "bytes": 8450,
+      "git_blob": "d7f86fe15b13e8ac378c5019f95f1afcf5e6cd16",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/parallel-survey.json",
+      "sha256": "aedbea8c531c064d8d1b8ff031fe3069a3588d0a49c8a4261e1932ca7f52e705"
+    },
+    {
+      "bytes": 3460,
+      "git_blob": "9bd35aff8df9bf5025159b3fa7ae4eafb64a624e",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/phase-closeout.json",
+      "sha256": "29d3aae2495e0bc365f97c89321850ca0768e2ff913ef2b73e2a44b8b3f59943"
+    },
+    {
+      "bytes": 11226,
+      "git_blob": "3ab80c1ae89aa6f2918d1961167b6063980b0a13",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/retained-inputs-provenance.json",
+      "sha256": "261e2a40097627ace4db40a71b6cd422c91d6f2c78171764b930c2b669ae05ad"
+    },
+    {
+      "bytes": 48595,
+      "git_blob": "922c79c4cdba16039740ddb13a8d3617b3cc91ff",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/retained-probe-independent-audit.json",
+      "sha256": "3bef322eda9d6b9e2791ced3a1d83cc57396da366b20afff85c9befa67ef2ce9"
+    },
+    {
+      "bytes": 8882,
+      "git_blob": "f502cbf99adfc4d28e0377da286f07953e719e5b",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/retained-typed-join-inputs.json",
+      "sha256": "f65694fd8e2c63e77fa24d2c36e08977e5f5156b62d06f464c539a8661ee125c"
+    },
+    {
+      "bytes": 29283,
+      "git_blob": "4f032147f13b11997c246d48786f44c6944cf04b",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/static-probe-review.json",
+      "sha256": "368c394cab5f7c7451ea249c137fcbc079c4c4d0213c9da9ce5c4efd6118922d"
+    },
+    {
+      "bytes": 8683,
+      "git_blob": "5996e221c181551a9063b9b22984d6b1bf1e1cae",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/tests-independent-audit.json",
+      "sha256": "bf1e213e088f66a36304aa55c034f4dc8a9354c6860f988acd98deddb0054ca3"
+    },
+    {
+      "bytes": 46267,
+      "git_blob": "8eff9a5406c44d26e74f28ee16dbed637a2a0044",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/validation-request-a-01.json",
+      "sha256": "20eaf018f77cac2c69bf05172ca3417f286ae78fa8cae22936633b8859fad0d4"
+    },
+    {
+      "bytes": 51481,
+      "git_blob": "b5abecf615d9cdf4ad009e1209ee66551faf3123",
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/validation-request-b-01.json",
+      "sha256": "8e84774d8b456188e94ec1deb5117cf448e770eede652d037daf13215bc3a948"
+    },
+    {
+      "bytes": 76112,
+      "git_blob": "b5eb7df495ac03e7d0532e427caefb8c60315409",
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "adce3520471250d3afff09533314131b18ecadb5207b810dc41daef1fa792253"
+    },
+    {
+      "bytes": 4232,
+      "git_blob": "cd102a477a7b2af5d844554320ed16a5afbb46a2",
+      "path": "docs/autoencoders/legal_relational_norm_v1.md",
+      "sha256": "c702832d0f8f52bf6dca3872589db1d278440e7fbb685fdfdd8916068c430e2b"
+    },
+    {
+      "bytes": 4789,
+      "git_blob": "872a89bf0819f37859fb8d616eb266f9ac03239c",
+      "path": "docs/autoencoders/legal_source_norm_scope_v1.md",
+      "sha256": "8db02a5f561d8e6ba75f6192bed1776ee6526636b8ebd640068734fb0ac4188b"
+    },
+    {
+      "bytes": 5322,
+      "git_blob": "9bad4a89e116ed79695f0dd660bbb8be201f5684",
+      "path": "docs/autoencoders/legal_source_typed_norm_join_v1.md",
+      "sha256": "c2daa5e5667942c6d4ee2796dd2068177eda1ab487aa44bfadc6da4e6cab94a2"
+    },
+    {
+      "bytes": 6604,
+      "git_blob": "bf45464d72ab3b2fb5fa468adb2d10980787dd65",
+      "path": "docs/autoencoders/legal_statutory_definition_correspondence_pilot.md",
+      "sha256": "866a094791476f22058a743e039d10cb47367e717b7f0605465e3f13a71f1a4b"
+    },
+    {
+      "bytes": 8254,
+      "git_blob": "87706b2c4f4957f879a23153f902582f64683cce",
+      "path": "docs/autoencoders/legal_typed_semantic_integration_20261016.md",
+      "sha256": "18a01e090c1cc3f3f38068bfbb1783c6a96bda72aefac6f4fd13bd1c5a7a89f5"
+    },
+    {
+      "bytes": 18562,
+      "git_blob": "dc0142cb407fc40d09558021386572efe10f792e",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+    },
+    {
+      "bytes": 19640,
+      "git_blob": "3ed073eb84be1791b6e42c7763f80e99191aba56",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+      "sha256": "30343ada53f17b7c39c4b1ce1fbc5bc14234396b5d28fb753e14141423d17039"
+    },
+    {
+      "bytes": 28971,
+      "git_blob": "605430c7c2b6b3424cc6ee17a726451aa9475a05",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+      "sha256": "92d0c1a46b86b9cdecdc42477f67e6a2141481379498f8ebd90369f9d3b65f11"
+    },
+    {
+      "bytes": 37240,
+      "git_blob": "f1f3ee8b42ba712cc6e29b26cfea6b7db1e1ab4f",
+      "path": "scripts/ops/legal_ir/probe_retained_typed_norm_join.py",
+      "sha256": "d59c0cc460c5b736fcf13c2bf9d4cded07c2c63df8122854587db0dab6a6d0cd"
+    },
+    {
+      "bytes": 21445,
+      "git_blob": "42baecbb1896142428c3a29bd1b30d9f926195ff",
+      "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+      "sha256": "e3160f78b6db26c0d5e28885cb2bd6b8c0f5777a1597c79b447ed535379b6cf2"
+    },
+    {
+      "bytes": 23401,
+      "git_blob": "a1128ae9120493e8555c75d28083af3cb9eb2dea",
+      "path": "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+      "sha256": "538b70505780cdf61cc64e837e145ec4fa76140a5e28a57bdded3649831bb7b1"
+    },
+    {
+      "bytes": 36968,
+      "git_blob": "2a43e98a87277a077075733ee845a53cdb1716c3",
+      "path": "tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py",
+      "sha256": "3c12e9731d0be90447e00c1fee9439b7b60f66b10928f5b7222fb21a26d2318b"
+    }
+  ],
+  "method": "Exact ordinary staged Git bodies and filesystem equality; complete curated phase directory and adopted source/test/docs plus new driver/guide. Every imported owner body unchanged; finite native cohorts current.",
+  "new_model_weights": false,
+  "new_training": false,
+  "original_owner_tip": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+  "schema": "legal-ir-typed-semantic-publication-manifest/v1",
+  "semantic_or_proof_admission": false,
+  "source_cohort_is_complete_dynamic_import_closure": false,
+  "total_bytes": 3103843,
+  "unchanged_shared_and_upstream_bodies": [
+    {
+      "bytes": 7973,
+      "git_blob": "2b13514776f0e0f80fbf391d55d55fc69e99b7ec",
+      "path": "docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+      "sha256": "585714e88fed858ee3d1a2f6fa7538d91dc01909c800d52547a2b9ad57a7ecce"
+    },
+    {
+      "bytes": 8477,
+      "git_blob": "ed1c20429ed74f43daa9bdc80cd028fd67238dc6",
+      "path": "docs/autoencoders/legal_source_sampling_review.md",
+      "sha256": "034220aa392539c74d350f66d7e44c27846298a9c86576b4c98aa4be15967fcb"
+    },
+    {
+      "bytes": 22701,
+      "git_blob": "780afbf171b850c4cb413dd6b525e2fe8ef8a6e6",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+      "sha256": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417"
+    },
+    {
+      "bytes": 28166,
+      "git_blob": "9717d9adc38babfade00d34f688c50ccb30a54db",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+      "sha256": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567"
+    },
+    {
+      "bytes": 33945,
+      "git_blob": "7a6fdece5dd56b28d5d02a7f367edce55892a5cd",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+      "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+    },
+    {
+      "bytes": 37587,
+      "git_blob": "47bd14cec65d455231170c0593346ece2f1e059a",
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+      "sha256": "bc7e401a591f53abe666e025daa908542c250d66fe61a5db51e3a13d5c21d009"
+    },
+    {
+      "bytes": 25031,
+      "git_blob": "8e3fc90b203f3ace8f04d6c81fbde96f524ffbc4",
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_review_v2.py",
+      "sha256": "d4bd0a34ae71a9c833ea9469e0f2478ef6a6d791f7b49c4566292def247f12c7"
+    },
+    {
+      "bytes": 24916,
+      "git_blob": "dc0b2818742276ba6ba3bef83647c0e95c37d3b2",
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+      "sha256": "1ded7a9fbc841d2e9678c8a0b1f22b5ebe1b58d9b3aab9938960707c2e8b58c6"
+    },
+    {
+      "bytes": 1428524,
+      "git_blob": "180e18423529e15eccb382bc9a466c211a366122",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "4b44bb723709be5b4606d497935b245723231df8ec19b24f1bd329fd8932ad24"
+    },
+    {
+      "bytes": 27402,
+      "git_blob": "227083a0a5fbee3a996e8f42b47d6ba02eb49f45",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_view_vocabulary_diagnostic.py",
+      "sha256": "71de47401a54d9374691ebd5fe5e50db38a4d741883e12ec1c7fbe4734292104"
+    },
+    {
+      "bytes": 50325,
+      "git_blob": "26b69cf514623ee9198253568edfba885958c614",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py",
+      "sha256": "0490667bf1825a2cc21b27829428bf861149789f8ad69fb9be65fc6601b628f5"
+    },
+    {
+      "bytes": 15958,
+      "git_blob": "c0433deaa76f1e6c93ad26c93a5dbe621a927ea9",
+      "path": "scripts/ops/legal_ir/run_owned_validation.py",
+      "sha256": "2d7a250e4c5237d24bf1b9328b059a71854d613a568de55f08c83b8e045e41b4"
+    }
+  ]
+}

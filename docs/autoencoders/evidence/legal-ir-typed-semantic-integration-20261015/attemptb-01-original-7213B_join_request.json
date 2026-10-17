@@ -1,0 +1,250 @@
+{
+  "schema": "legal-source-typed-norm-join-request/v1",
+  "interpretation_status": "unreviewed_correspondence_proposal",
+  "component_id": "title10-2024-officer-definition-two-uses",
+  "alternative_id": "B",
+  "selected_unit_ref": {
+    "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+    "schema": "legal-source-structured-sample-unit/v1",
+    "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+  },
+  "node_correspondences": [
+    {
+      "typed_path": "/root",
+      "source_anchor_paths": [],
+      "disposition": "introduced_unresolved",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ],
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence."
+    },
+    {
+      "typed_path": "/root/binders/0",
+      "source_anchor_paths": [],
+      "disposition": "introduced_unresolved",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ],
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence."
+    },
+    {
+      "typed_path": "/root/arguments/0",
+      "source_anchor_paths": [],
+      "disposition": "introduced_unresolved",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ],
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence."
+    },
+    {
+      "typed_path": "/root/arguments/0/binders/0",
+      "source_anchor_paths": [],
+      "disposition": "introduced_unresolved",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ],
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0",
+      "source_anchor_paths": [],
+      "disposition": "introduced_unresolved",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ],
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/binders/0",
+      "source_anchor_paths": [],
+      "disposition": "introduced_unresolved",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed"
+      ],
+      "rationale": "Introduced formal quantifier/domain or binder scope has no independently reviewed source correspondence."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0",
+      "source_anchor_paths": [
+        "/occurrences/1/anchor"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "necessary_approval_and_modal_scope"
+      ],
+      "rationale": "The exact may cue anchors a proposed P node; implication placement relative to this modality remains an alternative hypothesis."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension",
+      "source_anchor_paths": [
+        "/occurrences/1/anchor"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "necessary_approval_and_modal_scope"
+      ],
+      "rationale": "The exact may cue anchors a proposed P node; implication placement relative to this modality remains an alternative hypothesis."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension/children/0",
+      "source_anchor_paths": [
+        "/unresolved/3/span"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "necessary_approval_and_modal_scope"
+      ],
+      "rationale": "Only-with approval anchors a proposed implication whose direction and modal placement remain unreviewed; no sufficient permission is inferred."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0",
+      "source_anchor_paths": [
+        "/occurrences/2/anchor"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "assignment_transfer_coordination"
+      ],
+      "rationale": "The whole assigned-or-transferred phrase anchors proposed disjunction without resolving direction, modal distribution or event structure."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0",
+      "source_anchor_paths": [
+        "/occurrences/2/anchor"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "assignment_transfer_coordination"
+      ],
+      "rationale": "Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0/arguments/0",
+      "source_anchor_paths": [
+        "/occurrences/0/anchor"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "passive_subject_is_not_resolved_action_agent"
+      ],
+      "rationale": "The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0/arguments/1",
+      "source_anchor_paths": [
+        "/occurrences/3/anchor"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "direction_and_duties_attachment"
+      ],
+      "rationale": "Unreviewed duties parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1",
+      "source_anchor_paths": [
+        "/occurrences/2/anchor"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "assignment_transfer_coordination"
+      ],
+      "rationale": "Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1/arguments/0",
+      "source_anchor_paths": [
+        "/occurrences/0/anchor"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "passive_subject_is_not_resolved_action_agent"
+      ],
+      "rationale": "The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1/arguments/1",
+      "source_anchor_paths": [
+        "/occurrences/3/anchor"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "direction_and_duties_attachment"
+      ],
+      "rationale": "Unreviewed duties parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1",
+      "source_anchor_paths": [
+        "/unresolved/3/span"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "necessary_approval_and_modal_scope"
+      ],
+      "rationale": "Unreviewed predicate hypothesis over the retained whole lexical anchor; binary relation and argument roles do not establish complete source meaning."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/0",
+      "source_anchor_paths": [
+        "/unresolved/3/span"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "necessary_approval_and_modal_scope"
+      ],
+      "rationale": "Unreviewed approver parameter associated with a whole lexical phrase; its identity and relation scope remain unresolved."
+    },
+    {
+      "typed_path": "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/1",
+      "source_anchor_paths": [
+        "/occurrences/0/anchor"
+      ],
+      "disposition": "lexical_hypothesis",
+      "unresolved_codes": [
+        "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+        "passive_subject_is_not_resolved_action_agent"
+      ],
+      "rationale": "The legacy actor slot is the passive grammatical subject; its proposed recipient correspondence does not identify the action agent or resolve plural identity."
+    }
+  ],
+  "introduced_unresolved": [
+    {
+      "code": "typed_parameter_roles_quantifiers_and_predicates_unreviewed",
+      "rationale": "All quantifier/domain, predicate arity, actor omission, recipient/duties/approver parameter identities and modal implication choices are caller hypotheses. They are not reviewed statutory meanings. The source action agent, direction, approval scope and definition applicability remain open.",
+      "affected_typed_paths": [
+        "/root",
+        "/root/binders/0",
+        "/root/arguments/0",
+        "/root/arguments/0/binders/0",
+        "/root/arguments/0/arguments/0",
+        "/root/arguments/0/arguments/0/binders/0",
+        "/root/arguments/0/arguments/0/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/extension",
+        "/root/arguments/0/arguments/0/arguments/0/extension/children/0",
+        "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/0/arguments/1",
+        "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1",
+        "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/0/arguments/1/arguments/1",
+        "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1",
+        "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/0",
+        "/root/arguments/0/arguments/0/arguments/0/extension/children/0/arguments/1/arguments/1"
+      ]
+    }
+  ]
+}

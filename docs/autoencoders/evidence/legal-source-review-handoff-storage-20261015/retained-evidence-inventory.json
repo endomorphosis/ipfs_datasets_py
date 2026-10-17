@@ -1,0 +1,532 @@
+{
+  "all_checks_passed": true,
+  "current_native_attempt_separate": {
+    "coordinator_reported_status": "Storage-capacity refusal before native owner open completed; no source/test child execution or new claim.",
+    "different_checkouts_source_locations_CIDs_and_producer_generations_remain_attributed": true,
+    "no_repeat_of_966_or_251_checks": true,
+    "this_inventory_supplies_no_fresh_native_run_or_resource_claim": true
+  },
+  "discovery": "Tracked documentation and immediate artifact-phase metadata identified exact related subtrees; no foreign worktree census or direct foreign checkout reads.",
+  "limitations": [
+    "The 501 code-byte inventory is not a complete transitive executed-import or installed-distribution integrity claim.",
+    "Build-contract tests explicitly stub native processes; no actual Lean build follows from their passes.",
+    "The 63 real-source checks and prior 67-check retained-output audit are reconciled through derived receipts only; original sources, companions, contexts, subjects, signatures and Parquet bodies remain unopened here.",
+    "Synthetic signatures and prepared real-source subjects supply no admitted statutory meaning, training gold or decoder accuracy gain."
+  ],
+  "next_scope": "Reuse published context/review integration; preserve the parallel corpus_definition_use_v2.py owner. Actual source/applicability/meaning reviews and complete scope-valid uses remain unfinished.",
+  "operations": {
+    "Git_mutations": false,
+    "foreign_worktree_files_or_Git_accessed": false,
+    "model_or_numeric_library_imports": false,
+    "network": false,
+    "only_write": "/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01/retained-evidence-inventory.json",
+    "original_source_export_candidate_context_subject_review_or_checkpoint_bodies_opened": false,
+    "resource_claims": false,
+    "source_edits": false,
+    "tests_helpers_or_product_imports_executed": false
+  },
+  "original_author": {
+    "JUnit_recounts": [
+      {
+        "passing_subtests": 0,
+        "per_class": {
+          "tests.unit.logic.autoformal.test_legal_official_markup_context": {
+            "passed": 33
+          },
+          "tests.unit.logic.autoformal.test_legal_statutory_context_v2": {
+            "passed": 23
+          }
+        },
+        "pin": {
+          "bytes": 10494,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/context-new-and-restored-legacy-tests-v01.xml",
+          "sha256": "72612e0395f59170f1866d493f955dbeb151b76c8bdef1b30fc772942585e7c7"
+        },
+        "statuses": {
+          "passed": 56
+        },
+        "suite_tests_attribute": 56,
+        "testcase_elements": 56
+      },
+      {
+        "passing_subtests": 0,
+        "per_class": {
+          "tests.unit.logic.autoformal.test_legal_context_representability_integration": {
+            "passed": 2
+          },
+          "tests.unit.logic.autoformal.test_legal_statutory_context": {
+            "passed": 35
+          }
+        },
+        "pin": {
+          "bytes": 12817,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/context-legacy-regression-v01.xml",
+          "sha256": "422d2b4b6388ff0a7f9f5a6cf878733e1ecc529e2cd1b74861fe19ea03c47ae6"
+        },
+        "statuses": {
+          "passed": 37
+        },
+        "suite_tests_attribute": 37,
+        "testcase_elements": 37
+      },
+      {
+        "passing_subtests": 0,
+        "per_class": {
+          "tests.unit.logic.autoformal.test_corpus_definition_review_v2": {
+            "passed": 51
+          }
+        },
+        "pin": {
+          "bytes": 9784,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/review-authored-tests-v02.xml",
+          "sha256": "dd4ac7faa8e6d8c07397c6c131552b225d922ade9475a3525bdb9456ec97c6b7"
+        },
+        "statuses": {
+          "passed": 51
+        },
+        "suite_tests_attribute": 51,
+        "testcase_elements": 51
+      },
+      {
+        "passing_subtests": 0,
+        "per_class": {
+          "tests.unit.logic.autoformal.test_corpus_definition_review": {
+            "passed": 107
+          }
+        },
+        "pin": {
+          "bytes": 21631,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/legacy-definition-review-tests-v01.xml",
+          "sha256": "2de2d80c0da7aa876e577e0570c6d8ed11ab819b61fbbcbef862035d354b9537"
+        },
+        "statuses": {
+          "passed": 107
+        },
+        "suite_tests_attribute": 107,
+        "testcase_elements": 107
+      }
+    ],
+    "closed_at_utc": "2026-10-15T06:35:52.222402+00:00",
+    "earlier_source_movement_failure_retained": {
+      "passing_subtests": 0,
+      "per_class": {
+        "tests.unit.logic.autoformal.test_corpus_definition_review_v2": {
+          "failure": 1,
+          "passed": 50
+        }
+      },
+      "pin": {
+        "bytes": 11322,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/review-authored-tests-v02-source-movement.xml",
+        "sha256": "3b25ef1d4135cf3251a7f7d41e97b2b0536138c4b25f61f1d1aee2845d397bd4"
+      },
+      "statuses": {
+        "failure": 1,
+        "passed": 50
+      },
+      "suite_tests_attribute": 51,
+      "testcase_elements": 51
+    },
+    "eight_source_pins": [
+      {
+        "bytes": 8346,
+        "original_published_and_current_owned_equal": true,
+        "path": "docs/autoencoders/corpus_definition_review_v2.md",
+        "sha256": "968d9f42d389883fa7d2cdc2144db00497532d850a769f928888492689f2f6c1"
+      },
+      {
+        "bytes": 7953,
+        "original_published_and_current_owned_equal": true,
+        "path": "docs/autoencoders/legal_source_definition_v2.md",
+        "sha256": "8234812a7769d651b1a20fdbfd569dddabf73e5f5c1c33ca33a51292830cf6ae"
+      },
+      {
+        "bytes": 29833,
+        "original_published_and_current_owned_equal": true,
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py",
+        "sha256": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190"
+      },
+      {
+        "bytes": 4026,
+        "original_published_and_current_owned_equal": true,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_context_obligations.py",
+        "sha256": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482"
+      },
+      {
+        "bytes": 21940,
+        "original_published_and_current_owned_equal": true,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+        "sha256": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53"
+      },
+      {
+        "bytes": 8241,
+        "original_published_and_current_owned_equal": true,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py",
+        "sha256": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d"
+      },
+      {
+        "bytes": 29489,
+        "original_published_and_current_owned_equal": true,
+        "path": "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py",
+        "sha256": "a8aa5f72a818d7a888713c6769e50f30cb496cc86d1ac260b2ecebe38e84a5ff"
+      },
+      {
+        "bytes": 15365,
+        "original_published_and_current_owned_equal": true,
+        "path": "tests/unit/logic/autoformal/test_legal_official_markup_context.py",
+        "sha256": "f481e7aee8744cba67b8477cdf7a7d12c24246f7af7e8950b74d0254f1c7ffac"
+      }
+    ],
+    "eleven_recorded_owner_pins_vs_f50_and_current": [
+      {
+        "current_owned_equal": true,
+        "f50_relation": "absent_new_8f_path",
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py",
+        "sha256": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190"
+      },
+      {
+        "current_owned_equal": true,
+        "f50_relation": "absent_new_8f_path",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py",
+        "sha256": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d"
+      },
+      {
+        "current_owned_equal": true,
+        "f50_relation": "absent_new_8f_path",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_context_obligations.py",
+        "sha256": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482"
+      },
+      {
+        "current_owned_equal": true,
+        "f50_relation": "expected_8f_refactor",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+        "sha256": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53"
+      },
+      {
+        "current_owned_equal": true,
+        "f50_relation": "equal",
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py",
+        "sha256": "2e0eed594cbfa256f54d229e2c9e006eada04263aae17c5d330c79741047f087"
+      },
+      {
+        "current_owned_equal": true,
+        "f50_relation": "equal",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py",
+        "sha256": "dc4448d3cb8dbbc23f7686674bb5b2b56d04cfbdb74b817b9e22b180ee7ee36a"
+      },
+      {
+        "current_owned_equal": true,
+        "f50_relation": "equal",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_definition_boolean.py",
+        "sha256": "719169f57f549800dfaa40394203c5bb056e549f3f4aa783d3e5354beba3bb2b"
+      },
+      {
+        "current_owned_equal": true,
+        "f50_relation": "equal",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_graph_review.py",
+        "sha256": "32abecbf17bc3d10b59d1bd08fde3e8b6bfa58f73b17e31e817fe0f4e910af9e"
+      },
+      {
+        "current_owned_equal": true,
+        "f50_relation": "equal",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py",
+        "sha256": "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8"
+      },
+      {
+        "current_owned_equal": true,
+        "f50_relation": "equal",
+        "path": "ipfs_datasets_py/logic/profile_g.py",
+        "sha256": "4ca5dcc601f30c723467f425a6a03a7c5b1f644c2239a0f4a489705f1b715f03"
+      },
+      {
+        "current_owned_equal": true,
+        "f50_relation": "equal",
+        "path": "tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py",
+        "sha256": "184933ca71f9952003ed27a53ac30580f394ae3a6249b40b86c15665501a3a65"
+      }
+    ],
+    "independent_rejection_receipt": {
+      "bytes": 3860,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/independent-review-probes-v02.json",
+      "sha256": "6064adaf9d0f5de76656f6639c42d82a2234196f070004b208b59ef3dd122a0a"
+    },
+    "legacy_cases": 167,
+    "new_cases": 84,
+    "pending_authored_stub": {
+      "accepted_view_eligible": false,
+      "counts": {
+        "actual_statutory_review_meaning_gold_or_Lean_admissions": 0,
+        "additional_preparation_subject_registry_policy_review_assessment_records": 9,
+        "authenticated_evidence": 0,
+        "context_packets": 7,
+        "dependency_artifacts": 43,
+        "dependency_edges": 42,
+        "open_context_slots": 42,
+        "original_source_input_files": 6,
+        "payload_files": 22,
+        "reviews": 0,
+        "source_occurrences": 7,
+        "unique_record_seals_checked": 81
+      },
+      "evidence_status": "pending",
+      "independent_readback": {
+        "bytes": 13270,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/independent-pending-example-readback-v01.json",
+        "sha256": "5eac466c5c0867e6435fb0bafe8314ebe300a37567abef77b85679dec58b59d4"
+      },
+      "manifest": {
+        "bytes": 11314,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/authored-pending-review-01/manifest.json",
+        "sha256": "6866de89170dec83a8e715d1223a0b33ac07aedf4439e4bf76032b0f212fcf9e"
+      },
+      "payload_bodies_opened": false
+    },
+    "receipt": {
+      "bytes": 19890,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/implementation-receipt.json",
+      "sha256": "8367afeab400739004426512cee8e50f29a488c69ff14c7c2cacd110666d5067"
+    },
+    "reported_closeout_checks": 75,
+    "same_51_test_identities_rerun_and_passed": true,
+    "signed_test_scope": "Selected-key authentication on authored Ed25519 fixtures only; domain/role/principal/scope/time/revocation/context/dependency controls. No actual statutory human review or production trust established.",
+    "source": {
+      "branch": "codex/legal-definition-v2-review-20261015-01",
+      "clean": true,
+      "commit": "8f33492f4a639aa0ee3218653c63e467cd01d3ea",
+      "parent": "4e4ea1afa0226c62fdd28e1678cd4046feb90218",
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets"
+    },
+    "test_receipt": {
+      "bytes": 6982,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-v2-review-20261015-01/review-authored-test-receipt-v02.json",
+      "sha256": "a0816cb04c674122b2d659b371c8615875692f2b7159a2688525273189803996"
+    },
+    "unique_passed": 251
+  },
+  "published_integration": {
+    "988_suite_attribute_reconciled_to_966_cases_plus_22_subtests": true,
+    "JUnit_recount": {
+      "passing_subtests": 22,
+      "per_class": {
+        "tests.unit.logic.autoformal.test_corpus_contracts": {
+          "passed": 33
+        },
+        "tests.unit.logic.autoformal.test_corpus_definition_adapter_v2": {
+          "passed": 13
+        },
+        "tests.unit.logic.autoformal.test_corpus_definition_norm_adapter": {
+          "passed": 54
+        },
+        "tests.unit.logic.autoformal.test_corpus_definition_review": {
+          "passed": 107
+        },
+        "tests.unit.logic.autoformal.test_corpus_definition_review_v2": {
+          "passed": 51
+        },
+        "tests.unit.logic.autoformal.test_corpus_graph": {
+          "passed": 20
+        },
+        "tests.unit.logic.autoformal.test_corpus_graph_exchange": {
+          "passed": 37
+        },
+        "tests.unit.logic.autoformal.test_corpus_imports": {
+          "passed": 7
+        },
+        "tests.unit.logic.autoformal.test_corpus_source.SourceCorpusTests": {
+          "passed": 15
+        },
+        "tests.unit.logic.autoformal.test_definition_v2_graph_exchange": {
+          "passed": 4
+        },
+        "tests.unit.logic.autoformal.test_definition_v2_review_graph_exchange": {
+          "passed": 2
+        },
+        "tests.unit.logic.autoformal.test_legal_context_representability_integration": {
+          "passed": 2
+        },
+        "tests.unit.logic.autoformal.test_legal_corpus_incremental": {
+          "passed": 29
+        },
+        "tests.unit.logic.autoformal.test_legal_corpus_lake": {
+          "passed": 72
+        },
+        "tests.unit.logic.autoformal.test_legal_corpus_shared_lake": {
+          "passed": 31
+        },
+        "tests.unit.logic.autoformal.test_legal_graph_dependencies": {
+          "passed": 18
+        },
+        "tests.unit.logic.autoformal.test_legal_graph_review": {
+          "passed": 48
+        },
+        "tests.unit.logic.autoformal.test_legal_official_document_views": {
+          "passed": 61
+        },
+        "tests.unit.logic.autoformal.test_legal_official_markup_context": {
+          "passed": 33
+        },
+        "tests.unit.logic.autoformal.test_legal_official_source_custody": {
+          "passed": 41
+        },
+        "tests.unit.logic.autoformal.test_legal_source_definition_bridge": {
+          "passed": 23
+        },
+        "tests.unit.logic.autoformal.test_legal_source_definition_bridge_v2": {
+          "passed": 35
+        },
+        "tests.unit.logic.autoformal.test_legal_source_definition_lake": {
+          "passed": 7
+        },
+        "tests.unit.logic.autoformal.test_legal_source_definition_norm_bridge": {
+          "passed": 58
+        },
+        "tests.unit.logic.autoformal.test_legal_source_definition_norm_lake": {
+          "passed": 9
+        },
+        "tests.unit.logic.autoformal.test_legal_source_representability": {
+          "passed": 22
+        },
+        "tests.unit.logic.autoformal.test_legal_source_sampling": {
+          "passed": 29
+        },
+        "tests.unit.logic.autoformal.test_legal_source_sampling_review": {
+          "passed": 47
+        },
+        "tests.unit.logic.autoformal.test_legal_statutory_context": {
+          "passed": 35
+        },
+        "tests.unit.logic.autoformal.test_legal_statutory_context_v2": {
+          "passed": 23
+        }
+      },
+      "pin": {
+        "bytes": 183727,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/qualification-v01/junit.xml",
+        "sha256": "23a0ea5dde306d93d35b32afd07c645e3c145ac7a18285f926db73538310b462"
+      },
+      "statuses": {
+        "passed": 966
+      },
+      "suite_tests_attribute": 988,
+      "testcase_elements": 966
+    },
+    "authority": {
+      "Lean_execution_qualified": false,
+      "published": false,
+      "real_statutory_review_completed": false,
+      "source_semantics_verified": false,
+      "training_qualified": false
+    },
+    "commit": "56abb75457f1b57ceaef02c08dcdccba5ec6bb03",
+    "currentness_basis": "Coordinator fetched revision; this inventory verifies immutable owned Git objects, not live remote refs.",
+    "execution_head": "7488f3249aefba90eae7000365117ff378e12268",
+    "execution_index_tree": "deb8689930ec27a30bb434ca6f619c215e362a40",
+    "execution_root_from_probe_metadata": "/home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-review-integration-20261015",
+    "four_raw_qualification_output_pins_verified": true,
+    "independent_probe_audit": {
+      "bytes": 33776,
+      "repo_path": "docs/autoencoders/evidence/legal-ir-definition-v2-review-integration-20261015/independent_probe_review.json",
+      "revision": "56abb75457f1b57ceaef02c08dcdccba5ec6bb03",
+      "sha256": "ae75308c645f49a31bc162c8caeb481fef90bcdd74dd06a87dd763114ccd7cc5"
+    },
+    "independent_probe_audit_checks": 67,
+    "independent_recount": {
+      "bytes": 17993,
+      "repo_path": "docs/autoencoders/evidence/legal-ir-definition-v2-review-integration-20261015/independent_recount.json",
+      "revision": "56abb75457f1b57ceaef02c08dcdccba5ec6bb03",
+      "sha256": "936c651f10093f9713862ac6daddf08eed91583056f82e9268c3f920772caaf3"
+    },
+    "integration_metadata": {
+      "bytes": 28977,
+      "repo_path": "docs/autoencoders/evidence/legal-ir-definition-v2-review-integration-20261015/integration.json",
+      "revision": "56abb75457f1b57ceaef02c08dcdccba5ec6bb03",
+      "sha256": "9162f207d0aad7dbb2d939427dd1c9af63bcb10133d39bdd4e7bdb1c40ed48bb"
+    },
+    "modules": 30,
+    "original_251_case_identities_subset": true,
+    "passing_subtests": 22,
+    "publication_receipt": {
+      "bytes": 998,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/publication-receipt.json",
+      "sha256": "924bcf64b3c28887699a11ccbb8c553b14dee7c4d2b38401a08c1194a394a9d9"
+    },
+    "qualification_receipt": {
+      "bytes": 98169,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/qualification-v01/receipt.json",
+      "sha256": "15f9aa8a41d1845cb4aa15331a800c19caae046a48e84d4580538d98cebc4f47"
+    },
+    "raw_receipt_JUnit_probe_launch_bytes_match_published_Git": true,
+    "scope": "authored V2 context/review, legacy source/native/corpus, actual local graph exchange and cryptographic fixtures; build gates explicitly stubbed",
+    "source_bound_engineering_probe": {
+      "all_legal_gold_proof_Lean_authority_false": true,
+      "assessment_performed": false,
+      "families": {
+        "fol": {
+          "assessment_performed": false,
+          "context_packets": 6,
+          "dependency_artifacts": 40,
+          "dependency_edges": 39,
+          "open_slots": 36,
+          "reviews": 0,
+          "status": "subject_prepared_awaiting_actual_reviews"
+        },
+        "tdfol": {
+          "assessment_performed": false,
+          "context_packets": 6,
+          "dependency_artifacts": 40,
+          "dependency_edges": 39,
+          "open_slots": 36,
+          "reviews": 0,
+          "status": "subject_prepared_awaiting_actual_reviews"
+        }
+      },
+      "launcher_receipt": {
+        "bytes": 1991,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01-launch/receipt.json",
+        "sha256": "570f9c9caf399776c68256dd61330948bcb64110a572c20c0aaf901efb863c50"
+      },
+      "limitations": [
+        "Real source is retained, but the whole post-means list remains ONE opaque caller-declared atom.",
+        "Legal applicability is unreviewed and the legal as-of date remains unknown.",
+        "This probe prepares subjects only: no registry, policy, keys, signing, assessment or actual reviews are chosen.",
+        "Open context slots are not exhaustive legal dependency closure; no semantic/training/Lean admission follows.",
+        "Disk replay uses current public owners in this process, not a separate interpreter or native Lean build."
+      ],
+      "original_and_subject_payload_bodies_opened": false,
+      "passing_checks": 63,
+      "population": {
+        "blocks": 560,
+        "candidate_inputs": 134,
+        "controls": 426,
+        "open_obligations": 3360
+      },
+      "receipt": {
+        "bytes": 37585,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/probe-receipt.json",
+        "sha256": "6d0f530d9926ba0e18e9c6a751afce3bbfb5ce5218da3cbff0bd9948b78a12ff"
+      },
+      "registry_policy_keys_signer_or_review_clock_selected": false,
+      "reviews": 0
+    },
+    "source_inventory": {
+      "current_owned_changed": [],
+      "current_owned_equal": 500,
+      "current_owned_missing": [
+        "tests/conftest.py"
+      ],
+      "listed": 501,
+      "published_Git_blobs_equal": 501,
+      "run_input_metadata_exact_to_receipt": true,
+      "six_8f_executable_paths_in_inventory": 6,
+      "two_8f_docs_compared_separately_to_original_published_current": [
+        "docs/autoencoders/corpus_definition_review_v2.md",
+        "docs/autoencoders/legal_source_definition_v2.md"
+      ]
+    },
+    "unique_cases": 966,
+    "workers": 3
+  },
+  "schema": "legal-definition-review-retained-evidence-inventory/v1",
+  "scope": "Read-only derived JUnit/receipt recount and owned Git/source hashing; no runtime or original corpus/export/review payload access.",
+  "status": "AUTHOR_AND_PUBLISHED_INTEGRATION_EVIDENCE_RECONCILED"
+}

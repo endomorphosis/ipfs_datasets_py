@@ -1,0 +1,441 @@
+{
+  "curated_file_bindings": [
+    {
+      "bytes": 208001,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-binding-result.json",
+      "sha256": "6a438cd715a71ea92944b5a07805164182d18013f2222b8a9785c1df7643c6b5"
+    },
+    {
+      "bytes": 57051,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-candidate-input.json",
+      "sha256": "0a0d46c40ea8c97e99fcfd7859497d0d1e2793c36ee8384a8e7f17875ddcaa8c"
+    },
+    {
+      "bytes": 4686,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-00.json",
+      "sha256": "b1dc8245be9ba3ecf768873ab82f94fc38a45cc65c35c2d05274623c02b79043"
+    },
+    {
+      "bytes": 4651,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-01.json",
+      "sha256": "5716e65c77e1aab7fc2afafd48c4801aa611d5ec4fb9acf7a8e9473d903fb26b"
+    },
+    {
+      "bytes": 4596,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-02.json",
+      "sha256": "9aef24b56db1801ec213fdaef1d18f1cf60605a364ed51d857a353742dd551b1"
+    },
+    {
+      "bytes": 4597,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-03.json",
+      "sha256": "1d43e484482a9206fb4044b8950cc860e2b3b18d597ac99590b0bc7b8564d0dc"
+    },
+    {
+      "bytes": 4587,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-04.json",
+      "sha256": "2f9889e298394690629b90020851e1470279df9365bccb4abe76764351985c0c"
+    },
+    {
+      "bytes": 4611,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-05.json",
+      "sha256": "c8db5e2b3376011c24a20dcad456b65ab3458e08d75efa5fab460225022f0b7f"
+    },
+    {
+      "bytes": 3209,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-context-index.json",
+      "sha256": "c8a19f1bbd78317983b0a517df04b9abe709d063851ccc3ffeb311be7237d2e8"
+    },
+    {
+      "bytes": 133255,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-correspondence.json",
+      "sha256": "f9f70fc76952819aa3c82ef5dfcb598675e9d89ae632d8f3ad523087afaac9b7"
+    },
+    {
+      "bytes": 37109,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-dependency-manifest.json",
+      "sha256": "9408bedf4c8886e69f418bf3d1112201602daff615e914d882afdc1e6010db75"
+    },
+    {
+      "bytes": 2174,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-original-input-custody.json",
+      "sha256": "c5f9a16efed1f92f0fb9992a29d01ab972f11da892196a9a0544ff6006c2a480"
+    },
+    {
+      "bytes": 4967,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-replay-index.json",
+      "sha256": "848548eb9725f63d4e7ce14d214af71bae2d0ce5d2024cf136857972f0aaa585"
+    },
+    {
+      "bytes": 31853,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-report-input.json",
+      "sha256": "aa7723a6800ad1672b8a55ed11b125c04115817fdc5c42394a7af75c6ed6cfa9"
+    },
+    {
+      "bytes": 77863,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-review-preparation.json",
+      "sha256": "acac8419ece1a45500d838817f98c3094f7d8edcc6ece22e3b3d04b1e2a146ad"
+    },
+    {
+      "bytes": 103722,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-review-subject.json",
+      "sha256": "2d4c179dd2c51bfc53a29d361e021152cd43c6f25abe2a34df9ae86de26e5c74"
+    },
+    {
+      "bytes": 11158,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-fol-source-generation-comparison.json",
+      "sha256": "2805d5035769b9bbd0517a0c396425a6f995d157c1ff041252c6c8b8046efd7b"
+    },
+    {
+      "bytes": 208047,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-binding-result.json",
+      "sha256": "72c3b1629befacc9311ce22c94840ab3ebc7c7577a971dc705d2c9eda30ee47d"
+    },
+    {
+      "bytes": 57059,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-candidate-input.json",
+      "sha256": "d43446bacca4a8785efd76ab629ffd09e4ac29594e4306d81d72b4030cd8bca0"
+    },
+    {
+      "bytes": 4686,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-00.json",
+      "sha256": "b1dc8245be9ba3ecf768873ab82f94fc38a45cc65c35c2d05274623c02b79043"
+    },
+    {
+      "bytes": 4651,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-01.json",
+      "sha256": "5716e65c77e1aab7fc2afafd48c4801aa611d5ec4fb9acf7a8e9473d903fb26b"
+    },
+    {
+      "bytes": 4596,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-02.json",
+      "sha256": "9aef24b56db1801ec213fdaef1d18f1cf60605a364ed51d857a353742dd551b1"
+    },
+    {
+      "bytes": 4597,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-03.json",
+      "sha256": "1d43e484482a9206fb4044b8950cc860e2b3b18d597ac99590b0bc7b8564d0dc"
+    },
+    {
+      "bytes": 4587,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-04.json",
+      "sha256": "2f9889e298394690629b90020851e1470279df9365bccb4abe76764351985c0c"
+    },
+    {
+      "bytes": 4611,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-05.json",
+      "sha256": "c8db5e2b3376011c24a20dcad456b65ab3458e08d75efa5fab460225022f0b7f"
+    },
+    {
+      "bytes": 3221,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-context-index.json",
+      "sha256": "e256f8ee8fd598bf2a02f542049eef41758e855b09cc2db7cf63728abc25aabb"
+    },
+    {
+      "bytes": 133255,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-correspondence.json",
+      "sha256": "6b9c3544e8faa03ca6092ce4af74b7b2a3404f5a4260217d5e15ea60e9b4aefb"
+    },
+    {
+      "bytes": 37109,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-dependency-manifest.json",
+      "sha256": "84b918e5a3c55c0bd3eed70f097332f8ee2c55e7e9711d1a9e249130212aab83"
+    },
+    {
+      "bytes": 2182,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-original-input-custody.json",
+      "sha256": "05e9b170e11d9f29827881fc054b65d4bbb675970dbe7be9afd801ef5d026897"
+    },
+    {
+      "bytes": 4985,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-replay-index.json",
+      "sha256": "84d6c50b85a5e9fb98f18486169b84ae5ff6b2b50d57fbf20e3d78cea0355b0c"
+    },
+    {
+      "bytes": 31891,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-report-input.json",
+      "sha256": "2cf6d0b2384a395fdc4c6777be3d80d96695df9696162415600c112c85abaa18"
+    },
+    {
+      "bytes": 77865,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-review-preparation.json",
+      "sha256": "2726546d637b256785e3cfb75b9c59b62adc95702d60ece4303c3f82db42ccbe"
+    },
+    {
+      "bytes": 103724,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-review-subject.json",
+      "sha256": "90858aa28be14e83f3e72bd8a43611585ae179a06a11f4d70dc71fa361efec3f"
+    },
+    {
+      "bytes": 11164,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/actual-tdfol-source-generation-comparison.json",
+      "sha256": "23a673702423dcdbadcf43917be589a02e4a02cbc8b2da4895d17209401db2fa"
+    },
+    {
+      "bytes": 10872,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/file-index.json",
+      "sha256": "b199860a06d2ba8f69f0197e5d088205ac4eae8c77aa4280b5a78a212289d0a3"
+    },
+    {
+      "bytes": 4737,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/input-descriptor.json",
+      "sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736"
+    },
+    {
+      "bytes": 2619,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-control-results.json",
+      "sha256": "bb9139429e412c5658bbfc934d01264528b98b2bb91c81b90552f118fd5300ae"
+    },
+    {
+      "bytes": 3405,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-incomplete-dependency-closure-control.json",
+      "sha256": "353e1fa49dea7a449296bdfa39b9e9c9452af15bb9a5e20eb36f598fdd32b551"
+    },
+    {
+      "bytes": 408,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-independent-link-pin-control.json",
+      "sha256": "425a591e4abd8fe46afbbedcb489268f91daabba3b292eed23a2b2939975aa84"
+    },
+    {
+      "bytes": 2642,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-missing-context-context-index.json",
+      "sha256": "a54f48fd839a014b4a347ef2cf81ff93d8a79048a971a1fa14f035efec0a4f85"
+    },
+    {
+      "bytes": 463,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-missing-context-control.json",
+      "sha256": "11e9405244d520ca26e11f06034b2376251403ddb8372fa0c92e6a36731dfa1d"
+    },
+    {
+      "bytes": 478,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-mixed-family-candidate-control.json",
+      "sha256": "ecd1289ff2ddc7aaec8ff2702fcb938d8afb5aef84e28812c9ee00a83df38d82"
+    },
+    {
+      "bytes": 133071,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-omitted-unselected-link.json",
+      "sha256": "910a8ad1e98972d3cef5fa8ebf29c2875b4d7b9cf003263dedda3ab8b568b6ac"
+    },
+    {
+      "bytes": 698,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-omitted-unselected-population-control.json",
+      "sha256": "8d06b20e5f76946aac496e3e31b1905e327753a7247c116d3691f5e10673502a"
+    },
+    {
+      "bytes": 37285,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-pretty-report-input.json",
+      "sha256": "8aa627887cdc3d619aa79fe2188c975c7f01f6a6774dde9c8bc088667ca44f84"
+    },
+    {
+      "bytes": 542,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-pretty-report-transport-control.json",
+      "sha256": "ac3d373d5464e7c30d12d7fcf80d4315e1b372882b5199408aa5212c29f7232a"
+    },
+    {
+      "bytes": 3161,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-reordered-context-context-index.json",
+      "sha256": "a11979af6a8f8255117b8c4d138320be64a3a228aa8d0dedaf7cb0d70025d674"
+    },
+    {
+      "bytes": 467,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-reordered-context-control.json",
+      "sha256": "c998695c90ab3eb63f088477a24161f273cfdec74095e2d193c407f6bd58b29d"
+    },
+    {
+      "bytes": 3161,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-swapped-context-packet-context-index.json",
+      "sha256": "e59b8b9d4a80c7e71563059927efbcefcd08c6e595f63ae15579afdb25691427"
+    },
+    {
+      "bytes": 477,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-swapped-context-packet-control.json",
+      "sha256": "1660ee410579e52f8153c36e1c898d9c24e1d294413a19a879be9945e33bceed"
+    },
+    {
+      "bytes": 21119,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/replay-receipt.json",
+      "sha256": "ca49f5783d96664c6c53f61d23b91d6adfcac283e505efc70a66ec5e4b095b2a"
+    }
+  ],
+  "documents": [
+    {
+      "bytes": 9409,
+      "path": "docs/autoencoders/legal_retained_source_correspondence_20261015.md",
+      "sha256": "2992c59430c5bfc078c262c0cf778f0610ceb6d09f9c96e9751a4ca800cd32a3"
+    },
+    {
+      "bytes": 66793,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "61b1b0ed8fd9aa3a638d14e2323a7850650a169d7f7e8a47fe630b438c1aa935"
+    },
+    {
+      "bytes": 15986,
+      "path": "docs/autoencoders/README.md",
+      "sha256": "2901d7a1e491bb239ac6249ee7ecce6100a804fda2427981ac10d8121fa7bc58"
+    },
+    {
+      "bytes": 14848,
+      "path": "docs/autoencoders/legal_source_definition_review_correspondence_integration_20261015.md",
+      "sha256": "e08017e351c54521750a087d0d3f19bd730b01bca1f1da8ba0d2013fdecb7f52"
+    },
+    {
+      "bytes": 2633,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/README.md",
+      "sha256": "bb26ff55039a6c8219c01511584df5ffbb2074a8937a440bae94e4d131931f96"
+    }
+  ],
+  "driver": {
+    "bytes": 39684,
+    "path": "scripts/ops/legal_ir/replay_retained_definition_correspondence.py",
+    "sha256": "a580d10c33539058ff5019a6edd1b48a14b65adac4597567629573998f5a9d8b"
+  },
+  "findings": [],
+  "limitations": [
+    "This review rehashes curated public artifact bytes and their index/native projection joins; it does not rerun the product validators or recount all 227 source files.",
+    "The source and lease counts/status are bound to the independent native audits; this reviewer performs no live-ledger inspection.",
+    "The curated 51-file directory intentionally omits thirteen historical input copies; it is not a self-contained complete export.",
+    "The standalone probe and namespace tests establish no actual human review, authenticated exposure, statutory gold, model improvement or native Lean build.",
+    "Pre-existing unavailable research-document links are outside the current outcome wording review and are not silently replaced."
+  ],
+  "method": "Read-only documentation review and standard-library JSON/hash/file-inventory checks. No product imports, tests, native execution, resource/recovery actions or source edits.",
+  "observations": {
+    "a01_pytest_cases": 21,
+    "b02_final_bytes": 10634265,
+    "b02_final_file_count_including_durability_receipt": 69,
+    "b02_named_checks": 17,
+    "b02_native_elapsed_seconds": 320.49554496607743,
+    "b02_refusals": 8,
+    "b02_sealed_file_count": 68,
+    "b02_source_pin_count_from_bound_native_audit": 227,
+    "complete_export_bytes": 10620287,
+    "complete_export_files": 64,
+    "curated_export_bytes": 1621925,
+    "curated_export_files": 51,
+    "families": [
+      {
+        "all_authority_false": true,
+        "family": "fol",
+        "gold_masks_zero": true,
+        "physical_context_occurrences": 6,
+        "selected_open_slots": 36,
+        "selected_subjects": 2,
+        "whole_pending_subjects": 560
+      },
+      {
+        "all_authority_false": true,
+        "family": "tdfol",
+        "gold_masks_zero": true,
+        "physical_context_occurrences": 6,
+        "selected_open_slots": 36,
+        "selected_subjects": 2,
+        "whole_pending_subjects": 560
+      }
+    ],
+    "full_index_describes_complete_exports_not_curated_directory": true,
+    "omitted_historical_original_copy_names": [
+      "retained-acquisition-receipt.json",
+      "retained-actual-responses.json",
+      "retained-bundle.json",
+      "retained-c02-receipt.json",
+      "retained-descriptor.json",
+      "retained-fol-request.json",
+      "retained-fol-result.json",
+      "retained-raw-html.html",
+      "retained-sampler-receipt.json",
+      "retained-sampling-report.json",
+      "retained-source-review-receipt.json",
+      "retained-tdfol-request.json",
+      "retained-tdfol-result.json"
+    ]
+  },
+  "observed_at_utc": "2026-10-15T21:08:51.382953+00:00",
+  "outcome_references": [
+    {
+      "bytes": 1978,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-independent-audit.json",
+      "sha256": "f86ba18de20c847c46af824350e1f0ec87a65e78c1146961030bee9f9bb012a8"
+    },
+    {
+      "bytes": 677,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attempta-01-result.json",
+      "sha256": "4c0f18620cb5a8e9b591c9a5d55894446ff1ac886e276c644c9361a66af0efdb"
+    },
+    {
+      "bytes": 1842,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-independent-audit.json",
+      "sha256": "6321e71a82829c6b8017e6bcae02cde21a0df8da601467a2b8cf4a1dfafcf6e3"
+    },
+    {
+      "bytes": 700,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-result.json",
+      "sha256": "7c21daa0096ba7ea5001919290892828350a717679ed7f3fec150c0bb1405550"
+    },
+    {
+      "bytes": 17067,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-durability-projection.json",
+      "sha256": "fd13f28d21f67524e5d85269c8136873cd2221fb95b4179eaee2eb34790c8819"
+    },
+    {
+      "bytes": 361,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-02-terminal-observation.json",
+      "sha256": "e3c29bc10dc5cc8a288f0ea42f9ff468d87380ccf154007b01b3cfd8df52d39d"
+    },
+    {
+      "bytes": 7431,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/attemptb-01-failed-audit.json",
+      "sha256": "14807cf03884550bda47aedd5d36489c5c3eee6c83ec979832d8e05701ce7c0f"
+    },
+    {
+      "bytes": 2930,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/recovery-b-01-audit.json",
+      "sha256": "a5f25665536e1340b2b6d9ef8a3e19b0fe40e0236333f602f24bd2a6fe43737b"
+    },
+    {
+      "bytes": 5290,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/correction-review.json",
+      "sha256": "ccb803d069fd5dad95505c1ff4643c6dfc141296d97fac70d7023eab1fa9e4ad"
+    },
+    {
+      "bytes": 13060,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/retained-inputs-provenance-audit.json",
+      "sha256": "b637ddac2979600935c251a9bff4091bd9deb5041e34f100567ecb56604ecba7"
+    },
+    {
+      "bytes": 21119,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/replay-receipt.json",
+      "sha256": "ca49f5783d96664c6c53f61d23b91d6adfcac283e505efc70a66ec5e4b095b2a"
+    },
+    {
+      "bytes": 10872,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/file-index.json",
+      "sha256": "b199860a06d2ba8f69f0197e5d088205ac4eae8c77aa4280b5a78a212289d0a3"
+    },
+    {
+      "bytes": 2619,
+      "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/actual-source/negative-control-results.json",
+      "sha256": "bb9139429e412c5658bbfc934d01264528b98b2bb91c81b90552f118fd5300ae"
+    }
+  ],
+  "resolved_findings": [
+    {
+      "issue": "The phase README originally attached complete derived artifacts to b-01.",
+      "resolution": "Root changed the bullet to completed b-02 and explicitly retained b-01 as the failed attempt before these final hashes were captured."
+    }
+  ],
+  "schema": "legal-ir-retained-source-final-docs-review/v1",
+  "scope_checks": {
+    "a01_21_pytest_cases_and_b02_17_named_checks_kept_separate": true,
+    "all_source_review_exposure_semantic_admission_flags_false_and_gold_masks_zero": true,
+    "b01_failure_and_evidence_preserving_recovery_not_promoted": true,
+    "b02_eight_refusals_observed": true,
+    "both_rejected_view_updates_and_rollback_preserved": true,
+    "completed_correspondence_followup_not_listed_as_pending_next_acceptance": true,
+    "historical_originals_and_new_current_producer_generation_distinguished": true,
+    "parallel_8d_384d_768d_family_schema_task_assets_remain_separate": true,
+    "phase_readme_completed_b02_and_failed_b01_attribution_corrected": true,
+    "primary_graph_fixture_qualification_not_actual_corpus_export_or_semantic_row_join": true,
+    "raw_embedding_gain_not_formula_decoder_gain_or_independent_holdout": true,
+    "same_process_saved_artifact_regeneration_not_new_interpreter_cold_replay": true,
+    "strict_original_report_transport_and_omitted_optional_argument_presence_explained": true
+  },
+  "status": "pass"
+}

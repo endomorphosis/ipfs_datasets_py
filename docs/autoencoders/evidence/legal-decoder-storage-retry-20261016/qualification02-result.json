@@ -1,0 +1,15 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-qualification02/logs/execution.json"
+  ],
+  "executed_checks": [
+    "tests/unit/logic/autoformal/test_legal_ir_decoder_output_compatibility_v1.py",
+    "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_formula_codec.py"
+  ],
+  "request_sha256": "ee641863e1a34da3f193c3115d447693945c82c86383edfbc79088fc1ec3383b",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

@@ -1,0 +1,237 @@
+{
+  "checks": [
+    {
+      "name": "actionable_connected_component",
+      "observation": "Next acceptance is one complete reviewed definition, one complete norm using it and a second scope-valid use; execution manifest leaves original authored pilot specification unchanged.",
+      "status": "pass"
+    },
+    {
+      "name": "parallel_dependency_order",
+      "observation": "Stage7 explicitly depends on reviewed representations3\u20134 and may proceed alongside decoder experiments5\u20136; complete pilot acceptance still combines source, meaning, graph and Lean evidence.",
+      "status": "pass"
+    },
+    {
+      "name": "source_meaning_exposure_and_eligibility",
+      "observation": "Source/version correspondence, independent meaning review, actual exposure/independence and downstream eligibility remain separate obligations; signatures, candidate geometry and primary dependency closure do not supply them.",
+      "status": "pass"
+    },
+    {
+      "name": "reconstruction_and_representation_outcomes",
+      "observation": "Original-byte restoration, source-withheld generation, normalized text, complete semantic AST, embedding MSE/cosine and fixed-view CE remain separate. Full typed structures are not flattened into legacy facet metrics.",
+      "status": "pass"
+    },
+    {
+      "name": "model_compatibility_and_reuse",
+      "observation": "Existing8D/384D/768D assets and family/schema/task lineages are retained. The384D32-entryV2 codec compatibility is explicitly separated from V3 and the8D18-entry synthetic donor. Warm starts do not authorize unqualified teacher supervision.",
+      "status": "pass"
+    },
+    {
+      "name": "evaluation_design",
+      "observation": "Grouped revisions/duplicates/semantic dependencies, prior exposure, untouched components, target-free inference and active/zero/permuted/source-only/retrieval controls remain explicit; all-source coverage is reported beside supported-subset fidelity.",
+      "status": "pass"
+    },
+    {
+      "name": "graph_and_per_use_scope",
+      "observation": "Typed endpoints, distinct identity namespaces, ordered arguments/qualifiers, per-occurrence governing definitions, alternatives and complete searched partitions are required. Existing aliases and representative lookup are insufficient.",
+      "status": "pass"
+    },
+    {
+      "name": "conditional_kernel_vs_legal_eligibility",
+      "observation": "Conditional kernel artifacts may be reused only under unchanged AST/hypotheses/library/import/compiler/toolchain commitments. Source/review/applicability/policy drift separately invalidates accepted legal/planning eligibility. Negative lookup dependencies and clean-versus-incremental checks are retained.",
+      "status": "pass"
+    },
+    {
+      "name": "native_execution_and_deployment_limits",
+      "observation": "The two native execution profiles are selected by exact owner/profile/receipt rather than common schema. Compilation does not prove statutory fidelity. Kernel-custody simulation and real preworker admission refusal are distinguished; no productive GPU/Hub/container worker qualification is claimed.",
+      "status": "pass"
+    },
+    {
+      "name": "current_cache_metadata_scope",
+      "observation": "Independent raw-JSON recount establishes7962span descriptors/5070Parquet paths and entity11139328-byte LFS commitment. Neither these descriptors nor mixed primary rows are claimed as unique physical legal spans or accepted formalizations.",
+      "status": "pass"
+    },
+    {
+      "name": "parallel_owner_reconciliation",
+      "observation": "Published primary-bound review owner is reused without a duplicate adapter. Counted-frame2b9 prototype remains unmerged, unreviewed and not a qualified actual7214/Lean extension.",
+      "status": "pass"
+    },
+    {
+      "name": "release_and_registration",
+      "observation": "Separate family/schema/task/dimension identities, immutable Hub commit/path/hash, exact ModelManager resolution, numerical reload qualification and coordinated cross-cache/model/Lean release are distinguished from archive custody and promotion.",
+      "status": "pass"
+    }
+  ],
+  "contract_references": [
+    {
+      "bytes": 12979,
+      "path": "docs/autoencoders/pilots/uscode_definition_component/pilot_spec.json",
+      "read_from": "immutable Git HEAD object",
+      "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+      "sha256": "dd08f3de9ab0ea9cbf5a57cf52b1cdf8517ed41fa0d25f61a3e2753475a25279"
+    },
+    {
+      "bytes": 7488,
+      "path": "docs/autoencoders/pilots/uscode_definition_component/README.md",
+      "read_from": "immutable Git HEAD object",
+      "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+      "sha256": "550bbaefe436c4cde13f5905b4a28c753a9bce56b0d120f88d48554172243f57"
+    },
+    {
+      "bytes": 12974,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py",
+      "read_from": "immutable Git HEAD object",
+      "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+      "sha256": "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8"
+    },
+    {
+      "bytes": 30521,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_graph_review.py",
+      "read_from": "immutable Git HEAD object",
+      "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+      "sha256": "32abecbf17bc3d10b59d1bd08fde3e8b6bfa58f73b17e31e817fe0f4e910af9e"
+    },
+    {
+      "bytes": 28971,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+      "read_from": "immutable Git HEAD object",
+      "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+      "sha256": "92d0c1a46b86b9cdecdc42477f67e6a2141481379498f8ebd90369f9d3b65f11"
+    },
+    {
+      "bytes": 28371,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_build_v2.py",
+      "read_from": "immutable Git HEAD object",
+      "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+      "sha256": "1b4c03f9af40603f66df3f0e702ddd492a942badd533213e087c5fbf78cd855f"
+    },
+    {
+      "bytes": 30842,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+      "read_from": "immutable Git HEAD object",
+      "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+      "sha256": "98c1ff8ff52923c9c7ea392bdf77fb5baf8c946a4e8956d19be22e4f956b5e8f"
+    },
+    {
+      "bytes": 23696,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_primary_review_v2.py",
+      "read_from": "immutable Git HEAD object",
+      "revision": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+      "sha256": "b447512be5211d873de6ea849266ca2a42c8705d584b2c4d00785489f7720d4e"
+    }
+  ],
+  "history_preservation": {
+    "body_comparison_recipe": "Remove first introductory line from old opening and new evidence-history section; strip outer whitespace; compare remaining UTF8 strings exactly.",
+    "body_sha256": "195a1d8c232548a0b170abf1979fac8d74d0826c8c2be44f648c5641291a755c",
+    "header_change": "Original date/baseline sentence is restated as an evidence-history preface with overlapping-count scope; trailing whitespace differs. The historical qualification paragraphs are unchanged.",
+    "introductory_header_changed": true,
+    "old_opening_reference": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1:docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+    "original_numbered_sections_1_to_11_present_once": true,
+    "qualified_history_body_preserved_verbatim": true
+  },
+  "limits": [
+    "This is a plan/evidence consistency review, not a new runtime qualification or independent recount of all historical tests.",
+    "No current dataset payload or source-law identity/meaning has been validated by this review.",
+    "No actual human review, gold admission, model improvement, teacher promotion or Lean build is newly established.",
+    "The historical appendix retains original wording and scope; its earlier mixed-record occurrences terminology must be read with its explicit node/edge breakdown and the corrected active baseline."
+  ],
+  "local_links": {
+    "Git_HEAD_only_targets": [
+      "docs/autoformalization/legal-conditions-composition-20261015.md",
+      "docs/autoformalization/legal-modality-conditions-retention-20261015.md"
+    ],
+    "method": "Resolve local Markdown file targets against current filesystem or immutable Git HEAD tree for sparse-excluded files; external URLs and fragment correctness were not re-fetched/verified.",
+    "missing_file_targets": [],
+    "occurrences": 62,
+    "unique_file_targets": 50
+  },
+  "metadata_observations": [
+    {
+      "card_binding": {
+        "bytes": 13863,
+        "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-span-cache-card.md",
+        "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6"
+      },
+      "file_descriptors": 7962,
+      "listed_parquet_lfs_bytes": 4339061041,
+      "metadata_observed_at_utc": "2026-10-16T00:36:08.993492+00:00",
+      "parquet_descriptors": 5070,
+      "payload_downloaded_or_validated_by_this_review": false,
+      "public_metadata_and_card_only": true,
+      "raw_api_binding": {
+        "bytes": 2510870,
+        "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-span-cache-api.json",
+        "sha256": "f9263fe1a94cabd97f34852b510364aef5329c459a293d879742bc5b2c6c0b18"
+      },
+      "repo": "justicedao/uscode-autoformal-span-cache",
+      "revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+      "unique_source_or_semantic_assertion_count_established": false
+    },
+    {
+      "card_binding": {
+        "bytes": 581,
+        "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-entity-cache-card.md",
+        "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4"
+      },
+      "file_descriptors": 3,
+      "listed_parquet_lfs_bytes": 11139328,
+      "listed_payload_commitment": {
+        "bytes": 11139328,
+        "lfs_sha256": "f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233",
+        "path": "autoformal/uscode/kg-logic-index.parquet",
+        "relation_to_prior_census": "Same declared LFS payload commitment as the separately retained admitted full census; this review did not reread Parquet bytes or rerun the census."
+      },
+      "metadata_observed_at_utc": "2026-10-16T00:36:08.574395+00:00",
+      "parquet_descriptors": 1,
+      "payload_downloaded_or_validated_by_this_review": false,
+      "public_metadata_and_card_only": true,
+      "raw_api_binding": {
+        "bytes": 1534,
+        "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-entity-cache-api.json",
+        "sha256": "a6e283701865a8a93cf88010f8f684a940750cfb3aa2c7ff82181de20576bd1b"
+      },
+      "repo": "justicedao/uscode-autoformal-entity-cache",
+      "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "unique_source_or_semantic_assertion_count_established": false
+    }
+  ],
+  "method": "Read-only documentation/JSON and immutable Git-object review with standard-library recounts, byte hashes, history comparison and local-link resolution. Only this review JSON is written. No product imports or execution, pytest collection/tests, model/embedding/checkpoint loads, training, solver/Lean/native work, corpus payload validation, external HTTP, uploads or Git/index/ref mutations.",
+  "observed_at_utc": "2026-10-16T00:53:19.127754+00:00",
+  "plan": {
+    "bytes": 93411,
+    "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+    "sha256": "d113c7ca46f247571825e51ff03993acb549e41317d37a434cd824ec1a7530da"
+  },
+  "resolved_findings": [
+    {
+      "id": "primary_record_denominator",
+      "original_issue": "Decision baseline called297825mixed primary node/edge rows selected occurrences.",
+      "resolution": "Final baseline says297825selected original-primary records; physical source occurrence accounting remains separate."
+    },
+    {
+      "id": "Lean_parallel_order",
+      "original_issue": "Numbered stages could imply Lean must wait for successful decoder experiments.",
+      "resolution": "Explicitstage7dependency on3\u20134 and parallelism with5\u20136 removes the ambiguity."
+    },
+    {
+      "id": "donor_reference_antecedent",
+      "original_issue": "Its compatible V2 references had ambiguous antecedent after384D and8D donors.",
+      "resolution": "Final text explicitly identifies the selected384D donor."
+    }
+  ],
+  "reviewed_repository_head": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+  "schema": "legal-ir-execution-roadmap-independent-review/v1",
+  "status": "pass",
+  "supporting_evidence": [
+    {
+      "bytes": 2515,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/hub-metadata-summary.json",
+      "sha256": "9b8678f7c05a5a4061d9aab8fc319dd8b8111ce9e328e5dbc3aaa4159629c0cc"
+    },
+    {
+      "bytes": 21597,
+      "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/parallel-plan-review.json",
+      "sha256": "bf36fe1d9b61146100db3f3b691a586c35417feeace0ac03bb48973a16586bc3"
+    }
+  ],
+  "unresolved_blocking_findings": []
+}

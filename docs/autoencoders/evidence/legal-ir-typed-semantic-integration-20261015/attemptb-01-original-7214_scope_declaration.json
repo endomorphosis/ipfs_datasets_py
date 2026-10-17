@@ -1,0 +1,175 @@
+{
+  "schema": "canonical-normative-scope-declaration/v1",
+  "family": "deontic",
+  "profile": "normative-occurrence-scope/v1",
+  "input": {
+    "source_text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+    "context": {
+      "role": "required_unavailable",
+      "text": "",
+      "bindings": {},
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "input_sha256": "e9fa21bc2ab335a028480a19c073f994499e7dd16731422a64bb8494c6599a3f",
+  "occurrences": [
+    {
+      "occurrence_id": "lexical-actor",
+      "facet": "actor",
+      "canonical_symbol": "The President",
+      "anchor": {
+        "origin": "source",
+        "start": 0,
+        "end": 13,
+        "text": "The President",
+        "offset_unit": "unicode_character_half_open"
+      }
+    },
+    {
+      "occurrence_id": "lexical-modality",
+      "facet": "modality",
+      "canonical_symbol": "P",
+      "anchor": {
+        "origin": "source",
+        "start": 14,
+        "end": 17,
+        "text": "may",
+        "offset_unit": "unicode_character_half_open"
+      }
+    },
+    {
+      "occurrence_id": "lexical-action",
+      "facet": "action",
+      "canonical_symbol": "detail",
+      "anchor": {
+        "origin": "source",
+        "start": 18,
+        "end": 24,
+        "text": "detail",
+        "offset_unit": "unicode_character_half_open"
+      }
+    },
+    {
+      "occurrence_id": "lexical-object",
+      "facet": "object",
+      "canonical_symbol": "officers assigned to the Corps of Engineers",
+      "anchor": {
+        "origin": "source",
+        "start": 45,
+        "end": 88,
+        "text": "officers assigned to the Corps of Engineers",
+        "offset_unit": "unicode_character_half_open"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "surface-rule-7214",
+      "body": {
+        "modality": "lexical-modality",
+        "actor": "lexical-actor",
+        "action": "lexical-action",
+        "object": "lexical-object"
+      },
+      "qualifiers": {
+        "conditions": null,
+        "exceptions": null,
+        "temporal": null
+      }
+    }
+  ],
+  "statement_structure": {
+    "op": "rule",
+    "rule_id": "surface-rule-7214"
+  },
+  "binders": [],
+  "coverage": {
+    "declared_status": "partial",
+    "segments": [
+      {
+        "span": {
+          "origin": "source",
+          "start": 0,
+          "end": 163,
+          "text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+          "offset_unit": "unicode_character_half_open"
+        },
+        "disposition": "unresolved",
+        "rule_ids": [
+          "surface-rule-7214"
+        ],
+        "occurrence_ids": [],
+        "reason": "Every source character is retained; lexical slot proposals do not establish complete legal interpretation."
+      }
+    ]
+  },
+  "unresolved": [
+    {
+      "code": "cardinality_frame_distinctness_and_time",
+      "span": {
+        "origin": "source",
+        "start": 25,
+        "end": 44,
+        "text": "not more than three",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "The capped plural phrase needs explicit counted objects, distinctness, event/state and time scope; no global or lifetime frame is inferred."
+    },
+    {
+      "code": "recipient_assignment_restriction",
+      "span": {
+        "origin": "source",
+        "start": 45,
+        "end": 88,
+        "text": "officers assigned to the Corps of Engineers",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "The selected officer category and Corps assignment restriction need explicit relational arguments and scope."
+    },
+    {
+      "code": "purpose_attachment",
+      "span": {
+        "origin": "source",
+        "start": 89,
+        "end": 136,
+        "text": "to assist the Mayor of the District of Columbia",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "The assistance-purpose phrase is retained without deciding its formal attachment."
+    },
+    {
+      "code": "pronoun_and_duties_referent",
+      "span": {
+        "origin": "source",
+        "start": 137,
+        "end": 162,
+        "text": "in discharging his duties",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "The discharge clause and pronoun referent remain unresolved."
+    },
+    {
+      "code": "plural_to_definition_identity",
+      "span": {
+        "origin": "source",
+        "start": 45,
+        "end": 53,
+        "text": "officers",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "The literal plural officers is not a resolved singular officer definition binding."
+    },
+    {
+      "code": "applicability_authority_and_remaining_context",
+      "span": {
+        "origin": "source",
+        "start": 0,
+        "end": 163,
+        "text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "The original context requirements remain open. Separate retained definition/scope nominations are available but are not applied or adjudicated by this source-only request."
+    }
+  ],
+  "content_sha256": "74f19ac1f7579bee4e189099872b562672590662b71781c4cddc52adefd112c0"
+}

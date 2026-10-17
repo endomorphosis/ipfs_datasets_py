@@ -1,0 +1,62 @@
+{
+  "base_commit": "685b565f5710fecbf42b9f92b8a7131e1401f0dd",
+  "files": [
+    {
+      "adoption": "copied_exact",
+      "bytes": 48019,
+      "mode": "100644",
+      "path": "ipfs_datasets_py/logic/integration/reasoning/__init__.py",
+      "sha256": "40610ac00bd3b1d123a4bf5aa7dfd08d2164aa859130c1f72b625471accfce2e",
+      "source_git_blob": "0d9ec25dea3f61c647ffa68eefc1676d1a5b5f1c"
+    },
+    {
+      "adoption": "copied_exact",
+      "bytes": 13134,
+      "mode": "100644",
+      "path": "tests/unit/logic/integration/test_reasoning_lazy_imports.py",
+      "sha256": "905dbed2b4fa3248d70f972a24aea6cc816a2baa8e6c3a9f42aac44c7b4c1311",
+      "source_git_blob": "e920fc7d6affcbb38d6fe78a91ed27d7aef92908"
+    },
+    {
+      "adoption": "copied_exact",
+      "bytes": 5186,
+      "mode": "100644",
+      "path": "docs/autoencoders/legal_corpus_v2_public_handoffs.md",
+      "sha256": "75c0149c5061ed7e7e3e1221c4f6cc592db400bedb5276011acffb128511ee6d",
+      "source_git_blob": "222d12cb03e96fd9e5c6aa91830f5d0891176cb8"
+    },
+    {
+      "adoption": "already_identical",
+      "bytes": 14785,
+      "mode": "100644",
+      "path": "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py",
+      "sha256": "0070f10f39719c256e98dbf2c3d925dd783cd01d29fcf0a49ef99a396001fa2c",
+      "source_git_blob": "e3b2adc896da476009a10671cded1faac5bc8d41"
+    },
+    {
+      "adoption": "already_identical",
+      "bytes": 11291,
+      "mode": "100644",
+      "path": "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py",
+      "sha256": "a7c8d20b40b77eacf55b7a1f4821f632289f875df5a0e02a2a81dc5415e3efef",
+      "source_git_blob": "d3ed3a7b5d401a2851f34586206db42d812324bc"
+    },
+    {
+      "adoption": "already_identical",
+      "bytes": 17069,
+      "mode": "100644",
+      "path": "tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py",
+      "sha256": "fd243a3208bf04e7197bc4b39de5797ef6b666ffc5f19a96df4607a3653caf9b",
+      "source_git_blob": "914a7650a6d7495a1b47804d3e867ff9a35691f8"
+    }
+  ],
+  "schema": "retained-source-correspondence-parallel-adoption/v1",
+  "scope": "Selective original bodies; no foreign checkout mutation; no historical native processes rerun",
+  "source_commit": "4a88f05b1feb35c77db11c8442b2ccfd714ba672",
+  "static_review": {
+    "collision_names": 4,
+    "ordered_public_exports": 553,
+    "review": "Independent read-only review found no concrete blocker; exact module identity preserves early caller overrides.",
+    "whole_lazy_cases_expected": 21
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "complete_selected_targets_equal": true,
+  "current_memory_mb": 2048,
+  "current_request": {
+    "bytes": 57298,
+    "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-v05.json",
+    "sha256": "48782ef601fc0405c92ab312c66e1c7a521b73fd0e5ee3cb6e093e89b4d1d167"
+  },
+  "expected_unique_cases": 187,
+  "history_scope": "q04 scheduler admission refusal and exact own empty-claim administrative recovery are separate from test execution; root reports no q04 product/test child ran. This transition supplies no native q05 completion claim.",
+  "limitations": [
+    "Source/JSON metadata comparison only; no test/product/model/CID/corpus execution, payload reads or live ledger inspection.",
+    "The existing source v04 audit still describes the exact source/case roster; q05 uses new request/attempt paths and the declared lower memory budget."
+  ],
+  "observed_at_utc": "2026-10-16T01:10:27.982817+00:00",
+  "previous_request": {
+    "bytes": 57298,
+    "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-v04.json",
+    "sha256": "a08f10e39e294a84f1dc9573ce74d018aa2a8f3813926d57470cb9ea1a58f46e"
+  },
+  "request_changes": {
+    "argv": {
+      "current": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py",
+        "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-v05.json"
+      ],
+      "previous": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py",
+        "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-request-v04.json"
+      ]
+    },
+    "attempt_directory": {
+      "current": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05",
+      "previous": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification04"
+    },
+    "memory_mb": {
+      "current": 2048,
+      "previous": 6144
+    },
+    "outputs": {
+      "current": {
+        "cache": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/cache",
+        "db": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/db",
+        "exports": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/exports",
+        "logs": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/logs",
+        "pytest": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/pytest",
+        "tmp": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification05/tmp"
+      },
+      "previous": {
+        "cache": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification04/cache",
+        "db": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification04/db",
+        "exports": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification04/exports",
+        "logs": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification04/logs",
+        "pytest": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification04/pytest",
+        "tmp": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-typed-reconstruction-20261016-qualification04/tmp"
+      }
+    }
+  },
+  "reviewer": "/root/sampled_primary_metadata_review_n10",
+  "schema": "legal-typed-reconstruction-independent-request-transition/v5",
+  "source_pin_count": 240,
+  "source_pin_map_equal": true,
+  "source_roster_reference": {
+    "bytes": 73747,
+    "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/qualification-source-roster-review-v04.json",
+    "sha256": "484ad692a1fddae7cc68b1a50055518ff025aaf8ffcd4fe2fec71d1d866b50d0"
+  },
+  "status": "unchanged_sources_and_case_roster_transition_verified_native_completion_pending"
+}

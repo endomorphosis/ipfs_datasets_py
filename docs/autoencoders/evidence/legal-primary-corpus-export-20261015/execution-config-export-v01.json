@@ -1,0 +1,11 @@
+{
+  "accepted_producer_receipt": null,
+  "expected_export_manifest_sha256": null,
+  "input_descriptor": {
+    "bytes": 3507,
+    "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-corpus-export-20261015-01/input-descriptor-v01.json",
+    "sha256": "7c91b196349888b6b293aeef7743ea915a39ab7cac3e693bce51e4f39c7d52e8"
+  },
+  "mode": "export",
+  "schema": "legal-primary-corpus-campaign/v1"
+}

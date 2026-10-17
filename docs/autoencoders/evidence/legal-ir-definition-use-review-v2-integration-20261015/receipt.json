@@ -1,0 +1,423 @@
+{
+  "Hub_upload_performed": false,
+  "actual_source_replay": {
+    "Lean_admissions": 0,
+    "actual_responses": 0,
+    "actual_reviews": 0,
+    "actual_source_handoff_migration_executed": false,
+    "blank_question_slots": 8400,
+    "blocks": 560,
+    "candidate_paragraphs": 134,
+    "controls": 426,
+    "declared_applicability_verified": false,
+    "evaluation_gold": 0,
+    "families": [
+      "fol",
+      "tdfol"
+    ],
+    "named_checks": 15,
+    "original_open_context_obligations": 3360,
+    "payload_bytes_excluding_receipt": 7041460,
+    "payload_file_count": 25,
+    "pending_per_family": 560,
+    "receipt_sha256": "3e2b421aed87627b540712de89d7d8cfc00b7fd1dcb9966ac54044d62383c82b",
+    "refusal_controls": 6,
+    "training_gold": 0,
+    "whole_body_is_opaque_caller_declaration": true
+  },
+  "actual_statutory_review_performed": false,
+  "distinct_passing_cases": 541,
+  "earlier_qualifications_added_to_total": false,
+  "evidence_files": [
+    {
+      "bytes": 49340,
+      "path": "validation-request-a-02.json",
+      "sha256": "6aac164acabfaf7913f4019c7dbbca0c72c4f6824211fb430216e39f3e715de3"
+    },
+    {
+      "bytes": 1255,
+      "path": "a-02-result.json",
+      "sha256": "128c8ab09e8571a0bc240114d9239101d85c190d8cbf069d5d64c1432b5f842e"
+    },
+    {
+      "bytes": 1064,
+      "path": "a-02-execution.json",
+      "sha256": "5f403af65c7bd2fcc240b88f477e83b876e1cc9168744d5d75a45344470e7574"
+    },
+    {
+      "bytes": 2320,
+      "path": "a-02-stdout.log",
+      "sha256": "b7a8db893d4e47d5452db5481095affb2663e9a7db993b985833a3305f02afa1"
+    },
+    {
+      "bytes": 0,
+      "path": "a-02-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 57401,
+      "path": "a-02-junit.xml",
+      "sha256": "2934779cc0a7d7eecd5764c024bb0784d939d59ab5c3652cb19ca84be88c4829"
+    },
+    {
+      "bytes": 49126,
+      "path": "validation-request-b-01.json",
+      "sha256": "cdafc77bcca391736b705012b088640829de65d3f5baed31934b4b2cedfa2017"
+    },
+    {
+      "bytes": 1148,
+      "path": "b-01-result.json",
+      "sha256": "40c86199086c99f1392e57d53fba721f57730ceedd8ec18bac1c985894cef11b"
+    },
+    {
+      "bytes": 957,
+      "path": "b-01-execution.json",
+      "sha256": "8258ace58781f0e16204e8310dbfc5ce100e6b644bbf3ca302305faf5386ea97"
+    },
+    {
+      "bytes": 2086,
+      "path": "b-01-stdout.log",
+      "sha256": "7a59f8417f3005ba45b1a4b58dd5d18d57341002e88b56d58245521313beef15"
+    },
+    {
+      "bytes": 0,
+      "path": "b-01-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 46509,
+      "path": "b-01-junit.xml",
+      "sha256": "49a9f08dd6cf6b0e4ac6cd98ad80dc9d0de995f4abb68a8754dd97729852e7e0"
+    },
+    {
+      "bytes": 49497,
+      "path": "validation-request-c-02.json",
+      "sha256": "7cacb8e6ee76931b261e5f9dd1be57953deb20ad93624fc277fe483552d49475"
+    },
+    {
+      "bytes": 735,
+      "path": "c-02-result.json",
+      "sha256": "33b3bc063b56e507804aec70e05dadbef7f6a4cc34b6b5e8dc5ebea3f7bba794"
+    },
+    {
+      "bytes": 543,
+      "path": "c-02-execution.json",
+      "sha256": "eb7ade586b1e1d19b403436382d3daedb84393b558e0e73135fbe52182ade979"
+    },
+    {
+      "bytes": 411,
+      "path": "c-02-stdout.log",
+      "sha256": "d08e152c29925878b622aa545f1a3b0696532f1a80b5426c581e2cb2e57bec60"
+    },
+    {
+      "bytes": 0,
+      "path": "c-02-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 49340,
+      "path": "validation-request-a-01.json",
+      "sha256": "e223ee8573c5aec4c4e22dba2bbf36ea043d76090abae61eeaae1d3f4dd05dfe"
+    },
+    {
+      "bytes": 75015,
+      "path": "a-01-failed-junit.xml",
+      "sha256": "e42e3a62957ef569b63bf3bff9a229f283199de276c576249045acec1bc557c6"
+    },
+    {
+      "bytes": 12466,
+      "path": "a-01-failed-stdout.log",
+      "sha256": "d21663e642e8820acf7ca381d110f96531da2e2d61d8b79da3299fa010c86e8c"
+    },
+    {
+      "bytes": 1206,
+      "path": "a-01-failure.json",
+      "sha256": "6c7224fbf8c1d1308e9998198c879bdbe0c79dbfdeb1f80447d1de654b4fbc71"
+    },
+    {
+      "bytes": 14524,
+      "path": "pre-environment-fix/test_definition_use_review_v2_graph_exchange.py.txt",
+      "sha256": "e1bc28d32f69f8a2c0b38b9461f343b5050e76bd97eeb3a655c1b10e4b5a0a9f"
+    },
+    {
+      "bytes": 11030,
+      "path": "pre-environment-fix/test_definition_use_v2_graph_exchange.py.txt",
+      "sha256": "f3b81ddda224ad147f592ca53cbb44c162e5cb952f310a53c2632390522c7e36"
+    },
+    {
+      "bytes": 11149,
+      "path": "actual-source-replay-receipt.json",
+      "sha256": "3e2b421aed87627b540712de89d7d8cfc00b7fd1dcb9966ac54044d62383c82b"
+    },
+    {
+      "bytes": 2442,
+      "path": "retained-read-inputs.json",
+      "sha256": "2d3cfb44227bf8705d2fd7efb74773ce644a94e87a8593585708094a811b75f3"
+    },
+    {
+      "bytes": 17801,
+      "path": "independent-audit.json",
+      "sha256": "6e1783cba8364cc09e82f47ddd9ab4eaebcf1479d23516e97ae1d0181b32cfbd"
+    },
+    {
+      "bytes": 3733,
+      "path": "recovery-a-01-audit.json",
+      "sha256": "76eaabe5fdb419b163e454db29dd19f6f7c6775aebb517d0c17ce5fedf5a3834"
+    },
+    {
+      "bytes": 7006,
+      "path": "main-reconciliation.json",
+      "sha256": "82ded6b5738c2f01986eb49a8cea52d368094bd5c378237d6c0201ab71714466"
+    }
+  ],
+  "existing_models_or_embeddings_changed": false,
+  "existing_research_references": [
+    {
+      "bytes": 8532,
+      "path": "docs/autoformalization/legal-modality-conditions-retention-20261015.md",
+      "present_unchanged_in_base_tree": true,
+      "published_commit": "c13e83f4e82d5839465744eef19d4240ca378be0",
+      "sha256": "44f7303d44b9240d9842b9e97d73813b4cb2db66610cca9c9c2e95328eba9c29",
+      "working_tree_file_present": false
+    },
+    {
+      "bytes": 6147,
+      "path": "docs/autoformalization/legal-conditions-composition-20261015.md",
+      "present_unchanged_in_base_tree": true,
+      "published_commit": "efa831ae390880fd0c7e8f7e475db284b37ab6dd",
+      "sha256": "014e1487e079beb3d85892c8d6d012ec79048635b2539f5bcd93ae766648aa2b",
+      "working_tree_file_present": false
+    },
+    {
+      "bytes": 21660,
+      "path": "docs/implementation/reports/AUTOENCODER_MODALITY_REUSE_20260929.md",
+      "present_unchanged_in_base_tree": true,
+      "published_commit": "3666ebad19422b8345ebe5432a1c02f26d2eba4c",
+      "sha256": "bd2a5d282807e207a1172d8addd9dc03a4526aa9d35b05ef3edaf80121ef709b",
+      "working_tree_file_present": false
+    }
+  ],
+  "failed_prior_attempt": {
+    "cause": "cold child replaced explicit dependency PYTHONPATH under PYTHONNOUSERSITE=1; multiformats was unavailable",
+    "executed": 297,
+    "failed": 4,
+    "failed_evidence_preserved": true,
+    "failed_outcome_promoted": false,
+    "fix": "owned source root first, retain inherited explicit PYTHONPATH; user-site isolation unchanged",
+    "group": "a-01",
+    "passed": 293,
+    "storage_claim_closeout": {
+      "artifact_bytes": 1719755,
+      "artifact_bytes_deleted": 0,
+      "artifact_count": 77,
+      "audit": "recovery-a-01-audit.json",
+      "failed_outcome_promoted": false,
+      "method": "existing exact retained-reservation recovery API; require_capacity",
+      "released_storage_promise_bytes": 268435456
+    }
+  },
+  "formal_corpus_or_Lean_admitted": false,
+  "groups": {
+    "a-02": {
+      "archived_unrelated_test_preimages": [],
+      "completed": true,
+      "current_unchanged_pin_count": 202,
+      "declared_source_pin_count": 202,
+      "distinct_cases": 297,
+      "durability_sha256": "5e171bfc70c62e038acb8a639729a1aedf66a82b3e7d80a6f356bee258b25296",
+      "errors": 0,
+      "failures": 0,
+      "final_attempt_bytes": 1710656,
+      "final_attempt_file_count": 78,
+      "junit_sha256": "2934779cc0a7d7eecd5764c024bb0784d939d59ab5c3652cb19ca84be88c4829",
+      "modules": {
+        "tests.unit.logic.autoformal.test_corpus_definition_review_v2": 51,
+        "tests.unit.logic.autoformal.test_corpus_definition_use_review_v2": 49,
+        "tests.unit.logic.autoformal.test_corpus_definition_use_v2": 44,
+        "tests.unit.logic.autoformal.test_corpus_imports": 7,
+        "tests.unit.logic.autoformal.test_definition_use_review_v2_graph_exchange": 3,
+        "tests.unit.logic.autoformal.test_definition_use_v2_graph_exchange": 3,
+        "tests.unit.logic.autoformal.test_legal_graph_dependencies": 18,
+        "tests.unit.logic.autoformal.test_legal_graph_review": 48,
+        "tests.unit.logic.autoformal.test_scoped_definition_resolution": 74
+      },
+      "native_selected_record_sha256": "6f3a6f3769b11218ec42e5e59c3a82763ce7896b543b8e5d6205e92d9a59e2e6",
+      "native_status": "released",
+      "pytest_cases": 297,
+      "request_sha256": "6aac164acabfaf7913f4019c7dbbca0c72c4f6824211fb430216e39f3e715de3",
+      "returncode": 0,
+      "sealed_payload_file_count": 77,
+      "selected_checks": [
+        "tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py",
+        "tests/unit/logic/autoformal/test_corpus_definition_use_v2.py",
+        "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py",
+        "tests/unit/logic/autoformal/test_legal_graph_review.py",
+        "tests/unit/logic/autoformal/test_scoped_definition_resolution.py",
+        "tests/unit/logic/autoformal/test_legal_graph_dependencies.py",
+        "tests/unit/logic/autoformal/test_corpus_imports.py",
+        "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py",
+        "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py"
+      ],
+      "semantic_or_Lean_authority": false,
+      "skipped": 0,
+      "storage_bytes": 268435456
+    },
+    "b-01": {
+      "archived_unrelated_test_preimages": [
+        "test_definition_use_review_v2_graph_exchange.py",
+        "test_definition_use_v2_graph_exchange.py"
+      ],
+      "completed": true,
+      "current_unchanged_pin_count": 200,
+      "declared_source_pin_count": 202,
+      "distinct_cases": 244,
+      "durability_sha256": "ce9ffaf958e5f71ceeda69fb0fa7f790ebf2a5c4a943691892706561649db347",
+      "errors": 0,
+      "failures": 0,
+      "final_attempt_bytes": 91343,
+      "final_attempt_file_count": 14,
+      "junit_sha256": "49a9f08dd6cf6b0e4ac6cd98ad80dc9d0de995f4abb68a8754dd97729852e7e0",
+      "modules": {
+        "tests.unit.logic.autoformal.test_corpus_definition_adapter_v2": 13,
+        "tests.unit.logic.autoformal.test_legal_official_markup_context": 33,
+        "tests.unit.logic.autoformal.test_legal_source_definition_bridge_v2": 35,
+        "tests.unit.logic.autoformal.test_legal_source_sampling": 29,
+        "tests.unit.logic.autoformal.test_legal_source_sampling_definition_binding_v2": 59,
+        "tests.unit.logic.autoformal.test_legal_source_sampling_review": 47,
+        "tests.unit.logic.autoformal.test_legal_source_sampling_review_handoff": 28
+      },
+      "native_selected_record_sha256": "d20760023f4ea7a4587ab9f207fc0e8aded6213972d858302c599bf8f4486980",
+      "native_status": "released",
+      "pytest_cases": 244,
+      "request_sha256": "cdafc77bcca391736b705012b088640829de65d3f5baed31934b4b2cedfa2017",
+      "returncode": 0,
+      "sealed_payload_file_count": 13,
+      "selected_checks": [
+        "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+        "tests/unit/logic/autoformal/test_legal_source_sampling_review_handoff.py",
+        "tests/unit/logic/autoformal/test_legal_source_sampling.py",
+        "tests/unit/logic/autoformal/test_legal_source_sampling_review.py",
+        "tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py",
+        "tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py",
+        "tests/unit/logic/autoformal/test_legal_official_markup_context.py"
+      ],
+      "semantic_or_Lean_authority": false,
+      "skipped": 0,
+      "storage_bytes": 268435456
+    },
+    "c-02": {
+      "archived_unrelated_test_preimages": [],
+      "completed": true,
+      "current_unchanged_pin_count": 208,
+      "declared_source_pin_count": 208,
+      "durability_sha256": "145d7202b41f8d98077729c87e9c9c0c43f6fa15c83705f13715522ea9858b69",
+      "final_attempt_bytes": 7059744,
+      "final_attempt_file_count": 31,
+      "native_selected_record_sha256": "f5c51a8b542154fc776a242283af5ca9e7a76c262fe99073d716284934c650ac",
+      "native_status": "released",
+      "request_sha256": "7cacb8e6ee76931b261e5f9dd1be57953deb20ad93624fc277fe483552d49475",
+      "returncode": 0,
+      "sealed_payload_file_count": 30,
+      "selected_checks": [
+        "retained-uscode-10-section-101-enlisted-member-definition-binding-fol-and-tdfol-with-six-refusal-controls"
+      ],
+      "semantic_or_Lean_authority": false,
+      "storage_bytes": 268435456
+    }
+  },
+  "independent_audit": {
+    "path": "independent-audit.json",
+    "sha256": "6e1783cba8364cc09e82f47ddd9ab4eaebcf1479d23516e97ae1d0181b32cfbd",
+    "status": "pass"
+  },
+  "model_training_run": false,
+  "passing_pytest_cases": 541,
+  "post_validation_main_reconciliation": {
+    "concurrent_main_commit": "f84512733dd1a40bfe07d030337136fb08b1c652",
+    "path": "main-reconciliation.json",
+    "post_merge_matching_pins": {
+      "a-02": {
+        "matching_current_pins": 202,
+        "upstream_changed_pin_count": 0
+      },
+      "c-02": {
+        "matching_current_pins": 208,
+        "upstream_changed_pin_count": 0
+      }
+    },
+    "sha256": "82ded6b5738c2f01986eb49a8cea52d368094bd5c378237d6c0201ab71714466"
+  },
+  "preserved_contributions": [
+    {
+      "exact_bytes_preserved": true,
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py",
+      "sha256": "9a46a3efb5ce17b14ed55f719bd5dc1a48e727cb9168f2f17c5f0cd32bf821a0",
+      "source_commit": "e289e1bc059f3ad975bc2c3072a077a676337e4a"
+    },
+    {
+      "exact_bytes_preserved": true,
+      "path": "tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py",
+      "sha256": "84a63cc3959d2e513180e1705fc525dc2ef108744b1063b49a7e466d6dac0a4a",
+      "source_commit": "e289e1bc059f3ad975bc2c3072a077a676337e4a"
+    },
+    {
+      "exact_bytes_preserved": true,
+      "path": "docs/autoencoders/corpus_definition_use_review_v2.md",
+      "sha256": "44706e2b8a6efc89023ad12d80024afc762b6a28bae7abeddf9d3822cb6e78bc",
+      "source_commit": "e289e1bc059f3ad975bc2c3072a077a676337e4a"
+    },
+    {
+      "exact_bytes_preserved": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+      "sha256": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417",
+      "source_commit": "f9b69c7aa"
+    },
+    {
+      "exact_bytes_preserved": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review_handoff.py",
+      "sha256": "d1aa5ceef271284ed25fdf807bc4d98fe93ebfebd952660b9885ade10c536d89",
+      "source_commit": "f9b69c7aa"
+    },
+    {
+      "exact_bytes_preserved": true,
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_definition_binding_v2.py",
+      "sha256": "bc7e401a591f53abe666e025daa908542c250d66fe61a5db51e3a13d5c21d009",
+      "source_commit": "f9b69c7aa"
+    },
+    {
+      "exact_bytes_preserved": true,
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling_review_handoff.py",
+      "sha256": "7f6b3632aa5864d98582d5d2f839af0ba37ce08d9b4860600e68821b1bf53ab5",
+      "source_commit": "f9b69c7aa"
+    }
+  ],
+  "recovery_a_01_audit": {
+    "path": "recovery-a-01-audit.json",
+    "sha256": "76eaabe5fdb419b163e454db29dd19f6f7c6775aebb517d0c17ce5fedf5a3834",
+    "status": "pass"
+  },
+  "retained_assets_replaced": false,
+  "retained_large_bundle_custody": {
+    "bytes": 5664497,
+    "custody": "pinned driver literal length/transport hash and canonical bundle/sampling hashes; checked before export and after export",
+    "native_source_pin": false,
+    "read_inputs_manifest": "retained-read-inputs.json",
+    "reason": "exceeds unchanged 4 MiB native per-file source-pin ceiling"
+  },
+  "schema": "legal-ir-definition-use-review-v2-integration/v1",
+  "selected_test_modules": 16,
+  "source_base_commit": "234dc97a2fedb864c99add7f0d8e37ba81c785cf",
+  "source_inventory_scope": "finite selected owner/producer cohort; not complete dynamic import or distribution closure",
+  "supporting_files": [
+    {
+      "bytes": 2688,
+      "path": "README.md",
+      "sha256": "fb1022c73502973d2b1476315d7f37d380b8b94fc4c2b78027c6b8b1c430fe8b"
+    },
+    {
+      "bytes": 28445,
+      "path": "run_actual_definition_binding.py",
+      "sha256": "c483c0f1abbfa7f8cf5471f7a710feaa474b3cefb6f7da0c89ae76c31b9545ff"
+    }
+  ]
+}

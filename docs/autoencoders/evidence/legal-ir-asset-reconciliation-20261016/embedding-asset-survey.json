@@ -1,0 +1,1703 @@
+{
+  "authority": {
+    "current_runtime_load_qualified": false,
+    "gold_admitted": false,
+    "legal_meaning_verified": false,
+    "model_promoted": false,
+    "model_registered": false,
+    "proof_admitted": false,
+    "source_fidelity_established": false,
+    "teacher_qualified": false
+  },
+  "checkout": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016",
+  "critical_reconciliation": {
+    "finding": "Later native-conditioning artifacts preserve real multilingual production, an executed480-pair affine fit and trained768 interface checkpoints. Earlier zero-pair/zero-fit preparation receipts remain correct for those attempts but do not describe all retained work.",
+    "later_available_asset_roots": [
+      "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets",
+      "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets"
+    ],
+    "next_action": "Reuse retained later artifacts and staged assets after exact integrity/current-runtime compatibility checks; do not automatically redownload, re-encode or restart copied decoder bodies.",
+    "older_expected_asset_directories": [
+      {
+        "exists": false,
+        "path": "/home/barberb/lift_coding/artifacts/gte-multilingual-assets/model"
+      },
+      {
+        "exists": false,
+        "path": "/home/barberb/lift_coding/artifacts/gte-multilingual-assets/code"
+      }
+    ],
+    "older_unavailable_receipts": [
+      {
+        "path": "/home/barberb/lift_coding/artifacts/gte-decoder-native-preparation-20261002/run-01/summary.json",
+        "status": "unavailable"
+      },
+      {
+        "path": "/home/barberb/lift_coding/artifacts/gte-affine-alignment-preparation-20261001/run-02/summary.json",
+        "status": "unavailable"
+      },
+      {
+        "path": "/home/barberb/lift_coding/artifacts/gte-aligned-decoder-preparation-20261002/run-01/summary.json",
+        "status": "unavailable"
+      }
+    ]
+  },
+  "execution_counts_here": {
+    "database_opens": 0,
+    "encoder_calls": 0,
+    "foreign_writes": 0,
+    "model_loads": 0,
+    "network_requests": 0,
+    "numerical_reloads": 0,
+    "payload_rehashes": 0,
+    "product_imports": 0,
+    "tensor_model_dataset_payload_reads": 0,
+    "training": 0
+  },
+  "highest_value_reuse": [
+    {
+      "bytes": 398209746,
+      "id": "historical8_teacher",
+      "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+      "role": "Retained linguistic/sparse numerical teacher. Does not supply the experimental formulaGRU. Originalproducer configuration and independentheld-out quality remain separate gaps."
+    },
+    {
+      "checkpoint": {
+        "bytes": 128924,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/formula-head.json",
+        "sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe"
+      },
+      "codec_entries": 18,
+      "id": "8D_formula_donor",
+      "inputs": {
+        "bytes": 2313,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/schema/inputs.json",
+        "sha256": "2180ac2d5d0b666d4f3088ded217e31d630a00b68fe736b81d2b8e28ed07107d"
+      },
+      "max_output_tokens": 64,
+      "origin": "Explicit synthetic cached vectors; original pairwise projection reconstructs rawlatents, not a first-eight-coordinate GTE slice.",
+      "rows": 2,
+      "semantic_KD_eligible": false
+    },
+    {
+      "V2_rows": {
+        "canary": 30,
+        "test": 60,
+        "train": 180,
+        "validation": 60
+      },
+      "V3_vectors_remain_alignment_usable": true,
+      "checkpoint": {
+        "bytes": 614534,
+        "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+        "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+      },
+      "codec_entries": 32,
+      "exposed_exact_target_control": "0/60",
+      "id": "384D_GRU_donor",
+      "max_output_tokens": 512,
+      "reference_compatible_V2_train_validation": 240,
+      "reference_compatible_V3_rows": 0,
+      "semantic_KD_eligible": false,
+      "source_cohort_root": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir"
+    },
+    {
+      "checkpoint": {
+        "bytes": 6873498,
+        "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/student-initialization.json",
+        "sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12"
+      },
+      "copied_parameters": 27142,
+      "copied_tensors": 26,
+      "id": "original768_dual_donor_initialization",
+      "manifest": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/manifest.json",
+      "new_interfaces": "768to384affine boundary and shared-conditionto8connector",
+      "optimizer_resume_supported": false,
+      "representation_id": "legal_ir:dual_donor_768_decoder:e7effa4359407382e4b984e6b777f77f53428e728151466276c5501ce5ad70ce",
+      "status": "initialized_unaligned"
+    },
+    {
+      "LegalIR_V3_affine_receipts": 480,
+      "affine_receipts": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-embeddings/receipts.json",
+      "context": "242and480are differentsourcecohorts, not additiveunique-span coverage. Existingnative receipts must be joined to exacttask/source/profile inputs before encoding missing items.",
+      "global_manifest_binding": "incomplete",
+      "id": "completed_native768_source_receipts",
+      "old_decoder_receipts": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/embeddings-complete/receipts.json",
+      "old_decoder_selected_ready_rows": 18,
+      "old_decoder_source_tasks": 242,
+      "other_domains_not_requested": 1440
+    },
+    {
+      "auxiliary_connector_fitted_at_this_stage": false,
+      "candidate_fits": 3,
+      "fit_report": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-alignment/fit-report.json",
+      "fitted_bridge": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-alignment/fitted-bridge.json",
+      "fitted_bridge_sha256": "ecebc7a009162ef42f796fc294b6778c040d9bd2ef05ffd2c059972188907b72",
+      "id": "executed_affine_boundary",
+      "initialization_sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12",
+      "manifest": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-alignment/manifest.json",
+      "pairs": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-alignment/pairs.json",
+      "plan": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-alignment/plan.json",
+      "selected_regularization": 0.001,
+      "semantic_accuracy": null,
+      "status": "fitted_unqualified",
+      "train_pairs": 360,
+      "validation_mean_squared_L2": 0.002603819629455752,
+      "validation_pairs": 120,
+      "validation_used_for_fit": false
+    },
+    {
+      "checkpoint": {
+        "bytes": 6360717,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/aligned-interface-precise-01/trained-interfaces.json",
+        "sha256": "4557e89d0a8f9c77ceed13b8df9b4e0c247a32b37003e7f559d2e195a23230ef"
+      },
+      "current_numerical_reload_performed": false,
+      "free_running_or_held_out_statutory_accuracy": null,
+      "frozen_inherited_tensors": 26,
+      "historical_reload30_tensors_equal": true,
+      "historical_trained_reference_outputs_match": true,
+      "id": "trained_aligned_interface_candidate",
+      "manifest": {
+        "bytes": 39453,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/aligned-interface-precise-01/manifest.json",
+        "sha256": "5ece358484545903d70ebc0c99ca761ee28f035b1d01b6ea92a1af46c722f6d5"
+      },
+      "optimizer_resume_supported": false,
+      "optimizer_steps": 8,
+      "production_KD_eligible": false,
+      "reload_verification": {
+        "bytes": 4101,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/aligned-interface-precise-01/reload-verification.json",
+        "sha256": "24c49e44c3458db52f0f772053d26b663f594cf218bc9395322296aea64cf02b"
+      },
+      "representation_id": "gte-768-aligned-reference-interfaces:sha256:596a337ae6423e7bd28fb2ed63817467a4ef87d989011794eee8ec9bb6b64bb9",
+      "rows": 18,
+      "runtime_provenance_limit": "Temporary private precise-gradient-clipping substitution afterCPUbudget admission, restored before reload. Outer runtime wrapper is required provenance; inner implementationpinsalone are explicitly incomplete.",
+      "runtime_receipt": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/aligned-interface-precise-01-runtime.json",
+      "status": "trained_unqualified",
+      "trainable_interface_tensors": 4
+    },
+    {
+      "checkpoint": {
+        "bytes": 6347807,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/original-interface-precise-01/trained-interfaces.json",
+        "sha256": "1ffa63c4f95ff93ce40b16fee63eb766e0baf412f58b837b3addeb6b55154b00"
+      },
+      "frozen_inherited_tensors": 26,
+      "id": "trained_original_start_control",
+      "optimizer_steps": 8,
+      "production_KD_eligible": false,
+      "representation_id": "gte-768-dual-reference-interfaces:sha256:bcd43cbdf762817f3093df5c87abe0d9c42caeb5779fca048c953f2c48dc44fa",
+      "rows": 18,
+      "runtime_receipt": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/original-interface-precise-01-runtime.json",
+      "status": "trained_unqualified"
+    },
+    {
+      "caveat": "Actual source-only featurehash8/GTE384/GTE768 development caches, distinct from donorV2/V3corpora. Match source/split/task/receipt schemas before new use; not statutorygold.",
+      "context_applied": false,
+      "evaluation_role": "exposed_development",
+      "id": "matched_richer_three_lane_cache",
+      "input_binding": {
+        "bytes": 17282,
+        "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-embedding-01/embedding_inputs.json",
+        "sha256": "072b5e7479499bd232715ec72bfe157c0dafb80c0bb9c140423c867c9f751f99"
+      },
+      "lanes": {
+        "legacy8": {
+          "bytes": 74282,
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-embedding-01/legacy8_embeddings.json",
+          "sha256": "aa929c0836f592d2217e748fa7ee452c955ef2466497ee72efca2a859e08930c"
+        },
+        "native384": {
+          "bytes": 629044,
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-embedding-01/native384_embeddings.json",
+          "sha256": "14acf84a107d2bbdea3df8af9009f97ae670a3c45125e454c3a00312a78f7107"
+        },
+        "native768": {
+          "bytes": 1748842,
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-embedding-01/native768_embeddings.json",
+          "sha256": "d169295841e14829d896a81b48630d39f85537380df8e581b7440671ac49d2a9"
+        }
+      },
+      "query_targets_used_in_embedding": false,
+      "report": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-embedding-01/report.json",
+      "rows_per_lane": 34
+    },
+    {
+      "caveat": "These1485featurehashrows and the two synthetic formula-head inputs have different coordinate contracts.",
+      "historical_sparse_reconstruction_weights_used": false,
+      "id": "source_only_historical8_features",
+      "producer_bundle": {
+        "bytes": 4558389,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/historical8/historical-linguistic-features8.json",
+        "sha256": "920f8ea71140ce1feb6b823e1a982ff818f379356584c0f32452c2dc51ac956d"
+      },
+      "rows": 1485,
+      "source_inputs": {
+        "bytes": 429852,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/historical8/source-inputs.json",
+        "sha256": "5a292fe09b56f3e2df66e77da1ab50fffa11ef0c5496f8860054b5d0aa8bfbce"
+      },
+      "source_target_access": false,
+      "summary": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/historical8/summary.json"
+    },
+    {
+      "artifact_receipts": {
+        "384": {
+          "checkpoint": {
+            "bytes": 2799098,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+            "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+          },
+          "donor_checkpoint": {
+            "bytes": 614534,
+            "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+            "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+          },
+          "preprocessing": {
+            "bytes": 1510086,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/preprocessing.json",
+            "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+          },
+          "source_contexts": {
+            "bytes": 2295925,
+            "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-contexts.json",
+            "sha256": "3f124ce3210c68207d8405311742e5d5bedb43eab4f7c93cbf833aa7f5a223a2"
+          },
+          "source_inputs": {
+            "bytes": 532522,
+            "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-inputs.json",
+            "sha256": "722f9909868d545b54d5a1fe5a19880ccefa8e21d1d7f9b6fd1548d78494e7da"
+          }
+        },
+        "768": {
+          "checkpoint": {
+            "bytes": 4781613,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+            "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+          },
+          "donor_checkpoint": {
+            "bytes": 614534,
+            "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+            "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+          },
+          "preprocessing": {
+            "bytes": 2864122,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/preprocessing.json",
+            "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+          },
+          "source_contexts": {
+            "bytes": 4520563,
+            "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-contexts.json",
+            "sha256": "a8353fe8311702f4adeb1aa483cdda218a48cc1327309737b5f0680d2a8b2529"
+          },
+          "source_inputs": {
+            "bytes": 1051554,
+            "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-inputs.json",
+            "sha256": "e44720b13acb52306bb951ff500aa067a3c4ebe4a060139367e1d465e6511bd4"
+          }
+        }
+      },
+      "caveat": "Saved vectors/checkpoints/transforms exist. Width/cachecustody alone does not join exact multilingual nativeproducerprofile; preparation leaves nativeprofile/sourcebudget/teacher flagsfalse. No8192qualification.",
+      "dimension_role": "input_embedding",
+      "encoder_experiment_tokens": 512,
+      "id": "contextual384_768_formula_lanes",
+      "input_contracts": {
+        "384": {
+          "clause_vectors": "original_raw_cached_vectors",
+          "clause_width": 384,
+          "decoder_feature_normalizations": "saved_separate_paragraph_and_clause_stages_once",
+          "max_source_clauses": 8,
+          "paragraph_width": 384,
+          "source_only": true,
+          "transform_order": "saved_TRAIN_input_transform_then_zero_pad_to_eight"
+        },
+        "768": {
+          "clause_vectors": "original_raw_cached_vectors",
+          "clause_width": 768,
+          "decoder_feature_normalizations": "saved_separate_paragraph_and_clause_stages_once",
+          "max_source_clauses": 8,
+          "paragraph_width": 768,
+          "source_only": true,
+          "transform_order": "saved_TRAIN_input_transform_then_zero_pad_to_eight"
+        }
+      },
+      "max_source_clauses": 8,
+      "metadata_plans": {
+        "384": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-metadata-plan.json",
+        "768": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-metadata-plan.json"
+      },
+      "output_token_limit": 512,
+      "task": "semantic_IR_reconstruction"
+    },
+    {
+      "accepted_structural": {
+        "bytes": 13402647,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/head-probe-v1/exports/structural.candidate.state.json",
+        "sha256": "dadf1964dc6dbf9c89dbe360dd06908e24d299b5f80f5b6e2014967361932312"
+      },
+      "architecture": "proof_aware_auxiliary_heads_v2",
+      "caveat": "Native384USCode vector lineage is separately recorded; this auxiliary sparse state is not the same architecture as the formulaGRU or F18sourcepointer lineage.",
+      "embedding_lineage": {
+        "archived_input_token_counts": [
+          118,
+          81
+        ],
+        "dimensions_in_each_archived_sample": 384,
+        "metadata_attribution_only_no_new_encoder_or_model_asset_verification": true,
+        "receipt": {
+          "bytes": 434558,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/native-embeddings-20260925-r2/embedding-production.json",
+          "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa"
+        },
+        "recorded_context_tokens": 512,
+        "recorded_kind": "native",
+        "recorded_model_id": "thenlper/gte-small",
+        "recorded_model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+        "recorded_truncation": false,
+        "same_revision_both_rows": true
+      },
+      "id": "native384_auxiliary_heads",
+      "metadata_anchor": "/home/barberb/lift_coding/.worktrees/legal-ir-execution-plan-refresh-20261016/docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/asset-provenance.json",
+      "parent": {
+        "bytes": 7204344,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/4f/4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+        "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+      }
+    }
+  ],
+  "limits": [
+    "Declared payloadhashes were not freshly verified. Metadatahashes and physicalexistence/size do not constitute tensorcontent or currentnumericalcompatibility validation.",
+    "Retained native production/fit/reload results are attributed historical observations, not new execution-time authentication. Explicit producer_execution_authenticated/training_execution_authenticated=false flags remain in relevant reports.",
+    "No currentModelManagerDB opened; no system-wide absence claim. Readable artifact roots and defaultuserHFcache were surveyed without touchingforeignwork.",
+    "Initial8Dproducer details and each source/schema/task/codec/transform/context/precision/token contract still require exact matching. Short nativeproduction does not qualify maximum-lengthnumerics or semanticgeneralization."
+  ],
+  "metadata_files_read_and_hashed": [
+    {
+      "bytes": 1359,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-native-preparation-20261002/run-01/summary.json",
+      "sha256": "a34992deb788b6b821929c7c3eaa82023fff832704bce98eca24fe86cc9bc894"
+    },
+    {
+      "bytes": 910,
+      "path": "/home/barberb/lift_coding/artifacts/gte-affine-alignment-preparation-20261001/run-02/summary.json",
+      "sha256": "8b5e735cfa224f097a7c9513cd59575dfc1b5b8e0be2e7f6ca04e63eb114882a"
+    },
+    {
+      "bytes": 996,
+      "path": "/home/barberb/lift_coding/artifacts/gte-aligned-decoder-preparation-20261002/run-01/summary.json",
+      "sha256": "a602762fee0c33213781bf10733ab5d8e6782d11f7b8ffd2d74d29830a2e52a5"
+    },
+    {
+      "bytes": 9002,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/manifest.json",
+      "sha256": "2b8017707f5619262b6cdf1d86f73035322fa6f3a9e5a521c2a42c029bf55cde"
+    },
+    {
+      "bytes": 1236,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/summary.json",
+      "sha256": "d42ae4124d1e30a25f1f89ff1dbe133f4c64059bd7c6b1e5e054d5a4272cbb74"
+    },
+    {
+      "bytes": 5392,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-transfer-preparation-20261002/cohort-audit.json",
+      "sha256": "039b9529843a59ce7f039837da37be3826b0d91cfab65d1401c21bfcfa396286"
+    },
+    {
+      "bytes": 19275,
+      "path": "/home/barberb/lift_coding/artifacts/gte-embedding-reuse-20261002/archive-reuse-audit.json",
+      "sha256": "4218b8d58fc09cb6b06610936b13855f4f0a6fb0447f6ec5473332941c89c593"
+    },
+    {
+      "bytes": 8129,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-alignment/fit-report.json",
+      "sha256": "74699c49dc64e7864d405d3dacee9e81b140f5ca92c7f4929da7e815c3ffac0b"
+    },
+    {
+      "bytes": 9304,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-alignment/manifest.json",
+      "sha256": "0262b94f80698111bb90d99cbd07d9dfe579292291c31228f6ead23d8048c4b4"
+    },
+    {
+      "bytes": 785,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-alignment/summary.json",
+      "sha256": "9201756b560d566cc97792256fa9b5ccef24c33bec6fef5db8a0aac231303d41"
+    },
+    {
+      "bytes": 6827,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/aligned-interface-precise-01-runtime.json",
+      "sha256": "ca4afaeef38c71bd00448ea390e750e12411931460352d2ac7596e5cecc2a3e4"
+    },
+    {
+      "bytes": 6146,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/original-interface-precise-01-runtime.json",
+      "sha256": "7b07398af4b541d523133797d56e2c82149baaf2ce8e84e4a2535aa8529b9994"
+    },
+    {
+      "bytes": 1863,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/aligned-interface-precise-01/summary.json",
+      "sha256": "6b83aa2f0755edc8ab676b332b7c6fa6a32560681df3a6105b2d546fcb89b31c"
+    },
+    {
+      "bytes": 1212,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/original-interface-precise-01/summary.json",
+      "sha256": "9fe3e0af3a70625ecd619b5fefb8ff94ade2b0648d36b757dfe2ea91f43858ce"
+    },
+    {
+      "bytes": 4101,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/aligned-interface-precise-01/reload-verification.json",
+      "sha256": "24c49e44c3458db52f0f772053d26b663f594cf218bc9395322296aea64cf02b"
+    },
+    {
+      "bytes": 1749,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/aligned-interface-precise-01/checkpoint-inspection.json",
+      "sha256": "70038d03c46a2d8efc61665b02672dc93c80178a1fb7381d0542bc4ec7166bbe"
+    },
+    {
+      "bytes": 499,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/embeddings-complete/summary.json",
+      "sha256": "3e5168cc0a220e47869930eb552cd11ca2d3c2c5b92a4be35bb7fb546bb0377b"
+    },
+    {
+      "bytes": 630,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-embeddings/summary.json",
+      "sha256": "9094b4b276698bca5ceab0d8f3c204c32880282e30206d3a37a9e3b0c4f3ef9d"
+    },
+    {
+      "bytes": 3617,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/download-report.json",
+      "sha256": "744029056d8e51f89f14818e737502e38bdd4010c525356a03c2250ec2843803"
+    },
+    {
+      "bytes": 21132,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/delivery-report.json",
+      "sha256": "a4a8ce827df2a78ca8e07b0ab80e4f4cef2cfeb7d5d769a20726bb9e02d06f19"
+    },
+    {
+      "bytes": 25282,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-embedding-01/report.json",
+      "sha256": "1c663860ededddead242464a78a8a672a57a5c6727924b98108e0edc1399776b"
+    },
+    {
+      "bytes": 3606,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/staging.json",
+      "sha256": "f143b9f468a63c420c3e581a83753fe087a34671a4597c723cdb4ba233f0b523"
+    },
+    {
+      "bytes": 2338,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/historical8/summary.json",
+      "sha256": "826e5d2afa646e5b138bf81e96e8e64c1322f9ac9da116da33eacdd17ce019e9"
+    },
+    {
+      "bytes": 43214,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-metadata-plan.json",
+      "sha256": "a8ae1307d14c38327d776281bb534b8fc2bac3119cb92da9ab2584f5a99c1d79"
+    },
+    {
+      "bytes": 43215,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-metadata-plan.json",
+      "sha256": "d54e0935cd343d21bd02f3f6caad930799c29d804dcb5d5b36d971456b24fa65"
+    },
+    {
+      "bytes": 22412,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-execution-plan-refresh-20261016/docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/asset-provenance.json",
+      "sha256": "93f6b005a514ac5c5cf9f7ef9d20158a01a67fd9d36df8bd3d8addb627f15086"
+    },
+    {
+      "bytes": 583,
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/config.json",
+      "sha256": "00273cdfb3e05c7304d180270bdef8adae45023e7bdfc396338bdd815943dc59"
+    },
+    {
+      "bytes": 394,
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/tokenizer_config.json",
+      "sha256": "e1790949631401af1bfb6c9c7aeec7fcf612e274d73579d99f704faea40c8ba7"
+    },
+    {
+      "bytes": 190,
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/1_Pooling/config.json",
+      "sha256": "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23"
+    },
+    {
+      "bytes": 385,
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/modules.json",
+      "sha256": "73348a3d8f8ae4cc5f851dc6b98be3ea819390b814e83656d5eebbadf75fe43e"
+    },
+    {
+      "bytes": 1429,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets/model/config.json",
+      "sha256": "711bdc81365fc25d30533cf05b9fdf588e5ba01f18540fbbb1307d787597a313"
+    },
+    {
+      "bytes": 1149,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets/model/tokenizer_config.json",
+      "sha256": "24cebbf2ef20fc317256e03e52ac7b2ca326586f946a8427ecac036332bf0933"
+    }
+  ],
+  "method": "Bounded retained metadata/receipts plus filesystem names/stat. Payload hashes are original declared commitments; no vector, tensor, checkpoint, model-weight or dataset payload was opened or rehashed. No production imports, inference, training, numerical reload, network payloads, database opens or foreign writes.",
+  "next_actions": [
+    "Read actual ModelManager/catalog identities through the separately admittedread-only job. File existence and historicalmetadata cannot establish registration, publicHubpublication or promotion.",
+    "Authenticate and numerically reload retained4557...alignedcandidate,1ffa...original-startcontrol and7443...initializer under their exact source/codec/outerruntimecontracts. Preserve trained interfaces instead of automatically rerunning fitting or resetting inheritedweights.",
+    "Reuse staged model/codeassets and242/480native receiptcohorts after exact source/task/profile joins; encode only genuinely missingcompatibleinputs. Missingglobalotherdomain1440receipts are not missingcompletedLegalIR480pairs.",
+    "Update stale documentation with explicitly scoped historicalunavailableversuslaterfitted/trainedoutcomes; preserve all originalreceipts unchanged.",
+    "Keep mock8, linguistic8, synthetic rawformula8latents, rawGTE vectors, projectedcore/trainedvectors and target-conditioned observations separate. Reviewedmeaning/teacher/gold and long-context gates remain unchanged."
+  ],
+  "observed_at_utc": "2026-10-16T02:31:52.690604+00:00",
+  "payload_availability_stat_only": [
+    {
+      "current_bytes": 6873498,
+      "declared_bytes": 6873498,
+      "declared_sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12",
+      "exists": true,
+      "kind": "donor_or_initializer",
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/student-initialization.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        39603281,
+        1790897025907928030,
+        1790897025907928030
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 2313,
+      "declared_bytes": 2313,
+      "declared_sha256": "2180ac2d5d0b666d4f3088ded217e31d630a00b68fe736b81d2b8e28ed07107d",
+      "exists": true,
+      "kind": "donor_or_initializer",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/schema/inputs.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        68850461,
+        1790819597923179433,
+        1790819597923179433
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 128924,
+      "declared_bytes": 128924,
+      "declared_sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe",
+      "exists": true,
+      "kind": "donor_or_initializer",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/formula-head.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        68850457,
+        1790819597854399195,
+        1790819597854399195
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 7736,
+      "declared_bytes": 7736,
+      "declared_sha256": "a41eed532b7457b8f2ac41a50046cb3d98853c0df9df5d9742f2c2d34fdb1b28",
+      "exists": true,
+      "kind": "donor_or_initializer",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/inference.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        68850459,
+        1790819597887616002,
+        1790819597887616002
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 1585950,
+      "declared_bytes": 1585950,
+      "declared_sha256": "f4ad1d39677ed3184d019ad8556bf0cabd0957f855281c64343e8dfd73319c7b",
+      "exists": true,
+      "kind": "declared_native384_archive",
+      "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/train.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        7910423,
+        1790873711588030841,
+        1790873711588030841
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 529665,
+      "declared_bytes": 529665,
+      "declared_sha256": "4b55671a16186773dd65fa9b4b2d51aa7677e4ef89504e55b9937b1f9594fac7",
+      "exists": true,
+      "kind": "declared_native384_archive",
+      "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/validation.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        7910424,
+        1790873711594030924,
+        1790873711594030924
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 529323,
+      "declared_bytes": 529323,
+      "declared_sha256": "ea7532abc3c2bcc27ce38dc6358a3898250f62e7cb8fd17af723dd1b85d65444",
+      "exists": true,
+      "kind": "declared_native384_archive",
+      "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/test.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        7910471,
+        1790874483814702011,
+        1790874483814702011
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 265747,
+      "declared_bytes": 265747,
+      "declared_sha256": "9cd569111cdcc7edabf6a47f75f7b8f05630768ee8913aee9483df66841b9eef",
+      "exists": true,
+      "kind": "declared_native384_archive",
+      "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/canary.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        7910472,
+        1790874483817702053,
+        1790874483817702053
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 3113459,
+      "declared_bytes": 3113459,
+      "declared_sha256": "00f4074cca56daed9f766e74c90d3d35e608bfb1058c24db99fc30250314704f",
+      "exists": true,
+      "kind": "declared_native384_archive",
+      "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/train.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        15382446,
+        1790877356765437242,
+        1790877356765437242
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 1038480,
+      "declared_bytes": 1038480,
+      "declared_sha256": "6a07b7a4d7c73802fc4a31a2666adcb312706fcc3deffbc46626d9d8914d43c9",
+      "exists": true,
+      "kind": "declared_native384_archive",
+      "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/validation.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        15382447,
+        1790877356780437459,
+        1790877356780437459
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 1037637,
+      "declared_bytes": 1037637,
+      "declared_sha256": "33288ea40ee902788bb012b98dd48a767405c18090b92981ef82d680ddee0d72",
+      "exists": true,
+      "kind": "declared_native384_archive",
+      "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/test.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        15382474,
+        1790877460347440226,
+        1790877460347440226
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 519374,
+      "declared_bytes": 519374,
+      "declared_sha256": "ac7c55bb4d70f1428d5ecd81595b0546fa325bfb7f4c9ab67ad010dcdba813ec",
+      "exists": true,
+      "kind": "declared_native384_archive",
+      "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/canary.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        15382475,
+        1790877460353600362,
+        1790877460353600362
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 1229270,
+      "declared_bytes": 1229270,
+      "declared_sha256": "c8a58e35a91facfac82e02b9bd883acc80b23b25e6b84dc1a97b9917aefce8cc",
+      "exists": true,
+      "kind": "linguistic8_hash_observations_not_formula_latents",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legacy-teacher-release-20261001/integrated/historical_blank_en/observations.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        68971029,
+        1790825975686109940,
+        1790825975686109940
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 1337382,
+      "declared_bytes": 1337382,
+      "declared_sha256": "e440704648236a1284a3a6d7a13707a6ab0775e8d6df3be9813c130b3a08b136",
+      "exists": true,
+      "kind": "linguistic8_hash_observations_not_formula_latents",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legacy-teacher-release-20261001/integrated/local_en_core_web_sm/observations.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        68971208,
+        1790826114524845527,
+        1790826114524845527
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 190,
+      "declared_bytes": 190,
+      "declared_sha256": "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23",
+      "exists": true,
+      "kind": "cached_GTE_small_asset",
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/1_Pooling/config.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        37619390,
+        1784965543676008229,
+        1784965543677174706
+      ],
+      "size_matches_declared": true,
+      "symlink": true
+    },
+    {
+      "current_bytes": 583,
+      "declared_bytes": 583,
+      "declared_sha256": "00273cdfb3e05c7304d180270bdef8adae45023e7bdfc396338bdd815943dc59",
+      "exists": true,
+      "kind": "cached_GTE_small_asset",
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/config.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        37619372,
+        1784965532383889410,
+        1784965532385437026
+      ],
+      "size_matches_declared": true,
+      "symlink": true
+    },
+    {
+      "current_bytes": 66746168,
+      "declared_bytes": 66746168,
+      "declared_sha256": "9a1eb90bbac323ea08aa5629b624fe6ae75db121b904799c2266a1e2c2de22d2",
+      "exists": true,
+      "kind": "cached_GTE_small_asset",
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/model.safetensors",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        37619374,
+        1784965540665976565,
+        1784965540735984613
+      ],
+      "size_matches_declared": true,
+      "symlink": true
+    },
+    {
+      "current_bytes": 385,
+      "declared_bytes": 385,
+      "declared_sha256": "73348a3d8f8ae4cc5f851dc6b98be3ea819390b814e83656d5eebbadf75fe43e",
+      "exists": true,
+      "kind": "cached_GTE_small_asset",
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/modules.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        37619362,
+        1784965530947516258,
+        1784965530948152281
+      ],
+      "size_matches_declared": true,
+      "symlink": true
+    },
+    {
+      "current_bytes": 57,
+      "declared_bytes": 57,
+      "declared_sha256": "948201d8329907aae938fa62f9ceeed53f5694dacc2b87b9f3b78b37ee986529",
+      "exists": true,
+      "kind": "cached_GTE_small_asset",
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/sentence_bert_config.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        37619369,
+        1784965531949884842,
+        1784965531951350793
+      ],
+      "size_matches_declared": true,
+      "symlink": true
+    },
+    {
+      "current_bytes": 125,
+      "declared_bytes": 125,
+      "declared_sha256": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3",
+      "exists": true,
+      "kind": "cached_GTE_small_asset",
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/special_tokens_map.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        37619386,
+        1784965543211003338,
+        1784965543212183974
+      ],
+      "size_matches_declared": true,
+      "symlink": true
+    },
+    {
+      "current_bytes": 711661,
+      "declared_bytes": 711661,
+      "declared_sha256": "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0",
+      "exists": true,
+      "kind": "cached_GTE_small_asset",
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/tokenizer.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        37619383,
+        1784965542791998930,
+        1784965542793785301
+      ],
+      "size_matches_declared": true,
+      "symlink": true
+    },
+    {
+      "current_bytes": 394,
+      "declared_bytes": 394,
+      "declared_sha256": "e1790949631401af1bfb6c9c7aeec7fcf612e274d73579d99f704faea40c8ba7",
+      "exists": true,
+      "kind": "cached_GTE_small_asset",
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/tokenizer_config.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        37619379,
+        1784965541606986464,
+        1784965541608452512
+      ],
+      "size_matches_declared": true,
+      "symlink": true
+    },
+    {
+      "current_bytes": 231508,
+      "declared_bytes": 231508,
+      "declared_sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+      "exists": true,
+      "kind": "cached_GTE_small_asset",
+      "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/vocab.txt",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        37619381,
+        1784965542359994386,
+        1784965542361166030
+      ],
+      "size_matches_declared": true,
+      "symlink": true
+    },
+    {
+      "current_bytes": 1429,
+      "declared_bytes": 1429,
+      "declared_sha256": "711bdc81365fc25d30533cf05b9fdf588e5ba01f18540fbbb1307d787597a313",
+      "exists": true,
+      "kind": "staged_multilingual_asset",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets/model/config.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40789624,
+        1790928340705096739,
+        1790928340705096739
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 1149,
+      "declared_bytes": 1149,
+      "declared_sha256": "24cebbf2ef20fc317256e03e52ac7b2ca326586f946a8427ecac036332bf0933",
+      "exists": true,
+      "kind": "staged_multilingual_asset",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets/model/tokenizer_config.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40789625,
+        1790928340710512553,
+        1790928340710512553
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 964,
+      "declared_bytes": 964,
+      "declared_sha256": "8c785abebea9ae3257b61681b4e6fd8365ceafde980c21970d001e834cf10835",
+      "exists": true,
+      "kind": "staged_multilingual_asset",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets/model/special_tokens_map.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40789626,
+        1790928340713433268,
+        1790928340713433268
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 17082756,
+      "declared_bytes": 17082756,
+      "declared_sha256": "f59925fcb90c92b894cb93e51bb9b4a6105c5c249fe54ce1c704420ac39b81af",
+      "exists": true,
+      "kind": "staged_multilingual_asset",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets/model/tokenizer.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40789635,
+        1790928343068265701,
+        1790928343068265701
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 610753338,
+      "declared_bytes": 610753338,
+      "declared_sha256": "f5a35a10faa54da7717870af1517c9b41e9bd8e3880bc5a8e9363d4c3c63e9b0",
+      "exists": true,
+      "kind": "staged_multilingual_asset",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets/model/model.safetensors",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40789636,
+        1790928401886205382,
+        1790928401886205382
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 7127,
+      "declared_bytes": 7127,
+      "declared_sha256": "3411088045ffb8a9a0aa9936eae275896b39983a2ee5b08f091b44e6289e4fe4",
+      "exists": true,
+      "kind": "staged_multilingual_asset",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets/code/configuration.py",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40789633,
+        1790928340908532399,
+        1790928340908532399
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 59023,
+      "declared_bytes": 59023,
+      "declared_sha256": "374670b416fcc82f081c9cd28b5fd61c2bd91bbe18eb4798fcc48a81f9c250a0",
+      "exists": true,
+      "kind": "staged_multilingual_asset",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets/code/modeling.py",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40789634,
+        1790928341123557881,
+        1790928341123557881
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 7127,
+      "declared_bytes": 7127,
+      "declared_sha256": "3411088045ffb8a9a0aa9936eae275896b39983a2ee5b08f091b44e6289e4fe4",
+      "exists": true,
+      "kind": "second_multilingual_asset_copy",
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/code/configuration.py",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        23114557,
+        1791042931138054395,
+        1791042931138054395
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 59023,
+      "declared_bytes": 59023,
+      "declared_sha256": "374670b416fcc82f081c9cd28b5fd61c2bd91bbe18eb4798fcc48a81f9c250a0",
+      "exists": true,
+      "kind": "second_multilingual_asset_copy",
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/code/modeling.py",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        23114558,
+        1791042933233416104,
+        1791042933233416104
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 1429,
+      "declared_bytes": 1429,
+      "declared_sha256": "711bdc81365fc25d30533cf05b9fdf588e5ba01f18540fbbb1307d787597a313",
+      "exists": true,
+      "kind": "second_multilingual_asset_copy",
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/model/config.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        23114559,
+        1791042935736476196,
+        1791042935736476196
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 610753338,
+      "declared_bytes": 610753338,
+      "declared_sha256": "f5a35a10faa54da7717870af1517c9b41e9bd8e3880bc5a8e9363d4c3c63e9b0",
+      "exists": true,
+      "kind": "second_multilingual_asset_copy",
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/model/model.safetensors",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        23114560,
+        1791044120892451453,
+        1791044120893451457
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 964,
+      "declared_bytes": 964,
+      "declared_sha256": "8c785abebea9ae3257b61681b4e6fd8365ceafde980c21970d001e834cf10835",
+      "exists": true,
+      "kind": "second_multilingual_asset_copy",
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/model/special_tokens_map.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        23114561,
+        1791044121102884557,
+        1791044121102884557
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 17082756,
+      "declared_bytes": 17082756,
+      "declared_sha256": "f59925fcb90c92b894cb93e51bb9b4a6105c5c249fe54ce1c704420ac39b81af",
+      "exists": true,
+      "kind": "second_multilingual_asset_copy",
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/model/tokenizer.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        23114562,
+        1791044122583458272,
+        1791044122584458275
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 1149,
+      "declared_bytes": 1149,
+      "declared_sha256": "24cebbf2ef20fc317256e03e52ac7b2ca326586f946a8427ecac036332bf0933",
+      "exists": true,
+      "kind": "second_multilingual_asset_copy",
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/model/tokenizer_config.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        23114563,
+        1791044122792459115,
+        1791044122792459115
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 2799098,
+      "declared_bytes": 2799098,
+      "declared_sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00",
+      "exists": true,
+      "kind": "contextual384_checkpoint",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        74333128,
+        1791129849995028798,
+        1791129849995028798
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 614534,
+      "declared_bytes": 614534,
+      "declared_sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61",
+      "exists": true,
+      "kind": "contextual768_donor_checkpoint",
+      "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        7910455,
+        1790873967700568125,
+        1790873967700568125
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 1510086,
+      "declared_bytes": 1510086,
+      "declared_sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f",
+      "exists": true,
+      "kind": "contextual384_preprocessing",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/preprocessing.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        74324391,
+        1791104284865778204,
+        1791104284865778204
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 2295925,
+      "declared_bytes": 2295925,
+      "declared_sha256": "3f124ce3210c68207d8405311742e5d5bedb43eab4f7c93cbf833aa7f5a223a2",
+      "exists": true,
+      "kind": "contextual384_source_contexts",
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-contexts.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        8409924,
+        1791141714461782138,
+        1791141714461782138
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 532522,
+      "declared_bytes": 532522,
+      "declared_sha256": "722f9909868d545b54d5a1fe5a19880ccefa8e21d1d7f9b6fd1548d78494e7da",
+      "exists": true,
+      "kind": "contextual384_source_inputs",
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-inputs.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        8409923,
+        1791141714429781601,
+        1791141714429781601
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 4781613,
+      "declared_bytes": 4781613,
+      "declared_sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4",
+      "exists": true,
+      "kind": "contextual768_checkpoint",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        74333160,
+        1791129924775973274,
+        1791129924775973274
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 2864122,
+      "declared_bytes": 2864122,
+      "declared_sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae",
+      "exists": true,
+      "kind": "contextual768_preprocessing",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/preprocessing.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        74324458,
+        1791104461418416637,
+        1791104461418416637
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 4520563,
+      "declared_bytes": 4520563,
+      "declared_sha256": "a8353fe8311702f4adeb1aa483cdda218a48cc1327309737b5f0680d2a8b2529",
+      "exists": true,
+      "kind": "contextual768_source_contexts",
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-contexts.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        8409926,
+        1791141714601784484,
+        1791141714601784484
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 1051554,
+      "declared_bytes": 1051554,
+      "declared_sha256": "e44720b13acb52306bb951ff500aa067a3c4ebe4a060139367e1d465e6511bd4",
+      "exists": true,
+      "kind": "contextual768_source_inputs",
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-inputs.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        8409925,
+        1791141714538783428,
+        1791141714538783428
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 74282,
+      "declared_bytes": 74282,
+      "declared_sha256": "aa929c0836f592d2217e748fa7ee452c955ef2466497ee72efca2a859e08930c",
+      "exists": true,
+      "kind": "richer_source_only_legacy8",
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-embedding-01/legacy8_embeddings.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        23114567,
+        1791044314625713753,
+        1791044314625713753
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 629044,
+      "declared_bytes": 629044,
+      "declared_sha256": "14acf84a107d2bbdea3df8af9009f97ae670a3c45125e454c3a00312a78f7107",
+      "exists": true,
+      "kind": "richer_source_only_native384",
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-embedding-01/native384_embeddings.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        23114568,
+        1791044314633648382,
+        1791044314633648382
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 1748842,
+      "declared_bytes": 1748842,
+      "declared_sha256": "d169295841e14829d896a81b48630d39f85537380df8e581b7440671ac49d2a9",
+      "exists": true,
+      "kind": "richer_source_only_native768",
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-embedding-01/native768_embeddings.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        23114569,
+        1791044314658702306,
+        1791044314658702306
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 6360717,
+      "declared_bytes": 6360717,
+      "declared_sha256": "4557e89d0a8f9c77ceed13b8df9b4e0c247a32b37003e7f559d2e195a23230ef",
+      "exists": true,
+      "kind": "other_retained_payload",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/aligned-interface-precise-01/trained-interfaces.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40806277,
+        1790930468199616782,
+        1790930468199616782
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 6347807,
+      "declared_bytes": 6347807,
+      "declared_sha256": "1ffa63c4f95ff93ce40b16fee63eb766e0baf412f58b837b3addeb6b55154b00",
+      "exists": true,
+      "kind": "other_retained_payload",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/original-interface-precise-01/trained-interfaces.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        42096126,
+        1790930598746522486,
+        1790930598746522486
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 4558389,
+      "declared_bytes": 4558389,
+      "declared_sha256": "920f8ea71140ce1feb6b823e1a982ff818f379356584c0f32452c2dc51ac956d",
+      "exists": true,
+      "kind": "other_retained_payload",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/historical8/historical-linguistic-features8.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40794228,
+        1790929301139410703,
+        1790929301139410703
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 429852,
+      "declared_bytes": 429852,
+      "declared_sha256": "5a292fe09b56f3e2df66e77da1ab50fffa11ef0c5496f8860054b5d0aa8bfbce",
+      "exists": true,
+      "kind": "other_retained_payload",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/historical8/source-inputs.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40794041,
+        1790929279040353031,
+        1790929279040353031
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 434558,
+      "declared_bytes": 434558,
+      "declared_sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+      "exists": true,
+      "kind": "other_retained_payload",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/native-embeddings-20260925-r2/embedding-production.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        66980141,
+        1790316070640940776,
+        1790316070640940776
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 7204344,
+      "declared_bytes": 7204344,
+      "declared_sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+      "exists": true,
+      "kind": "other_retained_payload",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/4f/4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        68458943,
+        1790702643964084414,
+        1790702643972084518
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 13402647,
+      "declared_bytes": 13402647,
+      "declared_sha256": "dadf1964dc6dbf9c89dbe360dd06908e24d299b5f80f5b6e2014967361932312",
+      "exists": true,
+      "kind": "other_retained_payload",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/head-probe-v1/exports/structural.candidate.state.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        75238093,
+        1792096083861584271,
+        1792096083861584271
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 16464840,
+      "declared_bytes": 16464840,
+      "declared_sha256": "bfb80c990eb9239d4e83a91ec6fc6f8777f9b1f4cad4b937489004951b406405",
+      "exists": true,
+      "kind": "native768_affine_payload",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-alignment/pairs.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40793679,
+        1790929047122138418,
+        1790929047122138418
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 12330295,
+      "declared_bytes": 12330295,
+      "declared_sha256": "b13d1a5a702d2a4d29c41690745debd54cc92ea7df3f06f98c815eca718d8a16",
+      "exists": true,
+      "kind": "native768_affine_payload",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-alignment/plan.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40793680,
+        1790929047270130621,
+        1790929047270130621
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 6321585,
+      "declared_bytes": 6321585,
+      "declared_sha256": "ecebc7a009162ef42f796fc294b6778c040d9bd2ef05ffd2c059972188907b72",
+      "exists": true,
+      "kind": "native768_affine_payload",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-alignment/fitted-bridge.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40793683,
+        1790929047351074467,
+        1790929047351074467
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 4106903,
+      "declared_bytes": 4106903,
+      "declared_sha256": "0f857b7947f1d05e0dfd242c35c825e9ca72d36e24a3960c17a83b98f4a14f13",
+      "exists": true,
+      "kind": "native768_producer_report_payload",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/embeddings-complete/producer-report.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40792385,
+        1790928784359425196,
+        1790928784359425196
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 8135548,
+      "declared_bytes": 8135548,
+      "declared_sha256": "0918981644c8c707aa5886f47701cf110537dbd4079b7d35a979cf329e996226",
+      "exists": true,
+      "kind": "native768_producer_report_payload",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-embeddings/producer-report.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40792994,
+        1790928967659675363,
+        1790928967659675363
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    },
+    {
+      "current_bytes": 4097704,
+      "declared_bytes": null,
+      "declared_sha256": null,
+      "exists": true,
+      "kind": "native768_receipts_not_opened",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/embeddings-complete/receipts.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40792388,
+        1790928784443425694,
+        1790928784443425694
+      ],
+      "size_matches_declared": null,
+      "symlink": false
+    },
+    {
+      "current_bytes": 8126349,
+      "declared_bytes": null,
+      "declared_sha256": null,
+      "exists": true,
+      "kind": "native768_receipts_not_opened",
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/affine-embeddings/receipts.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        40792995,
+        1790928967827676642,
+        1790928967827676642
+      ],
+      "size_matches_declared": null,
+      "symlink": false
+    },
+    {
+      "current_bytes": 398209746,
+      "declared_bytes": 398209746,
+      "declared_sha256": null,
+      "exists": true,
+      "kind": "full_historical8_sparse_teacher",
+      "path": "/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json",
+      "payload_opened_or_rehashed": false,
+      "physical_witness": [
+        66306,
+        17957135,
+        1782855135021901395,
+        1782858072751409105
+      ],
+      "size_matches_declared": true,
+      "symlink": false
+    }
+  ],
+  "profiles": {
+    "linguistic8": {
+      "GTE_neural_embedding": false,
+      "GTE_tokenizer_revision_or_context_limit": null,
+      "backends": [
+        "historical_blank_en",
+        "local_en_core_web_sm"
+      ],
+      "dimension": 8,
+      "full_sparse_teacher_is_distinct": true,
+      "normalization": "L2; richer study reports six-decimal sourceoutputs",
+      "producer": "Frozen spaCy lexical/POS/dependency/modal-cue feature hash",
+      "target_aware_reconstruction": false
+    },
+    "mock_and_target_conditioned8": {
+      "classification": "Separate diagnostic population. Earlier span-cache surveys record mock:stable-sha256 and target-conditioned projected values, not GTE. This inventory performs no current Hub payload census.",
+      "never_alias_with": [
+        "source-only linguistic8",
+        "two-example formula-head rawlatents",
+        "rawGTE384",
+        "rawGTE768"
+      ]
+    },
+    "native384": {
+      "cached_snapshot": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd",
+      "caveat": "Stored configtorch_dtype=float16 and tokenizer effectively-unbounded model_max_length sentinel do not override each original runtimeprecision or512token producerprofile. Archive declarations are not new producer execution authentication.",
+      "dimension": 384,
+      "max_input_tokens": 512,
+      "metadata_checked_here": {
+        "hidden_size": 384,
+        "max_position_embeddings": 512,
+        "mean_pooling": true,
+        "normalization_module": true
+      },
+      "model": "thenlper/gte-small",
+      "model_tokenizer_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+      "normalization": "L2",
+      "pooling": "mean",
+      "recorded_producer_precision": "CPU_float32",
+      "source_policy": "exact_source_no_truncation"
+    },
+    "native768": {
+      "asset_manifest_sha256": "8beb874aa7b06599346173fde12e95f9f926b3028942d5014cdd2f99c4385166",
+      "caveat": "Tokenizer32768 setting does not enlarge selected8192encoderprofile. Prior source-only native production is recorded in retained receipts; current numerical loading and long-input numerics are not requalified here.",
+      "dimension": 768,
+      "implementation_model": "Alibaba-NLP/new-impl",
+      "implementation_revision": "40ced75c3017eb27626c9d4ea981bde21a2662f4",
+      "max_input_tokens": 8192,
+      "metadata_checked_here": {
+        "hidden_size": 768,
+        "max_position_embeddings": 8192,
+        "tokenizer_class": "XLMRobertaTokenizer",
+        "tokenizer_config_model_max_length": 32768
+      },
+      "model": "Alibaba-NLP/gte-multilingual-base",
+      "model_tokenizer_revision": "9bbca17d9273fd0d03d5725c7a4b0f6b45142062",
+      "normalization": "L2",
+      "pooling": "CLS",
+      "profile_id": "Alibaba-NLP/gte-multilingual-base@9bbca17d9273fd0d03d5725c7a4b0f6b45142062:code=Alibaba-NLP/new-impl@40ced75c3017eb27626c9d4ea981bde21a2662f4:d768:pool=cls:norm=l2:cpu:float32:tokens8192:reject_overlength:v1",
+      "recorded_producer_precision": "CPU_float32",
+      "source_policy": "exact_source_reject_overlength"
+    }
+  },
+  "reviewed_head": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+  "schema": "legal-ir-embedding-asset-metadata-survey/v1",
+  "status": "metadata_and_physical_availability_only"
+}

@@ -1,0 +1,32 @@
+{
+  "basis": {
+    "index_sqlite_max_bytes": 1610612736,
+    "new_output_cap_bytes": 33554432,
+    "original_payloads_copied": false,
+    "original_primary_candidate_bytes_readonly": 716898677,
+    "retained_association_bytes_readonly": 336630,
+    "retained_replay_bytes_readonly": 10630440
+  },
+  "consumer": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "memory_mb": 6144,
+    "storage_bytes": 2147483648,
+    "timeout_seconds": 1800
+  },
+  "limitations": [
+    "The read-only aggregate capacity observation supplies no admission.",
+    "Each request is freshly admitted and finalized by the existing native resource owner.",
+    "Caps do not prove runtime/RSS or constitute kernel quotas.",
+    "No original producer cleanup, foreign reservation recovery, model/Hub download or new authority."
+  ],
+  "observed_at_utc": "2026-10-16T00:11:24.019378+00:00",
+  "qualification": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "memory_mb": 6144,
+    "storage_bytes": 1073741824,
+    "timeout_seconds": 1800
+  },
+  "schema": "sampled-primary-review-resource-plan/v1"
+}

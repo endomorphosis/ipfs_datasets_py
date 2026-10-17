@@ -43,7 +43,7 @@ async def record_provenance(
         logger.info(f"Recording provenance for dataset {dataset_id}, operation: {operation}")
 
         # Import the provenance manager
-        from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager
+        from ipfs_datasets_py.analytics.data_provenance_enhanced import EnhancedProvenanceManager
 
         # Create a provenance manager instance
         provenance_manager = EnhancedProvenanceManager()

@@ -1,0 +1,63 @@
+# Typed relational batch diagnostic V1
+
+Base 1b7be0c601ec3373c2726e4022737e9bc20827e1. Additive source only until native execution. Do not change existing owners, representations, comparators, inference, gates or tests. All producer authoring and source/AST review is allowed; product/test/payload execution only by root through qualified run_owned_validation.
+
+## APIs and schemas
+
+New module ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py, stdlib-only public import.
+prepare_relational_batch_evaluation_v1(population_raw, references_raw, predictions_raw, *, expected_population_sha256, expected_references_sha256, expected_predictions_sha256)
+relational_batch_evaluation_sha256(report)
+validate_relational_batch_evaluation_v1(report, population_raw, references_raw, predictions_raw, *, expected_evaluation_sha256, expected_population_sha256, expected_references_sha256, expected_predictions_sha256)
+Exception RelationalBatchEvaluationError(ValueError).
+Output schema legal-relational-batch-evaluation/v1; profile full-selected-authored-relational-output-diagnostics/v1.
+
+Three independently pinned original byte transports. Duplicate JSON keys, nonfinite values, malformed outer JSON, wrong independent whole-transport pins and oversized aggregate inputs refuse before operation imports. Full finite ordinary JSON must be detached/bounded before hashing/copying; bytes inputs exact type, valid UTF8. Raw model candidate JSON lives as a request_utf8 string, so malformed candidate JSON is an accounted row failure rather than corrupt outer transport. Never accept arbitrary filesystem paths from input.
+
+Bounds: population 128KiB; reference and prediction envelopes each16MiB; output8MiB;64 expected occurrences;256 submitted observations; JSON nodes500000, depth96; each reference request UTF8 <=existing524288B; candidate raw request overflow within a safe outer envelope becomes invalid_typed_output without invoking lowering; each reference report <=existing8MiB. Refuse whole-envelope/population/output bounds, never truncate/drop rows. Per-candidate raw request overflow is retained as invalid_typed_output; an overbound reference refuses the asset. Bound strings before encoding. Complete original envelopes held only during call, immutable detached values. Check output during construction or otherwise bound retained intermediate pair material: each pair report <=existing4MiB; no accumulation of all full pair reports.
+
+Population closed shape:
+{schema:'legal-relational-batch-population/v1',partition:bounded nonblank<=128 chars,selection_sha256:lowercaseSHA256,rows:[{id:nonblank<=256chars,source_sha256:SHA256,context_sha256:SHA256}]}
+Nonempty ordered unique IDs represent occurrences; identical source/context hashes on distinct IDs are legal. The independently pinned full population is the denominator. Source/selection/context and partition identities remain caller declarations, not authenticated source text/custody or split membership.
+
+References closed shape:
+{schema:'legal-relational-batch-references/v1',population_sha256:expected population pin,rows:[...]}
+Exactly one row per population occurrence IN EXACT POPULATION ORDER, same IDs, no extra/duplicate/missing. Each row closed:
+{id,status:'available'|'unavailable',request_utf8:str|null,request_sha256:SHA256|null,report:dict|null,report_sha256:SHA256|null,reason:str|null}
+Available requires reasonnull, request string, own raw pin, ordinary full report and full canonical report pin. Validate ALL available references through existing public validate_relational_norm_v1 BEFORE candidates, including references whose predictions will be missing/duplicate/abstained. Invalid offered reference is an asset error: refuse batch. Unavailable requires all4payload/pin fieldsnull and bounded nonblankreason<=512chars; still remains in N and reference-availability metrics. Dropped reference row is not unavailable. No claim reviewed targets.
+
+Predictions closed outer shape (generation may be absent only to record generation_missing; rows/schema are required):
+{schema:'legal-relational-batch-predictions/v1',generation:{...},rows:[arbitrary finite JSON observations]}
+Malformed generation declaration is reported without discarding observations; it may withhold all comparable credit. Individual malformed row shapes, scalar rows, missing/invalidIDs and unfamiliar statuses must be accounted, not whole-batch refusal. Unknown envelope keys/schema and invalid rows container refuse as intake errors.
+Generation closed shape:
+{kind:'decoder_declared'|'authored_control',population_sha256:expected population pin,latent_dimension:8|384|768|null,checkpoint_sha256:SHA256|null,encoder_sha256:SHA256|null,settings_sha256:SHA256,teacher_forcing:false,target_access:false}
+Decoder-declared requires supported dimension + checkpoint/encoder hashes. Authored-control requires those three fieldsnull. Generation declarations are NOT execution/source-withheld/latent-only attestations; no checkpoint/model is opened or run. Never mislabel retained authored §7213 hypotheses as trained model output. Generation malformed/missing/contradictory fields become stable reason codes, not exception-message parsing.
+Each well-formed submitted row closed shape:
+{id,source_sha256,context_sha256,status:'decoded'|'abstained'|'unsupported',teacher_forcing:false,target_access:false,request_utf8:str|null,request_sha256:SHA256|null,reason:str|null}
+Decoded requires request/pin and reasonnull. Abstained/unsupported requires request/pinnull and bounded nonblankreason<=512chars. Payload-bearing abstentions are malformed. Pin mismatch or malformed raw candidate JSON / invalid or unsupported relational fragment is an accounted candidate failure; its whole predictions transport remains independently pinned. Do not invent a syntax-vs-unsupported taxonomy from broad ValueError text. Explicit unsupported status is a caller-declared abstention category, not independent family capability discovery.
+
+## Existing owner integration and source integrity
+
+Lazy imports only after complete bounded outer preflight. Reuse public relational.prepare_relational_norm_v1 for candidate lowering and validate_relational_norm_v1 for available originals. Use public paired comparison owner and its public digest for valid comparable pairs. No second AST/alpha/normalization or seven-facet flattening. Lowering generated request syntax is deterministic postprocessing, not model-generation attestation.
+Source-fence own module, public pair/relational modules, and the trusted fixed native closure through legal_family_routes.producer_pins (plus required actual syntax/parser owners if not in closure). Bound nofollow regular source snapshots and full physical identity, before/after operations. Never follow offered report producer filenames. Existing pair owner fences shared algebra and native owners. Initial trusted fixed source pins are compared at every fence; source-owner failure is never turned into model-invalid output. Catch only ValueError from candidate lowering (which current relational owner uses for invalid declarations), with source fence before and after including exception path. Catch no operational OSError/ImportError/RuntimeError and do not expose uncontrolled exception strings. Reference and pair replay failures refuse batch.
+
+## Coverage and arithmetic
+
+Retain all submitted observation rows in arrival order as ledger {index,id if valid else null,sha256 of complete canonical original row,associated_population_index or null,shape/provenance/outcome reason codes}; preserve full raw envelopes by transport references, not raw model/source text echo. Every valid ID indexes all observation indices including malformed rows; duplicate same ID (including identical rows) marks expected occurrence duplicate with zero agreement and no candidate selection. Unexpected IDs and unidentifiable rows separate ledger entries never change N. No favorable first/last/best matching or alternate matching by source hash.
+Every expected occurrence represented IN POPULATION ORDER, exactly one terminal status:
+missing,duplicate,malformed,unverifiable_generation,abstained,unsupported,invalid_typed_output,valid_without_reference,compared.
+Precedence missing/duplicate, malformed closed row/status/payload, provenance/generation mismatch, abstained/unsupported, candidate lowering failure, valid_without_reference, compared. Keep coverage/shape/provenance diagnostics separately so precedence cannot hide facts. Row source/context mismatch and nonfalse target_access/teacher_forcing yield unverifiable_generation; valid abstention with bad provenance likewise unverified (retain declared status).
+Valid_without_reference still runs candidate lowering/public validation and counts as valid typed output. Compared valid output must retain all6existing comparison booleans plus comparison fullcanonicalSHA, total/shared/ref-only/candidate-only feature counts and exclusive path lists. No full nested pair accumulation; complete pair is reproducible from original inputs. Valid disagreements remain compared.
+Report whole raw inputs SHA/length, population order and selection/partition refs, per-reference request/fullreport pins or absence reason, per-observation digest, source pins, per-occurrence outcomes. Hashes identify original artifacts, not authenticity/gold.
+Report exhaustive terminal counts sum exactly N. Coverage.valid means every expected ID exactly once, no unexpected IDs or unidentifiable observations; does not equate to decoded validity. Include prediction row count, missing IDs, duplicate ID->allindices, unexpected IDs->allindices, unidentifiable indices and complete observation ledger. Validity count decoded valid typed outputs includes compared+valid_without_reference. Reference availability count.
+For each6comparison booleans expose {matched,total:N,fraction:matched/N} as full_selected_structure_diagnostics, and separately {matched,total:compared_count,fraction:null when0} as comparable_pair_structure_diagnostics. No reviewed accuracy, no optimistic denominator changes. Include available-reference and valid-typed-output fractions versus N; any zero denominator =>null. Family/profile/signature booleans remain structural gates, not meaningful law fidelity.
+All original FALSE_AUTHORITY plus batch claims false, training_mask=0 evaluation_gold_mask=0 strictinteger. Fields: model_execution_verifiedfalse, generation_declarations_are_independent_prooffalse, partition_membership_verifiedfalse, source_commitments_verifiedfalse, reviewed_targets_verifiedfalse, decoder_accuracy_establishedfalse, generation_claims_are_declarations_onlytrue, metric_reference_accesstrue. Existing evaluator does no model/training/native Lake/backend execution; relational owner may generate syntax-only Lean.
+Validator independently pins output and REGENERATES complete report from all3 original transports; resealed omission/altereddenominator/authority/generation claim refuses. Do not accept output-only stored hashes as authority.
+
+## Qualification and examples
+
+Tests should use real existing exact-path authored AST builders and known alpha/argument/modal differences, no fake product namespaces/secondlogic. Mixed hand-authored population with everyterminal outcome; duplicate/unexpected/unidentifiable observations; missingtarget; badreference evenmissingcandidate; fullallmissing/abstain/invalid no100%conditional; repeatedsource distinctIDs; reordered submitted observations; raw-byte/canonical-pins; wholetransport failures before lazyowners; candidatepin failure accounted; outputtamperingreplay; sources/bounds/controltype. Do not repeat entire huge sourceguards in everytest but meaningful integritychecks needed. Explicit descriptive parametrization IDs avoid legacyJUnitbound failure. Product/test execution rootonly through native validation owner.
+Later separately admitted actual retained request consumer may add batch authored controls for2§7213hypotheses and honest missing/duplicate/abstain rows; no modelclaims/training/HTMLreplay. Root will own resource plan, native helper/requests/evidence/PR; do not read actual retained payload bodies outside native scope.
+
+Final report-cell keys agreed before freeze: reference_availability={available,unavailable,total,fraction}; valid_typed_output={count,total,fraction}; all six comparison metric cells={matched,total,fraction}.
+
+Outer ordinary-JSON profile additionally restricts integer magnitudes to abs(value)<=2**63-1 and finite floats. Shared500000 input-node budget spans all3transports. Unsafe ordinary-value outer envelopes refuse before owner imports; candidate JSON carried as UTF8 text is evaluated separately.

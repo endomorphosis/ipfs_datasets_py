@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-a-02/cache/pytest
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-definition-use-review-v2-integration-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 297 items
+
+tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py .... [  1%]
+.............................................                            [ 16%]
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py ........... [ 20%]
+.................................                                        [ 31%]
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py ........ [ 34%]
+...........................................                              [ 48%]
+tests/unit/logic/autoformal/test_legal_graph_review.py ................. [ 54%]
+...............................                                          [ 64%]
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py ....... [ 67%]
+...................................................................      [ 89%]
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py ........... [ 93%]
+.......                                                                  [ 95%]
+tests/unit/logic/autoformal/test_corpus_imports.py .......               [ 97%]
+tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py ... [ 98%]
+                                                                         [ 98%]
+tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py . [ 99%]
+..                                                                       [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-review-v2-integration-20261015-a-02/logs/junit.xml -
+======================= 297 passed in 113.59s (0:01:53) ========================

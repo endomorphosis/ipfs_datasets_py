@@ -1,0 +1,98 @@
+{
+  "independence": "Root independently recounted the source agent's retained public metadata; this did not re-fetch payloads or authenticate numerical/source-semantic execution.",
+  "known_parallel_documentation_drift": {
+    "foreign_document_modified": false,
+    "observation": "Its prepared-only decoder-output sentence predates the repository's completed 173-case qualification and 60+60 replay. Reuse the latest published repository evidence and preserve the external file unchanged.",
+    "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-next-implementation-plan-2026-10-16.md"
+  },
+  "metadata_recount": {
+    "declared_families": {
+      "bm25_documents": {
+        "declared_bytes": 8612386,
+        "declared_rows": 62931,
+        "files": 16
+      },
+      "bm25_postings": {
+        "declared_bytes": 741233033,
+        "declared_rows": 6920744,
+        "files": 1690
+      },
+      "corpus": {
+        "declared_bytes": 52219760,
+        "declared_rows": 62931,
+        "files": 16
+      },
+      "graph_edges": {
+        "declared_bytes": 28970756,
+        "declared_rows": 178691,
+        "files": 44
+      },
+      "graph_nodes": {
+        "declared_bytes": 17270502,
+        "declared_rows": 119134,
+        "files": 30
+      },
+      "receipt": {
+        "declared_bytes": 4069,
+        "declared_rows": 0,
+        "files": 3
+      },
+      "release_metadata": {
+        "declared_bytes": 1392,
+        "declared_rows": 0,
+        "files": 1
+      },
+      "report": {
+        "declared_bytes": 1705356855,
+        "declared_rows": 0,
+        "files": 4
+      },
+      "routing_index": {
+        "declared_bytes": 399684,
+        "declared_rows": 1812,
+        "files": 6
+      },
+      "vectors": {
+        "declared_bytes": 226441759,
+        "declared_rows": 62931,
+        "files": 16
+      }
+    },
+    "hub_descriptors": 2802,
+    "manifest_descriptors": 1826,
+    "selected_lfs_descriptors_hash_and_size_matched": 1819,
+    "selected_missing_paths": [],
+    "unbound_data_indexes_reports_paths": 412
+  },
+  "new_execution": {
+    "corpus_payload_reads": 0,
+    "database_operations": 0,
+    "lean_builds": 0,
+    "legal_reviews": 0,
+    "model_inference": 0,
+    "tests": 0,
+    "training_steps": 0
+  },
+  "prior_manifest_join": {
+    "current_revision": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+    "metadata_only_equivalence": true,
+    "new_payload_replay_performed": false,
+    "old_revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+    "old_selected_files": 74,
+    "old_selected_graph_rows": 297825,
+    "same_bytes_sha256": "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6",
+    "whole_release_equality_claimed": false
+  },
+  "repository_baseline": "ff8a01fd04c741f892572e7f28cba777d4dfd472",
+  "schema": "legal-uscode-source-plan-independent-root-recount/v1",
+  "semantic_authority_added": false,
+  "source_controls_reused": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_import.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_uscode_inventory.py",
+    "scripts/ops/legal_ir/inventory_pinned_uscode_sources.py"
+  ],
+  "source_research_summary": {
+    "bytes": 16303,
+    "sha256": "0175133a836705d7ab714477041baddda24d934a7f8dc5377b2abec4b0b8b684"
+  }
+}

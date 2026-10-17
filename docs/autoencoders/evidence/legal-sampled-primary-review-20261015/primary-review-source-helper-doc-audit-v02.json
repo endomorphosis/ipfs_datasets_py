@@ -1,0 +1,306 @@
+{
+  "Lean_executed": false,
+  "authority_granted": false,
+  "base": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+  "blocking_findings": [],
+  "consumer_summary": {
+    "artifact_checks": 5,
+    "child_seconds": 154.69071750203148,
+    "families": [
+      {
+        "actual_responses": 0,
+        "added_artifacts": 56,
+        "context_slots": 36,
+        "envelope_full_canonical_sha256": "dac2e95034b0b84f43b805296cc3c40a899f12d8630ee4d46eb2cd713eff9510",
+        "evaluation_gold_mask": 0,
+        "family": "fol",
+        "new_artifacts": 96,
+        "new_edges": 95,
+        "new_required_dependencies": 96,
+        "original_artifacts": 40,
+        "original_edges": 39,
+        "primary_artifact_refs": 6,
+        "retained_population_pending": 560,
+        "retained_population_subjects": 560,
+        "retained_source_occurrences": 6,
+        "training_mask": 0,
+        "unresolved_claims": [
+          "official_source_primary_package_equivalence",
+          "governing_version_and_applicability",
+          "independent_legal_interpretation",
+          "independent_formal_interpretation",
+          "authenticated_exposure"
+        ]
+      },
+      {
+        "actual_responses": 0,
+        "added_artifacts": 56,
+        "context_slots": 36,
+        "envelope_full_canonical_sha256": "29f8e425bab40326e0a6a55b2c21d34af1a67ecf257223e2a031c239205637c8",
+        "evaluation_gold_mask": 0,
+        "family": "tdfol",
+        "new_artifacts": 96,
+        "new_edges": 95,
+        "new_required_dependencies": 96,
+        "original_artifacts": 40,
+        "original_edges": 39,
+        "primary_artifact_refs": 6,
+        "retained_population_pending": 560,
+        "retained_population_subjects": 560,
+        "retained_source_occurrences": 6,
+        "training_mask": 0,
+        "unresolved_claims": [
+          "official_source_primary_package_equivalence",
+          "governing_version_and_applicability",
+          "independent_legal_interpretation",
+          "independent_formal_interpretation",
+          "authenticated_exposure"
+        ]
+      }
+    ],
+    "fol_envelope_transport_bytes": 255949,
+    "fresh_interpreter_over_retained_originals": true,
+    "loaded_checked_buffer_product_origins": 119,
+    "new_output_bytes": 1061778,
+    "new_outputs": 11,
+    "old_17_checks_and_8_refusals_rerun": false,
+    "old_bytes": 11032562,
+    "old_directories": 8,
+    "old_files": 77,
+    "old_inventory_unchanged": true,
+    "saved_new_envelope_validation_same_process": true,
+    "source_pin_count": 230,
+    "tdfol_envelope_transport_bytes": 255951
+  },
+  "edits_performed": false,
+  "execution_performed": false,
+  "findings": [
+    {
+      "detail": "Guide and retained receipt/independent audit agree on 207 unique cases: 51 new review-preparation, 88 association, 50 selected regular V2 definition-review and 18 dependency cases. No failures/errors/skips; collection, successful calls and exact JUnit identities join. The guide explicitly notes overlap with earlier qualifications and excludes independent legal-example/accuracy claims.",
+      "status": "pass",
+      "topic": "final fixture count and scope"
+    },
+    {
+      "detail": "Qualification has 225 frozen pins/125 checked-buffer product origins; consumer has 230 pins/119 origins. Current product matches both requests, helper matches consumer request, and both product/helper match the initial static audit exactly. Both independent metadata audits report no source/origin differences.",
+      "status": "pass",
+      "topic": "source execution provenance"
+    },
+    {
+      "detail": "A separately admitted consumer starts a fresh interpreter and reads retained original associations/index. It does not rerun the earlier association or source producer mains. It executes five artifact checks in 154.69071750203148 child seconds. Saved new-envelope validation occurs in that same consumer process; no separate consumer of newly prepared envelopes is claimed. Old 17 checks/eight refusals remain prior history.",
+      "status": "pass",
+      "topic": "fresh original consumer versus saved-envelope validation"
+    },
+    {
+      "detail": "Receipt and independent metadata audit agree on 77 old files/11,032,562 bytes/eight directories, including the 64 replay and seven association files. Before/after complete inventory canonical hashes and transport hashes agree. The audit distinguishes native-seal/inventory commitments from a separate reexecution or independent payload hash replay.",
+      "status": "pass",
+      "topic": "entire retained producer remains unchanged"
+    },
+    {
+      "detail": "The receipt declares 11 outputs summing to 1,061,778 bytes. FOL/TDFOL envelope transport lengths are 255,949/255,951 bytes. Guide correctly distinguishes raw files including trailing LF from full canonical envelope hashes; manifest/index internal hashes and full canonical hashes remain distinct.",
+      "status": "pass",
+      "topic": "new output accounting"
+    },
+    {
+      "detail": "Each family preserves 40 old artifacts/39 old edges and appends 56 artifacts/edges, yielding 96 artifacts/95 edges and 96 reachable dependencies. Old subject/native preparation/context evidence stays unchanged. The guide states old signed scope is unchanged and no new signing domain, private domain bypass or source-equivalence claim is supplied.",
+      "status": "pass",
+      "topic": "complete old manifest and new closure"
+    },
+    {
+      "detail": "Each family retains 560 pending subjects by association reference, six original occurrences and six primary refs, all 36 original context slots and zero responses. The guide explicitly distinguishes binding the full population from copying it. All five source-equivalence/version/applicability/independent-interpretation/exposure claims remain unresolved, authority false and integer masks zero.",
+      "status": "pass",
+      "topic": "reference-bound source population and unresolved meaning"
+    },
+    {
+      "detail": "Exact captured parent metadata and native results for qualification and consumer report completed return code zero, durable artifacts, released storage/lease, stopped recorded groups and no cleanup error. This review does not authenticate live scheduler state.",
+      "status": "pass",
+      "topic": "native finalization"
+    },
+    {
+      "detail": "README adds the new adapter link; the improvement plan records the narrow qualified milestone; the previous association guide links forward while preserving its original same-process qualification scope. Existing training/fixed-view, legacy-cache, original-primary and broader semantic/Lean work remains intact.",
+      "status": "pass",
+      "topic": "documentation integration and preserved parallel work"
+    },
+    {
+      "detail": "The adapter/actual consumer create no signatures or assessments and perform no legal/formal review, training, download, upload or Lean action. Selected existing V2 fixtures exercise synthetic signature/assessment mechanics under their old fixed domain; these are engineering tests, not actual review or a new domain. No source-equivalence, training-accuracy or Lean-admission result is claimed.",
+      "status": "pass",
+      "topic": "no unsupported review or model result"
+    }
+  ],
+  "inspected_metadata_pins": [
+    {
+      "bytes": 11296,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/primary-review-source-helper-doc-audit-v01.json",
+      "sha256": "47036cee3f7f7886deba31aa9961a3345ed8e6b07c50f7d753570f26ea66328f"
+    },
+    {
+      "bytes": 11863,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/qualification-independent-metadata-review-v01.json",
+      "sha256": "5acfa0cfd23312fb7f2cc70ba47ee184b62c2ac36c1552c55e3bdeb5cc0bb5ad"
+    },
+    {
+      "bytes": 99181,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/consumer-independent-metadata-review-v01.json",
+      "sha256": "5df8ed375b5dd6717ecb95ce40570169b92cb4bb2e60bc63a207109293e7a9c6"
+    },
+    {
+      "bytes": 56983,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/qualification-request-v01.json",
+      "sha256": "64373f3b966df19be3e5399c8aa1f8bf58147c23b404409a1be8f172e1ce13f4"
+    },
+    {
+      "bytes": 55328,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/consumer-request-v01.json",
+      "sha256": "27a2629f343b40281dadb004ac4f18f24ee84bccb76ce6cf2af2a7cc62cc6635"
+    },
+    {
+      "bytes": 244273,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/qualification.json",
+      "sha256": "e928c306f8dc0b9ec52979f17ab7a458c0428009c81c164fb793d1ea4dc05401"
+    },
+    {
+      "bytes": 55002,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-consumer01/logs/primary-review-consumer-receipt.json",
+      "sha256": "f41b79b4e41977eb0d688dabad13d475c86d3156434e19b7626f57c6755d9ecd"
+    },
+    {
+      "bytes": 5520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/qualification-parent-stdout-v01.json",
+      "sha256": "ee1fcea0efb77c9a5594bd97ab226e3e49cf034075e1579079a7aec58330fb1d"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/qualification-parent-stderr-v01.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 3566,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/result.json",
+      "sha256": "100b2062b0ab1dbf645cb245a9228420c43924c60aee959ce40f0b722cd0aa24"
+    },
+    {
+      "bytes": 3386,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/execution.json",
+      "sha256": "632def5b11202bcf64eaa3b2ba27adc712f51d95ccc3001f92a4c4bb76f5e91b"
+    },
+    {
+      "bytes": 79756,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-qualification01/logs/validation-durability.json",
+      "sha256": "bbcf831493471ddb630297069bf73b1d49b4b13f335fca7b609845e42d8cdb04"
+    },
+    {
+      "bytes": 5483,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/consumer-parent-stdout-v01.json",
+      "sha256": "8f32b91a47ff4e0fa2bc4cfa84ba31a2427dfba3cc5cf5d7a2e3568e75561911"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/consumer-parent-stderr-v01.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 906,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-consumer01/logs/result.json",
+      "sha256": "bc1685c99d96c518c692902c4eed0f43c265b0db7bed2bf19fad11c2337b0464"
+    },
+    {
+      "bytes": 736,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-consumer01/logs/execution.json",
+      "sha256": "3ea9c79aca2dcef2982530d783d963f5210bff0a4eefea2501aa9744804d2a43"
+    },
+    {
+      "bytes": 3156,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-review-20261015-consumer01/logs/validation-durability.json",
+      "sha256": "9b2902d678caad17e44d2e43cb0e557d9e8f131f915a2408985e6f56e5d0945b"
+    }
+  ],
+  "limitations": [
+    "Receipt family payload claims were reviewed as engineering metadata and source contracts; this audit did not read or rerun the underlying payloads.",
+    "Native durability and release were joined from exact captured/native metadata, not live scheduler/ledger authentication.",
+    "No product, helper, tests, models, training or Lean execution occurred during this audit."
+  ],
+  "native_closeout_metadata": [
+    {
+      "cleanup_error": null,
+      "completed": true,
+      "durable": true,
+      "job": "qualification",
+      "lease_released": true,
+      "live_processes": 0,
+      "returncode": 0,
+      "storage_status": "released"
+    },
+    {
+      "cleanup_error": null,
+      "completed": true,
+      "durable": true,
+      "job": "consumer",
+      "lease_released": true,
+      "live_processes": 0,
+      "returncode": 0,
+      "storage_status": "released"
+    }
+  ],
+  "observed_at_utc": "2026-10-16T00:19:28.205983+00:00",
+  "product_and_consumer_helper_unchanged_from_v01": true,
+  "publication_followup": [
+    "The guide evidence-index target may not exist at audit time because curation is pending. Root must verify its final curated membership and link targets before publication.",
+    "Curated metadata/source must exclude original source, lookup, association, mapping, subject/envelope and manifest payload bodies and state that it is not a self-contained replay corpus."
+  ],
+  "qualification_summary": {
+    "cases_by_module": {
+      "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py": 50,
+      "tests/unit/logic/autoformal/test_legal_graph_dependencies.py": 18,
+      "tests/unit/logic/autoformal/test_legal_source_sampling_primary_association_v2.py": 88,
+      "tests/unit/logic/autoformal/test_legal_source_sampling_primary_review_v2.py": 51
+    },
+    "errors": 0,
+    "failures": 0,
+    "loaded_checked_buffer_product_origins": 125,
+    "skips": 0,
+    "source_pin_count": 225,
+    "unique_cases": 207
+  },
+  "reviewer": "/root/sampled_primary_docs_review_n10",
+  "schema": "primary-review-source-helper-documentation-audit/v2",
+  "scope": "Final static source/documentation and completed native engineering metadata audit only. No product/helper/test execution or imports; no actual source/corpus/fixture/association/mapping/lookup/subject/envelope/manifest payload bodies, ledger or canonical Git access.",
+  "source_and_documentation_pins": [
+    {
+      "bytes": 23696,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_primary_review_v2.py",
+      "sha256": "b447512be5211d873de6ea849266ca2a42c8705d584b2c4d00785489f7720d4e"
+    },
+    {
+      "bytes": 49426,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/run_primary_review_consumer_v01.py",
+      "sha256": "4271ed02bd95230431cc91de78619b131870af9bda1a631e5e2f1b1debfe84bf"
+    },
+    {
+      "bytes": 35036,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_source_sampling_primary_review_v2.py",
+      "sha256": "882cc1f98e7a33711b50b8b941806727e9f0083803669f58f03280a81dd608b8"
+    },
+    {
+      "bytes": 8619,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_sampled_primary_definition_review_v2.md",
+      "sha256": "444da62054f606b47242ffe599a5dc8069c2b07add52db2b994bdfbc7f510b90"
+    },
+    {
+      "bytes": 16763,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/README.md",
+      "sha256": "06b9f871100c9fb65d8e77f052aa5a60757b5b9b7bd7df9db9bf386ff8efe630"
+    },
+    {
+      "bytes": 74371,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "8c7d5f1842e0dc0374d8754bf3be9d657f2e567d582f294c6dde7aebbbabb5c3"
+    },
+    {
+      "bytes": 9455,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_sampled_primary_association_v2.md",
+      "sha256": "13ac7c54b555a4b99b2c1d974a77a6767ef3226508be205fa84f1e79a839ed3a"
+    }
+  ],
+  "source_equivalence_verified": false,
+  "status": "PASS",
+  "training_performed": false
+}

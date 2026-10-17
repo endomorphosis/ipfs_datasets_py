@@ -1,0 +1,1 @@
+{"status": "pass", "receipt": "/home/barberb/lift_coding/artifacts/legal-ir-definition-v2-review-integration-20261015/real-source-subject-v01/probe-receipt.json"}

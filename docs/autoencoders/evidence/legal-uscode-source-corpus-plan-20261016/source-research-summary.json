@@ -1,0 +1,417 @@
+{
+  "control_plane": {
+    "build_summary.json": {
+      "bytes": 946,
+      "sha256": "5ef72e2f866b2683456496014ee9f9af902add559ab90c06919ebc167028fa7c",
+      "url": "https://huggingface.co/datasets/justicedao/ipfs_uscode/raw/91ca1838853ac82d7a12dd4ab47d9686f47667f9/build_summary.json",
+      "value": {
+        "acquired_at": "2026-09-08T22:59:35Z",
+        "admitted": 62931,
+        "bm25_docs": 62931,
+        "graph_edges": 178691,
+        "graph_nodes": 119134,
+        "output_dir": "/workspace/legal-corpora/us/releases/119-102/hf",
+        "recovery": 0,
+        "release_point": "us/pl/119/102",
+        "validation": {
+          "acceptance": {
+            "all_advertised_configs_schema_coherent": true,
+            "default_config_excludes_recovery": true,
+            "every_artifact_descriptor_bound": true,
+            "legacy_files_not_deleted": true,
+            "verbose_lineage_separate_from_control_plane": true
+          },
+          "artifact_count": 1827,
+          "config_count": 1,
+          "default_config": "publicus-ir-graphrag/v2",
+          "descriptor_count": 1827,
+          "manifest_digest": "f602ecde003d99e3d7e4fd3c4d7e7438f300223c998c7e0a561d3283afea88f9",
+          "release_root_cid": "bafkreifke54eqqlz7vceydibuiw4luypi6utpwjkfnp4x66gxhqxn5iugu",
+          "schema_version": "uscode-hf-release/v1",
+          "valid": true
+        },
+        "vectors": 62931
+      }
+    },
+    "dataset_configs.json": {
+      "bytes": 610,
+      "sha256": "3cc81d2170cb772ce1d425c68e7ae3ae329e0c8e611d884bcb2c0758b8c88c11",
+      "url": "https://huggingface.co/datasets/justicedao/ipfs_uscode/raw/91ca1838853ac82d7a12dd4ab47d9686f47667f9/dataset_configs.json",
+      "value": {
+        "configs": [
+          {
+            "config_name": "publicus-ir-graphrag/v2",
+            "data_files": [
+              {
+                "path": "data/**/*.parquet",
+                "split": "train"
+              }
+            ],
+            "features": [
+              "entry_cid",
+              "legal_id",
+              "family",
+              "record_json",
+              "record_sha256"
+            ],
+            "is_default": true,
+            "is_legacy": false,
+            "is_recovery": false,
+            "notes": [
+              "Default viewer-safe v2 configuration.",
+              "Excludes recovery JSON and legacy uscode_parquet monoliths."
+            ],
+            "path_prefixes": [
+              "data/corpus/",
+              "data/bm25/",
+              "data/vectors/",
+              "data/graph/",
+              "indexes/"
+            ],
+            "primary_key": "entry_cid"
+          }
+        ],
+        "default_config": "publicus-ir-graphrag/v2",
+        "default_excludes_recovery": true,
+        "schema_version": "uscode-hf-release/v1",
+        "task_id": "USCIR-031"
+      }
+    },
+    "dataset_infos.json": {
+      "bytes": 319,
+      "sha256": "f4a1719032bb31890ee61dce88ae40e8a32b41d0fb6af925770b8b0886edb6fe",
+      "url": "https://huggingface.co/datasets/justicedao/ipfs_uscode/raw/91ca1838853ac82d7a12dd4ab47d9686f47667f9/dataset_infos.json",
+      "value": {
+        "configs": {
+          "publicus-ir-graphrag/v2": {
+            "dataset_name": "justicedao/ipfs_uscode",
+            "features": [
+              "entry_cid",
+              "legal_id",
+              "family",
+              "record_json",
+              "record_sha256"
+            ],
+            "splits": {
+              "train": {
+                "name": "train",
+                "num_bytes": 1075147880,
+                "num_examples": 7409174
+              }
+            }
+          }
+        },
+        "dataset_name": "justicedao/ipfs_uscode",
+        "schema_version": "uscode-hf-release/v1"
+      }
+    },
+    "manifest.json": {
+      "artifacts_count": 1826,
+      "artifacts_sample": [
+        {
+          "family": "receipt",
+          "first_key": null,
+          "last_key": null,
+          "media_type": "text/markdown; charset=utf-8",
+          "relative_path": "README.md",
+          "row_count": 0,
+          "schema_id": "uscode-hf-release/v1",
+          "sha256": "afdfec638538e9c9c885e9c7cf7c9559740ceabe24b2a0c72c26492e74d0ae62",
+          "size_bytes": 3140
+        },
+        {
+          "family": "bm25_documents",
+          "first_key": "sha256:0002dc4910cf6ebae98a7c8f37a9e00b3609f909c8c75cb54f9e7900a76de5b5:usc:us:40:3318",
+          "last_key": "sha256:1088af773756e03d296cfa76d312a38105891f5a3107d9982ac9135f7dd7aaa0:usc:us:10:2640",
+          "media_type": "application/vnd.apache.parquet",
+          "relative_path": "data/bm25/documents/part-000000.parquet",
+          "row_count": 4096,
+          "schema_id": "uscode-bm25-document/v1",
+          "sha256": "c1e59541d37602216212b9a027191412c11d8e756f74960f54b14c2120ccab65",
+          "size_bytes": 560086
+        }
+      ],
+      "bytes": 852161,
+      "configs_count": 1,
+      "configs_sample": [
+        {
+          "config_name": "publicus-ir-graphrag/v2",
+          "data_files": [
+            {
+              "path": "data/**/*.parquet",
+              "split": "train"
+            }
+          ],
+          "features": [
+            "entry_cid",
+            "legal_id",
+            "family",
+            "record_json",
+            "record_sha256"
+          ],
+          "is_default": true,
+          "is_legacy": false,
+          "is_recovery": false,
+          "notes": [
+            "Default viewer-safe v2 configuration.",
+            "Excludes recovery JSON and legacy uscode_parquet monoliths."
+          ],
+          "path_prefixes": [
+            "data/corpus/",
+            "data/bm25/",
+            "data/vectors/",
+            "data/graph/",
+            "indexes/"
+          ],
+          "primary_key": "entry_cid"
+        }
+      ],
+      "sha256": "0c6c05582fda19f36c75b166c5c1afecdab156241ce73728f564802b52eacac6",
+      "top_level_keys": [
+        "additive_packaging",
+        "artifacts",
+        "bm25_b",
+        "bm25_k1",
+        "build_config_cid",
+        "configs",
+        "dataset_repo_id",
+        "default_config",
+        "default_excludes_recovery",
+        "determinism_seeds",
+        "goal_id",
+        "graph_ontology_version",
+        "hf_release_schema_version",
+        "legacy_files_deleted",
+        "lineage_is_control_plane",
+        "lineage_report",
+        "manifest_digest",
+        "max_adjacency_pointers_per_row",
+        "max_posting_pointers_per_row",
+        "max_rows_per_physical_shard",
+        "max_rows_per_vector_centroid",
+        "max_vector_shards_per_centroid",
+        "model_id",
+        "model_revision",
+        "package_version",
+        "producer",
+        "release_point",
+        "release_profile",
+        "release_root_cid",
+        "schema_version",
+        "source_revision",
+        "task_id",
+        "tokenizer_id",
+        "vector_space_id"
+      ],
+      "top_level_metadata": {
+        "additive_packaging": true,
+        "bm25_b": 0.75,
+        "bm25_k1": 1.2,
+        "build_config_cid": "3a0f52d25965246736c0cb856102917ba959a839cb81f505cc61c7c9291eddde",
+        "dataset_repo_id": "justicedao/ipfs_uscode",
+        "default_config": "publicus-ir-graphrag/v2",
+        "default_excludes_recovery": true,
+        "determinism_seeds": {
+          "build": 20260330
+        },
+        "goal_id": "USCIR-G080",
+        "graph_ontology_version": "uscode-legal-graph-ontology/v1",
+        "hf_release_schema_version": "uscode-hf-release/v1",
+        "legacy_files_deleted": false,
+        "lineage_is_control_plane": false,
+        "lineage_report": "reports/lineage.json",
+        "manifest_digest": "f602ecde003d99e3d7e4fd3c4d7e7438f300223c998c7e0a561d3283afea88f9",
+        "max_adjacency_pointers_per_row": 4096,
+        "max_posting_pointers_per_row": 4096,
+        "max_rows_per_physical_shard": 4096,
+        "max_rows_per_vector_centroid": 8192,
+        "max_vector_shards_per_centroid": 2,
+        "model_id": "thenlper/gte-small",
+        "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+        "package_version": "2",
+        "producer": "uscode_hf_release.py",
+        "release_point": "us/pl/119/102",
+        "release_profile": "publicus-ir-graphrag/v2",
+        "release_root_cid": "bafkreifke54eqqlz7vceydibuiw4luypi6utpwjkfnp4x66gxhqxn5iugu",
+        "schema_version": "uscode-sparse-graphrag-release-schema-v2",
+        "source_revision": "006dd603185b283c54648dd4aef3c2cbe650981a",
+        "task_id": "USCIR-031",
+        "tokenizer_id": "uscode-legal-tokenizer/v1",
+        "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+      },
+      "url": "https://huggingface.co/datasets/justicedao/ipfs_uscode/raw/91ca1838853ac82d7a12dd4ab47d9686f47667f9/manifest.json"
+    },
+    "release_metadata.json": {
+      "bytes": 1392,
+      "sha256": "0297120806ab840a69dac9e3ddd9a0821d90e2091cb97f6540abb95f0903c92e",
+      "url": "https://huggingface.co/datasets/justicedao/ipfs_uscode/raw/91ca1838853ac82d7a12dd4ab47d9686f47667f9/release_metadata.json",
+      "value": {
+        "additive_packaging": true,
+        "build_config_cid": "3a0f52d25965246736c0cb856102917ba959a839cb81f505cc61c7c9291eddde",
+        "configs": [
+          "publicus-ir-graphrag/v2"
+        ],
+        "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+        "dataset_id": "justicedao/ipfs_uscode",
+        "default_config": "publicus-ir-graphrag/v2",
+        "default_excludes_recovery": true,
+        "determinism_seed": 20260330,
+        "dry_run": false,
+        "goal_id": "USCIR-G080",
+        "graph_ontology_version": "uscode-legal-graph-ontology/v1",
+        "legacy_files_deleted": false,
+        "lineage_is_control_plane": false,
+        "lineage_report": "reports/lineage.json",
+        "model_id": "thenlper/gte-small",
+        "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+        "package_version": "2",
+        "producer": "uscode_hf_release.py",
+        "release_point": "us/pl/119/102",
+        "release_profile": "publicus-ir-graphrag/v2",
+        "release_root_cid": "bafkreifke54eqqlz7vceydibuiw4luypi6utpwjkfnp4x66gxhqxn5iugu",
+        "schema_version": "uscode-hf-release/v1",
+        "source_revision": "006dd603185b283c54648dd4aef3c2cbe650981a",
+        "task_id": "USCIR-031",
+        "tokenizer_id": "uscode-legal-tokenizer/v1",
+        "upload_path": null,
+        "uses_hf_api_upload_file": false,
+        "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+      }
+    },
+    "reports/admission.json": {
+      "bytes": 911,
+      "sha256": "1dadfc623780b019b9bcdc8e9604d9888cc487749e2e3a0211675f0ff62302ab",
+      "url": "https://huggingface.co/datasets/justicedao/ipfs_uscode/raw/91ca1838853ac82d7a12dd4ab47d9686f47667f9/reports/admission.json",
+      "value": {
+        "admitted_count": 62931,
+        "build_config_cid": "3a0f52d25965246736c0cb856102917ba959a839cb81f505cc61c7c9291eddde",
+        "default_config_excludes_recovery": true,
+        "disposition_counts": {
+          "admitted": 62931,
+          "excluded": 0,
+          "quarantined": 0,
+          "replaced": 0
+        },
+        "family_counts": {
+          "bm25_documents": 62931,
+          "bm25_postings": 6920744,
+          "corpus": 62931,
+          "graph_edges": 178691,
+          "graph_nodes": 119134,
+          "recovery": 0,
+          "vectors": 62931
+        },
+        "goal_id": "USCIR-G080",
+        "notes": "OLRC us/pl/119/102 approved_exact refresh (user-authorized)",
+        "producer": "uscode_hf_release.py",
+        "recovery_excluded_from_families": [
+          "bm25_documents",
+          "bm25_postings",
+          "centroids",
+          "corpus",
+          "graph_adjacency_in",
+          "graph_adjacency_out",
+          "graph_edges",
+          "graph_nodes",
+          "vectors"
+        ],
+        "recovery_quarantine_count": 0,
+        "release_point": "us/pl/119/102",
+        "release_profile": "publicus-ir-graphrag/v2",
+        "schema_version": "uscode-hf-release/v1",
+        "source_revision": "006dd603185b283c54648dd4aef3c2cbe650981a",
+        "task_id": "USCIR-031"
+      }
+    },
+    "reports/quality.json": {
+      "bytes": 567,
+      "sha256": "ed7e7d937aad19c371aa53544819111aa274a1be5261733649f0c82ccf9e72e3",
+      "url": "https://huggingface.co/datasets/justicedao/ipfs_uscode/raw/91ca1838853ac82d7a12dd4ab47d9686f47667f9/reports/quality.json",
+      "value": {
+        "artifact_count": 1818,
+        "build_config_cid": "3a0f52d25965246736c0cb856102917ba959a839cb81f505cc61c7c9291eddde",
+        "configs_schema_coherent": true,
+        "default_config": "publicus-ir-graphrag/v2",
+        "default_excludes_recovery": true,
+        "descriptor_bound_artifacts": true,
+        "every_artifact_descriptor_bound": true,
+        "goal_id": "USCIR-G080",
+        "legacy_files_deleted": false,
+        "max_rows_per_physical_shard": 4096,
+        "producer": "uscode_hf_release.py",
+        "schema_version": "uscode-hf-release/v1",
+        "task_id": "USCIR-031",
+        "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+      }
+    },
+    "reports/reproducibility.json": {
+      "bytes": 557,
+      "sha256": "884b5424bf6874619c6f2b8b846c2657baab4887611221d8599add39d83ad4cf",
+      "url": "https://huggingface.co/datasets/justicedao/ipfs_uscode/raw/91ca1838853ac82d7a12dd4ab47d9686f47667f9/reports/reproducibility.json",
+      "value": {
+        "build_config_cid": "3a0f52d25965246736c0cb856102917ba959a839cb81f505cc61c7c9291eddde",
+        "determinism_seed": 20260330,
+        "goal_id": "USCIR-G080",
+        "model_id": "thenlper/gte-small",
+        "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+        "producer": "uscode_hf_release.py",
+        "release_point": "us/pl/119/102",
+        "schema_version": "uscode-hf-release/v1",
+        "source_revision": "006dd603185b283c54648dd4aef3c2cbe650981a",
+        "task_id": "USCIR-031",
+        "tokenizer_id": "uscode-legal-tokenizer/v1",
+        "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+      }
+    }
+  },
+  "declared_upstream_source_revision": "006dd603185b283c54648dd4aef3c2cbe650981a",
+  "hub_observation": {
+    "declared_bytes": 3809284224,
+    "descriptors": 2802,
+    "sha256": "22114d951fc8df4fa5709fa1131cf880b5127c223fc5f54a1b8b10a47ba77285"
+  },
+  "manifest_reconciliation": {
+    "all_selected_lfs_sizes_and_declared_hashes_match_hub_metadata": true,
+    "file_payload_integrity_verified": false,
+    "metadata_size_mismatches": [
+      {
+        "hub_bytes": 3476,
+        "manifest_bytes": 3140,
+        "path": "README.md"
+      }
+    ],
+    "missing_selected_paths": [],
+    "selected_descriptor_count": 1826,
+    "unbound_data_indexes_reports_path_count": 412,
+    "unbound_family_counts": {
+      "data/graph/edges": 377,
+      "data/graph/nodes": 30,
+      "indexes": 5
+    }
+  },
+  "observed_at_utc": "2026-10-16T17:12:48.513712+00:00",
+  "pinned_release_commit": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+  "qualifications": {
+    "corpus_payload_schema_verified": false,
+    "lean_execution": false,
+    "models_downloaded": false,
+    "native_validation_run": false,
+    "parquet_downloaded": false,
+    "product_imported": false,
+    "semantic_admission": false,
+    "training": false,
+    "unique_source_population_verified": false,
+    "vectors_downloaded": false
+  },
+  "release_point_claim": "us/pl/119/102",
+  "repository": "justicedao/ipfs_uscode",
+  "schema": "legal-uscode-source-plan-research/v1",
+  "viewer": {
+    "cause_exception": "InvalidConfigName",
+    "cause_message": "Bad characters from black list '<>:/\\|?*' found in 'publicus-ir-graphrag/v2'. They could create issues when creating a directory for this config on Windows filesystem.",
+    "error": "Cannot get the config names for the dataset.",
+    "raw_sha256": "3d2f4d672ea5019a2c89deb23415df499f44fd09563fdeea55da153de8cf95d3",
+    "status": 500,
+    "url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fipfs_uscode"
+  }
+}

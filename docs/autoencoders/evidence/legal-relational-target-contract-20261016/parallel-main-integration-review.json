@@ -1,0 +1,166 @@
+{
+  "alignment": {
+    "byte_codec_fixed_259_symbols_and_exact_original_vs_canonical_transports_separate": true,
+    "candidate_examples_unassigned_split_zero_training_and_gold_masks": true,
+    "completed_60_plus_60_numerical_replay_reused_not_repeated": true,
+    "detached_source_token_components_not_active_embedding_lanes": true,
+    "existing_TypedExpression_relational_scope_join_graph_and_Lean_owners_reused": true,
+    "future_AST_action_codec_and_numerical_head_need_distinct_qualified_contract": true,
+    "no_reviewed_statutory_target_population_established": true,
+    "proposed_combined_AST_action_head_is_not_delivered_byte_codec": true,
+    "separate_IR_family_schema_task_profile_format_codec_dimension_input_producer_and_checkpoint_lineages": true,
+    "source_only_model_input_target_labels_and_embedding_declarations_separate": true,
+    "upstream_proposals_explicitly_not_executed_results": true
+  },
+  "limitations": [
+    "This finite static reconciliation does not authenticate remote network freshness, model outputs, actual legal meaning or native execution.",
+    "The142-case result is a documentation assertion here; the separate native outcome auditor owns its raw result/closeout validation.",
+    "No blanket merge-conflict or installed import-closure claim is made."
+  ],
+  "local_source_contracts": [
+    {
+      "bytes": 23864,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_target_codec_v1.py",
+      "sha256": "66c2f4fb4280add56913d7629ad80b91c581aae54b2f832fa359f412d9d7bdf5",
+      "top_level_imports": [
+        "from __future__ import annotations",
+        "from contextlib import contextmanager",
+        "import hashlib",
+        "import json",
+        "import math",
+        "import os",
+        "from pathlib import Path",
+        "import re",
+        "import stat",
+        "import threading"
+      ]
+    },
+    {
+      "bytes": 22837,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_decoder_example_v1.py",
+      "sha256": "4aed1fde35efce9cdd6579be83be6901143003e996611850f6b35f0cce3f705c",
+      "top_level_imports": [
+        "from __future__ import annotations",
+        "import hashlib",
+        "import json",
+        "import math",
+        "import os",
+        "from pathlib import Path",
+        "import re",
+        "import stat"
+      ]
+    }
+  ],
+  "method": "Read-only local Git object diffs, documentation text and standard-library metadata/AST inspection. No fetch, ref/index mutation, product import, tests, model/native/database call or payload access.",
+  "observation": {
+    "cached_origin_main": "121d98e3ee5f829f3b3e76b80baa3710626e6db1",
+    "local_head": "d56fd69c4d3a3aa3ef23f0e1c21dd11b692e5c8c",
+    "local_head_after_read": "d56fd69c4d3a3aa3ef23f0e1c21dd11b692e5c8c",
+    "pull_request": 1319,
+    "remote_network_freshness_verified_by_this_review": false,
+    "reviewed_base": "d56fd69c4d3a3aa3ef23f0e1c21dd11b692e5c8c",
+    "upstream_author_commit": "dc95e6dc486e0588245e7b22a4c4db934d201a94",
+    "upstream_merged_into_owned_head_at_observation": false
+  },
+  "observed_at_utc": "2026-10-16T07:07:15.216793+00:00",
+  "overlap": {
+    "all_changes_documentation_or_evidence": true,
+    "master_plan_text_overlap_requires_normal_merge": true,
+    "own_master_append_must_be_preserved": true,
+    "product_runtime_or_test_paths_changed": [],
+    "selected_native_request": {
+      "bytes": 58999,
+      "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/qualification-request-02.json",
+      "sha256": "ae07b1da724f4affe5989e9998266a5f76fae8a58fe62671491788e85a027380",
+      "source_count": 255
+    },
+    "selected_native_source_path_intersection": [],
+    "upstream_changed_paths": 7,
+    "upstream_master_changes": [
+      "Opening reviewed baseline becomes643c01860 and acknowledges PR1318.",
+      "Adds execution-design and metadata-only refresh links.",
+      "Replaces unavailable relative F18 report link with immutable archived GitHub link."
+    ]
+  },
+  "qualification_scope": {
+    "local_document_reports_native_attempt02_142_cases_3_modules_255_pins": true,
+    "new_training_or_inference_or_AST_action_head_claimed": false,
+    "qualification_outcome_independently_audited_by_this_review": false,
+    "source_meaning_training_gold_graph_admission_or_Lean_authority_claimed": false
+  },
+  "recommendation": "Normal merge preserves all seven upstream documentation/evidence files and both local contract updates. Use the fixed byte target as a reproducible candidate serialization boundary; keep the proposed AST-action architecture, reviewed-target eligibility and numerical training as later separately qualified work.",
+  "reviewed_local_documents": [
+    {
+      "bytes": 12380,
+      "path": "docs/autoencoders/legal_relational_decoder_target_contract_v1.md",
+      "sha256": "c7b7c17c130605cc54de1c7417bdbf90fa1c9d57ae52d75e416d35fcbf19cdea",
+      "worktree_status": "?? docs/autoencoders/legal_relational_decoder_target_contract_v1.md"
+    },
+    {
+      "bytes": 101120,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "a0473ea88ec6a9be5f6d748f3dbcaaee6fa8421cb30e513acfaa0dc410f07201",
+      "worktree_status": "M docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md"
+    }
+  ],
+  "schema": "legal-relational-target-contract-parallel-main-integration-review/v1",
+  "status": "static_alignment_pass_before_merge",
+  "upstream_files": [
+    {
+      "bytes": 2652,
+      "git_blob": "1a77865cd0e2583e5a3c6e2c1204fab463c60b20",
+      "git_mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/hub-metadata-summary-v01.json",
+      "sha256": "cbbfdb4a23a64ece3b61d394200eef27f43595f2b8bac22e68275016eb0e33b7",
+      "status": "A"
+    },
+    {
+      "bytes": 732,
+      "git_blob": "edf945898265cbea3196ecc6407455e7338f2e49",
+      "git_mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/index-v01.json",
+      "sha256": "68065439a0f8d38ec9bd1dbcf50da4350598a616e8ba148d54dd0449fc2c38dd",
+      "status": "A"
+    },
+    {
+      "bytes": 581,
+      "git_blob": "30a529f324c3b8eb4d5212ae67d3e993ed96706b",
+      "git_mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/uscode-autoformal-entity-cache-README.md",
+      "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4",
+      "status": "A"
+    },
+    {
+      "bytes": 13863,
+      "git_blob": "ce06ecb91419c806b8b109ab73ddaa9793508ce1",
+      "git_mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-20261016/uscode-autoformal-span-cache-README.md",
+      "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6",
+      "status": "A"
+    },
+    {
+      "bytes": 1629,
+      "git_blob": "eca4d9633314b218100139ffa3bd5c4f2959d4ba",
+      "git_mode": "100644",
+      "path": "docs/autoencoders/evidence/legal-ir-span-graph-plan-review-20261016.json",
+      "sha256": "243ccf9e9b5b7c059956211bc0e604d7155d57bd3d19b192c8e5b9d69c754cfe",
+      "status": "A"
+    },
+    {
+      "bytes": 40230,
+      "git_blob": "6c673cfb0b0bb3184cadcf89fb6ef8c0a2eed2c5",
+      "git_mode": "100644",
+      "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "sha256": "80fcffa00252dfde901e0373d240e63702d3e536dc7f11fb0e7d67d180205ca1",
+      "status": "A"
+    },
+    {
+      "bytes": 100303,
+      "git_blob": "e12368522e670e4417bfc489ff0f8c978350184c",
+      "git_mode": "100644",
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "38eeea5d6cdfe22309472c50fe30ec94388994a239256c85ba5f5061319796fe",
+      "status": "M"
+    }
+  ]
+}

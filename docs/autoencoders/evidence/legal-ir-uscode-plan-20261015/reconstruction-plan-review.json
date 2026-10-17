@@ -1,0 +1,53 @@
+{
+  "draft_binding": {
+    "bytes": 38823,
+    "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+    "sha256": "03998990b840488374589f684a36ef22a18d5a00906212c9ce7e5b3b6c836fbb"
+  },
+  "evidence_binding": {
+    "bytes": 44262,
+    "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/reconstruction-and-assets-survey.json",
+    "sha256": "be53f4860478d6c5321edf0a7628cef6bc893c2b226fe3e0d559a40dfc0f22c1"
+  },
+  "files_modified_except_this_review": 0,
+  "findings": [
+    {
+      "id": "direct-source-path",
+      "lines": [
+        33,
+        34,
+        35,
+        36,
+        51
+      ],
+      "model_quality_or_security_regression_claim": false,
+      "observation": "The diagram routes source features only through independent8/384/768 representations and the Source-to-LegalIR input row omits direct source text/token features. Retained F17/F18/grouped source-conditioned heads do not depend on an active dimensional bottleneck.",
+      "requested_correction": "Show a separately labelled direct source-text/token-feature path and distinguish latent-only, source-plus-latent and source-only evaluation arms; record direct source access in each row.",
+      "section": "2 Define the reconstruction tasks",
+      "severity": "correction"
+    }
+  ],
+  "model_calls": 0,
+  "network_calls": 0,
+  "not_requalified": [
+    "No active model/checkpoint/encoder loads or numerical replay.",
+    "No current ModelManager/catalog query.",
+    "No new HF network verification, corpus scan, legal review, graph admission or Lean execution."
+  ],
+  "observed_at_utc": "2026-10-15T04:21:27.589960+00:00",
+  "product_imports": 0,
+  "review_scope": "Independent read-only comparison of empirical model/transfer/reconstruction/evaluation/registry claims to the named source-bound survey; no source or plan modifications.",
+  "schema": "legal-ir-uscode-reconstruction-plan-review@1",
+  "tests_executed": 0,
+  "training_steps": 0,
+  "verified_within_review_scope": [
+    "F17/F18 completeIR154/168 and freshdev/test0/36, source-conditioned/latentdisabled status and scientific failure are accurate.",
+    "F18 immutable archivec9cce458 custody is kept separate from portable numerical reload, promotion and unverified current ModelManager import.",
+    "Saved-score conditions-rank diagnostic remains primary posthoc evidence requiring independent recount, with no trained composed model.",
+    "48/48semanticIR versus0/48originalprose and cohort-specific50percentIR-onlycollision ceiling are attributed correctly.",
+    "Earlier active384/native768 controls are preserved rather than erased by F17/F18 placeholders.",
+    "Warm-start transfer preserves compatibility/encoder/source/cache/task identity and does not pad384 to native768.",
+    "Exposure-aware component splits, complete denominators, retained error IDs and unsupported dispositions remain explicit.",
+    "Families/schema/tasks/dimension roles, model repository provenance and compiler versus learned-head identities stay separate."
+  ]
+}

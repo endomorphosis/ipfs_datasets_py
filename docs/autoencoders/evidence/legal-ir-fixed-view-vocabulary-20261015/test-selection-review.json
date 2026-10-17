@@ -1,0 +1,268 @@
+{
+  "authorship_validation": {
+    "ast_parse": true,
+    "builtin_compile": true,
+    "embedded_child_builtin_compile": true,
+    "models_or_checkpoints_loaded": false,
+    "network_calls": false,
+    "product_imports_executed": false,
+    "pytest_collection_executed": false,
+    "tests_executed": false,
+    "training_executed": false
+  },
+  "expected_expanded_case_count": 95,
+  "limitations": [
+    "95 is an AST-derived complete-module estimate; actual collection and raw JUnit determine final executed totals.",
+    "These are synthetic numerical and cooperative callback controls, not statutory meaning, human review, training gains, checkpoint promotion, or holdout validation.",
+    "The context checkpoint SHA is caller-declared; the adapter does not independently read or authenticate a checkpoint file.",
+    "Fresh-process replay covers pure scoring; real autoencoder adapter controls execute in the authorized pytest process.",
+    "The source-observation mutation seam is cooperative and does not establish authority against arbitrary trusted Python memory mutation."
+  ],
+  "modules": [
+    {
+      "bytes": 17782,
+      "cases": [
+        {
+          "expanded_cases": 2,
+          "function": "test_nonview_surviving_heads_equal_full_arithmetic_and_normalization"
+        },
+        {
+          "expanded_cases": 2,
+          "function": "test_nonview_preserves_reference_dependent_ir_support_and_losses"
+        },
+        {
+          "expanded_cases": 2,
+          "function": "test_actual_batch_patch_is_nonzero_memory_free_and_replayable"
+        },
+        {
+          "expanded_cases": 9,
+          "function": "test_explicit_candidate_order_rejects_invalid_shape"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_worker_explicit_order_is_bound_and_default_identity_shape_unchanged"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_default_candidate_order_and_explicit_family_cap"
+        },
+        {
+          "expanded_cases": 12,
+          "function": "test_opt_in_keeps_guards_and_exact_rollback"
+        },
+        {
+          "expanded_cases": 2,
+          "function": "test_nonview_rejects_regularization_before_evaluation"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_raw_projection_metrics_are_separate_bounded_and_read_only"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_actual_decoder_raw_branch_reveals_target_projection_without_changing_metric"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_structural_order_is_explicit_in_worker_job_policy"
+        },
+        {
+          "expanded_cases": 6,
+          "function": "test_new_operators_reject_unsupported_cuda_before_evaluation"
+        },
+        {
+          "expanded_cases": 2,
+          "function": "test_direct_new_operator_batch_rejects_unsupported_cuda_transactionally"
+        }
+      ],
+      "expanded_case_count": 42,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_nonview_projection.py",
+      "regular_file": true,
+      "sha256": "c1cc6a72b0df515d08896df8c62bd82ddd203f3a997cbd86b31defa03bbb119c",
+      "test_function_count": 13
+    },
+    {
+      "bytes": 10062,
+      "cases": [
+        {
+          "expanded_cases": 1,
+          "function": "test_registry_has_exact_canonical_views_and_stable_contract_ids"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_registry_resolves_names_components_aliases_enums_and_ids"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_every_contract_is_complete_for_all_downstream_consumers"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_all_representative_payloads_pass_typed_validation"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_validation_reports_missing_fields_and_never_accepts_source_text"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_view_specific_hooks_enforce_semantic_invariants"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_manifest_and_consumer_projections_are_deterministic_and_source_free"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_codex_projection_is_lane_bounded_and_contains_stable_contract_id"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_logic_ir_view_envelope_payload_is_accepted_without_envelope_source_text"
+        }
+      ],
+      "expanded_case_count": 9,
+      "path": "tests/unit/logic/integration/test_legal_ir_view_contracts.py",
+      "regular_file": true,
+      "sha256": "dd8c6192cbc298984c50411f17fbdcccbd409896b66c0084ffad1f2e0c4642e4",
+      "test_function_count": 9
+    },
+    {
+      "bytes": 24209,
+      "cases": [
+        {
+          "expanded_cases": 1,
+          "function": "test_profile_declares_actual_optimizer_lanes_and_pinned_mapper"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_zero_keys_and_mapping_order_preserve_fixed_support"
+        },
+        {
+          "expanded_cases": 4,
+          "function": "test_epsilon_continuity_matches_independent_log_sum_exp"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_seventh_zkp_class_and_extreme_logits_have_finite_unclamped_loss"
+        },
+        {
+          "expanded_cases": 8,
+          "function": "test_closed_finite_rows_refuse_invalid_observations"
+        },
+        {
+          "expanded_cases": 2,
+          "function": "test_score_row_bounds_refuse_without_a_partial_result"
+        },
+        {
+          "expanded_cases": 3,
+          "function": "test_profile_commitment_and_current_generation_are_both_required"
+        },
+        {
+          "expanded_cases": 3,
+          "function": "test_actual_adapter_zero_key_insertion_preserves_predictions"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_actual_head_scale_changes_effective_logits_and_matches_math"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_actual_adapter_tiny_nonzero_update_has_continuous_readout"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_warm_stale_support_cache_and_cold_state_replay_agree_after_revision"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_caller_state_and_actual_cache_objects_remain_untouched"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_ordered_formula_transition_changes_sample_pin_and_real_head_readout"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_caller_formula_reversal_during_actual_readout_refuses_closing"
+        },
+        {
+          "expanded_cases": 4,
+          "function": "test_adapter_refuses_stale_pins_or_incompatible_context"
+        },
+        {
+          "expanded_cases": 3,
+          "function": "test_unknown_checkpoint_labels_refuse_even_in_inactive_heads"
+        },
+        {
+          "expanded_cases": 2,
+          "function": "test_nonfinite_disabled_head_is_rejected_before_any_readout"
+        },
+        {
+          "expanded_cases": 2,
+          "function": "test_adapter_refuses_unsupported_profiles_without_loading_a_backend"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_changed_producer_observation_refuses_without_mutating_caller"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_strong_bad_actual_head_update_still_fails_existing_official_guard"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_checkpoint_context_stays_an_explicit_declaration_with_unknown_legacy_metadata"
+        },
+        {
+          "expanded_cases": 1,
+          "function": "test_pure_diagnostic_replays_in_fresh_process_without_optional_models_or_children"
+        }
+      ],
+      "expanded_case_count": 44,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_vocabulary_diagnostic.py",
+      "regular_file": true,
+      "sha256": "8b344f6feb6cde3c90598ab4585a7d9e8d8d83a721573d74ce27eb67031947b4",
+      "test_function_count": 22
+    }
+  ],
+  "new_module_expanded_cases": 44,
+  "observed_at_utc": "2026-10-15T21:49:48.494278+00:00",
+  "prelaunch_corrections": [
+    {
+      "details": "Replaced nonexistent ModalAutoencoderTrainingState.from_json with its existing public from_dict(json.loads(serialized_state)) before any native run.",
+      "kind": "test_loader"
+    },
+    {
+      "details": "Added exactly two authorized ordered-formula tests after peer review found the new owner initially pinned sorted sample.to_dict output. Existing production files remain outside this test author ownership.",
+      "kind": "additional_regressions"
+    }
+  ],
+  "production_observation": {
+    "bytes": 27402,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_view_vocabulary_diagnostic.py",
+    "sha256": "71de47401a54d9374691ebd5fe5e50db38a4d741883e12ec1c7fbe4734292104"
+  },
+  "schema": "legal-ir-fixed-view-vocabulary-test-selection-review/v1",
+  "selection_basis": [
+    "Whole unchanged 42-case nonview suite retains actual proposal guards and transactional rollback controls.",
+    "Whole unchanged 9-case canonical view-contract suite covers the separate payload namespace.",
+    "New 44-case module declares all seven optimizer bridge lanes from the current mapper/profile rather than observed checkpoint keys.",
+    "Independent log-sum-exp oracle checks finite unclamped CE, entropy, excess and epsilon continuity.",
+    "Actual Python/codec-free 8D mock LegalSample head readout checks zero-key insertion, scale, stale candidate cache and state revision, caller cache preservation, and strong bad-update refusal by the unchanged official guard.",
+    "Two ordered-formula controls detect meaningful feature order hidden by existing sorted document serialization, including a closing callback refusal.",
+    "Compatibility and refusal controls cover stale pins, unsupported namespace and adapter, disabled-head unknown/nonfinite values, producer-source observation drift, and explicit unknown legacy context declarations."
+  ],
+  "status": "static_review_complete_runtime_pending",
+  "strict_regular_file_scope": {
+    "new_module_file_writes": false,
+    "new_module_subprocess_case_count": 1,
+    "no_claim_of_arbitrary_process_containment": true,
+    "other_selected_file_output": "Existing nonview test writes a private regular parent JSON under tmp_path.",
+    "selected_modules_are_regular_files": true,
+    "subprocess_scope": "One bounded fresh Python interpreter for pure profile/score replay; parent PYTHONPATH preserved with checkout first, bytecode disabled, cwd/TMPDIR supplied tmp_path. Child forbids optional model imports and nested Popen.",
+    "symlink_fifo_or_tmp_path_factory_use": false
+  },
+  "whole_module_count": 3,
+  "workspace": "/home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015"
+}

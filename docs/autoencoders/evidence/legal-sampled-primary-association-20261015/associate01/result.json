@@ -1,0 +1,17 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-sampled-primary-association-20261015-associate01/logs/execution.json"
+  ],
+  "executed_checks": [
+    "retained-section101-definition-review-correspondence-fol-tdfol-with-eight-refusals",
+    "full_original_primary_index_baseline",
+    "fol_original_bound_sampled_primary_association",
+    "tdfol_original_bound_sampled_primary_association",
+    "source_and_native_output_closing_guards"
+  ],
+  "request_sha256": "88963d15fe5981bdc13ed1106c12fe005278c78ef8a034dbeac2faca2005e53c",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

@@ -1,0 +1,257 @@
+{
+  "fresh_authentication": {
+    "historical_auth04_receipt_not_relabelled": true,
+    "historical_request_pin": {
+      "bytes": 9558,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/authentication-validation-request-04.json",
+      "sha256": "57c9b8e3760e317f3491cd513ada25c5a48fddcfa38c7077dfb85fd07aaa6352"
+    },
+    "new_auth05_outcome_claimed": false,
+    "new_request_pin": {
+      "bytes": 9702,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authentication-validation-request-05.json",
+      "sha256": "beb14df36f657bf70afb2c7a2f4a744ec56b857c59c931f31a6f1e99be23dee0"
+    },
+    "only_root_and_exact_owned_attempt_rebinding": true,
+    "registration_handoff_new_request_pins_reviewed": false,
+    "source_bodies_verified": 30,
+    "source_bytes_verified": 10394420,
+    "unchanged_native_budgets_and_policy": true
+  },
+  "historical_loader_restoration": {
+    "body_exact": true,
+    "existing_files_overwritten": false,
+    "payloads_opened_by_reviewer": false,
+    "physical_identity_preserved": false,
+    "receipt_pin": {
+      "bytes": 6881,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/historical-loader-source-restoration.json",
+      "sha256": "32805ac0b0a6a01130d91d29f8c74d03c120a7054770fcf342243541f5dcfd82"
+    },
+    "restored_source_bytes": 221716,
+    "source_pairs_independently_compared": 3
+  },
+  "limits": {
+    "ModelManager_called": false,
+    "database_opened": false,
+    "model_checkpoint_or_embedding_payloads_loaded": false,
+    "native_admission_or_recovery_called": false,
+    "new_UID_or_kernel_containment_claim": false,
+    "new_training_or_teacher_claim": false,
+    "receipt_is_resource_capability": false,
+    "source_files_modified_by_reviewer": false,
+    "tests_executed": false
+  },
+  "mitigation": {
+    "borrowed_object_store": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/objects",
+    "fresh_source_revalidation_required": true,
+    "git_head": "6b8b1346f888adbebbcf1d714e4ad0ab39a02052",
+    "linked_worktree_commondir_present": false,
+    "new_operational_root": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets",
+    "objects_alternates_present": true,
+    "scope": "Separate clone metadata outside the linked-worktree cleanup namespace plus durable exact private source backups. This does not establish fully independent Git object custody or immunity to external filesystem deletion.",
+    "separate_real_git_directory": true
+  },
+  "observed_at_utc": "2026-10-16T05:17:26.279302+00:00",
+  "operational_driver": {
+    "new_pin": {
+      "bytes": 36296,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_driver.py",
+      "sha256": "a20b6d875ab84b0563d3808fa6d07b0ba865a926dcec9de8da3f1fc05f5cba23"
+    },
+    "only_change": "DATASETS Path constant; all other source bytes identical.",
+    "original_pin": {
+      "bytes": 36288,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/registration_driver.py",
+      "sha256": "85b15551714cf1912d8922a84208ab9b040263192e8504e219219ff8c2445720"
+    },
+    "runtime_tested_by_reviewer": false
+  },
+  "plan_rebinding": {
+    "changed_fields": [
+      "/models/0/model_metadata/huggingface_config/metadata_provenance/historical_registration_worklist_pin/path",
+      "/models/0/model_metadata/huggingface_config/metadata_provenance/publication_provenance_pin/path",
+      "/models/1/model_metadata/huggingface_config/metadata_provenance/historical_registration_worklist_pin/path",
+      "/models/1/model_metadata/huggingface_config/metadata_provenance/publication_provenance_pin/path",
+      "/models/2/model_metadata/huggingface_config/metadata_provenance/historical_registration_worklist_pin/path",
+      "/models/2/model_metadata/huggingface_config/metadata_provenance/publication_provenance_pin/path"
+    ],
+    "model_ids_asset_paths_hashes_lineage_and_other_metadata_unchanged": true,
+    "new_pin": {
+      "bytes": 29929,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/model-manager-import-plan.json",
+      "sha256": "b5d027bd36d455688eb9ec04fd92279f9d2732deaf776d443f6e917805b9846b"
+    },
+    "only_exact_root_path_replacements": true,
+    "original_pin": {
+      "bytes": 29881,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/model-manager-import-plan.json",
+      "sha256": "0b3ca1af15ac124aae297efd04df4699b6e96ba79cb7c0880601b58d8f5f43c4"
+    }
+  },
+  "preserved_core_sources": [
+    {
+      "body_exact": true,
+      "current_pin": {
+        "bytes": 21322,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/authenticate_published_components.py",
+        "sha256": "4e40833a0ec4bc3d19c64c84f9afcee60472948527917ad72da006f324501691"
+      },
+      "name": "authenticate_published_components.py",
+      "recovered_preimage_pin": {
+        "bytes": 21322,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/authenticate_published_components.py",
+        "sha256": "4e40833a0ec4bc3d19c64c84f9afcee60472948527917ad72da006f324501691"
+      }
+    },
+    {
+      "body_exact": true,
+      "current_pin": {
+        "bytes": 13218,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/publication-provenance.json",
+        "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+      },
+      "name": "publication-provenance.json",
+      "recovered_preimage_pin": {
+        "bytes": 13218,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/publication-provenance.json",
+        "sha256": "683cf7bc98bc7fdefedbc25880d8aa62668dccbc2b15c027202ec7db84915555"
+      }
+    },
+    {
+      "body_exact": true,
+      "current_pin": {
+        "bytes": 9267,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_entry.py",
+        "sha256": "6b47d0659d654a1ac54556f1733c69b12455268252d17293992f340562d1fde3"
+      },
+      "name": "registration_entry.py",
+      "recovered_preimage_pin": {
+        "bytes": 9267,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/registration_entry.py",
+        "sha256": "6b47d0659d654a1ac54556f1733c69b12455268252d17293992f340562d1fde3"
+      }
+    },
+    {
+      "body_exact": true,
+      "current_pin": {
+        "bytes": 13822,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_launcher.py",
+        "sha256": "8bdd253f0f7f52dc06f3855c98b6973c64eb69abf4ea46cddc61815b56777867"
+      },
+      "name": "registration_launcher.py",
+      "recovered_preimage_pin": {
+        "bytes": 13822,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/registration_launcher.py",
+        "sha256": "8bdd253f0f7f52dc06f3855c98b6973c64eb69abf4ea46cddc61815b56777867"
+      }
+    },
+    {
+      "body_exact": true,
+      "current_pin": {
+        "bytes": 30235,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_resource_scope.py",
+        "sha256": "704f6a37e8eaae4aec9064fa24123a48a41b162ac597d80d0ada1b087b74a8f5"
+      },
+      "name": "registration_resource_scope.py",
+      "recovered_preimage_pin": {
+        "bytes": 30235,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/registration_resource_scope.py",
+        "sha256": "704f6a37e8eaae4aec9064fa24123a48a41b162ac597d80d0ada1b087b74a8f5"
+      }
+    },
+    {
+      "body_exact": true,
+      "current_pin": {
+        "bytes": 1958,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/run_component_controls.py",
+        "sha256": "96a646a3947de8fc21bbf9805f05da5d4f1feb75e4429ca1ee71d1c667b41d37"
+      },
+      "name": "run_component_controls.py",
+      "recovered_preimage_pin": {
+        "bytes": 1958,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/run_component_controls.py",
+        "sha256": "96a646a3947de8fc21bbf9805f05da5d4f1feb75e4429ca1ee71d1c667b41d37"
+      }
+    },
+    {
+      "body_exact": true,
+      "current_pin": {
+        "bytes": 2719,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/run_original_validation.py",
+        "sha256": "408679dc80a063b0275d09dfca319ae520788852f7569c06dbbcdabcbd5bb50f"
+      },
+      "name": "run_original_validation.py",
+      "recovered_preimage_pin": {
+        "bytes": 2719,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/run_original_validation.py",
+        "sha256": "408679dc80a063b0275d09dfca319ae520788852f7569c06dbbcdabcbd5bb50f"
+      }
+    },
+    {
+      "body_exact": true,
+      "current_pin": {
+        "bytes": 18452,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_driver.py",
+        "sha256": "bb1beb7f2e94a75ebd4160915e2f6cf538821d5f0c85d0a30247a940dbca83d4"
+      },
+      "name": "test_registration_driver.py",
+      "recovered_preimage_pin": {
+        "bytes": 18452,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/test_registration_driver.py",
+        "sha256": "bb1beb7f2e94a75ebd4160915e2f6cf538821d5f0c85d0a30247a940dbca83d4"
+      }
+    },
+    {
+      "body_exact": true,
+      "current_pin": {
+        "bytes": 2772,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_resource_scope.py",
+        "sha256": "508f4dc8677c12e952a20cdd75a939d9b0a558d425cd6efaa158b655fecb26a4"
+      },
+      "name": "test_registration_resource_scope.py",
+      "recovered_preimage_pin": {
+        "bytes": 2772,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/test_registration_resource_scope.py",
+        "sha256": "508f4dc8677c12e952a20cdd75a939d9b0a558d425cd6efaa158b655fecb26a4"
+      }
+    },
+    {
+      "body_exact": true,
+      "current_pin": {
+        "bytes": 2289,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/test_registration_launcher.py",
+        "sha256": "f811d658c127068dcd50d246ec0d8ae650731900af78231a8c26ea1f3527552e"
+      },
+      "name": "test_registration_launcher.py",
+      "recovered_preimage_pin": {
+        "bytes": 2289,
+        "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/recovered-sources/test_registration_launcher.py",
+        "sha256": "f811d658c127068dcd50d246ec0d8ae650731900af78231a8c26ea1f3527552e"
+      }
+    }
+  ],
+  "review_method": "Read-only stdlib source/JSON/hash/stat and Git HEAD observation; no product imports or test/native/model/database execution. Private copies were used only as exact preimages.",
+  "schema": "legal-ir-source-relocation-static-review/v1",
+  "source_loss": {
+    "attribution": "Unresolved; bounded metadata survey found no actual deletion command or completed cleanup journal.",
+    "causal_cleanup_record_found": false,
+    "deletion_actor_identified": false,
+    "first_absence_independently_observed": true,
+    "incident_count": 2,
+    "native_controls_02": {
+      "parent_reported_source_missing_at_seal": true,
+      "parent_reported_test_outcome": {
+        "deselected": 1,
+        "passed": 49
+      },
+      "qualified": false,
+      "test_pass_is_not_successful_native_closeout": true
+    },
+    "original_operational_root": "/home/barberb/lift_coding/.worktrees/legal-ir-missing-component-import-20261016",
+    "parent_reported_database_writes_started": false,
+    "parent_reported_original_worktree_was_locked": true,
+    "second_absence_parent_reported": true
+  },
+  "status": "pass_for_fresh_authentication_with_explicit_limits"
+}

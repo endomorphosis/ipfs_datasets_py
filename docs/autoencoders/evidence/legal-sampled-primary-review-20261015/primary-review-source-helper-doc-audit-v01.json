@@ -1,0 +1,174 @@
+{
+  "Lean_executed": false,
+  "authority_granted": false,
+  "base": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+  "blocking_findings": [],
+  "execution_performed": false,
+  "findings": [
+    {
+      "evidence": "load_guard compiles the independently pinned stdlib qualification-guard definitions only; no retained producer/replay module is loaded or executed. main requires an initially empty product namespace and attaches the checked-buffer finder before product imports. Fresh interpreter execution remains contingent on the new native request actually running.",
+      "status": "pass",
+      "topic": "fresh retained artifact consumer"
+    },
+    {
+      "evidence": "The closed accepted producer descriptor pins exact producer/native/request/receipt/replay/file-index/captured-parent metadata. Receipt/replay/index hashes and primary index/candidate hashes are additionally fixed constants. Six native metadata locations are required beneath the exact retained producer directory. Native check identities, request hashes, return codes, durability, recorded stopped group, lease release and final accounting flags are joined explicitly.",
+      "status": "pass",
+      "topic": "independently accepted original generation"
+    },
+    {
+      "evidence": "accept_producer scans every file and directory of the bounded native-sealed producer generation, including the durability seal as a separately pinned file. It verifies every sealed file byte/hash/device/inode and a closed exact filename population. The 63 replay-index members plus index comprise exactly 64 files/10,630,440 bytes; all seven association files/336,630 bytes are separately matched against native inventory and receipt descriptors.",
+      "status": "pass",
+      "topic": "complete native and payload custody"
+    },
+    {
+      "evidence": "Before/after inventory includes full hash, size and physical file/directory identities. The entire native-sealed generation is rescanned and compared canonically at closeout; all originally captured metadata are read back unchanged. A cooperative audit hook refuses producer writes/mutations, network and extra child operations; caught attempts still fail final closure. This is not an OS sandbox or arbitrary descendant containment claim.",
+      "status": "pass",
+      "topic": "immutable retained producer"
+    },
+    {
+      "evidence": "retained_families reads original bytes only from accepted replay-index membership, verifies distinct FOL/TDFOL family identity and full canonical/internal commitments, and reconstructs the exact original ten correspondence arguments inside the five association replay arguments. It deep-copies the four original sampler binding fields and adds only expected_sampling_report_sha256; omitted view_limits/sampling_limits remain omitted. Candidate/report/request/context transports are returned as exact original bytes rather than reserialized aliases.",
+      "status": "pass",
+      "topic": "exact replay arguments and transport"
+    },
+    {
+      "evidence": "checked_descriptor and descriptor_bytes explicitly allow zero length only for captured_parent_stderr; g.snapshot supports allow_empty. The accepted captured stderr must equal empty bytes and is never JSON-decoded. Whole native inventory can hash other sealed empty files with allow_empty=True.",
+      "status": "pass",
+      "topic": "zero-byte captured stderr"
+    },
+    {
+      "evidence": "The consumer reconstructs the complete original PrimarySectionIndex from independently pinned candidate/reconstruction metadata and compares its full receipt to the retained baseline and exact internal index commitment. It calls only prepare_primary_association_definition_review_v2, the full-envelope hash helper and validate_primary_association_definition_review_v2. It contains no callbacks, private _ReviewDomain/_assess_reviews plumbing, schema relabeling, old producer main or replay main call.",
+      "status": "pass",
+      "topic": "public operations and exact original index"
+    },
+    {
+      "evidence": "New files are written exclusively beneath fresh native exports, read back, fsynced and inventoried with finite per-file/aggregate/count bounds. Root/config/request/source hashes, original source pin population, all input family objects, redirects, checkout inode, loaded product origins, Arrow thread settings and original producer inventory are rechecked. Separate native parent evidence is still required for final consumer durability, stopped group and resource release.",
+      "status": "pass",
+      "topic": "output and source closure"
+    },
+    {
+      "evidence": "Guide explicitly says the complete old 560-subject population is bound through the unchanged association rather than copied. It distinguishes whole-envelope validation expected_preparation_sha256 from the sealed preparation hash, full canonical/internal manifest and index commitments, and raw mapping from canonical mapping witnesses.",
+      "status": "pass",
+      "topic": "docs population and hash scope"
+    },
+    {
+      "evidence": "Guide and plan state the old candidate/correspondence/preparation/subject/manifest/signatures stay unchanged. The fresh subject uses the existing V2 graph/AST/context schema/action/audience; no new signature or assessment is created and this domain does not expressly decide official-source/primary equivalence. Version/applicability, independent interpretation and authenticated exposure remain unresolved; all authority/masks remain false/zero.",
+      "status": "pass",
+      "topic": "docs unchanged signing domain and open meaning"
+    },
+    {
+      "evidence": "README adds one new adapter link and the plan adds its narrow milestone. Existing fixed-view/model/source-reconstruction milestones remain intact. The current guide makes no claim that the pending qualification/consumer has passed and adds no accuracy, training, model, Hugging Face or Lean result.",
+      "status": "pass",
+      "topic": "parallel progress and evidence claims"
+    }
+  ],
+  "helper_contract": {
+    "accepted_descriptor_fields": [
+      "captured_parent_stderr",
+      "captured_parent_stdout",
+      "expected_association_bytes",
+      "expected_association_file_count",
+      "expected_replay_bytes",
+      "expected_replay_file_count",
+      "producer_attempt_directory",
+      "producer_durability",
+      "producer_execution",
+      "producer_receipt",
+      "producer_request",
+      "producer_result",
+      "replay_file_index",
+      "replay_receipt",
+      "schema"
+    ],
+    "config_fields": [
+      "accepted_producer_descriptor",
+      "expected_index_sha256",
+      "expected_reconstruction_full_canonical_sha256",
+      "expected_reconstruction_sha256",
+      "index_baseline",
+      "primary_candidate",
+      "reconstruction_report",
+      "schema"
+    ],
+    "explicit_unresolved_claims": [
+      "official_source_primary_package_equivalence",
+      "governing_version_and_applicability",
+      "independent_legal_interpretation",
+      "independent_formal_interpretation",
+      "authenticated_exposure"
+    ],
+    "named_checks": [
+      "retained_producer_original_inventory_and_native_closeout",
+      "full_original_primary_index_baseline",
+      "fol_fresh_retained_association_definition_review_subject",
+      "tdfol_fresh_retained_association_definition_review_subject",
+      "retained_producer_immutable_and_source_output_closing_guards"
+    ],
+    "old_producer_main_calls": 0,
+    "old_replay_main_calls": 0,
+    "only_main_call_is_local_entry_point": [
+      "main"
+    ],
+    "private_review_domain_calls": []
+  },
+  "limitations": [
+    "This audit verifies source contracts and frozen metadata, not actual retained payload bytes or a completed new consumer run.",
+    "Accepted old producer closeout is retained captured-parent/native evidence, not independent authentication of current scheduler state.",
+    "The consumer itself will run in a fresh interpreter over retained originals; validation of saved new envelopes remains in that same consumer process.",
+    "The old 17 named checks and eight refusal controls are prior producer history; the consumer must not count them as newly executed checks.",
+    "Root should update and recheck documentation/evidence links after actual qualification/consumer outcomes become available."
+  ],
+  "observed_at_utc": "2026-10-16T00:05:26.016563+00:00",
+  "product_or_test_edits": false,
+  "qualification_request_metadata": {
+    "execution_outcome_reviewed": false,
+    "product_source_pin_matches_current": true,
+    "source_pin_count": 225
+  },
+  "reviewer": "/root/sampled_primary_docs_review_n10",
+  "schema": "primary-review-source-helper-documentation-audit/v1",
+  "scope": "Static helper/product/documentation/AST inspection and one frozen request metadata read only. No helper/product/test execution or import; no actual corpus, fixture, lookup, sidecar, association, mapping or original source payload reads; no ledger or canonical Git access.",
+  "source_and_documentation_pins": [
+    {
+      "bytes": 49426,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/run_primary_review_consumer_v01.py",
+      "sha256": "4271ed02bd95230431cc91de78619b131870af9bda1a631e5e2f1b1debfe84bf"
+    },
+    {
+      "bytes": 28529,
+      "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py",
+      "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+    },
+    {
+      "bytes": 23696,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_sampling_primary_review_v2.py",
+      "sha256": "b447512be5211d873de6ea849266ca2a42c8705d584b2c4d00785489f7720d4e"
+    },
+    {
+      "bytes": 35036,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_source_sampling_primary_review_v2.py",
+      "sha256": "882cc1f98e7a33711b50b8b941806727e9f0083803669f58f03280a81dd608b8"
+    },
+    {
+      "bytes": 5482,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_sampled_primary_definition_review_v2.md",
+      "sha256": "30aa6fe1458ca751c93ba3c644bcbc3445ce0148a83614cb564af2b7693aebd1"
+    },
+    {
+      "bytes": 73942,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "380da39de3a5431f05740c30f752cd677494f035d4708daf28d29fe33a369866"
+    },
+    {
+      "bytes": 16763,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/README.md",
+      "sha256": "06b9f871100c9fb65d8e77f052aa5a60757b5b9b7bd7df9db9bf386ff8efe630"
+    },
+    {
+      "bytes": 56983,
+      "path": "/home/barberb/lift_coding/artifacts/legal-sampled-primary-review-20261015-01/qualification-request-v01.json",
+      "sha256": "64373f3b966df19be3e5399c8aa1f8bf58147c23b404409a1be8f172e1ce13f4"
+    }
+  ],
+  "source_equivalence_verified": false,
+  "training_performed": false
+}

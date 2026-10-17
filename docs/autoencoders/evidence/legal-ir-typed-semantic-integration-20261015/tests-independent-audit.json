@@ -1,0 +1,166 @@
+{
+  "artifacts": {
+    "all_files_regular_single_link_owned": true,
+    "all_seal_paths_sizes_hashes_device_inode_exact": true,
+    "final_bytes": 1190825,
+    "final_files_including_receipt": 14,
+    "inventory_before_after_equal": true,
+    "inventory_sha256": "4e636a4632b05fc00162cdff80970613037f92f430145175c24dfecc366918c3",
+    "junit": {
+      "bytes": 599087,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01/logs/junit.xml",
+      "sha256": "b0e294b5e2b23e79298b3a9496c3119576fa00312179d972b114c57f99d51b45"
+    },
+    "sealed_files_excluding_receipt": 13,
+    "stderr": {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01/logs/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout": {
+      "bytes": 2285,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01/logs/stdout.log",
+      "sha256": "4c490571f19e27b7b0933f040a315b6e9d6215c0dc8d95071119d11d494cc23e"
+    }
+  },
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01",
+  "audit_read_guards": {
+    "closing": {
+      "head": "1cbc313236a546fbbacae38635c88fa8072b6087",
+      "index_sha256": "f258ede438a9636afcf748cc656360dc1268c74f9d7854e4e4cbab79cebb0ac9",
+      "sources": {
+        "all_current_bytes_equal_head_git": true,
+        "all_request_hashes_equal": true,
+        "bindings_and_physical_witnesses_sha256": "cd5662540775fb75954125508fe35f29b005c872745ed88488d42ea089b49b0b",
+        "count": 200,
+        "source_map_sha256": "f917ef58e2f9e155da13e70ec0ea2746ce8f242019d35c103ad122c6cf71ff9a"
+      }
+    },
+    "equal": true,
+    "opening": {
+      "head": "1cbc313236a546fbbacae38635c88fa8072b6087",
+      "index_sha256": "f258ede438a9636afcf748cc656360dc1268c74f9d7854e4e4cbab79cebb0ac9",
+      "sources": {
+        "all_current_bytes_equal_head_git": true,
+        "all_request_hashes_equal": true,
+        "bindings_and_physical_witnesses_sha256": "cd5662540775fb75954125508fe35f29b005c872745ed88488d42ea089b49b0b",
+        "count": 200,
+        "source_map_sha256": "f917ef58e2f9e155da13e70ec0ea2746ce8f242019d35c103ad122c6cf71ff9a"
+      }
+    },
+    "request_unchanged": true
+  },
+  "authority": {
+    "arbitrary_descendant_containment": false,
+    "cross_uid_custody": false,
+    "gold_admitted": false,
+    "legal_meaning_verified": false,
+    "model_promoted": false,
+    "proof_admitted": false,
+    "review_performed": false,
+    "semantic_equivalence": false,
+    "source_authenticated": false
+  },
+  "execution_counts_here": {
+    "attempt_writes": 0,
+    "compilers": 0,
+    "ledger_mutations": 0,
+    "models": 0,
+    "native_resource_mutations": 0,
+    "product_imports": 0,
+    "solvers": 0,
+    "tests": 0,
+    "training": 0
+  },
+  "limitations": [
+    "Finite 200-source cohort and eight complete selected modules, not complete installed-package or dynamic import closure.",
+    "Authored fictional source custody, strict typed syntax, finite countermodels and replay controls qualify their declared structures; they do not establish statutory meaning, complete norms, independent targets, legal review or learned reconstruction accuracy.",
+    "No model, encoder, training, solver, actual native compiler, semantic admission or token-saving measurement is supplied by this audit. Stdlib-only cold imports in selected tests are distinct from those operations.",
+    "Durability is scoped to owned files fsynced after the recorded group stopped; arbitrary descendant containment and cross-UID custody remain unclaimed.",
+    "Other shared scheduler/ledger rows were neither exported nor mutated. Only the exact selected record, fixed policy and absence of its lease were checked. Shared-ref movement is not inferred or attributed."
+  ],
+  "method": "Independent standard-library read-only request/source/Git/JUnit/ordinary-artifact/native-seal/exact-selected-ledger-and-lease audit after the native attempt stopped. No runtime imports, test execution, resource acquisition, recovery, attempt writes or ledger mutation.",
+  "native": {
+    "durability": {
+      "bytes": 2449,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01/logs/validation-durability.json",
+      "sha256": "40f7599e513ce9452c71ab965661a828ba7a0f60f9070c964d9c04a28b1c2d96"
+    },
+    "durability_asserted": true,
+    "elapsed_seconds": 70.94225736591034,
+    "exact_request_attempt_policy_and_budget_join": true,
+    "execution": {
+      "bytes": 967,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01/logs/execution.json",
+      "sha256": "7bd6d7295e369be05849b8298724d3a1cff0a60e3ac3d94a4061bd07dac438ff"
+    },
+    "final_attempt_bytes": 1190825,
+    "final_external_charged_bytes": 0,
+    "final_total_charged_bytes": 1190825,
+    "native_lease_absent": true,
+    "private_rows_process_ids_and_lease_keys_exported": false,
+    "private_selected_record_before_after_unchanged": true,
+    "recorded_process_group_live_processes": 0,
+    "recorded_process_scope": "isolated_process_group_only",
+    "reservation_exceeded": false,
+    "result": {
+      "bytes": 1139,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-a-01/logs/result.json",
+      "sha256": "cb4251217e76e8449267d321a00c63715f2225d0b39531c3a9fe9a29590efbe4"
+    },
+    "selected_storage_status": "released",
+    "storage_allowance": 268435456
+  },
+  "native_source_guard_scope": "Request-pinned native owner checks source/request/cwd/output identities before launch and closing finalization. This audit independently rehashes all 200 current files twice after completion and matches each to adopted HEAD Git objects. These post-completion audit snapshots are not invented execution-time manifests.",
+  "observed_at_utc": "2026-10-16T00:14:28.649513+00:00",
+  "pytest": {
+    "cases": 412,
+    "errors": 0,
+    "failures": 0,
+    "fixture_alias_profile_used": false,
+    "junit_suite_seconds": [
+      11.741
+    ],
+    "ordinary_filesystem_profile": true,
+    "per_class": {
+      "tests.unit.logic.autoformal.test_legal_relational_norm_v1": 70,
+      "tests.unit.logic.autoformal.test_legal_source_norm_scope_v1": 50,
+      "tests.unit.logic.autoformal.test_legal_source_sampling": 29,
+      "tests.unit.logic.autoformal.test_legal_source_typed_norm_join_v1": 98,
+      "tests.unit.logic.autoformal.test_legal_statutory_context_v2": 23,
+      "tests.unit.logic.legal_ir.test_canonical_statement_scope": 97,
+      "tests.unit.logic.legal_ir.test_canonical_statement_scope_bridge": 18,
+      "tests.unit.logic.syntax_core.test_ast": 27
+    },
+    "skipped": 0,
+    "stdout_collected_and_passed_counts_match": true,
+    "unique_class_aware_cases": 412,
+    "whole_modules": 8
+  },
+  "request": {
+    "bytes": 46267,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-typed-semantic-integration-20261015/validation-request-a-01.json",
+    "sha256": "20eaf018f77cac2c69bf05172ca3417f286ae78fa8cae22936633b8859fad0d4"
+  },
+  "result_scope": {
+    "actual_retained_source_probe_aggregated": false,
+    "existing_selected_cases": 194,
+    "new_relational_cases": 70,
+    "new_source_scope_cases": 50,
+    "new_typed_join_cases": 98,
+    "other_historical_author_cases_aggregated": false
+  },
+  "schema": "legal-ir-typed-semantic-tests-independent-audit/v1",
+  "selected_checks": [
+    "tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py",
+    "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+    "tests/unit/logic/autoformal/test_legal_source_sampling.py",
+    "tests/unit/logic/autoformal/test_legal_statutory_context_v2.py",
+    "tests/unit/logic/legal_ir/test_canonical_statement_scope.py",
+    "tests/unit/logic/legal_ir/test_canonical_statement_scope_bridge.py",
+    "tests/unit/logic/syntax_core/test_ast.py"
+  ],
+  "status": "pass",
+  "used_for_model_acceptance": false
+}

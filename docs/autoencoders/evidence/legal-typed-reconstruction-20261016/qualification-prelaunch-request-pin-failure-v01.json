@@ -1,0 +1,8 @@
+{
+  "observed_at_utc": "2026-10-16T01:05:17.739064+00:00",
+  "product_or_tests_executed": false,
+  "reason": "An operator placeholder was mistakenly passed as the expected request pin. Native request parsing refused before owner creation or child execution. Corrected the command to the independently computed immutable v04 request SHA.",
+  "request_or_sources_changed": false,
+  "reservation_acquired": false,
+  "schema": "legal-typed-reconstruction-prelaunch-request-pin-failure/v1"
+}

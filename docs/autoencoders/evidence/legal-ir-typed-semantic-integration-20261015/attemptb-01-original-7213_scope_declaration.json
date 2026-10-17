@@ -1,0 +1,175 @@
+{
+  "schema": "canonical-normative-scope-declaration/v1",
+  "family": "deontic",
+  "profile": "normative-occurrence-scope/v1",
+  "input": {
+    "source_text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+    "context": {
+      "role": "required_unavailable",
+      "text": "",
+      "bindings": {},
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "input_sha256": "4cd741facd7012fc813050beec89620e7bd5c9b89740fb931e80b1fb6c497871",
+  "occurrences": [
+    {
+      "occurrence_id": "lexical-actor",
+      "facet": "actor",
+      "canonical_symbol": "Officers of the Corps of Engineers",
+      "anchor": {
+        "origin": "source",
+        "start": 0,
+        "end": 34,
+        "text": "Officers of the Corps of Engineers",
+        "offset_unit": "unicode_character_half_open"
+      }
+    },
+    {
+      "occurrence_id": "lexical-modality",
+      "facet": "modality",
+      "canonical_symbol": "P",
+      "anchor": {
+        "origin": "source",
+        "start": 35,
+        "end": 38,
+        "text": "may",
+        "offset_unit": "unicode_character_half_open"
+      }
+    },
+    {
+      "occurrence_id": "lexical-action",
+      "facet": "action",
+      "canonical_symbol": "be assigned or transferred",
+      "anchor": {
+        "origin": "source",
+        "start": 39,
+        "end": 65,
+        "text": "be assigned or transferred",
+        "offset_unit": "unicode_character_half_open"
+      }
+    },
+    {
+      "occurrence_id": "lexical-object",
+      "facet": "object",
+      "canonical_symbol": "to and from duties involving the civil functions of the Corps of Engineers",
+      "anchor": {
+        "origin": "source",
+        "start": 66,
+        "end": 140,
+        "text": "to and from duties involving the civil functions of the Corps of Engineers",
+        "offset_unit": "unicode_character_half_open"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "surface-rule-7213",
+      "body": {
+        "modality": "lexical-modality",
+        "actor": "lexical-actor",
+        "action": "lexical-action",
+        "object": "lexical-object"
+      },
+      "qualifiers": {
+        "conditions": null,
+        "exceptions": null,
+        "temporal": null
+      }
+    }
+  ],
+  "statement_structure": {
+    "op": "rule",
+    "rule_id": "surface-rule-7213"
+  },
+  "binders": [],
+  "coverage": {
+    "declared_status": "partial",
+    "segments": [
+      {
+        "span": {
+          "origin": "source",
+          "start": 0,
+          "end": 193,
+          "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+          "offset_unit": "unicode_character_half_open"
+        },
+        "disposition": "unresolved",
+        "rule_ids": [
+          "surface-rule-7213"
+        ],
+        "occurrence_ids": [],
+        "reason": "Every source character is retained; lexical slot proposals do not establish complete legal interpretation."
+      }
+    ]
+  },
+  "unresolved": [
+    {
+      "code": "passive_subject_is_not_resolved_action_agent",
+      "span": {
+        "origin": "source",
+        "start": 0,
+        "end": 34,
+        "text": "Officers of the Corps of Engineers",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "The legacy actor slot records a lexical proposal; the passive recipient and action agent remain unresolved."
+    },
+    {
+      "code": "assignment_transfer_coordination",
+      "span": {
+        "origin": "source",
+        "start": 39,
+        "end": 65,
+        "text": "be assigned or transferred",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "Assignment and transfer alternatives need an explicit relational and modal interpretation."
+    },
+    {
+      "code": "direction_and_duties_attachment",
+      "span": {
+        "origin": "source",
+        "start": 66,
+        "end": 140,
+        "text": "to and from duties involving the civil functions of the Corps of Engineers",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "The to/from direction and civil-functions restriction require explicit attachment and argument decisions."
+    },
+    {
+      "code": "necessary_approval_and_modal_scope",
+      "span": {
+        "origin": "source",
+        "start": 141,
+        "end": 192,
+        "text": "only with the approval of the Secretary of the Army",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "Approval wording requires explicit necessity and modal-scope decisions; it is not compiled as a sufficient guard."
+    },
+    {
+      "code": "plural_to_definition_identity",
+      "span": {
+        "origin": "source",
+        "start": 0,
+        "end": 8,
+        "text": "Officers",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "The literal plural Officers is not a resolved singular officer definition binding."
+    },
+    {
+      "code": "applicability_authority_and_remaining_context",
+      "span": {
+        "origin": "source",
+        "start": 0,
+        "end": 193,
+        "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+        "offset_unit": "unicode_character_half_open"
+      },
+      "reason": "The original context requirements remain open. Separate retained definition/scope nominations are available but are not applied or adjudicated by this source-only request."
+    }
+  ],
+  "content_sha256": "188096e260218185a83b34739e712c8022c0822de7f2fe3b3e4722299d189abb"
+}

@@ -1,0 +1,348 @@
+{
+  "authority": {
+    "complete_import_closure": false,
+    "current_scheduler_authentication": false,
+    "new_runtime_execution": false,
+    "proof_admission": false,
+    "semantic_admission": false,
+    "teacher_promotion": false,
+    "training_gold": false
+  },
+  "documentation_findings": {
+    "IR_family_schema_version_task_dimension_lanes_remain_separate": true,
+    "actual297825_primary_transport_remains_distinct_from_semantic_admission": true,
+    "compatible_original_asset_reuse_preserved": true,
+    "correct_shuffled_absent_latent_and_source_retrieval_controls_required": true,
+    "exact_UTF8_normalized_text_semantic_AST_view_embedding_outcomes_separate": true,
+    "fresh8target_author_probe_separate_from_retained_target_generation": true,
+    "fresh_combined_A02_B02_attributed_separately_from_original_attempts": true,
+    "initial_foreign_WIP_survey_retained_as_historical": true,
+    "later3421_publication_and_normal_merge_explicit": true,
+    "next_reviewed_definition_actual_norm_second_use_required": true,
+    "no_new_model_training_encoder_Hub_or_Lean_claim": true,
+    "no_redundant_equivalent8row_training_recommendation": true,
+    "physical_source_dependency_neighborhood_exposure_splits_required": true,
+    "reported_proposal_sidecars_and_rejections_preserved": true,
+    "source_and_cache_ordered_digest_limits_explicit": true,
+    "uniform_retained_view_heads_not_called_saturated_decoders": true
+  },
+  "documents": [
+    {
+      "bytes": 12136,
+      "path": "docs/autoencoders/legal_ir_fixed_view_vocabulary_20261015.md",
+      "sha256": "9f66c93040afc911b9dcdb449492fbed1370a987dca37bdcfc9e91c500d16343"
+    },
+    {
+      "bytes": 72208,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "08e3e2b0e7df25d1e917efec8121fd04fcc5ab7a99eb710c1f793e2c4bc99ce0"
+    },
+    {
+      "bytes": 16402,
+      "path": "docs/autoencoders/README.md",
+      "sha256": "b8d8219b9b62ffaf1363da27dc58bcbf5c3530876bc2801a10d2b3b12ddccfe8"
+    },
+    {
+      "bytes": 3397,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/README.md",
+      "sha256": "1937fe9041818b86bd80147119f65e20addab8c6d59627da5abff795db288be8"
+    },
+    {
+      "bytes": 4387,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/phase-closeout.json",
+      "sha256": "871b57e9f092f0ce670594d51313dd66c7b882f5194c284ecd95ec8888f7f224"
+    }
+  ],
+  "limitations": [
+    "This is documentation and retained-metadata consistency review, not product/test/model execution or a new native resource-currentness authentication.",
+    "The reviewer authored the standalone retained probe; its source correctness has a separate static peer review and actual native validation.",
+    "Source-pin/seal/selected-lease observations are attributed to separately retained independent native audits; this review does not reacquire grants or re-read complete native payload inventories.",
+    "Sorted sample exports cannot independently reconstruct the diagnostic ordered-input/cache-alias digest; matched recorded commitments and the adapter operation boundary are preserved.",
+    "Three historical Markdown targets are absent only from the sparse worktree filesystem and are present in exact HEAD Git objects; repository absence is not inferred.",
+    "Link checks cover local file-target existence, not external HTTP destinations, rendered anchors or full documentation workflow qualification."
+  ],
+  "local_file_links": [
+    {
+      "document": "docs/autoencoders/legal_ir_fixed_view_vocabulary_20261015.md",
+      "local_file_link_existence": {
+        "filesystem_present": 7,
+        "retained_Git_object_only": 0
+      },
+      "retained_Git_only_links": [],
+      "unresolved_targets": []
+    },
+    {
+      "document": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "local_file_link_existence": {
+        "filesystem_present": 53,
+        "retained_Git_object_only": 2
+      },
+      "retained_Git_only_links": [
+        {
+          "bytes": 8532,
+          "filesystem_absence_is_repository_absence": false,
+          "git_blob": "c4ece8870e7e3b5d5fdbba7e727f1f5c82799902",
+          "repository_path": "docs/autoformalization/legal-modality-conditions-retention-20261015.md",
+          "revision": "a0a71389dcce011d798bec344adf4880b7128a7f",
+          "sha256": "44f7303d44b9240d9842b9e97d73813b4cb2db66610cca9c9c2e95328eba9c29",
+          "target": "../autoformalization/legal-modality-conditions-retention-20261015.md"
+        },
+        {
+          "bytes": 6147,
+          "filesystem_absence_is_repository_absence": false,
+          "git_blob": "b80d1178a88361017397c04023fbc25d3c41b7aa",
+          "repository_path": "docs/autoformalization/legal-conditions-composition-20261015.md",
+          "revision": "a0a71389dcce011d798bec344adf4880b7128a7f",
+          "sha256": "014e1487e079beb3d85892c8d6d012ec79048635b2539f5bcd93ae766648aa2b",
+          "target": "../autoformalization/legal-conditions-composition-20261015.md"
+        }
+      ],
+      "unresolved_targets": []
+    },
+    {
+      "document": "docs/autoencoders/README.md",
+      "local_file_link_existence": {
+        "filesystem_present": 70,
+        "retained_Git_object_only": 1
+      },
+      "retained_Git_only_links": [
+        {
+          "bytes": 21660,
+          "filesystem_absence_is_repository_absence": false,
+          "git_blob": "8b42aeebba3f6499b6c68ebe51d827007d545b7e",
+          "repository_path": "docs/implementation/reports/AUTOENCODER_MODALITY_REUSE_20260929.md",
+          "revision": "a0a71389dcce011d798bec344adf4880b7128a7f",
+          "sha256": "bd2a5d282807e207a1172d8addd9dc03a4526aa9d35b05ef3edaf80121ef709b",
+          "target": "../implementation/reports/AUTOENCODER_MODALITY_REUSE_20260929.md"
+        }
+      ],
+      "unresolved_targets": []
+    },
+    {
+      "document": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/README.md",
+      "local_file_link_existence": {
+        "filesystem_present": 2,
+        "retained_Git_object_only": 0
+      },
+      "retained_Git_only_links": [],
+      "unresolved_targets": []
+    }
+  ],
+  "material_findings": [],
+  "method": [
+    "Read and hash the five final documentation/closeout bodies.",
+    "Independently recount A02 raw XML class-aware cases/modules/outcomes.",
+    "Compare B01/B02 retained original references, state identities, target/profile/evaluator-context commitments, numeric rows and supported head-activity observations.",
+    "Cross-check stated native times/source counts/inventory totals/release status against supplied exact execution/result files and separate independent metadata audits.",
+    "Check local Markdown file targets against filesystem or retained HEAD Git objects for sparse-checkout omissions. No external-link/anchor gate executed."
+  ],
+  "observed_at_utc": "2026-10-15T22:13:41.590385+00:00",
+  "outcome_evidence": [
+    {
+      "bytes": 24823,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-junit.xml",
+      "sha256": "20c792c5cdc699f593b96e3ef868b4f2992b77ecb600d53807db9b2486a4fa69"
+    },
+    {
+      "bytes": 950,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-result.json",
+      "sha256": "3106f31e81f74776a01012e8f47166da7a8915f0906660fdc22e2fb5e0baef10"
+    },
+    {
+      "bytes": 788,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-execution.json",
+      "sha256": "97fea1670266eb4accbba373793dd59b54dda8d0c129ce89603179ab41014e24"
+    },
+    {
+      "bytes": 2233,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-independent-audit.json",
+      "sha256": "d91326b290803766ba087f28d90ff3c4c9281c9791123c8ca6194d2ea37a0f27"
+    },
+    {
+      "bytes": 559,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-terminal-observation.json",
+      "sha256": "9820c77e2fa5466bcb82721fd8fe9e251193e67719183c02c11cfa5609c05100"
+    },
+    {
+      "bytes": 4136,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-durability-projection.json",
+      "sha256": "03c88ee9965c46625d20366f0eeca987b0904e12c7b767e3bc6228c342e91bf1"
+    },
+    {
+      "bytes": 656,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-result.json",
+      "sha256": "568e57a7fd9afcb9b176175bd5a4ea197e73af832765588ed0f91c1eba507914"
+    },
+    {
+      "bytes": 494,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-execution.json",
+      "sha256": "1abe50da5175783448725d678587a0cbf8433b1b3c2d104c4ab3d228f8ccf827"
+    },
+    {
+      "bytes": 1776,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-independent-audit.json",
+      "sha256": "a2338ceae142c7622d719c427bd3c876fdbcb8746bced2e0f41319381a1cb949"
+    },
+    {
+      "bytes": 560,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-terminal-observation.json",
+      "sha256": "68c7be4d1e893669e001b5ecec50fc5d8a07a1b3db1e3598c960c510f98aa1af"
+    },
+    {
+      "bytes": 4337,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-durability-projection.json",
+      "sha256": "7250d4ad81263a47cc5d6be22da175ff2e5a1e19006fa7614eebe0aa5b354e59"
+    },
+    {
+      "bytes": 16614,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-probe-receipt.json",
+      "sha256": "8f823e997d1887eec7e182a35971473f96c6cecd7cfbbc386abe2d1963f3bcef"
+    },
+    {
+      "bytes": 16620,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-probe-receipt.json",
+      "sha256": "fdc5eb3c338f2c5de47928e504b5ae86acccee829d649ea4e03cb280af1dfc09"
+    },
+    {
+      "bytes": 16440,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-parent-shadow-report.json",
+      "sha256": "670d08055c992e4550964d9ac32ebd8d77945ae573c60ef6de4dca9ed20ec067"
+    },
+    {
+      "bytes": 16440,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-parent-shadow-report.json",
+      "sha256": "79d64269be1eaa27e15cfa902adac5e0d8ea69f76b4bf9e469d34f3869d41142"
+    },
+    {
+      "bytes": 16367,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-structural-shadow-report.json",
+      "sha256": "ab07ee1c194295754ad2c1f99b84872a9731e4cb02d760e506cd3033ba61ce11"
+    },
+    {
+      "bytes": 16367,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-structural-shadow-report.json",
+      "sha256": "e86931721619146a5558e24e5eb21900b549be45d570d706492e46a85a8195bb"
+    },
+    {
+      "bytes": 21363,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/merged-retained-probe-independent-audit.json",
+      "sha256": "8c237c69e006791a23fafe6340f52d659088c21127df61601156c1941b92b7dc"
+    },
+    {
+      "bytes": 8419,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/tests-independent-audit.json",
+      "sha256": "68821e1381a4113dc825555d53459a95b55a2e1c6a8e945251fd539a1400754b"
+    },
+    {
+      "bytes": 19617,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/retained-probe-independent-audit.json",
+      "sha256": "d517d862877bb020efc329e891a0ed0289e3e86f1fd55682f720be6a2d6a91da"
+    },
+    {
+      "bytes": 11198,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/published-observer-integration-review.json",
+      "sha256": "7776ec438bd9f143af2c9dacd50a6859c25f6b466bca9f8c52f342f1e173369b"
+    },
+    {
+      "bytes": 25372,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/upstream-publication-reconciliation.json",
+      "sha256": "ae02ca0a8afc3bf09f1ce6e63df4378c7da2b677bc2398c477a48fc63d5be221"
+    },
+    {
+      "bytes": 9050,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/retained-head-inputs.json",
+      "sha256": "3ed669866f03b34098877f6e5e94ea5b8ec3766510bb2e4d6638058a27d608b5"
+    },
+    {
+      "bytes": 22412,
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/asset-provenance.json",
+      "sha256": "93f6b005a514ac5c5cf9f7ef9d20158a01a67fd9d36df8bd3d8addb627f15086"
+    }
+  ],
+  "resolved_review_comments": [
+    {
+      "issue": "Present-tense uncommitted/run-unqualified wording conflicted with later publication and combined qualification.",
+      "location": "guide Concurrent observer work",
+      "resolution": "Final body explicitly dates the initial observation and attributes the unqualified boundary to original a-01/b-01."
+    }
+  ],
+  "retained_probe_b02": {
+    "B01_B02_equal_commitment_fields": [
+      "original_inputs",
+      "input_descriptor_sha256",
+      "profile_sha256",
+      "evaluator_context_sha256",
+      "target_rows_sha256",
+      "target_loss_context_sha256",
+      "original_target_support_counts",
+      "tuning_ordinals"
+    ],
+    "checkpoint_observations": [
+      {
+        "all9_supported_view_logit_heads_stored_rows_zero": true,
+        "checkpoint": "parent",
+        "decoder_saturation_established": false,
+        "evaluator_context_sha256": "afb1481cc80935170ecb95d514dc0bd11c24f1da382cd96ca766048e07f7cf13",
+        "existing_dynamic_mean_CE": 1.5890269151739727,
+        "fixed_mean_CE": 1.9459101490553132,
+        "rows": 2,
+        "state_identity": "e52f71fe7fa5d3cd9982caa1920593851910e0fc2da834151b57c4d40efb0cdd"
+      },
+      {
+        "all9_supported_view_logit_heads_stored_rows_zero": true,
+        "checkpoint": "structural",
+        "decoder_saturation_established": false,
+        "evaluator_context_sha256": "afb1481cc80935170ecb95d514dc0bd11c24f1da382cd96ca766048e07f7cf13",
+        "existing_dynamic_mean_CE": 1.5890269151739727,
+        "fixed_mean_CE": 1.9459101490553132,
+        "rows": 2,
+        "state_identity": "f795a7d7d01c451a1f111cf66691289485fa83d4081e6579012e9a90c5b80c69"
+      }
+    ],
+    "evaluator_context_sha256": "afb1481cc80935170ecb95d514dc0bd11c24f1da382cd96ca766048e07f7cf13",
+    "final_bytes": 102986,
+    "final_files": 16,
+    "fixed_lane_count": 7,
+    "guarded_operation_count": 37,
+    "independent_holdout": false,
+    "native_seconds": 48.04187000985257,
+    "new_training_encoder_full_decoder_compiler_solver_calls": 0,
+    "no_retroactive_proposal_rescoring": true,
+    "original_target_support_counts": [
+      4,
+      6
+    ],
+    "partition": "repeated_tuning",
+    "release_status_at_recorded_closeout": "released",
+    "same19_original_input_refs": true,
+    "sample_count": 2,
+    "source_pins": 165
+  },
+  "review_scope": "Read-only final fixed-view guide, comprehensive-plan amendments, documentation index, phase evidence README and closeout consistency against exact retained metadata/XML. Only this review receipt was authored.",
+  "schema": "legal-ir-fixed-view-final-documentation-review/v1",
+  "source_head_at_review": "a0a71389dcce011d798bec344adf4880b7128a7f",
+  "status": "pass",
+  "unit_a02": {
+    "JUnit_seconds": [
+      1.857
+    ],
+    "author240_fixture_alias_total_not_aggregated": true,
+    "counts_by_module": {
+      "tests.unit.logic.integration.test_legal_ir_view_contracts": 9,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_view_vocabulary_diagnostic": 44,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_modal_autoencoder_nonview_projection": 42,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_modal_autoencoder_view_diagnostic": 27
+    },
+    "errors": 0,
+    "failures": 0,
+    "final_bytes": 53237,
+    "final_files": 15,
+    "native_seconds": 41.96363989007659,
+    "original95_included_not_added": true,
+    "raw_testcase_count": 122,
+    "release_status_at_recorded_closeout": "released",
+    "skipped": 0,
+    "source_pins": 146,
+    "unique_class_aware_cases": 122
+  }
+}

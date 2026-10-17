@@ -1,0 +1,163 @@
+{
+  "Lean_admitted": false,
+  "actual_reviews_created": 0,
+  "baseline": "077184f148ce497e8b2d3d2a10030a1185bac75b",
+  "contributions": [
+    {
+      "files": [
+        {
+          "current_sha256": "dabbb727e38b43f99c0089b924e29c20b26141d6b8d2a8bf4246b6f8168c2c7b",
+          "integrated_blob": "71ed481f338190d89f9dbbc0d469e5f857f79a48",
+          "original_blob": "71ed481f338190d89f9dbbc0d469e5f857f79a48",
+          "path": "docs/autoencoders/corpus_source_review_responses.md"
+        },
+        {
+          "current_sha256": "519f91a39f0f6f3fb0b7226042fe75642833588f31af8eeea9c5a488d603c7e9",
+          "integrated_blob": "f48770f68e72fc55f2bdf9bd0226dcc4e5af361c",
+          "original_blob": "f48770f68e72fc55f2bdf9bd0226dcc4e5af361c",
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_source_review_responses.py"
+        },
+        {
+          "current_sha256": "aa3b15977f14c61a929bf98999c4fca39ca5869a62b003df6b565a329f5b4560",
+          "integrated_blob": "5200c3d6e97021518052f4cc3eae2757f17d223d",
+          "original_blob": "5200c3d6e97021518052f4cc3eae2757f17d223d",
+          "path": "tests/unit/logic/autoformal/test_corpus_source_review_responses.py"
+        }
+      ],
+      "integrated_commit": "74a78eb1c2c1f3066ab4bba939af9cc0eda0704e",
+      "original_commit": "f4316438b146446f5ea600b5c8feacf3f29ab5a7"
+    },
+    {
+      "files": [
+        {
+          "current_sha256": "b8f4d6129bbbd64e1dae16f447ec83ce75c12d18938f8f6faf628a65e7a25721",
+          "integrated_blob": "783ba0e9ddf72980691ef526d6f7db4fc835af56",
+          "original_blob": "783ba0e9ddf72980691ef526d6f7db4fc835af56",
+          "path": "docs/autoencoders/corpus_source_adjudication.md"
+        },
+        {
+          "current_sha256": "0d658081521bc737ff17ec38f82d34122863b7b2b3094e8d1fabf4eef0caf2b9",
+          "integrated_blob": "41a44d2fc0bcb4f47d111c056d526493402880cc",
+          "original_blob": "41a44d2fc0bcb4f47d111c056d526493402880cc",
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_source_adjudication.py"
+        },
+        {
+          "current_sha256": "b9c47fab60a8089139e9c857bc82a541dc618991fad68938e652e6040c7dea4d",
+          "integrated_blob": "bc028c90d14268516e7c7845a761053419d180ec",
+          "original_blob": "bc028c90d14268516e7c7845a761053419d180ec",
+          "path": "tests/unit/logic/autoformal/test_corpus_source_adjudication.py"
+        }
+      ],
+      "integrated_commit": "90512f3225862a0bf6d10c34d62e7cbd1f8ed7c0",
+      "original_commit": "b86d5723ad33dde2432f7c9a5c734618c3625289"
+    },
+    {
+      "files": [
+        {
+          "current_sha256": "9a260c308d748b9a5fda174afd528a1e4a2b916d60b8b6920ed6f67e119526d8",
+          "integrated_blob": "82c69c3b108fb48fdec3fc2ad87b9f77fe06eaf9",
+          "original_blob": "82c69c3b108fb48fdec3fc2ad87b9f77fe06eaf9",
+          "path": "docs/autoencoders/corpus_source_application.md"
+        },
+        {
+          "current_sha256": "2e11ca5f1f8c23b7d399e72c529432f611a94dcc4599c6f69025884e8219dc86",
+          "integrated_blob": "199c88971a61d73692adb3112755c4304da0bf20",
+          "original_blob": "199c88971a61d73692adb3112755c4304da0bf20",
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_source_application.py"
+        },
+        {
+          "current_sha256": "51aed4dcc6115dba2513561a34295e853277cf752706bdc9b64c2761fbffdd67",
+          "integrated_blob": "ac7fb726bfdd73b7bd444124b24730a2e5e7ed13",
+          "original_blob": "ac7fb726bfdd73b7bd444124b24730a2e5e7ed13",
+          "path": "tests/unit/logic/autoformal/test_corpus_source_application.py"
+        }
+      ],
+      "integrated_commit": "0492b9d12ba4a13def6a3f4dcd4ab908edf8e040",
+      "original_commit": "89d2a5fc36806bc31fe089f595197f86b8b0736b"
+    },
+    {
+      "files": [
+        {
+          "current_sha256": "ffa4aa092fa76a8edb66ba488e306e72c0f5503da5f8e5d6fce5ba99e87bbea2",
+          "integrated_blob": "2a7a83ecc826f36a96360aac42574804be56fee9",
+          "original_blob": "2a7a83ecc826f36a96360aac42574804be56fee9",
+          "path": "docs/autoencoders/corpus_source_history.md"
+        },
+        {
+          "current_sha256": "88a652a0c10569723a9f278562c5c0bb7a2001515615661a2767fbe0881659d4",
+          "integrated_blob": "14b3f7cbe967bfdf47a19e856b8e1615baf1609d",
+          "original_blob": "14b3f7cbe967bfdf47a19e856b8e1615baf1609d",
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_source_history.py"
+        },
+        {
+          "current_sha256": "7d64fd16d78577fca3d1362b08a76455de652d76fd2e00224dad83361f1280b2",
+          "integrated_blob": "109417346c2485cceda7da46e7bec1b45803bbe9",
+          "original_blob": "109417346c2485cceda7da46e7bec1b45803bbe9",
+          "path": "tests/unit/logic/autoformal/test_corpus_source_history.py"
+        }
+      ],
+      "integrated_commit": "5beaa6c7f8d64cc1622a0e20f9d9a39356a31ceb",
+      "original_commit": "855b47bcb3e82a81b713652092e05905ba25905f"
+    },
+    {
+      "files": [
+        {
+          "current_sha256": "90c7628b9436f72507185d030e936063ca0a3791222c0356002bd0f145f3b85d",
+          "integrated_blob": "5510a3eb9e11c25b64d2e523e7394fe4beb74a36",
+          "original_blob": "5510a3eb9e11c25b64d2e523e7394fe4beb74a36",
+          "path": "docs/autoencoders/corpus_source_bindings.md"
+        },
+        {
+          "current_sha256": "6909ac7e9ebb260ff63cee90fea2d6a76a0cbd7618823d541a69dbd86d281fef",
+          "integrated_blob": "57b39d3692949dd3d1f0d020431fd3016488dff0",
+          "original_blob": "57b39d3692949dd3d1f0d020431fd3016488dff0",
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_source_bindings.py"
+        },
+        {
+          "current_sha256": "217682af664b1785a984b1090028cf3d3c4efd6d5641239cf0b1cf31b698a798",
+          "integrated_blob": "d5860b22c9abae13fbd3af6b3fbe4114a964d68e",
+          "original_blob": "d5860b22c9abae13fbd3af6b3fbe4114a964d68e",
+          "path": "tests/unit/logic/autoformal/test_corpus_source_bindings.py"
+        }
+      ],
+      "integrated_commit": "257dd563ec7faab15852aeb9d5f8453944033bb9",
+      "original_commit": "11a5d50dc04cc57d029f4556d49ef4ccea98df64"
+    }
+  ],
+  "import_order_tidy": "f98996e7aa98524bf7bef8094b6ce2fa88fbf54e",
+  "models_trained": false,
+  "qualification_attempts": [
+    {
+      "cases": 996,
+      "cause": "Incomplete sparse source checkout: processors legal source schema absent",
+      "errors": 975,
+      "failures": 1,
+      "request": "/home/barberb/lift_coding/artifacts/legal-corpus-source-integration-20261015-01/validation-request-v01.json",
+      "skips": 0,
+      "status": "failed"
+    },
+    {
+      "changes": "Hydrated actual source package and configs; fixed Ruff import order; fail-fast diagnostics",
+      "request": "/home/barberb/lift_coding/artifacts/legal-corpus-source-integration-20261015-01/validation-request-v02.json",
+      "status": "running"
+    }
+  ],
+  "schema": "legal-source-review-integration-manifest/v1",
+  "semantic_graph_admitted": false,
+  "source_checkout": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets",
+  "source_head": "f98996e7aa98524bf7bef8094b6ce2fa88fbf54e",
+  "static_reviews": [
+    {
+      "agent": "/root/conditions_rank_counter_f19",
+      "result": "no static blocker",
+      "runtime_execution": false,
+      "scope": "Exact additive integration, current dependency API compatibility, import-only AST comparison"
+    },
+    {
+      "agent": "/root/runtime_protocol_n9",
+      "result": "two helper findings fixed and independently reread",
+      "runtime_execution": false,
+      "scope": "Native validation ownership and private regular-directory fixture adapter"
+    }
+  ]
+}

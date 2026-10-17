@@ -1,0 +1,28 @@
+{
+  "executed_before_this_freeze": false,
+  "expected_cases": 316,
+  "final_request_sha256": "56974a0e61b2b58a69195368cd958c273f24fee9424598d017275a91c63925cb",
+  "merged_checkout_commit": "72c4bb353f03682f34a694f3f476fa59c186f8b0",
+  "schema": "legal-ir-native-preparation-prelaunch-reconciliation/v1",
+  "selected_complete_modules": 13,
+  "source_changes_before_execution": [
+    {
+      "new_sha256": "df45e300fd07d6e9f1297f59ba0d03e9822bf1cf2f4faa20250501024b31b8da",
+      "old_sha256": "e6439571deb39fe63fc0cfbb10808e7b4c64367f9d03ea2c8617c99c21223841",
+      "path": "ipfs_datasets_py/logic/integration/reasoning/__init__.py"
+    },
+    {
+      "new_sha256": "4f84d5740f5bdbed97cf124793da80ef5c5d5354f056c6236468e3556e2c4aaf",
+      "old_sha256": "4365090e34063a4aa9c3997ef6feb65e7214766d87d4fa594ecf95b5bb41afb0",
+      "path": "scripts/ops/legal_ir/run_legacy_span_cuda.py"
+    },
+    {
+      "new_sha256": "7d137bcda54692a20de292318731becd95431560bed5e849b6938108baa245e2",
+      "old_sha256": "419c3ca838a5bd49055eed31bd6707a228aae406adbf39df66f0536c66bac7d5",
+      "path": "tests/unit/logic/integration/test_reasoning_lazy_imports.py"
+    }
+  ],
+  "source_pin_count": 256,
+  "unexecuted_draft_sha256": "d2b92cce15751b6ace9a2b42a5e3e0bb6796e587e392bd7304ad2fd4c5dbb7f4",
+  "upstream_commit": "3e4814754"
+}

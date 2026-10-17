@@ -1,0 +1,23 @@
+{
+  "adopted_upstream_main": "64d5bf61f0a9894f0c12fc66c942a84d78a34e50",
+  "all_referenced_local_docs_exist": true,
+  "both_parents_preserved": true,
+  "checks_are_metadata_and_git_readback_only": true,
+  "guide_updates": [
+    "Preserve upstream counted-frame and paired-manifest integration",
+    "Adopt completed qualified five-variant replay instead of repeating it",
+    "Replace stale pending F15/F17/F18 import instruction with exact completed-binding reuse",
+    "Disambiguate earlier read-only survey from subsequent registry mutation"
+  ],
+  "initial_integration_commit": "52d083039b5dc5dcef9c46c08821992563e8411e",
+  "new_tests_or_numerical_execution_claimed": false,
+  "own_contribution_commit": "c7c16ba267017f21d7800e2fdff02fc90d98a7da",
+  "own_files_byte_preserved_except_reconciled_guides": 43,
+  "raw_native_identifier_fields_present": false,
+  "reconciled_guides": [
+    "docs/autoencoders/legal_ir_asset_reconciliation_20261016.md",
+    "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md"
+  ],
+  "schema": "legal-ir-missing-component-publication-integration/v1",
+  "scope": "Publication readback after normal merge; original staged publication inventory remains scoped to the pre-merge contribution"
+}

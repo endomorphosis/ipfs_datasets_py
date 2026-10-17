@@ -1,0 +1,26 @@
+{
+  "actual_main_calls": 1,
+  "command": [
+    "python3",
+    "-I",
+    "-S",
+    "-B",
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/analyze_conditions_composition_v01.py"
+  ],
+  "default_promotion": false,
+  "encoder_calls": 0,
+  "independent_scientific_recount_complete": false,
+  "model_calls": 0,
+  "optimizer_updates": 0,
+  "original_input_body_reads_only_by_source_qualified_child": true,
+  "output": {
+    "bytes": 9716921,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-diagnostic-v01.json",
+    "sha256": "393d154c6f116e255833de8d81be066a80817170a047613dba39ad591facf1df"
+  },
+  "returncode": 0,
+  "saved_score_joint_decoder_calls": 3160,
+  "saved_score_raw_reconstructions": 3160,
+  "schema": "conditions-composition-primary-execution/v1",
+  "technical_status": "completed_pending_independent_scientific_recount"
+}

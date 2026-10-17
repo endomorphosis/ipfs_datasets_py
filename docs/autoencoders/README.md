@@ -11,6 +11,14 @@ belong to their named backend; they are not interchangeable across backends.
 
 | I need to… | Start here |
 | --- | --- |
+| Compare typed predicate arguments, lexical binders and modal scope before richer decoder evaluation | [Typed relational reconstruction diagnostics](legal_relational_reconstruction_v1.md) |
+| Keep missing, duplicate, invalid and abstained typed outputs in the selected population | [Typed relational batch output diagnostics](legal_relational_batch_evaluation_v1.md) |
+| Record unsigned source/primary anchors with complete populations and unresolved evidence | [Sampled source / primary association](legal_sampled_primary_association_v2.md) |
+| Prepare a fresh definition-review subject that binds the primary association and its witnesses | [Association-bound definition review](legal_sampled_primary_definition_review_v2.md) |
+| Improve LegalIR on US Code spans and aggregate scoped semantic graphs into a shared Lean 4 corpus | [Current source, decoder, graph and Lean improvement plan](legal_ir_uscode_corpus_improvement_plan_20261015.md) |
+| Hand LegalIR work to the ipfs_accelerate_py agent supervisor | [Goals, subgoals, bounded tasks and supervisor handoff](legal_ir_supervisor_plan/README.md) |
+| Recover retained LegalIR checkpoints, native-conditioning assets and exact registration identities before another fit | [Asset and registration reconciliation](legal_ir_asset_reconciliation_20261016.md) |
+| Preserve richer typed norm hypotheses and original source scope before semantic training | [Typed semantic integration](legal_typed_semantic_integration_20261016.md) |
 | Replay selected normative Legal384/768 states on their original or separately bound retained native caches | [Original cached replay](normative_legal_ir_runtime.md), [retained native caches](normative_cached_legal_ir_runtime.md) |
 | Replay both retained and balanced normative wording banks in one private trainer | [Dual-bank training adapter](dual_bank_wording_training_adapter.md) |
 | Reconcile other agents' branches, findings and decoder progress | [Shared progress and formalization priorities](progress_integration.md) |
@@ -21,11 +29,27 @@ belong to their named backend; they are not interchangeable across backends.
 | Obtain formal ASTs or reconstruct native expressions from model scores | [Formal logic decoders](formal_logic_decoders.md) |
 | Train native categorical decoders and check actual outputs with Lake | [Native formula training](native_formula_training.md) |
 | Train a source-only learned formula decoder | [Learned legal formula training](learned_legal_formula_training.md) |
+| Prepare complete official statutory source units and open context | [Whole-source sampling](legal_source_sampling.md) |
+| Record source findings and meaning proposals against the complete source population | [Sampled-source review intake](legal_source_sampling_review.md) |
+| Compile explicit V2 definition declarations into candidate graphs | [V2 source definitions](legal_source_definition_v2.md) |
+| Bind explicit V2 definition candidates to exact source-review subjects | [Sampled-source definition binding](legal_source_sampling_definition_binding_v2.md) |
+| Join exact sampled-source bindings to existing V2 review subjects while preserving all open populations | [Unsigned source/review correspondence integration](legal_source_definition_review_correspondence_integration_20261015.md) |
+| Replay the retained 560-subject §101 population into inspectable unsigned review correspondence | [Retained actual-source replay](legal_retained_source_correspondence_20261015.md) |
+| Preserve and independently replay every selected original primary graph occurrence | [Export API and profiles](legal_primary_graph_export.md), [297,825-occurrence candidate and qualification](legal_primary_corpus_export_20261015.md) |
+| Prepare and authenticate exact V2 definition review evidence | [V2 definition context and review](corpus_definition_review_v2.md) |
+| Bind the full joint definition-use interpretation to its distinct review subject | [Combined V2 definition-use review](corpus_definition_use_review_v2.md) |
+| Inspect native combined-review qualification and the executed §101 source-binding replay | [Combined review and sampled-source integration](legal_definition_use_review_v2_integration_20261015.md) |
+| Prepare a conditional V2 definition-use Lean project with original review blockers retained | [V2 conditional native preparation](legal_corpus_definition_use_lake_v2.md) |
+| Track native project-exchange, lazy-import evidence and closeout status | [V2 native-preparation integration](legal_definition_use_native_preparation_integration_20261015.md) |
+| Preserve public reasoning exports and caller overrides across lazy owner imports | [Parallel public V2 handoffs](legal_corpus_v2_public_handoffs.md) |
+| Execute a bounded conditional V2 engineering build with explicit toolchain and original review inputs | [V2 engineering-build API](legal_corpus_definition_use_build_v2.md), [adoption and evidence limits](legal_source_definition_review_correspondence_integration_20261015.md#bounded-engineering-execution-already-exists) |
+| Select between the separately versioned V2 build and native-executor receipt profiles | [Native executor](legal_corpus_definition_use_native_v2.md), [profile reconciliation](legal_source_definition_review_correspondence_integration_20261015.md#concurrent-native-execution-profiles) |
 | Preserve and train the old 8D linguistic/IR feature decoder | [Legacy linguistic training](legacy_linguistic_training.md) |
 | Reproduce the September 17 teacher and prepare screened distillation targets | [Historical teacher fidelity, fixes and performance](legacy_teacher_fidelity.md) |
 | Transfer screened teacher evidence into separately embedded 384D formula training | [Teacher-to-student preparation and smoke](teacher_student_transfer.md) |
 | Detect actor shortcuts and compare balanced formula training data | [Actor composition and free-running evaluation](actor_composition_evaluation.md) |
 | Improve 8D feature updates and compare 384D reconstruction profiles | [Separate reconstruction-training paths](reconstruction_training.md) |
+| Compare LegalIR view logits under a fixed optimizer-lane vocabulary while preserving official acceptance | [Fixed view diagnostic](legal_ir_fixed_view_vocabulary_20261015.md) |
 | Keep 8D and 384D running while developing 768D multilingual GTE | [Parallel logic IR paths and transfer plan](gte_multilingual_migration_plan.md) |
 | Dispatch independent 8D, 384D and 768D workers together | [Parallel lane execution](parallel_lineage_execution.md) |
 | Run pinned local 8D and 384D models in private CPU workers | [Parallel model inference workers](gte_parallel_model_workers.md) |

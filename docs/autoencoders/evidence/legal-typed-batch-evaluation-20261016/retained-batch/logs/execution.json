@@ -1,0 +1,21 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 48.120563946897164,
+  "executed_checks": [
+    "retained_original_request_and_native_export_custody",
+    "current_root_public_relational_reference_replay",
+    "complete_selected_and_submitted_accounting_controls",
+    "self_and_competing_scope_structural_metrics",
+    "saved_batch_public_original_bound_revalidation",
+    "independent_pin_and_resealed_denominator_refusals",
+    "retained_selected_inputs_unchanged_and_final_source_guards"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "df3a15cadede9829209cfcbe92746cf898ef3419f008ec330a11241c5be77c7b",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

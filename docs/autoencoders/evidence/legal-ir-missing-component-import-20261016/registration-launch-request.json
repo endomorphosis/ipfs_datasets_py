@@ -1,0 +1,30 @@
+{
+  "driver_pin": {
+    "bytes": 36296,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_driver.py",
+    "sha256": "a20b6d875ab84b0563d3808fa6d07b0ba865a926dcec9de8da3f1fc05f5cba23"
+  },
+  "entry_pin": {
+    "bytes": 9267,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_entry.py",
+    "sha256": "6b47d0659d654a1ac54556f1733c69b12455268252d17293992f340562d1fde3"
+  },
+  "private_output_directory": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/registration-launch-02",
+  "registration_request_pin": {
+    "bytes": 11900,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-input-request.json",
+    "sha256": "952e8132b61ee36f2b4b24798487019f28c29cda15adcd50eb889f88c389c130"
+  },
+  "resource_request_pin": {
+    "bytes": 20691,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration-resource-request.json",
+    "sha256": "ad040ef3fffc65c872e2d380224f8d1567ecc629f714f4e945c86d5cb41161ec"
+  },
+  "resource_scope_pin": {
+    "bytes": 30235,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-ir-missing-component-import-20261016/registration_resource_scope.py",
+    "sha256": "704f6a37e8eaae4aec9064fa24123a48a41b162ac597d80d0ada1b087b74a8f5"
+  },
+  "schema": "legal-ir-missing-component-launch-request/v1",
+  "timeout_seconds": 1200
+}

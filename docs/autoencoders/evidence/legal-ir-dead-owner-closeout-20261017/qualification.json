@@ -1,0 +1,38 @@
+{
+  "schema": "legal-ir-completion-blocker-fixes@1",
+  "cleanup_qualification": {
+    "schema": "legal-ir-cleanup-fixes-qualification@1",
+    "source_commit": "66cd6d273c1536a0f6017efcfbe15a44f4c60025",
+    "unit_and_confinement_tests": 45,
+    "real_generated_launcher_normal_and_abrupt_regression_passed": true,
+    "provider_dispatched": false,
+    "old_orphan_recovery_executed": false
+  },
+  "controlled_sdk_and_acceptance_testcase_count": 68,
+  "additional_unittest_subtests": 31,
+  "initial_qualification_wrapper_failed_from_junit_subtest_count": true,
+  "actual_orphan_closeout": {
+    "actual_postwrite_census_complete": true,
+    "canonical_task_completion_mutated": false,
+    "inert_generated_launchers_preserved": true,
+    "old_failed_receipt_rewritten": false,
+    "original_artifacts_preserved": true,
+    "original_status": "active",
+    "provider_dispatched": false,
+    "schema": "legal-ir-stopped-orphan-closeout-result@1",
+    "selected_claim": "66182e7fb1ac4496bcb5923894c11f7c",
+    "selected_current_status": "released",
+    "task_retry_cap_changed": false
+  },
+  "actual_postwrite_accounting_verified": true,
+  "selected_claim_bytes": 4445962240,
+  "physical_files_deleted": false,
+  "deployed_sdk_tests_passed": 34,
+  "native_acceptance_fixture_roundtrip": "pending; not yet runtime qualified",
+  "canonical_tasks_independently_accepted": 0,
+  "total_canonical_tasks": 64,
+  "consumed_task_attempts_preserved": 2,
+  "task_retry_limit_changed": false,
+  "protected_image_authority_unchanged": true,
+  "hosted_ci_status": "account billing lock prevented jobs starting; not a code test failure"
+}

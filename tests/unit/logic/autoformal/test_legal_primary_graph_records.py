@@ -47,6 +47,35 @@ def codes(report):
 
 
 @pytest.mark.parametrize("family", ["graph_nodes", "graph_edges"])
+@pytest.mark.parametrize("malformed", [False, True])
+def test_payload_observation_preserves_decoder_fields_without_fabricating_custody(family, malformed):
+    row, custody = fixture(family, encoded="{broken" if malformed else None)
+    row["opaque_wrapper"] = {"observed": ["café", None, 3]}
+    payload = records.decode_primary_graph_payload(row, family=family,
+        expected_raw_row_sha256=records.raw_row_sha256(row))
+    physical = decode(row, custody)
+    assert payload["schema"] == records.PAYLOAD_SCHEMA != physical["schema"]
+    assert payload["coverage_scope"] == "pinned_payload_only_no_physical_custody"
+    assert "custody" not in payload and "custody_sha256" not in payload
+    assert all(value is False for value in payload["authority"].values())
+    assert {key: value for key, value in payload.items()
+            if key not in {"schema", "coverage_scope", "envelope_sha256"}} == {
+        key: value for key, value in physical.items()
+        if key not in {"schema", "coverage_scope", "envelope_sha256", "custody", "custody_sha256"}}
+    with pytest.raises(records.PrimaryGraphRecordError, match="exact pinned regeneration"):
+        records.validate_primary_graph_record(payload, row, **trusted(row, custody))
+
+
+def test_payload_pin_mismatch_and_unsupported_family_cannot_decode_a_different_observation():
+    row, _ = fixture()
+    with pytest.raises(records.PrimaryGraphRecordError, match="pinned raw graph row differs"):
+        records.decode_primary_graph_payload(row, family="graph_nodes", expected_raw_row_sha256="0" * 64)
+    with pytest.raises(records.PrimaryGraphRecordError, match="supported graph family"):
+        records.decode_primary_graph_payload(row, family="legacy_nodes",
+            expected_raw_row_sha256=records.raw_row_sha256(row))
+
+
+@pytest.mark.parametrize("family", ["graph_nodes", "graph_edges"])
 def test_current_wrapper_decodes_literal_ids_without_semantic_authority(family):
     row, custody = fixture(family)
     report = decode(row, custody)

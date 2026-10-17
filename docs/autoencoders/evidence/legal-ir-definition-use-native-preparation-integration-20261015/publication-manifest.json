@@ -1,0 +1,215 @@
+{
+  "exact_payload_files": [
+    {
+      "bytes": 3383,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/README.md",
+      "sha256": "54fc2626ffd871f301199e742e08741d55de286d0365f3ac63f487e46a79bfd5"
+    },
+    {
+      "bytes": 1129,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt01-administrative-refusal.json",
+      "sha256": "ea60c05182ae6d5f6bfe9ef91c0bb86a485ded2088400b796a5d0d472cdb15df"
+    },
+    {
+      "bytes": 7318,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt02-failed-audit.json",
+      "sha256": "aac4539b649ed9d138150a961c51de7279c93bf53d27f450ed57c5ba6f5c31cf"
+    },
+    {
+      "bytes": 1290,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt02-failure.json",
+      "sha256": "4b927114f5f7044dcfe4e209e709db9271a2e96d2782fb9ca22647d882999562"
+    },
+    {
+      "bytes": 95685,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt02-junit.xml",
+      "sha256": "1801159cf0eeee1f5f38037ee1d930796bf1c8ddce22fbae3a3f226f3477504c"
+    },
+    {
+      "bytes": 0,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt02-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 22481,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt02-stdout.log",
+      "sha256": "377445db22bbec0526e8e9e64048da3d26ae485c24a46787cb8403380ca2e263"
+    },
+    {
+      "bytes": 45603,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt03-durability-projection.json",
+      "sha256": "5b78417f3e9efc7a9c00b87ddee52a90878e7f738812ab642a5a2f96efc9a6e1"
+    },
+    {
+      "bytes": 1342,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt03-execution.json",
+      "sha256": "5766b36472bd13b6211502755a91ec7464ce9f0256322cb082745ff335ae3cd6"
+    },
+    {
+      "bytes": 60695,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt03-junit.xml",
+      "sha256": "81bfe5f7632e7fae124e11b1deab2b383d737109597960177c02b4b502a3df27"
+    },
+    {
+      "bytes": 1547,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt03-result.json",
+      "sha256": "9af12d7da6fb008ea3df097c65ecee370cae5f5eed24710548dd8e1c69b3aee1"
+    },
+    {
+      "bytes": 0,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt03-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2750,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/attempt03-stdout.log",
+      "sha256": "234368e7943f0ea75ac2123d4d88f1b7979db2f378d94fa28c1e1d21225d8b50"
+    },
+    {
+      "bytes": 13218,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/final-audit.json",
+      "sha256": "43495f664e6fe02fd8d66b89a4ffa520685660efac0690447e1b0aa04e12c0a2"
+    },
+    {
+      "bytes": 22274,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/historical-legacy-121-junit.xml",
+      "sha256": "d8409162efad0ec8e4d68d98ce1a6ee9ca2a807520a2df0d0f3c5cb7251738f6"
+    },
+    {
+      "bytes": 8712,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/historical-new-42-junit.xml",
+      "sha256": "e87aea4d0cd4563b3021b94ac3166316eda39eb7a7786c39a4f3db4191e9c69e"
+    },
+    {
+      "bytes": 1451,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/historical-test-recount.json",
+      "sha256": "fa60903cd04d472436f3e155241d4603894ae83c4dbbc828474213b0d36a5b8f"
+    },
+    {
+      "bytes": 7349,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/implementation-and-docs-review.json",
+      "sha256": "4d10444bc974478450c28874b08c4e975e79b138f32047cf20d255daf23b087a"
+    },
+    {
+      "bytes": 1442,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/lazy-public-api-static-proof.json",
+      "sha256": "41de26785710e86acd0d762bb8af29c2be9ab7cce6185f5eea07165210396af0"
+    },
+    {
+      "bytes": 815,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/native-closeout-observation.json",
+      "sha256": "5716e1484e85adf3c5f1d5d3d2aa463b0ab4554f4040463e94dc26e6468a060e"
+    },
+    {
+      "bytes": 1318,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/prelaunch-reconciliation-03.json",
+      "sha256": "a27f845d80d1d5e8877e713870231d792baa59164f87eef2d1f9b1c8602c1b0d"
+    },
+    {
+      "bytes": 12292,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/receipt.json",
+      "sha256": "af44e7636ffcb6f306d201bc6b48cb51e97c4582d8ae4b97611395e50c684d6a"
+    },
+    {
+      "bytes": 7325,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/recovery-audit.json",
+      "sha256": "2dfd33b9456f61ac2e98735e7a914514fffd7d3304abb2e6d834f01ceaf0169f"
+    },
+    {
+      "bytes": 1419,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/scheduler-refusal-01.json",
+      "sha256": "62f9470cb1f116c74e7acb0b12f21b06fb058042ece95bcebf0bc9d4588b855a"
+    },
+    {
+      "bytes": 1826,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/scheduler-refusal-01.stderr.txt",
+      "sha256": "a52213a8646035a436f42272b5567093d1c37841a94e14314f975bcb7ade5ad9"
+    },
+    {
+      "bytes": 2632,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/source-adoption-at-open.json",
+      "sha256": "cd25c841316aa40297194af27c94816d6f35cf4ccab93efc3725c86c497dd706"
+    },
+    {
+      "bytes": 30838,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/upstream-reconciliation.json",
+      "sha256": "c052d2cc4b732c44ac0404bb080113f688d41e3c393d2798c4c227791caf9b70"
+    },
+    {
+      "bytes": 52622,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/validation-request-01.json",
+      "sha256": "f78cac54fbd61f17d0cd4d71d625c4de01885feb9bf84588a3db86153b4e2cda"
+    },
+    {
+      "bytes": 52622,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/validation-request-02.json",
+      "sha256": "76823fd3c9d55563ecd06fc3f42a3ad3b896799bec3079ebcfbda2af73a00bd3"
+    },
+    {
+      "bytes": 65098,
+      "path": "docs/autoencoders/evidence/legal-ir-definition-use-native-preparation-integration-20261015/validation-request-03.json",
+      "sha256": "56974a0e61b2b58a69195368cd958c273f24fee9424598d017275a91c63925cb"
+    },
+    {
+      "bytes": 14805,
+      "path": "docs/autoencoders/README.md",
+      "sha256": "e18c6f34a618f315a9bd91242f587f799b302401125f4f6eec254d4705b40b79"
+    },
+    {
+      "bytes": 12542,
+      "path": "docs/autoencoders/legal_definition_use_review_v2_integration_20261015.md",
+      "sha256": "ef88626885caaf98d2e56ae2c0c018e306a54dabc6cefba78b6f56bf2d5d1895"
+    },
+    {
+      "bytes": 13210,
+      "path": "docs/autoencoders/legal_definition_use_native_preparation_integration_20261015.md",
+      "sha256": "25b5291af3c6f2bd2fa941d270145404b608caa406fa1ae0cd59178c7859c8a3"
+    },
+    {
+      "bytes": 55933,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "e73b1178ea04786bddd74595fe34ea68eb7f36c32e1ebf56a4dc8be84c99698f"
+    },
+    {
+      "bytes": 47365,
+      "path": "ipfs_datasets_py/logic/integration/reasoning/__init__.py",
+      "sha256": "df45e300fd07d6e9f1297f59ba0d03e9822bf1cf2f4faa20250501024b31b8da"
+    },
+    {
+      "bytes": 17069,
+      "path": "tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py",
+      "sha256": "fd243a3208bf04e7197bc4b39de5797ef6b666ffc5f19a96df4607a3653caf9b"
+    },
+    {
+      "bytes": 11384,
+      "path": "tests/unit/logic/integration/test_reasoning_lazy_imports.py",
+      "sha256": "7d137bcda54692a20de292318731becd95431560bed5e849b6938108baa245e2"
+    },
+    {
+      "bytes": 21600,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+      "sha256": "306ab6481b78db8046e3f4eeae7cb917002c4a50b227204c6d4692123914b47e"
+    },
+    {
+      "bytes": 23236,
+      "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py",
+      "sha256": "3f915be198be0d67133d7b07f5ae4c28b6738de94331a7c099c2783d27b0810e"
+    },
+    {
+      "bytes": 8773,
+      "path": "docs/autoencoders/legal_corpus_definition_use_lake_v2.md",
+      "sha256": "59aada044248343ae81583bd88e2ecbab995574fa80017ad72538bc42ec2165c"
+    }
+  ],
+  "manifest_excludes_its_own_bytes": true,
+  "native_tests_rerun_during_publication": false,
+  "no_tested_source_change_after_qualification": true,
+  "private_ledger_rows_process_identifiers_or_lease_keys_included": false,
+  "published_requests_are_evidence_not_portable_grants": true,
+  "qualified_source_commit": "f3b51b007bf60be9420788099dec26c5555930a4",
+  "raw_log_and_JUnit_bytes_preserved": true,
+  "reconciled_origin_main": "3e481475463fa791bdff24bcc9ee67c56176856a",
+  "retained_native_payloads_not_relocated": true,
+  "schema": "legal-ir-native-preparation-publication-manifest/v1",
+  "selected_256_source_pins_still_match": true
+}

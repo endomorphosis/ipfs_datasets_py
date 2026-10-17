@@ -1,0 +1,43 @@
+{
+  "all_authority_flags_false": true,
+  "all_sealed_paths_sizes_hashes_device_inode_exact": true,
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-a-01",
+  "durability": {
+    "bytes": 2444,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-a-01/logs/validation-durability.json",
+    "sha256": "2328b57c14f4d89d440996f4ba297a45c96e7e25b7488dc296de7760da3d955a"
+  },
+  "final_bytes": 12871,
+  "final_files": 14,
+  "method": "Independent stdlib read-only request/source/ordinary-file/native-seal/exact-selected-ledger-row inspection. No product imports, tests, resource acquisition, recovery or attempt writes.",
+  "native_elapsed_seconds": 58.18734279484488,
+  "observed_at_utc": "2026-10-15T20:46:07.751147+00:00",
+  "pytest": {
+    "cases": 21,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "suite_seconds": [
+      15.626
+    ],
+    "unique_class_aware": true
+  },
+  "request": {
+    "bytes": 59425,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-retained-source-correspondence-20261015/validation-request-a-01.json",
+    "sha256": "b96f146e6a59cc40fc90bf58a8b40c228d3ed68ae739cba770b2d63dabf93a43"
+  },
+  "result": {
+    "bytes": 677,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-a-01/logs/result.json",
+    "sha256": "4c0f18620cb5a8e9b591c9a5d55894446ff1ac886e276c644c9361a66af0efdb"
+  },
+  "schema": "retained-source-native-independent-audit/v1",
+  "sealed_files": 13,
+  "selected_checks": [
+    "tests/unit/logic/integration/test_reasoning_lazy_imports.py"
+  ],
+  "selected_storage_status": "released",
+  "source_pins_rehashed": 256,
+  "storage_budget": 268435456
+}

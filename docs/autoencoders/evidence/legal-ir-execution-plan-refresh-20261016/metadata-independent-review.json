@@ -1,0 +1,222 @@
+{
+  "authority": {
+    "completion_authority": false,
+    "execution_authority": false,
+    "gold_eligibility_verified": false,
+    "omission_authority": false,
+    "proof_authority": false,
+    "semantic_review_verified": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "card_qualification": {
+    "entity_card_supplies_positive_legal_review_or_training_gold_attestation": false,
+    "global_gold_example_census_established": false,
+    "global_gold_example_count": null,
+    "readable_diagnostic_sample": {
+      "available_documents": 45,
+      "counts_recomputed_from_payloads": false,
+      "formula_occurrences_including_repeats": 372,
+      "gold_qualified_or_lake_admitted_examples_claimed_by_card_for_this_sample": 0,
+      "span_observations": 56,
+      "tdfol_text_fallback_records": 41,
+      "unavailable_documents": 11
+    },
+    "scope": "Card diagnostic counts describe the card's named historical audit, not all current Parquet paths. No global zero-gold count is inferred. The entity card declares storage/configuration and producer links; its silence supplies no semantic qualification.",
+    "span_card_distinguishes_source_compiler_and_guided_ast_from_learned_formula_decoder": true,
+    "span_card_explicitly_withholds_gold_and_lake_admission_for_described_sample": true,
+    "span_card_lines": [
+      62,
+      71,
+      87,
+      123,
+      124
+    ],
+    "train_split_is_storage_label_not_quality_gate": true
+  },
+  "distinctions": [
+    "7,962 counts unique file paths advertised by the repository API; 5,070 counts Parquet paths. Neither count is a unique span, source document, legal entity, successful formalization or training example count.",
+    "4,339,061,041 is the sum of advertised sizes per Parquet path, including two paths with one identical 3,502-byte LFS payload. It is not measured download volume, unique content storage, decoded size or whole repository usedStorage.",
+    "The API advertises 5,069 distinct span-Parquet LFS hashes; no corresponding payloads were opened. Hash-distinct payloads still do not imply distinct semantic observations.",
+    "The 1,960,876 entity census rows are mixed legacy observations, not unique legal entities. Zero uniquely resolved flat endpoints does not repair multiplicity, source correspondence or graph semantics.",
+    "The verified primary graph export and this legacy materialized entity cache are separate populations; this metadata comparison does not establish derivation or interchangeability.",
+    "Storage split names, syntax flags, compiler agreement, cached statuses, content identities and metadata closure do not provide legal meaning, gold supervision or proof authority."
+  ],
+  "entity_retained_census_join": {
+    "advertised_and_retained_payload_sha256": "f5f07379d4ca913cb2d8d98505a4ecb01e4d0658039a2f4ff84fb4fb585e8233",
+    "current_api_body_equals_retained_pinned_api_body": true,
+    "current_lfs_identity_matches_retained_descriptor_footer_census_and_acquisition_record": true,
+    "payload_bytes": 11139328,
+    "payload_hash_recomputed_by_this_reviewer": false,
+    "recorded_census": {
+      "all_recorded_authority_flags_false": true,
+      "coverage_scope": "exact_pinned_parquet_rows_only",
+      "disposition_sum_matches": true,
+      "duplicate_raw_row_extra_instances": 1722389,
+      "duplicate_raw_row_groups": 6,
+      "edge_observations_ambiguous_declared_endpoints": 0,
+      "edge_observations_unique_declared_endpoints": 0,
+      "edge_observations_unresolved_at_declared_endpoints": 1722395,
+      "node_observations_missing_identity": 119134,
+      "node_observations_with_nonempty_declared_identity": 119318,
+      "other_mixed_observation_rows": 29,
+      "row_group_sum_matches": true,
+      "row_groups": 99,
+      "rows": 1960876
+    },
+    "repository_path": "autoformal/uscode/kg-logic-index.parquet",
+    "repository_revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+    "retained_acquisition_records_payload_hash_verification": true,
+    "retained_census_canonical_self_digest_recomputed": "223b5e693635c8270650f6b15a7cbdfdbbe0a214382a5ed6e0d74ffed87dda0b",
+    "retained_evidence_files": [
+      {
+        "bytes": 2202,
+        "equals_current_head_git_blob": true,
+        "path": "docs/autoencoders/evidence/legal-entity-cache-audit-20261015/input-descriptor-v01.json",
+        "sha256": "4cb4ac3e3d9fa5857fdc4f4ad288b7c1d565cf77da83a155fbf7e5f7a5317c85"
+      },
+      {
+        "bytes": 1534,
+        "equals_current_head_git_blob": true,
+        "path": "docs/autoencoders/evidence/legal-entity-cache-audit-20261015/entity-hub-pinned.json",
+        "sha256": "a6e283701865a8a93cf88010f8f684a940750cfb3aa2c7ff82181de20576bd1b"
+      },
+      {
+        "bytes": 11591,
+        "equals_current_head_git_blob": true,
+        "path": "docs/autoencoders/evidence/legal-entity-cache-audit-20261015/footer-population.json",
+        "sha256": "e83b8591a178f48b4ccacae51312196e865a52521acda6824735f9ff85aa66ea"
+      },
+      {
+        "bytes": 22401,
+        "equals_current_head_git_blob": true,
+        "path": "docs/autoencoders/evidence/legal-entity-cache-audit-20261015/entity-index-census.json",
+        "sha256": "b6d23ce2cffc942a83115a7d0837ee897c4c9db3bb1ac022585660f00c7f026a"
+      },
+      {
+        "bytes": 6043,
+        "equals_current_head_git_blob": true,
+        "path": "docs/autoencoders/evidence/legal-entity-cache-audit-20261015/entity-cache-audit.json",
+        "sha256": "d8d8f07460d465071c8a83db512364dcddf09ce2ace8a8a647e331ea851fd877"
+      },
+      {
+        "bytes": 7285,
+        "equals_current_head_git_blob": true,
+        "path": "docs/autoencoders/evidence/legal-entity-cache-audit-20261015/publication-manifest.json",
+        "sha256": "adca8a39743df11b46b7dce5804f8418884dfc640184ef5d74d5fa94f61ac5ec"
+      }
+    ],
+    "retained_evidence_matches_publication_manifest_rows": true,
+    "scope": "The row and defect counts are carried from the prior exact-payload census and its retained metadata. The current API advertises the same revision/content hash/length. This review does not traverse rows, recompute the underlying ordered row stream, authenticate the law, or establish a whole-source-corpus denominator."
+  },
+  "errors": [],
+  "execution_scope": {
+    "encoders": 0,
+    "http_requests": 0,
+    "lean_or_solver_invocations": 0,
+    "model_loads": 0,
+    "payload_downloads": 0,
+    "payload_reads": 0,
+    "product_imports": 0,
+    "production_tests": 0,
+    "training_runs": 0
+  },
+  "frozen_snapshot_time_scope": "The two retained repository metadata observations are at 2026-10-16 00:36:08 UTC; this review does not assert that either remote main remained unchanged afterward.",
+  "method": "Independent Python standard-library recount of retained API JSON, SHA256/size checks of exact API/card/summary bytes, Git-blob SHA1 calculation for each pinned README, and read-only joins to retained Git-bound entity census metadata. No HTTP refresh, dataset payload access, product imports or execution.",
+  "observed_at_utc": "2026-10-16T00:53:41.416398+00:00",
+  "plan_comparison": {
+    "current_cache_revision_file_and_entity_identity_claims_match": true,
+    "document_observed": {
+      "bytes": 93411,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "d113c7ca46f247571825e51ff03993acb549e41317d37a434cd824ec1a7530da"
+    },
+    "entity_mixed_row_and_zero_unique_endpoint_claims_match_retained_census": true,
+    "scope": "This binds the observed draft and its active cache table; the preserved chronological appendix contains earlier generation-specific observations and is not relabeled as this snapshot.",
+    "section": "Pinned cache refresh",
+    "span_advertised_path_byte_sum_independently_confirmed": 4339061041
+  },
+  "repository_metadata": [
+    {
+      "all_parquet_sizes_match_lfs_size": true,
+      "api_body": {
+        "bytes": 2510870,
+        "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-span-cache-api.json",
+        "sha256": "f9263fe1a94cabd97f34852b510364aef5329c459a293d879742bc5b2c6c0b18"
+      },
+      "api_gated": false,
+      "api_private": false,
+      "card_api_git_blob_sha1": "ce06ecb91419c806b8b109ab73ddaa9793508ce1",
+      "card_body": {
+        "bytes": 13863,
+        "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-span-cache-card.md",
+        "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6"
+      },
+      "card_matches_api_git_blob_and_size": true,
+      "duplicate_lfs_hash_path_groups": [
+        {
+          "paths": [
+            {
+              "bytes": 3502,
+              "path": "autoformal/uscode/goals/node-a/goals-a269a78ae270b96376118e2193371e7a0eebef0c17c5e374e775b1caeb783c92.parquet"
+            },
+            {
+              "bytes": 3502,
+              "path": "autoformal/uscode/goals/node-b/goals-5fbfa49e2dedebd4b794af2904923860bd5f7d1975ef7de586c0aa16c7e9602d.parquet"
+            }
+          ],
+          "sha256": "eb538849a62e12ac8d72418e6a5da2321eb332bdf677f34f56b94602d3f272cd"
+        }
+      ],
+      "file_descriptors": 7962,
+      "fresh_http_performed_by_reviewer": false,
+      "parquet_path_descriptors": 5070,
+      "payload_access_performed_by_reviewer": false,
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+      "snapshot_observed_at_utc": "2026-10-16T00:36:08.993492+00:00",
+      "sum_one_advertised_size_per_distinct_lfs_hash": 4339057539,
+      "summary_matches_raw_api_and_card_bodies": true,
+      "summed_advertised_parquet_path_bytes": 4339061041,
+      "unique_advertised_parquet_lfs_hashes": 5069,
+      "unique_file_paths": 7962
+    },
+    {
+      "all_parquet_sizes_match_lfs_size": true,
+      "api_body": {
+        "bytes": 1534,
+        "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-entity-cache-api.json",
+        "sha256": "a6e283701865a8a93cf88010f8f684a940750cfb3aa2c7ff82181de20576bd1b"
+      },
+      "api_gated": false,
+      "api_private": false,
+      "card_api_git_blob_sha1": "30a529f324c3b8eb4d5212ae67d3e993ed96706b",
+      "card_body": {
+        "bytes": 581,
+        "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/uscode-autoformal-entity-cache-card.md",
+        "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4"
+      },
+      "card_matches_api_git_blob_and_size": true,
+      "duplicate_lfs_hash_path_groups": [],
+      "file_descriptors": 3,
+      "fresh_http_performed_by_reviewer": false,
+      "parquet_path_descriptors": 1,
+      "payload_access_performed_by_reviewer": false,
+      "repository_id": "justicedao/uscode-autoformal-entity-cache",
+      "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "snapshot_observed_at_utc": "2026-10-16T00:36:08.574395+00:00",
+      "sum_one_advertised_size_per_distinct_lfs_hash": 11139328,
+      "summary_matches_raw_api_and_card_bodies": true,
+      "summed_advertised_parquet_path_bytes": 11139328,
+      "unique_advertised_parquet_lfs_hashes": 1,
+      "unique_file_paths": 3
+    }
+  ],
+  "schema": "legal-ir-plan-hub-metadata-independent-review/v1",
+  "status": "pass",
+  "summary_body": {
+    "bytes": 2515,
+    "path": "docs/autoencoders/evidence/legal-ir-execution-plan-refresh-20261016/hub-metadata-summary.json",
+    "sha256": "9b8678f7c05a5a4061d9aab8fc319dd8b8111ce9e328e5dbc3aaa4159629c0cc"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "associate": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "memory_mb": 6144,
+    "storage_bytes": 2147483648,
+    "timeout_seconds": 3600
+  },
+  "basis": {
+    "SQLite_max_bytes": 1610612736,
+    "candidate_bytes_readonly": 716898677,
+    "candidate_copied": false,
+    "new_actual_output_max_bytes": 33554432,
+    "original_source_replay_existing_max_output_bytes": 30000000
+  },
+  "discover": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "memory_mb": 6144,
+    "storage_bytes": 2147483648,
+    "timeout_seconds": 1800
+  },
+  "limitations": [
+    "Read-only observation supplies no admission.",
+    "Native parent separately admits, supervises, seals and releases every attempt.",
+    "Bounds do not prove runtime or process RSS; actual qualification remains necessary.",
+    "No cleanup of foreign source files or reservations."
+  ],
+  "qualification": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "memory_mb": 6144,
+    "storage_bytes": 1073741824,
+    "timeout_seconds": 1800
+  },
+  "schema": "sampled-primary-resource-plan/v1"
+}

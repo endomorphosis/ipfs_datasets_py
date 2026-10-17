@@ -1,0 +1,342 @@
+{
+  "complete_aggregate_accounting": {
+    "canonicalization_scope": "Primary lexical outputs have separate canonical-contract inspection; tagged legacy canonicalization is not computed by this adapter. Zero reported changes does not mean all60outputs underwent canonical normalization.",
+    "compatibility_cells": 30,
+    "first_pass_denominator": 60,
+    "invalid_native_generation": 0,
+    "metric_cells": 30,
+    "native_complete_candidates": 60,
+    "native_syntax_valid": 60,
+    "reported_canonicalization_changes": 0,
+    "richer_relational_profile_unsupported": 60,
+    "rows_per_cell": 2,
+    "scope": "Aggregates from the sealed numerical engineering summary. Raw model tokens, references and companion reports were not opened or independently rescored.",
+    "source_zero_cross_matrix": [
+      {
+        "legacy_cross_changed_out_of2": 2,
+        "legacy_source_zero_cross_exact_out_of2": [
+          2,
+          1,
+          0
+        ],
+        "legacy_zero_changed_out_of2": 1,
+        "primary_cross_changed_out_of2": 0,
+        "primary_source_exact_out_of2": 0,
+        "primary_zero_changed_out_of2": 2,
+        "variant": "original_donor"
+      },
+      {
+        "legacy_cross_changed_out_of2": 0,
+        "legacy_source_zero_cross_exact_out_of2": [
+          1,
+          1,
+          1
+        ],
+        "legacy_zero_changed_out_of2": 0,
+        "primary_cross_changed_out_of2": 0,
+        "primary_source_exact_out_of2": 0,
+        "primary_zero_changed_out_of2": 0,
+        "variant": "original_initialization"
+      },
+      {
+        "legacy_cross_changed_out_of2": 0,
+        "legacy_source_zero_cross_exact_out_of2": [
+          1,
+          1,
+          1
+        ],
+        "legacy_zero_changed_out_of2": 0,
+        "primary_cross_changed_out_of2": 0,
+        "primary_source_exact_out_of2": 0,
+        "primary_zero_changed_out_of2": 2,
+        "variant": "aligned_initialization"
+      },
+      {
+        "legacy_cross_changed_out_of2": 0,
+        "legacy_source_zero_cross_exact_out_of2": [
+          1,
+          1,
+          1
+        ],
+        "legacy_zero_changed_out_of2": 0,
+        "primary_cross_changed_out_of2": 0,
+        "primary_source_exact_out_of2": 0,
+        "primary_zero_changed_out_of2": 0,
+        "variant": "original_trained"
+      },
+      {
+        "legacy_cross_changed_out_of2": 0,
+        "legacy_source_zero_cross_exact_out_of2": [
+          1,
+          1,
+          1
+        ],
+        "legacy_zero_changed_out_of2": 0,
+        "primary_cross_changed_out_of2": 0,
+        "primary_source_exact_out_of2": 0,
+        "primary_zero_changed_out_of2": 2,
+        "variant": "aligned_trained"
+      }
+    ],
+    "terminated": 60,
+    "truncated": 0
+  },
+  "file_pins": [
+    {
+      "bytes": 49852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-replay-request-v03.json",
+      "sha256": "265577bec114742e13558da0fce595ae69265a82391f45e9caf8e87a2d83ec66"
+    },
+    {
+      "bytes": 85400,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay03/logs/numerical-replay.json",
+      "sha256": "e50e34358738bb2b70a1c2b0465fb2158d58ad44adfd6dc4f86ec8840f37d1ed"
+    },
+    {
+      "bytes": 718,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay03/logs/execution.json",
+      "sha256": "d34c909254a946bdb14e68dd7cf2a7d9ac260eaa3865f3677f566464009ba0ec"
+    },
+    {
+      "bytes": 901,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay03/logs/result.json",
+      "sha256": "5ae40128e19e17a7ac761fcc1df1f0b855594ffa5de4898ad3b44d260eb23345"
+    },
+    {
+      "bytes": 4926,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-decoder-storage-retry-20261016-numerical-replay03/logs/validation-durability.json",
+      "sha256": "b3e37f5a7d5538971a45023a6bc6885bfbe11890aaaf3e075dac3e00867b45cf"
+    },
+    {
+      "bytes": 5534,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical03-controller-stdout.log",
+      "sha256": "b6c2c5cdd69d4ef65603734bd59b474b31c7bde686e2fb94215c8cf1fa251c00"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical03-controller-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 33020,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v04.py",
+      "sha256": "25ffbdc7dc863f9129fd821cdf4ea8189b935a80f69e0f531c47d935b5751023"
+    },
+    {
+      "bytes": 64483,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification01-own-recovery-receipt-v01.json",
+      "sha256": "effb97719e9084588321065bf9c22314a5782f6f3fd77f6678229a918bbfef8d"
+    },
+    {
+      "bytes": 53163,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical01-own-recovery-receipt-v01.json",
+      "sha256": "5842ae9c043354ebd569996a2ced4e82177577142d76d33f325dacccefe6e6a9"
+    },
+    {
+      "bytes": 53445,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical02-own-recovery-receipt-v01.json",
+      "sha256": "b7f9c8ac81841ea9866f88ba0d445009c21c6023aa6754986bdf6723f68351cb"
+    }
+  ],
+  "frozen_source_files_independently_rehashed": 214,
+  "interpretation": {
+    "legacy_exactness": "Original8D donor matches2of2legacy training references with correct vectors,1of2withzero and0of2withcross-source; this shows conditional discrimination only on these exposed training diagnostics. Allfour768student variants match1of2under allthreecontrols with unchanged token sequences, supplying no useful auxiliary conditioning separation in this panel.",
+    "native_validity": "All60selected first-pass outputs conformed to their exact inherited native grammar and completed with EOS. This says nothing by itself about fidelity to legal text.",
+    "next_diagnostic": "Inspect shared768-to-legacy8 conditioning/connector behavior with the existing exact input/model lineage and matched controls before further fitting; source-pointer/typed-AST training requires an explicit new compatible output contract and eligible targets.",
+    "no_dimensional_comparison": "Primary exposed-validation and auxiliary legacy-training heads use different cohorts/nativecontracts. Their scores cannot rank8D/384D/768Dlegal ability or establish generalization.",
+    "primary_exactness": "All five variants match0of2archived primary exposed references under correct source; this small replay supplies no primary exact-reference improvement. Zero changes tokens for donor/aligned initialization/aligned trained, while cross-source changes none.",
+    "richer_logic_gap": "Every candidate remains unsupported for the richer quantified relational request; no roles/bindings/signatures are invented and no typed-relational training target is admitted."
+  },
+  "limitations": [
+    "Fresh-private model reload occurs in the same numerical consumer interpreter, not a separately launched numerical process or independently replicatedTorchinstallation.",
+    "Current filesystem/accounting observations supersede the earlier refused snapshot; success used the existing160GBcap and unchanged physicalfreecheck. No cap change or foreign claim release by this work is established.",
+    "814sourceexecutionevents are reported by the pinned checked-buffer runner; their private event payload was not opened. The49unique origin paths are independently bound to current frozen source pins.",
+    "This is2exposed primary validation rows plus2legacy training diagnostics, not4independentlyreviewedlaws, independentholdout accuracy, broaderlogic-family fidelity, training improvement, model/serviceadmission orLeanbuild.",
+    "InstalledTorchandbinarydependency integrity is notattested; trusted cooperative process-group resource supervision is not anOS sandbox."
+  ],
+  "native_checks": {
+    "actual_autoregressive_forward_steps": 3240,
+    "all_runtime_authority_flags_false": [
+      "accuracy_claim",
+      "download_executed",
+      "encoder_inference_executed",
+      "independent_holdout",
+      "inference_service_or_model_admission",
+      "lean_executed",
+      "proof_authority",
+      "references_used_as_generation_prefix",
+      "source_fidelity_qualified",
+      "third_party_distribution_integrity_attested",
+      "training_executed",
+      "zero_is_disabled_architecture"
+    ],
+    "allowed_readonly_ldconfig_calls": [
+      {
+        "args": [
+          "/sbin/ldconfig",
+          "-p"
+        ],
+        "canonical_binary": "/usr/sbin/ldconfig.real",
+        "canonical_interpreter": "/usr/bin/dash",
+        "canonical_wrapper": "/usr/sbin/ldconfig",
+        "cwd": null,
+        "environment": {
+          "LANG": "C",
+          "LC_ALL": "C"
+        },
+        "executable": "/sbin/ldconfig",
+        "process_group": -1,
+        "purpose": "installed_torch_libdl_discovery",
+        "shell": false,
+        "start_new_session": false
+      }
+    ],
+    "allowed_startup_writing_null_opens": [
+      {
+        "caller_file": "/usr/lib/python3.12/subprocess.py",
+        "caller_function": "_get_devnull",
+        "flags": 524290,
+        "mode": null
+      },
+      {
+        "caller_file": "/home/barberb/.local/lib/python3.12/site-packages/dill/_dill.py",
+        "caller_function": "get_file_type",
+        "flags": 524290,
+        "mode": "r+"
+      },
+      {
+        "caller_file": "/home/barberb/.local/lib/python3.12/site-packages/dill/_dill.py",
+        "caller_function": "get_file_type",
+        "flags": 524865,
+        "mode": "w"
+      },
+      {
+        "caller_file": "/usr/lib/python3.12/_pyio.py",
+        "caller_function": "__init__",
+        "flags": 524290,
+        "mode": null
+      },
+      {
+        "caller_file": "/usr/lib/python3.12/_pyio.py",
+        "caller_function": "__init__",
+        "flags": 524865,
+        "mode": null
+      }
+    ],
+    "checked_execution_events_reported": 814,
+    "completed_count": 6,
+    "device": "cpu",
+    "dtype": "float32",
+    "first_pass_sequences": 60,
+    "fresh_private_complete_receipt_digest_replay_exact": true,
+    "fresh_private_replay_sequences": 60,
+    "generation_calls": 120,
+    "generation_frozen_before_scoring": true,
+    "named_checks": [
+      "retained_parent_and_donor_admission",
+      "bounded_four_row_source_controls",
+      "all_generation_frozen_before_reference_scoring",
+      "fresh_private_reload_exact_numerical_replay",
+      "candidate_only_output_compatibility",
+      "final_inputs_sources_and_native_layout_unchanged"
+    ],
+    "native_child_slots": 2,
+    "native_parent_execution_elapsed_seconds": 154.14251700113527,
+    "numerical_elapsed_seconds": 67.02444768697023,
+    "optimizer_steps": 0,
+    "origin_scope_counts": {
+      "historical_exact_path": 28,
+      "owned_checkout": 21
+    },
+    "parent_admission_reads_reference_bearing_provenance": true,
+    "refused_child_attempts": 0,
+    "refused_network_attempts": 0,
+    "torch_version": "2.13.0+cu130",
+    "unique_checked_source_origins": 49
+  },
+  "native_closeout": {
+    "artifacts_durable_asserted": true,
+    "child_process_slots": 2,
+    "cleanup_error": null,
+    "completed": true,
+    "controller_result_is_expected_path_string": true,
+    "controller_stderr_bytes": 0,
+    "memory_mb": 4096,
+    "native_lease_released": true,
+    "recorded_group_live_processes": 0,
+    "returncode": 0,
+    "scope": "Captured native owner closeout crosschecked against frozen request/result/durability metadata; no fresh live process/ledger observation by this reviewer.",
+    "storage_bytes": 268435456,
+    "storage_released": true,
+    "unchanged_cap_bytes": 160000000000
+  },
+  "own_failed_attempt_history": {
+    "preserved_artifact_bytes": 268890,
+    "preserved_artifact_files": 20,
+    "recoveries": [
+      {
+        "artifact_bytes": 33583,
+        "artifact_files": 10,
+        "claim_reduction_bytes": 134217728,
+        "outputs_deleted": false,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/qualification01-own-recovery-receipt-v01.json",
+        "sha256": "effb97719e9084588321065bf9c22314a5782f6f3fd77f6678229a918bbfef8d"
+      },
+      {
+        "artifact_bytes": 117286,
+        "artifact_files": 5,
+        "claim_reduction_bytes": 268435456,
+        "outputs_deleted": false,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical01-own-recovery-receipt-v01.json",
+        "sha256": "5842ae9c043354ebd569996a2ced4e82177577142d76d33f325dacccefe6e6a9"
+      },
+      {
+        "artifact_bytes": 118021,
+        "artifact_files": 5,
+        "claim_reduction_bytes": 268435456,
+        "outputs_deleted": false,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical02-own-recovery-receipt-v01.json",
+        "sha256": "b7f9c8ac81841ea9866f88ba0d445009c21c6023aa6754986bdf6723f68351cb"
+      }
+    ],
+    "scope": "Failed collection and two stopped Torch-startup attempts remain separate history; exact existing-owner recovery metadata records preserved outputs and no new grant or foreign cleanup. They add no model generations or passing cases.",
+    "total_failed_claims_reconciled_bytes": 671088640
+  },
+  "private_output_custody": {
+    "all21refs_match_native_sealed_inventory_by_exact_relative_name_size_hash": true,
+    "native_durable_inventory_files": 26,
+    "native_result_hash_bound": true,
+    "native_total_attempt_bytes_including_durability_receipt": 2490167,
+    "output_names_exact": [
+      "candidate-compatibility.json",
+      "checked-source-execution-events.json",
+      "generation-aligned_initialization-cross_source.json",
+      "generation-aligned_initialization-source.json",
+      "generation-aligned_initialization-zero.json",
+      "generation-aligned_trained-cross_source.json",
+      "generation-aligned_trained-source.json",
+      "generation-aligned_trained-zero.json",
+      "generation-frozen.json",
+      "generation-original_donor-cross_source.json",
+      "generation-original_donor-source.json",
+      "generation-original_donor-zero.json",
+      "generation-original_initialization-cross_source.json",
+      "generation-original_initialization-source.json",
+      "generation-original_initialization-zero.json",
+      "generation-original_trained-cross_source.json",
+      "generation-original_trained-source.json",
+      "generation-original_trained-zero.json",
+      "plan.json",
+      "scores.json",
+      "source-inputs.json"
+    ],
+    "payload_bodies_opened": false,
+    "payload_bytes": 2397930,
+    "payload_references": 21,
+    "summary_hash_matches_native_durable_inventory": true
+  },
+  "request_sha256": "265577bec114742e13558da0fce595ae69265a82391f45e9caf8e87a2d83ec66",
+  "schema": "independent-decoder-retry-numerical-native-metadata-audit/v1",
+  "scope": "Only explicitly allowed engineering/native summary/request/closeout/recovery metadata and frozen source/system executable byte pins. No model/weights/latents/corpus/source-inputs/generation/scoring/compatibility/private source-event payload bodies, fixture bodies or ledger opened; no product/test imports or execution.",
+  "status": "PASS"
+}

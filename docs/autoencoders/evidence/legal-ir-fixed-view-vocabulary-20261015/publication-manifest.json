@@ -1,0 +1,562 @@
+{
+  "base_upstream": "3421e861ac06662a18c23b342acfbd8e4e3cf0df",
+  "current_native_cohorts": [
+    {
+      "current_exact_pins": 146,
+      "request_path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/validation-request-a-02.json",
+      "request_sha256": "58d343001a3098f59c6aaafd9e37260ee52edf566c2a17fd32ee5046cd66b0c0"
+    },
+    {
+      "current_exact_pins": 165,
+      "request_path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/validation-request-b-02.json",
+      "request_sha256": "54f158e0338d2904d25c261c33249cb2c769a1086abf0567c1f73cb3397f14e7"
+    }
+  ],
+  "exclusions": [
+    "publication-manifest.json self",
+    "final publication commit hash self-reference",
+    "private native IDs/ledger rows/launcher stdout",
+    "retained original large checkpoints and compressed target payloads; descriptor pins retained"
+  ],
+  "file_count": 81,
+  "files": [
+    {
+      "bytes": 16402,
+      "git_blob": "54363ab65c9d216e47a00432345fdd6b522e9ad0",
+      "path": "docs/autoencoders/README.md",
+      "sha256": "b8d8219b9b62ffaf1363da27dc58bcbf5c3530876bc2801a10d2b3b12ddccfe8"
+    },
+    {
+      "bytes": 3397,
+      "git_blob": "576bb649916bcee85fe24e88fb672d3d8fd09baa",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/README.md",
+      "sha256": "1937fe9041818b86bd80147119f65e20addab8c6d59627da5abff795db288be8"
+    },
+    {
+      "bytes": 22412,
+      "git_blob": "3ccb75886fd709f84370a9453ad91c97751c5125",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/asset-provenance.json",
+      "sha256": "93f6b005a514ac5c5cf9f7ef9d20158a01a67fd9d36df8bd3d8addb627f15086"
+    },
+    {
+      "bytes": 4136,
+      "git_blob": "63e583150ca6a544fd889f9a7bddbb0df3f28909",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-01-durability-projection.json",
+      "sha256": "d358e60750a4bb0c59e5b6e59af7052528d60bc8be4836f60c546324446605c3"
+    },
+    {
+      "bytes": 693,
+      "git_blob": "707d6f736c6b67ed63aa84e0afca958e7f492cad",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-01-execution.json",
+      "sha256": "2091663f35ee268ae5b0d0ee7af189fdfe36bede44a19754690c5ac06fa12d9d"
+    },
+    {
+      "bytes": 2137,
+      "git_blob": "5484e2ffcecaaf9136e883818adf5b476e3c37fe",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-01-independent-audit.json",
+      "sha256": "be2f8f1fbfa7751af10f62ff572685615fcef13e41516312ada5009d1e17876e"
+    },
+    {
+      "bytes": 19612,
+      "git_blob": "4f4a454a85fdd08f4e3658edc4577de14ef17c27",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-01-junit.xml",
+      "sha256": "62bcca233ccd680f8886b1a243856b36c5491afdfe193c9f0e5f23687c22b853"
+    },
+    {
+      "bytes": 855,
+      "git_blob": "1cf422d703d59e45b102dc9fd8c12074c4d27668",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-01-result.json",
+      "sha256": "6b5f2b52b2cde821b1c29e27a08b89af5d44da1c2119c9fcf56d8723c7e75391"
+    },
+    {
+      "bytes": 0,
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-01-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1348,
+      "git_blob": "6d88fdd0cf3d0c255264b5e988facf42449ab049",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-01-stdout.log",
+      "sha256": "c8a1dec0dea28442846ddfb318d15584141f6bade4f528dcd383a2418e636792"
+    },
+    {
+      "bytes": 641,
+      "git_blob": "248dd5a38e2bdd0d7aa559850d7bbb44f24a8cb3",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-01-terminal-observation.json",
+      "sha256": "03336e811e843ba9424e12069403378dcb8965fa025b3283d6527a7df0b0bc17"
+    },
+    {
+      "bytes": 4136,
+      "git_blob": "c4a3a28002163f83e45a738c804de304ed6db0e8",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-durability-projection.json",
+      "sha256": "03c88ee9965c46625d20366f0eeca987b0904e12c7b767e3bc6228c342e91bf1"
+    },
+    {
+      "bytes": 788,
+      "git_blob": "452a321c2c8ecf668fc4d10490c9e4d4eb9bb149",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-execution.json",
+      "sha256": "97fea1670266eb4accbba373793dd59b54dda8d0c129ce89603179ab41014e24"
+    },
+    {
+      "bytes": 2233,
+      "git_blob": "2d9c313431b1fea4fb459ce82bd85166130a37eb",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-independent-audit.json",
+      "sha256": "d91326b290803766ba087f28d90ff3c4c9281c9791123c8ca6194d2ea37a0f27"
+    },
+    {
+      "bytes": 24823,
+      "git_blob": "1d4c6a2dc9fdb4139c05d6f109a2505a04f6cb9c",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-junit.xml",
+      "sha256": "20c792c5cdc699f593b96e3ef868b4f2992b77ecb600d53807db9b2486a4fa69"
+    },
+    {
+      "bytes": 950,
+      "git_blob": "c9f4ab2e92656004f9b78f97beb9e45a09171330",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-result.json",
+      "sha256": "3106f31e81f74776a01012e8f47166da7a8915f0906660fdc22e2fb5e0baef10"
+    },
+    {
+      "bytes": 0,
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1526,
+      "git_blob": "b76f75fa81f71e24629a8b0e9c4bc9d09e55cd90",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-stdout.log",
+      "sha256": "db8414df6534c8e32e8804bf9488b473e7f004ec43ecce18d338655316feafab"
+    },
+    {
+      "bytes": 559,
+      "git_blob": "99212e54df6ea6a5cee3c0903cddcb69437cb6d3",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attempta-02-terminal-observation.json",
+      "sha256": "9820c77e2fa5466bcb82721fd8fe9e251193e67719183c02c11cfa5609c05100"
+    },
+    {
+      "bytes": 4337,
+      "git_blob": "298b4f412bb01a6ede0bb8ff36c2438bac97c180",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-durability-projection.json",
+      "sha256": "c60046a6ce55f7c2dadb2fc7670320b034ba6f625eb2def71a3a66e0f4b23631"
+    },
+    {
+      "bytes": 494,
+      "git_blob": "45d5f1c7401d3f01e7fcd2dfce4fa05146ca53cb",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-execution.json",
+      "sha256": "a5d3b9722efe7a66e719284924ed386ddb283bfa30baeb402c3430c7579f0808"
+    },
+    {
+      "bytes": 1658,
+      "git_blob": "efbc6fc835910a8462243ab9383be353de35132b",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-file-index.json",
+      "sha256": "1cf440593c59cdc2765c761e3eacd336a032faeaf6967d03e2094523c5a97e8d"
+    },
+    {
+      "bytes": 690,
+      "git_blob": "a58d245087b0249bf8339b1b1a0d43d80691c585",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-fixed-view-profile.json",
+      "sha256": "e604f9e3c3e02aa6ecde30ffbac78a1a6f79889cf3383481a9f5c25adc9562f7"
+    },
+    {
+      "bytes": 1776,
+      "git_blob": "cee483ef62bfd9881f91b56b9d068bbca0a692ec",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-independent-audit.json",
+      "sha256": "7162f7c7c25713a2f74b4b6827146a42be718e02075857dd7d026bcb7bae2f3d"
+    },
+    {
+      "bytes": 16440,
+      "git_blob": "7f32253a8a7baa985b2307ea915549a9206a92b6",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-parent-shadow-report.json",
+      "sha256": "670d08055c992e4550964d9ac32ebd8d77945ae573c60ef6de4dca9ed20ec067"
+    },
+    {
+      "bytes": 16614,
+      "git_blob": "2fb8d15adc769628bfccf7ffd0599b58b433f950",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-probe-receipt.json",
+      "sha256": "8f823e997d1887eec7e182a35971473f96c6cecd7cfbbc386abe2d1963f3bcef"
+    },
+    {
+      "bytes": 656,
+      "git_blob": "095a8a48670c34e47896d3028c73e2eda384dd7d",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-result.json",
+      "sha256": "e725ac79c617133e0bd195595eafd46678599b310646dc93559dea63727177f3"
+    },
+    {
+      "bytes": 9050,
+      "git_blob": "5386e55582335a7241682ac17a73672e20549872",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-retained-head-inputs.json",
+      "sha256": "3ed669866f03b34098877f6e5e94ea5b8ec3766510bb2e4d6638058a27d608b5"
+    },
+    {
+      "bytes": 520,
+      "git_blob": "0bfe659822275914b9351014eb94d5f97b0e75c0",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-row-targets.json",
+      "sha256": "944bffc78930d8710223504a0b5d5e7b04291bf9b52608911832ea5b20055965"
+    },
+    {
+      "bytes": 17460,
+      "git_blob": "b9497a0090266a3d3f737b4f9e0b42cb843a2b42",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-sample-06.json",
+      "sha256": "6ba4fa923f60574b10e994b9cf117ffc02b71888f3366607fc7dad6422522e62"
+    },
+    {
+      "bytes": 14730,
+      "git_blob": "16c4bd010b9e7ab2e4a4d5571496ddbc28332000",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-sample-07.json",
+      "sha256": "01350020d8a601bfbdc9326a6324e7f524a39da4bfa6c775b63c405332e8cf37"
+    },
+    {
+      "bytes": 0,
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 877,
+      "git_blob": "3241755b7dd5a1338478072df633e964e3cd78bb",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-stdout.log",
+      "sha256": "27f6d275cd323723198ad85275dbc57fdbb0aaa426b3c56eb5b25dac9c0bd47e"
+    },
+    {
+      "bytes": 16367,
+      "git_blob": "82854d1c813100829ddf81c12af4e9608f0237c8",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-structural-shadow-report.json",
+      "sha256": "ab07ee1c194295754ad2c1f99b84872a9731e4cb02d760e506cd3033ba61ce11"
+    },
+    {
+      "bytes": 2201,
+      "git_blob": "605ea49ac7e4fd26dc2e942881cd207025c1eece",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-target-loss-context.json",
+      "sha256": "bb46ee322986b49cd91a2cb841376719753114424a9a52838f3b20fa6b533709"
+    },
+    {
+      "bytes": 2419,
+      "git_blob": "bfa6b61c80635fab166a2fb93dc9670a61dafcd5",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-target-readbacks.json",
+      "sha256": "71f3f7c1b0cf9cc7baa0c5ffe64e02b0358e119bd0e95f0c304f25546f7e97af"
+    },
+    {
+      "bytes": 560,
+      "git_blob": "0528e925f3a2eb1e5ef2929e2d0b67d5a5cc2a60",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-01-terminal-observation.json",
+      "sha256": "dd9a4bdd862c5adca2326cfbfaae1fa643dc9dde660713bd6e48c4f1f5fd5884"
+    },
+    {
+      "bytes": 4337,
+      "git_blob": "8cfd75d22813ce2cdb74b99ff41c6e3924353023",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-durability-projection.json",
+      "sha256": "7250d4ad81263a47cc5d6be22da175ff2e5a1e19006fa7614eebe0aa5b354e59"
+    },
+    {
+      "bytes": 494,
+      "git_blob": "023d709487324d080bb86490c0df9dd0120c8ec5",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-execution.json",
+      "sha256": "1abe50da5175783448725d678587a0cbf8433b1b3c2d104c4ab3d228f8ccf827"
+    },
+    {
+      "bytes": 1658,
+      "git_blob": "62cbb28a15395e2ffb0987612e7bfd79f962e54e",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-file-index.json",
+      "sha256": "51cc04a8e7c4acae748b430f030fd9c9495daef268f450a94ddb944c295039b1"
+    },
+    {
+      "bytes": 690,
+      "git_blob": "a58d245087b0249bf8339b1b1a0d43d80691c585",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-fixed-view-profile.json",
+      "sha256": "e604f9e3c3e02aa6ecde30ffbac78a1a6f79889cf3383481a9f5c25adc9562f7"
+    },
+    {
+      "bytes": 1776,
+      "git_blob": "825192ad4e0419534839ffa3cd3fb95f82eec2f6",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-independent-audit.json",
+      "sha256": "a2338ceae142c7622d719c427bd3c876fdbcb8746bced2e0f41319381a1cb949"
+    },
+    {
+      "bytes": 16440,
+      "git_blob": "1942b244f9e21a41eb388419627ef6eaf91ec0c4",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-parent-shadow-report.json",
+      "sha256": "79d64269be1eaa27e15cfa902adac5e0d8ea69f76b4bf9e469d34f3869d41142"
+    },
+    {
+      "bytes": 16620,
+      "git_blob": "607971221eb95f930b72cd6ce237845209fd4bee",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-probe-receipt.json",
+      "sha256": "fdc5eb3c338f2c5de47928e504b5ae86acccee829d649ea4e03cb280af1dfc09"
+    },
+    {
+      "bytes": 656,
+      "git_blob": "5f9b8b5c110d93aa7fa5a2f47f230b980314e696",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-result.json",
+      "sha256": "568e57a7fd9afcb9b176175bd5a4ea197e73af832765588ed0f91c1eba507914"
+    },
+    {
+      "bytes": 9050,
+      "git_blob": "5386e55582335a7241682ac17a73672e20549872",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-retained-head-inputs.json",
+      "sha256": "3ed669866f03b34098877f6e5e94ea5b8ec3766510bb2e4d6638058a27d608b5"
+    },
+    {
+      "bytes": 520,
+      "git_blob": "0bfe659822275914b9351014eb94d5f97b0e75c0",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-row-targets.json",
+      "sha256": "944bffc78930d8710223504a0b5d5e7b04291bf9b52608911832ea5b20055965"
+    },
+    {
+      "bytes": 17460,
+      "git_blob": "b9497a0090266a3d3f737b4f9e0b42cb843a2b42",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-sample-06.json",
+      "sha256": "6ba4fa923f60574b10e994b9cf117ffc02b71888f3366607fc7dad6422522e62"
+    },
+    {
+      "bytes": 14730,
+      "git_blob": "16c4bd010b9e7ab2e4a4d5571496ddbc28332000",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-sample-07.json",
+      "sha256": "01350020d8a601bfbdc9326a6324e7f524a39da4bfa6c775b63c405332e8cf37"
+    },
+    {
+      "bytes": 0,
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 877,
+      "git_blob": "5685c9d22e08637702beadd5218cfd786d7b24b4",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-stdout.log",
+      "sha256": "2822f6a9e3d69161899ec4906b85e8debe5aceb81ccf3e933d57c18532743663"
+    },
+    {
+      "bytes": 16367,
+      "git_blob": "e0dc0db16ff0c9233ed60d51231ccb01e54afef7",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-structural-shadow-report.json",
+      "sha256": "e86931721619146a5558e24e5eb21900b549be45d570d706492e46a85a8195bb"
+    },
+    {
+      "bytes": 2201,
+      "git_blob": "605ea49ac7e4fd26dc2e942881cd207025c1eece",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-target-loss-context.json",
+      "sha256": "bb46ee322986b49cd91a2cb841376719753114424a9a52838f3b20fa6b533709"
+    },
+    {
+      "bytes": 2422,
+      "git_blob": "9ecb105c7974d15549d5723a5c2b617ec7271a36",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-target-readbacks.json",
+      "sha256": "2408dd829fd3ddf928d2802903e337a811b5746ddfd5d33783abbef197f72811"
+    },
+    {
+      "bytes": 560,
+      "git_blob": "9c4ef50528dbf9121b6e07389976a030a60b4a42",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/attemptb-02-terminal-observation.json",
+      "sha256": "68c7be4d1e893669e001b5ecec50fc5d8a07a1b3db1e3598c960c510f98aa1af"
+    },
+    {
+      "bytes": 16195,
+      "git_blob": "80aaab0ef3311bff23340194d713b91bf694809f",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/final-documentation-review.json",
+      "sha256": "40c88b2848d63e1f9aed4005a9316a9b59b7243d678a5e93818ce7b205494bd2"
+    },
+    {
+      "bytes": 9518,
+      "git_blob": "bf672f4b68f1f781baf2c972a757face6bfcc055",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/implementation-review.json",
+      "sha256": "a1129cd98b4d81436333dd1028bef3475f6c89c679aebd7225dbd4b96c759885"
+    },
+    {
+      "bytes": 1099,
+      "git_blob": "0f6313c66eb80396e368507bc399ee21921b0938",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/launcher-cli-preflight.json",
+      "sha256": "a6193030a475437068a12628d9a9f2d6fe5a3491288ccb713bcfc927c4b13cd3"
+    },
+    {
+      "bytes": 1903,
+      "git_blob": "bd65d42778f13f762d1219e352f65f495adc8699",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/launcher-missing-attempt.stderr.log",
+      "sha256": "b7a8f8943b79bde2203047f48652d7972588ac9679ab28276938a94bef9e90c5"
+    },
+    {
+      "bytes": 1815,
+      "git_blob": "69897262f8185a11cdfffafe594bcf08a292c0c2",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/merged-cohort-preflight.json",
+      "sha256": "d302e5279b3a600319698eb73bd7ee31ab836724495060610e9dc16a16839012"
+    },
+    {
+      "bytes": 21363,
+      "git_blob": "7fd7cc479630fb179368fdcdef95439e0ec055d0",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/merged-retained-probe-independent-audit.json",
+      "sha256": "8c237c69e006791a23fafe6340f52d659088c21127df61601156c1941b92b7dc"
+    },
+    {
+      "bytes": 7800,
+      "git_blob": "4cb99eb31e30e606d2ebbd3d981c86d4e9f864bd",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/merged-tests-independent-audit.json",
+      "sha256": "6d8debd6bf50970c3db8febf71a95fd2b8d9bb9930f84924ce5109f964f9b3db"
+    },
+    {
+      "bytes": 8370,
+      "git_blob": "2a5ac981c20d122aefb54d7b793a2add670790c3",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/parallel-observer-reconciliation.json",
+      "sha256": "493d0134853234d2c5ba1e1944d76044d6cb425cce99bc6a252cacc83ca602f8"
+    },
+    {
+      "bytes": 4387,
+      "git_blob": "3cc8c78837d36c6cfb6768a82f79f2c422d5b5f3",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/phase-closeout.json",
+      "sha256": "871b57e9f092f0ce670594d51313dd66c7b882f5194c284ecd95ec8888f7f224"
+    },
+    {
+      "bytes": 14396,
+      "git_blob": "72d6c0f6b763830683bf999cd4c51ad61b52f84c",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/published-head-observation.json",
+      "sha256": "bd3599791fd6b9238c02226630639b3b499c723b348cf4e9535af4c5ccbe73db"
+    },
+    {
+      "bytes": 11198,
+      "git_blob": "50695d4df54eea6a02824c4f38b46a92873cc938",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/published-observer-integration-review.json",
+      "sha256": "7776ec438bd9f143af2c9dacd50a6859c25f6b466bca9f8c52f342f1e173369b"
+    },
+    {
+      "bytes": 9050,
+      "git_blob": "5386e55582335a7241682ac17a73672e20549872",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/retained-head-inputs.json",
+      "sha256": "3ed669866f03b34098877f6e5e94ea5b8ec3766510bb2e4d6638058a27d608b5"
+    },
+    {
+      "bytes": 19617,
+      "git_blob": "fb4b08678c37b573b0cc8a873e37855b5f8bb911",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/retained-probe-independent-audit.json",
+      "sha256": "d517d862877bb020efc329e891a0ed0289e3e86f1fd55682f720be6a2d6a91da"
+    },
+    {
+      "bytes": 5459,
+      "git_blob": "63fdcbcc9d0ad150b0dcf89809cf2384e31639a1",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/static-probe-review.json",
+      "sha256": "46f4ef126c91ae920b204c741ebc593dba1b17d6f1057fe47b89544bde9760aa"
+    },
+    {
+      "bytes": 11090,
+      "git_blob": "32e89abde94958737970ead7b6387ca02b852b35",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/test-selection-review.json",
+      "sha256": "0a815bb652f0c18b8c03634361b5e6fc458a83ce7e130b1745519dabbb06f024"
+    },
+    {
+      "bytes": 8419,
+      "git_blob": "c5aa6136330a505b1b9b0ebba30257ddc138f68d",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/tests-independent-audit.json",
+      "sha256": "68821e1381a4113dc825555d53459a95b55a2e1c6a8e945251fd539a1400754b"
+    },
+    {
+      "bytes": 25372,
+      "git_blob": "4c07530f3a098e9c1f7eab48f312d5715008c4d1",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/upstream-publication-reconciliation.json",
+      "sha256": "ae02ca0a8afc3bf09f1ce6e63df4378c7da2b677bc2398c477a48fc63d5be221"
+    },
+    {
+      "bytes": 34082,
+      "git_blob": "a8cc06df66207caa44ee36b7a51fd600da70cb67",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/validation-request-a-01.json",
+      "sha256": "cc03ebcfaff655647572c44ad70b8182b3156f92c94856a5448da6c4d8f6db1c"
+    },
+    {
+      "bytes": 34753,
+      "git_blob": "19e9170607780bfc0be8903153df60ac49a61f8d",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/validation-request-a-02.json",
+      "sha256": "58d343001a3098f59c6aaafd9e37260ee52edf566c2a17fd32ee5046cd66b0c0"
+    },
+    {
+      "bytes": 37683,
+      "git_blob": "b73a293765c3468ea6747f4b8649d27936ace7f8",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/validation-request-b-01.json",
+      "sha256": "e2c6c97fdf2d4d406e0020c07b253dc8523d7e10fecb48dd1cfe2d343431d7b6"
+    },
+    {
+      "bytes": 38164,
+      "git_blob": "6b2b84cfca9b84cb7039b16f7ff347e8d5e4b7d5",
+      "path": "docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/validation-request-b-02.json",
+      "sha256": "54f158e0338d2904d25c261c33249cb2c769a1086abf0567c1f73cb3397f14e7"
+    },
+    {
+      "bytes": 12136,
+      "git_blob": "bb9a8cab0845617f9f766131ed818916d43d5f0d",
+      "path": "docs/autoencoders/legal_ir_fixed_view_vocabulary_20261015.md",
+      "sha256": "9f66c93040afc911b9dcdb449492fbed1370a987dca37bdcfc9e91c500d16343"
+    },
+    {
+      "bytes": 72208,
+      "git_blob": "aea9b38e957db8e76e5100ffd3b508fdcc20c493",
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "08e3e2b0e7df25d1e917efec8121fd04fcc5ab7a99eb710c1f793e2c4bc99ce0"
+    },
+    {
+      "bytes": 27402,
+      "git_blob": "227083a0a5fbee3a996e8f42b47d6ba02eb49f45",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_view_vocabulary_diagnostic.py",
+      "sha256": "71de47401a54d9374691ebd5fe5e50db38a4d741883e12ec1c7fbe4734292104"
+    },
+    {
+      "bytes": 32621,
+      "git_blob": "661a75c32b593ecac65b77ce0fdceac502850b64",
+      "path": "scripts/ops/legal_ir/probe_retained_fixed_view_vocabulary.py",
+      "sha256": "9d0f9f8378c117627625b54845f4eea76c5e0bd6c18c01d308f3769428de7a06"
+    },
+    {
+      "bytes": 24209,
+      "git_blob": "683a37938e0a95822f14e90c0f7d49d2dc8ce22d",
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_vocabulary_diagnostic.py",
+      "sha256": "8b344f6feb6cde3c90598ab4585a7d9e8d8d83a721573d74ce27eb67031947b4"
+    }
+  ],
+  "method": "Exact staged Git body and ordinary filesystem equality; complete curated phase directory plus introduced source/test/driver/docs. Finite current native cohorts rehashed. Imported parallel source/test bodies unchanged from upstream.",
+  "new_model_weights": false,
+  "new_training": false,
+  "schema": "legal-ir-fixed-view-publication-manifest/v1",
+  "semantic_or_proof_admission": false,
+  "source_cohort_is_complete_dynamic_import_closure": false,
+  "source_merge_head": "a0a71389dcce011d798bec344adf4880b7128a7f",
+  "total_bytes": 810664,
+  "unchanged_upstream_bodies": [
+    {
+      "bytes": 1428524,
+      "git_blob": "180e18423529e15eccb382bc9a466c211a366122",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "sha256": "4b44bb723709be5b4606d497935b245723231df8ec19b24f1bd329fd8932ad24"
+    },
+    {
+      "bytes": 8430,
+      "git_blob": "c03881a6c0b9d7e3d6a7f204c1811693d0898997",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_view_diagnostic.py",
+      "sha256": "1937169c7d49409b89b00c2b2c9d1d9e955ab3f37f15122931b79be9bb0c36ba"
+    },
+    {
+      "bytes": 10687,
+      "git_blob": "e96b88eb482fc4c9ac842239474b51e873d944a3",
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_view_diagnostic.py",
+      "sha256": "fea8840b7c020444bf667f8fdeae14a7cba5b0edb4317c4882b2a4e130f08f68"
+    },
+    {
+      "bytes": 4089,
+      "git_blob": "ab91cd1d5c828ce1c4ffae26e62e323d754d0104",
+      "path": "docs/autoencoders/fixed_view_vocabulary_diagnostics.md",
+      "sha256": "dd2bac1e73290b44137925dc75bedbbe66425b9b2a358d21e5a1ceb0fae31b80"
+    },
+    {
+      "bytes": 5951,
+      "git_blob": "602d3b6d12f40bce3629178060f4a3e77413e9e6",
+      "path": "docs/autoencoders/legal_ir_fixed_view_probe_20261015.md",
+      "sha256": "7287333debcba5625f6d14d572e8be1811a97209909b2a0250705ce419131c29"
+    },
+    {
+      "bytes": 43244,
+      "git_blob": "d5b28d4cb59171886cea89776a12eb25b27bd7df",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py",
+      "sha256": "9762f1efe9354a19299307f46ba72c2e14e953295e1a2f0ed965816f109b6b6a"
+    },
+    {
+      "bytes": 38815,
+      "git_blob": "4bed049d18ee75ca45159c05daf87f74ae55f493",
+      "path": "tests/unit/logic/autoformal/test_legal_primary_graph_export.py",
+      "sha256": "7b1aa14eccb77baa480529cc50bc100d64fec7e276349bf1df31e2370a9c27e6"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/barberb/.local/bin/python
+cachedir: /home/barberb/lift_coding/artifacts/legal-ir-graph-citations-20261015/baseline-v01/private/pytest-cache
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-graph-endpoints-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/unit/logic/test_kg_graph_citation_identity.py::test_current_wrapped_graph_parquet_preserves_exact_citation_identity FAILED [100%]
+
+=================================== FAILURES ===================================
+_____ test_current_wrapped_graph_parquet_preserves_exact_citation_identity _____
+tests/unit/logic/test_kg_graph_citation_identity.py:59: in test_current_wrapped_graph_parquet_preserves_exact_citation_identity
+    assert result == [{"source_legal_id": nodes[0]["legal_id"],
+E   AssertionError: assert [{'source_leg...olved': True}] == [{'source_leg...lved': False}]
+E     
+E     At index 0 diff: {'source_legal_id': '', 'target_legal_id': '', 'unresolved': True} != {'source_legal_id': 'usc:us:t5:s552', 'target_legal_id': 'usc:us:t35:s101', 'unresolved': False}
+E     
+E     Full diff:
+E       [
+E           {
+E     -         'source_legal_id': 'usc:us:t5:s552',...
+E     
+E     ...Full output truncated (11 lines hidden), use '-vv' to show
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-ir-graph-citations-20261015/baseline-v01/junit.xml -
+================================== Cache Info ==================================
+Commit hash: 6deae26e
+Note: Uncommitted changes present
+=========================== short test summary info ============================
+FAILED tests/unit/logic/test_kg_graph_citation_identity.py::test_current_wrapped_graph_parquet_preserves_exact_citation_identity
+============================== 1 failed in 0.58s ===============================

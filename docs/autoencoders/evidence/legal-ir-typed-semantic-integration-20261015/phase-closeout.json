@@ -1,0 +1,107 @@
+{
+  "accepted_governing_edges": 0,
+  "accepted_meanings": 0,
+  "actual_Lean_or_solver_processes": 0,
+  "adopted_production_bodies_changed": false,
+  "adopted_source_head": "1cbc313236a546fbbacae38635c88fa8072b6087",
+  "all_historical_reports_unchanged": true,
+  "all_original_inputs_unchanged": true,
+  "already_present_identical_files": 8,
+  "authority": {
+    "Lean_admitted": false,
+    "complete_norm_formalized": false,
+    "evaluation_gold_qualified": false,
+    "execution_authority": false,
+    "governing_use_verified": false,
+    "graph_admitted": false,
+    "model_promoted": false,
+    "proof_authority": false,
+    "review_performed": false,
+    "source_meaning_selected": false,
+    "source_meaning_verified": false,
+    "teacher_promoted": false,
+    "training_gold_qualified": false
+  },
+  "canonical_foreign_dirty_checkout_modified": false,
+  "context_inventory_exhaustive": false,
+  "controls": 65,
+  "counts_are_separate": true,
+  "evaluation_gold_mask": 0,
+  "human_reviews": 0,
+  "independent_holdout": false,
+  "native_attempts": [
+    {
+      "attempt": "a-01",
+      "completed": true,
+      "final_bytes": 1190825,
+      "final_files": 14,
+      "native_elapsed_seconds": 70.94225736591034,
+      "pytest": {
+        "cases": 412,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "suite_seconds": [
+          11.741
+        ],
+        "unique_class_aware": true
+      },
+      "request_sha256": "20eaf018f77cac2c69bf05172ca3417f286ae78fa8cae22936633b8859fad0d4",
+      "returncode": 0,
+      "sealed_files": 13,
+      "selected_storage_status": "released",
+      "source_pins_rehashed": 200
+    },
+    {
+      "attempt": "b-01",
+      "completed": true,
+      "final_bytes": 1896204,
+      "final_files": 47,
+      "native_elapsed_seconds": 49.52158011589199,
+      "request_sha256": "8e84774d8b456188e94ec1deb5117cf448e770eede652d037daf13215bc3a948",
+      "returncode": 0,
+      "sealed_files": 46,
+      "selected_storage_status": "released",
+      "source_pins_rehashed": 232
+    }
+  ],
+  "new_adopted_files": 10,
+  "new_current_root_reports": 7,
+  "new_process_consumer_replay": false,
+  "no_new_model_registration_or_hub_upload": true,
+  "no_new_training_or_embeddings_or_checkpoints": true,
+  "observed_at_utc": "2026-10-16T00:14:41.455372+00:00",
+  "organizer_exposed_to_hypotheses": true,
+  "original_inputs": 30,
+  "original_owner_tip": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+  "predicate_argument_entries": 12,
+  "producer_generation_changes_are_explicit": true,
+  "pytest_cases": 412,
+  "python_native_parser_and_generated_Lean_text_exercised": true,
+  "same_process_saved_byte_validation": true,
+  "schema": "legal-ir-typed-semantic-phase-closeout/v1",
+  "selected_paragraph_open_context_slots": 12,
+  "selected_paragraph_unresolved_source_issues": 12,
+  "selected_physical_paragraphs": 2,
+  "source_cohort_is_complete_dynamic_import_closure": false,
+  "source_only_pending_cases": 1,
+  "source_populations": {
+    "7213": {
+      "candidate_statute_paragraphs": 1,
+      "retained_controls": 25,
+      "source_units": 26
+    },
+    "7214": {
+      "candidate_statute_paragraphs": 1,
+      "retained_controls": 40,
+      "source_units": 41
+    }
+  },
+  "source_units": 67,
+  "standalone_named_checks": 19,
+  "standalone_required_refusals": 8,
+  "training_mask": 0,
+  "typed_hypotheses": 2,
+  "typed_provenance_row_entries": 38,
+  "upstream_base": "183035bb3db1a47db09771f2dfb21c183c91f24e"
+}

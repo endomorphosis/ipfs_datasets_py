@@ -1,0 +1,55 @@
+{
+  "corpus_payloads_opened": 0,
+  "data_or_model_uploads": 0,
+  "historical_qualification_scope_preserved": true,
+  "human_reviews": 0,
+  "independent_review_backups_identical": true,
+  "independent_reviews": [
+    {
+      "bytes": 4424,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/source-plan-independent-review.json",
+      "sha256": "ba18a543dbf6cb2cd2126cbf57f46be8e6860a2a3ece313469467465a56a1c2c"
+    },
+    {
+      "bytes": 7557,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/training-plan-independent-review.json",
+      "sha256": "44984c2a5f01225c32c3312575d1d83f7a9f07c651ba26c310f6ff760f02dfc2"
+    },
+    {
+      "bytes": 5310,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/graph-lean-plan-independent-review.json",
+      "sha256": "1b3d3d440304dbf2efcb543d5f2bb2253cb4280b92e7e0ce854f39f6f150d32a"
+    }
+  ],
+  "inference_runs": 0,
+  "lean_builds": 0,
+  "local_document_links_checked": 94,
+  "missing_local_document_links": [],
+  "models_or_vectors_downloaded": 0,
+  "native_jobs": 0,
+  "new_product_tests_run": 0,
+  "observed_at_utc": "2026-10-16T17:28:52.529709+00:00",
+  "optimizer_steps": 0,
+  "repository_baseline": "ff8a01fd04c741f892572e7f28cba777d4dfd472",
+  "reviewed_documents": [
+    {
+      "bytes": 105419,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "de459e4b7243f0a37efe216c76da9bb5ec8863edcaad46dacff47aa98b5edbb8"
+    },
+    {
+      "bytes": 58521,
+      "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "sha256": "d5e0ca717f66b6d32ccd3847f6148752bfcb4bf0ce8d26ddfbadaa40fbc17fb4"
+    },
+    {
+      "bytes": 3489,
+      "path": "docs/autoencoders/evidence/legal-uscode-source-corpus-plan-20261016/README.md",
+      "sha256": "0a32aa0b1b2269a76a1df9ff5df5b7fe269fac975cd8342fe5b55241ae89359b"
+    }
+  ],
+  "schema": "legal-uscode-source-plan-documentation-verification/v1",
+  "scope": "Static documentation, JSON, source-metadata recount, review-copy and link verification only.",
+  "semantic_or_proof_authority_added": false,
+  "tracked_changes_documentation_only": true
+}

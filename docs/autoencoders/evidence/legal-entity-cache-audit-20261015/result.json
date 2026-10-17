@@ -1,0 +1,16 @@
+{
+  "completed": true,
+  "evidence_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/logs/stdout.log",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-entity-cache-audit-20261015-01/logs/execution.json"
+  ],
+  "executed_checks": [
+    "verified_entity_cache_acquisition",
+    "pinned_footer_population",
+    "complete_entity_index_census",
+    "entity_input_refusal_controls"
+  ],
+  "request_sha256": "604552941cc7a858f1c9c251ec7251552257d153ad775514d4ddbe4260c3d02b",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

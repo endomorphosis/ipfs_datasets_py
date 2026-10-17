@@ -1,0 +1,234 @@
+{
+  "checked_facts": {
+    "alternative_typed_hypotheses_sharing_7213_paragraph": 2,
+    "new_current_root_report_count": 7,
+    "original_input_bytes": 1298913,
+    "original_input_count": 30,
+    "predicate_argument_entries": 12,
+    "retained_controls": 65,
+    "selected_paragraph_open_context_slots": 12,
+    "selected_paragraph_unresolved_source_issues": 12,
+    "selected_physical_paragraphs": 2,
+    "selected_source_populations": {
+      "7213": {
+        "candidate_statute_paragraphs": 1,
+        "retained_controls": 25,
+        "source_units": 26
+      },
+      "7214": {
+        "candidate_statute_paragraphs": 1,
+        "retained_controls": 40,
+        "source_units": 41
+      }
+    },
+    "source_only_pending_7214_cases": 1,
+    "source_units": 67,
+    "standalone_export_bytes": 1885766,
+    "standalone_exports": 42,
+    "standalone_final_bytes": 1896204,
+    "standalone_final_files": 47,
+    "standalone_named_checks": 19,
+    "standalone_native_seconds": 49.52158011589199,
+    "standalone_public_operations": 33,
+    "standalone_refusals": 8,
+    "standalone_sealed_files": 46,
+    "standalone_source_pins": 232,
+    "typed_provenance_entries": 38,
+    "unit_cases": 412,
+    "unit_errors": 0,
+    "unit_failures": 0,
+    "unit_final_bytes": 1190825,
+    "unit_final_files": 14,
+    "unit_junit_seconds": 11.741,
+    "unit_module_counts": {
+      "tests.unit.logic.autoformal.test_legal_relational_norm_v1": 70,
+      "tests.unit.logic.autoformal.test_legal_source_norm_scope_v1": 50,
+      "tests.unit.logic.autoformal.test_legal_source_sampling": 29,
+      "tests.unit.logic.autoformal.test_legal_source_typed_norm_join_v1": 98,
+      "tests.unit.logic.autoformal.test_legal_statutory_context_v2": 23,
+      "tests.unit.logic.legal_ir.test_canonical_statement_scope": 97,
+      "tests.unit.logic.legal_ir.test_canonical_statement_scope_bridge": 18,
+      "tests.unit.logic.syntax_core.test_ast": 27
+    },
+    "unit_native_seconds": 70.94225736591034,
+    "unit_skipped": 0,
+    "unit_source_pins": 200,
+    "unit_whole_modules": 8
+  },
+  "current_new_document_links": [
+    {
+      "document": "docs/autoencoders/legal_typed_semantic_integration_20261016.md",
+      "label": "LegalIR corpus plan",
+      "resolves_in_current_checkout": true,
+      "target": "legal_ir_uscode_corpus_improvement_plan_20261015.md"
+    },
+    {
+      "document": "docs/autoencoders/legal_typed_semantic_integration_20261016.md",
+      "label": "scope owner",
+      "resolves_in_current_checkout": true,
+      "target": "legal_source_norm_scope_v1.md"
+    },
+    {
+      "document": "docs/autoencoders/legal_typed_semantic_integration_20261016.md",
+      "label": "relational owner",
+      "resolves_in_current_checkout": true,
+      "target": "legal_relational_norm_v1.md"
+    },
+    {
+      "document": "docs/autoencoders/legal_typed_semantic_integration_20261016.md",
+      "label": "join owner",
+      "resolves_in_current_checkout": true,
+      "target": "legal_source_typed_norm_join_v1.md"
+    },
+    {
+      "document": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/README.md",
+      "label": "integration guide",
+      "resolves_in_current_checkout": true,
+      "target": "../../legal_typed_semantic_integration_20261016.md"
+    },
+    {
+      "document": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/README.md",
+      "label": "corpus plan",
+      "resolves_in_current_checkout": true,
+      "target": "../../legal_ir_uscode_corpus_improvement_plan_20261015.md"
+    }
+  ],
+  "document_bytes_stable_during_review": true,
+  "documents": [
+    {
+      "bytes": 8254,
+      "path": "docs/autoencoders/legal_typed_semantic_integration_20261016.md",
+      "sha256": "18a01e090c1cc3f3f38068bfbb1783c6a96bda72aefac6f4fd13bd1c5a7a89f5"
+    },
+    {
+      "bytes": 76112,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "adce3520471250d3afff09533314131b18ecadb5207b810dc41daef1fa792253"
+    },
+    {
+      "bytes": 16747,
+      "path": "docs/autoencoders/README.md",
+      "sha256": "093646c36a3f192cdf0e13e7e7a84d1f4d7eda0c81b4ca82b9dc91c123b2ff3d"
+    },
+    {
+      "bytes": 3603,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/README.md",
+      "sha256": "dd979632c6d375d70e4f2667a5f82d4659fa7a1391a606898b9b396651912eec"
+    },
+    {
+      "bytes": 3460,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/phase-closeout.json",
+      "sha256": "29d3aae2495e0bc365f97c89321850ca0768e2ff913ef2b73e2a44b8b3f59943"
+    }
+  ],
+  "evidence_bindings": [
+    {
+      "bytes": 30521,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/adoption-provenance.json",
+      "sha256": "d4f1dd890965f523e4940ef9e3133f03cef261a88aa76cfe424dbd85a28f830b"
+    },
+    {
+      "bytes": 8882,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/retained-typed-join-inputs.json",
+      "sha256": "f65694fd8e2c63e77fa24d2c36e08977e5f5156b62d06f464c539a8661ee125c"
+    },
+    {
+      "bytes": 11226,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/retained-inputs-provenance.json",
+      "sha256": "261e2a40097627ace4db40a71b6cd422c91d6f2c78171764b930c2b669ae05ad"
+    },
+    {
+      "bytes": 46267,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/validation-request-a-01.json",
+      "sha256": "20eaf018f77cac2c69bf05172ca3417f286ae78fa8cae22936633b8859fad0d4"
+    },
+    {
+      "bytes": 967,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attempta-01-execution.json",
+      "sha256": "7bd6d7295e369be05849b8298724d3a1cff0a60e3ac3d94a4061bd07dac438ff"
+    },
+    {
+      "bytes": 1139,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attempta-01-result.json",
+      "sha256": "cb4251217e76e8449267d321a00c63715f2225d0b39531c3a9fe9a29590efbe4"
+    },
+    {
+      "bytes": 599087,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attempta-01-junit.xml",
+      "sha256": "b0e294b5e2b23e79298b3a9496c3119576fa00312179d972b114c57f99d51b45"
+    },
+    {
+      "bytes": 8683,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/tests-independent-audit.json",
+      "sha256": "bf1e213e088f66a36304aa55c034f4dc8a9354c6860f988acd98deddb0054ca3"
+    },
+    {
+      "bytes": 51481,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/validation-request-b-01.json",
+      "sha256": "8e84774d8b456188e94ec1deb5117cf448e770eede652d037daf13215bc3a948"
+    },
+    {
+      "bytes": 485,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-execution.json",
+      "sha256": "95fb73fd9e0daf05f6d39f9dd59d7881fe65d384b6bb0963ec11a9c5bf82b194"
+    },
+    {
+      "bytes": 657,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-result.json",
+      "sha256": "a6a0c612bf3edd3b0c7e1afbec182f3720cb9d1ab3a57570e1b9a853ebf34f0f"
+    },
+    {
+      "bytes": 1787,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-independent-audit.json",
+      "sha256": "f0fd18b0290b4053502bde70c8e3a9e0b985ef98897f144fcf39e4da1e2a6918"
+    },
+    {
+      "bytes": 28787,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-probe-receipt.json",
+      "sha256": "e3e4d2387a2ca6566c14ad2e5ae89bf85824f9d48c6325d959405bd65b9f1ae6"
+    },
+    {
+      "bytes": 7043,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-file-index.json",
+      "sha256": "b7e89f6385e09eb3542e71648ed2119f9b91de246a22b3e2e6e76aa3d7377370"
+    },
+    {
+      "bytes": 4971,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-producer-generation-comparison.json",
+      "sha256": "290a7bf1b2003bd82f737d0d036013271576a456a4a8138d5555ce15e2608dd3"
+    },
+    {
+      "bytes": 1462,
+      "path": "docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/attemptb-01-refusal-controls.json",
+      "sha256": "db51666b59ba00111ebcc4d608f31fe04d082c4236f0c22145258919aadc0a7d"
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "Historical evidence outside this phase remains under its named original scope and was not independently requalified by this documentation review.",
+    "The native B deep audit was still being finalized at review opening; this review binds its actual stopped producer receipt and existing native audit directly rather than claiming that unfinished audit already existed.",
+    "The unchanged imported author guides retain historical artifact links and are not represented as a portable self-contained corpus distribution.",
+    "Mechanical transport, syntax and source geometry do not establish legal meaning, reviewed supervision, per-occurrence governing resolution or statutory training eligibility."
+  ],
+  "method": "Read-only review of frozen documentation and exact raw/native/published outcome bindings. Standard-library JUnit/JSON recount only; no product imports, behavioral execution, source edits or attempt writes.",
+  "observed_at_utc": "2026-10-16T00:18:45.140712+00:00",
+  "schema": "legal-ir-typed-semantic-final-documentation-review/v1",
+  "status": "pass",
+  "wording_checks": {
+    "author_overlapping_qualifications_not_added": true,
+    "bounded_native_parser_and_Lean_text_scope_explicit": true,
+    "comparison_projections_not_called_originals_or_runtime_adapter": true,
+    "exact_surface_IR_graph_fixed_view_and_embedding_metrics_distinct": true,
+    "hypotheses_and_repeated_issues_not_independent_examples": true,
+    "latent_intervention_and_inference_target_separation_remain_future_design": true,
+    "no_human_review_or_statutory_meaning_or_gold_claim": true,
+    "no_model_embedding_checkpoint_training_or_Lean_build_claim": true,
+    "old_imported_local_artifact_links_disclaimed_as_historical": true,
+    "original_and_current_absolute_producer_generations_distinct": true,
+    "rich_typed_arity_binders_quantifiers_not_flattened_into_seven_facets": true,
+    "saved_byte_replay_labeled_same_process": true,
+    "separate_IR_family_schema_version_task_dimension_paths_preserved": true,
+    "twelve_context_slots_limited_to_selected_scope_packets": true,
+    "unit_and_standalone_populations_separate": true
+  }
+}

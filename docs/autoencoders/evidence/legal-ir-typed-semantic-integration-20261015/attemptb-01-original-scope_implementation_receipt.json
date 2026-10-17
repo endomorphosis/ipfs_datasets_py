@@ -1,0 +1,499 @@
+{
+  "schema": "legal-sampled-norm-scope-implementation-receipt/v1",
+  "closed_at_utc": "2026-10-15T21:26:46.559412+00:00",
+  "all_checks_passed": true,
+  "check_count": 65,
+  "checks": [
+    {
+      "name": "clean committed owned source",
+      "passed": true
+    },
+    {
+      "name": "exact branch and direct parent",
+      "passed": true
+    },
+    {
+      "name": "31396 existing mode and OID entries preserved",
+      "passed": true
+    },
+    {
+      "name": "exactly three additions and 31399 closing entries",
+      "passed": true
+    },
+    {
+      "name": "ten gitlinks preserved",
+      "passed": true
+    },
+    {
+      "name": "committed pretest bytes: ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+      "passed": true
+    },
+    {
+      "name": "committed pretest bytes: tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+      "passed": true
+    },
+    {
+      "name": "committed pretest bytes: docs/autoencoders/legal_source_norm_scope_v1.md",
+      "passed": true
+    },
+    {
+      "name": "pretest pin set exactly covers three additions",
+      "passed": true
+    },
+    {
+      "name": "canonical raw HEAD and index guards unchanged",
+      "passed": true
+    },
+    {
+      "name": "canonical resolved HEAD unchanged",
+      "passed": true
+    },
+    {
+      "name": "canonical full stage mapping unchanged",
+      "passed": true
+    },
+    {
+      "name": "prior statutory component closure exact",
+      "passed": true
+    },
+    {
+      "name": "existing norm gap specification retained byte for byte",
+      "passed": true
+    },
+    {
+      "name": "original Markdown preserved: legal-ir-span-graph-lean4-implementation-plan-2026-10-13.md",
+      "passed": true
+    },
+    {
+      "name": "original Markdown preserved: legal-ir-training-review-and-corpus-plan-2026-10-13.md",
+      "passed": true
+    },
+    {
+      "name": "original Markdown preserved: legal-ir-connected-statutory-pilot-spec-2026-10-15.md",
+      "passed": true
+    },
+    {
+      "name": "original Markdown preserved: legal-ir-definition-profile-extension-spec-2026-10-15.md",
+      "passed": true
+    },
+    {
+      "name": "backlog exactly reconstructs with only declared changes",
+      "passed": true
+    },
+    {
+      "name": "all 24 task statuses and dependency lists exact",
+      "passed": true
+    },
+    {
+      "name": "entire existing LIR-17 training task exact",
+      "passed": true
+    },
+    {
+      "name": "training audit pointer and scientific background unchanged",
+      "passed": true
+    },
+    {
+      "name": "final qualified cohort passes at exact source",
+      "passed": true
+    },
+    {
+      "name": "217 unique passing cases across five modules",
+      "passed": true
+    },
+    {
+      "name": "50 new bridge cases included",
+      "passed": true
+    },
+    {
+      "name": "initial 214 pass 3 test setup failures retained separately",
+      "passed": true
+    },
+    {
+      "name": "actual examples use committed source",
+      "passed": true
+    },
+    {
+      "name": "six frozen actual payloads for two sources",
+      "passed": true
+    },
+    {
+      "name": "all fourteen prior selected source/input pins exact",
+      "passed": true
+    },
+    {
+      "name": "7213 complete source and unresolved lexical scope retained",
+      "passed": true
+    },
+    {
+      "name": "7213 both old flat routes unavailable and original context open",
+      "passed": true
+    },
+    {
+      "name": "7213 no formal meaning lowering graph lookup or governing use",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: corpus_contracts.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: corpus_source.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: legal_context_obligations.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: legal_official_document_views.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: legal_official_source_custody.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: legal_source_norm_scope_v1.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: legal_source_sampling.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: legal_statutory_context.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: legal_statutory_context_v2.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: canonical_contracts.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: canonical_statement_scope.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: canonical_statement_scope_bridge.py",
+      "passed": true
+    },
+    {
+      "name": "7213 producer exact: cid_utils.py",
+      "passed": true
+    },
+    {
+      "name": "7214 complete source and unresolved lexical scope retained",
+      "passed": true
+    },
+    {
+      "name": "7214 both old flat routes unavailable and original context open",
+      "passed": true
+    },
+    {
+      "name": "7214 no formal meaning lowering graph lookup or governing use",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: corpus_contracts.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: corpus_source.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: legal_context_obligations.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: legal_official_document_views.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: legal_official_source_custody.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: legal_source_norm_scope_v1.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: legal_source_sampling.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: legal_statutory_context.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: legal_statutory_context_v2.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: canonical_contracts.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: canonical_statement_scope.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: canonical_statement_scope_bridge.py",
+      "passed": true
+    },
+    {
+      "name": "7214 producer exact: cid_utils.py",
+      "passed": true
+    },
+    {
+      "name": "truthful exposure and zero actual reviews admissions operations",
+      "passed": true
+    },
+    {
+      "name": "one fresh process replayed both saved reports",
+      "passed": true
+    },
+    {
+      "name": "no blocked native network or optional model runtime imports",
+      "passed": true
+    },
+    {
+      "name": "final combined independent readback passed",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "unresolved_findings": [],
+  "source": {
+    "worktree": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets",
+    "branch": "codex/legal-norm-scope-20261015-01",
+    "commit": "886e578d35a487b061fabe876c27992b850dc88f",
+    "parent": "e25c119bc668fcdaa9157ef94faca5a1f882ac1f",
+    "clean": true,
+    "existing_entries_preserved": 31396,
+    "closing_entries": 31399,
+    "unchanged_gitlinks": 10,
+    "added_paths": [
+      "docs/autoencoders/legal_source_norm_scope_v1.md",
+      "ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+      "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py"
+    ],
+    "source_pins": [
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+        "bytes": 19640,
+        "sha256": "30343ada53f17b7c39c4b1ce1fbc5bc14234396b5d28fb753e14141423d17039"
+      },
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+        "bytes": 23401,
+        "sha256": "538b70505780cdf61cc64e837e145ec4fa76140a5e28a57bdded3649831bb7b1"
+      },
+      {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/docs/autoencoders/legal_source_norm_scope_v1.md",
+        "bytes": 4789,
+        "sha256": "8db02a5f561d8e6ba75f6192bed1776ee6526636b8ebd640068734fb0ac4188b"
+      }
+    ]
+  },
+  "opening": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/opening.json",
+    "bytes": 5015,
+    "sha256": "b777b35a881d4da44664c22d0bd37d646ae03528cb1f605d66ccab3804852b01"
+  },
+  "previous_closure": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/implementation-receipt.json",
+    "bytes": 28984,
+    "sha256": "91f8236b7ec9071eeb813d3316e895c67c3271c673806c36e25bca92d9affa56"
+  },
+  "progress": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/implementation-plan-progress-v01.json",
+    "bytes": 6638,
+    "sha256": "62950064ff005f38b46d74ee1bc335f51657acf9a16fbe46978d37e88101a142"
+  },
+  "evidence": {
+    "opening": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/opening.json",
+      "bytes": 5015,
+      "sha256": "b777b35a881d4da44664c22d0bd37d646ae03528cb1f605d66ccab3804852b01"
+    },
+    "previous_closure": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/implementation-receipt.json",
+      "bytes": 28984,
+      "sha256": "91f8236b7ec9071eeb813d3316e895c67c3271c673806c36e25bca92d9affa56"
+    },
+    "gap_specification_snapshot": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/retained-norm-gap-specification.md",
+      "bytes": 12720,
+      "sha256": "e1f371a8e3391415e8d6c51017154c9873826b74237b142d80388b5715bf0baf"
+    },
+    "guide": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets/docs/autoencoders/legal_source_norm_scope_v1.md",
+      "bytes": 4789,
+      "sha256": "8db02a5f561d8e6ba75f6192bed1776ee6526636b8ebd640068734fb0ac4188b"
+    },
+    "test_qualification": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/focused-test-qualification-v01.json",
+      "bytes": 3244,
+      "sha256": "d848ba6f4857819ef6d7ffeadf297445b59695f47cc5ff41a00a8690506a8686"
+    },
+    "actual_source_examples": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/manifest.json",
+      "bytes": 10207,
+      "sha256": "481aa642384c5a9f186251907f8cb0c722e1233ee8e898615d9c19ad5b0beeb6"
+    },
+    "fresh_saved_file_replay": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/fresh-scope-replay-v01.json",
+      "bytes": 2919,
+      "sha256": "5d22fe2fb56073e9cd6407eb2df4824f615d7d29735c25c67aa032a124b13170"
+    },
+    "prior_fixed_training_freshness_carried_forward": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/training-freshness-v01.json",
+      "bytes": 32631,
+      "sha256": "1395fe75786731236cc95e0fb3280ff45c48d97ddb064fb519817f0d802eb718"
+    },
+    "README": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/README.md",
+      "bytes": 4335,
+      "sha256": "1597369d2239820f03bdd9232a429f311ea4aa846ba9cfb6f213841795ca0e5f"
+    }
+  },
+  "plan_reconstruction": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/plan-reconstruction-v01.json",
+    "bytes": 75764,
+    "sha256": "b886ae47c7c3b16ed8e661241c92a965c318ef4953a5aa827f4916f986250df0"
+  },
+  "final_plans": [
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-span-graph-lean4-implementation-plan-2026-10-13.md",
+      "bytes": 226997,
+      "sha256": "7114eb6f0bc8b9da0452bcadc28ebd7af32ea45d7fc5a8d08b2297cc391fcb66"
+    },
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-training-review-and-corpus-plan-2026-10-13.md",
+      "bytes": 197955,
+      "sha256": "de6cc8322b74679a030ecb68b577be33703e069c0f656b5799b008d251d3c13e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-connected-statutory-pilot-spec-2026-10-15.md",
+      "bytes": 72615,
+      "sha256": "f2104463889963bd5624c2a08e6d280eb3b93008824ebbacf5e5a4dedc43cc91"
+    },
+    {
+      "path": "/home/barberb/lift_coding/implementation_plan/docs/legal-ir-definition-profile-extension-spec-2026-10-15.md",
+      "bytes": 66592,
+      "sha256": "545fd2c4fe1a7bad96813f71d8781b3ea44ce41f1eb633483f8181cf66628d7e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-comprehensive-review-20261013/implementation-backlog.json",
+      "bytes": 2269316,
+      "sha256": "1cd6d223d4a4cf294bbc6583d65c6696e09c0a28237f8ae24080167a27449cff"
+    }
+  ],
+  "independent_readback": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/independent-norm-scope-readback-v01.json",
+    "bytes": 44510,
+    "sha256": "2a2049b5eafd401df128aaa4106c2ac9e81011d66cef13f1f4f0abcc43f18244"
+  },
+  "final_test_JUnit": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/focused-tests-v02.xml",
+    "bytes": 39774,
+    "sha256": "2c84798aab7c55dfa209aa08cb3cc3439ff82dedb5ea0755282685a8efb561a0"
+  },
+  "initial_failed_attempt": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/focused-failed-attempt-v01.json",
+    "bytes": 1844,
+    "sha256": "00c7d7785a6c90d98604812a13d1c3654262150e9a24010c7a5ddb1f8e9a736b"
+  },
+  "actual_scope": {
+    "sources": [
+      "10 USC 7213, 2024",
+      "10 USC 7214, 2024"
+    ],
+    "complete_paragraphs": 2,
+    "inert_scope_declarations": 2,
+    "lexical_occurrence_slots": 8,
+    "explicit_unresolved_issues": 12,
+    "fully_accounted_source_characters": [
+      193,
+      163
+    ],
+    "semantic_coverage": "partial",
+    "full_literal_accounting_is_not_complete_meaning": true,
+    "original_open_contexts_retained": true,
+    "separate_101_nominations_available_but_unapplied": true,
+    "legacy_flat_routes": "both unavailable for both examples",
+    "formal_norm_ASTs": 0,
+    "lowered_IRs": 0,
+    "accepted_lookup_or_governing_USE_edges": 0,
+    "actual_reviews_signatures_admissions": 0,
+    "training_mask": 0,
+    "evaluation_gold_mask": 0,
+    "organizer_team_proposal_exposure": true,
+    "independent_holdout_or_learned_output_claimed": false
+  },
+  "training_background": {
+    "inventory_refreshed_this_slice": false,
+    "carried_forward_cutoff_utc": "2026-10-15T20:38:47+00:00",
+    "latest_qualified_formalization_control": "F18",
+    "F18_disposition": "scientific failure/no promotion",
+    "latest_completed_saved_score_diagnostic": "F19",
+    "previously_reported_auxiliary_embedding_epochs": 1,
+    "new_training_or_scoring_operations": 0,
+    "new_qualified_control_inferred": false,
+    "F20_state_inferred": false
+  },
+  "canonical_guard": {
+    "raw_fences": [
+      {
+        "path": "/home/barberb/lift_coding/.git/HEAD",
+        "bytes": 37,
+        "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+      },
+      {
+        "path": "/home/barberb/lift_coding/.git/index",
+        "bytes": 692628,
+        "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+      },
+      {
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD",
+        "bytes": 21,
+        "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+      },
+      {
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+        "bytes": 5251025,
+        "sha256": "8bd28a44ae0a0425cfaba561c3bf8c13f25bbf7e61cbf12c05708c9563dceda8"
+      }
+    ],
+    "resolved_HEAD": "74f5d98c8ffff3c284cffddf430091b5fc4c6f8c",
+    "stage_rows": 32220,
+    "stage_mapping_sha256": "b025665e177920ec3ec22e04c7a06afcb70f80e4e40bebdde18937aab2d6d922",
+    "scope": "HEAD/index metadata only; no canonical working-body qualification",
+    "all_unchanged": true
+  },
+  "operations": {
+    "human_reviews": 0,
+    "signatures_or_keys": 0,
+    "admissions": 0,
+    "model_training_scoring": 0,
+    "native_builds_or_probes": 0,
+    "resource_scheduler_mutation": 0,
+    "source_acquisition_or_publication": 0
+  },
+  "scope": "One new stateless transport owner with two unreviewed lexical scope examples; no new norm semantics, logic AST, native lowering or training result.",
+  "next_work_in_order": [
+    "Specify the smallest relational norm fragment using existing typed syntax and family owners: explicit actor/recipient arguments, action alternatives, direction and modal scope; distinguish necessary approval from sufficient permission with authored counterexamples.",
+    "Require declared counted objects, distinctness and event/time frame before adding cardinality syntax and checked lowering. Keep purpose/anaphora and unsupported constructs unresolved.",
+    "Collect actual independent source/meaning reviews with truthful proposal exposure, resolve plural identity and title applicability, then qualify governing definition-use edges.",
+    "Validate supported statutory Lean lowering and builds, apply reviewed graph/corpus/cache release gates, and admit dependency/exposure-aware training targets before new learned experiments."
+  ],
+  "closeout_driver": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/closeout_v01.py",
+    "bytes": 12241,
+    "sha256": "72e26c964e4f90c9b7a3ea806a6008e59e6c51ef48c954f551c99d4a4de07c3d"
+  }
+}

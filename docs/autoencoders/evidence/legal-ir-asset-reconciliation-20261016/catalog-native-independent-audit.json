@@ -1,0 +1,384 @@
+{
+  "authority": {
+    "checkpoint_bytes_authenticated": false,
+    "completion_authority": false,
+    "execution_authority": false,
+    "gold_eligible": false,
+    "model_loaded": false,
+    "proof_authority": false,
+    "runtime_admitted": false,
+    "source_semantics_verified": false,
+    "teacher_qualified": false
+  },
+  "catalog_observation": {
+    "F18_exact_checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+    "F18_scope": "Exact SHA presence/absence in the complete bounded strict IR declaration catalog only; not absence of every possible generic manager row or another store/process.",
+    "F18_strict_IR_declaration_matches": [],
+    "all_IR_count_scope": "Pinned public reader reports684; export retains family totals and all521LegalIR rows rather than full non-LegalIR rows. Reviewer checks aggregate consistency without reopening store.",
+    "all_IR_rows_recounted_independently": false,
+    "catalog_authority_flags_all_false": true,
+    "checkpoint_bytes_authenticated": false,
+    "copy_byte_exact": true,
+    "legal_ir_dimension_counts_independently_recounted": {
+      "384": 101,
+      "768": 15,
+      "8": 17,
+      "None": 388
+    },
+    "legal_ir_dimension_role_counts_independently_recounted": {
+      "input_embedding": 117,
+      "latent": 16,
+      "source_tokens": 363,
+      "unbound_component": 25
+    },
+    "legal_ir_rows_independently_recounted": 521,
+    "legal_ir_unique_record_ids": 521,
+    "observed_binding_snapshot_revision": "a7b719c6f71ec3fdad03f81fe3a2c1a85747f7a9d72113d058f324b14d51d75f",
+    "observed_catalog_revision": "bafkreihx7e4vr3pneui47mzxfhv2bkcoe2r5b6aw5tz6x7squoatquocvm",
+    "off_dimension_matrix_rows": 388,
+    "off_dimension_matrix_split": {
+      "source_tokens": 363,
+      "unbound_component": 25
+    },
+    "parallel_dimension_lane_total": 133,
+    "public_copy": {
+      "bytes": 740075,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/current-legal-ir-catalog.json",
+      "sha256": "c3aef6d860c3bcedb3154af13dcdc844fb0f48e8fa4d5aa2dfdcc2a761d7b235"
+    },
+    "public_read_only_catalog_load_count": 1,
+    "raw_native_export": {
+      "bytes": 740075,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-current-catalog-20261016-a-01/exports/current-legal-ir-catalog.json",
+      "sha256": "c3aef6d860c3bcedb3154af13dcdc844fb0f48e8fa4d5aa2dfdcc2a761d7b235"
+    },
+    "reported_IR_binding_count": 684,
+    "reported_IR_projected_model_count": 684,
+    "reported_family_count_sum_checked": 684,
+    "reported_family_counts": {
+      "codebase_ir": 9,
+      "intent_ir": 46,
+      "legal_ir": 521,
+      "security_ir": 69,
+      "ui_ux_ir": 39
+    },
+    "runtime_observation_performed": false,
+    "snapshot_revisions_independently_recomputed": false,
+    "ten_selector_queries": {
+      "found": 8,
+      "record_ids": [
+        "ir-model-asset-binding/v1:10485c538f0f4a64e9ec0b6fa1c62e06af1f368446cd2c0e8e342e127e9055d9",
+        "ir-model-asset-binding/v1:c992440d87ae57cffb689aa37fe2f3b63e9ae4c251a9ad65697148e576f840e2",
+        "ir-model-asset-binding/v1:f758fb82fd2041d57af0b60a7dcf6d3cb27154315bd74a72c0c132645e5fabff",
+        "ir-model-asset-binding/v1:48c8077b2266bb1972652f7517643d664dc166429df63bf0b687df441b12e787",
+        "ir-model-asset-binding/v1:8a90a70566137b0a0eccb89bb5c922bf323eadc9637b1a4a28f0c97117bab580",
+        "ir-model-asset-binding/v1:ba797ef100d2132650683b2cd80709a563bad78fa21b2563de9aaba16326efab",
+        "ir-model-asset-binding/v1:6ad44e541dabf272b043ee6545551164aced8886fa14fe5b21d3cef28dd16c3c",
+        "ir-model-asset-binding/v1:c743be38f98deb5e5c6c6348a9a573d84111f062c820f3689a50afde6e703b16"
+      ],
+      "requested": 8,
+      "unique_exact_join_to_export_rows": true
+    },
+    "total_database_record_count_established": false
+  },
+  "durability": {
+    "all_sealed_bytes_hashes_device_inode_match": true,
+    "arbitrary_descendant_containment_claimed": false,
+    "closed_population_matches_seal_plus_own_receipt": true,
+    "durability_receipt_files": 1,
+    "inventory": [
+      {
+        "bytes": 740075,
+        "path": "exports/current-legal-ir-catalog.json",
+        "sha256": "c3aef6d860c3bcedb3154af13dcdc844fb0f48e8fa4d5aa2dfdcc2a761d7b235"
+      },
+      {
+        "bytes": 571,
+        "path": "logs/execution.json",
+        "sha256": "50a94339d70ed3573e7ccb69671a886aea0fef5c153c22d7d063641fd72e8226"
+      },
+      {
+        "bytes": 545,
+        "path": "logs/result.json",
+        "sha256": "140d862e3071992e8cd339dc5ba48722d44ce494018a2675803fb6f811470fd8"
+      },
+      {
+        "bytes": 0,
+        "path": "logs/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 0,
+        "path": "logs/stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 1193,
+        "path": "logs/validation-durability.json",
+        "sha256": "0fb8a415d553011ca0ca9ff0de15a940b7ad99d7ed474aac7838a1ab5c364809"
+      }
+    ],
+    "original_scope": "owned_files_fsynced_after_recorded_group_observed_stopped",
+    "public_projection": {
+      "bytes": 2150,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/catalog-native-durability-public.json",
+      "sha256": "3924ca965ad2c624c3e65901e67faf9a89ab312920b6d9a238e3519054424ceb"
+    },
+    "sealed_payload_files": 5,
+    "total_attempt_bytes": 742384,
+    "total_attempt_files": 6
+  },
+  "errors": [],
+  "evidence": {
+    "driver_input_request": {
+      "bytes": 6507,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/catalog-input-request.json",
+      "sha256": "19eeaab68a6349fa024791f831b45c20017df3a113f0b6edce4e231511b0754c"
+    },
+    "native_execution": {
+      "bytes": 571,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-current-catalog-20261016-a-01/logs/execution.json",
+      "sha256": "50a94339d70ed3573e7ccb69671a886aea0fef5c153c22d7d063641fd72e8226"
+    },
+    "native_request": {
+      "bytes": 7228,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/catalog-validation-request.json",
+      "sha256": "fcc0b0d26dd4848b14329f727449e0240abdac3be2eccd844727a9653abae2e0"
+    },
+    "native_result": {
+      "bytes": 545,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-current-catalog-20261016-a-01/logs/result.json",
+      "sha256": "140d862e3071992e8cd339dc5ba48722d44ce494018a2675803fb6f811470fd8"
+    },
+    "original_native_durability": {
+      "bytes": 1193,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-current-catalog-20261016-a-01/logs/validation-durability.json",
+      "sha256": "0fb8a415d553011ca0ca9ff0de15a940b7ad99d7ed474aac7838a1ab5c364809"
+    },
+    "private_launch_record": {
+      "bytes": 358,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-asset-reconciliation-20261016/catalog-launch-result.json",
+      "sha256": "608502a7f49e2fe2c03c7a6c00011dd134537b5ad5d47acb4d36b373981fe792"
+    },
+    "private_parent_capture": {
+      "bytes": 5389,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-asset-reconciliation-20261016/catalog-parent-stdout.txt",
+      "sha256": "8e3c5a2c3433e3c1658243665bf8007f91d92a60d37f11d25775c631884cea8a"
+    },
+    "private_parent_stderr": {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-asset-reconciliation-20261016/catalog-parent-stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "limits": [
+    "Strict IR declaration lookup is distinct from generic manager rows, other stores and running processes.",
+    "Read-only discovery does not construct ModelManager, register/refresh models or authenticate checkpoint bodies; stored readiness/quality remains declaration.",
+    "No encoder, inference, training, human review, legal semantics, gold targets, Lean or prover result was validated.",
+    "Three named metadata checks and no pytest population; not additional model accuracy evidence."
+  ],
+  "method": "Independent standard-library metadata/file-hash audit of completed native records, exact source/request commitments, complete small owned-attempt population, retained catalog JSON and selected released storage record/matching absent scheduler lease. No database/checkpoint payload/product module/test/native API opened or executed by reviewer.",
+  "native_outcome": {
+    "authority_flags_in_execution_all_false": true,
+    "child_returncode": 0,
+    "completed": true,
+    "cooperative_resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+    "elapsed_seconds": 39.037730163894594,
+    "executed_named_checks": [
+      "public_read_only_ir_catalog_inventory",
+      "eight_exact_detached_binding_queries",
+      "source_request_store_and_wal_closing_fences"
+    ],
+    "named_check_count": 3,
+    "parent_returncode": 0,
+    "pytest_cases_executed": 0,
+    "request_result_execution_durability_joins_exact": true,
+    "six_field_result_exact": true
+  },
+  "observed_at_utc": "2026-10-16T02:44:00.218802+00:00",
+  "reviewer_execution": {
+    "checkpoint_payload_reads": 0,
+    "database_opens": 0,
+    "http_requests": 0,
+    "inference_calls": 0,
+    "ledger_mutations": 0,
+    "native_api_invocations": 0,
+    "product_imports": 0,
+    "tests": 0,
+    "training_runs": 0
+  },
+  "schema": "legal-ir-current-catalog-native-independent-audit/v1",
+  "selected_release_observation": {
+    "artifacts_durable_asserted": true,
+    "cleanup_error": null,
+    "external_charged_bytes": 0,
+    "final_attempt_bytes": 742384,
+    "ledger_observation": {
+      "bytes": 7453460,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+      "sha256": "30632095efdcce1de26b7b556be036d4cb9b576cb2b59cc3b7b157342d54af81"
+    },
+    "matching_native_lease_absent_from_observed_scheduler_state": true,
+    "resource_lease_cancelled": true,
+    "resource_lease_released": true,
+    "scheduler_state_observation": {
+      "bytes": 93917,
+      "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+      "sha256": "f20e96c188151e39bba939351349ad523618b1c8cf46c98035d4bb1dd6e85753"
+    },
+    "scope": "Only request-selected record and linked lease assessed. Native IDs/rows/PIDs/arguments omitted. No foreign cleanup/recovery or continuous lifecycle/confinement claim.",
+    "selected_current_record_equals_terminal_capture": true,
+    "selected_record_canonical_sha256": "b2916985fe22eeaa3359e6f87bbd3369e6d173af56cd60e0338974475da84242",
+    "selected_request_and_policy_sha256_match": true,
+    "selected_roots_match_request": true,
+    "selected_status": "released",
+    "storage_limit_exceeded": false,
+    "storage_reservation_bytes": 67108864
+  },
+  "source_and_store_fences": {
+    "all_origin_rows_match_requested_source_paths_bytes_hashes": true,
+    "checked_buffer_product_origin_count": 8,
+    "current_source_hashes_all_match": true,
+    "database_file_hashed_by_driver_or_reviewer": false,
+    "database_opened_by_reviewer": false,
+    "driver_source_request_closing_fences_passed": true,
+    "driver_store_WAL_before_after_witnesses_match": true,
+    "native_frozen_source_count": 22,
+    "scope": "Named finite source cohort, not complete installed-package closure. Store/WAL witnesses are cooperative endpoints, not atomic database/filesystem or host-confinement proof.",
+    "source_rows": [
+      {
+        "bytes": 6507,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/catalog-input-request.json",
+        "sha256": "19eeaab68a6349fa024791f831b45c20017df3a113f0b6edce4e231511b0754c"
+      },
+      {
+        "bytes": 22151,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/docs/autoencoders/evidence/legal-ir-asset-reconciliation-20261016/read_current_ir_catalog.py",
+        "sha256": "7ff80387e1674c0b94416af3e1a9d59ff58dedd73620755cec342aaefe2aa278"
+      },
+      {
+        "bytes": 56829,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/ipfs_datasets_py/__init__.py",
+        "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+      },
+      {
+        "bytes": 1775,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/ipfs_datasets_py/_router_alias.py",
+        "sha256": "908ecfb1abdb38edbe8da2b3efd89eec88594d97acfd7cb54518ff7ea2b23e20"
+      },
+      {
+        "bytes": 957,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/ipfs_datasets_py/optimizers/__init__.py",
+        "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+      },
+      {
+        "bytes": 69336,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+        "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+      },
+      {
+        "bytes": 40999,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+        "sha256": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed"
+      },
+      {
+        "bytes": 13056,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+        "sha256": "2f3cbbeaac77ca71531b4f844ef522d909677f3ee78a6d6d21412299d9cddb8c"
+      },
+      {
+        "bytes": 17545,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py",
+        "sha256": "e19dbd913e30c6960d4a848bc2b2f15236944e55bc7718598e047fbdf664f18d"
+      },
+      {
+        "bytes": 15543,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+        "sha256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633"
+      },
+      {
+        "bytes": 121503,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+        "sha256": "7c889bc858ff092e18bd2e97ff5a6407973e226eae33cddc9e5eef1d21f35986"
+      },
+      {
+        "bytes": 53075,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+        "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+      },
+      {
+        "bytes": 27271,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py",
+        "sha256": "8ed63a0dd0510ed5f5eaf453491616d65f5cad681fde8adca4a528a5d0fed72b"
+      },
+      {
+        "bytes": 15958,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-asset-reconciliation-20261016/scripts/ops/legal_ir/run_owned_validation.py",
+        "sha256": "2d7a250e4c5237d24bf1b9328b059a71854d613a568de55f08c83b8e045e41b4"
+      },
+      {
+        "bytes": 40208,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/__init__.py",
+        "sha256": "5083369f823be18cd467346f6f3b955925ec65bedafe9eb28a61ca8897997c03"
+      },
+      {
+        "bytes": 1596,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/__init__.py",
+        "sha256": "ecd4d6099e267ee2b65284691a298285f44d5443da4a1142e8bb260ae530ffd0"
+      },
+      {
+        "bytes": 8918,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/identity.py",
+        "sha256": "fbaf013ad8dd3035cfe04e9bfbb841aa72f8581ed04eb6a543abcd3d579caf44"
+      },
+      {
+        "bytes": 36178,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/schema.py",
+        "sha256": "e1fa8ec5f8e9f856f626b40aa896df0bde490055978bddea0e4b8a9885b89f49"
+      },
+      {
+        "bytes": 1043,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/__init__.py",
+        "sha256": "b771d4d00b5cf8f167e9bb7aa3951e25a8d5a225b78b0e872c1a21eabf5672f4"
+      },
+      {
+        "bytes": 19952,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/ir_persistent.py",
+        "sha256": "2cfdb2ad61c9bb1f2fe1c64cf6c70ca45c932d0ec53ccdd08640600d5730beed"
+      },
+      {
+        "bytes": 3331,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/persistent.py",
+        "sha256": "be262df4374f2fdcb08e8e517b7e05570bc524e94d79bcb47201bedff12edfa8"
+      },
+      {
+        "bytes": 37159,
+        "matches_native_request": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/model_catalog/sources/static.py",
+        "sha256": "4f9b658aecc00820e2d87866445f298c248e6d9a39161b1499a884f6451281cf"
+      }
+    ]
+  },
+  "status": "pass"
+}

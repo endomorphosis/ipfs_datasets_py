@@ -1,0 +1,17 @@
+{
+  "actual_helper_main_runs": 0,
+  "actual_original_body_opens": 0,
+  "correction": "Use os.write and os.close on the exclusively opened receipt descriptor; guard and exact source/test bytes unchanged.",
+  "failed_control_receipt": {
+    "bytes": 0,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-conditions-rank-invented-controls-v02.json",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "passed": false,
+  "refusal": "Pathname-only no-open audit guard rejected os.fdopen integer-FD open after exclusively creating the receipt; empty V02 receipt retained.",
+  "schema": "conditions-rank-detached-control-harness-refusal/v1",
+  "source_controls_unchanged": true,
+  "source_kernel_unchanged": true,
+  "suite_run_returned": true,
+  "test_success_not_claimed_without_receipt": true
+}

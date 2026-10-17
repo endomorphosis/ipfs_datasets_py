@@ -1,0 +1,37 @@
+{
+  "all_213_selected_source_pins_still_match": true,
+  "existing_profile_aliasing_or_receipt_migration_performed": false,
+  "incoming_module_imported_or_executed_by_this_reconciliation": false,
+  "incoming_paths": [
+    {
+      "bytes": 18141,
+      "exact_index_and_worktree_body_preserved": true,
+      "original_mode_blob": "100644 blob 99f78f20d2abd381678bf9ee41a8576af84202c2",
+      "path": "docs/autoencoders/legal_corpus_definition_use_native_v2.md",
+      "sha256": "315446a2c82e79b7594c65aea8da05397bc3f0f9c570a6180eeee2c1d708c05b"
+    },
+    {
+      "bytes": 30842,
+      "exact_index_and_worktree_body_preserved": true,
+      "original_mode_blob": "100644 blob fb75dd464c822b05e1c84a37137209264f58d92f",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+      "sha256": "98c1ff8ff52923c9c7ea392bdf77fb5baf8c946a4e8956d19be22e4f956b5e8f"
+    },
+    {
+      "bytes": 36138,
+      "exact_index_and_worktree_body_preserved": true,
+      "original_mode_blob": "100644 blob 3481a6a30d4760d113c9f26500072f72a0e95bbf",
+      "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+      "sha256": "bda94ed19c11b4b5635d3a74090679a55cfea95ad7ad59867b76890a7f37a74b"
+    }
+  ],
+  "incoming_tests_added_to_296_count": false,
+  "merged_commit": "d5709e1c4777ad069abe61c6895e518076525afd",
+  "no_rerun_reason": "Only three new separately named module/test/guide paths were added; no selected source or package initialization changed. Their incoming qualification retains its own producer evidence and is not claimed as this run.",
+  "original_base_commit": "6a435a7b1406afe772a7db72d214c2375248b7b0",
+  "qualification_rerun_after_merge": false,
+  "qualified_implementation_commit": "fafafcf9f09bd2b5e437b65ce2975e7c51778d34",
+  "schema": "legal-ir-source-review-concurrent-main-reconciliation/v1",
+  "selected_source_intersection": [],
+  "upstream_commit": "1b63e750ac3bee68b6f94c022aa4d4132f51d8a0"
+}

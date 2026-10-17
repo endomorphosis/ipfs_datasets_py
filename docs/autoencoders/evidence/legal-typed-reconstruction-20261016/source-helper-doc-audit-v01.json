@@ -1,0 +1,236 @@
+{
+  "Lean_executed": false,
+  "authority_granted": false,
+  "blocking_findings": [],
+  "edits_performed": false,
+  "findings": [
+    {
+      "detail": "The product bounds/detaches ordinary finite reports and duplicate-free request JSON before operation imports, verifies all four independently supplied original pins, and accepts only the exact authored source-unbound relational request profile. Original reports are replayed through the existing public relational validator before diagnostic work.",
+      "status": "pass",
+      "topic": "finite preflight and independent inputs"
+    },
+    {
+      "detail": "The product rebuilds TypedExpression through its existing public owner and compares complete validated roots with the existing bounded LogicExpressionAlgebra.alpha_equivalent. It neither constructs a replacement AST nor calls semantic_identity or an inferred legal-equivalence rule.",
+      "status": "pass",
+      "topic": "no new AST or equivalence owner"
+    },
+    {
+      "detail": "Exact serialization includes all original identities/digest. Declared projection removes only named expression/node/signature IDs and the derived expression digest, and normalizes signature declarations/role-row order without reordering arguments or connective children. Alpha agreement additionally requires actual normalized signature, family/profile and ordered-role agreement.",
+      "status": "pass",
+      "topic": "three clearly distinct comparison outcomes"
+    },
+    {
+      "detail": "Shared algebra preserves ordered child recursion, quantifier kinds/binding, predicate symbols and extension family/profile/payload/features. Within the strict one-Object relational profile, alpha does not erase capture, ordered role changes, implication direction or O/P/F placement. Binder spelling remains observable in the separate declared outcome.",
+      "status": "pass",
+      "topic": "lexical binding and modal structure"
+    },
+    {
+      "detail": "Feature extraction traverses the whole existing validated expression and cross-checks authoritative mapping order/path/kind/node/binder identity. It includes explicit binder and extension rows, ordered child paths, argument index/role, lexical binding quantifier path and modal/connective ancestry. The ledger preserves the complete reference-first ordered path union and explicit missing-side nulls, without favorable subtree remapping.",
+      "status": "pass",
+      "topic": "complete feature ledger"
+    },
+    {
+      "detail": "The new owner fences its own source and fixed trusted operation/native-producer closure through bounded regular nofollow reads across replay/projection/serialization. Offered producer maps are never used as filenames; they must first match independently replayed reports and the trusted fixed closure. Full-output validation requires independent pin and exact original-bound regeneration.",
+      "status": "pass",
+      "topic": "source fences and untrusted producer filenames"
+    },
+    {
+      "detail": "Static authored tests cover identity-only changes, complete bound-variable renames, declaration order, argument/capture/quantifier/connective/modal/role differences, missing path populations, input/report substitution, unproved producer filenames, finite preflight, complete result bounds and same-process real-source public-import controls. No test execution or collected-case count is claimed by this audit.",
+      "status": "pass",
+      "topic": "authored tests match scope"
+    },
+    {
+      "detail": "The closed config selects exactly A/B typed requests from the independently pinned published30-input descriptor and original native export file-index/seal. Source/config and preexisting result/execution/durability metadata joins were inspected without reading the two requests. The helper will read and compare those exact original/export bytes only under its new native owner and guard all selected metadata/request identities before/after.",
+      "status": "pass",
+      "topic": "narrow retained helper custody"
+    },
+    {
+      "detail": "Seven named checks comprise fresh current-root public relational prepare/validate, AA/BB identity controls, AB/BA modal distinction, saved-byte public comparison validation, two required refusal controls, and selected input/source/output closing guards. It never calls the old producer main or replays source HTML/scope/join. Saved comparison validation remains in the same new consumer interpreter.",
+      "status": "pass",
+      "topic": "retained helper operation roster"
+    },
+    {
+      "detail": "The helper uses exact existing V03 checked-buffer guard, native-only outputs, offline/one-thread redirects, denied network/extra-child operations and a fresh product namespace. It checks selected originals/export copies plus metadata, not the complete old producer tree or live ledger/scheduler. Final durability/stopped group/storage and lease release remain the new native parent obligation.",
+      "status": "pass",
+      "topic": "native and old custody claims remain scoped"
+    },
+    {
+      "detail": "Guide/README/plan distinguish exact identity, declared structure and lexical alpha outcomes; all require valid paired inputs. They explicitly exclude aggregate decoder accuracy and batch missing/malformed/duplicate/abstention coverage, reviewed meaning, semantic/gold admission or actual training/Lake execution. Existing source-equivalence and review gaps remain open; prior association/typed-source work retains separate domains.",
+      "status": "pass",
+      "topic": "docs preserve evaluation boundaries"
+    },
+    {
+      "detail": "Request/report/output bounds and full mapping union limits are explicit. Product output overflow refuses, preserving the original inputs. No authority is inferred from successful replay; every flag stays false and training/evaluation-gold masks are integer zero.",
+      "status": "pass",
+      "topic": "bounded refusal instead of clipping"
+    }
+  ],
+  "legal_review_performed": false,
+  "limitations": [
+    "Actual original/export typed-request bytes and new output reports were deliberately not opened or hashed by this audit. Their runtime replay remains pending under the admitted native helper.",
+    "Preexisting native metadata described a completed producer and selected export commitments; this audit does not authenticate old live scheduler/ledger state or complete-tree immutability.",
+    "Qualification/retained-comparison execution outcomes and final native closeout must be reviewed separately; no passed-case count or actual pair result is asserted here.",
+    "Read-only Python guards are cooperative, not OS network isolation, kernel quota or arbitrary descendant containment.",
+    "Paired syntax diagnostics do not supply a legal accuracy denominator, reviewed target, source correspondence decision, model result or training eligibility."
+  ],
+  "observed_at_utc": "2026-10-16T00:48:50.913711+00:00",
+  "payload_bodies_read": false,
+  "product_contract": {
+    "abstention_coverage_evaluated": false,
+    "complete_output_bytes": 4194304,
+    "invalid_inputs_refused": true,
+    "max_feature_rows_per_side": 1024,
+    "max_union_rows": 2048,
+    "profile": "paired-valid-authored-relational-structure-diagnostics/v1",
+    "public_apis": [
+      "prepare_relational_reconstruction_comparison_v1",
+      "relational_reconstruction_comparison_sha256",
+      "validate_relational_reconstruction_comparison_v1"
+    ],
+    "report_bytes_per_side": 8388608,
+    "request_bytes_per_side": 524288,
+    "schema": "legal-relational-reconstruction-comparison/v1",
+    "valid_input_pair_only": true
+  },
+  "product_execution_performed": false,
+  "resolved_preexecution_helper_findings": [
+    {
+      "draft_helper_sha256": "49886ec3262a057738bd09358e4f79bba89d918cff2a62eca7e31cc40002d646",
+      "resolution": "Before any retained-comparison execution, root replaced unbounded guard read with bounded nofollow regular single-link read plus full before/after/path identity, and requires exact guard/self source pins and argv.",
+      "topic": "guard bootstrap and exact native source/argv closure"
+    },
+    {
+      "resolution": "Every selected original/export request and metadata observation now records and rechecks the complete existing g.identity tuple, not only device/inode.",
+      "topic": "selected input physical identity"
+    },
+    {
+      "resolution": "The final helper requires exactly six export names and rechecks every output hash, byte length and complete physical identity at closing source/output guard.",
+      "topic": "new output closing custody"
+    }
+  ],
+  "retained_helper_contract": {
+    "authored_typed_requests": 2,
+    "expected_output_byte_ceiling": 8388608,
+    "expected_output_files": 6,
+    "old_complete_tree_inventory_checked": false,
+    "old_producer_main_invoked": false,
+    "original_and_export_request_descriptors_equal_by_hash_and_size": true,
+    "pairs": [
+      "AA",
+      "BB",
+      "AB",
+      "BA"
+    ],
+    "producer_index_listed_file_count_previously_inspected": 41,
+    "producer_native_seal_file_count_previously_inspected": 46,
+    "required_refusal_controls": [
+      "wrong_independent_original_request_pin",
+      "resealed_modal_disagreement_cannot_be_promoted"
+    ],
+    "saved_comparison_revalidation_separate_process": false,
+    "selected_checks": [
+      "retained_original_request_and_native_export_custody",
+      "current_root_public_relational_replay",
+      "self_pair_identity_and_structure_controls",
+      "competing_modal_scope_hypotheses_remain_distinct",
+      "saved_comparison_public_revalidation",
+      "independent_pin_and_resealed_comparison_refusals",
+      "retained_selected_inputs_unchanged_and_final_source_guards"
+    ],
+    "selected_original_request_bytes": [
+      16684,
+      16864
+    ],
+    "source_HTML_scope_or_join_replayed": false,
+    "source_descriptor_input_count_previously_inspected": 30
+  },
+  "retained_metadata_descriptors_previously_inspected": {
+    "producer_durability": {
+      "bytes": 8265,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/logs/validation-durability.json",
+      "sha256": "411660c8f49ba35fb78ddedc90428a5ce06fc4a226a8861e8ed1c56b8e62c673"
+    },
+    "producer_execution": {
+      "bytes": 485,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/logs/execution.json",
+      "sha256": "95fb73fd9e0daf05f6d39f9dd59d7881fe65d384b6bb0963ec11a9c5bf82b194"
+    },
+    "producer_file_index": {
+      "bytes": 7043,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/exports/file-index.json",
+      "sha256": "b7e89f6385e09eb3542e71648ed2119f9b91de246a22b3e2e6e76aa3d7377370"
+    },
+    "producer_result": {
+      "bytes": 657,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/logs/result.json",
+      "sha256": "a6a0c612bf3edd3b0c7e1afbec182f3720cb9d1ab3a57570e1b9a853ebf34f0f"
+    },
+    "source_descriptor": {
+      "bytes": 8882,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/retained-typed-join-inputs.json",
+      "sha256": "f65694fd8e2c63e77fa24d2c36e08977e5f5156b62d06f464c539a8661ee125c"
+    }
+  },
+  "reviewer": "/root/sampled_primary_docs_review_n10",
+  "schema": "typed-relational-reconstruction-source-helper-documentation-audit/v1",
+  "scope": "Static product/test/helper source, AST, guide/README/plan, closed config and selected preexisting native metadata inspection only. No product/helper/test imports or execution, selected original/export typed-request payload reads, source HTML/scope/join replay, generated report reads, ledger/canonical Git access or code/documentation edits.",
+  "source_documentation_config_pins": [
+    {
+      "bytes": 29705,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_reconstruction_v1.py",
+      "sha256": "13d4279872d9cc3184d5796596b984193e49b51c7a56c4066857bce74b3e3723"
+    },
+    {
+      "bytes": 37168,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+      "sha256": "c07593c1c7a29c6cdea388072b586590f4a5b76ca4f7ee6d457663371043d84f"
+    },
+    {
+      "bytes": 17064,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/run_retained_comparison_v01.py",
+      "sha256": "aad5df78a170ebcb03379e5247ad76a54df9d0a34a569bee6b11f6453fedbca0"
+    },
+    {
+      "bytes": 3326,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/comparison-inputs-v01.json",
+      "sha256": "ea81d7b3ae2266c075f79eb01d04b671f7b3da266dd176bb97ffc5691ae8d8a3"
+    },
+    {
+      "bytes": 5932,
+      "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/product-contract-v01.md",
+      "sha256": "589eced1ae74c19100e42af57f9543f6b6da492b5978d313fa10bc50fddd2f6d"
+    },
+    {
+      "bytes": 6068,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_relational_reconstruction_v1.md",
+      "sha256": "ccecad2f0285153eb795750e0d8905d99aeb7651d84fbecaae6c36e872a47e8c"
+    },
+    {
+      "bytes": 17124,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/README.md",
+      "sha256": "a91175fc9c90bb1d0b3dcba45bd478c1094ea224488e2532dcaea036b56f03f5"
+    },
+    {
+      "bytes": 77859,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "afaa728101e58d1d9cced243993a35ee8e9793c6af70e5b12567ab70be994988"
+    },
+    {
+      "bytes": 18562,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+    },
+    {
+      "bytes": 45735,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/syntax_core/algebra.py",
+      "sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7"
+    },
+    {
+      "bytes": 28529,
+      "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py",
+      "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+    }
+  ],
+  "status": "PASS",
+  "training_performed": false
+}

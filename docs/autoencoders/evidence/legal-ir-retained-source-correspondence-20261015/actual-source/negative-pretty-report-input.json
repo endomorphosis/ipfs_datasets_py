@@ -1,0 +1,726 @@
+{
+  "applicability": {
+    "instrument_id": "usc:us:10",
+    "jurisdiction_id": "us",
+    "legal_as_of_civil_date": null,
+    "scope_id": "callerdeclaredusc:title10:personnel:2024",
+    "scope_kind": "title",
+    "source_edition": 2024,
+    "source_release_id": "govinfo-markup-v2-edition:2024"
+  },
+  "authority": {
+    "Lean_admitted": false,
+    "admitted": false,
+    "applicability_semantics_verified": false,
+    "backend_executed": false,
+    "context_closure_verified": false,
+    "cross_family_equivalence_verified": false,
+    "definition_operator_interpreted": false,
+    "formalized": false,
+    "governing_source_binding_verified": false,
+    "independently_reviewed": false,
+    "lean_compilation_verified": false,
+    "legal_currentness_verified": false,
+    "legal_roles_verified": false,
+    "proof_authority": false,
+    "publisher_authenticity_verified": false,
+    "semantic_graph_admitted": false,
+    "source_authenticity_verified": false,
+    "source_semantics_verified": false,
+    "training_gold_qualified": false,
+    "training_qualified": false
+  },
+  "context_declarations": [
+    {
+      "availability": "required_unavailable",
+      "cid_scope": "payload_without_record_cid/v1",
+      "context_references": [
+        {
+          "purpose": "complete normalized source view retained, not dependency closure",
+          "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "record_kind": "source_version"
+        }
+      ],
+      "dependency_verification": "declaration_only",
+      "missing_requirements": [
+        "definition",
+        "authority",
+        "antecedent",
+        "shared_qualifier",
+        "temporal_origin",
+        "referenced_provision"
+      ],
+      "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+      "record_cid": "baguqeeralpcglyrjsh555a64ri2zkv7mkr4zsuyx3sjbsgtzcj6mywwhr2dq",
+      "schema": "legal-corpus-context-declaration/v1",
+      "source_occurrence_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a"
+    },
+    {
+      "availability": "required_unavailable",
+      "cid_scope": "payload_without_record_cid/v1",
+      "context_references": [
+        {
+          "purpose": "complete normalized source view retained, not dependency closure",
+          "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "record_kind": "source_version"
+        }
+      ],
+      "dependency_verification": "declaration_only",
+      "missing_requirements": [
+        "definition",
+        "authority",
+        "antecedent",
+        "shared_qualifier",
+        "temporal_origin",
+        "referenced_provision"
+      ],
+      "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+      "record_cid": "baguqeera6ossge23qopa3xw54at4v53h32z3fmpbv5wtj6qr6noalwpx3csa",
+      "schema": "legal-corpus-context-declaration/v1",
+      "source_occurrence_cid": "baguqeerawou2jkht7lwqz2uu4n3oilkrjbkyey6haiczo7zaeroe2bmjxc6q"
+    },
+    {
+      "availability": "required_unavailable",
+      "cid_scope": "payload_without_record_cid/v1",
+      "context_references": [
+        {
+          "purpose": "complete V2 source retained externally, not dependency closure",
+          "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "record_kind": "source_version"
+        }
+      ],
+      "dependency_verification": "declaration_only",
+      "missing_requirements": [
+        "definition",
+        "authority",
+        "antecedent",
+        "shared_qualifier",
+        "temporal_origin",
+        "referenced_provision"
+      ],
+      "reason": "V2 definition source origin retained; all legal context attachments remain unreviewed.",
+      "record_cid": "baguqeera33xh3vtgls6jb5uxy73jggzvwz6py3mtjfqravvgxyvln7bswt3a",
+      "schema": "legal-corpus-context-declaration/v1",
+      "source_occurrence_cid": "baguqeerazqktid7i5cld5rafr6wijmgrajou4t3szrn7zmdwzdgbfrdpknza"
+    },
+    {
+      "availability": "required_unavailable",
+      "cid_scope": "payload_without_record_cid/v1",
+      "context_references": [
+        {
+          "purpose": "complete V2 source retained externally, not dependency closure",
+          "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "record_kind": "source_version"
+        }
+      ],
+      "dependency_verification": "declaration_only",
+      "missing_requirements": [
+        "definition",
+        "authority",
+        "antecedent",
+        "shared_qualifier",
+        "temporal_origin",
+        "referenced_provision"
+      ],
+      "reason": "V2 definition source origin retained; all legal context attachments remain unreviewed.",
+      "record_cid": "baguqeeradtf2uciia5cadmnedvzm6eeiluusxapkcevfztaaf3wccstl3yga",
+      "schema": "legal-corpus-context-declaration/v1",
+      "source_occurrence_cid": "baguqeeradd7wbeibfxnpqng6akwfijw5kmvv4qhqxvs3p5grn3hydbhl3kea"
+    },
+    {
+      "availability": "required_unavailable",
+      "cid_scope": "payload_without_record_cid/v1",
+      "context_references": [
+        {
+          "purpose": "complete V2 source retained externally, not dependency closure",
+          "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "record_kind": "source_version"
+        }
+      ],
+      "dependency_verification": "declaration_only",
+      "missing_requirements": [
+        "definition",
+        "authority",
+        "antecedent",
+        "shared_qualifier",
+        "temporal_origin",
+        "referenced_provision"
+      ],
+      "reason": "V2 definition source origin retained; all legal context attachments remain unreviewed.",
+      "record_cid": "baguqeerazlaq4ya2f47geqf567b7bqfyvee2hrapt5543uzieoypbsyontoq",
+      "schema": "legal-corpus-context-declaration/v1",
+      "source_occurrence_cid": "baguqeeral7mrbfoikaar24nbrewlzvyvwxgkwmbqfu4hzusih6lhyuptx6vq"
+    },
+    {
+      "availability": "required_unavailable",
+      "cid_scope": "payload_without_record_cid/v1",
+      "context_references": [
+        {
+          "purpose": "complete V2 source retained externally, not dependency closure",
+          "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "record_kind": "source_version"
+        }
+      ],
+      "dependency_verification": "declaration_only",
+      "missing_requirements": [
+        "definition",
+        "authority",
+        "antecedent",
+        "shared_qualifier",
+        "temporal_origin",
+        "referenced_provision"
+      ],
+      "reason": "V2 definition source origin retained; all legal context attachments remain unreviewed.",
+      "record_cid": "baguqeeraupqdd6ekx7s7psaqzwlyo57dnyyftrq5kas2gpv2k6e5uf7zxwqq",
+      "schema": "legal-corpus-context-declaration/v1",
+      "source_occurrence_cid": "baguqeera3w5cuiuajv36qaphwagoj5yvfyvitcbkn44vopev2j3avltxkwda"
+    }
+  ],
+  "contributor_unit_refs": [
+    {
+      "record_cid": "baguqeeran22n7il4qlsb7jktsskotwbs75eat7ebdubjwex6rrtvexedefga",
+      "schema": "legal-source-structured-sample-unit/v1",
+      "sha256": "26391def5297187ea881ce3602609ce10a39d7bbca1f13d4857c984673b9ac0b"
+    }
+  ],
+  "declaration": {
+    "applicability": {
+      "instrument_id": "usc:us:10",
+      "jurisdiction_id": "us",
+      "legal_as_of_civil_date": null,
+      "scope_id": "callerdeclaredusc:title10:personnel:2024",
+      "scope_kind": "title",
+      "source_edition": 2024,
+      "source_release_id": "govinfo-markup-v2-edition:2024"
+    },
+    "body": {
+      "op": "atom",
+      "span": {
+        "char_end": 7217,
+        "char_start": 7188,
+        "text": "a person in an enlisted grade"
+      }
+    },
+    "contributor_unit_refs": [
+      {
+        "record_cid": "baguqeeran22n7il4qlsb7jktsskotwbs75eat7ebdubjwex6rrtvexedefga",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "26391def5297187ea881ce3602609ce10a39d7bbca1f13d4857c984673b9ac0b"
+      }
+    ],
+    "declaration_id": "unreviewed-navigation-2024-title10-section101-block54-enlisted-member",
+    "definition_cue": {
+      "char_end": 7187,
+      "char_start": 7182,
+      "text": "means"
+    },
+    "head": {
+      "char_end": 7180,
+      "char_start": 7165,
+      "text": "enlisted member"
+    },
+    "interpretation_status": "unreviewed_caller_declaration",
+    "normalized_view_id": "legal-official-markup-view:sha256:6a4190668d49d48b72067e555ff274380e76d58a3501088f43137f41dabe7973",
+    "scope_span": {
+      "char_end": 6527,
+      "char_start": 6513,
+      "text": "in this title:"
+    },
+    "scope_unit_ref": {
+      "record_cid": "baguqeerahdfpg6hzil7fbc45vksgjzsqdq7uh4dmch4bwt3oo3cybch7btpa",
+      "schema": "legal-source-structured-sample-unit/v1",
+      "sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706"
+    },
+    "source_version_ref": {
+      "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "schema": "legal-corpus-source-version/v1",
+      "sha256": "7894137f375a07b3c263964e9524ac6e6a6acc7111694f5d7c9c8c2f9b5b2af4"
+    }
+  },
+  "declaration_id": "unreviewed-navigation-2024-title10-section101-block54-enlisted-member",
+  "declared_native_profile_encoded": true,
+  "definition_lexical_coverage_complete": false,
+  "document_id": "govinfo-markup-v2-html-sha256:4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b",
+  "document_text_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+  "explicit_universal_biconditional": true,
+  "family": "fol",
+  "interpretation_contract": "For each entity in one caller-interpreted carrier, the declared head holds iff the explicit Boolean body holds at the evaluation point; applicability remains an unreviewed declaration.",
+  "lean_body": "def formula_0 {Entity Agent : Type} (i : Interpretation Entity Agent) : Nat → Prop := (fun t => ∀ v0 : Entity, (fun t => ((fun t => i.atom \"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\" [v0] t) t) ↔ ((fun t => i.atom \"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\" [v0] t) t)) t)",
+  "limitations": [
+    "This is a caller interpretation, not a reviewed statutory definition or governing source selection.",
+    "Whole contributor custody and exact atom spans do not establish complete meaning or attachment.",
+    "Only unary means/Boolean categories are encoded; includes, legal sorts, identity, general references and normative uses need supported separate profiles.",
+    "Original source/context evidence remains externally retained; no raw-HTML offset mapping or context closure is inferred.",
+    "No model, native Lean build, signature, review, training target or semantic admission is executed."
+  ],
+  "limits": {
+    "max_bindings": 512,
+    "max_contributors": 256,
+    "max_expression_depth": 12,
+    "max_expression_nodes": 128,
+    "max_input_bytes": 50331648,
+    "max_literal_bytes": 4096,
+    "max_occurrences": 256,
+    "max_operands": 16,
+    "max_report_bytes": 1048576,
+    "max_sampling_report_bytes": 33554432
+  },
+  "native": {
+    "admitted": false,
+    "all_logic_families_supported": false,
+    "backend_executed": false,
+    "cross_family_equivalence_verified": false,
+    "exact_native_ast_roundtrip": true,
+    "family": "fol",
+    "formula": "∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))",
+    "formula_sha256": "2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c",
+    "lean_body": "def formula_0 {Entity Agent : Type} (i : Interpretation Entity Agent) : Nat → Prop := (fun t => ∀ v0 : Entity, (fun t => ((fun t => i.atom \"Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a\" [v0] t) t) ↔ ((fun t => i.atom \"Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f\" [v0] t) t)) t)",
+    "lowering_details": {
+      "assumptions": [
+        "Object carrier and atomic predicates are arbitrary interpretation parameters.",
+        "Deontic/cognitive operators are distinct interpretation parameters; no modal axioms or source truth are asserted.",
+        "Supported temporal operators use discrete unbounded Nat traces."
+      ],
+      "operators": [
+        "QuantifiedFormula",
+        "BinaryFormula",
+        "↔",
+        "Predicate",
+        "Predicate"
+      ],
+      "validator": "strict_native_reparse_and_exact_AST"
+    },
+    "native_ast": {
+      "formula": {
+        "left": {
+          "arguments": [
+            {
+              "name": "x",
+              "node_type": "Variable",
+              "sort": null
+            }
+          ],
+          "name": "Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a",
+          "node_type": "Predicate"
+        },
+        "node_type": "BinaryFormula",
+        "operator": {
+          "enum": "LogicOperator",
+          "value": "↔"
+        },
+        "right": {
+          "arguments": [
+            {
+              "name": "x",
+              "node_type": "Variable",
+              "sort": null
+            }
+          ],
+          "name": "Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f",
+          "node_type": "Predicate"
+        }
+      },
+      "node_type": "QuantifiedFormula",
+      "quantifier": {
+        "enum": "Quantifier",
+        "value": "∀"
+      },
+      "variable": {
+        "name": "x",
+        "node_type": "Variable",
+        "sort": null
+      }
+    },
+    "native_ast_sha256": "3d5ea9d4a02c3b6134b1e37f02b589d16fd4c0fdffbf568da7dac8f98480e500",
+    "parse_receipt": {
+      "admitted": false,
+      "ast_classes": [
+        "BinaryFormula",
+        "Predicate",
+        "QuantifiedFormula"
+      ],
+      "consumed_all_input": true,
+      "diagnostics": [],
+      "family": "fol",
+      "formalized": false,
+      "formula": "∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))",
+      "formula_sha256": "2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c",
+      "parser": "ipfs_datasets_py.logic.TDFOL.tdfol_parser.TDFOLParser",
+      "parser_source_sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+      "passed": true,
+      "predicates": [
+        "Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f",
+        "Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a"
+      ],
+      "printed": "∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))",
+      "semantic_equivalence_checked": false,
+      "source_bound": false,
+      "syntax_valid": true
+    },
+    "printed": "∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))",
+    "printed_parse_receipt": {
+      "admitted": false,
+      "ast_classes": [
+        "BinaryFormula",
+        "Predicate",
+        "QuantifiedFormula"
+      ],
+      "consumed_all_input": true,
+      "diagnostics": [],
+      "family": "fol",
+      "formalized": false,
+      "formula": "∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))",
+      "formula_sha256": "2a524d643a903d2ccce7f51f7b4fa768ea7278830b9345354386dcadffce1f1c",
+      "parser": "ipfs_datasets_py.logic.TDFOL.tdfol_parser.TDFOLParser",
+      "parser_source_sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+      "passed": true,
+      "predicates": [
+        "Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f",
+        "Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a"
+      ],
+      "printed": "∀x.(↔ Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a(x) Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f(x))",
+      "semantic_equivalence_checked": false,
+      "source_bound": false,
+      "syntax_valid": true
+    },
+    "producer_pins": {
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/CEC/native/dcec_core.py": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/CEC/native/dcec_integration.py": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/family_qualification.py": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/ir_core/provenance.py": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "schema": "legal-native-family-route/v1",
+    "source_bound": false,
+    "source_semantics_verified": false
+  },
+  "native_ast": {
+    "formula": {
+      "left": {
+        "arguments": [
+          {
+            "name": "x",
+            "node_type": "Variable",
+            "sort": null
+          }
+        ],
+        "name": "Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a",
+        "node_type": "Predicate"
+      },
+      "node_type": "BinaryFormula",
+      "operator": {
+        "enum": "LogicOperator",
+        "value": "↔"
+      },
+      "right": {
+        "arguments": [
+          {
+            "name": "x",
+            "node_type": "Variable",
+            "sort": null
+          }
+        ],
+        "name": "Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f",
+        "node_type": "Predicate"
+      }
+    },
+    "node_type": "QuantifiedFormula",
+    "quantifier": {
+      "enum": "Quantifier",
+      "value": "∀"
+    },
+    "variable": {
+      "name": "x",
+      "node_type": "Variable",
+      "sort": null
+    }
+  },
+  "normalized_view_id": "legal-official-markup-view:sha256:6a4190668d49d48b72067e555ff274380e76d58a3501088f43137f41dabe7973",
+  "producer_pins": {
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/CEC/native/dcec_core.py": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/CEC/native/dcec_integration.py": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/corpus_contracts.py": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/corpus_source.py": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/family_qualification.py": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_definition_boolean.py": "719169f57f549800dfaa40394203c5bb056e549f3f4aa783d3e5354beba3bb2b",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_official_document_views.py": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py": "dc4448d3cb8dbbc23f7686674bb5b2b56d04cfbdb74b817b9e22b180ee7ee36a",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_source_sampling.py": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/ir_core/provenance.py": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe",
+    "/home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+  },
+  "profile": "declared-scope-v2-source-unary-predicate-definition/v1",
+  "report_sha256": "115bb26733cc06819ee1ea3c4e2b668067c7e8d9d7ffb553b78eac0c66686871",
+  "request_sha256": "835254b60c97254b401cf556f997929d73b9283e58a881b7e8bc46cc4b8dd7e5",
+  "schema": "legal-source-definition-bridge/v2",
+  "scope_key": "4735b86cb8d2a0e9bfff206d761cc5837dc7a17de7828a3776aec18cb4b2e601",
+  "scope_unit_ref": {
+    "record_cid": "baguqeerahdfpg6hzil7fbc45vksgjzsqdq7uh4dmch4bwt3oo3cybch7btpa",
+    "schema": "legal-source-structured-sample-unit/v1",
+    "sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706"
+  },
+  "source_bindings": [
+    {
+      "block_indices": [
+        48
+      ],
+      "context_cid": "baguqeeralpcglyrjsh555a64ri2zkv7mkr4zsuyx3sjbsgtzcj6mywwhr2dq",
+      "role": "scope_block",
+      "source_occurrence_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a",
+      "source_symbol": null,
+      "symbol": null
+    },
+    {
+      "block_indices": [
+        54
+      ],
+      "context_cid": "baguqeera6ossge23qopa3xw54at4v53h32z3fmpbv5wtj6qr6noalwpx3csa",
+      "role": "definition_contributor/0000",
+      "source_occurrence_cid": "baguqeerawou2jkht7lwqz2uu4n3oilkrjbkyey6haiczo7zaeroe2bmjxc6q",
+      "source_symbol": null,
+      "symbol": null
+    },
+    {
+      "block_indices": [
+        48
+      ],
+      "context_cid": "baguqeera33xh3vtgls6jb5uxy73jggzvwz6py3mtjfqravvgxyvln7bswt3a",
+      "role": "scope_literal",
+      "source_occurrence_cid": "baguqeerazqktid7i5cld5rafr6wijmgrajou4t3szrn7zmdwzdgbfrdpknza",
+      "source_symbol": null,
+      "symbol": null
+    },
+    {
+      "block_indices": [
+        54
+      ],
+      "context_cid": "baguqeeradtf2uciia5cadmnedvzm6eeiluusxapkcevfztaaf3wccstl3yga",
+      "role": "definition_head",
+      "source_occurrence_cid": "baguqeeradd7wbeibfxnpqng6akwfijw5kmvv4qhqxvs3p5grn3hydbhl3kea",
+      "source_symbol": "Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a",
+      "symbol": "Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a"
+    },
+    {
+      "block_indices": [
+        54
+      ],
+      "context_cid": "baguqeerazlaq4ya2f47geqf567b7bqfyvee2hrapt5543uzieoypbsyontoq",
+      "role": "definition_cue",
+      "source_occurrence_cid": "baguqeeral7mrbfoikaar24nbrewlzvyvwxgkwmbqfu4hzusih6lhyuptx6vq",
+      "source_symbol": null,
+      "symbol": null
+    },
+    {
+      "block_indices": [
+        54
+      ],
+      "context_cid": "baguqeeraupqdd6ekx7s7psaqzwlyo57dnyyftrq5kas2gpv2k6e5uf7zxwqq",
+      "role": "definition_body/0000",
+      "source_occurrence_cid": "baguqeera3w5cuiuajv36qaphwagoj5yvfyvitcbkn44vopev2j3avltxkwda",
+      "source_symbol": "Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f",
+      "symbol": "Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f"
+    }
+  ],
+  "source_bound": true,
+  "source_context_frontier": {
+    "derived_role_occurrences": 4,
+    "original_blocks": 560,
+    "original_context_declarations": 560,
+    "original_open_context_obligations": 3360,
+    "original_units": 560,
+    "selected_open_context_obligations": 36,
+    "selected_original_occurrences": 2,
+    "selected_physical_occurrences": 6,
+    "unselected_original_occurrences": 558,
+    "whole_source_context_retained_externally": true
+  },
+  "source_input_pins": {
+    "expected_descriptor_sha256": "431a4da4edc59bed35841256a9e13a56c52715b227e5d0a036b55ae255df07c8",
+    "expected_raw_bytes": 98879,
+    "expected_raw_sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b",
+    "extracted_text_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+    "normalized_view_id": "legal-official-markup-view:sha256:6a4190668d49d48b72067e555ff274380e76d58a3501088f43137f41dabe7973",
+    "sampling_report_full_canonical_sha256": "be524c7822f5e19a16ee56740560b19b0311001c553bd7ca9c2c9ed989af98b1",
+    "source_version_ref": {
+      "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "schema": "legal-corpus-source-version/v1",
+      "sha256": "7894137f375a07b3c263964e9524ac6e6a6acc7111694f5d7c9c8c2f9b5b2af4"
+    },
+    "view_report_full_canonical_sha256": "26ac99daae8452bfa43f799da7f455b6f4f228b3636712dbde203f6705b94192"
+  },
+  "source_occurrences": [
+    {
+      "cid_scope": "payload_without_record_cid/v1",
+      "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+      "end_char": 6527,
+      "end_utf8": 6551,
+      "historical_aliases": [],
+      "record_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a",
+      "schema": "legal-corpus-source-occurrence/v1",
+      "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "span_cid": "bafkreicddvi46ydescidocgmhsrordpbdyqawvmb6rmyimljgqiybtkpyq",
+      "span_sha256": "431d51cf606490903708cc3ca2e88de11e200b5581f459843169341180cd4fc4",
+      "span_text": "(b) Personnel Generally.—The following definitions relating to military personnel apply in this title:",
+      "start_char": 6425,
+      "start_utf8": 6447
+    },
+    {
+      "cid_scope": "payload_without_record_cid/v1",
+      "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+      "end_char": 7218,
+      "end_utf8": 7242,
+      "historical_aliases": [],
+      "record_cid": "baguqeerawou2jkht7lwqz2uu4n3oilkrjbkyey6haiczo7zaeroe2bmjxc6q",
+      "schema": "legal-corpus-source-occurrence/v1",
+      "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "span_cid": "bafkreif7wfhuwdkajcggycsnjbfeauxsg4wm74tms7apmpr3uxliarxi4e",
+      "span_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+      "span_text": "(6) The term \"enlisted member\" means a person in an enlisted grade.",
+      "start_char": 7151,
+      "start_utf8": 7175
+    },
+    {
+      "cid_scope": "payload_without_record_cid/v1",
+      "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+      "end_char": 6527,
+      "end_utf8": 6551,
+      "historical_aliases": [],
+      "record_cid": "baguqeerazqktid7i5cld5rafr6wijmgrajou4t3szrn7zmdwzdgbfrdpknza",
+      "schema": "legal-corpus-source-occurrence/v1",
+      "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "span_cid": "bafkreie5lng4jr63xdmx2urdu3pmuizntybk2zaflc6hujm7ittivqunr4",
+      "span_sha256": "9d5b4dc4c7dbb8d97d5223a6deca232d9e02ad640558bc7a259f44e68ac28d8f",
+      "span_text": "in this title:",
+      "start_char": 6513,
+      "start_utf8": 6537
+    },
+    {
+      "cid_scope": "payload_without_record_cid/v1",
+      "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+      "end_char": 7180,
+      "end_utf8": 7204,
+      "historical_aliases": [],
+      "record_cid": "baguqeeradd7wbeibfxnpqng6akwfijw5kmvv4qhqxvs3p5grn3hydbhl3kea",
+      "schema": "legal-corpus-source-occurrence/v1",
+      "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "span_cid": "bafkreibo52kzz3ujpoqsdclibsep3tgwevkr56hnnqzzsn3jopmxsgtbka",
+      "span_sha256": "2eee959cee897ba12189680c88fdccd625551ef8ed6c3399376973d9791a6150",
+      "span_text": "enlisted member",
+      "start_char": 7165,
+      "start_utf8": 7189
+    },
+    {
+      "cid_scope": "payload_without_record_cid/v1",
+      "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+      "end_char": 7187,
+      "end_utf8": 7211,
+      "historical_aliases": [],
+      "record_cid": "baguqeeral7mrbfoikaar24nbrewlzvyvwxgkwmbqfu4hzusih6lhyuptx6vq",
+      "schema": "legal-corpus-source-occurrence/v1",
+      "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "span_cid": "bafkreidqgmwvletjuj5ar2bjfjcyfmfdt7eyx4bfr5ynstscuww2yjvoxy",
+      "span_sha256": "70332d559269a27a08e8292a4582b0a39fc98bf0258f70d94e42a5adac26aebe",
+      "span_text": "means",
+      "start_char": 7182,
+      "start_utf8": 7206
+    },
+    {
+      "cid_scope": "payload_without_record_cid/v1",
+      "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+      "end_char": 7217,
+      "end_utf8": 7241,
+      "historical_aliases": [],
+      "record_cid": "baguqeera3w5cuiuajv36qaphwagoj5yvfyvitcbkn44vopev2j3avltxkwda",
+      "schema": "legal-corpus-source-occurrence/v1",
+      "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "span_cid": "bafkreidsd7fdiqmykixffuw2lal7intvoik4ulyfydf67oeyszkma272ru",
+      "span_sha256": "721fca344198522e52d2da5817f436757215ca2f05c0cbefb8989654c06bfa8d",
+      "span_text": "a person in an enlisted grade",
+      "start_char": 7188,
+      "start_utf8": 7212
+    }
+  ],
+  "source_version": {
+    "cid_scope": "payload_without_record_cid/v1",
+    "edition": "2024",
+    "extracted_view": {
+      "byte_length": 72592,
+      "character_length": 71598,
+      "cid": "bafkreihbnsqu4bqdjielyhttftnxsde6yw53s3j3uofmhpxcgnt4qsayke",
+      "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+      "extraction_profile": "legal-official-markup-document/v2",
+      "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+      "sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+    },
+    "historical_aliases": [],
+    "provision_id": "usc:us:10:101",
+    "raw_artifact": {
+      "cid": "bafkreicoruaxpfbcb4msm2gvge74kn73w4kamuvmjiapvl4tu3esdqwarm",
+      "media_type": "text/html",
+      "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+    },
+    "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+    "release_id": "govinfo-markup-v2-edition:2024",
+    "schema": "legal-corpus-source-version/v1",
+    "source_id": "usc:us:10:101"
+  },
+  "symbol_occurrences": [
+    {
+      "role": "head",
+      "span": {
+        "char_end": 7180,
+        "char_start": 7165,
+        "text": "enlisted member"
+      },
+      "symbol": "Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a"
+    },
+    {
+      "role": "body",
+      "span": {
+        "char_end": 7217,
+        "char_start": 7188,
+        "text": "a person in an enlisted grade"
+      },
+      "symbol": "Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f"
+    }
+  ],
+  "symbols": [
+    {
+      "arity": 1,
+      "scope_key": "4735b86cb8d2a0e9bfff206d761cc5837dc7a17de7828a3776aec18cb4b2e601",
+      "source_literal": "a person in an enlisted grade",
+      "symbol": "Da40ab2d15eb233346a3c5255c6377439b1d0e46f75b030463de7697564fc9d1f"
+    },
+    {
+      "arity": 1,
+      "scope_key": "4735b86cb8d2a0e9bfff206d761cc5837dc7a17de7828a3776aec18cb4b2e601",
+      "source_literal": "enlisted member",
+      "symbol": "Dbd48f41add569aaa0eb3e500460119c4aa990ec31eb4867a98e24aa609ad6c3a"
+    }
+  ]
+}

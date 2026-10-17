@@ -1,0 +1,483 @@
+{
+  "method": "Exact parsed native receipt fields with only reservation_id omitted; not a byte-identical raw receipt. Original retained in owned attempt.",
+  "native_receipt": {
+    "admitted": false,
+    "arbitrary_descendant_containment": false,
+    "files": [
+      {
+        "bytes": 37,
+        "device": 66306,
+        "inode": 68075689,
+        "path": "cache/pytest/.gitignore",
+        "sha256": "3ed731b65d06150c138e2dadb0be0697550888a6b47eb8c45ecc9adba8b8e9bd"
+      },
+      {
+        "bytes": 191,
+        "device": 66306,
+        "inode": 68075690,
+        "path": "cache/pytest/CACHEDIR.TAG",
+        "sha256": "37dc88ef9a0abeddbe81053a6dd8fdfb13afb613045ea1eb4a5c815a74a3bde4"
+      },
+      {
+        "bytes": 302,
+        "device": 66306,
+        "inode": 68075688,
+        "path": "cache/pytest/README.md",
+        "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad"
+      },
+      {
+        "bytes": 45552,
+        "device": 66306,
+        "inode": 68075839,
+        "path": "cache/pytest/v/cache/nodeids",
+        "sha256": "dfe1c650d2ce4afb43b9aec971fd221e21cc521e83ada997ce1bcc86add7b9ba"
+      },
+      {
+        "bytes": 42,
+        "device": 66306,
+        "inode": 68075692,
+        "path": "cache/pytest/v/commit_hash",
+        "sha256": "e9c13e40e25759199c914a18508ceeb48a2034b9481e7a5716fda38ecdb00597"
+      },
+      {
+        "bytes": 42,
+        "device": 66306,
+        "inode": 68075694,
+        "path": "cache/pytest/v/last_run_commit",
+        "sha256": "e9c13e40e25759199c914a18508ceeb48a2034b9481e7a5716fda38ecdb00597"
+      },
+      {
+        "bytes": 4,
+        "device": 66306,
+        "inode": 68075695,
+        "path": "cache/pytest/v/last_run_uncommitted",
+        "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      },
+      {
+        "bytes": 4,
+        "device": 66306,
+        "inode": 68075693,
+        "path": "cache/pytest/v/uncommitted_changes",
+        "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      },
+      {
+        "bytes": 1106,
+        "device": 66306,
+        "inode": 68075685,
+        "path": "logs/execution.json",
+        "sha256": "12b6327ddf5919827c6a1a60137f02839d5a1511708185baf682ae6af0287332"
+      },
+      {
+        "bytes": 56311,
+        "device": 66306,
+        "inode": 68075816,
+        "path": "logs/junit.xml",
+        "sha256": "77b34762556f9ae16fa533da7fc000fc6abaa50f929172847b49bebc747e2265"
+      },
+      {
+        "bytes": 1278,
+        "device": 66306,
+        "inode": 68075686,
+        "path": "logs/result.json",
+        "sha256": "113aa5cfcec6bcd3ea444f4e1e2e4a88352fc7ffd68d57c99d129164ab7f0bda"
+      },
+      {
+        "bytes": 0,
+        "device": 66306,
+        "inode": 68075684,
+        "path": "logs/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 2304,
+        "device": 66306,
+        "inode": 68075683,
+        "path": "logs/stdout.log",
+        "sha256": "a2cef3800af8e2271b00f38317903bc955852ce30426b959f9803b354cf9b5bc"
+      },
+      {
+        "bytes": 1858519,
+        "device": 66306,
+        "inode": 68075815,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/public-build-handoff.json",
+        "sha256": "50a11ba7ebc28b6aac996f280742e2c7b1a3afdbb221a10c53e80033fff37a78"
+      },
+      {
+        "bytes": 13758,
+        "device": 66306,
+        "inode": 68075837,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/build-receipt.json",
+        "sha256": "56ec4cdcca5e0846c036437fe223ed32221caa176b678bf21de2e4d51a36f297"
+      },
+      {
+        "bytes": 80,
+        "device": 66306,
+        "inode": 68075836,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/compiled/LegalCorpusV2.olean",
+        "sha256": "5df42a1efb94b951874c252ad2d89895f7a935b61a5c3f24a588def5391f4666"
+      },
+      {
+        "bytes": 155,
+        "device": 66306,
+        "inode": 68075833,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/compiled/LegalCorpusV2/Definition6ec2843bb66d074b581b40119114d93fe3e8d26200aeeeb8b8744d4ec3ec4f5d.olean",
+        "sha256": "d887e288f2a933548c69c8c8ffffe0b2591e0399c3a338f92f1d9020c095bb10"
+      },
+      {
+        "bytes": 155,
+        "device": 66306,
+        "inode": 68075834,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/compiled/LegalCorpusV2/Definitionbf3a2db00eba4fe1b2acbcf96395f63c15d509e243fd1d79fe3b43679694b53c.olean",
+        "sha256": "52e4da008b3e711b03be953cae546bf19b8686560c447dab158b966394a0c3c3"
+      },
+      {
+        "bytes": 150,
+        "device": 66306,
+        "inode": 68075835,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/compiled/LegalCorpusV2/Joint8e8482dc1224d47883d47f290e6d5016fab30e790da8e82a609bbef4ffaa3fa1.olean",
+        "sha256": "31f3a8808f377e114afda1a955c83ddcd3a06b5e4cf982911c1d00a934f7c4ad"
+      },
+      {
+        "bytes": 88,
+        "device": 66306,
+        "inode": 68075832,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/compiled/LegalCorpusV2/Prelude.olean",
+        "sha256": "6d31521dde2d1ac09e1916d0215ca0dc8157be976a1dffd75e26576a39748457"
+      },
+      {
+        "bytes": 91,
+        "device": 66306,
+        "inode": 68075819,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/project/LegalCorpusV2.lean",
+        "sha256": "496ae30a630d27e3758098f7a4fcc6c4f254a354a5575d1176009a5e1414912f"
+      },
+      {
+        "bytes": 1431,
+        "device": 66306,
+        "inode": 68075821,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/project/LegalCorpusV2/Aliasfafd34f5959511bc217990068eb6748de70fda3a55d3f1b1809536d1265e500e.lean",
+        "sha256": "d8c6a9fc9fa3924e440af04020eaa94a9723b3e3742123496629317a10b9c5ce"
+      },
+      {
+        "bytes": 748,
+        "device": 66306,
+        "inode": 68075822,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/project/LegalCorpusV2/Definition6ec2843bb66d074b581b40119114d93fe3e8d26200aeeeb8b8744d4ec3ec4f5d.lean",
+        "sha256": "32d6a93f79eea71bdbd07706eafcf7cd98a3e3d936530845af69113b0bed728f"
+      },
+      {
+        "bytes": 984,
+        "device": 66306,
+        "inode": 68075823,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/project/LegalCorpusV2/Definitionbf3a2db00eba4fe1b2acbcf96395f63c15d509e243fd1d79fe3b43679694b53c.lean",
+        "sha256": "2ce1bf61dbd853eb46fdaf06aac1634a38df4631027230c8d7cb210752143905"
+      },
+      {
+        "bytes": 2585,
+        "device": 66306,
+        "inode": 68075824,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/project/LegalCorpusV2/Joint8e8482dc1224d47883d47f290e6d5016fab30e790da8e82a609bbef4ffaa3fa1.lean",
+        "sha256": "11923d30de1919afaf0e0d891494d30853e23fa414351d155d3f8f44e6d9938d"
+      },
+      {
+        "bytes": 1262,
+        "device": 66306,
+        "inode": 68075825,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/project/LegalCorpusV2/Prelude.lean",
+        "sha256": "b5e04902f046fba4fbdf2b8f311058021181b8db305d58fb00bb1283ccdda717"
+      },
+      {
+        "bytes": 255706,
+        "device": 66306,
+        "inode": 68075829,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/project/corpus-manifest.json",
+        "sha256": "069f050de1415bfc04b496ecbeb3a82115e28518f00cfdfa41de8f0f9e882457"
+      },
+      {
+        "bytes": 113,
+        "device": 66306,
+        "inode": 68075826,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/project/lakefile.toml",
+        "sha256": "6a3f343d765843f03960382e98dbc5746e5bc0f1be9f602e6936d24ca2f37f85"
+      },
+      {
+        "bytes": 25,
+        "device": 66306,
+        "inode": 68075827,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/project/lean-toolchain",
+        "sha256": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+      },
+      {
+        "bytes": 1868,
+        "device": 66306,
+        "inode": 68075828,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-1vt12l2o/saved-authored-build/project/v2-input-bindings.json",
+        "sha256": "400cbd04a7290edbada33cfd15236ae841c26305dcfb309d17e9491c921934d4"
+      },
+      {
+        "bytes": 1858767,
+        "device": 66306,
+        "inode": 68075787,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/public-build-handoff.json",
+        "sha256": "d0dca714d2b466a81b7c64b7311f8918bbe1c2e3fa5f7ad0ebd83eeb58d39ead"
+      },
+      {
+        "bytes": 14350,
+        "device": 66306,
+        "inode": 68075812,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/build-receipt.json",
+        "sha256": "66b0502f82f94fb8f7a610b6cda1390173d7e129065bc0a6a19bc9f63014adf3"
+      },
+      {
+        "bytes": 80,
+        "device": 66306,
+        "inode": 68075811,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/compiled/LegalCorpusV2.olean",
+        "sha256": "5df42a1efb94b951874c252ad2d89895f7a935b61a5c3f24a588def5391f4666"
+      },
+      {
+        "bytes": 150,
+        "device": 66306,
+        "inode": 68075809,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/compiled/LegalCorpusV2/Alias11c7b84c242a2b0a83c1a327d37c6bbee6267ca968c3d650fbb418e8da1683ec.olean",
+        "sha256": "0fc66a3f7a69f8cdd56bdc1fafcff9263d827b59de3b092ab997b2aab81cbaf2"
+      },
+      {
+        "bytes": 155,
+        "device": 66306,
+        "inode": 68075808,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/compiled/LegalCorpusV2/Definition8acf6713e32824bc0f088323ed9261ecef68a1888fc880d7eef42ee0d663242c.olean",
+        "sha256": "69f75fb6add22ba29853549bd0e7e6f1e9c3fdb9293ff8831bd179eebf8367a1"
+      },
+      {
+        "bytes": 155,
+        "device": 66306,
+        "inode": 68075807,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/compiled/LegalCorpusV2/Definitionf9425eb6f0f4bff71b75e0ba8e3125d35585a539d3a46ecfdf604598dc617461.olean",
+        "sha256": "b34e92bf292a0af172f87b849d7078d5fe88838c30215e5e85c34fc0a54bb160"
+      },
+      {
+        "bytes": 150,
+        "device": 66306,
+        "inode": 68075810,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/compiled/LegalCorpusV2/Joint5b1c4a996867785de08bf8359aee9207fd172654b11ea5988c9de54ee674eda6.olean",
+        "sha256": "d26ea963c5273878d1250b1e8b1b269ae0bb19bead6831e28b4933580124e45e"
+      },
+      {
+        "bytes": 88,
+        "device": 66306,
+        "inode": 68075806,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/compiled/LegalCorpusV2/Prelude.olean",
+        "sha256": "6d31521dde2d1ac09e1916d0215ca0dc8157be976a1dffd75e26576a39748457"
+      },
+      {
+        "bytes": 91,
+        "device": 66306,
+        "inode": 68075793,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/project/LegalCorpusV2.lean",
+        "sha256": "1efb23110f0733e93b6dd341eb7ca7afcbccaa7d0ef18825fc01231da27d393c"
+      },
+      {
+        "bytes": 1431,
+        "device": 66306,
+        "inode": 68075795,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/project/LegalCorpusV2/Alias11c7b84c242a2b0a83c1a327d37c6bbee6267ca968c3d650fbb418e8da1683ec.lean",
+        "sha256": "7f040d9219696b436294173336ec84e4376f2015bf2d46f57fa4884d18f82996"
+      },
+      {
+        "bytes": 984,
+        "device": 66306,
+        "inode": 68075796,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/project/LegalCorpusV2/Definition8acf6713e32824bc0f088323ed9261ecef68a1888fc880d7eef42ee0d663242c.lean",
+        "sha256": "d2ced4a74016e88cfb261c92af6e26bf66775f6949110beb95ef08150b4cd23a"
+      },
+      {
+        "bytes": 748,
+        "device": 66306,
+        "inode": 68075797,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/project/LegalCorpusV2/Definitionf9425eb6f0f4bff71b75e0ba8e3125d35585a539d3a46ecfdf604598dc617461.lean",
+        "sha256": "5157915bf722c8540b3b8c15a185bd80617002154286046c8f4cb07f836fcf99"
+      },
+      {
+        "bytes": 2585,
+        "device": 66306,
+        "inode": 68075798,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/project/LegalCorpusV2/Joint5b1c4a996867785de08bf8359aee9207fd172654b11ea5988c9de54ee674eda6.lean",
+        "sha256": "f851d5422dae0548051edb2bcef6c22a0aba50a043fc0d2260515a0b29432e69"
+      },
+      {
+        "bytes": 1262,
+        "device": 66306,
+        "inode": 68075799,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/project/LegalCorpusV2/Prelude.lean",
+        "sha256": "b5e04902f046fba4fbdf2b8f311058021181b8db305d58fb00bb1283ccdda717"
+      },
+      {
+        "bytes": 255852,
+        "device": 66306,
+        "inode": 68075803,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/project/corpus-manifest.json",
+        "sha256": "9434010ccaa85bcd6446899ebd4c2738d687bbaae22e41625ea7d3ec0975a09c"
+      },
+      {
+        "bytes": 113,
+        "device": 66306,
+        "inode": 68075800,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/project/lakefile.toml",
+        "sha256": "6a3f343d765843f03960382e98dbc5746e5bc0f1be9f602e6936d24ca2f37f85"
+      },
+      {
+        "bytes": 25,
+        "device": 66306,
+        "inode": 68075801,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/project/lean-toolchain",
+        "sha256": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+      },
+      {
+        "bytes": 1868,
+        "device": 66306,
+        "inode": 68075802,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-42afhftr/saved-authored-build/project/v2-input-bindings.json",
+        "sha256": "297667741837a53e09bb9ef7c4e183cbca460ec0e2775b4be0a0be81450cc1be"
+      },
+      {
+        "bytes": 1858519,
+        "device": 66306,
+        "inode": 68075761,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/public-build-handoff.json",
+        "sha256": "f6adb36070af851a46e8bb132d21ce84422c85397c4eed01448e0b17954280c1"
+      },
+      {
+        "bytes": 14350,
+        "device": 66306,
+        "inode": 68075784,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/build-receipt.json",
+        "sha256": "c786a1d419335e1c7782cd708bb6d3de7a455b4fa364b2119096c4c35e37706f"
+      },
+      {
+        "bytes": 80,
+        "device": 66306,
+        "inode": 68075783,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/compiled/LegalCorpusV2.olean",
+        "sha256": "5df42a1efb94b951874c252ad2d89895f7a935b61a5c3f24a588def5391f4666"
+      },
+      {
+        "bytes": 150,
+        "device": 66306,
+        "inode": 68075781,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/compiled/LegalCorpusV2/Aliasfafd34f5959511bc217990068eb6748de70fda3a55d3f1b1809536d1265e500e.olean",
+        "sha256": "9e83a154a15c405bc20c2ca6aa825b5f9817f03b038abc25ca678c552d3ea0f8"
+      },
+      {
+        "bytes": 155,
+        "device": 66306,
+        "inode": 68075779,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/compiled/LegalCorpusV2/Definition6ec2843bb66d074b581b40119114d93fe3e8d26200aeeeb8b8744d4ec3ec4f5d.olean",
+        "sha256": "d887e288f2a933548c69c8c8ffffe0b2591e0399c3a338f92f1d9020c095bb10"
+      },
+      {
+        "bytes": 155,
+        "device": 66306,
+        "inode": 68075780,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/compiled/LegalCorpusV2/Definitionbf3a2db00eba4fe1b2acbcf96395f63c15d509e243fd1d79fe3b43679694b53c.olean",
+        "sha256": "52e4da008b3e711b03be953cae546bf19b8686560c447dab158b966394a0c3c3"
+      },
+      {
+        "bytes": 150,
+        "device": 66306,
+        "inode": 68075782,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/compiled/LegalCorpusV2/Joint8e8482dc1224d47883d47f290e6d5016fab30e790da8e82a609bbef4ffaa3fa1.olean",
+        "sha256": "31f3a8808f377e114afda1a955c83ddcd3a06b5e4cf982911c1d00a934f7c4ad"
+      },
+      {
+        "bytes": 88,
+        "device": 66306,
+        "inode": 68075778,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/compiled/LegalCorpusV2/Prelude.olean",
+        "sha256": "6d31521dde2d1ac09e1916d0215ca0dc8157be976a1dffd75e26576a39748457"
+      },
+      {
+        "bytes": 91,
+        "device": 66306,
+        "inode": 68075765,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/project/LegalCorpusV2.lean",
+        "sha256": "496ae30a630d27e3758098f7a4fcc6c4f254a354a5575d1176009a5e1414912f"
+      },
+      {
+        "bytes": 1431,
+        "device": 66306,
+        "inode": 68075767,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/project/LegalCorpusV2/Aliasfafd34f5959511bc217990068eb6748de70fda3a55d3f1b1809536d1265e500e.lean",
+        "sha256": "d8c6a9fc9fa3924e440af04020eaa94a9723b3e3742123496629317a10b9c5ce"
+      },
+      {
+        "bytes": 748,
+        "device": 66306,
+        "inode": 68075768,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/project/LegalCorpusV2/Definition6ec2843bb66d074b581b40119114d93fe3e8d26200aeeeb8b8744d4ec3ec4f5d.lean",
+        "sha256": "32d6a93f79eea71bdbd07706eafcf7cd98a3e3d936530845af69113b0bed728f"
+      },
+      {
+        "bytes": 984,
+        "device": 66306,
+        "inode": 68075769,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/project/LegalCorpusV2/Definitionbf3a2db00eba4fe1b2acbcf96395f63c15d509e243fd1d79fe3b43679694b53c.lean",
+        "sha256": "2ce1bf61dbd853eb46fdaf06aac1634a38df4631027230c8d7cb210752143905"
+      },
+      {
+        "bytes": 2585,
+        "device": 66306,
+        "inode": 68075770,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/project/LegalCorpusV2/Joint8e8482dc1224d47883d47f290e6d5016fab30e790da8e82a609bbef4ffaa3fa1.lean",
+        "sha256": "11923d30de1919afaf0e0d891494d30853e23fa414351d155d3f8f44e6d9938d"
+      },
+      {
+        "bytes": 1262,
+        "device": 66306,
+        "inode": 68075771,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/project/LegalCorpusV2/Prelude.lean",
+        "sha256": "b5e04902f046fba4fbdf2b8f311058021181b8db305d58fb00bb1283ccdda717"
+      },
+      {
+        "bytes": 255706,
+        "device": 66306,
+        "inode": 68075775,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/project/corpus-manifest.json",
+        "sha256": "81ebf3c6f6fd0a346ac483fe9715c5f1d9a3ae6f13bbd71d91998190799a3de7"
+      },
+      {
+        "bytes": 113,
+        "device": 66306,
+        "inode": 68075772,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/project/lakefile.toml",
+        "sha256": "6a3f343d765843f03960382e98dbc5746e5bc0f1be9f602e6936d24ca2f37f85"
+      },
+      {
+        "bytes": 25,
+        "device": 66306,
+        "inode": 68075773,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/project/lean-toolchain",
+        "sha256": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+      },
+      {
+        "bytes": 1868,
+        "device": 66306,
+        "inode": 68075774,
+        "path": "pytest/basetemp/test_cold_build_readback_preserves_authored_obse-61pws3yx/saved-authored-build/project/v2-input-bindings.json",
+        "sha256": "fc3d76290a1f12a17ae49c6dd7b14f629f73a5993a4e9f609b54bf0773969d8c"
+      }
+    ],
+    "request_sha256": "b5cea48e9224c00dcdd78757a5944710255dcdc47431c353a6e6eb26d1975ea3",
+    "result_path": "logs/result.json",
+    "result_sha256": "113aa5cfcec6bcd3ea444f4e1e2e4a88352fc7ffd68d57c99d129164ab7f0bda",
+    "schema": "owned-validation-durability/v1",
+    "scope": "owned_files_fsynced_after_recorded_group_observed_stopped"
+  },
+  "omitted_fields": [
+    "reservation_id"
+  ],
+  "original_bytes": 17537,
+  "original_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-source-review-correspondence-20261015-02/logs/validation-durability.json",
+  "original_sha256": "85654132a991e96bd65adac6c344544f9fdbcdbd19e9f8c44480ee2a3f5d9fc5",
+  "schema": "legal-ir-source-review-durability-public-projection/v1"
+}

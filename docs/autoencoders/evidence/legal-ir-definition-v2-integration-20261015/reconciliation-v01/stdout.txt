@@ -1,0 +1,287 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/barberb/.local/bin/python
+cachedir: /home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/reconciliation-v01/private/pytest-cache
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-definition-v2-integration-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+created: 3/3 workers
+3 workers [135 items]
+
+scheduling tests via LoadFileScheduling
+
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_cold_public_import_is_stdlib_only_and_calls_no_operation_owner 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_preserves_all_blocks_full_clauses_tables_headers_and_note_controls 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unreviewed_v2_definition_only_preserves_native_structure_without_norm[fol] 
+[gw0] [  0%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_cold_public_import_is_stdlib_only_and_calls_no_operation_owner 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_real_sampler_replay_once_and_complete_context_retained_once 
+[gw2] [  1%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_preserves_all_blocks_full_clauses_tables_headers_and_note_controls 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_repeated_unicode_text_preserves_physical_occurrences_and_byte_coordinates 
+[gw2] [  2%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_repeated_unicode_text_preserves_physical_occurrences_and_byte_coordinates 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_continuation_and_inline_labels_are_retained_without_attaching_legal_hierarchy 
+[gw2] [  2%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_continuation_and_inline_labels_are_retained_without_attaching_legal_hierarchy 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_field_region_wins_over_statutory_looking_class_and_notes_remain_available 
+[gw2] [  3%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_field_region_wins_over_statutory_looking_class_and_notes_remain_available 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_statute_headings_are_context_and_statutory_notes_are_not_discarded 
+[gw0] [  4%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_real_sampler_replay_once_and_complete_context_retained_once 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_controls_and_every_ordered_unit_have_blank_guides_not_reviews 
+[gw1] [  5%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unreviewed_v2_definition_only_preserves_native_structure_without_norm[fol] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unreviewed_v2_definition_only_preserves_native_structure_without_norm[tdfol] 
+[gw2] [  5%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_statute_headings_are_context_and_statutory_notes_are_not_discarded 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_all_context_obligations_and_zero_masks_survive_with_no_definition_or_graph_claim 
+[gw2] [  6%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_all_context_obligations_and_zero_masks_survive_with_no_definition_or_graph_claim 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_official_source_is_prepared_once_per_operation_not_once_per_sample 
+[gw0] [  7%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_controls_and_every_ordered_unit_have_blank_guides_not_reviews 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_catalog_preserves_all_thirteen_prior_questions_plus_two_norm_questions 
+[gw2] [  8%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_official_source_is_prepared_once_per_operation_not_once_per_sample 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[drop_control] 
+[gw1] [  8%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unreviewed_v2_definition_only_preserves_native_structure_without_norm[tdfol] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_two_entity_truth_oracle_detects_weakening_and_keeps_explicit_negation 
+[gw0] [  9%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_catalog_preserves_all_thirteen_prior_questions_plus_two_norm_questions 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_blank_template_needs_explicit_bundle_and_completed_declarations 
+[gw2] [ 10%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[drop_control] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[reorder] 
+[gw1] [ 11%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_two_entity_truth_oracle_detects_weakening_and_keeps_explicit_negation 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repeated_unicode_body_keeps_physical_origins_roles_and_derived_contexts 
+[gw2] [ 11%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[reorder] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[mask] 
+[gw0] [ 12%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_blank_template_needs_explicit_bundle_and_completed_declarations 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_repeated_unicode_occurrences_do_not_merge_or_relabel_coordinates 
+[gw1] [ 13%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repeated_unicode_body_keeps_physical_origins_roles_and_derived_contexts 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_cross_block_atom_retains_exact_LF_and_all_contributor_intersections 
+[gw2] [ 14%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[mask] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[meaning] 
+[gw0] [ 14%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_repeated_unicode_occurrences_do_not_merge_or_relabel_coordinates 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_withheld_parent_is_a_separate_subject_and_every_piece_survives[<p class="statutory-body">The officer shall act<br>only if approved.</p>] 
+[gw1] [ 15%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_cross_block_atom_retains_exact_LF_and_all_contributor_intersections 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_same_bytes_other_edition_or_applicability_do_not_reuse_scoped_symbols 
+[gw2] [ 16%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[meaning] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[context] 
+[gw2] [ 17%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[context] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[block] 
+[gw0] [ 17%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_withheld_parent_is_a_separate_subject_and_every_piece_survives[<p class="statutory-body">The officer shall act<br>only if approved.</p>] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_withheld_parent_is_a_separate_subject_and_every_piece_survives[<p class="statutory-body">The officer shall act<div>only if approved.</div>Unless exempt.</p>] 
+[gw2] [ 18%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[block] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[authority] 
+[gw1] [ 19%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_same_bytes_other_edition_or_applicability_do_not_reuse_scoped_symbols 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[forall] 
+[gw2] [ 20%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_rehashed_resealed_modified_population_cannot_validate[authority] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_wrong_external_acquisition_pins_are_rejected[expected_raw_sha256-0000000000000000000000000000000000000000000000000000000000000000] 
+[gw2] [ 20%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_wrong_external_acquisition_pins_are_rejected[expected_raw_sha256-0000000000000000000000000000000000000000000000000000000000000000] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_wrong_external_acquisition_pins_are_rejected[expected_descriptor_sha256-0000000000000000000000000000000000000000000000000000000000000000] 
+[gw2] [ 21%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_wrong_external_acquisition_pins_are_rejected[expected_descriptor_sha256-0000000000000000000000000000000000000000000000000000000000000000] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_wrong_external_acquisition_pins_are_rejected[expected_raw_bytes-1] 
+[gw2] [ 22%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_wrong_external_acquisition_pins_are_rejected[expected_raw_bytes-1] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_missing_raw_and_unsupported_markup_keep_explicit_owner_dispositions 
+[gw2] [ 22%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_missing_raw_and_unsupported_markup_keep_explicit_owner_dispositions 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_finite_lowered_population_and_output_bounds_never_truncate[limit0] 
+[gw2] [ 23%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_finite_lowered_population_and_output_bounds_never_truncate[limit0] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_finite_lowered_population_and_output_bounds_never_truncate[limit1] 
+[gw2] [ 24%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_finite_lowered_population_and_output_bounds_never_truncate[limit1] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_finite_lowered_population_and_output_bounds_never_truncate[limit2] 
+[gw2] [ 25%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_finite_lowered_population_and_output_bounds_never_truncate[limit2] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_finite_lowered_population_and_output_bounds_never_truncate[limit3] 
+[gw2] [ 25%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_finite_lowered_population_and_output_bounds_never_truncate[limit3] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_finite_lowered_population_and_output_bounds_never_truncate[limit4] 
+[gw2] [ 26%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_finite_lowered_population_and_output_bounds_never_truncate[limit4] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_result_is_detached_from_caller_descriptor_and_expected_report_pin_matters 
+[gw2] [ 27%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_result_is_detached_from_caller_descriptor_and_expected_report_pin_matters 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_split_or_nested_paragraph_never_proposes_a_truncated_condition_input[<p class="statutory-body">The officer shall act<br>only if approved.</p>] 
+[gw0] [ 28%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_withheld_parent_is_a_separate_subject_and_every_piece_survives[<p class="statutory-body">The officer shall act<div>only if approved.</div>Unless exempt.</p>] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_real_completed_declaration_roundtrip_keeps_all_authority_false 
+[gw1] [ 28%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[forall] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[iff] 
+[gw2] [ 29%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_split_or_nested_paragraph_never_proposes_a_truncated_condition_input[<p class="statutory-body">The officer shall act<br>only if approved.</p>] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_split_or_nested_paragraph_never_proposes_a_truncated_condition_input[<p class="statutory-body">The officer shall act<div>only if approved.</div></p>] 
+[gw2] [ 30%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_split_or_nested_paragraph_never_proposes_a_truncated_condition_input[<p class="statutory-body">The officer shall act<div>only if approved.</div></p>] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_split_or_nested_paragraph_never_proposes_a_truncated_condition_input[<p class="statutory-body">The officer shall act<div>only if approved.</div>Unless exempt.</p>] 
+[gw1] [ 31%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[iff] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[scope] 
+[gw2] [ 31%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_split_or_nested_paragraph_never_proposes_a_truncated_condition_input[<p class="statutory-body">The officer shall act<div>only if approved.</div>Unless exempt.</p>] 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_untrusted_report_declared_byte_budget_is_checked_before_source_replay 
+[gw0] [ 32%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_real_completed_declaration_roundtrip_keeps_all_authority_false 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_structured_unresolved_and_explicit_unknown_exposure_remain_pending 
+[gw2] [ 33%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_untrusted_report_declared_byte_budget_is_checked_before_source_replay 
+tests/unit/logic/autoformal/test_legal_source_sampling.py::test_public_hash_and_validator_refuse_report_above_fixed_hard_budget 
+[gw1] [ 34%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[scope] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[binding] 
+[gw2] [ 34%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling.py::test_public_hash_and_validator_refuse_report_above_fixed_hard_budget 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_definition_only_graph_has_exact_endpoints_and_no_invented_norm[fol] 
+[gw1] [ 35%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[binding] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[lean] 
+[gw0] [ 36%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_structured_unresolved_and_explicit_unknown_exposure_remain_pending 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_unsupported_disagreement_and_no_latest_response_winner 
+[gw1] [ 37%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[lean] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[authority] 
+[gw1] [ 37%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_repaired_report_digest_cannot_authorize_semantic_or_custody_mutants[authority] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[descriptor_hash] 
+[gw1] [ 38%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[descriptor_hash] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[raw_hash] 
+[gw2] [ 39%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_definition_only_graph_has_exact_endpoints_and_no_invented_norm[fol] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_definition_only_graph_has_exact_endpoints_and_no_invented_norm[tdfol] 
+[gw1] [ 40%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[raw_hash] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[raw_length] 
+[gw1] [ 40%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[raw_length] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[sampling_hash] 
+[gw1] [ 41%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_independently_supplied_source_commitments_are_required[sampling_hash] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[unit_ref] 
+[gw0] [ 42%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_unsupported_disagreement_and_no_latest_response_winner 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_different_prose_does_not_automatically_establish_agreement_or_dispute 
+[gw1] [ 42%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[unit_ref] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[omit] 
+[gw2] [ 43%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_definition_only_graph_has_exact_endpoints_and_no_invented_norm[tdfol] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_full_contributors_and_new_subspan_contexts_remain_separate_from_sampler 
+[gw1] [ 44%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[omit] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[reorder] 
+[gw0] [ 45%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_different_prose_does_not_automatically_establish_agreement_or_dispute 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_precedence_keeps_unresolved_and_unknown_exposure_reasons 
+[gw2] [ 45%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_full_contributors_and_new_subspan_contexts_remain_separate_from_sampler 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[AST] 
+[gw1] [ 46%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[reorder] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[gap] 
+[gw1] [ 47%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[gap] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[includes] 
+[gw2] [ 48%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[AST] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[scope] 
+[gw0] [ 48%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_precedence_keeps_unresolved_and_unknown_exposure_reasons 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_missing_duplicate_substituted_or_cross_category_answers_refuse[omit] 
+[gw1] [ 49%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[includes] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[operator] 
+[gw1] [ 50%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[operator] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[sort] 
+[gw0] [ 51%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_missing_duplicate_substituted_or_cross_category_answers_refuse[omit] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_missing_duplicate_substituted_or_cross_category_answers_refuse[duplicate] 
+[gw1] [ 51%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[sort] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[scope_kind] 
+[gw2] [ 52%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[scope] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[context] 
+[gw1] [ 53%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[scope_kind] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[self] 
+[gw0] [ 54%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_missing_duplicate_substituted_or_cross_category_answers_refuse[duplicate] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_missing_duplicate_substituted_or_cross_category_answers_refuse[reorder] 
+[gw1] [ 54%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[self] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[civil_date] 
+[gw0] [ 55%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_missing_duplicate_substituted_or_cross_category_answers_refuse[reorder] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_missing_duplicate_substituted_or_cross_category_answers_refuse[foreign] 
+[gw2] [ 56%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[context] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[role] 
+[gw1] [ 57%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_unsupported_or_inconsistent_declarations_refuse_without_rewriting[civil_date] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits0] 
+[gw0] [ 57%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_missing_duplicate_substituted_or_cross_category_answers_refuse[foreign] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_missing_duplicate_substituted_or_cross_category_answers_refuse[source_as_meaning] 
+[gw1] [ 58%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits0] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits1] 
+[gw2] [ 59%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[role] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[authority] 
+[gw0] [ 60%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_missing_duplicate_substituted_or_cross_category_answers_refuse[source_as_meaning] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[finding] 
+[gw1] [ 60%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits1] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits2] 
+[gw1] [ 61%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits2] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits3] 
+[gw0] [ 62%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[finding] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[rationale] 
+[gw1] [ 62%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_lower_limits_refuse_the_whole_candidate_without_truncation[limits3] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_oversize_request_refuses_before_source_replay 
+[gw2] [ 63%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[authority] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[graph_endpoint] 
+[gw1] [ 64%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_oversize_request_refuses_before_source_replay 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_public_import_remains_inert_without_models_or_native_compilation 
+[gw1] [ 65%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_public_import_remains_inert_without_models_or_native_compilation 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_exact_declared_title_and_section_scope_literals_preserve_applicability[in this title] 
+[gw0] [ 65%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[rationale] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[evidence] 
+[gw1] [ 66%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_exact_declared_title_and_section_scope_literals_preserve_applicability[in this title] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_exact_declared_title_and_section_scope_literals_preserve_applicability[In this section:] 
+[gw0] [ 67%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[evidence] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[unresolved] 
+[gw1] [ 68%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_exact_declared_title_and_section_scope_literals_preserve_applicability[In this section:] 
+tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_authored_continuation_refused_by_legacy_document_maps_without_relabeling_in_v2 
+[gw2] [ 68%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[graph_endpoint] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[report_pin] 
+[gw1] [ 69%] PASSED tests/unit/logic/autoformal/test_legal_source_definition_bridge_v2.py::test_authored_continuation_refused_by_legacy_document_maps_without_relabeling_in_v2 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_actual_public_imports_need_no_compiler_or_numerical_runtime 
+[gw0] [ 70%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[unresolved] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[resolved] 
+[gw1] [ 71%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_actual_public_imports_need_no_compiler_or_numerical_runtime 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_real_public_session_is_deferred_pinned_cached_and_resettable 
+[gw0] [ 71%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[resolved] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[gold] 
+[gw2] [ 72%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_resealed_candidate_cannot_replace_source_meaning_context_or_graph[report_pin] 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_bad_transport_hash_and_oversize_body_fail_before_native_owner_import 
+[gw2] [ 73%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_bad_transport_hash_and_oversize_body_fail_before_native_owner_import 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_public_import_does_not_import_native_definition_owners 
+[gw0] [ 74%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[gold] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[principal] 
+[gw2] [ 74%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_public_import_does_not_import_native_definition_owners 
+tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_changed_adapter_source_is_refused_before_cached_code_can_claim_new_pins 
+[gw2] [ 75%] PASSED tests/unit/logic/autoformal/test_corpus_definition_adapter_v2.py::test_changed_adapter_source_is_refused_before_cached_code_can_claim_new_pins 
+tests/unit/logic/autoformal/test_definition_v2_graph_exchange.py::test_public_v2_export_cold_readback_preserves_graph_and_separate_companion[fol] 
+[gw1] [ 76%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_real_public_session_is_deferred_pinned_cached_and_resettable 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_session_attribute_constructs_once_and_dispatch_uses_same_instance 
+[gw1] [ 77%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_session_attribute_constructs_once_and_dispatch_uses_same_instance 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_reset_explicitly_replaces_the_session 
+[gw1] [ 77%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_reset_explicitly_replaces_the_session 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_failed_initialization_is_not_cached_or_hidden 
+[gw1] [ 78%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_failed_initialization_is_not_cached_or_hidden 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_unknown_dispatch_does_not_construct_a_session 
+[gw1] [ 79%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_unknown_dispatch_does_not_construct_a_session 
+tests/unit/logic/autoformal/test_corpus_imports.py::test_concurrent_first_consumers_share_one_session 
+[gw1] [ 80%] PASSED tests/unit/logic/autoformal/test_corpus_imports.py::test_concurrent_first_consumers_share_one_session 
+[gw0] [ 80%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[principal] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[role] 
+[gw0] [ 81%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[role] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[time] 
+[gw0] [ 82%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[time] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[exposure] 
+[gw0] [ 82%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_substantive_answer_identity_exposure_and_no_authority_escape[exposure] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_other_occurrence_selector_cannot_substitute_for_subject_evidence 
+[gw0] [ 83%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_other_occurrence_selector_cannot_substitute_for_subject_evidence 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_boolean_subject_index_and_rehashed_response_authority_are_rejected 
+[gw2] [ 84%] PASSED tests/unit/logic/autoformal/test_definition_v2_graph_exchange.py::test_public_v2_export_cold_readback_preserves_graph_and_separate_companion[fol] 
+tests/unit/logic/autoformal/test_definition_v2_graph_exchange.py::test_public_v2_export_cold_readback_preserves_graph_and_separate_companion[tdfol] 
+[gw0] [ 85%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_boolean_subject_index_and_rehashed_response_authority_are_rejected 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[drop_control] 
+[gw0] [ 85%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[drop_control] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[reorder] 
+[gw0] [ 86%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[reorder] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[withheld] 
+[gw0] [ 87%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[withheld] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[filled_guide] 
+[gw2] [ 88%] PASSED tests/unit/logic/autoformal/test_definition_v2_graph_exchange.py::test_public_v2_export_cold_readback_preserves_graph_and_separate_companion[tdfol] 
+tests/unit/logic/autoformal/test_definition_v2_graph_exchange.py::test_public_v2_export_refuses_resealed_mutants_before_graph_writer[candidate_context] 
+[gw0] [ 88%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[filled_guide] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[question] 
+[gw0] [ 89%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[question] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[view] 
+[gw2] [ 90%] PASSED tests/unit/logic/autoformal/test_definition_v2_graph_exchange.py::test_public_v2_export_refuses_resealed_mutants_before_graph_writer[candidate_context] 
+tests/unit/logic/autoformal/test_definition_v2_graph_exchange.py::test_public_v2_export_refuses_resealed_mutants_before_graph_writer[report_ast] 
+[gw0] [ 91%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[view] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[authority] 
+[gw2] [ 91%] PASSED tests/unit/logic/autoformal/test_definition_v2_graph_exchange.py::test_public_v2_export_refuses_resealed_mutants_before_graph_writer[report_ast] 
+[gw0] [ 92%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_rehashed_bundle_tamper_is_not_authorized_by_outer_pins[authority] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_wrong_bundle_source_or_response_pin_refuses 
+[gw0] [ 93%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_wrong_bundle_source_or_response_pin_refuses 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_same_sampler_subject_cannot_rebind_answers_to_another_bundle_or_catalog 
+[gw0] [ 94%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_same_sampler_subject_cannot_rebind_answers_to_another_bundle_or_catalog 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_lowered_hard_limits_refuse_instead_of_truncating[limits0] 
+[gw0] [ 94%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_lowered_hard_limits_refuse_instead_of_truncating[limits0] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_lowered_hard_limits_refuse_instead_of_truncating[limits1] 
+[gw0] [ 95%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_lowered_hard_limits_refuse_instead_of_truncating[limits1] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_lowered_hard_limits_refuse_instead_of_truncating[limits2] 
+[gw0] [ 96%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_lowered_hard_limits_refuse_instead_of_truncating[limits2] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_lowered_hard_limits_refuse_instead_of_truncating[limits3] 
+[gw0] [ 97%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_lowered_hard_limits_refuse_instead_of_truncating[limits3] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_lowered_hard_limits_refuse_instead_of_truncating[limits4] 
+[gw0] [ 97%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_lowered_hard_limits_refuse_instead_of_truncating[limits4] 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_bad_bounded_inputs_refuse_before_operation_owner_import_or_replay 
+[gw0] [ 98%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_bad_bounded_inputs_refuse_before_operation_owner_import_or_replay 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_population_rejects_duplicates_before_replay_and_keeps_all_subjects 
+[gw0] [ 99%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_population_rejects_duplicates_before_replay_and_keeps_all_subjects 
+tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_explicit_missing_source_cannot_be_vacuous_review_completion 
+[gw0] [100%] PASSED tests/unit/logic/autoformal/test_legal_source_sampling_review.py::test_explicit_missing_source_cannot_be_vacuous_review_completion 
+
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-ir-definition-v2-integration-20261015/reconciliation-v01/junit.xml -
+================================== Cache Info ==================================
+Commit hash: c55222c3
+Note: Uncommitted changes present
+============================= 135 passed in 14.91s =============================

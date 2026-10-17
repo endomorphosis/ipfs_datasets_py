@@ -144,22 +144,71 @@ async def save_dataset(
 
         # Handle both dataset ID strings and direct data dictionaries
         if isinstance(dataset_data, dict):
-            # Direct data provided - create a mock save
-            dataset_id = f"mock_dataset_{hash(str(dataset_data))}"
-            data_size = len(str(dataset_data))
+            # Direct data provided: genuinely save it to destination.
+            # Never fabricate a success without writing.
+            import hashlib
+            data_str = json.dumps(dataset_data)
+            data_size = len(data_str)
+            dataset_id = f"dataset_{hashlib.sha256(data_str.encode()).hexdigest()[:16]}"
+            record_count = len(dataset_data.get("data", []))
 
             logger.info(
-                f"Processing dataset with {len(dataset_data.get('data', []))} records. Initial records: {len(dataset_data.get('data', []))}"
+                f"Saving dataset with {record_count} records to {destination}"
             )
+
+            # Actually write the data.
+            save_format = (format or "json").lower()
+            try:
+                if save_format == "json":
+                    with open(destination, "w") as f:
+                        json.dump(dataset_data, f, indent=2)
+                elif save_format == "csv":
+                    import csv
+                    rows = dataset_data.get("data", [])
+                    if rows and isinstance(rows[0], dict):
+                        with open(destination, "w", newline="") as f:
+                            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+                            writer.writeheader()
+                            writer.writerows(rows)
+                    else:
+                        raise ValueError("CSV format requires data as list of dicts")
+                else:
+                    raise ValueError(f"Unsupported format for direct save: {save_format}")
+            except Exception as e:
+                return {
+                    "status": "error",
+                    "message": f"Failed to save dataset: {e}",
+                    "dataset_id": dataset_id,
+                    "destination": destination,
+                }
+
+            # Record in the local registry so list_datasets/browse can find it.
+            try:
+                import os as _os
+                registry_path = _os.path.expanduser("~/.ipfs_datasets_registry.json")
+                registry = {}
+                if _os.path.exists(registry_path):
+                    with open(registry_path) as _rf:
+                        registry = json.load(_rf)
+                registry[dataset_id] = {
+                    "destination": destination,
+                    "format": save_format,
+                    "record_count": record_count,
+                    "size": data_size,
+                }
+                with open(registry_path, "w") as _wf:
+                    json.dump(registry, _wf, indent=2)
+            except Exception as _re:
+                logger.warning(f"Could not update dataset registry: {_re}")
 
             return {
                 "status": "success",
                 "dataset_id": dataset_id,
                 "destination": destination,
-                "format": format or "json",
+                "format": save_format,
                 "location": destination,
                 "size": data_size,
-                "record_count": len(dataset_data.get("data", [])),
+                "record_count": record_count,
             }
         else:
             # Dataset ID provided - try to use the dataset manager

@@ -1,0 +1,15 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 177.6888654800132,
+  "executed_checks": [
+    "retained-uscode-10-section-101-enlisted-member-definition-binding-fol-and-tdfol-with-six-refusal-controls"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "7cacb8e6ee76931b261e5f9dd1be57953deb20ad93624fc277fe483552d49475",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

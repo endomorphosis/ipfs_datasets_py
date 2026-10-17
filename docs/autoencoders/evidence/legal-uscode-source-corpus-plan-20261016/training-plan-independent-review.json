@@ -1,0 +1,155 @@
+{
+  "authority": {
+    "lean_proof_validity_added": false,
+    "model_quality_result_added": false,
+    "native_qualification_added": false,
+    "semantic_teacher_qualification_added": false,
+    "statutory_graph_admission_added": false,
+    "training_or_gold_mask_promoted": false
+  },
+  "blocking_findings": [],
+  "checks": [
+    {
+      "finding": "Explicit complete/partial/conflicting/pending/unsupported population; exposure, physical/component/version grouping, label origins and eligibility; existing adapter masks stay zero and splits unassigned.",
+      "id": "finite_target_inventory",
+      "status": "pass"
+    },
+    {
+      "finding": "Existing 259-entry byte/control reference transport is separate from proposed compact AST-action task; 524,290-ID safety ceiling is not a practical generation budget.",
+      "id": "byte_action_distinction",
+      "status": "pass"
+    },
+    {
+      "finding": "Canonical target lengths, artifact-ID overhead and overflow measured before fitting; encoder token and decoder ID budgets remain separate.",
+      "id": "output_feasibility",
+      "status": "pass"
+    },
+    {
+      "finding": "Exact checkpoint/runtime/vector producer/input identities and per-tensor shape/semantic-role/disposition ledger; reuse compatible learned bodies/adapters/vectors, generate only missing compatible entries.",
+      "id": "tensor_and_cache_reuse",
+      "status": "pass"
+    },
+    {
+      "finding": "Completed F15/F17/F18 imports and 687 records retained; detached source-token components distinguished from active 384D; remaining historical full 8D hash match resolved to actual weights separately.",
+      "id": "remaining_asset_gap",
+      "status": "pass"
+    },
+    {
+      "finding": "Original cached 8D input, shared condition, connector-produced 8D input, first-BOS logits/margins and diagnostic bypass; initialization-time drop distinguished from training forgetting.",
+      "id": "conditioning_diagnostic",
+      "status": "pass"
+    },
+    {
+      "finding": "Identical-prefix comparisons declare self-generated versus target-provided prefixes; reference prefixes excluded from target-free inference claims.",
+      "id": "prefix_provenance",
+      "status": "pass"
+    },
+    {
+      "finding": "Source-only, latent-only and combined routes with correct/zero/permuted controls; zero coordinates distinguished from branch removal; source pointers and retrieval declared.",
+      "id": "independent_input_routes",
+      "status": "pass"
+    },
+    {
+      "finding": "Separate 8D/384D/768D producer/checkpoint contracts; match source/context before independent context extension; no padded-vector relabeling or dimension-based context inference.",
+      "id": "dimension_context_factors",
+      "status": "pass"
+    },
+    {
+      "finding": "Compatible lower-dimensional warm starts separated from qualified source/task/profile teacher prediction supervision; incompatible 18/32/259 vocabularies do not receive direct sequence KL.",
+      "id": "scoped_distillation",
+      "status": "pass"
+    },
+    {
+      "finding": "Unfinished inference bridge explicitly preserves original IDs/bytes, invalid UTF-8, framing and incomplete outcomes in existing full-population accounting; no manufactured empty request or failure-as-abstention.",
+      "id": "full_byte_failure_accounting",
+      "status": "pass"
+    },
+    {
+      "finding": "IR-only semantic rendering, measured residual channel and retained-source restoration reported separately; exact UTF-8, normalized equality, semantic fidelity and edit distance distinct; cohort collision limit scoped.",
+      "id": "reconstruction_routes",
+      "status": "pass"
+    },
+    {
+      "finding": "Conditions margin versus matched CE/retention; structured-head engineering versus reviewed supervision; frozen budgets/tensors/populations/selection; no replay of unchanged historical diagnostic as new evidence.",
+      "id": "experiment_attribution",
+      "status": "pass"
+    },
+    {
+      "finding": "Tests, codec custody, byte roundtrip, low training loss, compiler agreement and syntax success establish no reviewed statutory teacher/graph/proof authority.",
+      "id": "no_semantic_promotion_from_engineering",
+      "status": "pass"
+    }
+  ],
+  "limitations": [
+    "This review checks plan consistency and retained documentation attribution, not the underlying historical runtime or numerical/model/corpus payloads.",
+    "Any later change to a reviewed document requires review update or an explicit subsequent review; these hashes describe only the inspected bodies."
+  ],
+  "new_execution": {
+    "checkpoint_or_vector_reads": 0,
+    "corpus_payload_reads": 0,
+    "database_operations": 0,
+    "lean_builds": 0,
+    "legal_reviews": 0,
+    "model_inference": 0,
+    "native_validation_jobs": 0,
+    "product_imports": 0,
+    "tests": 0,
+    "training_steps": 0
+  },
+  "nonblocking_notes": [],
+  "repository_baseline": "ff8a01fd04c741f892572e7f28cba777d4dfd472",
+  "resolved_nonblocking_notes": [
+    {
+      "current_phrase": "Seal source-only predictions and stop outcomes before reference scoring",
+      "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "reason": "Make explicit that the reference-scoring separation applies to latent-only and combined routes too; surrounding input-route and target-free requirements are already present.",
+      "resolution": "Root applied the all-input-route target-free prediction sealing wording; corrected body was reread before final pinning.",
+      "section": "6. Define evaluation before fitting",
+      "suggested_phrase": "Seal target-free predictions from every declared input route and their stop outcomes before reference scoring"
+    }
+  ],
+  "retained_documentation_basis": [
+    {
+      "bytes": 12380,
+      "path": "docs/autoencoders/legal_relational_decoder_target_contract_v1.md",
+      "sha256": "c7b7c17c130605cc54de1c7417bdbf90fa1c9d57ae52d75e416d35fcbf19cdea"
+    },
+    {
+      "bytes": 11574,
+      "path": "docs/autoencoders/legal_ir_asset_reconciliation_20261016.md",
+      "sha256": "cbe6857dcf9502401aacfd0799b76a31cbbce3803d0ea3bd892e524c423f6f4c"
+    },
+    {
+      "bytes": 16834,
+      "path": "docs/autoencoders/legal_ir_decoder_output_integration_20261016.md",
+      "sha256": "c8fe81472f637cf99f30a9b8bc218b1a7d1fcd80982bfccdb8edc6fededea1a6"
+    },
+    {
+      "bytes": 18363,
+      "path": "docs/autoencoders/legal_relational_batch_evaluation_v1.md",
+      "sha256": "d1d2f6b2b1500602a58d78821b2d3af6d41b697f7319666ec2b674a79fe16d24"
+    },
+    {
+      "bytes": 5241,
+      "path": "docs/autoencoders/legal_original_text_roundtrip.md",
+      "sha256": "3e5a5f254c792a4b73f4005195e508137fb488fa9c86b7972b3618ffa7f8f390"
+    }
+  ],
+  "review_kind": "Independent static review of the root-authored documentation changes against retained published documentation; no product or numerical execution.",
+  "reviewed_at_utc": "2026-10-16T17:27:14.249250+00:00",
+  "reviewed_documents": [
+    {
+      "bytes": 105419,
+      "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+      "sha256": "de459e4b7243f0a37efe216c76da9bb5ec8863edcaad46dacff47aa98b5edbb8"
+    },
+    {
+      "bytes": 58521,
+      "path": "docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "sha256": "d5e0ca717f66b6d32ccd3847f6148752bfcb4bf0ce8d26ddfbadaa40fbc17fb4"
+    }
+  ],
+  "reviewer": "/root/legal_training_plan_review",
+  "schema": "legal-uscode-training-plan-independent-review/v1",
+  "status": "pass"
+}

@@ -1,0 +1,65 @@
+{
+  "base": "1b7be0c601ec3373c2726e4022737e9bc20827e1",
+  "decisions": [
+    "Additive identity-based complete selected-population owner; no existing compiler/evaluator/inference edits",
+    "Reuse exact tdfol/tdfol_default1.0.0 public relational and paired owners; no wider family claim",
+    "Three independent raw transports freeze ordered population, explicit available/unavailable references and all observations",
+    "Nine exhaustive terminal states; no favorable duplicate selection or loss of unknown/unidentifiable submissions",
+    "Report selected N and comparable K separately, plus reference availability and valid typed-output fractions",
+    "Generation kind/checkpoint/dimension/source-context/target flags show declaration consistency, not inference attestation",
+    "Existing learned single-rule deontic receipts do not attest richer typed request inference",
+    "Oversized candidate inside safe outer transport is accounted; whole-envelope/reference overflow refuses",
+    "Trusted source-anchor and operation failures must not become decoder-invalid outcomes"
+  ],
+  "observed_at_utc": "2026-10-16T02:30:29.136728+00:00",
+  "remaining": [
+    "Qualified actual typed decoder generation with prediction seal before reference scoring",
+    "Reviewed connected legal targets and source/split/latent lineage",
+    "Broader typed-family profiles and matched8D384D768D training"
+  ],
+  "reviewers": [
+    "root",
+    "sampled_primary_metadata_review_n10",
+    "sampled_primary_docs_review_n10",
+    "primary_review_tests_n11"
+  ],
+  "schema": "legal-relational-batch-source-design-survey/v1",
+  "scope": "source/AST/design only; no product/test imports/execution, actual payload bodies or ledger reads",
+  "source_descriptors": [
+    {
+      "bytes": 15463,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/formula_generation_metrics.py",
+      "sha256": "1f717aeaa0e8c4ae9220976428b2764fc2a7f6d99a74940806c2762b10896376"
+    },
+    {
+      "bytes": 6557,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_coordination_evaluation.py",
+      "sha256": "8a8bf1842caa91cef2c5799eb7f1252f9c284ff4317cc2ec5b7f20ab1159b90f"
+    },
+    {
+      "bytes": 12832,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/learned_formula_observation.py",
+      "sha256": "75f241160e1e09d8414fbf43d7effc0f615f821a5de91b91f0e8447eb7fe04ad"
+    },
+    {
+      "bytes": 17669,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_generation.py",
+      "sha256": "3fe2bc54e36bd5b9f68bafe236193f2c377efa37090e2fe971a9a8e0bcc5aedf"
+    },
+    {
+      "bytes": 19197,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_comparison.py",
+      "sha256": "acf245266bb83393a321fc92f9f338e0d8e626baa6907451fdbc4f8397822915"
+    },
+    {
+      "bytes": 18562,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "sha256": "29dc8aefd0bd46a104d8f16444de6c6a017a29a3df0636044299b5f4b550c013"
+    },
+    {
+      "bytes": 29705,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_reconstruction_v1.py",
+      "sha256": "13d4279872d9cc3184d5796596b984193e49b51c7a56c4066857bce74b3e3723"
+    }
+  ]
+}

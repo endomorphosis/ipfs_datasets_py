@@ -1,0 +1,202 @@
+{
+  "files_deleted": false,
+  "filesystem_available_bytes": 21442281472,
+  "foreign_reservation_recovered": false,
+  "interpretation": "Retained is an accounting status, not evidence of stale ownership or permission to release/delete. Owner-led exact-attempt scan, liveness/custody checks and durable finalization are required before releasing commitments. Metadata does not authorize deletion of any model/corpus/evidence.",
+  "largest_retained_records": [
+    {
+      "attempt_directory": null,
+      "child": null,
+      "created_at": 1790628819.4905443,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 992205,
+      "reservation_id": "304467ad285444d1b28806057db0d17c",
+      "storage_bytes": 1500000000
+    },
+    {
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67139412,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926/capture-r1"
+      },
+      "child": {
+        "birth": "103166627",
+        "pid": 3200450
+      },
+      "created_at": 1790463353.168979,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 3181298,
+      "reservation_id": "626a02434b7b4c569415731a25d3b9f9",
+      "storage_bytes": 1500000000
+    },
+    {
+      "attempt_directory": null,
+      "child": null,
+      "created_at": 1790628765.6059742,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 977720,
+      "reservation_id": "88d024d77b9e4cc6beaf9cb0e596f00d",
+      "storage_bytes": 1500000000
+    },
+    {
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67139775,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926/capture-r1"
+      },
+      "child": {
+        "birth": "103478575",
+        "pid": 3946329
+      },
+      "created_at": 1790466472.367901,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 3927785,
+      "reservation_id": "aac1a959a09343f8b24040016fee2c4c",
+      "storage_bytes": 1500000000
+    },
+    {
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67139807,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r2/capture-r2"
+      },
+      "child": {
+        "birth": "103533727",
+        "pid": 4081135
+      },
+      "created_at": 1790467023.634099,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 4061722,
+      "reservation_id": "b08a7cfa09c648e69851ca85c306f285",
+      "storage_bytes": 1500000000
+    },
+    {
+      "attempt_directory": null,
+      "child": null,
+      "created_at": 1790628822.6958585,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 992206,
+      "reservation_id": "ba3cba0ddfc64b44b88400a78b4da0ef",
+      "storage_bytes": 1500000000
+    },
+    {
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137338,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r4"
+      },
+      "child": {
+        "birth": "99359009",
+        "pid": 2373890
+      },
+      "created_at": 1790425169.1195068,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 2346303,
+      "reservation_id": "209e07d4d9f74ce1be5452ad93258aa1",
+      "storage_bytes": 1000000000
+    },
+    {
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67004957,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-shadow-20260925/integration-r1/invocation/attempt-1-1-a904daab453a489e884cc6f6dad15bc7"
+      },
+      "child": {
+        "birth": "91671742",
+        "pid": 629638
+      },
+      "created_at": 1790348408.9417813,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 623988,
+      "reservation_id": "297afa219ed346c6b0e77ac2dcb04783",
+      "storage_bytes": 1000000000
+    },
+    {
+      "attempt_directory": null,
+      "child": null,
+      "created_at": 1791978491.984198,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 2317005,
+      "reservation_id": "47c6423c1ae748ddb85193a4b16154da",
+      "storage_bytes": 1000000000
+    },
+    {
+      "attempt_directory": null,
+      "child": null,
+      "created_at": 1790344472.6628764,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 3850850,
+      "reservation_id": "8827ac316aae4ecbbfddf9dedf0332d7",
+      "storage_bytes": 1000000000
+    },
+    {
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 73316538,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-low-resident-20261004/build-r1"
+      },
+      "child": {
+        "birth": "14638052",
+        "pid": 1416939
+      },
+      "created_at": 1791128306.9962783,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 1413618,
+      "reservation_id": "aebb073f220842cc8fe11a7a20d5b150",
+      "storage_bytes": 1000000000
+    },
+    {
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137480,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-20260926/capture-r1"
+      },
+      "child": {
+        "birth": "99497724",
+        "pid": 2711441
+      },
+      "created_at": 1790426527.2142782,
+      "final_attempt_bytes": null,
+      "finalization_profile": null,
+      "owner_pid": 2677266,
+      "reservation_id": "c396f8aa732a40569deb9d9f4c18e554",
+      "storage_bytes": 1000000000
+    }
+  ],
+  "ledger": {
+    "bytes": 7537010,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "cc7a714029b8dc666b9334583066a76b8b82bd4ff12a84dd17919ee02410c7e1"
+  },
+  "ledger_mutated": false,
+  "minimum_extra_available_bytes_at_snapshot": 12012574272,
+  "new_numerical_request_bytes": 268435456,
+  "nominal_storage_by_status": {
+    "active": 8388608,
+    "released": 294138702923,
+    "retained": 33178031680
+  },
+  "numerical_executed": false,
+  "observed_at_utc": "2026-10-16T03:32:35.802780+00:00",
+  "outstanding_reservations_bytes": 33186420288,
+  "readonly_nontransactional": true,
+  "reservation_status_counts": {
+    "active": 1,
+    "released": 590,
+    "retained": 92
+  },
+  "schema": "legal-decoder-storage-prerequisite-audit/v1",
+  "suggested_available_capacity_increase_bytes": 13000000000,
+  "tests_executed": false
+}

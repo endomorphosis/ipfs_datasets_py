@@ -1,0 +1,9 @@
+{
+  "artifacts_deleted": false,
+  "failed_execution_promoted": false,
+  "method": "Selected transcription of terminal status; original complete API receipt remains private and independently hashed.",
+  "request_sha256": "1be97ceeb4cf87db7f80ebedd70b7aebf3826cde47b76288d983af6f0244ab98",
+  "schema": "retained-source-b-01-recovery-terminal-observation/v1",
+  "status": "recovered_failed_evidence_preserved",
+  "tool_exit_code": 0
+}

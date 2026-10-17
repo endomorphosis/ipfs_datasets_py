@@ -1,0 +1,602 @@
+"""Selected native tests, retained §101 probe, and unreviewed V2 subjects.
+
+Invoke only as the frozen argv of run_owned_validation.py, with the request path
+as argv[1]. The native owner is the admission authority. This helper creates no
+resource grant, review claim, signer, registry, assessment, model or Lean result.
+No original body has been opened while authoring this draft.
+"""
+from __future__ import annotations
+
+import hashlib
+import importlib.abc
+import importlib.metadata
+import json
+import os
+from pathlib import Path
+import stat
+import sys
+import time
+import types
+import uuid
+
+
+PHASE = Path('/home/barberb/lift_coding/artifacts/legal-definition-review-integration-20261015-01')
+TEST_HELPER = PHASE / 'qualify_integration.py'
+PROBE_RELATIVE = Path('docs/autoencoders/evidence/legal-ir-definition-v2-integration-20261015/real_source_probe.py')
+LAUNCHER_RELATIVE = Path('scripts/ops/legal_ir/run_owned_validation.py')
+HISTORY = Path('/home/barberb/lift_coding/artifacts/legal-corpus-source-structured-sampling-20261015-01')
+ORIGINAL_INPUTS = {
+    'source.html': (HISTORY / 'official-2024-title10-section101.html', 98879,
+        '4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b'),
+    'acquisition-descriptor.json': (HISTORY / 'official-section101-acquisition-descriptor-v01.json', 926,
+        '00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe'),
+    'historical-sampling-report.json': (HISTORY / 'actual-section101-01/sampling-report.json', 2790275,
+        '173e3995b8628c76fbffcff1e1d77aad8d22d32ef84c3335e3ccc1c05af836d6'),
+}
+DESCRIPTOR_CANONICAL = '431a4da4edc59bed35841256a9e13a56c52715b227e5d0a036b55ae255df07c8'
+HISTORICAL_SAMPLER_CANONICAL = 'be524c7822f5e19a16ee56740560b19b0311001c553bd7ca9c2c9ed989af98b1'
+EXPECTED_GEOMETRY = [(334, 396), (766, 870), (382, 396), (780, 792), (794, 799), (800, 870)]
+EXPECTED_BINDING_ROLES = ['scope_block', 'definition_contributor/0000', 'scope_literal',
+    'definition_head', 'definition_cue', 'definition_body/0000']
+STEP_NAMES = ['selected_test_suites', 'retained_section101_v2_review_preparation']
+MODEL_ROOTS = frozenset({'torch', 'transformers', 'sentence_transformers', 'tensorflow',
+    'jax', 'jaxlib', 'onnxruntime', 'vllm'})
+MAX_SOURCE = 4 * 1024 * 1024
+MAX_SAMPLING = 32 * 1024 * 1024
+MAX_RECORD = 1024 * 1024
+
+
+def need(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def wire(value):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'),
+        ensure_ascii=False, allow_nan=False).encode('utf-8')
+
+
+def unique_pairs(pairs):
+    result = {}
+    for key, value in pairs:
+        need(key not in result, 'duplicate metadata key refused')
+        result[key] = value
+    return result
+
+
+def decode(raw):
+    return json.loads(raw, object_pairs_hook=unique_pairs,
+        parse_constant=lambda _: (_ for _ in ()).throw(ValueError('nonfinite metadata refused')))
+
+
+def local_snapshot(path, maximum):
+    """Bootstrap checked source bytes before loading the pinned native reader."""
+    path = Path(path)
+    need(path.is_absolute(), 'absolute bounded input required')
+    for parent in (path.parent, *path.parent.parents):
+        need(stat.S_ISDIR(parent.lstat().st_mode), 'unaliased input parents required')
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), 'rb') as stream:
+        before = os.fstat(stream.fileno())
+        need(stat.S_ISREG(before.st_mode) and before.st_nlink == 1
+            and 0 < before.st_size <= maximum, 'bounded single-link regular input required')
+        raw = stream.read(maximum + 1)
+        after = os.fstat(stream.fileno())
+    identity = lambda info: (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+    need(len(raw) == before.st_size and identity(before) == identity(after)
+        == identity(path.lstat()), 'bounded input changed during read')
+    return raw
+
+
+def load_checked(path, pins, role):
+    """Execute the exact checked buffer with its real __file__; never read pyc."""
+    path = Path(path)
+    need(str(path) in pins, 'helper source must be in frozen native request')
+    raw = local_snapshot(path, MAX_SOURCE)
+    need(sha(raw) == pins[str(path)], 'helper source SHA differs')
+    name = '_qualified_definition_review_' + role + '_' + uuid.uuid4().hex
+    need(name not in sys.modules, 'fresh helper module required')
+    module = types.ModuleType(name)
+    module.__file__ = str(path)
+    module.__package__ = ''
+    sys.modules[name] = module
+    try:
+        exec(compile(raw, str(path), 'exec', dont_inherit=True, optimize=0), module.__dict__)
+    except BaseException:
+        sys.modules.pop(name, None)
+        raise
+    return module
+
+
+def code_guard(pins, snapshot):
+    for spelling, digest in pins.items():
+        need(sha(snapshot(Path(spelling), MAX_SOURCE)) == digest, 'frozen execution source changed')
+
+
+def product_origins(root, pins):
+    """Require every loaded repository product Python owner to be admitted."""
+    origins = {}
+    for name, module in tuple(sys.modules.items()):
+        if name != 'ipfs_datasets_py' and not name.startswith('ipfs_datasets_py.'):
+            continue
+        file = getattr(module, '__file__', None)
+        if file is None:
+            continue
+        path = Path(file)
+        need(path.is_absolute() and path.suffix == '.py' and root in path.parents,
+            'product owner must originate in the selected source checkout')
+        need(str(path) in pins, 'loaded product owner missing from frozen source pins')
+        origins[name] = {'path': str(path), 'sha256': pins[str(path)]}
+    return origins
+
+
+class NoModels(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.partition('.')[0] in MODEL_ROOTS:
+            raise RuntimeError('model runtime import refused for source preparation')
+        return None
+
+
+def no_models_loaded():
+    need(not any(name.partition('.')[0] in MODEL_ROOTS for name in sys.modules),
+        'model runtime already loaded')
+
+
+class PinnedInput:
+    """Only read_bytes is adapted; the retained probe code stays unchanged."""
+    def __init__(self, path, length, digest, snapshot):
+        self.path, self.length, self.digest, self.snapshot = Path(path), length, digest, snapshot
+        self.reads = 0
+
+    def read_bytes(self):
+        raw = self.snapshot(self.path, self.length)
+        need(len(raw) == self.length and sha(raw) == self.digest,
+            'retained original input differs from fixed code commitment')
+        self.reads += 1
+        return raw
+
+    def descriptor(self):
+        return {'path': str(self.path), 'bytes': self.length, 'sha256': self.digest}
+
+
+def save(path, raw):
+    path = Path(path)
+    with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600), 'wb') as stream:
+        stream.write(raw)
+        stream.flush()
+        os.fsync(stream.fileno())
+    descriptor = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    return {'path': str(path), 'bytes': len(raw), 'sha256': sha(raw)}
+
+
+def read_descriptor(descriptor, snapshot, bound=MAX_RECORD):
+    need(type(descriptor) is dict and set(descriptor) == {'path', 'bytes', 'sha256'},
+        'exact replay file descriptor required')
+    need(type(descriptor['bytes']) is int and 0 < descriptor['bytes'] <= bound,
+        'bounded replay descriptor required')
+    raw = snapshot(Path(descriptor['path']), bound)
+    need(len(raw) == descriptor['bytes'] and sha(raw) == descriptor['sha256'],
+        'persisted replay file differs')
+    return raw
+
+
+def pin_existing(path, snapshot, bound=MAX_RECORD):
+    raw = snapshot(path, bound)
+    return {'path': str(path), 'bytes': len(raw), 'sha256': sha(raw)}
+
+
+def pin_probe_outputs(output, snapshot):
+    """The retained run() has a fixed 18-file output roster; no tree scan."""
+    paths = [(output / name, MAX_SAMPLING if name in
+        ('sampling-report.json', 'historical-sampling-report.json') else MAX_RECORD)
+        for name in ('source.html', 'acquisition-descriptor.json',
+            'historical-sampling-report.json', 'sampling-report.json')]
+    for family in ('fol', 'tdfol'):
+        paths.extend((output / family / name, MAX_RECORD)
+            for name in ('request.json', 'report.json', 'companion.json'))
+        paths.extend((output / family / 'graph-bundle' / name,
+            8 * 1024 * 1024 if name.endswith('.parquet') else MAX_RECORD)
+            for name in ('nodes.parquet', 'edges.parquet', 'manifest.json', 'snapshot.json'))
+    need(len(paths) == 18, 'fixed retained probe output roster differs')
+    return [pin_existing(path, snapshot, bound) for path, bound in paths]
+
+
+def load_family(output, family, snapshot):
+    paths = {
+        'candidate_raw': output / family / 'companion.json',
+        'report_raw': output / family / 'report.json',
+        'request_raw': output / family / 'request.json',
+        'raw_html': output / 'source.html',
+        'sampling_report_raw': output / 'sampling-report.json',
+        'descriptor_raw': output / 'acquisition-descriptor.json',
+    }
+    descriptors = {key: pin_existing(path, snapshot,
+        MAX_SAMPLING if key == 'sampling_report_raw' else MAX_RECORD) for key, path in paths.items()}
+    inputs = {key: read_descriptor(pin, snapshot,
+        MAX_SAMPLING if key == 'sampling_report_raw' else MAX_RECORD) for key, pin in descriptors.items()}
+    candidate = decode(inputs['candidate_raw'])
+    need(candidate['family'] == family, 'fresh candidate family differs')
+    need([(row['start_char'], row['end_char']) for row in candidate['source_occurrences']]
+        == EXPECTED_GEOMETRY, 'fixed six physical occurrences or order differs')
+    need([row['role'] for row in candidate['source_bindings']] == EXPECTED_BINDING_ROLES,
+        'fixed six source binding roles differ')
+    identities = [row['record_cid'] for row in candidate['source_occurrences']]
+    need(len(identities) == len(set(identities)) == 6, 'six distinct physical occurrence identities required')
+    pins = {
+        'candidate_sha256': sha(inputs['candidate_raw']), 'candidate_cid': candidate['record_cid'],
+        'graph_cid': candidate['graph']['record_cid'], 'request_sha256': sha(inputs['request_raw']),
+        'report_sha256': sha(inputs['report_raw']), 'raw_sha256': ORIGINAL_INPUTS['source.html'][2],
+        'raw_bytes': ORIGINAL_INPUTS['source.html'][1],
+        'extracted_sha256': candidate['source_version']['extracted_view']['sha256'],
+        'sampling_report_sha256': sha(inputs['sampling_report_raw']),
+        'sampling_report_full_canonical_sha256': sha(wire(decode(inputs['sampling_report_raw']))),
+        'descriptor_sha256': sha(inputs['descriptor_raw']),
+        'descriptor_full_canonical_sha256': DESCRIPTOR_CANONICAL,
+    }
+    return candidate, inputs, pins, descriptors
+
+
+def check_open_packet(packet, context_owner):
+    need(len(packet['dependency_slots']) == 6
+        and [row['kind'] for row in packet['dependency_slots']] == list(context_owner.DEPENDENCY_KINDS),
+        'all six fixed dependency kinds required')
+    for row in packet['dependency_slots']:
+        need(row['open'] is True and row['status'] == 'open_missing'
+            and row['availability'] == 'missing' and row['attachments'] == []
+            and row['semantic_attachment_verified'] is False
+            and row['locator'] is row['expected_view_id'] is row['candidate_selector'] is None,
+            'source-only context obligations must remain missing and unattached')
+    need(all(value is False for value in packet['authority'].values()), 'context authority must remain false')
+    for key in ('dependency_inventory_exhaustive', 'context_closure_verified', 'source_semantics_verified',
+            'independently_reviewed', 'training_qualified', 'proof_authority',
+            'semantic_attachments_inferred', 'raw_html_coordinate_mapping_verified'):
+        need(packet[key] is False, 'context qualification must remain false')
+
+
+def prepare_subjects(output, snapshot):
+    # Imports happen only in the qualified native child, after unchanged tests.
+    from ipfs_datasets_py.logic.autoformal import corpus_definition_review_v2 as review
+    from ipfs_datasets_py.logic.autoformal import legal_statutory_context_v2 as context
+    from ipfs_datasets_py.logic.autoformal import legal_graph_dependencies as dependencies
+    fol, inputs, _, _ = load_family(output, 'fol', snapshot)
+    td, _, _, _ = load_family(output, 'tdfol', snapshot)
+    need(td['source_occurrences'] == fol['source_occurrences'], 'FOL/TDFOL physical populations differ')
+    sampling = decode(inputs['sampling_report_raw'])
+    normalized_source = save(output / 'normalized-source.txt',
+        sampling['document_view_report']['document']['document_text'].encode('utf-8'))
+    trusted = {'expected_report_sha256': sampling['document_view_report_sha256'],
+        'descriptor': decode(inputs['descriptor_raw']), 'expected_descriptor_sha256': DESCRIPTOR_CANONICAL,
+        'expected_raw_sha256': ORIGINAL_INPUTS['source.html'][2],
+        'expected_raw_bytes': ORIGINAL_INPUTS['source.html'][1],
+        'limits': sampling['document_view_report']['limits']}
+    directory = output / 'contexts'
+    directory.mkdir(mode=0o700)
+    context_files, population = [], []
+    for index, occurrence in enumerate(fol['source_occurrences']):
+        packet = context.build_context_packet_v2(sampling['document_view_report'], inputs['raw_html'],
+            char_start=occurrence['start_char'], char_end=occurrence['end_char'],
+            dependency_requests=None, **trusted)
+        check_open_packet(packet, context)
+        descriptor = save(directory / (f'{index:04d}.json'), wire(packet))
+        context_files.append({'source_occurrence_cid': occurrence['record_cid'],
+            'packet_file': descriptor, 'dependency_requests': None})
+        population.append({'source_occurrence_cid': occurrence['record_cid'], 'packet_sha256': descriptor['sha256']})
+    context_manifest = save(output / 'context-inputs.json', wire(context_files))
+    population_file = save(output / 'expected-context-population.json', wire(population))
+    summaries = {}
+    for family in ('fol', 'tdfol'):
+        candidate, candidate_inputs, candidate_pin, candidate_files = load_family(output, family, snapshot)
+        directory = output / family
+        pin_file = save(directory / 'candidate-pin.json', wire(candidate_pin))
+        replay_file = save(directory / 'review-replay-inputs.json', wire({
+            'schema': 'legal-definition-v2-review-replay-inputs/v1',
+            'candidate_inputs': candidate_files, 'expected_candidate_pin': pin_file,
+            'context_inputs': context_manifest, 'expected_context_population': population_file}))
+        context_inputs = [{'source_occurrence_cid': row['source_occurrence_cid'],
+            'packet_raw': read_descriptor(row['packet_file'], snapshot), 'dependency_requests': row['dependency_requests']}
+            for row in context_files]
+        args = dict(candidate_inputs=candidate_inputs, expected_candidate_pin=candidate_pin,
+            context_inputs=context_inputs, expected_context_population=population)
+        preparation = review.prepare_definition_review_evidence_v2(**args)
+        manifest = dependencies.build_dependency_manifest(preparation['artifacts'], preparation['edges'],
+            expected_artifact_ids=preparation['expected_artifact_ids'])
+        subject = review.build_definition_review_subject_v2(preparation, manifest, **args,
+            expected_manifest_sha256=manifest['manifest_sha256'],
+            required_dependency_ids=preparation['expected_artifact_ids'])
+        need(all(preparation[key] is False for key in review.FALSE_FLAGS), 'review preparation authority must remain false')
+        need(len(preparation['contexts']) == 6 and len(preparation['context_slot_ids'])
+            == len(set(preparation['context_slot_ids'])) == 36, 'complete physical context obligations required')
+        need(subject['required_dependency_ids'] == preparation['expected_artifact_ids'], 'complete required dependency IDs differ')
+        preparation_file = save(directory / 'review-preparation.json', wire(preparation))
+        manifest_file = save(directory / 'review-dependency-manifest.json', wire(manifest))
+        subject_file = save(directory / 'review-subject.json', wire(subject))
+        # Fresh disk replay: reconstruct all six original byte inputs, the
+        # twelve-field pin, ordered packet population and closure from files.
+        replay = decode(read_descriptor(replay_file, snapshot))
+        need(set(replay) == {'schema', 'candidate_inputs', 'expected_candidate_pin', 'context_inputs',
+            'expected_context_population'} and replay['schema'] == 'legal-definition-v2-review-replay-inputs/v1',
+            'closed persisted replay manifest required')
+        cold_inputs = {key: read_descriptor(pin, snapshot, MAX_SAMPLING
+            if key == 'sampling_report_raw' else MAX_RECORD) for key, pin in replay['candidate_inputs'].items()}
+        cold_pin = decode(read_descriptor(replay['expected_candidate_pin'], snapshot))
+        cold_context_files = decode(read_descriptor(replay['context_inputs'], snapshot))
+        cold_population = decode(read_descriptor(replay['expected_context_population'], snapshot))
+        cold_contexts = []
+        for row in cold_context_files:
+            need(set(row) == {'source_occurrence_cid', 'packet_file', 'dependency_requests'}, 'closed persisted context row required')
+            raw = read_descriptor(row['packet_file'], snapshot)
+            check_open_packet(decode(raw), context)
+            cold_contexts.append({'source_occurrence_cid': row['source_occurrence_cid'],
+                'packet_raw': raw, 'dependency_requests': row['dependency_requests']})
+        cold_preparation = decode(read_descriptor(preparation_file, snapshot))
+        cold_manifest = decode(read_descriptor(manifest_file, snapshot))
+        cold_subject = decode(read_descriptor(subject_file, snapshot))
+        cold_args = dict(candidate_inputs=cold_inputs, expected_candidate_pin=cold_pin,
+            context_inputs=cold_contexts, expected_context_population=cold_population)
+        need(review.validate_definition_review_evidence_v2(cold_preparation, **cold_args) == preparation,
+            'persisted review preparation differs from original-source replay')
+        dependencies.validate_dependency_manifest(cold_manifest, expected_manifest_sha256=manifest['manifest_sha256'])
+        replayed_subject = review.build_definition_review_subject_v2(cold_preparation, cold_manifest, **cold_args,
+            expected_manifest_sha256=manifest['manifest_sha256'],
+            required_dependency_ids=cold_preparation['expected_artifact_ids'])
+        need(cold_subject == replayed_subject == subject, 'persisted review subject differs from complete disk replay')
+        summaries[family] = {'candidate_pin': pin_file, 'replay_inputs': replay_file,
+            'preparation': preparation_file, 'dependency_manifest': manifest_file, 'subject': subject_file,
+            'physical_occurrences': 6, 'open_context_slots': 36,
+            'dependency_artifact_count': len(preparation['expected_artifact_ids']),
+            'complete_original_disk_replay': True, 'actual_review_claims': 0,
+            'all_preparation_authorities_false': True}
+    return {'shared_context_inputs': context_manifest, 'expected_context_population': population_file,
+        'normalized_source': normalized_source,
+        'shared_physical_context_packet_count': 6, 'families': summaries}
+
+
+def prepare_unsigned_review_handoff(output, snapshot):
+    """Current blank source review, separate from all candidate-AST subjects."""
+    from ipfs_datasets_py.logic.autoformal import legal_source_sampling_review as intake
+    candidate, inputs, candidate_pin, _ = load_family(output, 'fol', snapshot)
+    sampling = decode(inputs['sampling_report_raw'])
+    report_sha = sha(wire(sampling))
+    replay = dict(descriptor=decode(inputs['descriptor_raw']),
+        expected_descriptor_sha256=DESCRIPTOR_CANONICAL,
+        expected_raw_sha256=ORIGINAL_INPUTS['source.html'][2],
+        expected_raw_bytes=ORIGINAL_INPUTS['source.html'][1],
+        expected_sampling_report_sha256=report_sha,
+        view_limits=sampling['document_view_report']['limits'], sampling_limits=sampling['limits'])
+    raw = inputs['raw_html']
+    bundle = intake.prepare_sampling_review_bundle(raw, **replay)
+    bundle_sha = intake.sampling_review_bundle_sha256(bundle)
+    need(intake.validate_sampling_review_bundle(bundle, raw,
+        expected_bundle_sha256=bundle_sha, **replay) == bundle, 'current unsigned bundle replay differs')
+    population = intake.summarize_sampling_review_population(bundle, [], raw,
+        expected_bundle_sha256=bundle_sha, expected_response_sha256s=[], **replay)
+    need(bundle['sampling_report'] == sampling and candidate_pin['sampling_report_full_canonical_sha256']
+        == report_sha, 'bundle and V2 source inputs use different producer generations')
+    need(bundle['manifest']['counts'] == dict(units=560, withheld_contexts=0, subjects=560,
+        strata={'candidate_statute_paragraph':134, 'retained_context_control':426}), 'complete 560-unit population differs')
+    need(population['subject_count'] == population['counts']['pending'] == 560
+        and population['response_count'] == 0 and population['review_completed'] is False
+        and all(value == 0 for key, value in population['counts'].items() if key != 'pending'), 'all units must remain pending')
+    guides = bundle['guides']
+    need(len(guides) == 560 and [g['subject_ref']['index'] for g in guides] == list(range(560))
+        and all(g['subject_ref']['kind'] == 'unit' for g in guides), 'complete ordered unit guides required')
+    for item in (bundle['manifest'], bundle['question_catalog'], population, *guides):
+        need(all(flag is False for flag in item['authority'].values()), 'unsigned handoff authority must remain false')
+    need(all(g['training_mask'] == g['evaluation_gold_mask'] == 0 and g['unresolved'] is True
+        and g['status'] == 'blank_not_a_review' for g in guides), 'blank guide masks/status differ')
+    need(bundle['manifest']['training_mask'] == bundle['manifest']['evaluation_gold_mask']
+        == population['training_mask'] == population['evaluation_gold_mask'] == 0, 'unsigned population masks must remain zero')
+    directory = output / 'source-first-review'
+    directory.mkdir(mode=0o700)
+    bundle_file = save(directory / 'review-bundle.json', wire(bundle))
+    templates = []
+    for guide in guides:
+        template = decode(wire(guide['response_template']))
+        need(template['bundle_sha256'] is None, 'sealed bundle templates must not self-reference')
+        template['bundle_sha256'] = bundle_sha
+        templates.append(template)
+    template_file = save(directory / 'response-templates.jsonl', b''.join(wire(t)+b'\n' for t in templates))
+    population_file = save(directory / 'population-pending.json', wire(population))
+    records = {r['record_cid']:r for r in sampling['records']}
+    units = [r for r in sampling['records'] if r['schema'] == intake.UNIT_SCHEMA]
+    need([u['ordinal'] for u in units] == list(range(560)), 'complete source-ordered units required')
+    view_id = sampling['document_view_report']['normalized_view']['view_id']
+    links = []
+    for occurrence, ordinal in zip(candidate['source_occurrences'], [9,13,9,13,13,13], strict=True):
+        matches = []
+        for unit, guide in zip(units, guides, strict=True):
+            whole = records[unit['source_occurrence_ref']['record_cid']]
+            if (unit['source_version_ref']['record_cid'] == occurrence['source_version_cid']
+                and unit['normalized_view_id'] == view_id and whole['coordinate_system'] == occurrence['coordinate_system']
+                and whole['start_char'] <= occurrence['start_char'] < occurrence['end_char'] <= whole['end_char']
+                and whole['start_utf8'] <= occurrence['start_utf8'] < occurrence['end_utf8'] <= whole['end_utf8']):
+                need(guide['source_occurrence_ref'] == unit['source_occurrence_ref'], 'guide/unit custody differs')
+                matches.append((unit, guide, whole))
+        need(len(matches) == 1 and matches[0][0]['ordinal'] == ordinal, 'physical occurrence association is unmapped or ambiguous')
+        unit, guide, whole = matches[0]
+        need(whole['span_text'][occurrence['start_char']-whole['start_char']:
+            occurrence['end_char']-whole['start_char']] == occurrence['span_text']
+            and whole['span_text'].encode('utf-8')[occurrence['start_utf8']-whole['start_utf8']:
+            occurrence['end_utf8']-whole['start_utf8']] == occurrence['span_text'].encode('utf-8'),
+            'contained physical text and UTF8 bytes differ')
+        need(whole == occurrence or (whole['start_char'], whole['end_char'])
+            != (occurrence['start_char'], occurrence['end_char']),
+            'same full geometry must retain exact original occurrence')
+        links.append(dict(source_occurrence_cid=occurrence['record_cid'], unit_ref=sampling['unit_refs'][ordinal],
+            guide_ref={'schema':guide['schema'], 'record_cid':guide['record_cid'], 'sha256':sha(wire(guide))},
+            subject_ref=guide['subject_ref'], source_version_cid=occurrence['source_version_cid'], normalized_view_id=view_id,
+            geometry={k:occurrence[k] for k in ('start_char','end_char','start_utf8','end_utf8')},
+            containing_full_unit_ref=unit['source_occurrence_ref'],
+            relationship='same_full_unit_occurrence' if whole == occurrence else 'contained_derived_subspan',
+            semantic_attachment_verified=False, historical_parent_cache_evidence=False, meaning_transfer_authorized=False))
+    subjects = {}
+    for family in ('fol','tdfol'):
+        other, _, pins, _ = load_family(output, family, snapshot)
+        need(other['source_occurrences'] == candidate['source_occurrences']
+            and pins['sampling_report_full_canonical_sha256'] == report_sha, 'family source population/generation differs')
+        subjects[family] = pin_existing(output / family / 'review-subject.json', snapshot)
+    handoff = dict(schema='legal-definition-v2-unsigned-review-handoff/v1', bundle=bundle_file,
+        bundle_sha256=bundle_sha, manifest_ref={'schema':bundle['manifest']['schema'],
+            'record_cid':bundle['manifest']['record_cid'], 'sha256':sha(wire(bundle['manifest']))},
+        question_catalog_ref=bundle['manifest']['question_catalog_ref'], response_templates=template_file,
+        pending_population=population_file, family_v2_subjects=subjects, ordered_custody_associations=links,
+        source_first_targets_pending=True, human_exposure_records_pending=True, candidate_AST_exposure_is_separate=True,
+        actual_responses=0, actual_reviews=0, training_mask=0, evaluation_gold_mask=0,
+        authority=dict(bundle['manifest']['authority']), schema_equivalence_claimed=False,
+        automatic_exposure_or_meaning_transfer=False, generated_metadata_not_admission=True)
+    handoff_file = save(directory / 'handoff-associations.json', wire(handoff))
+    need(decode(read_descriptor(bundle_file, snapshot, MAX_SAMPLING)) == bundle
+        and decode(read_descriptor(handoff_file, snapshot)) == handoff, 'persisted unsigned handoff differs')
+    return dict(bundle=bundle_file, bundle_sha256=bundle_sha, templates=template_file, population=population_file,
+        associations=handoff_file, subjects=560, pending=560, responses=0, reviews=0,
+        authority_granted=False, source_first_targets_and_exposure_require_human_completion=True)
+
+
+def versions():
+    values = {}
+    for name in ('pytest', 'cryptography', 'pyarrow', 'multiformats'):
+        try:
+            values[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            values[name] = None
+    return {'installed_distribution_metadata': values,
+        'external_distribution_integrity_or_trust_attested': False}
+
+
+def main():
+    need(not sys.flags.optimize, 'source preparation requires non-optimized Python')
+    need(len(sys.argv) == 2, 'one frozen native request path required')
+    request_raw = local_snapshot(Path(sys.argv[1]), MAX_RECORD)
+    request = decode(request_raw)
+    need(request['schema'] == 'owned-validation-request/v1', 'native request schema differs')
+    root = Path(request['cwd'])
+    need(root.is_absolute() and root == Path.cwd() and stat.S_ISDIR(root.lstat().st_mode),
+        'selected physical source checkout required')
+    root_info = root.lstat()
+    root_identity = (root_info.st_dev, root_info.st_ino)
+    attempt = Path(request['attempt_directory'])
+    layout = {name: str(attempt / name) for name in ('pytest', 'tmp', 'cache', 'db', 'exports', 'logs')}
+    need(request['outputs'] == layout and request['declared_external_writable_paths'] == []
+        and request['process_scope'] == 'isolated_process_group', 'exact native output layout required')
+    for path in (attempt, *(Path(value) for value in layout.values())):
+        info = path.lstat()
+        need(stat.S_ISDIR(info.st_mode) and info.st_uid == os.geteuid()
+            and stat.S_IMODE(info.st_mode) & 0o077 == 0, 'private owned native output directory required')
+    need(os.environ.get('TMPDIR') == layout['tmp'] and os.environ.get('XDG_CACHE_HOME') == layout['cache']
+        and os.environ.get('PYTHONDONTWRITEBYTECODE') == '1', 'native writable redirects required')
+    pins = request['source_sha256']
+    need(type(pins) is dict and str(Path(__file__).absolute()) in pins, 'wrapper source pin required')
+    logs = Path(layout['logs'])
+    receipt = {'schema': 'legal-definition-v2-review-source-preparation/v1', 'status': 'failed',
+        'request_sha256': sha(request_raw), 'declared_steps': STEP_NAMES, 'completed_steps': [],
+        'scope': 'Original-byte engineering replay and preparation of unreviewed source/context custody only.',
+        'actual_review_claims': 0, 'real_data_signing_keys_created': 0, 'real_data_registries_created': 0,
+        'real_data_signatures_created': 0, 'real_data_review_assessments': 0,
+        'model_calls': 0, 'model_weights_loaded': False, 'Lean_executed': False,
+        'legal_meaning_accepted': False, 'semantic_authority_granted': False,
+        'training_qualified': False, 'admitted': False, 'formalized': False,
+        'source_semantics_verified': False, 'context_closure_verified': False,
+        'fresh_interpreter_disk_replay_claimed': False}
+    stage = 'qualified_test_helper'
+    started = time.monotonic()
+    blocker = NoModels()
+    no_models_loaded()
+    sys.meta_path.insert(0, blocker)
+    try:
+        launcher = load_checked(root / LAUNCHER_RELATIVE, pins, 'native_snapshot')
+        snapshot = launcher.snapshot
+        code_guard(pins, snapshot)
+        helper = load_checked(TEST_HELPER, pins, 'selected_tests')
+        result = helper.main()
+        need(type(result) is int and result == 0, 'selected qualification tests failed')
+        checks_pin = pin_existing(logs / 'integration-checks.json', snapshot)
+        checks = decode(read_descriptor(checks_pin, snapshot))
+        need(checks['passed'] is True and checks['checks'] == request['selected_checks']
+            and checks['request_sha256'] == sha(request_raw), 'actual selected-check receipt differs')
+        need(Path.cwd() == root and (root.lstat().st_dev, root.lstat().st_ino) == root_identity,
+            'selected source checkout changed during tests')
+        receipt['selected_checks'] = request['selected_checks']
+        receipt['pytest_case_count'] = checks['cases']
+        receipt['test_evidence'] = checks_pin
+        receipt['completed_steps'].append(STEP_NAMES[0])
+        stage = 'retained_probe'
+        probe = load_checked(root / PROBE_RELATIVE, pins, 'retained_probe')
+        need(Path(probe.__file__) == root / PROBE_RELATIVE and probe.REPOSITORY == root,
+            'retained probe original repository binding differs')
+        need(probe.INPUTS == ORIGINAL_INPUTS and probe.DESCRIPTOR_CANONICAL == DESCRIPTOR_CANONICAL
+            and probe.HISTORICAL_SAMPLER_CANONICAL == HISTORICAL_SAMPLER_CANONICAL,
+            'retained probe original input commitments differ')
+        readers = {name: PinnedInput(path, length, digest, snapshot)
+            for name, (path, length, digest) in ORIGINAL_INPUTS.items()}
+        probe.INPUTS = {name: (readers[name], length, digest)
+            for name, (_, length, digest) in ORIGINAL_INPUTS.items()}
+        output = Path(layout['exports']) / 'section101-v2-review'
+        output.mkdir(mode=0o700)
+        probe_receipt = {'schema': 'legal-ir-definition-v2-real-source-engineering-probe/v1',
+            'status': 'running', 'checks': [], 'repository': str(root),
+            'driver': pin_existing(root / PROBE_RELATIVE, snapshot, MAX_SOURCE),
+            'entrypoint': 'run(output, receipt); retained main() not called',
+            'input_reader_adapter': 'exact three read_bytes paths; pinned native launcher.snapshot',
+            'scope': 'Retained probe only; review-subject preparation is a separate wrapper step.'}
+        probe.run(output, probe_receipt)
+        need(all(reader.reads == 1 for reader in readers.values()), 'retained probe original read population differs')
+        probe_outputs = pin_probe_outputs(output, snapshot)
+        receipt['retained_probe_outputs'] = save(output / 'retained-probe-output-pins.json',
+            wire({'schema': 'legal-definition-v2-retained-probe-output-pins/v1',
+                'files': probe_outputs, 'file_count': 18,
+                'retained_original_probe_algorithm_unchanged': True}))
+        probe_receipt['status'] = 'pass'
+        receipt['retained_probe'] = save(logs / 'retained-definition-v2-probe.json', wire(probe_receipt))
+        stage = 'prepare_contexts_and_review_subjects'
+        receipt['review_preparation'] = prepare_subjects(output, snapshot)
+        stage = 'prepare_current_unsigned_source_review_handoff'
+        receipt['unsigned_source_review_handoff'] = prepare_unsigned_review_handoff(output, snapshot)
+        receipt['review_handoff'] = save(output / 'README.md', '# Unreviewed 2024 title 10 §101 definition evidence\n\nThese engineering inputs prepare future review. There are zero actual legal or formal reviews, no admitted meanings or training targets, and no Lean build. The whole post-means body is one opaque unary atom. No six-way union, applicability decision or norm/use is inferred.\n\nStart with the [complete normalized source](normalized-source.txt) and retain a source-first target and exposure record before examining candidate ASTs. The [original HTML](source.html), [acquisition descriptor](acquisition-descriptor.json) and [complete sampler](sampling-report.json) remain available. All 560 source units (134 candidate paragraphs and 426 controls) and 3,360 original context obligations remain unreviewed. Earlier unsigned review bundles retain their original producer generation; this preparation creates a distinct V2 signature subject and does not relabel those declarations.\n\nThe [context input inventory](context-inputs.json) binds all six physical component occurrences in order; each has six open obligations. Available source content does not close a slot. Review the independent input commitments and complete dependency manifest before any future signing.\n\n- FOL: [review subject](fol/review-subject.json), [exact replay input manifest](fol/review-replay-inputs.json), [dependency manifest](fol/review-dependency-manifest.json).\n- TDFOL: [review subject](tdfol/review-subject.json), [exact replay input manifest](tdfol/review-replay-inputs.json), [dependency manifest](tdfol/review-dependency-manifest.json).\n\nThese subjects contain candidate ASTs and do not attest reviewer blinding, identity or independence. Production reviewer identities, legal/formal authorization, trust registry/policy, applicability and exposure evidence must be supplied separately. This preparation creates no real-data keys, registry, signatures or assessments. Preserve unresolved or disputed findings; future authentication remains separate from semantic admission.\n\nThe refreshed [unsigned source-review bundle](source-first-review/review-bundle.json), [560 blank templates](source-first-review/response-templates.jsonl), [pending population](source-first-review/population-pending.json) and [custody associations](source-first-review/handoff-associations.json) belong to the current producer generation. They are indexed separately from candidate ASTs and V2 subjects. Complete independent source-first targets and human exposure declarations before examining candidate interpretations. The six geometry associations preserve source custody only: contained subspans do not inherit historical parent-cache evidence, legal attachments, answers, signatures, exposure declarations or meaning authority. Viewing an unsigned source guide and viewing a V2 candidate subject are distinct exposures; neither transfers automatically to the other.\n'.encode('utf-8'))
+        for reader in readers.values():
+            reader.read_bytes()
+        receipt['original_inputs'] = {name: reader.descriptor() for name, reader in readers.items()}
+        receipt['original_inputs_verified_before_and_after'] = True
+        receipt['original_input_reads_per_file'] = {name: reader.reads for name, reader in readers.items()}
+        no_models_loaded()
+        receipt['loaded_product_source_origins'] = product_origins(root, pins)
+        code_guard(pins, snapshot)
+        need(Path.cwd() == root and (root.lstat().st_dev, root.lstat().st_ino) == root_identity,
+            'selected source checkout changed during preparation')
+        for pin in probe_outputs:
+            read_descriptor(pin, snapshot, MAX_SAMPLING)
+        need(local_snapshot(Path(sys.argv[1]), MAX_RECORD) == request_raw, 'native request changed during preparation')
+        receipt['completed_steps'].append(STEP_NAMES[1])
+        receipt['environment'] = versions()
+        receipt['elapsed_seconds'] = time.monotonic() - started
+        receipt['status'] = 'pass'
+        receipt['limitations'] = [
+            'Expected candidate/context transport pins are generated engineering replay commitments, not independent legal review.',
+            'The one opaque whole-body definition atom, scope/applicability declaration and six missing dependency kinds remain unreviewed.',
+            'Original sampler 560 units/134 candidates/426 controls and 3360 obligations remain open; no accepted review population is created.',
+            'Fresh disk replay uses the same process and admitted owner implementations, not an independent algorithm or fresh interpreter.',
+            'PyArrow/cryptography/CID libraries are runtime dependencies; reported distribution versions are descriptive, not a dependency integrity attestation.',
+            'The native launcher owns budgets, cancellation, final inventory durability and release. This helper grants no resource authority.']
+        output_pin = save(logs / 'definition-v2-review-preparation.json', wire(receipt))
+        print(json.dumps({'status': 'pass', 'receipt': output_pin, 'actual_review_claims': 0}, sort_keys=True))
+        return 0
+    except BaseException as error:
+        receipt.update(status='failed', failure_stage=stage, error_type=type(error).__name__,
+            elapsed_seconds=time.monotonic() - started)
+        save(logs / 'definition-v2-review-preparation-failure.json', wire(receipt))
+        # The unchanged native launcher retains the actual traceback in its
+        # private stderr and records nonzero completion. Never convert to pass.
+        raise
+    finally:
+        if blocker in sys.meta_path:
+            sys.meta_path.remove(blocker)
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

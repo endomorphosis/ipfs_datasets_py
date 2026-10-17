@@ -1,0 +1,51 @@
+{
+  "accepted_null_device_contract": {
+    "bound": "At most32writing opens. Every writing event records actual callerfile/function/mode/flags. Read-only null opens are not counted by this writing-only branch and are not a persistent output allowance.",
+    "identity": "Exact root-owned existing /dev/null character device major1/minor3, unchanged device/inode/mode/rdev/uid, rechecked through discovery_guard before every permitted writing open and completion.",
+    "mode_and_flags": "Only modeNone or normalr/w/a/r+/w+/a+ audit modes, integer write/update flags restricted to O_WRONLY/O_RDWR/O_CREAT/O_TRUNC/O_APPEND/O_CLOEXEC; no EXCL/symlink/regularfile/new persistent target is admitted.",
+    "scope": "A kernel null device is a standardI/O sink, so this exception does not expand regular-file output directories, source mutability, subprocess/network admission or post-startup writes. It accommodates installedDill/Torch filetype probes without editing or monkeypatching those packages.",
+    "unchanged_native_gate": "214frozenpins, child2/CPU1/4096MiBresident/268435456Bstorage/1800s; all prior exactldconfigmax4call constraints and native isolated-group closeout remain required.",
+    "window": "Torch import only, with finally closing discovery_open before any numerical generation."
+  },
+  "blocking_findings": [],
+  "required_runtime_audit": [
+    "Actualnativeadmission under frozenv03request and unchangedcap/freecheck.",
+    "Allowedldconfigcalls<=4and writingnullprobeopens<=32, all recorded; refusednetwork/childattempts0; persistentregularwritesonlyattempt.",
+    "All6namedchecks,60firstpass+60freshprivate replay, actualforwardstepcount and complete30compatibility/scorecells.",
+    "Nativeparent completed/returncode0, exactdurability inventory, group0, releasedstorage+lease, cleanupnull; failurehistoriesretainseparateexactreceipts."
+  ],
+  "review_scope": "Source/AST/requestmetadata only; no product/model/test imports or execution, weights/latents/corpus/generated prediction/scoring/compatibility/source-input payloads or ledger reads.",
+  "runtime_history_root_reported_not_independently_authenticated_here": {
+    "no_prior_success_or_additive_generation_count": true,
+    "numeric01": "Stopped on subprocess standard /dev/null during CUDA library lookup before anymodelgeneration; own268435456Bclaim recovery metadata separately reviewed,5files117286Bpreserved.",
+    "numeric02": "AdvancedpastCUDA and stopped on installedDill get_file_type(r+b) null-device probe before anymodelgeneration; rootreports exact own268435456Bclaim recovery5files118021Bpreserved."
+  },
+  "schema": "independent-numerical-worker-null-startup-profile-source-review/v1",
+  "source_and_request_pins": [
+    {
+      "bytes": 32502,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v03.py",
+      "sha256": "5c20913510c14341f028fc608536abd866900333c06a01597e2d6864411f93fd"
+    },
+    {
+      "bytes": 33020,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/run_numerical_replay_v04.py",
+      "sha256": "25ffbdc7dc863f9129fd821cdf4ea8189b935a80f69e0f531c47d935b5751023"
+    },
+    {
+      "bytes": 49852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-storage-retry-20261016-01/numerical-replay-request-v03.json",
+      "sha256": "265577bec114742e13558da0fce595ae69265a82391f45e9caf8e87a2d83ec66"
+    }
+  ],
+  "status": "SOURCE_REVIEW_PASS_RUNTIME_PENDING",
+  "whole_ast_delta_proof": {
+    "exact_changed_units": [
+      "Initialize bounded null_opens event list alongside existing discovery state.",
+      "Replace only the existing /dev/null writing-open exception branch.",
+      "Add one engineering summary event-list field."
+    ],
+    "meaning": "All library-discovery subprocess guards, native budgets, generation/reload/scoring/compatibility and original source/input/output custody stay exactly as the reviewedv03helper.",
+    "reduced_new_equals_prior_whole_ast": true
+  }
+}

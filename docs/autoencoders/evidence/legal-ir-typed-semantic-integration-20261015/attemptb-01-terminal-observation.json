@@ -1,0 +1,12 @@
+{
+  "admitted": false,
+  "completed": true,
+  "final_bytes": 1896204,
+  "final_files": 47,
+  "method": "Selected-field transcription of native launcher completion; not raw launcher stdout. Private native resource identifiers omitted; exact original native logs/seal retained.",
+  "native_elapsed_seconds": 49.52158011589199,
+  "returncode": 0,
+  "schema": "typed-semantic-native-terminal-observation/v1",
+  "selected_storage_status": "released",
+  "source_pins_rehashed": 232
+}

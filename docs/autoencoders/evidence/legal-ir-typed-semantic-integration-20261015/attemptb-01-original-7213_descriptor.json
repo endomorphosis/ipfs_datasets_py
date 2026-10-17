@@ -1,0 +1,19 @@
+{
+  "edition": 2024,
+  "granule_id": "USCODE-2024-title10-subtitleB-partII-chap723-sec7213",
+  "http_provenance": {
+    "content_type": "text/html",
+    "etag": null,
+    "final_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm",
+    "last_modified": "Fri, 22 Aug 2025 18:43:47 GMT",
+    "requested_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm",
+    "status_code": 200
+  },
+  "legal_id": "usc:us:10:7213",
+  "package_id": "USCODE-2024-title10",
+  "raw_bytes": 4049,
+  "raw_sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+  "retrieved_at": "2026-10-15T16:42:18.541223+00:00",
+  "schema": "legal-official-source-acquisition/v1",
+  "url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7213.htm"
+}

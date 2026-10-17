@@ -1,0 +1,64 @@
+{
+  "blocked_events": [],
+  "errors": [],
+  "failures": [],
+  "filesystem_scope": "No opens during controls; exclusive sealed control receipt only.",
+  "findings": [],
+  "future_actual_adapter_token_bound_required": 128,
+  "harness": "V03 preloads stdlib __future__ before unchanged no-open guard, writes exclusive receipt using os.write/os.close. AST removes only test source-loader _PATH/_SPEC/kernel bindings, its exec_module call and main guard; injects exact independently compiled kernel. All test functions/classes/imports remain unchanged.",
+  "kernel_token_bound": 256,
+  "limits": {
+    "address_space_bytes": 536870912,
+    "cpu_seconds": 30,
+    "maximum_file_bytes": 1000000
+  },
+  "no_numerical_or_installed_package_imports": true,
+  "no_original_data_or_helper_main": true,
+  "passed": true,
+  "prior_harness_refusals": [
+    {
+      "bytes": 649,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-conditions-rank-control-harness-refusal-v01.json",
+      "sha256": "7f642fda86ff4db93d867bb1306b96dd5776135444235b89962280d5de5cfde4"
+    },
+    {
+      "bytes": 889,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-conditions-rank-control-harness-refusal-v02.json",
+      "sha256": "b4377d48e2c3c11307fab1a150134e605feb798f3d1a053465da466dffd76fac"
+    }
+  ],
+  "schema": "conditions-rank-invented-detached-controls/v1",
+  "source_files": [
+    {
+      "bytes": 15787,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent_conditions_rank_kernel_v01.py",
+      "sha256": "e699571ad874c27bf9a310746e1b72e7840d9548fb8d80cc7856fc8c4702201e"
+    },
+    {
+      "bytes": 9621,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_independent_conditions_rank_kernel_v01.py",
+      "sha256": "f9c8344149cf9be1e77608eb980ce68dd5922f6fabf4bede316316e66ed7830e"
+    }
+  ],
+  "subtests": 44,
+  "test_methods": 17,
+  "test_names": [
+    "test_binary64_and_binary32_differences_are_both_preserved",
+    "test_boundary_rank_counts_exact_ties_by_coordinate",
+    "test_conditional_end_domain_excludes_invalid_earlier_ends",
+    "test_counter_matches_separate_sort_oracle_on_invented_tables",
+    "test_duplicate_misaligned_and_mutated_token_atoms_are_rejected",
+    "test_exact_saved_float_inputs_only",
+    "test_full_span_top8_can_retain_end_outside_unrestricted_top8",
+    "test_guard_ties_are_separate_from_exact_rank_ties",
+    "test_invalid_coordinate_types_and_domains_are_rejected",
+    "test_packet_rebuild_uses_fixed_literal_prefix_and_expected_domains",
+    "test_pair_score_overflow_is_rejected_instead_of_ranked",
+    "test_pair_sum_rounding_creates_a_real_binary32_tie",
+    "test_scalar_rejects_bool_nonfinite_and_overflow",
+    "test_stable_full_span_top8_can_reject_marginal_top8_pair",
+    "test_top16_and_top8_flags_are_not_interchangeable",
+    "test_unique_unicode_literal_alignment_preserves_character_and_byte_offsets",
+    "test_upper_triangle_omits_invalid_highest_cartesian_pair"
+  ]
+}

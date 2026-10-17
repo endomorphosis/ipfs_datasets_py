@@ -1,0 +1,436 @@
+{
+  "all_original_hashes_lengths_and_file_identities_stable": true,
+  "authority": {
+    "completion_authority": false,
+    "execution_authority": false,
+    "gold_admitted": false,
+    "legal_meaning_verified": false,
+    "model_promoted": false,
+    "proof_admitted": false,
+    "review_performed": false,
+    "semantic_reconstruction_verified": false,
+    "source_authenticated": false,
+    "teacher_promoted": false
+  },
+  "b01_b02_parity": {
+    "checkpoint_reports": [
+      {
+        "checkpoint_role": "parent_checkpoint",
+        "existing_dynamic_rows_exact": true,
+        "fixed_rows_metrics_and_contexts_exact": true,
+        "merged_report": {
+          "bytes": 16440,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/exports/parent-shadow-report.json",
+          "sha256": "79d64269be1eaa27e15cfa902adac5e0d8ea69f76b4bf9e469d34f3869d41142"
+        },
+        "old_report": {
+          "bytes": 16440,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-01/exports/parent-shadow-report.json",
+          "sha256": "670d08055c992e4550964d9ac32ebd8d77945ae573c60ef6de4dca9ed20ec067"
+        },
+        "state_identity": "e52f71fe7fa5d3cd9982caa1920593851910e0fc2da834151b57c4d40efb0cdd"
+      },
+      {
+        "checkpoint_role": "structural_checkpoint",
+        "existing_dynamic_rows_exact": true,
+        "fixed_rows_metrics_and_contexts_exact": true,
+        "merged_report": {
+          "bytes": 16367,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/exports/structural-shadow-report.json",
+          "sha256": "e86931721619146a5558e24e5eb21900b549be45d570d706492e46a85a8195bb"
+        },
+        "old_report": {
+          "bytes": 16367,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-01/exports/structural-shadow-report.json",
+          "sha256": "ab07ee1c194295754ad2c1f99b84872a9731e4cb02d760e506cd3033ba61ce11"
+        },
+        "state_identity": "f795a7d7d01c451a1f111cf66691289485fa83d4081e6579012e9a90c5b80c69"
+      }
+    ],
+    "fixed_parent_minus_structural_mean_ce": 0.0,
+    "new_scores_on_merged_core_separate_from_original_b01": true,
+    "original_descriptor_samples_targets_loss_companion_and_profile_byte_exact": true,
+    "prior_audit": {
+      "bytes": 19617,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015/docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/retained-probe-independent-audit.json",
+      "sha256": "d517d862877bb020efc329e891a0ed0289e3e86f1fd55682f720be6a2d6a91da"
+    },
+    "same_driver_sha256": "9d0f9f8378c117627625b54845f4eea76c5e0bd6c18c01d308f3769428de7a06",
+    "view_gain_demonstrated": false
+  },
+  "evaluation_gold_mask": 0,
+  "independent_numeric_recount": [
+    {
+      "checkpoint_role": "parent_checkpoint",
+      "existing_mean_cross_entropy": 1.5890269151739727,
+      "fixed_mean_cross_entropy": 1.9459101490553132,
+      "rows": [
+        {
+          "cross_entropy": 1.945910149055313,
+          "entropy": 1.333209580450543,
+          "excess_cross_entropy": 0.61270056860477,
+          "existing_dynamic_support_cross_entropy": 1.3862943611198906,
+          "sample_id": "us-code-31-792-a48ea2828f3fd122",
+          "uniform_cross_entropy": 1.9459101490553132
+        },
+        {
+          "cross_entropy": 1.945910149055313,
+          "entropy": 1.7579377689303994,
+          "excess_cross_entropy": 0.18797238012491357,
+          "existing_dynamic_support_cross_entropy": 1.791759469228055,
+          "sample_id": "us-code-15-1199-7fd648e43fe15dce",
+          "uniform_cross_entropy": 1.9459101490553132
+        }
+      ]
+    },
+    {
+      "checkpoint_role": "structural_checkpoint",
+      "existing_mean_cross_entropy": 1.5890269151739727,
+      "fixed_mean_cross_entropy": 1.9459101490553132,
+      "rows": [
+        {
+          "cross_entropy": 1.945910149055313,
+          "entropy": 1.333209580450543,
+          "excess_cross_entropy": 0.61270056860477,
+          "existing_dynamic_support_cross_entropy": 1.3862943611198906,
+          "sample_id": "us-code-31-792-a48ea2828f3fd122",
+          "uniform_cross_entropy": 1.9459101490553132
+        },
+        {
+          "cross_entropy": 1.945910149055313,
+          "entropy": 1.7579377689303994,
+          "excess_cross_entropy": 0.18797238012491357,
+          "existing_dynamic_support_cross_entropy": 1.791759469228055,
+          "sample_id": "us-code-15-1199-7fd648e43fe15dce",
+          "uniform_cross_entropy": 1.9459101490553132
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "The merged readout remains two repeatedly inspected tuning rows, not an independent holdout, a rescore of historical rejected proposals, semantic reconstruction gain, teacher qualification or legal/training gold.",
+    "Canonical historical sample JSON sorts formulas; original ordered-input/cache-alias digests are matched reported commitments from the pinned producer and cannot be independently reconstructed losslessly from sorted exports.",
+    "The original full constructor, checkpoint bytes, embeddings and targets were reused; no new target/encoder/training/full-decoder/solver/compiler call is claimed by the bounded receipt.",
+    "Checkpoint context is caller-declared within the adapter; this audit independently verifies original checkpoint byte custody, without parsing or loading the checkpoint.",
+    "Native release and durability are selected cooperative scope and do not establish arbitrary descendant containment."
+  ],
+  "method": "Independent standard-library original byte custody, numeric recount, B01/B02 comparison and exact selected native storage inspection after B02 stopped. No product imports, checkpoint JSON loading, target decompression, test execution or attempt writes.",
+  "native": {
+    "all_execution_authority_flags_false": true,
+    "artifacts_durable_asserted": true,
+    "completed": true,
+    "elapsed_seconds": 48.04187000985257,
+    "private_identifiers_rows_or_pids_exported": false,
+    "returncode": 0,
+    "selected_native_lease_absent": true,
+    "selected_storage_released": true,
+    "selected_storage_row_count": 1,
+    "six_field_result_shape": true
+  },
+  "observed_at_utc": "2026-10-15T22:10:50.570488+00:00",
+  "original_descriptor": {
+    "bytes": 9050,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-fixed-view-vocabulary-20261015/retained-head-inputs.json",
+    "sha256": "3ed669866f03b34098877f6e5e94ea5b8ec3766510bb2e4d6638058a27d608b5"
+  },
+  "original_input_count": 19,
+  "original_inputs": {
+    "constructor_receipt": {
+      "bytes": 303004,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/progress/outputs/incremental-0b8ac08050ed035ac608bf61b5c55e792ba68c8434bcb54714d18a192261171c/receipt.json",
+      "sha256": "d8ac75642d8cf544cbf359bb0365a44e9ba8f6959cb99a247a51e7b0b18697a1"
+    },
+    "embedding_receipt": {
+      "bytes": 434558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/native-embeddings-20260925-r2/embedding-production.json",
+      "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa"
+    },
+    "head_driver": {
+      "bytes": 43323,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/probe_existing_uscode_384_heads_v4.py",
+      "sha256": "49a22f448707a353e4ab491102a0203f89a2c8eef361379096cd76fa2d339881"
+    },
+    "head_owned_request": {
+      "bytes": 16512,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-followup-20261015/head-probe-owned-request-v1.json",
+      "sha256": "c15cd5548f3cfbe752ff20e6cc195936c489907f8258063c9295e960f061c7af"
+    },
+    "head_report": {
+      "bytes": 493485,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/head-probe-v1/exports/report.json",
+      "sha256": "4b701084aaa5b8cccd5c3bb4c3001e07df2364487d730352c119c0106f61ee1b"
+    },
+    "parent_checkpoint": {
+      "bytes": 7204344,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/4f/4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+      "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+    },
+    "preparation_report": {
+      "bytes": 32738,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/report.json",
+      "sha256": "39a55c4cbb68ca5f1c07c65d06b86234db00f4ceb043b158807c8c6ac466a531"
+    },
+    "published_observation": {
+      "bytes": 14396,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-fixed-view-vocabulary-20261015/published-head-observation.json",
+      "sha256": "bd3599791fd6b9238c02226630639b3b499c723b348cf4e9535af4c5ccbe73db"
+    },
+    "selected_inputs": {
+      "bytes": 160894,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/selected-inputs.json",
+      "sha256": "a934d07bd327b1bf709838ae51034b749b997e7a667c24c1e2ea9e73abd00232"
+    },
+    "source_import_receipt": {
+      "bytes": 75216,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/import-receipt.json",
+      "sha256": "513fa9976505ec4a133d039c8ae1e36f73394c4df8937a62a3194eeaf8996cad"
+    },
+    "structural_checkpoint": {
+      "bytes": 13402647,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/head-probe-v1/exports/structural.candidate.state.json",
+      "sha256": "dadf1964dc6dbf9c89dbe360dd06908e24d299b5f80f5b6e2014967361932312"
+    },
+    "support_audit": {
+      "bytes": 15576,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-followup-20261015/head-probe-view-support-audit-v2.json",
+      "sha256": "f111c12dbbb337a361cbb581d6c4c2a2cc0c1a1f0668bbcc56696cf2cc075553"
+    },
+    "target_config": {
+      "bytes": 1228305,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/target-config.json",
+      "sha256": "946418384b5b77f8b2288b8eab5f6728cedffc378644a1b2a4e7f28b09f9bb64"
+    },
+    "tuning06_bundle": {
+      "bytes": 3357352,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/span-06/targets.bundle",
+      "sha256": "45ee4a6f3bc3aaa36bc25bdec5a45eb2795dd9d0b03e1ae8be065ca792b860fe"
+    },
+    "tuning06_preparation": {
+      "bytes": 7132,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/span-06/preparation.json",
+      "sha256": "ddeceac5fa1b75f750d2c7f30a35ac20ae45593112dfbada416a93cce33decdb"
+    },
+    "tuning06_source_text": {
+      "bytes": 584,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000012.txt",
+      "sha256": "b1a0ea3c7c045d67947aaa665232ed39ef8f168b0153c94c7638b10460387e4a"
+    },
+    "tuning07_bundle": {
+      "bytes": 2555548,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/span-07/targets.bundle",
+      "sha256": "2fc401b5c77a5dc1b7ff59fe90b47b1eb13ef333a53fa408b934157ecbb0a4c9"
+    },
+    "tuning07_preparation": {
+      "bytes": 7141,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/span-07/preparation.json",
+      "sha256": "09e50d26c2c155671c8b04cdf7451656cd60b125880aa93e3c145d29fa199ccf"
+    },
+    "tuning07_source_text": {
+      "bytes": 431,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000013.txt",
+      "sha256": "ae94239867b3d0a4b092ca70e50f2eced5e85ba13b3fe7d4f5c8905639d354d7"
+    }
+  },
+  "outputs": {
+    "closed_file_index_and_all_hashes_exact": true,
+    "export_bytes": 98158,
+    "export_count": 11,
+    "files": [
+      {
+        "bytes": 1658,
+        "path": "exports/file-index.json",
+        "sha256": "51cc04a8e7c4acae748b430f030fd9c9495daef268f450a94ddb944c295039b1"
+      },
+      {
+        "bytes": 690,
+        "path": "exports/fixed-view-profile.json",
+        "sha256": "e604f9e3c3e02aa6ecde30ffbac78a1a6f79889cf3383481a9f5c25adc9562f7"
+      },
+      {
+        "bytes": 16440,
+        "path": "exports/parent-shadow-report.json",
+        "sha256": "79d64269be1eaa27e15cfa902adac5e0d8ea69f76b4bf9e469d34f3869d41142"
+      },
+      {
+        "bytes": 16620,
+        "path": "exports/probe-receipt.json",
+        "sha256": "fdc5eb3c338f2c5de47928e504b5ae86acccee829d649ea4e03cb280af1dfc09"
+      },
+      {
+        "bytes": 9050,
+        "path": "exports/retained-head-inputs.json",
+        "sha256": "3ed669866f03b34098877f6e5e94ea5b8ec3766510bb2e4d6638058a27d608b5"
+      },
+      {
+        "bytes": 520,
+        "path": "exports/row-targets.json",
+        "sha256": "944bffc78930d8710223504a0b5d5e7b04291bf9b52608911832ea5b20055965"
+      },
+      {
+        "bytes": 17460,
+        "path": "exports/sample-06.json",
+        "sha256": "6ba4fa923f60574b10e994b9cf117ffc02b71888f3366607fc7dad6422522e62"
+      },
+      {
+        "bytes": 14730,
+        "path": "exports/sample-07.json",
+        "sha256": "01350020d8a601bfbdc9326a6324e7f524a39da4bfa6c775b63c405332e8cf37"
+      },
+      {
+        "bytes": 16367,
+        "path": "exports/structural-shadow-report.json",
+        "sha256": "e86931721619146a5558e24e5eb21900b549be45d570d706492e46a85a8195bb"
+      },
+      {
+        "bytes": 2201,
+        "path": "exports/target-loss-context.json",
+        "sha256": "bb46ee322986b49cd91a2cb841376719753114424a9a52838f3b20fa6b533709"
+      },
+      {
+        "bytes": 2422,
+        "path": "exports/target-readbacks.json",
+        "sha256": "2408dd829fd3ddf928d2802903e337a811b5746ddfd5d33783abbef197f72811"
+      },
+      {
+        "bytes": 494,
+        "path": "logs/execution.json",
+        "sha256": "1abe50da5175783448725d678587a0cbf8433b1b3c2d104c4ab3d228f8ccf827"
+      },
+      {
+        "bytes": 656,
+        "path": "logs/result.json",
+        "sha256": "568e57a7fd9afcb9b176175bd5a4ea197e73af832765588ed0f91c1eba507914"
+      },
+      {
+        "bytes": 0,
+        "path": "logs/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 877,
+        "path": "logs/stdout.log",
+        "sha256": "2822f6a9e3d69161899ec4906b85e8debe5aceb81ccf3e933d57c18532743663"
+      },
+      {
+        "bytes": 2801,
+        "path": "logs/validation-durability.json",
+        "sha256": "15497f3de6bef8e0160c51a90a4ff682a0aec16f546b479208877c19d6432e4c"
+      }
+    ],
+    "final_files": 16,
+    "public_export_copies_exact": true,
+    "sealed_files": 15,
+    "sealed_path_size_hash_device_inode_witnesses_exact": true,
+    "total_bytes": 102986
+  },
+  "profile": {
+    "canonical_sha256": "1040c392edbaff6fb940d51ed6ee51e1f269381e97cd02e13e1b0a92ef477194",
+    "labels": [
+      "CEC.native",
+      "deontic.ir",
+      "external_provers.router",
+      "modal.frame_logic",
+      "TDFOL.prover",
+      "knowledge_graphs.neo4j_compat",
+      "zkp.circuits"
+    ],
+    "mapper_producer_pins_exact": true
+  },
+  "raw_bindings": {
+    "execution.json": {
+      "bytes": 494,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/logs/execution.json",
+      "sha256": "1abe50da5175783448725d678587a0cbf8433b1b3c2d104c4ab3d228f8ccf827"
+    },
+    "result.json": {
+      "bytes": 656,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/logs/result.json",
+      "sha256": "568e57a7fd9afcb9b176175bd5a4ea197e73af832765588ed0f91c1eba507914"
+    },
+    "stderr.log": {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/logs/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout.log": {
+      "bytes": 877,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/logs/stdout.log",
+      "sha256": "2822f6a9e3d69161899ec4906b85e8debe5aceb81ccf3e933d57c18532743663"
+    },
+    "validation-durability.json": {
+      "bytes": 2801,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/logs/validation-durability.json",
+      "sha256": "15497f3de6bef8e0160c51a90a4ff682a0aec16f546b479208877c19d6432e4c"
+    }
+  },
+  "request": {
+    "bytes": 38164,
+    "path": "/home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015/docs/autoencoders/evidence/legal-ir-fixed-view-vocabulary-20261015/validation-request-b-02.json",
+    "sha256": "54f158e0338d2904d25c261c33249cb2c769a1086abf0567c1f73cb3397f14e7"
+  },
+  "samples": {
+    "canonical_original_sample_bytes_exact": [
+      {
+        "bytes": 17460,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/exports/sample-06.json",
+        "sha256": "6ba4fa923f60574b10e994b9cf117ffc02b71888f3366607fc7dad6422522e62"
+      },
+      {
+        "bytes": 14730,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/exports/sample-07.json",
+        "sha256": "01350020d8a601bfbdc9326a6324e7f524a39da4bfa6c775b63c405332e8cf37"
+      }
+    ],
+    "count": 2,
+    "dimensions": 384,
+    "independent_holdout": false,
+    "ordinals": [
+      6,
+      7
+    ],
+    "original_source_text_exact": true,
+    "partition": "repeated_tuning",
+    "vectors_equal_original_tagged_float64_records": true
+  },
+  "schema": "merged-retained-fixed-view-probe-independent-audit/v1",
+  "selected_check": "retained-two-row-parent-structural-fixed-view-vocabulary",
+  "source_observation": {
+    "added_pins_since_b01": [
+      {
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_view_diagnostic.py",
+        "sha256": "1937169c7d49409b89b00c2b2c9d1d9e955ab3f37f15122931b79be9bb0c36ba"
+      },
+      {
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_view_diagnostic.py",
+        "sha256": "fea8840b7c020444bf667f8fdeae14a7cba5b0edb4317c4882b2a4e130f08f68"
+      }
+    ],
+    "all_exact_at_open_and_close": true,
+    "changed_pins_since_b01": [
+      {
+        "merged_sha256": "4b44bb723709be5b4606d497935b245723231df8ec19b24f1bd329fd8932ad24",
+        "original_sha256": "ad1a964c1b6b15592aaabe5550af331cb97721b6d362f768c148a62cfd442990",
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-fixed-view-vocabulary-20261015/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py"
+      }
+    ],
+    "closing_recensus_at_utc": "2026-10-15T22:10:50.570488+00:00",
+    "declared_merged_head": "a0a71389dcce011d798bec344adf4880b7128a7f",
+    "opening_recensus_at_utc": "2026-10-15T22:08:01.478994+00:00",
+    "pin_count": 165,
+    "scope": "Finite merged request inventory; not complete dynamic import closure or a global unchanged HEAD/index claim."
+  },
+  "status": "pass",
+  "targets": {
+    "full_target_loss_context_sha256": "1a63b1a2b51c0ec9ea7a21251b6230d04c0f7feffbb3ca87e06b93befd99f860",
+    "historical_full_config_and_bundle_manifests_equal": true,
+    "loader_hydration_observations_checked": true,
+    "matched_reported_evaluator_context_sha256": "afb1481cc80935170ecb95d514dc0bd11c24f1da382cd96ca766048e07f7cf13",
+    "no_independent_decompression": true,
+    "support_counts": [
+      4,
+      6
+    ],
+    "target_rows_sha256": "f2a28b5726ba3b93e1838a1420cb8291dbf84c7ba1cf8e83aebec6d0642d3ef3"
+  },
+  "training_mask": 0
+}

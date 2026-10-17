@@ -1,0 +1,81 @@
+"""Synthetic allocation controls; no legal or source-review evidence."""
+
+import importlib.util
+from pathlib import Path
+import stat
+from types import SimpleNamespace
+
+import pytest
+
+
+@pytest.fixture
+def factory_type():
+    spec = importlib.util.spec_from_file_location(
+        "integration_allocation_controls", Path(__file__).with_name("qualify_integration.py")
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.RegularDirectoryFactory
+
+
+def test_unique_retained_directories(tmp_path, factory_type):
+    factory = factory_type(tmp_path / "private")
+    first = factory.mktemp("same")
+    second = factory.mktemp("same")
+    assert first != second
+    assert first.parent == second.parent == factory.getbasetemp()
+    assert first.is_dir() and second.is_dir()
+    assert sorted(factory.getbasetemp().iterdir()) == sorted([first, second])
+    assert not any(path.is_symlink() for path in tmp_path.rglob("*"))
+
+
+@pytest.mark.parametrize("name", ["", ".", "..", "../escape", "/absolute", "a/b", "a\x00b"])
+def test_factory_refuses_escaping_names(tmp_path, factory_type, name):
+    factory = factory_type(tmp_path / "private")
+    with pytest.raises(ValueError):
+        factory.mktemp(name)
+    assert list(factory.getbasetemp().iterdir()) == []
+
+
+def test_exact_directory_never_replaced(tmp_path, factory_type):
+    factory = factory_type(tmp_path / "private")
+    directory = factory.mktemp("exact", numbered=False)
+    (directory / "retained.txt").write_text("retained")
+    with pytest.raises(FileExistsError):
+        factory.mktemp("exact", numbered=False)
+    assert (directory / "retained.txt").read_text() == "retained"
+
+
+def test_replaced_base_refused(tmp_path, factory_type):
+    factory = factory_type(tmp_path / "private")
+    factory.base.rename(tmp_path / "original-retained")
+    factory.base.mkdir()
+    with pytest.raises(ValueError, match="base changed"):
+        factory.mktemp("refused")
+    assert list(factory.base.iterdir()) == []
+
+
+def test_parent_alias_observation_refused_without_creating_alias(
+    tmp_path, factory_type, monkeypatch
+):
+    factory = factory_type(tmp_path / "private")
+    actual = Path.lstat
+
+    def observed(path, *args, **kwargs):
+        if path == tmp_path:
+            return SimpleNamespace(st_mode=stat.S_IFLNK)
+        return actual(path, *args, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "lstat", observed)
+        with pytest.raises(ValueError, match="parent changed or became aliased"):
+            factory.mktemp("refused")
+    assert list(factory.getbasetemp().iterdir()) == []
+
+
+@pytest.mark.parametrize("numbered", [None, 1, "true"])
+def test_non_boolean_allocation_mode_refused(tmp_path, factory_type, numbered):
+    factory = factory_type(tmp_path / "private")
+    with pytest.raises(ValueError, match="Boolean"):
+        factory.mktemp("refused", numbered=numbered)
+    assert list(factory.getbasetemp().iterdir()) == []

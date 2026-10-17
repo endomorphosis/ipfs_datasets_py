@@ -1,0 +1,1341 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-diagnostic-v01.json": {
+      "bytes": 9716921,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-diagnostic-v01.json",
+      "sha256": "393d154c6f116e255833de8d81be066a80817170a047613dba39ad591facf1df"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-independent-recount-v01.json": {
+      "bytes": 9720380,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-independent-recount-v01.json",
+      "sha256": "eaa6f1a2dccebd202c995e441df65849d0ea1c4d8613a6039f6bd57f1f4a83d4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-result-summary-v01.json": {
+      "bytes": 245319,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-result-summary-v01.json",
+      "sha256": "cd49699b791e14d92ed7d05f13f2dceed82dd59979aca83f45c2e4ae4a0f9826"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py": {
+      "bytes": 57479,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py",
+      "sha256": "6f37e5295ab09fe5f61215ab0445e6348d2972551c6bee1719e1c3c2ce2bd1aa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_balanced.py": {
+      "bytes": 53599,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_balanced.py",
+      "sha256": "40254faadaded8a227a15d5b1526579d5212289837fd428991e32a5707e3824c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py": {
+      "bytes": 80912,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+      "sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py": {
+      "bytes": 83852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json": {
+      "bytes": 6172,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json",
+      "sha256": "485e24dccd7f55ef547acb54afc1e3785a46de547454c9e5a155fc4f04a359c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json": {
+      "bytes": 3321,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json",
+      "sha256": "1bf6393d2c3c177342df97856b73868652d8f23aafa1dbe47f1aca81f3382dea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-inputs-v01.json": {
+      "bytes": 40054,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-inputs-v01.json",
+      "sha256": "fbbf88f03dac543c6fb839c385f2ef165e0b0636854764e662f770a19a7ebb77"
+    }
+  },
+  "authorship": {
+    "author": "actor_ranking_model_n9",
+    "authored_F17_F18_model_and_F18_F19_primary_analyzer": true,
+    "independent_acceptance_or_counter_authority_claimed": false,
+    "independent_recount_basis": "Separate counter independently recomputed eight complete record collections; tokenizer/coordinate/greedy/joint ASTs and custody plumbing remain shared and disclosed."
+  },
+  "claims": {
+    "active_latent_semantics_qualified": false,
+    "checkpoint_composition_qualified": false,
+    "default_promotion": false,
+    "future_repair_guaranteed": false,
+    "global_improvement_claimed": false,
+    "legal_accuracy_claimed": false,
+    "scientific_success_claimed": false,
+    "source_family_generalization_claimed": false,
+    "training_or_product_change_executed": false
+  },
+  "evidence_status": {
+    "SDK_network_calls": 0,
+    "all_eight_record_collections_equal": true,
+    "interpretation_not_model_reload_qualification": true,
+    "model_or_encoder_calls": 0,
+    "numerical_or_production_imports": 0,
+    "optimizer_updates": 0,
+    "original_capture_reference_export_teacher_checkpoint_or_private_bodies_opened_for_this_proposal": 0,
+    "primary_and_counter_passed": true,
+    "record_collections": [
+      "variant_panels",
+      "native_donor_panels",
+      "variant_score_rows",
+      "native_donor_score_rows",
+      "comparisons",
+      "all32_permissions",
+      "conditions_rank_diagnostics",
+      "component_copy_proofs"
+    ],
+    "scopes": "Training168 and eight previously exposed authored scopes; no independent held-out legal gold or source-generalization evidence.",
+    "scored_sources": 624,
+    "source_count": 632,
+    "statutory_sources_unscored": 8
+  },
+  "independent_saved_result_recount": {
+    "bytes": 9720380,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-independent-recount-v01.json",
+    "sha256": "eaa6f1a2dccebd202c995e441df65849d0ea1c4d8613a6039f6bd57f1f4a83d4"
+  },
+  "primary_result": {
+    "bytes": 9716921,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-diagnostic-v01.json",
+    "sha256": "393d154c6f116e255833de8d81be066a80817170a047613dba39ad591facf1df"
+  },
+  "public_result_summary": {
+    "bytes": 245319,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/conditions-composition-result-summary-v01.json",
+    "sha256": "cd49699b791e14d92ed7d05f13f2dceed82dd59979aca83f45c2e4ae4a0f9826"
+  },
+  "required_future_qualification": [
+    "New model/source, exact parent/checkpoint/teacher/training-mask custody, independent source review and fresh concrete resource/plan/guardian gates before execution. This proposal grants none of those authorities.",
+    "Initial all632 full head-bit and decoded parity to exact F18 parent before update0. Final all632 protected score bits for modality/actor/all presence/action/object/exceptions/temporal; only conditions start/end scores may change.",
+    "Inside the qualified child, one isolated synthetic fixture proves selected4 graph connectivity/finite gradients,38None,650 inactive gradient/moment/value preservation, stable active/zero margin normalization/tie/absence behavior, no candidate/teacher storage aliasing and RNG/grad-mode restoration. Zero selected bias gradients are permitted.",
+    "Each actual batch must join exact IDs/indices/source/tokens/gold/row weights/teacher targets, all valid conditions logits/domain digest, selected hardest wrong coordinates/tie count, float32 margin arithmetic and CE/KL/total association. An independently authored scalar counter must rederive the complete domain/argmax and retained anchors; scalar replay is not gradient proof.",
+    "Freeze the complete planned outputs before any authored evaluation scoring. Report all previous comparators/scope loss-ID sets, all32 permissions, all latent/law limits and actual protected-bit results; a higher training count alone cannot authorize promotion.",
+    "A new preregistered measurement contract may report training raw AND joint>=155 and no complete-IR losses versus F18/F15/N11 separately as a parent engineering signal. Retain the unchanged strict cross-phase criterion, including known F16/F17 raw actor gains that frozen F18 actor cannot reproduce; never rename that failed strict outcome a global success."
+  ],
+  "risks_and_limits": [
+    "A linear pointer on frozen features may not separate the target continuation even with the new objective. Ranking evidence does not establish sufficient capacity, mechanism, convergence or causal repair.",
+    "Full-domain negatives may spend updates on spans that joint compatibility would reject; this domain is chosen to address pre-pruning pressure and needs actual bounded validation.",
+    "Changing conditions can change joint choices or abstention for other fields despite their exact frozen logits. The observed joint object change under saved mixing demonstrates this coupling.",
+    "Freezing F18 actor avoids importing the observed F17-actor old_tune full-IR regression; it cannot guarantee joint retention or recover known historical raw actor-only gains.",
+    "All three saved variants remain0/36 on both fresh_dev and fresh_test under both routes. This narrow conditions pilot does not solve broader source/family generalization.",
+    "Every authored scope has been exposed. A later generalization claim needs newly reviewed independent gold; this proposal makes no legal accuracy, statutory semantics, Lake execution, family-wide result or active8/384/768 latent claim.",
+    "No composed checkpoint, checkpoint reload, new model forward, training candidate, hidden-state parity, product default or publication/promotion is qualified by this saved-head diagnostic or proposal."
+  ],
+  "saved_head_composition_observations": {
+    "all32_permission_modality_outcomes_correct_both_routes_all3_variants": true,
+    "all_variant_panels": [
+      {
+        "rows": 168,
+        "scope": "training168",
+        "scored": true,
+        "variants": {
+          "F15_baseline": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 154,
+            "raw_abstentions": 1,
+            "raw_complete_IR": 154
+          },
+          "F17_actor_F17_readouts": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 154,
+            "raw_abstentions": 1,
+            "raw_complete_IR": 154
+          },
+          "F17_actor_F18_readouts": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 154,
+            "raw_abstentions": 1,
+            "raw_complete_IR": 154
+          }
+        }
+      },
+      {
+        "rows": 96,
+        "scope": "old_tune",
+        "scored": true,
+        "variants": {
+          "F15_baseline": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 94,
+            "raw_abstentions": 0,
+            "raw_complete_IR": 94
+          },
+          "F17_actor_F17_readouts": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 93,
+            "raw_abstentions": 0,
+            "raw_complete_IR": 93
+          },
+          "F17_actor_F18_readouts": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 93,
+            "raw_abstentions": 0,
+            "raw_complete_IR": 93
+          }
+        }
+      },
+      {
+        "rows": 36,
+        "scope": "fresh_tune",
+        "scored": true,
+        "variants": {
+          "F15_baseline": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 19,
+            "raw_abstentions": 24,
+            "raw_complete_IR": 8
+          },
+          "F17_actor_F17_readouts": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 20,
+            "raw_abstentions": 23,
+            "raw_complete_IR": 8
+          },
+          "F17_actor_F18_readouts": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 20,
+            "raw_abstentions": 23,
+            "raw_complete_IR": 8
+          }
+        }
+      },
+      {
+        "rows": 36,
+        "scope": "fresh_challenge",
+        "scored": true,
+        "variants": {
+          "F15_baseline": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 25,
+            "raw_abstentions": 3,
+            "raw_complete_IR": 25
+          },
+          "F17_actor_F17_readouts": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 26,
+            "raw_abstentions": 4,
+            "raw_complete_IR": 26
+          },
+          "F17_actor_F18_readouts": {
+            "joint_abstentions": 0,
+            "joint_complete_IR": 26,
+            "raw_abstentions": 4,
+            "raw_complete_IR": 26
+          }
+        }
+      },
+      {
+        "rows": 72,
+        "scope": "old_authored_eval",
+        "scored": true,
+        "variants": {
+          "F15_baseline": {
+            "joint_abstentions": 1,
+            "joint_complete_IR": 53,
+            "raw_abstentions": 6,
+            "raw_complete_IR": 50
+          },
+          "F17_actor_F17_readouts": {
+            "joint_abstentions": 1,
+            "joint_complete_IR": 54,
+            "raw_abstentions": 6,
+            "raw_complete_IR": 51
+          },
+          "F17_actor_F18_readouts": {
+            "joint_abstentions": 1,
+            "joint_complete_IR": 54,
+            "raw_abstentions": 6,
+            "raw_complete_IR": 51
+          }
+        }
+      },
+      {
+        "rows": 72,
+        "scope": "authored_dev",
+        "scored": true,
+        "variants": {
+          "F15_baseline": {
+            "joint_abstentions": 6,
+            "joint_complete_IR": 46,
+            "raw_abstentions": 11,
+            "raw_complete_IR": 45
+          },
+          "F17_actor_F17_readouts": {
+            "joint_abstentions": 6,
+            "joint_complete_IR": 48,
+            "raw_abstentions": 13,
+            "raw_complete_IR": 47
+          },
+          "F17_actor_F18_readouts": {
+            "joint_abstentions": 6,
+            "joint_complete_IR": 48,
+            "raw_abstentions": 13,
+            "raw_complete_IR": 47
+          }
+        }
+      },
+      {
+        "rows": 72,
+        "scope": "authored_eval",
+        "scored": true,
+        "variants": {
+          "F15_baseline": {
+            "joint_abstentions": 1,
+            "joint_complete_IR": 34,
+            "raw_abstentions": 13,
+            "raw_complete_IR": 27
+          },
+          "F17_actor_F17_readouts": {
+            "joint_abstentions": 1,
+            "joint_complete_IR": 34,
+            "raw_abstentions": 13,
+            "raw_complete_IR": 27
+          },
+          "F17_actor_F18_readouts": {
+            "joint_abstentions": 1,
+            "joint_complete_IR": 34,
+            "raw_abstentions": 13,
+            "raw_complete_IR": 27
+          }
+        }
+      },
+      {
+        "rows": 36,
+        "scope": "fresh_dev",
+        "scored": true,
+        "variants": {
+          "F15_baseline": {
+            "joint_abstentions": 2,
+            "joint_complete_IR": 0,
+            "raw_abstentions": 26,
+            "raw_complete_IR": 0
+          },
+          "F17_actor_F17_readouts": {
+            "joint_abstentions": 2,
+            "joint_complete_IR": 0,
+            "raw_abstentions": 26,
+            "raw_complete_IR": 0
+          },
+          "F17_actor_F18_readouts": {
+            "joint_abstentions": 2,
+            "joint_complete_IR": 0,
+            "raw_abstentions": 26,
+            "raw_complete_IR": 0
+          }
+        }
+      },
+      {
+        "rows": 36,
+        "scope": "fresh_test",
+        "scored": true,
+        "variants": {
+          "F15_baseline": {
+            "joint_abstentions": 8,
+            "joint_complete_IR": 0,
+            "raw_abstentions": 31,
+            "raw_complete_IR": 0
+          },
+          "F17_actor_F17_readouts": {
+            "joint_abstentions": 8,
+            "joint_complete_IR": 0,
+            "raw_abstentions": 31,
+            "raw_complete_IR": 0
+          },
+          "F17_actor_F18_readouts": {
+            "joint_abstentions": 8,
+            "joint_complete_IR": 0,
+            "raw_abstentions": 31,
+            "raw_complete_IR": 0
+          }
+        }
+      },
+      {
+        "rows": 8,
+        "scope": "law",
+        "scored": false,
+        "variants": {
+          "F15_baseline": {
+            "joint_complete_IR": null,
+            "raw_complete_IR": null
+          },
+          "F17_actor_F17_readouts": {
+            "joint_complete_IR": null,
+            "raw_complete_IR": null
+          },
+          "F17_actor_F18_readouts": {
+            "joint_complete_IR": null,
+            "raw_complete_IR": null
+          }
+        }
+      }
+    ],
+    "equality_limit": "Identical scored per-ID flags do not establish identical score tensors, decoded IR, trained parameters or portable checkpoint behavior.",
+    "explanation": "The two actor fixes remain modality-wrong, while the one modality fix remains actor-wrong. A joint object-selection improvement occurs despite unchanged object logits and still leaves actor/exceptions wrong. These component changes do not complete an additional training rule.",
+    "exposed_eval_use": "Report these fixed-scope regressions and gains only. They do not select the loss, negative examples, margin, coefficient, donor winner or future update schedule.",
+    "mixed_training_per_ID_field_changes_vs_F15": {
+      "joint": [
+        {
+          "errors_after": [
+            "modality"
+          ],
+          "errors_before": [
+            "modality",
+            "actor"
+          ],
+          "full_IR_correct_after": false,
+          "id": "matched-temporal-train-actor_duration_name-1-o-absent"
+        },
+        {
+          "errors_after": [
+            "modality"
+          ],
+          "errors_before": [
+            "modality",
+            "actor"
+          ],
+          "full_IR_correct_after": false,
+          "id": "matched-temporal-train-actor_duration_name-1-o-present"
+        },
+        {
+          "errors_after": [
+            "actor",
+            "exceptions"
+          ],
+          "errors_before": [
+            "actor",
+            "object",
+            "exceptions"
+          ],
+          "full_IR_correct_after": false,
+          "id": "matched-temporal-train-actor_duration_name-1-p-absent"
+        },
+        {
+          "errors_after": [
+            "actor"
+          ],
+          "errors_before": [
+            "modality",
+            "actor"
+          ],
+          "full_IR_correct_after": false,
+          "id": "matched-temporal-train-actor_duration_name-1-f-absent"
+        }
+      ],
+      "raw": [
+        {
+          "errors_after": [
+            "modality"
+          ],
+          "errors_before": [
+            "modality",
+            "actor"
+          ],
+          "full_IR_correct_after": false,
+          "id": "matched-temporal-train-actor_duration_name-1-o-absent"
+        },
+        {
+          "errors_after": [
+            "modality"
+          ],
+          "errors_before": [
+            "modality",
+            "actor"
+          ],
+          "full_IR_correct_after": false,
+          "id": "matched-temporal-train-actor_duration_name-1-o-present"
+        },
+        {
+          "errors_after": [
+            "actor"
+          ],
+          "errors_before": [
+            "modality",
+            "actor"
+          ],
+          "full_IR_correct_after": false,
+          "id": "matched-temporal-train-actor_duration_name-1-f-absent"
+        }
+      ]
+    },
+    "mixed_variants_per_ID_score_flag_records_equal": true,
+    "no_automatic_winner_or_composed_checkpoint": true,
+    "nontraining_full_IR_changes_for_each_identical_mix": {
+      "F15": {
+        "authored_dev": {
+          "joint": {
+            "after_correct": 48,
+            "before_correct": 46,
+            "gain_ids": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ],
+            "loss_ids": []
+          },
+          "raw": {
+            "after_correct": 47,
+            "before_correct": 45,
+            "gain_ids": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ],
+            "loss_ids": []
+          }
+        },
+        "fresh_challenge": {
+          "joint": {
+            "after_correct": 26,
+            "before_correct": 25,
+            "gain_ids": [
+              "temporal-contrast-challenge-condition_exception_duration-0-p-present"
+            ],
+            "loss_ids": []
+          },
+          "raw": {
+            "after_correct": 26,
+            "before_correct": 25,
+            "gain_ids": [
+              "temporal-contrast-challenge-condition_exception_duration-0-p-present"
+            ],
+            "loss_ids": []
+          }
+        },
+        "fresh_tune": {
+          "joint": {
+            "after_correct": 20,
+            "before_correct": 19,
+            "gain_ids": [
+              "temporal-contrast-tuning-condition_exception_duration-0-p-present"
+            ],
+            "loss_ids": []
+          }
+        },
+        "old_authored_eval": {
+          "joint": {
+            "after_correct": 54,
+            "before_correct": 53,
+            "gain_ids": [
+              "matched-temporal-authored_eval-condition_duration-0-o-present"
+            ],
+            "loss_ids": []
+          },
+          "raw": {
+            "after_correct": 51,
+            "before_correct": 50,
+            "gain_ids": [
+              "matched-temporal-authored_eval-condition_duration-0-o-present"
+            ],
+            "loss_ids": []
+          }
+        },
+        "old_tune": {
+          "joint": {
+            "after_correct": 93,
+            "before_correct": 94,
+            "gain_ids": [],
+            "loss_ids": [
+              "native-tuning-calendula-t4-q5-p"
+            ]
+          },
+          "raw": {
+            "after_correct": 93,
+            "before_correct": 94,
+            "gain_ids": [],
+            "loss_ids": [
+              "native-tuning-calendula-t4-q5-p"
+            ]
+          }
+        }
+      },
+      "F17": {
+        "authored_eval": {
+          "joint": {
+            "after_correct": 34,
+            "before_correct": 33,
+            "gain_ids": [
+              "targeted-loss-authored_eval-condition_exception_duration-0-f-present"
+            ],
+            "loss_ids": []
+          }
+        },
+        "fresh_tune": {
+          "joint": {
+            "after_correct": 20,
+            "before_correct": 21,
+            "gain_ids": [],
+            "loss_ids": [
+              "temporal-contrast-tuning-object_duration_title-0-f-present"
+            ]
+          },
+          "raw": {
+            "after_correct": 8,
+            "before_correct": 9,
+            "gain_ids": [],
+            "loss_ids": [
+              "temporal-contrast-tuning-object_duration_title-0-f-present"
+            ]
+          }
+        },
+        "old_authored_eval": {
+          "joint": {
+            "after_correct": 54,
+            "before_correct": 55,
+            "gain_ids": [],
+            "loss_ids": [
+              "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+            ]
+          },
+          "raw": {
+            "after_correct": 51,
+            "before_correct": 52,
+            "gain_ids": [],
+            "loss_ids": [
+              "matched-temporal-authored_eval-object_duration_title-1-o-absent"
+            ]
+          }
+        }
+      },
+      "F18": {
+        "authored_dev": {
+          "joint": {
+            "after_correct": 48,
+            "before_correct": 46,
+            "gain_ids": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ],
+            "loss_ids": []
+          },
+          "raw": {
+            "after_correct": 47,
+            "before_correct": 45,
+            "gain_ids": [
+              "targeted-loss-authored_dev-actor_duration_name-1-p-absent",
+              "targeted-loss-authored_dev-actor_duration_name-1-p-present"
+            ],
+            "loss_ids": []
+          }
+        },
+        "old_tune": {
+          "joint": {
+            "after_correct": 93,
+            "before_correct": 94,
+            "gain_ids": [],
+            "loss_ids": [
+              "native-tuning-calendula-t4-q5-p"
+            ]
+          },
+          "raw": {
+            "after_correct": 93,
+            "before_correct": 94,
+            "gain_ids": [],
+            "loss_ids": [
+              "native-tuning-calendula-t4-q5-p"
+            ]
+          }
+        }
+      }
+    },
+    "source_protection": "Both mixes preserve F15 all presence and action/object/exceptions/temporal boundary score arrays; actor and modality/conditions blocks come from the specified saved donors.",
+    "training_error_overlap": {
+      "F15_baseline": {
+        "joint": [
+          {
+            "rows": 5,
+            "wrong_fields": [
+              "actor"
+            ]
+          },
+          {
+            "rows": 1,
+            "wrong_fields": [
+              "actor",
+              "object",
+              "exceptions"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "conditions"
+            ]
+          },
+          {
+            "rows": 6,
+            "wrong_fields": [
+              "modality",
+              "actor"
+            ]
+          }
+        ],
+        "raw": [
+          {
+            "rows": 5,
+            "wrong_fields": [
+              "actor"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "conditions"
+            ]
+          },
+          {
+            "rows": 6,
+            "wrong_fields": [
+              "modality",
+              "actor"
+            ]
+          },
+          {
+            "rows": 1,
+            "wrong_fields": [
+              "modality",
+              "actor",
+              "action",
+              "object",
+              "conditions",
+              "exceptions",
+              "temporal"
+            ]
+          }
+        ]
+      },
+      "F17_actor_F17_readouts": {
+        "joint": [
+          {
+            "rows": 6,
+            "wrong_fields": [
+              "actor"
+            ]
+          },
+          {
+            "rows": 1,
+            "wrong_fields": [
+              "actor",
+              "exceptions"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "conditions"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "modality"
+            ]
+          },
+          {
+            "rows": 3,
+            "wrong_fields": [
+              "modality",
+              "actor"
+            ]
+          }
+        ],
+        "raw": [
+          {
+            "rows": 6,
+            "wrong_fields": [
+              "actor"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "conditions"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "modality"
+            ]
+          },
+          {
+            "rows": 3,
+            "wrong_fields": [
+              "modality",
+              "actor"
+            ]
+          },
+          {
+            "rows": 1,
+            "wrong_fields": [
+              "modality",
+              "actor",
+              "action",
+              "object",
+              "conditions",
+              "exceptions",
+              "temporal"
+            ]
+          }
+        ]
+      },
+      "F17_actor_F18_readouts": {
+        "joint": [
+          {
+            "rows": 6,
+            "wrong_fields": [
+              "actor"
+            ]
+          },
+          {
+            "rows": 1,
+            "wrong_fields": [
+              "actor",
+              "exceptions"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "conditions"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "modality"
+            ]
+          },
+          {
+            "rows": 3,
+            "wrong_fields": [
+              "modality",
+              "actor"
+            ]
+          }
+        ],
+        "raw": [
+          {
+            "rows": 6,
+            "wrong_fields": [
+              "actor"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "conditions"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "modality"
+            ]
+          },
+          {
+            "rows": 3,
+            "wrong_fields": [
+              "modality",
+              "actor"
+            ]
+          },
+          {
+            "rows": 1,
+            "wrong_fields": [
+              "modality",
+              "actor",
+              "action",
+              "object",
+              "conditions",
+              "exceptions",
+              "temporal"
+            ]
+          }
+        ]
+      },
+      "native_F18": {
+        "joint": [
+          {
+            "rows": 6,
+            "wrong_fields": [
+              "actor"
+            ]
+          },
+          {
+            "rows": 1,
+            "wrong_fields": [
+              "actor",
+              "object",
+              "exceptions"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "conditions"
+            ]
+          },
+          {
+            "rows": 5,
+            "wrong_fields": [
+              "modality",
+              "actor"
+            ]
+          }
+        ],
+        "raw": [
+          {
+            "rows": 6,
+            "wrong_fields": [
+              "actor"
+            ]
+          },
+          {
+            "rows": 2,
+            "wrong_fields": [
+              "conditions"
+            ]
+          },
+          {
+            "rows": 5,
+            "wrong_fields": [
+              "modality",
+              "actor"
+            ]
+          },
+          {
+            "rows": 1,
+            "wrong_fields": [
+              "modality",
+              "actor",
+              "action",
+              "object",
+              "conditions",
+              "exceptions",
+              "temporal"
+            ]
+          }
+        ]
+      }
+    },
+    "training_full_IR_gain_and_loss_ID_sets_vs_F15_empty": true,
+    "training_full_IR_raw_and_joint": 154,
+    "variants": [
+      "F15_baseline",
+      "F17_actor_F18_readouts",
+      "F17_actor_F17_readouts"
+    ]
+  },
+  "schema": "conditions-composition-next-training-proposal/v1",
+  "single_proposed_recipe": {
+    "causal_scope": "Four-tensor freezing plus the added conditions margin is one compound recipe. It does not isolate the causal effect of the margin against an identically frozen no-margin control; no additional arm is proposed.",
+    "fixed_recipe": {
+      "batch_size": 12,
+      "inference": "Same raw decoder and joint fullspan top8, same1e-7 ambiguity and search/abstention limits.",
+      "max_experimental_updates": 32,
+      "optimizer": "Fresh Adam for the ordered4 tensors; lr.001,betas.9/.999,eps1e-8,weight_decay0,foreachFalse,clip_norm5 as retained recipe.",
+      "schedule": "Same168 training IDs, order/source manifests and fixed retained batch schedule; no new examples, evaluation-negative mining, retries, sweep, early stopping or threshold fit.",
+      "seed": 1729,
+      "separate_fixture": "If retained, preregister exactly1 isolated synthetic forward/2 synthetic occurrences/1 separate fixture Adam step; restore CPU RNG/grad mode. These are separate from experimental32 updates/1312 forwards/1664 source occurrences."
+    },
+    "new_margin": {
+      "applies_to": "Every authenticated gold-present training conditions row (72 of168); never just the two errors, a predicted-correct mask, temporal variant subset or evaluation rows.",
+      "coefficient": 0.25,
+      "coefficient_basis": "Fixed adaptation of the existing source actor-hinge convention, not chosen or tested against the observed gap values.",
+      "domain": "Every valid unpadded upper-triangle pair0<=left<=right<token_count, excluding only the exact gold pair. Do not filter overlap with other gold facets, use boundary-top8 Cartesian products, or restrict training negatives to inference top8.",
+      "formula": "L_total = L_F18_weighted_CE + L_existing_F15_masked_KL + 0.25 * mean_full_batch(I_gold_conditions_present * relu((1 + S(hardest_wrong)) - S(gold))).",
+      "graph_zero": "Absent conditions or an empty wrong domain contribute a graph-connected exact zero on valid conditions logits; padded/reversed pairs excluded. Divide by full B, never present count or active-hinge count.",
+      "margin": 1.0,
+      "purpose": "Directly penalize complete wrong-span ordering across the domain that is pruned to inference top8, while retaining endpoint CE. It changes a training objective, not decoding/label policy.",
+      "score": "CPU float32 S(left,right)=float32(start[left]+end[right]) on conditions row3. Enumerate row-major; choose exact highest score, ties earliest(left,right). Detach selection only, then recompute selected wrong and gold tensor scores with gradients and evaluate relu((1+wrong)-gold) in that association."
+    },
+    "objective_label": "conditions-fullspan-margin-retention",
+    "one_candidate_only": true,
+    "parent": {
+      "checkpoint_bytes": 21058430,
+      "checkpoint_sha256": "90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555",
+      "descriptor_authentication_required": "Resolve the exact checkpoint path/state digest through the qualified F18 public plan/snapshot/result chain in a future separately reviewed recipe; no checkpoint body was opened here.",
+      "initialization": "Copy all42 exact trained F18 states. Do not construct a mixed F17/F18 checkpoint or substitute saved score composition for checkpoint compatibility.",
+      "phase": "F18"
+    },
+    "partition": {
+      "active_row_scalars": 130,
+      "active_rows": {
+        "end.bias": [
+          3
+        ],
+        "end.weight": [
+          3
+        ],
+        "start.bias": [
+          3
+        ],
+        "start.weight": [
+          3
+        ]
+      },
+      "arithmetic": "2*(6*64+6)=780;2*(64+1)=130;780-130=650;42-4=38.",
+      "encoded_width": 64,
+      "frozen": "F18 modality, all actor/query/gate parameters, original and learned conditions/all-other presence, encoders/features and all nonconditions pointer rows.",
+      "fully_frozen_tensors": 38,
+      "gradient_limit": "A pointer bias is a common shift across token positions. CE, KL and pair margins are shift invariant in exact arithmetic; selected bias gradients may cancel to zero or rounding residuals. Require finite connected gradients, not positive/nonzero gradients or value changes for every selected tensor.",
+      "inactive_optimizer_scalars": 650,
+      "inactive_rows": {
+        "end.bias": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "end.weight": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "start.bias": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "start.weight": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ]
+      },
+      "model_tensors": 42,
+      "optimizer_parameter_order": [
+        "start.weight",
+        "start.bias",
+        "end.weight",
+        "end.bias"
+      ],
+      "optimizer_tensors": 4,
+      "route": "Keep full six-row GEMM geometry, detached frozen features and frozen output rows; only conditions row3 remains differentiable. No new feature/context module.",
+      "stored_optimizer_scalars": 780
+    },
+    "retained_anchor": {
+      "conditions_weight": "Existing fixed F15 raw conditions-only weight2 on exactly two authenticated training rows;1 otherwise. It multiplies frozen presence_CE plus half(start_CE+end_CE). Keep full B denominator and absent-pointer ignore semantics.",
+      "constant_terms": "Retain frozen-head CE/KL constants and association rather than subtracting/renormalizing them. Actor hinge remains explicitly omitted.",
+      "teacher_KL": "Keep existing F15 teacher, six component logits/masks, temperature1, coefficient1 and sum(masked KL)/(6*full B), rederived from the exact168 authenticated training rows. Do not replace the teacher with F19 composed outputs or refresh masks from the candidate.",
+      "teacher_masks": "Per-boundary valid-present teacher argmax==gold; per-class teacher argmax==gold. Correct F15 conditions starts stay retained; wrong F15 conditions ends on the two diagnosed rows stay unmasked. Teacher/rowweight masks remain distinct.",
+      "weighted_CE": "Keep F18 exact legacy association: (2*mean(modality_CE)+sum(six facet means with the entire conditions facet weighted by existing authenticated row weight))/8."
+    },
+    "training_authorized": false
+  },
+  "source_distinctness": {
+    "differences": [
+      "Existing actor hinge excludes overlap with other gold roles; proposed conditions hinge includes all valid wrong pairs, because even incompatible spans can consume candidate top8 before joint compatibility.",
+      "F17 combines actor objective with teacher-correct six-block KL; F18 combines weighted endpoint CE with KL and explicitly omits actor hinge. Neither inspected source has this conditions fullspan margin.",
+      "Conditions-balanced source trains presence CE; F19 rank source only diagnoses saved logits. No new context capacity is proposed."
+    ],
+    "inherited": "Full-span hardest-wrong hinge with margin1/coefficient.25 is already implemented for actor. This is a conditions-role/domain transfer, not a novel ranking algorithm.",
+    "source_evidence": {
+      "legal_span_actor_context_ranking.py": {
+        "definitions": {
+          "_loss": {
+            "end_line": 342,
+            "line": 325
+          }
+        },
+        "source": {
+          "bytes": 57479,
+          "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py",
+          "sha256": "6f37e5295ab09fe5f61215ab0445e6348d2972551c6bee1719e1c3c2ce2bd1aa"
+        }
+      },
+      "legal_span_conditions_balanced.py": {
+        "definitions": {
+          "_loss": {
+            "end_line": 378,
+            "line": 357
+          }
+        },
+        "source": {
+          "bytes": 53599,
+          "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_balanced.py",
+          "sha256": "40254faadaded8a227a15d5b1526579d5212289837fd428991e32a5707e3824c"
+        }
+      },
+      "legal_span_joint_readout_retention.py": {
+        "definitions": {
+          "_loss": {
+            "end_line": 399,
+            "line": 393
+          },
+          "_retention_loss": {
+            "end_line": 1051,
+            "line": 1023
+          }
+        },
+        "source": {
+          "bytes": 80912,
+          "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+          "sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502"
+        }
+      },
+      "legal_span_modality_conditions_retention.py": {
+        "definitions": {
+          "_active_rows": {
+            "end_line": 795,
+            "line": 793
+          },
+          "_loss": {
+            "end_line": 420,
+            "line": 383
+          },
+          "_model": {
+            "end_line": 213,
+            "line": 177
+          },
+          "_partition": {
+            "end_line": 93,
+            "line": 86
+          },
+          "_policy": {
+            "end_line": 123,
+            "line": 95
+          },
+          "_retention_loss": {
+            "end_line": 916,
+            "line": 915
+          },
+          "_trainable_shapes": {
+            "end_line": 67,
+            "line": 65
+          },
+          "_weighted_main_loss": {
+            "end_line": 1021,
+            "line": 1017
+          }
+        },
+        "source": {
+          "bytes": 83852,
+          "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+          "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+        }
+      },
+      "legal_span_targeted_loss.py": {
+        "definitions": {
+          "_actor_auxiliary": {
+            "end_line": 370,
+            "line": 321
+          },
+          "_actor_domain": {
+            "end_line": 254,
+            "line": 241
+          },
+          "_combine_main_loss": {
+            "end_line": 113,
+            "line": 103
+          },
+          "_combine_total_loss": {
+            "end_line": 118,
+            "line": 116
+          },
+          "_policy": {
+            "end_line": 90,
+            "line": 53
+          }
+        },
+        "source": {
+          "bytes": 49658,
+          "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+          "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+        }
+      }
+    }
+  },
+  "status": "source_only_one_future_candidate_proposal_not_execution_authority",
+  "training_conditions_diagnosis": {
+    "absent_training_rows": 96,
+    "counterfactual": "Repairing the two F18 conditions-only training rows while every other decoded decision stays fixed would yield156/168. This is a labelled counterfactual, not a forecast, joint-selection guarantee, representation-capacity proof or universal ceiling.",
+    "diagnostic_rows": [
+      {
+        "donor": "F15",
+        "fixed_modality_and_all_presence_correct": true,
+        "full_gold_assignment_retained": true,
+        "fullspan_domain_count": 561,
+        "gold": {
+          "end": 20,
+          "start": 9
+        },
+        "gold_assignment_nonoverlap": true,
+        "gold_end_rank": 3,
+        "gold_end_rank_given_gold_start": 3,
+        "gold_fullspan_in_top16": true,
+        "gold_fullspan_in_top8": true,
+        "gold_fullspan_rank": 3,
+        "gold_minus_short_end_f32": -0.9081954956054688,
+        "gold_minus_short_fullspan_binary64": -0.9081954956054688,
+        "gold_minus_short_fullspan_f32": -0.9081954956054688,
+        "gold_start_rank": 1,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+        "joint_status": "selected",
+        "raw_status": "decoded",
+        "short_competitor": {
+          "end": 12,
+          "start": 9,
+          "text": "the “indigoport5 application"
+        }
+      },
+      {
+        "donor": "F17",
+        "fixed_modality_and_all_presence_correct": true,
+        "full_gold_assignment_retained": true,
+        "fullspan_domain_count": 561,
+        "gold": {
+          "end": 20,
+          "start": 9
+        },
+        "gold_assignment_nonoverlap": true,
+        "gold_end_rank": 2,
+        "gold_end_rank_given_gold_start": 2,
+        "gold_fullspan_in_top16": true,
+        "gold_fullspan_in_top8": true,
+        "gold_fullspan_rank": 2,
+        "gold_minus_short_end_f32": -0.6553573608398438,
+        "gold_minus_short_fullspan_binary64": -0.6553573608398438,
+        "gold_minus_short_fullspan_f32": -0.6553573608398438,
+        "gold_start_rank": 1,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+        "joint_status": "selected",
+        "raw_status": "decoded",
+        "short_competitor": {
+          "end": 12,
+          "start": 9,
+          "text": "the “indigoport5 application"
+        }
+      },
+      {
+        "donor": "F18",
+        "fixed_modality_and_all_presence_correct": true,
+        "full_gold_assignment_retained": true,
+        "fullspan_domain_count": 561,
+        "gold": {
+          "end": 20,
+          "start": 9
+        },
+        "gold_assignment_nonoverlap": true,
+        "gold_end_rank": 2,
+        "gold_end_rank_given_gold_start": 2,
+        "gold_fullspan_in_top16": true,
+        "gold_fullspan_in_top8": true,
+        "gold_fullspan_rank": 2,
+        "gold_minus_short_end_f32": -0.6569890975952148,
+        "gold_minus_short_fullspan_binary64": -0.6569900512695312,
+        "gold_minus_short_fullspan_f32": -0.6569900512695312,
+        "gold_start_rank": 1,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+        "joint_status": "selected",
+        "raw_status": "decoded",
+        "short_competitor": {
+          "end": 12,
+          "start": 9,
+          "text": "the “indigoport5 application"
+        }
+      },
+      {
+        "donor": "F15",
+        "fixed_modality_and_all_presence_correct": true,
+        "full_gold_assignment_retained": true,
+        "fullspan_domain_count": 666,
+        "gold": {
+          "end": 23,
+          "start": 12
+        },
+        "gold_assignment_nonoverlap": true,
+        "gold_end_rank": 3,
+        "gold_end_rank_given_gold_start": 3,
+        "gold_fullspan_in_top16": true,
+        "gold_fullspan_in_top8": true,
+        "gold_fullspan_rank": 3,
+        "gold_minus_short_end_f32": -0.6456413269042969,
+        "gold_minus_short_fullspan_binary64": -0.6456413269042969,
+        "gold_minus_short_fullspan_f32": -0.6456413269042969,
+        "gold_start_rank": 1,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+        "joint_status": "selected",
+        "raw_status": "decoded",
+        "short_competitor": {
+          "end": 15,
+          "start": 12,
+          "text": "the “indigoport5 application"
+        }
+      },
+      {
+        "donor": "F17",
+        "fixed_modality_and_all_presence_correct": true,
+        "full_gold_assignment_retained": true,
+        "fullspan_domain_count": 666,
+        "gold": {
+          "end": 23,
+          "start": 12
+        },
+        "gold_assignment_nonoverlap": true,
+        "gold_end_rank": 3,
+        "gold_end_rank_given_gold_start": 3,
+        "gold_fullspan_in_top16": true,
+        "gold_fullspan_in_top8": true,
+        "gold_fullspan_rank": 3,
+        "gold_minus_short_end_f32": -0.39594173431396484,
+        "gold_minus_short_fullspan_binary64": -0.39594268798828125,
+        "gold_minus_short_fullspan_f32": -0.39594268798828125,
+        "gold_start_rank": 1,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+        "joint_status": "selected",
+        "raw_status": "decoded",
+        "short_competitor": {
+          "end": 15,
+          "start": 12,
+          "text": "the “indigoport5 application"
+        }
+      },
+      {
+        "donor": "F18",
+        "fixed_modality_and_all_presence_correct": true,
+        "full_gold_assignment_retained": true,
+        "fullspan_domain_count": 666,
+        "gold": {
+          "end": 23,
+          "start": 12
+        },
+        "gold_assignment_nonoverlap": true,
+        "gold_end_rank": 3,
+        "gold_end_rank_given_gold_start": 3,
+        "gold_fullspan_in_top16": true,
+        "gold_fullspan_in_top8": true,
+        "gold_fullspan_rank": 3,
+        "gold_minus_short_end_f32": -0.3966836929321289,
+        "gold_minus_short_fullspan_binary64": -0.3966827392578125,
+        "gold_minus_short_fullspan_f32": -0.3966827392578125,
+        "gold_start_rank": 1,
+        "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+        "joint_status": "selected",
+        "raw_status": "decoded",
+        "short_competitor": {
+          "end": 15,
+          "start": 12,
+          "text": "the “indigoport5 application"
+        }
+      }
+    ],
+    "exact_ties_and_guard": "Stable exact float32 coordinate ties are distinct from the retained inference1e-7 ambiguity guard; neither is retuned.",
+    "interpretation": "All six gold spans are already rank2 or3 in the actual upper-triangle fullspan candidates, with start rank1 and full gold assignment retained/compatible. The fixed shorter prefix outranks gold, including under the F18 donor. This supports testing score ordering, rather than top8 coverage, as a narrow hypothesis.",
+    "present_training_rows": 72,
+    "topk_conclusion": "Increasing top_k does not remove the already feasible, higher-scored short assignment. No top-k or threshold sweep is proposed; wider coverage could have other interactions and is not generally proven irrelevant."
+  }
+}

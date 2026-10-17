@@ -1,0 +1,47 @@
+{
+  "actual_limits_and_alarm_mutated_by_test": false,
+  "adapter_remains_unsealed_pending_primary_source": true,
+  "added_adapter_functions": [
+    "wall_alarm"
+  ],
+  "added_import": "stdlib signal",
+  "blocked_events": [],
+  "changed_adapter_functions": [
+    "enforce_limits",
+    "main"
+  ],
+  "errors": [],
+  "failures": [],
+  "findings": [],
+  "new_context384_requirement_before_BODY_READY": true,
+  "no_original_data_or_main_calls": true,
+  "passed": true,
+  "prior_11_methods_AST_exact": true,
+  "prior_65_subtest_controls_transferred_without_rerun": true,
+  "prior_exact_raw_draft_copies": [
+    {
+      "bytes": 32808,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/counter-adapter-draft-before-wall-v01.py",
+      "sha256": "1dd435a5a82a60d4f7a5538b41898f593670336082c7aec459216e221cbe1152"
+    },
+    {
+      "bytes": 6979,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test-counter-adapter-draft-before-wall-v01.py",
+      "sha256": "2f6c1cc0d79085269ef13d18bbd2e98094cb8dfddb78bd3ab8e886403cdbbfce"
+    }
+  ],
+  "schema": "conditions-counter-adapter-wall-control-and-AST-port/v1",
+  "source_files": [
+    {
+      "bytes": 33269,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/recount_conditions_composition_v01.py",
+      "sha256": "4f5c4cde42e9e088db70d5f96649a0dac15fab4631e033dc73db08223c2ead41"
+    },
+    {
+      "bytes": 8159,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_conditions_composition_counter_adapter_v01.py",
+      "sha256": "4c3cf925e24402ff94b9a5dfff86ae4667600fcaaef48a018f092c1b089ae730"
+    }
+  ],
+  "targeted_test_methods": 1
+}

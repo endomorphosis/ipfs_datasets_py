@@ -1,0 +1,33 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-03/cache/pytest
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 316 items
+
+tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py .... [  1%]
+.............................................                            [ 15%]
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py ........... [ 18%]
+.................................                                        [ 29%]
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py ........ [ 31%]
+...........................................                              [ 45%]
+tests/unit/logic/autoformal/test_legal_graph_review.py ................. [ 50%]
+...............................                                          [ 60%]
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py ....... [ 62%]
+...................................................................      [ 84%]
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py ........... [ 87%]
+.......                                                                  [ 89%]
+tests/unit/logic/autoformal/test_corpus_imports.py .......               [ 92%]
+tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py ... [ 93%]
+                                                                         [ 93%]
+tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py . [ 93%]
+..                                                                       [ 93%]
+tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py . [ 94%]
+..                                                                       [ 94%]
+tests/unit/logic/integration/test_reasoning_lazy_imports.py .....        [ 96%]
+tests/unit/logic/integration/test_legal_ir_symbols.py .......            [ 98%]
+tests/unit/logic/integration/test_legal_ir_source_maps.py ....           [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-03/logs/junit.xml -
+======================= 316 passed in 134.86s (0:02:14) ========================

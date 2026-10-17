@@ -1,0 +1,141 @@
+{
+  "authority": {
+    "gold_admitted": false,
+    "meaning_authenticated": false,
+    "model_gain_measured": false,
+    "native_probe_pass_observed_by_this_review": false,
+    "proof_admitted": false,
+    "review_performed": false,
+    "source_authenticated": false
+  },
+  "declared_not_executed_by_this_review": {
+    "family_routes": [
+      "fol",
+      "tdfol"
+    ],
+    "named_checks": 17,
+    "negative_refusals": 8
+  },
+  "driver": {
+    "bytes": 38913,
+    "path": "scripts/ops/legal_ir/replay_retained_definition_correspondence.py",
+    "sha256": "35570c5563a6f809c1aad011f6189b5afabcf002846476cf597be4c4a8937af1"
+  },
+  "findings": [
+    {
+      "observation": "The externally supplied descriptor SHA binds the exact ordered 13-role descriptor. Fixed absolute input paths, regular-file identity and length/SHA checks, and descriptor plus all-input rechecks surround each public operation. The review independently checked all 13 retained file lengths and SHA256 values.",
+      "scope": "Input custody",
+      "status": "pass"
+    },
+    {
+      "observation": "Actual retained sampler, C02, and earlier receipt keys match the driver assumptions. Original request, source, sampling, descriptor, bundle and acquisition commitments remain independently checked. Historical result fields used for stable-structure comparison exist; the historical FOL and TDFOL native AST, Lean body and symbol values are equal.",
+      "scope": "Historical correspondence",
+      "status": "pass"
+    },
+    {
+      "observation": "Current binding and review owners generate new candidate/report/subject identities using current producer origins. Historical candidate/result bytes are retained rather than rewritten. Compact current report transport without a trailing newline is separately frozen and checked against the binding report commitment; canonical records, original byte files and manifest-internal hashes are kept distinct.",
+      "scope": "New source generation",
+      "status": "pass"
+    },
+    {
+      "observation": "The driver checks the complete 560-subject pending population, 134 candidate paragraphs, 426 remaining controls, 8400 unanswered slots and 3360 original context obligations. Each family checks selected two original subjects, six physical occurrences, 36 selected context slots, all ordered role bindings and exact occurrence/packet references. A closing comparison requires both family routes to retain the same declared pure first-order AST/Lean/symbol subset.",
+      "scope": "Population and context",
+      "status": "pass"
+    },
+    {
+      "observation": "Eight declared controls cover a wrong independent link commitment, omitted unselected population, report-only serialization change, missing/reordered/swapped context, incomplete dependency closure and mixed-family candidate. Recomputed self-pins are explicitly described as unauthenticated. Negative payloads and index references are saved independently from successful primary outputs.",
+      "scope": "Refusal controls",
+      "status": "pass"
+    },
+    {
+      "observation": "The native-owned empty exports directory, regular single-link files, exclusive creation, readback hashes, bounded flat names, 128-file and 30,000,000-byte limits, closed inventory, receipt and self-excluded file index retain the source transports and family/context inputs needed for reconstruction. The descriptor input aggregate is bounded at 32 MiB. Native owner durability and release remain separate from these authored checks.",
+      "scope": "Output custody and limits",
+      "status": "pass"
+    }
+  ],
+  "independently_pinned_input_descriptor": {
+    "bytes": 4737,
+    "path": "docs/autoencoders/evidence/legal-ir-retained-source-correspondence-20261015/retained-inputs.json",
+    "sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736"
+  },
+  "limits": [
+    "No driver, runtime package, native API, model, solver, compiler, or test was imported or executed for this review. Actual probe outcomes must come from the later native execution and durable artifact observations.",
+    "The public correspondence validation in this driver runs in the coordinator process; this review makes no independent fresh-process product replay claim. Saved file and context indexes retain inputs for later reconstruction.",
+    "Successful checked linkage remains unsigned and does not authenticate source declarations, legal meaning, reviewer independence, exposure, gold labels, semantic agreement, Lean proof of source meaning, or trained-model gains.",
+    "The eight directly inspected operation-owner hashes are an explicit finite review cohort, not a complete dynamic import closure. The native validation request separately pins its selected source cohort.",
+    "Source consistency checks are sequential observations rather than a writer lease. Export fsync and readback are authored checks; physical durability and lifecycle cleanup require the existing native owner."
+  ],
+  "native_calls_by_reviewer": 0,
+  "performed": {
+    "all_descriptor_input_files_independently_read_and_sha256_verified": true,
+    "driver_and_descriptor_frozen_hashes_rechecked": true,
+    "historical_fol_tdfol_native_ast_lean_body_and_symbols_compared_equal": true,
+    "public_api_signatures_compared_to_calls": true,
+    "python_ast_parse": true,
+    "retained_input_bytes": 8998362,
+    "retained_input_count": 13,
+    "retained_input_roles": [
+      "c02_receipt",
+      "source_review_receipt",
+      "sampler_receipt",
+      "bundle",
+      "raw_html",
+      "descriptor",
+      "acquisition_receipt",
+      "sampling_report",
+      "fol_request",
+      "tdfol_request",
+      "fol_result",
+      "tdfol_result",
+      "actual_responses"
+    ],
+    "retained_receipt_schemas_and_referenced_field_shapes_checked": true
+  },
+  "review_kind": "read_only_source_and_retained_bytes_review_before_native_probe_execution",
+  "review_status": "no_concrete_static_blocker",
+  "reviewed_public_owners": [
+    {
+      "bytes": 7279,
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_contracts.py",
+      "sha256": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa"
+    },
+    {
+      "bytes": 14612,
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py",
+      "sha256": "2e0eed594cbfa256f54d229e2c9e006eada04263aae17c5d330c79741047f087"
+    },
+    {
+      "bytes": 29833,
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py",
+      "sha256": "db4da5508091729757bea1f64e20fe997c98b0c60069490f0845f856965be190"
+    },
+    {
+      "bytes": 12974,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_graph_dependencies.py",
+      "sha256": "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8"
+    },
+    {
+      "bytes": 13827,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling.py",
+      "sha256": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489"
+    },
+    {
+      "bytes": 22701,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+      "sha256": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417"
+    },
+    {
+      "bytes": 28166,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_review_v2.py",
+      "sha256": "bf47177528a8c48e8ba54bc8a130b19ed085085f259cb3431bbc5c58e9187567"
+    },
+    {
+      "bytes": 8241,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py",
+      "sha256": "2036a97950b744752d19f82eca25142ced957b34c934c1c16e60595db0e2234d"
+    }
+  ],
+  "runtime_executions_by_reviewer": 0,
+  "schema": "legal-retained-definition-correspondence-implementation-review/v1",
+  "tests_executed_by_reviewer": 0
+}

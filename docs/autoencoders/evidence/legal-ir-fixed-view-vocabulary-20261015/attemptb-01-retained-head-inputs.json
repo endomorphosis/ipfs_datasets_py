@@ -1,0 +1,181 @@
+{
+  "inputs": [
+    {
+      "bytes": 14396,
+      "name": "published_observation",
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-fixed-view-vocabulary-20261015/published-head-observation.json",
+      "sha256": "bd3599791fd6b9238c02226630639b3b499c723b348cf4e9535af4c5ccbe73db"
+    },
+    {
+      "bytes": 493485,
+      "name": "head_report",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/head-probe-v1/exports/report.json",
+      "sha256": "4b701084aaa5b8cccd5c3bb4c3001e07df2364487d730352c119c0106f61ee1b"
+    },
+    {
+      "bytes": 32738,
+      "name": "preparation_report",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/report.json",
+      "sha256": "39a55c4cbb68ca5f1c07c65d06b86234db00f4ceb043b158807c8c6ac466a531"
+    },
+    {
+      "bytes": 15576,
+      "name": "support_audit",
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-followup-20261015/head-probe-view-support-audit-v2.json",
+      "sha256": "f111c12dbbb337a361cbb581d6c4c2a2cc0c1a1f0668bbcc56696cf2cc075553"
+    },
+    {
+      "bytes": 16512,
+      "name": "head_owned_request",
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-followup-20261015/head-probe-owned-request-v1.json",
+      "sha256": "c15cd5548f3cfbe752ff20e6cc195936c489907f8258063c9295e960f061c7af"
+    },
+    {
+      "bytes": 43323,
+      "name": "head_driver",
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/probe_existing_uscode_384_heads_v4.py",
+      "sha256": "49a22f448707a353e4ab491102a0203f89a2c8eef361379096cd76fa2d339881"
+    },
+    {
+      "bytes": 303004,
+      "name": "constructor_receipt",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/progress/outputs/incremental-0b8ac08050ed035ac608bf61b5c55e792ba68c8434bcb54714d18a192261171c/receipt.json",
+      "sha256": "d8ac75642d8cf544cbf359bb0365a44e9ba8f6959cb99a247a51e7b0b18697a1"
+    },
+    {
+      "bytes": 160894,
+      "name": "selected_inputs",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/selected-inputs.json",
+      "sha256": "a934d07bd327b1bf709838ae51034b749b997e7a667c24c1e2ea9e73abd00232"
+    },
+    {
+      "bytes": 1228305,
+      "name": "target_config",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/target-config.json",
+      "sha256": "946418384b5b77f8b2288b8eab5f6728cedffc378644a1b2a4e7f28b09f9bb64"
+    },
+    {
+      "bytes": 7204344,
+      "name": "parent_checkpoint",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/4f/4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+      "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+    },
+    {
+      "bytes": 13402647,
+      "name": "structural_checkpoint",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/head-probe-v1/exports/structural.candidate.state.json",
+      "sha256": "dadf1964dc6dbf9c89dbe360dd06908e24d299b5f80f5b6e2014967361932312"
+    },
+    {
+      "bytes": 434558,
+      "name": "embedding_receipt",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/native-embeddings-20260925-r2/embedding-production.json",
+      "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa"
+    },
+    {
+      "bytes": 75216,
+      "name": "source_import_receipt",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/import-receipt.json",
+      "sha256": "513fa9976505ec4a133d039c8ae1e36f73394c4df8937a62a3194eeaf8996cad"
+    },
+    {
+      "bytes": 7132,
+      "name": "tuning06_preparation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/span-06/preparation.json",
+      "sha256": "ddeceac5fa1b75f750d2c7f30a35ac20ae45593112dfbada416a93cce33decdb"
+    },
+    {
+      "bytes": 3357352,
+      "name": "tuning06_bundle",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/span-06/targets.bundle",
+      "sha256": "45ee4a6f3bc3aaa36bc25bdec5a45eb2795dd9d0b03e1ae8be065ca792b860fe"
+    },
+    {
+      "bytes": 584,
+      "name": "tuning06_source_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000012.txt",
+      "sha256": "b1a0ea3c7c045d67947aaa665232ed39ef8f168b0153c94c7638b10460387e4a"
+    },
+    {
+      "bytes": 7141,
+      "name": "tuning07_preparation",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/span-07/preparation.json",
+      "sha256": "09e50d26c2c155671c8b04cdf7451656cd60b125880aa93e3c145d29fa199ccf"
+    },
+    {
+      "bytes": 2555548,
+      "name": "tuning07_bundle",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/span-07/targets.bundle",
+      "sha256": "2fc401b5c77a5dc1b7ff59fe90b47b1eb13ef333a53fa408b934157ecbb0a4c9"
+    },
+    {
+      "bytes": 431,
+      "name": "tuning07_source_text",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/embedding-receipt-set-20260926/probe-r2/probe/selected-inputs/source-000013.txt",
+      "sha256": "ae94239867b3d0a4b092ca70e50f2eced5e85ba13b3fe7d4f5c8905639d354d7"
+    }
+  ],
+  "schema": "retained-legal-ir-fixed-view-inputs/v1",
+  "tuning_rows": [
+    {
+      "bundle_role": "tuning06_bundle",
+      "expanded_target_bytes": 38424601,
+      "expanded_target_sha256": "12a7a7d0bcebc4a6b7c92d7531c3420b4149175612a509e9558a6d1bb5af35e1",
+      "ordinal": 6,
+      "partition": "repeated_tuning",
+      "physical_source_binding_json_pointer": "/physical_source_bindings/6",
+      "preparation_role": "tuning06_preparation",
+      "record_id": "sha256:53902e4e5b84cacb9c8466b50f9156210ef1d4415640ea4157757b9f758c6428",
+      "record_json_pointer": "/records/6",
+      "sample_id": "us-code-31-792-a48ea2828f3fd122",
+      "sample_payload_sha256": "6ba4fa923f60574b10e994b9cf117ffc02b71888f3366607fc7dad6422522e62",
+      "sample_payload_sha256_scope": "exact compact LegalSample.to_json; bundle carries its own tagged sample digest",
+      "source_text_role": "tuning06_source_text",
+      "target_snapshot_id": "sha256:f3ba45904b597ff8ab7b992264c4f9730b193b3396f29bd1ec85202a0da0c86d",
+      "target_view_distribution": {
+        "CEC.native": 0.22399828450999437,
+        "TDFOL.prover": 0.26715748890269075,
+        "deontic.ir": 0.36641712461411613,
+        "knowledge_graphs.neo4j_compat": 0.1424271019731987
+      },
+      "target_view_support": [
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat"
+      ]
+    },
+    {
+      "bundle_role": "tuning07_bundle",
+      "expanded_target_bytes": 23906265,
+      "expanded_target_sha256": "fa0453757ebd042a69f6bfb2f7c7b72d783a7cf4837eff8e4d3e38f9369e05b0",
+      "ordinal": 7,
+      "partition": "repeated_tuning",
+      "physical_source_binding_json_pointer": "/physical_source_bindings/7",
+      "preparation_role": "tuning07_preparation",
+      "record_id": "sha256:49369904d322be5fa72c78752163fe11c72e43bfd36d5e74d4388d94024489f7",
+      "record_json_pointer": "/records/7",
+      "sample_id": "us-code-15-1199-7fd648e43fe15dce",
+      "sample_payload_sha256": "01350020d8a601bfbdc9326a6324e7f524a39da4bfa6c775b63c405332e8cf37",
+      "sample_payload_sha256_scope": "exact compact LegalSample.to_json; bundle carries its own tagged sample digest",
+      "source_text_role": "tuning07_source_text",
+      "target_snapshot_id": "sha256:20b01819b7782d3384f630a8f77206ef59d989f263d75364c09fb7c6196f2dad",
+      "target_view_distribution": {
+        "CEC.native": 0.1753029651898129,
+        "TDFOL.prover": 0.16530296518981288,
+        "deontic.ir": 0.2472340869503466,
+        "external_provers.router": 0.12397722389235967,
+        "knowledge_graphs.neo4j_compat": 0.1114512221592836,
+        "modal.frame_logic": 0.1767315366183843
+      },
+      "target_view_support": [
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "external_provers.router",
+        "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic"
+      ]
+    }
+  ]
+}

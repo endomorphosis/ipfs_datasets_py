@@ -1,0 +1,46 @@
+{
+  "blocked_events": [],
+  "errors": [],
+  "failures": [],
+  "findings": [],
+  "harness": "Finite stdlib detached AST harness: removes only test source loader _PATH/_SPEC/kernel bindings, exec_module call and main guard; injects exact separately compiled kernel. Test functions/classes/imports unchanged. Exclusive receipt written by os.write.",
+  "limits": {
+    "address_space_bytes": 536870912,
+    "cpu_seconds": 30,
+    "maximum_file_bytes": 1000000
+  },
+  "no_numerical_or_installed_package_imports": true,
+  "no_original_data_or_helper_main": true,
+  "passed": true,
+  "schema": "conditions-composition-invented-detached-controls/v1",
+  "source_files": [
+    {
+      "bytes": 15324,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent_conditions_composition_kernel_v01.py",
+      "sha256": "c0f307a33a0bf68bb02528a89efd5109d0409792b4a347ac4f455ffb75198266"
+    },
+    {
+      "bytes": 10479,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_independent_conditions_composition_kernel_v01.py",
+      "sha256": "f124718cb0ebd20a08d39d363dd45e37103c2152cc13b1aba94bd9fb3a2de798"
+    }
+  ],
+  "source_files_not_sealed_until_after_pass": true,
+  "subtests": 19,
+  "test_methods": 13,
+  "test_names": [
+    "test_abstention_makes_every_field_false_even_empty_optional",
+    "test_each_fixed_copy_lens_selects_exact_donor_roles",
+    "test_gain_loss_counts_retain_ids_and_include_modality",
+    "test_join_hash_id_digest_and_pair_variant_mutations_are_rejected",
+    "test_malformed_selected_rule_is_rejected",
+    "test_modality_error_is_not_a_complete_ir_match",
+    "test_packet_enforces_fixed_128_token_budget",
+    "test_panel_counts_use_independent_rows_and_law_is_refused",
+    "test_per_id_score_rows_and_temporal_ambiguity_are_rebuilt",
+    "test_presence_abstention_is_excluded_from_all_confusion_cells",
+    "test_protected_f18_actor_and_presence_changes_are_rejected",
+    "test_protected_negative_zero_difference_is_detected_by_bits",
+    "test_unknown_variant_donor_and_geometry_are_rejected"
+  ]
+}

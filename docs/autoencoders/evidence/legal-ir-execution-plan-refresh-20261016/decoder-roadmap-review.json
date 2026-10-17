@@ -1,0 +1,240 @@
+{
+  "authority": {
+    "gold_admitted": false,
+    "implementation_executed": false,
+    "legal_meaning_verified": false,
+    "model_promoted": false,
+    "proof_admitted": false,
+    "review_performed": false,
+    "source_authenticated": false,
+    "teacher_qualified": false
+  },
+  "checkout": "/home/barberb/lift_coding/.worktrees/legal-ir-execution-plan-refresh-20261016",
+  "confirmed_constraints": [
+    {
+      "result": "Same donor, four-pointer-tensor freeze mask, candidate enumeration, optimizer and budget for margin versus CE/retention. The archived differently frozen F18 result alone is not a causal control. Two exposed errors do not explain fresh0/36 generalization.",
+      "topic": "Attributable ranking experiment"
+    },
+    {
+      "result": "Preserves completed original-target replay and published fresh-target experiment, failed native acceptance and rollback. Explicitly declines another equivalent eight-row run or retrospective promotion from diagnosticCE.",
+      "topic": "Fixed-view result"
+    },
+    {
+      "result": "Separates source-only/latent-only/source-plus-latent and correct/zero/permuted latent inputs, plus absent/unrelated/shuffled retrieval. Ordinary inference excludes canonical targets, teacher forcing and target/loss feature caches; evaluator-context fixed-view probes are not latent reconstruction evidence.",
+      "topic": "Target-free inference and interventions"
+    },
+    {
+      "result": "Separates exact declared originalUTF8 and normalized/edit metrics, canonical/ordered semanticAST and graph agreement, independent legal meaning, canonical rendering and retained-source/surface restoration. No source pointer or lossyIR score is relabeled as source-withheld learned prose.",
+      "topic": "Reconstruction meanings"
+    },
+    {
+      "result": "Maintains selected384D32-entry typedJSON and8D18-entry synthetic grammar codecs and lineages; V2/V3 compatibility is explicit. Requires source-matched producer receipts and training-only preprocessing. No padding384D into768D or sequenceKL across incompatible codecs.",
+      "topic": "Donor compatibility"
+    },
+    {
+      "result": "Compatible parameter copying and replay can proceed with semanticKD masks zero. Teacher scope, reference objectives, masks, prefix/token positions and temperature-scaledKL normalization remain separate. Existing checkpoints/initializers are reused rather than random reset.",
+      "topic": "Warm start versus supervision"
+    },
+    {
+      "result": "Reports squaredL2, cosine and declared normalization/scaling alongside coordinateMSE. Width-dependent coordinateMSE alone does not rank8D/384D/768D semantic quality.",
+      "topic": "Dimension-aware metrics"
+    },
+    {
+      "result": "Keeps768D encoder8192-token capability distinct from current512-output-token primary and64-token grammar heads. Separate length bands, chunked/whole-source assembly, overflow, truncation refusal, rule cardinality and checkpoints are required.",
+      "topic": "Context and output geometry"
+    },
+    {
+      "result": "Retains independent source/legal/formal decisions, actual exposure/independence, complete dependency/split grouping, eligible targets and untouched promotion components. Exposed §101/§7213 hypotheses and pending §7214 cannot supply reviewed gold. Low loss, compiler success, training split labels, confidence or upload do not supply statutory eligibility.",
+      "topic": "Review and promotion"
+    },
+    {
+      "result": "Preserves original native owner/profile distinctions, generatedtext versus actualbuild, explicit hypotheses/axiom policy and conditionalkernel validity versus legal/planning eligibility. Full source/review/context dependencies and negative lookup partitions remain required.",
+      "topic": "Lean and cache eligibility"
+    },
+    {
+      "result": "Maintains separate IRfamily/schema/version/task/dimension roles, head/codecs, inventories and ModelManager identities. Whole-cache inventory/triage can proceed before teacher promotion while admitted semantic coverage requires its own gates.",
+      "topic": "Parallel lanes and scaling"
+    }
+  ],
+  "execution_counts_here": {
+    "encoder_calls": 0,
+    "models": 0,
+    "native_compilers": 0,
+    "network_requests": 0,
+    "plan_edits": 0,
+    "product_imports": 0,
+    "resource_or_permission_mutations": 0,
+    "solvers": 0,
+    "source_edits": 0,
+    "tests": 0,
+    "training": 0
+  },
+  "limits": [
+    "This is a documentation/contract review. It does not execute, independently reproduce or extend F18/F19 arithmetic, model experiments, transfers, producer generation, cache census, graph admission, Lean builds or reviewer decisions.",
+    "Historical scores and scoped results remain attributed to their existing owners and evidence. This review neither aggregates prior test counts nor treats them as corpus semantic coverage.",
+    "The current model-card dimension/token fields come from the separately retained observation linked by the parent plan; this reviewer made no network request.",
+    "Semantic thresholds, statistical power, seeds, hyperparameters, exact accepted task profiles and downstream gold-eligibility bindings still require the planned immutable experiment/component manifests.",
+    "Source/graph census and counted-frame prototype details are reviewed by the separate architecture/source reviewer. This review is bounded to decoder science, reconstruction/transfer contracts and their roadmap dependencies.",
+    "Plan ordering is a proposed active roadmap, not an implementation or task/permission grant. No native-resource admission, scheduler policy, model/default promotion or production behavior is changed."
+  ],
+  "plan": {
+    "bytes": 93411,
+    "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+    "sha256": "d113c7ca46f247571825e51ff03993acb549e41317d37a434cd824ec1a7530da"
+  },
+  "resolved_precision_findings": [
+    {
+      "finding": "F19 full-span top-eight and hardest-wrong valid-span proposal must not silently become marginal-boundary top-k or a different loss.",
+      "original_draft_sha256": "86d369d936e39bac51fdb27711f2b60b0dfcf236a94d14b9904a1f5ce17fc180",
+      "resolution": "Final Section5 names full complete conditions spans, valid-span margin and the matched four-pointer-tensor CE/retention arm."
+    },
+    {
+      "finding": "Compatible V2/incompatible V3 reference corpus belongs to the selected384D donor, not the18-entry8D synthetic grammar donor.",
+      "resolution": "Final Section6 explicitly names the selected384D donor."
+    },
+    {
+      "finding": "Semantic teacher qualification and useful latent dependence are different claims.",
+      "resolution": "Final Section5 permits semantic supervision within an explicitly declared source/context scope, while active-GTE or representation-benefit claims additionally require useful latent dependence."
+    }
+  ],
+  "review_kind": "bounded_read_only_documentation_and_existing_contract_review",
+  "reviewed_at_utc": "2026-10-16T00:53:23.412487+00:00",
+  "reviewed_repository_baseline": "a4ee9f6a899a8d8fe5f6b9d89f5007dd88464af1",
+  "reviewed_sections": [
+    "Active roadmap and current decision baseline",
+    "Section5 attributable decoder experiments",
+    "Section6 parallel dimensions and transfer",
+    "Section8 unified Lean corpus and conditional artifact reuse",
+    "Section10 whole-cache processing and stage eligibility"
+  ],
+  "schema": "legal-ir-decoder-roadmap-static-review/v1",
+  "status": "pass_with_stated_scope",
+  "supporting_owner_and_guide_bindings": [
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 8532,
+      "materialized_local_bytes_equal": null,
+      "path": "docs/autoformalization/legal-modality-conditions-retention-20261015.md",
+      "sha256": "44f7303d44b9240d9842b9e97d73813b4cb2db66610cca9c9c2e95328eba9c29"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 6147,
+      "materialized_local_bytes_equal": null,
+      "path": "docs/autoformalization/legal-conditions-composition-20261015.md",
+      "sha256": "014e1487e079beb3d85892c8d6d012ec79048635b2539f5bcd93ae766648aa2b"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 6264,
+      "materialized_local_bytes_equal": true,
+      "path": "docs/autoencoders/legal_ir_head_training_probe_20261015.md",
+      "sha256": "2f55e77a69a20b37216bf59279ef1e610357d148350eeb575b42a96fb23dafcc"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 5951,
+      "materialized_local_bytes_equal": true,
+      "path": "docs/autoencoders/legal_ir_fixed_view_probe_20261015.md",
+      "sha256": "7287333debcba5625f6d14d572e8be1811a97209909b2a0250705ce419131c29"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 12136,
+      "materialized_local_bytes_equal": true,
+      "path": "docs/autoencoders/legal_ir_fixed_view_vocabulary_20261015.md",
+      "sha256": "9f66c93040afc911b9dcdb449492fbed1370a987dca37bdcfc9e91c500d16343"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 5241,
+      "materialized_local_bytes_equal": true,
+      "path": "docs/autoencoders/legal_original_text_roundtrip.md",
+      "sha256": "3e5a5f254c792a4b73f4005195e508137fb488fa9c86b7972b3618ffa7f8f390"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 15551,
+      "materialized_local_bytes_equal": true,
+      "path": "docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+      "sha256": "ee8cb120795ce9ee8c696d952169da5544c34e3ae4f2f6adeeacc58701532fa6"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 17437,
+      "materialized_local_bytes_equal": true,
+      "path": "docs/autoencoders/gte_decoder_reuse.md",
+      "sha256": "5c21a410b800598a36da87d4d5498ae9d8abf657911faa1e299a9eade06257ff"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 10467,
+      "materialized_local_bytes_equal": true,
+      "path": "docs/autoencoders/gte_decoder_knowledge_transfer.md",
+      "sha256": "e50f53bf4db5472ab0d42f78021f29051a184cbfbe84f77210519e00097c8026"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 11462,
+      "materialized_local_bytes_equal": true,
+      "path": "docs/autoencoders/gte_decoder_native_inputs.md",
+      "sha256": "749ff921c4aaa887293881994f39a8e8194cbf9d38fb00d1654201dc1af58602"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 7488,
+      "materialized_local_bytes_equal": true,
+      "path": "docs/autoencoders/pilots/uscode_definition_component/README.md",
+      "sha256": "550bbaefe436c4cde13f5905b4a28c753a9bce56b0d120f88d48554172243f57"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 83852,
+      "materialized_local_bytes_equal": true,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 27402,
+      "materialized_local_bytes_equal": true,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_view_vocabulary_diagnostic.py",
+      "sha256": "71de47401a54d9374691ebd5fe5e50db38a4d741883e12ec1c7fbe4734292104"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 22631,
+      "materialized_local_bytes_equal": true,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+      "sha256": "4a12dbc95bf06cae833ec7ff3b7d13b1eadf617cd189f32a44d4319678f00af6"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 13756,
+      "materialized_local_bytes_equal": true,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 25849,
+      "materialized_local_bytes_equal": true,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_transfer_batch.py",
+      "sha256": "e7cd0134df183df54dd56822e8e72d042076a206d2527322e7e64122a85e50d6"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 25011,
+      "materialized_local_bytes_equal": true,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_transfer_replay.py",
+      "sha256": "0cff6e50bcf996dd70bbf3c63fcfe3a6875a177db87bdcdb4fba5c4d5dfdac88"
+    },
+    {
+      "binding": "reviewed_baseline_Git_object",
+      "bytes": 11464,
+      "materialized_local_bytes_equal": true,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_distillation.py",
+      "sha256": "60d2e1db528ecd3165f7211019b4ea9bc838e843e63566efb9413645ef2a3ccd"
+    }
+  ]
+}

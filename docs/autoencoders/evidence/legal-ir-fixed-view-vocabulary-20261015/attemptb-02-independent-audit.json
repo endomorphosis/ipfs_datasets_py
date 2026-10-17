@@ -1,0 +1,33 @@
+{
+  "all_authority_flags_false": true,
+  "all_sealed_paths_sizes_hashes_device_inode_exact": true,
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02",
+  "durability": {
+    "bytes": 2801,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/logs/validation-durability.json",
+    "sha256": "15497f3de6bef8e0160c51a90a4ff682a0aec16f546b479208877c19d6432e4c"
+  },
+  "final_bytes": 102986,
+  "final_files": 16,
+  "method": "Independent stdlib read-only request/source/ordinary-file/native-seal/exact-selected-ledger-row inspection. No product imports, tests, resource acquisition, recovery or attempt writes.",
+  "native_elapsed_seconds": 48.04187000985257,
+  "observed_at_utc": "2026-10-15T22:08:52.866165+00:00",
+  "request": {
+    "bytes": 38164,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-fixed-view-vocabulary-20261015/validation-request-b-02.json",
+    "sha256": "54f158e0338d2904d25c261c33249cb2c769a1086abf0567c1f73cb3397f14e7"
+  },
+  "result": {
+    "bytes": 656,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-b-02/logs/result.json",
+    "sha256": "568e57a7fd9afcb9b176175bd5a4ea197e73af832765588ed0f91c1eba507914"
+  },
+  "schema": "retained-source-native-independent-audit/v1",
+  "sealed_files": 15,
+  "selected_checks": [
+    "retained-two-row-parent-structural-fixed-view-vocabulary"
+  ],
+  "selected_storage_status": "released",
+  "source_pins_rehashed": 165,
+  "storage_budget": 268435456
+}

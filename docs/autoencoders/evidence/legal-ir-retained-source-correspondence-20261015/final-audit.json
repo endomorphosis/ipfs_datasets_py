@@ -1,0 +1,803 @@
+{
+  "artifact_custody": {
+    "all13_original_files_and_descriptor_copies_unchanged": true,
+    "curated_public_bytes": 1621925,
+    "curated_public_copies": 51,
+    "curated_public_copies_exact": true,
+    "curated_subset_not_a_standalone_complete64file_bundle": true,
+    "exact_closed_filename_population": true,
+    "export_bytes": 10620287,
+    "export_index": [
+      {
+        "bytes": 208001,
+        "path": "actual-fol-binding-result.json",
+        "sha256": "6a438cd715a71ea92944b5a07805164182d18013f2222b8a9785c1df7643c6b5"
+      },
+      {
+        "bytes": 57051,
+        "path": "actual-fol-candidate-input.json",
+        "sha256": "0a0d46c40ea8c97e99fcfd7859497d0d1e2793c36ee8384a8e7f17875ddcaa8c"
+      },
+      {
+        "bytes": 4686,
+        "path": "actual-fol-context-00.json",
+        "sha256": "b1dc8245be9ba3ecf768873ab82f94fc38a45cc65c35c2d05274623c02b79043"
+      },
+      {
+        "bytes": 4651,
+        "path": "actual-fol-context-01.json",
+        "sha256": "5716e65c77e1aab7fc2afafd48c4801aa611d5ec4fb9acf7a8e9473d903fb26b"
+      },
+      {
+        "bytes": 4596,
+        "path": "actual-fol-context-02.json",
+        "sha256": "9aef24b56db1801ec213fdaef1d18f1cf60605a364ed51d857a353742dd551b1"
+      },
+      {
+        "bytes": 4597,
+        "path": "actual-fol-context-03.json",
+        "sha256": "1d43e484482a9206fb4044b8950cc860e2b3b18d597ac99590b0bc7b8564d0dc"
+      },
+      {
+        "bytes": 4587,
+        "path": "actual-fol-context-04.json",
+        "sha256": "2f9889e298394690629b90020851e1470279df9365bccb4abe76764351985c0c"
+      },
+      {
+        "bytes": 4611,
+        "path": "actual-fol-context-05.json",
+        "sha256": "c8db5e2b3376011c24a20dcad456b65ab3458e08d75efa5fab460225022f0b7f"
+      },
+      {
+        "bytes": 3209,
+        "path": "actual-fol-context-index.json",
+        "sha256": "c8a19f1bbd78317983b0a517df04b9abe709d063851ccc3ffeb311be7237d2e8"
+      },
+      {
+        "bytes": 133255,
+        "path": "actual-fol-correspondence.json",
+        "sha256": "f9f70fc76952819aa3c82ef5dfcb598675e9d89ae632d8f3ad523087afaac9b7"
+      },
+      {
+        "bytes": 37109,
+        "path": "actual-fol-dependency-manifest.json",
+        "sha256": "9408bedf4c8886e69f418bf3d1112201602daff615e914d882afdc1e6010db75"
+      },
+      {
+        "bytes": 2174,
+        "path": "actual-fol-original-input-custody.json",
+        "sha256": "c5f9a16efed1f92f0fb9992a29d01ab972f11da892196a9a0544ff6006c2a480"
+      },
+      {
+        "bytes": 4967,
+        "path": "actual-fol-replay-index.json",
+        "sha256": "848548eb9725f63d4e7ce14d214af71bae2d0ce5d2024cf136857972f0aaa585"
+      },
+      {
+        "bytes": 31853,
+        "path": "actual-fol-report-input.json",
+        "sha256": "aa7723a6800ad1672b8a55ed11b125c04115817fdc5c42394a7af75c6ed6cfa9"
+      },
+      {
+        "bytes": 77863,
+        "path": "actual-fol-review-preparation.json",
+        "sha256": "acac8419ece1a45500d838817f98c3094f7d8edcc6ece22e3b3d04b1e2a146ad"
+      },
+      {
+        "bytes": 103722,
+        "path": "actual-fol-review-subject.json",
+        "sha256": "2d4c179dd2c51bfc53a29d361e021152cd43c6f25abe2a34df9ae86de26e5c74"
+      },
+      {
+        "bytes": 11158,
+        "path": "actual-fol-source-generation-comparison.json",
+        "sha256": "2805d5035769b9bbd0517a0c396425a6f995d157c1ff041252c6c8b8046efd7b"
+      },
+      {
+        "bytes": 208047,
+        "path": "actual-tdfol-binding-result.json",
+        "sha256": "72c3b1629befacc9311ce22c94840ab3ebc7c7577a971dc705d2c9eda30ee47d"
+      },
+      {
+        "bytes": 57059,
+        "path": "actual-tdfol-candidate-input.json",
+        "sha256": "d43446bacca4a8785efd76ab629ffd09e4ac29594e4306d81d72b4030cd8bca0"
+      },
+      {
+        "bytes": 4686,
+        "path": "actual-tdfol-context-00.json",
+        "sha256": "b1dc8245be9ba3ecf768873ab82f94fc38a45cc65c35c2d05274623c02b79043"
+      },
+      {
+        "bytes": 4651,
+        "path": "actual-tdfol-context-01.json",
+        "sha256": "5716e65c77e1aab7fc2afafd48c4801aa611d5ec4fb9acf7a8e9473d903fb26b"
+      },
+      {
+        "bytes": 4596,
+        "path": "actual-tdfol-context-02.json",
+        "sha256": "9aef24b56db1801ec213fdaef1d18f1cf60605a364ed51d857a353742dd551b1"
+      },
+      {
+        "bytes": 4597,
+        "path": "actual-tdfol-context-03.json",
+        "sha256": "1d43e484482a9206fb4044b8950cc860e2b3b18d597ac99590b0bc7b8564d0dc"
+      },
+      {
+        "bytes": 4587,
+        "path": "actual-tdfol-context-04.json",
+        "sha256": "2f9889e298394690629b90020851e1470279df9365bccb4abe76764351985c0c"
+      },
+      {
+        "bytes": 4611,
+        "path": "actual-tdfol-context-05.json",
+        "sha256": "c8db5e2b3376011c24a20dcad456b65ab3458e08d75efa5fab460225022f0b7f"
+      },
+      {
+        "bytes": 3221,
+        "path": "actual-tdfol-context-index.json",
+        "sha256": "e256f8ee8fd598bf2a02f542049eef41758e855b09cc2db7cf63728abc25aabb"
+      },
+      {
+        "bytes": 133255,
+        "path": "actual-tdfol-correspondence.json",
+        "sha256": "6b9c3544e8faa03ca6092ce4af74b7b2a3404f5a4260217d5e15ea60e9b4aefb"
+      },
+      {
+        "bytes": 37109,
+        "path": "actual-tdfol-dependency-manifest.json",
+        "sha256": "84b918e5a3c55c0bd3eed70f097332f8ee2c55e7e9711d1a9e249130212aab83"
+      },
+      {
+        "bytes": 2182,
+        "path": "actual-tdfol-original-input-custody.json",
+        "sha256": "05e9b170e11d9f29827881fc054b65d4bbb675970dbe7be9afd801ef5d026897"
+      },
+      {
+        "bytes": 4985,
+        "path": "actual-tdfol-replay-index.json",
+        "sha256": "84d6c50b85a5e9fb98f18486169b84ae5ff6b2b50d57fbf20e3d78cea0355b0c"
+      },
+      {
+        "bytes": 31891,
+        "path": "actual-tdfol-report-input.json",
+        "sha256": "2cf6d0b2384a395fdc4c6777be3d80d96695df9696162415600c112c85abaa18"
+      },
+      {
+        "bytes": 77865,
+        "path": "actual-tdfol-review-preparation.json",
+        "sha256": "2726546d637b256785e3cfb75b9c59b62adc95702d60ece4303c3f82db42ccbe"
+      },
+      {
+        "bytes": 103724,
+        "path": "actual-tdfol-review-subject.json",
+        "sha256": "90858aa28be14e83f3e72bd8a43611585ae179a06a11f4d70dc71fa361efec3f"
+      },
+      {
+        "bytes": 11164,
+        "path": "actual-tdfol-source-generation-comparison.json",
+        "sha256": "23a673702423dcdbadcf43917be589a02e4a02cbc8b2da4895d17209401db2fa"
+      },
+      {
+        "bytes": 10872,
+        "path": "file-index.json",
+        "sha256": "b199860a06d2ba8f69f0197e5d088205ac4eae8c77aa4280b5a78a212289d0a3"
+      },
+      {
+        "bytes": 4737,
+        "path": "input-descriptor.json",
+        "sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736"
+      },
+      {
+        "bytes": 2619,
+        "path": "negative-control-results.json",
+        "sha256": "bb9139429e412c5658bbfc934d01264528b98b2bb91c81b90552f118fd5300ae"
+      },
+      {
+        "bytes": 3405,
+        "path": "negative-incomplete-dependency-closure-control.json",
+        "sha256": "353e1fa49dea7a449296bdfa39b9e9c9452af15bb9a5e20eb36f598fdd32b551"
+      },
+      {
+        "bytes": 408,
+        "path": "negative-independent-link-pin-control.json",
+        "sha256": "425a591e4abd8fe46afbbedcb489268f91daabba3b292eed23a2b2939975aa84"
+      },
+      {
+        "bytes": 2642,
+        "path": "negative-missing-context-context-index.json",
+        "sha256": "a54f48fd839a014b4a347ef2cf81ff93d8a79048a971a1fa14f035efec0a4f85"
+      },
+      {
+        "bytes": 463,
+        "path": "negative-missing-context-control.json",
+        "sha256": "11e9405244d520ca26e11f06034b2376251403ddb8372fa0c92e6a36731dfa1d"
+      },
+      {
+        "bytes": 478,
+        "path": "negative-mixed-family-candidate-control.json",
+        "sha256": "ecd1289ff2ddc7aaec8ff2702fcb938d8afb5aef84e28812c9ee00a83df38d82"
+      },
+      {
+        "bytes": 133071,
+        "path": "negative-omitted-unselected-link.json",
+        "sha256": "910a8ad1e98972d3cef5fa8ebf29c2875b4d7b9cf003263dedda3ab8b568b6ac"
+      },
+      {
+        "bytes": 698,
+        "path": "negative-omitted-unselected-population-control.json",
+        "sha256": "8d06b20e5f76946aac496e3e31b1905e327753a7247c116d3691f5e10673502a"
+      },
+      {
+        "bytes": 37285,
+        "path": "negative-pretty-report-input.json",
+        "sha256": "8aa627887cdc3d619aa79fe2188c975c7f01f6a6774dde9c8bc088667ca44f84"
+      },
+      {
+        "bytes": 542,
+        "path": "negative-pretty-report-transport-control.json",
+        "sha256": "ac3d373d5464e7c30d12d7fcf80d4315e1b372882b5199408aa5212c29f7232a"
+      },
+      {
+        "bytes": 3161,
+        "path": "negative-reordered-context-context-index.json",
+        "sha256": "a11979af6a8f8255117b8c4d138320be64a3a228aa8d0dedaf7cb0d70025d674"
+      },
+      {
+        "bytes": 467,
+        "path": "negative-reordered-context-control.json",
+        "sha256": "c998695c90ab3eb63f088477a24161f273cfdec74095e2d193c407f6bd58b29d"
+      },
+      {
+        "bytes": 3161,
+        "path": "negative-swapped-context-packet-context-index.json",
+        "sha256": "e59b8b9d4a80c7e71563059927efbcefcd08c6e595f63ae15579afdb25691427"
+      },
+      {
+        "bytes": 477,
+        "path": "negative-swapped-context-packet-control.json",
+        "sha256": "1660ee410579e52f8153c36e1c898d9c24e1d294413a19a879be9945e33bceed"
+      },
+      {
+        "bytes": 21119,
+        "path": "replay-receipt.json",
+        "sha256": "ca49f5783d96664c6c53f61d23b91d6adfcac283e505efc70a66ec5e4b095b2a"
+      },
+      {
+        "bytes": 1069,
+        "path": "retained-acquisition-receipt.json",
+        "sha256": "7d9852fd175ae48dc057f2b879ed176e7b26a394e92e6ae13f4824df894228bf"
+      },
+      {
+        "bytes": 3,
+        "path": "retained-actual-responses.json",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      {
+        "bytes": 5664497,
+        "path": "retained-bundle.json",
+        "sha256": "2c2bb4ce302568feb014cc6abb28501bd3b453600d696a19588bbb14b55d2846"
+      },
+      {
+        "bytes": 11149,
+        "path": "retained-c02-receipt.json",
+        "sha256": "3e2b421aed87627b540712de89d7d8cfc00b7fd1dcb9966ac54044d62383c82b"
+      },
+      {
+        "bytes": 926,
+        "path": "retained-descriptor.json",
+        "sha256": "00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe"
+      },
+      {
+        "bytes": 1645,
+        "path": "retained-fol-request.json",
+        "sha256": "53401d0500b5277f15158a7737425eb44f1553d5edcd48dc73fec741a1971bae"
+      },
+      {
+        "bytes": 208589,
+        "path": "retained-fol-result.json",
+        "sha256": "03736e22b07923ee3661d629c6252d0a64fd36ac4ef41f55b4c36af9a89b978d"
+      },
+      {
+        "bytes": 98879,
+        "path": "retained-raw-html.html",
+        "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+      },
+      {
+        "bytes": 3343,
+        "path": "retained-sampler-receipt.json",
+        "sha256": "90152d5f2226955929392dd24d514e80ca19e313b7d3a7c3be28ec8972aaf2b8"
+      },
+      {
+        "bytes": 2790275,
+        "path": "retained-sampling-report.json",
+        "sha256": "173e3995b8628c76fbffcff1e1d77aad8d22d32ef84c3335e3ccc1c05af836d6"
+      },
+      {
+        "bytes": 7705,
+        "path": "retained-source-review-receipt.json",
+        "sha256": "10e6cf392bfe00fa175de5d3dc931a20a63517594ea3eed89d40a5a5c185ec93"
+      },
+      {
+        "bytes": 1647,
+        "path": "retained-tdfol-request.json",
+        "sha256": "50a2e256aeb8db5cbc813e037dafba5f2cb6fe7b567837472942e36eb18830d7"
+      },
+      {
+        "bytes": 208635,
+        "path": "retained-tdfol-result.json",
+        "sha256": "197d44d44f074e381a9ee6908aea3f2fa57c5d8c7d0ce2cdb81cf90fe1acf49f"
+      }
+    ],
+    "exports": 64,
+    "file_index_own_hash_externally_bound_by_native_seal": true,
+    "file_index_prior_rows_including_receipt": 63,
+    "file_index_sha256": "b199860a06d2ba8f69f0197e5d088205ac4eae8c77aa4280b5a78a212289d0a3",
+    "input_descriptor_sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736",
+    "large_bundle_guard_separate_from_native4MiB_source_guard": true,
+    "native_source_pinned_original_roles": [
+      "c02_receipt",
+      "source_review_receipt",
+      "sampler_receipt",
+      "raw_html",
+      "descriptor",
+      "acquisition_receipt",
+      "sampling_report",
+      "fol_request",
+      "tdfol_request",
+      "fol_result",
+      "tdfol_result",
+      "actual_responses"
+    ],
+    "receipt_output_rows": 62,
+    "replay_receipt_sha256": "ca49f5783d96664c6c53f61d23b91d6adfcac283e505efc70a66ec5e4b095b2a"
+  },
+  "authority_and_content_commitments": {
+    "all_false_authority_objects": 1719,
+    "all_positive_links_unsigned": true,
+    "assessments_signatures_models_training_and_native_compiler_invocations": 0,
+    "counts_are_occurrences_across_retained_json_not_independent_legal_evidence": true,
+    "integer_zero_gold_masks": 3386,
+    "original_subject_schema_and_manifest_domains_preserved": true,
+    "plain_subject_not_invented_sealed_credential": true,
+    "recomputed_sha256_dag_json_CIDs_use_published_recipe": true,
+    "sealed_record_occurrences": 4460,
+    "unique_sealed_cids": 2436
+  },
+  "evaluation_gold_authority": false,
+  "execution_authority": false,
+  "families": [
+    {
+      "assessment_created": false,
+      "binding_full_canonical_sha256": "0270827aa73e4d0ff33e7a91688fc414a9365776565a021803a0cb5ac99f4d29",
+      "body": {
+        "op": "atom",
+        "span": {
+          "char_end": 7217,
+          "char_start": 7188,
+          "text": "a person in an enlisted grade"
+        }
+      },
+      "context_slots_open_in_exact_original_order": 36,
+      "correspondence_file": {
+        "bytes": 133255,
+        "path": "actual-fol-correspondence.json",
+        "sha256": "f9f70fc76952819aa3c82ef5dfcb598675e9d89ae632d8f3ad523087afaac9b7"
+      },
+      "correspondence_full_canonical_sha256": "1429c6c73ba2ec3b973ea3402803e3632df0d185ff08761647abcacad366822d",
+      "current_candidate_cid": "baguqeeraqco3tnnnug3yr6a66akzeebmteaeh42mpdo3mkxr62tqcxyggmnq",
+      "definition_edges": 1,
+      "definition_use_edges": 0,
+      "family": "fol",
+      "graph_edges": 26,
+      "graph_nodes": 15,
+      "historical_candidate_cid": "baguqeerazrfb746lt56yi33v24zqb2n3bmctgg23yva7issrfbzra6rhk7dq",
+      "legal_as_of_civil_date": null,
+      "link_complete_producer_count": 37,
+      "native_ast_sha256": "3d5ea9d4a02c3b6134b1e37f02b589d16fd4c0fdffbf568da7dac8f98480e500",
+      "original_and_current_binding_producer_count": 29,
+      "original_declared_native_fields_equal": [
+        "declaration",
+        "native_ast",
+        "lean_body",
+        "symbols",
+        "source_version",
+        "source_occurrences",
+        "source_bindings",
+        "source_context_frontier"
+      ],
+      "physical_contexts": 6,
+      "replay_index": {
+        "bytes": 4967,
+        "path": "actual-fol-replay-index.json",
+        "sha256": "848548eb9725f63d4e7ce14d214af71bae2d0ce5d2024cf136857972f0aaa585"
+      },
+      "report_producer_count": 24,
+      "required_dependency_artifacts": 40,
+      "required_selected_subjects": 2,
+      "source_role_bindings": 6,
+      "subject_full_canonical_sha256": "105db4551bc2ef0f888292961f869581bc885fb56ab1b2b8683bb97132b815dc",
+      "unsigned": true,
+      "whole_population_pending": 560
+    },
+    {
+      "assessment_created": false,
+      "binding_full_canonical_sha256": "50409a91caf41f635068d64e9d0083a5ca736dfe94c6c69260ccd25f20c919de",
+      "body": {
+        "op": "atom",
+        "span": {
+          "char_end": 7217,
+          "char_start": 7188,
+          "text": "a person in an enlisted grade"
+        }
+      },
+      "context_slots_open_in_exact_original_order": 36,
+      "correspondence_file": {
+        "bytes": 133255,
+        "path": "actual-tdfol-correspondence.json",
+        "sha256": "6b9c3544e8faa03ca6092ce4af74b7b2a3404f5a4260217d5e15ea60e9b4aefb"
+      },
+      "correspondence_full_canonical_sha256": "eafaed34bbb88abaa69f2ba8e8b2a28082f589e29781a62d62b83cfb36f8d7d3",
+      "current_candidate_cid": "baguqeerak3wt3rahch5xaductnrybatsl4m6gocvyk44louaoiysdkgh6n6a",
+      "definition_edges": 1,
+      "definition_use_edges": 0,
+      "family": "tdfol",
+      "graph_edges": 26,
+      "graph_nodes": 15,
+      "historical_candidate_cid": "baguqeerapkhv6y2ml5lkqhjl256h5gkd53crrtnoxeb6zw4thuarh4etwiua",
+      "legal_as_of_civil_date": null,
+      "link_complete_producer_count": 37,
+      "native_ast_sha256": "3d5ea9d4a02c3b6134b1e37f02b589d16fd4c0fdffbf568da7dac8f98480e500",
+      "original_and_current_binding_producer_count": 29,
+      "original_declared_native_fields_equal": [
+        "declaration",
+        "native_ast",
+        "lean_body",
+        "symbols",
+        "source_version",
+        "source_occurrences",
+        "source_bindings",
+        "source_context_frontier"
+      ],
+      "physical_contexts": 6,
+      "replay_index": {
+        "bytes": 4985,
+        "path": "actual-tdfol-replay-index.json",
+        "sha256": "84d6c50b85a5e9fb98f18486169b84ae5ff6b2b50d57fbf20e3d78cea0355b0c"
+      },
+      "report_producer_count": 24,
+      "required_dependency_artifacts": 40,
+      "required_selected_subjects": 2,
+      "source_role_bindings": 6,
+      "subject_full_canonical_sha256": "f4923e480613cd1ef574491371832646c5134d0b335d0dce9c172606acea2f7e",
+      "unsigned": true,
+      "whole_population_pending": 560
+    }
+  ],
+  "limits": [
+    "Real retained statutory source custody/fullpending560 population is linked to an exact unsigned subject; one unary definition, opaque body and title applicability remain unreviewed caller declarations and legal date is unknown.",
+    "Two original selected units/six physical contexts are subsets; all36 selected slots and3360 original obligations remain open. No statutory norm, governing definition use or semantic closure is established.",
+    "Same-process saved-artifact readback/public regeneration only; no new-interpreter replay, new Lean compilation, model training, source/reviewer/exposure authentication or gold/corpus admission.",
+    "Exact finite227 source bindings and selected native closeout are checked; no complete dynamic import closure, arbitrary-descendant containment or other-reservation/global-ledger audit.",
+    "Recorded refusal reasons and modified artifact joins were audited without replaying product owners. Current-generation candidate/report/subject identities remain distinct from unchanged historical C02 originals."
+  ],
+  "method": "Independent stdlib-only original JSON/ordinary-file/source-hash/native-seal and exact-selected ledger/state inspection. Full populations, subject/context references and recorded altered controls checked without importing owners or rerunning their functions. No tests, resource operations, model/compiler/network calls or attempt writes.",
+  "native": {
+    "all_sealed_path_size_hash_device_inode_membership_exact": true,
+    "artifacts_durable_asserted": true,
+    "completed": true,
+    "elapsed_seconds": 320.49554496607743,
+    "execution_sha256": "b2db43b7272f89fb882f8020efa9851c2839c09fcca600ccb70d4d64e6550809",
+    "final_bytes": 10634265,
+    "final_files_including_own_durability_receipt": 69,
+    "only_own_receipt_excluded_from_seal": true,
+    "original_durability_sha256": "47a3d1a240f8fce9e9abd53601c6500fd95a3c37721ca6e1bd332c330d06ec67",
+    "private_reservation_lease_ids_rows_pids_and_arguments_omitted": true,
+    "result_sha256": "7c21daa0096ba7ea5001919290892828350a717679ed7f3fec150c0bb1405550",
+    "returncode": 0,
+    "same_request_selected_check_execution_result_and_seal": true,
+    "sealed_files": 68,
+    "selected_native_lease_absent": true,
+    "selected_record_status": "released",
+    "six_field_result_exact": true
+  },
+  "observed_at_utc": "2026-10-15T21:11:16.115647+00:00",
+  "producer_generation": {
+    "current_historical_candidate_cids_differ_without_semantic_promotion": true,
+    "different_absolute_checkout_origins_preserved": true,
+    "original_historical_files_not_rewritten": true,
+    "same29_original_and_current_binding_producer_bodies_and_relative_paths_each_family": true,
+    "shared_producer_body_hashes": [
+      {
+        "path": "ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py",
+        "sha256": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/CEC/native/dcec_core.py",
+        "sha256": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/CEC/native/dcec_integration.py",
+        "sha256": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/CEC/native/dcec_parsing.py",
+        "sha256": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py",
+        "sha256": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+        "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+        "sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_contracts.py",
+        "sha256": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py",
+        "sha256": "2e0eed594cbfa256f54d229e2c9e006eada04263aae17c5d330c79741047f087"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_graph.py",
+        "sha256": "da2bef54beca29d0d613d46a81241f6f1b7f049e1c9bf9cf1c118d9942374061"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_source.py",
+        "sha256": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/family_qualification.py",
+        "sha256": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py",
+        "sha256": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py",
+        "sha256": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_definition_boolean.py",
+        "sha256": "719169f57f549800dfaa40394203c5bb056e549f3f4aa783d3e5354beba3bb2b"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_family_routes.py",
+        "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_official_document_views.py",
+        "sha256": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py",
+        "sha256": "dc4448d3cb8dbbc23f7686674bb5b2b56d04cfbdb74b817b9e22b180ee7ee36a"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling.py",
+        "sha256": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_definition_binding_v2.py",
+        "sha256": "253a1bcee6d301f3c57a1306ceb6865f37f88428b204932307db8e3638929417"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+        "sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+        "sha256": "e516ccaddfa0b60def9065363d76b69fb16d348b69c41916dbb0f9733c678c53"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
+        "sha256": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py",
+        "sha256": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py",
+        "sha256": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py",
+        "sha256": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/ir_core/provenance.py",
+        "sha256": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe"
+      },
+      {
+        "path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+        "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+      },
+      {
+        "path": "ipfs_datasets_py/utils/cid_utils.py",
+        "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      }
+    ]
+  },
+  "product_checks": {
+    "named_checks": [
+      "independently_pinned_original_receipt_source_and_request_chain",
+      "complete_560_subjects_134_candidates_426_controls_8400_blanks_3360_original_obligations",
+      "fol_exact_original_inputs_six_contexts_current_subject_and_full_population_link",
+      "fol_public_full_regeneration_preserves_unsigned_authority_and_retained_artifacts",
+      "tdfol_exact_original_inputs_six_contexts_current_subject_and_full_population_link",
+      "tdfol_public_full_regeneration_preserves_unsigned_authority_and_retained_artifacts",
+      "declared_pure_first_order_subset_matches_both_family_routes",
+      "negative_independent-link-pin_refused",
+      "negative_omitted-unselected-population_refused",
+      "negative_pretty-report-transport_refused",
+      "negative_missing-context_refused",
+      "negative_reordered-context_refused",
+      "negative_swapped-context-packet_refused",
+      "negative_incomplete-dependency-closure_refused",
+      "negative_mixed-family-candidate_refused",
+      "all_original_inputs_new_originals_and_public_owner_bytes_retained",
+      "closed_bounded_primary_artifact_inventory_exact_readback"
+    ],
+    "named_count": 17,
+    "new_interpreter_cold_replay": false,
+    "pytest_cases_in_this_replay": 0,
+    "recorded_public_operation_calls": 32,
+    "recorded_refusals": 8,
+    "same_process_saved_byte_readback_and_regeneration": true
+  },
+  "proof_authority": false,
+  "refusal_controls": {
+    "actual_recorded_outcomes": [
+      {
+        "exception_type": "ValueError",
+        "input": {
+          "bytes": 408,
+          "path": "negative-independent-link-pin-control.json",
+          "sha256": "425a591e4abd8fe46afbbedcb489268f91daabba3b292eed23a2b2939975aa84"
+        },
+        "name": "independent-link-pin",
+        "reason": "independent complete correspondence pin differs",
+        "refused": true
+      },
+      {
+        "exception_type": "ValueError",
+        "input": {
+          "bytes": 698,
+          "path": "negative-omitted-unselected-population-control.json",
+          "sha256": "8d06b20e5f76946aac496e3e31b1905e327753a7247c116d3691f5e10673502a"
+        },
+        "name": "omitted-unselected-population",
+        "reason": "correspondence differs from complete independent regeneration",
+        "refused": true
+      },
+      {
+        "exception_type": "CorpusContractError",
+        "input": {
+          "bytes": 542,
+          "path": "negative-pretty-report-transport-control.json",
+          "sha256": "ac3d373d5464e7c30d12d7fcf80d4315e1b372882b5199408aa5212c29f7232a"
+        },
+        "name": "pretty-report-transport",
+        "reason": "V2 definition candidate differs from independent authoritative regeneration",
+        "refused": true
+      },
+      {
+        "exception_type": "CorpusContractError",
+        "input": {
+          "bytes": 463,
+          "path": "negative-missing-context-control.json",
+          "sha256": "11e9405244d520ca26e11f06034b2376251403ddb8372fa0c92e6a36731dfa1d"
+        },
+        "name": "missing-context",
+        "reason": "V2 context population must cover every unique source occurrence in order",
+        "refused": true
+      },
+      {
+        "exception_type": "CorpusContractError",
+        "input": {
+          "bytes": 467,
+          "path": "negative-reordered-context-control.json",
+          "sha256": "c998695c90ab3eb63f088477a24161f273cfdec74095e2d193c407f6bd58b29d"
+        },
+        "name": "reordered-context",
+        "reason": "V2 context population must cover every unique source occurrence in order",
+        "refused": true
+      },
+      {
+        "exception_type": "CorpusContractError",
+        "input": {
+          "bytes": 477,
+          "path": "negative-swapped-context-packet-control.json",
+          "sha256": "1660ee410579e52f8153c36e1c898d9c24e1d294413a19a879be9945e33bceed"
+        },
+        "name": "swapped-context-packet",
+        "reason": "V2 context packet failed exact occurrence regeneration",
+        "refused": true
+      },
+      {
+        "exception_type": "CorpusContractError",
+        "input": {
+          "bytes": 3405,
+          "path": "negative-incomplete-dependency-closure-control.json",
+          "sha256": "353e1fa49dea7a449296bdfa39b9e9c9452af15bb9a5e20eb36f598fdd32b551"
+        },
+        "name": "incomplete-dependency-closure",
+        "reason": "independent V2 required dependency population differs",
+        "refused": true
+      },
+      {
+        "exception_type": "ValueError",
+        "input": {
+          "bytes": 478,
+          "path": "negative-mixed-family-candidate-control.json",
+          "sha256": "ecd1289ff2ddc7aaec8ff2702fcb938d8afb5aef84e28812c9ee00a83df38d82"
+        },
+        "name": "mixed-family-candidate",
+        "reason": "candidate and binding require exactly the same original request/HTML bytes",
+        "refused": true
+      }
+    ],
+    "all_saved_control_and_modified_artifact_references_exact": true,
+    "controls_not_reexecuted_by_auditor": true,
+    "dependency_control_removes_one_of40": true,
+    "missing_context_truncates_exact_ordered_population": true,
+    "mixed_family_has_other_original_request_bytes": true,
+    "omitted_subject_unselected_and_removed_only_once": true,
+    "pretty_report_decoded_equal_transport_different": true,
+    "reordered_context_reverses_complete_population": true,
+    "swapped_packet_recomputes_pin_but_keeps_wrong_occurrence": true
+  },
+  "request": {
+    "all_current_source_pins_match_before_after": true,
+    "bytes": 52956,
+    "current_postmerge_head": "7a6e5743560b5fbf95cbe1dbb393a29a3c9fd6a1",
+    "driver_sha256": "a580d10c33539058ff5019a6edd1b48a14b65adac4597567629573998f5a9d8b",
+    "execution_identified_by_source_pins_not_inferred_commit": true,
+    "filename": "validation-request-b-02.json",
+    "sha256": "40f7c340044279f430589f287ac18e63fc5e157e40f4e69e031ea4f955665f27",
+    "source_bindings": 227
+  },
+  "schema": "retained-source-correspondence-final-independent-audit/v1",
+  "semantic_admission_authority": false,
+  "separate_prior_scopes": {
+    "b01_failure_not_promoted": true,
+    "b01_recovery_preserved17_files9005753_bytes": true,
+    "evidence": {
+      "attemptb-01-failed-audit.json": {
+        "bytes": 7431,
+        "sha256": "14807cf03884550bda47aedd5d36489c5c3eee6c83ec979832d8e05701ce7c0f"
+      },
+      "namespace-independent-review.json": {
+        "bytes": 8466,
+        "sha256": "09b5495e2923f65535a1903763fcc2bcba704a47c5f971fb2547cbfe80b40fd5"
+      },
+      "recovery-b-01-audit.json": {
+        "bytes": 2930,
+        "sha256": "a5f25665536e1340b2b6d9ef8a3e19b0fe40e0236333f602f24bd2a6fe43737b"
+      }
+    },
+    "namespace_pytest_cases": 21,
+    "not_aggregated_with17_product_checks": true
+  },
+  "status": "pass",
+  "training_gold_authority": false,
+  "whole_repository_qualified": false,
+  "whole_source": {
+    "actual_responses": 0,
+    "actual_reviews": 0,
+    "blank_questions": 8400,
+    "candidate_statute_units": 134,
+    "complete_sampler_records": 1681,
+    "original_open_context_obligations": 3360,
+    "pending_subjects_each_family": 560,
+    "retained_context_controls": 426
+  }
+}

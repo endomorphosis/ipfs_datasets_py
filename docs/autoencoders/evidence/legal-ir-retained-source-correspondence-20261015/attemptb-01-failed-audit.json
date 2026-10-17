@@ -1,0 +1,186 @@
+{
+  "absence_of_success": {
+    "absent_paths": [
+      "logs/execution.json",
+      "logs/result.json",
+      "logs/validation-durability.json",
+      "logs/junit.xml",
+      "exports/replay-receipt.json",
+      "exports/file-index.json"
+    ],
+    "junit_cases": 0,
+    "links_produced": 0,
+    "native_success_result_or_durability_seal_invented": false,
+    "negative_controls_completed": 0,
+    "passed_cases_claimed": 0
+  },
+  "accounting_history": {
+    "auditor_performed_recovery": false,
+    "current_after_separate_authorized_recovery": "released, artifacts_durable_asserted=True, exact17file inventory preserved",
+    "independently_observed_before_recovery": "retained, artifacts_durable_asserted=False, selected native lease absent",
+    "recovery_evidence": "recovery-b-01-audit.json"
+  },
+  "evaluation_gold_authority": false,
+  "execution_authority": false,
+  "failure": {
+    "bytes": 662,
+    "completed": false,
+    "diagnostic": "ValueError: review bundle differs from exact complete sampler regeneration",
+    "filename": "logs/failure.json",
+    "native_elapsed_seconds": 76.56182333896868,
+    "returncode": 1,
+    "sha256": "1657e29c6a276bcda949c2306e1f7f500dc4f4bb8aac042ddbc16e58991c85ee",
+    "stage": "First FOL binding prepare -> full source review bundle replay; no fresh binding/subject/link output",
+    "stderr_sha256": "f2bad45f605dc398280b1da93d9a22e004fe5a8a61802e1ea3865a8509a7328d"
+  },
+  "limits": [
+    "Failed execution remains failed; no successful560-source correspondence or completed control population is claimed.",
+    "Current driver intentionally differs after authorized fix; its executed predecessor is archived exactly.",
+    "Original file disposition was separately recovered without deleting files; private IDs/rows/PIDs/arguments are omitted."
+  ],
+  "method": "Independent stdlib-only stable ordinary-file/hash/JSON/AST and exact selected native ledger/state inspection. No product imports, tests, driver execution, resource admission/recovery/cleanup or attempt writes.",
+  "observed_at_utc": "2026-10-15T20:59:17.580256+00:00",
+  "partial_inventory": {
+    "all13_originals_and_descriptor_export_copies_exact": true,
+    "files": [
+      {
+        "bytes": 4737,
+        "path": "exports/input-descriptor.json",
+        "sha256": "fbd75a2b03d322ccd32daa747c11a53fb6eef5ca51f2d52c19b292d4aa5b7736"
+      },
+      {
+        "bytes": 1069,
+        "path": "exports/retained-acquisition-receipt.json",
+        "sha256": "7d9852fd175ae48dc057f2b879ed176e7b26a394e92e6ae13f4824df894228bf"
+      },
+      {
+        "bytes": 3,
+        "path": "exports/retained-actual-responses.json",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      {
+        "bytes": 5664497,
+        "path": "exports/retained-bundle.json",
+        "sha256": "2c2bb4ce302568feb014cc6abb28501bd3b453600d696a19588bbb14b55d2846"
+      },
+      {
+        "bytes": 11149,
+        "path": "exports/retained-c02-receipt.json",
+        "sha256": "3e2b421aed87627b540712de89d7d8cfc00b7fd1dcb9966ac54044d62383c82b"
+      },
+      {
+        "bytes": 926,
+        "path": "exports/retained-descriptor.json",
+        "sha256": "00cdd9452ada9005ad30fa4e548a98a73914324cb99ec3d10c2911a878f86bfe"
+      },
+      {
+        "bytes": 1645,
+        "path": "exports/retained-fol-request.json",
+        "sha256": "53401d0500b5277f15158a7737425eb44f1553d5edcd48dc73fec741a1971bae"
+      },
+      {
+        "bytes": 208589,
+        "path": "exports/retained-fol-result.json",
+        "sha256": "03736e22b07923ee3661d629c6252d0a64fd36ac4ef41f55b4c36af9a89b978d"
+      },
+      {
+        "bytes": 98879,
+        "path": "exports/retained-raw-html.html",
+        "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+      },
+      {
+        "bytes": 3343,
+        "path": "exports/retained-sampler-receipt.json",
+        "sha256": "90152d5f2226955929392dd24d514e80ca19e313b7d3a7c3be28ec8972aaf2b8"
+      },
+      {
+        "bytes": 2790275,
+        "path": "exports/retained-sampling-report.json",
+        "sha256": "173e3995b8628c76fbffcff1e1d77aad8d22d32ef84c3335e3ccc1c05af836d6"
+      },
+      {
+        "bytes": 7705,
+        "path": "exports/retained-source-review-receipt.json",
+        "sha256": "10e6cf392bfe00fa175de5d3dc931a20a63517594ea3eed89d40a5a5c185ec93"
+      },
+      {
+        "bytes": 1647,
+        "path": "exports/retained-tdfol-request.json",
+        "sha256": "50a2e256aeb8db5cbc813e037dafba5f2cb6fe7b567837472942e36eb18830d7"
+      },
+      {
+        "bytes": 208635,
+        "path": "exports/retained-tdfol-result.json",
+        "sha256": "197d44d44f074e381a9ee6908aea3f2fa57c5d8c7d0ce2cdb81cf90fe1acf49f"
+      },
+      {
+        "bytes": 662,
+        "path": "logs/failure.json",
+        "sha256": "1657e29c6a276bcda949c2306e1f7f500dc4f4bb8aac042ddbc16e58991c85ee"
+      },
+      {
+        "bytes": 1992,
+        "path": "logs/stderr.log",
+        "sha256": "f2bad45f605dc398280b1da93d9a22e004fe5a8a61802e1ea3865a8509a7328d"
+      },
+      {
+        "bytes": 0,
+        "path": "logs/stdout.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "not_a_native_success_seal": true,
+    "ordinary_unaliased_regular_files": true,
+    "retained_original_export_files": 14,
+    "total_bytes": 9005753,
+    "total_files": 17
+  },
+  "proof_authority": false,
+  "request": {
+    "all227_matched_current_in_initial_pre_recovery_observation": true,
+    "archived_driver_bytes": 38913,
+    "archived_driver_file": "failed-driver-b-01.py",
+    "archived_driver_sha256": "35570c5563a6f809c1aad011f6189b5afabcf002846476cf597be4c4a8937af1",
+    "archived_exact_execution_driver_bindings": 1,
+    "authorized_current_driver_sha256": "a580d10c33539058ff5019a6edd1b48a14b65adac4597567629573998f5a9d8b",
+    "bytes": 52956,
+    "current_unchanged_source_bindings": 226,
+    "sha256": "5be492c8c7a06af4505040d4eec3f262b6111fdcbe8e1ad6ac5e1da7d1029bd0",
+    "source_bindings": 227
+  },
+  "schema": "retained-source-correspondence-failed-attempt-audit/v1",
+  "semantic_admission_authority": false,
+  "static_diagnosis": {
+    "conclusion": "Sealed original manifest omits optional limit keys. Explicit default-equivalent additions change input_binding/manifest and complete bundle identity. Rejection is correct; source owner/old bundle must remain unchanged.",
+    "executed_driver_replay_keys": [
+      "descriptor",
+      "expected_descriptor_sha256",
+      "expected_raw_bytes",
+      "expected_raw_sha256",
+      "expected_sampling_report_sha256",
+      "sampling_limits",
+      "view_limits"
+    ],
+    "extra_presence_sensitive_fields": [
+      "view_limits",
+      "sampling_limits"
+    ],
+    "historical_manifest_input_binding_keys": [
+      "descriptor",
+      "expected_descriptor_sha256",
+      "expected_raw_bytes",
+      "expected_raw_sha256"
+    ],
+    "prior_static_review_missed_presence_sensitive_binding": true,
+    "source": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py",
+    "source_locations": {
+      "passes_original_snapshot_before_defaults": 516,
+      "preserves_optional_key_presence": 320,
+      "requires_complete_bundle_equality": 535,
+      "seals_input_binding": 486
+    },
+    "source_sha256": "36d06d60386162fc5f2af3b79838222bd043713edf519959f65e5d973a446831"
+  },
+  "status": "failed_attempt_preserved",
+  "training_gold_authority": false
+}

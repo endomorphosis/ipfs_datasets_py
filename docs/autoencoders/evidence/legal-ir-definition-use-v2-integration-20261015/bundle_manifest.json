@@ -1,0 +1,67 @@
+{
+  "created_utc": "2026-10-15T07:34:43.237418+00:00",
+  "files": [
+    {
+      "bytes": 2862,
+      "path": "README.md",
+      "sha256": "1d55b473e480866fba6a3c5746eb8df7caea07e4410055a0bd0466817e7afc32"
+    },
+    {
+      "bytes": 14318,
+      "path": "author_snapshot/implementation-receipt.json",
+      "sha256": "b19a47a689c0a33c7fc762b3ffa6672ff0957aac01257fb2497b9bff4bac2e5f"
+    },
+    {
+      "bytes": 17952,
+      "path": "author_snapshot/manifest.json",
+      "sha256": "701f65e742ef262112441ec397fb5790b25a22f6eea870ba4085f05c1c15dbfc"
+    },
+    {
+      "bytes": 11453,
+      "path": "independent_recount.json",
+      "sha256": "c7d7701a399f94b2c5b13fbb17ba1cf28c84b7903365ca37129a3acbebc50c77"
+    },
+    {
+      "bytes": 5432,
+      "path": "integration.json",
+      "sha256": "96eed52a530ca117d1e77632a343e0b5505d44e3b27b597a5bc849fe198b293b"
+    },
+    {
+      "bytes": 1380,
+      "path": "main_reconciliation.json",
+      "sha256": "567066bb61da9d6916a4d82472aae33e93886f0cd23615bdfcffc76ecda2ee75"
+    },
+    {
+      "bytes": 55965,
+      "path": "qualification-v01/junit.xml",
+      "sha256": "42e39d8047e8cb838a5b75e805cb7b764db29f5e092026a8cbb393b63108daf6"
+    },
+    {
+      "bytes": 96250,
+      "path": "qualification-v01/receipt.json",
+      "sha256": "18fa2aab5a31f57ca4417e74439451850927d1600cedc8c9095f1386aa6dd6fa"
+    },
+    {
+      "bytes": 92700,
+      "path": "qualification-v01/run-inputs.json",
+      "sha256": "c8a382d76a9190561127a99ae5599abb005678f0d6f7b0cadad874554bf333e3"
+    },
+    {
+      "bytes": 0,
+      "path": "qualification-v01/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 94961,
+      "path": "qualification-v01/stdout.txt",
+      "sha256": "fe93105a560942273e16c6d2242fe99832997acc8f4e6bf8dcf31d4b2bf075f5"
+    },
+    {
+      "bytes": 7593,
+      "path": "qualification_runner.py",
+      "sha256": "fa5f466ba8d8852d3977f344759fa0359c26b07b2755140ad5dc7cc67e9ed783"
+    }
+  ],
+  "schema": "legal-definition-use-v2-evidence-bundle/v1",
+  "scope": "Exact evidence retains original producer generations; no actual legal review, full current-path replay of historical example, model training or admission inferred."
+}

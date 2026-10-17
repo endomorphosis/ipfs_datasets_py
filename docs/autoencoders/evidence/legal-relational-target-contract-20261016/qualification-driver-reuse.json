@@ -1,0 +1,16 @@
+{
+  "byte_unchanged": true,
+  "new_resource_owner_or_policy": false,
+  "original_driver": {
+    "bytes": 28529,
+    "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py",
+    "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+  },
+  "reused_driver": {
+    "bytes": 28529,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/run_qualification.py",
+    "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+  },
+  "schema": "legal-relational-target-qualification-driver-reuse/v1",
+  "scope": "Generic checked-buffer selected-pytest worker reused with its historical receipt schema; original native parent still owns admission and closeout"
+}

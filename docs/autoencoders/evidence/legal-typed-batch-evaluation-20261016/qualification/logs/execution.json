@@ -1,0 +1,18 @@
+{
+  "Lean_admitted": false,
+  "admitted": false,
+  "authority_granted": false,
+  "completed": true,
+  "elapsed_seconds": 63.00158656295389,
+  "executed_checks": [
+    "tests/unit/logic/autoformal/test_legal_relational_batch_evaluation_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+    "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+    "tests/unit/logic/syntax_core/test_algebra.py"
+  ],
+  "model_weights_downloaded": false,
+  "request_sha256": "28159ac07f73016b05f18a74e693cce97763da7a3a0eb85d913449c57fd2710a",
+  "resource_scope": "cooperative_isolated_process_group_and_owned_attempt",
+  "returncode": 0,
+  "schema": "owned-validation-result/v1"
+}

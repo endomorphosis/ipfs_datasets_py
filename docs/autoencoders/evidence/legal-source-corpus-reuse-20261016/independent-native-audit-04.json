@@ -1,0 +1,189 @@
+{
+  "attempt": "04",
+  "audit_status": "pass",
+  "authority": {
+    "Lean_admitted": false,
+    "formalized": false,
+    "legal_meanings_reviewed": false,
+    "model_improvement_measured": false,
+    "proof_authority": false,
+    "source_authority_authenticated": false,
+    "source_semantics_verified": false,
+    "training_gold_qualified": false
+  },
+  "native_closeout": {
+    "all_seven_sealed_file_hashes_sizes_and_inode_witnesses_match": true,
+    "arbitrary_descendant_containment_claimed": false,
+    "artifacts_durable_asserted": true,
+    "attempt_exceeded_reservation": false,
+    "cleanup_error": null,
+    "completed": true,
+    "failed_attempts01_02_03_preserved_separately": true,
+    "final_attempt_bytes": 106264,
+    "final_attempt_files": 8,
+    "final_external_charged_bytes": 0,
+    "lease_and_reservation_bindings_agree_privately": true,
+    "matching_current_ledger_records": 1,
+    "native_lease_released": true,
+    "original_storage_bytes": 67108864,
+    "record_matches_actual_parent_receipt": true,
+    "recorded_group_observed_stopped_before_fsync_scope": true,
+    "reservation_status": "released",
+    "returncode": 0,
+    "six_selected_check_names_match_worker_and_native_receipts": true
+  },
+  "native_durability": {
+    "bytes": 1518,
+    "sha256": "5f3a43a8fc71b645be96ea9c47251d2dd6d46e2ba9b444964e0360f58d6871b3"
+  },
+  "native_elapsed_seconds": 138.3568945589941,
+  "native_execution": {
+    "bytes": 653,
+    "sha256": "9ba6038abf64160fccb28acac7650f105244e6037da16c6c058d913a9b952a95"
+  },
+  "native_result": {
+    "bytes": 805,
+    "sha256": "64c8a1a7b90c43c3a92941dd4cc69b92c60ec29c751774164f584b3712ddfbeb"
+  },
+  "private_parent_closeout": {
+    "bytes": 5400,
+    "sha256": "3a90b67379681979380d0abda76dcae51313ccbe44d33338a8d257429d303017"
+  },
+  "public_owner_refusal_controls": {
+    "detached_authority_promotion": "refused",
+    "detached_manifest_commitment_substitution": "refused",
+    "detached_version_id_substitution": "refused",
+    "expired_binding_access": "refused"
+  },
+  "pytest_cases_executed": 0,
+  "qualification_passed": true,
+  "qualification_scope": "Fresh genuine public-owner read-only verification of retained published source inventory, frozen partitions, complete portable package, ordered rows and three exposed engineering companions; not legal meaning or model reconstruction.",
+  "request": {
+    "bytes": 22711,
+    "sha256": "a93b2ceb4ff722c64a2eaa3b164d19afe1d43bb6783f4df217e35750d42e5ae5"
+  },
+  "retained_source": {
+    "additional_alias_occurrences": 92,
+    "all_physical_rows_preserved": true,
+    "database_materialized": false,
+    "declared_corpus_shards": 16,
+    "not_relabelled_as_current_hub_head": true,
+    "ordered_row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+    "original_embedding_dispositions": {
+      "embedded": 51,
+      "token_limit_exceeded": 13,
+      "unattempted": 62867
+    },
+    "original_repository_revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+    "original_split_counts": {
+      "canary": 3147,
+      "holdout": 3144,
+      "train": 50282,
+      "validation": 6358
+    },
+    "physical_rows": 62931,
+    "source_export_rebuilt": false,
+    "source_inventory_rebuilt": false,
+    "unique_eligible_input_ids": 62839,
+    "verified_package_bytes": 263671066,
+    "verified_package_files": 103
+  },
+  "reviewer": "/root/span_correspondence_gap",
+  "reviewer_execution": {
+    "database_opened": false,
+    "model_opened": false,
+    "native_workload_executed": false,
+    "original_corpus_parquet_opened": false,
+    "product_imported": false,
+    "selected_output_companions_integrity_checked": true,
+    "tests_run": false
+  },
+  "runtime_profile": {
+    "SDK_or_socket_functions_modified": false,
+    "actual_allowed_capability_probe": {
+      "address": [
+        "::1",
+        0
+      ],
+      "bind_count": 1,
+      "closed_at_final_guard": true,
+      "closed_at_import_window_end_before_source_body_reads": true,
+      "creation_count": 1,
+      "every_observed_network_event_accounted": true,
+      "family": "AF_INET6",
+      "genuine_compiled_code_and_module_identity_verified": true,
+      "genuine_pinned_source_sha256": "2633bbdb69731e5ccb5cf4e4afd65605d86c7979cc5633126f50c92d5ad74a74",
+      "protocol": 0,
+      "same_socket_object_verified": true,
+      "type": "SOCK_STREAM"
+    },
+    "actual_disallowed_operations": {
+      "child_process": 0,
+      "database": 0,
+      "external_write": 0,
+      "network": 0
+    },
+    "arrow_cpu_and_io_threads": 1,
+    "cooperative_auditing_and_native_polled_usage_only": true,
+    "database_engine_definitions_absent": true,
+    "denial_journal_empty": true,
+    "genuine_optional_sdk_definitions_loaded": {
+      "huggingface_hub": true,
+      "requests": true
+    },
+    "optional_definition_versions": {
+      "huggingface_hub": "0.36.2",
+      "numpy": "1.26.4",
+      "pyarrow": "23.0.1",
+      "python": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+      "requests": "2.34.2",
+      "urllib3": "2.7.0"
+    },
+    "seccomp_or_OS_network_isolation_attested": false,
+    "unchanged_native_scheduler_policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+    "zero_network_event_claimed": false
+  },
+  "schema": "legal-source-corpus-reuse-independent-native-audit/v1",
+  "selected_companion_artifact": {
+    "bytes": 51533,
+    "sha256": "2b4890d9d9c1d2ac4887e2ab4cae51063a4feff94a973706ad9c92fda0874627"
+  },
+  "selected_companions": {
+    "exact_record_json_canonical_bytes_and_hashes_verified": true,
+    "exact_text_utf8_hashes_and_sizes_verified": true,
+    "exactly_one_physical_row_per_requested_legal_id": true,
+    "exposure_status": "exposed",
+    "gold_mask": 0,
+    "normative_target_selected": false,
+    "official_HTML_or_USLM_correspondence_claimed": false,
+    "original_split_membership": "train for all three; unchanged",
+    "physical_rows": 3,
+    "physical_selectors_and_original_source_row_ids_verified": true,
+    "physical_source_order_preserved": true,
+    "requested_legal_ids": [
+      "usc:us:10:101",
+      "usc:us:10:7213",
+      "usc:us:10:7214"
+    ],
+    "source_or_text_dedup_performed": false,
+    "text_coordinate_space": "exact decoded record_json.text; normalization none; distinct from official HTML/USLM",
+    "text_equals_original_verified_record_json_text": true,
+    "training_mask": 0
+  },
+  "six_named_artifact_checks_passed": true,
+  "source_custody": {
+    "all_current_hashes_match_frozen_request": true,
+    "all_product_origins_match_frozen_source_pins": true,
+    "all_seven_field_physical_witnesses_match_frozen_before_snapshot": true,
+    "checked_product_source_origins": 67,
+    "input_and_package_custody_fences_passed": true,
+    "public_copied_exports_equal_native_original_bytes": true,
+    "source_control_bytes": 2672143,
+    "source_control_count": 89
+  },
+  "worker_elapsed_seconds": 66.1954867800232,
+  "worker_report": {
+    "bytes": 51356,
+    "sha256": "3996521dee7e2c99d0272a35d8d9829ee2894e035c155e20d8c90811444da19f"
+  }
+}

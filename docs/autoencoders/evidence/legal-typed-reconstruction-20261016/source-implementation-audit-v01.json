@@ -1,0 +1,87 @@
+{
+  "bounds": {
+    "alpha_depth": 96,
+    "alpha_nodes": 4096,
+    "feature_rows_per_input": 1024,
+    "feature_union_rows": 2048,
+    "json_depth": 96,
+    "json_nodes": 500000,
+    "original_report_bytes_each": 8388608,
+    "output_bytes": 4194304,
+    "overflow": "complete refusal, no truncation",
+    "request_bytes_each": 524288,
+    "source_bytes_each": 4194304
+  },
+  "contract": {
+    "bytes": 5932,
+    "path": "/home/barberb/lift_coding/artifacts/legal-typed-reconstruction-20261016-01/product-contract-v01.md",
+    "sha256": "589eced1ae74c19100e42af57f9543f6b6da492b5978d313fa10bc50fddd2f6d"
+  },
+  "contracts_reviewed": [
+    "Preparation detaches finite ordinary input objects and verifies both whole-report and raw-request pins before the first lazy operation-owner import.",
+    "Each original report is replayed by the existing public validate_relational_norm_v1; no private relational/join compiler or traversal helper is called.",
+    "Source fences cover self, fixed actual operation modules and the trusted public legal_family_routes.producer_pins closure before/between/after replay, feature extraction and output serialization.",
+    "Offered report producer filenames never choose paths for reads; post-replay report pin maps are checked as subsets of the fixed trusted closure.",
+    "Exact typed-expression serialization is a separate outcome from ID-insensitive declared structure and lexical alpha agreement.",
+    "Declared projection removes only expression_id, content_digest, signature_id and authoritative mapped node_id fields; it normalizes only sort/predicate declaration ordering and predicate-keyed role-row ordering.",
+    "Predicate names, ordered arguments and role values, binder names, quantifier kinds, connective direction, modal placement, extension payload/features and schema identity remain in declared comparison.",
+    "Lexical alpha comparison delegates whole validated roots to shared LogicExpressionAlgebra.alpha_equivalent under explicit AlgebraLimits(4096 nodes,96 depth); global agreement additionally requires normalized signatures/family/profile and ordered-role agreement.",
+    "Flat features exhaustively cross-check original structural_mapping path order/kind/node IDs, binder identity/sort and modal operator, including binder and extension rows.",
+    "Variable binding_quantifier_path names the parent quantifier node; binder row typed_path names its /binders/0 record. No open fragment is validated as a separately closed formula.",
+    "Feature ledger preserves reference path order followed by candidate-only path order, explicit missing/unexpected sides and separate declared-versus-node-identity differences.",
+    "Invalid or unsupported requests refuse. The API compares valid pairs only and defines neither malformed-output/abstention denominators nor a corpus accuracy score.",
+    "Whole-comparison validation requires an independent full canonical output pin followed by exact regeneration through the same public APIs.",
+    "All authority flags remain false, training and evaluation-gold masks are integer0, and no new semantic target/admission/model/training/Lean operation is introduced."
+  ],
+  "existing_owner_call_sites": [
+    "algebra.AlgebraLimits",
+    "algebra.LogicExpressionAlgebra",
+    "relational.validate_relational_norm_v1",
+    "shared_algebra.alpha_equivalent"
+  ],
+  "limitations": [
+    "This reviewer authored the product module; this is an implementation scope/pin record, not independent implementation correctness evidence.",
+    "The tests were only parsed as source. The root supplied the84-case authored roster; no successful execution count is claimed here.",
+    "No retained source, hypothesis/report payload, fixture, lookup, source packet or model artifact was opened.",
+    "Native qualification, checked-buffer import origins, full collected/call/JUnit identity joins, durability and resource closeout remain pending at this source-review stage."
+  ],
+  "observed_at_utc": "2026-10-16T00:45:47.345560+00:00",
+  "product": {
+    "bytes": 29705,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/ipfs_datasets_py/logic/autoformal/legal_relational_reconstruction_v1.py",
+    "sha256": "13d4279872d9cc3184d5796596b984193e49b51c7a56c4066857bce74b3e3723"
+  },
+  "public_api": {
+    "prepare_relational_reconstruction_comparison_v1": "reference_report, candidate_report, *, reference_request_raw, candidate_request_raw, expected_reference_request_sha256, expected_candidate_request_sha256, expected_reference_report_sha256, expected_candidate_report_sha256",
+    "relational_reconstruction_comparison_sha256": "report",
+    "validate_relational_reconstruction_comparison_v1": "report, *args, expected_comparison_sha256, **kwargs"
+  },
+  "retained_source_probe_scope": [
+    "Use the existing integrated current-root relational reports and exact saved requests for the two competing retained section7213 hypotheses. Their source paragraph is shared, so comparison supplies one disagreement observation, not independent legal examples.",
+    "Self-pairs can establish repeatability/exact serialization mechanically; the two different modal placements should remain structurally distinct. This does not select either hypothesis as law.",
+    "Section7214 remains source-only pending with no relational report; it cannot supply a valid typed pair and must remain outside this API rather than be counted as malformed model output.",
+    "Any fresh ID, alpha-rename, implication-direction, argument-order or modal controls derived later are exposed engineering controls, not new statutory meanings or blind targets."
+  ],
+  "review_domain_limit": "Existing graph/unary-definition/norm review owners do not automatically approve the richer typed relational hypothesis. Source equivalence, applicability and independent legal/formal meaning decisions remain separate.",
+  "reviewer": "/root/sampled_primary_metadata_review_n10",
+  "schema": "legal-relational-reconstruction-source-implementation-audit/v1",
+  "scope": "Author source/AST review only. No product import, CID, fixture/corpus, test, model, numerical, compiler or ledger operation executed.",
+  "source_ast_parses": true,
+  "status": "source_review_complete_execution_pending",
+  "tests_source_observation": {
+    "bytes": 37168,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/tests/unit/logic/autoformal/test_legal_relational_reconstruction_v1.py",
+    "sha256": "c07593c1c7a29c6cdea388072b586590f4a5b76ca4f7ee6d457663371043d84f"
+  },
+  "top_level_imports": [
+    "from __future__ import annotations",
+    "import hashlib",
+    "import json",
+    "import math",
+    "import os",
+    "from pathlib import Path",
+    "import re",
+    "import stat"
+  ],
+  "training_target_integration_limit": "Existing LegalIR target snapshots/bundles serialize current LegalIRDocument/rich-target contracts but do not implement typed relational reconstruction scoring or grant admission. Do not wrap these diagnostic references as ready supervised statutory targets or populate training masks."
+}

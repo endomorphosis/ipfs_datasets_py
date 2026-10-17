@@ -1,0 +1,159 @@
+{
+  "actual_failure_predicate_proved": false,
+  "authority": {
+    "legal_meaning_or_review_authority": false,
+    "native_execution_owned_by_parent": true,
+    "new_admission_granted": false
+  },
+  "candidate_cause": "Pytest assertion rewriting can prepend its own import hook after the driver installs PinnedProductFinder, then explicitly mark validation_pytest for rewrite; that product plugin can execute outside the checked-buffer loader and fail the unchanged closing product_origins predicate.",
+  "candidate_cause_only": true,
+  "execution": {
+    "corpus_or_private_log_bodies_read": 0,
+    "helper_main_calls": 0,
+    "network_calls": 0,
+    "product_imports_or_calls": 0,
+    "pytest_imports_or_calls": 0,
+    "resource_or_ledger_calls": 0,
+    "tests_run": 0
+  },
+  "findings": [],
+  "historical_helpers_preserved": [
+    {
+      "bytes": 21416,
+      "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v01.py",
+      "sha256": "399131e712a88ea091e791c2ddefbf99ba9e0a7672523fead9d3df14fb7bcd3f"
+    },
+    {
+      "bytes": 28511,
+      "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v02.py",
+      "sha256": "33b4fddc1fc9de39e19300f9c46284d1b50529d3ac4eaec99f5c87cbdc03240e"
+    }
+  ],
+  "hypothesis_limit": "No failed stderr, product body, pytest runtime or next-attempt output was inspected or executed for this diagnosis. The exact V01 closing predicate is not proved by source analysis.",
+  "installed_pytest_source_pins": {
+    "pytest_assertion_source": {
+      "bytes": 8081,
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/_pytest/assertion/__init__.py",
+      "sha256": "2a69087174fab92dd88352b60b546d879fb93411a6c0996384a0f84a07071ac7"
+    },
+    "pytest_config_source": {
+      "bytes": 80947,
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/_pytest/config/__init__.py",
+      "sha256": "98b05c2c37d09e1d5c05975efc2d9af98d4aff6ea47de410a8e93956420873c1"
+    }
+  },
+  "new_helper": {
+    "bytes": 28529,
+    "path": "/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py",
+    "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+  },
+  "next_native_origin_diagnostics_required": true,
+  "passed": true,
+  "proof": {
+    "Python_asserts_not_disabled": true,
+    "Python_optimization_guard_and_optimize_zero_buffer_compile_unchanged": true,
+    "acceptance_predicates_and_source_guards_unchanged": true,
+    "normalized_whole_AST_exact_after_removing_only_added_option": true,
+    "raw_exact_single_replacement": true,
+    "test_selection_and_pytest_plugin_unchanged": true,
+    "unchanged_non_main_function_and_class_names": [
+      "QualificationFailure",
+      "need",
+      "sha",
+      "identity",
+      "physical_parents",
+      "snapshot",
+      "decode",
+      "code_guard",
+      "directory_guard",
+      "save",
+      "BufferLoader",
+      "DiscoveryOnlyLoader",
+      "PinnedProductFinder",
+      "product_origins",
+      "no_forbidden_modules",
+      "covers",
+      "CollectionEvidence",
+      "junit_evidence",
+      "bounded_diagnostics",
+      "execution_diagnostics",
+      "product_diagnostics"
+    ]
+  },
+  "schema": "legal-primary-graph-export-pytest-import-hook-static-diagnosis/v1",
+  "scope": "Source-only pytest import-hook analysis and single-option helper custody port.",
+  "single_source_delta": {
+    "added_pytest_option": "--assert=plain",
+    "immediately_before_selected_targets": true,
+    "new": "'cache_dir=' + str(Path(layout['cache']) / 'pytest'), '--assert=plain', *selected]",
+    "old": "'cache_dir=' + str(Path(layout['cache']) / 'pytest'), *selected]"
+  },
+  "source_line_evidence": [
+    {
+      "end_line": 33,
+      "fact": "plain is an accepted assertion mode; default is rewrite",
+      "line": 32,
+      "source_role": "pytest_assertion_source"
+    },
+    {
+      "end_line": 134,
+      "fact": "assertion rewrite hook prepends sys.meta_path",
+      "line": 129,
+      "source_role": "pytest_assertion_source"
+    },
+    {
+      "end_line": 913,
+      "fact": "explicit plugin mark_rewrite precedes import",
+      "line": 903,
+      "source_role": "pytest_config_source"
+    },
+    {
+      "end_line": 1345,
+      "fact": "hook install is conditional on rewrite, not disabled plugin autoload",
+      "line": 1332,
+      "source_role": "pytest_config_source"
+    }
+  ],
+  "static_function_evidence": [
+    {
+      "end_line": 77,
+      "function": "pytest_addoption",
+      "function_AST_sha256": "41df3d1555065c990755f1bb233935d7655f19efc33701baf33b80aaa8ca6055",
+      "line": 26,
+      "observation": "--assert offers rewrite/plain, with rewrite default.",
+      "source_role": "pytest_assertion_source"
+    },
+    {
+      "end_line": 142,
+      "function": "install_importhook",
+      "function_AST_sha256": "c6f5ac27b49c13e6b3c3beb200c5246962b0ab10bd9385dfca549b83e104c3be",
+      "line": 129,
+      "observation": "Creates AssertionRewritingHook and inserts it at sys.meta_path[0] (line 133).",
+      "source_role": "pytest_assertion_source"
+    },
+    {
+      "end_line": 927,
+      "function": "import_plugin",
+      "function_AST_sha256": "39bd7f8eeb3946dc2a35ecfd2c7629f4f8017559cc9fe6fbdfa08b7b0d4f1f1d",
+      "line": 887,
+      "observation": "Explicit plugin importspec is marked for rewrite at line 904 before importlib.import_module(importspec) at line 913.",
+      "source_role": "pytest_config_source"
+    },
+    {
+      "end_line": 1346,
+      "function": "_consider_importhook",
+      "function_AST_sha256": "b486b63e44b13102e78358f278dee578a5c9e0fe123df6a51319fcff20af3456",
+      "line": 1325,
+      "observation": "Only rewrite mode installs the assertion import hook; PYTEST_DISABLE_PLUGIN_AUTOLOAD does not skip this conditional installation.",
+      "source_role": "pytest_config_source"
+    },
+    {
+      "end_line": 1369,
+      "function": "_mark_plugins_for_rewrite",
+      "function_AST_sha256": "8c253e83891e9a7a66f4751892bafce27323aee1d9cf11dfdcc11a1a9487a074",
+      "line": 1348,
+      "observation": "Assigns pluginmanager.rewrite_hook before the disable_autoload early return; explicit plugin marking is separate from distribution autoload.",
+      "source_role": "pytest_config_source"
+    }
+  ]
+}

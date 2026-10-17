@@ -1,0 +1,13 @@
+{
+  "archive_derivation": "Reverse the exact two namespace source entries and explanatory comment; resulting raw bytes independently match the original qualification01 source pin. Not a previously captured executed buffer.",
+  "new_bytes": 35317,
+  "new_sha256": "b8517dc440827ebd0fbde89acdc80c92a4fb65bfc80cbdb577cd6ebbae378bc6",
+  "old_bytes": 35189,
+  "old_sha256": "12dbd712e49ab8d8f9fc7e83d088ea1161d7c68c6715ad9a7f53cad6c52f3474",
+  "old_source_archive": "qualification01-original-product-source.py.txt",
+  "schema": "legal-relational-batch-namespace-correction-proof/v1",
+  "source_guard_relaxed": false,
+  "test_population_changed": false,
+  "test_source_changed": false,
+  "whole_AST_identical_after_only_two_namespace_entries_removed": true
+}

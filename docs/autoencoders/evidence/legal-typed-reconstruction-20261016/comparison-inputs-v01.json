@@ -1,0 +1,57 @@
+{
+  "producer_attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01",
+  "producer_durability": {
+    "bytes": 8265,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/logs/validation-durability.json",
+    "sha256": "411660c8f49ba35fb78ddedc90428a5ce06fc4a226a8861e8ed1c56b8e62c673"
+  },
+  "producer_execution": {
+    "bytes": 485,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/logs/execution.json",
+    "sha256": "95fb73fd9e0daf05f6d39f9dd59d7881fe65d384b6bb0963ec11a9c5bf82b194"
+  },
+  "producer_file_index": {
+    "bytes": 7043,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/exports/file-index.json",
+    "sha256": "b7e89f6385e09eb3542e71648ed2119f9b91de246a22b3e2e6e76aa3d7377370"
+  },
+  "producer_result": {
+    "bytes": 657,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/logs/result.json",
+    "sha256": "a6a0c612bf3edd3b0c7e1afbec182f3720cb9d1ab3a57570e1b9a853ebf34f0f"
+  },
+  "retained_requests": [
+    {
+      "export": {
+        "bytes": 16684,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/exports/original-7213A_typed_request.json",
+        "sha256": "4fbdc25cf494a5ab00f0ceff2c7ef6a0f1ba7998969a4e8b9ccee5f0eb299f89"
+      },
+      "name": "A",
+      "original": {
+        "bytes": 16684,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7213-A/typed-request.json",
+        "sha256": "4fbdc25cf494a5ab00f0ceff2c7ef6a0f1ba7998969a4e8b9ccee5f0eb299f89"
+      }
+    },
+    {
+      "export": {
+        "bytes": 16864,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-typed-semantic-integration-20261015-b-01/exports/original-7213B_typed_request.json",
+        "sha256": "210fb6e56f4e10be42e35ea6fb8b48c32168c7de105c806a1563d7138c7eaa33"
+      },
+      "name": "B",
+      "original": {
+        "bytes": 16864,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-source-typed-join-20261015-01/source-typed-proposals-01/7213-B/typed-request.json",
+        "sha256": "210fb6e56f4e10be42e35ea6fb8b48c32168c7de105c806a1563d7138c7eaa33"
+      }
+    }
+  ],
+  "schema": "legal-relational-reconstruction-retained-inputs/v1",
+  "source_descriptor": {
+    "bytes": 8882,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/retained-typed-join-inputs.json",
+    "sha256": "f65694fd8e2c63e77fa24d2c36e08977e5f5156b62d06f464c539a8661ee125c"
+  }
+}

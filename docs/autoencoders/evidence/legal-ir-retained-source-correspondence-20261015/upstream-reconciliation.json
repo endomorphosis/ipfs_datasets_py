@@ -1,0 +1,233 @@
+{
+  "additional_runtime_tests_executed_for_merge": false,
+  "base_commit": "685b565f5710fecbf42b9f92b8a7131e1401f0dd",
+  "complete_installed_or_dynamic_import_closure_claimed": false,
+  "foreign_worktree_mutations": false,
+  "incoming_commit": "90662a4c6e0f12059c9900ba94ae80a4c86a0e25",
+  "incoming_exact_files": [
+    {
+      "bytes": 3187,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt01/failure.json",
+      "sha256": "dcea13027473d00204499a97bafc525473764d37db342676b6bbc6f567a7c709",
+      "source_git_blob": "71cedb42a541d7887475c29b1076785453f0b55d"
+    },
+    {
+      "bytes": 30014,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt01/junit.xml",
+      "sha256": "8ac76d4c1f8a014426a6e3196d1e90ad4a2fa6f8f9b32d8a5812897884396bbb",
+      "source_git_blob": "faa07648242fd1489bef06be465c7a808d0bbed4"
+    },
+    {
+      "bytes": 44893,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt01/qualification-failed.json",
+      "sha256": "17ae52692480d78684e9cf6be9132225308c7208cabdcef03af0ef043714592a",
+      "source_git_blob": "9520760bc659c05398e7d8ba9f192801a68a7b7d"
+    },
+    {
+      "bytes": 540,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt01/stderr.log",
+      "sha256": "dbf94c754994397f26a1b443273e382ebf5b2df69e6f726cb1aa19d6475bf53a",
+      "source_git_blob": "c432a9af73244a2b7746fd1d70250ab34ae1640d"
+    },
+    {
+      "bytes": 260,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt01/stdout.log",
+      "sha256": "3dc808a9092e36203c8ad3d2d49320267d9b8b7be097789296e1f0ca52e19743",
+      "source_git_blob": "aa12176dd1e877bb01366ef71081dbc5a549975c"
+    },
+    {
+      "bytes": 3045,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt02/execution.json",
+      "sha256": "fc26a7f4a71281073b73227df0ab1ab678f31dffaf051255a7316e68284c0754",
+      "source_git_blob": "371a11ec0a0cd495eade75cb11a331d4678d3a59"
+    },
+    {
+      "bytes": 30014,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt02/junit.xml",
+      "sha256": "0da783ef6a6e889d1f0ceaaaa31bd7a997fcee27ff873243c1c5e6088146933c",
+      "source_git_blob": "269a5cdc80d157cad30e5398e7704f6471a65d1b"
+    },
+    {
+      "bytes": 149013,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt02/qualification.json",
+      "sha256": "fa711a5f96f6f4b84b90f6e3d1ab332717c6762a9ad9ffb0a2e7b93eabf1194c",
+      "source_git_blob": "6ea7fa43ba3f3399dfec3bc643d7da8667513776"
+    },
+    {
+      "bytes": 3195,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt02/result.json",
+      "sha256": "505ce7e07b60d7cb8cc8c37b93f60a066e77a348eba9a6958943883c52010d1e",
+      "source_git_blob": "e3dd6f87b168c8385fda2ea936c9a142c6bec1e7"
+    },
+    {
+      "bytes": 0,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt02/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "bytes": 593,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt02/stdout.log",
+      "sha256": "94f112364d92dc3e98781b42580f4af50fb250e3a26dbedc4e00a53fcd5dd925",
+      "source_git_blob": "ea17a22e741474cbe1a984130a79743e7f74963c"
+    },
+    {
+      "bytes": 102308,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/attempt02/validation-durability.json",
+      "sha256": "da4286beeb1840d92deade9f4e71c0d7b00357e55b9dff03cce5eea03e1edb2f",
+      "source_git_blob": "7ba49854cab6afbec5ed61f45d9de58bdf7f3385"
+    },
+    {
+      "bytes": 43550,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/independent-metadata-review-v02.json",
+      "sha256": "2c4e28e7fdf67066b4a77f3abf97d6a9df06439d243a3b4f230911d472b1f1f3",
+      "source_git_blob": "2aabecb925f4c98a3d9fba575abc4e4e56c499ce"
+    },
+    {
+      "bytes": 585,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/native-parent-output-v01.txt",
+      "sha256": "0173681456fdad868f54024674df88c48314a6f025c78360fa18b586eb08aacf",
+      "source_git_blob": "ebf5402e8e0b957892fbd0a52f8c5425b72c984e"
+    },
+    {
+      "bytes": 5388,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/native-parent-output-v02.json",
+      "sha256": "6d57222bf87b2fa3aee5948e216c3fc5547ed4d7a44d83562f8ee9d1956eeead",
+      "source_git_blob": "2c790868a47436e095cc0cf6f927c70809585890"
+    },
+    {
+      "bytes": 12896,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/publication-manifest.json",
+      "sha256": "16da2137eb73a9b38540e556d1aac8b7aa402e7495f845ae6450906e3eeb807d",
+      "source_git_blob": "b19188f0b573fc1035606fb9e8733190bfd08aad"
+    },
+    {
+      "bytes": 6335,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/pytest-import-hook-static-diagnosis.json",
+      "sha256": "c2b6ea1993789ac1566585a84df40d5e58b9251e682468b25021905e664b0bc4",
+      "source_git_blob": "e9867a2b79d6b73dd130a045a473ef10accf6a95"
+    },
+    {
+      "bytes": 7381,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/recover_attempt01_v01.py",
+      "sha256": "22302c7fc3d168bd22ef77b0d9a10b515ff53cac2c19b94733e16abb46d9ca09",
+      "source_git_blob": "8f7551727280f94aaa7b23cb035f5730637d31d6"
+    },
+    {
+      "bytes": 110017,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/recovery-request-v01.json",
+      "sha256": "771b4a95a20146be46fedb1564559a77e4ab1cabcf43c6377a1caddd9475bccb",
+      "source_git_blob": "e08c0c4a709323c4684c18c45953ab28b8f49c50"
+    },
+    {
+      "bytes": 104027,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/recovery-result-v01.json",
+      "sha256": "7017b0c4b198475311f46459b49dd78b2eb24da0ce553544e45c7e143d912dc0",
+      "source_git_blob": "89c274ac22f5441506b6776429ff7f1ac48e9386"
+    },
+    {
+      "bytes": 21416,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/run_export_qualification_v01.py",
+      "sha256": "399131e712a88ea091e791c2ddefbf99ba9e0a7672523fead9d3df14fb7bcd3f",
+      "source_git_blob": "25c43d63ffeaca8320386802352de64eee689b30"
+    },
+    {
+      "bytes": 28511,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/run_export_qualification_v02.py",
+      "sha256": "33b4fddc1fc9de39e19300f9c46284d1b50529d3ac4eaec99f5c87cbdc03240e",
+      "source_git_blob": "f328e723a121a5eda573fcf189be663744bd5822"
+    },
+    {
+      "bytes": 28529,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/run_export_qualification_v03.py",
+      "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854",
+      "source_git_blob": "e2df3e58947c61a72cd029933b095e49d30c7e0f"
+    },
+    {
+      "bytes": 3185,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/selection-proposal.json",
+      "sha256": "494be670cb420ca507a200ecec793bce577c3de50108ac9078164cb5af411247",
+      "source_git_blob": "750d23c7663c129fc8d256284bd6b40527302f03"
+    },
+    {
+      "bytes": 411,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/storage-observation-v01-failed.json",
+      "sha256": "183afb4a88f113cdaf38903822fe46a9ac9fa6cb3dd13a895a72aca913e64435",
+      "source_git_blob": "cbe5d166d65218b806398bef203f332dbcfa7f2d"
+    },
+    {
+      "bytes": 3092,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/storage-observation-v02.json",
+      "sha256": "a8eee6cec2722d206443bfac96a4a15a652822f7c662e4360a1c1944cac1d257",
+      "source_git_blob": "32a18f32a6564d7e8db97ee3971c695b1933c699"
+    },
+    {
+      "bytes": 35723,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/upstream-reconciliation-v02.json",
+      "sha256": "5236478d7dd062a2b8ff56012b81f6835be0f268c6785cddfa2c080864b5b4f4",
+      "source_git_blob": "f4df407c5ac0fb58c3ee1dfaa249b690475f3df8"
+    },
+    {
+      "bytes": 25586,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/upstream-reconciliation.json",
+      "sha256": "592a3a382f16a2f03c7d4e6d90f95fc43d0d2ba9c533c6c5ccfad14f034c1ae9",
+      "source_git_blob": "c59c5423e88fa63ec782b56f2121a6442c73a0e0"
+    },
+    {
+      "bytes": 23049,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/validation-request-v01.json",
+      "sha256": "f7bf6667a651fdd30e4bafde2b34c1fc0fd275d7f9072b6bb93526db5b5391fc",
+      "source_git_blob": "4b44e83377e4164b6967180362dcb64d9ac0f5bd"
+    },
+    {
+      "bytes": 23049,
+      "path": "docs/autoencoders/evidence/legal-primary-graph-export-20261015/validation-request-v02.json",
+      "sha256": "908ca6e6638a08860b5f6209a4f58330f76d491d268c8a16572bce8f2398375b",
+      "source_git_blob": "6982b6496d3a2f9923d37cade974dc00ba174ab0"
+    },
+    {
+      "bytes": 10246,
+      "path": "docs/autoencoders/legal_entity_cache_audit_20261015.md",
+      "sha256": "5e354ee334b3781f972737494ad9fccddd4cd860e3a278306c61d8dbdc99efd1",
+      "source_git_blob": "3ad9fb67de455b784b52baddae2fe1cf25ff4daa"
+    },
+    {
+      "bytes": 16177,
+      "path": "docs/autoencoders/legal_primary_graph_export.md",
+      "sha256": "4d99fb334cbe6ca859e2e93d9415f2b435e5ece9e34d33613e703f4f22e12bb7",
+      "source_git_blob": "f6bdd4a61cfd7ee596beb1c506be1ecc2d77e46e"
+    },
+    {
+      "bytes": 41865,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_primary_graph_export.py",
+      "sha256": "deddfd7aaaf803d21dd630bae0aae47b24836efcac8a98844f1a0f8bb1877179",
+      "source_git_blob": "78f07bf9385df6c92104f5b2e8737893666ef21d"
+    },
+    {
+      "bytes": 29800,
+      "path": "tests/unit/logic/autoformal/test_legal_primary_graph_export.py",
+      "sha256": "5d96b765060ec9963d7bfd4ef5cf966c58fbb0948b1a0c67549733f2f1f097b2",
+      "source_git_blob": "64c486be830e61e699d32dd7703691e783abd31b"
+    }
+  ],
+  "main_training_diagnostic_preserved": true,
+  "master_plan": "Both additive contributions retained; updated stale pending-source sentence to actual b-02 status, preserving distinct primary-row/candidate correspondence obligation.",
+  "merge_commit": "7a6e5743560b5fbf95cbe1dbb393a29a3c9fd6a1",
+  "method": "Normal non-force merge of concurrent origin/main after native completion; standard-library and immutable Git object inspection.",
+  "models_created_or_promoted": false,
+  "observed_at_utc": "2026-10-15T21:05:47.573868+00:00",
+  "qualified_finite_cohorts": [
+    {
+      "all_current_pins_exact": true,
+      "attempt": "a-01",
+      "count": 256
+    },
+    {
+      "all_current_pins_exact": true,
+      "attempt": "b-02",
+      "count": 227
+    }
+  ],
+  "reason": "All executed finite source bytes remained identical. Incoming code/test are new unexecuted exporter paths, with separately attributed160-case qualification, not added to our21pytest/17named denominators.",
+  "schema": "retained-source-correspondence-upstream-reconciliation/v1"
+}

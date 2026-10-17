@@ -1,0 +1,93 @@
+"""Qualify the integrated source-review stack with private authored fixtures.
+
+Run from the repository root, supplying an exclusive artifact directory. No
+production source cache, review registry, signing keys or model assets are used.
+Inventories cover immediate autoformal modules and explicitly listed supporting
+files, not every transitive Python import or a production source population.
+"""
+from __future__ import annotations
+
+import argparse
+import collections
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+TEST_MODULES = (
+    "corpus_source_review_responses", "corpus_source_adjudication",
+    "corpus_source_application", "corpus_source_history", "corpus_source_bindings",
+    "corpus_source_review", "corpus_source_review_packets", "legal_graph_review",
+    "legal_graph_dependencies", "corpus_contracts", "corpus_source",
+    "corpus_parent_occurrence_adapter", "corpus_parent_alignment_adapter",
+)
+
+
+def binding(path):
+    raw = path.read_bytes()
+    return {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+
+
+def git(*args):
+    return subprocess.check_output(["git", *args], text=True).strip()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("output", type=Path)
+    args = parser.parse_args()
+    root = Path.cwd().resolve()
+    output = args.output.resolve()
+    output.mkdir(parents=True, exist_ok=False)
+    private = output / "private"
+    private.mkdir()
+    targets = ["tests/unit/logic/autoformal/test_" + name + ".py" for name in TEST_MODULES]
+    paths = set(root.glob("ipfs_datasets_py/logic/autoformal/*.py")) | {root / name for name in targets}
+    paths.update(root / name for name in (
+        "ipfs_datasets_py/logic/profile_g.py", "ipfs_datasets_py/utils/cid_utils.py",
+        "tests/conftest.py", "pytest.ini"))
+    paths.add(Path(__file__).resolve())
+    names = sorted(str(path.relative_to(root)) for path in paths)
+    before = {name: binding(root / name) for name in names}
+    head, index = git("rev-parse", "HEAD"), git("write-tree")
+    env = {key: os.environ[key] for key in ("PATH", "LANG", "LC_ALL", "LD_LIBRARY_PATH") if key in os.environ}
+    env.update({"PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1", "PYTHONDONTWRITEBYTECODE": "1",
+        "IPFS_DATASETS_AUTO_INSTALL_TEST_DEPS": "0", "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+        "HF_HUB_OFFLINE": "1", "HF_DATASETS_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1",
+        "GITHUB_TOKEN": "offline-test-sentinel-not-a-credential", "PYTHONPATH": str(root),
+        "TMPDIR": str(private), "XDG_CACHE_HOME": str(private / "cache"), "HF_HOME": str(private / "hf")})
+    command = [sys.executable, "-m", "pytest", "-o",
+        "addopts=-v --tb=short --strict-markers --import-mode=importlib",
+        "-o", "cache_dir=" + str(private / "pytest-cache"),
+        "--basetemp=" + str(private / "tmp"), "--junitxml=" + str(output / "junit.xml"), *targets]
+    result = subprocess.run(command, cwd=root, env=env, capture_output=True, timeout=1200)
+    (output / "stdout.txt").write_bytes(result.stdout)
+    (output / "stderr.txt").write_bytes(result.stderr)
+    after = {name: binding(root / name) for name in names}
+    cases = list(ET.parse(output / "junit.xml").getroot().iter("testcase"))
+    identities = [(case.get("classname"), case.get("name")) for case in cases]
+    counts = {kind: sum(case.find(kind) is not None for case in cases) for kind in ("failure", "error", "skipped")}
+    unchanged = before == after and git("rev-parse", "HEAD") == head and git("write-tree") == index
+    unique = len(identities) == len(set(identities))
+    covered = set(case.get("classname").rsplit(".", 1)[-1] for case in cases) == {"test_" + name for name in TEST_MODULES}
+    report = {"schema": "legal-source-review-stack-qualification/v1", "head": head,
+        "index_tree": index, "command": command, "exit_code": result.returncode,
+        "input_inventory": before, "inputs_unchanged": unchanged,
+        "test_cases": len(cases), "unique_cases": unique, "counts": counts,
+        "cases_by_class": dict(collections.Counter(case.get("classname") for case in cases)),
+        "all_target_modules_covered": covered,
+        "receipt_passed": result.returncode == 0 and bool(cases) and unique and covered and unchanged and not any(counts.values()),
+        "scope": "local authored source/review/signature fixtures; no real statutory review or production trust selection",
+        "authority": {"source_semantics_verified": False, "real_review_completed": False,
+                      "training_qualified": False, "proof_authority": False, "published": False}}
+    report["outputs"] = {name: binding(output / name) for name in ("stdout.txt", "stderr.txt", "junit.xml")}
+    (output / "receipt.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    print(json.dumps({key: report[key] for key in ("test_cases", "counts", "inputs_unchanged", "receipt_passed")}))
+    return 0 if report["receipt_passed"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

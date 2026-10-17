@@ -1,0 +1,257 @@
+{
+  "Constitution_formalized": false,
+  "Constitution_roundtrip_ok_assigned": false,
+  "actual_observer_parent": {
+    "lane": "validation",
+    "lease_id": "6635204b9ab647e199feac6779ef9050",
+    "new_native_lease_acquired_by_helper": false,
+    "owner_birth": "112892270",
+    "owner_pid": 2757223,
+    "policy_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661"
+  },
+  "authority": {
+    "CUDA_qualified": false,
+    "Hub_qualified": false,
+    "Lean_admitted": false,
+    "admitted": false,
+    "fatal_owner_recovery_qualified": false,
+    "hostile_same_uid_migration_qualified": false,
+    "model_fidelity_qualified": false,
+    "productive_Docker_qualified": false,
+    "training_qualified": false
+  },
+  "documentation_update_after_tests": {
+    "after_sha256": "520e3607a341be3d343bc69eb4040c4a4a78f51328ef8f9a62939e82a8978f5f",
+    "before_sha256": "16c4d0e243d56ac60eb6a50bd2375dec9ce58915c1f8ea09b54de97958741a98",
+    "documentation_only": true,
+    "evidence": {
+      "bytes": 1073,
+      "ctime_ns": 1792110675719477587,
+      "device": 66306,
+      "inode": 106842820,
+      "mtime_ns": 1792110675719477587,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/documentation-update-v1.json",
+      "resolved_path": "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/documentation-update-v1.json",
+      "sha256": "4772020fce6cb8b62eeaed4d5618439d96cfd89a57429866826dcd76131ed435"
+    },
+    "tested_module_or_test_code_changed": false,
+    "unit_suite_rerun_after_doc_update": false
+  },
+  "evidence_sha256": {
+    "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/kernel-custody-doc-status-v1.lease.json": "ad4c3ee9398742ad6a78e45d2689e1a58f1350742deca42e0896ca551325c4de",
+    "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/kernel-custody-units-v1.lease.json": "730ae4d8dea40b12189bf8bf6c011ccfcc3bcbcf78f2d019a0c11c76a38c8c8c",
+    "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/kernel-custody-units-v1.stderr.log": "a9ed12c11263362a73b37a650a9adc63bf623de3741c2eda1b13a431666c320e",
+    "/home/barberb/lift_coding/artifacts/legal-ir-cuda-recovery-20261015/kernel-custody-units-v2.lease.json": "831c16ebcbc44f7d66c6ebd4244618b61efdce491c17636baf44533b396a872c",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/actual-admission-refusal-v1.json": "65d7a50d9cbdd6f859c74af3afa800639807093d24d32c8288dd252430584994",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/canonical-promote-observation-v1.json": "055489f53b0bb54321401406314aac9a17fd64a7c844f421188657dfee18c2cc",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/canonical-unit-observation-v1.json": "ca621d48b0930482c6a7a6fc129b05ae7fe78db03eb2c6d89babecce3eaa5a6d",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/documentation-update-v1.json": "4772020fce6cb8b62eeaed4d5618439d96cfd89a57429866826dcd76131ed435",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/kernel-probe-normal-v2.bootstrap-result.json": "9106ff9fdcb02a6b50d93bca8464461907fb033d75ae832b54d186435993aae2",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/kernel-probe-normal-v3.bootstrap-result.json": "4dfec973b2653e0d53376ee5133901006b1d311af983d5a946af9be88cfd961d",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/kernel-probe-normal-v3.request.json": "a5964ac6546645b243ea9d1845459215537d3d70fea02bf68985eab5dd5a0129",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/kernel-probe-normal-v4.bootstrap-result.json": "a640f9fd5738cdd18d59422fc6df02daab6b4b0e85e5061c86f8e37db0285bec",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/kernel-probe-normal-v4.request.json": "d48d072e1978fbe0075ebeb85a813a9105074239b554c5623c5006a2a48e7bac",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/kernel-probe-normal-v5.bootstrap-result.json": "4e6de899dd88f34d47e4e7a356645f965eeac52fb86d259070582a1480f07c4b",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/kernel-probe-normal-v5.request.json": "50cce94efc0d2df1184808311ba7cdee96081968f996e76a03aff9a3d76e7fb1",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/kernel-unit-request-unit-tests-v1.json": "47f74ee501d929c3b464ed9172520dcefd9ba8672da267b4768ae7c11318f45f",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/kernel-unit-request-unit-tests-v2.json": "6759d364b729142c5dddb4b2ce5479db09ec5e399a06802184bfaaae2813da9c",
+    "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/legal-ir-kernel-probe-ae6001351394452a991e4e85b12322d0.service.startup-failure.json": "2050e797070a53ab08ddcf11dd2983ff0a275f4cf4f97db278931212fe721976",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-kernel-custody-20261015/unit-tests-v2/exports/pytest.xml": "32b66be42f27a1bd52cfcf8688ec9b3a79cd403b39a1dab124e9fc60c6ae3b43",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-kernel-custody-20261015/unit-tests-v2/logs/execution.json": "77b9b2ce2a4510ac4e51813396974491c1b76b2ccb07ef7e2bf6caf4ee235a5b",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-kernel-custody-20261015/unit-tests-v2/logs/result.json": "b44d779525fa438dfafef0cf6ffad7e903fa2834377330e1c24f358f4703c530",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-kernel-custody-20261015/unit-tests-v2/logs/validation-durability.json": "9b4ad687c8395c51fca69ae883594444b59145d787e9b5373974140b112c6147"
+  },
+  "inputs": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-kernel-custody-20261015/finalpublication-inputs-v2.json",
+    "sha256": "33cf96e6a8f9d4041b94546726acdf2b772f4da970f8a22c2cc50e66a8ea71de"
+  },
+  "ledger_observation": {
+    "bytes": 7351220,
+    "ctime_ns": 1792110828350227892,
+    "device": 66306,
+    "inode": 67028158,
+    "mtime_ns": 1792110828344302567,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "resolved_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "19a62a9138aba7f1b713a2f7a04fb7aedb6b6b255ff602b3cae78c2413764318"
+  },
+  "main_merge_reconciliation": {
+    "admitted": false,
+    "assessment": "Adds detached bounded storage-capacity diagnostics on the existing refusal. Success predicates, scheduler admission, cgroup logic and the new stdlib-only observer are unchanged. Preserve this other-agent change. No native suite against this newer diagnostic source is claimed.",
+    "diff": "--- tested/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py\n+++ main/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py\n@@ -51,6 +51,15 @@\n \n class DaemonResourceError(RuntimeError):\n     \"\"\"Admission, accounting, or explicit release could not be verified.\"\"\"\n+\n+    @property\n+    def capacity_observation(self):\n+        \"\"\"Return a detached aggregate snapshot, when capacity caused refusal.\n+\n+        The captured observation has no inventory or reservation records. Each\n+        access returns a copy so a diagnostic consumer cannot change it.\n+        \"\"\"\n+        return copy.deepcopy(getattr(self, \"_capacity_observation\", None))\n \n \n def _integer(value, name, *, minimum=1, maximum=None):\n@@ -420,7 +429,19 @@\n                   \"limit_bytes\": MAX_STORAGE_BYTES, \"minimum_filesystem_free_bytes\": free,\n                   \"scope\": \"named_roots_only_apparent_bytes\", \"inventory\": inventory}\n         if charged > MAX_STORAGE_BYTES or free < outstanding + additional:\n-            raise DaemonResourceError(\"storage reservation capacity exceeded\")\n+            error = DaemonResourceError(\"storage reservation capacity exceeded\")\n+            error._capacity_observation = copy.deepcopy({\n+                \"schema\": \"daemon-resource-capacity-observation/v1\",\n+                **{key: result[key] for key in (\n+                    \"observed_apparent_bytes\", \"outstanding_full_reservations_bytes\",\n+                    \"additional_requested_bytes\", \"charged_bytes\", \"limit_bytes\",\n+                    \"minimum_filesystem_free_bytes\", \"scope\")},\n+                \"storage_capacity_exceeded\": charged > MAX_STORAGE_BYTES,\n+                \"filesystem_free_insufficient\": free < outstanding + additional,\n+                \"storage_capacity_deficit_bytes\": max(0, charged - MAX_STORAGE_BYTES),\n+                \"filesystem_free_deficit_bytes\": max(0, outstanding + additional - free),\n+            })\n+            raise error\n         self._verify_owner_roots()\n         return result\n \n",
+    "main_at_review": "c6c95c5d88417b5c3ca436951f8716528707c863",
+    "other_eleven_native_sources_match": true,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+    "reviewed_main_sha256": "b9c8ca9f889366df93fd82887b7d6fcbfda9edee12a58a5667b485fe2c8a54ed",
+    "runtime_authority_retaged": false,
+    "schema": "kernel-custody-main-delta-review/v1",
+    "tested_source_sha256": "aaf67b9f37c4df7b15e1b9d08b9441290a5179dfce0ec01d21d25ae86423beb0"
+  },
+  "model_weights_downloaded": false,
+  "named_root_storage_cap_bytes": 160000000000,
+  "native_admission_diagnosis": {
+    "actual_claim_status": "retained",
+    "actual_refusal": {
+      "backoff_until": 1792110388.1676314,
+      "decision_cycle_at": 1792110386.1676314,
+      "demand": {
+        "additional_memory_mb": 1536,
+        "additional_process_slots": 4,
+        "pid_tasks_required": 128,
+        "root_reserved_memory_mb": 8192,
+        "root_reserved_process_slots": 2
+      },
+      "error_type": null,
+      "gate": "envelope",
+      "historical": true,
+      "lane": "validation",
+      "parent_lease_id": null,
+      "proof_memory_headroom_mb": 24922,
+      "reason": "proof_pid_headroom",
+      "request_id": "validation:fb4ef0c798f8407f8e2c7b10e9403e43",
+      "sample": {
+        "available_memory_mb": 1477,
+        "available_pid_tasks": 63,
+        "cpu_slots": 1,
+        "cpu_stall_percent": 30.76,
+        "io_stall_percent": 1.57,
+        "memory_stall_percent": 0.03,
+        "pid_task_limit": 64,
+        "total_memory_mb": 1536
+      },
+      "sample_contract": "max-host-visible-cgroup-avg10; memory/full,cpu/some,io/full; optional-psi-zero-fallback",
+      "schema": "proof-resource-admission-refusal@1",
+      "sequence": 4457,
+      "thresholds": {
+        "cpu_stall_percent": 50.0,
+        "io_stall_percent": 10.0,
+        "memory_stall_percent": 2.0
+      },
+      "waiter_id": "ad99164384d44f408297cbdc9ab7e03a"
+    },
+    "evidence_sha256": "65d7a50d9cbdd6f859c74af3afa800639807093d24d32c8288dd252430584994",
+    "interpretation": "The fixed 1536 MiB, 64-task service is itself the sampler-visible capacity. Its available 63 tasks cannot satisfy the observed 128-task conservative headroom demand; its available 1477 MiB also cannot cover 24922 MiB headroom plus global reservations and this request. This is a local execution scope versus global admission scope mismatch; increasing the disk cap does not resolve it.",
+    "native_grant_obtained": false,
+    "policy_or_sampler_overridden": false,
+    "productive_child_started": false,
+    "transition_contract_qualified": false
+  },
+  "native_authority_sources_unchanged": true,
+  "observed_at_unix": 1792110849.7231586,
+  "probes": [
+    {
+      "actual_closeout_observation_supplied": true,
+      "mode": "normal",
+      "name": "kernel-probe-normal-v3",
+      "native_claim": null,
+      "native_owner_original_birth_gone": true,
+      "observation_errors": {
+        "error": "private owner-writable cgroup directory required",
+        "error_type": "KernelCustodyError"
+      },
+      "observation_schema": "kernel-probe-startup-failure/v1",
+      "outcome": "not_qualified",
+      "qualification_scope": null
+    },
+    {
+      "actual_closeout_observation_supplied": false,
+      "mode": "normal",
+      "name": "kernel-probe-normal-v4",
+      "native_claim": {
+        "child": null,
+        "native_lease_absent": true,
+        "native_lease_id": null,
+        "original_owner_birth_gone": true,
+        "owner_birth": null,
+        "owner_pid": 2504999,
+        "reservation_id": "1a79e923bd7e4a5a83f7d05cb1d4d06b",
+        "retention_reason": "scheduler_admission_failed",
+        "status": "retained",
+        "storage_bytes": 8388608
+      },
+      "native_owner_original_birth_gone": true,
+      "observation_errors": {},
+      "observation_schema": null,
+      "outcome": "not_qualified",
+      "qualification_scope": null
+    },
+    {
+      "actual_closeout_observation_supplied": true,
+      "mode": "normal",
+      "name": "kernel-probe-normal-v5",
+      "native_claim": {
+        "child": null,
+        "native_lease_absent": true,
+        "native_lease_id": null,
+        "original_owner_birth_gone": true,
+        "owner_birth": null,
+        "owner_pid": 2561077,
+        "reservation_id": "fb4ef0c798f8407f8e2c7b10e9403e43",
+        "retention_reason": "scheduler_admission_failed",
+        "status": "retained",
+        "storage_bytes": 8388608
+      },
+      "native_owner_original_birth_gone": true,
+      "observation_errors": {},
+      "observation_schema": "kernel-probe-native-admission-refusal-observation/v1",
+      "outcome": "not_qualified",
+      "qualification_scope": null
+    }
+  ],
+  "retained_source_refusal": {
+    "exact_changed_source_identified_by_stderr": false,
+    "native_claim": {
+      "child": null,
+      "native_lease_absent": true,
+      "native_lease_id": null,
+      "original_owner_birth_gone": true,
+      "owner_birth": null,
+      "owner_pid": 2423748,
+      "reservation_id": "95312ed15ca64f1c91565b4d24537f75",
+      "retention_reason": "context_failed",
+      "status": "retained",
+      "storage_bytes": 134217728
+    },
+    "source_guard_refused": true
+  },
+  "schema": "legal-ir-kernel-custody-publication-summary/v1",
+  "semantic_acceptance_changed": false,
+  "source_sha256": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/kernel_custody.md": "520e3607a341be3d343bc69eb4040c4a4a78f51328ef8f9a62939e82a8978f5f",
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_kernel_custody.py": "c4926f3deeb2c574edc21b9cc15a45156c3da0463aae23abb0b1968634db46c0",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_kernel_custody.py": "74ab2b1dbee01e8a76d81cebf46051dc644e1b286cfe78d41b86c4816746e1dd"
+  },
+  "source_tree": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "storage_cap_changed": false,
+  "tested_module_and_test_sha256": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_kernel_custody.py": "c4926f3deeb2c574edc21b9cc15a45156c3da0463aae23abb0b1968634db46c0",
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_kernel_custody.py": "74ab2b1dbee01e8a76d81cebf46051dc644e1b286cfe78d41b86c4816746e1dd"
+  },
+  "unit_tests": {
+    "errors": 0,
+    "failures": 0,
+    "fixture_profile": "explicit_private_pytest_alias_readonly_directory_cleanup_profile/v2",
+    "native_claim": {
+      "child": {
+        "birth": "112774488",
+        "pid": 2445801
+      },
+      "native_lease_absent": true,
+      "native_lease_id": "d7a0f6500fc94fcaa22e42f4916ab087",
+      "original_owner_birth_gone": true,
+      "owner_birth": "112772921",
+      "owner_pid": 2442451,
+      "reservation_id": "dfd256db09704e61a4df2010184c9b70",
+      "retention_reason": null,
+      "status": "released",
+      "storage_bytes": 134217728
+    },
+    "outer_native_control_elapsed_seconds": 56.35380307189189,
+    "owned_execution_elapsed_seconds": 40.12203217786737,
+    "simulation_is_real_kernel_qualification": false,
+    "skipped": 0,
+    "strict_profile_passed": false,
+    "suite_seconds": 0.185,
+    "tests": 92
+  }
+}

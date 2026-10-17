@@ -1,0 +1,216 @@
+{
+  "arbitrary_descendant_containment": false,
+  "durability": {
+    "exact_all_path_size_hash_device_inode_membership": true,
+    "files": [
+      {
+        "bytes": 37,
+        "path": "cache/pytest/.gitignore",
+        "sha256": "3ed731b65d06150c138e2dadb0be0697550888a6b47eb8c45ecc9adba8b8e9bd"
+      },
+      {
+        "bytes": 191,
+        "path": "cache/pytest/CACHEDIR.TAG",
+        "sha256": "37dc88ef9a0abeddbe81053a6dd8fdfb13afb613045ea1eb4a5c815a74a3bde4"
+      },
+      {
+        "bytes": 302,
+        "path": "cache/pytest/README.md",
+        "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad"
+      },
+      {
+        "bytes": 3277,
+        "path": "cache/pytest/v/cache/nodeids",
+        "sha256": "82f124c5e2144645fade51be5216d87b80984154650b7f98ad14f46e8b1ca1f7"
+      },
+      {
+        "bytes": 42,
+        "path": "cache/pytest/v/commit_hash",
+        "sha256": "8293217cc95b2f15fb31db7461e23890f7b8943255b9a5a2b1679266175a8a76"
+      },
+      {
+        "bytes": 42,
+        "path": "cache/pytest/v/last_run_commit",
+        "sha256": "8293217cc95b2f15fb31db7461e23890f7b8943255b9a5a2b1679266175a8a76"
+      },
+      {
+        "bytes": 4,
+        "path": "cache/pytest/v/last_run_uncommitted",
+        "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      },
+      {
+        "bytes": 4,
+        "path": "cache/pytest/v/uncommitted_changes",
+        "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      },
+      {
+        "bytes": 497,
+        "path": "logs/execution.json",
+        "sha256": "6b1601c89c936fbf18b7285d7060538b569b7af08788af36352dc342bd0648da"
+      },
+      {
+        "bytes": 4258,
+        "path": "logs/junit.xml",
+        "sha256": "8ceee966b3e3a436e598d65e9bd07634bed8753e44bbcdedfa0857fa171561ce"
+      },
+      {
+        "bytes": 677,
+        "path": "logs/result.json",
+        "sha256": "4c0f18620cb5a8e9b591c9a5d55894446ff1ac886e276c644c9361a66af0efdb"
+      },
+      {
+        "bytes": 0,
+        "path": "logs/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 1096,
+        "path": "logs/stdout.log",
+        "sha256": "2f7383e71110af568093d7871071590ec57a238d9c1f4df7df6f06407abbe5a2"
+      }
+    ],
+    "final_bytes": 12871,
+    "final_files_including_own_receipt": 14,
+    "ordinary_files_no_aliases_or_hardlinks": true,
+    "original_bytes": 2444,
+    "original_sha256": "2328b57c14f4d89d440996f4ba297a45c96e7e25b7488dc296de7760da3d955a",
+    "own_receipt_excluded_from_own_inventory": true,
+    "public_projection_omits_only_private_reservation_id": true,
+    "result_and_execution_inside_seal": true,
+    "sealed_files": 13
+  },
+  "evaluation_gold_authority": false,
+  "execution_authority": false,
+  "limits": [
+    "Namespace behavior only:21cases in one module. No retained560-source correspondence replay was executed in this namespace qualification.",
+    "No claim of full import closure, optional reasoning-owner usability, statutory meaning, review/exposure authentication, legal applicability, formula reconstruction or teacher quality.",
+    "Lease absence and released storage status are exact-selected current metadata observations; no process enumeration or descendant-containment claim.",
+    "Compiler/model/training execution is not established; no actual Lean compilation occurred in this audit."
+  ],
+  "method": "Independent stdlib-only read of original request/raw JUnit/result/execution/native durability files, stable ordinary-file source hash checks, exact selected native reservation and lease membership checks, plus read-only Git object comparison. No product imports, tests, resource admission, recovery, cleanup or attempt writes.",
+  "native_execution": {
+    "all_four_execution_authority_flags_false": true,
+    "completed": true,
+    "elapsed_seconds": 58.18734279484488,
+    "original_execution_sha256": "6b1601c89c936fbf18b7285d7060538b569b7af08788af36352dc342bd0648da",
+    "returncode": 0,
+    "same_request_and_selected_check": true,
+    "schema": "owned-validation-result/v1"
+  },
+  "observed_at_utc": "2026-10-15T20:48:35.366976+00:00",
+  "proof_authority": false,
+  "public_custody": {
+    "raw_log_result_execution_junit_copies": [
+      {
+        "bytes": 497,
+        "file": "attempta-01-execution.json",
+        "sha256": "6b1601c89c936fbf18b7285d7060538b569b7af08788af36352dc342bd0648da"
+      },
+      {
+        "bytes": 677,
+        "file": "attempta-01-result.json",
+        "sha256": "4c0f18620cb5a8e9b591c9a5d55894446ff1ac886e276c644c9361a66af0efdb"
+      },
+      {
+        "bytes": 4258,
+        "file": "attempta-01-junit.xml",
+        "sha256": "8ceee966b3e3a436e598d65e9bd07634bed8753e44bbcdedfa0857fa171561ce"
+      },
+      {
+        "bytes": 1096,
+        "file": "attempta-01-stdout.log",
+        "sha256": "2f7383e71110af568093d7871071590ec57a238d9c1f4df7df6f06407abbe5a2"
+      },
+      {
+        "bytes": 0,
+        "file": "attempta-01-stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "root_audit_aggregate_counts_agree": true,
+    "root_independent_audit_sha256": "f86ba18de20c847c46af824350e1f0ec87a65e78c1146961030bee9f9bb012a8"
+  },
+  "pytest": {
+    "cases": 21,
+    "class_aware_unique_cases": 21,
+    "errors": 0,
+    "failures": 0,
+    "modules": {
+      "tests.unit.logic.integration.test_reasoning_lazy_imports": 21
+    },
+    "new_early_override_controls": 16,
+    "prior_namespace_controls": 5,
+    "raw_junit_sha256": "8ceee966b3e3a436e598d65e9bd07634bed8753e44bbcdedfa0857fa171561ce",
+    "skipped": 0,
+    "suite_seconds": 15.626
+  },
+  "request": {
+    "bytes": 59425,
+    "filename": "validation-request-a-01.json",
+    "public_copy_equal": true,
+    "sha256": "b96f146e6a59cc40fc90bf58a8b40c228d3ed68ae739cba770b2d63dabf93a43"
+  },
+  "result": {
+    "bytes": 677,
+    "completed": true,
+    "exact_six_field_schema": true,
+    "returncode": 0,
+    "same_request_and_selected_check": true,
+    "sha256": "4c0f18620cb5a8e9b591c9a5d55894446ff1ac886e276c644c9361a66af0efdb"
+  },
+  "schema": "retained-source-namespace-independent-review/v1",
+  "selected_check": [
+    "tests/unit/logic/integration/test_reasoning_lazy_imports.py"
+  ],
+  "selected_storage_closeout": {
+    "artifacts_durable_asserted": true,
+    "attempt_path_identity_and_request_join": true,
+    "exact_sealed_reservation_selected": true,
+    "original_policy_and_storage_budget_match": true,
+    "other_reservations_not_audited": true,
+    "private_ids_rows_pids_and_process_arguments_omitted": true,
+    "record_status": "released",
+    "selected_native_lease_absent_from_current_scheduler_state": true,
+    "unique_selected_record": true
+  },
+  "semantic_admission_authority": false,
+  "source_preservation": {
+    "adoption_commit": "de95d23980725e857ebdb2c98fd989fb15635f6e",
+    "all_current_hashes_match_before_after": true,
+    "execution_identified_by_exact_source_pins_not_inferred_commit": true,
+    "observed_head": "de95d23980725e857ebdb2c98fd989fb15635f6e",
+    "original_author_revision": "4a88f05b1feb35c77db11c8442b2ccfd714ba672",
+    "original_two_sources_and_guide": [
+      {
+        "blob": "0d9ec25dea3f61c647ffa68eefc1676d1a5b5f1c",
+        "bytes": 48019,
+        "exact_original_body_and_mode": true,
+        "included_in_native_source_pins": true,
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/integration/reasoning/__init__.py",
+        "sha256": "40610ac00bd3b1d123a4bf5aa7dfd08d2164aa859130c1f72b625471accfce2e"
+      },
+      {
+        "blob": "e920fc7d6affcbb38d6fe78a91ed27d7aef92908",
+        "bytes": 13134,
+        "exact_original_body_and_mode": true,
+        "included_in_native_source_pins": true,
+        "mode": "100644",
+        "path": "tests/unit/logic/integration/test_reasoning_lazy_imports.py",
+        "sha256": "905dbed2b4fa3248d70f972a24aea6cc816a2baa8e6c3a9f42aac44c7b4c1311"
+      },
+      {
+        "blob": "222d12cb03e96fd9e5c6aa91830f5d0891176cb8",
+        "bytes": 5186,
+        "exact_original_body_and_mode": true,
+        "included_in_native_source_pins": false,
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_corpus_v2_public_handoffs.md",
+        "sha256": "75c0149c5061ed7e7e3e1221c4f6cc592db400bedb5276011acffb128511ee6d"
+      }
+    ],
+    "requested_bindings": 256
+  },
+  "status": "pass",
+  "training_gold_authority": false
+}

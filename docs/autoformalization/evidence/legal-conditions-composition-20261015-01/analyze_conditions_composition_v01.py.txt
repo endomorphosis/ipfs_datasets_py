@@ -1,0 +1,462 @@
+#!/usr/bin/env python3
+"""Fixed F19 saved-head composition and two-row conditions-rank diagnostic.
+
+Pure AST coordinate/greedy/joint/scorer definitions are shared with F18. This is
+posthoc engineering on exposed sources, never checkpoint composition, a model
+forward, training, semantic law accuracy, causal explanation or promotion.
+All original input bodies are forbidden until independently qualified metadata
+and three frozen donor custody chains are joined inside the later child.
+"""
+import argparse
+import ast
+from collections import Counter
+from copy import deepcopy
+import hashlib
+import itertools
+import json
+import math
+import os
+from pathlib import Path
+import re
+import resource
+import signal
+import stat
+import struct
+import sys
+from types import SimpleNamespace
+
+ROOT=Path(__file__).resolve().parent
+SELF=ROOT/'analyze_conditions_composition_v01.py'
+GATE=ROOT/'analyzer-source-independent-review-v01.json'
+INPUTS=ROOT/'diagnostic-inputs-v01.json'
+OUTPUT=ROOT/'conditions-composition-diagnostic-v01.json'
+DESIGN=ROOT/'diagnostic-design-v01.json'
+EXECUTION_CONTRACT=ROOT/'diagnostic-execution-contract-v01.json'
+EXECUTION_PIN={'path': '/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json', 'bytes': 3321, 'sha256': '1bf6393d2c3c177342df97856b73868652d8f23aafa1dbe47f1aca81f3382dea'}
+DESIGN_PIN={'path': '/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json', 'bytes': 6172, 'sha256': '485e24dccd7f55ef547acb54afc1e3785a46de547454c9e5a155fc4f04a359c5'}
+SOURCE_PINS={'pure': {'path': '/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v02.py', 'bytes': 78492, 'sha256': '1a4b4f6b579d0d086ef97d4867c9eea274ceb88142edb4bff849eb95f0fa2e57'}, 'coordinate': {'path': '/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/analyze_targeted_results_v01.py', 'bytes': 66275, 'sha256': '4274d682da303954689bbb318750a91a49b407961f26d718104e1890a0ae4d0f'}, 'scorer': {'path': '/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py', 'bytes': 42637, 'sha256': '0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05'}, 'greedy': {'path': '/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py', 'bytes': 17966, 'sha256': 'e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909'}, 'joint': {'path': '/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py', 'bytes': 16730, 'sha256': '791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679'}}
+F15_CHECKPOINT='f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4'
+F15_STATE='a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42'
+FIELDS=('actor','action','object','conditions','exceptions','temporal')
+ALL_FIELDS=('modality',*FIELDS)
+OPTIONAL=('object','conditions','exceptions','temporal')
+OTHER_BOUNDARIES=('action','object','exceptions','temporal')
+SCOPES=('training168','old_tune','fresh_tune','fresh_challenge','old_authored_eval','authored_dev','authored_eval','fresh_dev','fresh_test','law')
+COUNTS=dict(zip(SCOPES,(168,96,36,36,72,72,72,36,36,8),strict=True))
+VARIANTS=('F15_baseline','F17_actor_F18_readouts','F17_actor_F17_readouts')
+DONORS=('F15','F17','F18')
+FIXED_IDS=('matched-temporal-train-condition_exception_duration-0-p-absent','matched-temporal-train-condition_exception_duration-0-p-present')
+MAX_PACKET=16000000
+MAX_OUTPUT=50000000
+EXPECTED={};OBSERVED={};ROLES={};BODY_READY=False
+sys.dont_write_bytecode=True
+
+
+def require(value,message):
+    if not value:raise ValueError(message)
+
+
+def canonical(value):return json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()
+
+
+def digest(value):return hashlib.sha256(canonical(value)).hexdigest()
+
+
+def f32(value):
+    require(type(value) in (int,float) and type(value) is not bool and math.isfinite(value),'Finite scalar required')
+    try:out=struct.unpack('<f',struct.pack('<f',value))[0]
+    except (OverflowError,struct.error):raise ValueError('Float32 overflow') from None
+    require(math.isfinite(out),'Finite float32 result required');return out
+
+
+def descriptor(value):
+    require(type(value) is dict and set(value)=={'path','bytes','sha256'} and type(value['path']) is str
+        and Path(value['path']).is_absolute() and '..' not in Path(value['path']).parts
+        and type(value['bytes']) is int and 0<value['bytes']<=MAX_PACKET
+        and type(value['sha256']) is str and re.fullmatch('[0-9a-f]{64}',value['sha256']),'Closed finite raw descriptor required')
+    return value
+
+
+def forbidden(path):
+    p=Path(path)
+    return (any(part.startswith('private-') or part in {'.git','.cache','__pycache__'} for part in p.parts)
+        or 'checkpoint' in p.name or p.suffix in ('.log','.jsonl')
+        or p.name in {'resources-start.json','resources-final.json','scheduler.json','disk-reservations.json'}
+        or p.name.startswith('ipfs-datasets-resource-scheduler-'))
+
+
+def raw_pin(path,expected=None):
+    p=Path(path);require(p.is_absolute() and not forbidden(p) and p.resolve(strict=True)==p,'Exact nonprivate noncheckpoint physical path required')
+    for part in (*reversed(p.parents),p):
+        meta=part.lstat();require(not stat.S_ISLNK(meta.st_mode) and (stat.S_ISREG(meta.st_mode) if part==p else stat.S_ISDIR(meta.st_mode)),'Ordinary physical path required')
+    before=p.stat();limit=MAX_OUTPUT if p==OUTPUT else MAX_PACKET;require(0<before.st_size<=limit,'Input/output byte bound exceeded')
+    h=hashlib.sha256();n=0
+    with p.open('rb') as stream:
+        for block in iter(lambda:stream.read(1048576),b''):h.update(block);n+=len(block);require(n<=limit,'Input/output grew above bound')
+    after=p.stat();identity=lambda s:(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    require(identity(before)==identity(after) and n==before.st_size,'Input changed while hashing')
+    actual=dict(path=str(p),bytes=n,sha256=h.hexdigest())
+    wanted=expected if expected is not None else EXPECTED.get(str(p))
+    if wanted is not None:require(actual['bytes']==wanted['bytes'] and actual['sha256']==wanted['sha256'] and ('path' not in wanted or wanted['path']==str(p)),'Exact raw input identity mismatch')
+    require(str(p) not in OBSERVED or OBSERVED[str(p)]==actual,'Earlier consumed input drift');OBSERVED[str(p)]=actual
+    return actual
+
+
+def read_json(path,expected=None):
+    p=Path(path);role=ROLES.get(str(p))
+    require(role in {'metadata','reference','capture'} and (role=='metadata' or BODY_READY),'Reference/capture body read before complete donor custody prohibited')
+    before=raw_pin(p,expected);raw=p.read_bytes();require(len(raw)==before['bytes'] and hashlib.sha256(raw).hexdigest()==before['sha256'],'Consumed JSON differs')
+    def unique(pairs):
+        out={}
+        for k,v in pairs:require(k not in out,'Duplicate JSON key');out[k]=v
+        return out
+    def number(text):
+        value=float(text);require(math.isfinite(value),'Nonfinite JSON number');return value
+    value=json.loads(raw,object_pairs_hook=unique,parse_float=number,parse_constant=lambda _:(_ for _ in ()).throw(ValueError('Nonfinite JSON')))
+    raw_pin(p,before);return value
+
+
+class FiniteIO:
+    def __init__(self):self.allowed={str(SELF),str(GATE),str(INPUTS)}
+    def admit(self,artifacts,roles):
+        require(type(artifacts) is dict and 0<len(artifacts)<=1024 and type(roles) is dict and set(roles)<=set(artifacts),'Finite reviewed artifact roles required')
+        require(sum(v['bytes'] for v in artifacts.values())<=1000000000,'Total pinned closure above1GB')
+        require(sum(role=='source' for role in roles.values())<=128,'Source closure above128')
+        for path,role in roles.items():
+            require(role in {'metadata','reference','capture','source'} and not forbidden(path),'Closed nonprivate role required')
+            item=dict(path=path,**{k:artifacts[path][k] for k in ('bytes','sha256')});descriptor(item)
+            require(Path(path).suffix==('.py' if role=='source' else '.json'),'Role/suffix mismatch')
+            self.allowed.add(path);EXPECTED[path]=item;ROLES[path]=role
+    def audit(self,event,args):
+        if event=='import':require(args[0].split('.')[0] in sys.stdlib_module_names and args[0].split('.')[0] not in {'site','ctypes','subprocess','socket'},'Only prequalified stdlib, no model/numerical/CID/SDK imports')
+        require(not event.startswith(('subprocess.','socket.','os.exec','os.spawn')) and event not in {'os.system','os.fork','os.posix_spawn','fcntl.flock','os.kill','os.killpg','os.mkdir','os.unlink','os.remove','os.rmdir','os.rename','os.replace','marshal.loads','os.listdir','os.scandir'},'Process/network/resource/directory/shared mutation prohibited')
+        if event=='open':
+            require(isinstance(args[0],(str,bytes)),'Anonymous FD body access refused')
+            path=str(Path(os.fsdecode(args[0])).absolute());mode,flags=args[1:3]
+            require(not forbidden(path),'Private/checkpoint/log body refused')
+            writing=isinstance(mode,str) and any(c in mode for c in 'wax+') or isinstance(flags,int) and bool(flags&(os.O_WRONLY|os.O_RDWR|os.O_CREAT|os.O_TRUNC|os.O_APPEND))
+            if writing:require(path==str(OUTPUT) and isinstance(flags,int) and flags&os.O_EXCL,'Exclusive own diagnostic output only')
+            else:require(path in self.allowed,'Unlisted body/source read refused')
+        if event in {'os.chmod','os.chown','os.truncate','os.utime','os.link','os.symlink'}:require(event=='os.chmod' and str(Path(args[0]).absolute())==str(OUTPUT) and args[1]==0o444,'Only own final output sealing allowed')
+
+
+def exact_admission(approval,item):
+    descriptor(item);expected=approval['artifacts'].get(item['path']);require(expected is not None and {k:expected[k] for k in ('bytes','sha256')}=={k:item[k] for k in ('bytes','sha256')},'Actual source-qualified raw pin required')
+
+
+def source_nodes(item,names,namespace):
+    require(ROLES.get(item['path'])=='source','Source-only role required');raw_pin(item['path'],item);raw=Path(item['path']).read_bytes();tree=ast.parse(raw)
+    selected=[n for n in tree.body if isinstance(n,(ast.FunctionDef,ast.ClassDef)) and n.name in names]
+    require(len(selected)==len(names) and {n.name for n in selected}==set(names),'Exact finite AST roster required')
+    require(not any(n.decorator_list or any(isinstance(c,(ast.Import,ast.ImportFrom)) for c in ast.walk(n)) for n in selected),'Decorated/importing AST helper refused')
+    exec(compile(ast.Module(body=selected,type_ignores=[]),item['path']+'#pure-only','exec'),namespace)
+    raw_pin(item['path'],item);return namespace
+
+
+def load_kernels(owners):
+    p=SOURCE_PINS['pure'];raw_pin(p['path'],p);tree=ast.parse(Path(p['path']).read_bytes())
+    ns=dict(globals(),ROOT=ROOT,pin=raw_pin,read=read_json,EXPECTED=EXPECTED,OBSERVED=OBSERVED,FREEZE_PASSED=True,
+        HELPER=Path(SOURCE_PINS['scorer']['path']),HELPER_SHA=SOURCE_PINS['scorer']['sha256'])
+    names={'N10','N11','N9','N8','N7','N6','N2','T','FIELDS','ALL_FIELDS','OLD_PANELS','FRESH_PANELS','PANELS','COUNTS','MODALITIES','FALSE','FIXED'}
+    assignments=[n for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(x,ast.Name) and x.id in names for x in n.targets)]
+    require(len(assignments)==len(names),'Exact retained constant roster')
+    exec(compile(ast.Module(body=assignments,type_ignores=[]),p['path']+'#constants','exec'),ns)
+    funcs={'canonical','digest','f32','binary','fixed','require_map_pin','detached','source_projection','references','independent_score_checks','paired_changes','modality_summary','optional_presence_confusion','guarded_choice'}
+    source_nodes(p,funcs,ns)
+    source_nodes(SOURCE_PINS['coordinate'],{'tokenize','strict_rule','gold_coordinates','scorers'},ns)
+    require(owners['ipfs_datasets_py.logic.formalization.autoencoder.retained_span_score_capture']==SOURCE_PINS['greedy']
+        and owners['ipfs_datasets_py.logic.legal_ir.joint_span_selection']==SOURCE_PINS['joint'],'Exact historical captured decoder sources required; current owners cannot substitute')
+    greedy,joint,scorer=ns['scorers'](owners)
+    return ns,greedy,joint,scorer
+
+
+def qualified_donor(label,item,approval):
+    require(label in DONORS and set(item)=={'plan','review','freeze','runtime_review','summary','snapshot_content_review'},'Closed donor metadata chain')
+    values={}
+    for k,d in item.items():
+        if d is None:require(k=='snapshot_content_review' and label!='F18','Only legacy content review may be null');continue
+        exact_admission(approval,d);require(ROLES.get(d['path'])=='metadata','Donor proof is metadata role');values[k]=read_json(d['path'],d)
+    prefix={'F15':'actor-refinement','F17':'joint-readout-retention','F18':'modality-conditions-retention'}[label]
+    r=values['review'];f=values['freeze'];runtime=values['runtime_review'];summary=values['summary'];plan=values['plan']
+    require(r['schema']==prefix+'-result-independent-review/v1' and r['passed'] is True and r['findings']==[]
+        and r['plan']==item['plan'] and r['freeze']==item['freeze'] and r['runtime_review']==item['runtime_review']
+        and runtime['passed'] is True and runtime['findings']==[] and runtime['plan']==item['plan'],'Exact completed donor independent custody required')
+    if label=='F18':
+        require(f['schema']=='modality-conditions-retention-opaque-output-snapshot/v1' and f['passed'] is True and f['findings']==[] and f['output_file_count']==62
+            and runtime['snapshot']==item['freeze'] and runtime['snapshot_content_review']==item['snapshot_content_review']
+            and runtime['schema']=='modality-conditions-retention-runtime-independent-review/v1'
+            and values['snapshot_content_review']['passed'] is True and values['snapshot_content_review']['findings']==[]
+            and values['snapshot_content_review']['snapshot']==item['freeze'] and values['snapshot_content_review']['all62_opaque_hashes_independently_recomputed'] is True,'Separate F18 snapshot/content/runtime required')
+        outputs={v['path']:{k:v[k] for k in ('bytes','sha256')} for v in f['results'].values()}
+        require(item['summary']==f['results']['summary.json'],'F18 summary snapshot join')
+    else:
+        require(f['schema']==prefix+'-output-freeze/v1' and f['all_outputs_frozen'] is True
+            and f['authorizes_authored_eval_scoring'] is True and f['actual_returned_optimizer_updates']==32
+            and f['checkpoint_JSON_parses']==f['model_or_encoder_calls']==0 and f['default_promotion'] is False
+            and f['statutory_reference_scoring_authorized'] is False and f['plan']==item['plan'] and f['runtime_review']==item['runtime_review']
+            and runtime['schema']==prefix+'-runtime-independent-review/v1' and item['summary']==f['summary'],'Legacy completed freeze/runtime/summary join')
+        outputs=f['results']
+    require(len(outputs)==62 and runtime['outputs']==outputs and summary['schema']==prefix+'-cell-results/v1' and summary['status']=='completed','All62 donor descriptors, summary schema and runtime outputs exact')
+    require(outputs[item['summary']['path']]=={k:item['summary'][k] for k in ('bytes','sha256')},'Summary belongs to exact donor outputs')
+    require(summary['checkpoint']['path'] in outputs and outputs[summary['checkpoint']['path']]=={k:summary['checkpoint'][k] for k in ('bytes','sha256')},'Checkpoint remains opaque descriptor-only donor identity')
+    if label=='F15':require(summary['checkpoint']['sha256']==F15_CHECKPOINT and summary['final_model_state_sha256']==F15_STATE,'Exact trained F15 donor required')
+    require(summary['candidate_training_capture_call_sizes']==[128,40] and plan['latent_enabled'] is False
+        and plan['context_contract']['dimension']==384,'Fixed source geometry/context384 and dormant latent plan required')
+    result_root=Path(item['summary']['path']).parent
+    captures={}
+    for scope in SCOPES:
+        d=summary['final_training_capture'] if scope=='training168' else summary['diagnostics'][scope]
+        require(d['row_count']==COUNTS[scope] and set(d)=={'raw','joint','row_count'},'Closed full donor scope descriptors required')
+        for view in ('raw','joint'):
+            exact_admission(approval,d[view]);require(ROLES.get(d[view]['path'])=='capture' and Path(d[view]['path']).parent==result_root
+                and outputs[d[view]['path']]=={k:d[view][k] for k in ('bytes','sha256')},'Exact frozen saved capture membership required')
+        captures[scope]=d
+    return dict(metadata=values,outputs=outputs,captures=captures,summary=summary,plan=plan)
+
+
+def validate_native(raw,joint_envelope,rows,donor,greedy,joint):
+    n=len(rows);summary=donor['summary'];inference=raw['inference'];prefix={'F15':'actor-refinement','F17':'joint-readout-retention','F18':'modality-conditions-retention'}[donor['label']]
+    require(raw['schema']==prefix+'-adapter-target-free-head-capture/v1' and inference['schema']=='bounded-'+prefix+'-adapter-inference/v1'
+        and inference['checkpoint_sha256']==summary['checkpoint']['sha256'] and inference['model_state_sha256']==summary['final_model_state_sha256']
+        and inference['latent_ablation']=='none' and len(raw['occurrences'])==len(inference['rows'])==n
+        and raw['actual_source_forwards']==n and raw['extra_capture_forwards']==0 and raw['model_weights_unchanged'] is True
+        and raw['original_greedy_observations_verified'] is True and raw['ambient_CPU_RNG_preserved'] is True
+        and raw['target_access'] is raw['teacher_forcing'] is inference['target_access'] is inference['teacher_forcing'] is inference['training_executed'] is False,
+        'Exact target-free complete donor capture required')
+    require(joint_envelope['schema']==prefix+'-joint-panel/v1' and joint_envelope['top_k']==8 and joint_envelope['max_search_nodes']==50000
+        and len(joint_envelope['rows'])==n,'Fixed saved joint envelope required')
+    require(inference['context_contract_sha256']==digest(donor['plan']['context_contract']),'Exact donor configuration/context contract hash')
+    for value in (raw,inference):
+        require(all(value.get(k) is False for k in ('qualified','admitted','formalized','proof_authority','semantic_correctness_verified','promotion_performed')),'No inference authority flags')
+    decoded=[]
+    for row,occ,g,j in zip(rows,raw['occurrences'],inference['rows'],joint_envelope['rows'],strict=True):
+        sh=hashlib.sha256(row['source_text'].encode()).hexdigest()
+        require(occ['id']==j['id']==row['id'] and occ['source_sha256']==g['source_sha256']==sh
+            and g['latent_sha256']==digest(row['latent']) and g['latent_input_enabled'] is False
+            and g['source_input_conditioned'] is True and g['sample_memory_used'] is False
+            and g['target_access'] is g['teacher_forcing'] is g['training_executed'] is False,'Exact source ID/order/SHA/dormant input joins')
+        clean=joint['_validated'](row['source_text'],occ['scores']);require(len(clean['tokens'])<=128,'128-token fixed budget')
+        greedy['_verify_greedy'](row['source_text'],occ['scores'],g)
+        selected=joint['select_joint_spans'](row['source_text'],occ['scores'],top_k=8,max_search_nodes=50000)
+        require(selected==j['result'],'Exact retained joint replay differs')
+        rebuilt=selected['independent_greedy'];require(rebuilt['status']==g['status'] and rebuilt['reason']==g['reason'] and rebuilt['canonical_ir']==g['canonical_ir'],'Reconstructed greedy differs from native owner result')
+        decoded.append(dict(id=row['id'],result=selected))
+    require(inference['decoded_count']==sum(g['status']=='decoded' for g in inference['rows']),'Native decoded count exact')
+    return raw,decoded
+
+
+def protected(scores):
+    return dict(presence_logits=deepcopy(scores['presence_logits']),**{side:{role:deepcopy(scores[side][role]) for role in OTHER_BOUNDARIES} for side in ('start_logits','end_logits')})
+
+
+def validate_shared_heads(packets):
+    require(set(packets)==set(DONORS),'Exactly three donor score packets')
+    base=packets['F15']
+    require(all(p['schema']=='joint-source-span-scores/v1' and p['tokens']==base['tokens'] for p in packets.values()),'Exact common token geometry')
+    for d in ('F17','F18'):
+        for side in ('start_logits','end_logits'):
+            require(canonical({r:packets[d][side][r] for r in OTHER_BOUNDARIES})==canonical({r:base[side][r] for r in OTHER_BOUNDARIES}),'Shared frozen other-role score bits differ')
+    require(canonical(packets['F18']['presence_logits'])==canonical(base['presence_logits'])
+        and all(canonical(packets['F18'][side]['actor'])==canonical(base[side]['actor']) for side in ('start_logits','end_logits')),'F18 protected allpresence and actor score bits differ')
+    require(all(canonical(packets['F17']['presence_logits'][r])==canonical(base['presence_logits'][r]) for r in ('object','conditions','temporal')),'F17 protected presence score bits differ')
+    return True
+
+
+def compose_scores(variant,packets):
+    require(variant in VARIANTS and set(packets)==set(DONORS),'Only fixed donor variants')
+    require(all(p['schema']=='joint-source-span-scores/v1' for p in packets.values()) and packets['F15']['tokens']==packets['F17']['tokens']==packets['F18']['tokens'],'All donor complete tokens identical before mixing')
+    validate_shared_heads(packets)
+    base=packets['F15'];out=deepcopy(base)
+    if variant!='F15_baseline':
+        readout='F18' if variant=='F17_actor_F18_readouts' else 'F17'
+        out['modality_logits']=deepcopy(packets[readout]['modality_logits'])
+        for side in ('start_logits','end_logits'):
+            out[side]['actor']=deepcopy(packets['F17'][side]['actor']);out[side]['conditions']=deepcopy(packets[readout][side]['conditions'])
+    require(canonical(protected(out))==canonical(protected(base)),'F15 allpresence/four other-role boundaries must remain exact copied scalars')
+    actor='F15' if variant=='F15_baseline' else 'F17';readout={'F15_baseline':'F15','F17_actor_F18_readouts':'F18','F17_actor_F17_readouts':'F17'}[variant]
+    require(canonical(out['modality_logits'])==canonical(packets[readout]['modality_logits'])
+        and all(canonical(out[side]['actor'])==canonical(packets[actor][side]['actor']) and canonical(out[side]['conditions'])==canonical(packets[readout][side]['conditions']) for side in ('start_logits','end_logits')),'Every selected donor score block must be exact copied scalars')
+    return out
+
+
+def align_literal(source,tokens,text):
+    require(type(text) is str and text,'Fixed literal span required');starts={t['start']:i for i,t in enumerate(tokens)};ends={t['end']:i for i,t in enumerate(tokens)};matches=[];cursor=0
+    while True:
+        p=source.find(text,cursor)
+        if p<0:break
+        if p in starts and p+len(text) in ends:matches.append((starts[p],ends[p+len(text)]))
+        cursor=p+1
+    require(len(matches)==1,'Fixed gold/short literal must be unique and exactly token aligned');return matches[0]
+
+
+def gap(a,b):return dict(binary64=a-b,f32=f32(a-b))
+
+
+def boundary_rank(logits,gold,indices,short):
+    require(type(gold) is int and type(short) is int and type(indices) is list and indices==sorted(set(indices)) and gold in indices and short in indices,'Closed boundary domain and exact coordinate membership')
+    require(all(type(x) is float and math.isfinite(x) and f32(x)==x for x in logits),'Exact finite binary32 boundary logits')
+    ranked=sorted(indices,key=lambda i:(-logits[i],i));wrong=[i for i in ranked if i!=gold];best=logits[wrong[0]] if wrong else None
+    a=None if best is None else gap(logits[gold],best);b=gap(logits[gold],logits[short])
+    return dict(gold_index=gold,domain_indices=indices,stable_rank=ranked.index(gold)+1,
+        strictly_higher=sum(logits[i]>logits[gold] for i in indices),exact_ties_including_gold=sum(logits[i]==logits[gold] for i in indices),
+        guard_ties_including_gold=sum(abs(f32(logits[i]-logits[gold]))<=1e-7 for i in indices),
+        in_marginal_top8=gold in ranked[:8],logit=logits[gold],gold_minus_best_wrong_binary64=None if a is None else a['binary64'],
+        gold_minus_best_wrong_f32=None if a is None else a['f32'],gold_minus_short_binary64=b['binary64'],gold_minus_short_f32=b['f32'])
+
+
+def full_span_rank(starts,ends,gold,short):
+    require(len(starts)==len(ends) and 1<=len(starts)<=128 and all(type(v) is float and math.isfinite(v) and f32(v)==v for v in starts+ends),'Finite complete binary32 pair vectors')
+    n=len(starts);require(all(type(i) is int for i in (*gold,*short)) and 0<=gold[0]<=gold[1]<n and short[0]==gold[0] and gold[0]<=short[1]<n,'Exact gold/short upper-triangle coordinates')
+    pairs=[(f32(starts[l]+ends[r]),l,r) for l in range(n) for r in range(l,n)];pairs.sort(key=lambda a:(-a[0],a[1],a[2]));value=f32(starts[gold[0]]+ends[gold[1]]);shortvalue=f32(starts[short[0]]+ends[short[1]])
+    rank=next(i+1 for i,p in enumerate(pairs) if p[1:]==tuple(gold));wrong=next((p for p in pairs if p[1:]!=tuple(gold)),None);margin=None if wrong is None else gap(value,wrong[0]);shortgap=gap(value,shortvalue)
+    boundary=f32(pairs[7][0]-pairs[8][0]) if len(pairs)>8 else None
+    return dict(gold_start=gold[0],gold_end=gold[1],stable_rank=rank,domain_count=len(pairs),strictly_higher=sum(p[0]>value for p in pairs),
+        exact_ties_including_gold=sum(p[0]==value for p in pairs),guard_ties_including_gold=sum(abs(f32(p[0]-value))<=1e-7 for p in pairs),
+        in_fullspan_top8=rank<=8,in_fullspan_top16=rank<=16,pair_score_f32=value,gold_minus_best_wrong_binary64=None if margin is None else margin['binary64'],
+        gold_minus_best_wrong_f32=None if margin is None else margin['f32'],gold_minus_short_binary64=shortgap['binary64'],gold_minus_short_f32=shortgap['f32'],
+        boundary8_9_margin_f32=boundary,boundary8_9_tied_within_guard=boundary is not None and boundary<=1e-7,
+        top8=[dict(start=l,end=r,score_f32=v) for v,l,r in pairs[:8]])
+
+
+def selection(record,route):
+    if route=='raw':
+        field=record.get('span_diagnostics',{}).get('facets',{}).get('conditions')
+        coords=None if field is None or field.get('token_start') is None else dict(start=field['token_start'],end=field['token_end_inclusive'])
+    else:
+        field=(record.get('span_diagnostics') or {}).get('conditions');span=None if field is None else field.get('span')
+        coords=None if span is None else dict(start=span['token_start'],end=span['token_end_inclusive'])
+    return dict(status=record['status'],reason=record['reason'],conditions=coords,canonical_ir=record['canonical_ir'])
+
+
+def assignment_coverage(row,scores,coords,joint):
+    modality,margin=joint['_choice'](scores['modality_logits']);rule=row['canonical_ir']['rules'][0]
+    fixed=margin>1e-7 and ('O','P','F')[modality]==rule['modality'];presences={};coverage={}
+    for role in OPTIONAL:
+        winner,margin=joint['_choice'](scores['presence_logits'][role]);presences[role]=margin>1e-7 and (winner==1)==(role in coords);fixed=bool(fixed and presences[role])
+    for role,pair in coords.items():coverage[role]=pair in [p[1:] for p in joint['_rank_spans'](scores,role)[0][:8]]
+    nonoverlap=all(b<c or d<a for i,(a,b) in enumerate(coords.values()) for c,d in list(coords.values())[i+1:])
+    return dict(fixed_modality_and_all_presence_correct=fixed,presence_correct=presences,gold_present_role_fullspan_top8=coverage,
+        gold_assignment_nonoverlap=nonoverlap,full_gold_assignment_retained=bool(fixed and all(coverage.values()) and nonoverlap),gold_dependent_postfreeze_diagnostic=True)
+
+
+def conditions_rank(row,occ,raw,joint_row,donor,short_text,ns,joint):
+    tokens,coords=ns['gold_coordinates'](row);scores=occ['scores'];require(tokens==scores['tokens'] and 'conditions' in coords,'Exact gold source/token join')
+    gold=coords['conditions'];short=align_literal(row['source_text'],tokens,short_text);require(short[0]==gold[0] and short[1]<gold[1],'Exact fixed shortened prefix competitor required')
+    starts=scores['start_logits']['conditions'];ends=scores['end_logits']['conditions'];n=len(tokens)
+    return dict(id=row['id'],donor=donor,source_sha256=hashlib.sha256(row['source_text'].encode()).hexdigest(),tokens_sha256=digest(tokens),
+        gold=dict(start=gold[0],end=gold[1]),short_competitor=dict(start=short[0],end=short[1],text=short_text),
+        start_unrestricted=boundary_rank(starts,gold[0],list(range(n)),short[0]),end_unrestricted=boundary_rank(ends,gold[1],list(range(n)),short[1]),
+        end_conditioned_gold_start=boundary_rank(ends,gold[1],list(range(gold[0],n)),short[1]),full_span=full_span_rank(starts,ends,gold,short),
+        raw_selection=selection(raw,'raw'),joint_selection=selection(joint_row,'joint'),assignment_coverage=assignment_coverage(row,scores,coords,joint))
+
+
+def score(scope,label,rows,metadata,raw,chosen,ns,joint,scorer):
+    if scope=='law':return dict(scope=scope,label=label,rows=8,reference_scored=False,raw_complete_IR=None,joint_complete_IR=None,statutory_semantics_qualified=False),None
+    value=scorer['score_panel'](rows,metadata,raw,chosen);ns['independent_score_checks'](rows,raw,chosen,value)
+    return dict(scope=scope,label=label,rows=len(rows),reference_scored=True,raw_complete_IR=value['raw_exact_ir'],joint_complete_IR=value['joint_exact_ir'],
+        raw_role_exact=value['role_exact_counts'],joint_role_exact=value['joint_role_exact_counts'],raw_modality_exact=value['modality_exact'],joint_modality_exact=value['joint_modality_exact'],
+        raw_abstentions=value['raw_abstentions'],joint_abstentions=sum(r['result']['status']!='selected' for r in chosen),
+        optional_presence_confusion=ns['optional_presence_confusion'](rows,raw,chosen),raw_only_reconstructed_saved_head_readout=label in VARIANTS[1:],
+        metric_authority='previously_exposed_authored_engineering_only',scientific_success_not_claimed=True,semantic_accuracy=None),value['rows']
+
+
+def execution_limits():
+    require(sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode,'Exact cold -I -S -B child required')
+    require(not any(n.split('.')[0] in {'torch','numpy','scipy','ipfs_datasets_py','huggingface_hub','multiformats','site','sitecustomize','usercustomize'} for n in sys.modules),'No ambient production/numerical/SDK/site modules')
+    resource.setrlimit(resource.RLIMIT_AS,(1610612736,1610612736))
+    resource.setrlimit(resource.RLIMIT_CPU,(600,600))
+    resource.setrlimit(resource.RLIMIT_FSIZE,(MAX_OUTPUT,MAX_OUTPUT))
+    def timed_out(signum,frame):raise TimeoutError('Fixed900-second diagnostic wall bound')
+    signal.signal(signal.SIGALRM,timed_out);signal.alarm(900)
+
+
+def main():
+    global BODY_READY
+    execution_limits()
+    require(not os.path.lexists(OUTPUT),'Exclusive new F19 output required');guard=FiniteIO();sys.addaudithook(guard.audit)
+    ROLES[str(GATE)]=ROLES[str(INPUTS)]='metadata'
+    approval=read_json(GATE);require(approval['schema']=='conditions-composition-analyzer-source-independent-review/v1' and approval['passed'] is True and approval['findings']==[]
+        and approval['analyzer']==raw_pin(SELF),'Actual independent source qualification required')
+    require(approval['inputs']['path']==str(INPUTS),'Exact concrete manifest path');manifest=read_json(INPUTS,approval['inputs'])
+    require(set(manifest)=={'schema','design','reference_plan','source_owner_pins','donors','read_roles'} and manifest['schema']=='conditions-composition-diagnostic-inputs/v1','Closed fixed input roles')
+    guard.admit(approval['artifacts'],manifest['read_roles'])
+    for item in (raw_pin(SELF),descriptor(approval['inputs']),DESIGN_PIN,EXECUTION_PIN,*SOURCE_PINS.values()):exact_admission(approval,item)
+    require(approval['execution_contract']==EXECUTION_PIN,'Exact separately source-bound execution contract')
+    execution=read_json(EXECUTION_CONTRACT,EXECUTION_PIN)
+    require(execution['schema']=='conditions-composition-diagnostic-execution-contract/v1'
+        and execution['input_manifest']==INPUTS.name and execution['primary_output']==OUTPUT.name
+        and execution['limits']['address_space_bytes']==1610612736 and execution['limits']['CPU_seconds']==600
+        and execution['limits']['wall_seconds']==900 and execution['limits']['processes']==1,'Fixed execution contract/schema/bounds')
+    require(manifest['design']==DESIGN_PIN,'Exact predeclared design');design=read_json(DESIGN,DESIGN_PIN)
+    require(design['schema']=='conditions-composition-diagnostic-design/v1' and tuple(v['name'] for v in design['variants'])==VARIANTS
+        and design['scopes']==COUNTS and design['fixed_conditions_ids']==list(FIXED_IDS) and design['source_count']==632 and design['scored_source_count']==624
+        and design['law8_unscored'] is True and design['default_promotion'] is False,'Fixed variants/source/rank scope cannot change')
+    exact_admission(approval,manifest['reference_plan']);plan=read_json(manifest['reference_plan']['path'],manifest['reference_plan'])
+    require(plan['schema']=='modality-conditions-retention-cell-plan/v1' and plan['source_checkpoint']['sha256']==F15_CHECKPOINT and plan['source_model_state_sha256']==F15_STATE
+        and manifest['source_owner_pins']==plan['source_owner_pins'],'Exact historical F18 source/reference lineage; no current owner substitution')
+    require(set(manifest['donors'])==set(DONORS),'Exactly F15/F17/F18 donors')
+    donors={label:qualified_donor(label,manifest['donors'][label],approval) for label in DONORS}
+    for label,d in donors.items():d['label']=label
+    require(len({digest(d['plan']['context_contract']) for d in donors.values()})==1,'All donor context/config contracts must match before any body scoring')
+    for path,item in EXPECTED.items():
+        if ROLES[path] in {'metadata','source'}:raw_pin(path,item)
+    BODY_READY=True
+    ns,greedy,joint,scorer=load_kernels(manifest['source_owner_pins']);data,populations,metadata=ns['references'](plan);rows_by_scope={s:data['training_rows'] if s=='training168' else populations[s] for s in SCOPES}
+    allrows=sum(rows_by_scope.values(),[]);require(len(allrows)==len({r['id'] for r in allrows})==632,'Exact unique632 source membership')
+    native={};native_panels=[];native_scores={};actual_joint=0;actual_visited_nodes=0
+    for label,d in donors.items():
+        for scope in SCOPES:
+            rows=rows_by_scope[scope];desc=d['captures'][scope];raw=read_json(desc['raw']['path'],desc['raw']);chosen=read_json(desc['joint']['path'],desc['joint'])
+            native[label,scope]=validate_native(raw,chosen,ns['source_projection'](rows),d,greedy,joint);actual_joint+=len(rows);actual_visited_nodes+=sum(j['result']['search']['visited_nodes'] for j in native[label,scope][1])
+            meta=data['training_metadata'] if scope=='training168' else metadata.get(scope)
+            panel,records=score(scope,label,rows,meta,*native[label,scope],ns,joint,scorer);native_panels.append(panel)
+            if records is not None:native_scores[label,scope]=records
+    variants={};variant_panels=[];variant_scores={};copy_proofs=[]
+    for scope in SCOPES:
+        rows=rows_by_scope[scope]
+        for variant in VARIANTS:
+            if variant=='F15_baseline':pair=native['F15',scope]
+            else:
+                occurrences=[];outputs=[];chosen=[]
+                for i,row in enumerate(rows):
+                    packets={d:native[d,scope][0]['occurrences'][i]['scores'] for d in DONORS};mixed=compose_scores(variant,packets)
+                    joint['_validated'](row['source_text'],mixed);result=joint['select_joint_spans'](row['source_text'],mixed,top_k=8,max_search_nodes=50000);actual_joint+=1;actual_visited_nodes+=result['search']['visited_nodes']
+                    rawrow=deepcopy(result['independent_greedy']);rawrow['source_sha256']=hashlib.sha256(row['source_text'].encode()).hexdigest()
+                    occurrences.append(dict(id=row['id'],source_sha256=rawrow['source_sha256'],scores=mixed));outputs.append(rawrow);chosen.append(dict(id=row['id'],result=result))
+                    copy_proofs.append(dict(id=row['id'],scope=scope,variant=variant,source_tokens_equal=True,protected_F15_head_sha256=digest(protected(mixed)),
+                        protected_F15_heads_exact=True,selected_donor_heads_exact=True,mixed_scores_sha256=digest(mixed)))
+                pair=(dict(occurrences=occurrences,inference=dict(rows=outputs)),chosen)
+            variants[variant,scope]=pair;meta=data['training_metadata'] if scope=='training168' else metadata.get(scope)
+            panel,records=score(scope,variant,rows,meta,*pair,ns,joint,scorer);variant_panels.append(panel)
+            if records is not None:variant_scores[variant,scope]=records
+    require(actual_joint==3160 and len(copy_proofs)==1264,'Exact saved-score replay operation budget; no model calls')
+    comparisons={v:{d:{s:ns['paired_changes'](native_scores[d,s],variant_scores[v,s]) for s in SCOPES if s!='law'} for d in DONORS} for v in VARIANTS}
+    permissions={}
+    for v in VARIANTS:
+        old=rows_by_scope['old_tune'];raw,chosen=variants[v,'old_tune'];r=[]
+        for row,g,j in zip(old,raw['inference']['rows'],chosen,strict=True):
+            if row['canonical_ir']['rules'][0]['modality']=='P':r.append(dict(id=row['id'],raw_correct=g['status']=='decoded' and g['canonical_ir']['rules'][0]['modality']=='P',joint_correct=j['result']['status']=='selected' and j['result']['canonical_ir']['rules'][0]['modality']=='P'))
+        require(len(r)==32,'Fixed32 permission membership');permissions[v]=r
+    observation=read_json(design['fixed_conditions_observation']['path'],design['fixed_conditions_observation']);require([r['id'] for r in observation['rows']]==list(FIXED_IDS),'Fixed two conditions observation membership')
+    rankrows=[];training=rows_by_scope['training168'];index={r['id']:i for i,r in enumerate(training)}
+    for fixed,observed in zip(FIXED_IDS,observation['rows'],strict=True):
+        short=observed['states']['parent_F15']['raw']['conditions'];require(type(short) is list and len(short)==1,'Exact prior exposed short competitor literal')
+        for d in DONORS:
+            i=index[fixed];raw,jrows=native[d,'training168'];rankrows.append(conditions_rank(training[i],raw['occurrences'][i],raw['inference']['rows'][i],jrows[i]['result'],d,short[0],ns,joint))
+    for path,expected in list(OBSERVED.items()):raw_pin(path,expected)
+    result=dict(schema='conditions-composition-diagnostic/v1',passed=True,findings=[],analyzer=raw_pin(SELF),source_qualification=raw_pin(GATE),inputs=raw_pin(INPUTS),design=DESIGN_PIN,
+        variant_panels=variant_panels,native_donor_panels=native_panels,variant_score_rows={v:{s:variant_scores[v,s] for s in SCOPES if s!='law'} for v in VARIANTS},
+        native_donor_score_rows={d:{s:native_scores[d,s] for s in SCOPES if s!='law'} for d in DONORS},comparisons=comparisons,all32_permissions=permissions,
+        conditions_rank_diagnostics=rankrows,component_copy_proofs=copy_proofs,source_count=632,scored_source_count=624,variant_panel_count=30,variant_scored_sets=27,
+        native_donor_panel_count=30,native_donor_scored_sets=27,variant_donor_scope_comparisons=81,saved_score_joint_decoder_calls=3160,saved_score_raw_reconstructions=3160,
+        actual_joint_visited_nodes=actual_visited_nodes,node_budget_per_joint_call=50000,full_domain_optimality_not_claimed=True,legacy_original_greedy_verification_calls=1896,execution_contract=EXECUTION_PIN,top_k_full_spans=8,rank_marginal_top8_distinct_from_joint_fullspan_top8=True,training155_descriptive_only=True,
+        source_group_generalization_claim=False,statutory8_unscored=True,shared_coordinate_greedy_joint_scorer_ASTs=True,independent_result_recount_required=True,
+        model_author_authored_primary=True,composed_checkpoint_constructed=False,checkpoint_JSON_parses=0,model_calls=0,encoder_calls=0,optimizer_updates=0,
+        numerical_or_production_imports=0,SDK_or_network_calls=0,private_body_reads=0,Git_mutations=0,scientific_success_not_claimed=True,default_promotion=False,
+        statutory_semantics_qualified=False,Lake_executed=False,active_latent_semantics_qualified=False,portable_composed_checkpoint_reload_qualified=False,input_pins=OBSERVED)
+    raw=(json.dumps(result,sort_keys=True,indent=2,allow_nan=False)+'\n').encode();require(len(raw)<=MAX_OUTPUT,'Diagnostic output above50MB')
+    with OUTPUT.open('xb') as stream:stream.write(raw);stream.flush();os.fsync(stream.fileno())
+    OUTPUT.chmod(0o444);guard.allowed.add(str(OUTPUT));print(dict(path=str(OUTPUT),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),flush=True)
+
+
+if __name__=='__main__':main()

@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-a-01/cache/pytest
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-retained-source-correspondence-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 21 items
+
+tests/unit/logic/integration/test_reasoning_lazy_imports.py ............ [ 57%]
+.........                                                                [100%]
+
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-retained-source-correspondence-20261015-a-01/logs/junit.xml -
+============================= 21 passed in 15.62s ==============================

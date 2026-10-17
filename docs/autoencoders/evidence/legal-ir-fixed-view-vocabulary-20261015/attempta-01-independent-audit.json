@@ -1,0 +1,45 @@
+{
+  "all_authority_flags_false": true,
+  "all_sealed_paths_sizes_hashes_device_inode_exact": true,
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-a-01",
+  "durability": {
+    "bytes": 2664,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-a-01/logs/validation-durability.json",
+    "sha256": "9d59ee1ef205469e575d1ae74c7ac3b4ea2cd3a5c9657227a4193708a49c315d"
+  },
+  "final_bytes": 43393,
+  "final_files": 15,
+  "method": "Independent stdlib read-only request/source/ordinary-file/native-seal/exact-selected-ledger-row inspection. No product imports, tests, resource acquisition, recovery or attempt writes.",
+  "native_elapsed_seconds": 42.63100290996954,
+  "observed_at_utc": "2026-10-15T21:50:41.347829+00:00",
+  "pytest": {
+    "cases": 95,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "suite_seconds": [
+      1.739
+    ],
+    "unique_class_aware": true
+  },
+  "request": {
+    "bytes": 34082,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-fixed-view-vocabulary-20261015/validation-request-a-01.json",
+    "sha256": "cc03ebcfaff655647572c44ad70b8182b3156f92c94856a5448da6c4d8f6db1c"
+  },
+  "result": {
+    "bytes": 855,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-fixed-view-vocabulary-20261015-a-01/logs/result.json",
+    "sha256": "6b5f2b52b2cde821b1c29e27a08b89af5d44da1c2119c9fcf56d8723c7e75391"
+  },
+  "schema": "retained-source-native-independent-audit/v1",
+  "sealed_files": 14,
+  "selected_checks": [
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_nonview_projection.py",
+    "tests/unit/logic/integration/test_legal_ir_view_contracts.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_vocabulary_diagnostic.py"
+  ],
+  "selected_storage_status": "released",
+  "source_pins_rehashed": 144,
+  "storage_budget": 268435456
+}

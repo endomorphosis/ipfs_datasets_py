@@ -1,0 +1,64 @@
+{
+  "adapted": {
+    "bytes": 5385,
+    "path": "docs/autoencoders/evidence/legal-relational-target-contract-20261016/recover_own_failed_qualification01_v01.py",
+    "sha256": "5e0d0c1ce0882d499dbb52d11fe251e4d700b6743c3215d0f901df4045312872"
+  },
+  "guard": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/run_qualification.py",
+    "sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854",
+    "unchanged_expected_sha256": "caef50be105d8280cd727ae0c14867644e223d83639454ff33f0df2df2e68854"
+  },
+  "literal_substitutions": [
+    {
+      "current": "ROOT = Path('/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets')",
+      "original": "ROOT = Path('/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets')"
+    },
+    {
+      "current": "GUARD = PHASE / 'run_qualification.py'",
+      "original": "GUARD = Path('/home/barberb/lift_coding/artifacts/legal-primary-graph-export-20261015-01/run_export_qualification_v03.py')"
+    },
+    {
+      "current": "owned-validation-runs/legal-relational-target-contract-20261016-a-01",
+      "original": "owned-validation-runs/legal-typed-batch-evaluation-20261016-qualification01"
+    },
+    {
+      "current": "PHASE / 'qualification-request-01.json'",
+      "original": "PHASE / 'qualification-request-v01.json'"
+    },
+    {
+      "current": "503a5c79e0ae0dbf1806484b0d0f5e49e0c086308cca61a694cd02f832115d79",
+      "original": "9c44d60070948e2a2f251e28354cf648f781690a2f9057c5ae5b93fa3db5fe29"
+    },
+    {
+      "current": "legal-relational-target-contract-own-failed-qualification-recovery/v1",
+      "original": "legal-typed-batch-evaluation-own-failed-qualification-recovery/v1"
+    }
+  ],
+  "method": "Standard-library source bytes, literal substitutions and AST/builtin compile only; no imports, recovery execution, ledger mutation or native calls.",
+  "observed_at_utc": "2026-10-16T06:51:51.065539+00:00",
+  "request": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-missing-component-import-20261016/datasets/docs/autoencoders/evidence/legal-relational-target-contract-20261016/qualification-request-01.json",
+    "sha256": "503a5c79e0ae0dbf1806484b0d0f5e49e0c086308cca61a694cd02f832115d79"
+  },
+  "reverse_substitutions_reproduce_original_bytes": true,
+  "schema": "legal-relational-target-contract-recovery-script-reuse-review/v1",
+  "scope": {
+    "current_administrative_source_generation_separate_from_failed_test_pins": true,
+    "exact_current_failed_attempt_only": true,
+    "execution_performed": false,
+    "foreign_cleanup_authorized": false,
+    "new_reservation_or_lease_acquired": false,
+    "outputs_deleted": false,
+    "requires_original_owner_and_recorded_groups_absent": true,
+    "requires_retained_context_failed_original_request_join": true,
+    "retains_complete_durable_artifact_inventory": true,
+    "tests_passed_claimed": false
+  },
+  "source": {
+    "bytes": 5482,
+    "path": "docs/autoencoders/evidence/legal-typed-batch-evaluation-20261016/recover_own_failed_qualification01_v01.py",
+    "sha256": "83e66433b458a60b669425e924055074744920d23e65dbcc31850fdefadb916f"
+  },
+  "status": "static_reuse_pass_execution_not_performed"
+}

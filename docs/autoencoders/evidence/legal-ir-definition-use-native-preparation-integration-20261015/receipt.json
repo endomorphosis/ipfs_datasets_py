@@ -1,0 +1,285 @@
+{
+  "authority": {
+    "actual_Lean_build_executed": false,
+    "actual_statutory_review_performed": false,
+    "candidate_build_eligible": false,
+    "formal_corpus_admitted": false,
+    "installed_Lean_toolchain_verified": false,
+    "proof_kernel_checked": false,
+    "semantic_agreement_established": false,
+    "source_exposure_authentication_established": false,
+    "training_gold_admitted": false
+  },
+  "current_qualification": {
+    "all_new_cases_included_in_total": true,
+    "attempt": "03",
+    "complete_test_modules": 13,
+    "errors": 0,
+    "execution": {
+      "bytes": 1342,
+      "path": "attempt03-execution.json",
+      "sha256": "5766b36472bd13b6211502755a91ec7464ce9f0256322cb082745ff335ae3cd6"
+    },
+    "failures": 0,
+    "independent_audit": {
+      "bytes": 13218,
+      "path": "final-audit.json",
+      "sha256": "43495f664e6fe02fd8d66b89a4ffa520685660efac0690447e1b0aa04e12c0a2"
+    },
+    "junit": {
+      "bytes": 60695,
+      "path": "attempt03-junit.xml",
+      "sha256": "81bfe5f7632e7fae124e11b1deab2b383d737109597960177c02b4b502a3df27"
+    },
+    "junit_suite_seconds": 134.86,
+    "native_execution_seconds": 176.86492826696485,
+    "new_project_cases": 3,
+    "new_reasoning_cases": 5,
+    "passing_unique_cases": 316,
+    "result": {
+      "bytes": 1547,
+      "path": "attempt03-result.json",
+      "sha256": "9af12d7da6fb008ea3df097c65ecee370cae5f5eed24710548dd8e1c69b3aee1"
+    },
+    "selected_modules": {
+      "tests/unit/logic/autoformal/test_corpus_definition_review_v2.py": 51,
+      "tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py": 49,
+      "tests/unit/logic/autoformal/test_corpus_definition_use_v2.py": 44,
+      "tests/unit/logic/autoformal/test_corpus_imports.py": 7,
+      "tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py": 3,
+      "tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py": 3,
+      "tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py": 3,
+      "tests/unit/logic/autoformal/test_legal_graph_dependencies.py": 18,
+      "tests/unit/logic/autoformal/test_legal_graph_review.py": 48,
+      "tests/unit/logic/autoformal/test_scoped_definition_resolution.py": 74,
+      "tests/unit/logic/integration/test_legal_ir_source_maps.py": 4,
+      "tests/unit/logic/integration/test_legal_ir_symbols.py": 7,
+      "tests/unit/logic/integration/test_reasoning_lazy_imports.py": 5
+    },
+    "skips": 0,
+    "source_inventory_is_complete_import_closure": false,
+    "source_pins": 256
+  },
+  "earlier_qualifications_added_to_total": false,
+  "executed_checkout_head": "72c4bb353f03682f34a694f3f476fa59c186f8b0",
+  "historical_author_qualification": {
+    "added_to_current_total": false,
+    "legacy_cases": 121,
+    "native_regular_file_profile_claimed": false,
+    "new_preparation_cases": 42,
+    "recount": {
+      "bytes": 1451,
+      "path": "historical-test-recount.json",
+      "sha256": "fa60903cd04d472436f3e155241d4603894ae83c4dbbc828474213b0d36a5b8f"
+    },
+    "unique_passing_cases": 163,
+    "whole_modules_with_special_file_controls_not_selected": [
+      "tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py",
+      "tests/unit/logic/autoformal/test_legal_corpus_lake.py"
+    ]
+  },
+  "implementation": {
+    "joined_project_scope": {
+      "actual_statutory_reviews_claim": false,
+      "authority_flags_checked_per_project": 29,
+      "fresh_process_handoffs": 3,
+      "native_builds_executed": 0,
+      "original_byte_inputs_verified_per_handoff": 12,
+      "project_count": 4,
+      "projects": [
+        {
+          "all_authority_flags_false": true,
+          "authority_flags_checked": 29,
+          "exact_17_field_public_handoff_and_12_original_byte_pins_checked": true,
+          "generated_files": 9,
+          "manifest_sha256": "8762e25ea711d61d58236a9a9cd953b53ea0d13cec41c3b48088ff2cb56e87cd",
+          "native_build_executed": false,
+          "native_modules": 6,
+          "project_name": "candidate-project",
+          "review_prerequisites_satisfied_under_selected_trust": true
+        },
+        {
+          "all_authority_flags_false": true,
+          "authority_flags_checked": 29,
+          "exact_17_field_public_handoff_and_12_original_byte_pins_checked": true,
+          "generated_files": 9,
+          "manifest_sha256": "0105d22b30475411e80567903c3de265c76177e9c4ee1d81db2f99b259b6e275",
+          "native_build_executed": false,
+          "native_modules": 6,
+          "project_name": "candidate-project",
+          "review_prerequisites_satisfied_under_selected_trust": true
+        },
+        {
+          "all_authority_flags_false": true,
+          "authority_flags_checked": 29,
+          "exact_17_field_public_handoff_and_12_original_byte_pins_checked": true,
+          "generated_files": 9,
+          "manifest_sha256": "43d894cfe045ef7202c8ff2c9e2e33b9b6cffc450ef3efac61bf3fbc1c116edf",
+          "native_build_executed": false,
+          "native_modules": 6,
+          "project_name": "blocked-project",
+          "review_prerequisites_satisfied_under_selected_trust": false
+        },
+        {
+          "all_authority_flags_false": true,
+          "authority_flags_checked": 29,
+          "exact_17_field_public_handoff_and_12_original_byte_pins_checked": false,
+          "generated_files": 9,
+          "manifest_sha256": "859b6bd894b2467ca3bba94966d8cd88d999912fec8d8ae682b40dbb82f69ea3",
+          "native_build_executed": false,
+          "native_modules": 6,
+          "project_name": "original-project",
+          "review_prerequisites_satisfied_under_selected_trust": true
+        }
+      ],
+      "proof_kernel_execution_claim": false,
+      "public_review_input_fields_per_handoff": 17
+    },
+    "public_preparer_reimplemented": false,
+    "public_transport_reimplemented": false,
+    "repair": "Lazy access to the original 553 reasoning exports from 38 owners, preserving effective ownership, ordered __all__, four function/module collisions and explicit non-module caller overrides.",
+    "static_api_proof": {
+      "bytes": 1442,
+      "path": "lazy-public-api-static-proof.json",
+      "sha256": "41de26785710e86acd0d762bb8af29c2be9ab7cce6185f5eea07165210396af0"
+    }
+  },
+  "native_closeout": {
+    "cleanup_error": null,
+    "complete_files_including_durability": 145,
+    "final_attempt_bytes": 8983664,
+    "launcher_exit_code": 0,
+    "native_durability_original": {
+      "bytes": 35745,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-03/logs/validation-durability.json",
+      "sha256": "0044a5416aeaab4067ae54ce7d24532f5af6cf477432c15f13b8742fe362605f"
+    },
+    "public_durability_projection": {
+      "bytes": 45603,
+      "path": "attempt03-durability-projection.json",
+      "sha256": "5b78417f3e9efc7a9c00b87ddee52a90878e7f738812ab642a5a2f96efc9a6e1"
+    },
+    "scope": "Existing sampled cooperative isolated process group and owned regular-file attempt; not an arbitrary-descendant filesystem quota.",
+    "sealed_files": 144,
+    "sealed_payload_bytes": 8947919,
+    "selected_native_lease_absent_at_independent_audit": true,
+    "selected_storage_status": "released",
+    "terminal_observation": {
+      "bytes": 815,
+      "path": "native-closeout-observation.json",
+      "sha256": "5716e1484e85adf3c5f1d5d3d2aa463b0ab4554f4040463e94dc26e6468a060e"
+    }
+  },
+  "original_author_observation_retained_as_historical": {
+    "bytes": 2632,
+    "path": "source-adoption-at-open.json",
+    "sha256": "cd25c841316aa40297194af27c94816d6f35cf4ccab93efc3725c86c497dd706"
+  },
+  "preserved_contribution": {
+    "adopted_commit": "e58337e4b371c9b16fb2451234f7497882e0c4c4",
+    "author_files": [
+      {
+        "author_and_index_mode_blob_exact": true,
+        "bytes": 21600,
+        "original_adopted_current_exact": true,
+        "original_mode_blob": "100644 blob b116b636e06191098e1a9128fadc15cc9ce73374",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+        "sha256": "306ab6481b78db8046e3f4eeae7cb917002c4a50b227204c6d4692123914b47e"
+      },
+      {
+        "author_and_index_mode_blob_exact": true,
+        "bytes": 23236,
+        "original_adopted_current_exact": true,
+        "original_mode_blob": "100644 blob b5d90f392dfd4cd62926493d80524ae0422b490b",
+        "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_lake_v2.py",
+        "sha256": "3f915be198be0d67133d7b07f5ae4c28b6738de94331a7c099c2783d27b0810e"
+      },
+      {
+        "author_and_index_mode_blob_exact": true,
+        "bytes": 8773,
+        "original_adopted_current_exact": true,
+        "original_mode_blob": "100644 blob d236320fe037baa723f985317e8760626cea4ff5",
+        "path": "docs/autoencoders/legal_corpus_definition_use_lake_v2.md",
+        "sha256": "59aada044248343ae81583bd88e2ecbab995574fa80017ad72538bc42ec2165c"
+      }
+    ],
+    "changed_paths": [],
+    "cohort_is_complete_dynamic_import_closure": false,
+    "currently_matching": 256,
+    "original_contribution": "9ff4d29ea36d5a495d7f9f321fb1d9def73aa98e",
+    "source_pins": 256
+  },
+  "prior_attempts": [
+    {
+      "administrative_note_is_native_execution_output": false,
+      "attempt": "01",
+      "child_started": false,
+      "evidence": {
+        "bytes": 1419,
+        "path": "scheduler-refusal-01.json",
+        "sha256": "62f9470cb1f116c74e7acb0b12f21b06fb058042ece95bcebf0bc9d4588b855a"
+      },
+      "historical_cpu_stall_percent": 52.5,
+      "kind": "native_cpu_admission_refusal",
+      "selected_claim_recovered": true,
+      "tests_executed": 0,
+      "unchanged_threshold_percent": 50
+    },
+    {
+      "attempt": "02",
+      "cause": "Eager reasoning package import reached optional symai configuration mkdir at /usr/.symai.",
+      "failed": 3,
+      "failed_audit": {
+        "bytes": 7318,
+        "path": "attempt02-failed-audit.json",
+        "sha256": "aac4539b649ed9d138150a961c51de7279c93bf53d27f450ed57c5ba6f5c31cf"
+      },
+      "failed_result_promoted": false,
+      "kind": "failing_cold_project_reconstruction",
+      "passed": 297,
+      "selected_claim_recovered": true,
+      "tests_executed": 300
+    }
+  ],
+  "qualified_source_commit": "f3b51b007bf60be9420788099dec26c5555930a4",
+  "recovery": {
+    "failed_results_promoted": false,
+    "independent_audit": {
+      "bytes": 7325,
+      "path": "recovery-audit.json",
+      "sha256": "2dfd33b9456f61ac2e98735e7a914514fffd7d3304abb2e6d834f01ceaf0169f"
+    },
+    "physical_artifact_bytes_removed": 0,
+    "released_reserved_promise_bytes": 536870912,
+    "retained_bytes": 9000576,
+    "retained_files": 145
+  },
+  "remaining_acceptance": [
+    "Versioned checked correspondence from sampled-source intake and exposure evidence to exact signed V2 interpretation subjects, preserving all populations and original hash namespaces.",
+    "Actual independent legal/formal meaning and governing-applicability reviews for a complete definition, operative norm/use and second use.",
+    "Correct graph-cache generation from verified original identities with full-population endpoint and occurrence reconciliation.",
+    "Compatible bounded V2 native execution adapter with installed-toolchain identity, complete compiled artifacts and observed axiom/kernel outcomes.",
+    "Separate reviewed-target eligibility and matched evaluation before decoder-quality or teacher-promotion claims."
+  ],
+  "schema": "legal-ir-definition-use-native-preparation-integration/v1",
+  "source_base_commit": "832c9d3b28f68c55237c4af2e99dd9ec5c137db5",
+  "status": "qualified_candidate_project_transport_and_lazy_imports",
+  "unchanged_assets": {
+    "ModelManager_or_Hub_uploads_performed": false,
+    "existing_embeddings_or_checkpoints_changed": false,
+    "existing_source_caches_replaced": false,
+    "models_created_or_promoted": false,
+    "parallel_dimensions": [
+      8,
+      384,
+      768
+    ],
+    "separate_family_schema_version_and_decoder_task_required": true,
+    "training_jobs_started": false
+  },
+  "upstream_reconciliation": {
+    "bytes": 30838,
+    "path": "upstream-reconciliation.json",
+    "sha256": "c052d2cc4b732c44ac0404bb080113f688d41e3c393d2798c4c227791caf9b70"
+  }
+}

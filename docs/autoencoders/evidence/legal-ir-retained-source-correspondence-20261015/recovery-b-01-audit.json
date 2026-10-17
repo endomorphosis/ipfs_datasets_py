@@ -1,0 +1,64 @@
+{
+  "all13_current_hashes_and_sizes_match_before_after": true,
+  "capacity": {
+    "final_charged_bytes": 129457062756,
+    "full_claim_charged_bytes": 129725498212,
+    "not_a_fresh_global_disk_census": true,
+    "observed_apparent_bytes_unchanged_across_recorded_checks": true,
+    "physical_source_bytes_deleted": 0,
+    "policy": "require_capacity",
+    "released_promise_bytes": 268435456,
+    "unchanged_limit_bytes": 160000000000
+  },
+  "evaluation_gold_authority": false,
+  "exact_four_registered_root_identities_match": true,
+  "execution_authority": false,
+  "failed_request_sha256": "5be492c8c7a06af4505040d4eec3f262b6111fdcbe8e1ad6ac5e1da7d1029bd0",
+  "limitations": [
+    "Recorded native API receipt and current selected row/source/retained artifacts were independently compared; this auditor did not invoke the API or measure a new admission.",
+    "Release disposes the failed attempt promise; it does not qualify failed source replay, complete reviews or promote any model/gold/Lean corpus.",
+    "Other live reservations were not audited or altered."
+  ],
+  "method": "Independent stdlib-only stable ordinary-file/hash/JSON/AST and exact selected native ledger/state inspection. No product imports, tests, driver execution, resource admission/recovery/cleanup or attempt writes.",
+  "observed_at_utc": "2026-10-15T20:59:17.580256+00:00",
+  "preservation": {
+    "all_files_regular_unaliased": true,
+    "artifact_bytes": 9005753,
+    "artifact_count": 17,
+    "artifact_inventory_sha256": "9a44ee2963c3e703367774f43982f9d1f27f3dd82aff6b85b11f7d8578a9895a",
+    "expected_api_and_current_inventories_exact": true,
+    "failed_execution_promoted": false,
+    "new_validation_or_model_or_solver_executed": false,
+    "outputs_deleted": false
+  },
+  "private_execution": {
+    "api_invoked_recorded": true,
+    "api_returned": true,
+    "bytes": 3891,
+    "error_type": null,
+    "postconditions_verified": true,
+    "raw_private_fields_not_published": true,
+    "sha256": "0cf59ee75083f10c39883de82d7d26ee35b39dd79be9a0b507dab503be6459a8"
+  },
+  "proof_authority": false,
+  "recovery_request": {
+    "bytes": 9525,
+    "sha256": "1be97ceeb4cf87db7f80ebedd70b7aebf3826cde47b76288d983af6f0244ab98"
+  },
+  "recovery_source_bindings": 13,
+  "schema": "retained-source-correspondence-recovery-independent-audit/v1",
+  "selected_record_join": {
+    "api_receipt_equals_selected_explicit_reconciliation": true,
+    "artifacts_durable_asserted": true,
+    "attempt_identity_and_failed_request_match": true,
+    "exact_request_selected_reservation_only": true,
+    "previous_record_sha256_matches_request_and_api": true,
+    "private_identifiers_rows_pids_and_arguments_omitted": true,
+    "selected_native_lease_absent": true,
+    "status": "released",
+    "unique_selected_row": true
+  },
+  "semantic_admission_authority": false,
+  "status": "pass_recovery_preserved_failed_evidence",
+  "training_gold_authority": false
+}

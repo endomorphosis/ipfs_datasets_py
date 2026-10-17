@@ -1,0 +1,150 @@
+{
+  "adopted_head": "1cbc313236a546fbbacae38635c88fa8072b6087",
+  "adoption_provenance": {
+    "bytes": 30521,
+    "path": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015/docs/autoencoders/evidence/legal-ir-typed-semantic-integration-20261015/adoption-provenance.json",
+    "sha256": "d4f1dd890965f523e4940ef9e3133f03cef261a88aa76cfe424dbd85a28f830b"
+  },
+  "cached_origin_main_at_bounded_review": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+  "distinct_canonical_correspondence_work": {
+    "actual_statutory_typed_correspondences_created_by_that_phase": 0,
+    "author_reported_cases": 335,
+    "case_roster": [
+      99,
+      71,
+      165
+    ],
+    "fictional_alternatives": 2,
+    "fixture_package_roots": "inert namespaces over captured operation modules",
+    "mutable_untracked_sources": [
+      {
+        "bytes": 23125,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_norm_scope_correspondence_v1.py",
+        "sha256": "8cc9645ed1ec3c35d80e876f4cefe74e37c49ff72b99d563ddbb013182735422"
+      },
+      {
+        "bytes": 6381,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/legal_norm_scope_correspondence_v1.md",
+        "sha256": "3c684ba551d511dfbeee5e63d17566ccc510453b7d2536aecc833b3639278f54"
+      },
+      {
+        "bytes": 6983,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/legal_ir_source_relational_correspondence_20261015.md",
+        "sha256": "a02a5b5522799166c21df96c4f2c4ad9a19f2503d75b91548e6af0c23ab21cf4"
+      }
+    ],
+    "no_universal_absence_or_current_runtime_claim": true,
+    "normal_application_startup_qualified": false,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "reporting_HEAD": "74f5d98c8ffff3c284cffddf430091b5fc4c6f8c",
+    "scope": "Different complete bidirectional source-anchor/typed-row correspondence and syntax ancestry owner; preserved without adoption or edits.",
+    "source_bound_meaning_or_gold": false
+  },
+  "files_originals_and_foreign_worktrees_modified": false,
+  "foreign_clean_owner": {
+    "branch": "codex/legal-source-typed-join-20261015-01",
+    "observed_head": "49bf6d67f7617cecd59bcd9bb09e4602a56ec742",
+    "observed_porcelain_empty": false,
+    "original_commit_stack": [
+      "e25c119bc668fcdaa9157ef94faca5a1f882ac1f",
+      "886e578d35a487b061fabe876c27992b850dc88f",
+      "52e9007ac32980e85a38faa36a8dfb978c89a079",
+      "49bf6d67f7617cecd59bcd9bb09e4602a56ec742"
+    ],
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets",
+    "source_mutated": false
+  },
+  "method": "Read-only Git objects, scoped worktree/ref/status observations, stdlib JSON/AST/XML/hash metadata; no product imports, tests, model loads, source acquisition, native execution or ref changes.",
+  "native_A_cohort_draft": {
+    "bytes": 119345,
+    "path": "/home/barberb/lift_coding/artifacts/legal-ir-typed-semantic-integration-20261015/source-cohort-draft.json",
+    "sha256": "4c9797fffae48eaa8e844efb8dfa2879d5218c85c894bac8b88300d2a456ce57"
+  },
+  "new_adopted_owner_scope": {
+    "author_original_replays_are_generation_bound_not_current_checkout_receipts": true,
+    "join": "Two partial hypotheses for one\u00a77213paragraph and source-only pending\u00a77214; preserve allsource issues/introduced formal assumptions; no full statutorynormAST/nativeoutput/graph/governinguse.",
+    "relational": "Strict single-Object typed fragment with ordered roles, binders, modal and connective structure; generated Lean text only, nullsourcebinding.",
+    "source_scope": "Complete literal/coordinate accounting with six unresolved issues per actual norm paragraph; no complete meaning."
+  },
+  "new_owned_checkout": "/home/barberb/lift_coding/.worktrees/legal-ir-typed-semantic-integration-20261015",
+  "next_measurement_boundary": {
+    "independent_holdout": false,
+    "inference_target_access": "Withhold canonicaltargets/compiler target+loss caches andteacherforcing except explicitly namedoracle controls; retainedviewdiagnostic wascontextconditioned numerical readout, notlatent-onlysemanticbaseline.",
+    "new_training_recommended_before_reviewed_targets": false,
+    "remaining": "Independent reviewed component plus separately measured exactUTF8/normalized surface and fulltypedAST/graph outcomes; preserve arity/binders/modal scope ratherthanflatten richerAST into7strings.",
+    "reuse_existing_controls": "run_legal_decoder_pilot hasnormal/zero/rotatedlatent arms; adapt onlycompatible schema.",
+    "reuse_existing_free_running_metric": "formula_generation_metrics.compare_free_running_formulas compares closed7facetIR andcoverage, not originallegaltext."
+  },
+  "observed_at_utc": "2026-10-16T00:04:40.277287+00:00",
+  "original_owned_fixed_view_published_revision": "96338f30daf01407ebd19073cb7be818613b67ee",
+  "product_imports_or_training_or_tests_performed": 0,
+  "published_progress": {
+    "actual_Docker_GPU_Hub_execution": false,
+    "actual_association_preserves560_pending_six_occurrences36_open_slots": true,
+    "actual_reviews": 0,
+    "declared_original_primary_anchors_not_official_source_equivalence": true,
+    "primary_discovery_rows": 297825,
+    "runtime_author_reported_snapshot_fixture_cases": 90,
+    "runtime_capture_files": 11144,
+    "runtime_capture_source_bytes": 421011653,
+    "runtime_fixture_profile": "explicit_private_pytest_alias_readonly_directory_cleanup_profile/v2",
+    "runtime_ordinary_strict_profile_passed": false,
+    "runtime_protocol": "autoencoder-frozen-source-run/v2",
+    "runtime_protocol_commit": "4d231c8dd4652a15130b69677471e77c107ca74b",
+    "same_interpreter_saved_artifact_regeneration_not_fresh_interpreter": true,
+    "sampled_primary_author_cases": 173,
+    "sampled_primary_feature_commit": "413bbff93cd6057328388877156856d8a19856a1",
+    "sampled_primary_merge_commit": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+    "sampled_primary_new_cases": 88,
+    "source_graph_fixture_cases_do_not_expand_fixed_view_model_metrics": true,
+    "source_refs": [
+      {
+        "bytes": 20647,
+        "git_blob": "6a7abfcfeea7ffb35e64f4aaab94b108d693dc64",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling_primary_association_v2.py",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "535ae636de2a6e216df1a46f488e8802538a0386101b6e087d24a99b23969233"
+      },
+      {
+        "bytes": 9021,
+        "git_blob": "c801d0857e17dc1d38a301fa640f65751e80f2f6",
+        "mode": "100644",
+        "path": "docs/autoencoders/legal_sampled_primary_association_v2.md",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "d4de1ebe8a5446f3b6ef9c59a4c548152502bd7d4461456ef008473d428fab25"
+      },
+      {
+        "bytes": 50325,
+        "git_blob": "26b69cf514623ee9198253568edfba885958c614",
+        "mode": "100644",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_snapshot.py",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "0490667bf1825a2cc21b27829428bf861149789f8ad69fb9be65fc6601b628f5"
+      },
+      {
+        "bytes": 5024,
+        "git_blob": "86ec6ddd8d585371b9068a916ee07b956123575c",
+        "mode": "100644",
+        "path": "docs/autoencoders/frozen_source_runtime_protocol.md",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "c935fdc242c99dea6a7d14793869d3811dd5a12c8e2f042bdbfb8a31ee009291"
+      },
+      {
+        "bytes": 7630,
+        "git_blob": "af49c7c333e95dc6366ef1325a77d71027675c25",
+        "mode": "100644",
+        "path": "docs/implementation/reports/evidence/legal_ir_source_runtime_protocol_20261015.json",
+        "revision": "183035bb3db1a47db09771f2dfb21c183c91f24e",
+        "sha256": "698d7ad09b0ffc8e26fd47214b254224c85a9d022564a9ab5dca5d4221c0ca04"
+      }
+    ]
+  },
+  "schema": "legal-ir-typed-semantic-static-parallel-survey/v1",
+  "scope_limits": [
+    "Author test/XML counts are historical attributed observations, not fresh new-checkout qualification.",
+    "Current main/cache refs are observation-only; no remote fetch or universal branch absence claim.",
+    "Different correspondence owners are kept distinct pending reviewed compatibility; no alias or signing-domain change."
+  ],
+  "source_cap_or_resource_policy_changed": false
+}

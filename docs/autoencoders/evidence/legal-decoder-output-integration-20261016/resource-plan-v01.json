@@ -1,0 +1,34 @@
+{
+  "execution_qualified": false,
+  "lean_planned": false,
+  "native_controller": "scripts/ops/legal_ir/run_owned_validation.py",
+  "numerical": {
+    "child_process_slots": 1,
+    "controls": 3,
+    "cpu_slots": 1,
+    "first_pass_generation_sequences": 60,
+    "fresh_private_reload_replay_sequences": 60,
+    "memory_mb": 4096,
+    "new_token_caps": {
+      "legacy": 63,
+      "primary": 511
+    },
+    "output_cap_bytes": 67108864,
+    "process_cpu_time_limit_seconds": 1200,
+    "process_virtual_address_space_cap_mib": 16384,
+    "selected_source_rows": 4,
+    "storage_bytes": 268435456,
+    "timeout_seconds": 1800,
+    "variants": 5
+  },
+  "qualification": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "storage_bytes": 134217728,
+    "timeout_seconds": 1800
+  },
+  "rationale": "Retained JSON checkpoints below7MiB each, two tiny donor heads and four dual-head variants loaded one at a time; bounded four-row existing-cache replay. 4GiB sampled resident grant differs from16GiB virtual AS ceiling. Zero optimizer steps, no encoder/model download, no full930-generation rerun. Existing native policy/caps unchanged. Readonly observer supplies no admission.",
+  "schema": "legal-decoder-output-integration-resource-plan/v1",
+  "training_planned": false
+}

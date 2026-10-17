@@ -1,0 +1,281 @@
+{
+  "blocking_findings": [],
+  "draft_binding": {
+    "bytes": 38823,
+    "path": "docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md",
+    "sha256": "03998990b840488374589f684a36ef22a18d5a00906212c9ce7e5b3b6c836fbb"
+  },
+  "effects": {
+    "external_new_calls": 0,
+    "hub_uploads": 0,
+    "model_or_checkpoint_edits": 0,
+    "plan_edits": 0,
+    "provider_calls": 0,
+    "solver_calls": 0,
+    "target_runtime_imports": 0,
+    "test_edits": 0,
+    "tests_executed": 0,
+    "training_steps": 0
+  },
+  "findings": [
+    {
+      "line": 72,
+      "observation": "Draft retains at least 1,597,955 edge rows, footer groups 2\u201314 and incomplete malformed-edge census. This matches all-edge group minima/maxima and null-count evidence; no whole-cache endpoint-success claim.",
+      "severity": "pass",
+      "topic": "Endpoint lower bound"
+    },
+    {
+      "line": 71,
+      "observation": "1,960,876 is explicitly mixed records and is not treated as legal entities, distinct spans, accepted assertions or proofs. Dataset cardinality/size are corroborated by the pinned footer.",
+      "severity": "pass",
+      "topic": "Mixed entity count"
+    },
+    {
+      "line": 78,
+      "observation": "Missing offsets and effective dates are limited to sampled paired schema; source release ipfs-uscode-5016b86a is not promoted to a statutory effective date. Required source/edition/applicability/coordinate-space joins and unknown handling are explicit.",
+      "severity": "pass",
+      "topic": "Missing source version/selector fields"
+    },
+    {
+      "line": 76,
+      "observation": "Draft calls for retained originals, versioned corrected export, duplicate/missing identity and typed-endpoint reconciliation, preserved old generation and unresolved records instead of guessed label joins. Sections3/7/9 and M0/M3 provide compatible ownership/publication gates.",
+      "severity": "pass",
+      "topic": "Concrete additive endpoint repair"
+    },
+    {
+      "line": 21,
+      "observation": "20-row/96-literal-match findings, 8D paired samples, training/fresh panels and current-cache snapshot inventory have distinct denominators. Whole-cache inventory/triage is allowed while semantic/proof admission remains gated.",
+      "severity": "pass",
+      "topic": "Sampling limits"
+    },
+    {
+      "line": 80,
+      "recommendation": "Prefer: The pinned footer partitions 443,905 rows into 443,904 span-status records and one meta row; the producer meta reports 22,379 sealed, 421,525 gaps and 3,820,263 pending. Keep uniqueness/current-complete-corpus qualifications. The current paragraph is cautious but443,904 is not an explicit producer counter; it is the footer span-row count and sealed+gap sum.",
+      "severity": "minor",
+      "topic": "Attribute443,904 to footer rather than a producer counter"
+    },
+    {
+      "line": 76,
+      "recommendation": "Before any migration, freeze a minimal real original\u2192export\u2192reimport fixture with two distinct source-versioned node identities and one typed edge. Require exact endpoint namespace/identity/role/ordinal preservation, referential closure and complete counts; empty/missing/foreign endpoints must produce an explicit unresolved/refused disposition rather than an empty-string successful edge. Then test the current faulty projection and correction on a bounded pinned legacy sample before a complete indexed rebuild. Do not assume the upstream original field names or primary-graph namespace without inspecting its producer.",
+      "severity": "minor",
+      "topic": "Make first exporter regression explicit"
+    }
+  ],
+  "hub_survey_binding": {
+    "bytes": 111508,
+    "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub-cache-survey.json",
+    "sha256": "735c53c37be1a512618e7561ec8a2e8ec53b29c1a68dfe3688ef848ade64976a"
+  },
+  "method": "Independent read-only draft/evidence inspection, stdlib validation of every retained public response binding and bounded common-secret pattern scan; no external request or target/runtime module import.",
+  "privacy_and_raw_custody": {
+    "all_sizes_and_hashes_verified": true,
+    "auth_headers_or_environment_tokens_used": false,
+    "common_secret_pattern_findings": [],
+    "common_secret_patterns_checked": [
+      "hugging_face_access_token",
+      "private_key_header",
+      "authorization_bearer_value",
+      "aws_access_key_id"
+    ],
+    "http_status_counts": {
+      "200": 21,
+      "206": 2,
+      "500": 2
+    },
+    "limits": "A bounded common-secret scan is not an exhaustive secret or personal-data audit of opaque public Parquet bytes. All captured IDs, source release labels, raw paths and payloads came from unauthenticated public endpoints. The recorded source_parquet machine path is existing public dataset provenance, not a locally accessed file or private credential. Signed redirect/CDN URLs and response authentication headers were not retained.",
+    "public_https_requests_only": true,
+    "query_credentials_found": false,
+    "raw_bindings": [
+      {
+        "bytes": 1064335,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-metadata.json",
+        "sha256": "2dcddd7c0b346c262af56b38fad48d0192b3bcdcec9a154f69172db711130edc",
+        "source_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache/revision/ac68213001c649516036562ad031529c97c10b97"
+      },
+      {
+        "bytes": 1221,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-metadata.json",
+        "sha256": "dfef810e7ef721f8f5d9b3816ca1bef0243bad5e0ce0d366c6215cfe6066eb28",
+        "source_url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-entity-cache/revision/067c2a41affc6041fafb8237ae6df41bf4320008"
+      },
+      {
+        "bytes": 13863,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-README.md",
+        "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6",
+        "source_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/README.md"
+      },
+      {
+        "bytes": 581,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-README.md",
+        "sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4",
+        "source_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/resolve/067c2a41affc6041fafb8237ae6df41bf4320008/README.md"
+      },
+      {
+        "bytes": 2118,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v1-manifest.json",
+        "sha256": "c5427410ef41d3a6a40778a15b0c2e85b9f87d145840c5106e1d96b129ff9fc1",
+        "source_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/paired-v1/manifests/legacy-cuda-census/manifest-00319d67e72123f28457c42f94e4ed395b39c5476c6f3a8a33893486afcec92d.json"
+      },
+      {
+        "bytes": 2118,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v2-manifest.json",
+        "sha256": "c8264675403c17acd6d11e2fb0b521a441809eff78e2beb45fcb26d4c45c4201",
+        "source_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/paired-v2/manifests/legacy-cuda-census/manifest-02f47f41fd8c1d9bcfcf6d5f6f134b807cd19a1c8159f9662e889f0f40fe0265.json"
+      },
+      {
+        "bytes": 2674,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/formula-text-manifest.json",
+        "sha256": "1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c",
+        "source_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/formula-text/v1/1c3c60623f70fc1466fbe65bd57d0b5fca95670ea0c67c3e33c7c93784d8005c/manifest.json"
+      },
+      {
+        "bytes": 44324,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v1-sample.parquet",
+        "sha256": "dac287c0f68b667fc3204855daf82291482f95205cd48810369a449dcee0039d",
+        "source_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/paired-v1/paired_spans/legacy-cuda-census/paired_spans-1e65d0c608e6d681281f0aed671e85440ae3379f656215500aed9f43066e5c42-dac287c0f68b667fc3204855daf82291482f95205cd48810369a449dcee0039d.parquet"
+      },
+      {
+        "bytes": 49600,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v2-sample.parquet",
+        "sha256": "89752616934159101508173859375afd2c8b41fece2ed503f36f84aa7a71f70f",
+        "source_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/paired-v2/paired_spans/legacy-cuda-census/paired_spans-43ef447e6a9ddc7ad46b67a8ac25c71db77f6128ba2ee42fba298d886434a098-89752616934159101508173859375afd2c8b41fece2ed503f36f84aa7a71f70f.parquet"
+      },
+      {
+        "bytes": 11929,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/paired-v2-goals-sample.parquet",
+        "sha256": "78e8ef56ac689126db3020e1d08ed4e4a2a388f1dc603c108c8a89a642dff5f9",
+        "source_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/paired-v2/goals/legacy-cuda-census/goals-43ef447e6a9ddc7ad46b67a8ac25c71db77f6128ba2ee42fba298d886434a098-78e8ef56ac689126db3020e1d08ed4e4a2a388f1dc603c108c8a89a642dff5f9.parquet"
+      },
+      {
+        "bytes": 39897,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/original-span-evidence.parquet",
+        "sha256": "a77a00a35b09b70b5d759ee7d1bc0d515106b0a1a0aaec526512fd8fee9e13c7",
+        "source_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/span-evidence.parquet"
+      },
+      {
+        "bytes": 65536,
+        "http_status": 206,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-parquet-tail.bin",
+        "sha256": "7ee086e9a93d693919ecf7912665cc9f19430cba2b7c225595035ec2d5445b5e",
+        "source_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache/resolve/067c2a41affc6041fafb8237ae6df41bf4320008/autoformal/uscode/kg-logic-index.parquet"
+      },
+      {
+        "bytes": 65536,
+        "http_status": 206,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/resume-parquet-tail.bin",
+        "sha256": "efce96dbf4abef575ccffa6e1ce2affc335bed875686203a28732a3910b528d6",
+        "source_url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/ac68213001c649516036562ad031529c97c10b97/autoformal/uscode/resume-checkpoint.parquet"
+      },
+      {
+        "bytes": 98,
+        "http_status": 500,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-viewer-is-valid.json",
+        "sha256": "91afbb421f5cc8355184136eb309db91f2089dc0d9fe89c6115b25c88d608b33",
+        "source_url": "https://datasets-server.huggingface.co/is-valid?dataset=justicedao%2Fuscode-autoformal-span-cache"
+      },
+      {
+        "bytes": 98,
+        "http_status": 500,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/span-viewer-splits.json",
+        "sha256": "91afbb421f5cc8355184136eb309db91f2089dc0d9fe89c6115b25c88d608b33",
+        "source_url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fuscode-autoformal-span-cache"
+      },
+      {
+        "bytes": 76,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-is-valid.json",
+        "sha256": "43203b08ebe297d116d215e33cd2f232e5d8611404c2c814693d6f3379713165",
+        "source_url": "https://datasets-server.huggingface.co/is-valid?dataset=justicedao%2Fuscode-autoformal-entity-cache"
+      },
+      {
+        "bytes": 138,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-splits.json",
+        "sha256": "6a460ee4eff400c981cc0d66879cacb6716cc7d91949d261224dc35a52595c5b",
+        "source_url": "https://datasets-server.huggingface.co/splits?dataset=justicedao%2Fuscode-autoformal-entity-cache"
+      },
+      {
+        "bytes": 756,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-size.json",
+        "sha256": "0306835cdfef6a430eee2ba8213aabd9a5a1c8c295b8b713d0eedc190b4a9e98",
+        "source_url": "https://datasets-server.huggingface.co/size?dataset=justicedao%2Fuscode-autoformal-entity-cache"
+      },
+      {
+        "bytes": 355,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-parquet.json",
+        "sha256": "d3b1ab1901fc1a778bc240df98d3ee60c7281cc9ef46febf130378bfb9808723",
+        "source_url": "https://datasets-server.huggingface.co/parquet?dataset=justicedao%2Fuscode-autoformal-entity-cache"
+      },
+      {
+        "bytes": 31051,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-first-rows.json",
+        "sha256": "5f081b7189518d0f38edb98b4f2a3f45a3aef9ac807961cc097d05a9f61da53b",
+        "source_url": "https://datasets-server.huggingface.co/first-rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train"
+      },
+      {
+        "bytes": 1584,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-100000.json",
+        "sha256": "b8bb4b44e200de16726e98a8fa61cf6ebb01f4528c179114c08e76932fd347df",
+        "source_url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=100000&length=2"
+      },
+      {
+        "bytes": 1703,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-130000.json",
+        "sha256": "e593b4c015dcfcf2dc80fe01ef248a9495e2331498dd55969c1e8371a68b27b0",
+        "source_url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=130000&length=2"
+      },
+      {
+        "bytes": 1552,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-245000.json",
+        "sha256": "6c05014f76a1473e2ddfeec6ae412f5fc2a806cb9e9f344f64e7b1af0b5e6e8e",
+        "source_url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=245000&length=2"
+      },
+      {
+        "bytes": 1574,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-1000000.json",
+        "sha256": "52c1672af74fea413919666a6c74bcbc57d8d4fb2d9dcba43122ebdcecb87523",
+        "source_url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=1000000&length=2"
+      },
+      {
+        "bytes": 1550,
+        "http_status": 200,
+        "path": "docs/autoencoders/evidence/legal-ir-uscode-plan-20261015/hub/entity-viewer-rows-1960874.json",
+        "sha256": "ff401ff9667ff97f9224c8e8dd8cfc085d6dd726fa8b23bab3f2dc342afe2d49",
+        "source_url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fuscode-autoformal-entity-cache&config=autoformal_uscode&split=train&offset=1960874&length=2"
+      }
+    ],
+    "raw_files_exactly_match_binding_list": true,
+    "raw_response_binding_count": 25,
+    "raw_response_bytes": 1404267,
+    "request_hosts": [
+      "datasets-server.huggingface.co",
+      "huggingface.co"
+    ],
+    "sample_private_authority_values": {
+      "resume_meta_claim_token": "empty",
+      "resume_meta_claim_worker": "empty"
+    }
+  },
+  "review_limits": "Cache-fact and endpoint/source-lineage plan review only. This does not independently qualify numerical F-series results, model registration/reload, source acquisition, legal truth, Lean outputs or complete cache contents.",
+  "reviewed_at_utc": "2026-10-15T04:21:53+00:00",
+  "schema": "legal-ir-uscode-cache-plan-review@1",
+  "status": "pass_with_nonblocking_recommendations"
+}

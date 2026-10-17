@@ -1,0 +1,455 @@
+{
+  "authority": {
+    "evaluation_gold": false,
+    "independent_holdout": false,
+    "model_qualified": false,
+    "proof": false,
+    "retroactive_acceptance": false,
+    "semantic_admission": false,
+    "source_meaning_verified": false,
+    "teacher_promoted": false,
+    "training_gold": false
+  },
+  "bounded_source_cohort_suggestion": {
+    "current_loader_and_model_API_source_objects": {
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+        "bytes": 27947,
+        "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+      },
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paths.py": {
+        "bytes": 7149,
+        "sha256": "63a68be07b1d015f92d8d5c3888517846bdf987aa2a1db4b45aa58559fcd8e8a"
+      },
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py": {
+        "bytes": 23177,
+        "sha256": "2d63251dd3a1135acf6ad6612eb0e60b62409569f564273b5a175bdf9109ae19"
+      },
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": {
+        "bytes": 27683,
+        "sha256": "4553e2feef78f3088750f5442433e05444fa6a04cd4788e2c25a32352f4c4fdb"
+      },
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": {
+        "bytes": 19728,
+        "sha256": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b"
+      },
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py": {
+        "bytes": 6258,
+        "sha256": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87"
+      },
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+        "bytes": 1425600,
+        "sha256": "ad1a964c1b6b15592aaabe5550af331cb97721b6d362f768c148a62cfd442990"
+      }
+    },
+    "original_head_owned_request_total_source_pins": 73,
+    "original_repository_package_source_pins": 65,
+    "reuse_scope": "Use original65package source-path list as a finite starting inventory, map repository paths to actual fresh checkout and independently hash current bytes. Add current namespace direct owners, diagnostic module/profile factory, native controller and current resource owners. Old source digest90a10... and current sources are distinct generations; do not claim all8760 or complete dynamic import closure."
+  },
+  "bounds": {
+    "actual_two_recorded_expanded_bytes": 62330866,
+    "aggregate_expanded_input_budget_bytes": 134217728,
+    "checkpoint_raw_read_maximum_bytes": 16777216,
+    "first_payload_exceeds32MiB": true,
+    "native_individual_source_guard_bytes": 4194304,
+    "native_source_pin_eligible_roles": [
+      "published_observation",
+      "head_report",
+      "preparation_report",
+      "support_audit",
+      "head_owned_request",
+      "head_driver",
+      "constructor_receipt",
+      "selected_inputs",
+      "target_config",
+      "embedding_receipt",
+      "source_import_receipt",
+      "tuning06_preparation",
+      "tuning06_bundle",
+      "tuning06_source_text",
+      "tuning07_preparation",
+      "tuning07_bundle",
+      "tuning07_source_text"
+    ],
+    "native_source_pin_ineligible_roles": [
+      "parent_checkpoint",
+      "structural_checkpoint"
+    ],
+    "target_expanded_payload_maximum_bytes": 67108864,
+    "unchanged_source_guard_not_relaxed": true
+  },
+  "bundle_metadata": [
+    {
+      "compressed_bundle_bytes": 3357352,
+      "decompressed_in_this_intake": false,
+      "expanded_size_and_digest_match_independently_pinned_support_audit": true,
+      "manifest_bytes": 1229015,
+      "manifest_sha256_computed": "7fdba48eb117543e15ae562c1b8200f3d1e1032221bf9c8796bc7fd90074b544",
+      "ordinal": 6,
+      "recorded_expanded_bytes": 38424601,
+      "same_complete_original_target_configuration": true,
+      "single_record_and_shard": true
+    },
+    {
+      "compressed_bundle_bytes": 2555548,
+      "decompressed_in_this_intake": false,
+      "expanded_size_and_digest_match_independently_pinned_support_audit": true,
+      "manifest_bytes": 1229016,
+      "manifest_sha256_computed": "cbd33f9ff21959a1c25ca183827b7e4b5f5b4709d83748ee3f349498f2468a3b",
+      "ordinal": 7,
+      "recorded_expanded_bytes": 23906265,
+      "same_complete_original_target_configuration": true,
+      "single_record_and_shard": true
+    }
+  ],
+  "checkpoint_scope": {
+    "accepted_structural": {
+      "bytes": 13402647,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/head-probe-v1/exports/structural.candidate.state.json",
+      "sha256": "dadf1964dc6dbf9c89dbe360dd06908e24d299b5f80f5b6e2014967361932312"
+    },
+    "both_exceed_native4MiB_source_pin_ceiling": true,
+    "checkpoints_hashed_as_bytes_not_loaded_or_parsed": true,
+    "controller_requires_bounded_independently_descriptor_pinned_before_after_reads": true,
+    "historical_rejected_view_candidates": [
+      {
+        "accepted_epochs": 0,
+        "candidate": {
+          "bytes": 7204344,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/head-probe-v1/exports/global_view.candidate.state.json",
+          "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+        },
+        "equals_parent_file_bytes_by_hash_and_size": true,
+        "name": "global_view"
+      },
+      {
+        "accepted_epochs": 0,
+        "candidate": {
+          "bytes": 7204344,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/head-probe-v1/exports/feature_view.candidate.state.json",
+          "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+        },
+        "equals_parent_file_bytes_by_hash_and_size": true,
+        "name": "feature_view"
+      }
+    ],
+    "parent": {
+      "bytes": 7204344,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/artifacts/4f/4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8",
+      "sha256": "4fe1c0038018dec32e6a92aa76f90607039b8f86b7740a1719f15d1cb50619e8"
+    },
+    "rejections_preserved_no_retroactive_acceptance": true,
+    "reported_architecture": "proof_aware_auxiliary_heads_v2",
+    "reported_dimensions": 384
+  },
+  "descriptor": {
+    "bytes": 9050,
+    "closed_top_level_fields": [
+      "schema",
+      "inputs",
+      "tuning_rows"
+    ],
+    "filename": "retained-head-inputs.json",
+    "ordered_roles": [
+      "published_observation",
+      "head_report",
+      "preparation_report",
+      "support_audit",
+      "head_owned_request",
+      "head_driver",
+      "constructor_receipt",
+      "selected_inputs",
+      "target_config",
+      "parent_checkpoint",
+      "structural_checkpoint",
+      "embedding_receipt",
+      "source_import_receipt",
+      "tuning06_preparation",
+      "tuning06_bundle",
+      "tuning06_source_text",
+      "tuning07_preparation",
+      "tuning07_bundle",
+      "tuning07_source_text"
+    ],
+    "sha256": "3ed669866f03b34098877f6e5e94ea5b8ec3766510bb2e4d6638058a27d608b5"
+  },
+  "embedding_lineage": {
+    "archived_input_token_counts": [
+      118,
+      81
+    ],
+    "dimensions_in_each_archived_sample": 384,
+    "metadata_attribution_only_no_new_encoder_or_model_asset_verification": true,
+    "receipt": {
+      "bytes": 434558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/native-embeddings-20260925-r2/embedding-production.json",
+      "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa"
+    },
+    "recorded_context_tokens": 512,
+    "recorded_kind": "native",
+    "recorded_model_id": "thenlper/gte-small",
+    "recorded_model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "recorded_truncation": false,
+    "same_revision_both_rows": true
+  },
+  "evaluation_gold_mask": 0,
+  "independent_Git_anchor": {
+    "bytes": 14396,
+    "copy_is_not_new_historical_observation": true,
+    "exact_Git_bytes_copied_to": "published-head-observation.json",
+    "path": "docs/implementation/reports/evidence/legal_ir_head_training_probe_20261015.json",
+    "revision": "685b565f5710fecbf42b9f92b8a7131e1401f0dd",
+    "sha256": "bd3599791fd6b9238c02226630639b3b499c723b348cf4e9535af4c5ccbe73db"
+  },
+  "loading_recipe": {
+    "bundles": "with load_target_bundle(original_path,expected_sha256=original_file_pin,config=historical_config,max_bytes=16*1024**2,max_shard_bytes=64*1024**2) as bundle: targets=bundle.targets_for([same_sample],config=historical_config); verify snapshot_id/sample_count/status and fully exhaust requested target read. No compression rewrite or new target generation.",
+    "cache_priming": "Original safe path: gated_evaluate(model,two_samples,execution_mode=INFERENCE_PATH,legal_ir_bridge_names=original5,legal_ir_evaluate_provers=False,legal_ir_targets=fully_hydrated_targets,legal_ir_parallel_workers=1,use_sample_memory=False,reconstruction_objective=raw_decoder). evaluate uses supplied mappings without compiling and calls _cache_legal_ir_targets before logits.",
+    "cache_semantics": "_cache_legal_ir_targets binds sampleID+contentID and invalidates dependent feature keys. Fresh model per checkpoint; do not transplant stale state-dependent feature caches. alias_cached_legal_ir_targets applies to bounded clone aliases and is unnecessary for unchanged full samples.",
+    "measurement_scope": "Any subsequent paired official/fixed-profile measurements are new diagnostic scores on previously inspected tuning rows, not a rescore of rejected historical proposals or independent holdout qualification.",
+    "models": "Inside native gate only: ModalAutoencoderTrainingState.from_dict(json.loads(checked_original_checkpoint_bytes)); AdaptiveModalAutoencoder(state=state,**original_full_constructor), preserving feature_codec/legacyadapters None and max_codec_feature_keys0; explicitly validate compatibility against current signature/serialized state fields and384 row widths. Never overwrite parent or call training.",
+    "private_cache_alternative": "Existing _legal_ir_target_payload with fully hydrated supplied targets -> model._cache_legal_ir_targets(samples,payload[target_view_distributions_by_sample],payload[target_losses_by_sample]); preserve exact full loss/distribution maps, not an invented summary. Public evaluate is closest to historical path.",
+    "samples": "SourceSampleRecord.from_dict(selected.records[i]); build_us_code_sample(**dataclasses.asdict(record.sample)), for exact retained ordinals6/7 only. No new embeddings or source selection.",
+    "target_configuration": "TargetSnapshotConfig.from_dict(json.loads(original target-config bytes)); retain complete original provenance."
+  },
+  "method": {
+    "new_embeddings": 0,
+    "new_target_compilations": 0,
+    "original_writes": 0,
+    "product_imports": 0,
+    "scoring_runs": 0,
+    "state_JSON_parses": 0,
+    "stdlib_metadata_and_readonly_Git": true,
+    "target_decompressions": 0,
+    "training_runs": 0
+  },
+  "observed_at_utc": "2026-10-15T21:28:09.419004+00:00",
+  "original_full_constructor": {
+    "canonical_ASCII_SHA256_computed": "2fea4f249c4309924ac65ff1e3da82521a88037fbf6602aa247439704ba78214",
+    "feature_codec_is_None": true,
+    "from_receipt": {
+      "bytes": 303004,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/feature-pretraining-20260929T162033Z/native-r4/feature-training/progress/outputs/incremental-0b8ac08050ed035ac608bf61b5c55e792ba68c8434bcb54714d18a192261171c/receipt.json",
+      "sha256": "d8ac75642d8cf544cbf359bb0365a44e9ba8f6959cb99a247a51e7b0b18697a1"
+    },
+    "full_value": {
+      "compiler_quality_embedding_weight_scale": 0.5,
+      "compiler_quality_family_logit_scale": 0.0,
+      "compute_device": "python",
+      "cosine_reconstruction_weight": 0.5,
+      "decompiler_plan_embedding_weight_scale": 0.5,
+      "decompiler_plan_family_logit_scale": 0.0,
+      "decompiler_plan_legal_ir_view_logit_scale": 0.0,
+      "embedding_head_update_normalization": 1.0,
+      "family_embedding_weight_scale": 0.5,
+      "family_legal_ir_view_embedding_weight_scale": 0.5,
+      "family_logit_head_update_normalization": 0.0,
+      "family_semantic_slot_embedding_weight_scale": 0.5,
+      "family_semantic_slot_legal_ir_view_embedding_weight_scale": 0.5,
+      "family_semantic_slot_legal_ir_view_logit_scale": 0.0,
+      "feature_activity_reference": 64,
+      "feature_codec": null,
+      "feature_embedding_weight_scale": 0.5,
+      "feature_family_logit_scale": 0.0,
+      "feature_logit_clip": 24.0,
+      "initial_embedding_rotation_scale": 0.1,
+      "initial_embedding_scale": 0.02,
+      "legacy_distillation_adapters": null,
+      "legacy_embedding_adapters": null,
+      "legal_ir_view_embedding_weight_scale": 0.5,
+      "legal_ir_view_family_logit_scale": 0.0,
+      "legal_ir_view_head_update_normalization": 0.0,
+      "legal_ir_view_logit_scale": 1.0,
+      "logic_signature_embedding_weight_scale": 0.5,
+      "logic_signature_family_logit_scale": 0.0,
+      "logic_signature_legal_ir_view_logit_scale": 0.0,
+      "max_amendment_operation_features": 64,
+      "max_applicability_scope_features": 64,
+      "max_authority_jurisdiction_features": 64,
+      "max_canonical_ir_graph_features": 64,
+      "max_clause_topology_features": 64,
+      "max_codec_feature_keys": 0,
+      "max_compiler_contract_features": 64,
+      "max_compiler_latent_profile_features": 48,
+      "max_condition_consequence_features": 64,
+      "max_constraint_grounding_features": 64,
+      "max_contrastive_ir_boundary_features": 64,
+      "max_coreference_binding_features": 64,
+      "max_cycle_consistency_features": 64,
+      "max_decompiler_surface_template_features": 48,
+      "max_defeasible_priority_features": 64,
+      "max_definition_grounding_features": 64,
+      "max_discourse_flow_features": 64,
+      "max_discretion_standard_features": 64,
+      "max_enforcement_remedy_features": 64,
+      "max_entity_binding_features": 64,
+      "max_enumeration_hierarchy_features": 64,
+      "max_equivalence_prototype_features": 48,
+      "max_evidentiary_burden_features": 64,
+      "max_legal_ir_token_bigram_features": 12,
+      "max_legal_ir_token_features": 24,
+      "max_legal_ir_token_trigram_features": 8,
+      "max_legal_relation_features": 64,
+      "max_legal_semantic_frame_features": 64,
+      "max_logic_view_contract_features": 64,
+      "max_logical_connective_features": 64,
+      "max_mental_state_features": 64,
+      "max_normative_polarity_features": 48,
+      "max_objective_residual_features": 64,
+      "max_procedural_lifecycle_features": 64,
+      "max_proof_obligation_features": 64,
+      "max_provenance_alignment_features": 64,
+      "max_quantifier_scope_features": 64,
+      "max_quantitative_formula_features": 64,
+      "max_reference_dependency_features": 64,
+      "max_repair_plan_features": 64,
+      "max_round_trip_bridge_features": 64,
+      "max_semantic_slot_interactions": 64,
+      "max_status_transition_features": 64,
+      "max_temporal_validity_features": 64,
+      "max_token_bigram_features": 24,
+      "max_token_features": 48,
+      "max_token_trigram_features": 12,
+      "modal_families": [
+        "alethic",
+        "deontic",
+        "temporal",
+        "epistemic",
+        "doxastic",
+        "dynamic",
+        "conditional_normative",
+        "frame",
+        "hybrid"
+      ],
+      "predicate_argument_embedding_weight_scale": 0.5,
+      "predicate_argument_family_logit_scale": 0.0,
+      "predicate_argument_legal_ir_view_logit_scale": 0.0,
+      "proof_feedback_version_fingerprint": "",
+      "proof_head_abstention_threshold": 0.55,
+      "proof_head_logit_clip": 12.0,
+      "proof_head_max_family_contexts": 32,
+      "proof_head_max_labels": 64,
+      "round_trip_signal_embedding_weight_scale": 0.5,
+      "round_trip_signal_family_logit_scale": 0.0,
+      "round_trip_signal_legal_ir_view_logit_scale": 0.0,
+      "semantic_slot_embedding_weight_scale": 0.5,
+      "semantic_slot_family_logit_scale": 0.0,
+      "semantic_slot_interaction_weight": 0.35,
+      "semantic_slot_legal_ir_view_embedding_weight_scale": 0.5,
+      "semantic_slot_legal_ir_view_family_logit_scale": 0.0,
+      "semantic_slot_legal_ir_view_logit_scale": 0.0
+    },
+    "legacy_embedding_and_distillation_adapters_None": true,
+    "max_codec_feature_keys_is_zero": true,
+    "not_checkpoint_authentication_by_declared_context": true,
+    "preserve_every_original_scale_and_feature_limit": true
+  },
+  "original_target_configuration": {
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "evaluate_provers": false,
+    "fields": [
+      "bridge_names",
+      "code_sha256",
+      "dependency_provenance",
+      "evaluate_provers",
+      "parallel_workers",
+      "target_timeout_seconds"
+    ],
+    "file": {
+      "bytes": 1228305,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-ir-cuda-recovery-20261015/shared-targets-v8/exports/target-config.json",
+      "sha256": "946418384b5b77f8b2288b8eab5f6728cedffc378644a1b2a4e7f28b09f9bb64"
+    },
+    "must_not_call_fresh_target_snapshot_config": true,
+    "old_target_producer_generation_preserved": true,
+    "parallel_workers": 1,
+    "reason": "target_snapshot_config fingerprints all current package Python files/dependencies and intentionally invalidates old targets after even unrelated code edits; this is retained-target reuse with historical provenance, not a claim of newly compiled current-generation targets.",
+    "source_manifest_entries": 8760,
+    "target_timeout_seconds": 300.0
+  },
+  "reference_closure": {
+    "constructor_receipt_and_head_report_full_constructor_equal": true,
+    "head_and_preparation_reports_to_selected_inputs_identical": true,
+    "head_owned_request_to_exact_original_driver_source_pin_checked": true,
+    "head_report_to_parent_and_structural_candidate_specs_checked": true,
+    "original_driver_literals_bind_embedding_and_import_receipts": true,
+    "preparation_report_to_target_config_and_two_bundle_evidence_rows_checked": true,
+    "published_observation_to_all5_original_evidence_refs_checked": true,
+    "source_import_receipt_to_two_physical_source_texts_checked": true,
+    "support_audit_to_exact_two_expanded_payload_declarations_checked": true
+  },
+  "schema": "retained-legal-ir-fixed-view-asset-provenance/v1",
+  "training_mask": 0,
+  "training_quality_limits": [
+    "Only original parent versus its accepted structural child, using original two repeatedly inspected tuning rows and preserved384 embeddings/full targets.",
+    "Original global/feature view proposals remain rejected and rolledback to parent bytes. No new training, target compilation, encoder execution, model promotion or teacher qualification was performed by this intake.",
+    "Observed target supports4/6 and their six-label union do not define the schema vocabulary. Subsequent diagnostic must use the new explicitly versioned seven bridge-contract lanes including zkp, without silently treating payload-decompiler/UIUX/raw fallback namespaces as equivalent.",
+    "Conditional source/meaning/proof context and all8/384/768 family/schema/task checkpoint lanes remain separate; this is native384 feature/view diagnostic lineage only."
+  ],
+  "two_retained_tuning_rows": [
+    {
+      "bundle_role": "tuning06_bundle",
+      "expanded_target_bytes": 38424601,
+      "expanded_target_sha256": "12a7a7d0bcebc4a6b7c92d7531c3420b4149175612a509e9558a6d1bb5af35e1",
+      "ordinal": 6,
+      "partition": "repeated_tuning",
+      "physical_source_binding_json_pointer": "/physical_source_bindings/6",
+      "preparation_role": "tuning06_preparation",
+      "record_id": "sha256:53902e4e5b84cacb9c8466b50f9156210ef1d4415640ea4157757b9f758c6428",
+      "record_json_pointer": "/records/6",
+      "sample_id": "us-code-31-792-a48ea2828f3fd122",
+      "sample_payload_sha256": "6ba4fa923f60574b10e994b9cf117ffc02b71888f3366607fc7dad6422522e62",
+      "sample_payload_sha256_scope": "exact compact LegalSample.to_json; bundle carries its own tagged sample digest",
+      "source_text_role": "tuning06_source_text",
+      "target_snapshot_id": "sha256:f3ba45904b597ff8ab7b992264c4f9730b193b3396f29bd1ec85202a0da0c86d",
+      "target_view_distribution": {
+        "CEC.native": 0.22399828450999437,
+        "TDFOL.prover": 0.26715748890269075,
+        "deontic.ir": 0.36641712461411613,
+        "knowledge_graphs.neo4j_compat": 0.1424271019731987
+      },
+      "target_view_support": [
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat"
+      ]
+    },
+    {
+      "bundle_role": "tuning07_bundle",
+      "expanded_target_bytes": 23906265,
+      "expanded_target_sha256": "fa0453757ebd042a69f6bfb2f7c7b72d783a7cf4837eff8e4d3e38f9369e05b0",
+      "ordinal": 7,
+      "partition": "repeated_tuning",
+      "physical_source_binding_json_pointer": "/physical_source_bindings/7",
+      "preparation_role": "tuning07_preparation",
+      "record_id": "sha256:49369904d322be5fa72c78752163fe11c72e43bfd36d5e74d4388d94024489f7",
+      "record_json_pointer": "/records/7",
+      "sample_id": "us-code-15-1199-7fd648e43fe15dce",
+      "sample_payload_sha256": "01350020d8a601bfbdc9326a6324e7f524a39da4bfa6c775b63c405332e8cf37",
+      "sample_payload_sha256_scope": "exact compact LegalSample.to_json; bundle carries its own tagged sample digest",
+      "source_text_role": "tuning07_source_text",
+      "target_snapshot_id": "sha256:20b01819b7782d3384f630a8f77206ef59d989f263d75364c09fb7c6196f2dad",
+      "target_view_distribution": {
+        "CEC.native": 0.1753029651898129,
+        "TDFOL.prover": 0.16530296518981288,
+        "deontic.ir": 0.2472340869503466,
+        "external_provers.router": 0.12397722389235967,
+        "knowledge_graphs.neo4j_compat": 0.1114512221592836,
+        "modal.frame_logic": 0.1767315366183843
+      },
+      "target_view_support": [
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "external_provers.router",
+        "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic"
+      ]
+    }
+  ]
+}

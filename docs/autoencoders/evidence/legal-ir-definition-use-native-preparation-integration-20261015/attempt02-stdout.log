@@ -1,0 +1,206 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+cachedir: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-02/cache/pytest
+rootdir: /home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 300 items
+
+tests/unit/logic/autoformal/test_corpus_definition_use_review_v2.py .... [  1%]
+.............................................                            [ 16%]
+tests/unit/logic/autoformal/test_corpus_definition_use_v2.py ........... [ 20%]
+.................................                                        [ 31%]
+tests/unit/logic/autoformal/test_corpus_definition_review_v2.py ........ [ 33%]
+...........................................                              [ 48%]
+tests/unit/logic/autoformal/test_legal_graph_review.py ................. [ 53%]
+...............................                                          [ 64%]
+tests/unit/logic/autoformal/test_scoped_definition_resolution.py ....... [ 66%]
+...................................................................      [ 88%]
+tests/unit/logic/autoformal/test_legal_graph_dependencies.py ........... [ 92%]
+.......                                                                  [ 94%]
+tests/unit/logic/autoformal/test_corpus_imports.py .......               [ 97%]
+tests/unit/logic/autoformal/test_definition_use_v2_graph_exchange.py ... [ 98%]
+                                                                         [ 98%]
+tests/unit/logic/autoformal/test_definition_use_review_v2_graph_exchange.py . [ 98%]
+..                                                                       [ 99%]
+tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py F [ 99%]
+FF                                                                       [100%]
+
+=================================== FAILURES ===================================
+_ test_public_native_project_fresh_process_load_preserves_exact_review_and_sources[fol] _
+tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py:243: in test_public_native_project_fresh_process_load_preserves_exact_review_and_sources
+    cold_load(tmp_path, directory, prepared, data, originals, fixture)
+tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py:209: in cold_load
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 36, in <module>
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py", line 556, in load_definition_use_corpus_v2
+E         expected = prepare_definition_use_corpus_v2(assessment_raw, **validation_inputs)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py", line 409, in prepare_definition_use_corpus_v2
+E         assessment = review.validate_definition_use_review_assessment_v2(
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 665, in validate_definition_use_review_assessment_v2
+E         expected = assess_definition_use_reviews_v2(*args, **kwargs)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 585, in assess_definition_use_reviews_v2
+E         expected = build_definition_use_review_subject_v2(
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 524, in build_definition_use_review_subject_v2
+E         checked = validate_definition_use_review_evidence_v2(
+E                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 433, in validate_definition_use_review_evidence_v2
+E         expected = prepare_definition_use_review_evidence_v2(
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 342, in prepare_definition_use_review_evidence_v2
+E         component = use.validate_definition_use_candidate_v2(
+E                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py", line 800, in validate_definition_use_candidate_v2
+E         expected = prepare_definition_use_v2(request_raw, **validation_inputs)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py", line 675, in prepare_definition_use_v2
+E         registry = lookup_owner.validate_definition_lookup_registry(
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py", line 327, in validate_definition_lookup_registry
+E         expected = build_definition_lookup_registry(inputs, value["expected_population"])
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py", line 255, in build_definition_lookup_registry
+E         symbols, dependencies = _owners()
+E                                 ^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py", line 120, in _owners
+E         from ..integration.reasoning import legal_ir_symbols as symbols
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/integration/reasoning/__init__.py", line 14, in <module>
+E         from .logic_verification import LogicVerifier
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/integration/reasoning/logic_verification.py", line 59, in <module>
+E         from symai import Symbol, Expression
+E       File "/home/barberb/.local/lib/python3.12/site-packages/symai/__init__.py", line 594, in <module>
+E         _symai_config_, _symsh_config_, _symserver_config_ = _start_symai()
+E                                                              ^^^^^^^^^^^^^^
+E       File "/home/barberb/.local/lib/python3.12/site-packages/symai/__init__.py", line 43, in _start_symai
+E         config_manager._env_config_dir.mkdir(parents=True, exist_ok=True)
+E       File "/usr/lib/python3.12/pathlib.py", line 1313, in mkdir
+E         os.mkdir(self, mode)
+E     PermissionError: [Errno 13] Permission denied: '/usr/.symai'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/usr/bin/python3', '-c', "\nimport base64,hashlib,json,math,pathlib,subprocess,sys\ndef forbid....py", line 1313, in mkdir\n    os.mkdir(self, mode)\nPermissionError: [Errno 13] Permission denied: \'/usr/.symai\'\n').returncode
+_ test_public_native_project_fresh_process_load_preserves_exact_review_and_sources[tdfol] _
+tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py:243: in test_public_native_project_fresh_process_load_preserves_exact_review_and_sources
+    cold_load(tmp_path, directory, prepared, data, originals, fixture)
+tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py:209: in cold_load
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 36, in <module>
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py", line 556, in load_definition_use_corpus_v2
+E         expected = prepare_definition_use_corpus_v2(assessment_raw, **validation_inputs)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py", line 409, in prepare_definition_use_corpus_v2
+E         assessment = review.validate_definition_use_review_assessment_v2(
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 665, in validate_definition_use_review_assessment_v2
+E         expected = assess_definition_use_reviews_v2(*args, **kwargs)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 585, in assess_definition_use_reviews_v2
+E         expected = build_definition_use_review_subject_v2(
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 524, in build_definition_use_review_subject_v2
+E         checked = validate_definition_use_review_evidence_v2(
+E                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 433, in validate_definition_use_review_evidence_v2
+E         expected = prepare_definition_use_review_evidence_v2(
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 342, in prepare_definition_use_review_evidence_v2
+E         component = use.validate_definition_use_candidate_v2(
+E                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py", line 800, in validate_definition_use_candidate_v2
+E         expected = prepare_definition_use_v2(request_raw, **validation_inputs)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py", line 675, in prepare_definition_use_v2
+E         registry = lookup_owner.validate_definition_lookup_registry(
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py", line 327, in validate_definition_lookup_registry
+E         expected = build_definition_lookup_registry(inputs, value["expected_population"])
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py", line 255, in build_definition_lookup_registry
+E         symbols, dependencies = _owners()
+E                                 ^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py", line 120, in _owners
+E         from ..integration.reasoning import legal_ir_symbols as symbols
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/integration/reasoning/__init__.py", line 14, in <module>
+E         from .logic_verification import LogicVerifier
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/integration/reasoning/logic_verification.py", line 59, in <module>
+E         from symai import Symbol, Expression
+E       File "/home/barberb/.local/lib/python3.12/site-packages/symai/__init__.py", line 594, in <module>
+E         _symai_config_, _symsh_config_, _symserver_config_ = _start_symai()
+E                                                              ^^^^^^^^^^^^^^
+E       File "/home/barberb/.local/lib/python3.12/site-packages/symai/__init__.py", line 43, in _start_symai
+E         config_manager._env_config_dir.mkdir(parents=True, exist_ok=True)
+E       File "/usr/lib/python3.12/pathlib.py", line 1313, in mkdir
+E         os.mkdir(self, mode)
+E     PermissionError: [Errno 13] Permission denied: '/usr/.symai'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/usr/bin/python3', '-c', "\nimport base64,hashlib,json,math,pathlib,subprocess,sys\ndef forbid....py", line 1313, in mkdir\n    os.mkdir(self, mode)\nPermissionError: [Errno 13] Permission denied: \'/usr/.symai\'\n').returncode
+_ test_real_competing_table_invalidates_old_assessment_and_replays_blocked_project _
+tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py:317: in test_real_competing_table_invalidates_old_assessment_and_replays_blocked_project
+    cold_load(tmp_path, blocked_directory, blocked_prepared, blocked_data, originals, fixture)
+tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py:209: in cold_load
+    assert completed.returncode == 0, completed.stderr.decode(errors="replace")
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 36, in <module>
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py", line 556, in load_definition_use_corpus_v2
+E         expected = prepare_definition_use_corpus_v2(assessment_raw, **validation_inputs)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py", line 409, in prepare_definition_use_corpus_v2
+E         assessment = review.validate_definition_use_review_assessment_v2(
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 665, in validate_definition_use_review_assessment_v2
+E         expected = assess_definition_use_reviews_v2(*args, **kwargs)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 585, in assess_definition_use_reviews_v2
+E         expected = build_definition_use_review_subject_v2(
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 524, in build_definition_use_review_subject_v2
+E         checked = validate_definition_use_review_evidence_v2(
+E                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 433, in validate_definition_use_review_evidence_v2
+E         expected = prepare_definition_use_review_evidence_v2(
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py", line 342, in prepare_definition_use_review_evidence_v2
+E         component = use.validate_definition_use_candidate_v2(
+E                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py", line 800, in validate_definition_use_candidate_v2
+E         expected = prepare_definition_use_v2(request_raw, **validation_inputs)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py", line 675, in prepare_definition_use_v2
+E         registry = lookup_owner.validate_definition_lookup_registry(
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py", line 327, in validate_definition_lookup_registry
+E         expected = build_definition_lookup_registry(inputs, value["expected_population"])
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py", line 255, in build_definition_lookup_registry
+E         symbols, dependencies = _owners()
+E                                 ^^^^^^^^^
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py", line 120, in _owners
+E         from ..integration.reasoning import legal_ir_symbols as symbols
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/integration/reasoning/__init__.py", line 14, in <module>
+E         from .logic_verification import LogicVerifier
+E       File "/home/barberb/lift_coding/.worktrees/legal-ir-definition-use-native-preparation-integration-20261015/ipfs_datasets_py/logic/integration/reasoning/logic_verification.py", line 59, in <module>
+E         from symai import Symbol, Expression
+E       File "/home/barberb/.local/lib/python3.12/site-packages/symai/__init__.py", line 594, in <module>
+E         _symai_config_, _symsh_config_, _symserver_config_ = _start_symai()
+E                                                              ^^^^^^^^^^^^^^
+E       File "/home/barberb/.local/lib/python3.12/site-packages/symai/__init__.py", line 43, in _start_symai
+E         config_manager._env_config_dir.mkdir(parents=True, exist_ok=True)
+E       File "/usr/lib/python3.12/pathlib.py", line 1313, in mkdir
+E         os.mkdir(self, mode)
+E     PermissionError: [Errno 13] Permission denied: '/usr/.symai'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/usr/bin/python3', '-c', "\nimport base64,hashlib,json,math,pathlib,subprocess,sys\ndef forbid....py", line 1313, in mkdir\n    os.mkdir(self, mode)\nPermissionError: [Errno 13] Permission denied: \'/usr/.symai\'\n').returncode
+- generated xml file: /home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-definition-use-native-preparation-integration-20261015-02/logs/junit.xml -
+=========================== short test summary info ============================
+FAILED tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py::test_public_native_project_fresh_process_load_preserves_exact_review_and_sources[fol]
+FAILED tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py::test_public_native_project_fresh_process_load_preserves_exact_review_and_sources[tdfol]
+FAILED tests/unit/logic/autoformal/test_definition_use_v2_native_project_exchange.py::test_real_competing_table_invalidates_old_assessment_and_replays_blocked_project
+================== 3 failed, 297 passed in 139.01s (0:02:19) ===================

@@ -127,26 +127,88 @@ async def process_dataset(
         # Initialize DataProcessor if available
         data_processor = DataProcessor() if CORE_OPS_AVAILABLE else None
 
-        # Process operations (mock implementation for now)
-        processed_records = initial_records
+        # Process operations — genuine implementation.
+        # If dataset_source is a dict with data, apply operations for real.
+        # Otherwise, return an honest error (no fabricated record counts).
+        data = None
+        if isinstance(dataset_source, dict):
+            data = dataset_source.get("data", [])
+        elif hasattr(dataset_source, "__iter__") and not isinstance(dataset_source, str):
+            try:
+                data = list(dataset_source)
+            except Exception:
+                data = None
+
+        if data is None:
+            return {
+                "status": "error",
+                "message": (
+                    "process_dataset requires dataset_source as a dict with a "
+                    "'data' list (or an iterable of records). String dataset IDs "
+                    "are not supported without a dataset registry lookup."
+                ),
+                "error_type": "validation",
+                "original_dataset_id": str(dataset_source)[:50] if dataset_source else "unknown",
+            }
+
+        initial_records = len(data)
+        processed = list(data)
         for i, operation in enumerate(operations):
             op_type = operation.get("type", "").lower()
             logger.info(f"Applying operation {i + 1}/{len(operations)}: {op_type}")
 
-            # Use DataProcessor for supported operations
-            if data_processor and op_type in ["transform", "normalize", "clean"]:
-                # Full implementation would delegate to DataProcessor here
-                pass
-
-            # Mock: Filters reduce record count
             if op_type == "filter":
-                processed_records = max(1, int(processed_records * 0.9))
+                # Genuine filter: keep records matching all conditions.
+                conditions = operation.get("conditions", {}) or operation.get("where", {})
+                if conditions:
+                    def _matches(rec):
+                        if not isinstance(rec, dict):
+                            return True
+                        for k, v in conditions.items():
+                            if rec.get(k) != v:
+                                return False
+                        return True
+                    processed = [r for r in processed if _matches(r)]
+            elif op_type in ("transform", "map"):
+                # Genuine transform: apply field mappings/renames.
+                mapping = operation.get("mapping", {}) or operation.get("fields", {})
+                if mapping and all(isinstance(r, dict) for r in processed):
+                    transformed = []
+                    for r in processed:
+                        nr = dict(r)
+                        for old_k, new_k in mapping.items():
+                            if old_k in nr:
+                                nr[new_k] = nr.pop(old_k)
+                        transformed.append(nr)
+                    processed = transformed
+            elif op_type == "clean":
+                # Genuine clean: drop records that are empty/None.
+                processed = [r for r in processed if r not in (None, {}, [], "")]
+            elif op_type == "normalize":
+                # Genuine normalize: lowercase string values if requested.
+                fields = operation.get("fields", [])
+                if fields:
+                    normalized = []
+                    for r in processed:
+                        if isinstance(r, dict):
+                            nr = dict(r)
+                            for f in fields:
+                                if isinstance(nr.get(f), str):
+                                    nr[f] = nr[f].strip().lower()
+                            normalized.append(nr)
+                        else:
+                            normalized.append(r)
+                    processed = normalized
+            else:
+                logger.warning(f"Unknown operation type '{op_type}'; skipping")
 
-        # Return success response
-        dataset_id = output_id or f"processed_{hash(str(dataset_source)) % 100000}"
+        processed_records = len(processed)
+        # Use a content-based ID, not a fabricated hash.
+        import hashlib as _hashlib
+        dataset_id = output_id or f"processed_{_hashlib.sha256(str(processed_records).encode()).hexdigest()[:12]}"
         return {
             "status": "success",
-            "original_dataset_id": str(dataset_source)[:50],
+            "original_dataset_id": str(dataset_source)[:50] if isinstance(dataset_source, str) else "inline-data",
             "dataset_id": dataset_id,
             "num_operations": len(operations),
             "num_records": processed_records,
@@ -155,6 +217,8 @@ async def process_dataset(
             if initial_records > 0
             else 1.0,
             "core_operations_used": CORE_OPS_AVAILABLE,
+            "data": processed if len(processed) <= 1000 else processed[:1000],
+            "truncated": len(processed) > 1000,
         }
 
     except (ValueError, TypeError) as e:

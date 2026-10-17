@@ -1,0 +1,222 @@
+{
+  "schema": "legal-actual-sampled-norm-scope-examples/v1",
+  "created_at_utc": "2026-10-15T21:22:51.770220+00:00",
+  "source_commit": "886e578d35a487b061fabe876c27992b850dc88f",
+  "source_worktree": "/home/barberb/lift_coding/artifacts/legal-corpus-contracts-20261013-01/datasets",
+  "opening": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/opening.json",
+    "bytes": 5015,
+    "sha256": "b777b35a881d4da44664c22d0bd37d646ae03528cb1f605d66ccab3804852b01"
+  },
+  "prior_statutory_manifest": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/manifest.json",
+    "bytes": 76924,
+    "sha256": "3c035af7fbaebb49d6657122931068370ddf729f701c10bb7231af0e9f67f2a4"
+  },
+  "previous_closure": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/implementation-receipt.json",
+    "bytes": 28984,
+    "sha256": "91f8236b7ec9071eeb813d3316e895c67c3271c673806c36e25bca92d9affa56"
+  },
+  "driver": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/prepare_actual_norm_scope_v01.py",
+    "bytes": 13641,
+    "sha256": "97aad77477d2fa5838dbd9502dc38bad5b56bce9892c13a1a74b0870a2486801"
+  },
+  "inputs": [
+    {
+      "section": "7213",
+      "original_unit_ref": {
+        "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+      },
+      "pins": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/source.html",
+          "bytes": 4049,
+          "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/descriptor.json",
+          "bytes": 942,
+          "sha256": "eab40b8e87203484173f69dc7656d559ef0ebcefa8192fdb65fb1f5e034612c6"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/sampling-report.json",
+          "bytes": 134030,
+          "sha256": "7a0c92ddbb93469fd7d5ce4512f3dec55511791ff904e001050f9614ed1637c3"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/view-report.json",
+          "bytes": 31140,
+          "sha256": "e3359aec9b6d637b1d73e3d7b589640d6878e067424a46ff5d1011030d363c98"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/replay-inputs.json",
+          "bytes": 1326,
+          "sha256": "3a5e29ad7b2724a9214f6bd924c813ba66d3e58446136a93e40128ff21ee9e55"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/selected-evidence.json",
+          "bytes": 18215,
+          "sha256": "f7ed1753af645c19cf76fae3a940a1ccd488cae18c6cc268a4307c7c7aa71b05"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/uses/1.json",
+          "bytes": 28166,
+          "sha256": "60ad3d29b303cc26b22cf4406fb35669e2825e192808cbff5b6b3b66b8e9776d"
+        }
+      ]
+    },
+    {
+      "section": "7214",
+      "original_unit_ref": {
+        "record_cid": "baguqeera632lzwmnhvsgkmnw6ydcqxmhepnxg7nssnnq2ayxcihfgevvlbrq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+      },
+      "pins": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/source.html",
+          "bytes": 7017,
+          "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/descriptor.json",
+          "bytes": 942,
+          "sha256": "e2d91953a2fbbf3d165ccf960f16d94a8eec29a5915d1097d1a334f6fa526e77"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/sampling-report.json",
+          "bytes": 209925,
+          "sha256": "335181759ba447324c17b6249201d5395dce8f7bdfd7dd69f5cb2add7535a4b0"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/view-report.json",
+          "bytes": 48483,
+          "sha256": "59c6d6abd3b93dda95f92b44f8ecbfc30974bd1b85109f328b004cecc7fe290a"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/replay-inputs.json",
+          "bytes": 1326,
+          "sha256": "970105b184c7a1703e75c56c5b714e0c712f543d315baf2412625ab3cb80c8a8"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/selected-evidence.json",
+          "bytes": 18225,
+          "sha256": "2f7b039e2b19384d0210057580e4da61b120a64b723726825d64311840ae6e25"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/uses/2.json",
+          "bytes": 28136,
+          "sha256": "3b93101b08869826b22dd42809b3af0acf35b2ccb27eb89651095085a2ef72b2"
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "section": "7213",
+      "report": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7213/report.json",
+        "bytes": 61547,
+        "sha256": "b4b63f59873968e41873daa32bd64a09fb887c06885dd57891a5b4c0105fc7ba"
+      },
+      "full_source_characters": 193,
+      "full_source_UTF8_bytes": 193,
+      "lexical_occurrences": 4,
+      "unresolved_issues": 6,
+      "mapped_source_anchor_positions": 11,
+      "semantic_coverage": "partial",
+      "formal_norm_AST": null,
+      "lowered_IR": null,
+      "governing_USE_edge": null
+    },
+    {
+      "section": "7214",
+      "report": {
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7214/report.json",
+        "bytes": 60058,
+        "sha256": "6f3cc36cf5dd7af7b834211d9231fee4409acd10fb8bc6323e795ed24f7e59a0"
+      },
+      "full_source_characters": 163,
+      "full_source_UTF8_bytes": 163,
+      "lexical_occurrences": 4,
+      "unresolved_issues": 6,
+      "mapped_source_anchor_positions": 11,
+      "semantic_coverage": "partial",
+      "formal_norm_AST": null,
+      "lowered_IR": null,
+      "governing_USE_edge": null
+    }
+  ],
+  "files": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7213/declaration.json",
+      "bytes": 5884,
+      "sha256": "6f147887db64786e6d25c00996e8354a4de225f59e0de3cbe9fdf0d2d074f176"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7213/report.json",
+      "bytes": 61547,
+      "sha256": "b4b63f59873968e41873daa32bd64a09fb887c06885dd57891a5b4c0105fc7ba"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7213/request.json",
+      "bytes": 390,
+      "sha256": "474c9d9b0d242c436d1379c3775c8d36ab6d5d4fb472d80586b94aa7df4906fb"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7214/declaration.json",
+      "bytes": 5549,
+      "sha256": "0e717c00702ba1f975e88efa616db2cb957e829224cc402ba03762d3fb384a3b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7214/report.json",
+      "bytes": 60058,
+      "sha256": "6f3cc36cf5dd7af7b834211d9231fee4409acd10fb8bc6323e795ed24f7e59a0"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-norm-scope-20261015-01/norm-proposals-01/7214/request.json",
+      "bytes": 360,
+      "sha256": "411cb0e8b3045a30a3201e157553b6e0890b665194153d7d8755d8ecb2773ed5"
+    }
+  ],
+  "exposure": {
+    "proposal_origin": "caller_authored_lexical_scope_transport",
+    "organizer_team_exposed": true,
+    "actual_reviewer_declarations": [],
+    "blind_or_independent_holdout_claim": false,
+    "selected_gold_interpretation": null
+  },
+  "context_scope": "Original sampler context obligations remain open; separate prior 101 nominations are retained externally and not applied here. Required-unavailable refers to remaining missing context, not absence of all contextual evidence.",
+  "authority": {
+    "source_meaning_verified": false,
+    "norm_AST_created": false,
+    "lowering_authorized": false,
+    "governing_use_verified": false,
+    "graph_admitted": false,
+    "Lean_admitted": false,
+    "training_gold_qualified": false,
+    "evaluation_gold_qualified": false,
+    "human_review_performed": false,
+    "signature_created": false
+  },
+  "training_mask": 0,
+  "evaluation_gold_mask": 0,
+  "operations": {
+    "human_reviews": 0,
+    "signatures_or_keys": 0,
+    "admissions": 0,
+    "model_training_scoring": 0,
+    "native_builds_or_probes": 0,
+    "resource_scheduler_mutation": 0,
+    "source_acquisition_or_publication": 0
+  },
+  "normal_public_imports": true,
+  "package_stubs_or_test_fixture_imports": false,
+  "blocked_process_or_network_attempts": [],
+  "optional_runtime_imports": [],
+  "scope": "Two inert source-bound lexical scope proposals with unresolved semantics. This is not a compositional norm AST or a formal interpretation of either law. Full literal accounting does not establish semantic completeness or exhaustive dependency discovery."
+}

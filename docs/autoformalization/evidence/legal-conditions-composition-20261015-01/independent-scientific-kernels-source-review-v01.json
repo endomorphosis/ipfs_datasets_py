@@ -1,0 +1,209 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json": {
+      "bytes": 6172,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json",
+      "sha256": "485e24dccd7f55ef547acb54afc1e3785a46de547454c9e5a155fc4f04a359c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json": {
+      "bytes": 3321,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json",
+      "sha256": "1bf6393d2c3c177342df97856b73868652d8f23aafa1dbe47f1aca81f3382dea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-conditions-composition-invented-controls-v01.json": {
+      "bytes": 2135,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-conditions-composition-invented-controls-v01.json",
+      "sha256": "0a1360d4ffcd2c3b00eb44b2f84f3527bad138ed669d7750cd81bace58edb533"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-conditions-rank-invented-controls-v03.json": {
+      "bytes": 3158,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-conditions-rank-invented-controls-v03.json",
+      "sha256": "76deca410546f2bd0181ff213ec536b0a4758cbe7d46048e3af163a5b4d7bb36"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent_conditions_composition_kernel_v01.py": {
+      "bytes": 15324,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent_conditions_composition_kernel_v01.py",
+      "sha256": "c0f307a33a0bf68bb02528a89efd5109d0409792b4a347ac4f455ffb75198266"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent_conditions_rank_kernel_v01.py": {
+      "bytes": 15787,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent_conditions_rank_kernel_v01.py",
+      "sha256": "e699571ad874c27bf9a310746e1b72e7840d9548fb8d80cc7856fc8c4702201e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_independent_conditions_composition_kernel_v01.py": {
+      "bytes": 10479,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_independent_conditions_composition_kernel_v01.py",
+      "sha256": "f124718cb0ebd20a08d39d363dd45e37103c2152cc13b1aba94bd9fb3a2de798"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_independent_conditions_rank_kernel_v01.py": {
+      "bytes": 9621,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_independent_conditions_rank_kernel_v01.py",
+      "sha256": "f9c8344149cf9be1e77608eb980ce68dd5922f6fabf4bede316316e66ed7830e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    }
+  },
+  "checks": [
+    "Finite exactbinary32 scalarheads refusebool/nonfinite/unroundednumbers; rankstableties useindex/coordinateequality separatelyfrom1e-7guard.",
+    "Fullspanenumeration uppertriangle left<=right roundsstart+endonce tobinary32; directhigher/equal/earliercounts andboundedtop9 insertion agreewithretained rankcontract.",
+    "Unrestricted andconditionedenddomains separate; goldpairmarginalCartesian flags distinctfromactualfullspan top8;top16membership descriptiveonly.",
+    "Uniqueexactliteralalignment independentlyreconstructsUnicodeword/punctuationtokens andchar/UTF8bytecoordinates; gold/shortprefix/start constraintsfixed,notadaptiveheuristic.",
+    "Gold-vs-bestwrong/short marginsretainbinary64 andexplicitbinary32rounding;singletonwrongsetNone handled.",
+    "Compositionliteralvariantmembership exactF15baseline/F17actor+F18readout/F17actor+F17readout; allF15presence andfour otherboundaryheads copied.",
+    "Donortokenpacket geometryjoined; everyselectedhead copiedfromdeclareddonor; binary32byte comparisonsdetectsignedzero differences.",
+    "ProtectedF18actor/allpresence andF17nonmutablepresence plusallotherboundaries checked; F17exceptionspresence maydiffer butmixedalwaysF15.",
+    "SevenfieldcompleteIR includesmodality;abstentions falseforallrolesincludingemptyoptionalfields.",
+    "Per-ID sourcehash/scoresdigest/order/pairvariant joins;raw/jointgainglossIDs andpresenceTP/TN/FP/FN/exclusionIDs reconstructedindependently.",
+    "Temporalambiguity excludedfromallconfusioncells,notcountedasabsence;lawpanel_packet explicitlyrefused.",
+    "Sourcekernels containonlystdlib imports,puredefinitions,nofile/model/network/private/runtimeentrypoints.",
+    "Inventedrankcontrols coverexactties,near-guardties,binary32rounding,invalidtrianglewinner,marginal/fullpairtop8counterexamples,top16separation,Unicodeuniquealignment,coordinate/finite/overflowrefusals.",
+    "Inventedcompositioncontrols covercopylens+noaliasing,signedzero,protectedactor/presence mutations,donor/geometry/boolexactness,128cap,abstention,modality,malformedIR,ID/hash/pairjoins,gainlossIDs,presenceexclusion,lawrefusal."
+  ],
+  "design": {
+    "bytes": 6172,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-design-v01.json",
+    "sha256": "485e24dccd7f55ef547acb54afc1e3785a46de547454c9e5a155fc4f04a359c5"
+  },
+  "execution_contract": {
+    "bytes": 3321,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/diagnostic-execution-contract-v01.json",
+    "sha256": "1bf6393d2c3c177342df97856b73868652d8f23aafa1dbe47f1aca81f3382dea"
+  },
+  "findings": [],
+  "limits": {
+    "Git_mutations": 0,
+    "SDK_network_calls": 0,
+    "actual_original_summaries_captures_references_teacher_checkpoints_opened": 0,
+    "kernel_or_helper_mains_executed": 0,
+    "new_scientific_arithmetic_control_execution": false,
+    "numeric_production_imports": 0
+  },
+  "passed": true,
+  "prior_invented_controls": {
+    "composition": {
+      "bytes": 2135,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-conditions-composition-invented-controls-v01.json",
+      "sha256": "0a1360d4ffcd2c3b00eb44b2f84f3527bad138ed669d7750cd81bace58edb533"
+    },
+    "composition_methods": 13,
+    "composition_subtests": 19,
+    "independent_wholesale_replay_performed_here": false,
+    "rank": {
+      "bytes": 3158,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent-conditions-rank-invented-controls-v03.json",
+      "sha256": "76deca410546f2bd0181ff213ec536b0a4758cbe7d46048e3af163a5b4d7bb36"
+    },
+    "rank_methods": 17,
+    "rank_subtests": 44,
+    "reason": "No finding requires repeating alreadyrootexecuted auditedinventedsuites; exactsource/test/controlpinjoins checked andtestmeaningfulness read."
+  },
+  "required_final_adapter_conditions": [
+    "Enforce128tokenlimitbefore rankkernels whosegeneralMAX_TOKENS=256; composition.validate_packetalreadyenforces128.",
+    "Authenticateallthreecustodychains thenactualsummary/capture/reference rawpins/schemas/source-token-order andfullnativegreedy/jointreplay; arithmeticpacket alone doesnotvalidatenativeownerbehavior.",
+    "Rankfullspan/coordinate kernels areindependent, but actualjointdecoder remainsretainedsharedASTunlessanotherimplementationisindependentlyqualified; disclosethislimit.",
+    "No file/network/private/FD/process/mutationauthoritycomesfromkernels; separatefrozenfiniteIOadaptersourcegate androottriggerrequired.",
+    "Score_rows/field_matches/presence_recount assumespreviouscallerstrictpacket/canonical/sourcevalidation; do notpresentkernel_rule asfullCID/codec/semanticqualification.",
+    "Savedoutputcomposition doesnotprovehiddenfeature equality or validcomposedcheckpoint; no tensorsorweightsexecuted, legal/Lake/active-latent/defaultclaims remainfalse."
+  ],
+  "reviewer": "/root/runtime_protocol_n9",
+  "schema": "conditions-composition-independent-scientific-kernels-source-review/v1",
+  "source_only": true,
+  "source_qualification_for_actual_counter_adapter": false,
+  "sources": {
+    "composition": {
+      "bytes": 15324,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent_conditions_composition_kernel_v01.py",
+      "sha256": "c0f307a33a0bf68bb02528a89efd5109d0409792b4a347ac4f455ffb75198266"
+    },
+    "rank": {
+      "bytes": 15787,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/independent_conditions_rank_kernel_v01.py",
+      "sha256": "e699571ad874c27bf9a310746e1b72e7840d9548fb8d80cc7856fc8c4702201e"
+    }
+  },
+  "static_source_proof": {
+    "composition": {
+      "file_IO_or_model_entrypoints": false,
+      "function_AST_sha256": {
+        "_f32": "31e09fb08c21c7d2db5e4fa33e16243a4ec1a11bdb279f3e483649f1b9f42aa7",
+        "_rule": "9ca3480806fb129496cd6cd5c8540e09552c6a97f34635951bf44450ba31f33b",
+        "_same_heads": "95e0d2b670fb11fbc949ed833b4cb69d8ae5feb7b101cc689140dd158148b45b",
+        "_vector_bytes": "9c80255334c729a569c39c2981d940f57527797b2040dd6e06bf0bd12e5bd6ee",
+        "canonical": "d5d91b2845e7078a13f34fc67a6ff72d53f58743c48c7237a7c05cd14d806c2c",
+        "compare_scored": "5d2b3b427df375b07e0fd10d8394865ff434b17d0c52194ed9b253e1edac0ab8",
+        "copy_saved_heads": "b3f2691fe56caf622af91bf6ada5ec458a5e054b6fd2ff3dd3707c60041abfff",
+        "digest": "b36e994c4f1228c8a6eb83a65b27199e3fb6c4351cc38d285a73145071769945",
+        "field_matches": "587ad76e9d87fa862b91bf920e7a7ce7ab1b55ac9ae33b44b9a548891b4a4c58",
+        "panel_packet": "ff53251eea264fc5dbce9b968eedc762076eaa63f3803bdda26157432a7e27bb",
+        "presence_recount": "5c1e12d3df37cb0f6aafb3b15575f986182d273cac3b11bfe4a060de2ca46665",
+        "protected_packet": "3032dc6790a4f39a2142e5b874a787ae13bab37cfaf6908673f63b1c2c8239d4",
+        "require": "fc9c460a88e379e9e6c574508a783d50244a1f835febf1f7e228fd1efc323777",
+        "score_rows": "65b912d17ef8fa50ce2e513c7c8c56aaacf129686c2f2bb9835de47894dc1cac",
+        "validate_packet": "a4ddd6c7b55364e11a92e5150bb3bb733b9192ec77b9e67c41a7b0e25722d6fc"
+      },
+      "function_count": 15,
+      "import_roots": [
+        "__future__",
+        "copy",
+        "hashlib",
+        "json",
+        "math",
+        "struct"
+      ],
+      "production_or_primary_imports": false
+    },
+    "rank": {
+      "file_IO_or_model_entrypoints": false,
+      "function_AST_sha256": {
+        "_all_spans": "ff56410eff28e9de69d3fb2f094ac79a09c4be38afc8f1d532766f587ae26d08",
+        "_bounded_order": "3c18843d529555f24501feb29bcb6b7f4d59699815f741b7e4560eb7586f82a9",
+        "_coordinate": "e9a321e5a389c211b32f1462ebed928c7baf314761d7d760f2c8415bdca5a1b3",
+        "_differences": "977eb6ec3503373fabc713ffd78b3d5a7426ac1506f2e545e1ae2e81dbeac297",
+        "_rank_summary": "4e149a6d191f8f847a4e69c91a516ef068cd1456612f7e2bb8f2209eec19f042",
+        "aligned_span": "f7be5cbd36800b2360fbed39bb136a7f46aa91d71910169c305cab41b8f941d7",
+        "binary32": "75f9569ad7b668a64ac8ae14abffc7e728aa9954430d97273e4e07faa1695947",
+        "boundary_packet": "ffb207750b4cea584169dcfcbc59f0a24c47d4ed91f273d7db43d3c020e1e58a",
+        "boundary_rank": "8fc37462cc2502833f8987f13f7268c880429392ef36cefa36b9dc1770562aa6",
+        "conditions_diagnostic": "fa8cd87ad9ef46376111316bc1278b7ed63a2b0050892158131a502ac617097f",
+        "full_span_packet": "1bcc4f5652fa5e70a0131452a5bf0145a621c6ca6bd371316d7a4fe71b8af7b3",
+        "heads": "67e45e34ec4a710254415b0f1f2646106fb868a4ab54d4efb4ee798e9eaaf12b",
+        "primary_rank_fields": "b0a661597bfd1a645d4af269fde84f2508d9741f1206ff6c557bad65354af807",
+        "require": "fc9c460a88e379e9e6c574508a783d50244a1f835febf1f7e228fd1efc323777",
+        "span_rank": "8130514bb15bf5e19e80e3534156e7299d1b9671228edc58372e4e5408163574"
+      },
+      "function_count": 15,
+      "import_roots": [
+        "__future__",
+        "math",
+        "re",
+        "struct"
+      ],
+      "production_or_primary_imports": false
+    }
+  },
+  "tests": {
+    "composition_tests": {
+      "bytes": 10479,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_independent_conditions_composition_kernel_v01.py",
+      "sha256": "f124718cb0ebd20a08d39d363dd45e37103c2152cc13b1aba94bd9fb3a2de798"
+    },
+    "rank_tests": {
+      "bytes": 9621,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/test_independent_conditions_rank_kernel_v01.py",
+      "sha256": "f9c8344149cf9be1e77608eb980ce68dd5922f6fabf4bede316316e66ed7830e"
+    }
+  }
+}

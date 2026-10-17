@@ -1,0 +1,180 @@
+"""Invented scalar controls; no retained source, score, target, or model files."""
+from __future__ import annotations
+
+import importlib.util
+from pathlib import Path
+import re
+import struct
+import unittest
+
+_PATH = Path(__file__).with_name("independent_conditions_rank_kernel_v01.py")
+_SPEC = importlib.util.spec_from_file_location("f19_independent_rank_control_kernel", _PATH)
+kernel = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(kernel)
+
+
+def tokenized(source):
+    return [{"text": match.group(), "start": match.start(), "end": match.end()}
+            for match in re.finditer(r"\w+|[^\w\s]", source, re.UNICODE)]
+
+
+def rounded(value):
+    return struct.unpack("!f", struct.pack("!f", value))[0]
+
+
+class InventedRankControls(unittest.TestCase):
+    def test_exact_saved_float_inputs_only(self):
+        rejected = [[], [0], [False], [True], [0.1], [float("nan")],
+                    [float("inf")], [-float("inf")], [0.0] * 257, (0.0,)]
+        for value in rejected:
+            with self.subTest(value_type=type(value).__name__, length=len(value)):
+                with self.assertRaises(ValueError):
+                    kernel.heads(value)
+        self.assertEqual(kernel.heads([0.0, -0.0, rounded(0.1)]), [0.0, -0.0, rounded(0.1)])
+
+    def test_scalar_rejects_bool_nonfinite_and_overflow(self):
+        for value in [False, True, "1", float("nan"), float("inf"), 1e100]:
+            with self.subTest(type=type(value).__name__):
+                with self.assertRaises(ValueError):
+                    kernel.binary32(value)
+
+    def test_boundary_rank_counts_exact_ties_by_coordinate(self):
+        actual = kernel.boundary_rank([2.0, 4.0, 2.0, 2.0], 2)
+        self.assertEqual(actual["ordinal_rank_1based"], 3)
+        self.assertEqual(actual["strictly_higher_count"], 1)
+        self.assertEqual(actual["equal_score_count_including_self"], 3)
+        self.assertEqual(actual["equal_score_earlier_coordinate_count"], 1)
+        self.assertEqual(actual["top8_token_indices"], [1, 0, 2, 3])
+
+    def test_guard_ties_are_separate_from_exact_rank_ties(self):
+        tiny = rounded(5e-8)
+        actual = kernel.boundary_packet([0.0, tiny], 0, 1)
+        self.assertEqual(actual["stable_rank"], 2)
+        self.assertEqual(actual["exact_ties_including_gold"], 1)
+        self.assertEqual(actual["guard_ties_including_gold"], 2)
+        self.assertEqual(actual["gold_minus_best_wrong_binary64"], -tiny)
+        self.assertEqual(actual["gold_minus_short_f32"], -tiny)
+
+    def test_conditional_end_domain_excludes_invalid_earlier_ends(self):
+        actual = kernel.boundary_packet([1.0] * 9 + [0.0], 9, 9, lower=9)
+        self.assertEqual(actual["stable_rank"], 1)
+        self.assertEqual(actual["domain_indices"], [9])
+        self.assertEqual(actual["gold_minus_best_wrong_binary64"], None)
+        self.assertEqual(actual["gold_minus_best_wrong_f32"], None)
+        self.assertEqual(kernel.boundary_rank([1.0] * 9 + [0.0], 9)["ordinal_rank_1based"], 10)
+
+    def test_invalid_coordinate_types_and_domains_are_rejected(self):
+        for args in [([0.0], True), ([0.0], -1), ([0.0], 1)]:
+            with self.subTest(args=args):
+                with self.assertRaises(ValueError):
+                    kernel.boundary_rank(*args)
+        with self.assertRaises(ValueError):
+            kernel.boundary_rank([0.0, 1.0], 0, lower=1)
+        with self.assertRaises(ValueError):
+            kernel.span_rank([0.0, 1.0], [0.0, 1.0], 1, 0)
+        with self.assertRaises(ValueError):
+            kernel.span_rank([0.0], [0.0, 1.0], 0, 0)
+
+    def test_upper_triangle_omits_invalid_highest_cartesian_pair(self):
+        actual = kernel.span_rank([0.0, 100.0], [100.0, 0.0], 1, 1)
+        self.assertEqual(actual["candidate_count"], 3)
+        self.assertEqual(actual["ordinal_rank_1based"], 2)
+        self.assertEqual(actual["score_float32"], 100.0)
+        self.assertEqual([(x["token_start"], x["token_end_inclusive"]) for x in actual["top8_spans"]],
+                         [(0, 0), (1, 1), (0, 1)])
+
+    def test_pair_sum_rounding_creates_a_real_binary32_tie(self):
+        actual = kernel.span_rank([16777216.0, 16777216.0], [0.0, 1.0], 0, 1)
+        self.assertEqual(actual["score_float32"], 16777216.0)
+        self.assertEqual(actual["ordinal_rank_1based"], 2)
+        self.assertEqual(actual["equal_score_count_including_self"], 3)
+        self.assertEqual(actual["best_span_margin_float32"], 0.0)
+        self.assertTrue(actual["greedy_span_ambiguous_within_guard"])
+
+    def test_binary64_and_binary32_differences_are_both_preserved(self):
+        actual = kernel.boundary_packet([16777216.0, -1.0], 0, 1)
+        self.assertEqual(actual["gold_minus_short_binary64"], 16777217.0)
+        self.assertEqual(actual["gold_minus_short_f32"], 16777216.0)
+
+    def test_stable_full_span_top8_can_reject_marginal_top8_pair(self):
+        starts, ends = [0.0] * 10, [0.0] * 10
+        self.assertTrue(kernel.boundary_rank(starts, 1)["retained_by_stable_top8"])
+        self.assertTrue(kernel.boundary_rank(ends, 7)["retained_by_stable_top8"])
+        actual = kernel.span_rank(starts, ends, 1, 7)
+        self.assertEqual(actual["ordinal_rank_1based"], 17)
+        self.assertFalse(actual["retained_by_stable_top8"])
+        self.assertEqual(actual["top8_boundary_margin_float32"], 0.0)
+        self.assertTrue(actual["top8_boundary_tied_within_guard"])
+
+    def test_full_span_top8_can_retain_end_outside_unrestricted_top8(self):
+        starts, ends = [-100.0] * 9 + [10.0], [1.0] * 9 + [0.0]
+        self.assertFalse(kernel.boundary_rank(ends, 9)["retained_by_stable_top8"])
+        actual = kernel.span_rank(starts, ends, 9, 9)
+        self.assertEqual(actual["ordinal_rank_1based"], 1)
+        self.assertTrue(actual["retained_by_stable_top8"])
+
+    def test_top16_and_top8_flags_are_not_interchangeable(self):
+        actual = kernel.full_span_packet([0.0] * 4, [0.0] * 4, 2, 3, 2)
+        self.assertEqual(actual["stable_rank"], 9)
+        self.assertFalse(actual["in_fullspan_top8"])
+        self.assertTrue(actual["in_fullspan_top16"])
+        self.assertEqual(actual["domain_count"], 10)
+
+    def test_counter_matches_separate_sort_oracle_on_invented_tables(self):
+        tables = [([0.0], [0.0]), ([1.0, -1.0], [2.0, 0.0]),
+                  ([2.0, 2.0, -4.0], [-1.0, 3.0, 3.0]),
+                  ([16777216.0, 0.0, -2.0], [0.0, 1.0, -1.0]),
+                  ([rounded(5e-8), 0.0, 0.0], [0.0, 0.0, 0.0])]
+        for starts, ends in tables:
+            pairs = [(rounded(starts[left] + ends[right]), left, right)
+                     for left in range(len(starts)) for right in range(left, len(ends))]
+            ordered = sorted(pairs, key=lambda item: (-item[0], item[1], item[2]))
+            for expected_rank, (_, left, right) in enumerate(ordered, 1):
+                with self.subTest(size=len(starts), left=left, right=right):
+                    actual = kernel.span_rank(starts, ends, left, right)
+                    self.assertEqual(actual["ordinal_rank_1based"], expected_rank)
+                    self.assertEqual([(x["score_float32"], x["token_start"], x["token_end_inclusive"])
+                                      for x in actual["top8_spans"]], ordered[:8])
+
+    def test_unique_unicode_literal_alignment_preserves_character_and_byte_offsets(self):
+        source = "§ prefix the “azure7 application” was received suffix"
+        atom = "the “azure7 application” was received"
+        actual = kernel.aligned_span(source, tokenized(source), atom)
+        self.assertEqual(source[actual["char_start"]:actual["char_end"]], atom)
+        self.assertEqual(actual["utf8_byte_start"], actual["char_start"] + 1)
+        self.assertEqual(source.encode("utf-8")[actual["utf8_byte_start"]:actual["utf8_byte_end"]].decode(), atom)
+
+    def test_duplicate_misaligned_and_mutated_token_atoms_are_rejected(self):
+        cases = [("a b ; a b", "a b"), ("azure7", "azure"), ("a b", "missing")]
+        for source, atom in cases:
+            with self.subTest(source=source, atom=atom):
+                with self.assertRaises(ValueError):
+                    kernel.aligned_span(source, tokenized(source), atom)
+        tokens = tokenized("a b")
+        tokens[0]["start"] = False
+        with self.assertRaises(ValueError):
+            kernel.aligned_span("a b", tokens, "a")
+        with self.assertRaises(ValueError):
+            kernel.aligned_span("a b", tokenized("a b")[:-1], "a")
+
+    def test_packet_rebuild_uses_fixed_literal_prefix_and_expected_domains(self):
+        source = "§ the “azure7 application” was received"
+        tokens = tokenized(source)
+        gold, short = "the “azure7 application” was received", "the “azure7 application"
+        starts, ends = [0.0] * len(tokens), [0.0] * len(tokens)
+        actual = kernel.primary_rank_fields(source, tokens, gold, short, starts, ends)
+        self.assertEqual(actual["gold"], {"start": 1, "end": 7})
+        self.assertEqual(actual["short_competitor"], {"start": 1, "end": 4, "text": short})
+        self.assertEqual(actual["end_conditioned_gold_start"]["domain_indices"], list(range(1, 8)))
+        self.assertEqual(actual["start_unrestricted"]["gold_minus_short_binary64"], 0.0)
+        with self.assertRaises(ValueError):
+            kernel.primary_rank_fields(source, tokens, gold, "application", starts, ends)
+
+    def test_pair_score_overflow_is_rejected_instead_of_ranked(self):
+        maximum = rounded(3.4028234663852886e38)
+        with self.assertRaises(ValueError):
+            kernel.span_rank([maximum], [maximum], 0, 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
