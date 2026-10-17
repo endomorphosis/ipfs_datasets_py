@@ -69,19 +69,28 @@ class IPFSPinner:
 
             # Handle different input types
             if isinstance(content_source, dict):
-                # Data dictionary provided - create a mock pin response
-                data_size = len(json.dumps(content_source))
-                mock_cid = f"Qm{hash(str(content_source)) % 1000000000:09d}"
-
-                return {
-                    "status": "success",
-                    "cid": mock_cid,
-                    "content_type": "data",
-                    "size": data_size,
-                    "hash_algo": hash_algo,
-                    "recursive": recursive,
-                    "wrap_with_directory": wrap_with_directory,
-                }
+                # Data dictionary: write to a temp file and pin it genuinely.
+                # Never fabricate a CID.
+                import tempfile
+                data_str = json.dumps(content_source)
+                data_size = len(data_str)
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tf:
+                    tf.write(data_str)
+                    temp_path = tf.name
+                try:
+                    if self.integration_mode == "direct":
+                        return await self._pin_direct(
+                            temp_path, recursive, wrap_with_directory, hash_algo
+                        )
+                    else:
+                        return await self._pin_via_mcp(
+                            temp_path, recursive, wrap_with_directory, hash_algo
+                        )
+                finally:
+                    try:
+                        os.unlink(temp_path)
+                    except OSError:
+                        pass
 
             content_path = str(content_source)
 
@@ -135,15 +144,22 @@ class IPFSPinner:
             elif hasattr(ipfs_kit_py, "pin_add"):
                 result = ipfs_kit_py.pin_add(content_path)
             else:
-                # Fallback to mock response if methods not available
-                result = {
-                    "Hash": f"Qm{hash(content_path) % 1000000000:09d}",
-                    "Size": os.path.getsize(content_path),
-                }
+                # No pinning method available in ipfs_kit_py: honest error,
+                # never fabricate a CID.
+                raise RuntimeError(
+                    "ipfs_kit_py has no add/pin_add method available; "
+                    "cannot pin content without an IPFS backend"
+                )
 
+            cid = result.get("Hash")
+            if not cid:
+                raise RuntimeError(
+                    "ipfs_kit_py pin operation returned no CID; "
+                    "pin may have failed silently"
+                )
             return {
                 "status": "success",
-                "cid": result.get("Hash", f"Qm{hash(content_path) % 1000000000:09d}"),
+                "cid": cid,
                 "content_type": "file",
                 "size": result.get("Size", os.path.getsize(content_path)),
                 "hash_algo": hash_algo,
@@ -151,16 +167,12 @@ class IPFSPinner:
                 "wrap_with_directory": wrap_with_directory,
             }
         except Exception as e:
-            self.logger.warning(f"IPFS kit error: {e}, using mock response")
-            # Return mock response on error
+            self.logger.error(f"IPFS pin failed: {e}")
+            # Honest error — never fabricate a CID on failure.
             return {
-                "status": "success",
-                "cid": f"Qm{hash(content_path) % 1000000000:09d}",
-                "content_type": "file",
-                "size": os.path.getsize(content_path),
-                "hash_algo": hash_algo,
-                "recursive": recursive,
-                "wrap_with_directory": wrap_with_directory,
+                "status": "error",
+                "message": f"IPFS pin failed: {e}",
+                "content_path": content_path,
             }
 
     async def _pin_via_mcp(

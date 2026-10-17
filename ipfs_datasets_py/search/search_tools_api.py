@@ -20,7 +20,9 @@ async def semantic_search_from_parameters(
 ) -> Dict[str, Any]:
     """Perform semantic search.
 
-    If a compatible vector_service is provided, uses it; otherwise returns mock results.
+    If a compatible vector_service is provided, uses it; otherwise delegates
+    to the real vector-store manager's search_vector_index. Raises an honest
+    error if no index exists for the collection instead of fabricating results.
     """
     if vector_service:
         samples = [query]
@@ -29,17 +31,28 @@ async def semantic_search_from_parameters(
             results: List[Dict[str, Any]] = search_results[:top_k]
         else:
             results = []
-    else:
-        results = [
-            {
-                "id": f"doc_{i}",
-                "text": f"Mock result {i} for query: {query}",
-                "score": 0.9 - (i * 0.1),
-                "metadata": {"model": model, "collection": collection},
-            }
-            for i in range(min(top_k, 3))
-        ]
-
+        return {
+            "query": query,
+            "model": model,
+            "top_k": top_k,
+            "collection": collection,
+            "results": results,
+            "total_found": len(results),
+        }
+    # No vector_service: use the genuine vector-store search. This embeds the
+    # query with the real model and searches the FAISS index. If the collection
+    # has no index, search_vector_index raises an honest error.
+    from ipfs_datasets_py.mcp_server.tools.vector_tools.vector_store_management import (
+        search_vector_index,
+    )
+    result = await search_vector_index(
+        index_name=collection,
+        query=query,
+        top_k=top_k,
+        filters=filters or {},
+    )
+    # Normalize to the semantic_search response shape.
+    results = result.get("results", [])
     return {
         "query": query,
         "model": model,
