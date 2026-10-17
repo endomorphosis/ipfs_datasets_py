@@ -100,7 +100,9 @@ def _artifact_list(value):
               and type(row["sha256"]) is str and re.fullmatch("[0-9a-f]{64}", row["sha256"]),
               "external recovery artifact row is invalid")
         paths.append(row["path"])
-    _need(paths == sorted(set(paths)), "external recovery artifact paths repeat or are unsorted")
+    # Match the unchanged durable producer's component-wise Path ordering.
+    # Validate the supplied inventory verbatim; never reorder its evidence.
+    _need(paths == sorted(set(paths), key=Path), "external recovery artifact paths repeat or are unsorted")
     return value
 
 

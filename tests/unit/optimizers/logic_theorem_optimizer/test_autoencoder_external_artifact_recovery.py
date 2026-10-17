@@ -98,6 +98,63 @@ def test_release_keeps_outputs_charge_history_and_other_records_with_actual_read
     assert report["outputs_deleted"] is report["admitted"] is report["cap_changed"] is False
 
 
+def _nested_path_order_fixture(fixture):
+    """Real private producer evidence with differing Path and string order."""
+    _, _, args, attempt, external = fixture
+    for tree in (attempt, external):
+        nested = tree / "native" / "grok"
+        nested.mkdir(parents=True)
+        (nested / "report.json").write_bytes(b'{"private":true}')
+        (tree / "native-parse-refusal-predicate-fixtures.json").write_bytes(b'[]')
+    args["expected_artifacts"] = old._durable_inventory(attempt)
+    args["external_evidence"]["expected_artifacts"] = old._durable_inventory(external)
+    for artifacts in (args["expected_artifacts"], args["external_evidence"]["expected_artifacts"]):
+        paths = [row["path"] for row in artifacts]
+        assert paths.index("native/grok/report.json") < paths.index("native-parse-refusal-predicate-fixtures.json")
+        assert paths != sorted(paths)
+    return fixture
+
+
+def test_real_nested_durable_producer_order_releases_only_selected_private_claim(fixture):
+    helper, ledger, args, attempt, external = _nested_path_order_fixture(fixture)
+    expected_attempt = deepcopy(args["expected_artifacts"])
+    expected_external = deepcopy(args["external_evidence"]["expected_artifacts"])
+    report = api.reconcile_retained_external_reservation(helper.ledger_path,
+        **args, capacity_policy="administrative_closeout")
+    actual = helper._read()
+    selected = actual["reservations"]["inert-selected"]
+    assert selected["status"] == "released" and selected["external_charges"] == {"inert-external": 128}
+    assert actual["reservations"]["inert-other"] == ledger["reservations"]["inert-other"]
+    assert report["artifacts"] == args["expected_artifacts"] == expected_attempt
+    assert report["external_artifacts"] == args["external_evidence"]["expected_artifacts"] == expected_external
+    assert old._durable_inventory(attempt) == expected_attempt
+    assert old._durable_inventory(external) == expected_external
+    assert report["final_nonpersisted_census_verified"] is True
+    assert report["full_claim_accounting"]["outstanding_full_reservations_bytes"] \
+        - report["final_nonpersisted_accounting"]["outstanding_full_reservations_bytes"] == 4096
+    assert report["admitted"] is report["outputs_deleted"] is report["cap_changed"] is False
+
+
+def test_reverse_shuffled_and_string_sorted_nested_evidence_refuse_without_private_ledger_write(fixture):
+    helper, _, args, *_ = _nested_path_order_fixture(fixture)
+    before = helper.ledger_path.read_bytes()
+    for which in ("attempt", "external"):
+        original = args["expected_artifacts"] if which == "attempt" else args["external_evidence"]["expected_artifacts"]
+        variants = (list(reversed(original)), original[1:] + original[:1],
+                    sorted(original, key=lambda row: row["path"]))
+        for artifacts in variants:
+            assert artifacts != original
+            changed = deepcopy(args)
+            if which == "attempt":
+                changed["expected_artifacts"] = artifacts
+            else:
+                changed["external_evidence"]["expected_artifacts"] = artifacts
+            with pytest.raises(r.DaemonResourceError, match="artifact paths repeat or are unsorted"):
+                api.reconcile_retained_external_reservation(helper.ledger_path,
+                    **changed, capacity_policy="administrative_closeout")
+            assert helper.ledger_path.read_bytes() == before
+
+
 def test_legacy_api_still_refuses_external_charges(fixture):
     helper, _, args, *_ = fixture
     before = helper.ledger_path.read_bytes()
