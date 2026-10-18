@@ -18,6 +18,7 @@ PID for the original owner.
 
 from __future__ import annotations
 
+import contextvars
 import json
 import math
 import marshal
@@ -256,6 +257,113 @@ class LeaseTimeoutError(ResourceSchedulerError, TimeoutError):
         # These are the inputs used by the actual terminal timeout branch.
         # They do not identify an exclusive blocking predicate or cause.
         self.timeout_decision = deepcopy(timeout_decision)
+
+
+class ResourceAdmissionDeadlineError(LeaseTimeoutError):
+    """An explicit absolute operation deadline expired; never a grant."""
+
+
+@dataclass(frozen=True)
+class ResourceOperationDeadline:
+    """Clock metadata only; no lease, bootstrap or resource authority."""
+    work_deadline_monotonic: float
+    native_deadline_monotonic: float
+    cleanup_only: bool = False
+
+
+_RESOURCE_OPERATION_DEADLINE = contextvars.ContextVar("resource_operation_deadline", default=None)
+
+
+def resource_operation_deadline():
+    """Return the current thread/context's explicit immutable clock metadata."""
+    return _RESOURCE_OPERATION_DEADLINE.get()
+
+
+def _operation_clock(deadline):
+    return deadline.native_deadline_monotonic if deadline.cleanup_only else deadline.work_deadline_monotonic
+
+
+def _validate_deadline_number(value):
+    if type(value) not in (int, float) or not math.isfinite(value):
+        raise ResourceConfigurationError("resource operation deadline must be finite")
+    return float(value)
+
+
+@contextmanager
+def resource_admission_deadline(*, work_deadline_monotonic, native_deadline_monotonic):
+    """Opt-in absolute productive clock; default callers have no new scope.
+
+    Native lock waits and grant decisions honor this clock. Nonpreemptible OS
+    IO and unrelated Quack/DB/source operations are not hard realtime bounded.
+    Nested productive scopes cannot widen either original deadline.
+    """
+    work = _validate_deadline_number(work_deadline_monotonic)
+    native = _validate_deadline_number(native_deadline_monotonic)
+    previous = resource_operation_deadline()
+    if work > native or (previous is not None and (previous.cleanup_only or
+            work > previous.work_deadline_monotonic or native > previous.native_deadline_monotonic)):
+        raise ResourceConfigurationError("resource operation deadline cannot widen its parent")
+    token = _RESOURCE_OPERATION_DEADLINE.set(ResourceOperationDeadline(work, native))
+    try:
+        _check_resource_operation_deadline()
+        yield
+    finally:
+        _RESOURCE_OPERATION_DEADLINE.reset(token)
+
+
+@contextmanager
+def resource_cleanup_deadline(*, native_deadline_monotonic):
+    """Original stopped-cleanup clock; acquisition is forbidden in this scope."""
+    native = _validate_deadline_number(native_deadline_monotonic)
+    previous = resource_operation_deadline()
+    if previous is not None and native > previous.native_deadline_monotonic:
+        raise ResourceConfigurationError("cleanup deadline cannot widen its original lifetime")
+    token = _RESOURCE_OPERATION_DEADLINE.set(ResourceOperationDeadline(native, native, True))
+    try:
+        _check_resource_operation_deadline()
+        yield
+    finally:
+        _RESOURCE_OPERATION_DEADLINE.reset(token)
+
+
+def _check_resource_operation_deadline():
+    deadline = resource_operation_deadline()
+    if deadline is not None and time.monotonic() >= _operation_clock(deadline):
+        raise ResourceAdmissionDeadlineError("original absolute resource operation deadline expired")
+
+
+@contextmanager
+def _resource_thread_lock(lock):
+    deadline = resource_operation_deadline()
+    if deadline is None:
+        with lock:
+            yield
+        return
+    acquired = False
+    try:
+        while not acquired:
+            _check_resource_operation_deadline()
+            acquired = lock.acquire(timeout=min(0.05, max(0.0, _operation_clock(deadline)-time.monotonic())))
+        _check_resource_operation_deadline()
+        yield
+    finally:
+        if acquired:
+            lock.release()
+
+
+def _resource_file_lock(descriptor):
+    if resource_operation_deadline() is None:
+        fcntl.flock(descriptor, fcntl.LOCK_EX)
+        return
+    while True:
+        _check_resource_operation_deadline()
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            _check_resource_operation_deadline()
+            return
+        except BlockingIOError:
+            deadline = resource_operation_deadline()
+            time.sleep(min(0.05, max(0.0, _operation_clock(deadline)-time.monotonic())))
 
 
 class LeaseCancelledError(ResourceSchedulerError):
@@ -883,7 +991,7 @@ class ResourceLease:
     Owners must release worker leases only after the actual work has stopped.
     """
 
-    def __init__(self, scheduler: "GlobalResourceScheduler", record: Mapping[str, Any]) -> None:
+    def __init__(self, scheduler: "GlobalResourceScheduler", record: Mapping[str, Any], *, _defer_heartbeat: bool = False) -> None:
         self._scheduler = scheduler
         self.lease_id = str(record["lease_id"])
         self.lease_key = str(record["lease_key"])
@@ -901,15 +1009,28 @@ class ResourceLease:
         self._released = False
         self._stop_heartbeat = threading.Event()
         self._heartbeat_thread: Optional[threading.Thread] = None
-        if scheduler.config.auto_renew_leases:
-            interval = max(0.001, min(30.0, scheduler.config.lease_ttl_seconds / 3.0))
+        self._heartbeat_start_attempted = False
+        self._heartbeat_start_returned = False
+        if type(_defer_heartbeat) is not bool:
+            raise ResourceConfigurationError("heartbeat deferral must be an explicit bool")
+        if not _defer_heartbeat:
+            self._start_heartbeat()
+
+    def _start_heartbeat(self) -> None:
+        """Start once after the SDK retains the actual opt-in lease object."""
+        if self._heartbeat_thread is not None:
+            raise ResourceSchedulerError("resource lease heartbeat already started")
+        if self._scheduler.config.auto_renew_leases:
+            interval = max(0.001, min(30.0, self._scheduler.config.lease_ttl_seconds / 3.0))
             self._heartbeat_thread = threading.Thread(
                 target=self._heartbeat_loop,
                 args=(interval,),
                 name=f"resource-lease-{self.lease_id[:8]}",
                 daemon=True,
             )
+            self._heartbeat_start_attempted = True
             self._heartbeat_thread.start()
+            self._heartbeat_start_returned = True
 
     @property
     def token(self) -> ResourceLeaseToken:
@@ -1019,7 +1140,7 @@ _PATH_LOCKS_GUARD = threading.Lock()
 
 def _path_lock(path: Path) -> threading.RLock:
     key = str(path)
-    with _PATH_LOCKS_GUARD:
+    with _resource_thread_lock(_PATH_LOCKS_GUARD):
         return _PATH_LOCKS.setdefault(key, threading.RLock())
 
 
@@ -1082,14 +1203,14 @@ class GlobalResourceScheduler:
     def _locked_state(
         self, *, persist: bool = True, allow_reconfigure: bool = False,
     ) -> Iterator[Dict[str, Any]]:
-        with self._thread_lock:
+        with _resource_thread_lock(self._thread_lock):
             # Lock a stable sibling inode and atomically replace the JSON state
             # after fsync.  Locking the JSON inode itself would be unsafe:
             # another process could already have the pre-replace inode open.
             with self.lock_path.open("a+", encoding="utf-8") as lock_handle:
                 if fcntl is None:  # pragma: no cover
                     raise SchedulerStateError("process-safe file locking is unavailable")
-                fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+                _resource_file_lock(lock_handle.fileno())
                 temporary_path: Optional[Path] = None
                 try:
                     candidate: Optional[bytes] = None
@@ -1877,6 +1998,10 @@ class GlobalResourceScheduler:
         Cancellation and timeouts remove the durable waiter before raising.
         """
 
+        operation_deadline = resource_operation_deadline()
+        if operation_deadline is not None and operation_deadline.cleanup_only:
+            raise ResourceConfigurationError("stopped cleanup cannot acquire a new resource lease")
+        _check_resource_operation_deadline()
         lane_value = self._normalise_lane(lane)
         if isinstance(cpu_slots, bool) or not isinstance(cpu_slots, int) or cpu_slots <= 0:
             raise ResourceConfigurationError("cpu_slots must be a positive integer")
@@ -1964,165 +2089,185 @@ class GlobalResourceScheduler:
             schema="resource-admission-observation@1", scope="proof_primary_gate",
             complete_admission_decision=False, primary_gate=None, last_sample=None)
 
-        while granted_record is None and terminal is None:
-            now_wall = time.time()
-            now_mono = time.monotonic()
-            externally_cancelled = bool(cancel_event is not None and cancel_event.is_set())
-            with self._locked_state() as state:
-                self._recover_stale_locked(state, now_wall)
-                if waiter_id not in state["waiters"]:
-                    if (self.config.max_waiting_requests is not None
-                            and len(state["waiters"]) >= self.config.max_waiting_requests):
-                        raise ResourceUnavailableError("resource admission queue is full; retry later")
-                    if parent_id:
-                        parent_record = state["leases"].get(parent_id)
-                        if parent_record is None:
-                            raise LeaseNotFoundError(f"parent lease {parent_id!r} is not active")
-                        if parent_key and parent_record.get("lease_key") != parent_key:
-                            raise LeaseNotFoundError("parent lease authority does not match")
-                        if cpu_slots > int(parent_record["cpu_slots"]) or memory_mb > int(
-                            parent_record["memory_mb"]
-                        ):
-                            raise ResourceUnavailableError(
-                                "child request exceeds parent lease capacity"
-                            )
-                        if gpu_memory_mb > int(parent_record.get("gpu_memory_mb", 0)):
-                            raise ResourceUnavailableError(
-                                "child GPU memory request exceeds parent lease capacity"
-                            )
-                        if unified_memory_mb > int(parent_record.get("unified_memory_mb", 0)):
-                            raise ResourceUnavailableError(
-                                "child unified-memory request exceeds parent lease capacity"
-                            )
-                        if child_process_slots > int(parent_record.get("child_process_slots", 0)):
-                            raise ResourceUnavailableError(
-                                "child process request exceeds parent lease capacity"
-                            )
-                    sequence = int(state["next_sequence"])
-                    state["next_sequence"] = sequence + 1
-                    state["waiters"][waiter_id] = {
-                        "waiter_id": waiter_id,
-                        "sequence": sequence,
-                        "lane": lane_value,
-                        "cpu_slots": cpu_slots,
-                        "memory_mb": memory_mb,
-                        "gpu_memory_mb": gpu_memory_mb,
-                        "unified_memory_mb": unified_memory_mb,
-                        "child_process_slots": child_process_slots,
-                        "requires_gpu": bool(requires_gpu or gpu_memory_mb > 0),
-                        "parent_lease_id": parent_id,
-                        "owner_pid": pid,
-                        "owner_birth_marker": birth_marker,
-                        "owner_boot_id": boot_id,
-                        "created_at": started_wall,
-                        "request_id": str(request_id)[:256],
-                        "saturation_recorded": False,
-                    }
-                waiter = state["waiters"][waiter_id]
-                parent_record = state["leases"].get(parent_id) if parent_id else None
-                parent_cancelled = bool(
-                    parent_id and (parent_record is None or parent_record.get("cancelled"))
-                )
-                timed_out = deadline is not None and now_mono >= deadline
-                can_grant_now = self._can_grant(
-                    state, waiter, observation=admission_observation) and self._is_fair_turn(state, waiter)
-                if can_grant_now and self.config.proof_recovery_enabled:
-                    # Another waiter's fairness probe can observe fresh pressure.
-                    # Recheck the shared fence before creating the actual lease.
-                    can_grant_now = self._recovery_ready(state, waiter, time.time())
-                if (
-                    not externally_cancelled
-                    and not parent_cancelled
-                    and not can_grant_now
-                    and not waiter.get("saturation_recorded")
-                ):
-                    waiter["saturation_recorded"] = True
-                    state["metrics"]["saturation_events_total"] += 1
-                if externally_cancelled or parent_cancelled:
-                    state["waiters"].pop(waiter_id, None)
-                    wait_seconds = now_mono - started_mono
-                    self._record_wait(state, lane_value, wait_seconds)
-                    state["metrics"]["cancellations_total"] += 1
-                    self._lane_metrics(state, lane_value)["cancellations_total"] += 1
-                    terminal = "cancelled"
-                elif timed_out and not can_grant_now:
-                    proof_refusal_observation = deepcopy(waiter.get("last_proof_refusal"))
-                    timeout_decision = {
-                        "schema": "resource-lease-timeout-decision@1",
-                        "decision_scope": "actual_terminal_timeout_branch",
-                        "cycle_wall_time": now_wall,
-                        "cycle_monotonic_time": now_mono,
-                        "deadline_monotonic": deadline,
-                        "elapsed_seconds": now_mono - started_mono,
-                        "clock_scope": "acquire_process_local_monotonic_clock",
-                        "waiter_id": waiter["waiter_id"],
-                        "sequence": waiter["sequence"],
-                        "request_id": waiter["request_id"],
-                        "lane": waiter["lane"][:128],
-                        "lane_truncated": len(waiter["lane"]) > 128,
-                        "parent_lease_id": waiter["parent_lease_id"],
-                        "timed_out": timed_out,
-                        "can_grant_now": can_grant_now,
-                        "externally_cancelled": externally_cancelled,
-                        "parent_cancelled": parent_cancelled,
-                        "proof_safety_enabled": self.config.proof_safety_enabled,
-                        "exact_blocking_predicate": None,
-                        "exact_blocking_cause": None,
-                    }
-                    state["waiters"].pop(waiter_id, None)
-                    wait_seconds = now_mono - started_mono
-                    self._record_wait(state, lane_value, wait_seconds)
-                    state["metrics"]["timeouts_total"] += 1
-                    self._lane_metrics(state, lane_value)["timeouts_total"] += 1
-                    terminal = "timeout"
-                elif can_grant_now:
-                    state["waiters"].pop(waiter_id, None)
-                    lease_id = uuid.uuid4().hex
-                    lease_key = uuid.uuid4().hex
-                    wait_seconds = now_mono - started_mono
-                    granted_record = {
-                        "lease_id": lease_id,
-                        "lease_key": lease_key,
-                        "sequence": waiter["sequence"],
-                        "lane": lane_value,
-                        "cpu_slots": cpu_slots,
-                        "memory_mb": memory_mb,
-                        "gpu_memory_mb": gpu_memory_mb,
-                        "unified_memory_mb": unified_memory_mb,
-                        "child_process_slots": child_process_slots,
-                        "requires_gpu": bool(requires_gpu or gpu_memory_mb > 0),
-                        "parent_lease_id": parent_id,
-                        "owner_pid": pid,
-                        "owner_birth_marker": birth_marker,
-                        "owner_boot_id": boot_id,
-                        "acquired_at": now_wall,
-                        "heartbeat_at": now_wall,
-                        "expires_at": now_wall + self.config.lease_ttl_seconds,
-                        "request_id": str(request_id)[:256],
-                        "cancelled": False,
-                        "wait_seconds": wait_seconds,
-                    }
-                    state["leases"][lease_id] = granted_record
-                    if self.config.proof_recovery_enabled:
-                        self._consume_recovery_grant(state, waiter, time.time())
-                    self._record_wait(state, lane_value, wait_seconds)
-                    state["metrics"]["acquisitions_total"] += 1
-                    self._lane_metrics(state, lane_value)["acquisitions_total"] += 1
+        try:
+            while granted_record is None and terminal is None:
+                now_wall = time.time()
+                now_mono = time.monotonic()
+                externally_cancelled = bool(cancel_event is not None and cancel_event.is_set())
+                with self._locked_state() as state:
+                    if operation_deadline is not None:
+                        _check_resource_operation_deadline()
+                        now_wall, now_mono = time.time(), time.monotonic()
+                    self._recover_stale_locked(state, now_wall)
+                    if waiter_id not in state["waiters"]:
+                        if (self.config.max_waiting_requests is not None
+                                and len(state["waiters"]) >= self.config.max_waiting_requests):
+                            raise ResourceUnavailableError("resource admission queue is full; retry later")
+                        if parent_id:
+                            parent_record = state["leases"].get(parent_id)
+                            if parent_record is None:
+                                raise LeaseNotFoundError(f"parent lease {parent_id!r} is not active")
+                            if parent_key and parent_record.get("lease_key") != parent_key:
+                                raise LeaseNotFoundError("parent lease authority does not match")
+                            if cpu_slots > int(parent_record["cpu_slots"]) or memory_mb > int(
+                                parent_record["memory_mb"]
+                            ):
+                                raise ResourceUnavailableError(
+                                    "child request exceeds parent lease capacity"
+                                )
+                            if gpu_memory_mb > int(parent_record.get("gpu_memory_mb", 0)):
+                                raise ResourceUnavailableError(
+                                    "child GPU memory request exceeds parent lease capacity"
+                                )
+                            if unified_memory_mb > int(parent_record.get("unified_memory_mb", 0)):
+                                raise ResourceUnavailableError(
+                                    "child unified-memory request exceeds parent lease capacity"
+                                )
+                            if child_process_slots > int(parent_record.get("child_process_slots", 0)):
+                                raise ResourceUnavailableError(
+                                    "child process request exceeds parent lease capacity"
+                                )
+                        sequence = int(state["next_sequence"])
+                        state["next_sequence"] = sequence + 1
+                        state["waiters"][waiter_id] = {
+                            "waiter_id": waiter_id,
+                            "sequence": sequence,
+                            "lane": lane_value,
+                            "cpu_slots": cpu_slots,
+                            "memory_mb": memory_mb,
+                            "gpu_memory_mb": gpu_memory_mb,
+                            "unified_memory_mb": unified_memory_mb,
+                            "child_process_slots": child_process_slots,
+                            "requires_gpu": bool(requires_gpu or gpu_memory_mb > 0),
+                            "parent_lease_id": parent_id,
+                            "owner_pid": pid,
+                            "owner_birth_marker": birth_marker,
+                            "owner_boot_id": boot_id,
+                            "created_at": started_wall,
+                            "request_id": str(request_id)[:256],
+                            "saturation_recorded": False,
+                        }
+                    waiter = state["waiters"][waiter_id]
+                    parent_record = state["leases"].get(parent_id) if parent_id else None
+                    parent_cancelled = bool(
+                        parent_id and (parent_record is None or parent_record.get("cancelled"))
+                    )
+                    timed_out = deadline is not None and now_mono >= deadline
+                    can_grant_now = self._can_grant(
+                        state, waiter, observation=admission_observation) and self._is_fair_turn(state, waiter)
+                    if can_grant_now and self.config.proof_recovery_enabled:
+                        # Another waiter's fairness probe can observe fresh pressure.
+                        # Recheck the shared fence before creating the actual lease.
+                        can_grant_now = self._recovery_ready(state, waiter, time.time())
+                    if operation_deadline is not None:
+                        # Pressure/fairness probes may take time; never grant from
+                        # the old pre-lock/pre-probe monotonic sample.
+                        _check_resource_operation_deadline()
+                        now_wall, now_mono = time.time(), time.monotonic()
+                        timed_out = deadline is not None and now_mono >= deadline
+                    if (
+                        not externally_cancelled
+                        and not parent_cancelled
+                        and not can_grant_now
+                        and not waiter.get("saturation_recorded")
+                    ):
+                        waiter["saturation_recorded"] = True
+                        state["metrics"]["saturation_events_total"] += 1
+                    if externally_cancelled or parent_cancelled:
+                        state["waiters"].pop(waiter_id, None)
+                        wait_seconds = now_mono - started_mono
+                        self._record_wait(state, lane_value, wait_seconds)
+                        state["metrics"]["cancellations_total"] += 1
+                        self._lane_metrics(state, lane_value)["cancellations_total"] += 1
+                        terminal = "cancelled"
+                    elif timed_out and not can_grant_now:
+                        proof_refusal_observation = deepcopy(waiter.get("last_proof_refusal"))
+                        timeout_decision = {
+                            "schema": "resource-lease-timeout-decision@1",
+                            "decision_scope": "actual_terminal_timeout_branch",
+                            "cycle_wall_time": now_wall,
+                            "cycle_monotonic_time": now_mono,
+                            "deadline_monotonic": deadline,
+                            "elapsed_seconds": now_mono - started_mono,
+                            "clock_scope": "acquire_process_local_monotonic_clock",
+                            "waiter_id": waiter["waiter_id"],
+                            "sequence": waiter["sequence"],
+                            "request_id": waiter["request_id"],
+                            "lane": waiter["lane"][:128],
+                            "lane_truncated": len(waiter["lane"]) > 128,
+                            "parent_lease_id": waiter["parent_lease_id"],
+                            "timed_out": timed_out,
+                            "can_grant_now": can_grant_now,
+                            "externally_cancelled": externally_cancelled,
+                            "parent_cancelled": parent_cancelled,
+                            "proof_safety_enabled": self.config.proof_safety_enabled,
+                            "exact_blocking_predicate": None,
+                            "exact_blocking_cause": None,
+                        }
+                        state["waiters"].pop(waiter_id, None)
+                        wait_seconds = now_mono - started_mono
+                        self._record_wait(state, lane_value, wait_seconds)
+                        state["metrics"]["timeouts_total"] += 1
+                        self._lane_metrics(state, lane_value)["timeouts_total"] += 1
+                        terminal = "timeout"
+                    elif can_grant_now:
+                        state["waiters"].pop(waiter_id, None)
+                        lease_id = uuid.uuid4().hex
+                        lease_key = uuid.uuid4().hex
+                        wait_seconds = now_mono - started_mono
+                        granted_record = {
+                            "lease_id": lease_id,
+                            "lease_key": lease_key,
+                            "sequence": waiter["sequence"],
+                            "lane": lane_value,
+                            "cpu_slots": cpu_slots,
+                            "memory_mb": memory_mb,
+                            "gpu_memory_mb": gpu_memory_mb,
+                            "unified_memory_mb": unified_memory_mb,
+                            "child_process_slots": child_process_slots,
+                            "requires_gpu": bool(requires_gpu or gpu_memory_mb > 0),
+                            "parent_lease_id": parent_id,
+                            "owner_pid": pid,
+                            "owner_birth_marker": birth_marker,
+                            "owner_boot_id": boot_id,
+                            "acquired_at": now_wall,
+                            "heartbeat_at": now_wall,
+                            "expires_at": now_wall + self.config.lease_ttl_seconds,
+                            "request_id": str(request_id)[:256],
+                            "cancelled": False,
+                            "wait_seconds": wait_seconds,
+                        }
+                        state["leases"][lease_id] = granted_record
+                        if self.config.proof_recovery_enabled:
+                            self._consume_recovery_grant(state, waiter, time.time())
+                        self._record_wait(state, lane_value, wait_seconds)
+                        state["metrics"]["acquisitions_total"] += 1
+                        self._lane_metrics(state, lane_value)["acquisitions_total"] += 1
 
-            if terminal is None and granted_record is None:
-                wait_for = self.config.poll_interval_seconds
-                if self.config.proof_safety_enabled:
-                    remaining_backoff = float(state.get("proof_backoff", {}).get("until", 0)) - time.time()
-                    wait_for = max(wait_for, min(1.0, remaining_backoff))
-                if deadline is not None:
-                    wait_for = min(wait_for, max(0.0, deadline - time.monotonic()))
-                if cancel_event is not None and hasattr(cancel_event, "wait"):
-                    try:
-                        cancel_event.wait(wait_for)  # type: ignore[attr-defined]
-                    except (TypeError, ValueError):
+                if terminal is None and granted_record is None:
+                    wait_for = self.config.poll_interval_seconds
+                    if self.config.proof_safety_enabled:
+                        remaining_backoff = float(state.get("proof_backoff", {}).get("until", 0)) - time.time()
+                        wait_for = max(wait_for, min(1.0, remaining_backoff))
+                    if deadline is not None:
+                        wait_for = min(wait_for, max(0.0, deadline - time.monotonic()))
+                    if operation_deadline is not None:
+                        wait_for = min(wait_for, max(0.0,
+                            operation_deadline.work_deadline_monotonic - time.monotonic()))
+                    if cancel_event is not None and hasattr(cancel_event, "wait"):
+                        try:
+                            cancel_event.wait(wait_for)  # type: ignore[attr-defined]
+                        except (TypeError, ValueError):
+                            time.sleep(wait_for)
+                    else:
                         time.sleep(wait_for)
-                else:
-                    time.sleep(wait_for)
+
+            if operation_deadline is not None:
+                _check_resource_operation_deadline()
+        except BaseException as admission_error:
+            if operation_deadline is not None:
+                self._retire_failed_scoped_admission(admission_error, waiter_id, granted_record, operation_deadline)
+            raise
 
         if terminal == "cancelled":
             error = LeaseCancelledError("resource lease request was cancelled")
@@ -2136,7 +2281,75 @@ class GlobalResourceScheduler:
             error.proof_refusal_observation = deepcopy(proof_refusal_observation)
             raise error
         assert granted_record is not None
-        return ResourceLease(self, granted_record)
+        if operation_deadline is None:
+            return ResourceLease(self, granted_record)
+        owned_lease = None
+        try:
+            _check_resource_operation_deadline()
+            # Retain the genuine object before its heartbeat can start/fail.
+            owned_lease = ResourceLease(self, granted_record, _defer_heartbeat=True)
+            owned_lease._start_heartbeat()
+            _check_resource_operation_deadline()
+            return owned_lease
+        except BaseException as admission_error:
+            self._retire_failed_scoped_admission(admission_error, waiter_id, granted_record,
+                operation_deadline, owned_lease=owned_lease)
+            raise
+
+    def _retire_failed_scoped_admission(self, error, waiter_id, granted_record, deadline, *, owned_lease=None):
+        """Stopped retirement of this actual request; never acquire a successor.
+
+        Unknown cleanup retains the actual scheduler/request record on the
+        original exception. It is not a serialized capability or a release.
+        """
+        error.resource_admission_cleanup_pending = True
+        error.resource_admission_waiter_id = waiter_id
+        error.resource_admission_scheduler = self
+        error.resource_admission_granted_record = deepcopy(granted_record)
+        error.resource_admission_owned_lease = owned_lease
+        if owned_lease is not None:
+            owned_lease._stop_heartbeat.set()
+        try:
+            with resource_cleanup_deadline(native_deadline_monotonic=deadline.native_deadline_monotonic):
+                with self._locked_state() as state:
+                    removed = state["waiters"].pop(waiter_id, None)
+                    if granted_record is not None:
+                        record = state["leases"].get(granted_record["lease_id"])
+                        if record is not None:
+                            if (record.get("lease_key") != granted_record["lease_key"] or
+                                    record.get("owner_pid") != granted_record["owner_pid"] or
+                                    (self._descendants(state, granted_record["lease_id"])-{granted_record["lease_id"]})):
+                                raise SchedulerStateError("failed scoped admission cannot retire unrelated live work")
+                            # No lease object was returned and no work started.
+                            record["release_requested"] = True
+                            released = self._prune_released_locked(state)
+                            state["metrics"]["releases_total"] += len(released)
+                            if granted_record["lease_id"] in state["leases"]:
+                                raise SchedulerStateError("failed admission lease remains charged")
+                    if removed is not None:
+                        state["metrics"]["timeouts_total"] += 1
+                        self._lane_metrics(state, removed["lane"])["timeouts_total"] += 1
+                if owned_lease is not None:
+                    heartbeat = owned_lease._heartbeat_thread
+                    if (heartbeat is not None and owned_lease._heartbeat_start_attempted
+                            and heartbeat.ident is None):
+                        # start() may be interrupted after native thread creation
+                        # but before its identity becomes observable. Absence is
+                        # unknown even when is_alive() currently reports False.
+                        raise SchedulerStateError("unreturned heartbeat startup identity remains unknown")
+                    if heartbeat is not None and heartbeat.ident is not None:
+                        if heartbeat is threading.current_thread():
+                            raise SchedulerStateError("unreturned admission heartbeat cannot join itself")
+                        _check_resource_operation_deadline()
+                        heartbeat.join(timeout=max(0.0, deadline.native_deadline_monotonic-time.monotonic()))
+                        if heartbeat.is_alive():
+                            raise SchedulerStateError("unreturned admission heartbeat remains live")
+                    # The actual state retirement persisted and no thread lives.
+                    owned_lease._released = True
+            error.resource_admission_cleanup_pending = False
+            error.resource_admission_granted_record = None
+        except BaseException as cleanup_error:
+            error.resource_admission_cleanup_error_type = type(cleanup_error).__name__
 
     acquire_lease = acquire
 
@@ -2144,7 +2357,12 @@ class GlobalResourceScheduler:
         kwargs["timeout"] = 0.0
         try:
             return self.acquire(lane, **kwargs)
-        except LeaseTimeoutError:
+        except ResourceAdmissionDeadlineError:
+            # None must never erase an explicit original-deadline outcome.
+            raise
+        except LeaseTimeoutError as error:
+            if getattr(error, "resource_admission_cleanup_pending", False):
+                raise
             return None
 
     def renew(self, lease_id: str, lease_key: Optional[str] = None) -> bool:

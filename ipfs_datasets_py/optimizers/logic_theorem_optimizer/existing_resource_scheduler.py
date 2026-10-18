@@ -136,7 +136,7 @@ class _PinnedGlobalResourceScheduler(native.GlobalResourceScheduler):
 
     @contextmanager
     def _locked_state(self, *, persist=True, allow_reconfigure=False):
-        with self._thread_lock:
+        with native._resource_thread_lock(self._thread_lock):
             _need(_parents(self.state_path) == self._parents, "native scheduler directory identity changed")
             _need(all(hashlib.sha256(path.read_bytes()).hexdigest() == digest
                       for path, digest in self._sources.items()), "native scheduler producer source changed")
@@ -148,7 +148,7 @@ class _PinnedGlobalResourceScheduler(native.GlobalResourceScheduler):
                 info = os.fstat(descriptor)
                 _need(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, "unaliased native scheduler lock required")
                 _need(native.fcntl is not None, "native process-safe locking unavailable")
-                native.fcntl.flock(descriptor, native.fcntl.LOCK_EX)
+                native._resource_file_lock(descriptor)
                 current = self.lock_path.lstat()
                 _need((current.st_dev, current.st_ino) == (info.st_dev, info.st_ino)
                       and _parents(self.state_path) == self._parents, "native lock or directory identity changed")
@@ -314,4 +314,89 @@ def expand_idle_process_capacity(state_path, expected_policy_sha256, total_child
         return report
 
 
-__all__ = ["open_existing_scheduler", "expand_idle_process_capacity", "policy_sha256", "ExistingResourceSchedulerError"]
+def expand_idle_cpu_pressure_headroom(state_path, expected_policy_sha256, proof_cpu_stall_percent, *, apply=False):
+    """Explicit bounded operator change to an idle scheduler's CPU PSI gate.
+
+    This changes only the CPU stall threshold, never capacities or allocation.
+    Unlike ordinary admission, this administrative operation evaluates CPU PSI
+    against the requested threshold so an old CPU refusal cannot prevent an
+    explicitly authorized increase. Memory, IO, PID and proof-safety checks
+    remain in force. All existing nonconfiguration state is preserved exactly.
+    """
+    _need(type(apply) is bool, "apply must be an explicit bool")
+    _need(type(proof_cpu_stall_percent) in (int, float)
+          and 0 < proof_cpu_stall_percent <= 75 and math.isfinite(proof_cpu_stall_percent),
+          "finite plain CPU stall threshold in (0, 75] required")
+    requested = float(proof_cpu_stall_percent)
+    facade = open_existing_scheduler(state_path, expected_policy_sha256)
+    with facade._locked_state(persist=False) as state:
+        previous = deepcopy(state)
+        raw, observed = _read(facade.state_path)
+        _need(observed == state, "native CPU policy snapshot changed")
+        policy = deepcopy(state["config"])
+        _need(policy["proof_safety_enabled"] is True, "native proof safety must remain enabled")
+        _need(policy["proof_resource_profile"] is None, "named proof profiles cannot be changed by this operator")
+        _need(requested > policy["proof_cpu_stall_percent"], "CPU stall threshold must strictly increase")
+        policy["proof_cpu_stall_percent"] = requested
+        try:
+            config = native.ResourceSchedulerConfig(state_path=facade.state_path, **deepcopy(policy))
+            config.validate()
+        except (TypeError, ValueError) as error:
+            raise ExistingResourceSchedulerError("expanded native CPU policy is invalid") from error
+        _need(config.persisted_dict() == policy, "expanded CPU policy cannot be normalized")
+        _need({key: value for key, value in policy.items() if key != "proof_cpu_stall_percent"}
+              == {key: value for key, value in state["config"].items() if key != "proof_cpu_stall_percent"},
+              "only the CPU stall threshold may change")
+        preserved = {key: value for key, value in state.items() if key != "config"}
+        report = dict(schema="native-idle-cpu-pressure-headroom-plan/v1", applied=False,
+            previous_policy_sha256=expected_policy_sha256, next_policy_sha256=policy_sha256(policy),
+            previous_cpu_stall_percent=state["config"]["proof_cpu_stall_percent"],
+            requested_cpu_stall_percent=requested, next_policy=policy,
+            changed_policy_fields=["proof_cpu_stall_percent"],
+            preserved_control_sha256=policy_sha256(preserved),
+            lease_count=len(state["leases"]), waiter_count=len(state["waiters"]),
+            status="held_native_activity", admitted=False, qualified=False,
+            resource_allocation_performed=False)
+        backoff = state.get("proof_backoff", {})
+        _need(type(backoff) is dict, "native proof backoff shape invalid")
+        if backoff:
+            until = backoff.get("until")
+            _need(type(until) in (int, float) and math.isfinite(until) and until >= 0,
+                  "native proof backoff deadline invalid")
+        active_backoff = bool(backoff) and backoff["until"] > time.time()
+        if state["leases"] or state["waiters"] or state.get("proof_recovery") or active_backoff:
+            _need(not apply, "idle scheduler required; leases, waiters or pressure state remain")
+            return report
+        host, proof_digest = _native_capacity_host(facade.config)
+        proof_source = Path(native.__file__).with_name("proof_resource_safety.py")
+        facade._sources[proof_source] = proof_digest
+        _need(isinstance(host, native.ProofHostResources), "native proof host observation required")
+        _need(host.available_pid_tasks is not None, "known native PID headroom required")
+        demand = (native.PROOF_PID_HEADROOM_TASKS
+                  + native.PROOF_PID_TASKS_PER_PROCESS * policy["total_child_process_slots"])
+        _need(host.available_pid_tasks >= demand, "native PID headroom insufficient for CPU policy expansion")
+        _need(host.available_memory_mb >= facade.config.proof_memory_headroom_mb,
+              "native memory headroom insufficient")
+        for observed, threshold in (
+            (host.memory_stall_percent, facade.config.proof_memory_stall_percent),
+            (host.cpu_stall_percent, requested),
+            (host.io_stall_percent, facade.config.proof_io_stall_percent),
+        ):
+            _need(observed < threshold, "native proof pressure holds CPU policy expansion")
+        _need(_read(facade.state_path)[0] == raw, "native CPU policy state changed outside lock")
+        report.update(status="ready_explicit_policy_rebind", pid_tasks_required=demand,
+            available_pid_tasks=host.available_pid_tasks, available_memory_mb=host.available_memory_mb,
+            pressure=dict(memory_full=host.memory_stall_percent, cpu_some=host.cpu_stall_percent,
+                          io_full=host.io_stall_percent), proof_source_sha256=proof_digest)
+        if apply:
+            successor = deepcopy(previous)
+            successor["config"] = policy
+            _need({key: value for key, value in successor.items() if key != "config"} == preserved,
+                  "native control history must remain unchanged")
+            facade._persist_locked_state(raw, successor)
+            report.update(applied=True, status="applied_requires_explicit_policy_rebind")
+        return report
+
+
+__all__ = ["open_existing_scheduler", "expand_idle_process_capacity", "expand_idle_cpu_pressure_headroom",
+           "policy_sha256", "ExistingResourceSchedulerError"]
