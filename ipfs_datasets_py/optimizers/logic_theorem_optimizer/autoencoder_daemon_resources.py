@@ -32,10 +32,10 @@ import uuid
 
 from .resource_scheduler import ResourceLane, get_global_resource_scheduler
 
-# Campaign cap increased from 145 to 160 GB under user authorization on 2026-10-15. Existing
+# Campaign cap increased to 220 GB under user authorization on 2026-10-17. Existing
 # ledgers require an explicit, lock-held limit migration; _read never upgrades
 # historical ledgers or releases their retained reservations implicitly.
-MAX_STORAGE_BYTES = 160_000_000_000
+MAX_STORAGE_BYTES = 220_000_000_000
 # Bound the retained JSON metadata independently of storage admission.
 # Reading/writing a larger ledger never changes its schema or storage cap.
 MAX_LEDGER_BYTES = 16 * 1024 * 1024
