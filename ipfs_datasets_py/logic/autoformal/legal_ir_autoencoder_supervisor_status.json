@@ -1,5 +1,5 @@
 {
-  "schema": "legal-ir-autoencoder-supervisor-status/v2",
+  "schema": "legal-ir-autoencoder-supervisor-status/v3",
   "board_namespace": "legal-ir-autoencoder-v1",
   "admitted": false,
   "formalized": false,
@@ -675,5 +675,19 @@
       "claim": null,
       "attempts": 0
     }
+  },
+  "supervisor": {
+    "state": "running",
+    "stalled": false,
+    "todo": "ipfs_datasets_py/logic/autoformal/LIRAE-TODO.md",
+    "board_namespace": "legal-ir-autoencoder-v1",
+    "task_count": 139,
+    "ready_count": 138,
+    "waiting_count": 1,
+    "blocked_count": 0,
+    "completed_count": 0,
+    "active_task_id": "LIRAE-WIDTH-384",
+    "selection_idle_reason": "",
+    "pass": "2026-10-20T06:55:50Z"
   }
 }
