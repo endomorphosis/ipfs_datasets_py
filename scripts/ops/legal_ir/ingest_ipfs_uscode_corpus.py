@@ -69,16 +69,7 @@ def _parse_document(document: dict) -> list[dict]:
 
 
 def _run_raw_coordinate_ingest(args) -> dict:
-    """Enqueue one bounded physical-row capture into a NEW catalog only.
-
-    This separate opt-in path never resumes, downloads, compiles or publishes.
-    The existing coordinate owner validates geometry and whole-input context.
-    A closed private catalog is atomically linked into place without overwrite;
-    an existing or racing destination is never opened as a catalog.
-    """
-    import stat
-    import tempfile
-
+    """Replay pinned physical rows and publish one fresh local source catalog."""
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_dataset import (
         capture_uscode_source_documents_from_parquet,
     )
@@ -86,76 +77,38 @@ def _run_raw_coordinate_ingest(args) -> dict:
         inventory_uscode_source_coordinates, uscode_source_coordinates_sha256,
         validate_uscode_source_coordinates,
     )
+    from ipfs_datasets_py.logic.autoformal.span_cache import write_fresh_source_coordinate_cache
 
-    destination = args.cache.absolute()
-    parent = destination.parent
-    if parent.resolve(strict=True) != parent:
-        raise ValueError("raw coordinate catalog parent must be an existing canonical directory")
-    parent_fd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
-    try:
-        def require_absent() -> None:
-            for name in (destination.name, destination.name + ".wal"):
-                try:
-                    os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
-                except FileNotFoundError:
-                    continue
-                raise ValueError("raw coordinate ingest requires a fresh catalog and no WAL; no backfill or overwrite")
-
-        require_absent()
-        captured = capture_uscode_source_documents_from_parquet(
-            args.parquet, source_revision=args.source_revision,
-            source_path_in_repo=args.source_path_in_repo,
-            expected_sha256=args.expected_source_sha256,
-            expected_bytes=args.expected_source_bytes, limit=args.limit,
-            offset=args.source_row_offset, release_id=args.source_release_id)
-        documents = captured["documents"]
-        report = inventory_uscode_source_coordinates(
-            documents, query="ipfs_uscode", release_id=args.source_release_id)
-        report_pin = uscode_source_coordinates_sha256(report)
-        validate_uscode_source_coordinates(report, documents,
-            expected_report_sha256=report_pin, query="ipfs_uscode",
-            release_id=args.source_release_id)
-        # No heavy compiler identity, remote checkpoint polling or executor is
-        # reached by this profile. Import the catalog only after source replay.
-        from ipfs_datasets_py.logic.autoformal.span_cache import SpanCache
-
-        with tempfile.TemporaryDirectory(prefix=".uscode-raw-ingest-", dir=parent) as staging:
-            staged = Path(staging) / "catalog.duckdb"
-            cache = SpanCache(staged)
-            try:
-                inserted = cache.enqueue_source_coordinates(report, documents,
-                    expected_report_sha256=report_pin, query="ipfs_uscode",
-                    release_id=args.source_release_id)
-                stats = cache.stats()
-            finally:
-                cache.close()
-            info = staged.lstat()
-            if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
-                    or Path(str(staged) + ".wal").exists()):
-                raise ValueError("closed staging catalog is not a standalone regular DuckDB file")
-            with staged.open("rb") as stream:
-                os.fsync(stream.fileno())
-            require_absent()
-            # Atomic no-clobber publication even if another writer races the
-            # preceding check. Both paths are on the same filesystem.
-            os.link(staged, destination.name, dst_dir_fd=parent_fd, follow_symlinks=False)
-            os.fsync(parent_fd)
-        return {"stage": "raw_coordinates_enqueued", "profile": "raw-coordinates-v1",
-                "source_file_sha256": captured["source_file_sha256"],
-                "source_file_bytes": captured["source_file_bytes"],
-                "source_revision": captured["source_revision"],
-                "source_path_in_repo": captured["source_path_in_repo"],
-                "source_release_id": args.source_release_id,
-                "physical_row_offset": captured["physical_row_offset"],
-                "documents": len(documents), "spans_enqueued": inserted,
-                "source_coordinates_report_sha256": report_pin, "stats": stats,
-                "fresh_catalog": True, "historical_backfill": False,
-                "source_authority_authenticated": False, "legal_meaning_verified": False,
-                "formalized": False, "admitted": False, "training_authorized": False,
-                "parquet_file_byte_mapping_verified": False, "model_executed": False,
-                "remote_io_performed": False}
-    finally:
-        os.close(parent_fd)
+    captured = capture_uscode_source_documents_from_parquet(
+        args.parquet, source_revision=args.source_revision,
+        source_path_in_repo=args.source_path_in_repo,
+        expected_sha256=args.expected_source_sha256,
+        expected_bytes=args.expected_source_bytes, limit=args.limit,
+        offset=args.source_row_offset, release_id=args.source_release_id)
+    documents = captured["documents"]
+    report = inventory_uscode_source_coordinates(
+        documents, query="ipfs_uscode", release_id=args.source_release_id)
+    report_pin = uscode_source_coordinates_sha256(report)
+    validate_uscode_source_coordinates(report, documents,
+        expected_report_sha256=report_pin, query="ipfs_uscode",
+        release_id=args.source_release_id)
+    written = write_fresh_source_coordinate_cache(args.cache, report, documents,
+        expected_report_sha256=report_pin, query="ipfs_uscode",
+        release_id=args.source_release_id)
+    return {"stage": "raw_coordinates_enqueued", "profile": "raw-coordinates-v1",
+            "source_file_sha256": captured["source_file_sha256"],
+            "source_file_bytes": captured["source_file_bytes"],
+            "source_revision": captured["source_revision"],
+            "source_path_in_repo": captured["source_path_in_repo"],
+            "source_release_id": args.source_release_id,
+            "physical_row_offset": captured["physical_row_offset"],
+            "documents": len(documents), "spans_enqueued": written["spans_enqueued"],
+            "source_coordinates_report_sha256": report_pin, "stats": written["stats"],
+            "fresh_catalog": True, "historical_backfill": False,
+            "source_authority_authenticated": False, "legal_meaning_verified": False,
+            "formalized": False, "admitted": False, "training_authorized": False,
+            "parquet_file_byte_mapping_verified": False, "model_executed": False,
+            "remote_io_performed": False}
 
 
 def _checkpoint_agent_id(cache) -> str:
