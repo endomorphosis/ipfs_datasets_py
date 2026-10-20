@@ -1388,7 +1388,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-USC-T42-P02 US Code title 42 sections 1000:2000
 
-- status: todo
+- status: completed
 - goal id: LIRAE-USC
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
