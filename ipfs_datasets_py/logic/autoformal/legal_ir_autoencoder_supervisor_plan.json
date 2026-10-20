@@ -5340,7 +5340,7 @@
         "formalized false"
       ],
       "validation_commands": [
-        "cd /tmp/ipfs-datasets-definition-landing && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/autoformal/test_uscode_born_alive_definition_v1.py -q --tb=line"
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/autoformal/test_uscode_born_alive_definition_v1.py -q --tb=line"
       ],
       "dependencies": [],
       "conflicts": [],

@@ -3,7 +3,7 @@
 Full US Code (60077 sections, revision 5016b86a273ce5e4ffd066c5ae9f5fe494dd417e) and the Constitution inventory.
 admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
-## LIRAE-ROOT
+## Goal LIRAE-ROOT
 
 - status: goal
 - title: Autoformalize the full US Code and the US Constitution
@@ -11,7 +11,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - parent goal id: none
 - acceptance: Every pinned section and constitution span has a span row or an explicit abstain; admitted and formalized stay false on every row; lake build Legal is the only Lean check
 
-## LIRAE-USC
+## Goal LIRAE-USC
 
 - status: goal
 - title: Autoformalize all 60077 ipfs_uscode sections by title shard
@@ -19,7 +19,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - parent goal id: LIRAE-ROOT
 - acceptance: Shards cover every section exactly once; No shard sets admitted or formalized
 
-## LIRAE-CONST
+## Goal LIRAE-CONST
 
 - status: goal
 - title: Inventory and project every Constitution span without admission
@@ -27,7 +27,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - parent goal id: LIRAE-ROOT
 - acceptance: roundtrip_ok stays false on every constitution span; The Twenty-First Amendment repeal stays a fixture
 
-## LIRAE-WIDTH
+## Goal LIRAE-WIDTH
 
 - status: goal
 - title: Compare 8d, 384d, 768d, and 4096d on the method sample only
@@ -35,7 +35,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - parent goal id: LIRAE-ROOT
 - acceptance: Full-corpus passes use the 384d profile; No encoder retraining
 
-## LIRAE-METHOD
+## Goal LIRAE-METHOD
 
 - status: goal
 - title: Keep the pinned born-alive path as the shard template
@@ -51,7 +51,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=1 start=0 end=39 count=39
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -64,7 +63,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=2 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -77,7 +75,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=2 start=1000 end=1609 count=609
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -90,7 +87,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=3 start=0 end=64 count=64
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -103,7 +99,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=4 start=0 end=47 count=47
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -116,7 +111,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=5 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -129,7 +123,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=5 start=1000 end=1179 count=179
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -142,7 +135,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=6 start=0 end=568 count=568
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -155,7 +147,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=7 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -168,7 +159,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=7 start=1000 end=2000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -181,7 +171,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=7 start=2000 end=2925 count=925
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -194,7 +183,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=8 start=0 end=360 count=360
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -207,7 +195,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=9 start=0 end=33 count=33
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -220,7 +207,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=10 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -233,7 +219,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=10 start=1000 end=2000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -246,7 +231,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=10 start=2000 end=3000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -259,7 +243,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=10 start=3000 end=3847 count=847
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -272,7 +255,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=11 start=0 end=280 count=280
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -285,7 +267,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=12 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -298,7 +279,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=12 start=1000 end=1980 count=980
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -311,7 +291,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=13 start=0 end=70 count=70
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -324,7 +303,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=14 start=0 end=417 count=417
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -337,7 +315,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=15 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -350,7 +327,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=15 start=1000 end=2000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -363,7 +339,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=15 start=2000 end=2701 count=701
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -376,7 +351,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=16 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -389,7 +363,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=16 start=1000 end=2000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -402,7 +375,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=16 start=2000 end=3000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -415,7 +387,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=16 start=3000 end=4000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -428,7 +399,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=16 start=4000 end=5000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -441,7 +411,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=16 start=5000 end=5090 count=90
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -454,7 +423,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=17 start=0 end=153 count=153
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -467,7 +435,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=18 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -480,7 +447,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=18 start=1000 end=1424 count=424
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -493,7 +459,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=19 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -506,7 +471,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=19 start=1000 end=1111 count=111
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -519,7 +483,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=20 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -532,7 +495,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=20 start=1000 end=2000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -545,7 +507,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=20 start=2000 end=2031 count=31
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -558,7 +519,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=21 start=0 end=756 count=756
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -571,7 +531,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=22 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -584,7 +543,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=22 start=1000 end=2000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -597,7 +555,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=22 start=2000 end=3000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -610,7 +567,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=22 start=3000 end=3452 count=452
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -623,7 +579,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=23 start=0 end=172 count=172
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -636,7 +591,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=24 start=0 end=162 count=162
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -649,7 +603,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=25 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -662,7 +615,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=25 start=1000 end=2000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -675,7 +627,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=25 start=2000 end=2396 count=396
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -688,7 +639,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=26 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -701,7 +651,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=26 start=1000 end=2000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -714,7 +663,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=26 start=2000 end=2142 count=142
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -727,7 +675,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=27 start=0 end=45 count=45
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -740,7 +687,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=28 start=0 end=808 count=808
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -753,7 +699,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=29 start=0 end=842 count=842
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -766,7 +711,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=30 start=0 end=626 count=626
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -779,7 +723,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=31 start=0 end=498 count=498
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -792,7 +735,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=32 start=0 end=77 count=77
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -805,7 +747,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=33 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -818,7 +759,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=33 start=1000 end=1565 count=565
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -831,7 +771,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=34 start=0 end=793 count=793
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -844,7 +783,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=35 start=0 end=175 count=175
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -857,7 +795,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=36 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -870,7 +807,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=36 start=1000 end=1173 count=173
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -883,7 +819,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=37 start=0 end=233 count=233
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -896,7 +831,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=38 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -909,7 +843,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=38 start=1000 end=1195 count=195
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -922,7 +855,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=39 start=0 end=181 count=181
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -935,7 +867,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=40 start=0 end=459 count=459
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -948,7 +879,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=41 start=0 end=241 count=241
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -961,7 +891,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=42 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -974,7 +903,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=42 start=1000 end=2000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -987,7 +915,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=42 start=2000 end=3000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1000,7 +927,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=42 start=3000 end=4000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1013,7 +939,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=42 start=4000 end=5000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1026,7 +951,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=42 start=5000 end=6000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1039,7 +963,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=42 start=6000 end=7000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1052,7 +975,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=42 start=7000 end=8000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1065,7 +987,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=42 start=8000 end=8443 count=443
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1078,7 +999,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=43 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1091,7 +1011,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=43 start=1000 end=1461 count=461
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1104,7 +1023,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=44 start=0 end=349 count=349
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1117,7 +1035,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=45 start=0 end=294 count=294
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1130,7 +1047,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=46 start=0 end=997 count=997
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1143,7 +1059,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=47 start=0 end=431 count=431
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1156,7 +1071,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=48 start=0 end=661 count=661
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1169,7 +1083,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=49 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1182,7 +1095,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=49 start=1000 end=1314 count=314
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1195,7 +1107,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=50 start=0 end=1000 count=1000
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1208,7 +1119,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=50 start=1000 end=1420 count=420
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1221,7 +1131,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=51 start=0 end=245 count=245
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1234,7 +1143,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=52 start=0 end=171 count=171
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1247,7 +1155,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=54 start=0 end=363 count=363
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1260,7 +1167,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: title=NA start=0 end=9 count=9
 - acceptance: Each section gets a span row or an explicit abstain; Entity rows cite those span ids; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1273,7 +1179,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1286,7 +1191,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1299,7 +1203,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1312,7 +1215,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1325,7 +1227,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1338,7 +1239,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1351,7 +1251,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1364,7 +1263,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1377,7 +1275,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1390,7 +1287,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1403,7 +1299,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1416,7 +1311,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1429,7 +1323,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1442,7 +1335,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1455,7 +1347,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1468,7 +1359,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1481,7 +1371,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1494,7 +1383,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1507,7 +1395,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1520,7 +1407,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1533,7 +1419,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1546,7 +1431,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1559,7 +1443,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1572,7 +1455,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1585,7 +1467,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1598,7 +1479,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1611,7 +1491,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1624,7 +1503,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1637,7 +1515,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false; The repeal stays a fixture and is not sent as an obligation
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1650,7 +1527,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1663,7 +1539,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1676,7 +1551,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1689,7 +1563,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1702,7 +1575,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1715,7 +1587,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Spans come from the existing constitution inventory; roundtrip_ok stays false; admitted and formalized stay false
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1728,7 +1599,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: No new 8d training run; Donor is not the corpus profile
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1741,7 +1611,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Record cosine and reconstruction loss; This profile is the later full-corpus default
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1754,7 +1623,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Same source access as the 384d run; 512-token ceiling stays recorded
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1767,7 +1635,6 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: No encoder execution; The 0/12 development result stays attached
-- validation: none
 - completion: manual
 - priority: P1
 - track: legal-ir
@@ -1780,7 +1647,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: lake_ok true; admitted false; formalized false
-- validation: cd /tmp/ipfs-datasets-definition-landing && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/autoformal/test_uscode_born_alive_definition_v1.py -q --tb=line
+- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/autoformal/test_uscode_born_alive_definition_v1.py -q --tb=line
 - completion: manual
 - priority: P1
 - track: legal-ir
