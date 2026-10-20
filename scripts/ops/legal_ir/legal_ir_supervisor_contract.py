@@ -26,6 +26,7 @@ PARQUET_SHA256 = '4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8
 PINNED_PARQUET = Path('/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/snapshots') / REVISION / 'uscode_parquet/laws.parquet'
 CONSTITUTION_SHA256 = '9dd8624bf0ef83dd135772f7c19aeef0496c3164d04d4bc0d6d8f1de91746e4b'
 CONSTITUTION = EVIDENCE / 'inputs/constitution.txt'
+WIDTH_REPLAY_EXECUTABLE = 'legal-ir-born-alive-width-replay-v1'
 SAMPLE_HASHES = sorted(['fb6eb7e04f50bdba72b954864e4cdc9dcf0a0857e6cc9a5b6e1544b234c64c2a', '6e1086c76b41205ed5caafe80a80ff240b68f6c89484b9d6b3d78f8db8c67bf2'])
 TESTS = {
     'uscode': ['tests/unit/logic/test_uscode_ingest.py', 'tests/unit/logic/test_span_cache_exchange.py', 'tests/unit/logic/test_paired_span_census.py', 'tests/unit/logic/test_entity_cache.py'],
@@ -42,6 +43,36 @@ OWNERS = {
 
 class ContractError(ValueError):
     pass
+
+
+class WidthReplayUnavailable(ContractError):
+    """The selected source-bound numerical replay capability is not deployed.
+
+    Hashing a provider-authored checkpoint or accepting self-reported metrics
+    does not authenticate a run. No reviewed owner currently binds either
+    retained contextual profile or saved 4096 vectors to both sample sources.
+    Keep these tasks pending until that capability is implemented and reviewed.
+    """
+
+    reason_code = 'width_source_bound_replay_unavailable'
+
+    def __init__(self, task_id):
+        self.receipt = {
+            'schema': 'legal-ir-width-replay-capability-blocker/v1',
+            'task_id': task_id,
+            'dimension': int(task_id.split('-')[-1]),
+            'status': 'blocked_input',
+            'reason_code': self.reason_code,
+            'required_capability': WIDTH_REPLAY_EXECUTABLE,
+            'source_hashes': list(SAMPLE_HASHES),
+            'retryable': True,
+            'completion_allowed': False,
+            'encoder_executed': False,
+            'training_executed': False,
+            'admitted': False,
+            'formalized': False,
+        }
+        super().__init__(self.reason_code + ': no authenticated same-source replay is available')
 
 
 def require(value, message):
@@ -98,10 +129,10 @@ def task_contract(task):
     instructions += {
         'uscode': 'source={repository:justicedao/ipfs_uscode,revision:' + REVISION + '}; evidence repeats shard title/start/end/count from plan.shards. JSON artifact kinds sections/spans/entities are arrays. Sections carry ipfs_cid,text,source_text_sha256,status=spans|abstain,span_ids or reason and false flags. For missing CID use source_row_index (zero-based absolute Parquet row); missing plaintext remains text=null,source_text_sha256=null,status=abstain with explicit reason, never invented legal text. Spans carry id,text,source_ipfs_cid,source_text_sha256 and false flags; entities cite span_ids. Source is pinned Hugging Face uscode_parquet/laws.parquet (download exact revision if container cache absent); validation uses authenticated operator cache.',
         'constitution': 'Use exact retained plaintext ' + CONSTITUTION.as_posix() + ', sha256=' + CONSTITUTION_SHA256 + '; JSON source artifact={source_id,text,sha256}; receipt.source repeats source_id/sha256. JSON spans artifact carries exact selected constitution_inventory rows plus source_id,source_text_sha256,admitted=false,formalized=false,roundtrip_ok=false. evidence.unit_id=' + (selector(task_id) if family == 'constitution' else '') + '; Amendment21 requires repeal_treated_as_obligation=false.',
-        'width': 'JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.',
+        'width': 'JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. The required source-bound replay capability is currently unavailable: retain a blocked-input diagnostic, never claim this task completed from unavailable inventory or a different authored cohort. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.',
         'method': 'lean_source artifact holds actual Lean source. evidence includes both pinned source_hashes; host sealed validator supplies lake_ok by running real lake build Legal with the trusted deployed toolchain. Do not invent a provider-side compiler observation. Skipped pinned-source tests supply no completion evidence.',
     }[family]
-    return {'outputs': [task_dir + '/receipt.json'], 'allowed_paths': allowed, 'validation_commands': commands, 'receipt_instructions': instructions, 'required_validation_executables': ['lake', 'lean'] if family == 'method' else []}
+    return {'outputs': [task_dir + '/receipt.json'], 'allowed_paths': allowed, 'validation_commands': commands, 'receipt_instructions': instructions, 'required_validation_executables': ['lake', 'lean'] if family == 'method' else [WIDTH_REPLAY_EXECUTABLE] if family == 'width' else []}
 
 
 def enrich(root):
@@ -291,6 +322,11 @@ def validate_width(task_id, receipt, data):
         require(row.get('token_ceiling') == 512, 'retain selected profile 512-token ceiling')
     else:
         require(row.get('encoder_executed') is False and row.get('development_result') == {'successful': 0, 'total': 12}, 'reuse saved vectors and retain 0/12')
+    # A file digest and plausible numbers are insufficient evidence of a run.
+    # This fail-closed gate must be replaced by a reviewed owner replay that
+    # authenticates the exact sample inputs, selected checkpoint and metrics.
+    # An executable with the declared name alone cannot authorize completion.
+    raise WidthReplayUnavailable(task_id)
 
 
 def validate(root, task_id, *, source_parquet=None):
@@ -334,6 +370,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         result = enrich(args.root) if args.enrich else check_board(args.root) if args.check_board else validate(args.root, args.check_task, source_parquet=args.corpus_parquet)
+    except WidthReplayUnavailable as exc:
+        print(json.dumps(exc.receipt, sort_keys=True), file=sys.stderr)
+        return 75
     except (ValueError, KeyError, TypeError, OSError, StopIteration) as exc:
         print('LegalIR contract failed: ' + str(exc), file=sys.stderr)
         return 1
