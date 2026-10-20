@@ -25,6 +25,7 @@ CODEBASE_SOURCE_FEATURE_VERSION = "source_bound_feature_v1"
 CODEBASE_SOURCE_FEATURE_SCHEMA = "codebase-ir-source-bound-feature-targets@1"
 LEGAL_VERSIONS = ("legacy_v1", "legacy_v1_optimized", "current_v2")
 LEARNED_FORMULA_VERSION = "source_conditioned_formula_v1"
+SPAN_FORMULA_VERSION = "source_span_formula_v1"
 GROUPED_FORMULA_VERSION = "source_conditioned_grouped_v2"
 NATIVE_FORMULA_VERSION = "native_formula_v1"
 PUBLISHED_384_VERSION = "published_384_v1"
@@ -152,6 +153,29 @@ def describe_runtime(domain, version):
                     "scope": "single_typed_deontic_rule_training_vocabulary"},
                 "source_identity": _source_identity(paths),
                 "qualification_requirements": requirements, **features.FALSE}
+    if domain == "legal_ir" and version == SPAN_FORMULA_VERSION:
+        # Discovery hashes source without importing the owner or restoring Torch.
+        paths.extend((name, root / name) for name in
+                     ("legal_span_formula.py", "legal_formula_codec.py"))
+        return {"schema": SCHEMA, "domain": domain, "runtime_version": version,
+                "runtime_id": domain + ":" + version, "lineage_id": version,
+                "input_representation": "source_text_and_optional_checkpoint_bound_384d_context",
+                "dimension": None, "input_fields": ["texts", "latents"],
+                "supported_latent_dimensions": [0, 384],
+                "latent_conditioning": "checkpoint_configured_dimension_and_enabled_flag",
+                "latent_ablation_modes": ["none", "zero", "rotate", "disabled"],
+                "state_schema": "span-legal-formula-checkpoint/v1",
+                "output_schema": "span-legal-formula-inference/v1",
+                "capabilities": ["load_checkpoint", "infer", "decode_formal_logic"],
+                "integrated": True, "experimental": True, "release_stage": "experimental",
+                "formal_decoder": {"available": True, "head_required": True,
+                    "independent_learned_formula_decoder": True,
+                    "factory": "open_formal_decoder",
+                    "scope": "single_canonical_deontic_rule_with_one_copied_span_per_facet"},
+                "source_conditioned": True, "all_family_requirements_satisfied": False,
+                "source_semantics_verified": False, "proof_ready": False,
+                "source_identity": _source_identity(paths),
+                "qualification_requirements": requirements, **features.FALSE}
     if domain == "legal_ir" and version == GROUPED_FORMULA_VERSION:
         # Discovery reads identities without importing Torch or loading weights.
         paths.extend((name, root.parent.parent / name) for name in (
@@ -235,7 +259,8 @@ def list_runtimes():
              ((namespace / (version + ".py")) if version == "legacy_v1_optimized"
               else (namespace / version / "__init__.py")).is_file()]
     return [describe_runtime(domain, PUBLISHED_384_VERSION) for domain in ("legal_ir", *NATIVE_DOMAINS)] + [
-        describe_runtime("legal_ir", version) for version in (*legal, LEARNED_FORMULA_VERSION, GROUPED_FORMULA_VERSION)] + [
+        describe_runtime("legal_ir", version) for version in
+        (*legal, LEARNED_FORMULA_VERSION, SPAN_FORMULA_VERSION, GROUPED_FORMULA_VERSION)] + [
         describe_runtime(domain, version) for domain in NATIVE_DOMAINS
         for version in ("native_v1", "native_v2", NATIVE_FORMULA_VERSION)] + [
         describe_runtime(CODEBASE_DOMAIN, CODEBASE_FEATURE_VERSION),
@@ -689,6 +714,46 @@ class LearnedFormulaRuntime:
         return {**result, "runtime_id": "legal_ir:" + LEARNED_FORMULA_VERSION}
 
 
+class SourceSpanFormulaRuntime:
+    """Inference over an exact local source-span checkpoint, without migration.
+
+    The existing span owner validates and restores its own state. Its complete
+    prediction report, copied Unicode spans, refusals and optional latent
+    controls pass through unchanged. No training or registry persistence is
+    exposed by this adapter.
+    """
+    def __init__(self, *, checkpoint_path, checkpoint_sha256):
+        _require(isinstance(checkpoint_path, (str, Path)), "span checkpoint requires a local path")
+        _require(type(checkpoint_sha256) is str and re.fullmatch(r"[0-9a-f]{64}", checkpoint_sha256),
+                 "span checkpoint requires an exact SHA-256")
+        from . import legal_span_formula as span
+        self._checkpoint = span.load_checkpoint(checkpoint_path, expected_sha256=checkpoint_sha256)
+        self._checkpoint_file_sha256 = checkpoint_sha256
+        self._checkpoint_content_sha256 = span.checkpoint_digest(self._checkpoint)
+        self._descriptor = describe_runtime("legal_ir", SPAN_FORMULA_VERSION)
+        self._decoder = None
+
+    def describe(self):
+        config = self._checkpoint["config"]
+        steps = self._checkpoint["progress"]["optimizer_steps"]
+        return {**_copy(self._descriptor), "checkpoint_file_sha256": self._checkpoint_file_sha256,
+                "checkpoint_sha256": self._checkpoint_content_sha256,
+                "latent_dimension": config["latent_dimension"], "latent_enabled": config["latent_enabled"],
+                "latent_conditioned": bool(config["latent_dimension"] and config["latent_enabled"]),
+                "optimizer_steps": steps, "checkpoint_present": True,
+                "trained_checkpoint_present": steps > 0}
+
+    def decode_formal_logic(self, texts, latents=None, *, latent_ablation="none"):
+        """Use exactly the direct owner's input contract and output report."""
+        if self._decoder is None:
+            from . import legal_span_formula as span
+            self._decoder = span.SpanLegalFormulaDecoder(self._checkpoint)
+        return self._decoder.decode_formal_logic(texts, latents, latent_ablation=latent_ablation)
+
+    def infer(self, texts, latents=None, *, latent_ablation="none"):
+        return self.decode_formal_logic(texts, latents, latent_ablation=latent_ablation)
+
+
 class GroupedFormulaRuntime:
     """Opt-in inference over an exact local grouped-v2 checkpoint.
 
@@ -837,6 +902,8 @@ def open_runtime(domain, version, **binding):
         return NativeFormulaRuntime(domain, **binding)
     if domain == "legal_ir" and version == LEARNED_FORMULA_VERSION:
         return LearnedFormulaRuntime(**binding)
+    if domain == "legal_ir" and version == SPAN_FORMULA_VERSION:
+        return SourceSpanFormulaRuntime(**binding)
     if domain == "legal_ir" and version == GROUPED_FORMULA_VERSION:
         return GroupedFormulaRuntime(**binding)
     if domain == "legal_ir":
@@ -1053,6 +1120,7 @@ __all__ = ["RuntimeVersionError", "list_runtimes", "describe_runtime", "prepare_
            "open_runtime", "build_native_runtime", "load_version", "open_formal_decoder",
            "NativeRuntime", "LegalRuntime", "StreamedFormalRuntime", "LearnedFormulaRuntime",
            "LEARNED_FORMULA_VERSION", "NATIVE_FORMULA_VERSION", "NativeFormulaRuntime",
+           "SPAN_FORMULA_VERSION", "SourceSpanFormulaRuntime",
            "GROUPED_FORMULA_VERSION", "GroupedFormulaRuntime",
            "build_native_formula_runtime", "CodebaseFeatureRuntime", "build_codebase_feature_runtime",
            "CODEBASE_DOMAIN", "CODEBASE_FEATURE_VERSION", "CODEBASE_SOURCE_FEATURE_VERSION",
