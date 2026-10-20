@@ -229,7 +229,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-USC-T07-P03 US Code title 7 sections 2000:2925
 
-- status: todo
+- status: completed
 - goal id: LIRAE-USC
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
