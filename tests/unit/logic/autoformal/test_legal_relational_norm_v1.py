@@ -3,6 +3,7 @@ from copy import deepcopy
 import hashlib
 import itertools
 import json
+from pathlib import Path
 
 import pytest
 
@@ -394,3 +395,27 @@ def test_report_hash_rejects_nonordinary_values_without_loading_owners(monkeypat
     monkeypatch.setattr(bridge, "_owners", lambda: pytest.fail("hashing imported owners"))
     for report in ({"object": object()}, {"nan": float("nan")}, {"tuple": ()}):
         with pytest.raises(ValueError): bridge.relational_norm_report_sha256(report)
+
+
+def test_producer_change_during_native_lowering_is_rejected(monkeypatch, tmp_path):
+    from ipfs_datasets_py.logic.autoformal import legal_family_routes as routes
+
+    original_bytes = Path(bridge.__file__).read_bytes()
+    copied_owner = tmp_path / "legal_relational_norm_v1.py"
+    copied_owner.write_bytes(original_bytes)
+    monkeypatch.setattr(bridge, "__file__", str(copied_owner))
+    monkeypatch.setattr(bridge, "_OWNER_PINS", None)
+    original_route = routes.prepare_native_fragment
+    completed_routes = []
+
+    def mutate_after_lowering(**kwargs):
+        result = original_route(**kwargs)
+        completed_routes.append(result["exact_native_ast_roundtrip"])
+        copied_owner.write_bytes(original_bytes + b"\n# changed during preparation\n")
+        return result
+
+    monkeypatch.setattr(routes, "prepare_native_fragment", mutate_after_lowering)
+    with pytest.raises(ValueError, match="relational producer changed"):
+        prepare(approval_request())
+    assert completed_routes == [True]
+    assert copied_owner.read_bytes() != original_bytes
