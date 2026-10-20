@@ -2476,7 +2476,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-CONST-ANCILLARY Retain unassigned Constitution notes and signature spans
 
-- status: todo
+- status: completed
 - goal id: LIRAE-CONST
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
