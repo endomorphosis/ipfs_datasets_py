@@ -795,7 +795,7 @@ Resume, compiler options, upload options and the separate `fenced-v1` runtime
 are incompatible with it. Custody and geometry observations keep source
 authority, legal meaning, formalization, admission and training authority false.
 
-The focused candidate qualification passed 116 cases and 348 test phases:
+The first selected landing (`e9fc55927`) passed 116 cases and 348 test phases:
 81 coordinate/cache/full-norm cases and 35 raw-ingest cases, including the
 unchanged legacy record path and refusal to overwrite an existing catalog.
 The new controls are in
@@ -809,10 +809,74 @@ versions were DuckDB 1.4.3, PyArrow 25.0.1 and NumPy 2.1.3. Package startup
 containers were isolated for these focused checks; this does not qualify a
 wheel installation, a full-corpus run or legal meaning.
 
-Paired Arrow export/reimport remains a separate missing slice. The current
-`SpanCache.export_rows`/sealed-row path and paired v1/v2 transport schemas do
-not carry the complete coordinate report and occurrence bindings. A local
-coordinate-aware catalog therefore does not imply a provenance-preserving
-paired dataset, qualified training input, source-context graph or checked Lean
-corpus. Extend the existing versioned paired transport owner before claiming
-that round trip; do not infer offsets for historical rows.
+## Portable selected source occurrences
+
+An explicit `uscode-paired-span-bundle/v3` manifest carries one complete source
+report and a small occurrence index in the existing artifacts table. The three
+Arrow tables retain their v2 row schemas; observation IDs and goal IDs remain
+the same for matching explicit inputs. Default v1/v2 reading and v2 writing
+remain unchanged; their rows do not acquire inferred
+coordinates. The v3 namespace is `autoformal/uscode/paired-v3`.
+
+Use `cache.export_source_coordinates(report_pin, source_span_ids=selected_ids)`
+to obtain the complete report once and source/reference rows for the selected
+live cache entries. Pass their existing `source_provenance_json` alongside the
+actual source-bound observations to `build_paired_census`, with the explicit
+`source_coordinate_report` and `expected_source_coordinate_report_sha256`
+arguments. Set the producer's `release_id` to the report's declared release;
+this label is not an independently authenticated statutory edition. The writer
+and loader replay the complete original document population and occurrence
+references, including unselected context. Subsetting documents before replay
+would change global span identities and is refused.
+
+The first profile supports one report and 1–128 selected observations per
+bundle. The report artifact is capped at the existing 16 MiB artifact bound,
+within the unchanged 64 MiB aggregate input bound. Its exact serialized-byte
+SHA256, the complete-report pin and the report's embedded content seal are
+distinct commitments. Nested raw metadata insertion order is preserved; none
+of these hashes supplies source authority or legal meaning.
+
+After retaining the complete repository layout locally, import into a new cache:
+
+```bash
+python scripts/ops/legal_ir/import_span_cache_exchange.py \
+  --manifest "$RETAINED_REPOSITORY/$MANIFEST_IN_REPO" \
+  --paired-repository-root "$RETAINED_REPOSITORY" \
+  --repository-id justicedao/uscode-autoformal-span-cache \
+  --revision "$SPAN_CACHE_COMMIT" \
+  --expected-manifest-sha256 "$MANIFEST_SHA256" \
+  --expected-coordinate-report-sha256 "$COMPLETE_REPORT_SHA256" \
+  --enqueue-source-cache "$NEW_CACHE" --output "$IMPORT_RECEIPT_DIRECTORY"
+```
+
+Keep both expected hashes independently from the imported bundle. This local,
+unsharded path retains the exact manifest and tables, validates the complete
+report and all selected references, then uses the same fresh-cache writer as
+raw ingest. Only selected spans become pending; unselected report spans do not
+enter the queue. Original occurrence indices survive. Existing catalogs and
+orphan WAL files are refused, including a racing destination. Compiler/model
+statuses and repair goals remain observations: this operation neither seals
+sources nor materializes supervisor work.
+
+The retained bundle, cache and receipt have separate publication boundaries.
+A later receipt failure may leave retained evidence and a published pending
+catalog; the existing-catalog refusal also applies to that retry.
+
+The durable feed uses the same existing stateless `load_paired_payload` reader.
+V3 record identity additionally binds the report pin and original span index,
+so identical normalized text under another physical context cannot silently
+merge. Complete reports are returned once per pin outside individual records;
+feed acknowledgement remains a separate explicit action.
+
+Focused qualification passed **278 cases / 834 test phases**: 71 coordinate/cache
+and raw-ingest regressions with unchanged executed source, plus 207 paired,
+selection, feed and source-import controls. Requests, JUnit, source/import
+readbacks and native release receipts are retained under
+`workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-paired-transport-20261020-01/`
+(`attempt-regressions-01` and `attempt-transport-03`). The tested storage versions
+were DuckDB 1.4.3, PyArrow 25.0.1 and NumPy 2.1.3. The transport run used genuine
+root, autoformal and deontic initializers with model/provider imports refused;
+other package initializers remained isolated. This qualifies the focused local
+transport, not a wheel installation or optional-provider execution. Training
+data, competent source/meaning review, a source-context graph and a checked Lean
+corpus retain their existing owners and review requirements.
