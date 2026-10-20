@@ -5275,15 +5275,13 @@
         "512-token ceiling stays recorded"
       ],
       "validation_commands": [],
-      "dependencies": [
-        "LIRAE-WIDTH-384"
-      ],
+      "dependencies": [],
       "conflicts": [],
       "evidence_refs": [],
       "resource_class": "cpu-medium",
       "token_class": "medium",
       "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
-      "rationale": "after-384-sample",
+      "rationale": "parallel-width-sample",
       "depth": 2,
       "completion_authority": false,
       "mutation_authority": false,

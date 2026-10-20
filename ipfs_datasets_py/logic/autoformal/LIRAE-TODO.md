@@ -1750,7 +1750,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 - status: todo
 - goal id: LIRAE-WIDTH
-- depends on: LIRAE-WIDTH-384
+- depends on: none
 - board namespace: legal-ir-autoencoder-v1
 - shard: none
 - acceptance: Same source access as the 384d run; 512-token ceiling stays recorded
