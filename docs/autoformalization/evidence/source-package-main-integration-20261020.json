@@ -1,0 +1,173 @@
+{
+  "checkout_scope": "Exact declared source/test/guide and runtime dependency files; unrelated repository paths are not materialized.",
+  "cohort_relationship": "The same45 authored intake controls ran in a fresh main-based integration context; the original302-case Oct16 cohort remains separate.",
+  "delivery_files": {
+    "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_package_intake_v1.md": {
+      "bytes": 2990,
+      "sha256": "ce3e13c040d20a938312e3ab5a49f27951447d46b88d8bc4183f9fe6dd373164"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_package_intake_v1.py": {
+      "bytes": 16881,
+      "sha256": "c8337a1fc765b3353bde190b6fb1e17641a2b1075c7c038bfa4bab3208e15062"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py": {
+      "bytes": 15638,
+      "sha256": "5acabbca1e300fb149a7de99c977573855ce212eff97734871cbc46bb1fcf928"
+    }
+  },
+  "hosted_CI_result_asserted": false,
+  "independent_saved_review": {
+    "bootstrap_failures_credited": 0,
+    "decision": "passed",
+    "durable_outputs_verified": 5,
+    "errors": 0,
+    "exact_planned_cases": 45,
+    "failures": 0,
+    "original_native_source_storage_closeout_verified": true,
+    "private_runtime_overlays_excluded_from_publication": 5,
+    "project_import_execution_performed_by_reviewer": false,
+    "recorded_at_utc": "2026-10-20T18:55:07.209235+00:00",
+    "recorded_by": "/root",
+    "reviewer": "/root/integration_freshness",
+    "schema": "legal-source-package-main-integration-independent-saved-review/v1",
+    "skips": 0,
+    "source_pins_reverified": 28
+  },
+  "original_qualification": {
+    "bytes": 11478,
+    "path": "workspace/test-logs/federal-corpus-audits/source-package-main-integration-20261020-01/qualification-summary.json",
+    "sha256": "1e09ecee25f7b1289810d835e2b59dac2e3f4fd7d388b4ec003242b9bc08d2ba"
+  },
+  "qualification": {
+    "base_commit": "a16cbff8bcfb79588c1a09dc1887ac50f54667ca",
+    "cases": {
+      "errors": 0,
+      "failed": 0,
+      "nodeids": [
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_exact_metadata_readback_order_spelling_identity_and_false_authority",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_manifest_bound_readme_mismatch_is_retained_under_correct_independent_input_pins",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_data_glob_rows_advertised_rows_routing_rows_and_unique_laws_stay_distinct",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_companion_schema_mismatch_is_an_explicit_unresolved_declaration",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unknown_or_bad_request_fields_fail_before_primary_owner_load[extra-None]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unknown_or_bad_request_fields_fail_before_primary_owner_load[limits-value1]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unknown_or_bad_request_fields_fail_before_primary_owner_load[repository_id-other/source]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unknown_or_bad_request_fields_fail_before_primary_owner_load[schema-other/v1]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unknown_or_bad_request_fields_fail_before_primary_owner_load[revision-main]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unknown_or_bad_request_fields_fail_before_primary_owner_load[revision-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unknown_or_bad_request_fields_fail_before_primary_owner_load[revision-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_missing_request_fields_fail_before_primary_owner_load[schema]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_missing_request_fields_fail_before_primary_owner_load[repository_id]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_missing_request_fields_fail_before_primary_owner_load[revision]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_missing_request_fields_fail_before_primary_owner_load[expected_release_identity]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_missing_request_fields_fail_before_primary_owner_load[expected_graph_population]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_missing_request_fields_fail_before_primary_owner_load[files]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unsafe_or_bad_selected_descriptors_fail_before_owner_load[path_in_repo-../manifest.json]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unsafe_or_bad_selected_descriptors_fail_before_owner_load[path_in_repo-/manifest.json]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unsafe_or_bad_selected_descriptors_fail_before_owner_load[path_in_repo-data/model.bin]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unsafe_or_bad_selected_descriptors_fail_before_owner_load[bytes-True]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unsafe_or_bad_selected_descriptors_fail_before_owner_load[bytes-1.0]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unsafe_or_bad_selected_descriptors_fail_before_owner_load[bytes-0]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unsafe_or_bad_selected_descriptors_fail_before_owner_load[bytes-2097153]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unsafe_or_bad_selected_descriptors_fail_before_owner_load[sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_unsafe_or_bad_selected_descriptors_fail_before_owner_load[extra-None]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_selected_file_population_bytes_and_pins_are_exact[duplicate_selection]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_selected_file_population_bytes_and_pins_are_exact[missing_mapping]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_selected_file_population_bytes_and_pins_are_exact[extra_mapping]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_selected_file_population_bytes_and_pins_are_exact[altered_bytes]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_selected_file_population_bytes_and_pins_are_exact[wrong_pin]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_selected_file_population_bytes_and_pins_are_exact[wrong_size]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_wrong_request_pin_duplicate_json_and_nonfinite_metadata_are_refused",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_fixed_request_file_and_aggregate_bounds_are_refused_without_truncation",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_independent_release_identity_is_delegated_and_cannot_be_resealed_away[source_revision]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_independent_release_identity_is_delegated_and_cannot_be_resealed_away[manifest_digest]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_independent_graph_population_is_not_replaced_by_manifest_self_claims",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_resealed_report_mutations_fail_complete_authoritative_readback[remove_issue]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_resealed_report_mutations_fail_complete_authoritative_readback[rewrite_count]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_resealed_report_mutations_fail_complete_authoritative_readback[map_revision]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_resealed_report_mutations_fail_complete_authoritative_readback[add_authority]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_resealed_report_mutations_fail_complete_authoritative_readback[reorder_files]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_resealed_report_mutations_fail_complete_authoritative_readback[extra_report_field]",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_wrong_independent_report_pin_is_refused",
+        "tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py::test_preparation_does_not_load_table_database_model_or_network_clients"
+      ],
+      "passed": 45,
+      "skipped": 0
+    },
+    "checkout_kind": "independent_primary_repository",
+    "direct_source_pins_reverified": 28,
+    "durable_files_verified": 5,
+    "evidence": {
+      "durability": {
+        "bytes": 1174,
+        "path": "workspace/test-logs/federal-corpus-audits/source-package-main-integration-20261020-01/run-01/logs/validation-durability.json",
+        "sha256": "184c7e65bd23d0913ce4c22f19128f6c8b49812213c2aa0f0611b6442ef44273"
+      },
+      "execution": {
+        "bytes": 7944,
+        "path": "workspace/test-logs/federal-corpus-audits/source-package-main-integration-20261020-01/run-01/logs/execution.json",
+        "sha256": "698999602e060b890f2866adfd04b20133ba2a84569de35c58c584f10d773755"
+      },
+      "junit": {
+        "bytes": 8744,
+        "path": "workspace/test-logs/federal-corpus-audits/source-package-main-integration-20261020-01/run-01/exports/tests.xml",
+        "sha256": "f14a84313ebbe0655cc2066224226161ab74c94b1c2d5ffe3834cbcf6a2690a1"
+      },
+      "launch": {
+        "bytes": 1255,
+        "path": "workspace/test-logs/federal-corpus-audits/source-package-main-integration-20261020-01/validation-launch-01.json",
+        "sha256": "a1524bc2d6f9124efa2fbe8181e377812392b08dc6a603ef7cf1f43ae46e1b3a"
+      },
+      "request": {
+        "bytes": 24060,
+        "path": "workspace/test-logs/federal-corpus-audits/source-package-main-integration-20261020-01/validation-request-01.json",
+        "sha256": "708137a932a7916cfbcf9b4c2a08c41caab0bd8ab52a46009dc1d3348e884120"
+      },
+      "result": {
+        "bytes": 7572,
+        "path": "workspace/test-logs/federal-corpus-audits/source-package-main-integration-20261020-01/run-01/logs/result.json",
+        "sha256": "5c6cb6497dfec8b7b1ef6bd335ee1dbf55724faf6e50fa18ca9095ef5b296dce"
+      },
+      "terminal": {
+        "bytes": 5689,
+        "path": "workspace/test-logs/federal-corpus-audits/source-package-main-integration-20261020-01/native-01.stdout.txt",
+        "sha256": "dfbfd0377ac9dca73b847880d7e66c0cf906e90fc0afcf6e939d4d5f78b52d7b"
+      }
+    },
+    "historical_cases_distinct": "45 intake cases within the original302-case Oct16 cohort; other257 not attributed here.",
+    "model_or_training_executed": false,
+    "native_Lean_executed": false,
+    "proof_authority": false,
+    "recorded_at_utc": "2026-10-20T18:53:06.362495+00:00",
+    "resource_closeout": {
+      "cleanup_error": null,
+      "native_lease_id": "5eafe22e8ac941e587845a8187c48772",
+      "native_lease_released": true,
+      "observed_descendants_remaining": 0,
+      "reservation_id": "13a9249ae5bf42e08feea08043135022",
+      "source_read_released": true,
+      "storage_status": "released"
+    },
+    "runtime_capture": {
+      "bytes": 9900,
+      "path": "workspace/test-logs/federal-corpus-audits/source-package-main-integration-20261020-01/runtime-capture.json",
+      "sha256": "4f501582a229f0dccc939acd03aab694336729d86cd813f7209f984181089c62"
+    },
+    "runtime_capture_limit": "Existing execution owners copied byte-exact into this independent checkout for validation. These five runtime overlays are not part of the public intake delivery.",
+    "runtime_overlays_private_not_for_publication": {
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py": "89f4ff118191fc9e5e1f29af6b6838cc54a28a609fe75e574ea7e2c1acfea804",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py": "d654ab5ed2fec314ea5ac07a662784ab20843b0b2feb56f13989ce1504607776",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": "2c00683202b4a783b5050329caa24a411f83788010baba86d9380123bae7d083",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py": "0de06ad8352296b7ffa756230521658dcffe689f578f85d9a471bc06b61b3994",
+      "scripts/ops/legal_ir/run_owned_validation.py": "497e92a85709d1bb49385f85385ddcfef5b83c68820fa7479c9aa728e102e938"
+    },
+    "schema": "legal-source-package-main-integration-qualification/v1",
+    "scope": "Clean-main normal-package integration of exact retained five-file metadata intake; synthetic tests only.",
+    "source_provenance_scope": "Cooperative source READ and direct declared hashes; not exhaustive imported-byte attestation.",
+    "status": "passed",
+    "statutory_meaning_qualified": false,
+    "training_gold_qualified": false
+  },
+  "recorded_at_utc": "2026-10-20T18:55:07.257757+00:00",
+  "schema": "legal-source-package-main-integration-delivery-evidence/v1",
+  "validation_runtime": "Existing owners captured byte-exact in an independent sparse checkout. Five private runtime overlays remain outside this public delivery. Existing shared scheduler policy, ledger and finite limits unchanged."
+}
