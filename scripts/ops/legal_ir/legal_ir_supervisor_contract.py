@@ -99,7 +99,7 @@ def task_contract(task):
         'uscode': 'source={repository:justicedao/ipfs_uscode,revision:' + REVISION + '}; evidence repeats shard title/start/end/count from plan.shards. JSON artifact kinds sections/spans/entities are arrays. Sections carry ipfs_cid,text,source_text_sha256,status=spans|abstain,span_ids or reason and false flags. For missing CID use source_row_index (zero-based absolute Parquet row); missing plaintext remains text=null,source_text_sha256=null,status=abstain with explicit reason, never invented legal text. Spans carry id,text,source_ipfs_cid,source_text_sha256 and false flags; entities cite span_ids. Source is pinned Hugging Face uscode_parquet/laws.parquet (download exact revision if container cache absent); validation uses authenticated operator cache.',
         'constitution': 'Use exact retained plaintext ' + CONSTITUTION.as_posix() + ', sha256=' + CONSTITUTION_SHA256 + '; JSON source artifact={source_id,text,sha256}; receipt.source repeats source_id/sha256. JSON spans artifact carries exact selected constitution_inventory rows plus source_id,source_text_sha256,admitted=false,formalized=false,roundtrip_ok=false. evidence.unit_id=' + (selector(task_id) if family == 'constitution' else '') + '; Amendment21 requires repeal_treated_as_obligation=false.',
         'width': 'JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.',
-        'method': 'lean_source artifact holds actual Lean source. evidence includes both pinned source_hashes and lake_ok=true. Validator reruns real lake build Legal. Skipped pinned-source tests supply no completion evidence.',
+        'method': 'lean_source artifact holds actual Lean source. evidence includes both pinned source_hashes; host sealed validator supplies lake_ok by running real lake build Legal with the trusted deployed toolchain. Do not invent a provider-side compiler observation. Skipped pinned-source tests supply no completion evidence.',
     }[family]
     return {'outputs': [task_dir + '/receipt.json'], 'allowed_paths': allowed, 'validation_commands': commands, 'receipt_instructions': instructions, 'required_validation_executables': ['lake', 'lean'] if family == 'method' else []}
 
@@ -308,7 +308,7 @@ def validate(root, task_id):
     elif family == 'width':
         validate_width(task_id, receipt, data)
     else:
-        require(sorted(receipt.get('evidence', {}).get('source_hashes', [])) == SAMPLE_HASHES and receipt['evidence'].get('lake_ok') is True, 'method source pins/Lake result differ')
+        require(sorted(receipt.get('evidence', {}).get('source_hashes', [])) == SAMPLE_HASHES, 'method source pins differ')
         require('lean_source' in data, 'actual Lean source required')
         source = data['lean_source'].decode()
         require(not re.search(r'\b(sorry|axiom)\b', source), 'Lean proof escape')
@@ -318,7 +318,7 @@ def validate(root, task_id):
         require(found.get('bafkreig4hls5clk3wa5iec5oa575e7gcpnyn3smiicsxgucu4yl654cvnu') == SAMPLE_HASHES[1] and found.get('bafkreihd2kvpadnqo2bwhjti7sq3kunzamoicottjgy32kva6eduqkcvru') == SAMPLE_HASHES[0], 'method source plaintext pins differ')
         result = lean.probe_lean_source(source)
         require(result.get('lake_ok') is True and result.get('admitted') is False and result.get('formalized') is False, 'real lake build Legal failed')
-    return {'task_id': task_id, 'validated': True, 'admitted': False, 'formalized': False}
+    return {'task_id': task_id, 'validated': True, 'admitted': False, 'formalized': False, **({'lake_ok': True} if family == 'method' else {})}
 
 
 def main(argv=None):
