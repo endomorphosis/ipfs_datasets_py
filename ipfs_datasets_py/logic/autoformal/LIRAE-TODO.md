@@ -2408,7 +2408,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-WIDTH-384 Score the born-alive sample with the 384d profile
 
-- status: todo
+- status: completed
 - goal id: LIRAE-WIDTH
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
