@@ -1566,7 +1566,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 ## LIRAE-CONST-A1 Constitution Article 1 span inventory
 
 - Status: completed
-- status: todo
+- status: completed
 - goal id: LIRAE-CONST
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
