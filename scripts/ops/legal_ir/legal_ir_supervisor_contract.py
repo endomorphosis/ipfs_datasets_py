@@ -30,8 +30,12 @@ REVISION = '5016b86a273ce5e4ffd066c5ae9f5fe494dd417e'
 PARQUET_SHA256 = '4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8'
 # An explicit deployment input, independent of the validator's private HOME.
 PINNED_PARQUET = Path('/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/snapshots') / REVISION / 'uscode_parquet/laws.parquet'
+CONSTITUTION_SOURCE_ID = 'national-archives-retained-20260923'
 CONSTITUTION_SHA256 = '9dd8624bf0ef83dd135772f7c19aeef0496c3164d04d4bc0d6d8f1de91746e4b'
 CONSTITUTION = EVIDENCE / 'inputs/constitution.txt'
+ANCILLARY_TASK = 'LIRAE-CONST-ANCILLARY'
+CONSTITUTION_UNITS = ('preamble', *('art-' + str(n) for n in range(1, 8)), *('amend-' + str(n) for n in range(1, 28)))
+CONSTITUTION_TASKS = ('LIRAE-CONST-PREAMBLE', *('LIRAE-CONST-A' + str(n) for n in range(1, 8)), *('LIRAE-CONST-AM' + str(n).zfill(2) for n in range(1, 28)))
 WIDTH_REPLAY_EXECUTABLE = 'legal-ir-born-alive-width-replay-v1'
 SAMPLE_HASHES = sorted(['fb6eb7e04f50bdba72b954864e4cdc9dcf0a0857e6cc9a5b6e1544b234c64c2a', '6e1086c76b41205ed5caafe80a80ff240b68f6c89484b9d6b3d78f8db8c67bf2'])
 TESTS = {
@@ -103,8 +107,26 @@ def directory(task_id):
 
 
 def selector(task_id):
+    if task_id == ANCILLARY_TASK:
+        return 'ancillary'
     suffix = task_id.removeprefix('LIRAE-CONST-')
     return 'preamble' if suffix == 'PREAMBLE' else 'amend-' + str(int(suffix[2:])) if suffix.startswith('AM') else 'art-' + str(int(suffix[1:]))
+
+
+def constitution_spans(inventory, task_id):
+    """Select retained source rows; ancillary is the original units' complement."""
+    unit = selector(task_id)
+    if task_id != ANCILLARY_TASK:
+        return [row for row in inventory['spans'] if row['unit_id'] == unit or row['unit_id'].startswith(unit + '.')]
+    selected = [row for row in inventory['spans'] if not any(
+        row['unit_id'] == original or row['unit_id'].startswith(original + '.')
+        for original in CONSTITUTION_UNITS)]
+    require(len(inventory['spans']) == 236 and len(selected) == 83,
+            'pinned ancillary source geometry differs')
+    require(all(row['status'] == 'non_operative' and (row['unit_id'] == 'signature'
+                or re.fullmatch(r'note-\d+', row['unit_id'])) for row in selected),
+            'ancillary may retain only non-operative notes and signatures')
+    return selected
 
 
 def owner(root, name):
@@ -154,6 +176,14 @@ def task_contract(task):
                 'max_patch_bytes': 16_000_000, 'max_output_bytes': 24_000_000,
             },
             receipt_instructions=instructions + ' Reviewed local inventory retains the complete source plaintext in deterministic single-member JSON ZIP artifacts. USC inventory uses one full-section span per nonempty source row; it claims no sentence-level formalization. Each ZIP contains only <kind>.json. Independent family tests and the protected checker remain mandatory; the native proposal gate exclusively decides completion.',
+        )
+    if task.get('local_constitution_inventory') is True:
+        require(task_id == ANCILLARY_TASK, 'local Constitution route requires the ancillary task')
+        result.update(
+            outputs=[task_dir + '/' + name for name in ('receipt.json', 'source.json', 'spans.json')],
+            allowed_paths=[task_dir], provider_role='deterministic-only', context_budget_tokens=0,
+            validation_commands=[commands[0], 'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + MATERIALIZER + ' --task ' + task_id + ' && ' + commands[1]],
+            receipt_instructions=instructions + ' Retain exactly the 83 source-derived non-operative note/signature rows omitted by the original 35 unit tasks. Preserve their actual status and reason. Independent tests and the protected checker remain mandatory; only native proposal/merge admission decides completion.',
         )
     return result
 
@@ -381,10 +411,12 @@ def validate_constitution(root, task_id, receipt, data):
     digest = sha(source['text'].encode())
     require(digest == CONSTITUTION_SHA256 == sha((root / CONSTITUTION).read_bytes()), 'Constitution retained input differs')
     require(source.get('sha256') == digest and receipt.get('source', {}).get('sha256') == digest and receipt['source'].get('source_id') == source['source_id'], 'Constitution source binding differs')
+    if task_id == ANCILLARY_TASK:
+        require(source['source_id'] == CONSTITUTION_SOURCE_ID, 'ancillary source identity differs')
     unit = selector(task_id)
     require(receipt.get('evidence', {}).get('unit_id') == unit, 'unit selector differs')
     inventory = owner(root, 'constitution_inventory').inventory_constitution(source['text'])
-    expected = [row for row in inventory['spans'] if row['unit_id'] == unit or row['unit_id'].startswith(unit + '.')]
+    expected = constitution_spans(inventory, task_id)
     require(expected and isinstance(rows, list) and len(rows) == len(expected), 'Constitution span coverage differs')
     actual = {row.get('id'): row for row in rows}
     require(len(actual) == len(rows) and set(actual) == {row['id'] for row in expected}, 'Constitution span IDs differ')

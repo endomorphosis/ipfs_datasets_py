@@ -48,13 +48,14 @@ def test_enable_preserves_every_completed_and_unrelated_contract(board):
     for key in set(after) - selected:
         assert after[key] == original_blocks[key], key
     updated_plan = json.loads((board / contract.PLAN).read_text())
-    for before, current in zip(original_plan['tasks'], updated_plan['tasks']):
+    assert len(updated_plan['tasks']) == len(original_plan['tasks'])
+    for before, current in zip(original_plan['tasks'], updated_plan['tasks'], strict=True):
         if before['task_id'] not in selected:
             assert current == before
     for key in selected:
         assert re.findall(r'(?mi)^- status: (.*)$', after[key])[-1] == statuses[key]
         assert '- provider role: deterministic-only\n' in after[key]
-    assert contract.check_board(board)['task_count'] == 134
+    assert contract.check_board(board)['task_count'] == len(original_plan['tasks'])
     # Re-running a reviewed conversion does not alter canonical task metadata.
     prior_board = (board / contract.BOARD).read_bytes()
     prior_plan = (board / contract.PLAN).read_bytes()

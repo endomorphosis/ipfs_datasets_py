@@ -108,8 +108,7 @@ def constitution_artifacts(root, contract, task_id):
     unit = contract.selector(task_id)
     spans = [{**row, "source_id": SOURCE_ID, "source_text_sha256": contract.CONSTITUTION_SHA256,
               "admitted": False, "formalized": False, "roundtrip_ok": False}
-             for row in inventory["spans"]
-             if row["unit_id"] == unit or row["unit_id"].startswith(unit + ".")]
+             for row in contract.constitution_spans(inventory, task_id)]
     contract.require(spans, "planned Constitution unit has no source inventory")
     return ({"source": source, "spans": spans},
             {"unit_id": unit, "repeal_treated_as_obligation": False},

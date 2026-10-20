@@ -8685,6 +8685,52 @@
         "lake",
         "lean"
       ]
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+      "task_id": "LIRAE-CONST-ANCILLARY",
+      "task_cid": "lir:task:LIRAE-CONST-ANCILLARY",
+      "goal_id": "LIRAE-CONST",
+      "goal_cid": "lir:goal:LIRAE-CONST",
+      "title": "Retain unassigned Constitution notes and signature spans",
+      "source_root": "ipfs_datasets",
+      "residual_id": "",
+      "identity_key": "LIRAE-CONST-ANCILLARY",
+      "predicted_files": [],
+      "context_paths": [],
+      "predicted_symbols": [],
+      "acceptance_criteria": [
+        "Retain exactly 83 non-operative notes and signature spans from the pinned source inventory",
+        "Preserve exact source span IDs, plaintext, status and reason",
+        "admitted, formalized and roundtrip_ok remain false"
+      ],
+      "dependencies": [],
+      "conflicts": [],
+      "evidence_refs": [],
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "rationale": "Retain the 83 actual source inventory rows outside the original 35 unit selectors",
+      "depth": 2,
+      "completion_authority": false,
+      "mutation_authority": false,
+      "seed_board_edit": false,
+      "local_constitution_inventory": true,
+      "outputs": [
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-const-ancillary/receipt.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-const-ancillary/source.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-const-ancillary/spans.json"
+      ],
+      "allowed_paths": [
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-const-ancillary"
+      ],
+      "validation_commands": [
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/test_constitution_inventory.py tests/unit/logic/test_constitution_article_1_inventory.py tests/unit/logic/test_paired_span_census.py::test_source_row_bounds_duplicates_nonfinite_and_constitution -q --tb=line",
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/materialize_legal_ir_inventory.py --task LIRAE-CONST-ANCILLARY && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONST-ANCILLARY"
+      ],
+      "receipt_instructions": "Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-const-ancillary/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-CONST-ANCILLARY task_kind=constitution status=inventory|implemented authority={admitted:false,formalized:false,roundtrip_ok:false}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. Use exact retained plaintext docs/implementation/reports/evidence/legal_ir_autoencoder/inputs/constitution.txt, sha256=9dd8624bf0ef83dd135772f7c19aeef0496c3164d04d4bc0d6d8f1de91746e4b; JSON source artifact={source_id,text,sha256}; receipt.source repeats source_id/sha256. JSON spans artifact carries exact selected constitution_inventory rows plus source_id,source_text_sha256,admitted=false,formalized=false,roundtrip_ok=false. evidence.unit_id=ancillary; Amendment21 requires repeal_treated_as_obligation=false. Retain exactly the 83 source-derived non-operative note/signature rows omitted by the original 35 unit tasks. Preserve their actual status and reason. Independent tests and the protected checker remain mandatory; only native proposal/merge admission decides completion.",
+      "required_validation_executables": [],
+      "provider_role": "deterministic-only",
+      "context_budget_tokens": 0
     }
   ],
   "supervisor_todo": "ipfs_datasets_py/logic/autoformal/LIRAE-TODO.md",

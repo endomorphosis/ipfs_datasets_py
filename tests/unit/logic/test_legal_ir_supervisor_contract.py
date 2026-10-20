@@ -342,7 +342,11 @@ def test_real_retained_source_pin_and_method_task_identity():
     methods = [task for task in plan["tasks"] if contract.kind(task["task_id"]) == "method"]
     assert [task["task_id"] for task in methods] == ["LIRAE-METHOD-01"]
     assert contract.REVISION == "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e"
-    assert contract.check_board(ROOT) == {"task_count": 134, "board_contract_valid": True}
+    const_ids = {task["task_id"] for task in plan["tasks"] if contract.kind(task["task_id"]) == "constitution"}
+    original_ids = set(contract.CONSTITUTION_TASKS)
+    assert const_ids in (original_ids, original_ids | {contract.ANCILLARY_TASK})
+    expected_count = 134 + int(contract.ANCILLARY_TASK in const_ids)
+    assert contract.check_board(ROOT) == {"task_count": expected_count, "board_contract_valid": True}
 
 
 def test_explicit_corpus_diagnostic_checks_real_pinned_bytes_without_changing_default(tmp_path, monkeypatch):
