@@ -309,11 +309,10 @@ def gap_report(
     """Live Hub scan: missing, stale, incomplete, and unpublished country IR."""
     from .build import CACHE, RELEASES
 
-    sources = slugs or [
-        s
-        for s in list_hub_slugs(author="endomorphosis", kind="source")
-        if s not in ALIAS_TO_CANONICAL
-    ]
+    # Each spelling is its own scrape and its own justicedao index.
+    # Dropping alias keys hid el_salvador and papua_new_guinea when those
+    # repos moved and the unpunctuated twin did not.
+    sources = slugs or list_hub_slugs(author="endomorphosis", kind="source")
     hub_ir = set(list_hub_slugs(author="justicedao", kind="ir"))
     local_dir = Path(releases_dir) if releases_dir else RELEASES
     local_ir = set(local_release_slugs(local_dir))

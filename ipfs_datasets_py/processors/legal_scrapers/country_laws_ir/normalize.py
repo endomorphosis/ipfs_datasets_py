@@ -409,11 +409,19 @@ _NOTICE_RE = re.compile(
 )
 
 
-def _instrument_record_type(metadata: dict[str, Any], title: str) -> str:
+def _instrument_record_type(
+    metadata: dict[str, Any],
+    title: str,
+    *,
+    text: str = "",
+    source_url: str = "",
+    language: str = "",
+) -> str:
     """A normative instrument is a law, even when its title says Article.
 
-    Newsletters, blogs, and press notices are not laws. A provision inside a
-    law stays an article; this label is only for the instrument itself.
+    Newsletters, blogs, press notices, title-only cards, and informative
+    website pages are not laws. A provision inside a law stays an article;
+    this label is only for the instrument itself.
     """
     meta = metadata or {}
     document_type = str(meta.get("document_type") or "").strip().casefold()
@@ -431,6 +439,21 @@ def _instrument_record_type(metadata: dict[str, Any], title: str) -> str:
         "statute",
         "constitution",
     }:
+        return "notice"
+    from ipfs_datasets_py.processors.legal_scrapers.world_law.document_role import (
+        classify_document_role,
+    )
+
+    role, _reason = classify_document_role(
+        {
+            "title": title,
+            "text": text,
+            "source_url": source_url,
+            "language": language,
+            "doc_type": document_type,
+        }
+    )
+    if role in {"metadata", "informative"}:
         return "notice"
     return "law"
 
@@ -625,10 +648,121 @@ def _base_record(
     return rec
 
 
+def _cid_worker_count(n_articles: int, requested: int | None) -> int:
+    """Cores for a CID-set check. Small corpora stay on one core."""
+    if requested is not None:
+        return max(1, int(requested))
+    if n_articles < 8000:
+        return 1
+    cpus = os.cpu_count() or 2
+    return max(2, min(12, cpus // 4, max(2, n_articles // 20000)))
+
+
+def _article_outcome(
+    row: pd.Series,
+    *,
+    law_map: dict[str, dict[str, Any]],
+    promoted: dict[str, list[Any]],
+    sibling_titles: dict[str, set[str]],
+    source_meta: dict[str, Any],
+    source_dataset: str,
+    source_revision: str,
+) -> tuple[dict[str, Any] | None, str, Any]:
+    """One article row as a corpus record, or a drop reason.
+
+    ``("", promoted skip)`` is ``(None, "", None)`` and is not a drop.
+    """
+    source_id = _row_get(row, "id")
+    instrument_id = _row_get(row, "law_id")
+    body = _row_get(row, "text")
+    article_title = _row_get(row, "title")
+    article_number = _row_get(row, "article_number")
+    if not body:
+        return None, "empty_body", source_id
+    if instrument_id in promoted:
+        return None, "", None
+    parent = law_map.get(instrument_id)
+    if parent and _is_title_shell(body, article_title):
+        expanded = _expand_title_shell(
+            parent["body"],
+            article_title,
+            sibling_titles.get(instrument_id) or set(),
+        )
+        if expanded:
+            body = expanded
+    if not parent:
+        return None, "missing_instrument", {"article_id": source_id, "law_id": instrument_id}
+    meta = parent["metadata"]
+    art_meta = _parse_meta(_row_get(row, "metadata_json"))
+    merged_meta = {**meta, **art_meta}
+    record = _base_record(
+        record_type="article",
+        source_dataset=source_dataset,
+        source_revision=source_revision,
+        instrument_id=instrument_id,
+        instrument_title=parent["instrument_title"],
+        law_cid=parent["law_cid"],
+        article_number=article_number,
+        article_title=article_title,
+        body=body,
+        jurisdiction=parent["jurisdiction"],
+        language=parent["language"] or _row_get(row, "language"),
+        source_url=_row_get(row, "source_url") or parent["source_url"],
+        snapshot_date=_snapshot_date(parent["row"], merged_meta, source_meta),
+        coverage=_coverage_from(parent["row"], merged_meta, articles_empty=False),
+        license_expr=parent["license"],
+        collector=_collector(merged_meta, source_dataset),
+        source_id=source_id,
+        extra={
+            "eli": parent["eli"],
+            "identifier": parent["identifier"],
+            "official_identifier": parent["official_identifier"],
+            "source_type": parent["source_type"],
+            "country": parent["country"],
+            "law_status": parent["law_status"],
+            "parent_law_id": instrument_id,
+            "article_id": source_id,
+            **_hierarchy_fields(
+                article_title, body, article_number, language=parent["language"]
+            ),
+        },
+    )
+    return record, "", None
+
+
+# Forked CID workers read this. It is set only for the duration of a pool.
+_CID_JOB: dict[str, Any] = {}
+
+
+def _cid_article_span(span: tuple[int, int]) -> list[tuple[str, str, Any]]:
+    start, end = span
+    job = _CID_JOB
+    articles = job["articles"]
+    out: list[tuple[str, str, Any]] = []
+    for i in range(start, end):
+        record, drop, sample = _article_outcome(
+            articles.iloc[i],
+            law_map=job["law_map"],
+            promoted=job["promoted"],
+            sibling_titles=job["sibling_titles"],
+            source_meta=job["source_meta"],
+            source_dataset=job["source_dataset"],
+            source_revision=job["source_revision"],
+        )
+        if record is None:
+            out.append(("", drop, sample))
+        else:
+            out.append((str(record["entry_cid"]), "", record.get("source_id")))
+    return out
+
+
 def build_corpus(
     laws: pd.DataFrame,
     articles: pd.DataFrame,
     source_meta: dict[str, Any],
+    *,
+    cid_only: bool = False,
+    cid_workers: int | None = None,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     source_dataset = source_meta["source_dataset"]
     source_revision = source_meta["source_revision"]
@@ -682,6 +816,26 @@ def build_corpus(
     }
 
     entries: list[dict[str, Any]] = []
+    cid_seen: set[str] = set()
+    n_emitted = 0
+
+    def _keep(rec: dict[str, Any]) -> None:
+        nonlocal n_emitted
+        if not cid_only:
+            entries.append(rec)
+            return
+        n_emitted += 1
+        cid = str(rec.get("entry_cid") or "")
+        if not cid:
+            return
+        if cid in cid_seen:
+            report["drops"]["duplicate_cid"] += 1
+            report["drops"]["duplicate_source_kept_first"] += 1
+            if len(report["drop_samples"]["duplicate_cid"]) < 20:
+                report["drop_samples"]["duplicate_cid"].append(rec.get("source_id"))
+            return
+        cid_seen.add(cid)
+
     slug = ""
     if source_dataset.startswith("endomorphosis/ipfs_") and source_dataset.endswith("_laws"):
         slug = source_dataset.split("ipfs_", 1)[1].removesuffix("_laws")
@@ -724,16 +878,23 @@ def build_corpus(
             coverage = f"{coverage}; reconstructed_from_articles"
         if not body:
             kids = children_by_law.get(instrument_id) or []
-            if kids:
+            # Article rows that normalize to nothing are not recoverable text.
+            if any(str(kid.get("body") or "").strip() for kid in kids):
                 report["n_empty_parents_with_articles_not_reconstructed"] += 1
             report["drops"]["empty_body"] += 1
             if len(report["drop_samples"]["empty_body"]) < 20:
                 report["drop_samples"]["empty_body"].append(instrument_id)
             return
         meta = parent["metadata"]
-        entries.append(
+        _keep(
             _base_record(
-                record_type=_instrument_record_type(meta, parent["instrument_title"]),
+                record_type=_instrument_record_type(
+                    meta,
+                    parent["instrument_title"],
+                    text=body,
+                    source_url=str(parent.get("source_url") or ""),
+                    language=str(parent.get("language") or ""),
+                ),
                 source_dataset=source_dataset,
                 source_revision=source_revision,
                 instrument_id=instrument_id,
@@ -825,80 +986,66 @@ def build_corpus(
                 f"{len(promoted)} instruments whose article rows were missing or thin"
             )
 
+    workers = 1
     if emit_articles:
-        for _, row in articles.iterrows():
-            source_id = _row_get(row, "id")
-            instrument_id = _row_get(row, "law_id")
-            body = _row_get(row, "text")
-            article_title = _row_get(row, "title")
-            article_number = _row_get(row, "article_number")
-            if not body:
-                report["drops"]["empty_body"] += 1
-                if len(report["drop_samples"]["empty_body"]) < 20:
-                    report["drop_samples"]["empty_body"].append(source_id)
-                continue
-            parent = law_map.get(instrument_id)
-            if instrument_id in promoted:
-                continue
-            if parent and _is_title_shell(body, article_title):
-                expanded = _expand_title_shell(
-                    parent["body"],
-                    article_title,
-                    sibling_titles.get(instrument_id) or set(),
-                )
-                if expanded:
-                    body = expanded
-            if not parent:
-                report["drops"]["missing_instrument"] += 1
-                if len(report["drop_samples"]["missing_instrument"]) < 20:
-                    report["drop_samples"]["missing_instrument"].append(
-                        {"article_id": source_id, "law_id": instrument_id}
-                    )
-                continue
-            meta = parent["metadata"]
-            art_meta = _parse_meta(_row_get(row, "metadata_json"))
-            merged_meta = {**meta, **art_meta}
-            entries.append(
-                _base_record(
-                    record_type="article",
-                    source_dataset=source_dataset,
-                    source_revision=source_revision,
-                    instrument_id=instrument_id,
-                    instrument_title=parent["instrument_title"],
-                    law_cid=parent["law_cid"],
-                    article_number=article_number,
-                    article_title=article_title,
-                    body=body,
-                    jurisdiction=parent["jurisdiction"],
-                    language=parent["language"] or _row_get(row, "language"),
-                    source_url=_row_get(row, "source_url") or parent["source_url"],
-                    snapshot_date=_snapshot_date(parent["row"], merged_meta, source_meta),
-                    coverage=_coverage_from(parent["row"], merged_meta, articles_empty=False),
-                    license_expr=parent["license"],
-                    collector=_collector(merged_meta, source_dataset),
-                    source_id=source_id,
-                    extra={
-                        "eli": parent["eli"],
-                        "identifier": parent["identifier"],
-                        "official_identifier": parent["official_identifier"],
-                        "source_type": parent["source_type"],
-                        "country": parent["country"],
-                        "law_status": parent["law_status"],
-                        "parent_law_id": instrument_id,
-                        "article_id": source_id,
-                        **_hierarchy_fields(
-                            article_title, body, article_number, language=parent["language"]
-                        ),
-                    },
-                )
-            )
+        def _note_drop(drop: str, sample: Any) -> None:
+            if not drop:
+                return
+            report["drops"][drop] += 1
+            if sample is not None and len(report["drop_samples"][drop]) < 20:
+                report["drop_samples"][drop].append(sample)
+
+        def _take(record: dict[str, Any] | None, drop: str, sample: Any) -> None:
+            if drop:
+                _note_drop(drop, sample)
+                return
+            if record is not None:
+                _keep(record)
+
+        outcome_kwargs = {
+            "law_map": law_map,
+            "promoted": promoted,
+            "sibling_titles": sibling_titles,
+            "source_meta": source_meta,
+            "source_dataset": source_dataset,
+            "source_revision": source_revision,
+        }
+        workers = _cid_worker_count(int(len(articles)), cid_workers) if cid_only else 1
+        if workers > 1 and len(articles):
+            import multiprocessing as mp
+
+            _CID_JOB.clear()
+            _CID_JOB.update({"articles": articles, **outcome_kwargs})
+            span = 4000
+            spans = [
+                (start, min(start + span, int(len(articles))))
+                for start in range(0, int(len(articles)), span)
+            ]
+            ctx = mp.get_context("fork")
+            with ctx.Pool(workers) as pool:
+                for batch in pool.imap_unordered(_cid_article_span, spans, chunksize=1):
+                    for cid, drop, sample in batch:
+                        if drop:
+                            _note_drop(drop, sample)
+                        elif cid:
+                            _keep({"entry_cid": cid, "source_id": sample})
+            _CID_JOB.clear()
+        else:
+            for _, row in articles.iterrows():
+                _take(*_article_outcome(row, **outcome_kwargs))
         for instrument_id, units in promoted.items():
             parent = law_map[instrument_id]
             meta = parent["metadata"]
             report["unit"] = "structured"
-            instrument_type = _instrument_record_type(meta, parent["instrument_title"])
+            instrument_type = _instrument_record_type(
+                meta,
+                parent["instrument_title"],
+                text=str(parent.get("body") or ""),
+                source_url=str(parent.get("source_url") or ""),
+                language=str(parent.get("language") or ""),
+            )
             for unit in units:
-                entries.append(
+                _keep(
                     _base_record(
                         record_type=_unit_record_type(
                             unit,
@@ -950,9 +1097,15 @@ def build_corpus(
             units = split_structured_units(body, language=parent["language"])
             if units:
                 report["unit"] = "structured"
-                instrument_type = _instrument_record_type(meta, parent["instrument_title"])
+                instrument_type = _instrument_record_type(
+                    meta,
+                    parent["instrument_title"],
+                    text=body,
+                    source_url=str(parent.get("source_url") or ""),
+                    language=str(parent.get("language") or ""),
+                )
                 for unit in units:
-                    entries.append(
+                    _keep(
                         _base_record(
                             record_type=_unit_record_type(
                                 unit,
@@ -995,6 +1148,22 @@ def build_corpus(
                             },
                         )
                     )
+
+    if cid_only:
+        # The set comparison only needs entry_cid. Bodies stay in the source
+        # frame and are not copied into a second corpus of Python dicts.
+        report["cid_only"] = True
+        report["cid_workers"] = workers
+        report["n_before_dedupe"] = n_emitted
+        report["n_out"] = len(cid_seen)
+        report["n_dropped_total"] = (
+            report["drops"]["empty_body"]
+            + report["drops"]["missing_instrument"]
+            + report["drops"]["duplicate_cid"]
+        )
+        frame = pd.DataFrame({"entry_cid": sorted(cid_seen)})
+        frame.attrs["normalization_report"] = report
+        return frame, report
 
     entries.sort(
         key=lambda r: (

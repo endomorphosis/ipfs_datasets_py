@@ -169,6 +169,34 @@ class PriorRelease:
         return source_fingerprint_from_manifest(self.manifest)
 
 
+def stamp_source_revision(manifest: dict[str, Any], new_revision: str) -> bool:
+    """Record a new raw SHA on an unchanged release.
+
+    Entry rows can match while the endomorphosis commit moved. The gap scan
+    compares ``dataset_revision``, so an unchanged corpus still needs that
+    field updated or the pack stays stale forever.
+    """
+
+    new = str(new_revision or "").strip().lower()
+    if len(new) != 40 or any(ch not in "0123456789abcdef" for ch in new):
+        return False
+    old = str(manifest.get("dataset_revision") or "").strip().lower()
+    if not old or old == new:
+        return False
+    manifest["dataset_revision"] = new
+    for key in ("source", "normalization"):
+        block = manifest.get(key)
+        if isinstance(block, dict) and block.get("source_revision"):
+            block["source_revision"] = new
+    incremental = manifest.get("incremental")
+    if isinstance(incremental, dict):
+        incremental["source_revision"] = new
+        fingerprint = str(incremental.get("source_fingerprint") or "")
+        if fingerprint.startswith(old + "|"):
+            incremental["source_fingerprint"] = new + fingerprint[len(old):]
+    return True
+
+
 def source_fingerprint(source_meta: Mapping[str, Any]) -> str:
     """Stable skip key: Hub SHA plus parquet digests when present."""
     revision = str(source_meta.get("source_revision") or "")

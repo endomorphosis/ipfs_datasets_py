@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """Shared helpers for national legislation collectors."""
 from __future__ import annotations
+# Harvested collector path injection. Do not collect from /workspace.
+import os as _ipfs_os
+from pathlib import Path as _ipfs_Path
+_CORPORA = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_corpora")))
+_SCRAPERS = _ipfs_Path(_ipfs_os.environ.get("IPFS_DATASETS_LEGAL_COLLECTORS_ROOT", str(_ipfs_Path.home() / ".ipfs_datasets" / "legal_collectors"))) / "shared"
+_HF_TOKEN_PATH = _ipfs_Path(_ipfs_os.environ.get("HF_TOKEN_PATH", str(_ipfs_Path.home() / ".cache" / "huggingface" / "token")))
 
 import hashlib
 import html
@@ -21,12 +27,7 @@ from xml.etree import ElementTree as ET
 import requests
 from requests.adapters import HTTPAdapter
 
-ROOT = Path(
-    os.environ.get(
-        "LEGAL_CORPORA_ROOT",
-        str(Path.home() / ".ipfs_datasets" / "legal-corpora"),
-    )
-)
+ROOT = _CORPORA
 SCHEMA_PATH = ROOT / "_templates" / "collection_record.schema.json"
 PT = timezone(timedelta(hours=-7))
 DEFAULT_UA = (
@@ -302,9 +303,68 @@ def existing_ids(cc: str) -> set[str]:
     return {p.stem for p in d.glob("*.json")}
 
 
+def _quality_reject(cc: str, record: dict):
+    """env-gated quality filter (QUALITY_FILTER=1; module via QUALITY_FILTER_MODULE, default tip+29q). Fail-open on errors."""
+    if os.environ.get("QUALITY_FILTER") != "1":
+        return None
+    try:
+        import sys as _sys
+        _lp = "{_SCRAPERS.parent}/logs"
+        if _lp not in _sys.path:
+            _sys.path.append(_lp)
+        import importlib as _il
+        _qf = _il.import_module(os.environ.get("QUALITY_FILTER_MODULE", "quality_filter_tip30a"))
+        return _qf.classify_new(cc, record, None)  # classify + exact-duplicate vs tip+29p LIVE baseline
+    except Exception:
+        return None
+
+
+# tip+29t WRITE-ONCE SAFETY: a closer must NEVER overwrite/modify an existing instrument file (baseline text or title).
+# Active for the tip-pipeline CCs always (and for any CC when WRITE_ONCE=1). If the target exists, the record is written
+# under a NEW unique id (<id>-wN) instead; the quality filter then judges the new row (dup_url/dup_content -> quarantine).
+_WRITE_ONCE_CCS = {"bo", "az", "al", "ao", "do", "et", "ir", "mw", "zm", "la", "lk", "tn", "rs"}
+_WRITE_ONCE_LOG = "{_SCRAPERS.parent}/logs/write_once_guard.log"
+
+
+def _write_once_ident(cc: str, ident: str) -> str:
+    if cc not in _WRITE_ONCE_CCS and os.environ.get("WRITE_ONCE") != "1":
+        return ident
+    idir = ROOT / cc / "instruments"
+    if not (idir / f"{ident}.json").exists():
+        return ident
+    n = 2
+    while (idir / f"{ident}-w{n}.json").exists():
+        n += 1
+    new_ident = f"{ident}-w{n}"
+    try:
+        with open(_WRITE_ONCE_LOG, "a", encoding="utf-8") as _fh:
+            _fh.write(json.dumps({"ts": utcnow(), "cc": cc, "refused_overwrite": ident, "written_as": new_ident,
+                                  "argv": " ".join(__import__("sys").argv)[:200]}, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+    return new_ident
+
+
 def write_instrument(cc: str, record: dict) -> Path:
-    ident = record["id"]
+    ident = _write_once_ident(cc, record["id"])
+    if ident != record["id"]:
+        record = dict(record, id=ident)
     dest = ROOT / cc / "instruments" / f"{ident}.json"
+    if dest.exists():  # hard guard (race): never overwrite
+        return dest
+    _qr = _quality_reject(cc, record)
+    if _qr and not dest.exists():
+        qdest = ROOT / cc / os.environ.get("QUALITY_QDIR", "quarantine_quality_tip29q") / f"{ident}.json"
+        qdest.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write(qdest, json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+        try:
+            with open(os.environ.get("QUALITY_REJECT_LOG", "{_SCRAPERS.parent}/logs/quality_reject_tip29q.log"), "a", encoding="utf-8") as _fh:
+                _fh.write(json.dumps({"cc": cc, "id": ident, "reason": _qr, "url": record.get("source_url")}, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
+        return qdest
+    if _qr:
+        return dest
     dest.parent.mkdir(parents=True, exist_ok=True)
     body = json.dumps(record, ensure_ascii=False, indent=2) + "\n"
     atomic_write(dest, body)

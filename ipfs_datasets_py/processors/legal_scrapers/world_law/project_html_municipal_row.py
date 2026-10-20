@@ -80,7 +80,14 @@ def project_html_municipal_row(
     provenance["source_official"] = None
     for key in _PROVENANCE_ONLY:
         provenance[key] = row.get(key)
-    if "html" in record or record["text"] == row.get("html"):
+    text_value = record["text"]
+    html_value = row.get("html")
+    copied = (
+        isinstance(text_value, str)
+        and isinstance(html_value, str)
+        and text_value == html_value
+    )
+    if "html" in record or copied:
         raise RuntimeError("html must not be copied into a legal record")
     return record
 
