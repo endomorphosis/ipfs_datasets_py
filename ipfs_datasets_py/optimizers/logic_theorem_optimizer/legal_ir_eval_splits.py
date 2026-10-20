@@ -1084,6 +1084,12 @@ def authorize_legal_ir_split_use(
     operation: str,
     items: Sequence[Any] = (),
 ) -> LegalIRSplitGuardResult:
+    """Validate the manifest and every supplied item's resolved membership.
+
+    An empty item sequence validates only the manifest. A supplied item must
+    resolve at least one member through an explicit ID, citation or source span;
+    its complete resolved membership must satisfy the selected operation.
+    """
     resolved = (
         manifest
         if isinstance(manifest, LegalIRSplitManifest)
@@ -1096,7 +1102,7 @@ def authorize_legal_ir_split_use(
         raise ValueError(f"unknown LegalIR split operation: {operation!r}")
     disallowed: list[dict[str, Any]] = []
     by_id = {item.sample_id: item for item in resolved.examples}
-    for item in items:
+    for item_index, item in enumerate(items):
         sample_ids = _sequence_strings(_get(item, "sample_ids", default=None))
         sample_id = _string(_get(item, "sample_id", "id", default=""))
         if sample_id:
@@ -1117,6 +1123,9 @@ def authorize_legal_ir_split_use(
                 for example in resolved.examples
                 if example.source_span_key == source_key and source_key
             )
+        if not sample_ids:
+            disallowed.append({"reason": "sample_not_resolved_in_split_manifest", "item_index": item_index})
+            continue
         for sid in dict.fromkeys(sample_ids):
             split = resolved.assignments.get(sid)
             if split is None:
