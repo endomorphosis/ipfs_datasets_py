@@ -1,0 +1,106 @@
+{
+  "schema": "native4096-model-manager-public-qualification/v1",
+  "original_summary_sha256": "2d3c4d0eed61c42bdb13877fba17403297808737e6f79a4033828478e839dca6",
+  "original_summary_bytes": 4014,
+  "original_summary_path": "workspace/test-logs/federal-corpus-audits/native4096-model-manager-20261020-01/qualification-summary.json",
+  "qualification": {
+    "schema": "native4096-model-manager-qualification/v1",
+    "status": "passed",
+    "recorded_at_utc": "2026-10-20T20:36:21.592020+00:00",
+    "base_sha": "629169ed2798d0c9a05c747f4670f012656f187a",
+    "checkout": "/home/barberb/lift_coding/.worktrees/legal-ir-source-package-intake-main-integration-20261020",
+    "branch": "agent/legal-ir-model-manager-source4096-v2-20261020",
+    "request_sha256": "448a331685c2b835330c0de5665ac573ca195444237c68bd18b1777eebdba184",
+    "cases": {
+      "passed": 134,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "unchanged_legacy_passed": 88,
+      "new_source4096_passed": 46,
+      "excluded_existing": [
+        "test_fifo_is_refused_before_manager_without_blocking",
+        "test_declared_alias_is_supported_without_hash_path_discovery",
+        "test_alias_retarget_at_open_is_detected_even_for_equal_bytes"
+      ],
+      "full_suite_pass_claimed": false
+    },
+    "direct_source_pins_verified": 28,
+    "durable_files_verified": 428,
+    "durable_bytes_verified": 526551,
+    "prior_qualification_source_pins_preserved": 28,
+    "source_write_read_compute_storage_released": true,
+    "resource_closeout": {
+      "source_read_released": true,
+      "native_lease_released": true,
+      "storage_status": "released",
+      "reservation_id": "8bf00258f5d54f129741d3b978b4ddfa",
+      "resource_lease_id": "9edb9c8b03954f3f86f0878d82caa3b7",
+      "cleanup_errors": [],
+      "observed_survivors": 0
+    },
+    "files": {
+      "ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py": {
+        "preimage_sha256": "5d50f879d6e1e80fc68a29060680fcac9e234f62a3732f7c697f31360ca9506b",
+        "postimage_sha256": "d3ab419bbcea664c71a8294037a4579680e208e80dffd0cfdb55f60bf03f5091",
+        "bytes": 38931
+      },
+      "tests/unit/logic/formalization/autoencoder/test_ir_model_manager_import.py": {
+        "preimage_sha256": "216acf5017720ccc853d049a73398a1949952b589ed3df5fe368e12805d741a2",
+        "postimage_sha256": "6015fd42885a30e42b94fe7a2925709a27acc0942a980edfe2a8a307e340c583",
+        "bytes": 41462
+      },
+      "docs/autoencoders/ir_model_manager_import_v2.md": {
+        "preimage_sha256": null,
+        "postimage_sha256": "9f084c36ab531208bd7ab8179dc837c98e52932e84af625c886ca236bbaee69a",
+        "bytes": 3610
+      }
+    },
+    "qualification_scope": "Synthetic metadata, publisher-receipt and inert persistence controls; no actual ModelManager database, Hub operation, checkpoint tensors, native encoder, model training or Lean run.",
+    "separate_pending_gates": [
+      "Actual selected checkpoint publication/import and driver persisted readback.",
+      "4096 inventory/routing profile and decoder runtime delivery.",
+      "Statutory fidelity and model quality."
+    ],
+    "original_canonical_checkout_changed": false,
+    "private_runtime_overlay_count": 5,
+    "private_runtime_overlays_to_publish": false,
+    "evidence": {
+      "validation-request-01.json": {
+        "sha256": "448a331685c2b835330c0de5665ac573ca195444237c68bd18b1777eebdba184",
+        "bytes": 11133
+      },
+      "validation-launch-01.json": {
+        "sha256": "74584d4c54433d318722b9fdebe2ffd7484c05f0749d389b85a3dee62f92be6f",
+        "bytes": 1269
+      },
+      "native-01.stdout.txt": {
+        "sha256": "2f5c072bfb408c55953716a6f175e2d9949a7c024a1577db902d4b7338a9baa6",
+        "bytes": 5641
+      },
+      "run-01/exports/tests.xml": {
+        "sha256": "f3c3d63c3503b49eb05fbba7d37b0a14e0a474061964098a6d65b0b01020752d",
+        "bytes": 25914
+      },
+      "run-01/exports/collection.json": {
+        "sha256": "d7768d4e53a60126a9340db5604c99264b0bc67982bf60aabebd77097f4a68f8",
+        "bytes": 21335
+      },
+      "run-01/logs/result.json": {
+        "sha256": "7c903195f5d583ff3a435d484022640868f35dfe6bc40535bcd97749cb2326c0",
+        "bytes": 628
+      },
+      "run-01/logs/execution.json": {
+        "sha256": "b4e2053d7f60315ceac796d219cfe7f2fa51f19528eeeca04a86ee611567ca6c",
+        "bytes": 1018
+      },
+      "run-01/logs/validation-durability.json": {
+        "sha256": "961c9282948efb96631f690804391a78685abd6d9c0d5491e2c7281c781cfc19",
+        "bytes": 92434
+      }
+    }
+  },
+  "publication_scope": "Importer, owning tests, guide and this summary only. Five retained runtime overlays are private qualification inputs and excluded from this commit.",
+  "portability_limit": "This summary does not publish the original machine-bound requests/fixtures/runtime captures or establish inference/DB/Hub qualification from a clone.",
+  "hosted_CI_pass_claimed": false
+}

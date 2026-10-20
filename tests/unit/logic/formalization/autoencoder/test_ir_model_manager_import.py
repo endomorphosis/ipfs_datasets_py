@@ -570,3 +570,207 @@ def test_component_records_mix_with_existing_lane_records_without_relabeling(tmp
     assert result["registered_count"] == 2
     assert manager.persisted[original["model_id"]] == original
     assert manager.persisted[metadata["model_id"]]["huggingface_config"]["ir_checkpoint"]["dimension"] is None
+
+
+def make_source4096_data(tmp_path, *, scheme="lfs-payload-sha256", count=1,
+                         profile="leanstral4096:cpu1:last:l2:single-sequence:tokens512:lazy-mmap:v2"):
+    """Synthetic metadata, never a claim of a native forward or model state."""
+    data = make_data(tmp_path, scheme=scheme, count=count)
+    data["plan"]["schema"] = adapter.SCHEMA_V2
+    repo = "Example/legal-ir-autoencoder-4096d"
+    data["publication"]["repository_id"] = repo
+    evidence = save(tmp_path / "synthetic-native-evidence.json", {"synthetic": True, "native_executed": False})
+    producer = {"profile": profile,
+        "model_sha256": "a" * 64, "worker_sha256": "b" * 64, "worker_source_sha256": "c" * 64,
+        "owner_source_sha256": "d" * 64, "vocabulary_owner_source_sha256": "e" * 64,
+        "library_sha256": {"/explicit/synthetic/library.so": "f" * 64}}
+    source = {"schema": adapter.SOURCE_PROFILE_SCHEMA, "expected_producer": producer,
+        "pooling": "last", "normalization": "l2", "attention": "causal", "context_tokens": 512,
+        "sequences": 1, "source_text_required": True, "evidence_pins": [evidence],
+        "evidence_scope": "pinned_historical_metadata_only", "ordinary_receipt_is_capability": False}
+    for record in data["plan"]["models"]:
+        metadata = record["model_metadata"]
+        record["release"]["repository_id"] = repo
+        metadata["source_url"] = f"https://huggingface.co/{repo}/tree/{record['release']['revision']}"
+        identity = metadata["huggingface_config"]["ir_checkpoint"]
+        identity.update(asset_binding_schema=adapter.SOURCE_BINDING_SCHEMA, ir_family_id="legal_ir",
+            dimension=4096, dimension_role="source_input_representation_width",
+            schema_version="bound-native4096-source-span-checkpoint/v1",
+            task_id="source_text_and_representation_to_legal_ir", source_representation=deepcopy(source))
+        metadata.update(architecture="utf8-byte-bidirectional-gru-native-4096-film-spans/v1",
+            inputs=[{"name": "source_text", "data_type": "text", "dtype": "utf8"},
+                {"name": "source_representation", "data_type": "embeddings", "shape": [4096], "dtype": "float32"}],
+            outputs=[{"name": "legal_ir", "data_type": "text", "dtype": "utf8"}])
+        metadata["huggingface_config"].update(complete_runtime_io_contract=False,
+            native_execution_verified_by_importer=False, source_compatibility_verified=False,
+            live_native_capability_restored=False)
+        identity["record_id"] = metadata["model_id"] = source4096_id(record)
+    repin(data)
+    return data
+
+
+def source4096_id(record):
+    identity = record["model_metadata"]["huggingface_config"]["ir_checkpoint"]
+    return adapter.ir_model_source_record_id_v2(identity["ir_family_id"], identity["dimension_role"],
+        identity["role"], record["checkpoint_pin"]["sha256"], schema_version=identity["schema_version"],
+        task_id=identity["task_id"], source_representation=identity["source_representation"])
+
+
+def invoke_v2(data, manager=None, *, factory=deepcopy, **kwargs):
+    manager = manager or InertManager()
+    return adapter.import_ir_model_manager_records_v2(data["manifest"], release_receipts=data["releases"],
+        manager=manager, readback=manager.readback, metadata_factory=factory, **kwargs)
+
+
+@pytest.mark.parametrize("width,expected", [
+    (8, "ir-model-asset-binding/v1:256a250cd544ed116d2371a1535e36c80475d00e6ce8c63db9148b40a0b85428"),
+    (384, "ir-model-asset-binding/v1:117b2785390687f722329d0e4bf43d416eca8ccec48dbe29be99715c166f9555"),
+    (768, "ir-model-asset-binding/v1:4f303abea13bc38616e1db6fdb21d6f210cb1f7398aa90cac5f3363a287362c2")])
+def test_v1_golden_ids_remain_unchanged(width, expected):
+    assert adapter.ir_model_asset_record_id("security_ir", width, "input_embedding", "baseline", "a" * 64) == expected
+
+
+def test_v1_never_silently_accepts_v2_or_source4096_metadata(tmp_path):
+    data, manager = make_source4096_data(tmp_path), InertManager()
+    with pytest.raises(adapter.ModelManagerImportError, match="schema"):
+        invoke(data, manager)
+    data["plan"]["schema"] = adapter.SCHEMA
+    repin(data)
+    with pytest.raises(adapter.ModelManagerImportError, match="v2 importer"):
+        invoke(data, manager)
+    with pytest.raises(adapter.ModelManagerImportError):
+        adapter.ir_model_asset_record_id("legal_ir", 4096, "input_embedding", "head", "a" * 64)
+    assert manager.get_calls == manager.add_calls == []
+
+
+@pytest.mark.parametrize("scheme", ["lfs-payload-sha256", "git-blob-sha1"])
+@pytest.mark.parametrize("profile", ["leanstral4096:cpu1:last:l2:single-sequence:tokens512:lazy-mmap:v2",
+    "leanstral4096:cpu1:last:l2:single-sequence:tokens512:layer-reclaim:v3"])
+def test_v2_registers_explicit_source4096_metadata_with_false_native_authority(tmp_path, scheme, profile):
+    data, manager = make_source4096_data(tmp_path, scheme=scheme, profile=profile), InertManager()
+    result = invoke_v2(data, manager)
+    assert result["schema"] == adapter.RESULT_SCHEMA_V2 and result["registered_count"] == 1
+    assert manager.persisted[result["outcomes"][0]["model_id"]] == data["plan"]["models"][0]["model_metadata"]
+    assert result["authority"]["registration_metadata_verified"] is True
+    assert all(value is False for key, value in result["authority"].items() if key != "registration_metadata_verified")
+    assert all(result["authority"][key] is False for key in (
+        "native_execution_verified_by_importer", "source_compatibility_verified", "live_native_capability_restored"))
+
+
+def test_v2_can_retain_legacy_records_and_ids_without_migration(tmp_path):
+    data, manager = make_source4096_data(tmp_path, count=2), InertManager()
+    old_root = tmp_path / "legacy"
+    old_root.mkdir()
+    old = make_data(old_root)
+    original = deepcopy(old["plan"]["models"][0])
+    data["plan"]["models"].append(original)
+    # A second receipt keeps its exact independent release binding.
+    repin(data)
+    data["releases"].extend(old["releases"])
+    result = invoke_v2(data, manager)
+    assert result["registered_count"] == 3
+    assert manager.persisted[original["model_metadata"]["model_id"]] == original["model_metadata"]
+
+
+def test_v2_source_identity_binds_producer_and_checkpoint_schema_but_not_evidence_locator(tmp_path):
+    data = make_source4096_data(tmp_path)
+    record = data["plan"]["models"][0]
+    identity = record["model_metadata"]["huggingface_config"]["ir_checkpoint"]
+    original = source4096_id(record)
+    pin0 = identity["source_representation"]["evidence_pins"][0]
+    alias = tmp_path / "same-evidence-other-location.json"
+    alias.write_bytes(Path(pin0["path"]).read_bytes())
+    identity["source_representation"]["evidence_pins"] = [pin(alias)]
+    assert source4096_id(record) == original
+    identity["schema_version"] = "native-4096-source-span-checkpoint/v1"
+    assert source4096_id(record) != original
+    identity["schema_version"] = "bound-native4096-source-span-checkpoint/v1"
+    identity["source_representation"]["expected_producer"]["worker_sha256"] = "1" * 64
+    assert source4096_id(record) != original
+
+
+@pytest.mark.parametrize("mutation", ["dimension", "bool_dimension", "family", "role", "schema", "task",
+    "missing_descriptor", "extra_descriptor", "producer_profile", "producer_hash", "producer_extra",
+    "pooling", "normalization", "attention", "context", "sequences", "source_text", "capability", "scope",
+    "missing_evidence", "extra_pin", "bad_library", "duplicate_evidence", "profile", "format", "io",
+    "runtime_io", "native_authority", "ready", "teacher", "proof", "source_id", "architecture", "missing_flag"])
+def test_v2_bad_native_declarations_refuse_before_manager_or_factory(tmp_path, mutation):
+    data, manager = make_source4096_data(tmp_path), InertManager()
+    metadata = data["plan"]["models"][0]["model_metadata"]
+    config, identity = metadata["huggingface_config"], metadata["huggingface_config"]["ir_checkpoint"]
+    source = identity["source_representation"]
+    if mutation == "dimension": identity["dimension"] = 384
+    elif mutation == "bool_dimension": identity["dimension"] = True
+    elif mutation == "family": identity["ir_family_id"] = "security_ir"
+    elif mutation == "role": identity["dimension_role"] = "latent"
+    elif mutation == "schema": identity["schema_version"] = "arbitrary/v1"
+    elif mutation == "task": identity["task_id"] = "vector_only_reconstruction"
+    elif mutation == "missing_descriptor": identity.pop("source_representation")
+    elif mutation == "extra_descriptor": source["native_proof"] = True
+    elif mutation == "producer_profile": source["expected_producer"]["profile"] = "arbitrary4096"
+    elif mutation == "producer_hash": source["expected_producer"]["model_sha256"] = "A" * 64
+    elif mutation == "producer_extra": source["expected_producer"]["authority"] = True
+    elif mutation == "pooling": source["pooling"] = "mean"
+    elif mutation == "normalization": source["normalization"] = "none"
+    elif mutation == "attention": source["attention"] = "bidirectional"
+    elif mutation == "context": source["context_tokens"] = 8192
+    elif mutation == "sequences": source["sequences"] = True
+    elif mutation == "source_text": source["source_text_required"] = False
+    elif mutation == "capability": source["ordinary_receipt_is_capability"] = True
+    elif mutation == "scope": source["evidence_scope"] = "live_verified"
+    elif mutation == "missing_evidence": source["evidence_pins"] = []
+    elif mutation == "extra_pin": source["evidence_pins"][0]["authority"] = True
+    elif mutation == "bad_library": source["expected_producer"]["library_sha256"] = {"../bad.so": "1" * 64}
+    elif mutation == "duplicate_evidence": source["evidence_pins"].append(deepcopy(source["evidence_pins"][0]))
+    elif mutation == "profile": identity["profile_id"] = "invented-qualified-profile"
+    elif mutation == "format": identity["format_id"] = "invented-qualified-format"
+    elif mutation == "io": metadata["inputs"] = metadata["inputs"][1:]
+    elif mutation == "runtime_io": config["complete_runtime_io_contract"] = True
+    elif mutation == "native_authority": config["native_execution_verified_by_importer"] = True
+    elif mutation in ("ready", "teacher", "proof"):
+        identity[{"ready": "runtime_ready", "teacher": "teacher_qualified", "proof": "proof_authority"}[mutation]] = True
+    elif mutation == "source_id": identity["record_id"] = metadata["model_id"] = "ir-model-source-binding/v2:" + "0" * 64
+    elif mutation == "architecture": metadata["architecture"] = "arbitrary-network"
+    elif mutation == "missing_flag": config.pop("source_compatibility_verified")
+    repin(data)
+    def forbidden_factory(value):
+        pytest.fail("Invalid native declaration reached metadata factory")
+    with pytest.raises(adapter.ModelManagerImportError):
+        invoke_v2(data, manager, factory=forbidden_factory)
+    assert manager.get_calls == manager.add_calls == []
+
+
+def test_v2_evidence_drift_before_dispatch_and_during_factory_is_detected(tmp_path):
+    data, manager = make_source4096_data(tmp_path), InertManager()
+    source = data["plan"]["models"][0]["model_metadata"]["huggingface_config"]["ir_checkpoint"]["source_representation"]
+    path = Path(source["evidence_pins"][0]["path"])
+    raw = path.read_bytes()
+    path.write_bytes(raw + b" ")
+    with pytest.raises(adapter.ModelManagerImportError):
+        invoke_v2(data, manager)
+    assert manager.get_calls == manager.add_calls == []
+    path.write_bytes(raw)
+    def changing_factory(value):
+        path.write_bytes(raw + b" ")
+        return deepcopy(value)
+    with pytest.raises(adapter.ModelManagerImportError):
+        invoke_v2(data, manager, factory=changing_factory)
+    assert manager.add_calls == []
+
+
+def test_v2_requires_fresh_persistence_and_preserves_idempotent_activity(tmp_path):
+    data, manager = make_source4096_data(tmp_path), InertManager()
+    manager.persist = False
+    with pytest.raises(adapter.ModelManagerImportError) as failure:
+        invoke_v2(data, manager)
+    assert failure.value.outcomes[0]["add_model_returned"] is True
+    assert failure.value.outcomes[0]["persisted_metadata_matched"] is False
+    manager.persist = True
+    stored = deepcopy(data["plan"]["models"][0]["model_metadata"])
+    stored["inference_count"] = 17
+    model_id = stored["model_id"]
+    manager.models[model_id] = manager.persisted[model_id] = stored
+    manager.add_calls.clear()
+    result = invoke_v2(data, manager)
+    assert result["already_present_count"] == 1 and manager.add_calls == []
+    assert manager.persisted[model_id]["inference_count"] == 17
