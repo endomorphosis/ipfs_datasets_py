@@ -1648,6 +1648,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-CONST-A6 Constitution Article 6 span inventory
 
+- Status: completed
 - status: todo
 - goal id: LIRAE-CONST
 - depends on: none
