@@ -8,16 +8,22 @@ import argparse
 import hashlib
 import importlib.util
 import importlib
+import io
 import json
 import math
 from pathlib import Path
 import re
 import sys
+import stat
+import struct
+import zipfile
+import zlib
 
 ROOT = Path(__file__).resolve().parents[3]
 PLAN = Path('ipfs_datasets_py/logic/autoformal/legal_ir_autoencoder_supervisor_plan.json')
 BOARD = Path('ipfs_datasets_py/logic/autoformal/LIRAE-TODO.md')
 SCRIPT = 'scripts/ops/legal_ir/legal_ir_supervisor_contract.py'
+MATERIALIZER = 'scripts/ops/legal_ir/materialize_legal_ir_inventory.py'
 EVIDENCE = Path('docs/implementation/reports/evidence/legal_ir_autoencoder')
 SCHEMA = 'legal-ir-supervisor-task-receipt/v1'
 REVISION = '5016b86a273ce5e4ffd066c5ae9f5fe494dd417e'
@@ -132,17 +138,44 @@ def task_contract(task):
         'width': 'JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. The required source-bound replay capability is currently unavailable: retain a blocked-input diagnostic, never claim this task completed from unavailable inventory or a different authored cohort. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.',
         'method': 'lean_source artifact holds actual Lean source. evidence includes both pinned source_hashes; host sealed validator supplies lake_ok by running real lake build Legal with the trusted deployed toolchain. Do not invent a provider-side compiler observation. Skipped pinned-source tests supply no completion evidence.',
     }[family]
-    return {'outputs': [task_dir + '/receipt.json'], 'allowed_paths': allowed, 'validation_commands': commands, 'receipt_instructions': instructions, 'required_validation_executables': ['lake', 'lean'] if family == 'method' else [WIDTH_REPLAY_EXECUTABLE] if family == 'width' else []}
+    result = {'outputs': [task_dir + '/receipt.json'], 'allowed_paths': allowed, 'validation_commands': commands, 'receipt_instructions': instructions, 'required_validation_executables': ['lake', 'lean'] if family == 'method' else [WIDTH_REPLAY_EXECUTABLE] if family == 'width' else []}
+    if task.get('local_inventory') is True:
+        require(family == 'uscode', 'local inventory route requires a US Code shard')
+        labels = ['sections', 'spans', 'entities']
+        archives = [task_dir + '/' + label + '.zip' for label in labels]
+        result.update(
+            outputs=[task_dir + '/receipt.json', *archives],
+            allowed_paths=[task_dir],
+            validation_commands=[commands[0], 'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + MATERIALIZER + ' --task ' + task_id + ' && ' + commands[1]],
+            provider_role='deterministic-only', context_budget_tokens=0,
+            proposal_artifact_envelope={
+                'schema': 'ipfs_accelerate_py/agent-supervisor/task-artifact-envelope@3',
+                'binary_paths': archives, 'max_file_bytes': 8_000_000,
+                'max_patch_bytes': 16_000_000, 'max_output_bytes': 24_000_000,
+            },
+            receipt_instructions=instructions + ' Reviewed local inventory retains the complete source plaintext in deterministic single-member JSON ZIP artifacts. USC inventory uses one full-section span per nonempty source row; it claims no sentence-level formalization. Each ZIP contains only <kind>.json. Independent family tests and the protected checker remain mandatory; the native proposal gate exclusively decides completion.',
+        )
+    return result
 
 
-def enrich(root):
+def enrich(root, *, enable_local_inventory=False):
     root = Path(root)
     plan = json.loads((root / PLAN).read_text())
+    chunks = re.split(r'(?=^## )', (root / BOARD).read_text(), flags=re.MULTILINE)
+    pending = set()
+    if enable_local_inventory:
+        for chunk in chunks:
+            match = re.match(r'## (LIRAE-[A-Z0-9-]+)\b', chunk)
+            statuses = re.findall(r'^- status:\s*([^\n]+)', chunk, flags=re.MULTILINE | re.IGNORECASE)
+            if match and statuses and statuses[-1].strip().lower() in {'todo', 'ready'} and kind(match[1]) == 'uscode':
+                pending.add(match[1])
     contracts = {}
     for task in plan['tasks']:
+        if task['task_id'] in pending:
+            task['local_inventory'] = True
         contracts[task['task_id']] = task_contract(task)
-        task.update(contracts[task['task_id']])
-    chunks = re.split(r'(?=^## )', (root / BOARD).read_text(), flags=re.MULTILINE)
+        if not enable_local_inventory or task['task_id'] in pending:
+            task.update(contracts[task['task_id']])
     seen = set()
     for index, chunk in enumerate(chunks):
         match = re.match(r'## (LIRAE-[A-Z0-9-]+)\b', chunk)
@@ -150,16 +183,23 @@ def enrich(root):
             continue
         task_id = match[1]
         seen.add(task_id)
+        if enable_local_inventory and task_id not in pending:
+            continue
         contract = contracts[task_id]
-        chunk = re.sub(r'^- (?:outputs|allowed paths|predicted files|receipt instructions|validation|required validation executables):[^\n]*\n?', '', chunk, flags=re.MULTILINE)
+        chunk = re.sub(r'^- (?:outputs|allowed paths|predicted files|receipt instructions|validation|required validation executables|provider role|context budget tokens|proposal artifact envelope):[^\n]*\n?', '', chunk, flags=re.MULTILINE)
         lines = ['- outputs: ' + ', '.join(contract['outputs']), '- allowed paths: ' + ', '.join(contract['allowed_paths']), '- receipt instructions: ' + contract['receipt_instructions'], '- validation: ' + '; '.join(contract['validation_commands'])]
         if contract['required_validation_executables']:
             lines.append('- required validation executables: ' + ', '.join(contract['required_validation_executables']))
+        for label, key in [('provider role', 'provider_role'), ('context budget tokens', 'context_budget_tokens')]:
+            if key in contract:
+                lines.append('- ' + label + ': ' + str(contract[key]))
+        if 'proposal_artifact_envelope' in contract:
+            lines.append('- proposal artifact envelope: ' + json.dumps(contract['proposal_artifact_envelope'], separators=(',', ':'), sort_keys=True))
         chunks[index] = chunk.rstrip() + '\n' + '\n'.join(lines) + '\n\n'
     require(seen == set(contracts), 'board/plan task IDs differ')
     (root / PLAN).write_text(json.dumps(plan, indent=2) + '\n')
     (root / BOARD).write_text(''.join(chunks).rstrip() + '\n')
-    return {'task_count': len(contracts), 'enriched': True}
+    return {'task_count': len(contracts), 'enriched': True, **({'local_inventory_enabled_count': len(pending)} if enable_local_inventory else {})}
 
 
 def check_board(root):
@@ -180,6 +220,11 @@ def check_board(root):
             require('- ' + label + ': ' + value in chunk, 'stale board ' + label + ' for ' + task_id)
         if contract['required_validation_executables']:
             require('- required validation executables: ' + ', '.join(contract['required_validation_executables']) in chunk, 'stale required executables for ' + task_id)
+        for label, key in [('provider role', 'provider_role'), ('context budget tokens', 'context_budget_tokens')]:
+            if key in contract:
+                require('- ' + label + ': ' + str(contract[key]) in chunk, 'stale local execution metadata for ' + task_id)
+        if 'proposal_artifact_envelope' in contract:
+            require('- proposal artifact envelope: ' + json.dumps(contract['proposal_artifact_envelope'], separators=(',', ':'), sort_keys=True) in chunk, 'stale artifact envelope for ' + task_id)
         require(all(task.get(key) == value for key, value in contract.items()), 'stale plan contract ' + task_id)
     require(sha((root / CONSTITUTION).read_bytes()) == CONSTITUTION_SHA256, 'retained Constitution input differs')
     return {'task_count': len(plan['tasks']), 'board_contract_valid': True}
@@ -221,7 +266,55 @@ def read_artifacts(root, task_id, receipt):
 
 def payload(data, label):
     require(label in data, 'missing ' + label + ' artifact')
-    return json.loads(data[label])
+    raw = data[label]
+    if not raw.startswith(b'PK\x03\x04'):
+        return json.loads(raw)
+    require(label in {'sections', 'spans', 'entities'}, 'ZIP is only supported for USC inventory arrays')
+    maximum = 128 * 1024 * 1024
+    require(30 <= len(raw) <= maximum, 'bounded JSON ZIP required')
+    # Reject multi-member/ZIP64/multi-disk/comment archives before ZipFile
+    # constructs its directory objects. No filesystem extraction is performed.
+    end = struct.unpack('<4s4H2LH', raw[-22:])
+    require(end[0] == b'PK\x05\x06' and end[1:5] == (0, 0, 1, 1)
+            and end[7] == 0 and end[6] + end[5] == len(raw) - 22,
+            'one ordinary JSON ZIP member without archive comment required')
+    try:
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            members = archive.infolist()
+            require(len(members) == 1 and archive.comment == b'', 'one JSON ZIP member required')
+            member = members[0]
+            require(member.filename == label + '.json' and member.header_offset == 0
+                    and not member.is_dir() and stat.S_ISREG(member.external_attr >> 16),
+                    'ordinary exact JSON ZIP member required')
+            require(member.flag_bits & ~0x800 == 0 and member.extra == member.comment == b''
+                    and member.compress_type in {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED},
+                    'encrypted, extra-field or unsupported JSON ZIP refused')
+            require(0 < member.file_size <= maximum and 0 < member.compress_size <= maximum,
+                    'JSON ZIP uncompressed size exceeds bound')
+            header = struct.unpack('<4s5H3L2H', raw[:30])
+            name_end = 30 + header[9]
+            require(header[0] == b'PK\x03\x04' and header[10] == 0
+                    and raw[30:name_end] == (label + '.json').encode()
+                    and header[2] == member.flag_bits and header[3] == member.compress_type
+                    and header[6:9] == (member.CRC, member.compress_size, member.file_size)
+                    and name_end + member.compress_size == end[6],
+                    'JSON ZIP local member/header differs')
+            compressed = raw[name_end:end[6]]
+            if member.compress_type == zipfile.ZIP_DEFLATED:
+                decoder = zlib.decompressobj(-15)
+                content = decoder.decompress(compressed, maximum + 1)
+                require(decoder.eof and not decoder.unused_data and not decoder.unconsumed_tail,
+                        'JSON ZIP stream is incomplete, trailing or exceeds bound')
+            else:
+                content = compressed
+            require(len(content) == member.file_size <= maximum
+                    and zlib.crc32(content) & 0xffffffff == member.CRC,
+                    'JSON ZIP size/CRC differs')
+    except (zipfile.BadZipFile, RuntimeError, OSError, struct.error, zlib.error) as error:
+        raise ContractError('invalid bounded JSON ZIP artifact') from error
+    result = json.loads(content)
+    require(isinstance(result, list), 'USC JSON ZIP must retain an array payload')
+    return result
 
 
 def usc_rows(title, *, source_parquet=None):
@@ -363,13 +456,14 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument('--enrich', action='store_true')
+    modes.add_argument('--enable-local-inventory', action='store_true', help='Enable reviewed local inventory only for currently pending US Code shards; completed contracts remain unchanged')
     modes.add_argument('--check-board', action='store_true')
     modes.add_argument('--check-task', metavar='TASK_ID')
     parser.add_argument('--root', type=Path, default=ROOT)
     parser.add_argument('--corpus-parquet', type=Path, help='Exact pinned Parquet for local diagnostics; its immutable digest is always checked')
     args = parser.parse_args(argv)
     try:
-        result = enrich(args.root) if args.enrich else check_board(args.root) if args.check_board else validate(args.root, args.check_task, source_parquet=args.corpus_parquet)
+        result = enrich(args.root, enable_local_inventory=True) if args.enable_local_inventory else enrich(args.root) if args.enrich else check_board(args.root) if args.check_board else validate(args.root, args.check_task, source_parquet=args.corpus_parquet)
     except WidthReplayUnavailable as exc:
         print(json.dumps(exc.receipt, sort_keys=True), file=sys.stderr)
         return 75
