@@ -193,14 +193,15 @@ def payload(data, label):
     return json.loads(data[label])
 
 
-def usc_rows(title):
-    require(PINNED_PARQUET.is_file(), 'exact pinned US Code deployment input missing')
-    with PINNED_PARQUET.open('rb') as stream:
+def usc_rows(title, *, source_parquet=None):
+    parquet = Path(source_parquet) if source_parquet is not None else PINNED_PARQUET
+    require(parquet.is_file(), 'exact pinned US Code input missing; container diagnostics may pass --corpus-parquet PATH to the exact downloaded snapshot (keep downloads in /tmp)')
+    with parquet.open('rb') as stream:
         require(hashlib.file_digest(stream, 'sha256').hexdigest() == PARQUET_SHA256, 'US Code Parquet input digest differs')
     import pyarrow.parquet as pq
     result = []
     source_row_index = 0
-    for batch in pq.ParquetFile(PINNED_PARQUET).iter_batches(batch_size=4000, columns=['ipfs_cid', 'title_number', 'section_number', 'text']):
+    for batch in pq.ParquetFile(parquet).iter_batches(batch_size=4000, columns=['ipfs_cid', 'title_number', 'section_number', 'text']):
         for row in batch.to_pylist():
             row['source_row_index'] = source_row_index
             source_row_index += 1
@@ -209,11 +210,12 @@ def usc_rows(title):
     return sorted(result, key=lambda row: (str(row['section_number'] or ''), str(row['ipfs_cid'])))
 
 
-def validate_uscode(shard, receipt, data):
+def validate_uscode(shard, receipt, data, *, source_parquet=None):
     source = receipt.get('source', {})
     require(source.get('repository') == 'justicedao/ipfs_uscode' and source.get('revision') == REVISION, 'US Code pin differs')
     require(all(receipt.get('evidence', {}).get(key) == shard[key] for key in ('title', 'start', 'end', 'count')), 'shard identity differs')
-    expected = usc_rows(str(shard['title']))[shard['start']:shard['end']]
+    rows = usc_rows(str(shard['title'])) if source_parquet is None else usc_rows(str(shard['title']), source_parquet=source_parquet)
+    expected = rows[shard['start']:shard['end']]
     sections, spans, entities = [payload(data, label) for label in ('sections', 'spans', 'entities')]
     require(all(isinstance(rows, list) for rows in (sections, spans, entities)), 'section/span/entity arrays required')
     require(len(expected) == shard['count'] == len(sections), 'all pinned sections need rows')
@@ -291,7 +293,7 @@ def validate_width(task_id, receipt, data):
         require(row.get('encoder_executed') is False and row.get('development_result') == {'successful': 0, 'total': 12}, 'reuse saved vectors and retain 0/12')
 
 
-def validate(root, task_id):
+def validate(root, task_id, *, source_parquet=None):
     root = Path(root).resolve()
     plan = json.loads((root / PLAN).read_text())
     require(any(task['task_id'] == task_id for task in plan['tasks']), 'task absent from plan')
@@ -302,7 +304,7 @@ def validate(root, task_id):
     false_flags(receipt.get('authority'), family == 'constitution')
     data = read_artifacts(root, task_id, receipt)
     if family == 'uscode':
-        validate_uscode(next(row for row in plan['shards'] if row['task_id'] == task_id), receipt, data)
+        validate_uscode(next(row for row in plan['shards'] if row['task_id'] == task_id), receipt, data, source_parquet=source_parquet)
     elif family == 'constitution':
         validate_constitution(root, task_id, receipt, data)
     elif family == 'width':
@@ -314,7 +316,7 @@ def validate(root, task_id):
         require(not re.search(r'\b(sorry|axiom)\b', source), 'Lean proof escape')
         lean = owner(root, 'lean_units')
         require(source == lean.render_term_lean('object', 'born alive', statute_ids=['usc:us:1:8', 'usc:us:10:1059']), 'method source differs from pinned template')
-        found = {row['ipfs_cid']: sha(row['text'].encode()) for title in ('1', '10') for row in usc_rows(title)}
+        found = {row['ipfs_cid']: sha(row['text'].encode()) for title in ('1', '10') for row in (usc_rows(title) if source_parquet is None else usc_rows(title, source_parquet=source_parquet))}
         require(found.get('bafkreig4hls5clk3wa5iec5oa575e7gcpnyn3smiicsxgucu4yl654cvnu') == SAMPLE_HASHES[1] and found.get('bafkreihd2kvpadnqo2bwhjti7sq3kunzamoicottjgy32kva6eduqkcvru') == SAMPLE_HASHES[0], 'method source plaintext pins differ')
         result = lean.probe_lean_source(source)
         require(result.get('lake_ok') is True and result.get('admitted') is False and result.get('formalized') is False, 'real lake build Legal failed')
@@ -328,9 +330,10 @@ def main(argv=None):
     modes.add_argument('--check-board', action='store_true')
     modes.add_argument('--check-task', metavar='TASK_ID')
     parser.add_argument('--root', type=Path, default=ROOT)
+    parser.add_argument('--corpus-parquet', type=Path, help='Exact pinned Parquet for local diagnostics; its immutable digest is always checked')
     args = parser.parse_args(argv)
     try:
-        result = enrich(args.root) if args.enrich else check_board(args.root) if args.check_board else validate(args.root, args.check_task)
+        result = enrich(args.root) if args.enrich else check_board(args.root) if args.check_board else validate(args.root, args.check_task, source_parquet=args.corpus_parquet)
     except (ValueError, KeyError, TypeError, OSError, StopIteration) as exc:
         print('LegalIR contract failed: ' + str(exc), file=sys.stderr)
         return 1

@@ -343,3 +343,46 @@ def test_real_retained_source_pin_and_method_task_identity():
     assert [task["task_id"] for task in methods] == ["LIRAE-METHOD-01"]
     assert contract.REVISION == "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e"
     assert contract.check_board(ROOT) == {"task_count": 134, "board_contract_valid": True}
+
+
+def test_explicit_corpus_diagnostic_checks_real_pinned_bytes_without_changing_default(tmp_path, monkeypatch):
+    import hashlib
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    task_id = 'LIRAE-USC-T01'
+    text = 'Retained source plaintext.'
+    parquet = tmp_path / 'download.parquet'
+    pq.write_table(pa.table({'ipfs_cid': ['source-cid'], 'title_number': ['1'],
+                             'section_number': ['8'], 'text': [text]}), parquet)
+    monkeypatch.setattr(contract, 'PARQUET_SHA256', hashlib.sha256(parquet.read_bytes()).hexdigest())
+    default = tmp_path / 'unavailable-operator-cache.parquet'
+    monkeypatch.setattr(contract, 'PINNED_PARQUET', default)
+    shard = {'task_id': task_id, 'title': '1', 'start': 0, 'end': 1, 'count': 1}
+    write_json(tmp_path / contract.PLAN, {'tasks': [{'task_id': task_id}], 'shards': [shard]})
+    task_dir = contract.directory(task_id)
+    artifacts = []
+    for label, value in {'sections': [false_row(ipfs_cid='source-cid', text=text,
+            source_text_sha256=contract.sha(text.encode()), status='abstain', reason='explicit uncompiled inventory')],
+            'spans': [], 'entities': []}.items():
+        path = task_dir / (label + '.json')
+        write_json(tmp_path / path, value)
+        artifacts.append({'kind': label, 'path': path.as_posix(), 'sha256': contract.sha((tmp_path / path).read_bytes())})
+    write_json(tmp_path / task_dir / 'receipt.json', {'schema': contract.SCHEMA, 'task_id': task_id,
+        'task_kind': 'uscode', 'status': 'inventory', 'authority': false_row(),
+        'source': {'repository': 'justicedao/ipfs_uscode', 'revision': contract.REVISION},
+        'evidence': shard, 'artifacts': artifacts})
+    command = ['--root', str(tmp_path), '--check-task', task_id]
+    assert contract.main(command) == 1
+    assert contract.main(command + ['--corpus-parquet', str(parquet)]) == 0
+    assert contract.PINNED_PARQUET == default
+    assert contract.main(command) == 1
+    parquet.write_bytes(parquet.read_bytes() + b'changed')
+    assert contract.main(command + ['--corpus-parquet', str(parquet)]) == 1
+
+
+def test_corpus_override_authenticates_digest_before_parsing(tmp_path, monkeypatch):
+    source = tmp_path / 'untrusted.parquet'
+    source.write_bytes(b'invented corpus')
+    monkeypatch.setattr(contract, 'PARQUET_SHA256', '0' * 64)
+    with pytest.raises(contract.ContractError, match='digest differs'):
+        contract.usc_rows('1', source_parquet=source)
