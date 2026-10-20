@@ -936,3 +936,54 @@ fixtures and actual storage codecs, with genuine deterministic compiler owners
 and selected package startup isolation. It does not execute numerical engines,
 providers, training or Lean, authenticate legal interpretation, or admit a
 source-context graph or unified Lean corpus.
+
+## Coordinate-bearing source/span/entity join
+
+The existing `legal_source_span_entity_join_v1` owner now exposes the explicit
+`prepare_source_span_entity_join_manifest_v2` and
+`validate_source_span_entity_join_manifest_v2` APIs. They consume the qualified
+paired-v3 coordinate reader, existing five-file source-package metadata intake
+and existing twelve-field entity metadata contract. This port reuses the
+source-package owner and owning tests; it introduces no second join registry,
+entity scanner, graph builder or model path.
+
+Use `legal-source-span-entity-join-request/v2` with the same closed argument
+layout as v1 and a `legal-paired-manifest-inventory-request/v2` paired selection.
+That selection independently pins the complete coordinate report as well as the
+exact manifest bytes. V2 admits one complete bundle and 1–64 declared physical
+rows. Both the report pin and row bounds are checked before source preparation
+or payload-table I/O. The first coordinate profile requires empty legacy joins;
+v1 keeps the historical candidate recipe and paired-v1/v2 selection.
+
+The exact ordered report UTF8 string remains once in the embedded payload
+intake, and each row reference retains its original global span index and
+canonical provenance reference. Equal text does not collapse physical rows or
+select an occurrence in another source namespace. Source-release correspondence
+remains unverified, entity semantics remain unavailable, and graph, training and
+Lean authority remain false. The separate existing entity-census companion is
+not implicitly upgraded to this new join profile.
+
+Bounded original metadata snapshots, selected source pins and physical file
+witnesses are checked at closing. Every closing check is attempted on failure,
+with secondary findings attached to the original exception. The validator also
+checks the offered report after full replay. These are ordered custody checks;
+they do not establish an atomic three-repository snapshot or legal meaning.
+
+Fresh qualification passed **128 cases / 384 test phases**: 45 genuine
+source-package metadata controls, 48 legacy orchestration controls with explicit
+substituted delegates, and 35 genuine coordinate/custody controls. Native
+requests use 51 function selectors and independently verify every expanded case,
+phase and JUnit outcome. All 209 candidate pins and 233 total source pins were
+verified; 45 imported/compiled source files were separately observed. The native
+owner sealed 289 files / 3,686,009 bytes and completed original process,
+resource/storage and source READ release. Evidence is retained under
+`workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-three-cache-join-20261020-01/`
+(`attempt-join-02` and `final-independent-qualification-v02.json`).
+
+The first attempt's 128 pytest passes receive no native qualification credit:
+its wrapper expected one incorrect parameter label. The fresh corrected manifest
+was independently checked before launch, with unchanged product/test bytes.
+All 286 failed-attempt files / 3,650,855 bytes remain retained; only its unused
+128 MiB promise was released through the existing recovery owner. No existing
+entity census was repeated. Model, training, provider/network, statutory
+meaning, graph admission and Lean execution remain separate work.
