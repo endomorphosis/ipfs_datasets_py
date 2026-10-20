@@ -11,12 +11,35 @@ from ipfs_datasets_py.processors.legal_data.justicedao_release_registry import (
     selected_releases,
 )
 
-def test_committed_pins_are_not_readable() -> None:
+_AMERICAN_MUNICIPAL_REVISION = "df0c0c405bf59cb948d1269dea29767a4712fb81"
+
+
+def test_world_pins_stay_unreadable() -> None:
     assert pin_readable("world_national_law") is False
     assert pin_readable("world_municipal_law") is False
-    assert pin_readable("american_municipal_law_norm") is False
     assert pin_readable("justicedao/ipfs_france_laws_norm") is False
     assert pin_revision("world_national_law") is None
+
+
+def test_american_municipal_norm_pin_is_readable() -> None:
+    assert pin_readable("american_municipal_law_norm") is True
+    assert pin_revision("american_municipal_law_norm") == _AMERICAN_MUNICIPAL_REVISION
+    assert pin_revision("justicedao/american_municipal_law_norm") == _AMERICAN_MUNICIPAL_REVISION
+    releases = build_release_registry(
+        [
+            "justicedao/american_municipal_law_norm",
+            "justicedao/american_municipal_law",
+            "justicedao/world_national_law",
+            "justicedao/world_municipal_law",
+        ]
+    )
+    by_repo = {item.hf_repo: item for item in releases}
+    norm = by_repo["justicedao/american_municipal_law_norm"]
+    assert norm.selected is True
+    assert norm.searchable is True
+    assert by_repo["justicedao/american_municipal_law"].selected is False
+    assert by_repo["justicedao/world_national_law"].selected is False
+    assert by_repo["justicedao/world_municipal_law"].selected is False
 
 
 def test_april_municipal_and_world_repos_stay_unselected(monkeypatch) -> None:

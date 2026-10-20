@@ -2,6 +2,6 @@
   "repos": {
     "world_national_law": {"revision": null, "searchable": false},
     "world_municipal_law": {"revision": null, "searchable": false},
-    "american_municipal_law_norm": {"revision": null, "searchable": false}
+    "american_municipal_law_norm": {"revision": "df0c0c405bf59cb948d1269dea29767a4712fb81", "searchable": true}
   }
 }

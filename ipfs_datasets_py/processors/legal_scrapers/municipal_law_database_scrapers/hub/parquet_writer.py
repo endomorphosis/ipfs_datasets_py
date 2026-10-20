@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import re
 import time
@@ -102,20 +103,70 @@ def strip_tags(html: str) -> str:
     return text
 
 
+# A section token is digits with dot, hyphen, or colon separators.
+# "sec" must be a whole word so "SECURE" is not section "URE".
+# A later "Chapter 180" inside a section title is not the section number.
+_SECTION_ATOM = r"\d+(?:[.\-:]\d+)*"
+_LEADING_SECTION = re.compile(
+    rf"^\s*({_SECTION_ATOM})(?:\s*[\-\u2013\u2014]+\s*({_SECTION_ATOM}))?\b"
+)
+_SECTION_KEYWORD = re.compile(
+    rf"(?i)(?:§{{1,2}}|\bsec(?:tion|s)?\b)\.?\s*"
+    rf"({_SECTION_ATOM})(?:\s*[\-\u2013\u2014]+\s*({_SECTION_ATOM}))?"
+)
+_ACTION_DATE = re.compile(r"(?i)\b(?:passed|adopted|effective|eff\.)[:\s]*")
+# "12- 21-09" appears in real history notes. Spaces around the hyphens stay legal.
+_MDY = re.compile(r"\b(\d{1,2})\s*-\s*(\d{1,2})\s*-\s*(\d{2,4})\b")
+# A two-digit year is not placed in the future. 36 is 1936, 24 is 2024.
+_TWO_DIGIT_CEILING = 2026
+_ISO_DATE = re.compile(r"\b((?:18|19|20)\d{2})-(\d{2})-(\d{2})\b")
+_MONTH_DATE = re.compile(
+    r"(?i)\b((?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|"
+    r"Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|"
+    r"Dec(?:ember)?))[.]?\s+(\d{1,2}),\s+((?:18|19|20)\d{2})\b"
+)
+_MONTH_INDEX = {
+    "jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3,
+    "apr": 4, "april": 4, "may": 5, "jun": 6, "june": 6, "jul": 7, "july": 7,
+    "aug": 8, "august": 8, "sep": 9, "sept": 9, "september": 9, "oct": 10,
+    "october": 10, "nov": 11, "november": 11, "dec": 12, "december": 12,
+}
+_CANONICAL_HREF = re.compile(
+    r"(?i)<link\b[^>]*?\brel\s*=\s*[\"']canonical[\"'][^>]*?\bhref\s*=\s*[\"']([^\"']+)[\"']"
+    r"|<link\b[^>]*?\bhref\s*=\s*[\"']([^\"']+)[\"'][^>]*?\brel\s*=\s*[\"']canonical[\"']"
+)
+_HREF = re.compile(r"""(?i)\bhref\s*=\s*["']([^"']+)["']""")
+_CHROME_URL = re.compile(
+    r"(?i)(?:xmlrpc\.php|/(?:feed|comments)(?:/|$)|wp-content/|wp-includes/|"
+    r"fonts\.googleapis|fonts\.gstatic|gmpg\.org|googletagmanager|favicon|"
+    r"\.css(?:\?|$)|\.js(?:\?|$)|\.(?:png|jpe?g|gif|svg|ico|webp|woff2?)(?:\?|$))"
+)
+_MUNICODE_ORIGIN = "https://library.municode.com"
+
+
+def _section_from_match(match: re.Match[str]) -> str:
+    start = match.group(1)
+    end = match.group(2)
+    if end:
+        return f"{start}—{end}"
+    return start
+
+
 def extract_title_num(title: str) -> str:
-    t = title or ""
-    m = re.search(
-        r"(?i)\b(?:sec(?:tion)?|§)\.?\s*([0-9A-Za-z]+(?:[.\-:][0-9A-Za-z]+)*)",
-        t,
-    )
-    if m:
-        return m.group(1)
-    m = re.search(r"(?i)\bchapter\s+([0-9A-Za-z]+(?:[.\-][0-9A-Za-z]+)*)", t)
-    if m:
-        return m.group(1)
-    m = re.search(r"(?i)\barticle\s+([IVXLCDM]+|[0-9A-Za-z]+)", t)
-    if m:
-        return m.group(1)
+    """Return the section number printed at the start of a chunk title.
+
+    A leading ``186.04`` wins over a later chapter cross-reference.
+    ``Sec.`` / ``Secs.`` / ``§`` must introduce a digit. A word that merely
+    begins with ``sec`` is not a section.
+    """
+
+    text = title or ""
+    match = _LEADING_SECTION.match(text)
+    if match:
+        return _section_from_match(match)
+    match = _SECTION_KEYWORD.search(text)
+    if match:
+        return _section_from_match(match)
     return ""
 
 
@@ -125,22 +176,192 @@ def extract_chapter_num(chapter: str) -> str:
 
 
 def _year_from_short(yy: int) -> int:
-    return 1900 + yy if yy >= 50 else 2000 + yy
+    year = 2000 + yy
+    if year > _TWO_DIGIT_CEILING:
+        return 1900 + yy
+    return year
+
+
+def _iso_from_parts(month: int, day: int, year: int) -> str:
+    if not (1 <= month <= 12 and 1 <= day <= 31 and 1800 <= year <= 2100):
+        return ""
+    return f"{year:04d}-{month:02d}-{day:02d}"
+
+
+def _iso_from_year_token(year_s: str, month: int, day: int) -> str:
+    if len(year_s) == 4:
+        year = int(year_s)
+    elif len(year_s) == 2:
+        year = _year_from_short(int(year_s))
+    else:
+        return ""
+    return _iso_from_parts(month, day, year)
+
+
+def _date_in_window(window: str) -> Optional[Tuple[str, str]]:
+    match = _MDY.search(window)
+    if match:
+        iso = _iso_from_year_token(match.group(3), int(match.group(1)), int(match.group(2)))
+        if iso:
+            return match.group(0), iso
+    match = _MONTH_DATE.search(window)
+    if match:
+        month = _MONTH_INDEX.get(match.group(1).lower().rstrip("."))
+        if month is not None:
+            iso = _iso_from_parts(month, int(match.group(2)), int(match.group(3)))
+            if iso:
+                return match.group(0), iso
+    return None
+
+
+def _trailing_passage(text: str) -> Optional[Tuple[str, str]]:
+    """A citation date sitting at the end of a note, after a comma or ``of``.
+
+    ``Ord. No. 75-02, 4-21-75`` and ``Amd. of 7-9-13`` carry the date there.
+    ``Ord. 98-6-61`` and ``§ 12-15-10`` are not dates.
+    """
+
+    match: Optional[re.Match[str]] = None
+    for candidate in _MDY.finditer(text):
+        match = candidate
+    if match is None or text[match.end() :].strip(" .;"):
+        return None
+    prefix = text[: match.start()]
+    if re.search(r"(?i)(?:§|secs?\.?|sections?)\s*$", prefix):
+        return None
+    if not re.search(r"(?i)(?:,\s*|of\s+)$", prefix):
+        return None
+    iso = _iso_from_year_token(match.group(3), int(match.group(1)), int(match.group(2)))
+    if not iso:
+        return None
+    return match.group(0), iso
+
+
+def passage_dates(note: str) -> List[Tuple[str, str]]:
+    """Return ``(raw token, YYYY-MM-DD)`` for each passage or effective date.
+
+    Ordinance numbers such as ``98-6-61`` are not dates. A token after
+    Passed, Adopted, or Effective is read first. Otherwise a month-name date,
+    or a trailing ``, 4-21-75`` / ``of 7-9-13`` citation date. A bare
+    two-digit year is not a date.
+    """
+
+    text = note or ""
+    found: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for match in _ACTION_DATE.finditer(text):
+        parsed = _date_in_window(text[match.end(): match.end() + 48])
+        if parsed is None or parsed[1] in seen:
+            continue
+        seen.add(parsed[1])
+        found.append(parsed)
+    if found:
+        return found
+    match = _MONTH_DATE.search(text)
+    if match:
+        month = _MONTH_INDEX.get(match.group(1).lower().rstrip("."))
+        if month is not None:
+            iso = _iso_from_parts(month, int(match.group(2)), int(match.group(3)))
+            if iso:
+                return [(match.group(0), iso)]
+    trailing = _trailing_passage(text)
+    if trailing:
+        return [trailing]
+    return []
+
+
+def adoption_line_dates(plain: str) -> List[Tuple[str, str]]:
+    """Adoption dates printed on a title page that has no history note.
+
+    ``current through ... passed <date>`` is a supplement stamp, not the
+    effective date of the chunk.
+    """
+
+    text = plain or ""
+    found: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for match in _ACTION_DATE.finditer(text):
+        prefix = text[max(0, match.start() - 48) : match.start()]
+        window = text[match.end() : match.end() + 48]
+        if re.search(r"(?i)\bthrough\b", prefix):
+            continue
+        folded = window.lstrip().lower()
+        if folded.startswith(("through", "after", "before", "prior", "since")):
+            continue
+        # A supplement-table column header ("Date Adopted Include/Omit") is not
+        # an adoption. "Date Adopted: October 16, 1990" still is.
+        if re.search(r"(?i)\bdate$", prefix.rstrip()):
+            lead = window.lstrip(" :")
+            if _MDY.match(lead) is None and _MONTH_DATE.match(lead) is None:
+                continue
+        parsed = _date_in_window(window)
+        if parsed is None or parsed[1] in seen:
+            continue
+        seen.add(parsed[1])
+        found.append(parsed)
+    return found
 
 
 def parse_year(date_s: str) -> str:
+    """Year of one date token. An ordinance number is not a year."""
+
     if not date_s:
         return ""
-    m = re.search(r"\b(19|20)\d{2}\b", date_s)
-    if m:
-        return m.group(0)
-    m = re.search(r"\b(\d{1,2})-(\d{1,2})-(\d{2})\b", date_s)
-    if m:
-        return str(_year_from_short(int(m.group(3))))
-    m = re.search(r"\b(\d{2})\b", date_s)
-    if m:
-        return str(_year_from_short(int(m.group(1))))
+    dates = passage_dates(date_s)
+    if dates:
+        return dates[0][1][:4]
+    match = _MDY.search(date_s)
+    if match:
+        iso = _iso_from_year_token(match.group(3), int(match.group(1)), int(match.group(2)))
+        if iso:
+            return iso[:4]
+    match = _ISO_DATE.search(date_s)
+    if match:
+        iso = _iso_from_parts(int(match.group(2)), int(match.group(3)), int(match.group(1)))
+        if iso:
+            return iso[:4]
+    match = _MONTH_DATE.search(date_s)
+    if match:
+        return match.group(3)
     return ""
+
+
+def _http_url(href: str) -> Optional[str]:
+    text = html.unescape(href or "").strip()
+    if text.startswith("//"):
+        text = "https:" + text
+    if not text.startswith(("http://", "https://")):
+        return None
+    return text.split("#", 1)[0]
+
+
+def source_url_from_html(raw: str) -> Optional[str]:
+    """Return the chunk's own URL, or None when the HTML has no source link.
+
+    A ``rel=canonical`` document URL wins. Otherwise the first Municode
+    ``/codes/...`` path is prefixed with ``https://library.municode.com``.
+    Stylesheets, feeds, and state-code cross-references are not the source.
+    """
+
+    blob = raw or ""
+    match = _CANONICAL_HREF.search(blob)
+    if match:
+        url = _http_url(match.group(1) or match.group(2) or "")
+        if url and _CHROME_URL.search(url) is None:
+            return url
+    for href in _HREF.findall(blob):
+        text = html.unescape(href).strip()
+        absolute = _http_url(text)
+        path = (absolute or text).split("?", 1)[0].split("#", 1)[0]
+        if path.startswith("/codes/"):
+            return _MUNICODE_ORIGIN + path
+        if (
+            absolute
+            and "library.municode.com/codes/" in absolute
+            and _CHROME_URL.search(absolute) is None
+        ):
+            return absolute.split("?", 1)[0]
+    return None
 
 
 def _split_history_notes(blob: str) -> List[str]:
@@ -191,11 +412,19 @@ def extract_history_notes(html: str) -> List[str]:
             if re.search(r"(?i)\b(ord\.|res\.|ord\b)", plain):
                 notes.extend(_split_history_notes(plain))
     if not notes:
-        for m in re.finditer(
-            r"\(((?:Ord\.|Res\.)[^()]{3,180})\)",
-            strip_tags(html),
-        ):
-            notes.extend(_split_history_notes(m.group(1)))
+        # Real notes often start with a code cross-reference or "EOrd.", not "Ord.".
+        # Keep a parenthetical only when it carries a passage or effective date.
+        plain = strip_tags(html)
+        for m in re.finditer(r"\(([^()]{3,400})\)", plain):
+            blob = m.group(1)
+            if re.search(r"(?i)\b(?:passed|adopted|effective|eff\.)\b", blob):
+                notes.extend(_split_history_notes(blob))
+        if not notes:
+            for m in re.finditer(
+                r"\(((?:Ord\.|Res\.)[^()]{3,180})\)",
+                plain,
+            ):
+                notes.extend(_split_history_notes(m.group(1)))
     # de-dupe preserving order
     seen = set()
     out = []
@@ -217,20 +446,12 @@ def parse_history_fields(note: str) -> Dict[str, str]:
     m = re.search(r"(§+\s*[^,;]+)", note)
     if m:
         section = m.group(1).strip(" ,;")
-    m = re.search(r"\b(\d{1,2}-\d{1,2}-\d{2,4})\b", note)
-    if m:
-        date_s = m.group(1)
+    dates = passage_dates(note)
+    if dates:
+        date_s = dates[0][0]
+        year = dates[0][1][:4]
     else:
-        m = re.search(
-            r"\b((?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|"
-            r"Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|"
-            r"Dec(?:ember)?)[.]?\s+\d{1,2},\s+\d{4})\b",
-            note,
-            re.I,
-        )
-        if m:
-            date_s = m.group(1)
-    year = parse_year(date_s) or parse_year(note)
+        year = ""
     return {
         "history_note": note,
         "ordinance": ordinance,
