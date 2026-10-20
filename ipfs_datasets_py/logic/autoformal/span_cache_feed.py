@@ -22,8 +22,8 @@ LEGACY_SCHEMA = "span-cache-incremental-feed/v1"
 DEFAULT_REPOSITORY = "justicedao/uscode-autoformal-span-cache"
 _HEX40 = re.compile(r"[0-9a-f]{40}\Z")
 _MANIFEST = re.compile(r"autoformal/uscode/exchanges/[A-Za-z0-9_-]+/exchange-([0-9a-f]{64})\.manifest\.json\Z")
-_PAIRED_MANIFEST = re.compile(r"autoformal/uscode/paired-v([12])/manifests/([A-Za-z0-9_-]+)/manifest-([0-9a-f]{64})\.json\Z")
-_PAIRED_TABLE = re.compile(r"autoformal/uscode/paired-v([12])/(paired_spans|goals|artifacts)/([A-Za-z0-9_-]+)/(paired_spans|goals|artifacts)-(?:[0-9a-f]{64}-)?([0-9a-f]{64})\.parquet\Z")
+_PAIRED_MANIFEST = re.compile(r"autoformal/uscode/paired-v([123])/manifests/([A-Za-z0-9_-]+)/manifest-([0-9a-f]{64})\.json\Z")
+_PAIRED_TABLE = re.compile(r"autoformal/uscode/paired-v([123])/(paired_spans|goals|artifacts)/([A-Za-z0-9_-]+)/(paired_spans|goals|artifacts)-(?:[0-9a-f]{64}-)?([0-9a-f]{64})\.parquet\Z")
 _DISCOVERY_ROOT = "autoformal/uscode"
 _EXCHANGE_CENSUS_ROOTS = {
     "uscode-autoformal-exchange-manifest/v2": "autoformal/uscode/census",
@@ -174,7 +174,8 @@ class HubExchangeClient:
         return path
 
 
-_SOURCE_FIELDS = ("record_id", "sample", "source_span_id", "text", "source_text_sha256", "legal_id", "document_id", "source_revision")
+_LEGACY_SOURCE_FIELDS = ("record_id", "sample", "source_span_id", "text", "source_text_sha256", "legal_id", "document_id", "source_revision")
+_SOURCE_FIELDS = _LEGACY_SOURCE_FIELDS + ("source_coordinate_report_sha256", "source_coordinate_span_index", "source_provenance_json")
 
 
 def _stable_source(record):
@@ -206,7 +207,9 @@ def _attempt_source(row, payload):
         for key in ("legal_id", "document_id"):
             if key in source and (not isinstance(source[key], str) or len(source[key]) > 2048):
                 raise ValueError("attempt source metadata must be a bounded string")
-        return _stable_source(source)
+        # Preserve the original legacy projection. Coordinate-looking extras
+        # are not a version3 full-report/reference replay or a new source claim.
+        return {key: source[key] for key in _LEGACY_SOURCE_FIELDS if key in source}
     except (KeyError, TypeError, ValueError) as exc:
         raise FeedError("invalid qualification attempt source: " + str(exc)) from exc
 
@@ -275,6 +278,8 @@ def paired_source_records(bundle, *, repository_id, revision, manifest_in_repo,
     _paired_descriptors(manifest, manifest_in_repo)
     if manifest.get("repository_id") != repository_id or manifest.get("path_in_repo") != manifest_in_repo:
         raise FeedError("paired bundle repository or path binding differs")
+    from .paired_span_census import validate_paired_source_coordinates
+    coordinates = validate_paired_source_coordinates(bundle)
     records = {}
     artifacts = [{key: artifact[key] for key in ("artifact_sha256", "kind", "encoding", "decoded_bytes")}
                  for artifact in bundle["artifacts"]]
@@ -282,7 +287,7 @@ def paired_source_records(bundle, *, repository_id, revision, manifest_in_repo,
     artifact_reference = {"path": bundle["table_paths"]["artifacts"],
                           "path_in_repo": artifact_table["path_in_repo"],
                           "sha256": artifact_table["sha256"], "bytes": artifact_table["bytes"]}
-    for row in bundle["paired_spans"]:
+    for row_index, row in enumerate(bundle["paired_spans"]):
         source = row["source"]
         if (row["schema_version"] != bundle["schema_version"] or row["repository_id"] != repository_id
                 or row["provenance"]["agent_id"] != manifest["agent_id"]
@@ -296,6 +301,13 @@ def paired_source_records(bundle, *, repository_id, revision, manifest_in_repo,
         identity = {"repository_id": repository_id, "source_span_id": source["span_id"],
                     "legal_id": source["legal_id"], "source_text_sha256": source["text_sha256"],
                     "source_revision": source["revision"]}
+        reference = None
+        if coordinates is not None:
+            reference = coordinates["rows"][row_index]["source_provenance_json"]
+            # Version3 binds the exact retained occurrence. Legacy identities
+            # remain unchanged and cannot silently acquire new provenance.
+            identity.update(source_coordinate_report_sha256=coordinates["report_sha256"],
+                            source_coordinate_span_index=json.loads(reference)["span_index"])
         digest = _sha(_json(identity).encode())
         if int(digest, 16) % shard_count != shard_index:
             continue
@@ -313,10 +325,99 @@ def paired_source_records(bundle, *, repository_id, revision, manifest_in_repo,
                              "text": source["text"], "citation": source["legal_id"] or source["span_id"]},
                   "observations": [observation], "admitted": False, "formalized": False,
                   "qualified": False, "proof_authority": False, "source_authority_authenticated": False}
+        if reference is not None:
+            record["source_provenance_json"] = reference
+            observation["coordinate_transport"] = dict(manifest["coordinate_transport"])
         record["provenance"] = {"source_identity": identity, "observations": record["observations"],
                                 "source_authority_authenticated": False}
         _merge_source(records, record)
     return [records[key] for key in sorted(records)]
+
+
+def load_paired_payload(manifest_path, *, repository_root, repository_id, path_in_repo,
+                        expected_manifest_sha256=None, max_bytes, max_rows, max_decoded_bytes):
+    """Load one retained paired bundle without creating a feed or database.
+
+    ``repository_root`` is the exact absolute directory containing the pinned
+    repository layout. The caller owns revision acquisition; this function
+    neither resolves a Hub revision nor downloads files. An optional independent
+    manifest commitment is checked before any table is read. The same aggregate
+    expansion guards and strict paired owner serve this API and the durable feed.
+    Returned observations remain unadmitted producer evidence.
+    """
+    for label, bound in (("max_bytes", max_bytes), ("max_rows", max_rows),
+                         ("max_decoded_bytes", max_decoded_bytes)):
+        _positive(bound, label)
+    if not isinstance(repository_id, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository_id):
+        raise FeedError("repository must have an owner and name")
+    _relative(path_in_repo)
+    if _PAIRED_MANIFEST.fullmatch(path_in_repo) is None:
+        raise FeedError("paired manifest repository path required")
+    if expected_manifest_sha256 is not None and (
+            type(expected_manifest_sha256) is not str
+            or re.fullmatch(r"[0-9a-f]{64}", expected_manifest_sha256) is None):
+        raise FeedError("expected manifest SHA256 must be a lowercase digest")
+    directory, manifest = Path(repository_root), Path(manifest_path)
+    if not directory.is_absolute() or directory.resolve() != directory or not directory.is_dir():
+        raise FeedError("paired repository root must be an exact absolute nonsymlink directory")
+    if manifest != directory / path_in_repo or manifest.resolve() != directory / path_in_repo:
+        raise FeedError("paired manifest escaped the retained repository layout")
+    raw = _read_regular_snapshot(manifest, max_bytes=min(max_bytes, 64 * 1024))
+    if expected_manifest_sha256 is not None and _sha(raw) != expected_manifest_sha256:
+        raise FeedError("paired manifest differs from expected SHA256")
+    value = _manifest_json(raw)
+    if value.get("repository_id") != repository_id or value.get("path_in_repo") != path_in_repo:
+        raise FeedError("paired manifest repository or path binding differs")
+    descriptors = _paired_descriptors(value, path_in_repo)
+
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from . import paired_span_census as paired
+
+    version = paired.LEGACY_SCHEMA if value["schema"] == paired.LEGACY_MANIFEST_SCHEMA else paired.SCHEMA
+    schemas = paired.arrow_schemas(version)
+    compressed, decoded, table_paths, artifact_sizes = len(raw), len(raw), {}, []
+    for (name, size), kind in zip(descriptors, paired.TABLE_NAMES):
+        entry = value["tables"][kind]
+        compressed += size
+        if compressed > max_bytes:
+            raise FeedError("paired bundle compressed size exceeds bound")
+        table_path = directory / name
+        if table_path.resolve() != table_path:
+            raise FeedError("paired table repository layout became a filesystem alias")
+        table_raw = _read_regular_snapshot(table_path, max_bytes=size)
+        if len(table_raw) != size or _sha(table_raw) != entry["sha256"]:
+            raise FeedError("paired table size or hash differs")
+        parquet = pq.ParquetFile(pa.BufferReader(table_raw),
+            thrift_string_size_limit=min(max_bytes, max_decoded_bytes),
+            thrift_container_size_limit=max(1, min(1_000_000, max_rows * 1024)))
+        limit = max_rows * (1 if kind == "paired_spans" else 8)
+        if (parquet.schema_arrow != schemas[kind] or parquet.metadata.num_rows != entry["row_count"]
+                or parquet.metadata.num_rows > limit):
+            raise FeedError("paired table schema or row count exceeds bound")
+        decoded += sum(parquet.metadata.row_group(i).total_byte_size
+                       for i in range(parquet.metadata.num_row_groups))
+        if decoded > max_decoded_bytes:
+            raise FeedError("paired bundle aggregate Arrow allocation exceeds ready bound")
+        table_paths[kind] = str(table_path)
+        if kind == "artifacts":
+            # Read the tiny size column only after bounding the whole table.
+            artifact_sizes = parquet.read(columns=["decoded_bytes"]).column(0).to_pylist()
+    for size in artifact_sizes:
+        if type(size) is not int or size < 0:
+            raise FeedError("invalid paired artifact decoded size")
+        decoded += size
+        if decoded > max_decoded_bytes:
+            raise FeedError("paired bundle artifact expansion exceeds ready bound")
+    loaded = paired.load_paired_census_bundle(manifest, max_bytes=max_bytes, max_rows=max_rows)
+    if loaded["table_paths"] != table_paths or loaded["manifest_sha256"] != _sha(raw):
+        raise FeedError("paired loader changed retained paths or manifest generation")
+    # This bounds represented input bytes, not process RSS.
+    represented = len(_json(loaded["paired_spans"]).encode()) + len(_json(loaded["goals"]).encode())
+    represented += sum(artifact_sizes) + len(raw)
+    if represented > max_decoded_bytes:
+        raise FeedError("paired represented inputs exceed ready bound")
+    return {**loaded, "decoded_bytes": max(decoded, represented), "fingerprint": value["fingerprint"]}
 
 
 class SpanCacheFeed:
@@ -495,70 +596,10 @@ class SpanCacheFeed:
         return manifest
 
     def _load_paired(self, manifest, path, revision, *, max_bytes, max_rows, max_decoded_bytes):
-        """Bound aggregate Arrow and artifact expansion before the strict loader.
-
-        The paired owner validates hashes, schemas, comparisons, capture receipts
-        and reciprocal goal links. Its individual-table expansion limit is
-        supplemented here with one aggregate ready-input bound per poll.
-        """
-        import pyarrow as pa
-        import pyarrow.parquet as pq
-        from . import paired_span_census as paired
-
-        raw = _read_regular_snapshot(manifest, max_bytes=min(max_bytes, 64 * 1024))
-        value = _manifest_json(raw)
-        if value.get("repository_id") != self.repository_id or value.get("path_in_repo") != path:
-            raise FeedError("paired manifest repository or path binding differs")
-        descriptors = _paired_descriptors(value, path)
-        directory = self.artifacts / revision
-        if Path(manifest) != directory / path or Path(manifest).resolve() != directory / path:
-            raise FeedError("paired manifest escaped the retained repository layout")
-        version = paired.LEGACY_SCHEMA if value["schema"] == paired.LEGACY_MANIFEST_SCHEMA else paired.SCHEMA
-        schemas = paired.arrow_schemas(version)
-        compressed, decoded, table_paths, artifact_sizes = len(raw), len(raw), {}, []
-        for (name, size), kind in zip(descriptors, paired.TABLE_NAMES):
-            entry = value["tables"][kind]
-            compressed += size
-            if compressed > max_bytes:
-                raise FeedError("paired bundle compressed size exceeds bound")
-            table_path = directory / name
-            if table_path.resolve() != table_path:
-                raise FeedError("paired table repository layout became a filesystem alias")
-            table_raw = _read_regular_snapshot(table_path, max_bytes=size)
-            if len(table_raw) != size or _sha(table_raw) != entry["sha256"]:
-                raise FeedError("paired table size or hash differs")
-            parquet = pq.ParquetFile(pa.BufferReader(table_raw),
-                thrift_string_size_limit=min(max_bytes, max_decoded_bytes),
-                thrift_container_size_limit=max(1, min(1_000_000, max_rows * 1024)))
-            limit = max_rows * (1 if kind == "paired_spans" else 8)
-            if (parquet.schema_arrow != schemas[kind] or parquet.metadata.num_rows != entry["row_count"]
-                    or parquet.metadata.num_rows > limit):
-                raise FeedError("paired table schema or row count exceeds bound")
-            decoded += sum(parquet.metadata.row_group(i).total_byte_size
-                           for i in range(parquet.metadata.num_row_groups))
-            if decoded > max_decoded_bytes:
-                raise FeedError("paired bundle aggregate Arrow allocation exceeds ready bound")
-            table_paths[kind] = str(table_path)
-            if kind == "artifacts":
-                # Read the tiny size column only after bounding the whole table.
-                artifact_sizes = parquet.read(columns=["decoded_bytes"]).column(0).to_pylist()
-        for size in artifact_sizes:
-            if type(size) is not int or size < 0:
-                raise FeedError("invalid paired artifact decoded size")
-            decoded += size
-            if decoded > max_decoded_bytes:
-                raise FeedError("paired bundle artifact expansion exceeds ready bound")
-        loaded = paired.load_paired_census_bundle(manifest, max_bytes=max_bytes,
-                                                  max_rows=max_rows)
-        if loaded["table_paths"] != table_paths or loaded["manifest_sha256"] != _sha(raw):
-            raise FeedError("paired loader changed retained paths or manifest generation")
-        # Include the JSON representation returned to the caller, not just
-        # Parquet's accounting. This is an input-byte bound, not an RSS claim.
-        represented = len(_json(loaded["paired_spans"]).encode()) + len(_json(loaded["goals"]).encode())
-        represented += sum(artifact_sizes) + len(raw)
-        if represented > max_decoded_bytes:
-            raise FeedError("paired represented inputs exceed ready bound")
-        return {**loaded, "decoded_bytes": max(decoded, represented), "fingerprint": value["fingerprint"]}
+        """Use the shared stateless payload guard for this retained revision."""
+        return load_paired_payload(manifest, repository_root=self.artifacts / revision,
+            repository_id=self.repository_id, path_in_repo=path, max_bytes=max_bytes,
+            max_rows=max_rows, max_decoded_bytes=max_decoded_bytes)
 
     def poll_once(self, *, max_bundles=4, max_listing_entries=100, max_download_files=12,
                   max_download_bytes=64 * 1024 * 1024, max_bundle_bytes=64 * 1024 * 1024,
@@ -586,7 +627,7 @@ class SpanCacheFeed:
         with self._manager.short_writer_transaction() as cx:
             pending = cx.execute("SELECT path,revision,blob_id,size,status,manifest_path FROM feed_bundles WHERE status!='acknowledged' ORDER BY last_attempt,path LIMIT ?", [max_bundles]).fetchall()
         budget = {"bytes": max_download_bytes, "files": max_download_files, "downloaded_bytes": 0}
-        ready, total_decoded, merged_records = [], 0, {}
+        ready, total_decoded, merged_records, coordinate_reports = [], 0, {}, {}
         for path, revision, blob, size, status, local in pending:
             try:
                 manifest = Path(local) if status == "ready" else self._download(path, revision, blob, size, max_bytes=max_bundle_bytes, budget=budget)
@@ -611,9 +652,20 @@ class SpanCacheFeed:
                 reader = paired_source_records if paired else source_records
                 records = reader(loaded, repository_id=self.repository_id, revision=revision,
                     manifest_in_repo=path, shard_count=self.shard_count, shard_index=self.shard_index)
+                coordinate_payload = None
                 if paired:
+                    from .paired_span_census import validate_paired_source_coordinates
+                    coordinate_payload = validate_paired_source_coordinates(loaded)
+                    report_bytes = 0
+                    if coordinate_payload is not None:
+                        pin = coordinate_payload["report_sha256"]
+                        report = coordinate_payload["report"]
+                        prior = coordinate_reports.get(pin)
+                        if prior is not None and _json(prior) != _json(report):
+                            raise FeedError("complete coordinate report changed under its pinned identity")
+                        report_bytes = len(_json({pin: report}).encode())
                     represented = len(_json(records).encode()) + sum(
-                        artifact["decoded_bytes"] for artifact in loaded["artifacts"])
+                        artifact["decoded_bytes"] for artifact in loaded["artifacts"]) + report_bytes
                     candidate_decoded = max(candidate_decoded, represented)
                     if candidate_decoded > remaining:
                         raise FeedError("paired source records exceed decoded byte budget")
@@ -638,6 +690,8 @@ class SpanCacheFeed:
                 # or observations in this poll's delivered results.
                 for record in records:
                     _merge_source(merged_records, record)
+                if coordinate_payload is not None:
+                    coordinate_reports[coordinate_payload["report_sha256"]] = coordinate_payload["report"]
                 total_decoded += candidate_decoded
                 ready.append(delivered)
             except Exception as exc:
@@ -647,7 +701,7 @@ class SpanCacheFeed:
                     cx.execute("UPDATE feed_bundles SET status='pending',manifest_path=NULL,fingerprint=NULL,last_attempt=?,attempts=attempts+1,error=? WHERE path=?", [time.time(), type(exc).__name__ + ": " + str(exc)[:500], path])
         with self._manager.short_writer_transaction() as cx:
             counts = dict(cx.execute("SELECT status,count(*) FROM feed_bundles GROUP BY status").fetchall())
-        return {"schema": SCHEMA, "repository_id": self.repository_id, "head_revision": head,
+        result = {"schema": SCHEMA, "repository_id": self.repository_id, "head_revision": head,
                 "discovery": discovery, "new_bundles": ready,
                 "records": [merged_records[key] for key in sorted(merged_records)],
                 "counts": counts, "errors": errors, "downloaded_bytes": budget["downloaded_bytes"],
@@ -656,3 +710,8 @@ class SpanCacheFeed:
                 "shard_count": self.shard_count, "shard_index": self.shard_index,
                 "weights_downloaded": False, "training_executed": False, "enqueued": False,
                 "admitted": False, "formalized": False}
+        if coordinate_reports:
+            # Full reports travel once per pin, outside source records. The
+            # records keep bounded references; acknowledgement remains explicit.
+            result["source_coordinate_reports"] = coordinate_reports
+        return result

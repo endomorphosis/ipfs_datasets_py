@@ -338,7 +338,7 @@ def test_hub_discovery_uses_broad_pinned_root_and_strict_cursor(monkeypatch):
 
 
 @pytest.mark.parametrize("name", ["weights/model.bin", "autoformal/uscode/paired-v2/artifacts/agent/model.parquet",
-    "autoformal/uscode/paired-v3/manifests/agent/manifest-" + "a" * 64 + ".json",
+    "autoformal/uscode/paired-v4/manifests/agent/manifest-" + "a" * 64 + ".json",
     "autoformal/uscode/paired-v2/../weights/model.parquet"])
 def test_hub_paired_paths_cannot_redirect_to_weights_or_unknown_namespaces(name):
     client = HubExchangeClient(api=SimpleNamespace(endpoint="https://huggingface.co"))

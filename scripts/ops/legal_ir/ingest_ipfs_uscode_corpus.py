@@ -68,6 +68,49 @@ def _parse_document(document: dict) -> list[dict]:
     return list(ledger.get("spans") or [])
 
 
+def _run_raw_coordinate_ingest(args) -> dict:
+    """Replay pinned physical rows and publish one fresh local source catalog."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_dataset import (
+        capture_uscode_source_documents_from_parquet,
+    )
+    from ipfs_datasets_py.logic.autoformal.uscode_ingest import (
+        inventory_uscode_source_coordinates, uscode_source_coordinates_sha256,
+        validate_uscode_source_coordinates,
+    )
+    from ipfs_datasets_py.logic.autoformal.span_cache import write_fresh_source_coordinate_cache
+
+    captured = capture_uscode_source_documents_from_parquet(
+        args.parquet, source_revision=args.source_revision,
+        source_path_in_repo=args.source_path_in_repo,
+        expected_sha256=args.expected_source_sha256,
+        expected_bytes=args.expected_source_bytes, limit=args.limit,
+        offset=args.source_row_offset, release_id=args.source_release_id)
+    documents = captured["documents"]
+    report = inventory_uscode_source_coordinates(
+        documents, query="ipfs_uscode", release_id=args.source_release_id)
+    report_pin = uscode_source_coordinates_sha256(report)
+    validate_uscode_source_coordinates(report, documents,
+        expected_report_sha256=report_pin, query="ipfs_uscode",
+        release_id=args.source_release_id)
+    written = write_fresh_source_coordinate_cache(args.cache, report, documents,
+        expected_report_sha256=report_pin, query="ipfs_uscode",
+        release_id=args.source_release_id)
+    return {"stage": "raw_coordinates_enqueued", "profile": "raw-coordinates-v1",
+            "source_file_sha256": captured["source_file_sha256"],
+            "source_file_bytes": captured["source_file_bytes"],
+            "source_revision": captured["source_revision"],
+            "source_path_in_repo": captured["source_path_in_repo"],
+            "source_release_id": args.source_release_id,
+            "physical_row_offset": captured["physical_row_offset"],
+            "documents": len(documents), "spans_enqueued": written["spans_enqueued"],
+            "source_coordinates_report_sha256": report_pin, "stats": written["stats"],
+            "fresh_catalog": True, "historical_backfill": False,
+            "source_authority_authenticated": False, "legal_meaning_verified": False,
+            "formalized": False, "admitted": False, "training_authorized": False,
+            "parquet_file_byte_mapping_verified": False, "model_executed": False,
+            "remote_io_performed": False}
+
+
 def _checkpoint_agent_id(cache) -> str:
     """One stable id per cache so two machines do not publish over each other."""
 
@@ -719,6 +762,15 @@ def main(argv: list[str] | None = None, *, fenced_runtime=None) -> int:
     parser.add_argument("--cache", type=Path, required=True)
     parser.add_argument("--claim-profile", choices=("legacy", "fenced-v1"), default="legacy",
                         help="Explicit fenced source-manifest profile; legacy helpers remain unqualified.")
+    parser.add_argument("--source-ingest-profile", choices=("legacy", "raw-coordinates-v1"),
+                        default="legacy", help="Opt-in pinned physical rows into a NEW coordinate-aware catalog.")
+    parser.add_argument("--source-revision", help="Raw profile: independent lowercase 40-hex repository commit.")
+    parser.add_argument("--source-path-in-repo", help="Raw profile: canonical relative Parquet repository path.")
+    parser.add_argument("--expected-source-sha256", help="Raw profile: independent exact local Parquet SHA256.")
+    parser.add_argument("--expected-source-bytes", type=int)
+    parser.add_argument("--source-release-id", help="Raw profile: explicit source release identity; never inferred from text.")
+    parser.add_argument("--source-row-offset", type=int, default=0,
+                        help="Raw profile: zero-based physical row ordinal (not legacy valid-document skip).")
     parser.add_argument("--source-manifest", type=Path)
     parser.add_argument("--fenced-span-limit", type=int, default=32,
                         help="Maximum selected fenced spans per invocation (1..4096).")
@@ -747,6 +799,27 @@ def main(argv: list[str] | None = None, *, fenced_runtime=None) -> int:
         help="Ignored. Census and goals append to the span-cache dataset, not a local supervisor.",
     )
     args = parser.parse_args(argv)
+    if args.source_ingest_profile == "raw-coordinates-v1":
+        if (args.claim_profile != "legacy" or fenced_runtime is not None
+                or args.source_manifest is not None):
+            parser.error("raw-coordinates-v1 is a separate source-enqueue profile, not a fenced runtime")
+        if (args.parquet is None or args.limit is None or not 1 <= args.limit <= 128
+                or not all((args.source_revision, args.source_path_in_repo,
+                            args.expected_source_sha256, args.expected_source_bytes,
+                            args.source_release_id))):
+            parser.error("raw-coordinates-v1 requires --parquet, --limit 1..128, all source pins and --source-release-id")
+        if (not args.enqueue_only or args.resume or args.upload or args.upload_dir is not None
+                or args.quack_gaps or args.supervisor_database is not None
+                or args.batch is not None or args.compile_workers != 0
+                or args.release_id != "ipfs-uscode-5016b86a"):
+            parser.error("raw-coordinates-v1 requires --enqueue-only --no-resume; compiler, upload and legacy-release options are incompatible")
+        report = _run_raw_coordinate_ingest(args)
+        print(json.dumps(report, sort_keys=True), flush=True)
+        return 0
+    if (any(value is not None for value in (args.source_revision, args.source_path_in_repo,
+            args.expected_source_sha256, args.expected_source_bytes, args.source_release_id))
+            or args.source_row_offset != 0):
+        parser.error("raw source pins and physical offsets require --source-ingest-profile raw-coordinates-v1")
     if args.batch is None:
         args.batch = 16 if args.claim_profile == "fenced-v1" else 128
     if args.claim_profile == "fenced-v1":
