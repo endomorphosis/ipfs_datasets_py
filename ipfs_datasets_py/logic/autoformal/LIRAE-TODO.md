@@ -1809,6 +1809,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-CONST-AM09 Constitution Amendment 9 span inventory
 
+- Status: completed
 - status: todo
 - goal id: LIRAE-CONST
 - depends on: none
