@@ -18,6 +18,9 @@ from . import legal_definition_boolean as boolean
 REQUEST_SCHEMA = "legal-source-definition-request/v2"
 SCHEMA = "legal-source-definition-bridge/v2"
 PROFILE = "declared-scope-v2-source-unary-predicate-definition/v1"
+PARENT_REQUEST_SCHEMA = "legal-parent-definition-request/v1"
+PARENT_SCHEMA = "legal-parent-definition-bridge/v1"
+PARENT_PROFILE = "declared-literal-parent-unary-predicate-definition/v1"
 FAMILIES = ("fol", "tdfol")
 DEFAULT_LIMITS = {
     "max_occurrences": 256,
@@ -31,6 +34,10 @@ DEFAULT_LIMITS = {
     "max_sampling_report_bytes": 32 * 1024 * 1024,
     "max_input_bytes": 48 * 1024 * 1024,
 }
+PARENT_DEFAULT_LIMITS = {key: value for key, value in DEFAULT_LIMITS.items()
+    if key not in ("max_sampling_report_bytes", "max_input_bytes")}
+_PARENT_DECLARATION_FIELDS = {"declaration_id", "interpretation_status", "source_binding_sha256",
+    "scope", "scope_kind", "scope_span", "contributor_spans", "head", "definition_cue", "body"}
 AUTHORITY = dict.fromkeys(
     (
         "source_authenticity_verified",
@@ -136,16 +143,16 @@ def _text(value, label, maximum=512):
     _need(len(value.encode("utf-8")) <= maximum, "bounded " + label + " required")
 
 
-def _limits(limits):
+def _limits(limits, defaults=DEFAULT_LIMITS):
     _need(
         limits is None or type(limits) is dict,
         "closed optional definition limits required",
     )
-    _need(not (set(limits or {}) - set(DEFAULT_LIMITS)), "unknown definition limit")
-    bounds = dict(DEFAULT_LIMITS, **(limits or {}))
+    _need(not (set(limits or {}) - set(defaults)), "unknown definition limit")
+    bounds = dict(defaults, **(limits or {}))
     for name, value in bounds.items():
         _need(
-            type(value) is int and 0 < value <= DEFAULT_LIMITS[name],
+            type(value) is int and 0 < value <= defaults[name],
             "positive lowered definition bound required: " + name,
         )
     return bounds
@@ -246,6 +253,62 @@ def _applicability(value, document, version):
             )
         except ValueError as error:
             raise ValueError("valid declared civil date required") from error
+
+
+def _encode_unary_definition(declaration, *, scope_key, atom_span, bounds, family, routes):
+    """Shared ordered unary Boolean lowering; each source profile validates spans."""
+    head_text = declaration["head"]["text"]
+    from ..intent_ir.formalize.modal_projections import _ast
+    from ..TDFOL import tdfol_core as t
+
+    x = t.Variable("x")
+    symbols, symbol_occurrences = {}, []
+
+    def atom(value, *, head=False):
+        literal = atom_span(value, head=head)
+        symbol = "D" + digest({"scope": scope_key, "literal": literal, "arity": 1})
+        symbols[symbol] = {
+            "symbol": symbol,
+            "source_literal": literal,
+            "arity": 1,
+            "scope_key": scope_key,
+        }
+        symbol_occurrences.append(
+            {"symbol": symbol, "span": value, "role": "head" if head else "body"}
+        )
+        return t.Predicate(symbol, (x,))
+
+    head = atom(declaration["head"], head=True)
+    body = boolean.build_boolean_expression(
+        declaration["body"],
+        atom_builder=atom,
+        require=_need,
+        max_depth=bounds["max_expression_depth"],
+        max_nodes=bounds["max_expression_nodes"],
+        max_operands=bounds["max_operands"],
+    )
+    _need(
+        all(
+            row["source_literal"] != head_text
+            for symbol, row in symbols.items()
+            if symbol != head.name
+        ),
+        "definition body cannot silently collapse to its head",
+    )
+    _need(
+        len(symbols) >= 2
+        and head.name
+        not in {row["symbol"] for row in symbol_occurrences if row["role"] == "body"},
+        "self-referential or vacuous head definition unsupported",
+    )
+    typed = t.QuantifiedFormula(
+        t.Quantifier.FORALL, x, t.BinaryFormula(t.LogicOperator.IFF, head, body)
+    )
+    native = routes.prepare_native_fragment(
+        family=family, formula=typed.to_string(), expected_ast=_ast(typed)
+    )
+
+    return native, symbols, symbol_occurrences, head
 
 
 def prepare_definition_v2(
@@ -419,7 +482,7 @@ def prepare_definition_v2(
         scope_literal.casefold() in (f"in this {kind}", f"in this {kind}:"),
         "exact declared title/section scope literal required",
     )
-    head_text = span(declaration["head"], block=first)
+    span(declaration["head"], block=first)
     _need(
         span(declaration["definition_cue"], block=first) == "means",
         "explicit means cue required",
@@ -443,54 +506,9 @@ def prepare_definition_v2(
             "applicability": declaration["applicability"],
         }
     )
-    from ..intent_ir.formalize.modal_projections import _ast
-    from ..TDFOL import tdfol_core as t
-
-    x = t.Variable("x")
-    symbols, symbol_occurrences = {}, []
-
-    def atom(value, *, head=False):
-        literal = span(value, block=first if head else None, body=not head)
-        symbol = "D" + digest({"scope": scope_key, "literal": literal, "arity": 1})
-        symbols[symbol] = {
-            "symbol": symbol,
-            "source_literal": literal,
-            "arity": 1,
-            "scope_key": scope_key,
-        }
-        symbol_occurrences.append(
-            {"symbol": symbol, "span": value, "role": "head" if head else "body"}
-        )
-        return t.Predicate(symbol, (x,))
-
-    head = atom(declaration["head"], head=True)
-    body = boolean.build_boolean_expression(
-        declaration["body"],
-        atom_builder=atom,
-        require=_need,
-        max_depth=bounds["max_expression_depth"],
-        max_nodes=bounds["max_expression_nodes"],
-        max_operands=bounds["max_operands"],
-    )
-    _need(
-        all(
-            row["source_literal"] != head_text
-            for symbol, row in symbols.items()
-            if symbol != head.name
-        ),
-        "definition body cannot silently collapse to its head",
-    )
-    _need(
-        len(symbols) >= 2
-        and head.name
-        not in {row["symbol"] for row in symbol_occurrences if row["role"] == "body"},
-        "self-referential or vacuous head definition unsupported",
-    )
-    typed = t.QuantifiedFormula(
-        t.Quantifier.FORALL, x, t.BinaryFormula(t.LogicOperator.IFF, head, body)
-    )
-    native = routes.prepare_native_fragment(
-        family=request["family"], formula=typed.to_string(), expected_ast=_ast(typed)
+    native, symbols, symbol_occurrences, head = _encode_unary_definition(
+        declaration, scope_key=scope_key, bounds=bounds, family=request["family"], routes=routes,
+        atom_span=lambda value, *, head: span(value, block=first if head else None, body=not head),
     )
 
     original_occurrences = {
@@ -692,3 +710,186 @@ __all__ = [
     "prepare_definition_v2",
     "validate_definition_v2",
 ]
+
+
+def parent_definition_producer_pins():
+    """Retain existing native/Boolean owners and explicit physical parent owners."""
+    from . import legal_semantic_graph, corpus_parent_occurrence_adapter
+    pins = producer_pins()
+    for module in (legal_semantic_graph, corpus_parent_occurrence_adapter):
+        path = Path(module.__file__).resolve()
+        pins[str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return pins
+
+
+def prepare_parent_definition_v1(request, *, parent_bundle, expected_manifest_cid,
+        source_occurrence_cid, companion_record_cid, report_bytes, expected_report_pins,
+        replay_inputs, parent_limits=None, limits=None):
+    """Encode a caller's unary definition against a replayed complete literal field.
+
+    Contributor spans are explicit unreviewed ranges, never inferred statutory
+    units. The whole parent population/originals remain required. Separate parent
+    intake limits bound that evidence; this profile bounds the compact declaration,
+    report and derived origins without pretending an HTML sampling report exists.
+    """
+    from . import corpus_contracts as contracts, corpus_source as sources
+    from . import legal_semantic_graph as graphs, corpus_parent_occurrence_adapter as parent
+    bounds = _limits(limits, PARENT_DEFAULT_LIMITS)
+    request = contracts.clone_json(request)
+    _closed(request, _REQUEST_FIELDS, "literal parent definition request")
+    _need(request["schema"] == PARENT_REQUEST_SCHEMA and request["profile"] == PARENT_PROFILE,
+          "explicit literal parent definition profile required")
+    _need(type(request["family"]) is str and request["family"] in FAMILIES,
+          "parent definition requires FOL or its TDFOL subset")
+    request_raw = _canonical(request, bounds["max_report_bytes"])
+    declaration = request["declaration"]
+    _closed(declaration, _PARENT_DECLARATION_FIELDS, "literal parent definition declaration")
+    _text(declaration["declaration_id"], "declaration identity", 256)
+    _need(declaration["interpretation_status"] == "unreviewed_caller_declaration",
+          "explicit unreviewed caller interpretation required")
+    _sha(declaration["source_binding_sha256"], "independent parent source binding")
+    _need(declaration["scope_kind"] in ("title", "section"), "declared title/section scope kind required")
+    pins = parent_definition_producer_pins()
+    source = graphs.bind_parent_source_occurrence(parent_bundle,
+        expected_manifest_cid=expected_manifest_cid, source_occurrence_cid=source_occurrence_cid,
+        companion_record_cid=companion_record_cid, report_bytes=report_bytes,
+        expected_report_pins=expected_report_pins, replay_inputs=replay_inputs, limits=parent_limits)
+    _need(source["source_binding_sha256"] == declaration["source_binding_sha256"],
+          "declared parent source differs from complete independent replay")
+    graphs._check_bindings(source, declaration["scope"])
+    version, whole = source["source_version"], source["selector"]
+    view = version["extracted_view"]
+    _need(whole["start_char"] == whole["start_utf8"] == 0
+          and whole["end_char"] == view["character_length"]
+          and whole["end_utf8"] == view["byte_length"]
+          and whole["span_sha256"] == view["sha256"]
+          and whole["span_cid"] == view["cid"], "complete exact literal field required; a fragment is insufficient")
+    text = whole["span_text"]
+    source_args = dict(source_version=version, expected_raw_sha256=version["raw_artifact"]["sha256"],
+        extracted_text=text, expected_extracted_sha256=view["sha256"])
+    sources.validate_source_occurrence(whole, **source_args)
+
+    def exact(value):
+        _closed(value, ("char_start", "char_end", "text"), "parent definition source span")
+        start, end = value["char_start"], value["char_end"]
+        _need(type(start) is int and type(end) is int and 0 <= start < end <= len(text),
+              "bounded exact parent definition interval required")
+        _text(value["text"], "source literal", bounds["max_literal_bytes"])
+        _need(text[start:end] == value["text"], "parent definition span differs from literal source")
+        return value["text"]
+
+    contributors = declaration["contributor_spans"]
+    _need(type(contributors) is list and 1 <= len(contributors) <= bounds["max_contributors"],
+          "bounded nonempty declared contributor spans required")
+    previous_end = 0
+    for item in contributors:
+        exact(item)
+        _need(previous_end <= item["char_start"], "unique ordered nonoverlapping contributor spans required")
+        previous_end = item["char_end"]
+    first = contributors[0]
+
+    def covered(value):
+        cursor, end = value["char_start"], value["char_end"]
+        for item in contributors:
+            if item["char_end"] <= cursor:
+                continue
+            if item["char_start"] > cursor:
+                break
+            cursor = min(end, item["char_end"])
+            if cursor == end:
+                return True
+        return False
+
+    def atom_span(value, *, head=False):
+        literal = exact(value)
+        if head:
+            _need(first["char_start"] <= value["char_start"] < value["char_end"] <= first["char_end"],
+                  "definition head must remain in first declared contributor")
+        else:
+            _need(value["char_start"] >= declaration["definition_cue"]["char_end"] and covered(value),
+                  "definition body must follow means and have no uncovered contributor gap")
+        return literal
+
+    scope_literal = exact(declaration["scope_span"])
+    kind = declaration["scope_kind"]
+    _need(scope_literal.casefold() in (f"in this {kind}", f"in this {kind}:"),
+          "exact declared title/section scope literal required")
+    atom_span(declaration["head"], head=True)
+    cue = declaration["definition_cue"]
+    _need(exact(cue) == "means" and first["char_start"] <= cue["char_start"] < cue["char_end"] <= first["char_end"],
+          "literal means cue must remain in first declared contributor")
+    _need(declaration["scope_span"]["char_end"] <= declaration["head"]["char_start"]
+          and declaration["head"]["char_end"] <= cue["char_start"], "declared scope/head/means source order differs")
+    scope_key = digest({"profile": PARENT_PROFILE, "declaration_id": declaration["declaration_id"],
+        "source_binding_sha256": source["source_binding_sha256"], "scope": declaration["scope"],
+        "scope_kind": kind, "scope_span": declaration["scope_span"]})
+    from . import legal_family_routes as routes
+    native, symbols, symbol_occurrences, head = _encode_unary_definition(declaration,
+        scope_key=scope_key, atom_span=atom_span, bounds=bounds, family=request["family"], routes=routes)
+    occurrences, contexts, bindings, retained = [whole], [source["context"]], [], {
+        (0, len(text)): (whole, source["context"])}
+
+    def add(role, value, *, symbol=None):
+        _need(len(bindings) < bounds["max_bindings"], "complete parent binding bound exceeded")
+        geometry = value["char_start"], value["char_end"]
+        if geometry not in retained:
+            _need(len(occurrences) < bounds["max_occurrences"], "complete parent occurrence bound exceeded")
+            start, end = geometry
+            occurrence = sources.build_source_occurrence(version,
+                **{key: val for key, val in source_args.items() if key != "source_version"},
+                start_char=start, end_char=end, start_utf8=len(text[:start].encode()),
+                end_utf8=len(text[:end].encode()))
+            context = sources.build_context_declaration(occurrence, expected_occurrence_cid=occurrence["record_cid"],
+                availability="required_unavailable", reason="Caller-declared definition ranges do not establish governing context or complete statutory units.",
+                context_references=source["context"]["context_references"], missing_requirements=list(parent.MISSING_CONTEXT))
+            retained[geometry] = occurrence, context
+            occurrences.append(occurrence); contexts.append(context)
+        occurrence, context = retained[geometry]
+        bindings.append({"role": role, "source_occurrence_cid": occurrence["record_cid"],
+            "context_cid": context["record_cid"], "source_symbol": symbol, "symbol": symbol})
+
+    add("source_field", {"char_start": 0, "char_end": len(text)})
+    for index, item in enumerate(contributors):
+        add(f"declared_contributor/{index:04d}", item)
+    add("scope_literal", declaration["scope_span"])
+    add("definition_head", declaration["head"], symbol=head.name)
+    add("definition_cue", cue)
+    for index, row in enumerate(row for row in symbol_occurrences if row["role"] == "body"):
+        add(f"definition_body/{index:04d}", row["span"], symbol=row["symbol"])
+    report = {"schema": PARENT_SCHEMA, "profile": PARENT_PROFILE, "family": request["family"],
+        "declaration_id": declaration["declaration_id"], "request_sha256": hashlib.sha256(request_raw).hexdigest(),
+        "declaration": declaration, "parent_source_binding": source, "source_version": version,
+        "source_occurrences": occurrences, "context_declarations": contexts, "source_bindings": bindings,
+        "scope": declaration["scope"], "scope_kind": kind, "scope_key": scope_key,
+        "contributor_spans": contributors, "symbols": [symbols[key] for key in sorted(symbols)],
+        "symbol_occurrences": symbol_occurrences, "native_ast": native["native_ast"], "native": native,
+        "lean_body": native["lean_body"], "producer_pins": pins, "limits": bounds,
+        "source_input_pins": {"parent_manifest_cid": expected_manifest_cid,
+            "source_occurrence_cid": source_occurrence_cid, "companion_record_cid": companion_record_cid,
+            "source_binding_sha256": source["source_binding_sha256"]},
+        "source_bound": True, "explicit_universal_biconditional": True, "declared_native_profile_encoded": True,
+        "definition_lexical_coverage_complete": False, "contributor_completeness_verified": False,
+        "source_region_roles_verified": False, "governing_scope_verified": False,
+        "interpretation_contract": "Caller-declared forall x, head(x) iff body(x) in an unreviewed physical-source namespace; applicability and contributor completeness remain unresolved.",
+        "limitations": ["The complete literal field is available, but declared ranges are not verified statutory units.",
+            "Edition, governing source, context and semantic coverage remain unresolved.",
+            "No normative use, legal review, model execution, native Lean build or corpus admission is supplied."],
+        "authority": dict(AUTHORITY)}
+    report["report_sha256"] = digest(report)
+    _need(len(wire(report)) <= bounds["max_report_bytes"], "complete parent definition report bound exceeded")
+    _need(parent_definition_producer_pins() == pins, "parent definition producers changed during preparation")
+    return contracts.clone_json(report)
+
+
+def validate_parent_definition_v1(report, request, **inputs):
+    """Replay complete physical evidence and declaration; no seal-only acceptance."""
+    from . import corpus_contracts as contracts
+    bounds = _limits(inputs.get("limits"), PARENT_DEFAULT_LIMITS)
+    offered = _canonical(contracts.clone_json(report), bounds["max_report_bytes"])
+    expected = prepare_parent_definition_v1(request, **inputs)
+    _need(offered == wire(expected), "parent definition differs from complete independent regeneration")
+    return True
+
+
+__all__ += ["PARENT_REQUEST_SCHEMA", "PARENT_SCHEMA", "PARENT_PROFILE", "PARENT_DEFAULT_LIMITS",
+            "parent_definition_producer_pins", "prepare_parent_definition_v1", "validate_parent_definition_v1"]
