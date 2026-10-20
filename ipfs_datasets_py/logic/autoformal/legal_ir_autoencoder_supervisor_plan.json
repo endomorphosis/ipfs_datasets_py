@@ -8508,7 +8508,7 @@
       ],
       "validation_commands": [
         "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py tests/unit/logic/test_paired_span_census.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions.py -q --tb=line",
-        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-384"
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/replay_born_alive_width.py --root . --task-id LIRAE-WIDTH-384 --output-directory docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-384 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-384"
       ],
       "dependencies": [],
       "conflicts": [],
@@ -8522,20 +8522,96 @@
       "mutation_authority": false,
       "seed_board_edit": false,
       "outputs": [
-        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-384/receipt.json"
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-384/receipt.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-384/observation.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-384/checkpoint.zip"
       ],
       "allowed_paths": [
-        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-384",
-        "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions.py",
-        "tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py",
-        "tests/unit/logic/test_paired_span_census.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions.py"
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-384"
       ],
-      "receipt_instructions": "Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-384/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-384 task_kind=width status=inventory|implemented authority={admitted:false,formalized:false}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. The required source-bound replay capability is currently unavailable: retain a blocked-input diagnostic, never claim this task completed from unavailable inventory or a different authored cohort. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.",
+      "receipt_instructions": "Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-384/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-384 task_kind=width status=inventory|implemented authority={admitted:false,formalized:false}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. Use the reviewed dimension-specific frozen selected-followup replay; retain exact raw checkpoint bytes in checkpoint.zip and compare against an independent protected rerun. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}. Both exact born-alive parent sources and complete selected subsection byte ranges must be authenticated, with actual512 token checks/no truncation. No training. measurement_scope=identity_by_construction_not_learned_reconstruction; quality, semantic and statutory fidelity flags remain false. Preserve actual raw decoder predictions and complete producer evidence. Identity projection diagnostics are not learned reconstruction quality.",
       "required_validation_executables": [
-        "legal-ir-born-alive-width-replay-v1"
-      ]
+        "python3"
+      ],
+      "local_width_replay": true,
+      "provider_role": "deterministic-only",
+      "context_budget_tokens": 0,
+      "required_validation_file_pins": [
+        {
+          "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "bytes": 374277662,
+          "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+        },
+        {
+          "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/42046bd361a033a24264dc41de1fe6cafd68072f",
+          "bytes": 394,
+          "sha256": "e1790949631401af1bfb6c9c7aeec7fcf612e274d73579d99f704faea40c8ba7"
+        },
+        {
+          "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/4eca68d85ecd3034cf4174d8a4033a75344ea62d",
+          "bytes": 57,
+          "sha256": "948201d8329907aae938fa62f9ceeed53f5694dacc2b87b9f3b78b37ee986529"
+        },
+        {
+          "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/9a1eb90bbac323ea08aa5629b624fe6ae75db121b904799c2266a1e2c2de22d2",
+          "bytes": 66746168,
+          "sha256": "9a1eb90bbac323ea08aa5629b624fe6ae75db121b904799c2266a1e2c2de22d2"
+        },
+        {
+          "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/a8b3208c2884c4efb86e49300fdd3dc877220cdf",
+          "bytes": 125,
+          "sha256": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3"
+        },
+        {
+          "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/bcc565b3b20a79e17f048e97717303f26ea833e5",
+          "bytes": 583,
+          "sha256": "00273cdfb3e05c7304d180270bdef8adae45023e7bdfc396338bdd815943dc59"
+        },
+        {
+          "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/c17ed520ed8438736732a54957a69306b8822215",
+          "bytes": 711661,
+          "sha256": "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0"
+        },
+        {
+          "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/d1514c3162bbe87b343f565fadc62e6c06f04f03",
+          "bytes": 190,
+          "sha256": "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23"
+        },
+        {
+          "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/db4787d654117aedec30099876bfa6431eb39827",
+          "bytes": 385,
+          "sha256": "73348a3d8f8ae4cc5f851dc6b98be3ea819390b814e83656d5eebbadf75fe43e"
+        },
+        {
+          "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/fb140275c155a9c7c5a3b3e0e77a9e839594a938",
+          "bytes": 231508,
+          "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+          "bytes": 614534,
+          "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+        },
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/preprocessing.json",
+          "bytes": 1510086,
+          "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+        },
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+          "bytes": 2799098,
+          "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+        }
+      ],
+      "proposal_artifact_envelope": {
+        "schema": "ipfs_accelerate_py/agent-supervisor/task-artifact-envelope@3",
+        "binary_paths": [
+          "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-384/checkpoint.zip"
+        ],
+        "max_file_bytes": 8000000,
+        "max_patch_bytes": 16000000,
+        "max_output_bytes": 24000000
+      }
     },
     {
       "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
@@ -8556,7 +8632,7 @@
       ],
       "validation_commands": [
         "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py tests/unit/logic/test_paired_span_census.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions.py -q --tb=line",
-        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-768"
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/replay_born_alive_width.py --root . --task-id LIRAE-WIDTH-768 --output-directory docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-768 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-768"
       ],
       "dependencies": [],
       "conflicts": [],
@@ -8570,20 +8646,91 @@
       "mutation_authority": false,
       "seed_board_edit": false,
       "outputs": [
-        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-768/receipt.json"
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-768/receipt.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-768/observation.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-768/checkpoint.zip"
       ],
       "allowed_paths": [
-        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-768",
-        "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions.py",
-        "tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py",
-        "tests/unit/logic/test_paired_span_census.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions.py"
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-768"
       ],
-      "receipt_instructions": "Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-768/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-768 task_kind=width status=inventory|implemented authority={admitted:false,formalized:false}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. The required source-bound replay capability is currently unavailable: retain a blocked-input diagnostic, never claim this task completed from unavailable inventory or a different authored cohort. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.",
+      "receipt_instructions": "Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-768/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-768 task_kind=width status=inventory|implemented authority={admitted:false,formalized:false}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. Use the reviewed dimension-specific frozen selected-followup replay; retain exact raw checkpoint bytes in checkpoint.zip and compare against an independent protected rerun. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}. Both exact born-alive parent sources and complete selected subsection byte ranges must be authenticated, with actual512 token checks/no truncation. No training. measurement_scope=identity_by_construction_not_learned_reconstruction; quality, semantic and statutory fidelity flags remain false. Preserve actual raw decoder predictions and complete producer evidence. Identity projection diagnostics are not learned reconstruction quality.",
       "required_validation_executables": [
-        "legal-ir-born-alive-width-replay-v1"
-      ]
+        "python3"
+      ],
+      "local_width_replay": true,
+      "provider_role": "deterministic-only",
+      "context_budget_tokens": 0,
+      "required_validation_file_pins": [
+        {
+          "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "bytes": 374277662,
+          "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/code/configuration.py",
+          "bytes": 7127,
+          "sha256": "3411088045ffb8a9a0aa9936eae275896b39983a2ee5b08f091b44e6289e4fe4"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/code/modeling.py",
+          "bytes": 59023,
+          "sha256": "374670b416fcc82f081c9cd28b5fd61c2bd91bbe18eb4798fcc48a81f9c250a0"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/model/config.json",
+          "bytes": 1429,
+          "sha256": "711bdc81365fc25d30533cf05b9fdf588e5ba01f18540fbbb1307d787597a313"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/model/model.safetensors",
+          "bytes": 610753338,
+          "sha256": "f5a35a10faa54da7717870af1517c9b41e9bd8e3880bc5a8e9363d4c3c63e9b0"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/model/special_tokens_map.json",
+          "bytes": 964,
+          "sha256": "8c785abebea9ae3257b61681b4e6fd8365ceafde980c21970d001e834cf10835"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/model/tokenizer.json",
+          "bytes": 17082756,
+          "sha256": "f59925fcb90c92b894cb93e51bb9b4a6105c5c249fe54ce1c704420ac39b81af"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/richer-encoder-assets/model/tokenizer_config.json",
+          "bytes": 1149,
+          "sha256": "24cebbf2ef20fc317256e03e52ac7b2ca326586f946a8427ecac036332bf0933"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+          "bytes": 614534,
+          "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+        },
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_multilingual_local_assets_v1.json",
+          "bytes": 1470,
+          "sha256": "8beb874aa7b06599346173fde12e95f9f926b3028942d5014cdd2f99c4385166"
+        },
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/preprocessing.json",
+          "bytes": 2864122,
+          "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+        },
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+          "bytes": 4781613,
+          "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+        }
+      ],
+      "proposal_artifact_envelope": {
+        "schema": "ipfs_accelerate_py/agent-supervisor/task-artifact-envelope@3",
+        "binary_paths": [
+          "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-768/checkpoint.zip"
+        ],
+        "max_file_bytes": 8000000,
+        "max_patch_bytes": 16000000,
+        "max_output_bytes": 24000000
+      }
     },
     {
       "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",

@@ -14,6 +14,7 @@ import math
 from pathlib import Path
 import re
 import sys
+import tempfile
 import stat
 import struct
 import zipfile
@@ -24,6 +25,8 @@ PLAN = Path('ipfs_datasets_py/logic/autoformal/legal_ir_autoencoder_supervisor_p
 BOARD = Path('ipfs_datasets_py/logic/autoformal/LIRAE-TODO.md')
 SCRIPT = 'scripts/ops/legal_ir/legal_ir_supervisor_contract.py'
 MATERIALIZER = 'scripts/ops/legal_ir/materialize_legal_ir_inventory.py'
+WIDTH_REPLAYER = 'scripts/ops/legal_ir/replay_born_alive_width.py'
+LOCAL_WIDTH_TASKS = frozenset({'LIRAE-WIDTH-384', 'LIRAE-WIDTH-768'})
 EVIDENCE = Path('docs/implementation/reports/evidence/legal_ir_autoencoder')
 SCHEMA = 'legal-ir-supervisor-task-receipt/v1'
 REVISION = '5016b86a273ce5e4ffd066c5ae9f5fe494dd417e'
@@ -141,6 +144,20 @@ def owner(root, name):
     return module
 
 
+def width_replay_owner(root):
+    spec = importlib.util.spec_from_file_location('legal_ir_protected_width_replay', Path(root) / WIDTH_REPLAYER)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def width_required_file_pins(dimension):
+    pins = width_replay_owner(ROOT).required_input_file_pins(dimension)
+    require(isinstance(pins, list) and pins, 'reviewed width input pins required')
+    return pins
+
+
 def task_contract(task):
     task_id = task['task_id']
     family = kind(task_id)
@@ -185,26 +202,43 @@ def task_contract(task):
             validation_commands=[commands[0], 'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + MATERIALIZER + ' --task ' + task_id + ' && ' + commands[1]],
             receipt_instructions=instructions + ' Retain exactly the 83 source-derived non-operative note/signature rows omitted by the original 35 unit tasks. Preserve their actual status and reason. Independent tests and the protected checker remain mandatory; only native proposal/merge admission decides completion.',
         )
+    if task.get('local_width_replay') is True:
+        require(task_id in LOCAL_WIDTH_TASKS, 'local width replay requires reviewed384/768 task')
+        dimension = int(task_id.rsplit('-', 1)[1])
+        archive = task_dir + '/checkpoint.zip'
+        instructions = instructions.replace('The required source-bound replay capability is currently unavailable: retain a blocked-input diagnostic, never claim this task completed from unavailable inventory or a different authored cohort.',
+            'Use the reviewed dimension-specific frozen selected-followup replay; retain exact raw checkpoint bytes in checkpoint.zip and compare against an independent protected rerun.')
+        result.update(outputs=[task_dir + '/' + name for name in ('receipt.json', 'observation.json', 'checkpoint.zip')],
+            allowed_paths=[task_dir], provider_role='deterministic-only', context_budget_tokens=0,
+            validation_commands=[commands[0], 'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + WIDTH_REPLAYER + ' --root . --task-id ' + task_id + ' --output-directory ' + task_dir + ' && ' + commands[1]],
+            required_validation_executables=['python3'],
+            required_validation_file_pins=width_required_file_pins(dimension),
+            proposal_artifact_envelope={'schema': 'ipfs_accelerate_py/agent-supervisor/task-artifact-envelope@3',
+                'binary_paths': [archive], 'max_file_bytes': 8_000_000,
+                'max_patch_bytes': 16_000_000, 'max_output_bytes': 24_000_000},
+            receipt_instructions=instructions + ' Both exact born-alive parent sources and complete selected subsection byte ranges must be authenticated, with actual512 token checks/no truncation. No training. measurement_scope=identity_by_construction_not_learned_reconstruction; quality, semantic and statutory fidelity flags remain false. Preserve actual raw decoder predictions and complete producer evidence. Identity projection diagnostics are not learned reconstruction quality.',
+        )
     return result
 
 
-def enrich(root, *, enable_local_inventory=False):
+def enrich(root, *, enable_local_inventory=False, enable_local_width_replay=False):
     root = Path(root)
     plan = json.loads((root / PLAN).read_text())
     chunks = re.split(r'(?=^## )', (root / BOARD).read_text(), flags=re.MULTILINE)
     pending = set()
-    if enable_local_inventory:
+    routing_update = enable_local_inventory or enable_local_width_replay
+    if routing_update:
         for chunk in chunks:
             match = re.match(r'## (LIRAE-[A-Z0-9-]+)\b', chunk)
             statuses = re.findall(r'^- status:\s*([^\n]+)', chunk, flags=re.MULTILINE | re.IGNORECASE)
-            if match and statuses and statuses[-1].strip().lower() in {'todo', 'ready'} and kind(match[1]) == 'uscode':
+            if match and statuses and statuses[-1].strip().lower() in {'todo', 'ready'} and ((enable_local_inventory and kind(match[1]) == 'uscode') or (enable_local_width_replay and match[1] in LOCAL_WIDTH_TASKS)):
                 pending.add(match[1])
     contracts = {}
     for task in plan['tasks']:
         if task['task_id'] in pending:
-            task['local_inventory'] = True
+            task['local_inventory' if kind(task['task_id']) == 'uscode' else 'local_width_replay'] = True
         contracts[task['task_id']] = task_contract(task)
-        if not enable_local_inventory or task['task_id'] in pending:
+        if not routing_update or task['task_id'] in pending:
             task.update(contracts[task['task_id']])
     seen = set()
     for index, chunk in enumerate(chunks):
@@ -213,13 +247,15 @@ def enrich(root, *, enable_local_inventory=False):
             continue
         task_id = match[1]
         seen.add(task_id)
-        if enable_local_inventory and task_id not in pending:
+        if routing_update and task_id not in pending:
             continue
         contract = contracts[task_id]
-        chunk = re.sub(r'^- (?:outputs|allowed paths|predicted files|receipt instructions|validation|required validation executables|provider role|context budget tokens|proposal artifact envelope):[^\n]*\n?', '', chunk, flags=re.MULTILINE)
+        chunk = re.sub(r'^- (?:outputs|allowed paths|predicted files|receipt instructions|validation|required validation executables|required validation file pins|provider role|context budget tokens|proposal artifact envelope):[^\n]*\n?', '', chunk, flags=re.MULTILINE)
         lines = ['- outputs: ' + ', '.join(contract['outputs']), '- allowed paths: ' + ', '.join(contract['allowed_paths']), '- receipt instructions: ' + contract['receipt_instructions'], '- validation: ' + '; '.join(contract['validation_commands'])]
         if contract['required_validation_executables']:
             lines.append('- required validation executables: ' + ', '.join(contract['required_validation_executables']))
+        if 'required_validation_file_pins' in contract:
+            lines.append('- required validation file pins: ' + json.dumps(contract['required_validation_file_pins'], separators=(',', ':'), sort_keys=True))
         for label, key in [('provider role', 'provider_role'), ('context budget tokens', 'context_budget_tokens')]:
             if key in contract:
                 lines.append('- ' + label + ': ' + str(contract[key]))
@@ -229,7 +265,7 @@ def enrich(root, *, enable_local_inventory=False):
     require(seen == set(contracts), 'board/plan task IDs differ')
     (root / PLAN).write_text(json.dumps(plan, indent=2) + '\n')
     (root / BOARD).write_text(''.join(chunks).rstrip() + '\n')
-    return {'task_count': len(contracts), 'enriched': True, **({'local_inventory_enabled_count': len(pending)} if enable_local_inventory else {})}
+    return {'task_count': len(contracts), 'enriched': True, **({'local_inventory_enabled_count' if enable_local_inventory else 'local_width_replay_enabled_count': len(pending)} if routing_update else {})}
 
 
 def check_board(root):
@@ -250,6 +286,8 @@ def check_board(root):
             require('- ' + label + ': ' + value in chunk, 'stale board ' + label + ' for ' + task_id)
         if contract['required_validation_executables']:
             require('- required validation executables: ' + ', '.join(contract['required_validation_executables']) in chunk, 'stale required executables for ' + task_id)
+        if 'required_validation_file_pins' in contract:
+            require('- required validation file pins: ' + json.dumps(contract['required_validation_file_pins'], separators=(',', ':'), sort_keys=True) in chunk, 'stale required file pins for ' + task_id)
         for label, key in [('provider role', 'provider_role'), ('context budget tokens', 'context_budget_tokens')]:
             if key in contract:
                 require('- ' + label + ': ' + str(contract[key]) in chunk, 'stale local execution metadata for ' + task_id)
@@ -428,14 +466,17 @@ def validate_constitution(root, task_id, receipt, data):
         require(any(edge.get('kind') == 'repeal' and edge.get('target') == 'amend-18' for edge in inventory['edges']) and receipt['evidence'].get('repeal_treated_as_obligation') is False, 'retain text-backed repeal fixture')
 
 
-def validate_width(task_id, receipt, data):
+def validate_width(task_id, receipt, data, *, root=None, replay_enabled=False):
     row = payload(data, 'observation')
     false_flags(row)
     dimension = int(task_id.split('-')[-1])
     require(row.get('dimension') == dimension and receipt.get('evidence', {}).get('dimension') == dimension, 'width differs')
     require(sorted(row.get('source_hashes', [])) == SAMPLE_HASHES, 'both pinned sample sources required')
     require(row.get('training_executed') is False and row.get('status') == 'observed', 'unavailable assets cannot complete')
-    require(isinstance(row.get('profile_id'), str) and row['profile_id'] and 'checkpoint' in data and sha(data['checkpoint']) == row.get('checkpoint_sha256'), 'actual profile/checkpoint identity required')
+    reviewed_replay = root is not None and replay_enabled and task_id in LOCAL_WIDTH_TASKS
+    require(isinstance(row.get('profile_id'), str) and row['profile_id'] and 'checkpoint' in data, 'actual profile/checkpoint identity required')
+    if not reviewed_replay:
+        require(sha(data['checkpoint']) == row.get('checkpoint_sha256'), 'actual profile/checkpoint identity required')
     metrics = row.get('metrics', {})
     require(all(type(metrics.get(key)) in (int, float) and math.isfinite(metrics[key]) for key in ('cosine_similarity', 'reconstruction_loss')), 'finite measured metrics required')
     require(-1 <= metrics['cosine_similarity'] <= 1 and metrics['reconstruction_loss'] >= 0, 'metrics out of range')
@@ -447,6 +488,14 @@ def validate_width(task_id, receipt, data):
         require(row.get('token_ceiling') == 512, 'retain selected profile 512-token ceiling')
     else:
         require(row.get('encoder_executed') is False and row.get('development_result') == {'successful': 0, 'total': 12}, 'reuse saved vectors and retain 0/12')
+    if reviewed_replay:
+        require(row.get('measurement_scope') == 'identity_by_construction_not_learned_reconstruction', 'explicit projection measurement scope required')
+        require(all(row.get(key) is False for key in ('quality_qualified', 'source_semantics_verified', 'statutory_fidelity_qualified', 'learned_reconstruction_demonstrated')), 'projection diagnostics cannot assert quality or fidelity')
+        module = width_replay_owner(root)
+        with tempfile.TemporaryDirectory(prefix='legal-ir-width-verify-') as scratch:
+            result = module.verify_observation(Path(root), task_id, row, data['checkpoint'], output_directory=Path(scratch))
+        require(isinstance(result, dict) and result.get('verified') is True, 'independent width replay verification failed')
+        return
     # A file digest and plausible numbers are insufficient evidence of a run.
     # This fail-closed gate must be replaced by a reviewed owner replay that
     # authenticates the exact sample inputs, selected checkpoint and metrics.
@@ -469,7 +518,8 @@ def validate(root, task_id, *, source_parquet=None):
     elif family == 'constitution':
         validate_constitution(root, task_id, receipt, data)
     elif family == 'width':
-        validate_width(task_id, receipt, data)
+        task = next(task for task in plan['tasks'] if task['task_id'] == task_id)
+        validate_width(task_id, receipt, data, root=root, replay_enabled=task.get('local_width_replay') is True)
     else:
         require(sorted(receipt.get('evidence', {}).get('source_hashes', [])) == SAMPLE_HASHES, 'method source pins differ')
         require('lean_source' in data, 'actual Lean source required')
@@ -489,13 +539,14 @@ def main(argv=None):
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument('--enrich', action='store_true')
     modes.add_argument('--enable-local-inventory', action='store_true', help='Enable reviewed local inventory only for currently pending US Code shards; completed contracts remain unchanged')
+    modes.add_argument('--enable-local-width-replay', action='store_true', help='Enable reviewed frozen replay only for pending384/768 tasks; preserve every other contract')
     modes.add_argument('--check-board', action='store_true')
     modes.add_argument('--check-task', metavar='TASK_ID')
     parser.add_argument('--root', type=Path, default=ROOT)
     parser.add_argument('--corpus-parquet', type=Path, help='Exact pinned Parquet for local diagnostics; its immutable digest is always checked')
     args = parser.parse_args(argv)
     try:
-        result = enrich(args.root, enable_local_inventory=True) if args.enable_local_inventory else enrich(args.root) if args.enrich else check_board(args.root) if args.check_board else validate(args.root, args.check_task, source_parquet=args.corpus_parquet)
+        result = enrich(args.root, enable_local_width_replay=True) if args.enable_local_width_replay else enrich(args.root, enable_local_inventory=True) if args.enable_local_inventory else enrich(args.root) if args.enrich else check_board(args.root) if args.check_board else validate(args.root, args.check_task, source_parquet=args.corpus_parquet)
     except WidthReplayUnavailable as exc:
         print(json.dumps(exc.receipt, sort_keys=True), file=sys.stderr)
         return 75
