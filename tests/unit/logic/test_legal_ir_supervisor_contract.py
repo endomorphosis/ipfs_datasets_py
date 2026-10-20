@@ -253,6 +253,51 @@ def test_uscode_rejects_cross_source_unaccounted_and_unbound_evidence(monkeypatc
         contract.validate_uscode(shard, receipt, data)
 
 
+def untitled_uscode_case(monkeypatch):
+    sources = [
+        {"ipfs_cid": None, "text": None, "source_row_index": 17},
+        {"ipfs_cid": None, "text": None, "source_row_index": 52491},
+    ]
+    monkeypatch.setattr(contract, "usc_rows", lambda title: deepcopy(sources))
+    shard = {"title": "NA", "start": 0, "end": 2, "count": 2}
+    sections = [false_row(**source, source_text_sha256=None, status="abstain",
+                          reason="pinned recovery manifest contains no plaintext", span_ids=[])
+                for source in sources]
+    receipt = {"source": {"repository": "justicedao/ipfs_uscode", "revision": contract.REVISION},
+               "evidence": dict(shard)}
+    data = {"sections": raw(sections), "spans": raw([]), "entities": raw([])}
+    return shard, receipt, data
+
+
+def test_untitled_null_cid_rows_remain_distinct_explicit_abstentions(monkeypatch):
+    shard, receipt, data = untitled_uscode_case(monkeypatch)
+    contract.validate_uscode(shard, receipt, data)
+    rows = json.loads(data["sections"])
+    assert [row["source_row_index"] for row in rows] == [17, 52491]
+    assert all(row["text"] is row["source_text_sha256"] is None for row in rows)
+
+
+@pytest.mark.parametrize("attack", ["duplicate_index", "missing_index", "invented_plaintext", "invented_empty_text", "invented_hash", "invented_span"])
+def test_null_source_rows_reject_identity_collapse_and_invented_content(monkeypatch, attack):
+    shard, receipt, data = untitled_uscode_case(monkeypatch)
+    rows = json.loads(data["sections"])
+    if attack == "duplicate_index":
+        rows[1]["source_row_index"] = rows[0]["source_row_index"]
+    elif attack == "missing_index":
+        del rows[0]["source_row_index"]
+    elif attack == "invented_plaintext":
+        rows[0]["text"] = "Invented recovery statute."
+    elif attack == "invented_empty_text":
+        rows[0]["text"] = ""
+    elif attack == "invented_hash":
+        rows[0]["source_text_sha256"] = contract.sha(b"")
+    else:
+        rows[0]["span_ids"] = ["invented-span"]
+    data["sections"] = raw(rows)
+    with pytest.raises(contract.ContractError):
+        contract.validate_uscode(shard, receipt, data)
+
+
 def width_case(dimension):
     row = false_row(dimension=dimension, source_hashes=list(contract.SAMPLE_HASHES),
                     profile_id="asserted-profile", checkpoint_sha256=contract.sha(b"asserted-checkpoint"),

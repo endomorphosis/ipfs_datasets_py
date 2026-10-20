@@ -96,12 +96,12 @@ def task_contract(task):
     commands = ['IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest ' + ' '.join(tests) + ' -q --tb=line', 'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + SCRIPT + ' --check-task ' + task_id]
     instructions = ('Write ' + task_dir + '/receipt.json schema=' + SCHEMA + ' task_id=' + task_id + ' task_kind=' + family + ' status=inventory|implemented authority={admitted:false,formalized:false' + (',roundtrip_ok:false' if family == 'constitution' else '') + '}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. ')
     instructions += {
-        'uscode': 'source={repository:justicedao/ipfs_uscode,revision:' + REVISION + '}; evidence repeats shard title/start/end/count from plan.shards. JSON artifact kinds sections/spans/entities are arrays. Sections carry ipfs_cid,text,source_text_sha256,status=spans|abstain,span_ids or reason and false flags. Spans carry id,text,source_ipfs_cid,source_text_sha256 and false flags; entities cite span_ids. Source is pinned Hugging Face uscode_parquet/laws.parquet (download exact revision if container cache absent); validation uses authenticated operator cache.',
+        'uscode': 'source={repository:justicedao/ipfs_uscode,revision:' + REVISION + '}; evidence repeats shard title/start/end/count from plan.shards. JSON artifact kinds sections/spans/entities are arrays. Sections carry ipfs_cid,text,source_text_sha256,status=spans|abstain,span_ids or reason and false flags. For missing CID use source_row_index (zero-based absolute Parquet row); missing plaintext remains text=null,source_text_sha256=null,status=abstain with explicit reason, never invented legal text. Spans carry id,text,source_ipfs_cid,source_text_sha256 and false flags; entities cite span_ids. Source is pinned Hugging Face uscode_parquet/laws.parquet (download exact revision if container cache absent); validation uses authenticated operator cache.',
         'constitution': 'Use exact retained plaintext ' + CONSTITUTION.as_posix() + ', sha256=' + CONSTITUTION_SHA256 + '; JSON source artifact={source_id,text,sha256}; receipt.source repeats source_id/sha256. JSON spans artifact carries exact selected constitution_inventory rows plus source_id,source_text_sha256,admitted=false,formalized=false,roundtrip_ok=false. evidence.unit_id=' + (selector(task_id) if family == 'constitution' else '') + '; Amendment21 requires repeal_treated_as_obligation=false.',
         'width': 'JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.',
         'method': 'lean_source artifact holds actual Lean source. evidence includes both pinned source_hashes and lake_ok=true. Validator reruns real lake build Legal. Skipped pinned-source tests supply no completion evidence.',
     }[family]
-    return {'outputs': [task_dir + '/receipt.json'], 'allowed_paths': allowed, 'validation_commands': commands, 'receipt_instructions': instructions}
+    return {'outputs': [task_dir + '/receipt.json'], 'allowed_paths': allowed, 'validation_commands': commands, 'receipt_instructions': instructions, 'required_validation_executables': ['lake', 'lean'] if family == 'method' else []}
 
 
 def enrich(root):
@@ -120,8 +120,10 @@ def enrich(root):
         task_id = match[1]
         seen.add(task_id)
         contract = contracts[task_id]
-        chunk = re.sub(r'^- (?:outputs|allowed paths|predicted files|receipt instructions|validation):[^\n]*\n?', '', chunk, flags=re.MULTILINE)
+        chunk = re.sub(r'^- (?:outputs|allowed paths|predicted files|receipt instructions|validation|required validation executables):[^\n]*\n?', '', chunk, flags=re.MULTILINE)
         lines = ['- outputs: ' + ', '.join(contract['outputs']), '- allowed paths: ' + ', '.join(contract['allowed_paths']), '- receipt instructions: ' + contract['receipt_instructions'], '- validation: ' + '; '.join(contract['validation_commands'])]
+        if contract['required_validation_executables']:
+            lines.append('- required validation executables: ' + ', '.join(contract['required_validation_executables']))
         chunks[index] = chunk.rstrip() + '\n' + '\n'.join(lines) + '\n\n'
     require(seen == set(contracts), 'board/plan task IDs differ')
     (root / PLAN).write_text(json.dumps(plan, indent=2) + '\n')
@@ -145,6 +147,8 @@ def check_board(root):
         contract = task_contract(task)
         for label, value in (('outputs', ', '.join(contract['outputs'])), ('allowed paths', ', '.join(contract['allowed_paths'])), ('validation', '; '.join(contract['validation_commands']))):
             require('- ' + label + ': ' + value in chunk, 'stale board ' + label + ' for ' + task_id)
+        if contract['required_validation_executables']:
+            require('- required validation executables: ' + ', '.join(contract['required_validation_executables']) in chunk, 'stale required executables for ' + task_id)
         require(all(task.get(key) == value for key, value in contract.items()), 'stale plan contract ' + task_id)
     require(sha((root / CONSTITUTION).read_bytes()) == CONSTITUTION_SHA256, 'retained Constitution input differs')
     return {'task_count': len(plan['tasks']), 'board_contract_valid': True}
@@ -195,8 +199,11 @@ def usc_rows(title):
         require(hashlib.file_digest(stream, 'sha256').hexdigest() == PARQUET_SHA256, 'US Code Parquet input digest differs')
     import pyarrow.parquet as pq
     result = []
+    source_row_index = 0
     for batch in pq.ParquetFile(PINNED_PARQUET).iter_batches(batch_size=4000, columns=['ipfs_cid', 'title_number', 'section_number', 'text']):
         for row in batch.to_pylist():
+            row['source_row_index'] = source_row_index
+            source_row_index += 1
             if ('NA' if row['title_number'] is None else str(row['title_number'])) == title:
                 result.append(row)
     return sorted(result, key=lambda row: (str(row['section_number'] or ''), str(row['ipfs_cid'])))
@@ -210,8 +217,11 @@ def validate_uscode(shard, receipt, data):
     sections, spans, entities = [payload(data, label) for label in ('sections', 'spans', 'entities')]
     require(all(isinstance(rows, list) for rows in (sections, spans, entities)), 'section/span/entity arrays required')
     require(len(expected) == shard['count'] == len(sections), 'all pinned sections need rows')
-    sources = {row['ipfs_cid']: row for row in expected}
-    actual = {row.get('ipfs_cid'): row for row in sections}
+    def row_key(row):
+        cid = row.get('ipfs_cid')
+        return cid if isinstance(cid, str) and cid else ('parquet-row', row.get('source_row_index'))
+    sources = {row_key(row): row for row in expected}
+    actual = {row_key(row): row for row in sections}
     span_map = {}
     require(len(actual) == len(sections) and set(actual) == set(sources), 'section identities differ')
     for row in spans:
@@ -224,6 +234,9 @@ def validate_uscode(shard, receipt, data):
     for cid, source in sources.items():
         row = actual[cid]
         false_flags(row)
+        if source['text'] is None:
+            require(row.get('text') is None and row.get('source_text_sha256') is None and row.get('ipfs_cid') == source['ipfs_cid'] and row.get('status') == 'abstain' and isinstance(row.get('reason'), str) and row['reason'].strip() and not row.get('span_ids'), 'missing source plaintext requires explicit abstention')
+            continue
         require(row.get('text') == source['text'] and row.get('source_text_sha256') == sha(source['text'].encode()), 'section plaintext/hash differs')
         if row.get('status') == 'abstain':
             require(isinstance(row.get('reason'), str) and row['reason'].strip(), 'abstention reason required')
