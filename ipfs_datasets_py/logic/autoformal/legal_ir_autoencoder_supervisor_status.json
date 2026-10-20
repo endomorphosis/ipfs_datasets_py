@@ -1,20 +1,651 @@
 {
-  "schema": "legal-ir-autoencoder-supervisor-status/v1",
+  "schema": "legal-ir-autoencoder-supervisor-status/v2",
   "board_namespace": "legal-ir-autoencoder-v1",
   "admitted": false,
   "formalized": false,
+  "constitution_roundtrip_ok": false,
   "tasks": {
-    "LIRAE-LAND-01": {
+    "LIRAE-USC-T01": {
       "status": "ready",
       "claim": null,
       "attempts": 0
     },
-    "LIRAE-LAND-02": {
+    "LIRAE-USC-T02-P01": {
       "status": "ready",
       "claim": null,
       "attempts": 0
     },
-    "LIRAE-SPAN-01": {
+    "LIRAE-USC-T02-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T03": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T04": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T05-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T05-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T06": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T07-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T07-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T07-P03": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T08": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T09": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T10-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T10-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T10-P03": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T10-P04": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T11": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T12-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T12-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T13": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T14": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T15-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T15-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T15-P03": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T16-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T16-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T16-P03": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T16-P04": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T16-P05": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T16-P06": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T17": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T18-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T18-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T19-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T19-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T20-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T20-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T20-P03": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T21": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T22-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T22-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T22-P03": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T22-P04": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T23": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T24": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T25-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T25-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T25-P03": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T26-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T26-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T26-P03": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T27": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T28": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T29": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T30": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T31": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T32": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T33-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T33-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T34": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T35": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T36-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T36-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T37": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T38-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T38-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T39": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T40": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T41": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T42-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T42-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T42-P03": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T42-P04": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T42-P05": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T42-P06": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T42-P07": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T42-P08": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T42-P09": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T43-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T43-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T44": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T45": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T46": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T47": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T48": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T49-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T49-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T50-P01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T50-P02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T51": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T52": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-T54": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-USC-TNA": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-PREAMBLE": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-A1": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-A2": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-A3": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-A4": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-A5": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-A6": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-A7": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM03": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM04": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM05": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM06": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM07": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM08": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM09": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM10": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM11": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM12": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM13": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM14": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM15": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM16": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM17": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM18": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM19": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM20": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM21": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM22": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM23": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM24": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM25": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM26": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-CONST-AM27": {
       "status": "ready",
       "claim": null,
       "attempts": 0
@@ -39,12 +670,7 @@
       "claim": null,
       "attempts": 0
     },
-    "LIRAE-ENTITY-01": {
-      "status": "ready",
-      "claim": null,
-      "attempts": 0
-    },
-    "LIRAE-LEAN-01": {
+    "LIRAE-METHOD-01": {
       "status": "ready",
       "claim": null,
       "attempts": 0
