@@ -332,6 +332,7 @@ def prepare_relational_norm_v1(request_raw, *, expected_request_sha256):
         ],
     }
     _wire(report, MAX_REPORT_BYTES)
+    _need(_owners()[-1] == pins, "relational producer changed during preparation")
     return report
 
 
