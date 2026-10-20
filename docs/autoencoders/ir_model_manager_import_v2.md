@@ -56,3 +56,22 @@ importing into the explicitly configured manager and verifying real persistence.
 The separate4096 inventory/routing profile, decoder runtime delivery and legal
 evaluation retain their own gates. The67GB upstream Leanstral model need not be
 copied into the bounded decoder release stage.
+
+The retained October17 assets have now completed that publication and
+retained-catalog registration path. All three original checkpoints are public at
+[the immutable Hugging Face release](https://huggingface.co/Publicus/legal-ir-autoencoder-4096d/tree/7f1621e79eef7592d0cfdb06cbc2f11370e24dc5);
+anonymous downloads matched every published payload hash. The existing selected
+`external/ipfs_accelerate/model_manager.duckdb` catalog grew from687 to690
+records, with per-insert native readbacks, cold native readback, a genuine cold
+manager reload and three typed catalog resolutions. All687 baseline records'
+metadata/activity and the schema/indexes were preserved. The compatible typed
+reader is merged in [Accelerate PR295](https://github.com/endomorphosis/ipfs_accelerate_py/pull/295).
+
+The original registration owner finalized its compute/storage reservation and
+writer lock; both source READ leases were released. The configured MCP service's
+separate state database and other running manager instances were not refreshed.
+These remain two-example smoke-test checkpoints with zero decoded examples, no
+held-out statutes, and false runtime/teacher/proof flags.
+[The delivery evidence](../autoformalization/evidence/native4096-retained-assets-20261020.json)
+records artifact identities,94 catalog controls,42 import-safety controls and
+the remaining inventory, runtime, supervisor and legal-evaluation gates.
