@@ -1,0 +1,480 @@
+{
+  "schema": "legal-ir-autoencoder-supervisor-plan/v1",
+  "board_namespace": "legal-ir-autoencoder-v1",
+  "admitted": false,
+  "formalized": false,
+  "completion_authority": false,
+  "mutation_authority": false,
+  "corpus": {
+    "repository": "justicedao/ipfs_uscode",
+    "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e"
+  },
+  "span_cache": "justicedao/uscode-autoformal-span-cache",
+  "entity_cache": "justicedao/uscode-autoformal-entity-cache",
+  "branch": "legal-ir-plaintext-definition-landing",
+  "parallel_waves": {
+    "A": [
+      "LIRAE-LAND-01",
+      "LIRAE-LAND-02",
+      "LIRAE-SPAN-01",
+      "LIRAE-WIDTH-08",
+      "LIRAE-WIDTH-384",
+      "LIRAE-WIDTH-4096",
+      "LIRAE-LEAN-01"
+    ],
+    "B": [
+      "LIRAE-WIDTH-768",
+      "LIRAE-ENTITY-01"
+    ]
+  },
+  "goals": [
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-goal-proposal@1",
+      "goal_id": "LIRAE-ROOT",
+      "goal_cid": "lir:goal:LIRAE-ROOT",
+      "title": "Autoformalize US Code through the existing LegalIR owners",
+      "parent_goal_id": "",
+      "source_root": "ipfs_datasets",
+      "residual_ids": [],
+      "acceptance_criteria": [
+        "Reuse landed owners",
+        "Keep admitted and formalized false",
+        "Lake build Legal is the only Lean check"
+      ],
+      "scope_paths": [],
+      "context_paths": [],
+      "dependencies": [],
+      "conflicts": [],
+      "resource_class": "cpu-medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "depth": 0,
+      "is_subgoal": false,
+      "rationale": "Root goal. Do not open a new artifact recovery program.",
+      "completion_authority": false,
+      "mutation_authority": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-goal-proposal@1",
+      "goal_id": "LIRAE-LAND",
+      "goal_cid": "lir:goal:LIRAE-LAND",
+      "title": "Land tested owners onto origin/main without the dirty pile",
+      "parent_goal_id": "LIRAE-ROOT",
+      "source_root": "ipfs_datasets",
+      "residual_ids": [],
+      "acceptance_criteria": [
+        "Each closure is diffed against origin/main",
+        "Unrelated untracked modules stay out"
+      ],
+      "scope_paths": [],
+      "context_paths": [],
+      "dependencies": [],
+      "conflicts": [],
+      "resource_class": "cpu-medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "depth": 1,
+      "is_subgoal": true,
+      "rationale": "",
+      "completion_authority": false,
+      "mutation_authority": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-goal-proposal@1",
+      "goal_id": "LIRAE-SPAN",
+      "goal_cid": "lir:goal:LIRAE-SPAN",
+      "title": "Record the pinned born-alive spans in the span cache",
+      "parent_goal_id": "LIRAE-ROOT",
+      "source_root": "ipfs_datasets",
+      "residual_ids": [],
+      "acceptance_criteria": [
+        "admitted stays false",
+        "Hashes match ipfs_uscode revision 5016b86a"
+      ],
+      "scope_paths": [],
+      "context_paths": [],
+      "dependencies": [],
+      "conflicts": [],
+      "resource_class": "cpu-medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "depth": 1,
+      "is_subgoal": true,
+      "rationale": "",
+      "completion_authority": false,
+      "mutation_authority": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-goal-proposal@1",
+      "goal_id": "LIRAE-WIDTH",
+      "goal_cid": "lir:goal:LIRAE-WIDTH",
+      "title": "Use the four existing autoencoder profiles on one span",
+      "parent_goal_id": "LIRAE-ROOT",
+      "source_root": "ipfs_datasets",
+      "residual_ids": [],
+      "acceptance_criteria": [
+        "No encoder retraining",
+        "Widths are separate profiles"
+      ],
+      "scope_paths": [],
+      "context_paths": [],
+      "dependencies": [],
+      "conflicts": [],
+      "resource_class": "cpu-medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "depth": 1,
+      "is_subgoal": true,
+      "rationale": "",
+      "completion_authority": false,
+      "mutation_authority": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-goal-proposal@1",
+      "goal_id": "LIRAE-ENTITY",
+      "goal_cid": "lir:goal:LIRAE-ENTITY",
+      "title": "Add one term row to the entity-cache projection",
+      "parent_goal_id": "LIRAE-ROOT",
+      "source_root": "ipfs_datasets",
+      "residual_ids": [],
+      "acceptance_criteria": [
+        "Term links both section ids",
+        "Structural title graph is not copied"
+      ],
+      "scope_paths": [],
+      "context_paths": [],
+      "dependencies": [
+        "LIRAE-SPAN"
+      ],
+      "conflicts": [],
+      "resource_class": "cpu-medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "depth": 1,
+      "is_subgoal": true,
+      "rationale": "",
+      "completion_authority": false,
+      "mutation_authority": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-goal-proposal@1",
+      "goal_id": "LIRAE-LEAN",
+      "goal_cid": "lir:goal:LIRAE-LEAN",
+      "title": "Keep the Lean fingerprint honest",
+      "parent_goal_id": "LIRAE-ROOT",
+      "source_root": "ipfs_datasets",
+      "residual_ids": [],
+      "acceptance_criteria": [
+        "lake build Legal receipt retained",
+        "formalized stays false"
+      ],
+      "scope_paths": [],
+      "context_paths": [],
+      "dependencies": [
+        "LIRAE-SPAN"
+      ],
+      "conflicts": [],
+      "resource_class": "cpu-medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "depth": 1,
+      "is_subgoal": true,
+      "rationale": "",
+      "completion_authority": false,
+      "mutation_authority": false
+    }
+  ],
+  "tasks": [
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+      "task_id": "LIRAE-LAND-01",
+      "task_cid": "lir:task:LIRAE-LAND-01",
+      "goal_id": "LIRAE-LAND",
+      "goal_cid": "lir:goal:LIRAE-LAND",
+      "title": "Diff the parent inventory closure against origin/main",
+      "source_root": "ipfs_datasets",
+      "residual_id": "",
+      "identity_key": "LIRAE-LAND-01",
+      "predicted_files": [
+        "ipfs_datasets_py/logic/autoformal/legal_parent_source_inventory_v1.py"
+      ],
+      "context_paths": [],
+      "predicted_symbols": [],
+      "acceptance_criteria": [
+        "Report only files absent from origin/main",
+        "Do not commit the 244-file pile"
+      ],
+      "validation_commands": [],
+      "dependencies": [],
+      "conflicts": [],
+      "evidence_refs": [],
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "rationale": "parallel-wave-A",
+      "depth": 2,
+      "completion_authority": false,
+      "mutation_authority": false,
+      "seed_board_edit": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+      "task_id": "LIRAE-LAND-02",
+      "task_cid": "lir:task:LIRAE-LAND-02",
+      "goal_id": "LIRAE-LAND",
+      "goal_cid": "lir:goal:LIRAE-LAND",
+      "title": "Diff the metadata loader closure against origin/main",
+      "source_root": "ipfs_datasets",
+      "residual_id": "",
+      "identity_key": "LIRAE-LAND-02",
+      "predicted_files": [
+        "ipfs_datasets_py/logic/autoformal/legal_parent_source_metadata_inventory_v1.py"
+      ],
+      "context_paths": [],
+      "predicted_symbols": [],
+      "acceptance_criteria": [
+        "Loader tests stay with their own closure",
+        "No second scanner"
+      ],
+      "validation_commands": [],
+      "dependencies": [],
+      "conflicts": [],
+      "evidence_refs": [],
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "rationale": "parallel-wave-A",
+      "depth": 2,
+      "completion_authority": false,
+      "mutation_authority": false,
+      "seed_board_edit": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+      "task_id": "LIRAE-SPAN-01",
+      "task_cid": "lir:task:LIRAE-SPAN-01",
+      "goal_id": "LIRAE-SPAN",
+      "goal_cid": "lir:goal:LIRAE-SPAN",
+      "title": "Export 1 USC 8 and 10 USC 1059 span rows",
+      "source_root": "ipfs_datasets",
+      "residual_id": "",
+      "identity_key": "LIRAE-SPAN-01",
+      "predicted_files": [
+        "tests/unit/logic/autoformal/test_uscode_born_alive_definition_v1.py"
+      ],
+      "context_paths": [],
+      "predicted_symbols": [],
+      "acceptance_criteria": [
+        "CIDs and SHA-256 stay pinned",
+        "admitted and formalized are false"
+      ],
+      "validation_commands": [
+        "cd /tmp/ipfs-datasets-definition-landing && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/autoformal/test_uscode_born_alive_definition_v1.py -q --tb=line"
+      ],
+      "dependencies": [],
+      "conflicts": [],
+      "evidence_refs": [],
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "rationale": "parallel-wave-A",
+      "depth": 2,
+      "completion_authority": false,
+      "mutation_authority": false,
+      "seed_board_edit": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+      "task_id": "LIRAE-WIDTH-08",
+      "task_cid": "lir:task:LIRAE-WIDTH-08",
+      "goal_id": "LIRAE-WIDTH",
+      "goal_cid": "lir:goal:LIRAE-WIDTH",
+      "title": "Reuse the 8d donor without training",
+      "source_root": "ipfs_datasets",
+      "residual_id": "",
+      "identity_key": "LIRAE-WIDTH-08",
+      "predicted_files": [
+        "ipfs_datasets_py/logic/formalization/autoencoder/legal_native384_contexts.py"
+      ],
+      "context_paths": [],
+      "predicted_symbols": [],
+      "acceptance_criteria": [
+        "No new 8d training run",
+        "Donor is not used as a statutory teacher"
+      ],
+      "validation_commands": [],
+      "dependencies": [],
+      "conflicts": [],
+      "evidence_refs": [],
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "rationale": "parallel-wave-A",
+      "depth": 2,
+      "completion_authority": false,
+      "mutation_authority": false,
+      "seed_board_edit": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+      "task_id": "LIRAE-WIDTH-384",
+      "task_cid": "lir:task:LIRAE-WIDTH-384",
+      "goal_id": "LIRAE-WIDTH",
+      "goal_cid": "lir:goal:LIRAE-WIDTH",
+      "title": "Score the born-alive span with one 384d profile",
+      "source_root": "ipfs_datasets",
+      "residual_id": "",
+      "identity_key": "LIRAE-WIDTH-384",
+      "predicted_files": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions.py"
+      ],
+      "context_paths": [],
+      "predicted_symbols": [],
+      "acceptance_criteria": [
+        "Source access is declared",
+        "Cosine and reconstruction loss are recorded"
+      ],
+      "validation_commands": [],
+      "dependencies": [],
+      "conflicts": [],
+      "evidence_refs": [],
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "rationale": "parallel-wave-A",
+      "depth": 2,
+      "completion_authority": false,
+      "mutation_authority": false,
+      "seed_board_edit": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+      "task_id": "LIRAE-WIDTH-768",
+      "task_cid": "lir:task:LIRAE-WIDTH-768",
+      "goal_id": "LIRAE-WIDTH",
+      "goal_cid": "lir:goal:LIRAE-WIDTH",
+      "title": "Pair the 768d wording checkpoint after the 384d receipt",
+      "source_root": "ipfs_datasets",
+      "residual_id": "",
+      "identity_key": "LIRAE-WIDTH-768",
+      "predicted_files": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions.py"
+      ],
+      "context_paths": [],
+      "predicted_symbols": [],
+      "acceptance_criteria": [
+        "Same span and source access as the 384d run",
+        "512-token ceiling stays recorded"
+      ],
+      "validation_commands": [],
+      "dependencies": [
+        "LIRAE-WIDTH-384"
+      ],
+      "conflicts": [],
+      "evidence_refs": [],
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "rationale": "parallel-wave-B",
+      "depth": 2,
+      "completion_authority": false,
+      "mutation_authority": false,
+      "seed_board_edit": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+      "task_id": "LIRAE-WIDTH-4096",
+      "task_cid": "lir:task:LIRAE-WIDTH-4096",
+      "goal_id": "LIRAE-WIDTH",
+      "goal_cid": "lir:goal:LIRAE-WIDTH",
+      "title": "Reuse saved Leanstral 4096 vectors without rerunning the encoder",
+      "source_root": "ipfs_datasets",
+      "residual_id": "",
+      "identity_key": "LIRAE-WIDTH-4096",
+      "predicted_files": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_4096.py"
+      ],
+      "context_paths": [],
+      "predicted_symbols": [],
+      "acceptance_criteria": [
+        "No encoder execution",
+        "0/12 development result stays attached"
+      ],
+      "validation_commands": [],
+      "dependencies": [],
+      "conflicts": [],
+      "evidence_refs": [],
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "rationale": "parallel-wave-A",
+      "depth": 2,
+      "completion_authority": false,
+      "mutation_authority": false,
+      "seed_board_edit": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+      "task_id": "LIRAE-ENTITY-01",
+      "task_cid": "lir:task:LIRAE-ENTITY-01",
+      "goal_id": "LIRAE-ENTITY",
+      "goal_cid": "lir:goal:LIRAE-ENTITY",
+      "title": "Project the born-alive term onto both section ids",
+      "source_root": "ipfs_datasets",
+      "residual_id": "",
+      "identity_key": "LIRAE-ENTITY-01",
+      "predicted_files": [
+        "tests/unit/logic/autoformal/test_uscode_born_alive_definition_v1.py"
+      ],
+      "context_paths": [],
+      "predicted_symbols": [],
+      "acceptance_criteria": [
+        "One term row",
+        "No USES_DEFINITION edge until review"
+      ],
+      "validation_commands": [],
+      "dependencies": [
+        "LIRAE-SPAN-01"
+      ],
+      "conflicts": [],
+      "evidence_refs": [],
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "rationale": "parallel-wave-B",
+      "depth": 2,
+      "completion_authority": false,
+      "mutation_authority": false,
+      "seed_board_edit": false
+    },
+    {
+      "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+      "task_id": "LIRAE-LEAN-01",
+      "task_cid": "lir:task:LIRAE-LEAN-01",
+      "goal_id": "LIRAE-LEAN",
+      "goal_cid": "lir:goal:LIRAE-LEAN",
+      "title": "Reconfirm the existing lake fingerprint test",
+      "source_root": "ipfs_datasets",
+      "residual_id": "",
+      "identity_key": "LIRAE-LEAN-01",
+      "predicted_files": [
+        "tests/unit/logic/autoformal/test_uscode_born_alive_definition_v1.py"
+      ],
+      "context_paths": [],
+      "predicted_symbols": [],
+      "acceptance_criteria": [
+        "lake_ok true",
+        "admitted false",
+        "formalized false"
+      ],
+      "validation_commands": [
+        "cd /tmp/ipfs-datasets-definition-landing && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/autoformal/test_uscode_born_alive_definition_v1.py -q --tb=line"
+      ],
+      "dependencies": [],
+      "conflicts": [],
+      "evidence_refs": [],
+      "resource_class": "cpu-medium",
+      "token_class": "medium",
+      "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+      "rationale": "parallel-wave-A",
+      "depth": 2,
+      "completion_authority": false,
+      "mutation_authority": false,
+      "seed_board_edit": false
+    }
+  ]
+}

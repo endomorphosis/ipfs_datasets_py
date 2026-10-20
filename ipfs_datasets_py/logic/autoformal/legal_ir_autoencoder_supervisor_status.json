@@ -1,0 +1,53 @@
+{
+  "schema": "legal-ir-autoencoder-supervisor-status/v1",
+  "board_namespace": "legal-ir-autoencoder-v1",
+  "admitted": false,
+  "formalized": false,
+  "tasks": {
+    "LIRAE-LAND-01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-LAND-02": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-SPAN-01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-WIDTH-08": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-WIDTH-384": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-WIDTH-768": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-WIDTH-4096": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-ENTITY-01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    },
+    "LIRAE-LEAN-01": {
+      "status": "ready",
+      "claim": null,
+      "attempts": 0
+    }
+  }
+}
