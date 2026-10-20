@@ -1540,7 +1540,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-USC-T43-P01 US Code title 43 sections 0:1000
 
-- status: todo
+- status: completed
 - goal id: LIRAE-USC
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
