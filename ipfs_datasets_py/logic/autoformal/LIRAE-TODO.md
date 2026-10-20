@@ -894,7 +894,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-USC-T24 US Code title 24 sections 0:162
 
-- status: todo
+- status: completed
 - goal id: LIRAE-USC
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
