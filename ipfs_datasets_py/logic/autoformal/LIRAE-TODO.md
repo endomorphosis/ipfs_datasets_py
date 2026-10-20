@@ -2051,7 +2051,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-CONST-AM24 Constitution Amendment 24 span inventory
 
-- status: todo
+- status: completed
 - goal id: LIRAE-CONST
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
