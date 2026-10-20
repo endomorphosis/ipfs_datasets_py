@@ -1768,7 +1768,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-USC-T52 US Code title 52 sections 0:171
 
-- status: todo
+- status: completed
 - goal id: LIRAE-USC
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
