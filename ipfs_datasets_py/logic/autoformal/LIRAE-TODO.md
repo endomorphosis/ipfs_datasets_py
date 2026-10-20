@@ -1583,7 +1583,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 ## LIRAE-CONST-A2 Constitution Article 2 span inventory
 
 - Status: completed
-- status: todo
+- status: completed
 - goal id: LIRAE-CONST
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
@@ -1649,7 +1649,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 ## LIRAE-CONST-A6 Constitution Article 6 span inventory
 
 - Status: completed
-- status: todo
+- status: completed
 - goal id: LIRAE-CONST
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
