@@ -2179,7 +2179,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-METHOD-01 Reconfirm the born-alive template test
 
-- status: todo
+- status: completed
 - goal id: LIRAE-METHOD
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
