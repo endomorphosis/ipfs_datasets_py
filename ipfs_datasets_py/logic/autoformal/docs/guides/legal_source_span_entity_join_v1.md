@@ -1,0 +1,221 @@
+# Source, span and entity join manifest
+
+The public `ipfs_datasets_py.logic.autoformal.legal_source_span_entity_join_v1`
+module connects selected source-package metadata, complete paired-span bundles
+and legacy occurrence candidates into one replayable manifest. It preserves
+unresolved source correspondence and entity bindings. The entity input in this
+first profile is metadata-only; no entity Parquet file or semantic graph is
+inferred from its advertised schema or row count.
+
+## Existing owners
+
+The adapter delegates to:
+
+- `legal_source_package_intake_v1`: exact five-file source metadata intake,
+  using `legal_primary_graph_manifest` for source manifest validation.
+- `legal_paired_manifest_inventory_v1`: explicit pinned paired-v1/v2 selection.
+- `legal_paired_payload_intake_v1`: actual complete paired, goal and artifact
+  table verification, preserving every physical row and adapter refusal.
+- `corpus_legacy_source_join`: independently pinned producer receipts and
+  complete stored source sections, retaining every exact occurrence candidate.
+- `legal_entity_index_intake`: the existing twelve-field entity schema contract.
+  This manifest does not invoke its file iterator or claim its census coverage.
+
+The source metadata adapter retains the exact `manifest.json`,
+`release_metadata.json`, `dataset_configs.json`, `dataset_infos.json` and
+`README.md` bytes. Companion descriptor discrepancies and advertised-count
+differences remain report issues. Validating their transport does not repair
+the source release or verify its corpus/graph tables.
+
+## Inputs and public API
+
+`prepare_source_span_entity_join_manifest` takes the exact outer request bytes,
+source request and metadata bytes, paired-inventory request and manifest bytes,
+entity schema response bytes, an independently expected outer-request SHA-256,
+and optional complete legacy-join inputs.
+
+The closed outer request has these fields:
+
+```text
+schema = legal-source-span-entity-join-request/v1
+source_request_sha256
+paired_inventory_request_sha256
+paired_bundles = [{manifest_path_in_repo, repository_root}, ...]
+legacy_joins = {manifest_path_in_repo: independent_inputs_sha256, ...}
+entity = {repository_id, revision, configuration, info_sha256}
+```
+
+Paired bundle order must equal the selected metadata manifest order. Each
+retained root is an explicit caller input, never a path chosen by an offered
+report. Actual table custody is checked by the existing payload owner. The
+entity repository is `justicedao/uscode-autoformal-entity-cache`, configuration
+`autoformal_uscode`, with an immutable forty-hex revision. The response must
+declare the matching dataset/configuration and supported twelve-field schema.
+Its commit association is caller-bound acquisition evidence; this operation
+performs no remote authentication.
+
+Each optional legacy input contains exactly `expected_population`,
+`producer_receipt_bytes`, `expected_producer_receipt_sha256`, `source_sections`
+and `expected_source_sections`. `legacy_join_inputs_sha256` commits the complete
+ordinary-JSON inputs while replacing receipt bytes by their SHA-256 and size.
+The delegated legacy owner validates the actual receipt and section content.
+No short revision alias is expanded to the current source head. The stored
+Parquet-text coordinate profile is distinct from the current source wrapper,
+official HTML and other normalized views.
+
+`source_span_entity_join_manifest_sha256` hashes the complete bounded report.
+`validate_source_span_entity_join_manifest` requires an independent report pin
+and regenerates all selected metadata, tables and candidate joins from the
+original inputs. Rehashing an altered report does not replace this replay.
+
+## Physical identities and dispositions
+
+Physical identity includes repository, immutable revision, table path,
+whole-file SHA-256 and row ordinal. Identical derived row bytes in different
+files or positions remain distinct physical rows. `row_references` retains
+every selected manifest-row reference; `physical_rows` accounts separately for
+distinct physical tuples and their reference ordinals. Repeated references to
+one physical row must agree on its observed identity and row digest.
+
+Duplicate bytes within one bank are computed once by the legacy candidate
+owner, whose input contract requires unique row commitments. The complete
+physical population and all references remain in this adapter. Conflicting
+independent expectations for duplicate bytes refuse the operation.
+
+Source candidate records preserve source sections, Unicode/UTF8 selectors and
+unresolved context. A unique text candidate remains unselected. No candidate
+is passed as `source_bindings` to the paired adapter. Current-source release
+correspondence stays `unverified_no_independent_crosswalk`; different revision
+names alone do not prove incompatible legal editions.
+
+Entity bindings remain `unavailable_semantic_companions_not_supplied` for every
+row. Complete entity-file custody and scoped semantic companions require a
+future compatible profile. All admission, semantic, proof and training flags
+remain false; training and evaluation-gold masks remain strict integer zero.
+
+The current bounds are sixteen selected bundles, 256 selected row references,
+a 256 KiB outer request and a 16 MiB complete report, in addition to each
+delegated owner's existing byte/node/depth/row limits. Overflow refuses the
+operation instead of returning a truncated successful population. Source-owner
+freshness is checked around preparation. Owner pins describe selected source
+files; full execution provenance belongs to the frozen validation request.
+
+## Qualification
+
+Run new unit tests and the retained-data integration through the existing
+`scripts/ops/legal_ir/run_owned_validation.py` owner, with independently frozen
+code/input pins, a private attempt, existing scheduler policy and explicit
+resource limits. Retained inputs and preparation scripts live at
+`artifacts/legal-ir-source-span-entity-join-20261016-01/` in the parent workspace.
+Inspect that packet's request, JUnit, replay assertions and durable result
+before attributing successful execution to any source generation.
+
+This adapter creates no reviewed statutory interpretation, definition binding,
+training target, model improvement, Lean build or proof receipt. Its output is
+the source-custody and unresolved-join input to those later stages.
+
+## Explicit coordinate profile v2
+
+The same owner exposes `prepare_source_span_entity_join_manifest_v2` and
+`validate_source_span_entity_join_manifest_v2`, with the same argument layout.
+The outer request uses `legal-source-span-entity-join-request/v2`; the complete
+report uses `legal-source-span-entity-join-manifest/v2` and records the separate
+compatibility profile `paired-coordinate-three-cache-join/v1`. The existing
+complete-report hash helper applies to either profile. The v1 entrypoints
+continue to require the legacy paired-v1/v2 selection.
+
+V2 admits exactly one paired-v3 manifest and 1–64 declared physical rows. Use
+the metadata owner's `legal-paired-manifest-inventory-request/v2` request, whose
+selected manifest entry additionally requires an independently supplied
+`source_coordinate_report_sha256`. That pin is checked against the manifest
+declaration before source-package preparation or payload-table I/O. The outer
+request still pins the exact paired request, source request and entity metadata
+bytes independently. An exact manifest-byte pin, a complete-coordinate-report
+pin, its embedded seal and the report artifact's byte digest have distinct roles.
+
+`legacy_joins` must be empty in this first coordinate profile, and the optional
+`legacy_join_inputs` must be absent, null or empty. Historical stored-Parquet
+candidate recipes are not implicitly applied to a coordinate transport row.
+The original legacy join remains available through v1.
+
+The existing payload owner's v2 reader verifies the complete original report
+population and every selected occurrence. Its report is embedded unchanged in
+`paired_bundles[0].payload_intake`. The complete report appears exactly once,
+as `source_coordinates.report_raw_utf8`, an exact UTF8 string. It is not parsed
+and reserialized by the join. This preserves nested source-metadata insertion
+order even when the outer join is serialized with sorted JSON keys.
+
+Every `row_references` entry additionally retains:
+
+```text
+source_provenance_json
+source_coordinate_report_sha256
+source_coordinate_span_index
+coordinate_transport_status = complete_report_occurrence_replayed
+```
+
+The original global span index is preserved; it is not renumbered within the
+selected rows. Equal text in different original occurrences or physical table
+positions remains distinct. `physical_rows` keeps its reference-ordinal mapping
+and physical identity recipe; neither population is collapsed by text equality.
+The separate coordinate replay count measures this transport observation only.
+
+`selected_occurrence` remains null: it refers to the legacy candidate-selection
+claim, not the new explicit coordinate reference. The source-package metadata
+report, span report and entity metadata retain their different repository and
+revision namespaces. `current_source_release_correspondence` remains
+`unverified_no_independent_crosswalk`; entity bindings remain
+`unavailable_semantic_companions_not_supplied`. Entity file rows are not decoded
+or verified by this profile. All source, semantic, graph, training and Lean
+authority flags remain false, and both masks remain strict integer zero.
+
+The coordinate operation detaches bounded original metadata mappings and checks
+the offered mappings again at closing. Exact original byte arguments and these
+mappings share an 8 MiB aggregate bound, in addition to the delegated owners'
+stricter limits. Source-owner pins include the existing source-manifest and
+coordinate replay owners. These are selected source observations, not a complete
+loaded-code attestation or a historical pin allowlist.
+
+The same manifest and table inode/size/time witnesses are checked around the
+existing payload decoder. Roots and files must be unaliased, and files must be
+regular single-link leaves. These are ordered custody checks, not an atomic
+snapshot of all three repositories. Closing original-input, source and file
+checks all run on success and failure; secondary custody failures are attached
+to the original exception rather than replacing it. The validator also checks
+that its offered report did not change during full original-input replay.
+
+The existing 16 MiB whole-report bound remains in force, including the exact
+report string and JSON escaping. Overflow and unavailable, corrupt or changed
+bundle files refuse the complete join; this owner does not return a truncated
+success or infer a source/entity association. The separately implemented entity
+census companion remains a distinct legacy-join profile until explicitly made
+compatible. Coordinates alone do not activate entity graphs or semantic review.
+
+Fresh focused qualification passed **128 cases / 384 test phases**: 45 existing
+source-package cases use authored metadata through real owners, 48 legacy join
+cases substitute orchestration delegates, and 35 new coordinate cases use real
+source-package, metadata, payload and coordinate readers over authored local
+Arrow fixtures. Four of the coordinate controls execute genuine delegates before
+explicit negative closing-custody mutations or failure injection. None supplies
+statutory correspondence or legal meaning, and no prior qualification is
+relabeled by this port.
+
+The native request binds 51 bounded function selectors; all 128 expanded case
+IDs, all three passing phases per case and exact JUnit outcomes were verified
+without skips, deselections or expected-failure credit. All 209 conservative
+candidate file pins and 233 total request pins matched; the separately measured
+imported/compiled candidate closure was 45 files. The existing owner sealed 289
+files totaling 3,686,009 bytes, with original native/resource/storage cleanup and
+source READ closeout. Actual storage libraries were PyArrow 25.0.1 and NumPy
+2.1.3; DuckDB was not imported. Selected package startup remains isolated.
+
+Requests, original source capture, source/import manifests, JUnit, sealed
+artifacts and native release receipts are retained under
+`workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-three-cache-join-20261020-01/`
+(`attempt-join-02` and `final-independent-qualification-v02.json`). The first
+attempt passed all 128 pytest cases but remains unqualified because its wrapper
+expected one incorrect parameter label. The corrected case list was independently
+verified before the fresh run. All 286 failed-attempt files remain preserved;
+the existing recovery owner released its unused 128 MiB storage promise.
+Product and test bytes were unchanged between attempts. No model, training,
+provider/network, entity census scan, graph admission or Lean execution occurred.
