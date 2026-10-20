@@ -880,3 +880,59 @@ other package initializers remained isolated. This qualifies the focused local
 transport, not a wheel installation or optional-provider execution. Training
 data, competent source/meaning review, a source-context graph and a checked Lean
 corpus retain their existing owners and review requirements.
+
+## Source-context intake from portable occurrences
+
+The existing compact source-context cache intake now has an explicit v2 profile
+for the coordinate transport above. Reuse
+`prepare_source_context_cache_intake_v2` and
+`validate_source_context_cache_intake_v2` in
+`logic/autoformal/legal_compact_source_context_cache_intake_v1.py`, with the
+metadata companion's `legal-paired-manifest-inventory-request/v2` request and
+the independently supplied `legal-compact-source-context-cache-bindings/v2`
+association document. The original-bound source inventory remains a separate
+input. The module's current guide documents all arguments and report fields.
+
+This first intake profile admits one paired-v3 manifest and at most 64 declared
+physical rows. It retains the exact complete report once, as an opaque UTF8
+string in the existing payload report, plus each selected occurrence's original
+global span index and canonical provenance reference. Exact artifact-byte,
+complete-report and manifest pins keep their separate roles. Missing, corrupt
+or unsupported bundles preserve all declared row slots and expected pins;
+actual coordinate fields remain unavailable. Unexpected exceptions and changed
+source/file witnesses still refuse the operation.
+
+Coordinate replay does not choose an inventory occurrence. Associations remain
+explicit caller declarations, and equal text is only a consistency observation.
+Cached formal outputs and vectors stay outside source-context construction.
+Inference views remain null, training/evaluation masks remain zero and source,
+meaning, context-permission and Lean authority remain false. The existing v1
+entrypoints retain the legacy paired-v1/v2 profile. Strict current producer pins
+identify a fresh source compatibility generation; old receipt hashes are not
+reissued as its qualification.
+
+The dependency closure reuses the existing compact-content, lexical-context,
+physical-inventory and shared-token owners and their owning tests. It also
+includes the existing split guard's rejection of supplied items that resolve no
+manifest member. No numerical kernel or model profile changed.
+
+Fresh native qualification passed **594 cases / 1,782 test phases**: 385 pure
+owner and split-membership controls, then 209 legacy and coordinate
+metadata/payload/intake controls. Native requests bind 114 and 77 function
+selectors; exact expanded case IDs, all phases and JUnit outcomes are verified
+independently. The historical retained sixteen-row external integration case
+was explicitly excluded, with no skip credit. Evidence, source/import manifests,
+original native cleanup and storage release receipts are retained under
+`workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-context-intake-20261020-01/`
+(`attempt-pure-03`, `attempt-paired-03` and
+`final-independent-qualification-v03.json`).
+
+Two earlier wrapper attempts remain preserved and unqualified: one stopped on
+missing import pins and one rejected a legitimate JUnit evidence property after
+all 385 pytest cases passed. Both unused 128 MiB storage promises were released
+through the existing recovery owner without deleting evidence. The final run
+used the same product/test bytes. This qualification covers authored local
+fixtures and actual storage codecs, with genuine deterministic compiler owners
+and selected package startup isolation. It does not execute numerical engines,
+providers, training or Lean, authenticate legal interpretation, or admit a
+source-context graph or unified Lean corpus.
