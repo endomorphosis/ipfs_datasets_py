@@ -711,3 +711,108 @@ reported model-state changes, accepted optimizer updates and compiler gaps are
 separate observations: none is interchangeable with a completed repair or a
 legal proof. Profile stage durations are inclusive and overlap; do not add them
 to estimate wall time. This is a diagnostic report, not a new admission gate.
+
+## Opt-in pinned physical-row enqueue
+
+`scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py` has a separate
+`--source-ingest-profile raw-coordinates-v1` path for a bounded local Parquet
+selection. The default legacy ingest and its historical span IDs are unchanged.
+This profile captures exact decoded source text before the legacy record
+adapter strips whitespace or supplies fallback text. It invokes the existing
+`inventory_uscode_source_coordinates` and `validate_uscode_source_coordinates`
+APIs, then persists the complete report and span bindings through
+`SpanCache.enqueue_source_coordinates`.
+
+Supply independent source pins from the retained source descriptor: the
+lowercase 40-hex repository revision, canonical relative repository path,
+whole-file SHA256 and exact byte count. `--source-release-id` is a required,
+explicit identity for this source selection; the legacy default release ID is
+not reused. A matching local file digest does not authenticate its claimed
+repository revision, establish an official edition or verify legal meaning.
+Hashing an arbitrary replacement and declaring its digest is not source review.
+
+For example, after setting these variables from that descriptor, run from the
+repository root with an approved local Python environment containing PyArrow
+and DuckDB:
+
+```bash
+python scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py \
+  --source-ingest-profile raw-coordinates-v1 \
+  --parquet "$SOURCE_PARQUET" \
+  --source-revision "$SOURCE_REVISION" \
+  --source-path-in-repo "$SOURCE_PATH_IN_REPO" \
+  --expected-source-sha256 "$SOURCE_SHA256" \
+  --expected-source-bytes "$SOURCE_BYTES" \
+  --source-release-id "$SOURCE_RELEASE_ID" \
+  --source-row-offset 0 --limit 8 \
+  --cache "$NEW_CACHE" --enqueue-only --no-resume
+```
+
+`NEW_CACHE` must be absent, with no existing `.wal` sidecar, in an existing
+canonical directory. Existing files, symlinks and catalogs are refused before
+opening a catalog; no historical row is backfilled or assigned a new identity.
+After complete source and coordinate validation, the profile constructs a
+private staging catalog, closes it and publishes it atomically without
+overwriting a racing destination. The emitted `raw_coordinates_enqueued`
+receipt includes the complete report's SHA256. Keep this pin independently
+when subsequently reading the report with
+`SpanCache.read_source_coordinate_report`.
+
+`--source-row-offset` is a zero-based physical Parquet row ordinal, not the
+legacy valid-document skip count. The complete requested selection must exist;
+missing text or CID, whitespace-only text and out-of-range selections fail
+instead of being filtered or replaced by citation text. The retained witness
+binds each physical ordinal to the whole file and revision/path declaration,
+the exact projected law-field metadata and selected-row digest. Exact decoded
+text, including leading/trailing whitespace, CRLF and Unicode, is retained in
+the coordinate report. Span coordinates are half-open Unicode-code-point and
+UTF8 byte ranges within that decoded text. They are not byte positions inside
+the compressed Parquet file or recovered raw HTML.
+
+Span IDs follow the existing inventory API for the complete selected document
+population, including its global span ordinal. This new profile does not
+silently reuse the historical CLI's per-document ordinal reset. Different
+selection windows are separate populations; joining them or retrofitting old
+catalog identities requires an explicit transport/replay contract.
+
+The profile enforces these fixed bounds:
+
+- An explicit `--limit` of 1–128 physical rows; offset and file row count at
+  most 10,000,000; the complete requested range must be present.
+- A regular, nonsymlink local file of at most 1 GiB, held open while its pinned
+  size, SHA256 and unchanged file identity are checked.
+- At most 1 MiB of UTF8 text per row and 8 MiB across the selected rows;
+  projected non-text row metadata is bounded to 48 KiB per row.
+- A Parquet footer of at most 8 MiB, at most 128 schema columns and 8,192 row
+  groups; selected row groups are at most 64 MiB each and 128 MiB in total.
+- The existing coordinate API's complete-report, document metadata and span
+  bounds also apply. These checks do not certify kernel-enforced resource
+  isolation or a full-corpus execution budget.
+
+This enqueue-only profile does not poll remote checkpoints, download sources,
+upload, compile, dispatch workers, train, run Lean or change supervisor state.
+Resume, compiler options, upload options and the separate `fenced-v1` runtime
+are incompatible with it. Custody and geometry observations keep source
+authority, legal meaning, formalization, admission and training authority false.
+
+The focused candidate qualification passed 116 cases and 348 test phases:
+81 coordinate/cache/full-norm cases and 35 raw-ingest cases, including the
+unchanged legacy record path and refusal to overwrite an existing catalog.
+The new controls are in
+`tests/unit/logic/test_uscode_raw_source_coordinate_ingest.py`. Both cohorts used
+the existing native validation owner, authenticated candidate source imports,
+and verified process cleanup and resource release. Retained requests, JUnit,
+source/import readbacks and sealed results are under
+`workspace/test-logs/federal-corpus-audits/legal-ir-selected-landing-20261020-01/`
+(`attempt-coordinate-fullnorm-05` and `attempt-raw-source-05`). The tested storage
+versions were DuckDB 1.4.3, PyArrow 25.0.1 and NumPy 2.1.3. Package startup
+containers were isolated for these focused checks; this does not qualify a
+wheel installation, a full-corpus run or legal meaning.
+
+Paired Arrow export/reimport remains a separate missing slice. The current
+`SpanCache.export_rows`/sealed-row path and paired v1/v2 transport schemas do
+not carry the complete coordinate report and occurrence bindings. A local
+coordinate-aware catalog therefore does not imply a provenance-preserving
+paired dataset, qualified training input, source-context graph or checked Lean
+corpus. Extend the existing versioned paired transport owner before claiming
+that round trip; do not infer offsets for historical rows.
