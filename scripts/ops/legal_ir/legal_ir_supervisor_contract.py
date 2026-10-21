@@ -59,12 +59,12 @@ class ContractError(ValueError):
 
 
 class WidthReplayUnavailable(ContractError):
-    """The selected source-bound numerical replay capability is not deployed.
+    """An unselected or unreviewed replay cannot accept asserted metrics.
 
-    Hashing a provider-authored checkpoint or accepting self-reported metrics
-    does not authenticate a run. No reviewed owner currently binds either
-    retained contextual profile or saved 4096 vectors to both sample sources.
-    Keep these tasks pending until that capability is implemented and reviewed.
+    Reviewed 384D/768D routes require explicit local selection and independent
+    protected replay. Pending 8D/4096D routes have not been implemented and
+    reviewed. A checkpoint digest or self-reported metrics cannot authenticate
+    either an unselected route or a missing route; keep those tasks pending.
     """
 
     reason_code = 'width_source_bound_replay_unavailable'
@@ -85,12 +85,132 @@ class WidthReplayUnavailable(ContractError):
             'admitted': False,
             'formalized': False,
         }
+        if task_id in ('LIRAE-WIDTH-08', 'LIRAE-WIDTH-4096'):
+            self.receipt['prerequisites'] = inspect_width_prerequisites(task_id)
         super().__init__(self.reason_code + ': no authenticated same-source replay is available')
 
 
 def require(value, message):
     if not value:
         raise ContractError(message)
+
+
+def inspect_width_prerequisites(task_id):
+    """Describe the two pending routes without inspecting or authorizing inputs.
+
+    These are declared requirements, not file availability observations. The
+    retained subsection geometry identifies the original task inputs; this
+    metadata neither authenticates supplied vectors nor issues a live native
+    capability. Every call returns detached plain data and executes no replay,
+    filesystem inspection, producer, model, training or resource operation.
+    """
+    require(type(task_id) is str and task_id in ('LIRAE-WIDTH-08', 'LIRAE-WIDTH-4096'),
+            'prerequisite inspection supports only exact pending08/4096 task IDs')
+    dimension = 8 if task_id == 'LIRAE-WIDTH-08' else 4096
+    sources = [
+        {
+            'id': 'born-alive-10-1059-n',
+            'legal_id': 'usc:us:10:1059',
+            'parent_sha256': '6e1086c76b41205ed5caafe80a80ff240b68f6c89484b9d6b3d78f8db8c67bf2',
+            'parent_bytes': 30787,
+            'byte_start': 14849, 'byte_end': 16175,
+            'char_start': 14806, 'char_end': 16128,
+            'span_sha256': 'bfdabce62b4c822fa39aaa517ab55815501c68b6fb10ee292accb3015e7c9faf',
+            'span_bytes': 1326,
+            'coverage': 'complete_literal_subsection', 'full_parent_coverage': False,
+            'literal_start': '(n) Dependent Child Defined',
+            'literal_end': ' (Added Pub. L. 103',
+        },
+        {
+            'id': 'born-alive-1-8-b',
+            'legal_id': 'usc:us:1:8',
+            'parent_sha256': 'fb6eb7e04f50bdba72b954864e4cdc9dcf0a0857e6cc9a5b6e1544b234c64c2a',
+            'parent_bytes': 1584,
+            'byte_start': 722, 'byte_end': 1282,
+            'char_start': 721, 'char_end': 1281,
+            'span_sha256': 'e9b539bd922e3196c8bef902808393b47ce74601d64353fb505625fa0e006851',
+            'span_bytes': 560,
+            'coverage': 'complete_literal_subsection', 'full_parent_coverage': False,
+            'literal_start': '(b) As used in this section',
+            'literal_end': ' (c) Nothing in this section',
+        },
+    ]
+    constraints = {
+        'new_training_permitted': False,
+        'different_authored_cohort_may_complete': False,
+        'source_selection_may_change': False,
+    }
+    if dimension == 8:
+        constraints.update(role='donor', corpus_default=False,
+            vector_acquisition='preserved_compatible_vectors_or_preserved_compatible_source_to8_producer')
+    else:
+        constraints.update(new_encoder_execution_permitted=False,
+            vector_acquisition='independently_preserved_saved_vectors_only',
+            development_result={'successful': 0, 'total': 12})
+    producer_fields = ['profile_id', 'revision', 'config_sha256', 'core_sha256',
+                       'coordinate_contract']
+    if dimension == 4096:
+        producer_fields += ['model_sha256', 'worker_sha256', 'library_sha256',
+                            'tokenizer_policy', 'pooling', 'normalization',
+                            'worker_source_sha256', 'owner_source_sha256',
+                            'vocabulary_owner_source_sha256', 'token_ids_and_count']
+    producer = {
+        'identity_fields': producer_fields,
+        'compatibility': 'matching_preserved_donor_or_decoder_context_contract',
+        'authentication': 'original_producer_bytes_and_receipt_not_caller_assertion',
+    }
+    if dimension == 4096:
+        producer['source_contract'] = {
+            'model_sha256': '4668fd2a6d2764de250489852230e96238eb5c0d7495866eb3b9c6c4fac5c7da',
+            'single_sequence': True, 'untruncated': True,
+            'max_source_tokens_including_special': 512,
+            'pooling': 'last', 'normalization': 'l2',
+        }
+    return {
+        'schema': 'legal-ir-width-replay-prerequisites/v1',
+        'task_id': task_id, 'dimension': dimension,
+        'diagnostic_scope': 'declared_requirements_only',
+        'input_availability': 'not_inspected',
+        'input_files_checked': False, 'executable_presence_checked': False,
+        'reviewed_route_available': False, 'executable_presence_sufficient': False,
+        'reviewed_local_dimensions': [384, 768],
+        'source_contract': {
+            'repository': 'justicedao/ipfs_uscode', 'revision': REVISION,
+            'parquet_sha256': PARQUET_SHA256,
+            'source_text_policy': 'exact_utf8_no_normalization',
+            'offset_contract': 'zero_based_half_open_utf8_bytes',
+            'sources': sources,
+        },
+        'required_inputs': {
+            'vectors': {
+                'dimension': dimension,
+                'ordered_source_ids': [source['id'] for source in sources],
+                'coordinates': 'finite_original_native_coordinates_no_padding_truncation_or_relabelling',
+                'source_binding': 'exact_parent_and_span_hashes_bytes_offsets_and_source_identity',
+                'evidence': 'original_preserved_vector_bytes_and_authenticated_producer_receipt',
+            },
+            'producer': producer,
+            'checkpoint': {
+                'identity': 'exact_saved_checkpoint_bytes_and_sha256',
+                'interface': 'compatible_native_input_projection_decoder_head_core_and_coordinate_contract',
+            },
+            'replay': {
+                'owner': WIDTH_REPLAYER,
+                'required_route': 'explicit_source_bound_dimension_replay_and_independent_verifier',
+                'reviewed': False,
+            },
+        },
+        'task_constraints': constraints,
+        'next_actions': [
+            'Supply a precise independently preserved input locator and original source/producer contracts.',
+            'Review an explicit dimension-specific replay route and independent verifier in the existing owner.',
+            'Qualify the exact source/input/checkpoint route through the existing source and native resource owners.',
+            'Deploy only the reviewed capability; retain task fences until protected validation authenticates a run.',
+        ],
+        'completion_allowed': False, 'resource_admission_granted': False,
+        'encoder_executed': False, 'training_executed': False,
+        'admitted': False, 'formalized': False, 'proof_authority': False,
+    }
 
 
 def sha(raw):
@@ -542,11 +662,25 @@ def main(argv=None):
     modes.add_argument('--enable-local-width-replay', action='store_true', help='Enable reviewed frozen replay only for pending384/768 tasks; preserve every other contract')
     modes.add_argument('--check-board', action='store_true')
     modes.add_argument('--check-task', metavar='TASK_ID')
+    modes.add_argument('--inspect-width-prerequisites',
+        choices=('LIRAE-WIDTH-08', 'LIRAE-WIDTH-4096', 'all'), metavar='TASK_ID|all',
+        help='Print declared pending-width requirements only; inspect no files and authorize no completion')
     parser.add_argument('--root', type=Path, default=ROOT)
     parser.add_argument('--corpus-parquet', type=Path, help='Exact pinned Parquet for local diagnostics; its immutable digest is always checked')
     args = parser.parse_args(argv)
     try:
-        result = enrich(args.root, enable_local_width_replay=True) if args.enable_local_width_replay else enrich(args.root, enable_local_inventory=True) if args.enable_local_inventory else enrich(args.root) if args.enrich else check_board(args.root) if args.check_board else validate(args.root, args.check_task, source_parquet=args.corpus_parquet)
+        if args.inspect_width_prerequisites == 'all':
+            result = {
+                'schema': 'legal-ir-width-replay-prerequisite-bundle/v1',
+                'diagnostic_scope': 'declared_requirements_only',
+                'diagnostics': [inspect_width_prerequisites(task_id)
+                    for task_id in ('LIRAE-WIDTH-08', 'LIRAE-WIDTH-4096')],
+                'completion_allowed': False,
+            }
+        elif args.inspect_width_prerequisites is not None:
+            result = inspect_width_prerequisites(args.inspect_width_prerequisites)
+        else:
+            result = enrich(args.root, enable_local_width_replay=True) if args.enable_local_width_replay else enrich(args.root, enable_local_inventory=True) if args.enable_local_inventory else enrich(args.root) if args.enrich else check_board(args.root) if args.check_board else validate(args.root, args.check_task, source_parquet=args.corpus_parquet)
     except WidthReplayUnavailable as exc:
         print(json.dumps(exc.receipt, sort_keys=True), file=sys.stderr)
         return 75
