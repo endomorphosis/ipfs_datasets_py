@@ -1,0 +1,54 @@
+{
+  "cases": {
+    "cases": 4,
+    "declared_latent_dimensions": [
+      0,
+      384
+    ],
+    "distinct_authored_supported_source_texts": 1,
+    "existing_genuine_coordinate_regressions": 2,
+    "new_supported_target_cases": 2,
+    "passed_phases": 12,
+    "prior_249_case_qualification_reused_not_repeated": true,
+    "product_code_changes": 0
+  },
+  "delivery": "Qualified three-test-file extension to d4f62d9; local committed branch delivery remains separately receipted.",
+  "limits": [
+    "One authored source text; no real statutory fidelity or reconstruction accuracy estimate.",
+    "Dimension384 is a metadata declaration; no latent producer, vector, checkpoint or numerical model ran.",
+    "No training, optimizer update, network/provider call or native Lean build.",
+    "Source release/edition, meaning/context/review/applicability, split and consumer decisions remain unresolved.",
+    "Mechanically supported deterministic compiler outputs do not become eligible supervision or gold.",
+    "Coordinate entity-census compatibility and complete source-bound typed-IR graph intake remain separate gaps."
+  ],
+  "observed": {
+    "all_authority_flags": false,
+    "consumer_eligible": false,
+    "default_unsupported_marker_fixture_preserved": true,
+    "evaluation_gold_mask": 0,
+    "genuine_adapter_and_decoder_audit": true,
+    "genuine_opening_and_closing_original_join_replay": true,
+    "mechanically_supported_outputs_per_new_case": 2,
+    "original_coordinate_spans_per_new_case": 2,
+    "original_global_span_indices": [
+      1
+    ],
+    "physical_paired_rows_per_new_case": 1,
+    "physical_row_ordinals": [
+      0
+    ],
+    "supported_routes": [
+      "compiler.formal_outputs",
+      "compiler.canonical_formal_outputs"
+    ],
+    "supported_source_text": "Clerk shall file report.",
+    "target_configured_before_producer_capture": true,
+    "training_mask": 0
+  },
+  "qualification": {
+    "bytes": 6332,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-supported-target-20261020-01/qualification-summary.json",
+    "sha256": "f44167aff227aa5e179ec6453637f6c1f968a902060dd2e3613f171e9feb552c"
+  },
+  "schema": "legal-ir-coordinate-supported-target-evidence/v1"
+}

@@ -32,8 +32,8 @@ def sha(raw):
 
 
 @pytest.fixture
-def coordinate_join(tmp_path):
-    coordinate = build_coordinate_payload(tmp_path)
+def coordinate_join(tmp_path, request):
+    coordinate = build_coordinate_payload(tmp_path, **getattr(request, "param", {}))
     source_request, metadata = source_inputs(advertised=15, readme_mismatch=True)
     source_raw = wire(source_request)
     location = coordinate["request"]

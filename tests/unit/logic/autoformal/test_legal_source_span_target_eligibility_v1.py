@@ -916,3 +916,108 @@ def test_coordinate_eligibility_bounds_refuse_before_discovery(coordinate_eligib
     with pytest.raises(ValueError):
         owner.prepare_source_span_target_eligibility_v2(request, raw,
             expected_request_sha256=sha(request), join_originals=case["originals"])
+
+
+@pytest.mark.parametrize("coordinate_join", [{
+    "documents": [{"z_metadata": "first", "a_metadata": "second", "legal_id": "usc:us:5:551",
+                   "text": "Unselected Ω context. Clerk shall file report."}],
+    "selected_indices": (1,), "compiler_rule": rule(),
+}], ids=["supported-authored-source-span"], indirect=True)
+@pytest.mark.parametrize("dimension", [0, 384], ids=["zero-latent", "declared-384d"])
+def test_coordinate_eligibility_supported_target_preserves_source_custody_without_authority(
+    coordinate_eligibility, dimension, monkeypatch,
+):
+    """Genuine mechanical support grants no legal, latent or consumer authority."""
+    case = coordinate_eligibility
+    original_join = wire(case["join"])
+    original_inputs = deepcopy(case["originals"])
+    target = rule()
+
+    # Keep the actual audit and metadata owners; reject numerical entry points.
+    for name in ("_torch", "_model", "build_checkpoint", "train_decoder", "load_checkpoint"):
+        if hasattr(span, name):
+            def forbidden(*args, _entrypoint=name, **kwargs):
+                pytest.fail("mechanical coordinate audit invoked " + _entrypoint)
+            monkeypatch.setattr(span, name, forbidden)
+
+    request_raw, join_raw = coordinate_inputs(case, latent_dimension=dimension)
+    report = owner.prepare_source_span_target_eligibility_v2(request_raw, join_raw,
+        expected_request_sha256=sha(request_raw), join_originals=case["originals"])
+    assert owner.validate_source_span_target_eligibility_v2(report, request_raw, join_raw,
+        expected_request_sha256=sha(request_raw),
+        expected_report_sha256=owner.source_span_target_eligibility_sha256(report),
+        join_originals=case["originals"]) == report
+    assert report["schema"] == owner.SCHEMA_V2
+    assert report["request"]["latent_dimension"] == dimension
+    assert report["upstream_reexecution_performed"] is True
+    assert report["checkpoint_status"] == "not_assessed"
+    assert report["join_manifest_raw_utf8"].encode("utf-8") == join_raw == original_join
+    assert wire(report).count(wire(report["join_manifest_raw_utf8"])) == 1
+    assert case["originals"] == original_inputs
+    assert wire(case["join"]) == original_join
+
+    joined = json.loads(report["join_manifest_raw_utf8"])
+    carrier = joined["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    assert carrier == case["join"]["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    raw_coordinates = carrier["report_raw_utf8"].encode("utf-8")
+    coordinate_report = json.loads(raw_coordinates)
+    assert coordinate_report == case["case"]["coordinate"]["report"]
+    assert len(coordinate_report["spans"]) == 2
+    assert "Unselected Ω context." in carrier["report_raw_utf8"]
+    assert carrier["report_bytes"] == len(raw_coordinates)
+    assert carrier["report_artifact_sha256"] == sha(raw_coordinates)
+    assert carrier["report_sha256"] == report["source_coordinate_report_sha256"] == case["case"]["coordinate"]["pin"]
+    assert "report_raw_utf8" not in report
+
+    assert report["counts"]["physical_rows"] == report["counts"]["row_references"] == 1
+    assert report["counts"]["output_occurrences"] == report["counts"]["mechanically_supported_outputs"] == 2
+    assert report["counts"]["target_statuses"] == {"mechanically_supported": 2}
+    assert report["counts"]["rows_without_outputs"] == 0
+    assert report["duplicate_source_groups"] == []
+    physical = report["physical_rows"][0]
+    assert physical["physical_identity"]["row_ordinal"] == 0
+    assert type(physical["source_coordinate_span_index"]) is int
+    assert physical["source_coordinate_span_index"] == 1
+    assert physical["source_text"] == "Clerk shall file report."
+    assert physical["source_text_sha256"] == sha(physical["source_text"].encode("utf-8"))
+    assert physical["source_unit_status"] == "unestablished"
+    assert physical["meaning_unit_id"] is physical["selected_occurrence"] is None
+    assert physical["output_occurrence_ordinals"] == [0, 1]
+    assert "latent" not in physical
+    for field in ("context_status", "source_review_status", "semantic_review_status", "exposure_status",
+                  "split_status", "source_role_status", "applicability_status", "dependency_status",
+                  "definition_binding_status"):
+        assert physical[field] == "unresolved"
+    for field in ("meaning_unit_mask", "source_binding_mask", "context_mask", "source_review_mask",
+                  "source_role_mask", "applicability_mask", "dependency_mask", "definition_binding_mask"):
+        assert type(physical[field]) is int and physical[field] == 0
+
+    outputs = report["output_occurrences"]
+    assert [(entry["route"], entry["ordinal"]) for entry in outputs] == [
+        ("compiler.formal_outputs", 0), ("compiler.canonical_formal_outputs", 0)]
+    assert len({entry["interpretation_cid"] for entry in outputs}) == 2
+    reference = joined["row_references"][0]
+    for row in [physical, report["row_references"][0], *outputs]:
+        assert row["physical_identity_sha256"] == physical["physical_identity_sha256"]
+        assert {key: row[key] for key in owner._COORDINATE_FIELDS} == {
+            key: reference[key] for key in owner._COORDINATE_FIELDS}
+        assert "report_raw_utf8" not in row
+    for index, output in enumerate(outputs):
+        assert output["target_status"] == "mechanically_supported"
+        assert output["canonical_ir"] == {"rules": [target]}
+        assert json.loads(output["formal_output"]["payload_json"]) == target
+        assert output["formal_output"]["family"] == "typed_deontic"
+        assert output["formal_output"]["format"] == "typed-deontic-rule/v1"
+        assert output["producer_origin"] == output["formal_output"]["origin"] == "deterministic_compiler"
+        assert output["formal_output"]["independent"] is True
+        assert output["formal_output"]["target_conditioned"] is False
+        assert output["decoder_audit"] == {"accepted_ids": [
+            physical["physical_identity_sha256"] + ":" + str(index)], "rejected_rows": [], "all_supported": True}
+        assert "unsupported_consumer_target_origin" in output["consumer_compatibility_blockers"]
+        assert ("consumer_requires_zero_latent" in output["consumer_compatibility_blockers"]) == (dimension == 384)
+        assert output["eligibility_blockers"]
+    assert report["current_source_release_correspondence"] == "unverified_no_independent_crosswalk"
+    assert report["entity_binding"] == "unavailable_semantic_companions_not_supplied"
+    for field in ("consumer_eligible_rows", "source_units_established", "training_qualified_rows", "evaluation_gold_rows"):
+        assert report["counts"][field] == 0
+    assert_coordinate_unqualified(report)

@@ -159,3 +159,24 @@ The source-span registry dependency uses its existing complete profile:
 descriptor, catalog symbol, class and factory routing. Metadata discovery and
 argument-guard controls do not qualify checkpoint loading, numerical inference,
 training or legal reconstruction.
+
+
+## Supported coordinate target integration
+
+The focused follow-up qualifies four cases and twelve passed phases: two new
+dimension declarations (0 and 384) over one authored source, plus two existing
+genuine coordinate regressions. It reuses the original 249-case qualification.
+The authored rule enters before genuine paired capture and survives the public
+producer, Parquet, join, adapter and source-copy audit. Both direct and canonical
+compiler routes are mechanically supported for `Clerk shall file report.`
+Physical row 0 still references original global span 1, while the complete
+two-span coordinate carrier retains the unselected context. The default marker
+fixture is unchanged. Original-input validation, post-audit physical-drift
+refusal and source/compute/storage cleanup all close within their existing owners.
+
+Dimension 384 is metadata only: no vector, encoder, decoder checkpoint, numerical
+inference or training runs. Every authority flag remains false; all training/gold
+masks remain integer zero; consumer eligibility and legal review gates stay
+closed. One authored example supplies no statutory accuracy estimate. See the
+[retained qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-supported-target-20261020-01/qualification-summary.json)
+and the [committed evidence summary](../../../../../docs/autoformalization/evidence/legal-ir-coordinate-supported-target-20261021.json).
