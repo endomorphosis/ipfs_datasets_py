@@ -234,14 +234,14 @@
       "required": true,
       "status": "implementation_present",
       "main_integration": {
-        "status": "qualified_scoped_main_integration_publication_pending",
+        "status": "qualified_source_generation_published_origin_main",
         "base_main": "5beb7f4f7f03307f37684908cbb85ae977fc08b6",
         "public_additive_apis": [
           "prepare_coordinate_source_graph_intake_v1",
           "validate_coordinate_source_graph_intake_v1",
           "coordinate_source_graph_intake_sha256"
         ],
-        "scope": "APIs require the exact selected source in the integration checkout. Qualification and local/unmerged/unpushed delivery flags retain their original cutoffs; no subsequent merge or push is claimed.",
+        "scope": "Qualified integrated owner APIs are published at the recorded verified source-bearing commit. Original selected-delivery source pins and local/unmerged/unpushed cutoff flags remain historical.",
         "historical_qualified_owner_bytes": 46532,
         "historical_qualified_owner_sha256": "9ef87c5426bd11cf210f0c5b9755ef30e6e101ce3508d56b5a2052251a88c48c",
         "changed_source_qualification": "47 cases / 141 passed phases; separate from original 25/75 source generation",
@@ -252,7 +252,19 @@
           "sha256": "495f07ba8bd8f3f028834dc36a1e3acf7a226c6ec4a061102e75be71ae19f6cf"
         },
         "owner_bytes": 46494,
-        "owner_sha256": "a9a5ceefc5ed291fc17991b9848d93f8fb9bb7f5e503e4f34130624cd2abf8e4"
+        "owner_sha256": "a9a5ceefc5ed291fc17991b9848d93f8fb9bb7f5e503e4f34130624cd2abf8e4",
+        "publication": {
+          "repository": "endomorphosis/ipfs_datasets_py",
+          "commit": "1fe22386109cd2c282034a4cc9f0b66b6c4f98f5",
+          "verified_remote_main": "1fe22386109cd2c282034a4cc9f0b66b6c4f98f5",
+          "push_receipt": {
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/datasets-push-v01.json",
+            "bytes": 1334,
+            "sha256": "17bc092057ee78532209e13b22cecedeb6e204293b61168f2fed8a557c049b7f"
+          },
+          "scope": "Verified source-bearing integration commit; later documentation-only commits are separate."
+        },
+        "publication_evidence_id": "coordinate-main-publication-20261021-01"
       },
       "selected_git_delivery": {
         "branch": "agent/legal-ir-coordinate-graph-intake-20261021",
@@ -402,7 +414,7 @@
       "required": true,
       "status": "implementation_present",
       "main_integration": {
-        "status": "qualified_scoped_main_integration_publication_pending",
+        "status": "qualified_source_generation_published_origin_main",
         "base_main": "5beb7f4f7f03307f37684908cbb85ae977fc08b6",
         "owner_bytes": 39616,
         "owner_sha256": "c8b9cbe47b3f6ca5709909f34d53730aff594f8218947e17cb0d07f9ea4161f9",
@@ -411,12 +423,24 @@
           "prepare_source_span_target_eligibility_v2",
           "validate_source_span_target_eligibility_v2"
         ],
-        "scope": "APIs require the exact selected source in the integration checkout. Qualification and local/unmerged/unpushed delivery flags retain their original cutoffs; no subsequent merge or push is claimed.",
+        "scope": "Qualified integrated owner APIs are published at the recorded verified source-bearing commit. Original selected-delivery source pins and local/unmerged/unpushed cutoff flags remain historical.",
         "qualification": {
           "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/qualification-summary.json",
           "bytes": 11271,
           "sha256": "495f07ba8bd8f3f028834dc36a1e3acf7a226c6ec4a061102e75be71ae19f6cf"
-        }
+        },
+        "publication": {
+          "repository": "endomorphosis/ipfs_datasets_py",
+          "commit": "1fe22386109cd2c282034a4cc9f0b66b6c4f98f5",
+          "verified_remote_main": "1fe22386109cd2c282034a4cc9f0b66b6c4f98f5",
+          "push_receipt": {
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/datasets-push-v01.json",
+            "bytes": 1334,
+            "sha256": "17bc092057ee78532209e13b22cecedeb6e204293b61168f2fed8a557c049b7f"
+          },
+          "scope": "Verified source-bearing integration commit; later documentation-only commits are separate."
+        },
+        "publication_evidence_id": "coordinate-main-publication-20261021-01"
       },
       "selected_git_delivery": {
         "branch": "agent/legal-ir-coordinate-eligibility-20261020",
@@ -832,7 +856,7 @@
       "required": true,
       "status": "implementation_present",
       "main_integration": {
-        "status": "qualified_scoped_main_integration_publication_pending",
+        "status": "qualified_source_generation_published_origin_main",
         "base_main": "5beb7f4f7f03307f37684908cbb85ae977fc08b6",
         "owner_bytes": 38608,
         "owner_sha256": "1c589c1713fdd946869b69745ab43938df5d85e91c16ae525ef22dfd75824f7e",
@@ -840,12 +864,24 @@
           "prepare_source_span_entity_census_v2",
           "validate_source_span_entity_census_v2"
         ],
-        "scope": "APIs require the exact selected source in the integration checkout. Qualification and local/unmerged/unpushed delivery flags retain their original cutoffs; no subsequent merge or push is claimed.",
+        "scope": "Qualified integrated owner APIs are published at the recorded verified source-bearing commit. Original selected-delivery source pins and local/unmerged/unpushed cutoff flags remain historical.",
         "qualification": {
           "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/qualification-summary.json",
           "bytes": 11271,
           "sha256": "495f07ba8bd8f3f028834dc36a1e3acf7a226c6ec4a061102e75be71ae19f6cf"
-        }
+        },
+        "publication": {
+          "repository": "endomorphosis/ipfs_datasets_py",
+          "commit": "1fe22386109cd2c282034a4cc9f0b66b6c4f98f5",
+          "verified_remote_main": "1fe22386109cd2c282034a4cc9f0b66b6c4f98f5",
+          "push_receipt": {
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/datasets-push-v01.json",
+            "bytes": 1334,
+            "sha256": "17bc092057ee78532209e13b22cecedeb6e204293b61168f2fed8a557c049b7f"
+          },
+          "scope": "Verified source-bearing integration commit; later documentation-only commits are separate."
+        },
+        "publication_evidence_id": "coordinate-main-publication-20261021-01"
       },
       "selected_git_delivery": {
         "branch": "agent/legal-ir-coordinate-entity-census-20261021",
@@ -1079,7 +1115,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-21T03:16:11.897620+00:00",
+  "last_updated_at_utc": "2026-10-21T03:18:59.632310+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -1868,8 +1904,29 @@
       "observed_bytes": 11271,
       "observed_sha256": "495f07ba8bd8f3f028834dc36a1e3acf7a226c6ec4a061102e75be71ae19f6cf",
       "required_for_catalog_check": false,
-      "status": "qualified_main_integration_remote_publication_pending",
-      "scope": "47 focused engineering cases /141 passed phases on the changed main source generation. Original 25/75 and earlier selected qualifications retain their own source scopes. No new source/edition crosswalk, entity/definition meaning, training, model or Lean admission."
+      "status": "qualified_main_integration_published",
+      "scope": "47 focused engineering cases /141 passed phases on the changed main source generation. Original 25/75 and earlier selected qualifications retain their own source scopes. No new source/edition crosswalk, entity/definition meaning, training, model or Lean admission.",
+      "publication": {
+        "repository": "endomorphosis/ipfs_datasets_py",
+        "commit": "1fe22386109cd2c282034a4cc9f0b66b6c4f98f5",
+        "verified_remote_main": "1fe22386109cd2c282034a4cc9f0b66b6c4f98f5",
+        "push_receipt": {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/datasets-push-v01.json",
+          "bytes": 1334,
+          "sha256": "17bc092057ee78532209e13b22cecedeb6e204293b61168f2fed8a557c049b7f"
+        },
+        "scope": "Verified source-bearing integration commit; later documentation-only commits are separate."
+      }
+    },
+    {
+      "id": "coordinate-main-publication-20261021-01",
+      "root": "datasets_repository",
+      "path": "docs/autoformalization/evidence/legal-ir-coordinate-main-publication-20261021.json",
+      "observed_bytes": 2531,
+      "observed_sha256": "6a5d487cea3df46e4da6e05c7e8123d699b06338b1815637c0d7f50799f64262",
+      "required_for_catalog_check": true,
+      "status": "verified_datasets_main_source_publication",
+      "scope": "Verified source-bearing datasets-main commit and immutable push/qualification pins. No new test, model, semantic review or corpus admission."
     }
   ]
 }

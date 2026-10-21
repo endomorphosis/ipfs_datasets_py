@@ -27,7 +27,9 @@ records the changed source generation, exact source pins, selected cohorts and
 original resource cleanup. This main integration qualifies its changed source
 generation through **47 cases / 141 passed phases**, as recorded in that
 independently pinned receipt. This is focused compatibility engineering
-evidence; remote publication is a separate verified action.
+evidence. The [verified datasets-main publication](../../../../../docs/autoformalization/evidence/legal-ir-coordinate-main-publication-20261021.json)
+records qualified source-bearing commit `1fe22386109cd2c282034a4cc9f0b66b6c4f98f5`. Later documentation-only
+commits do not change or requalify that source generation.
 The original 25/75 result below remains separate historical evidence.
 
 ## Existing raw-row APIs remain unchanged
