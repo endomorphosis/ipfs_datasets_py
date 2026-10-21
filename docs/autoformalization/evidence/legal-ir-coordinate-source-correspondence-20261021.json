@@ -1,0 +1,162 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "governing_definition_or_use_selected": false,
+    "model_accuracy_measured": false,
+    "real_independent_reviews_supplied": false,
+    "source_epoch_or_edition_crosswalk_selected": false,
+    "source_meaning_verified": false,
+    "training_gold_qualified": false
+  },
+  "counts": {
+    "Git_delivery_source_postimages": 222,
+    "cases": 59,
+    "cohort_cases": [
+      30,
+      29
+    ],
+    "legacy_cases": 3,
+    "new_cases": 56,
+    "passed_phases": 177,
+    "qualified_runtime_files": 223
+  },
+  "evaluation_gold_mask": 0,
+  "failed_history": {
+    "disposition": "Original failed source/native/storage observations retain their own exact cutoff. Any later storage recovery is separate evidence; release is not inferred here.",
+    "failed_setup_phases": 26,
+    "passed_cases": 4,
+    "product_changed_for_fixture_correction": false,
+    "qualification_passed": false,
+    "review": {
+      "bytes": 274361,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/independent-failed-correspondence-v02-01-review-v01.json",
+      "sha256": "2b3c556bfaf5fc48419aff27aa19257ddaf93b8ecac0552b4d13b0a1deaf92fc"
+    },
+    "successful59_case_credit": 0
+  },
+  "guide": {
+    "bytes": 23813,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/documentation-candidate-v02/ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_correspondence_requests_v1.md",
+    "sha256": "f1027355135a44dca415847da40b8f1385310e67e15824b40908bb83eb8ec9c0"
+  },
+  "limits": "Complete original/source/review replay inputs remain independently retained; no report pointer alone makes them portable or current.",
+  "native_harness": {
+    "all223_committed_claim": false,
+    "external_inner_plugin": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+    "inherited_Git_plugin_sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31",
+    "only_this_runtime_path_excluded_from_Git_postimage_comparison": true,
+    "original_external_capsule_and_native_results_remain_required": true,
+    "partial_native_owner_port": false,
+    "qualified_external_plugin_sha256": "dc6ae4f1cd27628a56db13fc656156c1b84df8ff999d4158ff25e70fac89f7a6",
+    "retained_native_parent_files": 15
+  },
+  "original_successful_custody": {
+    "cohorts": [
+      {
+        "cases": 30,
+        "label": "correspondence-v03-03",
+        "native_lease_id": "553f500dea104ea48e34d02ebca7f7b8",
+        "passed_phases": 90,
+        "storage_reservation_id": "737a92a71bdf447dbb0616e4e6f765e0"
+      },
+      {
+        "cases": 29,
+        "label": "correspondence-v03-04",
+        "native_lease_id": "1fdaa741161241558bb162feb8ddf439",
+        "passed_phases": 87,
+        "storage_reservation_id": "54e51c8c7afc4fcc83a938fce74b7ac4"
+      }
+    ],
+    "group_and_descendant_live_processes": 0,
+    "no_child_timeout_fallback_exercised": false,
+    "normal_granted_path_only": true,
+    "original_native_and_storage_released": true,
+    "original_source_READ_closed": true,
+    "retained_bytes": 17604450,
+    "retained_files_including_two_durability_receipts": 1362,
+    "scope": "Two successful corrected v03 cohorts; failed v02 administrative storage closeout is separately recorded below.",
+    "sealed_payload_files": 1360
+  },
+  "preservation": {
+    "original_guide_prefix_bytes": 10253,
+    "original_guide_prefix_sha256": "8b76a0a03c6c2623287164f127dae70930852e5f4969da2fc4f777c6f1f85db5",
+    "original_owner_prefix_bytes": 24051,
+    "original_owner_prefix_sha256": "943d320f4a1b25ae6e1f6daf86ef818b07092e505d73ce44f3ab689f3493952d"
+  },
+  "qualification": {
+    "independent_review": {
+      "bytes": 18337,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/independent-actual-qualification-review-v01.json",
+      "sha256": "0d2f1aee84341480bf0703c1d4d63813567e766e7197afc9a87aa43d749977d2"
+    },
+    "manifests": [
+      {
+        "bytes": 47635,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/manifest-correspondence-v03-03.json",
+        "sha256": "8b3dfd7027ba7a54e5352439df37369e3deb1dc39d74d64377ea6783874e530b"
+      },
+      {
+        "bytes": 46327,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/manifest-correspondence-v03-04.json",
+        "sha256": "1c3565cbfa1fad810c13ef8527d9a398d74c0c47072378a386879fb67ea202c4"
+      }
+    ],
+    "retained_failure_review": {
+      "bytes": 274361,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/independent-failed-correspondence-v02-01-review-v01.json",
+      "sha256": "2b3c556bfaf5fc48419aff27aa19257ddaf93b8ecac0552b4d13b0a1deaf92fc"
+    },
+    "runtime_capture": {
+      "bytes": 71363,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/runtime-source-capture-v03.json",
+      "sha256": "6e89eeace29f3a0575a43aadc894802959ab5a9bd92d0e6f5e3ec11aec8e0d96"
+    },
+    "summary": {
+      "bytes": 19934,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/qualification-summary.json",
+      "sha256": "3ee2e4415e4e232584bb71d4a8a8b7eeec4c179a411adb6fb74a5d371ecc8676"
+    }
+  },
+  "recorded_at_utc": "2026-10-21T04:08:07.298215+00:00",
+  "runtime_capture": {
+    "bytes": 71363,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/runtime-source-capture-v03.json",
+    "sha256": "6e89eeace29f3a0575a43aadc894802959ab5a9bd92d0e6f5e3ec11aec8e0d96"
+  },
+  "schema": "legal-ir-coordinate-source-correspondence-evidence/v1",
+  "scope": "Original-input coordinate row/request custody only; no statutory semantic or model qualification.",
+  "selected_Git_delivery": {
+    "base_commit": "adce3ed285598d6c9d659313d733286403459163",
+    "branch": "agent/legal-ir-coordinate-source-correspondence-20261021",
+    "delivery_control": {
+      "bytes": 28647,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/controls/deliver_coordinate_source_correspondence_v02.py",
+      "sha256": "3333444bc79bc0dc0817ef7b89ffcced7b09dc77ef05fed9856c136366f88c8b"
+    },
+    "merge": false,
+    "metadata_helper": {
+      "bytes": 27020,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-target-eligibility-reconciliation-20261021-01/controls/deliver_selected_reconciliation_v02.py",
+      "sha256": "e6c3beaa1d41d9b605fe393cb4737858b00fcfdf4005c40bae0cb18946cc969d"
+    },
+    "paths": [
+      "ipfs_datasets_py/logic/autoformal/corpus_legacy_source_review.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
+      "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_correspondence_requests_v1.md",
+      "tests/unit/logic/autoformal/test_corpus_legacy_source_review.py",
+      "tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py",
+      "docs/autoformalization/evidence/legal-ir-coordinate-source-correspondence-20261021.json"
+    ],
+    "primary_runtime_installation": false,
+    "push": false,
+    "status": "prepared_pending_original_WRITE_and_actual_Git_readback",
+    "superproject_pointer_change": false,
+    "worktree": "/home/barberb/lift_coding/.worktrees/legal-ir-coordinate-source-correspondence-20261021"
+  },
+  "source_generation": {
+    "corrected_test_sha256": "0d1c4aaef7284e492f14bfbe7cff3d0c32f451a7cb4c0c294624147c642036e7",
+    "product_sha256": "b81e00313689a305cb87e039051b20cc8e8bf763c1f5e69f7507620300c113de"
+  },
+  "status": "qualified_private_candidates_git_delivery_pending",
+  "training_mask": 0
+}
