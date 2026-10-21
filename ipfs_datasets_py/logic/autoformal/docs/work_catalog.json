@@ -328,7 +328,8 @@
         "selected-coordinate-context-intake-20261020-01",
         "selected-coordinate-three-cache-join-20261020-01",
         "selected-pilot-progress-identity-lookup-20261021-01",
-        "comprehensive-reuse-plan-review-20261021-07"
+        "comprehensive-reuse-plan-review-20261021-07",
+        "selected-pilot-paired-membership-lookup-20261021-01"
       ],
       "id": "source-span-entity-join",
       "notes": "Join custody does not establish legal meaning or target eligibility. Historical census companion preserves missing endpoints and unselected source occurrences; evidence navigation does not admit a semantic graph. Newer opt-in raw/paired/context/join transport is separately qualified and committed on431c9c7; see selected_git_delivery. Legacy historical transport flags retain their original observation scope; default adoption/publication and semantic/crosswalk gates remain separate.",
@@ -359,6 +360,31 @@
         ],
         "pushed": false,
         "scope": "Separate selected postimage; top-level APIs/status retain installed-primary profile and historical qualification scope."
+      },
+      "selected_pilot_paired_original_rosters": {
+        "complete_bundle_or_producer_integrity_verified": false,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "selected-pilot-paired-membership-lookup-20261021-01",
+        "exact_target_id_collisions": 0,
+        "global_absence_inferred": false,
+        "next_action": "Reuse both completed negative rosters; inspect retained producer/segmentation/ID-scheme lineage before selecting a genuinely different bounded population. Any later positive requires independently pinned complete bundle/physical-row/producer replay in existing owners.",
+        "original_source_native_storage_closeout_verified": true,
+        "paired_v1": {
+          "files": 611,
+          "independently_expected_rows": 4888,
+          "physical_rows": 4888,
+          "revision": "765176c6db79ba65c1697c21dead43666350b730"
+        },
+        "paired_v2": {
+          "files": 486,
+          "independently_expected_rows": null,
+          "physical_rows": 3888,
+          "revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+          "unresolved_manifest_mappings": 485
+        },
+        "source_projection_only": true,
+        "target_physical_row_bound": false,
+        "training_mask": 0
       },
       "status": "implementation_present"
     },
@@ -1207,7 +1233,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-21T03:56:08.916321+00:00",
+  "last_updated_at_utc": "2026-10-21T06:04:14.071891+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2099,6 +2125,26 @@
       "root": "datasets_repository",
       "scope": "Maintained programme synthesis with four pinned review inputs: retained autoencoder science, current owner/API publication availability, bounded metadata for three unchanged Hub revisions, and earlier artifact reuse. Preserves all 24 task IDs and four distinct representation systems. Reuses the completed 130-candidate physical replay; next work locates immutable physical provenance for only two exact operative span IDs. Clarifies parallel Lean/model prerequisites and separate source/meaning, representability, autonomous reconstruction and native/release gates. Paired 4,888 observations and entity 1,960,876 rows remain storage counts. No new payload scan, encoder, model, training, tests or Lean execution; source and asset qualifications retain their original generations.",
       "status": "read_only_reuse_and_plan_review"
+    },
+    {
+      "id": "selected-pilot-paired-membership-lookup-20261021-01",
+      "observed_bytes": 17497,
+      "observed_sha256": "c5e0f7ac51eefcb01f75748d942b7c0d7f7de6ea1031ac2ccc0b6c63c874d9a6",
+      "path": "docs/autoformalization/evidence/legal-ir-paired-roster-catalog-observations-20261021.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Two exact heading-inclusive operative IDs have zero collisions in complete selected original rosters:611paired-v1 files/4888independent rows@765176c6 and486paired-v2 files/3888actualfooter rows@60501f3e. V2 independent total null/485manifest mappings unresolved. Both native/storage/sourceREAD closeouts verified; v03reused407retained files+204new, priorwatchdog failure/closedstorage/filespreserved. Source columns only, no completebundle/producer/source-edition/meaning/training/gold/model/Lean authority or targetphysicalrowbinding. Reuse negatives and inspect retainedproducer/segmentation/ID-scheme lineage before any genuinely different bounded population; no repeatrosters/globalabsence inference.",
+      "status": "completed_owned_source_projection_lookups_independently_reviewed"
+    },
+    {
+      "id": "retained-384-768-catalog-discovery-attempt-20261021-01",
+      "observed_bytes": 17497,
+      "observed_sha256": "c5e0f7ac51eefcb01f75748d942b7c0d7f7de6ea1031ac2ccc0b6c63c874d9a6",
+      "path": "docs/autoformalization/evidence/legal-ir-paired-roster-catalog-observations-20261021.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "One original-owned metadata discovery attempt for four retained 384D/768D CE/zero selectors failed at catalog_load. One actual read-only DuckDB connection attempt did not return, before settings or model_metadata SQL; no snapshot or selector resolutions were obtained. Immediate generic wrapper cause ValueError does not identify the underlying native reason; registration presence remains unverified, with no missing-record, writer or configuration inference. Original native/source-READ and selected 128 MiB retained-storage closeout completed; all four failed files (2,930 bytes) were preserved and rehashed. No ModelManager construction, registration, checkpoint/companion payload read, full database hash/copy, model, training or Lean execution. Existing historical registrations, public payload roundtrips and reader source remain reusable under their original scopes. Portable evidence includes the independent failure/closeout review and original full receipt references.",
+      "status": "owned_data_discovery_refused_and_closed"
     }
   ]
 }
