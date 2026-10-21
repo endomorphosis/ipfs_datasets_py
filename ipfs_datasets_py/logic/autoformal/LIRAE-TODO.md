@@ -2455,7 +2455,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-WIDTH-4096 Measure fresh Leanstral4096 source embedding repeatability on the sample
 
-- status: todo
+- status: completed
 - goal id: LIRAE-WIDTH
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
