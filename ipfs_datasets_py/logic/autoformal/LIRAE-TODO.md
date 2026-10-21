@@ -2391,7 +2391,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-WIDTH-08 Measure frozen spaCy8 feature reconstruction on the born-alive sample
 
-- status: todo
+- status: completed
 - goal id: LIRAE-WIDTH
 - depends on: none
 - board namespace: legal-ir-autoencoder-v1
