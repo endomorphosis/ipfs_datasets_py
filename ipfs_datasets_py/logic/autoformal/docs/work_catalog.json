@@ -2155,6 +2155,16 @@
       "root": "datasets_repository",
       "scope": "DATA04 reused the existing reader for one actual read-only IRPersistentCatalogResult with 690 bindings and four exact same-result retained 384D/768D CE/zero selector matches, zero not found. Fixed first-SQL external-access hardening preceded settings/catalog SQL; effective read-only, extension-off and bounded resource settings verified. All 249 source pins and original native/storage/source-READ closeout checked; six files/77,589 bytes preserved. Metadata presence and stored trained/readiness declarations confer no checkpoint/runtime/source-compatibility, quality, service, training/gold or Lean authority. DATA02 unknown failure and DATA03 direct temp_directory_change_blocked refusal plus actual closeouts remain separate; no new weights, registrations, model execution or 8D/4096D discovery.",
       "status": "verified_readonly_metadata_discovery_and_original_closeout"
+    },
+    {
+      "id": "retained-native384-companion-delivery-reuse-20261021-01",
+      "root": "datasets_repository",
+      "path": "docs/autoformalization/evidence/legal-ir-retained-native384-companion-delivery-20261021.json",
+      "observed_bytes": 10252,
+      "observed_sha256": "5ec3ec8005972b7d8cabc64df0ff3aaaf4475a9aa9b430863cf53bdfa6d40448",
+      "required_for_catalog_check": false,
+      "status": "published_original_companions_and_reused_closed_preflight_generations",
+      "scope": "Eight original companion assets/25,397,561 bytes plus manifest published publicly at be0d0226235144c8d67cb2d1ca35828d5c3a8710; nine committed size/Git blob identities verified, without anonymous full-byte postupload roundtrip. Reuses peer P-generation two-source CE/zero/four source-only preparations with two null targets per arm. Preserves closed T cache-path refusal, unchanged nine code hashes and unexecuted portability drafts; first closed HTTP401 and intermediate DATA07 nine-path absence remain separate from successful later publication. No selected decoder checkpoint republication, training, source relocation, model quality, registration/service refresh or supervisor adoption qualification. All original native/storage/source custody closed."
     }
   ]
 }
