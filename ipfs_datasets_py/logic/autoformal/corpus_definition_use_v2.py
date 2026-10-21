@@ -23,6 +23,12 @@ PROFILE = "declared-v2-unary-definition-use-alias-assumption/v1"
 BINDING_SCHEMA = "legal-corpus-v2-definition-use-binding/v1"
 INTERPRETATION_SCHEMA = "legal-corpus-v2-definition-use-interpretation/v1"
 AST_SCHEMA = "legal-corpus-v2-definition-use-alias-ast/v1"
+PARENT_SCHEMA = "legal-corpus-parent-definition-use-candidate/v1"
+PARENT_REQUEST_SCHEMA = "legal-corpus-parent-definition-use-request/v1"
+PARENT_PROFILE = "declared-plaintext-parent-unary-definition-use-alias-assumption/v1"
+PARENT_BINDING_SCHEMA = "legal-corpus-parent-definition-use-binding/v1"
+PARENT_INTERPRETATION_SCHEMA = "legal-corpus-parent-definition-use-interpretation/v1"
+PARENT_AST_SCHEMA = "legal-corpus-parent-definition-use-alias-ast/v1"
 LOOKUP_COVERAGE = "representative_first_occurrence_whole_predicate_assumption"
 MAX_TOTAL_INPUT_BYTES = 48 * 1024 * 1024
 MAX_SOURCE_BYTES = 8_000_000
@@ -53,6 +59,12 @@ FALSE_FLAGS = dict.fromkeys(
     ),
     False,
 )
+PARENT_FALSE_FLAGS = {
+    **FALSE_FLAGS,
+    "governing_scope_verified": False,
+    "governing_edition_verified": False,
+    "contributor_completeness_verified": False,
+}
 _REQUEST_FIELDS = {
     "schema",
     "profile",
@@ -111,6 +123,7 @@ FIELDS = {
     "limitations",
     *FALSE_FLAGS,
 }
+PARENT_FIELDS = FIELDS | set(PARENT_FALSE_FLAGS)
 
 
 def _fail(message):
@@ -274,6 +287,66 @@ def _prepare(evidence, review):
     return preparation, candidate, report
 
 
+def _parent_use_preflight(evidence):
+    """Reuse the parent byte preflight; count both complete logical transports.
+
+    Shared objects or physical storage do not reduce logical input accounting.
+    This imports the existing pure review preflight, never a source replay,
+    signature check, model or native build. The complete replay follows later.
+    """
+    fields = _EVIDENCE_FIELDS | {"parent_inputs"}
+    contracts.require_keys(
+        evidence, fields | ({"parent_limits"} if "parent_limits" in evidence else set()),
+        "parent use evidence inputs",
+    )
+    contracts.require_cid(evidence["expected_preparation_cid"],
+                          "expected parent preparation CID", codecs=("dag-json",))
+    from . import corpus_definition_review_v2 as review
+
+    pins, population, transport = review._parent_preflight(
+        evidence["candidate_inputs"], evidence["expected_candidate_pin"],
+        evidence["parent_inputs"], evidence["context_inputs"],
+        evidence["expected_context_population"], evidence.get("parent_limits"),
+    )
+    parent = evidence["parent_inputs"]
+    total = sum(len(raw) for raw in evidence["candidate_inputs"].values())
+    total += transport["parent_bundle"]["bytes"] + transport["replay_inputs"]["bytes"]
+    total += sum(row["bytes"] for row in transport["report_bytes"].values())
+    requests = []
+    for row in evidence["context_inputs"]:
+        request = contracts.clone_json(row["dependency_requests"])
+        requests.append(request)
+        total += len(row["packet_raw"]) + len(canonical_dag_json_bytes(request))
+    metadata = {
+        "expected_preparation_cid": evidence["expected_preparation_cid"],
+        "candidate_pins": pins,
+        "context_population": population,
+        "transport": transport,
+        "expected_report_pins": parent["expected_report_pins"],
+        "parent_limits": evidence.get("parent_limits"),
+        "dependency_requests": requests,
+    }
+    # Metadata is additionally charged even when some of its commitments also
+    # occur in the raw inputs. Never deduplicate repeated endpoint originals.
+    total += len(canonical_dag_json_bytes(contracts.clone_json(metadata)))
+    _need(total <= MAX_TOTAL_INPUT_BYTES, "complete parent use input byte budget exceeded")
+    return total, _digest(metadata)
+
+
+def _prepare_parent(evidence, review):
+    preparation = review.prepare_parent_definition_review_evidence_v1(
+        **{key: value for key, value in evidence.items()
+           if key != "expected_preparation_cid"}
+    )
+    _need(preparation["record_cid"] == evidence["expected_preparation_cid"],
+          "independent parent preparation CID differs")
+    candidate = contracts.load_record_bytes(evidence["candidate_inputs"]["candidate_raw"],
+        expected_sha256=evidence["expected_candidate_pin"]["candidate_sha256"])
+    report = contracts.load_record_bytes(evidence["candidate_inputs"]["report_raw"],
+        expected_sha256=evidence["expected_candidate_pin"]["report_sha256"])
+    return preparation, candidate, report
+
+
 def _contexts(preparations):
     """Union physical geometry, retaining both ordered role populations elsewhere."""
     contexts, slots = {}, []
@@ -315,7 +388,27 @@ def _partition(row, candidate, applicability_cid):
     )
 
 
-def _selected_binding(request, donor, consumer, registry, lookup):
+def _parent_partition(row, candidate, preparation):
+    """A declared lookup partition must match independently replayed originals."""
+    version = candidate["source_version"]
+    binding = preparation["parent_input_binding"]
+    expected = {
+        "document_id": version["source_id"],
+        "source_version_cid": version["record_cid"],
+        "release_id": version["release_id"],
+        "edition": version["edition"],
+        "scope_cid": candidate["scope_record"]["record_cid"],
+        "preparation_cid": preparation["record_cid"],
+        **{key: binding[key] for key in (
+            "parent_manifest_cid", "root_source_occurrence_cid",
+            "companion_record_cid", "source_binding_sha256")},
+    }
+    _need(row["availability"] == "available"
+          and all(row[key] == value for key, value in expected.items()),
+          "parent lookup partition differs from independently replayed source or preparation")
+
+
+def _selected_binding(request, donor, consumer, registry, lookup, parent_preparations=None):
     _need(
         donor["record_cid"] != consumer["record_cid"]
         and donor["source_version"]["source_id"]
@@ -326,11 +419,14 @@ def _selected_binding(request, donor, consumer, registry, lookup):
         donor["family"] == consumer["family"] and donor["family"] in {"fol", "tdfol"},
         "matching unary native families required",
     )
-    applicability = donor["scope_record"]["declared_applicability"]
-    _need(
-        applicability == consumer["scope_record"]["declared_applicability"],
-        "exact shared declared applicability required",
-    )
+    applicability_cid = None
+    if parent_preparations is None:
+        applicability = donor["scope_record"]["declared_applicability"]
+        _need(
+            applicability == consumer["scope_record"]["declared_applicability"],
+            "exact shared declared applicability required",
+        )
+        applicability_cid = cid_for_dag_json(applicability)
     donor_symbol = donor["term_record"]["symbol"]
     _need(
         request["donor_symbol"] == donor_symbol
@@ -380,9 +476,12 @@ def _selected_binding(request, donor, consumer, registry, lookup):
         "exact local and donor query route required",
     )
     local, target = partitions[local_id], partitions[donor_id]
-    applicability_cid = cid_for_dag_json(applicability)
-    _partition(local, consumer, applicability_cid)
-    _partition(target, donor, applicability_cid)
+    if parent_preparations is None:
+        _partition(local, consumer, applicability_cid)
+        _partition(target, donor, applicability_cid)
+    else:
+        _parent_partition(local, consumer, parent_preparations[1])
+        _parent_partition(target, donor, parent_preparations[0])
     reference = lookup["reference"]
     donor_document = donor["source_version"]["source_id"]
     consumer_document = consumer["source_version"]["source_id"]
@@ -424,7 +523,13 @@ def _selected_binding(request, donor, consumer, registry, lookup):
         "scope_record_cid": donor["scope_record"]["record_cid"],
         "definition_record_cid": donor["definition_record"]["record_cid"],
         "term_record_cid": donor["term_record"]["record_cid"],
-        "applicability_cid": applicability_cid,
+        **({"applicability_cid": applicability_cid} if parent_preparations is None else {
+            "preparation_cid": parent_preparations[0]["record_cid"],
+            "source_binding_sha256": target["source_binding_sha256"],
+            "scope_relation": "unreviewed_caller_declared_route",
+            "applicability_verified": False,
+            "governing_edition_verified": False,
+        }),
     }
 
 
@@ -543,6 +648,7 @@ def _dependencies(
     pins,
     producers,
     dependencies,
+    prefix="v2-use",
 ):
     artifacts, edges = {}, set()
 
@@ -565,7 +671,7 @@ def _dependencies(
         }
 
     policy = [
-        {"key": "v2-use-owner:" + path, "sha256": digest}
+        {"key": prefix + "-owner:" + path, "sha256": digest}
         for path, digest in sorted(producers.items())
     ]
     add(artifact(snapshot["record_cid"], _digest(snapshot), policy))
@@ -582,9 +688,9 @@ def _dependencies(
     )
     for row in records:
         add(artifact(row["record_cid"], _digest(row)))
-    add(artifact("v2-use-joint-native:sha256:" + _digest(native), _digest(native)))
+    add(artifact(prefix + "-joint-native:sha256:" + _digest(native), _digest(native)))
     for label, digest in pins.items():
-        add(artifact("v2-use-input:" + label + ":sha256:" + digest, digest))
+        add(artifact(prefix + "-input:" + label + ":sha256:" + digest, digest))
     edges.update(
         (snapshot["record_cid"], key)
         for key in artifacts
@@ -602,7 +708,7 @@ def _dependencies(
     return manifest, ids
 
 
-def prepare_definition_use_v2(
+def _prepare_definition_use(
     request_raw,
     *,
     expected_request_sha256,
@@ -616,6 +722,7 @@ def prepare_definition_use_v2(
     expected_lookup_cid,
     query_raw,
     expected_query_sha256,
+    parent=False,
 ):
     """Regenerate a bounded, unreviewed cross-document unary alias component."""
     _need(_pure_pins() == _IMPORTED_PURE_PINS, "V2 use owners changed since import")
@@ -627,11 +734,15 @@ def prepare_definition_use_v2(
     )
     for raw, expected, label in small:
         _bounded(raw, expected, contracts.MAX_RECORD_BYTES, label)
-    total = (
-        sum(len(row[0]) for row in small)
-        + _preflight(donor_evidence_inputs)
-        + _preflight(consumer_evidence_inputs)
-    )
+    if parent:
+        endpoint_preflights = (
+            _parent_use_preflight(donor_evidence_inputs),
+            _parent_use_preflight(consumer_evidence_inputs),
+        )
+        total = sum(len(row[0]) for row in small) + sum(row[0] for row in endpoint_preflights)
+    else:
+        total = (sum(len(row[0]) for row in small)
+                 + _preflight(donor_evidence_inputs) + _preflight(consumer_evidence_inputs))
     _need(
         total <= MAX_TOTAL_INPUT_BYTES,
         "complete combined original input byte budget exceeded",
@@ -643,8 +754,8 @@ def prepare_definition_use_v2(
     )
     contracts.require_keys(request, _REQUEST_FIELDS, "explicit V2 use request")
     _need(
-        request["schema"] == REQUEST_SCHEMA
-        and request["profile"] == PROFILE
+        request["schema"] == (PARENT_REQUEST_SCHEMA if parent else REQUEST_SCHEMA)
+        and request["profile"] == (PARENT_PROFILE if parent else PROFILE)
         and request["interpretation_status"] == "unreviewed_caller_declaration",
         "explicit unreviewed V2 alias request required",
     )
@@ -666,13 +777,16 @@ def prepare_definition_use_v2(
     owners = _owners()
     producers = _pins(owners)
     review, lookup_owner, routes, dependencies = owners
-    dp, donor, dr = _prepare(donor_evidence_inputs, review)
-    cp, consumer, cr = _prepare(consumer_evidence_inputs, review)
+    prepare_endpoint = _prepare_parent if parent else _prepare
+    dp, donor, dr = prepare_endpoint(donor_evidence_inputs, review)
+    cp, consumer, cr = prepare_endpoint(consumer_evidence_inputs, review)
     contexts, slots = _contexts((dp, cp))
     registry = contracts.load_record_bytes(
         registry_raw, expected_sha256=expected_registry_sha256
     )
-    registry = lookup_owner.validate_definition_lookup_registry(
+    validate_registry = (lookup_owner.validate_parent_definition_lookup_registry_v1
+                         if parent else lookup_owner.validate_definition_lookup_registry)
+    registry = validate_registry(
         registry, expected_registry_cid=expected_registry_cid
     )
     lookup = contracts.load_record_bytes(
@@ -682,15 +796,18 @@ def prepare_definition_use_v2(
         lookup["record_cid"] == expected_lookup_cid,
         "independent selected lookup CID differs",
     )
-    lookup = lookup_owner.validate_definition_lookup(
+    validate_lookup = (lookup_owner.validate_parent_definition_lookup_v1
+                       if parent else lookup_owner.validate_definition_lookup)
+    lookup = validate_lookup(
         lookup, registry, query_raw, expected_query_sha256
     )
-    body, table_binding = _selected_binding(request, donor, consumer, registry, lookup)
+    body, table_binding = _selected_binding(request, donor, consumer, registry, lookup,
+                                           (dp, cp) if parent else None)
     alias_native, joint = _native(donor, consumer, (dr, cr), request, routes)
     interpretation = contracts.seal_record(
         {
-            "schema": INTERPRETATION_SCHEMA,
-            "profile": PROFILE,
+            "schema": PARENT_INTERPRETATION_SCHEMA if parent else INTERPRETATION_SCHEMA,
+            "profile": PARENT_PROFILE if parent else PROFILE,
             "request_sha256": expected_request_sha256,
             "request_json": request_raw.decode(),
             "donor_preparation_cid": dp["record_cid"],
@@ -701,8 +818,8 @@ def prepare_definition_use_v2(
     )
     binding = contracts.seal_record(
         {
-            "schema": BINDING_SCHEMA,
-            "profile": PROFILE,
+            "schema": PARENT_BINDING_SCHEMA if parent else BINDING_SCHEMA,
+            "profile": PARENT_PROFILE if parent else PROFILE,
             "use_id": request["use_id"],
             "consumer_candidate_cid": consumer["record_cid"],
             "donor_candidate_cid": donor["record_cid"],
@@ -732,7 +849,7 @@ def prepare_definition_use_v2(
     )
     alias = contracts.seal_record(
         {
-            "schema": AST_SCHEMA,
+            "schema": PARENT_AST_SCHEMA if parent else AST_SCHEMA,
             "family": donor["family"],
             "native_ast": alias_native["native_ast"],
             "lean_body": alias_native["lean_body"],
@@ -743,7 +860,9 @@ def prepare_definition_use_v2(
         }
     )
     snapshot = _graph(donor, consumer, interpretation, binding, alias)
-    lookup_manifest = lookup_owner.build_definition_lookup_dependencies(
+    build_dependencies = (lookup_owner.build_parent_definition_lookup_dependencies_v1
+                          if parent else lookup_owner.build_definition_lookup_dependencies)
+    lookup_manifest = build_dependencies(
         registry, [lookup], [lookup["record_cid"]]
     )
     input_pins = {label: expected for _, expected, label in small}
@@ -756,12 +875,18 @@ def prepare_definition_use_v2(
         input_pins,
         producers,
         dependencies,
+        prefix="parent-use" if parent else "v2-use",
     )
     _need(_pins(owners) == producers, "V2 use owners changed during preparation")
+    if parent:
+        _need(endpoint_preflights == (
+            _parent_use_preflight(donor_evidence_inputs),
+            _parent_use_preflight(consumer_evidence_inputs)),
+            "parent original transport changed during combined preparation")
     return contracts.seal_record(
         {
-            "schema": SCHEMA,
-            "profile": PROFILE,
+            "schema": PARENT_SCHEMA if parent else SCHEMA,
+            "profile": PARENT_PROFILE if parent else PROFILE,
             "family": donor["family"],
             "view": "candidate",
             "interpretation_record": interpretation,
@@ -780,18 +905,66 @@ def prepare_definition_use_v2(
             "producer_pins": producers,
             "original_interpretations_unchanged": True,
             "declared_native_binding_encoded": True,
-            "review_status": "new_combined_use_review_profile_and_actual_reviews_pending",
+            "review_status": ("parent_combined_use_review_profile_and_actual_reviews_pending"
+                              if parent else "new_combined_use_review_profile_and_actual_reviews_pending"),
             "limitations": [
-                "Two distinct physical documents, one supplied V2 candidate per endpoint; complete tables may contain additional unreviewed declarations.",
+                ("Two distinct physical plaintext parent documents; each endpoint replays original evidence and all declared contexts. Unknown editions and scope declarations do not establish governing compatibility."
+                 if parent else "Two distinct physical documents, one supplied V2 candidate per endpoint; complete tables may contain additional unreviewed declarations."),
                 "A whole local predicate is aliased by an unreviewed assumption; no identity or legal implication is proved.",
                 "Only the first matching physical use is the representative lookup query; all body roles and contexts remain retained.",
                 "Complete supplied tables are dependencies; governing inventory and legal applicability remain unverified.",
                 "Original definition reviews cannot authorize this new alias or combined graph/native interpretation.",
                 "No combined-use review domain, native Lean build profile, actual statutory meaning or admission is supplied.",
             ],
-            **FALSE_FLAGS,
+            **(PARENT_FALSE_FLAGS if parent else FALSE_FLAGS),
         }
     )
+
+
+def prepare_definition_use_v2(
+    request_raw, *, expected_request_sha256, donor_evidence_inputs,
+    consumer_evidence_inputs, registry_raw, expected_registry_sha256,
+    expected_registry_cid, lookup_raw, expected_lookup_sha256, expected_lookup_cid,
+    query_raw, expected_query_sha256,
+):
+    """Prepare the unchanged official V2 source/applicability profile."""
+    return _prepare_definition_use(request_raw,
+        expected_request_sha256=expected_request_sha256,
+        donor_evidence_inputs=donor_evidence_inputs,
+        consumer_evidence_inputs=consumer_evidence_inputs, registry_raw=registry_raw,
+        expected_registry_sha256=expected_registry_sha256,
+        expected_registry_cid=expected_registry_cid, lookup_raw=lookup_raw,
+        expected_lookup_sha256=expected_lookup_sha256, expected_lookup_cid=expected_lookup_cid,
+        query_raw=query_raw, expected_query_sha256=expected_query_sha256)
+
+
+def prepare_parent_definition_use_v1(
+    request_raw, *, expected_request_sha256, donor_evidence_inputs,
+    consumer_evidence_inputs, registry_raw, expected_registry_sha256,
+    expected_registry_cid, lookup_raw, expected_lookup_sha256, expected_lookup_cid,
+    query_raw, expected_query_sha256,
+):
+    """Compose candidate-only unary aliases from fully replayed plaintext parents.
+
+    Lookup nominations remain unreviewed even when lexically unique. This API
+    supplies neither combined-use signatures nor a native Lean admission route.
+    """
+    return _prepare_definition_use(request_raw,
+        expected_request_sha256=expected_request_sha256,
+        donor_evidence_inputs=donor_evidence_inputs,
+        consumer_evidence_inputs=consumer_evidence_inputs, registry_raw=registry_raw,
+        expected_registry_sha256=expected_registry_sha256,
+        expected_registry_cid=expected_registry_cid, lookup_raw=lookup_raw,
+        expected_lookup_sha256=expected_lookup_sha256, expected_lookup_cid=expected_lookup_cid,
+        query_raw=query_raw, expected_query_sha256=expected_query_sha256, parent=True)
+
+
+def validate_parent_definition_use_candidate_v1(record, request_raw, **validation_inputs):
+    """Require exact regeneration from independently pinned original parent bytes."""
+    checked = contracts.validate_record(record, schema=PARENT_SCHEMA, fields=PARENT_FIELDS)
+    expected = prepare_parent_definition_use_v1(request_raw, **validation_inputs)
+    _need(checked == expected, "parent definition use differs from complete independent regeneration")
+    return checked
 
 
 def validate_definition_use_candidate_v2(record, request_raw, **validation_inputs):
@@ -813,4 +986,6 @@ __all__ = [
     "MAX_TOTAL_INPUT_BYTES",
     "prepare_definition_use_v2",
     "validate_definition_use_candidate_v2",
+    "PARENT_SCHEMA", "PARENT_REQUEST_SCHEMA", "PARENT_PROFILE", "PARENT_FALSE_FLAGS",
+    "prepare_parent_definition_use_v1", "validate_parent_definition_use_candidate_v1",
 ]

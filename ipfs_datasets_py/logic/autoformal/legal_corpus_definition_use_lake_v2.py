@@ -8,6 +8,8 @@ project transport are delegated to their existing owners on explicit use.
 from __future__ import annotations
 
 import hashlib
+import json
+import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,7 +22,11 @@ from . import corpus_definition_use_review_v2 as review
 SCHEMA = "legal-corpus-v2-definition-use-lake-preparation/v1"
 PROFILE = "replayed-v2-definition-use-conditional-project/v1"
 INPUT_BINDING_SCHEMA = "legal-corpus-v2-definition-use-native-input-binding/v1"
+PARENT_SCHEMA = "legal-corpus-parent-definition-use-lake-preparation/v1"
+PARENT_PROFILE = "replayed-parent-definition-use-conditional-project/v1"
+PARENT_INPUT_BINDING_SCHEMA = "legal-corpus-parent-definition-use-native-input-binding/v1"
 MAX_INPUT_BYTES = 48 * 1024 * 1024
+MAX_PARENT_REPLAY_BYTES = 64 * 1024 * 1024
 MAX_PROJECT_BYTES = 8 * 1024 * 1024
 MAX_FILES = 9
 MAX_EVIDENCE = 256
@@ -59,6 +65,8 @@ FALSE_FLAGS = {
         False,
     ),
 }
+PARENT_FALSE_FLAGS = {**FALSE_FLAGS, **review.PARENT_FALSE_FLAGS}
+
 FIELDS = {
     "profile",
     "toolchain",
@@ -83,6 +91,8 @@ FIELDS = {
     "hash_recipes",
     *FALSE_FLAGS,
 }
+PARENT_FIELDS = FIELDS | set(PARENT_FALSE_FLAGS)
+
 
 
 @dataclass(frozen=True)
@@ -150,7 +160,7 @@ def _pins(owners):
 
 
 def _preflight(
-    assessment_raw, expected_assessment_file_sha256, review_inputs, toolchain
+    assessment_raw, expected_assessment_file_sha256, review_inputs, toolchain, *, parent=False
 ):
     _need(
         _pure_pins() == _IMPORTED_PURE_PINS,
@@ -171,11 +181,16 @@ def _preflight(
     contracts.require_keys(
         review_inputs, REVIEW_INPUT_FIELDS, "complete original combined-review inputs"
     )
-    review._preflight(
-        review_inputs["component_raw"],
-        review_inputs["expected_component_pin"],
-        review_inputs["use_inputs"],
-    )
+    if parent:
+        parent_preflight = review._preflight(
+            review_inputs["component_raw"], review_inputs["expected_component_pin"],
+            review_inputs["use_inputs"], parent=True)
+    else:
+        review._preflight(
+            review_inputs["component_raw"],
+            review_inputs["expected_component_pin"],
+            review_inputs["use_inputs"],
+        )
     source = review_inputs["use_inputs"]
     total = len(assessment_raw) + len(review_inputs["component_raw"])
     total += len(
@@ -187,8 +202,11 @@ def _preflight(
         len(source[label + "_raw"])
         for label in ("request", "registry", "lookup", "query")
     )
-    total += review.use._preflight(source["donor_evidence_inputs"])
-    total += review.use._preflight(source["consumer_evidence_inputs"])
+    if parent:
+        total += sum(endpoint[0] for endpoint in parent_preflight[1]["endpoints"])
+    else:
+        total += review.use._preflight(source["donor_evidence_inputs"])
+        total += review.use._preflight(source["consumer_evidence_inputs"])
     for name in (
         "subject",
         "registry",
@@ -226,8 +244,8 @@ def _preflight(
     _need(total <= MAX_INPUT_BYTES, "complete native preparation input budget exceeded")
 
 
-def _module(prefix, identity):
-    return "LegalCorpusV2." + prefix + _sha(identity.encode())
+def _module(prefix, identity, *, parent=False):
+    return ("LegalCorpusParent." if parent else "LegalCorpusV2.") + prefix + _sha(identity.encode())
 
 
 def _file(module, imports, body):
@@ -243,7 +261,7 @@ def _file(module, imports, body):
     )
 
 
-def _fragment_inputs(component, review_inputs):
+def _fragment_inputs(component, review_inputs, *, parent=False):
     result = []
     source = review_inputs["use_inputs"]
     for role in ("donor", "consumer"):
@@ -257,12 +275,12 @@ def _fragment_inputs(component, review_inputs):
                 role,
                 report["native"],
                 _module(
-                    "Definition", evidence["expected_candidate_pin"]["candidate_cid"]
+                    "Definition", evidence["expected_candidate_pin"]["candidate_cid"], parent=parent
                 ),
             )
         )
     result.extend(
-        (role, component[role + "_native"], _module(prefix, identity))
+        (role, component[role + "_native"], _module(prefix, identity, parent=parent))
         for role, prefix, identity in (
             ("alias", "Alias", component["binding_record"]["record_cid"]),
             ("joint", "Joint", component["record_cid"]),
@@ -271,10 +289,11 @@ def _fragment_inputs(component, review_inputs):
     return result
 
 
-def _render(component, review_inputs, toolchain, binding, owners):
+def _render(component, review_inputs, toolchain, binding, owners, *, parent=False):
     routes, emitter, _ = owners
+    namespace = "LegalCorpusParent" if parent else "LegalCorpusV2"
     fragments = []
-    for role, original, module in _fragment_inputs(component, review_inputs):
+    for role, original, module in _fragment_inputs(component, review_inputs, parent=parent):
         native = routes.prepare_native_fragment(
             family=component["family"],
             formula=original["formula"],
@@ -290,14 +309,14 @@ def _render(component, review_inputs, toolchain, binding, owners):
         by_role[role]["module"] for role in ("donor", "consumer", "alias", "joint")
     )
     imports = {
-        "LegalCorpusV2.Prelude": [],
-        donor: ["LegalCorpusV2.Prelude"],
-        consumer: ["LegalCorpusV2.Prelude"],
+        namespace + ".Prelude": [],
+        donor: [namespace + ".Prelude"],
+        consumer: [namespace + ".Prelude"],
         alias: [donor, consumer],
         joint: [donor, consumer, alias],
-        "LegalCorpusV2": [joint],
+        namespace: [joint],
     }
-    modules = ["LegalCorpusV2.Prelude", donor, consumer, alias, joint, "LegalCorpusV2"]
+    modules = [namespace + ".Prelude", donor, consumer, alias, joint, namespace]
     _need(len(set(modules)) == 6, "exact distinct native module population required")
     position = {module: index for index, module in enumerate(modules)}
     _need(
@@ -309,12 +328,14 @@ def _render(component, review_inputs, toolchain, binding, owners):
         "closed acyclic native import population required",
     )
     files = {
-        "lakefile.toml": 'name = "legal_corpus_v2_definition_use"\nversion = "0.1.0"\n\n[[lean_lib]]\nname = "legal"\nroots = ["LegalCorpusV2"]\n',
+        "lakefile.toml": ('name = "'
+            + ("legal_corpus_parent_definition_use" if parent else "legal_corpus_v2_definition_use")
+            + '"\nversion = "0.1.0"\n\n[[lean_lib]]\nname = "legal"\nroots = ["' + namespace + '"]\n'),
         "lean-toolchain": toolchain + "\n",
-        "LegalCorpusV2/Prelude.lean": "namespace LegalCorpusV2\n"
+        namespace + "/Prelude.lean": "namespace " + namespace + "\n"
         + emitter.PRELUDE
-        + "\nend LegalCorpusV2\n",
-        "v2-input-bindings.json": canonical_dag_json_bytes(binding).decode() + "\n",
+        + "\nend " + namespace + "\n",
+        ("parent-input-bindings.json" if parent else "v2-input-bindings.json"): canonical_dag_json_bytes(binding).decode() + "\n",
     }
     for role in ("donor", "consumer"):
         row = by_role[role]
@@ -375,7 +396,7 @@ def _render(component, review_inputs, toolchain, binding, owners):
         + "    jointAt i t ↔ formula_0 i t := by\n  exact Iff.rfl\n#print axioms joint_matches_original"
     )
     files[joint.replace(".", "/") + ".lean"] = _file(joint, imports[joint], joint_body)
-    files["LegalCorpusV2.lean"] = "import " + joint + "\n"
+    files[namespace + ".lean"] = "import " + joint + "\n"
     for module in modules:
         path = module.replace(".", "/") + ".lean"
         actual = re.findall(r"(?m)^import ([A-Za-z][A-Za-z0-9_.]*)$", files[path])
@@ -396,19 +417,20 @@ def _render(component, review_inputs, toolchain, binding, owners):
     return files, fragments, modules, imports, theorems
 
 
-def prepare_definition_use_corpus_v2(
-    assessment_raw, *, expected_assessment_file_sha256, review_inputs, toolchain
+def _prepare_definition_use_corpus(
+    assessment_raw, *, expected_assessment_file_sha256, review_inputs, toolchain,
+    parent=False, parent_input_sha256=None
 ):
     """Prepare unqualified candidate text, preserving the replayed review outcome."""
     _preflight(
-        assessment_raw, expected_assessment_file_sha256, review_inputs, toolchain
+        assessment_raw, expected_assessment_file_sha256, review_inputs, toolchain, parent=parent
     )
     assessment = contracts.load_record_bytes(
         assessment_raw, expected_sha256=expected_assessment_file_sha256
     )
-    assessment = review.validate_definition_use_review_assessment_v2(
-        assessment, **review_inputs
-    )
+    validate_review = (review.validate_parent_definition_use_review_assessment_v1 if parent
+                       else review.validate_definition_use_review_assessment_v2)
+    assessment = validate_review(assessment, **review_inputs)
     owners = _owners()
     producers = _pins(owners)
     component = contracts.load_record_bytes(
@@ -423,8 +445,9 @@ def prepare_definition_use_corpus_v2(
     )
     binding = contracts.seal_record(
         {
-            "schema": INPUT_BINDING_SCHEMA,
-            "profile": PROFILE,
+            "schema": PARENT_INPUT_BINDING_SCHEMA if parent else INPUT_BINDING_SCHEMA,
+            "profile": PARENT_PROFILE if parent else PROFILE,
+            **({"original_input_commitment_sha256": parent_input_sha256} if parent else {}),
             "assessment_file_sha256": expected_assessment_file_sha256,
             "assessment_canonical_sha256": _digest(assessment),
             "assessment_sha256": assessment["assessment_sha256"],
@@ -453,12 +476,12 @@ def prepare_definition_use_corpus_v2(
         }
     )
     files, fragments, modules, imports, theorems = _render(
-        component, review_inputs, toolchain, binding, owners
+        component, review_inputs, toolchain, binding, owners, parent=parent
     )
     manifest = contracts.seal_record(
         {
-            "schema": SCHEMA,
-            "profile": PROFILE,
+            "schema": PARENT_SCHEMA if parent else SCHEMA,
+            "profile": PARENT_PROFILE if parent else PROFILE,
             "toolchain": toolchain,
             "review_intake_binding": binding,
             "review_evidence_status": assessment["evidence_assessment_status"],
@@ -492,11 +515,15 @@ def prepare_definition_use_corpus_v2(
                 "Joint assembly assumes the exact donor definition, consumer definition and alias.",
                 "Modular joint equivalence is a generated definitional obligation; native kernel checking has not run.",
                 "No conclusion about the consumer head follows from the donor body without its separate complete Boolean body obligations.",
-            ],
+            ] + ([
+                "Both endpoint definitions remain caller interpretations of literal parent text, not authenticated statutory facts.",
+                "The cross-parent scope route and alias are caller declarations; matching unknown editions do not establish governing scope or edition compatibility.",
+                "Contributor completeness, source-region roles, applicability and complete contextual meaning remain unverified.",
+            ] if parent else []),
             "producer_pins": producers,
             "native_producer_pins": fragments[-1]["native"]["producer_pins"],
             "execution_handoff": {
-                "status": "V2_build_execution_adapter_not_registered",
+                "status": "parent_build_execution_adapter_not_registered" if parent else "V2_build_execution_adapter_not_registered",
                 "target": "legal",
                 "argv_recipe": [
                     "<verified-native-lake>",
@@ -523,8 +550,13 @@ def prepare_definition_use_corpus_v2(
                 "assessment_internal": "existing review-engine assessment_sha256",
                 "canonical_records_and_ASTs": "SHA256 of full canonical DAG JSON",
                 "files": "SHA256 of complete generated UTF8 bytes; preparation manifest pinned separately",
+                **({"original_parent_input_commitment":
+                    "SHA256 streamed typed tree of full original inputs excluding offered output: "
+                    "d/l collection tags with decimal child count and colon; sorted dict string keys; "
+                    "b/s/i/r scalar tags with decimal byte length, colon and exact bytes/UTF8/decimal-int/finite-JSON-float body; "
+                    "n/t/f tags for null/true/false"} if parent else {}),
             },
-            **FALSE_FLAGS,
+            **(PARENT_FALSE_FLAGS if parent else FALSE_FLAGS),
         }
     )
     _need(
@@ -534,6 +566,15 @@ def prepare_definition_use_corpus_v2(
     return DefinitionUseCorpusPreparation(
         canonical_dag_json_bytes(manifest).decode(), tuple(sorted(files.items()))
     )
+
+
+def prepare_definition_use_corpus_v2(
+    assessment_raw, *, expected_assessment_file_sha256, review_inputs, toolchain
+):
+    """Prepare the unchanged official V2 candidate profile, never parent input."""
+    return _prepare_definition_use_corpus(assessment_raw,
+        expected_assessment_file_sha256=expected_assessment_file_sha256,
+        review_inputs=review_inputs, toolchain=toolchain)
 
 
 def validate_definition_use_corpus_v2(preparation, assessment_raw, **validation_inputs):
@@ -591,10 +632,414 @@ def write_definition_use_corpus_v2(
     )
 
 
+class _ParentInputBudget:
+    """Bound and detach an expanded mixed caller graph before any body hash."""
+    def __init__(self):
+        self.remaining = MAX_INPUT_BYTES
+        self.nodes = 1_000_000
+        self.active = set()
+
+    def charge(self, size):
+        _need(size <= self.remaining, "complete parent Lake input budget exceeded")
+        self.remaining -= size
+
+    def copy(self, value, depth=0):
+        self.nodes -= 1
+        _need(self.nodes >= 0 and depth <= 48, "parent Lake input node/depth bound exceeded")
+        kind = type(value)
+        if kind is bytes:
+            self.charge(len(value)); return value
+        if kind is str:
+            _need(len(value) <= self.remaining, "parent Lake string exceeds remaining input budget")
+            try:
+                raw = json.dumps(value, ensure_ascii=False, allow_nan=False).encode("utf-8")
+            except (UnicodeError, ValueError) as error:
+                _fail("ordinary parent Lake UTF8 string required")
+            self.charge(len(raw)); return value
+        if value is None or kind is bool:
+            self.charge(5); return value
+        if kind is int:
+            _need(-(2**63) <= value < 2**63, "signed64 parent Lake integer required")
+            self.charge(len(str(value))); return value
+        if kind is float:
+            _need(math.isfinite(value), "finite parent Lake float required")
+            self.charge(len(json.dumps(value, allow_nan=False))); return value
+        _need(kind in (dict, list), "plain parent Lake JSON or immutable bytes required")
+        _need(len(value) <= self.nodes, "parent Lake input collection node bound exceeded")
+        identity = id(value)
+        _need(identity not in self.active, "cyclic parent Lake input refused")
+        self.active.add(identity)
+        try:
+            self.charge(2 + max(0, len(value) - 1))
+            if kind is list:
+                return [self.copy(child, depth + 1) for child in value]
+            result = {}
+            for key, child in value.items():
+                _need(type(key) is str and len(key) <= 4096, "bounded plain parent Lake key required")
+                self.charge(1)
+                result[self.copy(key, depth + 1)] = self.copy(child, depth + 1)
+            return result
+        finally:
+            self.active.remove(identity)
+
+
+def _emit_parent_replay_value(value, emit):
+    """Emit the original typed commitment frames for an already bounded tree."""
+    def frame(tag, raw):
+        emit(tag + str(len(raw)).encode("ascii") + b":")
+        emit(raw)
+
+    def visit(item):
+        kind = type(item)
+        if kind in (dict, list):
+            emit((b"d" if kind is dict else b"l") + str(len(item)).encode("ascii") + b":")
+            if kind is dict:
+                for key in sorted(item):
+                    visit(key); visit(item[key])
+            else:
+                for child in item:
+                    visit(child)
+        elif kind is bytes:
+            frame(b"b", item)
+        elif kind is str:
+            frame(b"s", item.encode("utf-8"))
+        elif item is None:
+            emit(b"n")
+        elif kind is bool:
+            emit(b"t" if item else b"f")
+        elif kind is int:
+            frame(b"i", str(item).encode("ascii"))
+        elif kind is float:
+            frame(b"r", json.dumps(item, allow_nan=False).encode("ascii"))
+        else:
+            _fail("bounded parent commitment scalar required")
+
+    visit(value)
+
+
+def _parent_commitment(value):
+    """Stream the unchanged typed tree after its complete input bound passed.
+
+    Each collection has its tag and decimal child count followed by a colon;
+    dict keys are sorted and emitted as strings before their values. Each
+    byte/string/int/float scalar has its tag, decimal raw length, colon and raw
+    body. Null/true/false are distinct one-byte tags. No tagged copy or complete
+    serialized tree is allocated. This commitment grants no evidence authority.
+    """
+    hasher = hashlib.sha256()
+    _emit_parent_replay_value(value, hasher.update)
+    return hasher.hexdigest()
+
+
+def _parent_replay_maximum(max_bytes):
+    _need(type(max_bytes) is int and 1 <= max_bytes <= MAX_PARENT_REPLAY_BYTES,
+          "parent replay byte maximum must be an integer from one through 64 MiB")
+    return max_bytes
+
+
+def encode_parent_replay_value_v1(value, *, max_bytes=MAX_PARENT_REPLAY_BYTES):
+    """Encode a detached ordinary tree with the original typed commitment frames.
+
+    The existing complete expanded-input budget is applied before any emission;
+    the independent wire bound is checked before every output buffer growth.
+    These bytes transport caller evidence and grant no validation authority.
+    """
+    maximum = _parent_replay_maximum(max_bytes)
+    detached = _ParentInputBudget().copy(value)
+    output = bytearray()
+
+    def emit(raw):
+        _need(len(raw) <= maximum - len(output), "parent replay payload byte bound exceeded")
+        output.extend(raw)
+
+    _emit_parent_replay_value(detached, emit)
+    return bytes(output)
+
+
+class _ParentReplayValueDecoder:
+    """Bounded parser for the original typed frames, never arbitrary objects."""
+    def __init__(self, payload, maximum):
+        self.payload = payload
+        self.view = memoryview(payload)
+        self.maximum = maximum
+        self.position = 0
+        self.budget = _ParentInputBudget()
+
+    def header(self, limit):
+        start = self.position
+        number = 0
+        while True:
+            _need(self.position < len(self.payload), "truncated parent replay header")
+            byte = self.payload[self.position]
+            if byte == 58:
+                _need(self.position > start, "empty parent replay header")
+                self.position += 1
+                return number
+            _need(48 <= byte <= 57, "decimal parent replay header required")
+            _need(self.position == start or self.payload[start] != 48,
+                  "leading zero in parent replay header")
+            digit = byte - 48
+            _need(number <= (limit - digit) // 10, "parent replay header bound exceeded")
+            number = number * 10 + digit
+            self.position += 1
+
+    def body_end(self, length):
+        _need(length <= len(self.payload) - self.position, "truncated parent replay body")
+        return self.position + length
+
+    def scalar(self, tag, *, key):
+        limit = self.maximum
+        if key:
+            limit = min(limit, 4 * 4096)
+        elif tag == 105:
+            limit = min(limit, 20)
+        elif tag == 114:
+            limit = min(limit, 32)
+        length = self.header(limit)
+        start = self.position
+        end = self.body_end(length)
+        if tag == 115:
+            # JSON ensure_ascii=False retains UTF8 and adds quotes/escapes.
+            # Charge that exact expanded cost before slicing or decoding a body.
+            self.budget.charge(length + 2)
+            extra = 0
+            for byte in self.view[start:end]:
+                if byte in (34, 92, 8, 9, 10, 12, 13):
+                    extra += 1
+                elif byte < 32:
+                    extra += 5
+                _need(extra <= self.budget.remaining,
+                      "complete parent Lake input budget exceeded")
+            self.budget.charge(extra)
+            try:
+                result = self.payload[start:end].decode("utf-8")
+            except UnicodeError:
+                _fail("ordinary parent replay UTF8 string required")
+            _need(not key or len(result) <= 4096, "bounded plain parent Lake key required")
+        else:
+            self.budget.charge(length)
+            raw = self.payload[start:end]
+            if tag == 98:
+                result = raw
+            elif tag == 105:
+                _need(re.fullmatch(rb"-?(?:0|[1-9][0-9]*)", raw) is not None,
+                      "canonical parent replay integer required")
+                result = int(raw)
+                _need(-(2**63) <= result < 2**63 and raw == str(result).encode("ascii"),
+                      "signed64 canonical parent replay integer required")
+            else:
+                try:
+                    result = float(raw)
+                except (ValueError, OverflowError):
+                    _fail("canonical finite parent replay float required")
+                _need(math.isfinite(result) and
+                      raw == json.dumps(result, allow_nan=False).encode("ascii"),
+                      "canonical finite parent replay float required")
+        self.position = end
+        return result
+
+    def value(self, depth=0, *, key=False):
+        self.budget.nodes -= 1
+        _need(self.budget.nodes >= 0 and depth <= 48,
+              "parent Lake input node/depth bound exceeded")
+        _need(self.position < len(self.payload), "truncated parent replay value")
+        tag = self.payload[self.position]
+        self.position += 1
+        _need(not key or tag == 115, "plain parent replay string key required")
+        if tag in (98, 115, 105, 114):
+            return self.scalar(tag, key=key)
+        if tag in (110, 116, 102):
+            self.budget.charge(5)
+            return None if tag == 110 else tag == 116
+        _need(tag in (100, 108), "unsupported parent replay tag")
+        count = self.header(self.budget.nodes)
+        _need(count <= self.budget.nodes // (2 if tag == 100 else 1),
+              "parent Lake input collection node bound exceeded")
+        self.budget.charge(2 + max(0, count - 1))
+        if tag == 108:
+            result = []
+            for _ in range(count):
+                result.append(self.value(depth + 1))
+            return result
+        result = {}
+        previous = None
+        for _ in range(count):
+            self.budget.charge(1)
+            name = self.value(depth + 1, key=True)
+            _need(previous is None or previous < name,
+                  "sorted unique parent replay dictionary keys required")
+            previous = name
+            result[name] = self.value(depth + 1)
+        return result
+
+    def canonical(self, value):
+        position = 0
+
+        def compare(raw):
+            nonlocal position
+            end = position + len(raw)
+            _need(end <= len(self.payload) and self.view[position:end] == raw,
+                  "canonical parent replay encoding required")
+            position = end
+
+        _emit_parent_replay_value(value, compare)
+        _need(position == len(self.payload), "canonical complete parent replay encoding required")
+
+
+def decode_parent_replay_value_v1(payload, *, expected_payload_sha256,
+                                  max_bytes=MAX_PARENT_REPLAY_BYTES):
+    """Decode only bounded canonical typed bytes under an independent SHA256.
+
+    Nodes, nesting, scalar expansion and keys are charged while parsing, before
+    body allocation or collection growth. The returned tree contains only plain
+    dict/list/string/bytes/int/float/bool/None values, never replay capabilities.
+    """
+    maximum = _parent_replay_maximum(max_bytes)
+    _need(type(payload) is bytes and 0 < len(payload) <= maximum,
+          "bounded immutable nonempty parent replay bytes required")
+    _need(type(expected_payload_sha256) is str and
+          re.fullmatch(r"[0-9a-f]{64}", expected_payload_sha256) is not None,
+          "independent lowercase SHA256 parent replay pin required")
+    _need(_sha(payload) == expected_payload_sha256, "parent replay payload SHA256 mismatch")
+    parser = _ParentReplayValueDecoder(payload, maximum)
+    result = parser.value()
+    _need(parser.position == len(payload), "trailing parent replay bytes refused")
+    parser.canonical(result)
+    return result
+
+
+def _parent_offered(preparation):
+    _need(type(preparation) is DefinitionUseCorpusPreparation,
+          "typed parent definition-use preparation required")
+    text, files = preparation.manifest_json, preparation.files
+    _need(type(text) is str and type(files) is tuple and len(files) == MAX_FILES,
+          "closed parent preparation manifest/nine-file storage required")
+    result = []
+    for item in files:
+        _need(type(item) is tuple and len(item) == 2 and all(type(value) is str for value in item),
+              "plain parent preparation file pairs required")
+        result.append(list(item))
+    return {"manifest_json": text, "files": result}
+
+
+def _parent_capture(assessment_raw, expected_assessment_file_sha256, review_inputs, toolchain, offered=None):
+    _need(type(assessment_raw) is bytes and 0 < len(assessment_raw) <= contracts.MAX_RECORD_BYTES,
+          "bounded immutable parent assessment bytes required")
+    _need(type(review_inputs) is dict and len(review_inputs) == len(REVIEW_INPUT_FIELDS)
+          and all(type(key) is str for key in review_inputs) and set(review_inputs) == REVIEW_INPUT_FIELDS,
+          "closed complete parent combined-review inputs required")
+    graph = {"assessment_raw": assessment_raw, "expected_assessment_file_sha256": expected_assessment_file_sha256,
+        "review_inputs": review_inputs, "toolchain": toolchain,
+        "offered": None if offered is None else _parent_offered(offered)}
+    copied = _ParentInputBudget().copy(graph)
+    frozen = _parent_commitment(copied)
+    base = {key: value for key, value in copied.items() if key != "offered"}
+    return copied, frozen, _parent_commitment(base)
+
+
+def _parent_fence(original, copied, frozen, offered=None):
+    _need(_parent_capture(**original, offered=offered)[1] == frozen,
+          "caller parent Lake input or offered preparation changed")
+    detached = {key: copied[key] for key in original}
+    # The original offered object is separately fenced; retain its detached JSON
+    # in the second complete root without constructing a public capability.
+    graph = {**detached, "offered": copied["offered"]}
+    snapshot = _ParentInputBudget().copy(graph)
+    _need(_parent_commitment(snapshot) == frozen,
+          "detached parent Lake inputs changed")
+
+
+def _parent_operation(original, operation, offered=None):
+    copied, frozen, commitment = _parent_capture(**original, offered=offered)
+    failure = None
+    try:
+        return operation(copied, commitment)
+    except BaseException as error:
+        failure = error
+        raise
+    finally:
+        try:
+            _parent_fence(original, copied, frozen, offered)
+        except BaseException:
+            if failure is None:
+                raise
+            BaseException.add_note(failure, "A closing parent Lake input comparison also failed.")
+
+
+def prepare_parent_definition_use_corpus_v1(
+    assessment_raw, *, expected_assessment_file_sha256, review_inputs, toolchain
+):
+    """Replay literal-parent combined review and prepare conditional text only."""
+    original = dict(assessment_raw=assessment_raw,
+        expected_assessment_file_sha256=expected_assessment_file_sha256,
+        review_inputs=review_inputs, toolchain=toolchain)
+    def prepare(copied, commitment):
+        return _prepare_definition_use_corpus(copied["assessment_raw"],
+            expected_assessment_file_sha256=copied["expected_assessment_file_sha256"],
+            review_inputs=copied["review_inputs"], toolchain=copied["toolchain"],
+            parent=True, parent_input_sha256=commitment)
+    return _parent_operation(original, prepare)
+
+
+def _validate_parent(preparation, copied, commitment):
+    manifest = contracts.load_record_bytes(copied["offered"]["manifest_json"].encode("utf-8"),
+        expected_sha256=_sha(copied["offered"]["manifest_json"].encode("utf-8")))
+    contracts.validate_record(manifest, schema=PARENT_SCHEMA, fields=PARENT_FIELDS)
+    expected = _prepare_definition_use_corpus(copied["assessment_raw"],
+        expected_assessment_file_sha256=copied["expected_assessment_file_sha256"],
+        review_inputs=copied["review_inputs"], toolchain=copied["toolchain"],
+        parent=True, parent_input_sha256=commitment)
+    _need(copied["offered"] == _parent_offered(expected),
+          "parent native project differs from complete independent regeneration")
+    return expected
+
+
+def validate_parent_definition_use_corpus_v1(preparation, assessment_raw, **validation_inputs):
+    original = dict(assessment_raw=assessment_raw, **validation_inputs)
+    return _parent_operation(original,
+        lambda copied, commitment: _validate_parent(preparation, copied, commitment), preparation)
+
+
+def load_parent_definition_use_corpus_v1(directory, assessment_raw, *, expected_manifest_sha256, **validation_inputs):
+    original = dict(assessment_raw=assessment_raw, **validation_inputs)
+    def load(copied, commitment):
+        expected = _prepare_definition_use_corpus(copied["assessment_raw"],
+            expected_assessment_file_sha256=copied["expected_assessment_file_sha256"],
+            review_inputs=copied["review_inputs"], toolchain=copied["toolchain"],
+            parent=True, parent_input_sha256=commitment)
+        transport = _owners()[2]
+        files = transport._read_files(directory,
+            {name for name, _ in expected.files} | {transport.MANIFEST_FILE}, maximum_files=MAX_FILES)
+        raw = files.pop(transport.MANIFEST_FILE)
+        contracts.load_record_bytes(raw, expected_sha256=expected_manifest_sha256)
+        _need(raw == expected.manifest_json.encode()
+              and files == {name: body.encode() for name, body in expected.files},
+              "parent project transport differs from independent preparation")
+        return expected
+    return _parent_operation(original, load)
+
+
+def write_parent_definition_use_corpus_v1(preparation, directory, assessment_raw, **validation_inputs):
+    original = dict(assessment_raw=assessment_raw, **validation_inputs)
+    def write(copied, commitment):
+        checked = _validate_parent(preparation, copied, commitment)
+        transport = _owners()[2]
+        def readback(root, raw):
+            return load_parent_definition_use_corpus_v1(root, copied["assessment_raw"],
+                expected_manifest_sha256=_sha(raw),
+                **{key: copied[key] for key in validation_inputs})
+        return transport._write_project(checked, directory, readback=readback, maximum_files=MAX_FILES)
+    return _parent_operation(original, write, preparation)
+
+
 __all__ = [
     "DefinitionUseCorpusPreparation",
     "prepare_definition_use_corpus_v2",
     "validate_definition_use_corpus_v2",
     "write_definition_use_corpus_v2",
     "load_definition_use_corpus_v2",
+    "prepare_parent_definition_use_corpus_v1",
+    "validate_parent_definition_use_corpus_v1",
+    "write_parent_definition_use_corpus_v1",
+    "load_parent_definition_use_corpus_v1",
 ]

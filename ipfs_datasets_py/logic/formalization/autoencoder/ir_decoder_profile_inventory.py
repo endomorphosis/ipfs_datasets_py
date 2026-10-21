@@ -12,6 +12,10 @@ verified initialization weights do not imply a supported or qualified runtime.
 Resolution authenticates a pinned registry by rebuilding every record and all
 twelve lanes from its embedded bindings. File reads and endpoint fences do not
 establish an atomic snapshot, ongoing source currentness, or model authority.
+
+A separate source-representation profile describes the expected LegalIR4096
+producer. It neither changes those twelve cells nor registers a decoder format
+or authenticates an encoder execution.
 """
 from __future__ import annotations
 
@@ -26,6 +30,18 @@ from . import ir_decoder_format_runtime as formats
 
 
 SCHEMA = "ir-decoder-profile-inventory/v1"
+SOURCE_REPRESENTATION_SCHEMA = "ir-source-representation-profile/v1"
+_SOURCE_PRODUCER_FIELDS = {"profile", "model_sha256", "worker_sha256", "worker_source_sha256",
+    "owner_source_sha256", "vocabulary_owner_source_sha256", "library_sha256"}
+_SOURCE_PRODUCER_PROFILES = {
+    "leanstral4096:cpu1:last:l2:single-sequence:tokens512:lazy-mmap:v2",
+    "leanstral4096:cpu1:last:l2:single-sequence:tokens512:layer-reclaim:v3",
+}
+_SOURCE_MODEL_SHA256 = "4668fd2a6d2764de250489852230e96238eb5c0d7495866eb3b9c6c4fac5c7da"
+_SOURCE_AUTHORITY = {"source_producer_execution_authenticated": False,
+    "source_vectors_verified": False, "checkpoint_compatible": False,
+    "runtime_ready": False, "teacher_qualified": False, "proof_authority": False,
+    "model_quality_qualified": False}
 MAX_REFERENCE_BYTES = formats.MAX_REFERENCE_BYTES
 MAX_BINDINGS = 256
 _REQUEST_FIELDS = {"ir_family_id", "dimension", "dimension_role", "task_id", "checkpoint_sha256"}
@@ -55,6 +71,71 @@ def _require(condition, message):
 
 def _id(prefix, identity):
     return prefix + hashlib.sha256(cached._raw(identity)).hexdigest()
+
+
+def build_ir_source_representation_profile(producer):
+    """Describe an expected LegalIR4096 producer without executing it.
+
+    This independent metadata profile adds no cell or decoder format to the
+    original twelve-lane inventory. Producer hashes are caller declarations,
+    never native execution evidence. Library content digests exclude physical
+    locators and retain multiplicity; a matching width or profile cannot issue
+    the live capability required by the existing native embedding owner.
+    """
+    _require(type(producer) is dict and all(type(key) is str for key in producer)
+             and set(producer) == _SOURCE_PRODUCER_FIELDS,
+             "closed expected source4096 producer declaration required")
+    _require(type(producer["profile"]) is str
+             and producer["profile"] in _SOURCE_PRODUCER_PROFILES,
+             "explicit supported Leanstral full-forward producer profile required")
+    for key in _SOURCE_PRODUCER_FIELDS - {"profile", "library_sha256"}:
+        _require(cached._hash(producer[key]), "exact declared producer SHA256 required: " + key)
+    _require(producer["model_sha256"] == _SOURCE_MODEL_SHA256,
+             "declared Leanstral model identity differs")
+    libraries = producer["library_sha256"]
+    _require(type(libraries) is list and 1 <= len(libraries) <= 63
+             and all(cached._hash(value) for value in libraries),
+             "one to 63 explicit native library content digests required")
+    captured = {key: producer[key] for key in sorted(_SOURCE_PRODUCER_FIELDS - {"library_sha256"})}
+    captured["library_sha256"] = sorted(libraries)
+    identity = {"ir_family_id": "legal_ir", "dimension": 4096,
+        "dimension_role": "input_embedding", "producer": captured,
+        "source_text_policy": "exact_utf8_no_normalization",
+        "maximum_source_utf8_bytes": 65536, "source_nul_policy": "reject",
+        "pooling": "last", "normalization": "l2",
+        "tokenizer_policy": "native-model-vocabulary:add-special:no-parse-special:no-chat-template:untruncated:tokens512",
+        "maximum_source_tokens_including_special": 512}
+    return {"schema": SOURCE_REPRESENTATION_SCHEMA,
+        "profile_id": _id(SOURCE_REPRESENTATION_SCHEMA + ":", identity),
+        "identity": identity, "scope": "declared_expected_source_producer_only",
+        "authority": dict(_SOURCE_AUTHORITY)}
+
+
+def validate_ir_source_representation_profile(profile):
+    """Validate closed metadata; authenticate no native capability or model."""
+    _require(type(profile) is dict and all(type(key) is str for key in profile)
+             and set(profile) == {"schema", "profile_id", "identity", "scope", "authority"},
+             "closed source representation profile required")
+    identity = profile["identity"]
+    _require(type(identity) is dict and all(type(key) is str for key in identity)
+             and set(identity) == {"ir_family_id", "dimension", "dimension_role",
+        "producer", "source_text_policy", "pooling", "normalization", "tokenizer_policy",
+        "maximum_source_tokens_including_special", "maximum_source_utf8_bytes", "source_nul_policy"},
+             "closed source representation identity required")
+    # Exact builtins throughout prevent custom serializer callbacks and keep
+    # booleans/floats distinct from the integer contracts.
+    _require(type(profile["schema"]) is str and type(profile["profile_id"]) is str
+             and type(profile["scope"]) is str and type(profile["authority"]) is dict
+             and all(type(key) is str for key in profile["authority"])
+             and set(profile["authority"]) == set(_SOURCE_AUTHORITY)
+             and all(type(value) is bool for value in profile["authority"].values()),
+             "exact source profile schema, ID, scope and boolean authority required")
+    expected = build_ir_source_representation_profile(identity["producer"])
+    for key in set(identity) - {"producer"}:
+        _require(type(identity[key]) is type(expected["identity"][key]),
+                 "exact source representation field type required: " + key)
+    _require(profile == expected, "source representation profile identity or authority differs")
+    return expected
 
 
 def _maximum(value):
@@ -349,5 +430,6 @@ def resolve_ir_decoder_profile_route(registry_pin, request, *, format_request,
         raise DecoderProfileInventoryError("invalid decoder profile route binding") from error
 
 
-__all__ = ["SCHEMA", "DecoderProfileInventoryError", "build_ir_decoder_profile_inventory",
-           "resolve_ir_decoder_profile_route"]
+__all__ = ["SCHEMA", "SOURCE_REPRESENTATION_SCHEMA", "DecoderProfileInventoryError",
+           "build_ir_source_representation_profile", "validate_ir_source_representation_profile",
+           "build_ir_decoder_profile_inventory", "resolve_ir_decoder_profile_route"]

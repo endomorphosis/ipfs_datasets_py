@@ -14,7 +14,6 @@ from pathlib import Path
 import re
 
 from . import legal_family_routes as routes
-from . import legal_definition_boolean as boolean
 from . import legal_statutory_context as context
 from ..TDFOL import tdfol_core as t
 from ..intent_ir.formalize.modal_projections import _ast
@@ -51,7 +50,7 @@ def closed(value, keys, label):
 
 def producer_pins():
     return routes.producer_pins() | {str(Path(module.__file__).resolve()):
-        hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest() for module in (context, boolean)} | {
+        hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest() for module in (context,)} | {
         str(Path(__file__).resolve()): hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
 
 
@@ -110,7 +109,7 @@ def prepare_definition(request):
     require(scope["char_end"] <= decl["head"]["char_start"], "section scope must precede its defined term")
     require(decl["head"]["char_end"] <= decl["definition_cue"]["char_start"], "defined term must precede means cue")
     scope_key = digest({"document_id": doc["document_id"], "scope": scope, "profile": PROFILE})
-    symbols, atom_spans = {}, []
+    symbols, atom_spans, node_count = {}, [], 0
     x = t.Variable("x")
 
     def atom(span, *, head=False):
@@ -122,8 +121,25 @@ def prepare_definition(request):
         atom_spans.append({"symbol": symbol, "span": span, "role": "head" if head else "body"})
         return t.Predicate(symbol, (x,))
 
-    def expression(value):
-        return boolean.build_boolean_expression(value, atom_builder=atom, require=require)
+    def expression(value, depth=0):
+        nonlocal node_count
+        node_count += 1
+        require(depth <= 12 and node_count <= 128 and type(value) is dict, "bounded typed definition expression required")
+        op = value.get("op")
+        if op == "atom":
+            closed(value, ("op", "span"), "definition atom")
+            return atom(value["span"])
+        if op == "not":
+            closed(value, ("op", "operand"), "definition negation")
+            return t.UnaryFormula(t.LogicOperator.NOT, expression(value["operand"], depth + 1))
+        require(op in ("all", "any"), "unsupported definition expression; no modalities, quantifier erasure or temporal reification")
+        closed(value, ("op", "operands"), "definition Boolean expression")
+        require(type(value["operands"]) is list and 2 <= len(value["operands"]) <= 16, "bounded nontrivial Boolean operands required")
+        operands = [expression(child, depth + 1) for child in value["operands"]]
+        result = operands[0]
+        for operand in operands[1:]:
+            result = t.BinaryFormula(t.LogicOperator.AND if op == "all" else t.LogicOperator.OR, result, operand)
+        return result
 
     head, body = atom(decl["head"], head=True), expression(decl["body"])
     require(all(row["source_literal"] != head_text for symbol, row in symbols.items() if symbol != head.name),

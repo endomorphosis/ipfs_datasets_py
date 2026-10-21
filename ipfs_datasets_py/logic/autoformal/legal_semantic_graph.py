@@ -20,7 +20,9 @@ from ..legal_ir import canonical_statement_scope as statement_scope
 SCHEMA = "legal-semantic-proposed-graph/v1"
 SOURCE_SCHEMA = "legal-semantic-source-occurrence/v1"
 SCOPE_SCHEMA = "legal-semantic-explicit-scope/v1"
-PROFILES = ("canonical_rules_v1", "normative_scope_v1")
+PARENT_SOURCE_SCHEMA = "legal-semantic-parent-literal-source/v1"
+PARENT_SCOPE_SCHEMA = "legal-semantic-parent-declared-scope/v1"
+PROFILES = ("canonical_rules_v1", "normative_scope_v1", "relational_norm_v1")
 MAX_BYTES = 1024 * 1024
 MAX_NODES = 4096
 MAX_DEPTH = 24
@@ -33,6 +35,9 @@ _SHA = re.compile(r"[0-9a-f]{64}\Z")
 _SOURCE_KEYS = {"schema", "document_id", "document_revision", "edition", "view_id", "paragraph_index",
                 "selector", "source_binding_sha256"}
 _SCOPE_KEYS = {"schema", "jurisdiction", "instrument", "edition", "applicability", "definition_scope", "scope_id"}
+_PARENT_SOURCE_KEYS = {"schema", "document_id", "document_revision", "edition", "source_version",
+    "selector", "context", "parent_record", "companion_record", "cache_row_record",
+    "parent_manifest_cid", "source_binding_sha256"}
 _REF_KEYS = {"artifact_id", "artifact_sha256", "role"}
 _ENTITY_KEYS = {"entity_key", "kind", "label", "source_selector", "definition_kind", "ast_path", "ambiguity", "evidence_refs"}
 _ASSERTION_KEYS = {"assertion_key", "subject_key", "predicate", "object_keys", "ambiguity", "evidence_refs", "dependency_refs"}
@@ -121,7 +126,137 @@ def bind_scope(*, jurisdiction, instrument, edition, applicability, definition_s
     return {**body, "scope_id": "legal-scope:sha256:" + digest(body)}
 
 
+def bind_parent_source_occurrence(parent_bundle, *, expected_manifest_cid,
+                                  source_occurrence_cid, companion_record_cid,
+                                  report_bytes, expected_report_pins, replay_inputs, limits=None):
+    """Nominate one candidate after complete physical parent-owner replay.
+
+    The explicit role/cache-match CID preserves why this occurrence was supplied.
+    Nomination is for proposal custody only: the complete population stays bound
+    by its independently expected manifest CID and no governing source is chosen.
+    Original reports, file bytes and row witnesses remain required at replay.
+    """
+    from . import corpus_contracts as contracts, corpus_parent_occurrence_adapter as parent
+    for label, value in (("expected_manifest_cid", expected_manifest_cid),
+                         ("source_occurrence_cid", source_occurrence_cid),
+                         ("companion_record_cid", companion_record_cid)):
+        contracts.require_cid(value, label, codecs=("dag-json",))
+    # Reject a known wrong identity before physical I/O. This is only a cheap
+    # preflight: matching the label never skips the complete owner replay below.
+    require(type(parent_bundle) is dict and type(parent_bundle.get("manifest")) is dict
+            and parent_bundle["manifest"].get("record_cid") == expected_manifest_cid,
+            "parent manifest identity differs")
+    checked = parent.validate_parent_occurrence_corpus(parent_bundle, report_bytes=report_bytes,
+        expected_report_pins=expected_report_pins, replay_inputs=replay_inputs, limits=limits)
+    require(checked["manifest"]["record_cid"] == expected_manifest_cid, "parent manifest identity differs")
+    records = {row["record_cid"]: row for row in checked["records"]}
+    require(companion_record_cid in records and source_occurrence_cid in records,
+            "explicit occurrence and companion must belong to complete parent population")
+    companion, occurrence = records[companion_record_cid], records[source_occurrence_cid]
+    require(companion["schema"] in (parent.ROLE_SCHEMA, parent.MATCH_SCHEMA)
+            and companion["source_occurrence_cid"] == source_occurrence_cid,
+            "parent companion binds a different occurrence")
+    version = records[companion["source_version_cid"]]
+    body = {"schema": PARENT_SOURCE_SCHEMA, "document_id": version["source_id"],
+        "document_revision": version["release_id"], "edition": version["edition"],
+        "source_version": version, "selector": occurrence,
+        "context": records[companion["context_cid"]],
+        "parent_record": records[companion["parent_record_cid"]], "companion_record": companion,
+        "cache_row_record": records[companion["cache_row_record_cid"]]
+            if companion["schema"] == parent.MATCH_SCHEMA else None,
+        "parent_manifest_cid": expected_manifest_cid}
+    result = {**body, "source_binding_sha256": digest(body)}
+    _check_parent_source(result)
+    return deepcopy(result)
+
+
+def _check_parent_source(value):
+    """Check bounded custody structure; only the binder/adapter replays originals."""
+    from . import corpus_contracts as contracts, corpus_source as corpus
+    from . import corpus_parent_occurrence_adapter as parent
+    wire(value)
+    _closed(value, _PARENT_SOURCE_KEYS, "parent literal source binding")
+    require(value["schema"] == PARENT_SOURCE_SCHEMA and value["source_binding_sha256"] == digest(
+        {key: item for key, item in value.items() if key != "source_binding_sha256"}),
+        "parent source binding digest differs")
+    contracts.require_cid(value["parent_manifest_cid"], "parent_manifest_cid", codecs=("dag-json",))
+    version = corpus._version_shape(value["source_version"])
+    occurrence = corpus._occurrence_shape(value["selector"])
+    context_record = corpus.validate_context_declaration(value["context"], source_occurrence=occurrence,
+        expected_occurrence_cid=occurrence["record_cid"])
+    view, raw = version["extracted_view"], version["raw_artifact"]
+    require(version["edition"] == value["edition"] == parent.UNDECLARED_EDITION
+            and value["document_id"] == version["source_id"]
+            and value["document_revision"] == version["release_id"], "parent source identity/edition differs")
+    require(raw["media_type"] == "text/plain" and raw["sha256"] == view["sha256"]
+            and view["extraction_profile"] == "exact_parquet_text_field_unclassified_regions/v1"
+            and view["normalization_profile"] == "identity/v1", "exact parent text profile required")
+    require(occurrence["source_version_cid"] == version["record_cid"]
+            and occurrence["end_char"] <= view["character_length"]
+            and occurrence["end_utf8"] <= view["byte_length"]
+            and version["historical_aliases"] == occurrence["historical_aliases"] == [],
+            "parent occurrence source version or geometry differs")
+    require(context_record["availability"] == "required_unavailable"
+            and context_record["missing_requirements"] == list(parent.MISSING_CONTEXT)
+            and len(context_record["context_references"]) == 1
+            and context_record["context_references"][0]["record_cid"] == version["record_cid"]
+            and context_record["context_references"][0]["record_kind"] == "source_version",
+            "parent governing context remains required and unavailable")
+    parent_record = contracts.validate_record(value["parent_record"],
+        schema=parent.PARENT_SCHEMA, fields=parent.PARENT_FIELDS)
+    companion = value["companion_record"]
+    require(type(companion) is dict and companion.get("schema") in (parent.ROLE_SCHEMA, parent.MATCH_SCHEMA),
+            "explicit parent role or cache-match companion required")
+    fields = parent.ROLE_FIELDS if companion["schema"] == parent.ROLE_SCHEMA else parent.MATCH_FIELDS
+    contracts.validate_record(companion, schema=companion["schema"], fields=fields)
+    require(parent_record["source_version_cid"] == companion["source_version_cid"] == version["record_cid"]
+            and companion["parent_record_cid"] == parent_record["record_cid"]
+            and companion["source_occurrence_cid"] == occurrence["record_cid"]
+            and companion["context_cid"] == context_record["record_cid"], "parent companion crosslinks differ")
+    identity = parent_record["source_identity"]
+    require(type(identity) is dict and identity.get("field") == "text"
+            and digest(identity) == parent_record["source_identity_sha256"]
+            and version["source_id"] == "parent-literal-field:sha256:" + digest(identity)
+            and parent_record["raw_row_sha256"] == identity.get("raw_row_sha256")
+            and version["release_id"] == f"parquet:{identity.get('repository')}@{identity.get('revision')};sha256={identity.get('file_sha256')}"
+            and version["provision_id"] == f"physical-parent-row:{identity.get('row_ordinal')}:field:text",
+            "parent physical field identity differs")
+    wrappers = [parent_record, companion]
+    if companion["schema"] == parent.MATCH_SCHEMA:
+        cache = contracts.validate_record(value["cache_row_record"],
+            schema=parent.CACHE_ROW_SCHEMA, fields=parent.CACHE_ROW_FIELDS)
+        require(cache["record_cid"] == companion["cache_row_record_cid"]
+                and all(cache[key] == companion[key] for key in
+                        ("cache_identity", "cache_row_ordinal", "record_sha256", "raw_row_sha256")),
+                "cache companion identity differs")
+        wrappers.append(cache)
+    else:
+        require(value["cache_row_record"] is None, "parent role cannot invent a cache-row association")
+    for wrapper in wrappers:
+        require(all(wrapper[key] is False for key in parent.FALSE_FLAGS)
+                and all(wrapper[key] is None for key in parent.UNSELECTED),
+                "parent source authority/selection cannot be promoted")
+
+
+def bind_parent_scope(*, source, jurisdiction, instrument, applicability, definition_scope):
+    """Declare proposal scope against one physical version; edition stays unknown."""
+    _check_parent_source(source)
+    for label, value in (("jurisdiction", jurisdiction), ("instrument", instrument),
+                         ("applicability", applicability), ("definition_scope", definition_scope)):
+        _text(value, label)
+    body = {"schema": PARENT_SCOPE_SCHEMA, "jurisdiction": jurisdiction, "instrument": instrument,
+        "edition": source["edition"], "applicability": applicability, "definition_scope": definition_scope,
+        "source_version_cid": source["source_version"]["record_cid"]}
+    return {**body, "scope_id": "legal-scope:sha256:" + digest(body)}
+
+
 def _check_bindings(source, scope):
+    if type(source) is dict and source.get("schema") == PARENT_SOURCE_SCHEMA:
+        _closed(scope, _SCOPE_KEYS | {"source_version_cid"}, "parent declared scope")
+        expected = bind_parent_scope(source=source, **{key: scope[key] for key in
+            ("jurisdiction", "instrument", "applicability", "definition_scope")})
+        require(wire(scope) == wire(expected), "parent scope identity/edition differs")
+        return
     _closed(source, _SOURCE_KEYS, "source occurrence binding")
     require(source["schema"] == SOURCE_SCHEMA and source["source_binding_sha256"] == digest(
         {key: value for key, value in source.items() if key != "source_binding_sha256"}), "source binding digest differs")
@@ -153,10 +288,19 @@ def _validate_ast(ast, profile, source, scope_request):
     if profile == "canonical_rules_v1":
         CanonicalRoundTripIR.from_dict(ast)  # Type validation only; do not apply its sorting/deduplication.
         require(scope_request is None, "flat rules cannot carry an undeclared scope request")
-    else:
-        require(type(scope_request) is dict and scope_request.get("source_text") == source["selector"]["text"],
+    elif profile == "normative_scope_v1":
+        source_text = source["selector"]["span_text" if source["schema"] == PARENT_SOURCE_SCHEMA else "text"]
+        require(type(scope_request) is dict and scope_request.get("source_text") == source_text,
                 "scope AST requires exact separately supplied source/context input")
         statement_scope.validate_scope_declaration(scope_request, ast, expected_input_sha256=digest(scope_request))
+    else:
+        require(scope_request is None, "relational graph cannot carry an undeclared scope request")
+        # Transport the complete authored request, including signature and ordered
+        # argument roles. The graph's nominated paragraph does not populate the
+        # relational owner's null source_binding or establish legal meaning.
+        from . import legal_relational_norm_v1 as relational
+        raw = wire(ast)
+        relational.prepare_relational_norm_v1(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
 
 
 def _kind(value):
@@ -212,6 +356,21 @@ def _pointer(ast, path):
 
 
 def _subselector(selector, source):
+    if source["schema"] == PARENT_SOURCE_SCHEMA:
+        from . import corpus_source as corpus
+        checked = corpus._occurrence_shape(selector)
+        origin = source["selector"]
+        start, end = checked["start_char"], checked["end_char"]
+        require(checked["source_version_cid"] == origin["source_version_cid"]
+                and origin["start_char"] <= start < end <= origin["end_char"],
+                "entity mention escapes parent source occurrence")
+        text = origin["span_text"]
+        left, right = start - origin["start_char"], end - origin["start_char"]
+        require(checked["span_text"] == text[left:right]
+                and checked["start_utf8"] == origin["start_utf8"] + len(text[:left].encode())
+                and checked["end_utf8"] == origin["start_utf8"] + len(text[:right].encode())
+                and checked["historical_aliases"] == [], "parent entity occurrence geometry differs")
+        return
     _closed(selector, context._SELECTOR_KEYS, "entity occurrence selector")
     origin = source["selector"]
     start, end = selector["char_start"], selector["char_end"]
@@ -253,7 +412,8 @@ def _semantics(declarations, ast, source, scope):
             require(declaration["definition_kind"] in ("means", "includes", "deems") if kind == "definition"
                     else declaration["definition_kind"] is None, "explicit distinct definition operator required")
             identity = {"kind": kind, "scope_id": scope["scope_id"],
-                        "occurrence_id": declaration["source_selector"]["occurrence_id"],
+                        "occurrence_id": declaration["source_selector"][
+                            "record_cid" if source["schema"] == PARENT_SOURCE_SCHEMA else "occurrence_id"],
                         "document_revision": source["document_revision"]}
             if kind == "definition": identity.update(definition_kind=declaration["definition_kind"], ast_path=declaration["ast_path"])
         entity_id = "legal-" + kind + ":sha256:" + digest(identity)

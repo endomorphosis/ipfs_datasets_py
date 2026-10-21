@@ -1,0 +1,27 @@
+# Receipt-bound prepared source generation
+
+This opt-in adapter composes the existing native receipt conditioner and source-context nominator with the prepared compact v3 decoder. It accepts 1–64 new tokens from BOS. The trained-source v2 and receipt-bound v1 APIs retain their original 12-token profiles.
+
+The module is `ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_receipt_bound_prepared_source_generation_v2`. Its public functions are:
+
+- `prepare_receipt_bound_prepared_source_generation_v2(population_raw, rows, checkpoint, *, expected_population_sha256, expected_checkpoint_sha256, max_new_tokens, source_resolver)`
+- `receipt_bound_prepared_source_generation_sha256(report)`
+- `validate_receipt_bound_prepared_source_generation_v2(report, population_raw, rows, checkpoint, *, expected_report_sha256, expected_population_sha256, expected_checkpoint_sha256, max_new_tokens, source_resolver)`
+
+`population_raw` contains independently pinned UTF-8 JSON bytes of a `legal-relational-batch-population/v1` object: `partition`, `selection_sha256`, and 1–16 ordered `rows`, each with `id`, `source_sha256` and `context_sha256`. IDs are unique. Here `context_sha256` commits the original catalog bytes.
+
+Each corresponding input row has exactly `id`, `source_raw`, `catalog_raw`, `expected_source_sha256`, `expected_catalog_sha256`, `source_request`, `expected_source_request_sha256`, `input_id`, and `receipt_ref`. Source and catalog inputs are bytes. The source request contains `occurrence_id` and the original receipt `input`, including its physical descriptor/span and text. A receipt reference contains absolute `path`, raw `bytes` and `sha256`. The resolver maps the original source artifact descriptor to its retained physical artifact. There is no caller-supplied replacement conditioning vector.
+
+The public conditioner verifies original physical source/input/receipt joins. Source bytes must equal the original bytes. Catalog identity, source-context identity and compact model-context identity stay distinct. Source inputs must be nonempty strict UTF-8 and at most 65,536 bytes; catalogs must be nonempty strict UTF-8 and at most 524,288 bytes. Unique receipt files total at most 64 MiB. Aggregate input/report bounds are 192/96 MiB. Bound violations refuse complete operations; reports are never truncated.
+
+All receipt and context dispositions are frozen before generation. `mapping.outer_to_inner` retains every outer index, with null for unavailable vectors. `mapping.inner_to_outer` lists embedded originals in order. `receipt_inventory` retains complete producer receipt order and status/token/vector commitments, including inputs outside the selected window. Equal text and equal float32 bits at different physical origins remain separate occurrences. Over-limit and missing vectors stay null. Ambiguous and unavailable contexts remain explicit abstentions.
+
+The inner caller is `legal_compact_prepared_source_generation_v3`, exposing `prepare_prepared_source_generation_v3` and `prepared_source_generation_sha256`. Each nominated embedded occurrence uses its exact native float32 vector and a BOS-only prefix. Its original generation restores at most one private model; its mandatory batch-adapter replay restores a fresh private model. Every numerical step still scores the complete growing prefix. No model cache crosses public operations. A population with no numerical work performs pure checkpoint inspection without model or optimizer restoration.
+
+The retained compact v2 checkpoint profile, 384 conditioning coordinates, vocabulary of 537 tokens and 512-total-ID bound are unchanged. Gated training-state checkpoints have a separate contract. Catalog-generation codecs and interfaces also require a separate compatibility qualification. `source_conditionings`, `source_reports`, and the legacy-named `trained_source_report` field retain the complete nested reports; the inner report has the prepared-source v3 schema/profile.
+
+Hashing a report performs no numerical replay. Positive public validation reconstructs the entire report from the same original inputs and compares it with the independently pinned report. It repeats original generation and mandatory adapter replay, with fresh preparations. Count original and validation operations separately; wrapper/GRU observers overlap, and replayed calls are not independent examples. Preparation totals repeated in nested trace rows are not additional restores. A changed receipt is a changed input, not permission to rerun an encoder.
+
+A 64-token allowance can hold the 46 new IDs of the retained authored target shapes. It does not ensure that a decoder emits EOS or reconstructs a correct formula. Keep capped, blocked, incomplete, abstained and unavailable cases in the original denominator. Full traces retain allowed choices, raw maxima, actual emissions and completion dispositions.
+
+The checkpoint was trained on authored sparse vectors; exact native GTE transport does not establish trained conditioning-space compatibility. The nested declaration retains `encoder_sha256: null`. Training/gold masks and comparison credit remain zero. Source meaning, context permission, legal accuracy, graph admission and Lean admission remain unverified. Native-space fitting needs a separately frozen population or an explicit weights-only warm start with fresh optimizer state; changed conditioning rows cannot use the old exact-Adam-resume claim.

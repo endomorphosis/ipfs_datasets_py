@@ -175,7 +175,7 @@ def synthetic_compiler(monkeypatch, tmp_path):
             assert request.environment["ELAN_TOOLCHAIN"] == TOOLCHAIN
             assert request.environment["LEAN_NUM_THREADS"] == "1"
             assert request.limits.timeout_seconds == 12
-            assert request.limits.max_output_files == 15
+            assert request.limits.max_output_files == len(modules) + len(expected_sources)
             assert request.limits.max_output_bytes == 2 * 1024**2
             assert request.limits.resident_memory_bytes == 2 * 1024**3
             assert request.limits.max_workspace_bytes == 128 * 1024**2

@@ -1,5 +1,7 @@
 # Autoencoder inference and training handbook
 
+**Current LegalIR handoff:** [autoformalization guide](../../ipfs_datasets_py/logic/autoformal/README.md) and [current state](../../ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md). Source, review, graph, Lean and LegalIR model guides are maintained beside the autoformal module; this document retains its existing model guidance and dated research history.
+
 Use this handbook to choose a supported execution path, prepare its inputs,
 run or resume it, and interpret the evidence. Its core API baseline is dataset
 commit `3666ebad19422b8345ebe5432a1c02f26d2eba4c` (2026-09-29), with the

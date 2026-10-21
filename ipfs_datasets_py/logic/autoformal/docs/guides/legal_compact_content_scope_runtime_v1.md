@@ -1,0 +1,17 @@
+# Scope-filtered weighted compact LegalIR inference
+
+`legal_compact_content_scope_runtime_v1.generate` is an opt-in consumer of the existing complete weighted checkpoint and the separately qualified lexical-scope filter. Its arguments match `legal_compact_content_weighted_runtime_v1.generate`: checkpoint, 384-element conditioning, prefix IDs, raw context bytes, independent checkpoint/objective/context commitments, a 1–64 new-token allowance and declared prefix/context origins.
+
+The intact checkpoint is validated by its original weighted owner. Model construction and full-prefix CPU inference reuse the pinned prepared runtime’s private model-only session. No optimizer is constructed or restored, no gradients or updates run, and no old checkpoint format is fabricated. The old runtime and scope filter remain unchanged. This consumer adds their source identities to its result and composes its own source checks with the original numerical session fence, including forward and close boundaries.
+
+The inference policy `lexically-bound-variable-predicate-arguments/v1` removes locally impossible predicate branches before selection. It preserves the old codec coordinates, training inventories, targets and objective commitments; those were produced using the original grammar. Identical codec coordinates do not imply identical inference grammar semantics. Old-selector choices on each refined prefix are local comparisons, not a separately generated baseline trajectory. Final typed decoding still uses the original token owner.
+
+A supplied complete or blocked prefix creates no model. Each generation call with work to do restores one model, uses at most 64 full-prefix forwards and retains all 537 scores at every actual step. There is no cross-call model cache, incremental hidden state, inferred permission or automatic retry. Existing input, source and 8 MiB serialized-result limits remain enforced through the pinned original runtime.
+
+The source checks are bounded custody checks, not arbitrary bytecode or operating-system attestation. The scope filter’s owner roster intentionally contains the original selector twice; its exact roster is checked separately from the old token producer’s roster. Final outputs keep all legal, graph, Lean, source-semantic and other admission authority false and all training/evaluation gold masks zero.
+
+## Evaluation scope
+
+The accompanying development qualification enrolls four fixed BOS generations from the two previously trained step-128 compact384 checkpoints and their two fictional authored rows. It keeps the original 64-token allowance and unchanged weights; historical baselines are reused observations, not newly run controls. Exact exposed-target reconstruction, valid local syntax, completion within budget and blocked prefixes are reported separately. Complete target-derived prefixes used for zero-allocation guards are not learned predictions.
+
+These rows and contexts are exposed training fixtures. This API does not authenticate an instruction encoder, establish held-out reconstruction, formalize US Code, resolve cross-section entities, qualify 768D/4096D heads, execute Lean, or authorize graph publication. The broader source/span/entity/definition-to-Lean plan still requires those independent stages and their qualifications. A generation that remains incomplete or wrong remains a failed reconstruction; the allowance is not enlarged in response to its output.
