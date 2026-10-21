@@ -389,6 +389,11 @@ from pathlib import Path as _CoordinateGraphPath
 COORDINATE_GRAPH_REQUEST_SCHEMA = "legal-coordinate-source-graph-intake-request/v1"
 COORDINATE_GRAPH_SCHEMA = "legal-coordinate-source-graph-intake/v1"
 COORDINATE_GRAPH_PROFILE = "paired-coordinate-source-graph-intake/v1"
+COORDINATE_GRAPH_REQUEST_SCHEMA_V2 = "legal-coordinate-source-graph-intake-request/v2"
+COORDINATE_GRAPH_SCHEMA_V2 = "legal-coordinate-source-graph-intake/v2"
+COORDINATE_GRAPH_PROFILE_V2 = "original-input-coordinate-source-graph-intake/v1"
+COORDINATE_GRAPH_ELIGIBILITY_REFERENCE_SCHEMA = "legal-coordinate-source-graph-eligibility-reference/v1"
+COORDINATE_GRAPH_JOIN_REFERENCE_SCHEMA = "legal-coordinate-source-graph-join-reference/v1"
 _COORDINATE_GRAPH_MAX_BYTES = 64 * 1024 * 1024
 _COORDINATE_GRAPH_INPUT_BYTES = 16 * 1024 * 1024
 _COORDINATE_GRAPH_REQUEST_BYTES = 128 * 1024
@@ -444,10 +449,11 @@ def _coordinate_graph_owners():
     """Pin this profile's graph/source owners beside the eligibility closure."""
     import importlib
     from . import legal_source_span_target_eligibility_v1 as eligibility, tree_pin
-    from . import legal_paired_manifest_inventory_v1 as ordinary, span_cache
+    from . import legal_paired_manifest_inventory_v1 as ordinary, span_cache, legal_context_obligations
     root = _CoordinateGraphPath(__file__).resolve().parents[3]
     modules = [graphs, context, eligibility, tree_pin, ordinary, span_cache,
-        importlib.import_module(CanonicalRoundTripIR.__module__), graphs.statement_scope]
+        importlib.import_module(CanonicalRoundTripIR.__module__), graphs.statement_scope,
+        legal_context_obligations]
     paths = []
     for module in modules:
         path = _CoordinateGraphPath(module.__file__).resolve()
@@ -468,16 +474,31 @@ def _coordinate_graph_owners():
     return eligibility, pins
 
 
-def _coordinate_graph_callables(eligibility):
-    return (eligibility.validate_source_span_target_eligibility_v2,
+def _coordinate_graph_runtime(eligibility):
+    """Reuse the current eligibility owner's metadata-only runtime custody."""
+    owners = eligibility._owners()
+    return owners[4], owners[5]
+
+
+def _coordinate_graph_callables(eligibility, *, eligibility_version=2):
+    validator = (eligibility.validate_source_span_target_eligibility_v2 if eligibility_version == 2
+                 else eligibility.validate_source_span_target_eligibility_v3)
+    result = (validator,
         eligibility.source_span_target_join_originals_sha256, eligibility.source_span_target_eligibility_sha256,
         _rule, _bound_source, graphs.build_graph, graphs.graph_to_ast, graphs.bind_scope,
         graphs.bind_source_occurrence, context.normalized_document_view, context.validate_source_selector,
         CanonicalRoundTripIR.from_dict.__func__)
+    if eligibility_version == 3:
+        result += (eligibility._owners, _coordinate_graph_runtime(eligibility)[0].describe_runtime,
+            _coordinate_graph_preflight, _coordinate_graph_sources, _coordinate_graph_outputs,
+            _coordinate_graph_references_v2, _coordinate_graph_owners, _coordinate_graph_callables,
+            _coordinate_graph_runtime)
+    return result
 
 
 def _coordinate_graph_preflight(request_raw, eligibility_report_raw, eligibility_request_raw,
-        join_manifest_raw, expected_request_sha256, join_originals, source_bindings):
+        join_manifest_raw, expected_request_sha256, join_originals, source_bindings, *, profile_version=1):
+    _need(type(profile_version) is int and profile_version in (1, 2), "explicit coordinate graph version required")
     _need(type(expected_request_sha256) is str and _SHA.fullmatch(expected_request_sha256),
           "exact coordinate graph request SHA256 required")
     _need(type(request_raw) is bytes and _coordinate_graph_sha(request_raw) == expected_request_sha256,
@@ -486,10 +507,16 @@ def _coordinate_graph_preflight(request_raw, eligibility_report_raw, eligibility
     fields = {"schema", "graph_profile", "eligibility_report_raw_sha256", "eligibility_report_sha256",
         "eligibility_request_sha256", "join_manifest_raw_sha256", "join_manifest_sha256",
         "join_originals_sha256", "source_bindings_sha256", "expected_physical_ids"}
+    if profile_version == 2:
+        fields.add("source_compatibility_profile")
     _need(type(request) is dict and set(request) == fields, "closed coordinate graph request required")
-    _need(request["schema"] == COORDINATE_GRAPH_REQUEST_SCHEMA and request["graph_profile"] == "canonical_rules_v1",
+    _need(request["schema"] == (COORDINATE_GRAPH_REQUEST_SCHEMA if profile_version == 1
+          else COORDINATE_GRAPH_REQUEST_SCHEMA_V2) and request["graph_profile"] == "canonical_rules_v1",
           "unsupported coordinate graph intake profile")
-    for key in fields - {"schema", "graph_profile", "expected_physical_ids"}:
+    if profile_version == 2:
+        _need(request["source_compatibility_profile"] == COORDINATE_GRAPH_PROFILE_V2,
+              "explicit original-input coordinate graph v2 profile required")
+    for key in fields - {"schema", "graph_profile", "expected_physical_ids", "source_compatibility_profile"}:
         _need(type(request[key]) is str and _SHA.fullmatch(request[key]), "exact independent coordinate graph pin required")
     for raw, field, maximum in ((eligibility_report_raw, "eligibility_report_raw_sha256", _COORDINATE_GRAPH_INPUT_BYTES),
             (eligibility_request_raw, "eligibility_request_sha256", _COORDINATE_GRAPH_REQUEST_BYTES),
@@ -498,6 +525,15 @@ def _coordinate_graph_preflight(request_raw, eligibility_report_raw, eligibility
               "coordinate graph input bytes differ from independent pin: " + field)
     offered = _coordinate_graph_read(eligibility_report_raw, _COORDINATE_GRAPH_INPUT_BYTES, "coordinate eligibility report")
     retained = _coordinate_graph_read(join_manifest_raw, _COORDINATE_GRAPH_INPUT_BYTES, "coordinate join report")
+    if profile_version == 2:
+        eligibility_request = _coordinate_graph_read(eligibility_request_raw, _COORDINATE_GRAPH_REQUEST_BYTES,
+                                                    "original-input eligibility request")
+        _need(type(offered) is dict and offered.get("schema") == "legal-source-span-target-eligibility/v3"
+              and offered.get("source_compatibility_profile") == "original-input-coordinate-target-eligibility/v1"
+              and type(eligibility_request) is dict
+              and eligibility_request.get("schema") == "legal-source-span-target-eligibility-request/v3"
+              and eligibility_request.get("source_compatibility_profile") == "original-input-coordinate-target-eligibility/v1",
+              "coordinate graph v2 requires explicit original-input eligibility v3 request and report")
     _need(_coordinate_graph_sha(_coordinate_graph_wire(offered)) == request["eligibility_report_sha256"]
           and _coordinate_graph_sha(_coordinate_graph_wire(retained)) == request["join_manifest_sha256"],
           "coordinate graph canonical input identity differs")
@@ -513,12 +549,14 @@ def _coordinate_graph_preflight(request_raw, eligibility_report_raw, eligibility
     return request, offered, retained, _coordinate_graph_originals(join_originals), bindings, binding_raw
 
 
-def _coordinate_graph_sources(retained, eligible, expected_ids):
+def _coordinate_graph_sources(retained, eligible, expected_ids, *, eligibility_version=2):
     """Keep original nested sources and every physical reference, without selection."""
-    _need(eligible.get("schema") == "legal-source-span-target-eligibility/v2"
-          and eligible.get("source_compatibility_profile") == "paired-coordinate-target-eligibility/v1"
+    _need(eligible.get("schema") == ("legal-source-span-target-eligibility/v2" if eligibility_version == 2
+          else "legal-source-span-target-eligibility/v3")
+          and eligible.get("source_compatibility_profile") == ("paired-coordinate-target-eligibility/v1"
+          if eligibility_version == 2 else "original-input-coordinate-target-eligibility/v1")
           and eligible.get("upstream_reexecution_performed") is True,
-          "genuinely replayed coordinate eligibility v2 required")
+          "genuinely replayed coordinate eligibility for the explicit graph profile required")
     physical, refs, outputs = eligible["physical_rows"], eligible["row_references"], eligible["output_occurrences"]
     _need([row["physical_identity_sha256"] for row in physical] == expected_ids
           and _coordinate_graph_wire(refs) == _coordinate_graph_wire(retained["row_references"]),
@@ -562,8 +600,98 @@ def _finish_coordinate_graph(checks, primary):
         raise error
 
 
-def prepare_coordinate_source_graph_intake_v1(request_raw, eligibility_report_raw, eligibility_request_raw,
-        join_manifest_raw, *, expected_request_sha256, join_originals, source_bindings):
+def _coordinate_graph_references_v2(request, eligibility_report_raw, join_manifest_raw, *, report=None):
+    """Bind exact artifact bytes and canonical identities without copying carriers."""
+    eligible = _coordinate_graph_read(eligibility_report_raw, _COORDINATE_GRAPH_INPUT_BYTES,
+                                      "referenced original-input eligibility")
+    retained = _coordinate_graph_read(join_manifest_raw, _COORDINATE_GRAPH_INPUT_BYTES,
+                                      "referenced original-input join")
+    _need(_coordinate_graph_sha(eligibility_report_raw) == request["eligibility_report_raw_sha256"]
+          and _coordinate_graph_sha(_coordinate_graph_wire(eligible)) == request["eligibility_report_sha256"]
+          and _coordinate_graph_sha(join_manifest_raw) == request["join_manifest_raw_sha256"]
+          and _coordinate_graph_sha(_coordinate_graph_wire(retained)) == request["join_manifest_sha256"],
+          "coordinate graph referenced artifact/canonical identities differ")
+    _need(type(eligible.get("join_manifest_raw_utf8")) is str
+          and eligible["join_manifest_raw_utf8"].encode("utf-8") == join_manifest_raw,
+          "coordinate graph referenced join pointer does not name the exact artifact")
+    references = {
+        "eligibility_report_reference": {
+            "schema": COORDINATE_GRAPH_ELIGIBILITY_REFERENCE_SCHEMA,
+            "container": "eligibility_report_raw_utf8",
+            "report_artifact_sha256": request["eligibility_report_raw_sha256"],
+            "report_sha256": request["eligibility_report_sha256"],
+            "report_bytes": len(eligibility_report_raw)},
+        "join_manifest_reference": {
+            "schema": COORDINATE_GRAPH_JOIN_REFERENCE_SCHEMA,
+            "container": "eligibility_report_raw_utf8",
+            "json_pointer": "/join_manifest_raw_utf8",
+            "join_manifest_raw_sha256": request["join_manifest_raw_sha256"],
+            "join_manifest_sha256": request["join_manifest_sha256"],
+            "join_manifest_bytes": len(join_manifest_raw)}}
+    if report is not None:
+        _need(type(report.get("eligibility_report_raw_utf8")) is str
+              and report["eligibility_report_raw_utf8"].encode("utf-8") == eligibility_report_raw
+              and "eligibility_report" not in report and "join_manifest_raw_utf8" not in report,
+              "coordinate graph v2 must retain one complete raw eligibility carrier")
+        for key, value in references.items():
+            _need(_coordinate_graph_wire(report.get(key)) == _coordinate_graph_wire(value),
+                  "coordinate graph closed typed reference differs: " + key)
+    return references
+
+
+def _coordinate_graph_outputs(eligible, sources, bindings):
+    """One mechanical projection for both explicit coordinate graph profiles."""
+    outputs = []
+    for ordinal, output in enumerate(eligible["output_occurrences"]):
+        identity = output["physical_identity_sha256"]
+        nested = sources[identity]
+        projection = {"source_span_id": nested.get("span_id"), "source_text": nested.get("text"),
+            "source_sha256": nested.get("text_sha256"), "legal_id": nested.get("legal_id"),
+            "source_revision": nested.get("revision")}
+        one_binding = {nested["span_id"]: bindings[identity]} if identity in bindings else {}
+        source, binding, issues = _bound_source(projection, one_binding)
+        formal = output["formal_output"]
+        supported = (output["target_status"] == "mechanically_supported" and type(formal) is dict
+            and formal.get("family") == "typed_deontic" and formal.get("format") == "typed-deontic-rule/v1")
+        rule = _rule({"rule_json": formal["payload_json"]}) if supported else {
+            "status": "unsupported_coordinate_target", "decoded_rule": None, "ast": None,
+            "issues": [{"code": "coordinate_target_not_mechanically_supported_typed_deontic_rule"}]}
+        issues = [*rule["issues"], *issues]
+        if supported:
+            _need(_coordinate_graph_wire(rule["ast"]) == _coordinate_graph_wire(output["canonical_ir"]),
+                  "coordinate graph rule differs from complete eligibility target")
+        graph_request, graph = None, None
+        if not issues and source is not None and binding is not None:
+            graph_request = {"ast": rule["ast"], "profile": "canonical_rules_v1", "source": source,
+                "scope": binding["scope"], "dependency_refs": binding.get("dependency_refs", []),
+                "evidence_refs": binding.get("evidence_refs", [])}
+            graph_input = _coordinate_graph_wire(graph_request)
+            delegated_request = graph_request
+            try:
+                graph = graphs.build_graph(**graph_request)
+            except (ValueError, TypeError, KeyError, UnicodeError, RecursionError) as error:
+                issues.append({"code": "existing_graph_profile_refused", "message": str(error)[:512]})
+                graph_request, graph = None, None
+            _need(_coordinate_graph_wire(delegated_request) == graph_input,
+                  "coordinate graph builder changed admitted graph inputs")
+            if graph is not None:
+                _need(_coordinate_graph_wire(graphs.graph_to_ast(graph)) == _coordinate_graph_wire(rule["ast"]),
+                      "coordinate graph ordered AST round trip differs")
+        outputs.append({**deepcopy(output), "output_occurrence_ordinal": ordinal,
+            "eligibility_output": deepcopy(output), "paired_source": deepcopy(nested),
+            "rule_assessment": rule, "source_binding": source,
+            "source_binding_declaration_sha256": _digest(binding) if binding is not None else None,
+            "context_observation": deepcopy(binding.get("context_observation")) if type(binding) is dict else None,
+            "selected_occurrence": None, "source_binding_mask": 0,
+            "graph_source_relationship": "independently_nominated_exact_source_occurrence_crosswalk_unverified",
+            "coordinate_to_graph_source_correspondence": "unverified_no_independent_crosswalk",
+            "issues": issues, "disposition": "proposed_unreviewed_graph" if graph is not None else "unresolved",
+            "graph_request": graph_request, "graph": graph, **_FALSE})
+    return outputs
+
+
+def _prepare_coordinate_source_graph_intake(request_raw, eligibility_report_raw, eligibility_request_raw,
+        join_manifest_raw, *, expected_request_sha256, join_originals, source_bindings, profile_version):
     """Retain every coordinate target and nominate exact, unreviewed source graphs.
 
     Opening and closing eligibility validation replay the genuine original join.
@@ -572,10 +700,12 @@ def prepare_coordinate_source_graph_intake_v1(request_raw, eligibility_report_ra
     """
     request, offered, retained, captured, bindings, binding_raw = _coordinate_graph_preflight(request_raw,
         eligibility_report_raw, eligibility_request_raw, join_manifest_raw, expected_request_sha256,
-        join_originals, source_bindings)
+        join_originals, source_bindings, profile_version=profile_version)
+    eligibility_version = 2 if profile_version == 1 else 3
     snapshots = tuple(_coordinate_graph_wire(value) for value in (request, offered, retained))
     eligibility, before, callables, eligible, eligible_raw = None, None, None, None, None
     opened, primary, result = False, None, None
+    runtime, runtime_pins, runtime_description_raw, result_raw = None, None, None, None
 
     def originals_unchanged():
         _coordinate_graph_originals(join_originals)
@@ -597,11 +727,23 @@ def prepare_coordinate_source_graph_intake_v1(request_raw, eligibility_report_ra
               "coordinate graph producer changed since import")
         if before is not None:
             _need(_coordinate_graph_owners()[1] == before, "coordinate graph producer sources changed during operation")
-            _need(all(left is right for left, right in zip(_coordinate_graph_callables(eligibility), callables)),
+            current_callables = _coordinate_graph_callables(eligibility, eligibility_version=eligibility_version)
+            _need(len(current_callables) == len(callables)
+                  and all(left is right for left, right in zip(current_callables, callables)),
                   "coordinate graph producer callable changed during operation")
+            if profile_version == 2:
+                current_runtime, owner_pins = _coordinate_graph_runtime(eligibility)
+                _need(current_runtime is runtime and _coordinate_graph_wire(owner_pins,
+                    _COORDINATE_GRAPH_REQUEST_BYTES) == runtime_pins,
+                    "coordinate graph eligibility runtime owners changed during operation")
+                if runtime_description_raw is not None:
+                    _need(_coordinate_graph_wire(runtime.describe_runtime("legal_ir",
+                        eligible["request"]["decoder_profile"])) == runtime_description_raw,
+                        "coordinate graph runtime description changed during operation")
 
     def replay_eligibility():
-        return eligibility.validate_source_span_target_eligibility_v2(offered, eligibility_request_raw,
+        validator = (eligibility.validate_source_span_target_eligibility_v2 if profile_version == 1 else callables[0])
+        return validator(offered, eligibility_request_raw,
             join_manifest_raw, expected_request_sha256=request["eligibility_request_sha256"],
             expected_report_sha256=request["eligibility_report_sha256"], join_originals=captured)
 
@@ -616,7 +758,10 @@ def prepare_coordinate_source_graph_intake_v1(request_raw, eligibility_report_ra
         eligibility, before = _coordinate_graph_owners()
         before = _coordinate_graph_read(_coordinate_graph_wire(before), _COORDINATE_GRAPH_REQUEST_BYTES,
                                        "coordinate graph owner pins")
-        callables = _coordinate_graph_callables(eligibility)
+        callables = _coordinate_graph_callables(eligibility, eligibility_version=eligibility_version)
+        if profile_version == 2:
+            runtime, owner_pins = _coordinate_graph_runtime(eligibility)
+            runtime_pins = _coordinate_graph_wire(owner_pins, _COORDINATE_GRAPH_REQUEST_BYTES)
         originals_unchanged()
         _need(eligibility.source_span_target_eligibility_sha256(offered) == request["eligibility_report_sha256"],
               "coordinate graph eligibility identity differs from original owner")
@@ -628,53 +773,13 @@ def prepare_coordinate_source_graph_intake_v1(request_raw, eligibility_report_ra
               and eligible["join_manifest_sha256"] == request["join_manifest_sha256"]
               and eligible["join_originals_sha256"] == request["join_originals_sha256"],
               "coordinate graph input request/report ancestry differs")
-        sources = _coordinate_graph_sources(retained, eligible, request["expected_physical_ids"])
-        outputs = []
-        for ordinal, output in enumerate(eligible["output_occurrences"]):
-            identity = output["physical_identity_sha256"]
-            nested = sources[identity]
-            projection = {"source_span_id": nested.get("span_id"), "source_text": nested.get("text"),
-                "source_sha256": nested.get("text_sha256"), "legal_id": nested.get("legal_id"),
-                "source_revision": nested.get("revision")}
-            one_binding = {nested["span_id"]: bindings[identity]} if identity in bindings else {}
-            source, binding, issues = _bound_source(projection, one_binding)
-            formal = output["formal_output"]
-            supported = (output["target_status"] == "mechanically_supported" and type(formal) is dict
-                and formal.get("family") == "typed_deontic" and formal.get("format") == "typed-deontic-rule/v1")
-            rule = _rule({"rule_json": formal["payload_json"]}) if supported else {
-                "status": "unsupported_coordinate_target", "decoded_rule": None, "ast": None,
-                "issues": [{"code": "coordinate_target_not_mechanically_supported_typed_deontic_rule"}]}
-            issues = [*rule["issues"], *issues]
-            if supported:
-                _need(_coordinate_graph_wire(rule["ast"]) == _coordinate_graph_wire(output["canonical_ir"]),
-                      "coordinate graph rule differs from complete eligibility target")
-            graph_request, graph = None, None
-            if not issues and source is not None and binding is not None:
-                graph_request = {"ast": rule["ast"], "profile": "canonical_rules_v1", "source": source,
-                    "scope": binding["scope"], "dependency_refs": binding.get("dependency_refs", []),
-                    "evidence_refs": binding.get("evidence_refs", [])}
-                graph_input = _coordinate_graph_wire(graph_request)
-                delegated_request = graph_request
-                try:
-                    graph = graphs.build_graph(**graph_request)
-                except (ValueError, TypeError, KeyError, UnicodeError, RecursionError) as error:
-                    issues.append({"code": "existing_graph_profile_refused", "message": str(error)[:512]})
-                    graph_request, graph = None, None
-                _need(_coordinate_graph_wire(delegated_request) == graph_input,
-                      "coordinate graph builder changed admitted graph inputs")
-                if graph is not None:
-                    _need(_coordinate_graph_wire(graphs.graph_to_ast(graph)) == _coordinate_graph_wire(rule["ast"]),
-                          "coordinate graph ordered AST round trip differs")
-            outputs.append({**deepcopy(output), "output_occurrence_ordinal": ordinal,
-                "eligibility_output": deepcopy(output), "paired_source": deepcopy(nested),
-                "rule_assessment": rule, "source_binding": source,
-                "source_binding_declaration_sha256": _digest(binding) if binding is not None else None,
-                "context_observation": deepcopy(binding.get("context_observation")) if type(binding) is dict else None,
-                "selected_occurrence": None, "source_binding_mask": 0,
-                "graph_source_relationship": "independently_nominated_exact_source_occurrence_crosswalk_unverified",
-                "coordinate_to_graph_source_correspondence": "unverified_no_independent_crosswalk",
-                "issues": issues, "disposition": "proposed_unreviewed_graph" if graph is not None else "unresolved",
-                "graph_request": graph_request, "graph": graph, **_FALSE})
+        if profile_version == 2:
+            runtime_description_raw = _coordinate_graph_wire(eligible["runtime_description"])
+            _need(_coordinate_graph_wire(runtime.describe_runtime("legal_ir", eligible["request"]["decoder_profile"]))
+                  == runtime_description_raw, "coordinate graph runtime description differs from eligibility")
+        sources = _coordinate_graph_sources(retained, eligible, request["expected_physical_ids"],
+                                            eligibility_version=eligibility_version)
+        outputs = _coordinate_graph_outputs(eligible, sources, bindings)
         report = {"schema": COORDINATE_GRAPH_SCHEMA, "source_compatibility_profile": COORDINATE_GRAPH_PROFILE,
             "request": request, "request_raw_utf8": request_raw.decode("utf-8"),
             "request_sha256": expected_request_sha256, "eligibility_report_raw_utf8": eligibility_report_raw.decode("utf-8"),
@@ -699,14 +804,31 @@ def prepare_coordinate_source_graph_intake_v1(request_raw, eligibility_report_ra
             "producer_pins_scope": "listed_graph_source_and_eligibility_owner_files_not_complete_execution_closure",
             "runtime_description": deepcopy(eligible["runtime_description"]), "checkpoint_status": "not_assessed",
             "training_mask": 0, "evaluation_gold_mask": 0, "authority": dict(_COORDINATE_GRAPH_AUTHORITY), **_FALSE}
+        if profile_version == 2:
+            report.update(schema=COORDINATE_GRAPH_SCHEMA_V2,
+                source_compatibility_profile=COORDINATE_GRAPH_PROFILE_V2,
+                upstream_reexecution_requirement="opening_and_closing_public_eligibility_v3_original_input_replay",
+                **_coordinate_graph_references_v2(request, eligibility_report_raw, join_manifest_raw))
+            # Mutate only our new outer report; genuine eligibility stays intact.
+            del report["eligibility_report"]
+            del report["join_manifest_raw_utf8"]
         result = _coordinate_graph_read(_coordinate_graph_wire(report), _COORDINATE_GRAPH_MAX_BYTES,
                                         "coordinate source graph intake")
+        if profile_version == 2:
+            _coordinate_graph_references_v2(request, eligibility_report_raw, join_manifest_raw, report=result)
+            result_raw = _coordinate_graph_wire(result)
     except BaseException as error:
         primary = error
         raise
     finally:
         _finish_coordinate_graph((("closing public eligibility replay", closing_eligibility),
             ("original and admitted inputs", originals_unchanged), ("producer sources and callables", producers_unchanged)), primary)
+    if profile_version == 2:
+        _need(_coordinate_graph_wire(result) == result_raw,
+              "coordinate graph detached result changed during closing replay")
+        _coordinate_graph_references_v2(request, eligibility_report_raw, join_manifest_raw, report=result)
+        return _coordinate_graph_read(result_raw, _COORDINATE_GRAPH_MAX_BYTES,
+                                      "detached original-input coordinate graph v2")
     return result
 
 
@@ -715,8 +837,8 @@ def coordinate_source_graph_intake_sha256(report):
     return _coordinate_graph_sha(_coordinate_graph_wire(report))
 
 
-def validate_coordinate_source_graph_intake_v1(report, request_raw, eligibility_report_raw, eligibility_request_raw,
-        join_manifest_raw, *, expected_request_sha256, expected_report_sha256, join_originals, source_bindings):
+def _validate_coordinate_source_graph_intake(report, request_raw, eligibility_report_raw, eligibility_request_raw,
+        join_manifest_raw, *, expected_request_sha256, expected_report_sha256, join_originals, source_bindings, profile_version):
     """Regenerate every proposal and refusal, including genuine closing replay."""
     _need(type(expected_report_sha256) is str and _SHA.fullmatch(expected_report_sha256),
           "exact coordinate graph report SHA256 required")
@@ -726,7 +848,9 @@ def validate_coordinate_source_graph_intake_v1(report, request_raw, eligibility_
     _need(_coordinate_graph_sha(original) == expected_report_sha256, "coordinate graph report SHA256 differs")
     primary = None
     try:
-        expected = prepare_coordinate_source_graph_intake_v1(request_raw, eligibility_report_raw, eligibility_request_raw,
+        prepare = (prepare_coordinate_source_graph_intake_v1 if profile_version == 1
+                   else prepare_coordinate_source_graph_intake_v2)
+        expected = prepare(request_raw, eligibility_report_raw, eligibility_request_raw,
             join_manifest_raw, expected_request_sha256=expected_request_sha256,
             join_originals=join_originals, source_bindings=source_bindings)
         _need(original == _coordinate_graph_wire(expected), "coordinate graph report differs from complete original-input replay")
@@ -742,5 +866,40 @@ def validate_coordinate_source_graph_intake_v1(report, request_raw, eligibility_
         _finish_coordinate_graph((("offered graph report", offered_unchanged),), primary)
 
 
+def prepare_coordinate_source_graph_intake_v1(request_raw, eligibility_report_raw, eligibility_request_raw,
+        join_manifest_raw, *, expected_request_sha256, join_originals, source_bindings):
+    """Historical original-input eligibility-v2 profile; no current-v2 fallback."""
+    return _prepare_coordinate_source_graph_intake(request_raw, eligibility_report_raw, eligibility_request_raw,
+        join_manifest_raw, expected_request_sha256=expected_request_sha256,
+        join_originals=join_originals, source_bindings=source_bindings, profile_version=1)
+
+
+def validate_coordinate_source_graph_intake_v1(report, request_raw, eligibility_report_raw, eligibility_request_raw,
+        join_manifest_raw, *, expected_request_sha256, expected_report_sha256, join_originals, source_bindings):
+    """Regenerate the historical graph v1 contract without a profile upgrade."""
+    return _validate_coordinate_source_graph_intake(report, request_raw, eligibility_report_raw,
+        eligibility_request_raw, join_manifest_raw, expected_request_sha256=expected_request_sha256,
+        expected_report_sha256=expected_report_sha256, join_originals=join_originals,
+        source_bindings=source_bindings, profile_version=1)
+
+
+def prepare_coordinate_source_graph_intake_v2(request_raw, eligibility_report_raw, eligibility_request_raw,
+        join_manifest_raw, *, expected_request_sha256, join_originals, source_bindings):
+    """Prepare unreviewed proposals only from explicit genuine eligibility v3."""
+    return _prepare_coordinate_source_graph_intake(request_raw, eligibility_report_raw, eligibility_request_raw,
+        join_manifest_raw, expected_request_sha256=expected_request_sha256,
+        join_originals=join_originals, source_bindings=source_bindings, profile_version=2)
+
+
+def validate_coordinate_source_graph_intake_v2(report, request_raw, eligibility_report_raw, eligibility_request_raw,
+        join_manifest_raw, *, expected_request_sha256, expected_report_sha256, join_originals, source_bindings):
+    """Regenerate every v2 proposal/reference through genuine closing v3 replay."""
+    return _validate_coordinate_source_graph_intake(report, request_raw, eligibility_report_raw,
+        eligibility_request_raw, join_manifest_raw, expected_request_sha256=expected_request_sha256,
+        expected_report_sha256=expected_report_sha256, join_originals=join_originals,
+        source_bindings=source_bindings, profile_version=2)
+
+
 __all__ += ["prepare_coordinate_source_graph_intake_v1", "validate_coordinate_source_graph_intake_v1",
+            "prepare_coordinate_source_graph_intake_v2", "validate_coordinate_source_graph_intake_v2",
             "coordinate_source_graph_intake_sha256"]

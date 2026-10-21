@@ -180,3 +180,10 @@ masks remain integer zero; consumer eligibility and legal review gates stay
 closed. One authored example supplies no statutory accuracy estimate. See the
 [retained qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-supported-target-20261020-01/qualification-summary.json)
 and the [committed evidence summary](../../../../../docs/autoformalization/evidence/legal-ir-coordinate-supported-target-20261021.json).
+
+
+## Explicit original-input v3 and retained-v1 paths
+
+The public original-input-v2 APIs, mandatory originals and existing wire profile above remain supported. The selected stronger original-input-v3 APIs coexist with them. Retained joins use prepare_retained_source_span_target_eligibility_v1 / validate_retained_source_span_target_eligibility_v1, request schema legal-source-span-retained-target-eligibility-request/v1, report schema legal-source-span-retained-target-eligibility/v1 and mandatory retained-coordinate-target-eligibility/v1 profile. No route infers missing originals or automatically converts a report. One existing mechanical census serves the explicit routes; source/edition/meaning decisions remain unresolved.
+
+The historical source-custody branch used retained rows under v2 names before the original-input-v2 contract became public. Those branch receipts remain historical and are not a declaration that the public API changed. The integrated source and cross-profile qualification supersede only the current routing. Complete coordinate artifacts, independent pins, closed requests, opening/closing checks and zero learning/gold masks remain required.

@@ -1,5 +1,13 @@
 # Span-cache intake and coordinate graph proposals
 
+The raw-row APIs below retain their existing contract. The coordinate graph v1
+sections describe the historical `73841dee` graph / `c8b9cbe4` original-input
+eligibility-v2 combination. The separately reconciled `43a93776` owner uses v2 for
+a narrower retained-coordinate contract and v3 for original-input replay. Those
+profiles are not interchangeable. The explicit coordinate graph v2 port described
+at the end of this guide uses eligibility v3; its separate original-owner
+qualification passed 43 cases and 129 phases with the scope recorded below.
+
 `legal_span_cache_intake.py` retains complete, independently pinned cache-row
 populations and builds proposals through the existing `legal_semantic_graph`
 owner. Its additive coordinate API connects genuinely replayed eligibility
@@ -7,30 +15,11 @@ outputs to independently nominated source occurrences. It does not establish
 that those nominated occurrences are the retained coordinate source, select a
 governing edition, resolve entities or admit a reviewed graph.
 
-The original 25-case / 75-phase graph qualification used owner SHA256
+The reviewed candidate has owner SHA256
 `9ef87c5426bd11cf210f0c5b9755ef30e6e101ce3508d56b5a2052251a88c48c`
 (46,532 bytes) and owning-test SHA256
 `e14a0ac8f6c068d79d9f97fa48618d03004aa6790b6ebff5c9417e0c29c7e754`
-(37,003 bytes). These historical pins identify that original source generation;
-they do not identify or qualify a changed main-integration source by themselves.
-
-## Main-integration source generation
-
-The main integration removes the obsolete `context._context_obligations` owner
-alias so the existing coordinate graph profile can resolve its owner closure
-against the delivered main modules. This compatibility change preserves the
-original API and proposal scope; it is not another graph implementation or a
-source/edition/meaning qualification.
-
-The separate [main-integration qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/qualification-summary.json)
-records the changed source generation, exact source pins, selected cohorts and
-original resource cleanup. This main integration qualifies its changed source
-generation through **47 cases / 141 passed phases**, as recorded in that
-independently pinned receipt. This is focused compatibility engineering
-evidence. The [verified datasets-main publication](../../../../../docs/autoformalization/evidence/legal-ir-coordinate-main-publication-20261021.json)
-records qualified source-bearing commit `1fe22386109cd2c282034a4cc9f0b66b6c4f98f5`. Later documentation-only
-commits do not change or requalify that source generation.
-The original 25/75 result below remains separate historical evidence.
+(37,003 bytes). These identify the candidate, not a published installation.
 
 ## Existing raw-row APIs remain unchanged
 
@@ -287,3 +276,147 @@ run receipts and source generations. Further corpus custody/export should reuse
 `legal_parent_source_alignment` and `corpus_parent_alignment_adapter`. Those
 owners preserve candidates and unresolved correspondence; none authorizes
 automatic source selection or a semantic review decision.
+
+
+## Explicit coordinate graph v2 over eligibility v3
+
+`prepare_coordinate_source_graph_intake_v2` and
+`validate_coordinate_source_graph_intake_v2` extend this same implementation owner.
+The public argument lists match the graph v1 APIs. The private preparation engine,
+source extraction and mechanical per-output graph projection are shared; the
+existing semantic graph builder and full ordered canonical AST are reused.
+
+Graph v2 requires the closed eleven-field request below. The profile discriminator
+is mandatory; neither an API, schema, graph shape nor retained field selects a
+different profile automatically.
+
+```text
+schema = legal-coordinate-source-graph-intake-request/v2
+source_compatibility_profile = original-input-coordinate-source-graph-intake/v1
+graph_profile = canonical_rules_v1
+eligibility_report_raw_sha256
+eligibility_report_sha256
+eligibility_request_sha256
+join_manifest_raw_sha256
+join_manifest_sha256
+join_originals_sha256
+source_bindings_sha256
+expected_physical_ids
+```
+
+The exact eligibility request/report must be v3 with profile
+`original-input-coordinate-target-eligibility/v1`. Independently pinned original
+join arguments remain a separate required `join_originals` argument. The retained
+coordinate join and its genuine public replay retain their existing v2 contract.
+The new graph report has schema `legal-coordinate-source-graph-intake/v2` and the
+same explicit graph compatibility profile as its request.
+
+```python
+from ipfs_datasets_py.logic.autoformal.legal_span_cache_intake import (
+    prepare_coordinate_source_graph_intake_v2,
+    validate_coordinate_source_graph_intake_v2,
+    coordinate_source_graph_intake_sha256,
+)
+
+report = prepare_coordinate_source_graph_intake_v2(
+    request_raw, eligibility_report_raw, eligibility_request_raw, join_manifest_raw,
+    expected_request_sha256=request_pin,
+    join_originals=original_join_inputs, source_bindings=independent_bindings,
+)
+validate_coordinate_source_graph_intake_v2(
+    report, request_raw, eligibility_report_raw, eligibility_request_raw,
+    join_manifest_raw, expected_request_sha256=request_pin,
+    expected_report_sha256=coordinate_source_graph_intake_sha256(report),
+    join_originals=original_join_inputs, source_bindings=independent_bindings,
+)
+```
+
+The caller supplies all independent input commitments before invoking preparation.
+A newly computed whole-report identity cannot replace complete regeneration or
+turn a changed input into an authorized source, target or graph.
+
+### One eligibility artifact and typed references
+
+The graph v2 report retains `eligibility_report_raw_utf8` once at this report
+layer. It does not duplicate the parsed `eligibility_report` or add a second
+`join_manifest_raw_utf8` field. Its two closed references are:
+
+| Reference | Exact fields |
+| --- | --- |
+| `eligibility_report_reference` | `schema=legal-coordinate-source-graph-eligibility-reference/v1`, `container=eligibility_report_raw_utf8`, `report_artifact_sha256`, `report_sha256`, `report_bytes` |
+| `join_manifest_reference` | `schema=legal-coordinate-source-graph-join-reference/v1`, `container=eligibility_report_raw_utf8`, `json_pointer=/join_manifest_raw_utf8`, `join_manifest_raw_sha256`, `join_manifest_sha256`, `join_manifest_bytes` |
+
+First decode the retained eligibility artifact as JSON. Its exact
+`join_manifest_raw_utf8` string names the original join artifact; encoding that
+string as UTF-8 must equal the separately supplied join bytes. The eligibility
+v3 report already preserves its own typed reference to the original coordinate
+carrier. The graph does not rebuild that carrier or translate its view offsets
+into HTML offsets.
+
+Artifact hashes commit exact supplied UTF-8 bytes. Canonical report hashes commit
+the corresponding ordinary JSON representation. These are distinct identities;
+whitespace or non-ASCII text must not make a character count stand in for a byte
+count. Both references, both canonical identities and both exact artifact lengths
+are checked again after closing replay. The final returned graph report is
+detached from the genuine upstream report and graph callback objects.
+
+### Replay, compatibility and authority
+
+New graph preparation invokes the current genuine public
+`validate_source_span_target_eligibility_v3` on opening and closing. Its original
+join replay, current callable identities and source/runtime owner commitments
+remain mandatory. Graph-level closing checks run after that public replay and
+also fence original inputs, independent nominations, admitted snapshots, the
+selected validator, graph operations and runtime descriptor. The graph validator
+regenerates the complete result and checks the caller's offered report after
+replay. A primary callback error retains secondary closing-custody notes.
+
+The historical graph v1 public names, request and report representation remain
+available unchanged. They continue to require their original original-input
+eligibility-v2 dependency contract. The reconciled retained-v2 API does not accept
+that contract, so historical graph v1 is not newly qualified on the reconciled
+stack. There is no fallback to retained validation or implicit upgrade of an old
+report to graph v2. Reuse the old 25-case receipt only for its original source
+combination and scope.
+
+The new port's bounded original-owner qualification passed **43 cases and 129
+setup/call/teardown phases** across 20 selected functions: 22 adapted coordinate
+controls, 18 focused compatibility/reference/closing-custody controls and three
+unchanged raw-row regressions. The original 37,003-byte test prefix and historical
+function ASTs are preserved; unselected historical cases gain no new execution
+claim.
+
+The run pins 233 runtime files and 252 native-request source entries, with seven
+separate preparation-metadata pins. Independent actual review checked every pin,
+the 139-file actual module/compile union and all 329 retained sealed files
+(328 payload files plus the durability receipt), totaling 4,166,691 bytes. The
+original normal granted owner closed native, storage and outer source READ
+custody with no live observed child/group processes or sampled RSS remaining.
+No pre-child fallback ran; broader lifecycle qualifications remain separate.
+The [qualification summary](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-graph-v3-port-20261021-01/qualification-summary.json)
+and its independent actual review retain the complete local receipt identities.
+The [portable selected evidence summary](../../../../../docs/autoformalization/evidence/legal-ir-coordinate-graph-v3-port-20261021.json)
+records their exact producer identities; referenced workspace logs are not
+claimed to be remotely published.
+
+All formal-output and physical occurrences retain order, multiplicity, exact
+provenance strings and original global coordinate indices. Support stays limited
+to mechanically supported `typed_deontic` / `typed-deontic-rule/v1` outputs as
+`canonical_rules_v1` proposals. The separately qualified `f9253ab4` entity-census
+slice is retained in the selected stack, but this graph operation consumes no
+entity meanings or definition bindings. It does not establish a source/edition
+crosswalk, a selected historical occurrence, a governing definition, complete
+norm applicability, semantic review or Lean admission. Source-binding, training
+and evaluation-gold masks remain integer zero and all authority flags false.
+
+The new selected combination starts from reconciliation `43a93776` and reuses the
+exact entity-census paths and historical graph owners before this explicit port.
+It does not replace the primary cache generation or import workspace/artifact
+implementations into product code. No model, vector, checkpoint, training or Lean
+execution is introduced. The existing lossless corpus/graph export owners remain
+the next integration boundary after this proposal-preparation slice.
+
+
+## Public v2 and explicit v3 compatibility
+
+Graph-v1 retains published original-input eligibility-v2 with mandatory originals. Graph-v2 uses explicit eligibility-v3; the new corpus-custody profile consumes graph-v2. Retained eligibility has distinct retained-v1 APIs and wire identities, and cannot substitute for either original-input route. Source/helper byte pins remain complete across helper-backed and inlined context generations; existing reports retain their original producer pins and do not gain authority from relocation.

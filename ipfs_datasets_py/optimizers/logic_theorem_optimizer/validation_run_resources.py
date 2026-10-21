@@ -2,9 +2,11 @@
 
 All declared writable outputs belong to one private attempt. This is sampled
 accounting, not a filesystem quota or a sandbox. Process observations cover the
-original isolated child group; descendants that create another session are not
-contained. A caller requiring arbitrary-tree containment must use a separately
-qualified kernel scope. No result from this module constitutes Lean admission.
+original isolated child group by default. The explicit sampled-descendant
+profile additionally retains observed birth-bound descendants across new
+sessions and reparenting. Neither profile contains an unobserved escaping
+daemon; arbitrary-tree containment requires a separately qualified kernel
+scope. No result from this module constitutes Lean admission.
 
 Constructing a reservation never initializes the scheduler or ledger. Native
 host admission is fail-fast; ``timeout_seconds`` bounds the productive run.
@@ -24,6 +26,7 @@ from pathlib import Path
 import re
 import stat
 import sys
+import threading
 import time
 
 from . import autoencoder_daemon_resources as host
@@ -36,6 +39,8 @@ MAX_SOURCE_BYTES = 4 * 1024 * 1024
 MAX_SOURCE_PINS = 256
 MAX_DURABILITY_ENTRIES = 20_000
 OUTPUT_NAMES = ("pytest", "tmp", "cache", "db", "exports", "logs")
+GROUP_SCOPE = "isolated_process_group"
+TRACKED_SCOPE = "sampled_birth_bound_descendants"
 _DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -132,6 +137,9 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
         self._opened = False
         self._started = None
         self._sealed = None
+        self._process_lock = threading.RLock()
+        self._descendants = None
+        self._last_process_observation = None
         self._owner_identity = host._process(os.getpid())
         _need(self._owner_identity is not None, "Linux owner process telemetry required")
         # The actual existing state is validated before ledger access. This
@@ -146,6 +154,7 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
                          expected_scheduler_policy_sha256=expected_scheduler_policy_sha256,
                          require_existing_ledger=True)
         self._validate_request()
+        self._process_scope = self.request["process_scope"]
         self._guard_inputs()
         _need(any(root in self.directory.parents for root in self.roots),
               "validation attempt must be a strict descendant of one named root")
@@ -182,7 +191,7 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
         _need(request["attempt_directory"] == str(self.directory)
               and request["outputs"] == {name: str(path) for name, path in self.output_layout.items()}
               and request["declared_external_writable_paths"] == []
-              and request["process_scope"] == "isolated_process_group",
+              and request["process_scope"] in (GROUP_SCOPE, TRACKED_SCOPE),
               "validation writable outputs must use the exact private attempt layout")
         budgets = {"storage_bytes": self.storage_bytes, "memory_mb": self.memory_mb,
                    "cpu_slots": self.cpu_slots, "child_process_slots": self.child_process_slots}
@@ -275,7 +284,8 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
                          scheduler_state_path=str(self._scheduler_state_path),
                          scheduler_policy_sha256=self._expected_scheduler_policy_sha256,
                          native_lease_id=lease["lease_id"],
-                         process_scope="isolated_process_group_only",
+                         process_scope=("isolated_process_group_only" if not self.tracks_descendants
+                                        else TRACKED_SCOPE),
                          outputs={name: str(path) for name, path in self.output_layout.items()})
             for name, path in self.output_layout.items():
                 path.mkdir(mode=0o700)
@@ -322,32 +332,174 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
                       XDG_CACHE_HOME=str(self.output_layout["cache"]), PYTHONDONTWRITEBYTECODE="1")
         return values
 
+    def _retain_attached_descendants(self):
+        if not self.tracks_descendants or self._child is None or self._descendants is not None:
+            return
+        child = self._child
+        current = host._process(child["pid"])
+        _need(current is not None and current["pid"] == child["pid"]
+              and current["birth"] == child["birth"],
+              "attached descendant leader birth differs before sampling")
+        # Keep the genuine tracker private until its initial sample and both
+        # current PID/birth checks agree with the base owner's saved identity.
+        from ipfs_datasets_py.logic.backends.process import _LinuxDescendantTracker
+        tracker = None
+        try:
+            tracker = _LinuxDescendantTracker(child["pid"], retain_history=True)
+            _need(tracker.enabled, "Linux descendant observations required")
+            tracker.refresh()
+            leader = tracker.records.get(child["pid"])
+            _need(leader is not None and str(leader[0]) == child["birth"],
+                  "attached descendant leader birth differs")
+            _need(not tracker.error, "initial validation descendant observation failed: " + tracker.error)
+            current = host._process(child["pid"])
+            _need(current is not None and current["pid"] == child["pid"]
+                  and current["birth"] == child["birth"],
+                  "attached descendant leader birth differs after sampling")
+        except BaseException as tracking_error:
+            if tracker is not None:
+                try:
+                    tracker.close()
+                except BaseException as close_error:
+                    tracking_error.add_note("discarding initial descendant sample: "
+                                            + type(close_error).__name__ + ": " + str(close_error)[:300])
+            raise
+        # An unverified sample is never published for later drain/signalling.
+        self._descendants = tracker
+
     def attach_child(self, child_pid):
         self.guard()
         _need(self._sealed is None, "sealed validation cannot attach more work")
         _need(self._child is None, "one validation process group per reservation required")
-        usage = super().check_usage(self.directory, child_pid=child_pid)
-        self.check_limits()
-        return usage
+        with self._process_lock:
+            try:
+                usage = super().check_usage(self.directory, child_pid=child_pid)
+            except BaseException as attachment_error:
+                try:
+                    self._retain_attached_descendants()
+                except BaseException as tracking_error:
+                    attachment_error.add_note("descendant retention after attachment failure: "
+                                              + type(tracking_error).__name__ + ": " + str(tracking_error)[:300])
+                raise
+            # The launcher keeps its child behind the startup barrier until
+            # both the durable attachment and this genuine tracker succeed.
+            self._retain_attached_descendants()
+            self.check_limits()
+            return usage
+
+    @property
+    def tracks_descendants(self):
+        return self._process_scope == TRACKED_SCOPE
+
+    def _check_process_owner(self):
+        # Cleanup must remain possible after a source/deadline/watchdog refusal;
+        # it does not invoke the productive guard or acquire a new grant.
+        current = host._process(os.getpid())
+        _need(current is not None and current["pid"] == self._owner_identity["pid"]
+              and current["birth"] == self._owner_identity["birth"],
+              "validation process cleanup belongs to another owner")
+
+    def observe_processes(self):
+        """Sample the original group plus retained out-of-group descendants.
+
+        This is cooperative ancestry observation, not kernel containment. Short
+        lived unobserved escaping daemons remain outside this explicit scope.
+        Every retained identity is checked before counting or signalling it.
+        """
+        with self._process_lock:
+            self._check_process_owner()
+            group = host._group_usage(self._child)
+            if not self.tracks_descendants:
+                return {"scope": "isolated_process_group_only", "group_rss": group,
+                        "live_processes": group["live_processes"],
+                        "rss_bytes": group["rss_bytes"]}
+            tracker = self._descendants
+            _need(self._child is None or tracker is not None,
+                  "attached validation child has no retained descendant owner")
+            if tracker is None:
+                result = {"scope": TRACKED_SCOPE, "group_rss": group,
+                          "live_processes": 0, "rss_bytes": 0,
+                          "observed_identities": [], "out_of_group_live_identities": [],
+                          "tracking_error": ""}
+            else:
+                tracker.refresh()
+                extra, extra_rss = [], 0
+                # Count the original group once. Only retained identities now
+                # outside that group are added; setsid does not lose custody.
+                for pid, (birth, _) in tuple(tracker.records.items()):
+                    identity = host._process(pid)
+                    if identity is None or identity["birth"] != str(birth) or identity["state"] == "Z":
+                        continue
+                    if identity["group_pid"] != self._child["pid"]:
+                        extra.append({"pid": pid, "birth": str(birth),
+                                      "parent_pid": identity["parent_pid"],
+                                      "process_group_id": identity["group_pid"],
+                                      "rss_bytes": identity["rss_bytes"]})
+                        extra_rss += identity["rss_bytes"]
+                result = {"scope": TRACKED_SCOPE, "group_rss": group,
+                          "live_processes": group["live_processes"] + len(extra),
+                          "rss_bytes": group["rss_bytes"] + extra_rss,
+                          "observed_identities": [identity.to_dict()
+                              for _, identity in sorted(tracker.history.items())],
+                          "out_of_group_live_identities": sorted(extra, key=lambda row: row["pid"]),
+                          "tracking_error": tracker.error}
+            self._last_process_observation = copy.deepcopy(result)
+            _need(not result["tracking_error"], "validation descendant observation failed: " + result["tracking_error"])
+            return result
+
+    def drain_tracked_descendants(self, grace_seconds=3.0):
+        """Drain retained native descendants independently of the pytest group.
+
+        The original owner is retained on a survivor or observation error. No
+        PID-name scan, foreign lease mutation or new scheduler owner is used.
+        """
+        _finite_positive(grace_seconds, "descendant cleanup grace", 60)
+        with self._process_lock:
+            self._check_process_owner()
+            if not self.tracks_descendants or self._descendants is None:
+                return None
+            # A sticky observation error must not prevent attempts to stop the
+            # already retained identities. It still prevents a release claim.
+            _, survivors = self._descendants.drain(grace_seconds)
+            observation = self.observe_processes()
+            _need(not survivors and not observation["live_processes"],
+                  "validation tracked descendant cleanup remains unresolved")
+            return observation
+
+    def _require_processes_stopped(self):
+        observation = self.observe_processes()
+        _need(not observation["live_processes"],
+              "validation child group or tracked descendants are still alive")
+        return observation
+
+    def to_dict(self):
+        value = super().to_dict()
+        if self.tracks_descendants:
+            value["process_observation"] = copy.deepcopy(self._last_process_observation)
+        return value
 
     def check_limits(self, *, full=False):
         """Observe local aggregate bytes/RSS/processes; full=True adds real census."""
         _need(type(full) is bool, "full must be a boolean")
         self.guard()
-        group = host._group_usage(self._child)
+        processes = self.observe_processes()
+        group = processes["group_rss"]
         owner = host._process(os.getpid())
         _need(owner is not None, "validation owner telemetry unavailable")
-        rss = owner["rss_bytes"] + group["rss_bytes"]
+        rss = owner["rss_bytes"] + processes["rss_bytes"]
         _need(rss <= self.memory_mb * 1024 * 1024, "validation owner and child RSS limit exceeded")
-        _need(group["live_processes"] <= self.child_process_slots, "validation child process limit exceeded")
+        _need(processes["live_processes"] <= self.child_process_slots, "validation child process limit exceeded")
         inventory = host._inventory([self.directory], strict=True)
         _need(not host._external_charges(self._record), "validation external writable charges are unsupported")
         _need(inventory["apparent_bytes"] <= self.storage_bytes, "validation aggregate storage limit exceeded")
-        result = {"scope": "owned_attempt_and_isolated_process_group_only",
+        result = {"scope": ("owned_attempt_and_isolated_process_group_only" if not self.tracks_descendants
+                            else "owned_attempt_and_" + TRACKED_SCOPE),
                   "attempt_bytes": inventory["apparent_bytes"], "inventory": inventory,
                   "owner_and_child_rss_bytes": rss, "group_rss": group,
                   "checked_at": time.time(), "full_ledger_check": False,
                   "enforcement": "sampled_not_kernel_quota_or_arbitrary_tree_containment"}
+        if self.tracks_descendants:
+            result["process_observation"] = processes
         if full:
             _need(not self.cancelled and self.heartbeat(), "native validation custody was lost")
             result["ledger_usage"] = super().check_usage(self.directory)
@@ -416,7 +568,7 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
         """
         self.guard()
         _need(self._child is not None, "validation results require an attached actual child")
-        _need(not host._group_usage(self._child)["live_processes"], "validation child group is still alive")
+        self._require_processes_stopped()
         _need(self._sealed is None, "validation results are already sealed")
         path = self._evidence_path(os.fspath(result_path))
         path, raw, _ = _regular_bytes(path, MAX_REQUEST_BYTES)
@@ -466,7 +618,7 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
         self.guard()
         _need(self._child is not None and self._sealed is not None,
               "validation finalization requires actual checks and sealed results")
-        _need(not host._group_usage(self._child)["live_processes"], "validation child group is still alive")
+        self._require_processes_stopped()
         _need(self._durable_inventory(fsync=True) == self._sealed["files"],
               "validation artifacts changed after sealing")
         receipt = self.output_layout["logs"] / "validation-durability.json"
@@ -476,6 +628,9 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
         _need(not self.cancelled and self.heartbeat(), "native validation custody was lost")
         value = super().finalize(self.directory, artifacts_durable=True)
         self._opened = False
+        with self._process_lock:
+            if self._descendants is not None:
+                self._descendants.close()
         return value
 
     def release(self, *, artifacts_durable=False):
@@ -486,10 +641,25 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
 
     def __exit__(self, exc_type, exc, traceback):
         if self._opened:
+            if self.tracks_descendants:
+                try:
+                    self._require_processes_stopped()
+                except BaseException as cleanup:
+                    # The base owner's group-only failure exit may release a
+                    # native lease when nested sessions remain. Do not enter
+                    # that weaker path until this owner's larger scope drains.
+                    self._cleanup_error = type(cleanup).__name__ + ": " + str(cleanup)
+                    self._retain("tracked_descendant_cleanup_unresolved")
+                    if exc_type is None:
+                        raise
+                    return False
             try:
                 return super().__exit__(exc_type, exc, traceback)
             finally:
                 self._opened = False
+                with self._process_lock:
+                    if self._descendants is not None:
+                        self._descendants.close()
         return False
 
 
