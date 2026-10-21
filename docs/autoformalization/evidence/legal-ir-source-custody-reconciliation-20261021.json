@@ -1,0 +1,239 @@
+{
+  "API_profiles": {
+    "gold_mask": 0,
+    "training_mask": 0,
+    "v1": "Unchanged strict target-eligibility contract.",
+    "v2": "Captured retained-coordinate contract; previous original-input-v2 historical producer receipts remain separate and immutable.",
+    "v3": "Explicit original-input-coordinate-target-eligibility/v1 profile, mandatory original inputs and opening/closing source/callable/custody checks; no shape-based schema inference."
+  },
+  "actual_incident_recovery": {
+    "historical_native_release_established": false,
+    "independent_review": {
+      "bytes": 5750,
+      "path": "workspace/test-logs/federal-corpus-audits/parent-shared-replay-files-20261020-01/reserved-recovery-candidate-v01/operational-closeout-v01/independent-actual96MiB-readback-v01.json",
+      "sha256": "e91a496d3edf14fdb7e81264b6b0f577a234b6806a11ec7a283d252cd9eb1abe"
+    },
+    "old_failed_run_qualified": false,
+    "receipt": {
+      "bytes": 7087,
+      "path": "workspace/test-logs/federal-corpus-audits/parent-shared-replay-files-20261020-01/reserved-recovery-candidate-v01/operational-closeout-v01/actual96MiB-closeout-receipt-v02.json",
+      "sha256": "b9be00663f98a49877c18700c955b816f57f162922169dd2e03e892e12dfbc7b"
+    },
+    "released_promise_bytes": 100663296,
+    "summary": {
+      "bytes": 2416,
+      "path": "workspace/test-logs/federal-corpus-audits/parent-shared-replay-files-20261020-01/reserved-recovery-candidate-v01/operational-closeout-v01/operational-summary-v01.json",
+      "sha256": "0f0fe9eed192339d15843cf2bab9efa0f100a44d686e5af12d5ac45832881d6f"
+    }
+  },
+  "delivery": {
+    "base_commit": "3623a46f713037b05f33236e7a308959aa206d09",
+    "base_identical_source_paths": 232,
+    "branch": "agent/legal-ir-source-custody-reconciliation-20261021",
+    "changed_source_and_test_paths": [
+      {
+        "base_missing": false,
+        "bytes": 55018,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_span_target_eligibility_v1.py",
+        "sha256": "7b8327177e97b696b79baeb92af379d562d8aecacdfa9b2f75200724f20697ad"
+      },
+      {
+        "base_missing": false,
+        "bytes": 105673,
+        "path": "ipfs_datasets_py/logic/autoformal/span_cache.py",
+        "sha256": "e35f5333fc4776d5b519ec84a38f42715a76ff7b20a776a35b7e01ea9342b068"
+      },
+      {
+        "base_missing": false,
+        "bytes": 44830,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+        "sha256": "770216300812c8fa86c155b0d538e734e90f7e2c8d1f15d00a9f3d992594fc1a"
+      },
+      {
+        "base_missing": false,
+        "bytes": 24518,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py",
+        "sha256": "d654ab5ed2fec314ea5ac07a662784ab20843b0b2feb56f13989ce1504607776"
+      },
+      {
+        "base_missing": false,
+        "bytes": 144291,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+        "sha256": "2c00683202b4a783b5050329caa24a411f83788010baba86d9380123bae7d083"
+      },
+      {
+        "base_missing": false,
+        "bytes": 36389,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py",
+        "sha256": "1cf169b22c944c878e1e622ce45e5f381ca831aaa40f4b1186082cae2383f429"
+      },
+      {
+        "base_missing": false,
+        "bytes": 30982,
+        "path": "scripts/ops/legal_ir/run_owned_validation.py",
+        "sha256": "c7581722b5e1c83f8b03f96a86158e2d95e38d00f222c67c8806dfd56e3b71a2"
+      },
+      {
+        "base_missing": false,
+        "bytes": 91358,
+        "path": "tests/unit/logic/autoformal/test_legal_source_span_target_eligibility_v1.py",
+        "sha256": "40d8aebe6275612f8b05cf7eedcb723ff4cc013457507a63a72e6f73de8d7998"
+      },
+      {
+        "base_missing": false,
+        "bytes": 21240,
+        "path": "tests/unit/logic/autoformal/test_span_cache_source_coordinates.py",
+        "sha256": "d3acbc4e2d867b3896a2ce3e399623681fd6d3874d915f9098194df368943dba"
+      },
+      {
+        "base_missing": false,
+        "bytes": 35460,
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_empty_failed_admission_recovery.py",
+        "sha256": "79671b6b237c2044b4407ba43836a589eea453697253b30f6225336cfa2f177d"
+      },
+      {
+        "base_missing": true,
+        "bytes": 20016,
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_resource_lease_inspection.py",
+        "sha256": "ed1d227d937c68903000c99496300ea2a33e34c16a1a5a36d8435a67f7751be8"
+      },
+      {
+        "base_missing": false,
+        "bytes": 79557,
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py",
+        "sha256": "73359a76ba9042ea8f8fead70b9a9adad5b201c33e250973059ff846e01d55a4"
+      }
+    ],
+    "qualified_source_paths": 244,
+    "scope": "Local isolated selected-source commit; final HEAD is bound by the external Git delivery receipt. No push, merge or superproject pointer update is claimed.",
+    "source_union": {
+      "bytes": 135412,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-target-eligibility-reconciliation-20261021-01/selected-source-union-pending-v01.json",
+      "sha256": "37c97023841bf172038455474c03da0c09cbe96fa6e1d68d128599fb678190ba"
+    },
+    "source_union_status_note": "The immutable preflight was named pending before the240case execution; the four successful independent reviews below close that qualification gate."
+  },
+  "evidence_availability": "The JSON and exact source identities are portable. Referenced workspace receipts are local retained evidence and are not claimed to be remotely published. Earlier summaries retain their recording-time pending statements; this later aggregate binds the completed gates.",
+  "failed_attempt_preservation": {
+    "failed_runs_qualified": false,
+    "files_deleted": false,
+    "note": "Native01/02 and reconciliation01 storage promises were closed through the original existing recovery API; all failed evidence remains retained. Historical146-case recovered assertion evidence still has unknown original native cleanup; the fresh47case cohort does not relabel it.",
+    "preserved_bytes": 8606504,
+    "preserved_files": 1028,
+    "released_test_promises_bytes": 402653184
+  },
+  "installation_boundaries": {
+    "primary_installed": "Canonical owned-validation launcher and empty-unopened recovery owner/test pairs were installed through original WRITE+CAS.",
+    "protected_programme_checkout": "Existing321-path programme index and its HEAD remain untouched.",
+    "selected_branch_only": "Reconciled eligibility and selected-cache loader dependency remain isolated; primary strict-v1 eligibility and newer primary cache implementation are preserved."
+  },
+  "next_frontier": {
+    "engineering": "Source-bound coordinate intake to complete typed LegalIR graph, reusing existing graph/intake owners.",
+    "meaning": "Actual source edition, applicability, definition/entity bindings, consumer contract and legal meaning reviews remain explicit and unresolved.",
+    "widths": "8D authentic selected-span producer and4096 born-alive replay prerequisites remain separate from384/768 engineering completion; no numerical admission follows from this metadata work."
+  },
+  "observed_at_utc": "2026-10-21T01:08:17.192591+00:00",
+  "qualification": {
+    "cases": 492,
+    "cohorts": [
+      {
+        "cases": 240,
+        "custody": {
+          "descendant_and_group_live_processes": 0,
+          "descendant_and_group_rss_bytes": 0,
+          "original_native_and_storage_released": true,
+          "original_source_READ_closed": true,
+          "sealed_bytes_including_receipt": 7812038,
+          "sealed_files_plus_durability_receipt": 577
+        },
+        "independent_review": {
+          "bytes": 4805,
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-target-eligibility-reconciliation-20261021-01/independent-reconciliation240-qualified-review-v01.json",
+          "sha256": "36cde4eafed57340b8f8f8e067aa2e68a49509ba774935ca1186cb365f14faae"
+        },
+        "name": "eligibility_and_pure_loader",
+        "passed_phases": 720,
+        "summary": {
+          "bytes": 6215,
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-target-eligibility-reconciliation-20261021-01/qualification-summary.json",
+          "sha256": "644d21998a547dd60ebb54643c7d0838060b474752261e2f3918941d7c51e5d8"
+        }
+      },
+      {
+        "cases": 59,
+        "custody": {
+          "descendant_live_processes": 0,
+          "descendant_rss_bytes": 0,
+          "original_native_release_verified": true,
+          "original_storage_record_released": true,
+          "sealed_bytes_including_receipt": 1011840,
+          "sealed_files_plus_durability_receipt": 468,
+          "source_READ_closed_after_verified_cleanup": true
+        },
+        "independent_review": {
+          "bytes": 3413,
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-validation-no-child-lifecycle-20261021-01/independent-native-qualified-review-v01.json",
+          "sha256": "6cb23306dbe1eba78e6629d9509f4d588dd3c37d31061502a9f9661d2295f169"
+        },
+        "name": "native_source_custody",
+        "passed_phases": 177,
+        "summary": {
+          "bytes": 5453,
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-validation-no-child-lifecycle-20261021-01/qualification-summary.json",
+          "sha256": "3fa8032d34d978b163dffc32072fe448dea5aee903eabcedadd5b5d8a768e367"
+        }
+      },
+      {
+        "cases": 146,
+        "custody": {
+          "canonical_source_WRITE_CAS_installed": true,
+          "group_and_descendant_live_processes": 0,
+          "group_and_descendant_rss_bytes": 0,
+          "original_native_released": true,
+          "original_source_READ_closed": true,
+          "original_validation_storage_released": true,
+          "sealed_bytes_including_receipt": 1328265,
+          "sealed_files_plus_durability_receipt": 677
+        },
+        "independent_review": {
+          "bytes": 3941,
+          "path": "workspace/test-logs/federal-corpus-audits/parent-shared-replay-files-20261020-01/reserved-recovery-candidate-v01/independent-146-qualified-review-v01.json",
+          "sha256": "9e468711df4f04379f38b00509d0171ff5c8e51cfee1cc5a1503bbb8d901d48d"
+        },
+        "name": "empty_unopened_recovery",
+        "passed_phases": 438,
+        "summary": {
+          "bytes": 5147,
+          "path": "workspace/test-logs/federal-corpus-audits/parent-shared-replay-files-20261020-01/reserved-recovery-candidate-v01/qualification-summary.json",
+          "sha256": "d0b436aedfe1d77e0b093b1ded74717cb44d93a54c51c60cd5055a1342df6ca1"
+        }
+      },
+      {
+        "cases": 47,
+        "custody": {
+          "descendant_and_group_live_processes": 0,
+          "descendant_and_group_rss_bytes": 0,
+          "native_and_storage_released": true,
+          "original_source_READ_closed": true,
+          "sealed_bytes_including_receipt": 341898,
+          "sealed_files_plus_receipt": 100
+        },
+        "independent_review": {
+          "bytes": 3683,
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-validation-no-child-lifecycle-20261021-01/inspection-api-qualification-v01/independent-inspection47-qualified-review-v01.json",
+          "sha256": "13286223d4b0920a4f2558f56d739713d64561d52cb5ae8ded50c671f325ed8e"
+        },
+        "name": "read_only_inspection",
+        "passed_phases": 141,
+        "summary": {
+          "bytes": 3821,
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-validation-no-child-lifecycle-20261021-01/inspection-api-qualification-v01/qualification-summary.json",
+          "sha256": "09060b220f28d56d3c3159d5d333ed3df6f0eb39209c4867644b1a77ca63be7e"
+        }
+      }
+    ],
+    "passed_phases": 1476,
+    "scope": "Owning engineering, provenance, profile, cleanup and pure report controls; no statutory meaning approval, numerical model training or Lean execution."
+  },
+  "schema": "legal-ir-source-custody-reconciliation-selected-evidence/v1"
+}

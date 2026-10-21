@@ -380,3 +380,103 @@ def test_changed_supplied_document_metadata_refuses_without_persisting_report(ow
         owner.enqueue_source_coordinates(report, substituted, expected_report_sha256=pin,
             query=QUERY, release_id=RELEASE)
     assert snapshot(owner) == before
+
+
+# Pure loader controls exercise the existing bytes API without constructing a
+# SpanCache owner, opening a database, or calling model/provider/process code.
+def coordinate_loader_payload(report):
+    return json.dumps(report, ensure_ascii=False, sort_keys=False,
+                      separators=(",", ":"), allow_nan=False).encode("utf-8")
+
+
+def test_coordinate_loader_unicode_complete_population_and_metadata_order():
+    supplied = document(" \tΩ\u00a0agency shall\r\nact.\r\nCafé may file!  ")
+    supplied["entry_cid"] = {"zeta": 7, "alpha": {"right": 2, "left": 1}}
+    _, report, pin, spans = case([supplied, document("Unselected officer may file.", "2")])
+    raw = coordinate_loader_payload(report)
+    assert hashlib.sha256(raw).hexdigest() != pin
+    loaded = cache_module.load_source_coordinate_report(raw, expected_report_sha256=pin)
+    assert loaded == report and len(loaded["documents"]) == 2 and len(loaded["spans"]) == len(spans)
+    metadata = loaded["documents"][0]["source_metadata"]["entry_cid"]
+    assert list(metadata) == ["zeta", "alpha"] and list(metadata["alpha"]) == ["right", "left"]
+    for occurrence in loaded["spans"]:
+        source = loaded["documents"][occurrence["input_document_ordinal"]]["source_text"]
+        assert source[occurrence["source_char_start"]:occurrence["source_char_end"]] == occurrence["source_text"]
+        assert source.encode()[occurrence["source_utf8_byte_start"]:occurrence["source_utf8_byte_end"]].decode() == occurrence["source_text"]
+    assert loaded["authority"] and all(flag is False for flag in loaded["authority"].values())
+    loaded["documents"][0]["source_text"] = "changed returned object"
+    assert cache_module.load_source_coordinate_report(raw, expected_report_sha256=pin) == report
+
+
+@pytest.mark.parametrize("shape", ["text", "bytearray", "memoryview", "subclass", "none"],
+    ids=["text", "bytearray", "memoryview", "bytes-subclass", "none"])
+def test_coordinate_loader_requires_exact_bytes(shape):
+    _, report, pin, _ = case()
+    raw = coordinate_loader_payload(report)
+    class BytesSubclass(bytes):
+        pass
+    invalid = {"text": raw.decode(), "bytearray": bytearray(raw), "memoryview": memoryview(raw),
+               "subclass": BytesSubclass(raw), "none": None}[shape]
+    with pytest.raises(SpanCacheError):
+        cache_module.load_source_coordinate_report(invalid, expected_report_sha256=pin)
+
+
+@pytest.mark.parametrize("damage", ["utf8", "duplicate", "nonfinite", "depth"],
+    ids=["invalid-utf8", "duplicate-json-key", "nonfinite-json", "excess-depth"])
+def test_coordinate_loader_refuses_malformed_json(damage):
+    _, report, pin, _ = case()
+    raw = {"utf8": b"\xff", "duplicate": b'{"schema":"first",' + coordinate_loader_payload(report)[1:],
+           "nonfinite": b'{"value":NaN}', "depth": b"["*65 + b"0" + b"]"*65}[damage]
+    with pytest.raises(SpanCacheError):
+        cache_module.load_source_coordinate_report(raw, expected_report_sha256=pin)
+
+
+@pytest.mark.parametrize("damage", ["uppercase", "boolean", "artifact", "stale"],
+    ids=["uppercase-pin", "boolean-pin", "artifact-not-report-pin", "stale-report-pin"])
+def test_coordinate_loader_requires_independent_canonical_report_pin(damage):
+    _, report, pin, _ = case()
+    raw = coordinate_loader_payload(report)
+    alternative = {"uppercase": pin.upper(), "boolean": True,
+        "artifact": hashlib.sha256(raw).hexdigest(), "stale": "0"*64}[damage]
+    assert hashlib.sha256(raw).hexdigest() != pin
+    with pytest.raises(SpanCacheError):
+        cache_module.load_source_coordinate_report(raw, expected_report_sha256=alternative)
+
+
+@pytest.mark.parametrize("damage", ["zero", "negative", "boolean", "float", "text", "none", "increase"],
+    ids=["zero", "negative", "boolean", "float", "text", "none", "raised-cap"])
+def test_coordinate_loader_bound_is_exact_positive_and_lower_only(damage):
+    _, report, pin, _ = case()
+    raw = coordinate_loader_payload(report)
+    bound = {"zero": 0, "negative": -1, "boolean": True, "float": 1.5, "text": "1024", "none": None,
+             "increase": cache_module.MAX_SOURCE_COORDINATE_REPORT_BYTES + 1}[damage]
+    with pytest.raises(SpanCacheError):
+        cache_module.load_source_coordinate_report(raw, expected_report_sha256=pin, max_bytes=bound)
+
+
+def test_coordinate_loader_checks_raw_byte_bound_before_decode(monkeypatch):
+    def forbidden(*args, **kwargs):
+        pytest.fail("over-budget loader input reached JSON decoding")
+    monkeypatch.setattr(cache_module, "_coordinate_load", forbidden)
+    with pytest.raises(SpanCacheError):
+        cache_module.load_source_coordinate_report(b"\xff"*9, expected_report_sha256="a"*64, max_bytes=8)
+
+
+@pytest.mark.parametrize("field", ["source_char_end", "source_utf8_byte_end"],
+    ids=["character-geometry", "utf8-geometry"])
+def test_coordinate_loader_recommitted_geometry_requires_full_replay(field):
+    _, report, _, _ = case()
+    report["spans"][0][field] -= 1
+    reseal(report)
+    with pytest.raises(SpanCacheError):
+        cache_module.load_source_coordinate_report(coordinate_loader_payload(report),
+            expected_report_sha256=ingest.uscode_source_coordinates_sha256(report))
+
+
+def test_coordinate_loader_recommitted_authority_is_never_promoted():
+    _, report, _, _ = case()
+    report["authority"][next(iter(report["authority"]))] = True
+    reseal(report)
+    with pytest.raises(SpanCacheError):
+        cache_module.load_source_coordinate_report(coordinate_loader_payload(report),
+            expected_report_sha256=ingest.uscode_source_coordinates_sha256(report))

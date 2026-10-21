@@ -103,7 +103,9 @@ def _read(path, *, require_current=True):
 
 
 class _PinnedGlobalResourceScheduler(native.GlobalResourceScheduler):
-    def __init__(self, config, policy, expected_digest, parents):
+    def __init__(self, config, policy, expected_digest, parents, *, inspection_only=False):
+        _need(type(inspection_only) is bool, "inspection_only must be an explicit bool")
+        self._inspection_only = inspection_only
         # Native __init__ may create parents/reconfigure idle state. Initialize
         # only its facade fields, then enter the same native lock domain.
         self.config = config
@@ -135,7 +137,14 @@ class _PinnedGlobalResourceScheduler(native.GlobalResourceScheduler):
         state["config"] = stored
 
     @contextmanager
-    def _locked_state(self, *, persist=True, allow_reconfigure=False):
+    def _locked_state(self, *, persist=True, allow_reconfigure=False, strict_existing=False):
+        if self._inspection_only:
+            _need(not persist and not allow_reconfigure,
+                  "inspection-only scheduler facade cannot mutate or reconfigure state")
+            strict_existing = True
+        if strict_existing:
+            _need(not persist and not allow_reconfigure,
+                  "lease inspection requires an existing nonpersistent read")
         with native._resource_thread_lock(self._thread_lock):
             _need(_parents(self.state_path) == self._parents, "native scheduler directory identity changed")
             _need(all(hashlib.sha256(path.read_bytes()).hexdigest() == digest
@@ -143,7 +152,9 @@ class _PinnedGlobalResourceScheduler(native.GlobalResourceScheduler):
             # Read before opening the lock so missing state never creates a
             # directory or lock. Read again while holding the native lock.
             _read(self.state_path, require_current=False)
-            descriptor = os.open(self.lock_path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+            flags = os.O_NOFOLLOW | os.O_NONBLOCK
+            flags |= os.O_RDONLY if strict_existing else os.O_CREAT | os.O_RDWR
+            descriptor = os.open(self.lock_path, flags, 0o600)
             try:
                 info = os.fstat(descriptor)
                 _need(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, "unaliased native scheduler lock required")
@@ -151,6 +162,7 @@ class _PinnedGlobalResourceScheduler(native.GlobalResourceScheduler):
                 native._resource_file_lock(descriptor)
                 current = self.lock_path.lstat()
                 _need((current.st_dev, current.st_ino) == (info.st_dev, info.st_ino)
+                      and stat.S_ISREG(current.st_mode) and current.st_nlink == 1
                       and _parents(self.state_path) == self._parents, "native lock or directory identity changed")
                 raw, state = _read(self.state_path)
                 self._validate_state_configuration(state, allow_reconfigure=False)
@@ -164,6 +176,7 @@ class _PinnedGlobalResourceScheduler(native.GlobalResourceScheduler):
 
     def _persist_locked_state(self, raw, state):
         """Persist under the caller-held native lock after policy validation."""
+        _need(not self._inspection_only, "inspection-only scheduler facade cannot persist state")
         current_raw, _ = _read(self.state_path)
         _need(current_raw == raw, "native state changed outside its sibling lock")
         _need(_parents(self.state_path) == self._parents, "native scheduler directory identity changed")
@@ -191,14 +204,18 @@ class _PinnedGlobalResourceScheduler(native.GlobalResourceScheduler):
                 temporary.unlink(missing_ok=True)
 
 
-def open_existing_scheduler(state_path, expected_policy_sha256):
+def open_existing_scheduler(state_path, expected_policy_sha256, *, inspection_only=False):
     """Open exactly the selected existing native policy; never grant a lease.
 
     Both arguments are scalar identities. All persisted typed configuration
     comes from the existing state. Nonpersisted native operational settings
     retain their normal dataclass defaults; no host/profile defaults are used
     to replace stored capacities or safety policy. No global cache is changed.
+    inspection_only=True also requires an existing sibling lock and refuses
+    all persistent operations on the returned facade. Caller deadline scopes
+    still bound opening/locking; filesystem IO is not hard realtime bounded.
     """
+    _need(type(inspection_only) is bool, "inspection_only must be an explicit bool")
     _need(isinstance(state_path, (str, Path)) and str(state_path), "explicit native state path required")
     _need(type(expected_policy_sha256) is str and re.fullmatch(r"[0-9a-f]{64}", expected_policy_sha256),
           "exact native policy SHA256 required")
@@ -217,7 +234,8 @@ def open_existing_scheduler(state_path, expected_policy_sha256):
     # producer can accept its exact smaller schema; this producer rejects
     # omissions rather than populating newer policy fields into older state.
     _need(config.persisted_dict() == policy, "stored native policy cannot be normalized")
-    return _PinnedGlobalResourceScheduler(config, policy, expected_policy_sha256, parents)
+    return _PinnedGlobalResourceScheduler(config, policy, expected_policy_sha256, parents,
+        inspection_only=inspection_only)
 
 
 def _native_capacity_host(config):

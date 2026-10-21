@@ -1,4 +1,4 @@
-# Retained source/span target eligibility census
+# Source/span target eligibility census
 
 `legal_source_span_target_eligibility_v1` inventories every physical row and
 formal-output occurrence in an independently pinned source/span/entity join.
@@ -6,7 +6,9 @@ It replays candidate custody and uses the existing `source_span_formula_v1`
 audit to measure decoder expressibility. It does not select a statutory
 interpretation, authorize a consumer, load a checkpoint or run training.
 
-## Legacy v1 inputs and API
+The three profiles below are available on the selected branch `agent/legal-ir-source-custody-reconciliation-20261021`, based on `3623a46f7130`. The primary checkout was observed with strict v1 source `7767cdce` on 2026-10-21; its briefly captured `c391f6dd` retained-v2 contract is preserved as a compatibility baseline. This selected delivery preserves the primary cache generation separately.
+
+## Strict v1 inputs and API
 
 Use the complete raw UTF-8 join report and a closed JSON request containing:
 
@@ -49,6 +51,105 @@ replay the original join against its complete source, table, receipt and metadat
 inputs. The census explicitly records that its own selection scope is the pinned
 retained join report, rather than claiming fresh upstream acquisition.
 
+## Explicit coordinate profiles and compatibility
+
+The single owner has three explicit contracts. Their common census preserves the
+same candidate custody, ordered physical population and decoder audit; their input
+replay scopes differ.
+
+| Contract | Public prepare/validate suffix | Closed request | Upstream replay |
+| --- | --- | --- | --- |
+| Strict retained v1 | no suffix | request `/v1`, six original fields | Retained v1 join only |
+| Retained-coordinate v2 | `_v2` | request `/v2`, original fields plus `source_coordinate_report_sha256` | Stored supplied documents and exact selected coordinate references only |
+| Original-input coordinate v3 | `_v3` | request `/v3`, v2 fields plus `join_originals_sha256` and mandatory `source_compatibility_profile` | Opening and closing public coordinate join v2 validation against all original public inputs |
+
+The v1/v2 signatures, request/report shapes and narrower replay scope are retained.
+V2 has no `join_originals` argument and reports
+`upstream_reexecution_performed=False`; its declared historical join producer pins
+do not identify a current execution of that upstream operation. Neither schema nor
+report shape selects another profile automatically.
+
+V3 requires the exact profile
+`original-input-coordinate-target-eligibility/v1` in both its independently pinned
+request and output. It requires the genuine coordinate join v2 owner and fails
+closed if that owner is unavailable. Add these fields to the v2 request, changing
+its schema explicitly:
+
+```json
+{
+  "schema": "legal-source-span-target-eligibility-request/v3",
+  "source_compatibility_profile": "original-input-coordinate-target-eligibility/v1",
+  "join_originals_sha256": "<independently committed original public join inputs>"
+}
+```
+
+This fragment supplements the seven v2 fields; the complete v3 request has nine
+fields, with no extras. `join_originals` is a separate required keyword argument:
+
+```python
+from ipfs_datasets_py.logic.autoformal.legal_source_span_target_eligibility_v1 import (
+    prepare_source_span_target_eligibility_v3,
+    source_span_target_eligibility_sha256,
+    source_span_target_join_originals_sha256,
+    validate_source_span_target_eligibility_v3,
+)
+
+originals_pin = source_span_target_join_originals_sha256(join_originals)
+# Build and independently pin the complete v3 request, including originals_pin.
+report = prepare_source_span_target_eligibility_v3(
+    request_raw, join_raw,
+    expected_request_sha256=request_sha256, join_originals=join_originals,
+)
+validate_source_span_target_eligibility_v3(
+    report, request_raw, join_raw,
+    expected_request_sha256=request_sha256,
+    expected_report_sha256=source_span_target_eligibility_sha256(report),
+    join_originals=join_originals,
+)
+```
+
+The closed originals contain `request_raw`, `source_request_raw`,
+`source_metadata_bytes`, `paired_inventory_request_raw`, `paired_manifest_bytes`,
+`entity_info_raw`, `expected_request_sha256` and `legacy_join_inputs`. They are the
+existing coordinate join's public replay arguments, including the independent
+original request pin. Legacy occurrence inputs must be `None` or an empty mapping.
+The aggregate original bytes are bounded at 8 MiB; the profile accepts one complete
+coordinate bundle with one through 64 physical rows. The original join also checks
+its retained physical bundle files. This reexecutes the declared operation; it
+establishes no crosswalk from that cache population to current statutory sources.
+
+At the new v3 report layer, exact `join_manifest_raw_utf8` occurs once. The full
+coordinate carrier remains inside that join's own representation. V3 adds a closed
+`source_coordinates_reference` with schema
+`legal-source-span-target-coordinate-carrier-reference/v1`, container
+`join_manifest_raw_utf8`, JSON pointer
+`/paired_bundles/0/payload_intake/source_coordinates`, the exact raw join hash, and
+the coordinate carrier's canonical report hash, raw artifact hash and byte count.
+These identities are distinct. The outer report does not copy the full carrier.
+Every physical row and formal output preserves its original global coordinate
+span index, report pin and exact provenance string; equal text does not merge
+physical observations.
+
+V3 closes original-input, producer, callable, retained-join and runtime-description
+custody before and after the genuine closing join replay, including on a primary
+census failure. Validation also checks the offered report after replay. Secondary
+custody failures remain attached to a primary error. Recommitting a changed report
+cannot replace full regeneration or turn any learning/gold mask or authority flag
+on.
+
+The unmerged historical producer at commit
+`d4f62d9db14d6064359d881d82695611cfc6d763` used original-input replay under the same
+v2 API/schema names that the separate retained-coordinate implementation later
+exposed. Its original producer bytes and qualification receipts remain historical
+evidence. They are not rewritten or relabeled as current retained v2 or as v3.
+Migration requires constructing a new explicit v3 request and independently
+qualifying its genuine original-input replay. A historical v2 report or request is
+never silently upgraded.
+
+The owned reconciliation run passed **240 cases and 720 phases**: 215 eligibility cases and 25 fixtureless cache-loader cases. The eligibility population contains all 144 captured v1/retained-v2 regressions unchanged, 42 adapted original-replay controls, 27 profile/custody/reference controls and two supported-target controls. The existing pure report loader and byte bound were reused exactly from the previously qualified cache producer and added to the selected cache without changing its existing class or row validators. The original selected cache test ASTs are preserved; its 24 earlier cases were not rerun in this focused cohort. All 229 source files, 256 request pins, 240 collected nodes and complete native, storage and source closeout were independently checked.
+
+The positive controls declare dimensions 0 and 384 without constructing latent vectors or models. Source, edition, meaning, review, consumer, training and gold decisions remain unresolved. The [selected evidence summary](../../../../../docs/autoformalization/evidence/legal-ir-source-custody-reconciliation-20261021.json) records the exact producer identities and retained local receipts.
+
 ## Preserved populations and dispositions
 
 The report retains ordered physical identities, all row references and every
@@ -87,96 +188,5 @@ repair queues; it supplies no authorization to bypass those owners.
 Production operations should freeze the actual source closure and retained input
 identities, use the workspace logic-tree guard, and hold the existing source read
 lease throughout the owned validation child lifetime. The qualification packet
-for the selected historical population is maintained outside the repository at
+for the selected historical strict-v1 population is maintained outside the repository at
 `artifacts/legal-ir-target-eligibility-20261016-01/` in the enclosing workspace.
-
-## Coordinate join v2
-
-The additive `prepare_source_span_target_eligibility_v2` and
-`validate_source_span_target_eligibility_v2` APIs accept the explicit
-`legal-source-span-entity-join-manifest/v2` coordinate profile. Legacy v1 keeps
-its strict schema and retained-report-only scope. Neither API relabels one
-profile as the other.
-
-The closed v2 request retains the v1 request fields and changes `schema` to
-`legal-source-span-target-eligibility-request/v2`. It also requires:
-
-- `join_originals_sha256`: an independent commitment to the complete original
-  public join arguments; `source_span_target_join_originals_sha256` computes
-  that bounded identity without granting authority.
-- `source_coordinate_report_sha256`: the independent canonical coordinate
-  report identity, distinct from the hash of its exact artifact bytes.
-
-Supply `join_originals` separately with exactly `request_raw`,
-`source_request_raw`, `source_metadata_bytes`, `paired_inventory_request_raw`,
-`paired_manifest_bytes`, `entity_info_raw`, `expected_request_sha256` and
-`legacy_join_inputs`. These are the original public coordinate-join inputs,
-not a newly synthesized legacy join. Raw fields are bytes and the metadata
-collections are ordinary mappings of exact names to bytes. This bounded
-profile permits `legacy_join_inputs` only as `None` or an empty dictionary.
-
-```python
-from ipfs_datasets_py.logic.autoformal.legal_source_span_target_eligibility_v1 import (
-    prepare_source_span_target_eligibility_v2,
-    validate_source_span_target_eligibility_v2,
-)
-
-report = prepare_source_span_target_eligibility_v2(
-    request_raw, join_raw,
-    expected_request_sha256=request_sha256,
-    join_originals=original_join_inputs,
-)
-validate_source_span_target_eligibility_v2(
-    report, request_raw, join_raw,
-    expected_request_sha256=request_sha256,
-    expected_report_sha256=source_span_target_eligibility_sha256(report),
-    join_originals=original_join_inputs,
-)
-```
-
-Both preparation and complete report validation invoke the genuine public
-coordinate-join validator against the original inputs. Preparation performs
-opening and closing replay; after an opened operation fails, closing custody
-checks still run and preserve the original error with secondary failure notes.
-Original-input and producer checks also run on failure. The validator additionally
-checks that caller-owned offered report content did not change during replay.
-
-One nonempty selected bundle with at most 64 physical rows is supported.
-Original input bytes have an 8 MiB aggregate ceiling; request and report limits
-remain explicit. Physical row ordinals and original global span indices are
-separate identities. Each physical row and formal-output occurrence retains
-its exact provenance JSON, coordinate-report reference and original span index.
-The exact raw join is retained once at this report layer, preserving its complete
-carrier without rebuilding or normalizing it.
-
-The shared mechanical census preserves the original v1 output audit. Current
-source/edition correspondence remains unverified, entity information remains
-metadata-only, and every training/gold mask remains integer zero. All authority
-flags remain false. A supported source-copy target is a representability result,
-not a source, meaning, exposure, split or consumer-authorization decision.
-
-The source-span registry dependency uses its existing complete profile:
-descriptor, catalog symbol, class and factory routing. Metadata discovery and
-argument-guard controls do not qualify checkpoint loading, numerical inference,
-training or legal reconstruction.
-
-
-## Supported coordinate target integration
-
-The focused follow-up qualifies four cases and twelve passed phases: two new
-dimension declarations (0 and 384) over one authored source, plus two existing
-genuine coordinate regressions. It reuses the original 249-case qualification.
-The authored rule enters before genuine paired capture and survives the public
-producer, Parquet, join, adapter and source-copy audit. Both direct and canonical
-compiler routes are mechanically supported for `Clerk shall file report.`
-Physical row 0 still references original global span 1, while the complete
-two-span coordinate carrier retains the unselected context. The default marker
-fixture is unchanged. Original-input validation, post-audit physical-drift
-refusal and source/compute/storage cleanup all close within their existing owners.
-
-Dimension 384 is metadata only: no vector, encoder, decoder checkpoint, numerical
-inference or training runs. Every authority flag remains false; all training/gold
-masks remain integer zero; consumer eligibility and legal review gates stay
-closed. One authored example supplies no statutory accuracy estimate. See the
-[retained qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-supported-target-20261020-01/qualification-summary.json)
-and the [committed evidence summary](../../../../../docs/autoformalization/evidence/legal-ir-coordinate-supported-target-20261021.json).

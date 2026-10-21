@@ -628,6 +628,454 @@ def test_typed_format_with_mismatched_family_is_preserved_without_decoder_audit(
     assert retained["canonical_ir"] is retained["decoder_audit"] is None
     assert report["counts"]["target_statuses"] == {"unsupported_formal_format": 1}
     assert harness["audit_calls"] == []
+
+
+# Coordinate eligibility reuses genuine source/report/candidate/audit owners.
+# The retained join populations below are declared authored metadata rather than
+# actual Parquet reads; join regeneration is deliberately outside this profile.
+from pathlib import Path
+
+from ipfs_datasets_py.logic.autoformal import span_cache as coordinate_cache
+from ipfs_datasets_py.logic.autoformal import uscode_ingest as coordinate_ingest
+
+_coordinate_genuine_owners = owner._owners
+
+
+def coordinate_joined_fixture():
+    documents = [
+        {"z_metadata": "retained-before-a", "a_metadata": "retained-after-z",
+         "legal_id": "usc:us:5:1",
+         "text": "  Ω agency may retain records.\r\n Clerk shall file report.  "}
+        for _ in range(2)
+    ]
+    report = coordinate_ingest.inventory_uscode_source_coordinates(documents,
+        query="authored-coordinate-eligibility", release_id="authored-coordinate-release")
+    pin = coordinate_ingest.uscode_source_coordinates_sha256(report)
+    _, spans = coordinate_cache._coordinate_replay(report, pin)
+    assert len(spans) == 4
+    rows, provenance = [], []
+    for ordinal, index in enumerate((1, 3)):
+        source = spans[index]
+        reference = coordinate_cache._coordinate_wire(
+            coordinate_cache._coordinate_reference(report, spans, pin, index),
+            coordinate_cache.MAX_SOURCE_COORDINATE_REFERENCE_BYTES).decode("utf-8")
+        value = paired(str(ordinal), text=source["text"],
+                       canonical=[formal(origin="authored_engineering_fixture")])
+        value["schema_version"] = "uscode-paired-span-census/v2"
+        value["source"].update(span_id=source["source_span_id"], legal_id=source["legal_id"],
+                                 revision=report["release_id"])
+        rows.append(value)
+        provenance.append(reference)
+    joined_report = joined(*rows)
+    joined_report.update(schema="legal-source-span-entity-join-manifest/v2",
+        source_compatibility_profile="paired-coordinate-three-cache-join/v1",
+        selection_scope="exact_selected_paired_v3_bundle_with_complete_source_coordinates",
+        producer_pins={"historical-declared-producer": "d" * 64})
+    inventory = joined_report["span_inventory"]
+    inventory["schema"] = "legal-paired-manifest-inventory/v2"
+    selected = inventory["manifests"][0]
+    old_path = selected["path_in_repo"]
+    path = old_path.replace("paired-v1", "paired-v3")
+    table = selected["manifest"]["tables"]["paired_spans"]
+    table["path_in_repo"] = table["path_in_repo"].replace("paired-v1", "paired-v3")
+    raw_report = json.dumps(report, sort_keys=False, ensure_ascii=False,
+                            separators=(",", ":"), allow_nan=False).encode("utf-8")
+    carrier = {"report_raw_utf8": raw_report.decode("utf-8"), "report_bytes": len(raw_report),
+               "report_artifact_sha256": sha(raw_report), "report_sha256": pin}
+    assert sha(raw_report) != pin
+    selected.update(path_in_repo=path, bank="paired-v3", source_coordinate_report_sha256=pin)
+    selected["manifest"].update(schema="uscode-paired-span-bundle/v3", coordinate_transport={
+        "schema": "paired-source-coordinate-transport/v1", "report_artifact_sha256": sha(raw_report),
+        "report_sha256": pin, "index_artifact_sha256": "e" * 64})
+    bundle = joined_report["paired_bundles"][0]
+    bundle["manifest_path_in_repo"] = path
+    intake = bundle["payload_intake"]
+    intake.update(schema="legal-paired-payload-intake/v2", manifest_path_in_repo=path,
+                  manifest_schema="uscode-paired-span-bundle/v3", source_coordinates=carrier)
+    intake["tables"]["paired_spans"] = deepcopy(table)
+    for index, (payload_row, physical, reference, provenance_json) in enumerate(zip(
+            intake["rows"], joined_report["physical_rows"], joined_report["row_references"], provenance)):
+        global_index = (1, 3)[index]
+        coordinate_fields = {"source_provenance_json": provenance_json,
+            "source_coordinate_report_sha256": pin, "source_coordinate_span_index": global_index}
+        payload_row.update(coordinate_fields)
+        physical["physical_identity"]["path_in_repo"] = table["path_in_repo"]
+        identity = deepcopy(physical["physical_identity"])
+        identity_sha = sha(wire(identity))
+        physical.update(physical_identity=identity, physical_identity_sha256=identity_sha)
+        reference.update(physical_identity=deepcopy(identity), physical_identity_sha256=identity_sha,
+            manifest_path_in_repo=path, bank="paired-v3", **coordinate_fields,
+            coordinate_transport_status="complete_report_occurrence_replayed")
+    joined_report["counts"]["coordinate_occurrence_replayed_rows"] = 2
+    return {"join": joined_report, "report": report, "pin": pin,
+            "provenance": provenance, "documents": documents}
+
+
+@pytest.fixture
+def coordinate_harness(harness, monkeypatch):
+    state = harness
+    state.update(coordinate_joined_fixture())
+    state["coordinate_calls"] = []
+    real_load = coordinate_cache.load_source_coordinate_report
+    real_validate = coordinate_cache.validate_source_coordinate_rows
+
+    def load(raw, **kwargs):
+        state["coordinate_calls"].append(("load", raw, dict(kwargs)))
+        return real_load(raw, **kwargs)
+
+    def validate_rows(report, rows, **kwargs):
+        state["coordinate_calls"].append(("rows", deepcopy(rows), dict(kwargs)))
+        return real_validate(report, rows, **kwargs)
+
+    monkeypatch.setattr(coordinate_cache, "load_source_coordinate_report", load)
+    monkeypatch.setattr(coordinate_cache, "validate_source_coordinate_rows", validate_rows)
+    return state
+
+
+def coordinate_inputs(state, *, pretty_join=False, **changes):
+    join_raw = (json.dumps(state["join"], sort_keys=True, ensure_ascii=False, indent=2).encode("utf-8")
+                if pretty_join else wire(state["join"]))
+    request = {"schema": "legal-source-span-target-eligibility-request/v2",
+        "join_manifest_raw_sha256": sha(join_raw), "join_manifest_sha256": sha(wire(state["join"])),
+        "expected_physical_ids": [entry["physical_identity_sha256"] for entry in state["join"]["physical_rows"]],
+        "decoder_profile": "source_span_formula_v1", "latent_dimension": 0,
+        "source_coordinate_report_sha256": state["pin"], **changes}
+    return wire(request), join_raw
+
+
+def coordinate_prepare(state, **changes):
+    request, join_raw = coordinate_inputs(state, **changes)
+    return owner.prepare_source_span_target_eligibility_v2(request, join_raw,
+        expected_request_sha256=sha(request))
+
+
+def coordinate_validate(state, report, **changes):
+    request, join_raw = coordinate_inputs(state, **changes)
+    value = json.loads(report) if type(report) is bytes else report
+    return owner.validate_source_span_target_eligibility_v2(report, request, join_raw,
+        expected_request_sha256=sha(request),
+        expected_report_sha256=owner.source_span_target_eligibility_sha256(value))
+
+
+def coordinate_carrier(state):
+    return state["join"]["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+
+
+def test_coordinate_eligibility_replays_genuine_complete_report_and_exact_occurrences(coordinate_harness):
+    state = coordinate_harness
+    before = deepcopy(state["join"])
+    result = coordinate_prepare(state)
+    assert coordinate_validate(state, result) == result
+    assert coordinate_validate(state, wire(result)) == result
+    assert state["join"] == before
+    assert result["schema"] == "legal-source-span-target-eligibility/v2"
+    assert result["source_coordinates"] == coordinate_carrier(state)
+    assert result["source_coordinate_report_sha256"] == state["pin"]
+    assert result["source_coordinates"]["report_artifact_sha256"] != state["pin"]
+    assert result["upstream_reexecution_performed"] is False
+    assert [entry["source_coordinate_span_index"] for entry in result["physical_rows"]] == [1, 3]
+    assert [entry["source_provenance_json"] for entry in result["physical_rows"]] == state["provenance"]
+    assert result["row_references"] == before["row_references"]
+    assert [entry[0] for entry in state["coordinate_calls"]].count("load") >= 1
+    assert [entry[0] for entry in state["coordinate_calls"]].count("rows") >= 1
+    assert state["audit_calls"]
+    assert result["counts"]["mechanically_supported_outputs"] == 2
+    assert result["counts"]["consumer_eligible_rows"] == 0
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+    assert all(type(value) is bool and value is False for value in result["authority"].values())
+    assert all(type(row["training_mask"]) is int and row["training_mask"] == 0
+               and row["selected_occurrence"] is None for row in result["physical_rows"])
+
+
+def test_coordinate_eligibility_distinct_original_occurrences_keep_equal_text_and_physical_rows(coordinate_harness):
+    state = coordinate_harness
+    result = coordinate_prepare(state)
+    physical = result["physical_rows"]
+    assert physical[0]["source_text"] == physical[1]["source_text"] == "Clerk shall file report."
+    assert len({row["physical_identity_sha256"] for row in physical}) == 2
+    assert physical[0]["source_provenance_json"] != physical[1]["source_provenance_json"]
+    assert [row["source_coordinate_span_index"] for row in physical] == [1, 3]
+    assert result["counts"]["physical_rows"] == result["counts"]["output_occurrences"] == 2
+    assert result["counts"]["distinct_source_texts"] == 1
+    assert all("duplicate_source_text" in output["consumer_compatibility_blockers"]
+               for output in result["output_occurrences"])
+
+
+def test_coordinate_eligibility_preserves_report_transport_bytes_and_separate_raw_join_pin(coordinate_harness):
+    state = coordinate_harness
+    first = coordinate_prepare(state)
+    carrier = coordinate_carrier(state)
+    raw = json.dumps(json.loads(carrier["report_raw_utf8"]), sort_keys=False,
+                     ensure_ascii=False, indent=2).encode("utf-8")
+    assert raw.index(b'z_metadata') < raw.index(b'a_metadata')
+    carrier.update(report_raw_utf8=raw.decode("utf-8"), report_bytes=len(raw), report_artifact_sha256=sha(raw))
+    state["join"]["span_inventory"]["manifests"][0]["manifest"]["coordinate_transport"]["report_artifact_sha256"] = sha(raw)
+    result = coordinate_prepare(state, pretty_join=True)
+    assert coordinate_validate(state, result, pretty_join=True) == result
+    assert result["source_coordinates"] == carrier
+    assert result["source_coordinates"]["report_raw_utf8"].encode("utf-8") == raw
+    assert result["source_coordinate_report_sha256"] == first["source_coordinate_report_sha256"]
+    assert result["join_manifest_raw_sha256"] != first["join_manifest_raw_sha256"]
+    result["source_coordinates"]["report_raw_utf8"] = "mutated returned value"
+    assert coordinate_carrier(state)["report_raw_utf8"] == raw.decode("utf-8")
+
+
+@pytest.mark.parametrize("route", ["v1_rejects_coordinate", "v2_rejects_legacy"])
+def test_coordinate_eligibility_keeps_explicit_legacy_and_coordinate_entrypoints(coordinate_harness, route):
+    state = coordinate_harness
+    if route == "v1_rejects_coordinate":
+        request, join_raw = inputs(state)
+        with pytest.raises(ValueError):
+            owner.prepare_source_span_target_eligibility(request, join_raw, expected_request_sha256=sha(request))
+    else:
+        state["join"] = joined(paired(canonical=[formal()]))
+        with pytest.raises(ValueError):
+            coordinate_prepare(state)
+
+
+@pytest.mark.parametrize("damage", ["missing", "boolean", "uppercase", "different", "raw_artifact_pin"])
+def test_coordinate_eligibility_requires_independent_canonical_coordinate_pin(coordinate_harness, damage):
+    state = coordinate_harness
+    request, join_raw = coordinate_inputs(state)
+    request = json.loads(request)
+    if damage == "missing":
+        request.pop("source_coordinate_report_sha256")
+    else:
+        request["source_coordinate_report_sha256"] = {
+            "boolean": True, "uppercase": "A" * 64, "different": "0" * 64,
+            "raw_artifact_pin": coordinate_carrier(state)["report_artifact_sha256"]}[damage]
+    raw = wire(request)
+    with pytest.raises(ValueError):
+        owner.prepare_source_span_target_eligibility_v2(raw, join_raw, expected_request_sha256=sha(raw))
+    assert state["audit_calls"] == []
+
+
+@pytest.mark.parametrize("damage", ["missing", "extra", "raw_utf8", "length", "boolean_length",
+                                    "artifact_hash", "report_pin", "source_text", "manifest_artifact"])
+def test_coordinate_eligibility_resealed_carrier_and_report_forgeries_refuse(coordinate_harness, damage):
+    state = coordinate_harness
+    carrier = coordinate_carrier(state)
+    if damage == "missing":
+        del state["join"]["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    elif damage == "extra":
+        carrier["source_verified"] = True
+    elif damage == "raw_utf8":
+        carrier["report_raw_utf8"] += " "
+    elif damage == "length":
+        carrier["report_bytes"] += 1
+    elif damage == "boolean_length":
+        carrier["report_bytes"] = True
+    elif damage == "artifact_hash":
+        carrier["report_artifact_sha256"] = "0" * 64
+    elif damage == "report_pin":
+        carrier["report_sha256"] = "0" * 64
+    elif damage == "manifest_artifact":
+        state["join"]["span_inventory"]["manifests"][0]["manifest"]["coordinate_transport"]["report_artifact_sha256"] = "0" * 64
+    else:
+        changed = json.loads(carrier["report_raw_utf8"])
+        changed["documents"][0]["source_text"] += " changed"
+        raw = json.dumps(changed, sort_keys=False, ensure_ascii=False).encode("utf-8")
+        carrier.update(report_raw_utf8=raw.decode(), report_bytes=len(raw), report_artifact_sha256=sha(raw))
+        state["join"]["span_inventory"]["manifests"][0]["manifest"]["coordinate_transport"]["report_artifact_sha256"] = sha(raw)
+    with pytest.raises((ValueError, coordinate_cache.SpanCacheError)):
+        coordinate_prepare(state)
+    assert state["audit_calls"] == []
+
+
+@pytest.mark.parametrize("damage", ["wrong_global_index", "boolean_index", "foreign_provenance",
+                                    "foreign_report", "reference_index", "raw_source"])
+def test_coordinate_eligibility_preserves_original_global_source_and_provenance(coordinate_harness, damage):
+    state = coordinate_harness
+    payload = state["join"]["paired_bundles"][0]["payload_intake"]["rows"][0]
+    reference = state["join"]["row_references"][0]
+    if damage == "wrong_global_index":
+        payload["source_coordinate_span_index"] = reference["source_coordinate_span_index"] = 0
+    elif damage == "boolean_index":
+        payload["source_coordinate_span_index"] = reference["source_coordinate_span_index"] = True
+    elif damage == "foreign_provenance":
+        foreign = state["provenance"][1]
+        payload["source_provenance_json"] = reference["source_provenance_json"] = foreign
+    elif damage == "foreign_report":
+        payload["source_coordinate_report_sha256"] = reference["source_coordinate_report_sha256"] = "0" * 64
+    elif damage == "reference_index":
+        reference["source_coordinate_span_index"] = 0
+    else:
+        def mutate(row):
+            row["source"]["text"] = "Another clerk shall file report."
+            row["source"]["text_sha256"] = sha(row["source"]["text"].encode())
+        replace_retained_row(state, mutate)
+    with pytest.raises((ValueError, coordinate_cache.SpanCacheError)):
+        coordinate_prepare(state)
+    assert state["audit_calls"] == []
+
+
+@pytest.mark.parametrize("damage", ["drop_payload", "drop_reference", "drop_physical",
+                                    "reorder_references", "duplicate_reference", "count"])
+def test_coordinate_eligibility_refuses_population_loss_and_physical_relabeling(coordinate_harness, damage):
+    state = coordinate_harness
+    retained = state["join"]
+    if damage == "drop_payload": retained["paired_bundles"][0]["payload_intake"]["rows"].pop()
+    elif damage == "drop_reference": retained["row_references"].pop()
+    elif damage == "drop_physical": retained["physical_rows"].pop()
+    elif damage == "reorder_references": retained["row_references"].reverse()
+    elif damage == "duplicate_reference": retained["row_references"][1] = deepcopy(retained["row_references"][0])
+    else: retained["counts"]["coordinate_occurrence_replayed_rows"] += 1
+    with pytest.raises(ValueError):
+        coordinate_prepare(state)
+
+
+@pytest.mark.parametrize("damage", ["authority", "training_boolean", "gold_one", "crosswalk", "entity"])
+def test_coordinate_eligibility_coordinate_custody_cannot_promote_source_or_semantic_gates(coordinate_harness, damage):
+    retained = coordinate_harness["join"]
+    if damage == "authority": retained["authority"]["source_semantics_verified"] = True
+    elif damage == "training_boolean": retained["training_mask"] = False
+    elif damage == "gold_one": retained["evaluation_gold_mask"] = 1
+    elif damage == "crosswalk": retained["row_references"][0]["current_source_release_correspondence"] = "reviewed"
+    else: retained["row_references"][0]["entity_binding"] = "verified"
+    with pytest.raises(ValueError):
+        coordinate_prepare(coordinate_harness)
+
+
+@pytest.mark.parametrize("damage", ["carrier", "index", "reference", "mask"])
+def test_coordinate_eligibility_output_resealing_cannot_replace_original_replay(coordinate_harness, damage):
+    result = coordinate_prepare(coordinate_harness)
+    if damage == "carrier": result["source_coordinates"]["report_raw_utf8"] += " "
+    elif damage == "index": result["physical_rows"][0]["source_coordinate_span_index"] = 0
+    elif damage == "reference": result["row_references"][0]["source_provenance_json"] = "{}"
+    else: result["training_mask"] = 1
+    with pytest.raises(ValueError):
+        coordinate_validate(coordinate_harness, result)
+
+
+@pytest.mark.parametrize("stage", ["load", "rows"])
+def test_coordinate_eligibility_closing_checks_detect_source_change_after_genuine_coordinate_work(
+        coordinate_harness, monkeypatch, stage):
+    function = "load_source_coordinate_report" if stage == "load" else "validate_source_coordinate_rows"
+    real = getattr(coordinate_cache, function)
+
+    def changed(*args, **kwargs):
+        result = real(*args, **kwargs)
+        monkeypatch.setattr(owner, "_SELF_PIN", "0" * 64)
+        return result
+
+    monkeypatch.setattr(coordinate_cache, function, changed)
+    with pytest.raises(ValueError, match="producer changed"):
+        coordinate_prepare(coordinate_harness)
+
+
+def test_coordinate_eligibility_primary_helper_error_retains_secondary_closing_custody(
+        coordinate_harness, monkeypatch):
+    original = coordinate_cache.validate_source_coordinate_rows
+    primary = RuntimeError("authored primary coordinate failure after genuine validation")
+
+    def fail_after_genuine(*args, **kwargs):
+        original(*args, **kwargs)
+        monkeypatch.setattr(owner, "_SELF_PIN", "0" * 64)
+        raise primary
+
+    monkeypatch.setattr(coordinate_cache, "validate_source_coordinate_rows", fail_after_genuine)
+    with pytest.raises(RuntimeError) as caught:
+        coordinate_prepare(coordinate_harness)
+    assert caught.value is primary
+    assert any("secondary eligibility custody failure" in note
+               for note in getattr(primary, "__notes__", []))
+
+
+@pytest.mark.parametrize("target", ["complete_report", "selected_rows"])
+def test_coordinate_eligibility_refuses_coordinate_delegate_mutation_after_genuine_validation(
+        coordinate_harness, monkeypatch, target):
+    original = coordinate_cache.validate_source_coordinate_rows
+
+    def changed(report, rows, **kwargs):
+        indices = original(report, rows, **kwargs)
+        if target == "complete_report":
+            report["documents"][0]["source_text"] += " changed after genuine validation"
+        else:
+            rows[0]["text"] += " changed after genuine validation"
+        return indices
+
+    monkeypatch.setattr(coordinate_cache, "validate_source_coordinate_rows", changed)
+    with pytest.raises(ValueError):
+        coordinate_prepare(coordinate_harness)
+
+
+def test_coordinate_eligibility_uses_genuine_canonical_owner_closure_without_registry_or_join_doubles(
+        coordinate_harness, monkeypatch):
+    monkeypatch.setattr(owner, "_owners", _coordinate_genuine_owners)
+    result = coordinate_prepare(coordinate_harness)
+    assert coordinate_validate(coordinate_harness, result) == result
+    assert "logic_tree_guard_paths" in result["producer_pins"]
+    assert result["runtime_description"]["runtime_id"] == "legal_ir:source_span_formula_v1"
+    assert result["current_coordinate_producer_pins"]
+    assert result["counts"]["physical_rows"] == 2
+    assert result["counts"]["consumer_eligible_rows"] == 0
+    assert all(value is False for value in result["authority"].values())
+
+
+def test_coordinate_eligibility_refuses_foreign_coordinate_owner_paths_before_reading_them(
+        coordinate_harness, monkeypatch, tmp_path):
+    foreign = tmp_path / "foreign-checkout"
+    cache_path = foreign / "ipfs_datasets_py/logic/autoformal/span_cache.py"
+    ingest_path = foreign / "ipfs_datasets_py/logic/autoformal/uscode_ingest.py"
+    assert not foreign.exists()
+    original = Path.read_bytes
+
+    def deny_foreign_read(path):
+        if foreign in path.parents:
+            pytest.fail("foreign coordinate source was read before canonical-root refusal")
+        return original(path)
+
+    monkeypatch.setattr(coordinate_cache, "__file__", str(cache_path))
+    monkeypatch.setattr(coordinate_ingest, "__file__", str(ingest_path))
+    monkeypatch.setattr(Path, "read_bytes", deny_foreign_read)
+    with pytest.raises(ValueError, match="escaped selected source tree"):
+        coordinate_prepare(coordinate_harness)
+    assert coordinate_harness["coordinate_calls"] == []
+    assert coordinate_harness["audit_calls"] == []
+    assert not foreign.exists()
+
+
+@pytest.mark.parametrize("damage", ["legacy_candidate_join", "source_disposition"])
+def test_coordinate_eligibility_rejects_unresolved_source_status_forgery_and_legacy_join_mixing(
+        coordinate_harness, damage):
+    retained = coordinate_harness["join"]
+    if damage == "legacy_candidate_join":
+        retained["paired_bundles"][0]["legacy_candidate_join"] = {"unprovided_legacy_correspondence": True}
+    else:
+        retained["row_references"][0]["source_disposition"] = "selected_governing_source"
+    with pytest.raises(ValueError):
+        coordinate_prepare(coordinate_harness)
+    assert coordinate_harness["audit_calls"] == []
+
+
+@pytest.mark.parametrize("damage", ["paired_v1", "foreign_source_revision", "foreign_reference_revision"])
+def test_coordinate_eligibility_preserves_original_paired_generation_and_declared_report_release(
+        coordinate_harness, damage):
+    state = coordinate_harness
+    payload = state["join"]["paired_bundles"][0]["payload_intake"]["rows"][0]
+    reference = state["join"]["row_references"][0]
+    if damage == "foreign_reference_revision":
+        reference["producer_source_revision_label"] = "foreign-unadopted-release"
+    else:
+        def mutate(row):
+            if damage == "paired_v1":
+                row["schema_version"] = "uscode-paired-span-census/v1"
+            else:
+                row["source"]["revision"] = "foreign-unadopted-release"
+        replace_retained_row(state, mutate)
+        # Preserve a genuinely valid candidate for the changed row: the v2
+        # coordinate-generation/release check must reject independently of an
+        # unrelated stale candidate commitment.
+        raw = payload["derived_row_json"].encode("utf-8")
+        payload["candidate"] = adapter.adapt_paired_span_bytes(raw,
+            expected_row_sha256=payload["row_sha256"])
+        if damage == "foreign_source_revision":
+            reference["producer_source_revision_label"] = "foreign-unadopted-release"
+    with pytest.raises(ValueError):
+        coordinate_prepare(state)
+    assert state["audit_calls"] == []
+
+
 # The additive coordinate cohort uses genuine source/package/Arrow/join/runtime
 # owners. Only named negative controls replace a delegate after genuine work.
 from pathlib import Path
@@ -638,7 +1086,7 @@ from tests.unit.logic.autoformal.test_legal_source_span_entity_coordinate_join_v
 
 
 @pytest.fixture
-def coordinate_eligibility(coordinate_join):
+def original_replay_v3(coordinate_join):
     case = coordinate_join
     raw = wire(case["request"])
     originals = {"request_raw": raw, "source_request_raw": case["source_raw"],
@@ -649,33 +1097,34 @@ def coordinate_eligibility(coordinate_join):
     return {"case": case, "join": prepare_coordinate_join(case), "originals": originals}
 
 
-def coordinate_inputs(case, **changes):
+def original_replay_inputs_v3(case, **changes):
     raw = wire(case["join"])
-    request = {"schema": owner.REQUEST_SCHEMA_V2, "join_manifest_raw_sha256": sha(raw),
+    request = {"schema": owner.REQUEST_SCHEMA_V3, "join_manifest_raw_sha256": sha(raw),
         "join_manifest_sha256": coordinate_join_owner.source_span_entity_join_manifest_sha256(case["join"]),
         "expected_physical_ids": [row["physical_identity_sha256"] for row in case["join"]["physical_rows"]],
         "decoder_profile": owner.DECODER_PROFILE, "latent_dimension": 0,
         "join_originals_sha256": owner.source_span_target_join_originals_sha256(case["originals"]),
-        "source_coordinate_report_sha256": case["case"]["coordinate"]["pin"], **changes}
+        "source_coordinate_report_sha256": case["case"]["coordinate"]["pin"],
+        "source_compatibility_profile": owner.ORIGINAL_REPLAY_PROFILE_V3, **changes}
     return wire(request), raw
 
 
-def prepare_coordinate_eligibility(case, **changes):
-    request, raw = coordinate_inputs(case, **changes)
-    return owner.prepare_source_span_target_eligibility_v2(request, raw,
+def prepare_original_replay_v3(case, **changes):
+    request, raw = original_replay_inputs_v3(case, **changes)
+    return owner.prepare_source_span_target_eligibility_v3(request, raw,
         expected_request_sha256=sha(request), join_originals=case["originals"])
 
 
-def validate_coordinate_eligibility(case, report):
-    request, raw = coordinate_inputs(case)
+def validate_original_replay_v3(case, report):
+    request, raw = original_replay_inputs_v3(case)
     value = json.loads(report) if type(report) is bytes else report
-    return owner.validate_source_span_target_eligibility_v2(report, request, raw,
+    return owner.validate_source_span_target_eligibility_v3(report, request, raw,
         expected_request_sha256=sha(request),
         expected_report_sha256=owner.source_span_target_eligibility_sha256(value),
         join_originals=case["originals"])
 
 
-def assert_coordinate_unqualified(report):
+def assert_original_replay_unqualified_v3(report):
     assert all(type(flag) is bool and flag is False for flag in report["authority"].values())
     for row in [report, *report["physical_rows"], *report["row_references"], *report["output_occurrences"]]:
         assert type(row["training_mask"]) is int and row["training_mask"] == 0
@@ -685,12 +1134,14 @@ def assert_coordinate_unqualified(report):
         assert all(type(mask) is int and mask == 0 for mask in row["field_masks"].values())
 
 
-def test_coordinate_eligibility_genuine_roundtrip_preserves_unresolved_semantics(coordinate_eligibility):
-    case = coordinate_eligibility
-    report = prepare_coordinate_eligibility(case)
-    assert validate_coordinate_eligibility(case, report) == report
-    assert validate_coordinate_eligibility(case, wire(report)) == report
-    assert report["schema"] == owner.SCHEMA_V2
+def test_original_replay_v3_genuine_roundtrip_preserves_unresolved_semantics(original_replay_v3):
+    case = original_replay_v3
+    report = prepare_original_replay_v3(case)
+    assert validate_original_replay_v3(case, report) == report
+    assert validate_original_replay_v3(case, wire(report)) == report
+    reordered = {key: report[key] for key in reversed(report)}
+    assert validate_original_replay_v3(case, reordered) == report
+    assert report["schema"] == owner.SCHEMA_V3
     assert report["upstream_reexecution_performed"] is True
     assert report["runtime_description"]["runtime_version"] == owner.DECODER_PROFILE
     assert report["current_source_release_correspondence"] == "unverified_no_independent_crosswalk"
@@ -698,12 +1149,12 @@ def test_coordinate_eligibility_genuine_roundtrip_preserves_unresolved_semantics
     assert report["counts"]["physical_rows"] == 2
     assert report["counts"]["consumer_eligible_rows"] == 0
     assert report["counts"]["output_occurrences"] > 0
-    assert_coordinate_unqualified(report)
+    assert_original_replay_unqualified_v3(report)
 
 
-def test_coordinate_eligibility_retains_one_complete_join_and_exact_original_span_indices(coordinate_eligibility):
-    case = coordinate_eligibility
-    report = prepare_coordinate_eligibility(case)
+def test_original_replay_v3_retains_one_complete_join_and_exact_original_span_indices(original_replay_v3):
+    case = original_replay_v3
+    report = prepare_original_replay_v3(case)
     assert report["join_manifest_raw_utf8"].encode() == wire(case["join"])
     joined_report = json.loads(report["join_manifest_raw_utf8"])
     carrier = joined_report["paired_bundles"][0]["payload_intake"]["source_coordinates"]
@@ -731,18 +1182,19 @@ def test_coordinate_eligibility_retains_one_complete_join_and_exact_original_spa
 
 
 @pytest.mark.parametrize("dimension", [0, 384], ids=["zero", "native384"])
-def test_coordinate_eligibility_dimension_never_dispatches_or_creates_latents(coordinate_eligibility, dimension):
-    report = prepare_coordinate_eligibility(coordinate_eligibility, latent_dimension=dimension)
+def test_original_replay_v3_dimension_never_dispatches_or_creates_latents(original_replay_v3, dimension):
+    report = prepare_original_replay_v3(original_replay_v3, latent_dimension=dimension)
     assert report["request"]["latent_dimension"] == dimension
     assert not any("latent" in row for row in report["physical_rows"])
-    assert_coordinate_unqualified(report)
+    assert_original_replay_unqualified_v3(report)
 
 
-def test_coordinate_eligibility_legacy_entrypoint_rejects_v2_even_with_legacy_request_shape(coordinate_eligibility):
-    request_raw, raw = coordinate_inputs(coordinate_eligibility)
+def test_original_replay_v3_legacy_entrypoint_rejects_v3_even_with_legacy_request_shape(original_replay_v3):
+    request_raw, raw = original_replay_inputs_v3(original_replay_v3)
     request = json.loads(request_raw)
     request["schema"] = owner.REQUEST_SCHEMA
     request.pop("join_originals_sha256")
+    request.pop("source_compatibility_profile")
     request.pop("source_coordinate_report_sha256")
     request_raw = wire(request)
     with pytest.raises(ValueError, match="complete selected join"):
@@ -750,43 +1202,43 @@ def test_coordinate_eligibility_legacy_entrypoint_rejects_v2_even_with_legacy_re
             expected_request_sha256=sha(request_raw))
 
 
-def test_coordinate_eligibility_v2_refuses_legacy_join_before_discovery(coordinate_eligibility, monkeypatch):
-    case = coordinate_eligibility
+def test_original_replay_v3_refuses_legacy_join_before_discovery(original_replay_v3, monkeypatch):
+    case = original_replay_v3
     case["join"] = joined(paired(canonical=[formal()]))
     monkeypatch.setattr(owner, "_owners", lambda: pytest.fail("legacy join reached discovery"))
     with pytest.raises(ValueError, match="coordinate join v2"):
-        prepare_coordinate_eligibility(case)
+        prepare_original_replay_v3(case)
 
 
 @pytest.mark.parametrize("damage", ["schema", "extra", "raw_pin", "canonical_pin", "originals_pin", "coordinate_pin"],
     ids=["schema", "extra", "raw-pin", "canonical-pin", "originals-pin", "coordinate-pin"])
-def test_coordinate_eligibility_independent_closed_request_refuses(coordinate_eligibility, damage):
+def test_original_replay_v3_independent_closed_request_refuses(original_replay_v3, damage):
     changes = {"schema": {"schema": owner.REQUEST_SCHEMA}, "extra": {"reviewed": True},
         "raw_pin": {"join_manifest_raw_sha256": "0" * 64},
         "canonical_pin": {"join_manifest_sha256": "0" * 64},
         "originals_pin": {"join_originals_sha256": "0" * 64},
         "coordinate_pin": {"source_coordinate_report_sha256": "0" * 64}}[damage]
     with pytest.raises(ValueError):
-        prepare_coordinate_eligibility(coordinate_eligibility, **changes)
+        prepare_original_replay_v3(original_replay_v3, **changes)
 
 
 @pytest.mark.parametrize("damage", ["omit", "reverse", "duplicate", "foreign"],
     ids=["omit", "reverse", "duplicate", "foreign"])
-def test_coordinate_eligibility_requires_exact_physical_population(coordinate_eligibility, damage):
-    case = coordinate_eligibility
+def test_original_replay_v3_requires_exact_physical_population(original_replay_v3, damage):
+    case = original_replay_v3
     ids = [row["physical_identity_sha256"] for row in case["join"]["physical_rows"]]
     changed = {"omit": ids[:1], "reverse": ids[::-1], "duplicate": [ids[0], ids[0]],
         "foreign": [ids[0], "0" * 64]}[damage]
     with pytest.raises(ValueError):
-        prepare_coordinate_eligibility(case, expected_physical_ids=changed)
+        prepare_original_replay_v3(case, expected_physical_ids=changed)
 
 
 @pytest.mark.parametrize("damage", ["index", "reference", "carrier", "physical", "row_count",
     "omit_row", "training_mask", "gold_mask", "crosswalk", "entity"],
     ids=["index", "reference", "carrier", "physical", "row-count", "omit-row", "training-mask",
          "gold-mask", "crosswalk", "entity"])
-def test_coordinate_eligibility_rehashed_join_requires_genuine_original_replay(coordinate_eligibility, damage):
-    report = coordinate_eligibility["join"]
+def test_original_replay_v3_rehashed_join_requires_genuine_original_replay(original_replay_v3, damage):
+    report = original_replay_v3["join"]
     row = report["row_references"][0]
     if damage == "index": row["source_coordinate_span_index"] = 0
     elif damage == "reference": row["source_provenance_json"] = report["row_references"][1]["source_provenance_json"]
@@ -799,13 +1251,13 @@ def test_coordinate_eligibility_rehashed_join_requires_genuine_original_replay(c
     elif damage == "crosswalk": row["current_source_release_correspondence"] = "verified"
     else: row["entity_binding"] = "verified"
     with pytest.raises(ValueError):
-        prepare_coordinate_eligibility(coordinate_eligibility)
+        prepare_original_replay_v3(original_replay_v3)
 
 
 @pytest.mark.parametrize("damage", ["index", "index_bool", "reference", "join_bytes", "mask", "outputs"],
     ids=["index", "index-bool", "reference", "join-bytes", "mask", "outputs"])
-def test_coordinate_eligibility_rehashed_report_requires_exact_regeneration(coordinate_eligibility, damage):
-    report = prepare_coordinate_eligibility(coordinate_eligibility)
+def test_original_replay_v3_rehashed_report_requires_exact_regeneration(original_replay_v3, damage):
+    report = prepare_original_replay_v3(original_replay_v3)
     if damage == "index": report["physical_rows"][0]["source_coordinate_span_index"] = 0
     elif damage == "index_bool": report["physical_rows"][0]["source_coordinate_span_index"] = True
     elif damage == "reference": report["output_occurrences"][0]["source_provenance_json"] = "{}"
@@ -813,11 +1265,11 @@ def test_coordinate_eligibility_rehashed_report_requires_exact_regeneration(coor
     elif damage == "mask": report["training_mask"] = 1
     else: report["output_occurrences"].pop()
     with pytest.raises(ValueError, match="full original-input replay"):
-        validate_coordinate_eligibility(coordinate_eligibility, report)
+        validate_original_replay_v3(original_replay_v3, report)
 
 
-def test_coordinate_eligibility_original_metadata_drift_is_caught_after_real_audit(coordinate_eligibility, monkeypatch):
-    case = coordinate_eligibility
+def test_original_replay_v3_original_metadata_drift_is_caught_after_real_audit(original_replay_v3, monkeypatch):
+    case = original_replay_v3
     actual, called = span.audit_examples, []
     def drift(rows):
         result = actual(rows)
@@ -829,20 +1281,20 @@ def test_coordinate_eligibility_original_metadata_drift_is_caught_after_real_aud
         return result
     monkeypatch.setattr(span, "audit_examples", drift)
     with pytest.raises(ValueError, match="originals changed"):
-        prepare_coordinate_eligibility(case)
+        prepare_original_replay_v3(case)
     assert called
 
 
 @pytest.mark.parametrize("producer", ["eligibility", "join"], ids=["eligibility", "join"])
-def test_coordinate_eligibility_stale_producer_refuses(coordinate_eligibility, monkeypatch, producer):
+def test_original_replay_v3_stale_producer_refuses(original_replay_v3, monkeypatch, producer):
     module = owner if producer == "eligibility" else coordinate_join_owner
     monkeypatch.setattr(module, "_SELF_PIN", "0" * 64)
     with pytest.raises(ValueError, match="changed since import"):
-        prepare_coordinate_eligibility(coordinate_eligibility)
+        prepare_original_replay_v3(original_replay_v3)
 
 
-def test_coordinate_eligibility_closing_replay_catches_physical_drift_after_real_audit(coordinate_eligibility, monkeypatch):
-    case = coordinate_eligibility
+def test_original_replay_v3_closing_replay_catches_physical_drift_after_real_audit(original_replay_v3, monkeypatch):
+    case = original_replay_v3
     actual, called = span.audit_examples, []
     def drift(rows):
         result = actual(rows)
@@ -855,11 +1307,11 @@ def test_coordinate_eligibility_closing_replay_catches_physical_drift_after_real
         return result
     monkeypatch.setattr(span, "audit_examples", drift)
     with pytest.raises(ValueError):
-        prepare_coordinate_eligibility(case)
+        prepare_original_replay_v3(case)
     assert called
 
 
-def test_coordinate_eligibility_operational_error_still_attempts_genuine_closing_join(coordinate_eligibility, monkeypatch):
+def test_original_replay_v3_operational_error_still_attempts_genuine_closing_join(original_replay_v3, monkeypatch):
     actual_audit = span.audit_examples
     actual_replay = coordinate_join_owner.validate_source_span_entity_join_manifest_v2
     calls = []
@@ -872,12 +1324,12 @@ def test_coordinate_eligibility_operational_error_still_attempts_genuine_closing
     monkeypatch.setattr(coordinate_join_owner, "validate_source_span_entity_join_manifest_v2", replay)
     monkeypatch.setattr(span, "audit_examples", fail)
     with pytest.raises(RuntimeError, match="authored failure"):
-        prepare_coordinate_eligibility(coordinate_eligibility)
+        prepare_original_replay_v3(original_replay_v3)
     assert len(calls) == 2
 
 
-def test_coordinate_eligibility_primary_error_retains_secondary_original_custody_failure(coordinate_eligibility, monkeypatch):
-    case = coordinate_eligibility
+def test_original_replay_v3_primary_error_retains_secondary_original_custody_failure(original_replay_v3, monkeypatch):
+    case = original_replay_v3
     actual = span.audit_examples
     def fail(rows):
         actual(rows)
@@ -885,13 +1337,13 @@ def test_coordinate_eligibility_primary_error_retains_secondary_original_custody
         raise RuntimeError("primary authored failure")
     monkeypatch.setattr(span, "audit_examples", fail)
     with pytest.raises(RuntimeError, match="primary authored failure") as caught:
-        prepare_coordinate_eligibility(case)
+        prepare_original_replay_v3(case)
     assert any("original inputs" in note for note in caught.value.__notes__)
 
 
-def test_coordinate_eligibility_validator_checks_offered_report_after_real_replay(coordinate_eligibility, monkeypatch):
-    case = coordinate_eligibility
-    report = prepare_coordinate_eligibility(case)
+def test_original_replay_v3_validator_checks_offered_report_after_real_replay(original_replay_v3, monkeypatch):
+    case = original_replay_v3
+    report = prepare_original_replay_v3(case)
     actual = span.audit_examples
     def mutate(rows):
         result = actual(rows)
@@ -899,14 +1351,14 @@ def test_coordinate_eligibility_validator_checks_offered_report_after_real_repla
         return result
     monkeypatch.setattr(span, "audit_examples", mutate)
     with pytest.raises(ValueError, match="offered coordinate eligibility report changed"):
-        validate_coordinate_eligibility(case, report)
+        validate_original_replay_v3(case, report)
 
 
 @pytest.mark.parametrize("damage", ["physical_rows", "metadata_count", "metadata_bytes"],
     ids=["physical-row-bound", "metadata-count-bound", "metadata-byte-bound"])
-def test_coordinate_eligibility_bounds_refuse_before_discovery(coordinate_eligibility, monkeypatch, damage):
-    case = coordinate_eligibility
-    request, raw = coordinate_inputs(case)
+def test_original_replay_v3_bounds_refuse_before_discovery(original_replay_v3, monkeypatch, damage):
+    case = original_replay_v3
+    request, raw = original_replay_inputs_v3(case)
     request = json.loads(request)
     if damage == "physical_rows": request["expected_physical_ids"] = ["a" * 64] * 65
     elif damage == "metadata_count": case["originals"]["source_metadata_bytes"] = {str(i): b"x" for i in range(17)}
@@ -914,8 +1366,212 @@ def test_coordinate_eligibility_bounds_refuse_before_discovery(coordinate_eligib
     request = wire(request)
     monkeypatch.setattr(owner, "_owners", lambda: pytest.fail("invalid bound reached discovery"))
     with pytest.raises(ValueError):
-        owner.prepare_source_span_target_eligibility_v2(request, raw,
+        owner.prepare_source_span_target_eligibility_v3(request, raw,
             expected_request_sha256=sha(request), join_originals=case["originals"])
+
+
+def retained_request_from_original_replay_v3(case):
+    request, raw = original_replay_inputs_v3(case)
+    request = json.loads(request)
+    request["schema"] = owner.REQUEST_SCHEMA_V2
+    request.pop("join_originals_sha256")
+    request.pop("source_compatibility_profile")
+    return wire(request), raw
+
+
+@pytest.mark.parametrize("damage", ["missing", "foreign", "boolean", "historical"],
+    ids=["missing-profile", "foreign-profile", "boolean-profile", "historical-v2-profile"])
+def test_original_replay_v3_requires_mandatory_profile_before_discovery(original_replay_v3, monkeypatch, damage):
+    request, raw = original_replay_inputs_v3(original_replay_v3)
+    request = json.loads(request)
+    if damage == "missing": request.pop("source_compatibility_profile")
+    else: request["source_compatibility_profile"] = {
+        "foreign": "retained-report-audit/v1", "boolean": True,
+        "historical": "paired-coordinate-target-eligibility/v1"}[damage]
+    request = wire(request)
+    monkeypatch.setattr(owner, "_owners", lambda: pytest.fail("invalid profile reached discovery"))
+    with pytest.raises(ValueError):
+        owner.prepare_source_span_target_eligibility_v3(request, raw,
+            expected_request_sha256=sha(request), join_originals=original_replay_v3["originals"])
+
+
+@pytest.mark.parametrize("generation", ["retained_v2", "historical_original_v2"],
+    ids=["retained-v2-shape", "historical-original-v2-shape"])
+def test_original_replay_v3_never_infers_upgrade_from_v2_shape(original_replay_v3, monkeypatch, generation):
+    if generation == "retained_v2":
+        request, raw = retained_request_from_original_replay_v3(original_replay_v3)
+    else:
+        request, raw = original_replay_inputs_v3(original_replay_v3)
+        request = json.loads(request)
+        request["schema"] = owner.REQUEST_SCHEMA_V2
+        request.pop("source_compatibility_profile")
+        request = wire(request)
+    monkeypatch.setattr(owner, "_owners", lambda: pytest.fail("v2 request reached v3 discovery"))
+    with pytest.raises(ValueError):
+        owner.prepare_source_span_target_eligibility_v3(request, raw,
+            expected_request_sha256=sha(request), join_originals=original_replay_v3["originals"])
+
+
+@pytest.mark.parametrize("extra", ["join_originals_sha256", "source_compatibility_profile"],
+    ids=["originals-commitment", "original-replay-profile"])
+def test_retained_v2_rejects_original_replay_request_extensions(original_replay_v3, monkeypatch, extra):
+    request, raw = retained_request_from_original_replay_v3(original_replay_v3)
+    request = json.loads(request)
+    request[extra] = (owner.source_span_target_join_originals_sha256(original_replay_v3["originals"])
+        if extra == "join_originals_sha256" else owner.ORIGINAL_REPLAY_PROFILE_V3)
+    request = wire(request)
+    monkeypatch.setattr(owner, "_owners", lambda: pytest.fail("extended v2 request reached discovery"))
+    with pytest.raises(ValueError):
+        owner.prepare_source_span_target_eligibility_v2(request, raw, expected_request_sha256=sha(request))
+
+
+@pytest.mark.parametrize("operation", ["prepare", "validate"], ids=["prepare-api", "validate-api"])
+def test_retained_v2_preserves_original_public_signatures(original_replay_v3, operation):
+    request, raw = retained_request_from_original_replay_v3(original_replay_v3)
+    kwargs = {"expected_request_sha256": sha(request), "join_originals": original_replay_v3["originals"]}
+    with pytest.raises(TypeError, match="join_originals"):
+        if operation == "prepare":
+            owner.prepare_source_span_target_eligibility_v2(request, raw, **kwargs)
+        else:
+            owner.validate_source_span_target_eligibility_v2({}, request, raw,
+                expected_report_sha256="0" * 64, **kwargs)
+
+
+@pytest.mark.parametrize("offered_generation", ["retained_v2", "original_v3"],
+    ids=["retained-v2-offered-to-v3", "original-v3-offered-to-v2"])
+def test_recommitted_reports_cannot_cross_explicit_replay_generations(original_replay_v3, offered_generation):
+    case = original_replay_v3
+    request, raw = retained_request_from_original_replay_v3(case)
+    retained = owner.prepare_source_span_target_eligibility_v2(request, raw, expected_request_sha256=sha(request))
+    original = prepare_original_replay_v3(case)
+    assert retained["upstream_reexecution_performed"] is False
+    assert retained["coordinate_validation_scope"] == "stored_supplied_documents_and_exact_selected_references_only"
+    assert "source_coordinates" in retained and "join_manifest_raw_utf8" not in retained
+    assert original["upstream_reexecution_performed"] is True
+    assert "source_coordinates" not in original and "source_coordinates_reference" in original
+    with pytest.raises(ValueError, match="differs from full"):
+        if offered_generation == "retained_v2":
+            validate_original_replay_v3(case, retained)
+        else:
+            owner.validate_source_span_target_eligibility_v2(original, request, raw,
+                expected_request_sha256=sha(request),
+                expected_report_sha256=owner.source_span_target_eligibility_sha256(original))
+
+
+@pytest.mark.parametrize("damage", ["path", "container", "artifact_pin", "canonical_pin", "boolean_bytes", "duplicate_carrier"],
+    ids=["foreign-path", "foreign-container", "artifact-pin", "canonical-pin", "boolean-byte-count", "duplicate-carrier"])
+def test_original_replay_v3_coordinate_reference_is_exact_under_recommitment(original_replay_v3, damage):
+    report = prepare_original_replay_v3(original_replay_v3)
+    reference = report["source_coordinates_reference"]
+    carrier = json.loads(report["join_manifest_raw_utf8"])["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    assert reference == {"schema": owner.COORDINATE_REFERENCE_SCHEMA,
+        "container": "join_manifest_raw_utf8", "json_pointer": "/paired_bundles/0/payload_intake/source_coordinates",
+        "join_manifest_raw_sha256": report["join_manifest_raw_sha256"],
+        "report_sha256": carrier["report_sha256"], "report_artifact_sha256": carrier["report_artifact_sha256"],
+        "report_bytes": carrier["report_bytes"]}
+    if damage == "path": reference["json_pointer"] = "/paired_bundles/1/payload_intake/source_coordinates"
+    elif damage == "container": reference["container"] = "request_raw_utf8"
+    elif damage == "artifact_pin": reference["report_artifact_sha256"] = "0" * 64
+    elif damage == "canonical_pin": reference["report_sha256"] = "0" * 64
+    elif damage == "boolean_bytes": reference["report_bytes"] = True
+    else: report["source_coordinates"] = carrier
+    with pytest.raises(ValueError, match="full original-input replay"):
+        validate_original_replay_v3(original_replay_v3, report)
+
+
+def test_original_replay_v3_fails_closed_without_genuine_join_api(original_replay_v3, monkeypatch):
+    monkeypatch.delattr(coordinate_join_owner, "validate_source_span_entity_join_manifest_v2")
+    with pytest.raises(ValueError, match="requires the genuine coordinate join v2 owner"):
+        prepare_original_replay_v3(original_replay_v3)
+
+
+def test_original_replay_v3_opening_refusal_never_claims_completed_replay_or_runs_census(original_replay_v3, monkeypatch):
+    calls = []
+    def refused(*args, **kwargs):
+        calls.append(True)
+        raise RuntimeError("authored opening refusal before genuine replay")
+    monkeypatch.setattr(coordinate_join_owner, "validate_source_span_entity_join_manifest_v2", refused)
+    monkeypatch.setattr(span, "audit_examples", lambda rows: pytest.fail("opening refusal reached census"))
+    with pytest.raises(RuntimeError, match="authored opening refusal"):
+        prepare_original_replay_v3(original_replay_v3)
+    assert len(calls) == 1
+
+
+def test_original_replay_v3_join_callable_replacement_after_real_audit_refuses(original_replay_v3, monkeypatch):
+    actual_audit = span.audit_examples
+    def changed(rows):
+        result = actual_audit(rows)
+        monkeypatch.setattr(coordinate_join_owner, "validate_source_span_entity_join_manifest_v2", lambda *a, **k: None)
+        return result
+    monkeypatch.setattr(span, "audit_examples", changed)
+    with pytest.raises(ValueError, match="callable changed"):
+        prepare_original_replay_v3(original_replay_v3)
+
+
+def test_original_replay_v3_runtime_description_change_after_real_audit_refuses(original_replay_v3, monkeypatch):
+    runtime = owner._owners()[4]
+    actual_description, actual_audit = runtime.describe_runtime, span.audit_examples
+    changed = []
+    def describe(*args, **kwargs):
+        result = actual_description(*args, **kwargs)
+        return {**result, "authored_drift": True} if changed else result
+    def audit(rows):
+        result = actual_audit(rows)
+        changed.append(True)
+        return result
+    monkeypatch.setattr(runtime, "describe_runtime", describe)
+    monkeypatch.setattr(span, "audit_examples", audit)
+    with pytest.raises(ValueError, match="runtime description changed"):
+        prepare_original_replay_v3(original_replay_v3)
+
+
+def test_original_replay_v3_primary_error_retains_genuine_closing_replay_failure(original_replay_v3, monkeypatch):
+    actual_replay, actual_audit = coordinate_join_owner.validate_source_span_entity_join_manifest_v2, span.audit_examples
+    calls = []
+    def replay(*args, **kwargs):
+        result = actual_replay(*args, **kwargs)
+        calls.append(True)
+        if len(calls) == 2: raise RuntimeError("authored failure after genuine closing replay")
+        return result
+    def failed_audit(rows):
+        actual_audit(rows)
+        raise RuntimeError("authored primary census error")
+    monkeypatch.setattr(coordinate_join_owner, "validate_source_span_entity_join_manifest_v2", replay)
+    monkeypatch.setattr(span, "audit_examples", failed_audit)
+    with pytest.raises(RuntimeError, match="authored primary census error") as caught:
+        prepare_original_replay_v3(original_replay_v3)
+    assert len(calls) == 2
+    assert any("closing public join replay" in note and "authored failure" in note for note in caught.value.__notes__)
+
+
+@pytest.mark.parametrize("target", ["originals", "retained", "callable", "runtime"],
+    ids=["post-close-originals", "post-close-retained", "post-close-callable", "post-close-runtime"])
+def test_original_replay_v3_rechecks_outer_custody_after_genuine_closing_replay(original_replay_v3, monkeypatch, target):
+    case = original_replay_v3
+    actual_replay = coordinate_join_owner.validate_source_span_entity_join_manifest_v2
+    runtime = owner._owners()[4]
+    actual_description, calls, closed = runtime.describe_runtime, [], []
+    def describe(*args, **kwargs):
+        result = actual_description(*args, **kwargs)
+        return {**result, "authored_post_close_drift": True} if closed and target == "runtime" else result
+    def replay(*args, **kwargs):
+        result = actual_replay(*args, **kwargs)
+        calls.append(True)
+        if len(calls) == 2:
+            closed.append(True)
+            if target == "originals":
+                metadata = case["originals"]["source_metadata_bytes"]
+                metadata[next(iter(metadata))] += b"\n"
+            elif target == "retained": args[0]["training_mask"] = True
+            elif target == "callable":
+                monkeypatch.setattr(coordinate_join_owner, "validate_source_span_entity_join_manifest_v2", lambda *a, **k: None)
+        return result
+    monkeypatch.setattr(runtime, "describe_runtime", describe)
+    monkeypatch.setattr(coordinate_join_owner, "validate_source_span_entity_join_manifest_v2", replay)
+    with pytest.raises(ValueError, match={"originals": "originals changed", "retained": "join changed",
+            "callable": "callable changed", "runtime": "runtime description changed"}[target]):
+        prepare_original_replay_v3(case)
+    assert len(calls) == 2
 
 
 @pytest.mark.parametrize("coordinate_join", [{
@@ -924,11 +1580,11 @@ def test_coordinate_eligibility_bounds_refuse_before_discovery(coordinate_eligib
     "selected_indices": (1,), "compiler_rule": rule(),
 }], ids=["supported-authored-source-span"], indirect=True)
 @pytest.mark.parametrize("dimension", [0, 384], ids=["zero-latent", "declared-384d"])
-def test_coordinate_eligibility_supported_target_preserves_source_custody_without_authority(
-    coordinate_eligibility, dimension, monkeypatch,
+def test_original_replay_v3_supported_target_preserves_source_custody_without_authority(
+    original_replay_v3, dimension, monkeypatch,
 ):
     """Genuine mechanical support grants no legal, latent or consumer authority."""
-    case = coordinate_eligibility
+    case = original_replay_v3
     original_join = wire(case["join"])
     original_inputs = deepcopy(case["originals"])
     target = rule()
@@ -940,14 +1596,14 @@ def test_coordinate_eligibility_supported_target_preserves_source_custody_withou
                 pytest.fail("mechanical coordinate audit invoked " + _entrypoint)
             monkeypatch.setattr(span, name, forbidden)
 
-    request_raw, join_raw = coordinate_inputs(case, latent_dimension=dimension)
-    report = owner.prepare_source_span_target_eligibility_v2(request_raw, join_raw,
+    request_raw, join_raw = original_replay_inputs_v3(case, latent_dimension=dimension)
+    report = owner.prepare_source_span_target_eligibility_v3(request_raw, join_raw,
         expected_request_sha256=sha(request_raw), join_originals=case["originals"])
-    assert owner.validate_source_span_target_eligibility_v2(report, request_raw, join_raw,
+    assert owner.validate_source_span_target_eligibility_v3(report, request_raw, join_raw,
         expected_request_sha256=sha(request_raw),
         expected_report_sha256=owner.source_span_target_eligibility_sha256(report),
         join_originals=case["originals"]) == report
-    assert report["schema"] == owner.SCHEMA_V2
+    assert report["schema"] == owner.SCHEMA_V3
     assert report["request"]["latent_dimension"] == dimension
     assert report["upstream_reexecution_performed"] is True
     assert report["checkpoint_status"] == "not_assessed"
@@ -1020,4 +1676,5 @@ def test_coordinate_eligibility_supported_target_preserves_source_custody_withou
     assert report["entity_binding"] == "unavailable_semantic_companions_not_supplied"
     for field in ("consumer_eligible_rows", "source_units_established", "training_qualified_rows", "evaluation_gold_rows"):
         assert report["counts"][field] == 0
-    assert_coordinate_unqualified(report)
+    assert_original_replay_unqualified_v3(report)
+

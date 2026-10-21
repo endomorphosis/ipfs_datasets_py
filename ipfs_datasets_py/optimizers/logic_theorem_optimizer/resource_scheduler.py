@@ -72,6 +72,10 @@ _POLL_CACHE_MAX_TEXT_CHARS = 262144
 _POLL_CACHE_MAX_RESIDENT_BYTES = 4 * 1024**2
 _POLL_CACHE_MAX_NODES = 32768
 _POLL_CACHE_MAX_DEPTH = 64
+# Inspection refuses complete populations above these bounds; it never samples
+# or truncates descendants when determining whether retained work remains.
+_LEASE_INSPECTION_MAX_RECORDS = 16384
+_LEASE_INSPECTION_MAX_DESCENDANTS = 4096
 try:
     _POLL_JSON_LOADS = json.loads
     _POLL_JSON_LOADS_CODE = json.loads.__code__
@@ -1202,7 +1206,39 @@ class GlobalResourceScheduler:
     @contextmanager
     def _locked_state(
         self, *, persist: bool = True, allow_reconfigure: bool = False,
+        strict_existing: bool = False,
     ) -> Iterator[Dict[str, Any]]:
+        if strict_existing:
+            if persist or allow_reconfigure:
+                raise ResourceConfigurationError("lease inspection requires an existing nonpersistent read")
+            # Reuse the existing owner's bounded, no-follow reader. This branch
+            # neither creates the sibling lock nor synthesizes missing state.
+            from .existing_resource_scheduler import _parents, _read, _need
+            import stat
+            configured = Path(os.path.abspath(os.path.expanduser(str(self.config.state_path))))
+            parents = _parents(configured)
+            _need(configured == self.state_path, "inspection state path differs from configured identity")
+            with _resource_thread_lock(self._thread_lock):
+                _read(self.state_path, require_current=False)
+                descriptor = os.open(self.lock_path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+                try:
+                    info = os.fstat(descriptor)
+                    _need(stat.S_ISREG(info.st_mode) and info.st_nlink == 1,
+                          "unaliased existing native scheduler lock required")
+                    _need(fcntl is not None, "native process-safe locking unavailable")
+                    _resource_file_lock(descriptor)
+                    current = self.lock_path.lstat()
+                    _need((current.st_dev, current.st_ino) == (info.st_dev, info.st_ino)
+                          and current.st_nlink == 1 and stat.S_ISREG(current.st_mode)
+                          and _parents(configured) == parents,
+                          "native lock or directory identity changed")
+                    _, state = _read(self.state_path)
+                    self._validate_state_configuration(state, allow_reconfigure=False)
+                    yield state
+                    _need(_parents(configured) == parents, "native scheduler directory identity changed")
+                finally:
+                    os.close(descriptor)
+            return
         with _resource_thread_lock(self._thread_lock):
             # Lock a stable sibling inode and atomically replace the JSON state
             # after fsync.  Locking the JSON inode itself would be unsafe:
@@ -2364,6 +2400,137 @@ class GlobalResourceScheduler:
             if getattr(error, "resource_admission_cleanup_pending", False):
                 raise
             return None
+
+    def inspect_lease(
+        self, lease_id: str, *, expected_request_id: str,
+        expected_lane: Union[str, ResourceLane], expected_owner_pid: int,
+        expected_owner_birth_marker: Optional[str] = None,
+        bounded_lock_timeout: float = 1.0,
+    ) -> Dict[str, Any]:
+        """Inspect one exact identity and its retained descendants without writes.
+
+        This is an observation, never an authority token or release receipt.
+        Missing current state is an error; an absent row has unknown historical
+        disposition. Expiry, cancellation and a release request do not establish
+        that live descendants stopped. The existing lock deadline bounds waits,
+        not nonpreemptible filesystem IO. Use open_existing_scheduler when a
+        caller does not already own a scheduler facade, with inspection_only=True
+        and a caller deadline covering opening too; native __init__ is eager.
+        """
+        lane = expected_lane.value if isinstance(expected_lane, ResourceLane) else expected_lane
+        for value, maximum in ((lease_id, 256), (expected_request_id, 256), (lane, 128)):
+            if type(value) is not str or not value or len(value) > maximum or "\0" in value:
+                raise ResourceConfigurationError("exact bounded lease, request and lane identities required")
+        if type(expected_owner_pid) is not int or expected_owner_pid <= 0:
+            raise ResourceConfigurationError("exact positive owner PID required")
+        if expected_owner_birth_marker is not None and (
+                type(expected_owner_birth_marker) is not str
+                or not expected_owner_birth_marker or len(expected_owner_birth_marker) > 256
+                or "\0" in expected_owner_birth_marker):
+            raise ResourceConfigurationError("exact owner birth marker required when provided")
+        if (type(bounded_lock_timeout) not in (int, float)
+                or not math.isfinite(bounded_lock_timeout) or not 0 < bounded_lock_timeout <= 30):
+            raise ResourceConfigurationError("inspection lock timeout must be finite and in (0, 30]")
+        limit = time.monotonic() + bounded_lock_timeout
+        previous = resource_operation_deadline()
+        if previous is not None and previous.cleanup_only:
+            scope = resource_cleanup_deadline(
+                native_deadline_monotonic=min(limit, previous.native_deadline_monotonic))
+        else:
+            scope = resource_admission_deadline(
+                work_deadline_monotonic=min(limit, previous.work_deadline_monotonic) if previous else limit,
+                native_deadline_monotonic=min(limit, previous.native_deadline_monotonic) if previous else limit)
+        with scope:
+            with self._locked_state(persist=False, strict_existing=True) as state:
+                leases = state["leases"]
+                record = leases.get(lease_id)
+                if record is not None and (
+                        record.get("lease_id") != lease_id
+                        or record.get("request_id") != expected_request_id
+                        or record.get("lane") != lane
+                        or type(record.get("owner_pid")) is not int
+                        or record["owner_pid"] != expected_owner_pid
+                        or (expected_owner_birth_marker is not None
+                            and record.get("owner_birth_marker") != expected_owner_birth_marker)):
+                    raise LeaseNotFoundError("exact lease inspection identity does not match")
+                if len(leases) > _LEASE_INSPECTION_MAX_RECORDS:
+                    raise SchedulerStateError("lease inspection total-record bound exceeded")
+                children: Dict[str, list[str]] = {}
+                for ordinal, (identifier, row) in enumerate(leases.items()):
+                    if ordinal % 128 == 0:
+                        _check_resource_operation_deadline()
+                    parent = row.get("parent_lease_id")
+                    if (type(identifier) is not str or not identifier or len(identifier) > 256
+                            or "\0" in identifier or (parent is not None and (
+                                type(parent) is not str or not parent or len(parent) > 256 or "\0" in parent))):
+                        raise SchedulerStateError("inspected lease ancestry identity is malformed")
+                    if parent is not None:
+                        children.setdefault(parent, []).append(identifier)
+                # A single adjacency pass and a bounded worklist replace the
+                # legacy repeated whole-state descendant scan. Reachable cycles
+                # refuse rather than being silently collapsed into a set.
+                pending, seen, descendant_ids = [lease_id], set(), []
+                while pending:
+                    if len(seen) % 128 == 0:
+                        _check_resource_operation_deadline()
+                    identifier = pending.pop()
+                    if identifier in seen:
+                        raise SchedulerStateError("cycle in inspected lease descendants")
+                    seen.add(identifier)
+                    if identifier != lease_id:
+                        if len(descendant_ids) >= _LEASE_INSPECTION_MAX_DESCENDANTS:
+                            raise SchedulerStateError("lease inspection descendant bound exceeded")
+                        descendant_ids.append(identifier)
+                    pending.extend(children.get(identifier, ()))
+                now = time.time()
+                observations: Dict[tuple[int, str, str], bool] = {}
+                boot = _owner_boot_id()
+
+                def project(identifier, row):
+                    _check_resource_operation_deadline()
+                    # Closed scalar projection: metadata, keys and authority
+                    # tokens from the complete state never leave this method.
+                    expires = row.get("expires_at")
+                    if (row.get("lease_id") != identifier
+                            or type(expires) not in (int, float) or not math.isfinite(expires)
+                            or type(row.get("owner_pid")) is not int or row["owner_pid"] <= 0
+                            or type(row.get("lane")) is not str
+                            or type(row.get("owner_birth_marker", "")) is not str
+                            or any(type(row.get(flag, False)) is not bool
+                                   for flag in ("cancelled", "release_requested"))
+                            or (row.get("parent_lease_id") is not None
+                                and type(row["parent_lease_id"]) is not str)):
+                        raise SchedulerStateError("inspected lease status is malformed")
+                    expired = expires <= now
+                    release_requested = row.get("release_requested", False)
+                    cancelled = row.get("cancelled", False)
+                    status = ("release_requested" if release_requested else "cancelled" if cancelled
+                              else "expired" if expired else "present")
+                    return {"lease_id": identifier, "parent_lease_id": row.get("parent_lease_id"),
+                        "lane": row["lane"], "owner_pid": row["owner_pid"],
+                        "owner_birth_marker": row.get("owner_birth_marker", ""),
+                        "owner_alive": _owner_alive_once(row, observations, current_boot=boot),
+                        "expires_at": expires, "expired": expired,
+                        "cancelled": cancelled, "release_requested": release_requested,
+                        "status": status}
+
+                own = project(lease_id, record) if record is not None else None
+                descendants = [project(identifier, leases[identifier]) for identifier in
+                    sorted(descendant_ids)]
+                _check_resource_operation_deadline()
+                return {"schema": "exact-resource-lease-inspection/v1", "read_only": True,
+                    "lease_id": lease_id, "expected_request_id": expected_request_id,
+                    "expected_lane": lane, "expected_owner_pid": expected_owner_pid,
+                    "expected_owner_birth_marker": expected_owner_birth_marker,
+                    "binding_verified": True if own is not None else None,
+                    "owner_birth_binding_verified": (True if own is not None
+                        and expected_owner_birth_marker is not None else None),
+                    "observed_at": now, "status": own["status"] if own else "absent",
+                    "lease": own, "descendants": descendants,
+                    "descendant_count": len(descendants),
+                    "live_descendant_count": sum(row["owner_alive"] for row in descendants),
+                    "historical_release_status": None,
+                    "historical_release_reason": "current scheduler state contains no release history"}
 
     def renew(self, lease_id: str, lease_key: Optional[str] = None) -> bool:
         now = time.time()
