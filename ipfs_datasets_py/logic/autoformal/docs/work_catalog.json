@@ -2145,6 +2145,16 @@
       "root": "datasets_repository",
       "scope": "One original-owned metadata discovery attempt for four retained 384D/768D CE/zero selectors failed at catalog_load. One actual read-only DuckDB connection attempt did not return, before settings or model_metadata SQL; no snapshot or selector resolutions were obtained. Immediate generic wrapper cause ValueError does not identify the underlying native reason; registration presence remains unverified, with no missing-record, writer or configuration inference. Original native/source-READ and selected 128 MiB retained-storage closeout completed; all four failed files (2,930 bytes) were preserved and rehashed. No ModelManager construction, registration, checkpoint/companion payload read, full database hash/copy, model, training or Lean execution. Existing historical registrations, public payload roundtrips and reader source remain reusable under their original scopes. Portable evidence includes the independent failure/closeout review and original full receipt references.",
       "status": "owned_data_discovery_refused_and_closed"
+    },
+    {
+      "id": "retained-384-768-catalog-discovery-20261021-04",
+      "observed_bytes": 7060,
+      "observed_sha256": "a0f78b034f822cb17a3f14dce3e40b55bb1091158b162646b715cc29b1f73125",
+      "path": "docs/autoformalization/evidence/legal-ir-retained-catalog-discovery-20261021.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "DATA04 reused the existing reader for one actual read-only IRPersistentCatalogResult with 690 bindings and four exact same-result retained 384D/768D CE/zero selector matches, zero not found. Fixed first-SQL external-access hardening preceded settings/catalog SQL; effective read-only, extension-off and bounded resource settings verified. All 249 source pins and original native/storage/source-READ closeout checked; six files/77,589 bytes preserved. Metadata presence and stored trained/readiness declarations confer no checkpoint/runtime/source-compatibility, quality, service, training/gold or Lean authority. DATA02 unknown failure and DATA03 direct temp_directory_change_blocked refusal plus actual closeouts remain separate; no new weights, registrations, model execution or 8D/4096D discovery.",
+      "status": "verified_readonly_metadata_discovery_and_original_closeout"
     }
   ]
 }
