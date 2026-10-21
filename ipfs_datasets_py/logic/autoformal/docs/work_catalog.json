@@ -216,17 +216,60 @@
       "apis": [
         "prepare_span_cache_intake",
         "validate_span_cache_intake",
-        "prepare_entity_cache_graphs"
+        "prepare_entity_cache_graphs",
+        "prepare_coordinate_source_graph_intake_v1",
+        "validate_coordinate_source_graph_intake_v1",
+        "coordinate_source_graph_intake_sha256"
       ],
       "compatibility_dependency": false,
-      "evidence_ids": [],
+      "evidence_ids": [
+        "coordinate-graph-intake-adopted-20261021-01",
+        "coordinate-graph-intake-git-20261021-01"
+      ],
       "id": "span-intake",
-      "notes": "",
+      "notes": "Reuse the separately qualified coordinate slice; all source/edition/meaning and semantic admission gates remain unresolved, selected occurrences null and learning/gold masks zero.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_span_cache_intake",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py",
       "required": true,
-      "status": "implementation_present"
+      "status": "implementation_present",
+      "main_integration": {
+        "status": "qualified_scoped_main_integration_publication_pending",
+        "base_main": "5beb7f4f7f03307f37684908cbb85ae977fc08b6",
+        "public_additive_apis": [
+          "prepare_coordinate_source_graph_intake_v1",
+          "validate_coordinate_source_graph_intake_v1",
+          "coordinate_source_graph_intake_sha256"
+        ],
+        "scope": "APIs require the exact selected source in the integration checkout. Qualification and local/unmerged/unpushed delivery flags retain their original cutoffs; no subsequent merge or push is claimed.",
+        "historical_qualified_owner_bytes": 46532,
+        "historical_qualified_owner_sha256": "9ef87c5426bd11cf210f0c5b9755ef30e6e101ce3508d56b5a2052251a88c48c",
+        "changed_source_qualification": "47 cases / 141 passed phases; separate from original 25/75 source generation",
+        "qualification_path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/qualification-summary.json",
+        "qualification": {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/qualification-summary.json",
+          "bytes": 11271,
+          "sha256": "495f07ba8bd8f3f028834dc36a1e3acf7a226c6ec4a061102e75be71ae19f6cf"
+        },
+        "owner_bytes": 46494,
+        "owner_sha256": "a9a5ceefc5ed291fc17991b9848d93f8fb9bb7f5e503e4f34130624cd2abf8e4"
+      },
+      "selected_git_delivery": {
+        "branch": "agent/legal-ir-coordinate-graph-intake-20261021",
+        "head": "73841dee310d74f5425130e2b81114e18851ee4a",
+        "base_commit": "f9253ab4491b7b1cfdbbd09eb0350877ad75e986",
+        "owner_path": "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py",
+        "owner_bytes": 46532,
+        "owner_sha256": "9ef87c5426bd11cf210f0c5b9755ef30e6e101ce3508d56b5a2052251a88c48c",
+        "public_additive_apis": [
+          "prepare_coordinate_source_graph_intake_v1",
+          "validate_coordinate_source_graph_intake_v1",
+          "coordinate_source_graph_intake_sha256"
+        ],
+        "merged": false,
+        "pushed": false,
+        "scope": "Historical selected-delivery cutoff; separate scoped main integration/publication remains pending."
+      }
     },
     {
       "apis": [
@@ -339,17 +382,58 @@
     {
       "apis": [
         "prepare_source_span_target_eligibility",
-        "validate_source_span_target_eligibility"
+        "validate_source_span_target_eligibility",
+        "source_span_target_join_originals_sha256",
+        "prepare_source_span_target_eligibility_v2",
+        "validate_source_span_target_eligibility_v2"
       ],
       "compatibility_dependency": false,
-      "evidence_ids": [],
+      "evidence_ids": [
+        "coordinate-target-eligibility-qualified-20261020-01",
+        "coordinate-target-eligibility-git-20261020-01",
+        "coordinate-supported-target-qualified-20261021-01",
+        "coordinate-supported-target-git-20261021-01"
+      ],
       "id": "target-eligibility",
-      "notes": "Missing producer/offset/governing-definition evidence must remain explicit.",
+      "notes": "Missing producer/offset/governing-definition evidence must remain explicit. Reuse the separately qualified coordinate slice; all source/edition/meaning and semantic admission gates remain unresolved, selected occurrences null and learning/gold masks zero.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_span_target_eligibility_v1",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_source_span_target_eligibility_v1.py",
       "required": true,
-      "status": "implementation_present"
+      "status": "implementation_present",
+      "main_integration": {
+        "status": "qualified_scoped_main_integration_publication_pending",
+        "base_main": "5beb7f4f7f03307f37684908cbb85ae977fc08b6",
+        "owner_bytes": 39616,
+        "owner_sha256": "c8b9cbe47b3f6ca5709909f34d53730aff594f8218947e17cb0d07f9ea4161f9",
+        "public_additive_apis": [
+          "source_span_target_join_originals_sha256",
+          "prepare_source_span_target_eligibility_v2",
+          "validate_source_span_target_eligibility_v2"
+        ],
+        "scope": "APIs require the exact selected source in the integration checkout. Qualification and local/unmerged/unpushed delivery flags retain their original cutoffs; no subsequent merge or push is claimed.",
+        "qualification": {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/qualification-summary.json",
+          "bytes": 11271,
+          "sha256": "495f07ba8bd8f3f028834dc36a1e3acf7a226c6ec4a061102e75be71ae19f6cf"
+        }
+      },
+      "selected_git_delivery": {
+        "branch": "agent/legal-ir-coordinate-eligibility-20261020",
+        "head": "d4f62d9db14d6064359d881d82695611cfc6d763",
+        "base_commit": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+        "owner_path": "ipfs_datasets_py/logic/autoformal/legal_source_span_target_eligibility_v1.py",
+        "owner_bytes": 39616,
+        "owner_sha256": "c8b9cbe47b3f6ca5709909f34d53730aff594f8218947e17cb0d07f9ea4161f9",
+        "public_additive_apis": [
+          "source_span_target_join_originals_sha256",
+          "prepare_source_span_target_eligibility_v2",
+          "validate_source_span_target_eligibility_v2"
+        ],
+        "merged": false,
+        "pushed": false,
+        "scope": "Historical selected-delivery cutoff; separate scoped main integration/publication remains pending."
+      }
     },
     {
       "apis": [
@@ -729,20 +813,55 @@
       "apis": [
         "prepare_source_span_entity_census_v1",
         "source_span_entity_census_sha256",
-        "validate_source_span_entity_census_v1"
+        "validate_source_span_entity_census_v1",
+        "prepare_source_span_entity_census_v2",
+        "validate_source_span_entity_census_v2"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
         "entity-census-completion",
-        "entity-census-readback"
+        "entity-census-readback",
+        "coordinate-entity-census-qualified-20261021-01",
+        "coordinate-entity-census-git-20261021-01"
       ],
       "id": "source-span-entity-census",
-      "notes": "Existing companion reuses an independently pinned prior census and original entity path. Historical engineering completion does not establish meaning or resolve empty edge endpoints. No replay performed by this catalog update.",
+      "notes": "Existing companion reuses an independently pinned prior census and original entity path. Historical engineering completion does not establish meaning or resolve empty edge endpoints. No replay performed by this catalog update. Reuse the separately qualified coordinate slice; all source/edition/meaning and semantic admission gates remain unresolved, selected occurrences null and learning/gold masks zero.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_span_entity_census_v1",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_source_span_entity_census_v1.py",
       "required": true,
-      "status": "implementation_present"
+      "status": "implementation_present",
+      "main_integration": {
+        "status": "qualified_scoped_main_integration_publication_pending",
+        "base_main": "5beb7f4f7f03307f37684908cbb85ae977fc08b6",
+        "owner_bytes": 38608,
+        "owner_sha256": "1c589c1713fdd946869b69745ab43938df5d85e91c16ae525ef22dfd75824f7e",
+        "public_additive_apis": [
+          "prepare_source_span_entity_census_v2",
+          "validate_source_span_entity_census_v2"
+        ],
+        "scope": "APIs require the exact selected source in the integration checkout. Qualification and local/unmerged/unpushed delivery flags retain their original cutoffs; no subsequent merge or push is claimed.",
+        "qualification": {
+          "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/qualification-summary.json",
+          "bytes": 11271,
+          "sha256": "495f07ba8bd8f3f028834dc36a1e3acf7a226c6ec4a061102e75be71ae19f6cf"
+        }
+      },
+      "selected_git_delivery": {
+        "branch": "agent/legal-ir-coordinate-entity-census-20261021",
+        "head": "f9253ab4491b7b1cfdbbd09eb0350877ad75e986",
+        "base_commit": "3623a46f713037b05f33236e7a308959aa206d09",
+        "owner_path": "ipfs_datasets_py/logic/autoformal/legal_source_span_entity_census_v1.py",
+        "owner_bytes": 38608,
+        "owner_sha256": "1c589c1713fdd946869b69745ab43938df5d85e91c16ae525ef22dfd75824f7e",
+        "public_additive_apis": [
+          "prepare_source_span_entity_census_v2",
+          "validate_source_span_entity_census_v2"
+        ],
+        "merged": false,
+        "pushed": false,
+        "scope": "Historical selected-delivery cutoff; separate scoped main integration/publication remains pending."
+      }
     },
     {
       "apis": [
@@ -960,7 +1079,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-20T23:26:19.846480+00:00",
+  "last_updated_at_utc": "2026-10-21T03:16:11.897620+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -1647,6 +1766,110 @@
       "required_for_catalog_check": false,
       "scope": "128cases/384phases:45 source-package metadata,48 substituted legacy orchestration,35 genuine coordinatejoin controls; entity metadata/custody only, no endpoint or current-source crosswalk recovery.",
       "status": "qualified_selected_branch_unmerged"
+    },
+    {
+      "id": "coordinate-target-eligibility-qualified-20261020-01",
+      "observed_bytes": 3530,
+      "observed_sha256": "e364ece1e21f45066ae6e8e09233b6636f5a46e6d87f436502015fe3381ef3cf",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-target-eligibility-20261020-01/qualification-summary.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "249cases/747passedphases:92legacy+42genuine-coordinate+103authoredconsumer+12runtime-metadata guards. Exact private candidate, genuine opening/closing join replay, no source/meaning/gold/model/Lean admission; original READ/native/storage closed.",
+      "status": "qualified_private_candidate"
+    },
+    {
+      "id": "coordinate-target-eligibility-git-20261020-01",
+      "root": "datasets_repository",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-target-eligibility-20261020-01/git-delivery-receipt-v01.json",
+      "observed_bytes": 6271,
+      "observed_sha256": "becf3350ef2afdd6b0a38ebb643b56d99faf796fbbdcd7b892370e4c3401cbd4",
+      "required_for_catalog_check": false,
+      "status": "historical_selected_delivery_committed_unmerged_unpushed",
+      "delivery_commit": "d4f62d9db14d6064359d881d82695611cfc6d763",
+      "delivery_branch": "agent/legal-ir-coordinate-eligibility-20261020",
+      "scope": "Successful original Git/source-WRITE delivery at its recorded cutoff. Historical unmerged/unpushed observations are retained; this main integration has a separate pending publication boundary."
+    },
+    {
+      "delivery_branch": "agent/legal-ir-coordinate-supported-target-20261021",
+      "delivery_commit": "3623a46f713037b05f33236e7a308959aa206d09",
+      "id": "coordinate-supported-target-qualified-20261021-01",
+      "observed_bytes": 6332,
+      "observed_sha256": "f44167aff227aa5e179ec6453637f6c1f968a902060dd2e3613f171e9feb552c",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-supported-target-20261020-01/qualification-summary.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "4cases/12passedphases:2new supported-target dimension declarations over1authoredsource +2existing genuine coordinate regressions. 230sourcefiles/255requestpins; original READ/native/storage closed. No numerical model, statutory accuracy, training, gold or Lean admission.",
+      "status": "qualified_selected_branch_unmerged"
+    },
+    {
+      "id": "coordinate-supported-target-git-20261021-01",
+      "root": "datasets_repository",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-supported-target-20261020-01/git-delivery-receipt-v03.json",
+      "observed_bytes": 5448,
+      "observed_sha256": "fafc7a072c1c3d71033a9b5003ca1d7a0123680fe9bb1352be84142934796f01",
+      "required_for_catalog_check": false,
+      "status": "historical_selected_delivery_committed_unmerged_unpushed",
+      "delivery_commit": "3623a46f713037b05f33236e7a308959aa206d09",
+      "delivery_branch": "agent/legal-ir-coordinate-supported-target-20261021",
+      "scope": "Successful original Git/source-WRITE delivery at its recorded cutoff. Historical unmerged/unpushed observations are retained; this main integration has a separate pending publication boundary."
+    },
+    {
+      "delivery_branch": "agent/legal-ir-coordinate-entity-census-20261021",
+      "delivery_commit": "f9253ab4491b7b1cfdbbd09eb0350877ad75e986",
+      "id": "coordinate-entity-census-qualified-20261021-01",
+      "observed_bytes": 11021,
+      "observed_sha256": "2a4974cc3e7baed0125172bd47ee1f6a751065a56486503e91375f0d405bee6d",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-entity-census-20261021-01/qualification-summary.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "41cases/123passedphases:37new coordinate-census cases +4existing entity-reader regressions. Tiny authored setup; zero row decoding during companion operations; original historical census reused separately. 230sourcefiles/256requestpins; original READ/native/storage closed. No semantic, training, model or Lean admission.",
+      "status": "qualified_selected_branch_unmerged"
+    },
+    {
+      "id": "coordinate-entity-census-git-20261021-01",
+      "root": "datasets_repository",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-entity-census-20261021-01/git-delivery-receipt-v01.json",
+      "observed_bytes": 5839,
+      "observed_sha256": "6b5814a09c9d709dc0ca53cdd7125c2d6275363b600de42ef711f5eb7dab62ad",
+      "required_for_catalog_check": false,
+      "status": "historical_selected_delivery_committed_unmerged_unpushed",
+      "delivery_commit": "f9253ab4491b7b1cfdbbd09eb0350877ad75e986",
+      "delivery_branch": "agent/legal-ir-coordinate-entity-census-20261021",
+      "scope": "Successful original Git/source-WRITE delivery at its recorded cutoff. Historical unmerged/unpushed observations are retained; this main integration has a separate pending publication boundary."
+    },
+    {
+      "delivery_branch": "agent/legal-ir-coordinate-graph-intake-20261021",
+      "delivery_commit": "73841dee310d74f5425130e2b81114e18851ee4a",
+      "id": "coordinate-graph-intake-adopted-20261021-01",
+      "observed_bytes": 5178,
+      "observed_sha256": "5160a450a1542eafda877604ec6443c6996ddc04e995167daf6247a768f1793f",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-graph-adoption-20261021-01/qualification-summary.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Reuse original graph01:25cases/75phases,22new+3legacy;232exact sources/256requestpins. Proposed typed-deontic canonical graphs only. No new cohort, model, training, source crosswalk, entity/definition binding, review or Lean admission.",
+      "status": "qualified_selected_branch_unmerged"
+    },
+    {
+      "id": "coordinate-graph-intake-git-20261021-01",
+      "root": "datasets_repository",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-graph-adoption-20261021-01/git-delivery-receipt-v01.json",
+      "observed_bytes": 4913,
+      "observed_sha256": "bb19b4ec4c355f2a90ea175921e05c833686af9c4fb4344f74e65ae8cb713e2d",
+      "required_for_catalog_check": false,
+      "status": "historical_selected_delivery_committed_unmerged_unpushed",
+      "delivery_commit": "73841dee310d74f5425130e2b81114e18851ee4a",
+      "delivery_branch": "agent/legal-ir-coordinate-graph-intake-20261021",
+      "scope": "Successful original Git/source-WRITE delivery at its recorded cutoff. Historical unmerged/unpushed observations are retained; this main integration has a separate pending publication boundary."
+    },
+    {
+      "id": "coordinate-main-integration-qualified-20261021-01",
+      "root": "datasets_repository",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/qualification-summary.json",
+      "observed_bytes": 11271,
+      "observed_sha256": "495f07ba8bd8f3f028834dc36a1e3acf7a226c6ec4a061102e75be71ae19f6cf",
+      "required_for_catalog_check": false,
+      "status": "qualified_main_integration_remote_publication_pending",
+      "scope": "47 focused engineering cases /141 passed phases on the changed main source generation. Original 25/75 and earlier selected qualifications retain their own source scopes. No new source/edition crosswalk, entity/definition meaning, training, model or Lean admission."
     }
   ]
 }

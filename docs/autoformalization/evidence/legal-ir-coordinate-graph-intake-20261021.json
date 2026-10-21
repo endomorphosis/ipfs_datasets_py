@@ -1,0 +1,84 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "coordinate_to_graph_source_correspondence_verified": false,
+    "current_source_release_correspondence_verified": false,
+    "entity_semantic_bindings_verified": false,
+    "evaluation_gold_qualified": false,
+    "graph_admitted": false,
+    "semantic_review_verified": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "evaluation_gold_mask": 0,
+  "graph_profile": "canonical_rules_v1",
+  "independent_review": {
+    "bytes": 29459,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-graph-adoption-20261021-01/independent-qualification-adoption-review-v01.json",
+    "sha256": "5699eaf39afafdc3163aadb1dcf9312f06317a3e2388523d41aef44eee0cea2d"
+  },
+  "integration_base_commit": "f9253ab4491b7b1cfdbbd09eb0350877ad75e986",
+  "limits": [
+    "This adoption reuses the exact closed original graph01 cohort; it starts no new tests, training, inference, provider calls, corpus scans or Lean builds.",
+    "The 22 new coordinate cases and three legacy regressions use authored transport/source/HTML fixtures, not reviewed statutory examples.",
+    "Only mechanically supported typed_deontic / typed-deontic-rule/v1 outputs become canonical_rules_v1 graph proposals. Other outputs remain lossless unresolved occurrences.",
+    "HTML, edition, revision and exact occurrence nominations are independent declarations. Coordinate-to-graph and current-release correspondence remain unverified; no source/edition crosswalk is supplied.",
+    "All training/evaluation/source-binding masks remain integer zero, selected occurrences remain null, and authority flags remain false.",
+    "Entity census bindings, governing definitions, every-use reviews, complete typed-family support, corpus exchange and semantic/graph/Lean admission are not supplied by this profile.",
+    "The original native run proves its normal granted-owner cleanup only. No no-native fallback ran; broader lifecycle59 is not qualified by this run.",
+    "Original path-dependent evidence and producer pins retain their original locations; exact source delivery is not a fresh-checkout or relocation qualification."
+  ],
+  "original_cleanup": {
+    "native_compute_released": true,
+    "native_fallback_executed": false,
+    "normal_granted_path": true,
+    "source_read_closed": true,
+    "storage_released": true
+  },
+  "original_qualified_manifest": {
+    "bytes": 48068,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-graph-intake-20261021-01/manifest-graph-01.json",
+    "sha256": "718b3b7a85bafe61cd0cdfb957d4e9959d81c20a36d601b7712f26506fbdee71"
+  },
+  "owner": "ipfs_datasets_py.logic.autoformal.legal_span_cache_intake",
+  "qualification": {
+    "actual_module_compile_union_paths": 139,
+    "baseline_changed_candidate_paths": 2,
+    "baseline_exact_candidate_paths": 230,
+    "candidate_files": 232,
+    "cases": 25,
+    "legacy_regressions": 3,
+    "new_coordinate_cases": 22,
+    "phase_passes": 75,
+    "request_source_pins": 256,
+    "retained_attempt_bytes": 2323709,
+    "retained_attempt_files": 185
+  },
+  "qualification_summary": {
+    "bytes": 5178,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-graph-adoption-20261021-01/qualification-summary.json",
+    "sha256": "5160a450a1542eafda877604ec6443c6996ddc04e995167daf6247a768f1793f"
+  },
+  "schema": "legal-ir-coordinate-graph-intake-evidence/v1",
+  "selected_occurrence": null,
+  "selected_sources": {
+    "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py": {
+      "bytes": 46532,
+      "sha256": "9ef87c5426bd11cf210f0c5b9755ef30e6e101ce3508d56b5a2052251a88c48c"
+    },
+    "tests/unit/logic/autoformal/test_legal_span_cache_intake.py": {
+      "bytes": 37003,
+      "sha256": "e14a0ac8f6c068d79d9f97fa48618d03004aa6790b6ebff5c9417e0c29c7e754"
+    }
+  },
+  "source_binding_mask": 0,
+  "source_compatibility_profile": "paired-coordinate-source-graph-intake/v1",
+  "status": "original_qualification_reused_selected_delivery_not_yet_installed_or_published",
+  "supported_family": "typed_deontic",
+  "supported_format": "typed-deontic-rule/v1",
+  "tasks": [
+    "LIR-02",
+    "LIR-04"
+  ],
+  "training_mask": 0
+}

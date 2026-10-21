@@ -6,7 +6,7 @@ It replays candidate custody and uses the existing `source_span_formula_v1`
 audit to measure decoder expressibility. It does not select a statutory
 interpretation, authorize a consumer, load a checkpoint or run training.
 
-## Inputs and API
+## Legacy v1 inputs and API
 
 Use the complete raw UTF-8 join report and a closed JSON request containing:
 
@@ -89,3 +89,94 @@ identities, use the workspace logic-tree guard, and hold the existing source rea
 lease throughout the owned validation child lifetime. The qualification packet
 for the selected historical population is maintained outside the repository at
 `artifacts/legal-ir-target-eligibility-20261016-01/` in the enclosing workspace.
+
+## Coordinate join v2
+
+The additive `prepare_source_span_target_eligibility_v2` and
+`validate_source_span_target_eligibility_v2` APIs accept the explicit
+`legal-source-span-entity-join-manifest/v2` coordinate profile. Legacy v1 keeps
+its strict schema and retained-report-only scope. Neither API relabels one
+profile as the other.
+
+The closed v2 request retains the v1 request fields and changes `schema` to
+`legal-source-span-target-eligibility-request/v2`. It also requires:
+
+- `join_originals_sha256`: an independent commitment to the complete original
+  public join arguments; `source_span_target_join_originals_sha256` computes
+  that bounded identity without granting authority.
+- `source_coordinate_report_sha256`: the independent canonical coordinate
+  report identity, distinct from the hash of its exact artifact bytes.
+
+Supply `join_originals` separately with exactly `request_raw`,
+`source_request_raw`, `source_metadata_bytes`, `paired_inventory_request_raw`,
+`paired_manifest_bytes`, `entity_info_raw`, `expected_request_sha256` and
+`legacy_join_inputs`. These are the original public coordinate-join inputs,
+not a newly synthesized legacy join. Raw fields are bytes and the metadata
+collections are ordinary mappings of exact names to bytes. This bounded
+profile permits `legacy_join_inputs` only as `None` or an empty dictionary.
+
+```python
+from ipfs_datasets_py.logic.autoformal.legal_source_span_target_eligibility_v1 import (
+    prepare_source_span_target_eligibility_v2,
+    validate_source_span_target_eligibility_v2,
+)
+
+report = prepare_source_span_target_eligibility_v2(
+    request_raw, join_raw,
+    expected_request_sha256=request_sha256,
+    join_originals=original_join_inputs,
+)
+validate_source_span_target_eligibility_v2(
+    report, request_raw, join_raw,
+    expected_request_sha256=request_sha256,
+    expected_report_sha256=source_span_target_eligibility_sha256(report),
+    join_originals=original_join_inputs,
+)
+```
+
+Both preparation and complete report validation invoke the genuine public
+coordinate-join validator against the original inputs. Preparation performs
+opening and closing replay; after an opened operation fails, closing custody
+checks still run and preserve the original error with secondary failure notes.
+Original-input and producer checks also run on failure. The validator additionally
+checks that caller-owned offered report content did not change during replay.
+
+One nonempty selected bundle with at most 64 physical rows is supported.
+Original input bytes have an 8 MiB aggregate ceiling; request and report limits
+remain explicit. Physical row ordinals and original global span indices are
+separate identities. Each physical row and formal-output occurrence retains
+its exact provenance JSON, coordinate-report reference and original span index.
+The exact raw join is retained once at this report layer, preserving its complete
+carrier without rebuilding or normalizing it.
+
+The shared mechanical census preserves the original v1 output audit. Current
+source/edition correspondence remains unverified, entity information remains
+metadata-only, and every training/gold mask remains integer zero. All authority
+flags remain false. A supported source-copy target is a representability result,
+not a source, meaning, exposure, split or consumer-authorization decision.
+
+The source-span registry dependency uses its existing complete profile:
+descriptor, catalog symbol, class and factory routing. Metadata discovery and
+argument-guard controls do not qualify checkpoint loading, numerical inference,
+training or legal reconstruction.
+
+
+## Supported coordinate target integration
+
+The focused follow-up qualifies four cases and twelve passed phases: two new
+dimension declarations (0 and 384) over one authored source, plus two existing
+genuine coordinate regressions. It reuses the original 249-case qualification.
+The authored rule enters before genuine paired capture and survives the public
+producer, Parquet, join, adapter and source-copy audit. Both direct and canonical
+compiler routes are mechanically supported for `Clerk shall file report.`
+Physical row 0 still references original global span 1, while the complete
+two-span coordinate carrier retains the unselected context. The default marker
+fixture is unchanged. Original-input validation, post-audit physical-drift
+refusal and source/compute/storage cleanup all close within their existing owners.
+
+Dimension 384 is metadata only: no vector, encoder, decoder checkpoint, numerical
+inference or training runs. Every authority flag remains false; all training/gold
+masks remain integer zero; consumer eligibility and legal review gates stay
+closed. One authored example supplies no statutory accuracy estimate. See the
+[retained qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-supported-target-20261020-01/qualification-summary.json)
+and the [committed evidence summary](../../../../../docs/autoformalization/evidence/legal-ir-coordinate-supported-target-20261021.json).

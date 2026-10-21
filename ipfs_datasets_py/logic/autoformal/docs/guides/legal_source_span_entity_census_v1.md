@@ -148,3 +148,143 @@ semantic reviews or Lean execution. Self-resealed report-tampering cases require
 full original replay and should be explicitly budgeted; fixed-pin mismatches
 can be tested before that work. Negative unit fault injections must remain
 separate from actual retained-evidence qualification.
+
+## Additive coordinate v2 companion
+
+Qualification status: **PASSED — original census-04, independently accepted**.
+The original controller completed 41 cases and 123 setup/call/teardown phases
+with zero skips: 37 new coordinate-companion cases and four ported entity-owner
+regressions. The prior 141-case qualification remains separate and was not rerun.
+The new companion fixture prepares one tiny 16-row detailed census in module
+setup; companion preparation and replay perform zero entity-row rescans.
+The exact candidate has 230 source files and the native request pins 256
+sources; the original normal granted-native owner proved compute/storage
+cleanup and closed source READ. The c758 runner result is scoped to this
+normal path; this census run does not qualify broader lifecycle59, and no fallback ran.
+See the retained `qualification-summary.json` in the census phase and
+`docs/autoformalization/evidence/legal-ir-coordinate-entity-census-20261021.json`.
+This transport/custody result does not establish statutory meaning, reviewed
+entity bindings, model accuracy or Lean admission. Installation/publication
+are separate actions. The original v1 definitions, request schema and legacy
+join dispatch remain unchanged; v1 rejects coordinate-v2 requests and joins,
+and explicit v2 APIs reject v1 profiles.
+
+```python
+prepare_source_span_entity_census_v2(
+    request_raw, join_report, census_raw, entity_path,
+    *, expected_request_sha256, join_originals,
+)
+source_span_entity_census_join_originals_sha256(join_originals)
+source_span_entity_census_sha256(report)
+validate_source_span_entity_census_v2(
+    report, request_raw, join_report, census_raw, entity_path,
+    *, expected_report_sha256, expected_request_sha256, join_originals,
+)
+```
+
+The v2 request is duplicate-free UTF-8 JSON with exactly eight top-level keys:
+
+```text
+schema = legal-source-span-entity-census-request/v2
+join_report_sha256
+census_raw_sha256
+census_sha256
+entity = {
+  repository_id, revision, configuration, file_sha256, file_bytes, rows
+}
+census_limits = {
+  max_rows, batch_size, max_file_bytes, max_decoded_bytes,
+  max_row_group_bytes, max_batch_bytes, max_row_bytes, max_scratch_bytes
+}
+join_originals_sha256
+source_coordinate_report_sha256
+```
+
+The report schema is `legal-source-span-entity-census/v2`, with
+`source_compatibility_profile=paired-coordinate-entity-census/v1`. The same
+complete-report hash function serves both companion versions.
+`expected_request_sha256` must independently pin the exact request bytes.
+The canonical full join pin, exact prior-census raw pin, prior-census self-seal,
+original-input commitment and coordinate-report pin remain separate identities.
+A supplied self-seal or a digest recomputed from an untrusted report is not
+independent retained evidence.
+
+The originals helper commits the same closed eight-field original-argument
+mapping described above. Four raw byte arguments are limited to 256 KiB each;
+each metadata mapping has 1–16 entries with nonempty UTF-8 names of at most
+512 bytes. Their exact byte values and lengths are committed. The aggregate
+original-byte limit is **8 MiB** for this coordinate profile; the original
+v1 limit remains unchanged. `legacy_join_inputs` must be `None` or an empty
+ordinary mapping. The helper also checks the original request bytes against
+their independently supplied request pin. The helper creates an identity;
+callers must retain that identity independently before relying on it in a
+later request or replay. It grants no source or semantic authority.
+
+V2 calls the existing public
+`legal_source_span_entity_join_v1.validate_source_span_entity_join_manifest_v2`
+against all captured originals. A copied join report or a wrapper success flag
+does not substitute for this genuine regeneration. The selected join must have
+exactly one complete coordinate bundle with **1–64** ordered physical paired
+rows and references. The upstream join and payload owners retain their stricter
+input checks. Partial populations, reordered references and mixed legacy
+occurrence inputs cannot be silently accepted.
+
+The companion retains the complete regenerated join unchanged. Its complete
+raw coordinate report is retained once inside that join, with its raw-byte
+identity and independently pinned canonical coordinate identity. Each companion
+reference adds `source_provenance_json`, `source_coordinate_report_sha256` and
+`source_coordinate_span_index`; these must exactly match the corresponding
+payload reference. A global coordinate index of `1` can belong to physical
+paired row `0`. Neither that global index nor a companion reference ordinal
+should be substituted for a physical table-row ordinal. Identical text at
+distinct coordinates remains distinct evidence. Exact occurrence transport
+does not verify a current statutory edition or select an entity meaning.
+
+The original detailed entity census and original absolute `entity_path` remain
+mandatory. A prior 1,960,876-row retained census may be reused at that original
+path with its independently retained pins and unchanged limits; this is not a
+new census. Reuse preserves every recorded endpoint defect, duplicate and
+legacy boolean observation. It does not repair empty endpoints or attach
+entity rows to the selected spans. A tiny authored test census must declare its
+own actual population consistently across the genuine join and census; it
+cannot be presented as that historical population.
+
+Preparation first calls the genuine entity binding validator with
+`endpoint_details=True`, then genuinely replays the coordinate join. On every
+exit after entering this custody operation, the closing checks attempt another
+entity binding validation, inspect paired-file witnesses, compare both offered
+and detached originals with the independent commitment, check offered and
+captured join identities, and inspect selected producer source hashes. The
+outer validator also fences the offered companion report. An opening entity
+binding failure still receives the closing entity check; paired-file closing
+checks apply once the selected bundle context has been captured. All applicable
+checks are attempted, and secondary failures are attached to a primary failure
+instead of replacing it.
+
+Opening and closing entity bindings rehash the original entity file and check
+its schema, footer and bounds without decoding entity rows. The final paired
+check reuses the existing join owner's physical-file witnesses: retained paths,
+regular-file and link constraints, device/inode, mode, size and modification/
+change timestamps. It detects drift after the genuine join validator returns.
+It is a fresh metadata observation, **not a second payload hash or payload-row
+replay**. These ordered opening and closing observations do not provide an
+atomic snapshot, arbitrary concurrent-writer protection or loaded-byte
+attestation. The report keeps those limits explicit.
+
+A successful preparation therefore makes two genuine entity binding calls and
+one genuine public join-v2 validation. Preparing and then publicly validating
+the companion repeats preparation, giving four entity bindings and two public
+join validations. These are API behavior requirements, not a claim that any
+qualification run has completed. `fresh_entity_rows_decoded` remains `0`,
+`fresh_entity_row_replay_performed` remains false, and the nested join's
+metadata-only entity `verified_file_rows=0` is preserved.
+
+`coordinate_occurrence_replayed_rows` counts selected references transported
+with exact coordinates. `prior_entity_census_rows` counts the separate retained
+historical population. Neither count measures semantic fidelity.
+`entity_semantic_binding` and its aggregate count remain `null`, all authority
+flags remain false, and every training/evaluation mask remains integer zero.
+No graph admission, governing-definition resolution, semantic review,
+training/gold eligibility, model execution or Lean admission follows from this
+companion. New qualification receipts must be appended only after the original
+resource/source owners close and the actual outcomes have been reviewed.

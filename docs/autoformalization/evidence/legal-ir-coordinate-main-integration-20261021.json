@@ -1,0 +1,55 @@
+{
+  "schema": "legal-ir-coordinate-main-integration-evidence/v1",
+  "status": "main_integration_qualified_remote_publication_pending",
+  "qualification": {
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/qualification-summary.json",
+    "bytes": 11271,
+    "sha256": "495f07ba8bd8f3f028834dc36a1e3acf7a226c6ec4a061102e75be71ae19f6cf"
+  },
+  "scope": {
+    "actual_loaded_source_body_union": 144,
+    "cases": 47,
+    "description": "Current-main graph/context ownership and binding compatibility, declared runtime metadata and selected public eligibility/census/entity-reader boundaries.",
+    "phase_passes": 141
+  },
+  "selected_source": {
+    "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py": {
+      "bytes": 46494,
+      "sha256": "a9a5ceefc5ed291fc17991b9848d93f8fb9bb7f5e503e4f34130624cd2abf8e4"
+    }
+  },
+  "original_graph_generation": {
+    "bytes": 46532,
+    "sha256": "9ef87c5426bd11cf210f0c5b9755ef30e6e101ce3508d56b5a2052251a88c48c",
+    "cases": 25,
+    "phase_passes": 75
+  },
+  "change": "Remove obsolete internal context-owner alias for delivered main compatibility; preserve existing API and proposal semantics.",
+  "original_cleanup": {
+    "compute_released": true,
+    "observed_RSS_bytes": 0,
+    "observed_live_groups_and_descendants": 0,
+    "source_READ_closed": true,
+    "storage_released": true
+  },
+  "coordinate_to_graph_source_correspondence": "unverified_no_independent_crosswalk",
+  "selected_occurrence": null,
+  "source_binding_mask": 0,
+  "training_mask": 0,
+  "evaluation_gold_mask": 0,
+  "authority": {
+    "source_semantics_verified": false,
+    "semantic_review_verified": false,
+    "entity_semantic_bindings_verified": false,
+    "training_qualified": false,
+    "evaluation_gold_qualified": false,
+    "graph_admitted": false,
+    "Lean_admitted": false,
+    "published": false
+  },
+  "limits": [
+    "Focused authored engineering fixtures; no new model, training, corpus scan or native Lean execution.",
+    "Historical source and Git delivery records remain unchanged; no future commit hash or successful push is claimed.",
+    "Original-input eligibility v2 remains distinct from separate unqualified v3/corpus-adapter preparation."
+  ]
+}

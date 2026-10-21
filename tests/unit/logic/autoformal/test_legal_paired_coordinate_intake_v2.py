@@ -22,7 +22,7 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def build_coordinate_payload(tmp_path, documents=None, selected_indices=(1, 3)):
+def build_coordinate_payload(tmp_path, documents=None, selected_indices=(1, 3), *, compiler_rule=None):
     """Use the existing inventory/reference/Arrow owners, without a source DB."""
     # Equal text at different original positions remains two physical sources.
     if documents is None:
@@ -40,7 +40,11 @@ def build_coordinate_payload(tmp_path, documents=None, selected_indices=(1, 3)):
         row = source_row(source["source_span_id"], text=source["text"],
                          release=report["release_id"], guided=False)
         row.update(legal_id=source["legal_id"], source_provenance_json=reference)
-        row["compiler_result"]["rules"][0]["actor"] = MARKER
+        if compiler_rule is None:
+            row["compiler_result"]["rules"][0]["actor"] = MARKER
+        else:
+            # Configure the authored observation before the producer captures it.
+            row["compiler_result"]["rules"] = [deepcopy(compiler_rule)]
         observations.append(row)
         references.append(reference)
     bundle = paired.build_paired_census(observations, agent_id="coordinate-intake",

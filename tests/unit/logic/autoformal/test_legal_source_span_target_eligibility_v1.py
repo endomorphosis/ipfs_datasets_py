@@ -628,3 +628,396 @@ def test_typed_format_with_mismatched_family_is_preserved_without_decoder_audit(
     assert retained["canonical_ir"] is retained["decoder_audit"] is None
     assert report["counts"]["target_statuses"] == {"unsupported_formal_format": 1}
     assert harness["audit_calls"] == []
+# The additive coordinate cohort uses genuine source/package/Arrow/join/runtime
+# owners. Only named negative controls replace a delegate after genuine work.
+from pathlib import Path
+from ipfs_datasets_py.logic.autoformal import legal_source_span_entity_join_v1 as coordinate_join_owner
+from tests.unit.logic.autoformal.test_legal_source_span_entity_coordinate_join_v2 import (
+    coordinate_join, prepare as prepare_coordinate_join,
+)
+
+
+@pytest.fixture
+def coordinate_eligibility(coordinate_join):
+    case = coordinate_join
+    raw = wire(case["request"])
+    originals = {"request_raw": raw, "source_request_raw": case["source_raw"],
+        "source_metadata_bytes": case["metadata"],
+        "paired_inventory_request_raw": wire(case["paired_request"]),
+        "paired_manifest_bytes": case["manifests"], "entity_info_raw": case["info_raw"],
+        "expected_request_sha256": sha(raw), "legacy_join_inputs": None}
+    return {"case": case, "join": prepare_coordinate_join(case), "originals": originals}
+
+
+def coordinate_inputs(case, **changes):
+    raw = wire(case["join"])
+    request = {"schema": owner.REQUEST_SCHEMA_V2, "join_manifest_raw_sha256": sha(raw),
+        "join_manifest_sha256": coordinate_join_owner.source_span_entity_join_manifest_sha256(case["join"]),
+        "expected_physical_ids": [row["physical_identity_sha256"] for row in case["join"]["physical_rows"]],
+        "decoder_profile": owner.DECODER_PROFILE, "latent_dimension": 0,
+        "join_originals_sha256": owner.source_span_target_join_originals_sha256(case["originals"]),
+        "source_coordinate_report_sha256": case["case"]["coordinate"]["pin"], **changes}
+    return wire(request), raw
+
+
+def prepare_coordinate_eligibility(case, **changes):
+    request, raw = coordinate_inputs(case, **changes)
+    return owner.prepare_source_span_target_eligibility_v2(request, raw,
+        expected_request_sha256=sha(request), join_originals=case["originals"])
+
+
+def validate_coordinate_eligibility(case, report):
+    request, raw = coordinate_inputs(case)
+    value = json.loads(report) if type(report) is bytes else report
+    return owner.validate_source_span_target_eligibility_v2(report, request, raw,
+        expected_request_sha256=sha(request),
+        expected_report_sha256=owner.source_span_target_eligibility_sha256(value),
+        join_originals=case["originals"])
+
+
+def assert_coordinate_unqualified(report):
+    assert all(type(flag) is bool and flag is False for flag in report["authority"].values())
+    for row in [report, *report["physical_rows"], *report["row_references"], *report["output_occurrences"]]:
+        assert type(row["training_mask"]) is int and row["training_mask"] == 0
+        assert type(row["evaluation_gold_mask"]) is int and row["evaluation_gold_mask"] == 0
+    for row in report["physical_rows"] + report["output_occurrences"]:
+        assert row["consumer_eligible"] is False
+        assert all(type(mask) is int and mask == 0 for mask in row["field_masks"].values())
+
+
+def test_coordinate_eligibility_genuine_roundtrip_preserves_unresolved_semantics(coordinate_eligibility):
+    case = coordinate_eligibility
+    report = prepare_coordinate_eligibility(case)
+    assert validate_coordinate_eligibility(case, report) == report
+    assert validate_coordinate_eligibility(case, wire(report)) == report
+    assert report["schema"] == owner.SCHEMA_V2
+    assert report["upstream_reexecution_performed"] is True
+    assert report["runtime_description"]["runtime_version"] == owner.DECODER_PROFILE
+    assert report["current_source_release_correspondence"] == "unverified_no_independent_crosswalk"
+    assert report["entity_binding"] == "unavailable_semantic_companions_not_supplied"
+    assert report["counts"]["physical_rows"] == 2
+    assert report["counts"]["consumer_eligible_rows"] == 0
+    assert report["counts"]["output_occurrences"] > 0
+    assert_coordinate_unqualified(report)
+
+
+def test_coordinate_eligibility_retains_one_complete_join_and_exact_original_span_indices(coordinate_eligibility):
+    case = coordinate_eligibility
+    report = prepare_coordinate_eligibility(case)
+    assert report["join_manifest_raw_utf8"].encode() == wire(case["join"])
+    joined_report = json.loads(report["join_manifest_raw_utf8"])
+    carrier = joined_report["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    assert len(json.loads(carrier["report_raw_utf8"])["spans"]) == 4
+    assert carrier["report_sha256"] == report["source_coordinate_report_sha256"]
+    assert [row["source_coordinate_span_index"] for row in report["physical_rows"]] == [1, 3]
+    rows = report["physical_rows"]
+    assert rows[0]["source_text"] == rows[1]["source_text"]
+    assert rows[0]["physical_identity_sha256"] != rows[1]["physical_identity_sha256"]
+    refs = {row["physical_identity_sha256"]: row for row in case["join"]["row_references"]}
+    for row in rows + report["output_occurrences"]:
+        original = refs[row["physical_identity_sha256"]]
+        for key in owner._COORDINATE_FIELDS:
+            assert row[key] == original[key]
+        assert "report_raw_utf8" not in row
+    assert "report_raw_utf8" not in report
+    def retained_join_count(value):
+        if type(value) is dict:
+            return sum(retained_join_count(child) for child in value.values())
+        if type(value) is list:
+            return sum(retained_join_count(child) for child in value)
+        return int(type(value) is str and value == report["join_manifest_raw_utf8"])
+    # This checks the new report layer; the original join retains its own scope.
+    assert retained_join_count(report) == 1
+
+
+@pytest.mark.parametrize("dimension", [0, 384], ids=["zero", "native384"])
+def test_coordinate_eligibility_dimension_never_dispatches_or_creates_latents(coordinate_eligibility, dimension):
+    report = prepare_coordinate_eligibility(coordinate_eligibility, latent_dimension=dimension)
+    assert report["request"]["latent_dimension"] == dimension
+    assert not any("latent" in row for row in report["physical_rows"])
+    assert_coordinate_unqualified(report)
+
+
+def test_coordinate_eligibility_legacy_entrypoint_rejects_v2_even_with_legacy_request_shape(coordinate_eligibility):
+    request_raw, raw = coordinate_inputs(coordinate_eligibility)
+    request = json.loads(request_raw)
+    request["schema"] = owner.REQUEST_SCHEMA
+    request.pop("join_originals_sha256")
+    request.pop("source_coordinate_report_sha256")
+    request_raw = wire(request)
+    with pytest.raises(ValueError, match="complete selected join"):
+        owner.prepare_source_span_target_eligibility(request_raw, raw,
+            expected_request_sha256=sha(request_raw))
+
+
+def test_coordinate_eligibility_v2_refuses_legacy_join_before_discovery(coordinate_eligibility, monkeypatch):
+    case = coordinate_eligibility
+    case["join"] = joined(paired(canonical=[formal()]))
+    monkeypatch.setattr(owner, "_owners", lambda: pytest.fail("legacy join reached discovery"))
+    with pytest.raises(ValueError, match="coordinate join v2"):
+        prepare_coordinate_eligibility(case)
+
+
+@pytest.mark.parametrize("damage", ["schema", "extra", "raw_pin", "canonical_pin", "originals_pin", "coordinate_pin"],
+    ids=["schema", "extra", "raw-pin", "canonical-pin", "originals-pin", "coordinate-pin"])
+def test_coordinate_eligibility_independent_closed_request_refuses(coordinate_eligibility, damage):
+    changes = {"schema": {"schema": owner.REQUEST_SCHEMA}, "extra": {"reviewed": True},
+        "raw_pin": {"join_manifest_raw_sha256": "0" * 64},
+        "canonical_pin": {"join_manifest_sha256": "0" * 64},
+        "originals_pin": {"join_originals_sha256": "0" * 64},
+        "coordinate_pin": {"source_coordinate_report_sha256": "0" * 64}}[damage]
+    with pytest.raises(ValueError):
+        prepare_coordinate_eligibility(coordinate_eligibility, **changes)
+
+
+@pytest.mark.parametrize("damage", ["omit", "reverse", "duplicate", "foreign"],
+    ids=["omit", "reverse", "duplicate", "foreign"])
+def test_coordinate_eligibility_requires_exact_physical_population(coordinate_eligibility, damage):
+    case = coordinate_eligibility
+    ids = [row["physical_identity_sha256"] for row in case["join"]["physical_rows"]]
+    changed = {"omit": ids[:1], "reverse": ids[::-1], "duplicate": [ids[0], ids[0]],
+        "foreign": [ids[0], "0" * 64]}[damage]
+    with pytest.raises(ValueError):
+        prepare_coordinate_eligibility(case, expected_physical_ids=changed)
+
+
+@pytest.mark.parametrize("damage", ["index", "reference", "carrier", "physical", "row_count",
+    "omit_row", "training_mask", "gold_mask", "crosswalk", "entity"],
+    ids=["index", "reference", "carrier", "physical", "row-count", "omit-row", "training-mask",
+         "gold-mask", "crosswalk", "entity"])
+def test_coordinate_eligibility_rehashed_join_requires_genuine_original_replay(coordinate_eligibility, damage):
+    report = coordinate_eligibility["join"]
+    row = report["row_references"][0]
+    if damage == "index": row["source_coordinate_span_index"] = 0
+    elif damage == "reference": row["source_provenance_json"] = report["row_references"][1]["source_provenance_json"]
+    elif damage == "carrier": report["paired_bundles"][0]["payload_intake"]["source_coordinates"]["report_raw_utf8"] += " "
+    elif damage == "physical": report["physical_rows"][0]["physical_identity_sha256"] = "0" * 64
+    elif damage == "row_count": report["counts"]["physical_paired_rows"] += 1
+    elif damage == "omit_row": report["paired_bundles"][0]["payload_intake"]["rows"].pop()
+    elif damage == "training_mask": report["training_mask"] = True
+    elif damage == "gold_mask": row["evaluation_gold_mask"] = 1
+    elif damage == "crosswalk": row["current_source_release_correspondence"] = "verified"
+    else: row["entity_binding"] = "verified"
+    with pytest.raises(ValueError):
+        prepare_coordinate_eligibility(coordinate_eligibility)
+
+
+@pytest.mark.parametrize("damage", ["index", "index_bool", "reference", "join_bytes", "mask", "outputs"],
+    ids=["index", "index-bool", "reference", "join-bytes", "mask", "outputs"])
+def test_coordinate_eligibility_rehashed_report_requires_exact_regeneration(coordinate_eligibility, damage):
+    report = prepare_coordinate_eligibility(coordinate_eligibility)
+    if damage == "index": report["physical_rows"][0]["source_coordinate_span_index"] = 0
+    elif damage == "index_bool": report["physical_rows"][0]["source_coordinate_span_index"] = True
+    elif damage == "reference": report["output_occurrences"][0]["source_provenance_json"] = "{}"
+    elif damage == "join_bytes": report["join_manifest_raw_utf8"] += " "
+    elif damage == "mask": report["training_mask"] = 1
+    else: report["output_occurrences"].pop()
+    with pytest.raises(ValueError, match="full original-input replay"):
+        validate_coordinate_eligibility(coordinate_eligibility, report)
+
+
+def test_coordinate_eligibility_original_metadata_drift_is_caught_after_real_audit(coordinate_eligibility, monkeypatch):
+    case = coordinate_eligibility
+    actual, called = span.audit_examples, []
+    def drift(rows):
+        result = actual(rows)
+        if not called:
+            called.append(True)
+            metadata = case["originals"]["source_metadata_bytes"]
+            key = next(iter(metadata))
+            metadata[key] += b"\n"
+        return result
+    monkeypatch.setattr(span, "audit_examples", drift)
+    with pytest.raises(ValueError, match="originals changed"):
+        prepare_coordinate_eligibility(case)
+    assert called
+
+
+@pytest.mark.parametrize("producer", ["eligibility", "join"], ids=["eligibility", "join"])
+def test_coordinate_eligibility_stale_producer_refuses(coordinate_eligibility, monkeypatch, producer):
+    module = owner if producer == "eligibility" else coordinate_join_owner
+    monkeypatch.setattr(module, "_SELF_PIN", "0" * 64)
+    with pytest.raises(ValueError, match="changed since import"):
+        prepare_coordinate_eligibility(coordinate_eligibility)
+
+
+def test_coordinate_eligibility_closing_replay_catches_physical_drift_after_real_audit(coordinate_eligibility, monkeypatch):
+    case = coordinate_eligibility
+    actual, called = span.audit_examples, []
+    def drift(rows):
+        result = actual(rows)
+        if not called:
+            called.append(True)
+            table = case["join"]["span_inventory"]["manifests"][0]["manifest"]["tables"]["paired_spans"]
+            root = Path(case["case"]["request"]["paired_bundles"][0]["repository_root"])
+            target = root / table["path_in_repo"]
+            target.write_bytes(target.read_bytes() + b"changed")
+        return result
+    monkeypatch.setattr(span, "audit_examples", drift)
+    with pytest.raises(ValueError):
+        prepare_coordinate_eligibility(case)
+    assert called
+
+
+def test_coordinate_eligibility_operational_error_still_attempts_genuine_closing_join(coordinate_eligibility, monkeypatch):
+    actual_audit = span.audit_examples
+    actual_replay = coordinate_join_owner.validate_source_span_entity_join_manifest_v2
+    calls = []
+    def replay(*args, **kwargs):
+        calls.append(True)
+        return actual_replay(*args, **kwargs)
+    def fail(rows):
+        actual_audit(rows)
+        raise RuntimeError("authored failure after real decoder audit")
+    monkeypatch.setattr(coordinate_join_owner, "validate_source_span_entity_join_manifest_v2", replay)
+    monkeypatch.setattr(span, "audit_examples", fail)
+    with pytest.raises(RuntimeError, match="authored failure"):
+        prepare_coordinate_eligibility(coordinate_eligibility)
+    assert len(calls) == 2
+
+
+def test_coordinate_eligibility_primary_error_retains_secondary_original_custody_failure(coordinate_eligibility, monkeypatch):
+    case = coordinate_eligibility
+    actual = span.audit_examples
+    def fail(rows):
+        actual(rows)
+        case["originals"]["source_metadata_bytes"]["extra"] = b"changed"
+        raise RuntimeError("primary authored failure")
+    monkeypatch.setattr(span, "audit_examples", fail)
+    with pytest.raises(RuntimeError, match="primary authored failure") as caught:
+        prepare_coordinate_eligibility(case)
+    assert any("original inputs" in note for note in caught.value.__notes__)
+
+
+def test_coordinate_eligibility_validator_checks_offered_report_after_real_replay(coordinate_eligibility, monkeypatch):
+    case = coordinate_eligibility
+    report = prepare_coordinate_eligibility(case)
+    actual = span.audit_examples
+    def mutate(rows):
+        result = actual(rows)
+        report["training_mask"] = True
+        return result
+    monkeypatch.setattr(span, "audit_examples", mutate)
+    with pytest.raises(ValueError, match="offered coordinate eligibility report changed"):
+        validate_coordinate_eligibility(case, report)
+
+
+@pytest.mark.parametrize("damage", ["physical_rows", "metadata_count", "metadata_bytes"],
+    ids=["physical-row-bound", "metadata-count-bound", "metadata-byte-bound"])
+def test_coordinate_eligibility_bounds_refuse_before_discovery(coordinate_eligibility, monkeypatch, damage):
+    case = coordinate_eligibility
+    request, raw = coordinate_inputs(case)
+    request = json.loads(request)
+    if damage == "physical_rows": request["expected_physical_ids"] = ["a" * 64] * 65
+    elif damage == "metadata_count": case["originals"]["source_metadata_bytes"] = {str(i): b"x" for i in range(17)}
+    else: case["originals"]["source_metadata_bytes"] = {"large": b"x" * (owner.MAX_COORDINATE_ORIGINAL_BYTES + 1)}
+    request = wire(request)
+    monkeypatch.setattr(owner, "_owners", lambda: pytest.fail("invalid bound reached discovery"))
+    with pytest.raises(ValueError):
+        owner.prepare_source_span_target_eligibility_v2(request, raw,
+            expected_request_sha256=sha(request), join_originals=case["originals"])
+
+
+@pytest.mark.parametrize("coordinate_join", [{
+    "documents": [{"z_metadata": "first", "a_metadata": "second", "legal_id": "usc:us:5:551",
+                   "text": "Unselected Ω context. Clerk shall file report."}],
+    "selected_indices": (1,), "compiler_rule": rule(),
+}], ids=["supported-authored-source-span"], indirect=True)
+@pytest.mark.parametrize("dimension", [0, 384], ids=["zero-latent", "declared-384d"])
+def test_coordinate_eligibility_supported_target_preserves_source_custody_without_authority(
+    coordinate_eligibility, dimension, monkeypatch,
+):
+    """Genuine mechanical support grants no legal, latent or consumer authority."""
+    case = coordinate_eligibility
+    original_join = wire(case["join"])
+    original_inputs = deepcopy(case["originals"])
+    target = rule()
+
+    # Keep the actual audit and metadata owners; reject numerical entry points.
+    for name in ("_torch", "_model", "build_checkpoint", "train_decoder", "load_checkpoint"):
+        if hasattr(span, name):
+            def forbidden(*args, _entrypoint=name, **kwargs):
+                pytest.fail("mechanical coordinate audit invoked " + _entrypoint)
+            monkeypatch.setattr(span, name, forbidden)
+
+    request_raw, join_raw = coordinate_inputs(case, latent_dimension=dimension)
+    report = owner.prepare_source_span_target_eligibility_v2(request_raw, join_raw,
+        expected_request_sha256=sha(request_raw), join_originals=case["originals"])
+    assert owner.validate_source_span_target_eligibility_v2(report, request_raw, join_raw,
+        expected_request_sha256=sha(request_raw),
+        expected_report_sha256=owner.source_span_target_eligibility_sha256(report),
+        join_originals=case["originals"]) == report
+    assert report["schema"] == owner.SCHEMA_V2
+    assert report["request"]["latent_dimension"] == dimension
+    assert report["upstream_reexecution_performed"] is True
+    assert report["checkpoint_status"] == "not_assessed"
+    assert report["join_manifest_raw_utf8"].encode("utf-8") == join_raw == original_join
+    assert wire(report).count(wire(report["join_manifest_raw_utf8"])) == 1
+    assert case["originals"] == original_inputs
+    assert wire(case["join"]) == original_join
+
+    joined = json.loads(report["join_manifest_raw_utf8"])
+    carrier = joined["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    assert carrier == case["join"]["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    raw_coordinates = carrier["report_raw_utf8"].encode("utf-8")
+    coordinate_report = json.loads(raw_coordinates)
+    assert coordinate_report == case["case"]["coordinate"]["report"]
+    assert len(coordinate_report["spans"]) == 2
+    assert "Unselected Ω context." in carrier["report_raw_utf8"]
+    assert carrier["report_bytes"] == len(raw_coordinates)
+    assert carrier["report_artifact_sha256"] == sha(raw_coordinates)
+    assert carrier["report_sha256"] == report["source_coordinate_report_sha256"] == case["case"]["coordinate"]["pin"]
+    assert "report_raw_utf8" not in report
+
+    assert report["counts"]["physical_rows"] == report["counts"]["row_references"] == 1
+    assert report["counts"]["output_occurrences"] == report["counts"]["mechanically_supported_outputs"] == 2
+    assert report["counts"]["target_statuses"] == {"mechanically_supported": 2}
+    assert report["counts"]["rows_without_outputs"] == 0
+    assert report["duplicate_source_groups"] == []
+    physical = report["physical_rows"][0]
+    assert physical["physical_identity"]["row_ordinal"] == 0
+    assert type(physical["source_coordinate_span_index"]) is int
+    assert physical["source_coordinate_span_index"] == 1
+    assert physical["source_text"] == "Clerk shall file report."
+    assert physical["source_text_sha256"] == sha(physical["source_text"].encode("utf-8"))
+    assert physical["source_unit_status"] == "unestablished"
+    assert physical["meaning_unit_id"] is physical["selected_occurrence"] is None
+    assert physical["output_occurrence_ordinals"] == [0, 1]
+    assert "latent" not in physical
+    for field in ("context_status", "source_review_status", "semantic_review_status", "exposure_status",
+                  "split_status", "source_role_status", "applicability_status", "dependency_status",
+                  "definition_binding_status"):
+        assert physical[field] == "unresolved"
+    for field in ("meaning_unit_mask", "source_binding_mask", "context_mask", "source_review_mask",
+                  "source_role_mask", "applicability_mask", "dependency_mask", "definition_binding_mask"):
+        assert type(physical[field]) is int and physical[field] == 0
+
+    outputs = report["output_occurrences"]
+    assert [(entry["route"], entry["ordinal"]) for entry in outputs] == [
+        ("compiler.formal_outputs", 0), ("compiler.canonical_formal_outputs", 0)]
+    assert len({entry["interpretation_cid"] for entry in outputs}) == 2
+    reference = joined["row_references"][0]
+    for row in [physical, report["row_references"][0], *outputs]:
+        assert row["physical_identity_sha256"] == physical["physical_identity_sha256"]
+        assert {key: row[key] for key in owner._COORDINATE_FIELDS} == {
+            key: reference[key] for key in owner._COORDINATE_FIELDS}
+        assert "report_raw_utf8" not in row
+    for index, output in enumerate(outputs):
+        assert output["target_status"] == "mechanically_supported"
+        assert output["canonical_ir"] == {"rules": [target]}
+        assert json.loads(output["formal_output"]["payload_json"]) == target
+        assert output["formal_output"]["family"] == "typed_deontic"
+        assert output["formal_output"]["format"] == "typed-deontic-rule/v1"
+        assert output["producer_origin"] == output["formal_output"]["origin"] == "deterministic_compiler"
+        assert output["formal_output"]["independent"] is True
+        assert output["formal_output"]["target_conditioned"] is False
+        assert output["decoder_audit"] == {"accepted_ids": [
+            physical["physical_identity_sha256"] + ":" + str(index)], "rejected_rows": [], "all_supported": True}
+        assert "unsupported_consumer_target_origin" in output["consumer_compatibility_blockers"]
+        assert ("consumer_requires_zero_latent" in output["consumer_compatibility_blockers"]) == (dimension == 384)
+        assert output["eligibility_blockers"]
+    assert report["current_source_release_correspondence"] == "unverified_no_independent_crosswalk"
+    assert report["entity_binding"] == "unavailable_semantic_companions_not_supplied"
+    for field in ("consumer_eligible_rows", "source_units_established", "training_qualified_rows", "evaluation_gold_rows"):
+        assert report["counts"][field] == 0
+    assert_coordinate_unqualified(report)

@@ -423,3 +423,342 @@ def test_negative_outer_failure_preserves_primary_and_offered_report_note(retain
         validate(retained, offered)
     assert captured.value is primary
     assert any("offered companion report" in note for note in getattr(primary, "__notes__", []))
+
+
+# Coordinate coverage uses one tiny genuine detailed census, not the retained
+# 1,960,876-row fixture above. A guard forbids new row scans during each
+# companion operation; separate small entity-owner regressions keep their scope.
+from tests.unit.logic.autoformal.test_legal_entity_index_intake import (
+    rows as coordinate_entity_rows, write as write_coordinate_entity,
+)
+from tests.unit.logic.autoformal.test_legal_source_span_entity_coordinate_join_v2 import (
+    coordinate_join as coordinate_join_fixture, prepare as prepare_coordinate_join,
+)
+
+
+@pytest.fixture(scope="module")
+def coordinate_prior_census(tmp_path_factory):
+    directory = tmp_path_factory.mktemp("coordinate-prior-entity-census", numbered=False)
+    path = directory / "sixteen-authored-entities.parquet"
+    inputs = write_coordinate_entity(path, coordinate_entity_rows())
+    inputs["revision"] = "c" * 40
+    census = entity.census_parquet(path, endpoint_details=True, **inputs)
+    assert census["rows"] == sum(census["disposition_counts"].values()) == 16
+    assert census["schema"] == "legal-materialized-entity-index-census/v2"
+    original = path.read_bytes()
+    yield {"path": path, "census": census, "raw": wire(census) + b"\n", "bytes": original}
+    assert path.read_bytes() == original
+
+
+@pytest.fixture
+def coordinate_census(coordinate_prior_census, tmp_path, monkeypatch):
+    prior = coordinate_prior_census
+    calls = {"bindings": [], "joins": [], "forbidden_scans": 0}
+
+    def no_scan(*args, **kwargs):
+        calls["forbidden_scans"] += 1
+        pytest.fail("coordinate companion decoded entity rows instead of checking prior custody")
+
+    for name in ("census_parquet", "validate_census", "iter_observed_rows", "_rows"):
+        monkeypatch.setattr(entity, name, no_scan)
+    source = coordinate_join_fixture.__wrapped__(tmp_path, SimpleNamespace(param={}))
+    info = json.loads(source["info_raw"])
+    info["dataset_info"]["splits"]["train"]["num_examples"] = 16
+    source["info_raw"] = wire(info)
+    source["request"]["entity"]["info_sha256"] = sha(source["info_raw"])
+    joined = prepare_coordinate_join(source)
+    original_request = wire(source["request"])
+    originals = {"request_raw": original_request, "source_request_raw": source["source_raw"],
+        "source_metadata_bytes": source["metadata"],
+        "paired_inventory_request_raw": wire(source["paired_request"]),
+        "paired_manifest_bytes": source["manifests"], "entity_info_raw": source["info_raw"],
+        "expected_request_sha256": sha(original_request), "legacy_join_inputs": None}
+    census = deepcopy(prior["census"])
+    request = {"schema": subject.REQUEST_SCHEMA_V2,
+        "join_report_sha256": join.source_span_entity_join_manifest_sha256(joined),
+        "census_raw_sha256": sha(prior["raw"]), "census_sha256": census["census_sha256"],
+        "join_originals_sha256": subject.source_span_entity_census_join_originals_sha256(originals),
+        "source_coordinate_report_sha256": source["coordinate"]["pin"],
+        "entity": {"repository_id": "justicedao/uscode-autoformal-entity-cache", "revision": "c" * 40,
+            "configuration": "autoformal_uscode", "file_sha256": sha(prior["bytes"]),
+            "file_bytes": len(prior["bytes"]), "rows": 16},
+        "census_limits": deepcopy(census["limits"])}
+    genuine_binding, genuine_join = entity.validate_census_bindings, join.validate_source_span_entity_join_manifest_v2
+
+    def bindings(*args, **kwargs):
+        entry = {"endpoint_details": kwargs.get("endpoint_details"), "passed": False}
+        calls["bindings"].append(entry)
+        result = genuine_binding(*args, **kwargs)
+        entry["passed"] = True
+        return result
+
+    def replay(*args, **kwargs):
+        entry = {"passed": False}
+        calls["joins"].append(entry)
+        result = genuine_join(*args, **kwargs)
+        entry["passed"] = True
+        return result
+
+    monkeypatch.setattr(entity, "validate_census_bindings", bindings)
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v2", replay)
+    case = SimpleNamespace(source=source, joined=joined, originals=originals, census=census,
+        census_raw=prior["raw"], entity_path=prior["path"], entity_bytes=prior["bytes"],
+        request=request, calls=calls)
+    yield case
+    assert calls["forbidden_scans"] == 0
+    assert case.entity_path.read_bytes() == case.entity_bytes
+
+
+def prepare_coordinate_census(case, *, request=None, joined=None, census_raw=None, originals=None,
+                             entity_path=None):
+    raw = wire(case.request if request is None else request)
+    return subject.prepare_source_span_entity_census_v2(raw,
+        case.joined if joined is None else joined, case.census_raw if census_raw is None else census_raw,
+        case.entity_path if entity_path is None else entity_path, expected_request_sha256=sha(raw),
+        join_originals=case.originals if originals is None else originals)
+
+
+def validate_coordinate_census(case, report):
+    offered = json.loads(report) if type(report) is bytes else report
+    request = wire(case.request)
+    return subject.validate_source_span_entity_census_v2(report, request, case.joined,
+        case.census_raw, case.entity_path, expected_request_sha256=sha(request),
+        expected_report_sha256=subject.source_span_entity_census_sha256(offered),
+        join_originals=case.originals)
+
+
+def assert_coordinate_census_unqualified(report):
+    assert all(type(value) is bool and value is False for value in report["authority"].values())
+    for row in [report, *report["row_references"]]:
+        assert type(row["training_mask"]) is type(row["evaluation_gold_mask"]) is int
+        assert row["training_mask"] == row["evaluation_gold_mask"] == 0
+    assert all(row["entity_semantic_binding"] is None for row in report["row_references"])
+    assert report["counts"]["fresh_entity_rows_decoded"] == 0
+    assert report["counts"]["entity_semantic_bindings"] is None
+    assert report["evidence"]["atomic_multi_file_snapshot_verified"] is False
+    assert report["evidence"]["fresh_entity_row_replay_performed"] is False
+
+
+@pytest.mark.parametrize("transport", ["object", "bytes"], ids=["object", "bytes"])
+def test_coordinate_census_genuine_binding_and_original_join_replay_without_rescan(coordinate_census, transport):
+    case = coordinate_census
+    original_join, original_inputs = wire(case.joined), deepcopy(case.originals)
+    report = prepare_coordinate_census(case)
+    offered = wire(report) if transport == "bytes" else report
+    assert validate_coordinate_census(case, offered) == report
+    assert len(case.calls["bindings"]) == 4 and len(case.calls["joins"]) == 2
+    assert all(row == {"endpoint_details": True, "passed": True} for row in case.calls["bindings"])
+    assert all(row["passed"] for row in case.calls["joins"])
+    assert report["schema"] == subject.SCHEMA_V2
+    assert report["join_report"] == case.joined and wire(report["join_report"]) == original_join
+    assert case.originals == original_inputs
+    assert report["census"]["raw_utf8"].encode() == case.census_raw
+    assert report["census"]["report"] == case.census
+    assert report["census_binding_validation"]["status"] == "pinned_prior_census_custody_verified"
+    assert report["counts"]["prior_entity_census_rows"] == 16
+    assert report["counts"]["selected_physical_paired_rows"] == 2
+    assert report["counts"]["selected_paired_row_references"] == 2
+    assert report["join_report"]["entity_metadata"]["verified_file_rows"] == 0
+    assert report["join_report"]["entity_metadata"]["declared_rows"] == 16
+    detail = report["census"]["report"]["endpoint_integrity"]
+    assert detail["edge_rows"] == 6
+    assert detail["exclusive_edge_dispositions"] == {"missing_endpoint_value": 2,
+        "nonempty_dangling_endpoint": 1, "ambiguous_declared_endpoint": 2, "unique_declared_endpoints": 1}
+    carrier = report["join_report"]["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    assert carrier == case.joined["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+    assert len(json.loads(carrier["report_raw_utf8"])["spans"]) == 4
+    assert [row["reference_ordinal"] for row in report["row_references"]] == [0, 1]
+    assert [row["source_coordinate_span_index"] for row in report["row_references"]] == [1, 3]
+    assert [row["physical_identity_sha256"] for row in report["row_references"]] == [
+        row["physical_identity_sha256"] for row in case.joined["row_references"]]
+    for fresh, old in zip(report["row_references"], case.joined["row_references"], strict=True):
+        for key in ("source_provenance_json", "source_coordinate_report_sha256", "source_coordinate_span_index"):
+            assert fresh[key] == old[key]
+        assert "report_raw_utf8" not in fresh and fresh["reason"] == "semantic_companions_not_supplied"
+    assert wire(report).count(wire(carrier["report_raw_utf8"])) == 1
+    assert_coordinate_census_unqualified(report)
+
+
+@pytest.mark.parametrize("damage", ["missing", "join-pin", "originals-pin", "coordinate-pin", "boolean-rows",
+    "row-count", "file-bytes", "limits"], ids=["missing", "join-pin", "originals-pin", "coordinate-pin",
+    "boolean-rows", "row-count", "file-bytes", "limits"])
+def test_coordinate_census_independent_request_and_lineage_refusals(coordinate_census, damage):
+    case = coordinate_census
+    request = deepcopy(case.request)
+    if damage == "missing": request.pop("join_originals_sha256")
+    elif damage == "join-pin": request["join_report_sha256"] = "0" * 64
+    elif damage == "originals-pin": request["join_originals_sha256"] = "0" * 64
+    elif damage == "coordinate-pin": request["source_coordinate_report_sha256"] = "0" * 64
+    elif damage == "boolean-rows": request["entity"]["rows"] = True
+    elif damage == "row-count": request["entity"]["rows"] -= 1
+    elif damage == "file-bytes": request["entity"]["file_bytes"] -= 1
+    else: request["census_limits"]["batch_size"] += 1
+    with pytest.raises(ValueError): prepare_coordinate_census(case, request=request)
+
+
+@pytest.mark.parametrize("damage", ["index", "order", "carrier", "mask", "entity-binding"],
+    ids=["index", "order", "carrier", "mask", "entity-binding"])
+def test_coordinate_census_resealed_join_requires_genuine_original_replay(coordinate_census, damage):
+    case = coordinate_census
+    joined, request = deepcopy(case.joined), deepcopy(case.request)
+    if damage == "index": joined["row_references"][0]["source_coordinate_span_index"] = 0
+    elif damage == "order": joined["row_references"].reverse()
+    elif damage == "carrier": joined["paired_bundles"][0]["payload_intake"]["source_coordinates"]["report_raw_utf8"] += " "
+    elif damage == "mask": joined["row_references"][0]["training_mask"] = True
+    else: joined["row_references"][0]["entity_binding"] = "forged_semantic_binding"
+    request["join_report_sha256"] = join.source_span_entity_join_manifest_sha256(joined)
+    with pytest.raises(ValueError): prepare_coordinate_census(case, request=request, joined=joined)
+
+
+@pytest.mark.parametrize("damage", ["v1", "authority", "partial", "endpoint-sum", "source-path"],
+    ids=["v1", "authority", "partial", "endpoint-sum", "source-path"])
+def test_coordinate_census_resealed_prior_census_still_obeys_entity_owner(coordinate_census, damage):
+    case = coordinate_census
+    census, request = deepcopy(case.census), deepcopy(case.request)
+    if damage == "v1":
+        census["schema"] = "legal-materialized-entity-index-census/v1"
+        census.pop("endpoint_integrity")
+    elif damage == "authority": census["authority"]["admitted"] = True
+    elif damage == "partial": census["population_complete"] = False
+    elif damage == "endpoint-sum": census["endpoint_integrity"]["exclusive_edge_dispositions"]["unique_declared_endpoints"] += 1
+    else: census["source"]["path"] += ".forged"
+    census["census_sha256"] = sha(wire({key: value for key, value in census.items() if key != "census_sha256"}))
+    raw = wire(census)
+    request.update(census_raw_sha256=sha(raw), census_sha256=census["census_sha256"])
+    with pytest.raises(ValueError): prepare_coordinate_census(case, request=request, census_raw=raw)
+
+
+@pytest.mark.parametrize("profile", ["v1-entrypoint", "v1-join"], ids=["v1-entrypoint", "v1-join"])
+def test_coordinate_census_version_domains_do_not_alias(coordinate_census, profile):
+    case = coordinate_census
+    request = deepcopy(case.request)
+    if profile == "v1-entrypoint":
+        request["schema"] = subject.REQUEST_SCHEMA
+        request.pop("join_originals_sha256"); request.pop("source_coordinate_report_sha256")
+        raw = wire(request)
+        with pytest.raises(ValueError):
+            subject.prepare_source_span_entity_census_v1(raw, case.joined, case.census_raw,
+                case.entity_path, expected_request_sha256=sha(raw), join_originals=case.originals)
+    else:
+        joined = deepcopy(case.joined)
+        joined["schema"] = join.SCHEMA
+        request["join_report_sha256"] = join.source_span_entity_join_manifest_sha256(joined)
+        with pytest.raises(ValueError): prepare_coordinate_census(case, request=request, joined=joined)
+
+
+@pytest.mark.parametrize("damage", ["index", "index-bool", "order", "binding", "mask"],
+    ids=["index", "index-bool", "order", "binding", "mask"])
+def test_coordinate_census_resealed_output_refuses_exact_regeneration(coordinate_census, damage):
+    case = coordinate_census
+    report = prepare_coordinate_census(case)
+    if damage == "index": report["row_references"][0]["source_coordinate_span_index"] = 0
+    elif damage == "index-bool": report["row_references"][0]["source_coordinate_span_index"] = True
+    elif damage == "order": report["row_references"].reverse()
+    elif damage == "binding": report["row_references"][0]["entity_semantic_binding"] = {"invented": "A"}
+    else: report["training_mask"] = 1
+    with pytest.raises(ValueError): validate_coordinate_census(case, report)
+
+
+@pytest.mark.parametrize("source", ["entity", "paired"], ids=["entity", "paired"])
+def test_coordinate_census_closing_checks_refuse_physical_drift(coordinate_census, monkeypatch, source):
+    case = coordinate_census
+    if source == "entity": target = case.entity_path
+    else:
+        selected = case.joined["span_inventory"]["manifests"][0]["manifest"]["tables"]["paired_spans"]
+        target = Path(case.source["request"]["paired_bundles"][0]["repository_root"]) / selected["path_in_repo"]
+    original = target.read_bytes()
+    genuine = join.validate_source_span_entity_join_manifest_v2
+    changed = []
+    def drift(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        if not changed:
+            target.write_bytes(original + b"closing physical mutation")
+            changed.append(True)
+        return result
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v2", drift)
+    try:
+        with pytest.raises(ValueError): prepare_coordinate_census(case)
+        assert changed == [True]
+        assert len(case.calls["bindings"]) == 2
+        assert case.calls["bindings"][0]["passed"] is True
+        if source == "entity": assert case.calls["bindings"][1]["passed"] is False
+    finally: target.write_bytes(original)
+
+
+def test_coordinate_census_closing_original_input_fence(coordinate_census, monkeypatch):
+    case = coordinate_census
+    genuine = join.validate_source_span_entity_join_manifest_v2
+    def mutate(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        case.originals["source_metadata_bytes"]["README.md"] += b"late original mutation"
+        return result
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v2", mutate)
+    with pytest.raises(ValueError): prepare_coordinate_census(case)
+    assert len(case.calls["bindings"]) == 2
+
+
+def test_coordinate_census_primary_failure_preserves_secondary_custody(coordinate_census, monkeypatch):
+    case = coordinate_census
+    genuine = join.validate_source_span_entity_join_manifest_v2
+    primary = RuntimeError("authored failure after genuine coordinate join")
+    def fail(*args, **kwargs):
+        genuine(*args, **kwargs)
+        case.originals["source_metadata_bytes"]["README.md"] += b"secondary original mutation"
+        raise primary
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v2", fail)
+    with pytest.raises(RuntimeError) as caught: prepare_coordinate_census(case)
+    assert caught.value is primary
+    assert any("original" in note for note in getattr(primary, "__notes__", []))
+    assert len(case.calls["bindings"]) == 2 and all(row["passed"] for row in case.calls["bindings"])
+
+
+@pytest.mark.parametrize("producer", ["companion", "join"], ids=["companion", "join"])
+def test_coordinate_census_stale_source_refuses(coordinate_census, monkeypatch, producer):
+    module = subject if producer == "companion" else join
+    monkeypatch.setattr(module, "_SELF_PIN", "0" * 64)
+    with pytest.raises(ValueError): prepare_coordinate_census(coordinate_census)
+
+
+def test_coordinate_census_validator_preserves_offered_report_fence(coordinate_census, monkeypatch):
+    case = coordinate_census
+    report = prepare_coordinate_census(case)
+    genuine = join.validate_source_span_entity_join_manifest_v2
+    def mutate(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        report["authority"]["admitted"] = True
+        return result
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v2", mutate)
+    with pytest.raises(ValueError): validate_coordinate_census(case, report)
+
+
+def test_coordinate_census_alternate_entity_locator_cannot_rewrite_prior_identity(coordinate_census, tmp_path):
+    with pytest.raises(ValueError):
+        prepare_coordinate_census(coordinate_census, entity_path=tmp_path / "foreign.parquet")
+
+
+def test_coordinate_census_actual_footer_refuses_resealed_false_population(coordinate_census):
+    case = coordinate_census
+    census, request = deepcopy(case.census), deepcopy(case.request)
+    census["rows"] = census["source"]["expected_rows"] = request["entity"]["rows"] = 15
+    census["disposition_counts"]["unknown_record_kind_observation"] -= 1
+    census["census_sha256"] = sha(wire({key: value for key, value in census.items() if key != "census_sha256"}))
+    raw = wire(census)
+    request.update(census_raw_sha256=sha(raw), census_sha256=census["census_sha256"])
+    with pytest.raises(entity.EntityIndexIntakeError, match="footer row count"):
+        prepare_coordinate_census(case, request=request, census_raw=raw)
+    assert case.calls["joins"] == []
+    assert len(case.calls["bindings"]) == 2 and not any(row["passed"] for row in case.calls["bindings"])
+
+
+def test_coordinate_census_closing_producer_fence_after_real_join(coordinate_census, monkeypatch):
+    case = coordinate_census
+    genuine = join.validate_source_span_entity_join_manifest_v2
+    def drift(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        monkeypatch.setattr(subject, "_SELF_PIN", "0" * 64)
+        return result
+    monkeypatch.setattr(join, "validate_source_span_entity_join_manifest_v2", drift)
+    with pytest.raises(ValueError, match="changed since import"):
+        prepare_coordinate_census(case)
+    assert len(case.calls["joins"]) == 1 and case.calls["joins"][0]["passed"] is True
+    assert len(case.calls["bindings"]) == 2 and all(row["passed"] for row in case.calls["bindings"])
