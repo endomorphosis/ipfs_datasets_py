@@ -1,0 +1,52 @@
+{
+  "schema": "legal-ir-coordinate-main-publication-evidence/v1",
+  "status": "datasets_main_source_generation_verified_published",
+  "repository": "endomorphosis/ipfs_datasets_py",
+  "source_bearing_commit": "1fe22386109cd2c282034a4cc9f0b66b6c4f98f5",
+  "verified_remote_main": "1fe22386109cd2c282034a4cc9f0b66b6c4f98f5",
+  "original_push_receipt": {
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/datasets-push-v01.json",
+    "bytes": 1334,
+    "sha256": "17bc092057ee78532209e13b22cecedeb6e204293b61168f2fed8a557c049b7f"
+  },
+  "qualification": {
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-main-publication-20261021-01/qualification-summary.json",
+    "bytes": 11271,
+    "sha256": "495f07ba8bd8f3f028834dc36a1e3acf7a226c6ec4a061102e75be71ae19f6cf"
+  },
+  "qualification_scope": {
+    "actual_loaded_source_body_union": 144,
+    "cases": 47,
+    "description": "Current-main graph/context ownership and binding compatibility, declared runtime metadata and selected public eligibility/census/entity-reader boundaries.",
+    "phase_passes": 141
+  },
+  "qualified_source": {
+    "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py": {
+      "bytes": 46494,
+      "sha256": "a9a5ceefc5ed291fc17991b9848d93f8fb9bb7f5e503e4f34130624cd2abf8e4"
+    }
+  },
+  "publication_scope": "Qualified owner sources and maintained navigation; no semantic corpus admission.",
+  "historical_selected_source_generation_preserved": true,
+  "later_docs_only_commit_not_identified_or_claimed": true,
+  "coordinate_to_graph_source_correspondence": "unverified_no_independent_crosswalk",
+  "selected_occurrence": null,
+  "source_binding_mask": 0,
+  "training_mask": 0,
+  "evaluation_gold_mask": 0,
+  "semantic_authority": {
+    "source_semantics_verified": false,
+    "semantic_review_verified": false,
+    "entity_semantic_bindings_verified": false,
+    "training_qualified": false,
+    "evaluation_gold_qualified": false,
+    "graph_admitted": false,
+    "Lean_admitted": false
+  },
+  "limits": [
+    "Publication follows the pinned actual push and matching remote-main verification; no new remote query is performed by this recorder.",
+    "Original 25/75, changed-source47/141 and earlier engineering cohorts retain separate source/fixture scopes.",
+    "No additional tests, native/model execution, training, source crosswalk, review or legal meaning is supplied by this metadata update."
+  ],
+  "recorded_at_utc": "2026-10-21T03:18:59.632204+00:00"
+}

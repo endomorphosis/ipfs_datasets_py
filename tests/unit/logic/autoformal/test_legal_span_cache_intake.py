@@ -1026,17 +1026,19 @@ def test_coordinate_graph_v2_callback_cannot_mutate_the_typed_ast_after_genuine_
     assert calls
 
 @_supported_coordinate_graph
-@pytest.mark.parametrize("profile", ["retained-v2", "historical-original-v2"],
-                         ids=["retained-v2", "historical-original-v2"])
+@pytest.mark.parametrize("profile", ["retained-v1", "historical-original-v2"],
+                         ids=["retained-v1", "historical-original-v2"])
 def test_coordinate_graph_v2_refuses_other_eligibility_profiles_before_graph(coordinate_graph_v2_case, monkeypatch, profile):
     case = coordinate_graph_v2_case
     request = json.loads(case["eligibility_request_raw"])
     request["schema"] = "legal-source-span-target-eligibility-request/v2"
     request.pop("source_compatibility_profile")
-    if profile == "retained-v2":
+    if profile == "retained-v1":
+        request["schema"] = eligibility.RETAINED_REQUEST_SCHEMA_V1
+        request["source_compatibility_profile"] = eligibility.RETAINED_PROFILE_V1
         request.pop("join_originals_sha256")
         request_raw = _coordinate_graph_wire(request)
-        observed = eligibility.prepare_source_span_target_eligibility_v2(
+        observed = eligibility.prepare_retained_source_span_target_eligibility_v1(
             request_raw, case["join_raw"], expected_request_sha256=_coordinate_graph_sha(request_raw))
         assert observed["upstream_reexecution_performed"] is False
     else:

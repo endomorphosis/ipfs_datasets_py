@@ -1,0 +1,155 @@
+{
+  "all_failed_artifacts_preserved": true,
+  "base_public_main": "9eee15b82105db9bf0113df503eef3f8a7d6765d",
+  "contracts": {
+    "authority": "All source/meaning/adoption/learning/gold gates remain unresolved/zero/false; no new numerical or legal qualification.",
+    "constant_collision_resolution": "COORDINATE_PROFILE retains published target-profile value; COORDINATE_JOIN_PROFILE separately names upstream three-cache join. Retained request/report constants have RETAINED_*_V1 names.",
+    "explicit_retained_v1": {
+      "closed_request_fields": [
+        "schema",
+        "source_compatibility_profile",
+        "join_manifest_raw_sha256",
+        "join_manifest_sha256",
+        "expected_physical_ids",
+        "decoder_profile",
+        "latent_dimension",
+        "source_coordinate_report_sha256"
+      ],
+      "join_originals_parameter": false,
+      "legacy_branch_v2_wire_implicitly_accepted": false,
+      "mandatory_source_compatibility_profile": "retained-coordinate-target-eligibility/v1",
+      "prepare": "prepare_retained_source_span_target_eligibility_v1",
+      "report_schema": "legal-source-span-retained-target-eligibility/v1",
+      "request_schema": "legal-source-span-retained-target-eligibility-request/v1",
+      "upstream_reexecution_performed": false,
+      "validate": "validate_retained_source_span_target_eligibility_v1"
+    },
+    "original_v3": {
+      "function_and_helper_bytes_identical_to_selected": true,
+      "prepare": "prepare_source_span_target_eligibility_v3",
+      "validate": "validate_source_span_target_eligibility_v3"
+    },
+    "published_original_v2": {
+      "function_bytes_identical_to_public": true,
+      "join_originals_required": true,
+      "prepare": "prepare_source_span_target_eligibility_v2",
+      "profile": "paired-coordinate-target-eligibility/v1",
+      "report_schema": "legal-source-span-target-eligibility/v2",
+      "request_schema": "legal-source-span-target-eligibility-request/v2",
+      "validate": "validate_source_span_target_eligibility_v2"
+    },
+    "shared_census_engine": "_target_census; one definition; original v2 uses default noncoordinate census then exact public coordinate augmentation; retained v1 and v3 use selected coordinate census.",
+    "strict_v1": "Original strict request/report route and v1 owning controls preserved."
+  },
+  "earlier_native_artifacts": "Retain complete original source generations and revalidate current native closure; this engineering delivery does not renew native artifact/proof authority.",
+  "evaluation_gold_mask": 0,
+  "hosted_CI": "No passing hosted result is claimed; refer to actual PR checks.",
+  "independent_static_review": {
+    "bytes": 4144,
+    "sha256": "fbab89bc7043b8ad2e826777c3595eedffa5c1506f5fb440af6c7bc4bd56c090"
+  },
+  "later_fixture_failed_storage_closeout": {
+    "bytes": 348815,
+    "sha256": "c0457946d759d1a8f34e0483867fc17b98c74266a1e8c49125cd937e4c46f6bd"
+  },
+  "model_training_or_native_Lean_execution": false,
+  "prior_composition": "55-case receipt is the historical pre-public-v2-reconciliation generation; 12-pass/43-error composition exposed the missing private context alias before its fix.",
+  "prior_failed_storage_closeout": {
+    "bytes": 146837,
+    "sha256": "1d4c5756e81a2197a5d4ce0c8c8ffb6c1d82f4c2f72d295f6db6b74b2a4773b1"
+  },
+  "prior_failed_storage_promise_released_bytes": 134217728,
+  "proof_admission": false,
+  "public_v2_preservation": "Original published v2 bodies, signatures, schemas, profile and helper implementations retained; no optional-originals dispatch or implicit v3 conversion.",
+  "qualification": {
+    "cases_passed": 395,
+    "cohorts": {
+      "eligibility": {
+        "cases_passed": 275,
+        "controller_complete": {
+          "bytes": 184,
+          "sha256": "54500f1f288d42c60b1fa34d8c676c029af4dae2b3e7649373d8e7ef1777a41e"
+        },
+        "elapsed_test_seconds": 35.96446947706863,
+        "launch_cleanup": {
+          "bytes": 7956,
+          "sha256": "a7102a192e965678970c1c1c569d7ffde790dd9ff01d75dba05a2e7fbdc6865b"
+        },
+        "manifest": {
+          "bytes": 122506,
+          "sha256": "8fba96a0f584fa6f5650e2b3cb2cfad4138d3fc9cb3bd476503b9195a7c2d46f"
+        },
+        "original_native_storage_and_source_READ_closed": true,
+        "phases_passed": 825,
+        "request": {
+          "bytes": 71321,
+          "sha256": "c75fb172fa43a372e54f4889cf38d46f17145176be9287a7e92fa96d964ab97a"
+        },
+        "source_files": 235,
+        "test_result": {
+          "bytes": 81178,
+          "sha256": "cbc2d9b346b286f1ea9a86f6396d11a94917dc18e2c53406b90dcd25c253d496"
+        }
+      },
+      "graph_corpus_context": {
+        "cases_passed": 120,
+        "controller_complete": {
+          "bytes": 184,
+          "sha256": "9473ac84c08cb27c9cce3c4b29ae9210fb67f04ca885a7439decda8194b2e691"
+        },
+        "elapsed_test_seconds": 144.78727658605203,
+        "launch_cleanup": {
+          "bytes": 7974,
+          "sha256": "c36ea83c544c2021ac8a57129b0f9bcf90829021bd515259a04428ce5b915102"
+        },
+        "manifest": {
+          "bytes": 72458,
+          "sha256": "b1efb9010cdec62bfe8dd8176a5c34a0acd6000664bacabf2ace177748ab919e"
+        },
+        "original_native_storage_and_source_READ_closed": true,
+        "phases_passed": 360,
+        "request": {
+          "bytes": 64618,
+          "sha256": "45457da4e905120514d69c5ada88351c22bda26dc3a66c6a38e2e9a16af858e6"
+        },
+        "source_files": 235,
+        "test_result": {
+          "bytes": 31129,
+          "sha256": "0ff36ba322a981a3f870ddd130a4bb4445f6dcd238625c9a4ea199181f222bba"
+        }
+      }
+    },
+    "distinct_population": "Disjoint selected test nodes; authored engineering controls, not distinct statutes or model-quality accuracy.",
+    "phases_passed": 1185
+  },
+  "recorded_at_utc": "2026-10-21T03:56:08.916321+00:00",
+  "remaining_work": [
+    "Bind exact statutory source/span/edition correspondence for a complete norm, governing definition and two distinct uses.",
+    "Obtain actual source/meaning/applicability evidence and support complete selected IR/native projection.",
+    "Evaluate compatible retained decoder states with autonomous AST, IR-only prose and exact-byte measures separately."
+  ],
+  "schema": "legal-ir-public-v2-retained-v1-original-v3-reconciliation/v1",
+  "selected_lineage": [
+    "43a937761c936fdb3feb083071b97b47f17dd3eb",
+    "2eed195955f10b6a054e1cd61bee8b23fe4646d4",
+    "adce3ed285598d6c9d659313d733286403459163"
+  ],
+  "source": {
+    "ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py": {
+      "bytes": 49834,
+      "sha256": "2d977fa6e79bfd01dda1f804d200ba6c4ab79fd81adcc745a8b5534e9eea2b5b"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_span_target_eligibility_v1.py": {
+      "bytes": 75099,
+      "sha256": "b0c8551413cce67e9567912b6c474e4a1e2f151ce13aeb418ac6725b7cde6c29"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py": {
+      "bytes": 57730,
+      "sha256": "c1e808323e2f7343637f269d017502283f986bb08a4cf009b3f48e7662f10c40"
+    }
+  },
+  "source_binding_admission": false,
+  "source_edition_meaning_or_review_qualified": false,
+  "training_mask": 0,
+  "workspace_receipts_are_published": false
+}

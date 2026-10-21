@@ -662,11 +662,11 @@ def test_coordinate_corpus_retained_eligibility_cannot_replace_original_replay_a
     case = coordinate_corpus_case
     inputs = case["intake_inputs"]
     request = json.loads(inputs["eligibility_request_raw"])
-    request["schema"] = _coordinate_eligibility.REQUEST_SCHEMA_V2
+    request["schema"] = _coordinate_eligibility.RETAINED_REQUEST_SCHEMA_V1
     request.pop("join_originals_sha256")
-    request.pop("source_compatibility_profile")
+    request["source_compatibility_profile"] = _coordinate_eligibility.RETAINED_PROFILE_V1
     request_raw = _custody_wire(request)
-    retained = _coordinate_eligibility.prepare_source_span_target_eligibility_v2(
+    retained = _coordinate_eligibility.prepare_retained_source_span_target_eligibility_v1(
         request_raw, inputs["join_manifest_raw"], expected_request_sha256=sha(request_raw))
     assert retained["upstream_reexecution_performed"] is False
     retained_raw = json.dumps(retained, ensure_ascii=False, indent=2).encode("utf-8")

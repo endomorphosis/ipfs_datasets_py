@@ -538,4 +538,3 @@ def test_live_split_source_drift_invalidates_binding_before_consumer_dispatch(mo
     with pytest.raises(owner.SourceSpanConsumerBindingError):
         consume(binding, rows, options, lambda received: calls.append(received))
     assert calls == []
-

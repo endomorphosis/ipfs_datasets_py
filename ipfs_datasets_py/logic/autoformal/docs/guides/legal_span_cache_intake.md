@@ -415,3 +415,8 @@ It does not replace the primary cache generation or import workspace/artifact
 implementations into product code. No model, vector, checkpoint, training or Lean
 execution is introduced. The existing lossless corpus/graph export owners remain
 the next integration boundary after this proposal-preparation slice.
+
+
+## Public v2 and explicit v3 compatibility
+
+Graph-v1 retains published original-input eligibility-v2 with mandatory originals. Graph-v2 uses explicit eligibility-v3; the new corpus-custody profile consumes graph-v2. Retained eligibility has distinct retained-v1 APIs and wire identities, and cannot substitute for either original-input route. Source/helper byte pins remain complete across helper-backed and inlined context generations; existing reports retain their original producer pins and do not gain authority from relocation.
