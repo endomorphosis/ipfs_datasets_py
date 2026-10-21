@@ -327,7 +327,8 @@
         "selected-coordinate-paired-transport-20261020-01",
         "selected-coordinate-context-intake-20261020-01",
         "selected-coordinate-three-cache-join-20261020-01",
-        "selected-pilot-progress-identity-lookup-20261021-01"
+        "selected-pilot-progress-identity-lookup-20261021-01",
+        "comprehensive-reuse-plan-review-20261021-07"
       ],
       "id": "source-span-entity-join",
       "notes": "Join custody does not establish legal meaning or target eligibility. Historical census companion preserves missing endpoints and unselected source occurrences; evidence navigation does not admit a semantic graph. Newer opt-in raw/paired/context/join transport is separately qualified and committed on431c9c7; see selected_git_delivery. Legacy historical transport flags retain their original observation scope; default adoption/publication and semantic/crosswalk gates remain separate.",
@@ -2088,6 +2089,16 @@
       "root": "datasets_repository",
       "scope": "Completed bounded DATA lookup of pinned historical progress765176c6:443905ledger rows/443904unique span identities/0duplicate identities;15same-legal-ID/different-text observations (4section7213,11section7214), zero occurrences of all3selected text hashes, officer-definition hash not listed. Exact3hashes OR7213/7214 query retained allbounded rows; no all101 or parentParquet reread. All236source pins unchanged and original native/storage/sourceREAD closeout independently verified. Integer-zero training/gold masks; no physical paired-row/source-edition/meaning or model/training/reconstruction/Lean qualification. Next compare retained whole-section text views through the existing source-coordinate inventory before physical cache binding.",
       "status": "completed_owned_data_lookup"
+    },
+    {
+      "id": "comprehensive-reuse-plan-review-20261021-07",
+      "observed_bytes": 7464,
+      "observed_sha256": "db7e6b37f9b1bde183a92db7250c5df1f246ddb8337611d95e59b78f043ce087",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-07/comprehensive-reuse-plan-review-v01.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Maintained programme synthesis with four pinned review inputs: retained autoencoder science, current owner/API publication availability, bounded metadata for three unchanged Hub revisions, and earlier artifact reuse. Preserves all 24 task IDs and four distinct representation systems. Reuses the completed 130-candidate physical replay; next work locates immutable physical provenance for only two exact operative span IDs. Clarifies parallel Lean/model prerequisites and separate source/meaning, representability, autonomous reconstruction and native/release gates. Paired 4,888 observations and entity 1,960,876 rows remain storage counts. No new payload scan, encoder, model, training, tests or Lean execution; source and asset qualifications retain their original generations.",
+      "status": "read_only_reuse_and_plan_review"
     }
   ]
 }
