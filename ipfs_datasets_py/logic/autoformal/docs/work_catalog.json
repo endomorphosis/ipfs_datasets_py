@@ -326,7 +326,8 @@
         "selected-pilot-census-lookup-20261020-03",
         "selected-coordinate-paired-transport-20261020-01",
         "selected-coordinate-context-intake-20261020-01",
-        "selected-coordinate-three-cache-join-20261020-01"
+        "selected-coordinate-three-cache-join-20261020-01",
+        "selected-pilot-progress-identity-lookup-20261021-01"
       ],
       "id": "source-span-entity-join",
       "notes": "Join custody does not establish legal meaning or target eligibility. Historical census companion preserves missing endpoints and unselected source occurrences; evidence navigation does not admit a semantic graph. Newer opt-in raw/paired/context/join transport is separately qualified and committed on431c9c7; see selected_git_delivery. Legacy historical transport flags retain their original observation scope; default adoption/publication and semantic/crosswalk gates remain separate.",
@@ -2077,6 +2078,16 @@
       "root": "datasets_repository",
       "scope": "59 distinct authored engineering cases /177 phases passed against current main dependencies in disjoint30/29 cohorts. All223 runtime files and current native/plugin generation pinned; original native/storage/source READ custody closed. Original selected59 remains a separate generation. No operative source/edition crosswalk, legal meaning, model/training/Lean or gold qualification.",
       "status": "current_main_focused_integration_qualified"
+    },
+    {
+      "id": "selected-pilot-progress-identity-lookup-20261021-01",
+      "observed_bytes": 18553,
+      "observed_sha256": "5ac21258fce9f1ce4a1d30c7d8d8d2f4040fb0a4496598fcb36525a97db99862",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/data-01/owned-progress-lookup-complete-v02.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Completed bounded DATA lookup of pinned historical progress765176c6:443905ledger rows/443904unique span identities/0duplicate identities;15same-legal-ID/different-text observations (4section7213,11section7214), zero occurrences of all3selected text hashes, officer-definition hash not listed. Exact3hashes OR7213/7214 query retained allbounded rows; no all101 or parentParquet reread. All236source pins unchanged and original native/storage/sourceREAD closeout independently verified. Integer-zero training/gold masks; no physical paired-row/source-edition/meaning or model/training/reconstruction/Lean qualification. Next compare retained whole-section text views through the existing source-coordinate inventory before physical cache binding.",
+      "status": "completed_owned_data_lookup"
     }
   ]
 }
