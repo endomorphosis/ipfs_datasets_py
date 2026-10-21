@@ -1,0 +1,346 @@
+{
+  "base_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+  "catalog_components": 30,
+  "catalog_evidence_records": 59,
+  "delivery": {
+    "canonical_source_or_Git_mutations": false,
+    "complete_reviewed_index_sha256": "ce45fa589332e83b1fd84529c644eb0cf173c236324c3f7bc6128991778e160f",
+    "independent_clone": true,
+    "pre_record_tree_sha": "68b4394ee2823bac896eb798c23987128db15f2a",
+    "tested_candidate_profile": "Original reviewed isolated checkout; no tests reattributed to publication clone."
+  },
+  "fresh_validation": [
+    {
+      "cases_passed": 234,
+      "cohort": "importer-01",
+      "manifest_sha256": "769ae6420c364b91b7937b078f77056115e2013235426559a6bfe8d75b96ce6c",
+      "original_native_cleanup_verified": true,
+      "original_source_READ_closed": true,
+      "phases_passed": 702,
+      "request_sha256": "023b4308d9d482bb13ee63e4a330261cc366e4c2b299e2712d54bc9bbafb1de0"
+    },
+    {
+      "cases_passed": 22,
+      "cohort": "programme-03",
+      "manifest_sha256": "22ad553bbb5c59c19ab5106c6e204d73da7f8640273358b8cebbf214048ca525",
+      "original_native_cleanup_verified": true,
+      "original_source_READ_closed": true,
+      "phases_passed": 66,
+      "request_sha256": "55bd415374a13c88e0a06c49eee705a29a1a5d86d6e3f9841888eb3d555572f0"
+    },
+    {
+      "cases_passed": 61,
+      "cohort": "parent-04",
+      "manifest_sha256": "82d6d1fb4e0d4ab06bbea17d9f4529ffc498e9b7feb26a883e209815ef4808c1",
+      "original_native_cleanup_verified": true,
+      "original_source_READ_closed": true,
+      "phases_passed": 183,
+      "request_sha256": "ad1c964166992bdb9e707f70ccc9c3496c98166eaea60e73a5c2ab9b8d045bcd"
+    }
+  ],
+  "maintained_documents": 170,
+  "observed_at_utc": "2026-10-21T00:29:40.716207+00:00",
+  "original_work_items": 24,
+  "previously_merged_paths_preserved": 49,
+  "prior_source_pull_request": 1329,
+  "private_evidence": "Full requests, immutable input captures, failed attempts and native release receipts remain in their original workspace evidence hierarchy.",
+  "public_document_compatibility": {
+    "exact_current_canonical_stubs": 35,
+    "first_source_delivery_paths_unchanged": 49,
+    "fragment_targets_verified": 1,
+    "generic_handbook_original_body_retained": 1,
+    "index_and_current_postimages": 65,
+    "legacy_document_postimages": 63,
+    "never_public_aliases_absent": 271,
+    "old_main_bodies_exactly_preserved": 63,
+    "original_archive_body_matches": 35,
+    "package_entry_points_unchanged_from_reviewed_five_rule_patches": 3,
+    "relative_targets_verified": 181,
+    "source_postimages_unchanged": 53,
+    "supplemental_body_matches": 28,
+    "supplemental_zip_markdown_members": 28
+  },
+  "qualification_limits": {
+    "model_executed": false,
+    "native_Lean_executed": false,
+    "native_generation_caveat": "Later shared-Lake generation is exercised by parent replay/transport only. Prior native builds, cache artifacts and refusals retain their complete original dependency generations.",
+    "numerical_profiles_requalified": false,
+    "previous_native_artifact_reuse_under_changed_owner_sources_qualified": false,
+    "source_only_delivery": true,
+    "statutory_meaning_qualified": false,
+    "training_executed": false
+  },
+  "retained_failed_controls": [
+    {
+      "cohort": "programme-02",
+      "reason": "Control wrapper compared pathlib cwd to str; corrected typed cwd normalization only, preserving guards and product bytes."
+    },
+    {
+      "cohort": "parent-01",
+      "reason": "61 pytest cases passed, but final import guard rejected an omitted router_deps source pin; exact cohort rerun with complete declared import closure."
+    },
+    {
+      "cohort": "parent-02",
+      "reason": "Early collection guard rejected further eagerly imported CEC/common helper pins before tests ran. The next request binds those hashes transitively through its pinned manifest, retaining the outer source pins and strict pre/post import checks."
+    },
+    {
+      "cohort": "parent-03",
+      "reason": "61 pytest cases passed, but closing import-origin guard rejected 33 additional runtime-only imports. All 136 observed product origins are pre-enrolled in the final request, with unchanged guards and selectors."
+    }
+  ],
+  "reused_product_source_files": 53,
+  "reviewed_evidence": {
+    "compatibility-final-review.json": {
+      "bytes": 16383,
+      "sha256": "410b3ecdc4e8e9c52be5f51d67313582613de16f16b1b924b571beb951239cbb"
+    },
+    "compatibility-redirects.json": {
+      "bytes": 177956,
+      "sha256": "cb311d8c14aa3a4ccfb107988ab9905a53c52f4f705644829000b48326d73ff8"
+    },
+    "docs-closure.json": {
+      "bytes": 320277,
+      "sha256": "14f096fbcd6cc83801cb404b6bab75fa6b63ea31d3b44e306e471d35dd0b7869"
+    },
+    "independent-publication-preparation-v01.json": {
+      "bytes": 33561,
+      "sha256": "96ffc01f3095175d9e54ea99a535c1e0528626ba5d1e18808dd50ab95a966b78"
+    },
+    "independent-publication-sparse-context-v01.json": {
+      "bytes": 7702,
+      "sha256": "8506838e7e7fa7042d9d53c1e15657e71cad71ea29d8c21514fff7ff1f491784"
+    },
+    "parent-closure-supplement.json": {
+      "bytes": 362721,
+      "sha256": "485063a9b4694c935b36201e54adf099808577b8f1e448f66f3c27d59a08f846"
+    },
+    "programme-final-release-review-01.json": {
+      "bytes": 100881,
+      "sha256": "c42374bb691cd0a906975c3c19702b6e762d5b4467817e078ff71051bbfe8c6f"
+    },
+    "source-closure-final-review-02.json": {
+      "bytes": 83148,
+      "sha256": "28321d99eb1a9e8596efbc5ba1dc9033712140977ec71b066aaafa8417595fc8"
+    }
+  },
+  "schema": "legal-ir-programme-main-integration/v1",
+  "scope": "Existing maintained LegalIR programme, dependency-complete source owners, owning tests and package data; no new model or legal-meaning qualification.",
+  "source_postimages": {
+    "ipfs_datasets_py/logic/autoformal/corpus_definition_adapter_v2.py": {
+      "bytes": 19768,
+      "sha256": "17412dc0e246e43ba5a1935f3f053c5312b2868d334d6204ca2801aba9230237"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_definition_review_v2.py": {
+      "bytes": 58374,
+      "sha256": "d121c761c4acc30e9e651c72f77c1adbd4ae190f11ca5f3535c166097ab8d7fe"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_definition_use_review_v2.py": {
+      "bytes": 36028,
+      "sha256": "f8a8e36454555e27fe082504914db39d8924cea794802a41c4616ccc63081503"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_definition_use_v2.py": {
+      "bytes": 39651,
+      "sha256": "c8963dd77ec9e80df964e0e425c7940383ebf7b9ef16dcd5122c801a11051907"
+    },
+    "ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py": {
+      "bytes": 18797,
+      "sha256": "a685c83ca40ba18fc308e57c253a1d13b099452f5fe12ec155141a8687cecb94"
+    },
+    "ipfs_datasets_py/logic/autoformal/experimental/__init__.py": {
+      "bytes": 245,
+      "sha256": "491fdbd5ea89804a8b2f5a3de2fa79e3fbbb7869607174f6c600b4e9964cb2e5"
+    },
+    "ipfs_datasets_py/logic/autoformal/experimental/_legacy_source_bridge_v1.py": {
+      "bytes": 10669,
+      "sha256": "4ea5daba6f14db3191588806f93c77367c929165e7aab4241a61eb331bfa1b38"
+    },
+    "ipfs_datasets_py/logic/autoformal/experimental/gated_conditioning_v1.py": {
+      "bytes": 22232,
+      "sha256": "4011067d65d6d49b3d61eb0c3f17c6520f57904127e06a32a932787001c99b27"
+    },
+    "ipfs_datasets_py/logic/autoformal/experimental/gated_training_state_v1.py": {
+      "bytes": 25964,
+      "sha256": "c05619103d048c36631c5702b62e199dd1e4601bd9c38cb28bc2f2818378f4ee"
+    },
+    "ipfs_datasets_py/logic/autoformal/experimental/journal_inference_v1.py": {
+      "bytes": 34830,
+      "sha256": "8c11b5f25ecf481562ed606b524720c630648dc80f5791087746ae6d24e8bbe9"
+    },
+    "ipfs_datasets_py/logic/autoformal/experimental/journal_training_session_v1.py": {
+      "bytes": 40151,
+      "sha256": "54cfa9d9c8ee1f66e4eb1ed2e89665b52922d5414e5505260f2b61043a106a2c"
+    },
+    "ipfs_datasets_py/logic/autoformal/experimental/projected_context_decoder_v1.py": {
+      "bytes": 28967,
+      "sha256": "521661adbca557837e2477e83ef73217b27cb2de3135bfbffc5337f5588fce24"
+    },
+    "ipfs_datasets_py/logic/autoformal/experimental/trained_projected_context_decoder_v1.py": {
+      "bytes": 22610,
+      "sha256": "5ed1e8860168a32708512fdfadf4849cfabf41da6b622ebcf71c60100253cd69"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py": {
+      "bytes": 42928,
+      "sha256": "255559a50f15a68a39169c7e588737a86468bd9c25c6d4f42cd053c80858fb32"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py": {
+      "bytes": 45309,
+      "sha256": "80326f7edb96ff99b763a8c9323d9c2640fc074fed5a47ee00f30261e754b387"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py": {
+      "bytes": 52283,
+      "sha256": "e699d7d490b65df1a60566aa196bd8e575687703fcf1df411e5a209666b08355"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py": {
+      "bytes": 44210,
+      "sha256": "6bc1370952487a09bba3c5f963eb6d744e1f6fcf6edc15bb442a93f829267c99"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_parent_parquet_pages.py": {
+      "bytes": 71640,
+      "sha256": "fcf2f111f1b95450caf09e818b2298e8080ad53774944b844ac46d729af767c7"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_parent_source_identity_bindings_v1.py": {
+      "bytes": 31266,
+      "sha256": "581a21b35b545385e9005ce98f0322804bb19f8c87b7e402c30f2a2620d1c392"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_parent_source_metadata_inventory_v1.py": {
+      "bytes": 37312,
+      "sha256": "aff076e83283f98e4d4dd78421364b94987651eb0312239c368b6cfc6795fba0"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py": {
+      "bytes": 34676,
+      "sha256": "f929572c71536bc61364cccbf274c8f03e0bbc01655d2c6b0a3435d34d1a70c4"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge.py": {
+      "bytes": 10069,
+      "sha256": "2956a408cf767243f16944e4eb5dad425d26e1b09fd1979fbbbfa8fb4701a812"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_definition_bridge_v2.py": {
+      "bytes": 38423,
+      "sha256": "da374789b919212513f9d4403b2bd161783db53982233f4ff2e8273166a8a860"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_span_entity_census_v1.py": {
+      "bytes": 17631,
+      "sha256": "a4a1013a9827ae4cade30b79b1d7e7ab74f2b669514d05f088c0e628d4ecc82f"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_span_target_eligibility_v1.py": {
+      "bytes": 24006,
+      "sha256": "7767cdce96c30c21566f031624f1d3349da836386142e610ca41d7dadf365ca6"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py": {
+      "bytes": 23949,
+      "sha256": "1f1e607c7c8d1e479ae5b79e17f928571e3da49f0ad4180dfc93e609d0d47dc2"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py": {
+      "bytes": 20005,
+      "sha256": "2f4e2895e29d6a7fcefdb240c73b732b8e0504b918af62994a04964bc572a13e"
+    },
+    "ipfs_datasets_py/logic/autoformal/scoped_definition_resolution.py": {
+      "bytes": 30302,
+      "sha256": "f35fd6484c2c0cca4234477231c702dc17de4b5d9cadb0f944272065d9c13962"
+    },
+    "ipfs_datasets_py/logic/autoformal/work_catalog.py": {
+      "bytes": 17398,
+      "sha256": "15e2c24193afca750f860ad7de0a9e96591668ad756de77fdfc94f10ef10c352"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py": {
+      "bytes": 25697,
+      "sha256": "cd94b586f369517e6b3507995f9eea1b0589cce769c11afe6676285b0161811a"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py": {
+      "bytes": 43980,
+      "sha256": "71b8e01cae1153081cb5df456800d8d907a092bf09f169af1fcb83b90eace163"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_completion_budget_v1.py": {
+      "bytes": 14328,
+      "sha256": "0d7362815dad5048652020d03967af4908123d74887e71e1823c62aa958783a7"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_decisions_v1.py": {
+      "bytes": 25111,
+      "sha256": "e404b4299790d099cc124e93092082e81848cade8c1d9f130e2c83cc34b1e5b2"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_fingerprint_v1.py": {
+      "bytes": 5930,
+      "sha256": "e28f769ce751fbadbca7b654aa2b1cae332487aabad2d19b9623d3db3b31f70f"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_head_v1.py": {
+      "bytes": 38671,
+      "sha256": "8e32341e5962c01193ec46313011b83ba67b340a8996f866e417b10179b5c021"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_prepared_runtime_v3.py": {
+      "bytes": 53267,
+      "sha256": "a7d7cedfa482537ac76a9ccf9a49a79f6108e89268b02ca3b355abcfe774ec1e"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_budget_runtime_v1.py": {
+      "bytes": 16005,
+      "sha256": "feb59e061e169a65f3d5f7721ab3ee84d3ecd3d170ba433d3a7b49ef7e65c26b"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_policy_v1.py": {
+      "bytes": 17713,
+      "sha256": "abc011efbbc6460be7a68832698631d8b34708dbb60253fcbd1d5394a45d1c41"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_prepared_training_v1.py": {
+      "bytes": 27465,
+      "sha256": "b7d4ca5fd23d1f8c408156cebc50c57f553e46cf99a527188f5e80668e3bd253"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_prepared_training_v2.py": {
+      "bytes": 35141,
+      "sha256": "255dd2128b88a67e8abadc4fe9efaadf6f25abb3165363326e1f23a26b56ab4f"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_trained_runtime_v1.py": {
+      "bytes": 29650,
+      "sha256": "42dd29ad96e9ca8c28be071fe63292fca8b0155f7284eeac52c9306bfd921814"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_training_v1.py": {
+      "bytes": 24528,
+      "sha256": "7d1562aa7109dc9998fcf533357262a352e9a8c72425bf5d4c02537a9e0d685c"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_scope_filter_v1.py": {
+      "bytes": 9794,
+      "sha256": "7b77e5d71012f9394ec0eb9fa05a70310644a3ed5e334f8e91904354b6a187b9"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_scope_prepared_training_v1.py": {
+      "bytes": 36190,
+      "sha256": "a07025ba46fa0357797e709c37c27f7a8faf17e395df2657e3a71fa22533fc5f"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_scope_prepared_training_v2.py": {
+      "bytes": 43934,
+      "sha256": "9e2d70532e4b559d3d6e808658474b7aaff7d851c89733684fb1c4c51e6e8c78"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_scope_training_v1.py": {
+      "bytes": 32709,
+      "sha256": "fb86141cd0b69fe74e43cc9460d557e890c90c07178bf9e1a62d15098552c208"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_selection_v1.py": {
+      "bytes": 18115,
+      "sha256": "936b476ea86a406a8c73937bbff9726dcaa3b2314b84b067064d8a618d1ee656"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_trained_runtime_v2.py": {
+      "bytes": 49460,
+      "sha256": "43037fe64c58de0bcfc2072178eabe1276b4a020863e20b9498a634763b56e5a"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_training_v2.py": {
+      "bytes": 33914,
+      "sha256": "3ff34b8094a8bb19315741a03873c95f7d809654b35717fd4cee97e074fd2b59"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_weighted_prepared_training_v1.py": {
+      "bytes": 32735,
+      "sha256": "6f7248714cea81edfe6fda69bb0abe38bb37535f2cb92d460d8e38c4d2cd4b07"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_weighted_training_v1.py": {
+      "bytes": 34023,
+      "sha256": "3646b831d73338a2bc93f4ca414f8e3cf317b576d404244be4089fbe736168cc"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_native384_contexts.py": {
+      "bytes": 12837,
+      "sha256": "df3b3477f4af9bc05f07c7d6f267e9596a6b91795827f6c86712f46ec88dee9b"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_native768_contexts.py": {
+      "bytes": 24058,
+      "sha256": "a012acba2bc868c0ab223e628a15dd314deeac41c896e378eb28e0c27b36559b"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py": {
+      "bytes": 18700,
+      "sha256": "1a44d0245575c8af586e69259a1dffec0d4aa85ac6070566024774aeef8529f2"
+    }
+  }
+}

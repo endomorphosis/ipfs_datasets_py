@@ -674,3 +674,539 @@ def validate_selected_parent_rows(report, descriptor, *, expected_report_sha256,
 __all__ = ["ParentParquetPagesError", "preflight_parent_pages", "validate_parent_page_preflight",
     "read_selected_parent_rows", "validate_selected_parent_rows", "parent_page_report_sha256",
     "parent_row_report_sha256", "parse_page_header", "decode_snappy_page", "decode_rle_values"]
+
+
+# The complete metadata profile is additive. The selected-row DEFAULT_LIMITS,
+# APIs and their 256 MiB aggregate page allowance above remain unchanged.
+from dataclasses import asdict, dataclass
+
+METADATA_SCHEMA = "legal-parent-complete-source-metadata/v1"
+METADATA_PROFILE = "historical-parent-complete-source-metadata/v1"
+METADATA_SCOPE = "declared_parent_artifact_only"
+METADATA_MANIFEST_NAME = "parent-source-metadata.json"
+METADATA_NORMALIZATION = "unicode-whitespace-casefold-v1"
+_METADATA_AUTHORITY = dict.fromkeys(("source_semantics_verified", "source_authority_authenticated",
+    "official_edition_correspondence_verified", "original_producer_occurrence_attested",
+    "source_equivalence_proven", "context_permission_verified", "context_closure_verified",
+    "source_encoder_authenticated", "global_holdout_verified", "training_qualified",
+    "evaluation_gold_qualified", "model_executed", "training_executed", "database_executed",
+    "prover_executed", "Lean_admitted", "convergence_proved", "admitted"), False)
+_METADATA_IDENTITIES = ("ipfs_cid", "title_number", "section_number")
+_METADATA_NONSCALAR = object()
+
+
+@dataclass(frozen=True)
+class ParentMetadataScanLimits:
+    """Separate whole-scan ceilings; smaller values are accepted explicitly.
+
+    Decoded page and hashed canonical totals measure work, not resident RAM.
+    Resident metadata accounting bounds canonical observation bytes, not Python
+    object/allocator overhead. An owned runtime memory reservation is separate.
+    """
+    max_rows: int = 65536
+    max_total_decoded_page_bytes: int = 2 * 1024**3
+    max_total_canonical_hashed_bytes: int = 4 * 1024**3
+    max_metadata_row_bytes: int = 4096
+    max_identity_literal_bytes: int = 512
+    max_resident_metadata_bytes: int = 256 * 1024**2
+    max_rows_per_metadata_shard: int = 4096
+    max_metadata_shard_bytes: int = 4 * 1024**2
+    max_metadata_shards: int = 128
+    max_preflight_bytes: int = 8 * 1024**2
+    max_manifest_bytes: int = 2 * 1024**2
+    max_total_metadata_package_bytes: int = 384 * 1024**2
+
+    def __post_init__(self):
+        for name, maximum in (("max_rows", 65536),
+                ("max_total_decoded_page_bytes", 2 * 1024**3),
+                ("max_total_canonical_hashed_bytes", 4 * 1024**3),
+                ("max_metadata_row_bytes", 4096), ("max_identity_literal_bytes", 512),
+                ("max_resident_metadata_bytes", 256 * 1024**2),
+                ("max_rows_per_metadata_shard", 4096), ("max_metadata_shard_bytes", 4 * 1024**2),
+                ("max_metadata_shards", 128), ("max_preflight_bytes", 8 * 1024**2),
+                ("max_manifest_bytes", 2 * 1024**2),
+                ("max_total_metadata_package_bytes", 384 * 1024**2)):
+            _need(type(getattr(self, name)) is int and 0 < getattr(self, name) <= maximum,
+                "metadata scan limit is unknown, noninteger or raised: " + name)
+
+
+def _metadata_scan_limits_snapshot(value):
+    """Validate plain integer ceilings before serializing caller limit fields."""
+    _need(type(value) is ParentMetadataScanLimits, "explicit genuine metadata scan limits required")
+    values = {name: getattr(value, name) for name in ParentMetadataScanLimits.__dataclass_fields__}
+    checked = ParentMetadataScanLimits(**values)
+    return checked, _wire(values)
+
+
+def _metadata_json_snapshot(value, maximum):
+    """Bound plain JSON before copying or serializing caller metadata."""
+    nodes = byte_count = 0
+    active = set()
+    def copy(item, depth):
+        nonlocal nodes, byte_count
+        nodes += 1
+        _need(nodes <= 262144 and depth <= 16, "metadata JSON node/depth bound exceeded")
+        kind = type(item)
+        if kind is str:
+            _need(len(item) <= maximum, "metadata JSON string character bound exceeded")
+            byte_count += len(item.encode("utf-8"))
+            _need(byte_count <= maximum, "metadata JSON aggregate string byte bound exceeded")
+            return item
+        if item is None or kind is bool: return item
+        if kind is int:
+            _need(-(2**63) <= item < 2**63, "metadata JSON integer bound exceeded")
+            return item
+        _need(kind in (dict, list) and len(item) <= 65536, "bounded plain metadata JSON required")
+        identity = id(item)
+        _need(identity not in active, "cyclic metadata JSON refused")
+        active.add(identity)
+        try:
+            if kind is list: return [copy(child, depth + 1) for child in item]
+            result = {}
+            for key, child in item.items():
+                _need(type(key) is str and len(key) <= 4096, "bounded metadata JSON key required")
+                result[copy(key, depth + 1)] = copy(child, depth + 1)
+            return result
+        finally: active.remove(identity)
+    try:
+        detached = copy(value, 0); raw = _wire(detached)
+    except (TypeError, UnicodeError, RecursionError, RuntimeError) as exc:
+        raise ParentParquetPagesError("invalid bounded metadata JSON") from exc
+    _need(len(raw) <= maximum, "canonical metadata JSON byte bound exceeded")
+    return detached, raw
+
+
+def _metadata_close_fds(descriptors, primary=None):
+    """Attempt every close while retaining the earliest operational failure."""
+    error = primary
+    for descriptor in descriptors:
+        try: os.close(descriptor)
+        except BaseException as failure:
+            if error is None: error = failure
+            else: error.add_note("Metadata descriptor cleanup also failed: " + type(failure).__name__)
+    if error is not None: raise error
+
+
+def _metadata_directory(path):
+    path = Path(path)
+    _need(path.is_absolute() and ".." not in path.parts and path.name not in ("", ".", ".."),
+        "explicit absolute fresh metadata destination required")
+    _need(all(stat.S_ISDIR(parent.lstat().st_mode) for parent in path.parents)
+        and path.parent.resolve(strict=True) == path.parent, "physical metadata destination parents required")
+    _need(not path.exists() and not path.is_symlink(), "metadata output must be new; no overwrite")
+    parent_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    fd = None
+    try:
+        os.mkdir(path, mode=0o700)
+        fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        os.fsync(parent_fd)
+    except BaseException as failure:
+        _metadata_close_fds(([fd] if fd is not None else []) + [parent_fd], failure)
+    else:
+        try: os.close(parent_fd)
+        except BaseException as failure:
+            _metadata_close_fds([fd], failure)
+    try:
+        info = os.fstat(fd)
+        _need(stat.S_ISDIR(info.st_mode) and path.resolve(strict=True) == path
+            and (info.st_dev, info.st_ino) == (path.lstat().st_dev, path.lstat().st_ino),
+            "metadata root identity changed")
+    except BaseException as failure:
+        _metadata_close_fds([fd], failure)
+    return path, fd, (info.st_dev, info.st_ino)
+
+
+class _MetadataPackageWriter:
+    """Exclusive bounded shards; a manifest is allowed only after source guard."""
+    def __init__(self, path, limits):
+        self.path, self.root_fd, self.identity = _metadata_directory(path)
+        self.limits, self.shards, self.total, self.rows = limits, [], 0, 0
+        self.stream = None
+        try:
+            os.mkdir(self.path / "metadata", mode=0o700)
+            self.data_fd = os.open(self.path / "metadata",
+                os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+            self.data_identity = (os.fstat(self.data_fd).st_dev, os.fstat(self.data_fd).st_ino)
+            os.fsync(self.root_fd)
+        except BaseException as failure:
+            _metadata_close_fds(([self.data_fd] if hasattr(self, "data_fd") else []) + [self.root_fd], failure)
+
+    def guard(self):
+        _need(self.path.resolve(strict=True) == self.path
+            and self.identity == (self.path.lstat().st_dev, self.path.lstat().st_ino)
+            == (os.fstat(self.root_fd).st_dev, os.fstat(self.root_fd).st_ino),
+            "metadata root changed during scan")
+        data = self.path / "metadata"
+        _need(stat.S_ISDIR(data.lstat().st_mode) and data.resolve(strict=True) == data
+            and self.data_identity == (data.lstat().st_dev, data.lstat().st_ino)
+            == (os.fstat(self.data_fd).st_dev, os.fstat(self.data_fd).st_ino),
+            "metadata shard directory changed during scan")
+
+    def _start(self):
+        _need(len(self.shards) < self.limits.max_metadata_shards, "metadata shard count bound exceeded")
+        self.name = "part-" + str(len(self.shards)).zfill(6) + ".jsonl"
+        fd = os.open(self.path / "metadata" / self.name,
+            os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        self.stream = os.fdopen(fd, "wb")
+        self.file_identity = (os.fstat(fd).st_dev, os.fstat(fd).st_ino)
+        self.guard()
+        actual = (self.path / "metadata" / self.name).lstat()
+        _need(self.file_identity == (actual.st_dev, actual.st_ino), "new metadata shard path/FD differ")
+        self.digest, self.file_bytes, self.file_rows, self.first = hashlib.sha256(), 0, 0, self.rows
+
+    def finish_shard(self):
+        if self.stream is None: return
+        self.stream.flush(); os.fsync(self.stream.fileno())
+        info = os.fstat(self.stream.fileno())
+        _need(stat.S_ISREG(info.st_mode) and info.st_nlink == 1 and info.st_size == self.file_bytes,
+            "metadata shard physical size/type differs")
+        self.stream.close(); self.stream = None
+        self.guard()
+        path = self.path / "metadata" / self.name
+        current = path.lstat()
+        _need(stat.S_ISREG(current.st_mode) and current.st_nlink == 1
+            and (current.st_dev, current.st_ino) == self.file_identity and current.st_size == self.file_bytes,
+            "metadata shard identity changed")
+        self.shards.append({"relative_path": "metadata/" + self.name, "bytes": self.file_bytes,
+            "sha256": self.digest.hexdigest(), "row_count": self.file_rows,
+            "start_ordinal": self.first, "end_ordinal": self.rows})
+        os.fsync(self.data_fd)
+
+    def append(self, row):
+        self.guard()
+        _need(row["physical_key"]["parquet_row_index"] == self.rows,
+            "metadata rows must cover every contiguous physical ordinal")
+        raw = _wire(row) + b"\n"
+        _need(len(raw) <= self.limits.max_metadata_row_bytes
+            and len(raw) <= self.limits.max_metadata_shard_bytes, "metadata row byte bound exceeded")
+        if self.stream is not None and (self.file_rows >= self.limits.max_rows_per_metadata_shard
+                or self.file_bytes + len(raw) > self.limits.max_metadata_shard_bytes):
+            self.finish_shard()
+        if self.stream is None: self._start()
+        _need(self.total + len(raw) <= self.limits.max_total_metadata_package_bytes,
+            "aggregate metadata package byte bound exceeded")
+        self.stream.write(raw); self.digest.update(raw)
+        self.file_bytes += len(raw); self.file_rows += 1
+        self.total += len(raw); self.rows += 1
+
+    def write_manifest(self, value):
+        self.guard(); self.finish_shard()
+        raw = _wire(value) + b"\n"
+        _need(len(raw) <= self.limits.max_manifest_bytes
+            and self.total + len(raw) <= self.limits.max_total_metadata_package_bytes,
+            "metadata manifest/package byte bound exceeded")
+        pending = self.path / ".parent-source-metadata.pending"
+        complete = self.path / METADATA_MANIFEST_NAME
+        fd = os.open(pending, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        identity = (os.fstat(fd).st_dev, os.fstat(fd).st_ino)
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                self.guard()
+                info = pending.lstat()
+                _need(identity == (info.st_dev, info.st_ino), "pending manifest path/FD differ")
+                stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+            self.guard()
+            # A hard link is atomic and refuses an existing destination. Remove
+            # only our private pending name so the completed file is single-link.
+            os.link(pending, complete, follow_symlinks=False)
+            os.unlink(pending)
+            os.fsync(self.root_fd); self.guard()
+            info = complete.lstat()
+            _need(stat.S_ISREG(info.st_mode) and info.st_nlink == 1
+                and identity == (info.st_dev, info.st_ino) and info.st_size == len(raw),
+                "completed metadata manifest identity/size differs")
+        except BaseException as failure:
+            # Failure/cancellation never removes a foreign replacement. Partial
+            # shards survive; our own uncommitted final/pending names do not.
+            for path in (complete, pending):
+                try:
+                    info = path.lstat()
+                    if (info.st_dev, info.st_ino) == identity: os.unlink(path)
+                except FileNotFoundError: pass
+                except BaseException as cleanup_error:
+                    failure.add_note("Metadata manifest cleanup also failed: " + type(cleanup_error).__name__)
+            raise
+
+    def close(self):
+        error = None
+        def attempt(operation):
+            nonlocal error
+            try: operation()
+            except BaseException as failure:
+                if error is None: error = failure
+        if self.stream is not None:
+            # Partial shards survive cancellation/failure, without a manifest.
+            stream, self.stream = self.stream, None
+            attempt(stream.flush)
+            attempt(lambda: os.fsync(stream.fileno()))
+            attempt(stream.close)
+        attempt(lambda: os.close(self.data_fd))
+        attempt(lambda: os.close(self.root_fd))
+        if error is not None: raise error
+
+
+def _metadata_observation():
+    return {"text": None, "normalized_content_sha256": None,
+        "observed_identity": dict.fromkeys(_METADATA_IDENTITIES),
+        "observed_identity_status": dict.fromkeys(_METADATA_IDENTITIES, "missing"),
+        "observed_identity_evidence": dict.fromkeys(_METADATA_IDENTITIES),
+        "disposition": "missing_text"}
+
+
+class _MetadataRowStates:
+    """One SHA context and bounded small observations per declared group row."""
+    def __init__(self, count, limits, aggregate):
+        _need(type(count) is int and 0 < count <= limits.max_rows,
+            "metadata row state count exceeds its preallocation bound")
+        initial = _metadata_observation()
+        size = len(_wire(initial))
+        _need(size <= limits.max_metadata_row_bytes
+            and size * count <= limits.max_resident_metadata_bytes,
+            "initial resident source observations exceed their byte bound")
+        _need(aggregate[0] + 2 * count <= limits.max_total_canonical_hashed_bytes,
+            "canonical row braces exceed whole-scan byte bound")
+        aggregate[0] += 2 * count
+        self.count, self.limits, self.aggregate = count, limits, aggregate
+        self.hashes = [hashlib.sha256(b"{") for _ in range(count)]
+        self.raw_bytes = [2] * count
+        self.observations = [_metadata_observation() for _ in range(count)]
+        self.observation_bytes = [size] * count
+        self.resident_bytes = size * count
+
+    def charge(self, ordinal, size):
+        _need(type(ordinal) is int and 0 <= ordinal < self.count
+            and type(size) is int and size >= 0, "literal bounded row fragment required")
+        _need(self.raw_bytes[ordinal] + size <= DEFAULT_LIMITS["max_row_bytes"],
+            "complete physical row canonical byte bound exceeded before fragment allocation")
+        _need(self.aggregate[0] + size <= self.limits.max_total_canonical_hashed_bytes,
+            "whole-parent canonical hashed-byte bound exceeded before fragment allocation")
+        self.raw_bytes[ordinal] += size; self.aggregate[0] += size
+
+    def bytes(self, ordinal, raw):
+        self.charge(ordinal, len(raw)); self.hashes[ordinal].update(raw)
+
+    def scalar(self, ordinal, value, kind):
+        size = 4 if value is None else _value_json_bytes(value, kind)
+        self.charge(ordinal, size)
+        decoded = None if value is None else _selected_value(value, kind)
+        fragment = _wire(decoded)
+        _need(len(fragment) == size, "canonical scalar fragment differs from exact existing byte recipe")
+        self.hashes[ordinal].update(fragment)
+        return decoded
+
+    def observe(self, ordinal, name, value):
+        if name not in (*_METADATA_IDENTITIES, "text"): return
+        observed = self.observations[ordinal]
+        if name == "text":
+            if type(value) is str:
+                raw = value.encode("utf-8")
+                observed["text"] = {"sha256": hashlib.sha256(raw).hexdigest(),
+                    "utf8_bytes": len(raw), "unicode_characters": len(value)}
+                observed["normalized_content_sha256"] = hashlib.sha256(
+                    " ".join(value.split()).casefold().encode("utf-8")).hexdigest()
+                observed["disposition"] = "stored_text_available" if value else "empty_text"
+            else:
+                observed["disposition"] = "missing_text" if value is None else "unsupported_text_type"
+        elif type(value) is str:
+            raw = value.encode("utf-8")
+            if len(raw) <= self.limits.max_identity_literal_bytes:
+                observed["observed_identity"][name] = value
+                observed["observed_identity_status"][name] = "observed_string"
+            else:
+                observed["observed_identity_status"][name] = "unsupported_size"
+                observed["observed_identity_evidence"][name] = {
+                    "sha256": hashlib.sha256(raw).hexdigest(), "utf8_bytes": len(raw)}
+        else:
+            observed["observed_identity_status"][name] = "missing" if value is None else "unsupported_type"
+        size = len(_wire(observed))
+        _need(size <= self.limits.max_metadata_row_bytes,
+            "resident per-row source observation exceeds byte bound")
+        total = self.resident_bytes - self.observation_bytes[ordinal] + size
+        _need(total <= self.limits.max_resident_metadata_bytes,
+            "resident canonical source observation budget exceeded")
+        self.observation_bytes[ordinal], self.resident_bytes = size, total
+
+
+def _metadata_scan_body(stream, column, page, page_limits, accounting, witnesses, seen):
+    _need(page["page_id"] not in seen, "complete scan attempted to decode a page twice")
+    seen.add(page["page_id"])
+    return _body(stream, column, page, page_limits, accounting, witnesses)
+
+
+def _metadata_hash_column(stream, column, group_rows, states, field_position,
+        page_limits, accounting, witnesses, seen):
+    """Hash one column in canonical-key order; no collection of source rows."""
+    field = column["field"]; kind = field["kind"]; repeated = field["max_repetition_level"]
+    prefix_size = (1 if field_position else 0) + _value_json_bytes(field["name"].encode("utf-8"), "utf8") + 1
+    for ordinal in range(group_rows): states.charge(ordinal, prefix_size)
+    prefix = (b"," if field_position else b"") + _wire(field["name"]) + b":"
+    _need(len(prefix) == prefix_size, "canonical key fragment differs from its reserved bytes")
+    dictionary = None
+    scalar_rows, list_row, list_items, list_open = 0, -1, 0, False
+    for page in column["pages"]:
+        raw = _metadata_scan_body(stream, column, page, page_limits, accounting, witnesses, seen)
+        if page["type"] == 2:
+            dictionary = list(_plain_values(raw, kind, page["num_values"], page_limits))
+            continue
+        reps, offset = _level_stream(raw, 0, field["max_repetition_level"], page["num_values"], page_limits)
+        defs, offset = _level_stream(raw, offset, field["max_definition_level"], page["num_values"], page_limits)
+        nonnull = sum(level == field["max_definition_level"] for level in defs)
+        payload = raw[offset:]
+        if page["encoding"] == 8:
+            _need(dictionary is not None and payload, "metadata dictionary dependency is absent")
+            ids = decode_rle_values(payload[1:], bit_width=payload[0], count=nonnull,
+                max_values=page_limits["max_page_values"])
+            _need(all(index < len(dictionary) for index in ids), "metadata dictionary index exceeds its values")
+            values = (dictionary[index] for index in ids)
+        else: values = _plain_values(payload, kind, nonnull, page_limits)
+        for index, (rep, definition) in enumerate(zip(reps, defs, strict=True)):
+            value = next(values) if definition == field["max_definition_level"] else None
+            if not repeated:
+                ordinal = page["data_value_start"] + index
+                _need(ordinal == scalar_rows and ordinal < group_rows,
+                    "metadata scalar physical ordinal coverage differs")
+                states.hashes[ordinal].update(prefix)
+                decoded = states.scalar(ordinal, None if definition == 0 else value, kind)
+                states.observe(ordinal, field["name"], decoded)
+                scalar_rows += 1
+            else:
+                if rep == 0:
+                    if list_open: states.bytes(list_row, b"]")
+                    list_row += 1; list_items = 0
+                    _need(list_row < group_rows, "metadata list physical row population exceeds footer")
+                    states.hashes[list_row].update(prefix)
+                    list_open = definition != 0
+                    states.bytes(list_row, b"[" if list_open else b"null")
+                    states.observe(list_row, field["name"], _METADATA_NONSCALAR if list_open else None)
+                else:
+                    _need(list_row >= 0 and list_open and list_items > 0 and definition >= 2,
+                        "invalid metadata list continuation/null-empty levels")
+                if definition >= 2:
+                    _need(list_items < page_limits["max_list_values"],
+                        "metadata list cardinality exceeds existing bound")
+                    if list_items: states.bytes(list_row, b",")
+                    states.scalar(list_row, None if definition == 2 else value, kind)
+                    list_items += 1
+        _need(next(values, None) is None, "metadata page decoded-value population differs")
+    if repeated:
+        if list_open: states.bytes(list_row, b"]")
+        _need(list_row + 1 == group_rows, "metadata lists omit physical rows")
+    else:
+        _need(scalar_rows == group_rows, "metadata scalar column omits physical rows")
+
+
+def scan_parent_source_metadata(descriptor, *, expected_descriptor_sha256,
+        expected_preflight_sha256, preflight_report, output_directory,
+        limits):
+    """Scan every physical row through this same parser into a new package.
+
+    No lazy producer escapes the source guard. Source/hash/budget failures
+    precede publication; partial outputs are diagnostic. Publication failures
+    attempt to remove only this writer's own uncommitted manifest names, but
+    arbitrary filesystem failure cannot guarantee cleanup. Path existence alone
+    is not a successful scan or durability receipt. Completion grants no
+    grouping, split or legal authority.
+    """
+    original_limits = limits
+    limits, limits_raw = _metadata_scan_limits_snapshot(limits)
+    _sha(expected_descriptor_sha256); _sha(expected_preflight_sha256)
+    parent, parent_raw = _metadata_json_snapshot(descriptor, 16384)
+    supplied, supplied_raw = _metadata_json_snapshot(preflight_report, limits.max_preflight_bytes)
+    source = _descriptor(parent, expected_descriptor_sha256, DEFAULT_LIMITS)
+    _need(_digest(supplied) == expected_preflight_sha256,
+        "independent complete preflight SHA differs for metadata scan")
+    _need(source["row_count"] <= limits.max_rows, "whole-parent rows exceed metadata scan bound")
+    writer = None
+    body_error = None
+    try:
+        with _opened(source) as stream:
+            current = _preflight(stream, source, expected_descriptor_sha256, DEFAULT_LIMITS)
+            _need(_wire(current) == supplied_raw, "whole-parent preflight differs from fresh original")
+            pages = [page for group in current["row_groups"] for col in group["columns"] for page in col["pages"]]
+            expected_page_ids = {page["page_id"] for page in pages}
+            expected_decoded = sum(page["uncompressed_bytes"] for page in pages)
+            _need(len(expected_page_ids) == len(pages) == current["page_count"]
+                and expected_decoded <= limits.max_total_decoded_page_bytes,
+                "complete page population or whole-scan aggregate decoded budget differs")
+            next_ordinal = 0
+            for group in current["row_groups"]:
+                _need(group["row_start"] == next_ordinal, "whole-parent row-group interval gap/overlap")
+                next_ordinal += group["row_count"]
+            _need(next_ordinal == source["row_count"], "whole-parent physical coverage differs")
+            writer = _MetadataPackageWriter(output_directory, limits)
+            # Only this separately enrolled profile changes the aggregate work
+            # allowance passed to the existing private body reader. Every old
+            # per-file/page/value/dictionary/list/row limit remains unchanged.
+            page_limits = dict(DEFAULT_LIMITS, max_decoded_bytes=limits.max_total_decoded_page_bytes)
+            accounting, witnesses, seen, canonical_total = [0], {}, set(), [0]
+            dispositions = {}
+            for group in current["row_groups"]:
+                states = _MetadataRowStates(group["row_count"], limits, canonical_total)
+                columns = sorted(group["columns"], key=lambda col: col["field"]["name"])
+                for position, column in enumerate(columns):
+                    _metadata_hash_column(stream, column, group["row_count"], states, position,
+                        page_limits, accounting, witnesses, seen)
+                for local, observed in enumerate(states.observations):
+                    ordinal = group["row_start"] + local
+                    states.hashes[local].update(b"}")
+                    key = {"repository_id": source["repository"], "revision": source["revision"],
+                        "path_in_repo": source["path_in_repo"], "artifact_sha256": source["sha256"],
+                        "artifact_bytes": source["bytes"], "parquet_row_index": ordinal}
+                    row = {"physical_section_id": "sha256:" + _digest(key), "physical_key": key,
+                        "full_raw_row_sha256": states.hashes[local].hexdigest(), **observed,
+                        "raw_row_canonical_bytes": states.raw_bytes[local],
+                        "group_id": None, "split": None, "inference_view": None,
+                        "authority": dict(_METADATA_AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0}
+                    writer.append(row)
+                    dispositions[row["disposition"]] = dispositions.get(row["disposition"], 0) + 1
+                del states
+            writer.finish_shard()
+            _need(writer.rows == source["row_count"] and seen == expected_page_ids
+                and accounting[0] == expected_decoded == sum(x["uncompressed_bytes"] for x in witnesses.values()),
+                "whole-parent rows or once-only page byte coverage differs")
+            _need(_metadata_json_snapshot(descriptor, 16384)[1] == parent_raw
+                and _metadata_json_snapshot(preflight_report, limits.max_preflight_bytes)[1] == supplied_raw
+                and _metadata_scan_limits_snapshot(original_limits)[1] == limits_raw,
+                "caller originals changed during complete metadata scan")
+        # _opened has completed its final same-FD/full-parent hash and path guard.
+        _need(_metadata_json_snapshot(descriptor, 16384)[1] == parent_raw
+            and _metadata_json_snapshot(preflight_report, limits.max_preflight_bytes)[1] == supplied_raw
+            and _metadata_scan_limits_snapshot(original_limits)[1] == limits_raw,
+            "caller originals changed during final original guard")
+        manifest = {"schema": METADATA_SCHEMA, "profile": METADATA_PROFILE, "scope": METADATA_SCOPE,
+            "parent": source, "parent_descriptor_sha256": expected_descriptor_sha256,
+            "preflight_report_sha256": expected_preflight_sha256,
+            "source_schema": current["source_schema"], "source_schema_sha256": current["source_schema_sha256"],
+            "content_normalization": METADATA_NORMALIZATION, "limits": asdict(limits),
+            "row_count": writer.rows, "shards": writer.shards,
+            "coverage": {"declared_parent_rows": source["row_count"], "replayed_parent_rows": writer.rows,
+                "whole_parent_inventoried": True}, "all_source_columns_hashed": True,
+            "raw_rows_stored": False, "source_text_stored": False, "grouping_metadata_complete": False,
+            "page_count": len(seen), "decoded_page_bytes": accounting[0],
+            "decoded_page_witnesses": list(witnesses.values()), "raw_row_canonical_bytes": canonical_total[0],
+            "total_metadata_bytes": writer.total, "disposition_counts": dispositions,
+            "group_id": None, "split": None, "inference_view": None,
+            "authority": dict(_METADATA_AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0}
+        manifest["manifest_sha256"] = _digest(manifest)
+        _metadata_json_snapshot(manifest, limits.max_manifest_bytes)
+        writer.write_manifest(manifest)
+        return manifest
+    except BaseException as failure:
+        body_error = failure
+        raise
+    finally:
+        if writer is not None:
+            try: writer.close()
+            except BaseException as cleanup_error:
+                if body_error is None: raise
+                body_error.add_note("Metadata writer cleanup also failed: " + type(cleanup_error).__name__)
+
+
+def parent_source_metadata_manifest_sha256(manifest):
+    """Hash bounded complete canonical metadata, including its internal seal."""
+    return hashlib.sha256(_metadata_json_snapshot(manifest, 2 * 1024**2)[1]).hexdigest()
+
+
+__all__ += ["ParentMetadataScanLimits", "scan_parent_source_metadata",
+    "parent_source_metadata_manifest_sha256", "METADATA_SCHEMA", "METADATA_PROFILE",
+    "METADATA_SCOPE", "METADATA_MANIFEST_NAME", "METADATA_NORMALIZATION"]

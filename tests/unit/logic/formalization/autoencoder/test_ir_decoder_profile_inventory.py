@@ -24,6 +24,122 @@ EXPERIMENT_KEYS = ("seed", "epochs", "batch_size", "learning_rate", "patience",
                    "reconstruction_weight", "max_seconds")
 
 
+def source4096_producer():
+    # Authored metadata only: these hashes are not a native execution witness.
+    return {"profile": "leanstral4096:cpu1:last:l2:single-sequence:tokens512:lazy-mmap:v2",
+        "model_sha256": "4668fd2a6d2764de250489852230e96238eb5c0d7495866eb3b9c6c4fac5c7da",
+        "worker_sha256": "a" * 64, "worker_source_sha256": "b" * 64,
+        "owner_source_sha256": "c" * 64, "vocabulary_owner_source_sha256": "d" * 64,
+        "library_sha256": ["f" * 64, "e" * 64, "f" * 64]}
+
+
+def test_source4096_profile_is_separate_content_bound_detached_declared_metadata():
+    producer = source4096_producer()
+    profile = inventory.build_ir_source_representation_profile(producer)
+    assert profile["schema"] == "ir-source-representation-profile/v1"
+    identity = profile["identity"]
+    assert profile["profile_id"] == profile["schema"] + ":" + hashlib.sha256(
+        inventory.cached._raw(identity)).hexdigest()
+    assert identity["ir_family_id"] == "legal_ir"
+    assert identity["dimension"] == 4096 and identity["dimension_role"] == "input_embedding"
+    assert identity["producer"]["library_sha256"] == ["e" * 64, "f" * 64, "f" * 64]
+    assert identity["source_text_policy"] == "exact_utf8_no_normalization"
+    assert identity["maximum_source_tokens_including_special"] == 512
+    assert identity["maximum_source_utf8_bytes"] == 65536 and identity["source_nul_policy"] == "reject"
+    assert profile["scope"] == "declared_expected_source_producer_only"
+    assert all(value is False for value in profile["authority"].values())
+    assert inventory.validate_ir_source_representation_profile(profile) == profile
+    producer["library_sha256"].append("1" * 64)
+    assert len(profile["identity"]["producer"]["library_sha256"]) == 3
+    restored = inventory.validate_ir_source_representation_profile(profile)
+    restored["identity"]["producer"]["library_sha256"].clear()
+    assert len(profile["identity"]["producer"]["library_sha256"]) == 3
+
+
+def test_source4096_profile_retains_library_multiplicity_and_distinct_producer_generations():
+    producer = source4096_producer()
+    before = inventory.build_ir_source_representation_profile(producer)
+    producer["library_sha256"].reverse()
+    assert inventory.build_ir_source_representation_profile(producer) == before
+    for key, replacement in (
+        ("library_sha256", ["e" * 64, "f" * 64]),
+        ("worker_sha256", "2" * 64),
+        ("profile", "leanstral4096:cpu1:last:l2:single-sequence:tokens512:layer-reclaim:v3"),
+    ):
+        changed = dict(producer, **{key: replacement})
+        assert inventory.build_ir_source_representation_profile(changed)["profile_id"] != before["profile_id"]
+
+
+@pytest.mark.parametrize("location", ["producer", "profile", "identity", "authority"])
+def test_source4096_profile_refuses_nonbuiltin_keys_before_hash_or_equality_callbacks(location):
+    callbacks = []
+    class ForeignKey(str):
+        armed = False
+        def __hash__(self):
+            if self.armed:
+                callbacks.append("hash")
+                raise AssertionError("foreign key hash executed")
+            return super().__hash__()
+        def __eq__(self, other):
+            if self.armed:
+                callbacks.append("equality")
+                raise AssertionError("foreign key equality executed")
+            return super().__eq__(other)
+    profile = inventory.build_ir_source_representation_profile(source4096_producer())
+    target = profile if location == "profile" else profile["identity"] if location == "identity" else \
+        profile["authority"] if location == "authority" else profile["identity"]["producer"]
+    key = ForeignKey("foreign")
+    target[key] = "unused"
+    key.armed = True
+    with pytest.raises(inventory.DecoderProfileInventoryError):
+        inventory.validate_ir_source_representation_profile(profile)
+    assert callbacks == []
+
+
+@pytest.mark.parametrize("mutation", ["unknown_profile", "model", "bad_hash", "library_map",
+    "empty_libraries", "too_many_libraries", "missing_worker", "extra_claim"])
+def test_source4096_profile_requires_complete_expected_producer_without_geometry_shortcuts(mutation):
+    producer = source4096_producer()
+    if mutation == "unknown_profile": producer["profile"] = "arbitrary-vector4096"
+    elif mutation == "model": producer["model_sha256"] = "1" * 64
+    elif mutation == "bad_hash": producer["worker_sha256"] = True
+    elif mutation == "library_map": producer["library_sha256"] = {"/tmp/lib.so": "e" * 64}
+    elif mutation == "empty_libraries": producer["library_sha256"] = []
+    elif mutation == "too_many_libraries": producer["library_sha256"] = ["e" * 64] * 64
+    elif mutation == "missing_worker": producer.pop("worker_sha256")
+    elif mutation == "extra_claim": producer["native_execution_authenticated"] = True
+    with pytest.raises(inventory.DecoderProfileInventoryError):
+        inventory.build_ir_source_representation_profile(producer)
+
+
+@pytest.mark.parametrize("mutation", ["family", "dimension", "float_dimension", "boolean_tokens",
+    "role", "pooling", "normalization", "tokenizer", "text_policy", "id", "authority",
+    "integer_authority", "extra_identity", "extra_top", "source_byte_limit", "nul_policy"])
+def test_source4096_profile_refuses_resealed_geometry_policy_or_authority_changes(mutation):
+    profile = inventory.build_ir_source_representation_profile(source4096_producer())
+    identity = profile["identity"]
+    if mutation == "family": identity["ir_family_id"] = "intent_ir"
+    elif mutation == "dimension": identity["dimension"] = 768
+    elif mutation == "float_dimension": identity["dimension"] = 4096.0
+    elif mutation == "boolean_tokens": identity["maximum_source_tokens_including_special"] = True
+    elif mutation == "role": identity["dimension_role"] = "latent"
+    elif mutation == "pooling": identity["pooling"] = "mean"
+    elif mutation == "normalization": identity["normalization"] = "none"
+    elif mutation == "tokenizer": identity["tokenizer_policy"] = "caller_tokens"
+    elif mutation == "text_policy": identity["source_text_policy"] = "strip"
+    elif mutation == "id": profile["profile_id"] = profile["schema"] + ":" + "0" * 64
+    elif mutation == "authority": profile["authority"]["source_producer_execution_authenticated"] = True
+    elif mutation == "integer_authority": profile["authority"]["runtime_ready"] = 0
+    elif mutation == "extra_identity": identity["runtime_ready"] = False
+    elif mutation == "extra_top": profile["execution_witness"] = "caller"
+    elif mutation == "source_byte_limit": identity["maximum_source_utf8_bytes"] = 65537
+    elif mutation == "nul_policy": identity["source_nul_policy"] = "allow"
+    if mutation != "id":
+        profile["profile_id"] = profile["schema"] + ":" + hashlib.sha256(inventory.cached._raw(identity)).hexdigest()
+    with pytest.raises(inventory.DecoderProfileInventoryError):
+        inventory.validate_ir_source_representation_profile(profile)
+
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"),
                                     ensure_ascii=True, allow_nan=False).encode()).hexdigest()

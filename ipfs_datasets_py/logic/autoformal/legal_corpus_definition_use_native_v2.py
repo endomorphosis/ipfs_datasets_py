@@ -1,4 +1,4 @@
-"""Observe conditional native proofs for an unchanged V2 definition-use project.
+"""Observe conditional native proofs for source-bound definition/use projects.
 
 Public import uses only the standard library. The existing preparation owner
 retains all source, review, native rendering and interpretation decisions. This
@@ -19,6 +19,10 @@ import re
 
 BUILD_SCHEMA = "legal-corpus-v2-definition-use-native-build/v1"
 PROFILE = "replayed-v2-definition-use-conditional-native-build/v1"
+PARENT_BUILD_SCHEMA = "legal-corpus-parent-definition-use-native-build/v1"
+PARENT_PROFILE = "replayed-parent-definition-use-conditional-native-build/v1"
+PARENT_SHARED_BUILD_SCHEMA = "legal-corpus-parent-shared-definition-use-native-build/v1"
+PARENT_SHARED_PROFILE = "replayed-parent-shared-definition-use-conditional-native-build/v1"
 MAX_RECORD_BYTES = 1024 * 1024
 MAX_INPUT_BYTES = 48 * MAX_RECORD_BYTES
 MAX_PROJECT_BYTES = 8 * MAX_RECORD_BYTES
@@ -29,8 +33,13 @@ MAX_RECEIPT_BYTES = MAX_RECORD_BYTES
 MAX_FILES = 9
 MAX_MODULES = 6
 MAX_THEOREMS = 3
+MAX_PARENT_SHARED_COMPONENTS = 8
+MAX_PARENT_SHARED_FILES = 52
+MAX_PARENT_SHARED_MODULES = 34
+MAX_PARENT_SHARED_THEOREMS = 24
 _TOOLCHAIN = re.compile(r"leanprover/lean4:v[0-9]+\.[0-9]+\.[0-9]+\Z")
 _PREPARATION_MODULE = "ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_lake_v2"
+_PARENT_SHARED_MODULE = "ipfs_datasets_py.logic.autoformal.legal_corpus_shared_lake"
 _REVIEW_FIELDS = {
     "subject", "registry", "policy", "reviews", "dependency_manifest",
     "component_raw", "expected_component_pin", "use_inputs",
@@ -61,6 +70,15 @@ FALSE_FLAGS = dict.fromkeys(
     ),
     False,
 )
+# Public import remains stdlib-only. The complete parent preparation flags are
+# also retained at execution, after its actual owner has been loaded and replayed.
+PARENT_FALSE_FLAGS = {
+    **FALSE_FLAGS,
+    "governing_scope_verified": False,
+    "governing_edition_verified": False,
+    "contributor_completeness_verified": False,
+    "source_region_roles_verified": False,
+}
 AUTHORITY = dict.fromkeys(
     ("source", "legal", "review", "proof", "model", "training", "gold", "corpus_admission"),
     False,
@@ -159,12 +177,15 @@ def _parse(raw, maximum):
     return result
 
 
-def _preparation_document(preparation):
+def _preparation_document(preparation, *, parent_shared=False):
     # The exact class is checked after all caller-controlled inputs are bounded.
     # Reading the frozen dataclass storage here does not import its owner.
     cls = type(preparation)
-    _need(cls.__module__ == _PREPARATION_MODULE and cls.__name__ == "DefinitionUseCorpusPreparation",
-          "existing typed V2 definition-use preparation required")
+    module, name = ((_PARENT_SHARED_MODULE, "ParentSharedCorpusPreparation") if parent_shared
+                    else (_PREPARATION_MODULE, "DefinitionUseCorpusPreparation"))
+    _need(cls.__module__ == module and cls.__name__ == name,
+          "existing typed parent shared preparation required" if parent_shared
+          else "existing typed V2 definition-use preparation required")
     data = object.__getattribute__(preparation, "__dict__")
     _need(type(data) is dict and set(data) == {"manifest_json", "files"},
           "closed original V2 preparation fields required")
@@ -172,8 +193,11 @@ def _preparation_document(preparation):
     _need(type(text) is str and 0 < len(text) <= MAX_RECORD_BYTES,
           "bounded original V2 preparation manifest text required")
     manifest = _parse(text.encode("utf-8"), MAX_RECORD_BYTES)
-    _need(type(original_files) is tuple and len(original_files) == MAX_FILES,
-          "exact nine-file V2 definition-use project required")
+    _need(type(original_files) is tuple and
+          (1 <= len(original_files) <= MAX_PARENT_SHARED_FILES if parent_shared
+           else len(original_files) == MAX_FILES),
+          "bounded complete parent shared project required" if parent_shared
+          else "exact nine-file V2 definition-use project required")
     names, files, total = [], [], 0
     for item in original_files:
         _need(type(item) is tuple and len(item) == 2, "exact generated file pairs required")
@@ -199,6 +223,56 @@ def preparation_sha256(preparation):
     enforces the exact existing owner type and independently regenerates bytes.
     """
     return _sha(_wire(_preparation_document(preparation), MAX_PREPARATION_BYTES))
+
+
+def parent_shared_preparation_sha256(preparation):
+    """Commit the complete shared manifest and files, without granting authority."""
+    return _sha(_wire(_preparation_document(preparation, parent_shared=True),
+                      MAX_PREPARATION_BYTES))
+
+
+def _parent_shared_preflight(preparation, component_inputs, *, expected_population,
+                             expected_preparation_sha256, toolchain):
+    _pin(expected_preparation_sha256, "complete parent shared preparation")
+    _need(type(toolchain) is str and len(toolchain) <= 128 and _TOOLCHAIN.fullmatch(toolchain),
+          "explicit version-pinned Lean toolchain required")
+    document = _preparation_document(preparation, parent_shared=True)
+    _need(type(component_inputs) is list and
+          1 <= len(component_inputs) <= MAX_PARENT_SHARED_COMPONENTS,
+          "bounded complete parent shared component population required")
+    _need(type(expected_population) is list and len(expected_population) == len(component_inputs),
+          "complete independent ordered parent shared population required")
+    # Bound the entire offered project and expanded original inputs together
+    # before hashing their full bodies or importing any operation owner.
+    _bound_tree({"preparation": document, "component_inputs": component_inputs,
+                 "expected_population": expected_population, "toolchain": toolchain},
+                MAX_INPUT_BYTES, allow_bytes=True)
+    _need(_sha(_wire(document, MAX_PREPARATION_BYTES)) == expected_preparation_sha256,
+          "independent complete parent shared preparation pin differs")
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
+          "native definition-use owner changed since import")
+
+
+def validate_parent_shared_definition_use_native_v1(
+        preparation, *, component_inputs, expected_population,
+        expected_preparation_sha256, toolchain):
+    """Replay all original parent components and the exact aggregate project."""
+    _parent_shared_preflight(preparation, component_inputs,
+        expected_population=expected_population,
+        expected_preparation_sha256=expected_preparation_sha256, toolchain=toolchain)
+    owners = _owners()
+    shared = owners[4]
+    _need(type(preparation) is shared.ParentSharedCorpusPreparation,
+          "exact existing parent shared preparation type required")
+    checked = shared.validate_parent_shared_definition_use_corpus_v1(
+        preparation, component_inputs=component_inputs,
+        expected_population=expected_population, toolchain=toolchain)
+    manifest = checked.to_dict()
+    _need(manifest["schema"] == shared.PARENT_SCHEMA and
+          manifest["profile"] == shared.PARENT_PROFILE,
+          "native shared preparation must retain its exact source/review profile")
+    _pins(owners, manifest)
+    return checked
 
 
 def _preflight(preparation, assessment_raw, expected_preparation_sha256,
@@ -253,9 +327,9 @@ def _pins(owners, manifest):
     return pins
 
 
-def validate_definition_use_native_v2(preparation, assessment_raw, *,
+def _validate_definition_use_native(preparation, assessment_raw, *,
         expected_preparation_sha256, expected_assessment_file_sha256,
-        review_inputs, toolchain):
+        review_inputs, toolchain, parent=False):
     """Bound original inputs, verify the external whole pin and publicly replay."""
     _preflight(preparation, assessment_raw, expected_preparation_sha256,
                expected_assessment_file_sha256, review_inputs, toolchain)
@@ -263,11 +337,17 @@ def validate_definition_use_native_v2(preparation, assessment_raw, *,
     preparer = owners[0]
     _need(type(preparation) is preparer.DefinitionUseCorpusPreparation,
           "exact existing V2 definition-use preparation type required")
-    checked = preparer.validate_definition_use_corpus_v2(
+    validate_preparation = (preparer.validate_parent_definition_use_corpus_v1 if parent
+                            else preparer.validate_definition_use_corpus_v2)
+    checked = validate_preparation(
         preparation, assessment_raw,
         expected_assessment_file_sha256=expected_assessment_file_sha256,
         review_inputs=review_inputs, toolchain=toolchain)
-    _pins(owners, checked.to_dict())
+    manifest = checked.to_dict()
+    _need(manifest["schema"] == (preparer.PARENT_SCHEMA if parent else preparer.SCHEMA)
+          and manifest["profile"] == (preparer.PARENT_PROFILE if parent else preparer.PROFILE),
+          "native preparation must retain its exact fixed source/review profile")
+    _pins(owners, manifest)
     return checked
 
 
@@ -286,7 +366,7 @@ def _binary_recheck(binaries):
     return True
 
 
-def _axiom_observations(stdout, stderr, manifest):
+def _axiom_observations(stdout, stderr, manifest, *, maximum_theorems=None):
     """Accept one exact Lean empty-axiom result per original qualified theorem.
 
     A normal Lake ``info: <generated-source>:line:column:`` prefix is allowed;
@@ -294,9 +374,12 @@ def _axiom_observations(stdout, stderr, manifest):
     not proof observations. Complete captures remain separately retained.
     """
     expected = manifest["conditional_theorems"]
-    _need(type(expected) is list and len(expected) == MAX_THEOREMS
-          and len(set(expected)) == MAX_THEOREMS,
-          "exact three conditional theorem obligations required")
+    _need(type(expected) is list and
+          (len(expected) == MAX_THEOREMS if maximum_theorems is None
+           else 1 <= len(expected) <= maximum_theorems) and
+          all(type(name) is str and re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", name)
+              for name in expected) and len(set(expected)) == len(expected),
+          "exact distinct conditional theorem obligations required")
     dependencies, errors = {}, []
     marker = re.compile(r"\b(?:axiom|axioms|sorry|sorryAx)\b")
     for number, line in enumerate(stdout.splitlines(), 1):
@@ -348,20 +431,23 @@ def _observed_process_scope(lifecycle, pid, process):
     return True
 
 
-def compilation_receipt_sha256(receipt):
+def _compilation_receipt_sha256(receipt, *, parent=False):
     """Full canonical observation commitment; never an admission credential."""
-    _need(type(receipt) is dict and receipt.get("schema") == BUILD_SCHEMA,
-          "V2 definition-use native compilation receipt required")
+    _need(type(receipt) is dict
+          and receipt.get("schema") == (PARENT_BUILD_SCHEMA if parent else BUILD_SCHEMA),
+          "parent definition-use native compilation receipt required" if parent
+          else "V2 definition-use native compilation receipt required")
     return _sha(_wire(receipt, MAX_RECEIPT_BYTES))
 
 
-def _persist_build(checked, output, owners, artifacts, executed_sources, logs, receipt):
+def _persist_build(checked, output, owners, artifacts, executed_sources, logs, receipt,
+                   *, maximum_files=MAX_FILES, maximum_modules=MAX_MODULES):
     transport, shared = owners[1], owners[4]
     shared._write_frozen_project(checked, output / "project")
     compiled = {name.removeprefix(".lake/build/lib/lean/"): body
                 for name, body in artifacts.items()}
-    for directory, contents, maximum in (("compiled", compiled, MAX_MODULES),
-                                         ("executed-inputs", executed_sources, MAX_FILES)):
+    for directory, contents, maximum in (("compiled", compiled, maximum_modules),
+                                         ("executed-inputs", executed_sources, maximum_files)):
         shared._write_compiled(output / directory, contents)
         observed = transport._read_files(output / directory, set(contents), maximum_files=maximum)
         _need(observed == contents, "retained native observations failed exact readback")
@@ -382,10 +468,10 @@ def _persist_build(checked, output, owners, artifacts, executed_sources, logs, r
         _need((output / name).read_bytes() == raw, "retained native compiler log failed exact readback")
 
 
-def build_definition_use_native_v2(preparation, assessment_raw, *,
+def _build_definition_use_native(preparation, assessment_raw, *,
         expected_preparation_sha256, expected_assessment_file_sha256,
         review_inputs, toolchain, lake_executable, output_directory,
-        timeout_seconds=60, cancellation=None):
+        timeout_seconds=60, cancellation=None, parent=False):
     """Run the existing conditional project under bounded, owned native tools.
 
     Valid pending or rejected assessments remain pending or rejected. Native
@@ -394,27 +480,74 @@ def build_definition_use_native_v2(preparation, assessment_raw, *,
     """
     _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
           and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
-    validated = validate_definition_use_native_v2(
+    validate_native = (validate_parent_definition_use_native_v1 if parent
+                       else validate_definition_use_native_v2)
+    validated = validate_native(
         preparation, assessment_raw, expected_preparation_sha256=expected_preparation_sha256,
         expected_assessment_file_sha256=expected_assessment_file_sha256,
         review_inputs=review_inputs, toolchain=toolchain)
+    owners = _owners()
+    preparer = owners[0]
+    flags = dict(preparer.PARENT_FALSE_FLAGS if parent else preparer.FALSE_FLAGS)
+    flags.update(PARENT_FALSE_FLAGS if parent else FALSE_FLAGS)
+    def binding(manifest):
+        return {"assessment_file_sha256": expected_assessment_file_sha256,
+                "review_intake_binding": manifest["review_intake_binding"],
+                "review_evidence_status": manifest["review_evidence_status"],
+                "review_blockers": manifest["review_blockers"],
+                "review_prerequisites_satisfied_under_selected_trust":
+                    manifest["review_prerequisites_satisfied_under_selected_trust"],
+                "original_preparation_build_eligible": manifest["build_eligible"],
+                "original_preparation_execution_handoff": manifest["execution_handoff"]}
+    def replay():
+        return validate_native(preparation, assessment_raw,
+            expected_preparation_sha256=expected_preparation_sha256,
+            expected_assessment_file_sha256=expected_assessment_file_sha256,
+            review_inputs=review_inputs, toolchain=toolchain)
+    return _build_validated_native(preparation, validated,
+        replay=replay, expected_preparation_sha256=expected_preparation_sha256,
+        toolchain=toolchain, lake_executable=lake_executable,
+        output_directory=output_directory, timeout_seconds=timeout_seconds,
+        cancellation=cancellation, build_schema=PARENT_BUILD_SCHEMA if parent else BUILD_SCHEMA,
+        profile=PARENT_PROFILE if parent else PROFILE, flags=flags, receipt_binding=binding)
+
+
+def _build_validated_native(preparation, validated, *, replay,
+        expected_preparation_sha256, toolchain, lake_executable, output_directory,
+        timeout_seconds, cancellation, build_schema, profile, flags, receipt_binding,
+        maximum_files=MAX_FILES, maximum_modules=MAX_MODULES,
+        maximum_theorems=None):
+    """One bounded native execution path, with each source profile replayed by its owner."""
     owners = _owners()
     preparer, transport, _, process, _ = owners
     # Keep a private immutable snapshot for invocation and failed-run transport.
     # A caller changing its original object during execution must not replace
     # the retained project with different bytes after the native observation.
-    checked = preparer.DefinitionUseCorpusPreparation(validated.manifest_json, tuple(validated.files))
+    checked = type(validated)(validated.manifest_json, tuple(validated.files))
+    shared_type = type(checked) is owners[4].ParentSharedCorpusPreparation
+    snapshot_document = _preparation_document(checked, parent_shared=shared_type)
+    _need(_sha(_wire(snapshot_document, MAX_PREPARATION_BYTES)) == expected_preparation_sha256,
+          "frozen native preparation differs from independent complete pin")
     manifest = checked.to_dict()
+    receipt_binding = receipt_binding(manifest)
     producers = _pins(owners, manifest)
     output = transport._path(output_directory)
     transport._check_directories(output.parent, allow_missing=True)
     _need(not output.exists() and not output.is_symlink(), "fresh native build output directory required")
+    modules = manifest["expected_modules"]
+    _need(type(modules) is list and 1 <= len(modules) <= maximum_modules
+          and len(set(modules)) == len(modules)
+          and (maximum_modules != MAX_MODULES or len(modules) == MAX_MODULES),
+          "complete bounded native module population required")
+    _need(1 <= len(checked.files) <= maximum_files, "complete bounded native file population required")
+    theorems = (list(dict.fromkeys(name for row in receipt_binding["theorem_contributors"]
+                                  for name in row["conditional_theorems"])) if shared_type
+                else manifest["conditional_theorems"])
+    _need(1 <= len(theorems) <= (MAX_THEOREMS if maximum_theorems is None else maximum_theorems),
+          "complete bounded conditional theorem population required")
     executable, binaries, probes = _installed_toolchain(lake_executable, toolchain)
     _need(_binary_recheck(binaries), "installed compiler binaries changed during version probes")
     command = (str(executable), "--offline", "--no-cache", "build", "legal")
-    modules = manifest["expected_modules"]
-    _need(type(modules) is list and len(modules) == MAX_MODULES
-          and len(set(modules)) == MAX_MODULES, "exact six native modules required")
     artifact_paths = tuple(".lake/build/lib/lean/" + name.replace(".", "/") + ".olean"
                            for name in modules)
     source_files = {name: body.encode("utf-8") for name, body in checked.files}
@@ -427,17 +560,18 @@ def build_definition_use_native_v2(preparation, assessment_raw, *,
             timeout_seconds=timeout_seconds, cpu_seconds=timeout_seconds,
             resident_memory_bytes=2 * 1024**3, max_output_bytes=MAX_CAPTURE_BYTES,
             max_input_bytes=MAX_PROJECT_BYTES, max_workspace_bytes=128 * MAX_RECORD_BYTES,
-            max_output_files=MAX_FILES + MAX_MODULES))
-    flags = dict(preparer.FALSE_FLAGS) | FALSE_FLAGS
+            max_output_files=len(output_paths)))
     try:
         run = process.BoundedToolRunner().run(invocation, cancellation=cancellation)
     except process.OwnedToolCleanupError as error:
         try:
             refusal = transport.contracts.seal_record({
-                "schema": BUILD_SCHEMA, "profile": PROFILE,
+                "schema": build_schema,
+                "profile": profile,
                 "preparation_cid": manifest["record_cid"],
                 "preparation_full_canonical_sha256": expected_preparation_sha256,
-                "assessment_file_sha256": expected_assessment_file_sha256,
+                **receipt_binding,
+                "conditional_theorems": theorems,
                 "toolchain": toolchain, "expected_command": list(command),
                 "build_passed": False, "status": "owned_native_cleanup_unresolved",
                 "execution_status": "no_complete_native_result_returned",
@@ -448,18 +582,15 @@ def build_definition_use_native_v2(preparation, assessment_raw, *,
                 "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
                 **flags,
             })
-            _persist_build(checked, output, owners, {}, {}, {}, refusal)
+            _persist_build(checked, output, owners, {}, {}, {}, refusal,
+                           maximum_files=maximum_files, maximum_modules=maximum_modules)
             error.add_note("Unqualified frozen project/cleanup refusal retained at " + str(output))
         except (ValueError, TypeError, OSError) as preservation_error:
             error.add_note("Native cleanup refusal preservation also failed: " + type(preservation_error).__name__)
         raise
     post_error, binary_error = None, None
     try:
-        validate_definition_use_native_v2(
-            preparation, assessment_raw,
-            expected_preparation_sha256=expected_preparation_sha256,
-            expected_assessment_file_sha256=expected_assessment_file_sha256,
-            review_inputs=review_inputs, toolchain=toolchain)
+        replay()
         _need(preparation == checked, "original preparation changed during native compilation")
         _need(_pins(owners, manifest) == producers, "native producers changed during compilation")
     except (ValueError, TypeError, KeyError, IndexError, OSError, UnicodeError, RecursionError) as error:
@@ -480,7 +611,9 @@ def build_definition_use_native_v2(preparation, assessment_raw, *,
     process_scope = _observed_process_scope(lifecycle, run.pid, process)
     cleanup_confirmed = bool(type(lifecycle) is process.NativeToolLifecycleObservation
                              and lifecycle.leader.pid == run.pid and lifecycle.cleanup_confirmed)
-    axioms, axiom_errors, axiom_passed = _axiom_observations(run.stdout, run.stderr, manifest)
+    axioms, axiom_errors, axiom_passed = _axiom_observations(
+        run.stdout, run.stderr, {"conditional_theorems": theorems},
+        maximum_theorems=maximum_theorems)
     passed = bool(run.ok and native_runtime and tuple(run.command) == command
                   and coverage and source_readback and unchanged and post_error is None
                   and not run.output_truncated and not run.workspace_limit_exceeded
@@ -493,24 +626,19 @@ def build_definition_use_native_v2(preparation, assessment_raw, *,
           "bounded native process observations required")
     previews = {name: raw[:MAX_LOG_PREVIEW_BYTES].decode("utf-8", errors="replace").replace("\x00", "\\u0000")
                 for name, raw in logs.items()}
-    # The preparer's fourth entry describes its unexecuted preparation state.
-    # Retain that original list separately, while carrying every real hypothesis
-    # without the obsolete execution-status sentence in this observation.
+    # Retain the complete original preparation list separately; this observation
+    # carries every real hypothesis without its obsolete execution-status text.
     assumptions = [text for text in manifest["theorem_assumptions"]
-                   if text != "Modular joint equivalence is a generated definitional obligation; native kernel checking has not run."]
+                   if text not in {
+                       "Modular joint equivalence is a generated definitional obligation; native kernel checking has not run.",
+                       "This profile prepares files only; native and incremental qualification have not run."}]
     receipt = transport.contracts.seal_record({
-        "schema": BUILD_SCHEMA, "profile": PROFILE,
+        "schema": build_schema,
+        "profile": profile,
         "preparation_cid": manifest["record_cid"],
         "preparation_full_canonical_sha256": expected_preparation_sha256,
         "preparation_manifest_sha256": _sha(checked.manifest_json.encode("utf-8")),
-        "assessment_file_sha256": expected_assessment_file_sha256,
-        "review_intake_binding": manifest["review_intake_binding"],
-        "review_evidence_status": manifest["review_evidence_status"],
-        "review_blockers": manifest["review_blockers"],
-        "review_prerequisites_satisfied_under_selected_trust": manifest[
-            "review_prerequisites_satisfied_under_selected_trust"],
-        "original_preparation_build_eligible": manifest["build_eligible"],
-        "original_preparation_execution_handoff": manifest["execution_handoff"],
+        **receipt_binding,
         "original_preparation_unchanged": post_error is None,
         "toolchain": toolchain, "command": list(run.command), "expected_command": list(command),
         "runtime": run.runtime.value, "pid": run.pid, "returncode": run.returncode,
@@ -529,7 +657,7 @@ def build_definition_use_native_v2(preparation, assessment_raw, *,
         "artifact_bytes": {name: len(body) for name, body in artifacts.items()},
         "artifact_files": {name: "compiled/" + name.removeprefix(".lake/build/lib/lean/")
                            for name in artifacts},
-        "conditional_theorems": manifest["conditional_theorems"],
+        "conditional_theorems": theorems,
         "conditional_kernel_status": "checked_under_explicit_hypotheses" if passed else "not_verified",
         "theorem_axiom_dependencies": axioms,
         "axiom_observations_passed": axiom_passed,
@@ -560,9 +688,188 @@ def build_definition_use_native_v2(preparation, assessment_raw, *,
                     "conditional_proofs_verified": passed}),
     })
     executed_sources = {name: run.output_files[name] for name in source_files if name in run.output_files}
-    _persist_build(checked, output, owners, artifacts, executed_sources, logs, receipt)
+    _persist_build(checked, output, owners, artifacts, executed_sources, logs, receipt,
+                   maximum_files=maximum_files, maximum_modules=maximum_modules)
     return receipt
 
 
+def validate_definition_use_native_v2(
+    preparation,
+    assessment_raw,
+    *,
+    expected_preparation_sha256,
+    expected_assessment_file_sha256,
+    review_inputs,
+    toolchain,
+):
+    """Replay the unchanged official V2 definition-use preparation profile."""
+    return _validate_definition_use_native(
+        preparation,
+        assessment_raw,
+        expected_preparation_sha256=expected_preparation_sha256,
+        expected_assessment_file_sha256=expected_assessment_file_sha256,
+        review_inputs=review_inputs,
+        toolchain=toolchain,
+        parent=False
+    )
+
+
+def validate_parent_definition_use_native_v1(
+    preparation,
+    assessment_raw,
+    *,
+    expected_preparation_sha256,
+    expected_assessment_file_sha256,
+    review_inputs,
+    toolchain,
+):
+    """Replay the fixed parent preparation and all original source/review inputs."""
+    return _validate_definition_use_native(
+        preparation,
+        assessment_raw,
+        expected_preparation_sha256=expected_preparation_sha256,
+        expected_assessment_file_sha256=expected_assessment_file_sha256,
+        review_inputs=review_inputs,
+        toolchain=toolchain,
+        parent=True
+    )
+
+
+def build_definition_use_native_v2(
+    preparation,
+    assessment_raw,
+    *,
+    expected_preparation_sha256,
+    expected_assessment_file_sha256,
+    review_inputs,
+    toolchain,
+    lake_executable,
+    output_directory,
+    timeout_seconds=60,
+    cancellation=None,
+):
+    """Observe official V2 conditional checks under existing caller-owned resources."""
+    return _build_definition_use_native(
+        preparation,
+        assessment_raw,
+        expected_preparation_sha256=expected_preparation_sha256,
+        expected_assessment_file_sha256=expected_assessment_file_sha256,
+        review_inputs=review_inputs,
+        toolchain=toolchain,
+        lake_executable=lake_executable,
+        output_directory=output_directory,
+        timeout_seconds=timeout_seconds,
+        cancellation=cancellation,
+        parent=False
+    )
+
+
+def build_parent_definition_use_native_v1(
+    preparation,
+    assessment_raw,
+    *,
+    expected_preparation_sha256,
+    expected_assessment_file_sha256,
+    review_inputs,
+    toolchain,
+    lake_executable,
+    output_directory,
+    timeout_seconds=60,
+    cancellation=None,
+):
+    """Observe parent conditional native checks under existing caller-owned resources."""
+    return _build_definition_use_native(
+        preparation,
+        assessment_raw,
+        expected_preparation_sha256=expected_preparation_sha256,
+        expected_assessment_file_sha256=expected_assessment_file_sha256,
+        review_inputs=review_inputs,
+        toolchain=toolchain,
+        lake_executable=lake_executable,
+        output_directory=output_directory,
+        timeout_seconds=timeout_seconds,
+        cancellation=cancellation,
+        parent=True
+    )
+
+
+def compilation_receipt_sha256(receipt):
+    """Commit the complete official V2 observation; no validation or authority is implied."""
+    return _compilation_receipt_sha256(
+        receipt,
+        parent=False
+    )
+
+
+def parent_compilation_receipt_sha256(receipt):
+    """Commit the complete parent observation; no validation or authority is implied."""
+    return _compilation_receipt_sha256(
+        receipt,
+        parent=True
+    )
+
+
+def build_parent_shared_definition_use_native_v1(
+        preparation, *, component_inputs, expected_population,
+        expected_preparation_sha256, toolchain, lake_executable,
+        output_directory, timeout_seconds=60, cancellation=None):
+    """Observe the exact aggregate under every child's retained conditional premises.
+
+    Callers retain the original source and native resource owners. The compiler
+    timeout bounds the Lake invocation, separately from complete source/review
+    replay. No combined legal review or incremental cache result is inferred.
+    """
+    _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+          and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+
+    def replay():
+        return validate_parent_shared_definition_use_native_v1(
+            preparation, component_inputs=component_inputs,
+            expected_population=expected_population,
+            expected_preparation_sha256=expected_preparation_sha256, toolchain=toolchain)
+
+    validated = replay()
+    def binding(manifest):
+        contributors = [
+            {"ordinal": row["ordinal"], "component_cid": row["component_cid"],
+             "conditional_theorems": list(row["conditional_theorems"])}
+            for row in manifest["components"]]
+        _need(1 <= len(contributors) <= MAX_PARENT_SHARED_COMPONENTS,
+              "complete bounded parent shared contributor population required")
+        # Every contribution survives; the engine observes each unique generated
+        # theorem once in stable first-occurrence order.
+        return {
+            "population": manifest["population"],
+            "components": manifest["components"],
+            "input_commitment_sha256": manifest["input_commitment_sha256"],
+            "theorem_contributors": contributors,
+            "original_preparation_build_eligible": manifest["build_eligible"],
+            "original_preparation_lean_compilation_status": manifest["lean_compilation_status"],
+            "parent_incremental_cache_status": "not_run",
+        }
+    flags = dict(_owners()[4].PARENT_FALSE_FLAGS)
+    flags.update(PARENT_FALSE_FLAGS)
+    return _build_validated_native(preparation, validated,
+        replay=replay, expected_preparation_sha256=expected_preparation_sha256,
+        toolchain=toolchain, lake_executable=lake_executable,
+        output_directory=output_directory, timeout_seconds=timeout_seconds,
+        cancellation=cancellation, build_schema=PARENT_SHARED_BUILD_SCHEMA,
+        profile=PARENT_SHARED_PROFILE, flags=flags, receipt_binding=binding,
+        maximum_files=MAX_PARENT_SHARED_FILES, maximum_modules=MAX_PARENT_SHARED_MODULES,
+        maximum_theorems=MAX_PARENT_SHARED_THEOREMS)
+
+
+def parent_shared_compilation_receipt_sha256(receipt):
+    """Commit a shared native observation; no validation or authority is implied."""
+    _need(type(receipt) is dict and receipt.get("schema") == PARENT_SHARED_BUILD_SCHEMA,
+          "parent shared definition-use native compilation receipt required")
+    return _sha(_wire(receipt, MAX_RECEIPT_BYTES))
+
+
 __all__ = ["preparation_sha256", "validate_definition_use_native_v2",
-           "build_definition_use_native_v2", "compilation_receipt_sha256"]
+           "build_definition_use_native_v2", "compilation_receipt_sha256",
+           "validate_parent_definition_use_native_v1", "build_parent_definition_use_native_v1",
+           "parent_compilation_receipt_sha256", "parent_shared_preparation_sha256",
+           "validate_parent_shared_definition_use_native_v1",
+           "build_parent_shared_definition_use_native_v1",
+           "parent_shared_compilation_receipt_sha256"]

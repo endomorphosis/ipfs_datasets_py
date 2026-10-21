@@ -572,6 +572,218 @@ def test_component_records_mix_with_existing_lane_records_without_relabeling(tmp
     assert manager.persisted[metadata["model_id"]]["huggingface_config"]["ir_checkpoint"]["dimension"] is None
 
 
+def make_source_representation_data(tmp_path, *, shape=None):
+    """Synthetic expected-producer metadata; no native producer is authenticated."""
+    from ipfs_datasets_py.logic.formalization.autoencoder import ir_decoder_profile_inventory as inventory
+    data = make_data(tmp_path)
+    producer = {"profile": "leanstral4096:cpu1:last:l2:single-sequence:tokens512:lazy-mmap:v2",
+        "model_sha256": "4668fd2a6d2764de250489852230e96238eb5c0d7495866eb3b9c6c4fac5c7da",
+        "worker_sha256": "a" * 64, "worker_source_sha256": "b" * 64,
+        "owner_source_sha256": "c" * 64, "vocabulary_owner_source_sha256": "d" * 64,
+        "library_sha256": ["e" * 64, "e" * 64, "f" * 64]}
+    profile = inventory.build_ir_source_representation_profile(producer)
+    profile_pin = save(tmp_path / "synthetic-source-profile.json", profile)
+    record = data["plan"]["models"][0]
+    metadata = record["model_metadata"]
+    identity = metadata["huggingface_config"]["ir_checkpoint"]
+    identity.update(asset_binding_schema=adapter.SOURCE_REPRESENTATION_BINDING_SCHEMA,
+        ir_family_id="legal_ir", dimension=4096, dimension_role="input_embedding",
+        role="synthetic-source-embedding-projection", source_representation_profile_id=profile["profile_id"],
+        source_representation_profile_pin=profile_pin)
+    metadata["inputs"] = [{"name": "source_embedding", "data_type": "embeddings",
+        "shape": [4096] if shape is None else shape, "dtype": "float32"}]
+    metadata["huggingface_config"]["complete_runtime_io_contract"] = False
+    identity["record_id"] = metadata["model_id"] = adapter.ir_model_source_representation_record_id(
+        identity["role"], record["checkpoint_pin"]["sha256"], profile["profile_id"])
+    data["source_profile"] = profile
+    repin(data)
+    return data
+
+
+@pytest.mark.parametrize("shape", [[4096], [-1, 4096]])
+def test_legal4096_source_representation_preserves_pinned_profile_without_decoder_authority(tmp_path, shape):
+    data, manager = make_source_representation_data(tmp_path, shape=shape), InertManager()
+    result = invoke(data, manager)
+    stored = manager.persisted[result["outcomes"][0]["model_id"]]
+    identity = stored["huggingface_config"]["ir_checkpoint"]
+    assert (identity["ir_family_id"], identity["dimension"], identity["dimension_role"]) == (
+        "legal_ir", 4096, "input_embedding")
+    assert identity["source_representation_profile_id"] == data["source_profile"]["profile_id"]
+    assert identity["source_representation_profile_pin"] == pin(tmp_path / "synthetic-source-profile.json")
+    assert identity["profile_id"] is identity["format_id"] is None
+    assert stored["huggingface_config"]["complete_runtime_io_contract"] is False
+    assert stored["inputs"][0] == {"name": "source_embedding", "data_type": "embeddings",
+        "shape": shape, "dtype": "float32"}
+    assert identity["trained"] is identity["donor"] is None
+    assert result["registered_count"] == result["persisted_metadata_matched_count"] == 1
+    assert all(result["authority"][key] is False for key in ("runtime_ready", "teacher_qualified",
+        "proof_authority", "model_numerically_loaded", "model_quality_qualified"))
+    repeated = invoke(data, manager)
+    assert repeated["registered_count"] == 0 and repeated["already_present_count"] == 1
+    assert len(manager.add_calls) == 1 and len(manager.readback_calls) == 2
+
+
+@pytest.mark.parametrize("mutation", ["missing_profile_id", "missing_profile_pin", "foreign_profile_id",
+    "profile_pin_hash", "profile_json", "duplicate_profile_json", "resealed_profile_id",
+    "family", "dimension", "dimension_bool", "dimension_role", "missing_schema", "foreign_schema",
+    "legacy_asset_id", "known_format_id", "decoder_profile", "decoder_format", "runtime_io",
+    "missing_runtime_io", "runtime_ready", "teacher_qualified", "proof_authority", "empty_inputs",
+    "feature_input", "width384", "rank3", "wrong_dtype", "missing_dtype", "boolean_width",
+    "source_authflag", "external_lane"])
+def test_legal4096_binding_rejects_incomplete_or_promoted_source_metadata_before_effects(tmp_path, mutation):
+    data, manager = make_source_representation_data(tmp_path), InertManager()
+    record = data["plan"]["models"][0]
+    metadata = record["model_metadata"]
+    config = metadata["huggingface_config"]
+    identity = config["ir_checkpoint"]
+    if mutation == "missing_profile_id": identity.pop("source_representation_profile_id")
+    elif mutation == "missing_profile_pin": identity.pop("source_representation_profile_pin")
+    elif mutation == "foreign_profile_id": identity["source_representation_profile_id"] = "ir-source-representation-profile/v1:" + "0" * 64
+    elif mutation == "profile_pin_hash": identity["source_representation_profile_pin"]["sha256"] = "0" * 64
+    elif mutation in ("profile_json", "duplicate_profile_json", "resealed_profile_id"):
+        path = Path(identity["source_representation_profile_pin"]["path"])
+        if mutation == "profile_json": path.write_text("not JSON", encoding="utf-8")
+        elif mutation == "duplicate_profile_json": path.write_text('{"schema":"a","schema":"b"}', encoding="utf-8")
+        else:
+            changed = deepcopy(data["source_profile"])
+            changed["profile_id"] = "ir-source-representation-profile/v1:" + "0" * 64
+            save(path, changed)
+        identity["source_representation_profile_pin"] = pin(path)
+    elif mutation == "family": identity["ir_family_id"] = "security_ir"
+    elif mutation == "dimension": identity["dimension"] = 384
+    elif mutation == "dimension_bool": identity["dimension"] = True
+    elif mutation == "dimension_role": identity["dimension_role"] = "latent"
+    elif mutation == "missing_schema": identity.pop("asset_binding_schema")
+    elif mutation == "foreign_schema": identity["asset_binding_schema"] = "ir-source-representation-asset-binding/v2"
+    elif mutation in ("legacy_asset_id", "known_format_id"):
+        selected = adapter.ir_model_asset_record_id("legal_ir", 384, "input_embedding", identity["role"],
+            record["checkpoint_pin"]["sha256"]) if mutation == "legacy_asset_id" else "ir-decoder-checkpoint-record/v1:" + "0" * 64
+        identity["record_id"] = metadata["model_id"] = selected
+    elif mutation == "decoder_profile": identity["profile_id"] = "ir-decoder-profile/v1:" + "0" * 64
+    elif mutation == "decoder_format": identity["format_id"] = "ir-decoder-format/v1:" + "0" * 64
+    elif mutation == "runtime_io": config["complete_runtime_io_contract"] = True
+    elif mutation == "missing_runtime_io": config.pop("complete_runtime_io_contract")
+    elif mutation in ("runtime_ready", "teacher_qualified", "proof_authority"): identity[mutation] = True
+    elif mutation == "empty_inputs": metadata["inputs"] = []
+    elif mutation == "feature_input": metadata["inputs"][0]["data_type"] = "features"
+    elif mutation == "width384": metadata["inputs"][0]["shape"] = [384]
+    elif mutation == "rank3": metadata["inputs"][0]["shape"] = [1, 1, 4096]
+    elif mutation == "wrong_dtype": metadata["inputs"][0]["dtype"] = "float64"
+    elif mutation == "missing_dtype": metadata["inputs"][0].pop("dtype")
+    elif mutation == "boolean_width": metadata["inputs"][0]["shape"] = [True, 4096]
+    elif mutation == "source_authflag": identity["source_producer_execution_authenticated"] = True
+    elif mutation == "external_lane": identity["external_lane_binding"] = {"ir_family_id": "legal_ir", "dimension": 4096}
+    repin(data)
+    factory_calls = []
+    with pytest.raises(adapter.ModelManagerImportError):
+        invoke(data, manager, factory=lambda value: factory_calls.append(value))
+    assert manager.get_calls == manager.add_calls == manager.readback_calls == factory_calls == []
+
+
+@pytest.mark.parametrize("component", [False, True])
+@pytest.mark.parametrize("marker", ["source_representation_profile_id", "source_representation_profile_pin",
+    "unknown_source_schema", "decoder_profile", "decoder_format"])
+def test_source_profile_markers_cannot_be_smuggled_into_existing_bindings(tmp_path, component, marker):
+    data = make_component_data(tmp_path) if component else make_data(tmp_path)
+    manager = InertManager()
+    identity = data["plan"]["models"][0]["model_metadata"]["huggingface_config"]["ir_checkpoint"]
+    if marker == "source_representation_profile_id": identity[marker] = "ir-source-representation-profile/v1:" + "0" * 64
+    elif marker == "source_representation_profile_pin": identity[marker] = deepcopy(data["plan"]["models"][0]["checkpoint_pin"])
+    elif marker == "unknown_source_schema": identity["asset_binding_schema"] = "ir-source-representation-asset-binding/v2"
+    else: identity["profile_id" if marker == "decoder_profile" else "format_id"] = "ir-source-representation-profile/v1:" + "0" * 64
+    repin(data)
+    with pytest.raises(adapter.ModelManagerImportError):
+        invoke(data, manager)
+    assert manager.get_calls == manager.add_calls == manager.readback_calls == []
+
+
+def test_source_representation_id_binds_profile_checkpoint_and_role_without_extending_v1_lane_api():
+    profile = "ir-source-representation-profile/v1:" + "a" * 64
+    selected = adapter.ir_model_source_representation_record_id("source-projection", "b" * 64, profile)
+    assert selected.startswith(adapter.SOURCE_REPRESENTATION_BINDING_SCHEMA + ":")
+    assert selected == adapter.ir_model_source_representation_record_id("source-projection", "b" * 64, profile)
+    assert selected != adapter.ir_model_source_representation_record_id("different-projection", "b" * 64, profile)
+    assert selected != adapter.ir_model_source_representation_record_id("source-projection", "c" * 64, profile)
+    assert selected != adapter.ir_model_source_representation_record_id("source-projection", "b" * 64,
+        "ir-source-representation-profile/v1:" + "d" * 64)
+    with pytest.raises(adapter.ModelManagerImportError):
+        adapter.ir_model_asset_record_id("legal_ir", 4096, "input_embedding", "source-projection", "b" * 64)
+
+
+@pytest.mark.parametrize("profile", [None, [], True, "ir-source-representation-profile/v2:" + "a" * 64,
+    "ir-source-representation-profile/v1:" + "A" * 64, "ir-source-representation-profile/v1:short",
+    "ir-decoder-profile/v1:" + "a" * 64])
+def test_source_representation_id_requires_exact_versioned_profile_identity(profile):
+    with pytest.raises(adapter.ModelManagerImportError):
+        adapter.ir_model_source_representation_record_id("source-projection", "b" * 64, profile)
+
+
+def test_source_profile_reference_obeys_caller_byte_cap_before_profile_read(tmp_path, monkeypatch):
+    data, manager = make_source_representation_data(tmp_path), InertManager()
+    identity = data["plan"]["models"][0]["model_metadata"]["huggingface_config"]["ir_checkpoint"]
+    path = Path(identity["source_representation_profile_pin"]["path"])
+    path.write_bytes(path.read_bytes() + b" " * 16384)
+    identity["source_representation_profile_pin"] = pin(path)
+    repin(data)
+    maximum = max(data["manifest"]["bytes"], *(p["bytes"] for p in data["releases"])) + 1
+    assert identity["source_representation_profile_pin"]["bytes"] > maximum
+    reads, original_read = [], adapter._read
+    def recorded_read(reference, **kwargs):
+        reads.append(reference["path"])
+        return original_read(reference, **kwargs)
+    monkeypatch.setattr(adapter, "_read", recorded_read)
+    with pytest.raises(adapter.ModelManagerImportError, match="bound"):
+        invoke(data, manager, max_reference_bytes=maximum)
+    assert str(path) not in reads and manager.get_calls == manager.add_calls == []
+
+
+@pytest.mark.parametrize("mutation_stage", ["factory", "readback", "existing_readback"])
+def test_source_profile_pin_is_fenced_through_factory_and_each_fresh_readback(tmp_path, mutation_stage):
+    data, manager = make_source_representation_data(tmp_path), InertManager()
+    metadata = data["plan"]["models"][0]["model_metadata"]
+    profile_path = Path(metadata["huggingface_config"]["ir_checkpoint"]["source_representation_profile_pin"]["path"])
+    def change_profile():
+        profile_path.write_bytes(profile_path.read_bytes() + b" ")
+    def factory(value):
+        change_profile()
+        return deepcopy(value)
+    def readback(model_id):
+        result = manager.readback(model_id)
+        change_profile()
+        return result
+    if mutation_stage == "existing_readback":
+        manager.models[metadata["model_id"]] = deepcopy(metadata)
+        manager.persisted[metadata["model_id"]] = deepcopy(metadata)
+    with pytest.raises(adapter.ModelManagerImportError) as caught:
+        invoke(data, manager, factory=factory if mutation_stage == "factory" else deepcopy,
+            readback=manager.readback if mutation_stage == "factory" else readback)
+    outcome = caught.value.outcomes[0]
+    if mutation_stage == "factory":
+        assert manager.add_calls == manager.readback_calls == []
+        assert outcome["add_model_started"] is False and outcome["persisted_readback_started"] is False
+    else:
+        assert len(manager.readback_calls) == 1 and outcome["persisted_metadata_matched"] is True
+        assert len(manager.add_calls) == (0 if mutation_stage == "existing_readback" else 1)
+        assert outcome["already_present"] is (mutation_stage == "existing_readback")
+
+
+def test_source_binding_coexists_with_v1_lane_without_relabelling_legacy_record(tmp_path):
+    data, manager = make_source_representation_data(tmp_path), InertManager()
+    source_record = deepcopy(data["plan"]["models"][0])
+    legacy_dir = tmp_path / "legacy"
+    legacy_dir.mkdir()
+    legacy = make_data(legacy_dir)
+    original = deepcopy(legacy["plan"]["models"][0]["model_metadata"])
+    data["plan"]["models"].insert(0, legacy["plan"]["models"][0])
+    # Both synthetic publications use the same checkpoint JSON content and remote
+    # asset path, so one existing verified publication covers both concrete rows.
+    repin(data)
+    result = invoke(data, manager)
+    assert result["registered_count"] == 2
+    assert manager.persisted[original["model_id"]] == original
+    assert manager.persisted[source_record["model_metadata"]["model_id"]] == source_record["model_metadata"]
+
+
 def make_source4096_data(tmp_path, *, scheme="lfs-payload-sha256", count=1,
                          profile="leanstral4096:cpu1:last:l2:single-sequence:tokens512:lazy-mmap:v2"):
     """Synthetic metadata, never a claim of a native forward or model state."""
@@ -774,3 +986,234 @@ def test_v2_requires_fresh_persistence_and_preserves_idempotent_activity(tmp_pat
     result = invoke_v2(data, manager)
     assert result["already_present_count"] == 1 and manager.add_calls == []
     assert manager.persisted[model_id]["inference_count"] == 17
+
+
+def make_reconciled_source_data(tmp_path):
+    """Keep four declared binding generations in one explicit v2 plan."""
+    roots = {kind: tmp_path / kind for kind in ("native", "legacy", "component", "profile")}
+    for root in roots.values():
+        root.mkdir()
+    data = make_source4096_data(roots["native"])
+    others = [make_data(roots["legacy"]), make_component_data(roots["component"]),
+              make_source_representation_data(roots["profile"])]
+    for kind, other in zip(("legacy", "component", "profile"), others):
+        remote_path = f"reconciliation/{kind}/checkpoint.json"
+        other["plan"]["models"][0]["release"]["path_in_repo"] = remote_path
+        other["publication"]["files"][0]["path_in_repo"] = remote_path
+        repin(other)
+        data["plan"]["models"].extend(deepcopy(other["plan"]["models"]))
+    repin(data)
+    for other in others:
+        data["releases"].extend(other["releases"])
+    data["profile_path"] = roots["profile"] / "synthetic-source-profile.json"
+    data["evidence_path"] = roots["native"] / "synthetic-native-evidence.json"
+    return data
+
+
+def invoke_reconciled(data, manager, *, factory=deepcopy, readback=None, **kwargs):
+    return adapter.import_ir_model_manager_records_v2(data["manifest"],
+        release_receipts=data["releases"], manager=manager,
+        readback=manager.readback if readback is None else readback,
+        metadata_factory=factory, **kwargs)
+
+
+def test_reconciled_v2_plan_preserves_all_four_binding_contracts_and_record_ids(tmp_path):
+    data, manager = make_reconciled_source_data(tmp_path), InertManager()
+    originals = [deepcopy(record["model_metadata"]) for record in data["plan"]["models"]]
+    ids = [metadata["model_id"] for metadata in originals]
+    assert len(set(ids)) == 4
+    result = invoke_reconciled(data, manager)
+    assert result["schema"] == adapter.RESULT_SCHEMA_V2
+    assert result["registered_count"] == result["persisted_metadata_matched_count"] == 4
+    assert manager.persisted == {metadata["model_id"]: metadata for metadata in originals}
+    native, legacy, component, profile = [metadata["huggingface_config"]["ir_checkpoint"]
+                                           for metadata in originals]
+    assert native["dimension_role"] == "source_input_representation_width"
+    assert legacy["dimension"] == 384 and component["dimension"] is None
+    assert profile["dimension_role"] == "input_embedding" and profile["dimension"] == 4096
+    assert native["source_representation"]["expected_producer"]["library_sha256"] == {
+        "/explicit/synthetic/library.so": "f" * 64}
+    assert data["profile_path"].is_file()
+    repeated = invoke_reconciled(data, manager)
+    assert repeated["registered_count"] == 0 and repeated["already_present_count"] == 4
+    assert len(manager.add_calls) == 4 and manager.persisted == {
+        metadata["model_id"]: metadata for metadata in originals}
+    assert all(value is False for key, value in result["authority"].items()
+               if key != "registration_metadata_verified")
+
+
+@pytest.mark.parametrize("entrypoint", ["v1", "v2"])
+@pytest.mark.parametrize("binding", ["legacy", "component"])
+@pytest.mark.parametrize("schema", ["original", "missing", "unknown"])
+def test_reconciliation_refuses_embedded_v2_declarations_on_other_binding_schemas_before_effects(
+        tmp_path, entrypoint, binding, schema):
+    data = make_data(tmp_path) if binding == "legacy" else make_component_data(tmp_path)
+    identity = data["plan"]["models"][0]["model_metadata"]["huggingface_config"]["ir_checkpoint"]
+    identity["source_representation"] = {"schema": adapter.SOURCE_PROFILE_SCHEMA}
+    if schema == "missing":
+        identity.pop("asset_binding_schema", None)
+    elif schema == "unknown":
+        identity["asset_binding_schema"] = "ir-source-representation-binding/v999"
+    if entrypoint == "v2":
+        data["plan"]["schema"] = adapter.SCHEMA_V2
+    repin(data)
+    manager, factories = InertManager(), []
+    with pytest.raises(adapter.ModelManagerImportError):
+        (invoke if entrypoint == "v1" else invoke_reconciled)(data, manager,
+            factory=lambda value: factories.append(value))
+    assert manager.get_calls == manager.add_calls == factories == []
+
+
+@pytest.mark.parametrize("entrypoint", ["v1", "v2"])
+def test_reconciliation_independent_profile_rejects_embedded_native_source_declaration(tmp_path, entrypoint):
+    data, manager = make_source_representation_data(tmp_path), InertManager()
+    identity = data["plan"]["models"][0]["model_metadata"]["huggingface_config"]["ir_checkpoint"]
+    identity["source_representation"] = {"schema": adapter.SOURCE_PROFILE_SCHEMA}
+    if entrypoint == "v2":
+        data["plan"]["schema"] = adapter.SCHEMA_V2
+    repin(data)
+    factories = []
+    with pytest.raises(adapter.ModelManagerImportError):
+        (invoke if entrypoint == "v1" else invoke_reconciled)(data, manager,
+            factory=lambda value: factories.append(value))
+    assert manager.get_calls == manager.add_calls == factories == []
+
+
+@pytest.mark.parametrize("extra", ["source_representation_profile_id", "source_representation_profile_pin"])
+def test_reconciliation_native_source_rejects_independent_profile_identity_extras(tmp_path, extra):
+    data, manager = make_source4096_data(tmp_path), InertManager()
+    record = data["plan"]["models"][0]
+    identity = record["model_metadata"]["huggingface_config"]["ir_checkpoint"]
+    identity[extra] = ("ir-source-representation-profile/v1:" + "1" * 64
+                       if extra.endswith("_id") else deepcopy(record["checkpoint_pin"]))
+    repin(data)
+    factories = []
+    with pytest.raises(adapter.ModelManagerImportError):
+        invoke_v2(data, manager, factory=lambda value: factories.append(value))
+    assert manager.get_calls == manager.add_calls == factories == []
+
+
+@pytest.mark.parametrize("entrypoint", ["v1", "v2"])
+def test_reconciliation_independent_profile_cap_precedes_profile_read_for_each_entrypoint(
+        tmp_path, monkeypatch, entrypoint):
+    data, manager = make_source_representation_data(tmp_path), InertManager()
+    identity = data["plan"]["models"][0]["model_metadata"]["huggingface_config"]["ir_checkpoint"]
+    path = Path(identity["source_representation_profile_pin"]["path"])
+    path.write_bytes(path.read_bytes() + b" " * 16384)
+    identity["source_representation_profile_pin"] = pin(path)
+    if entrypoint == "v2":
+        data["plan"]["schema"] = adapter.SCHEMA_V2
+    repin(data)
+    maximum = max(data["manifest"]["bytes"], *(p["bytes"] for p in data["releases"])) + 1
+    assert identity["source_representation_profile_pin"]["bytes"] > maximum
+    reads, original = [], adapter._read
+    def observed(reference, **kwargs):
+        reads.append(reference["path"])
+        return original(reference, **kwargs)
+    monkeypatch.setattr(adapter, "_read", observed)
+    with pytest.raises(adapter.ModelManagerImportError, match="bound"):
+        (invoke if entrypoint == "v1" else invoke_reconciled)(data, manager,
+            max_reference_bytes=maximum)
+    assert str(path) not in reads and manager.get_calls == manager.add_calls == []
+
+
+def test_reconciliation_native_evidence_cap_precedes_evidence_read(tmp_path, monkeypatch):
+    data, manager = make_source4096_data(tmp_path), InertManager()
+    identity = data["plan"]["models"][0]["model_metadata"]["huggingface_config"]["ir_checkpoint"]
+    path = Path(identity["source_representation"]["evidence_pins"][0]["path"])
+    path.write_bytes(path.read_bytes() + b" " * 16384)
+    identity["source_representation"]["evidence_pins"] = [pin(path)]
+    identity["record_id"] = data["plan"]["models"][0]["model_metadata"]["model_id"] = source4096_id(
+        data["plan"]["models"][0])
+    repin(data)
+    maximum = max(data["manifest"]["bytes"], *(p["bytes"] for p in data["releases"])) + 1
+    assert identity["source_representation"]["evidence_pins"][0]["bytes"] > maximum
+    reads, original = [], adapter._read
+    def observed(reference, **kwargs):
+        reads.append(reference["path"])
+        return original(reference, **kwargs)
+    monkeypatch.setattr(adapter, "_read", observed)
+    with pytest.raises(adapter.ModelManagerImportError, match="bound"):
+        invoke_v2(data, manager, max_reference_bytes=maximum)
+    assert str(path) not in reads and manager.get_calls == manager.add_calls == []
+
+
+@pytest.mark.parametrize("reference", ["profile_path", "evidence_path"])
+@pytest.mark.parametrize("stage", ["before_dispatch", "factory", "readback", "existing_readback"])
+def test_reconciliation_mixed_plan_fences_both_source_references_at_effect_boundaries(tmp_path, reference, stage):
+    data, manager = make_reconciled_source_data(tmp_path), InertManager()
+    path = data[reference]
+    def change():
+        path.write_bytes(path.read_bytes() + b" ")
+    def factory(value):
+        change()
+        return deepcopy(value)
+    def readback(model_id):
+        returned = manager.readback(model_id)
+        change()
+        return returned
+    if stage == "existing_readback":
+        for record in data["plan"]["models"]:
+            metadata = record["model_metadata"]
+            manager.models[metadata["model_id"]] = deepcopy(metadata)
+            manager.persisted[metadata["model_id"]] = deepcopy(metadata)
+    if stage == "before_dispatch":
+        change()
+    with pytest.raises(adapter.ModelManagerImportError) as caught:
+        invoke_reconciled(data, manager, factory=factory if stage == "factory" else deepcopy,
+            readback=readback if stage in ("readback", "existing_readback") else manager.readback)
+    if stage == "before_dispatch":
+        assert manager.get_calls == manager.add_calls == manager.readback_calls == []
+        assert caught.value.outcomes == []
+    elif stage == "factory":
+        assert manager.add_calls == manager.readback_calls == []
+        assert len(caught.value.outcomes) == 1 and caught.value.outcomes[0]["add_model_started"] is False
+    else:
+        assert len(manager.readback_calls) == 1 and len(caught.value.outcomes) == 1
+        outcome = caught.value.outcomes[0]
+        assert outcome["persisted_metadata_matched"] is True
+        assert len(manager.add_calls) == (0 if stage == "existing_readback" else 1)
+        assert outcome["already_present"] is (stage == "existing_readback")
+
+
+def test_reconciliation_keeps_library_locations_in_v2_identity_and_outside_declared_profile_identity(tmp_path):
+    from ipfs_datasets_py.logic.formalization.autoencoder import ir_decoder_profile_inventory as inventory
+    data = make_source4096_data(tmp_path)
+    record = data["plan"]["models"][0]
+    source = record["model_metadata"]["huggingface_config"]["ir_checkpoint"]["source_representation"]
+    source["expected_producer"]["model_sha256"] = (
+        "4668fd2a6d2764de250489852230e96238eb5c0d7495866eb3b9c6c4fac5c7da")
+    before_id = source4096_id(record)
+    declaration = deepcopy(source["expected_producer"])
+    declaration["library_sha256"] = list(declaration["library_sha256"].values())
+    declared_before = inventory.build_ir_source_representation_profile(declaration)
+    libraries = source["expected_producer"]["library_sha256"]
+    libraries["/explicit/relocated/library.so"] = libraries.pop("/explicit/synthetic/library.so")
+    assert source4096_id(record) != before_id
+    declaration["library_sha256"] = list(libraries.values())
+    assert inventory.build_ir_source_representation_profile(declaration) == declared_before
+    assert source["ordinary_receipt_is_capability"] is False
+    assert all(value is False for value in declared_before["authority"].values())
+
+
+@pytest.mark.parametrize("entrypoint", ["v1", "v2"])
+@pytest.mark.parametrize("binding", ["legacy", "component", "registered_format"])
+@pytest.mark.parametrize("field", ["profile_id", "format_id"])
+def test_reconciliation_native_source_profile_namespace_cannot_be_a_decoder_profile_or_format(
+        tmp_path, entrypoint, binding, field):
+    data = make_component_data(tmp_path) if binding == "component" else make_data(tmp_path)
+    metadata = data["plan"]["models"][0]["model_metadata"]
+    identity = metadata["huggingface_config"]["ir_checkpoint"]
+    if binding == "registered_format":
+        identity["profile_id"] = "ir-decoder-profile/v1:" + "1" * 64
+        identity["format_id"] = "ir-decoder-format/v1:" + "2" * 64
+        identity["record_id"] = metadata["model_id"] = "ir-decoder-checkpoint-record/v1:" + "3" * 64
+    identity[field] = adapter.SOURCE_PROFILE_SCHEMA
+    if entrypoint == "v2":
+        data["plan"]["schema"] = adapter.SCHEMA_V2
+    repin(data)
+    manager, factories = InertManager(), []
+    with pytest.raises(adapter.ModelManagerImportError):
+        (invoke if entrypoint == "v1" else invoke_reconciled)(data, manager,
+            factory=lambda value: factories.append(value))
+    assert manager.get_calls == manager.add_calls == factories == []
