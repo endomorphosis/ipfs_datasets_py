@@ -1,0 +1,321 @@
+{
+  "Lean_execution": false,
+  "authority": {
+    "Lean_admitted": false,
+    "checkpoint_bytes_authenticated": false,
+    "complete_bundle_integrity_verified": false,
+    "current_edition_reconciled": false,
+    "definition_applicability_verified": false,
+    "entity_correspondence_bound": false,
+    "evaluation_gold_qualified": false,
+    "governing_source_selected": false,
+    "inference_executed": false,
+    "model_loaded": false,
+    "model_manager_constructed": false,
+    "paired_target_physical_row_bound": false,
+    "proof_authority": false,
+    "registration_performed": false,
+    "runtime_admitted": false,
+    "service_refreshed": false,
+    "source_meaning_verified": false,
+    "source_revision_authenticated": false,
+    "teacher_qualified": false,
+    "training_executed": false
+  },
+  "catalog_discovery": {
+    "bounds": {
+      "child_process_slots": 2,
+      "cpu_slots": 1,
+      "max_config_bytes": 8388608,
+      "max_records": 1024,
+      "max_report_bytes": 8388608,
+      "memory_mb": 4096,
+      "storage_bytes": 134217728,
+      "timeout_seconds": 300
+    },
+    "checkpoint_or_companion_bytes_read": false,
+    "database_copied": false,
+    "database_created": false,
+    "database_full_hash_performed": false,
+    "database_initialization_IO_scope": "The real connect call was attempted; possible native initialization I/O before refusal is not reconstructed. No model_metadata query completed or started under the frozen worker control flow.",
+    "effective_settings_query_reached": false,
+    "failure": {
+      "diagnostic_limit": "The existing persistent reader wraps the native exception as ValueError and the IR reader wraps it again. The private classifier handles the generic IR wrapper before its generic native branch; only one immediate cause type was saved. No exact writer/configuration/setting/corruption cause is established.",
+      "immediate_cause_type": "ValueError",
+      "public_error_type": "IRPersistentCatalogError",
+      "retry_or_fallback_performed": false,
+      "saved_refusal_category": "selected_catalog_read_or_metadata_refused",
+      "settings_relaxed": false,
+      "stage": "catalog_load",
+      "underlying_native_cause": "unknown_from_retained_sanitized_receipts"
+    },
+    "missing_model_or_registration_presence_finding": false,
+    "model_metadata_query_reached": false,
+    "next_boundary": "Keep the refusal and existing historical registration/Hub publication observations separate. Retained logs cannot recover the native leaf cause. Any future diagnostic request needs its own frozen controls and admission; this record authorizes no retry, registration, service refresh, database creation or setting relaxation.",
+    "operation": "one attempted unchanged IRPersistentCatalogSource.load with four exact same-snapshot selector resolutions intended",
+    "original_closeout": {
+      "direct_ledger_write": false,
+      "failure_remains_unqualified": true,
+      "files_deleted": false,
+      "native_lease_released": true,
+      "native_owner_cleanup_proven": true,
+      "original_source_READ_closed": true,
+      "other_reservations_unchanged_scope": "existing owner commitment, not a fresh global ledger survey",
+      "preserved_failed_bytes": 2930,
+      "preserved_failed_files": 4,
+      "selected_retained_storage_reconciled_and_released": true,
+      "storage_verification_pending": false
+    },
+    "real_connection_attempts": 1,
+    "real_connection_returned": false,
+    "receipts": {
+      "actual_selected_storage_closeout": {
+        "bytes": 5369,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/data-02/failed-catalog01-storage-closeout-v01.json",
+        "root": "datasets_repository",
+        "sha256": "22521c8e370fe142f32252d11a3bfa1e8ea83d358b32f62715da2aa67b540daa"
+      },
+      "independent_failure_and_closeout_review": {
+        "bytes": 8471,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/data-02/independent-failure-closeout-review-v01.json",
+        "root": "datasets_repository",
+        "sha256": "a717804e237740ad8600aa2debdb22e7832dd060c8e31c3a5fc2f10cd426e3eb"
+      },
+      "original_exit_and_native_terminal": {
+        "bytes": 10978,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/data-02/launch-catalog-01.json",
+        "root": "datasets_repository",
+        "sha256": "ee6248e2e5d6ac34be33af8560e3e9e07347dcfc4d4c7ce50a695533d4748546"
+      },
+      "request": {
+        "bytes": 53736,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/data-02/request-catalog-01.json",
+        "root": "datasets_repository",
+        "sha256": "e5708e8933385a4d9126b737ed6e7a3fbc1c875a212e9bec77049323a1fdf6fc"
+      },
+      "static_failure_diagnostic": {
+        "bytes": 5592,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/data-02/failure-diagnostic-review-v01.json",
+        "root": "datasets_repository",
+        "sha256": "ff51cd8429d073efe60f79e3e63eb3ac89a8269013fd29f5eae4539e9bd64636"
+      },
+      "worker": {
+        "bytes": 25415,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/data-02/controls/discover_ir_catalog_v01.py",
+        "root": "datasets_repository",
+        "sha256": "55a70c1a3364b54f638c77d5c14ceeb86d4f9581376a170d85edfa3b2a0534ce"
+      },
+      "worker_failure": {
+        "bytes": 1591,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/data-02/attempt-catalog-01/exports/data-failure.json",
+        "root": "datasets_repository",
+        "sha256": "9b01a1733732c86fb069bbf2a97a70a62eae26a9024b003bd80c1e0654dd177d"
+      }
+    },
+    "requested_bindings": [
+      {
+        "dimension": 384,
+        "expected_checkpoint_sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e",
+        "record_id": "ir-model-asset-binding/v1:0ea60eed1f606e655940a8e45c5db151d9686fcb8bb532b94866e6f8947262c8",
+        "role": "normative_wording_zero_selected_semantic_decoder_state"
+      },
+      {
+        "dimension": 384,
+        "expected_checkpoint_sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266",
+        "record_id": "ir-model-asset-binding/v1:aa588d1669769d996f9626d2693ff5866ce402ca3372574e18e290342c7e4435",
+        "role": "normative_wording_ce_selected_semantic_decoder_state"
+      },
+      {
+        "dimension": 768,
+        "expected_checkpoint_sha256": "c8beca3ef5ea2d477ebc9a1564c8922404b245098a0b56083197cd6185c3083f",
+        "record_id": "ir-model-asset-binding/v1:958f84ca889bf8c19e39f293e015b5bc54b23f49e751c25304020ab217912b6d",
+        "role": "normative_wording_zero_selected_semantic_decoder_state"
+      },
+      {
+        "dimension": 768,
+        "expected_checkpoint_sha256": "aa2f75cad0ade34a3965a4f0b71bdc2fe962f5b863b38133927978ea2673aeb3",
+        "record_id": "ir-model-asset-binding/v1:d537d0366d6e846dfb9610ea6b237ccde8ec0389e33ead2c51b511f49cdcaa7a",
+        "role": "normative_wording_ce_selected_semantic_decoder_state"
+      }
+    ],
+    "selected_store": {
+      "declared_bytes": 2980851712,
+      "max_store_bytes": 4294967296,
+      "parent_workspace_relative_path": "external/ipfs_accelerate/model_manager.duckdb",
+      "read_only": true
+    },
+    "selector_input": {
+      "bytes": 7931,
+      "path": "normative-decoder-runtime-20261007/preflight-final/original-assets-preflight.json",
+      "root": "artifact_workspace",
+      "sha256": "a2825acf33b8f80d2bc3ee95354a9117e358cb2a7cdd6b4b24d10b228a272029"
+    },
+    "selector_resolutions": [],
+    "status": "failed_before_real_connection_returned",
+    "store_closing_endpoint_equality_qualified": false,
+    "successful_catalog_snapshot": false,
+    "successful_selector_resolution_count": 0
+  },
+  "evaluation_gold_mask": 0,
+  "model_execution": false,
+  "original_reference_roots": {
+    "artifact_workspace": "historical lift_coding/artifacts evidence root",
+    "datasets_repository": "ipfs_datasets_py repository root"
+  },
+  "paired_cache": {
+    "cohorts": [
+      {
+        "acquisition_modes": {
+          "HTTPS": 204,
+          "retained_byte_copy": 407
+        },
+        "bank": "paired-v1",
+        "both_target_dispositions": "not_located_in_declared_original_table_roster",
+        "complete_selected_roster_processed": true,
+        "complete_three_table_bundle_validated": false,
+        "compressed_bytes": 26259160,
+        "declared_source_decode_bytes": 1562327,
+        "exact_target_ID_collision_count": 0,
+        "files": 611,
+        "independently_expected_total_rows": 4888,
+        "original_native_released": true,
+        "original_source_READ_closed": true,
+        "original_storage_released": true,
+        "physical_rows": 4888,
+        "producer_or_source_binding_authenticated": false,
+        "projection": [
+          "source"
+        ],
+        "receipts": {
+          "controller_closeout": {
+            "bytes": 424,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/paired-manifest-lookup-v01/controller-complete-paired-candidates-v03.json",
+            "root": "datasets_repository",
+            "sha256": "98c8a627147c35aab714359d73f9cd2097984b143d82cec45eff6371fff6a4a5"
+          },
+          "launch": {
+            "bytes": 8091,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/paired-manifest-lookup-v01/launch-paired-candidates-v03.json",
+            "root": "datasets_repository",
+            "sha256": "f237bc5e42310f1a2aa4e13110351f5471e5bfdc7c95c24a35ac2476dfc794d3"
+          },
+          "roster": {
+            "bytes": 562332,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/paired-manifest-lookup-v01/original-paired-v1-roster-v01.json",
+            "root": "datasets_repository",
+            "sha256": "51edaae5d47863e33f47f88b0bab61ab665cd93ec925eaa2b5835df5b34ccd79"
+          },
+          "source_projection_observation": {
+            "bytes": 498375,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/paired-manifest-lookup-v01/attempt-paired-candidates-v03/pytest/paired-candidates/candidate-observation.json",
+            "root": "datasets_repository",
+            "sha256": "f86b4de940900e9a5b82008fc8be5da7fdf2f351913678501f4e21c8e37b3d56"
+          }
+        },
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "revision": "765176c6db79ba65c1697c21dead43666350b730",
+        "target_physical_row_locators": [],
+        "unresolved_manifest_mappings": 0
+      },
+      {
+        "acquisition_modes": {
+          "HTTPS": 486
+        },
+        "bank": "paired-v2",
+        "both_target_dispositions": "not_located_in_declared_original_table_roster",
+        "complete_selected_roster_processed": true,
+        "complete_three_table_bundle_validated": false,
+        "compressed_bytes": 22184001,
+        "declared_source_decode_bytes": 1249440,
+        "exact_target_ID_collision_count": 0,
+        "files": 486,
+        "independently_expected_total_rows": null,
+        "original_native_released": true,
+        "original_source_READ_closed": true,
+        "original_storage_released": true,
+        "physical_rows": 3888,
+        "producer_or_source_binding_authenticated": false,
+        "projection": [
+          "source"
+        ],
+        "receipts": {
+          "controller_closeout": {
+            "bytes": 424,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/paired-manifest-lookup-v01/controller-complete-paired-candidates-v04.json",
+            "root": "datasets_repository",
+            "sha256": "19f59d86114b5df255feec07ef6be7c4714ad7672fe8e2d8b3f1a0d9655e0b50"
+          },
+          "launch": {
+            "bytes": 8093,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/paired-manifest-lookup-v01/launch-paired-candidates-v04.json",
+            "root": "datasets_repository",
+            "sha256": "84afbf47e6dbba2dd5fc64ea32f35d3cb4f753048490bdbf5e8316ea62edbaf7"
+          },
+          "roster": {
+            "bytes": 385104,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/paired-manifest-lookup-v01/original-paired-v2-roster-v01.json",
+            "root": "datasets_repository",
+            "sha256": "4b34be17aaf3c5505ce838f804d377afb4b65579c1278814726d8439a928547f"
+          },
+          "source_projection_observation": {
+            "bytes": 332489,
+            "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/paired-manifest-lookup-v01/attempt-paired-candidates-v04/pytest/paired-candidates/candidate-observation.json",
+            "root": "datasets_repository",
+            "sha256": "dd915abe2cd6c653b8100270e275ef98411af729b011b6e74ead7b2b9600f2cb"
+          }
+        },
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+        "target_physical_row_locators": [],
+        "unresolved_manifest_mappings": 485
+      }
+    ],
+    "independent_result_review": {
+      "bytes": 18892,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-07/paired-roster-results-independent-review-v01.json",
+      "root": "datasets_repository",
+      "sha256": "ef71d34a44f44c4a8232757f93f7dabe76a6d21804f337f0ed249e281fe83393"
+    },
+    "negative_scope": "Neither exact target ID occurs in either complete selected original roster. This does not establish absence from other revisions/cache families, statutory text or retained embeddings. Paired-v2 has3888 observed footer rows, no independently supplied aggregate row oracle, and485 unresolved manifest links. Counts from the two generations are not unique source/example/quality totals.",
+    "next_boundary": "Reuse both completed scoped negatives; inspect already-retained producer/segmentation/ID-scheme lineage before selecting any genuinely different bounded population. Any future positive locator still requires independent original-manifest and complete three-table/physical-row/producer validation through existing owners.",
+    "preserved_predecessor": {
+      "new_downloads_in_v03": 204,
+      "original_failed_files_preserved": true,
+      "original_failure_not_relabelled_as_timeout_or_success": true,
+      "original_run_status": "failed_watchdog_inventory_raced_incomplete_to_final_file_rename",
+      "retained_downloads_reused_in_v03": 407,
+      "selected_original_failed_storage_closeout_completed": true,
+      "storage_closeout_receipt": {
+        "bytes": 92333,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/paired-manifest-lookup-v01/failed-paired-candidates01-storage-closeout-v01.json",
+        "root": "datasets_repository",
+        "sha256": "b278ca8b2851522dd9af89851363ce098d534fb32848c39da59728d07f329d90"
+      }
+    },
+    "target_identity_rule": "These are complete heading-inclusive candidate identities; inner operative-clause hashes remain distinct. No heading stripping or ID replacement.",
+    "targets": [
+      {
+        "expected_whole_candidate_text_sha256": "71ca988bfb6fe414997fb329fadae6df2cfde5ed97f19135ef63ad94e468bb66",
+        "legal_id": "usc:us:10:7213",
+        "source_span_id": "uscode-span-27f63eaefdf3309148d7d4444978e3495e11aa20f4eef3e9c5c1764b8e9755bb"
+      },
+      {
+        "expected_whole_candidate_text_sha256": "0953781d7433ecf37084fd81539db173849d9e14a85b0a9786787ec3b292226c",
+        "legal_id": "usc:us:10:7214",
+        "source_span_id": "uscode-span-7616d1697e660b6c942bae8832e4aef0c7df16fd1808a5d9df682ed3fa892b1a"
+      }
+    ]
+  },
+  "qualification_boundaries": [
+    "These are DATA transport/search/refusal observations, not pytest cases or reconstructed legal examples.",
+    "A negative exact-ID search does not prove missing legal content, absent cached embeddings or incompatible source meaning.",
+    "The failed catalog attempt supplies no fresh model registration/presence, current supervisor adoption, runtime readiness, checkpoint authenticity or reconstruction-quality result.",
+    "Successful resource closeout preserves failed scientific/engineering outcomes and does not qualify the failed catalog operation."
+  ],
+  "recorded_at_utc": "2026-10-21T06:11:11.892187+00:00",
+  "schema": "legal-ir-paired-roster-catalog-observations/v1",
+  "scope": "Portable summary of existing independently reviewed DATA receipts. Original workspace files are external retained evidence references, not prerequisites for reading these bounded findings. This summary grants no statutory, model, runtime or proof authority.",
+  "status": "completed_scoped_paired_ID_searches_and_retained_failed_catalog_discovery",
+  "training_execution": false,
+  "training_mask": 0
+}
