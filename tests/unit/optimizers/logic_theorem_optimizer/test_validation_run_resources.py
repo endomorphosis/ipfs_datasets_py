@@ -3,8 +3,9 @@
 These checks never initialize, replace or allocate from the shared host state.
 The outer validation launcher owns the actual host grant.  Each test exercises
 the production owner against a separate real file-backed scheduler and ledger.
-Process custody covers an isolated process group; this is not a kernel quota
-or containment of arbitrary descendants which create their own sessions.
+The legacy profile covers an isolated process group. The explicit tracked
+profile additionally tests observed new-session descendants; neither profile
+claims kernel containment of unobserved escaping processes.
 """
 from __future__ import annotations
 
@@ -145,7 +146,7 @@ def private_control(tmp_path):
     _write_json(ledger, {
         "schema": native_disk.SCHEMA,
         "roots": [native_disk._root_identity(root)],
-        "limit_bytes": 160_000_000_000,
+        "limit_bytes": 220_000_000_000,
         "reservations": {"foreign-retained": foreign},
     })
 
@@ -202,7 +203,7 @@ def private_control(tmp_path):
     # claims deliberately remain and are not administratively reconciled here.
     assert scheduler.snapshot()["allocated"]["cpu_slots"] == 0
     assert _json(scheduler.state_path)["config"] == policy
-    assert _json(ledger)["limit_bytes"] == 160_000_000_000
+    assert _json(ledger)["limit_bytes"] == 220_000_000_000
     assert _json(ledger)["reservations"]["foreign-retained"] == foreign
 
 
@@ -353,7 +354,7 @@ def test_existing_control_metadata_is_never_initialized_or_reconfigured(private_
         if fault == "missing_ledger":
             _write_json(c["ledger"], {"schema": native_disk.SCHEMA,
                 "roots": [native_disk._root_identity(c["root"])],
-                "limit_bytes": 160_000_000_000,
+                "limit_bytes": 220_000_000_000,
                 "reservations": {"foreign-retained": c["foreign"]}})
 
 
@@ -362,7 +363,7 @@ def test_full_retained_claims_refuse_new_capacity_without_changing_cap_or_rows(p
     _, _, _, kwargs = c["prepare"]()
     before = _json(c["ledger"])
     extra = {"reservation_id": "other-full-claim", "status": "retained", "owner_pid": os.getpid(),
-             "storage_bytes": 160_000_000_000, "external_charges": {}}
+             "storage_bytes": 220_000_000_000, "external_charges": {}}
     before["reservations"]["other-full-claim"] = extra
     _write_json(c["ledger"], before)
     raw = c["ledger"].read_bytes()
@@ -776,3 +777,701 @@ def test_opt_in_pytest_profile_retains_unique_private_directories_without_aliase
     assert all(stat.S_IMODE(path.stat().st_mode) == 0o700 for path in directories)
     assert all((path / "actual-check.json").is_file() for path in directories)
 
+
+
+# These are harmless real Python fixtures. Their explicit setsid child ignores
+# SIGTERM so the shared retained-identity drain must reach its bounded SIGKILL.
+TRACKED_CHILD_SOURCE = r"""
+import json, os, signal, subprocess, sys, time
+from pathlib import Path
+mode, attempt_text, request_digest, checks_json = sys.argv[1:]
+attempt = Path(attempt_text)
+assert sys.stdin.readline().strip() == 'attached'
+assert sys.stdin.readline().strip()
+nested_body = ("import signal,sys,time\n"
+               "from pathlib import Path\n"
+               "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+               "Path(sys.argv[1]).write_text('ready')\n"
+               "time.sleep(20)\n")
+nested = subprocess.Popen([sys.executable, '-B', '-c', nested_body,
+                           str(attempt/'logs'/'nested-ready')],
+                          stdin=subprocess.DEVNULL, start_new_session=True)
+(attempt/'logs'/'nested.pid').write_text(str(nested.pid))
+if mode == 'tracked_parent_exit':
+    while not (attempt/'tmp'/'allow-parent-exit').exists():
+        time.sleep(.01)
+    raise SystemExit(0)
+time.sleep(20)
+"""
+
+
+def _tracked_fixture(control, **kwargs):
+    control['source'].write_text(TRACKED_CHILD_SOURCE)
+    return control['prepare'](mode='tracked_waiting', **kwargs,
+        mutate=lambda request: request.update(process_scope=validation.TRACKED_SCOPE))
+
+
+def _nested_ready(owner, attempt):
+    _wait_for(lambda: (attempt/'logs'/'nested-ready').is_file(), 'new-session child did not become ready')
+    pid = int((attempt/'logs'/'nested.pid').read_text())
+    observed = owner.observe_processes()
+    identity = native_disk._process(pid)
+    assert identity is not None and identity['state'] != 'Z'
+    assert identity['group_pid'] == pid and pid != owner.to_dict()['record']['child']['pid']
+    assert any(row['pid'] == pid and str(row['birth_ticks']) == identity['birth']
+               for row in observed['observed_identities'])
+    return pid, identity['birth'], observed
+
+
+def _finish_tracked(owner, process):
+    _stop_group(process)
+    owner.drain_tracked_descendants(.05)
+
+
+def test_tracked_scope_retains_before_barrier_and_counts_group_union_once(private_control):
+    c = private_control
+    attempt, manifest, request, kwargs = _tracked_fixture(c, child_process_slots=2)
+    with _owner(c, kwargs) as owned:
+        process = _start_attached(owned, request, manifest)
+        try:
+            child = owned.to_dict()['record']['child']
+            assert owned._descendants.records[child['pid']][0] == int(child['birth'])
+            pid, birth, observed = _nested_ready(owned, attempt)
+            assert observed['scope'] == validation.TRACKED_SCOPE
+            assert observed['group_rss']['live_processes'] == 1
+            assert observed['live_processes'] == 2
+            assert observed['rss_bytes'] == (observed['group_rss']['rss_bytes'] +
+                sum(row['rss_bytes'] for row in observed['out_of_group_live_identities']))
+            assert [(row['pid'], row['birth']) for row in observed['out_of_group_live_identities']] == [(pid, birth)]
+            actual = owned.check_limits()['process_observation']
+            assert actual['live_processes'] == 2 and not actual['tracking_error']
+            assert len(set(request)) == 17
+        finally:
+            _finish_tracked(owned, process)
+
+
+def test_tracked_new_session_process_limit_retains_full_original_claim(private_control):
+    c = private_control
+    attempt, manifest, request, kwargs = _tracked_fixture(c, child_process_slots=1)
+    with _owner(c, kwargs) as owned:
+        key = owned.reservation_id
+        process = _start_attached(owned, request, manifest)
+        try:
+            _nested_ready(owned, attempt)
+            assert native_disk._group_usage(owned._child)['live_processes'] == 1
+            with pytest.raises(validation.ValidationResourceError, match='process limit'):
+                owned.check_limits()
+        finally:
+            _finish_tracked(owned, process)
+    row = _json(c['ledger'])['reservations'][key]
+    assert row['status'] == 'retained' and row['storage_bytes'] == kwargs['storage_bytes']
+    assert row['process_scope'] == validation.TRACKED_SCOPE
+
+
+def test_parent_exit_preserves_retained_new_session_and_blocks_sealing(private_control):
+    c = private_control
+    c['source'].write_text(TRACKED_CHILD_SOURCE)
+    attempt, manifest, request, kwargs = c['prepare'](mode='tracked_parent_exit',
+        mutate=lambda value: value.update(process_scope=validation.TRACKED_SCOPE))
+    with _owner(c, kwargs) as owned:
+        process = _start_attached(owned, request, manifest)
+        try:
+            pid, birth, _ = _nested_ready(owned, attempt)
+            (attempt/'tmp'/'allow-parent-exit').write_text('explicit fixture handshake')
+            process.wait(timeout=5)
+            assert process.returncode == 0
+            observed = owned.observe_processes()
+            assert observed['group_rss']['live_processes'] == 0
+            assert observed['live_processes'] == 1
+            assert any(row['pid'] == pid and row['birth'] == birth
+                       for row in observed['out_of_group_live_identities'])
+            with pytest.raises(validation.ValidationResourceError, match='tracked descendants.*alive'):
+                owned.seal_results(attempt/'logs'/'not-a-result.json')
+        finally:
+            _finish_tracked(owned, process)
+        closed = owned.observe_processes()
+        assert closed['live_processes'] == 0
+        assert any(row['pid'] == pid for row in closed['observed_identities'])
+
+
+def test_live_retained_session_prevents_weaker_failure_exit_releasing_native_lease(private_control):
+    c = private_control
+    attempt, manifest, request, kwargs = _tracked_fixture(c)
+    owned = _owner(c, kwargs).open()
+    process = _start_attached(owned, request, manifest)
+    try:
+        pid, birth, _ = _nested_ready(owned, attempt)
+        # A changed decoded request must refuse productive work, and must not
+        # downgrade the cleanup scope frozen from the authenticated manifest.
+        owned.request['process_scope'] = validation.GROUP_SCOPE
+        assert owned.tracks_descendants
+        with pytest.raises(validation.ValidationResourceError, match='in-memory.*changed'):
+            owned.check_limits()
+        _stop_group(process)
+        assert native_disk._group_usage(owned._child)['live_processes'] == 0
+        assert owned.__exit__(RuntimeError, RuntimeError('fixture cancellation'), None) is False
+        row = _json(c['ledger'])['reservations'][owned.reservation_id]
+        assert row['status'] == 'retained'
+        assert row['retention_reason'] == 'tracked_descendant_cleanup_unresolved'
+        lease = owned.to_dict()['resource_lease']['lease_id']
+        assert lease in _json(c['scheduler'].state_path)['leases']
+        assert native_disk._process(pid)['birth'] == birth
+        assert owned._opened and owned.to_dict()['cleanup_error']
+    finally:
+        owned.request['process_scope'] = validation.TRACKED_SCOPE
+        _finish_tracked(owned, process)
+        owned.__exit__(RuntimeError, RuntimeError('drained fixture failure'), None)
+    assert owned.to_dict()['resource_lease']['lease_id'] not in _json(c['scheduler'].state_path)['leases']
+
+
+def test_observation_error_retains_failure_custody_even_when_original_group_is_dead(private_control, monkeypatch):
+    c = private_control
+    attempt, manifest, request, kwargs = _tracked_fixture(c)
+    owned = _owner(c, kwargs).open()
+    process = _start_attached(owned, request, manifest)
+    try:
+        _nested_ready(owned, attempt)
+        _stop_group(process)
+        with monkeypatch.context() as fault:
+            fault.setattr(owned._descendants, 'error', 'deliberate bounded observation fault')
+            with pytest.raises(validation.ValidationResourceError, match='observation failed'):
+                owned.drain_tracked_descendants(.05)
+            assert owned.__exit__(RuntimeError, RuntimeError('original refusal'), None) is False
+            assert owned._opened
+            assert owned.to_dict()['process_observation']['tracking_error']
+            lease = owned.to_dict()['resource_lease']['lease_id']
+            assert lease in _json(c['scheduler'].state_path)['leases']
+            assert _json(c['ledger'])['reservations'][owned.reservation_id]['retention_reason'] == 'tracked_descendant_cleanup_unresolved'
+    finally:
+        _finish_tracked(owned, process)
+        owned.__exit__(RuntimeError, RuntimeError('drained fixture failure'), None)
+
+
+def test_tracking_cleanup_refuses_changed_owner_birth_before_signalling(private_control, monkeypatch):
+    c = private_control
+    attempt, manifest, request, kwargs = _tracked_fixture(c)
+    with _owner(c, kwargs) as owned:
+        process = _start_attached(owned, request, manifest)
+        try:
+            pid, birth, _ = _nested_ready(owned, attempt)
+            original = native_disk._process
+            def changed_owner(candidate):
+                value = original(candidate)
+                if candidate == os.getpid() and value is not None:
+                    value = dict(value, birth=str(int(value['birth']) + 1))
+                return value
+            with monkeypatch.context() as fault:
+                fault.setattr(native_disk, '_process', changed_owner)
+                with pytest.raises(validation.ValidationResourceError, match='another owner'):
+                    owned.drain_tracked_descendants(.05)
+            assert native_disk._process(pid)['birth'] == birth
+            assert native_disk._process(pid)['state'] != 'Z'
+        finally:
+            _finish_tracked(owned, process)
+
+
+def _tracked_cli(control, *, succeeds):
+    attempt, manifest, request, kwargs = control['prepare'](timeout_seconds=30,
+        child_process_slots=2, mutate=lambda value: value.update(process_scope=validation.TRACKED_SCOPE))
+    package_root = Path(validation.__file__).resolve().parents[3]
+    launcher = package_root/'scripts'/'ops'/'legal_ir'/'run_owned_validation.py'
+    source = control['source']
+    # The child announces its real setsid helper before waiting. On failures the
+    # launcher takes a final ancestry sample before terminating the parent.
+    source.write_text("import os,subprocess,sys,time\nfrom pathlib import Path\n"
+        "root=Path(sys.argv[1])\n"
+        "body=\"import signal,sys,time; from pathlib import Path; signal.signal(signal.SIGTERM,signal.SIG_IGN); Path(sys.argv[1]).write_text('ready'); time.sleep(20)\"\n"
+        "child=subprocess.Popen([sys.executable,'-B','-c',body,str(root/'logs'/'nested-ready')],stdin=subprocess.DEVNULL,start_new_session=True)\n"
+        "(root/'logs'/'nested.pid').write_text(str(child.pid))\n"
+        + ("time.sleep(.5)\nchild.kill()\nchild.wait(timeout=5)\nassert 6*7==42\nprint('actual-tracked-check=42',flush=True)\n"
+           if succeeds else "time.sleep(20)\n"))
+    request['argv'] = [sys.executable, '-B', str(source), str(attempt)]
+    request['selected_checks'] = ['actual tracked Python fixture']
+    shared = package_root/'ipfs_datasets_py'/'logic'/'backends'/'process.py'
+    paths = [launcher, source, Path(validation.__file__), Path(native_disk.__file__),
+             Path(native.__file__), Path(existing.__file__),
+             Path(native.__file__).with_name('proof_resource_safety.py'), shared]
+    request['source_sha256'] = {str(path.resolve()): _sha(path) for path in paths}
+    _write_json(manifest, request)
+    environment = dict(os.environ, PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1',
+        IPFS_DATASETS_PY_MINIMAL_IMPORTS='1', IPFS_DATASETS_AUTO_INSTALL='0',
+        IPFS_AUTO_INSTALL='false', OMP_NUM_THREADS='1', MKL_NUM_THREADS='1',
+        OPENBLAS_NUM_THREADS='1')
+    cli = subprocess.Popen([sys.executable, '-B', str(launcher), '--request', str(manifest),
+        '--expected-request-sha256', _sha(manifest), '--resource-ledger', str(control['ledger'])],
+        cwd=package_root, env=environment, text=True, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, start_new_session=True)
+    return cli, attempt, source, request
+
+
+@pytest.mark.parametrize('refusal', ['cancel', 'source_drift'])
+def test_actual_cli_drains_real_new_session_on_cancel_or_source_watchdog(private_control, refusal):
+    c = private_control
+    cli, attempt, source, request = _tracked_cli(c, succeeds=False)
+    nested = None
+    try:
+        _wait_for(lambda: (attempt/'logs'/'nested-ready').is_file(), 'tracked CLI child did not become ready', timeout=15)
+        nested = native_disk._process(int((attempt/'logs'/'nested.pid').read_text()))
+        assert nested is not None and nested['group_pid'] == nested['pid']
+        if refusal == 'cancel':
+            cli.send_signal(signal.SIGTERM)
+        else:
+            source.write_text(source.read_text()+'\n# deliberate private source watchdog mutation\n')
+        stdout, stderr = cli.communicate(timeout=15)
+        assert cli.returncode != 0, (stdout, stderr)
+        current = native_disk._process(nested['pid'])
+        assert current is None or current['birth'] != nested['birth'] or current['state'] == 'Z'
+        failure = _json(attempt/'logs'/'failure.json')
+        assert failure['completed'] is False and not failure['Lean_admitted']
+        assert failure['process_observation']['scope'] == validation.TRACKED_SCOPE
+        assert failure['process_observation']['live_processes'] == 0
+        assert failure['process_cleanup_error'] is None
+        terminal = json.loads(stdout)
+        assert terminal['schema'] == 'owned-validation-failure-terminal/v1'
+        assert terminal['completed'] is False and terminal['admitted'] is False
+        assert terminal['Lean_admitted'] is False
+        assert terminal['failure'] == failure
+        assert terminal['request_sha256'] == failure['request_sha256']
+        assert terminal['process_cleanup_error'] is None and terminal['owner_exit_error'] is None
+        original_owner = terminal['reservation']
+        assert original_owner['status'] == 'retained'
+        assert original_owner['record']['status'] == 'retained'
+        assert original_owner['record']['storage_bytes'] == request['storage_bytes']
+        assert original_owner['resource_lease']['released'] is True
+        assert original_owner['cleanup_error'] is None
+        after_exit = original_owner['process_observation']
+        assert after_exit['scope'] == validation.TRACKED_SCOPE
+        assert after_exit['live_processes'] == 0
+        assert after_exit['group_rss']['live_processes'] == 0
+        assert after_exit['tracking_error'] == ''
+        assert after_exit['out_of_group_live_identities'] == []
+        assert any(row['pid'] == nested['pid'] and str(row['birth_ticks']) == nested['birth']
+                   for row in failure['process_observation']['observed_identities'])
+        rows = [row for key, row in _json(c['ledger'])['reservations'].items() if key != 'foreign-retained']
+        assert len(rows) == 1 and rows[0]['status'] == 'retained'
+        assert rows[0]['process_scope'] == validation.TRACKED_SCOPE
+        assert rows[0]['storage_bytes'] == request['storage_bytes']
+        assert not _json(c['scheduler'].state_path)['leases']
+        assert not (attempt/'logs'/'result.json').exists()
+        assert not (attempt/'logs'/'validation-durability.json').exists()
+    finally:
+        if cli.poll() is None:
+            cli.send_signal(signal.SIGTERM)
+            cli.wait(timeout=15)
+        _stop_group(cli)
+        if nested is not None:
+            current = native_disk._process(nested['pid'])
+            if current is not None and current['birth'] == nested['birth'] and current['state'] != 'Z':
+                os.kill(nested['pid'], signal.SIGKILL)
+
+
+def test_actual_cli_saves_completed_explicit_tracked_scope_before_release(private_control):
+    c = private_control
+    cli, attempt, _, request = _tracked_cli(c, succeeds=True)
+    try:
+        stdout, stderr = cli.communicate(timeout=20)
+        assert cli.returncode == 0, (stdout, stderr)
+    finally:
+        _stop_group(cli)
+    execution = _json(attempt/'logs'/'execution.json')
+    assert execution['completed'] and execution['returncode'] == 0
+    assert execution['resource_scope'] == 'cooperative_sampled_birth_bound_descendants_and_owned_attempt'
+    assert execution['process_observation']['scope'] == validation.TRACKED_SCOPE
+    assert execution['process_observation']['live_processes'] == 0
+    assert execution['process_observation']['tracking_error'] == ''
+    terminal = json.loads(stdout)
+    assert terminal['reservation']['status'] == 'released'
+    assert terminal['reservation']['process_observation']['live_processes'] == 0
+    assert terminal['reservation']['resource_lease']['lease_id'] not in _json(c['scheduler'].state_path)['leases']
+    assert (attempt/'logs'/'validation-durability.json').is_file()
+    assert not execution['Lean_admitted']
+    assert len(request) == 17
+
+
+def test_legacy_scope_receipt_does_not_claim_tracked_descendant_observation(private_control):
+    c = private_control
+    _, manifest, request, kwargs = c['prepare']()
+    with _owner(c, kwargs) as owned:
+        assert not owned.tracks_descendants and owned._descendants is None
+        result = _complete(owned, request, manifest)
+        owned.seal_results(result)
+        terminal = owned.finalize(artifacts_durable=True)
+    assert terminal['status'] == 'released'
+    assert terminal['record']['process_scope'] == 'isolated_process_group_only'
+    assert 'process_observation' not in terminal
+    assert request['process_scope'] == 'isolated_process_group'
+    assert len(request) == 17
+
+
+def test_tracked_attachment_update_failure_retains_tracker_for_cleanup(private_control, monkeypatch):
+    """A real blocked child remains owned when its ledger attachment fails."""
+    c = private_control
+    attempt, manifest, request, kwargs = _tracked_fixture(c, child_process_slots=1)
+    owned = _owner(c, kwargs).open()
+    lease_id = owned.to_dict()['resource_lease']['lease_id']
+    attachment_error = native_disk.DaemonResourceError('injected attachment ledger update unavailable')
+    process, rejected_updates = None, []
+    try:
+        process = subprocess.Popen(
+            request['argv'], cwd=request['cwd'], env=owned.environment(os.environ),
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, start_new_session=True,
+        )
+        actual = _wait_for(lambda: native_disk._process(process.pid), 'blocked child identity unavailable')
+        expected_child = {'pid': process.pid, 'birth': actual['birth']}
+        assert actual['parent_pid'] == os.getpid() and actual['group_pid'] == process.pid
+        original_update = owned._update
+        def fail_child_update(**fields):
+            if fields.get('child') is not None:
+                assert fields['child'] == expected_child
+                rejected_updates.append(deepcopy(fields))
+                raise attachment_error
+            return original_update(**fields)
+        with monkeypatch.context() as fault:
+            fault.setattr(owned, '_update', fail_child_update)
+            with pytest.raises(native_disk.DaemonResourceError, match='injected attachment ledger update') as caught:
+                owned.attach_child(process.pid)
+            assert caught.value is attachment_error
+        assert len(rejected_updates) == 1
+        assert owned._child == expected_child
+        assert owned.to_dict()['record']['child'] is None
+        assert _json(c['ledger'])['reservations'][owned.reservation_id]['child'] is None
+        tracker = owned._descendants
+        assert tracker is not None and tracker.enabled and tracker.error == ''
+        assert tracker.records[process.pid][0] == int(expected_child['birth'])
+        assert (process.pid, int(expected_child['birth'])) in tracker.history
+        observed = owned.observe_processes()
+        assert observed['scope'] == validation.TRACKED_SCOPE and observed['tracking_error'] == ''
+        assert observed['live_processes'] == observed['group_rss']['live_processes'] == 1
+        assert observed['out_of_group_live_identities'] == []
+        assert any(row['pid'] == process.pid and str(row['birth_ticks']) == expected_child['birth']
+                   for row in observed['observed_identities'])
+        # No handshake is written. The genuine child cannot reach the nested
+        # process or productive work after its two explicit stdin barriers.
+        assert process.poll() is None and process.stdin is not None and not process.stdin.closed
+        assert not (attempt / 'logs/nested.pid').exists()
+        assert not (attempt / 'logs/nested-ready').exists()
+        assert not (attempt / 'exports/checked.json').exists()
+        assert lease_id in _json(c['scheduler'].state_path)['leases']
+    finally:
+        try:
+            if process is not None:
+                _finish_tracked(owned, process)
+        finally:
+            owned.__exit__(RuntimeError, attachment_error, None)
+    assert process.returncode is not None
+    assert lease_id not in _json(c['scheduler'].state_path)['leases']
+    assert owned.to_dict()['resource_lease']['released'] is True
+    assert owned.to_dict()['cleanup_error'] is None and not owned._opened
+    row = _json(c['ledger'])['reservations'][owned.reservation_id]
+    assert row['status'] == 'retained' and row['storage_bytes'] == kwargs['storage_bytes']
+    assert row['child'] is None and row['process_scope'] == validation.TRACKED_SCOPE
+    assert _json(c['ledger'])['reservations']['foreign-retained'] == c['foreign']
+    assert _json(c['scheduler'].state_path)['config'] == c['policy']
+
+
+@pytest.mark.parametrize('rejection_point', ['before_sampling', 'after_sampling'])
+def test_tracked_attachment_rejected_initial_identity_is_never_drained(private_control, monkeypatch, rejection_point):
+    """Rejected initial samples cannot become a scope that cleanup may signal."""
+    from ipfs_datasets_py.logic.backends import process as process_backend
+    c = private_control
+    attempt, manifest, request, kwargs = _tracked_fixture(c, child_process_slots=1)
+    owned = _owner(c, kwargs).open()
+    lease_id = owned.to_dict()['resource_lease']['lease_id']
+    attachment_error = native_disk.DaemonResourceError('injected attachment ledger update unavailable')
+    process = None
+    sampled, closed, drained, signalled, child_queries = [], [], [], [], []
+    try:
+        process = subprocess.Popen(
+            request['argv'], cwd=request['cwd'], env=owned.environment(os.environ),
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, start_new_session=True,
+        )
+        actual = _wait_for(lambda: native_disk._process(process.pid), 'blocked child identity unavailable')
+        expected_child = {'pid': process.pid, 'birth': actual['birth']}
+        original_update, original_process = owned._update, native_disk._process
+        tracker_type = process_backend._LinuxDescendantTracker
+        original_refresh, original_close = tracker_type.refresh, tracker_type.close
+        original_drain, original_signal = tracker_type.drain, tracker_type.signal_descendants
+        reject_query = 2 if rejection_point == 'before_sampling' else 3
+        def fail_child_update(**fields):
+            if fields.get('child') is not None:
+                assert fields['child'] == expected_child
+                raise attachment_error
+            return original_update(**fields)
+        def selected_identity(pid):
+            value = original_process(pid)
+            if pid == process.pid:
+                child_queries.append(value)
+                if len(child_queries) == reject_query:
+                    assert value is not None and value['birth'] == expected_child['birth']
+                    return dict(value, birth=str(int(value['birth']) + 1))
+            return value
+        def sample(tracker):
+            original_refresh(tracker)
+            if tracker.leader_pid == process.pid:
+                sampled.append(tracker)
+                assert tracker.records[process.pid][0] == int(expected_child['birth'])
+        def close_sample(tracker):
+            descriptors = [descriptor for _, descriptor in tracker.records.values() if descriptor is not None]
+            original_close(tracker)
+            if tracker.leader_pid == process.pid:
+                assert tracker.records == {}
+                for descriptor in descriptors:
+                    with pytest.raises(OSError):
+                        os.fstat(descriptor)
+                closed.append(tracker)
+        def forbid_drain(tracker, *args, **kwargs):
+            if tracker.leader_pid == process.pid:
+                drained.append(tracker)
+                raise AssertionError('rejected initial tracker must not drain')
+            return original_drain(tracker, *args, **kwargs)
+        def forbid_signal(tracker, *args, **kwargs):
+            if tracker.leader_pid == process.pid:
+                signalled.append(tracker)
+                raise AssertionError('rejected initial tracker must not signal')
+            return original_signal(tracker, *args, **kwargs)
+        with monkeypatch.context() as fault:
+            fault.setattr(owned, '_update', fail_child_update)
+            fault.setattr(native_disk, '_process', selected_identity)
+            fault.setattr(tracker_type, 'refresh', sample)
+            fault.setattr(tracker_type, 'close', close_sample)
+            fault.setattr(tracker_type, 'drain', forbid_drain)
+            fault.setattr(tracker_type, 'signal_descendants', forbid_signal)
+            with pytest.raises(native_disk.DaemonResourceError, match='injected attachment ledger update') as caught:
+                owned.attach_child(process.pid)
+            assert caught.value is attachment_error
+            assert len(child_queries) == reject_query
+            assert any('birth differs ' + rejection_point.replace('_', ' ') in note
+                       for note in caught.value.__notes__)
+            assert owned._child == expected_child and owned._descendants is None
+            assert owned.to_dict()['record']['child'] is None
+            assert _json(c['ledger'])['reservations'][owned.reservation_id]['child'] is None
+            assert owned.drain_tracked_descendants(.05) is None
+            with pytest.raises(validation.ValidationResourceError, match='no retained descendant owner'):
+                owned.observe_processes()
+            assert drained == signalled == []
+            if rejection_point == 'before_sampling':
+                assert sampled == closed == []
+            else:
+                assert len(sampled) == len(closed) == 1 and sampled[0] is closed[0]
+                assert sampled[0].records == {}
+            assert process.poll() is None and process.stdin is not None and not process.stdin.closed
+            assert not (attempt / 'logs/nested.pid').exists()
+            assert not (attempt / 'logs/nested-ready').exists()
+            assert not (attempt / 'exports/checked.json').exists()
+            assert lease_id in _json(c['scheduler'].state_path)['leases']
+    finally:
+        try:
+            if process is not None:
+                # Only after the selected fault is removed, retain the actual
+                # still-blocked original birth through the genuine owner.
+                try:
+                    owned._retain_attached_descendants()
+                finally:
+                    _finish_tracked(owned, process)
+        finally:
+            owned.__exit__(RuntimeError, attachment_error, None)
+    assert process.returncode is not None
+    assert lease_id not in _json(c['scheduler'].state_path)['leases']
+    assert owned.to_dict()['resource_lease']['released'] is True
+    assert owned.to_dict()['cleanup_error'] is None and not owned._opened
+    row = _json(c['ledger'])['reservations'][owned.reservation_id]
+    assert row['status'] == 'retained' and row['storage_bytes'] == kwargs['storage_bytes']
+    assert row['child'] is None and row['process_scope'] == validation.TRACKED_SCOPE
+    assert _json(c['ledger'])['reservations']['foreign-retained'] == c['foreign']
+    assert _json(c['scheduler'].state_path)['config'] == c['policy']
+
+
+# The lifecycle extension is exercised under real private native admission. The
+# outer owned test run retains the actual host resource and writable scope.
+def _lifecycle_launcher_module():
+    import importlib.util
+    launcher = Path(validation.__file__).resolve().parents[3]/'scripts/ops/legal_ir/run_owned_validation.py'
+    spec = importlib.util.spec_from_file_location('canonical_validation_lifecycle_under_test', launcher)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module, launcher
+
+
+def _prepare_no_child_lifecycle(control):
+    module, launcher = _lifecycle_launcher_module()
+    attempt, manifest, request, kwargs = control['prepare'](memory_mb=4096,
+        mutate=lambda value: value.update(process_scope=validation.TRACKED_SCOPE))
+    request['argv'] = [sys.executable, '-B', str(control['source'])]
+    paths = [launcher, control['source'], Path(validation.__file__), Path(native_disk.__file__),
+        Path(native.__file__), Path(existing.__file__), Path(native.__file__).with_name('proof_resource_safety.py')]
+    request['source_sha256'] = {str(path.resolve()): _sha(path) for path in paths}
+    _write_json(manifest, request)
+    kwargs['frozen_validation_manifest_sha256'] = _sha(manifest)
+    return module, launcher, attempt, manifest, request, kwargs
+
+
+def _actual_no_child_cli(control):
+    module, launcher, attempt, manifest, request, kwargs = _prepare_no_child_lifecycle(control)
+    blocker = control['scheduler'].acquire(native.ResourceLane.VALIDATION,
+        cpu_slots=1, memory_mb=1, child_process_slots=0, timeout=0,
+        request_id='private-no-child-admission-blocker')
+    environment = dict(os.environ, PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1',
+        IPFS_DATASETS_PY_MINIMAL_IMPORTS='1', IPFS_DATASETS_AUTO_INSTALL='0',
+        IPFS_AUTO_INSTALL='false', OMP_NUM_THREADS='1', MKL_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1')
+    cli = None
+    try:
+        cli = subprocess.Popen([sys.executable, '-B', str(launcher), '--request', str(manifest),
+            '--expected-request-sha256', _sha(manifest), '--resource-ledger', str(control['ledger'])],
+            cwd=launcher.parents[3], env=environment, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+        identity = native_disk._process(cli.pid)
+        assert identity is not None
+        stdout, stderr = cli.communicate(timeout=30)
+        assert cli.returncode != 0, (stdout, stderr)
+        terminal = json.loads(stdout)
+        assert terminal['failure']['error_type'] == 'LeaseTimeoutError', (stdout, stderr)
+        caller = dict(expected_request_sha256=_sha(manifest), owner_pid=cli.pid,
+            owner_birth=identity['birth'], returncode=cli.returncode,
+            expected_resource_ledger=str(control['ledger']))
+        return module, terminal, manifest.read_bytes(), caller, attempt
+    finally:
+        if cli is not None:
+            if cli.poll() is None:
+                cli.terminate()
+                cli.wait(timeout=10)
+            _stop_group(cli)
+        blocker.release()
+
+
+def test_actual_cli_native_timeout_proves_no_child_source_custody_and_retains_storage(private_control):
+    module, terminal, request_raw, caller, attempt = _actual_no_child_cli(private_control)
+    verdict = module.classify_owned_validation_source_custody(terminal, request_raw, **caller)
+    assert verdict == {'verdict': 'proven_original_no_child_no_native_grant',
+        'source_custody_closed': True, 'storage_release_authorized': False}
+    original = terminal['reservation']
+    assert original['resource_lease'] is None and original['process_observation'] is None
+    assert original['record']['child'] is None and original['record']['prior_children'] == []
+    assert original['status'] == original['record']['status'] == 'retained'
+    assert original['record']['retention_reason'] == 'scheduler_admission_failed'
+    assert original['record']['artifacts_durable_asserted'] is False
+    assert not tuple(attempt.iterdir())
+    witness = terminal['source_custody_lifecycle']
+    assert witness['events'] == dict(owner_open_attempted=True, owner_open_returned=False,
+        child_launch_attempted=False, child_created=False, barrier_release_attempted=False,
+        barrier_released=False, owner_exit_handling_completed=True)
+    assert witness['native_grant']['exact_native_timeout'] is True
+    assert witness['native_grant']['timeout_decision']['request_id'] == 'validation:' + original['reservation_id']
+    assert witness['owner'] == {'pid': caller['owner_pid'], 'birth': caller['owner_birth']}
+    # Authored metadata perturbation proves storage cleanup is a separate claim;
+    # this is not evidence that the real fixture encountered a storage failure.
+    retained_failure = deepcopy(terminal)
+    retained_failure['reservation']['cleanup_error'] = 'DaemonResourceError'
+    retained_failure['source_custody_lifecycle']['storage']['cleanup_error'] = 'DaemonResourceError'
+    assert module.classify_owned_validation_source_custody(retained_failure, request_raw, **caller) == verdict
+
+
+def test_original_no_child_classifier_refuses_spoofed_mismatched_or_started_evidence(private_control):
+    module, terminal, request_raw, caller, _ = _actual_no_child_cli(private_control)
+    assert module.classify_owned_validation_source_custody(terminal, request_raw, **caller)['source_custody_closed'] is True
+    for damage in ('missing', 'schema', 'request', 'owner_pid', 'owner_birth', 'producer', 'policy',
+            'ledger', 'reservation', 'launch_attempt', 'child_created', 'barrier_attempt', 'barrier_released',
+            'open_returned', 'exit_incomplete', 'acquired', 'subclass', 'timeout_request', 'timeout_integer',
+            'grant_integer', 'cancelled', 'source_guard', 'budget_bool', 'attached_child', 'process_observation',
+            'process_cleanup', 'exit_error', 'admitted_outcome', 'storage_release'):
+        changed = deepcopy(terminal)
+        witness = changed['source_custody_lifecycle']
+        decision = witness['native_grant']['timeout_decision']
+        if damage == 'missing': changed.pop('source_custody_lifecycle')
+        elif damage == 'schema': witness['schema'] = 'owned-validation-source-custody-lifecycle/v0'
+        elif damage == 'request': witness['request_sha256'] = '0'*64
+        elif damage == 'owner_pid': witness['owner']['pid'] += 1
+        elif damage == 'owner_birth': witness['owner']['birth'] += '1'
+        elif damage == 'producer': witness['producer']['sha256'] = '0'*64
+        elif damage == 'policy': witness['scheduler']['policy_sha256'] = '0'*64
+        elif damage == 'ledger': witness['ledger_path'] += '.foreign'
+        elif damage == 'reservation': witness['reservation_id'] += '-foreign'
+        elif damage in ('launch_attempt', 'child_created', 'barrier_attempt', 'barrier_released', 'open_returned'):
+            key = {'launch_attempt': 'child_launch_attempted', 'child_created': 'child_created',
+                'barrier_attempt': 'barrier_release_attempted', 'barrier_released': 'barrier_released',
+                'open_returned': 'owner_open_returned'}[damage]
+            witness['events'][key] = True
+        elif damage == 'exit_incomplete': witness['events']['owner_exit_handling_completed'] = False
+        elif damage == 'acquired': witness['native_grant']['status'] = 'acquired'
+        elif damage == 'subclass':
+            changed['failure']['error_type'] = 'ResourceAdmissionDeadlineError'
+            witness['native_grant']['exact_native_timeout'] = False
+        elif damage == 'timeout_request': decision['request_id'] += '-foreign'
+        elif damage == 'timeout_integer': decision['timed_out'] = 1
+        elif damage == 'grant_integer': decision['can_grant_now'] = 0
+        elif damage == 'cancelled': decision['externally_cancelled'] = True
+        elif damage == 'source_guard': witness['source_guards']['source_pins_unchanged'] = False
+        elif damage == 'budget_bool': witness['budgets']['cpu_slots'] = True
+        elif damage == 'attached_child': witness['owner_child_attached'] = True
+        elif damage == 'process_observation': changed['reservation']['process_observation'] = {'live_processes': 1}
+        elif damage == 'process_cleanup': changed['process_cleanup_error'] = 'unresolved'
+        elif damage == 'exit_error': changed['owner_exit_error'] = 'unresolved'
+        elif damage == 'admitted_outcome': changed['failure']['admitted'] = True
+        else: witness['storage']['release_authorized'] = True
+        result = module.classify_owned_validation_source_custody(changed, request_raw, **caller)
+        assert result == {'verdict': 'requires_original_native_cleanup',
+            'source_custody_closed': False, 'storage_release_authorized': False}, damage
+    for key, value in (('owner_pid', True), ('returncode', 0), ('returncode', False),
+            ('expected_request_sha256', '0'*64), ('expected_resource_ledger', str(private_control['ledger'])+'.foreign')):
+        assert module.classify_owned_validation_source_custody(terminal, request_raw,
+            **{**caller, key: value})['source_custody_closed'] is False, key
+    for filename in module._LIFECYCLE_OWNER_NAMES:
+        sparse_request = json.loads(request_raw)
+        path = str(module.ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer'/filename)
+        sparse_request['source_sha256'].pop(path)
+        sparse_raw = json.dumps(sparse_request, sort_keys=True, separators=(',', ':')).encode()
+        sparse_pin = hashlib.sha256(sparse_raw).hexdigest()
+        sparse_terminal = deepcopy(terminal)
+        sparse_terminal['request_sha256'] = sparse_pin
+        sparse_terminal['failure']['request_sha256'] = sparse_pin
+        sparse_terminal['source_custody_lifecycle']['request_sha256'] = sparse_pin
+        assert module.classify_owned_validation_source_custody(sparse_terminal, sparse_raw,
+            **{**caller, 'expected_request_sha256': sparse_pin})['source_custody_closed'] is False, filename
+        with pytest.raises(ValueError, match='original lifecycle owner source pins'):
+            module._lifecycle_source_guard(sparse_request)
+    source = private_control['source']
+    original = source.read_bytes()
+    try:
+        source.write_bytes(original + b'\n# authored post-exit pinned source drift\n')
+        assert module.classify_owned_validation_source_custody(terminal, request_raw, **caller)['source_custody_closed'] is False
+    finally:
+        source.write_bytes(original)
+    assert module.classify_owned_validation_source_custody(terminal, request_raw, **caller)['source_custody_closed'] is True
+
+
+def test_lifecycle_builder_never_promotes_subclass_spoof_or_legacy_timeout(private_control):
+    control = private_control
+    module, _, _, manifest, request, kwargs = _prepare_no_child_lifecycle(control)
+    blocker = control['scheduler'].acquire(native.ResourceLane.VALIDATION,
+        cpu_slots=1, memory_mb=1, child_process_slots=0, timeout=0,
+        request_id='private-builder-admission-blocker')
+    owner = _owner(control, kwargs)
+    try:
+        with pytest.raises(native.LeaseTimeoutError) as caught:
+            owner.open()
+        genuine = caught.value
+        assert type(genuine) is native.LeaseTimeoutError
+        owner.__exit__(type(genuine), genuine, None)
+        reservation = owner.to_dict()
+        events = dict(owner_open_attempted=True, owner_open_returned=False,
+            child_launch_attempted=False, child_created=False,
+            barrier_release_attempted=False, barrier_released=False)
+        def witness(error):
+            return module._source_custody_witness(owner, reservation, request,
+                manifest.read_bytes(), manifest, _sha(manifest), events, error,
+                exit_handling_completed=True)
+        assert witness(genuine)['native_grant']['status'] == 'not_acquired_terminal_timeout'
+        spoof = type('LeaseTimeoutError', (RuntimeError,), {})('authored spoof')
+        spoof.timeout_decision = deepcopy(genuine.timeout_decision)
+        legacy = native.LeaseTimeoutError('legacy message without decision')
+        subclass = native.ResourceAdmissionDeadlineError('deadline subclass',
+            timeout_decision=genuine.timeout_decision)
+        mismatch = native.LeaseTimeoutError('wrong request',
+            timeout_decision={**genuine.timeout_decision, 'request_id': 'foreign'})
+        for error in (spoof, legacy, subclass, mismatch):
+            observed = witness(error)
+            assert observed['native_grant']['status'] == 'unknown'
+            assert observed['storage']['release_authorized'] is False
+    finally:
+        blocker.release()

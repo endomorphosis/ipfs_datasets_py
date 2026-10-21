@@ -349,6 +349,36 @@ def write_fresh_source_coordinate_cache(path, report, documents, *, expected_rep
         os.close(parent_fd)
 
 
+def _coordinate_transport_bound(max_bytes: int) -> int:
+    if (type(max_bytes) is not int or max_bytes <= 0
+            or max_bytes > MAX_SOURCE_COORDINATE_REPORT_BYTES):
+        raise SpanCacheError("source-coordinate transport bound must be a positive lower-only integer")
+    return max_bytes
+
+
+
+def load_source_coordinate_report(payload: bytes, *, expected_report_sha256: str,
+                                  max_bytes: int = MAX_SOURCE_COORDINATE_REPORT_BYTES) -> dict[str, Any]:
+    """Validate portable report bytes against an independently supplied report pin.
+
+    This is an offline bytes boundary, with no file, database, model or network
+    operations. The limit is checked before UTF8 decoding. Replay checks exact
+    supplied text and legacy span geometry, not official provenance or meaning.
+    Nested metadata order is retained because legacy IDs may use str(mapping).
+    The report pin is distinct from a digest of the serialized transport bytes.
+    """
+    maximum = _coordinate_transport_bound(max_bytes)
+    pin = _coordinate_pin(expected_report_sha256)
+    if type(payload) is not bytes or len(payload) > maximum:
+        raise SpanCacheError("bounded source-coordinate transport bytes required")
+    try:
+        raw = payload.decode("utf-8")
+    except UnicodeError as error:
+        raise SpanCacheError("source-coordinate transport is not UTF8") from error
+    return _coordinate_replay(_coordinate_load(raw, maximum), pin)[0]
+
+
+
 @dataclass(frozen=True)
 class SpanCacheTextLimits:
     """UTF-8 limits for new source/decompilation writes, never truncation sizes.

@@ -195,3 +195,244 @@ bridge requires its own exact whole-source contributor units, edition and scope.
 Unclassified literal regions or sentence candidates cannot be relabeled as
 those units. Qualified definitions, governing context, source authenticity,
 review and legal correctness remain unresolved.
+
+## Complete coordinate graph corpus custody
+
+Qualification: **46 passed cases / 138 passed phases** (43 new coordinate cases
+and three existing official-adapter regressions), with 232 frozen source files.
+The original validation owner closed source, native and storage custody. See
+`workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-corpus-custody-20261021-01/qualification-summary.json`
+and its independently checked original receipts. This is prepared for a selected
+local delivery; primary installation, publication and legal/Lean admission are not
+established. Existing official, parent and relational adapters retain their
+original contracts; this cohort does not newly qualify the broader profiles.
+
+The coordinate corpus profile requires the explicit upstream graph-intake v2
+and genuine original-input eligibility v3 contracts. It does not reinterpret
+historical graph v1 or retained-row eligibility v2 as that evidence, and has no
+silent fallback. Its schema is `legal-coordinate-graph-corpus/v1`, with
+`source_compatibility_profile=original-input-coordinate-graph-v2-corpus-custody/v1`.
+Upstream graphs are still proposed `canonical_rules_v1` graphs constructed from
+supported `typed_deontic` / `typed-deontic-rule/v1` outputs. Other logic families,
+relational norms and reviewed definitions do not become supported by entering
+this wrapper.
+
+```python
+coordinate_graph_corpus_originals_sha256(intake_inputs)
+coordinate_graph_corpus_inputs_sha256(output_inputs)
+coordinate_graph_corpus_sha256(report)
+
+prepare_coordinate_graph_corpus_v1(
+    intake_report_raw, *, expected_intake_raw_sha256,
+    expected_intake_sha256, intake_inputs, expected_intake_inputs_sha256,
+    output_inputs, expected_output_inputs_sha256,
+)
+validate_coordinate_graph_corpus_v1(
+    report, intake_report_raw, *, expected_report_sha256,
+    expected_intake_raw_sha256, expected_intake_sha256, intake_inputs,
+    expected_intake_inputs_sha256, output_inputs,
+    expected_output_inputs_sha256,
+)
+export_coordinate_graph_corpus_output_v1(
+    report, output_occurrence_ordinal, output_directory, intake_report_raw,
+    *, expected_report_sha256, expected_intake_raw_sha256,
+    expected_intake_sha256, intake_inputs, expected_intake_inputs_sha256,
+    output_inputs, expected_output_inputs_sha256,
+)
+```
+
+`report` is an ordinary bounded JSON report, not an additional sealed corpus
+record. Its full canonical hash omits no fields. The exact raw upstream artifact
+pin `expected_intake_raw_sha256` is distinct from `expected_intake_sha256`, the
+existing graph-intake owner's complete canonical identity. Independently retain
+both pins, all original bytes and the two input commitments; a report's own hash
+fields are not independent evidence.
+
+### Complete upstream originals
+
+`intake_inputs` is an ordinary closed mapping of exactly seven fields:
+
+```text
+request_raw
+eligibility_report_raw
+eligibility_request_raw
+join_manifest_raw
+expected_request_sha256
+join_originals
+source_bindings
+```
+
+These are the complete arguments to
+`legal_span_cache_intake.validate_coordinate_source_graph_intake_v2`, excluding
+the offered report and its separately supplied expected report hash. The graph
+request must use `legal-coordinate-source-graph-intake-request/v2` and
+`original-input-coordinate-source-graph-intake/v1`. Its eligibility request must
+use `legal-source-span-target-eligibility-request/v3` and
+`original-input-coordinate-target-eligibility/v1`. The upstream report must have
+the corresponding graph v2 schema/profile. A valid retained-row eligibility
+report remains a different contract.
+
+The originals helper represents each of the four exact byte arguments by
+SHA256 and byte length, retains the independently pinned graph request identity,
+uses the existing public eligibility helper to commit the complete
+`join_originals`, and commits the ordinary canonical source-binding-map bytes
+by SHA256 and length. It then hashes the ordinary canonical identity mapping.
+No original byte buffer is replaced by a parsed report projection. The existing
+closed eight-field `join_originals` contract, complete physical population and
+source-binding declarations remain required at every replay.
+
+`source_bindings` keeps the upstream physical-identity keys and the original
+document, raw-HTML base64, revision, scope and selector declarations. The wrapper
+uses that original nominated document and HTML; it does not fetch another
+source or generate an official edition from the cache. These declarations
+retain the upstream unverified crosswalk and review status.
+
+### Independent per-output custody
+
+`output_inputs` is a complete ordered list of at most 128 closed slots, one per
+upstream output occurrence. A zero-output upstream population requires an empty
+list. Each slot has exactly these nine fields:
+
+```text
+output_occurrence_ordinal
+physical_identity_sha256
+route
+ordinal
+expected_proposal_sha256
+trusted_proposal_inputs
+expected_inputs_sha256
+expected_raw_sha256
+expected_extracted_sha256
+```
+
+The first four fields identify the exact upstream output: complete-list ordinal,
+physical row identity, producer route and route-local formal-output ordinal.
+Ordinals must be ordinary integers, not booleans. Repeated text, repeated graph
+content and matching compiler outputs do not collapse those identities.
+
+The last five fields are either **all `None`** or all supplied. All `None`
+explicitly records unavailable corpus custody. A supported upstream graph with
+missing custody remains an unresolved slot; it is not dropped. An unresolved
+upstream graph requires all five fields `None`. Partial, malformed or mismatched
+supplied custody is refused rather than reclassified as missing evidence.
+
+For supplied custody, `trusted_proposal_inputs` has the existing full eight
+fields: `ast`, `profile`, `source`, `scope`, `semantic_declarations`,
+`dependency_refs`, `evidence_refs` and `scope_request`. It must exactly match the
+genuinely replayed upstream `graph_request`, with the producer's explicit default
+`semantic_declarations=None` and `scope_request=None`. No trusted input is
+manufactured by copying a self-sealed candidate. New entity/assertion declarations
+cannot be injected through these sidecars.
+
+The proposal byte recipe is exactly
+`canonical_dag_json_bytes(genuinely_replayed_graph)`, independently pinned by
+`expected_proposal_sha256`. The complete eight-field proposal input hash uses
+the existing `INPUT_DIGEST_RECIPE`; it is not the AST-only hash, graph ID or
+complete intake hash. `expected_raw_sha256` pins the exact original nominated
+HTML bytes; `expected_extracted_sha256` pins the complete original nominated
+document's UTF-8 `document_text`. Source selectors still address the normalized
+extracted view rather than raw HTML offsets.
+
+The output-input helper validates the closed slot structure and computes SHA256
+over the complete ordinary canonical JSON list. It includes missing slots and
+their original order. Computing a commitment cannot authorize incorrect source,
+proposal or input pins; preparation checks those against genuine replay before
+calling the existing adapter.
+
+### Existing candidate construction and lossless report
+
+Preparation genuinely validates upstream graph v2 on opening and closing,
+against every original argument. For each complete supplied slot it calls the
+unchanged `adapt_proposed_graph_bytes` and
+`validate_proposed_graph_candidate` with independent inputs and original source
+bytes. Candidate records keep the existing schemas, CIDs, ordered AST and
+source-version/occurrence records. The wrapper creates no new AST codec, entity
+resolver or legal-role graph projection.
+
+The outer report retains the exact upstream intake artifact once in
+`intake_report_raw_utf8`, with its raw and canonical pins. Its complete typed
+eligibility/join/carrier references retain their original names and values inside
+that artifact; they resolve within their original upstream containers. The
+wrapper does not duplicate the full intake artifact inside individual rows or
+retarget upstream coordinate pointers.
+
+`physical_rows` and `row_references` retain the complete upstream populations.
+Every `output_occurrences` slot keeps its four identity fields and the complete
+original upstream row in `intake_output`, including eligibility output and
+coordinate lineage. `candidate` is the existing sealed candidate or `None`.
+Disposition is `candidate_corpus_custody` or `unresolved`; missing custody uses
+issue `custody_inputs_not_supplied`, and unresolved upstream graphs use
+`upstream_graph_unresolved`. Counts distinguish physical rows, references,
+outputs, candidate outputs and unresolved outputs.
+
+All authority remains false. Source/edition correspondence remains
+`unverified_no_independent_crosswalk`, entity binding remains
+`unavailable_semantic_companions_not_supplied`, selected occurrence remains
+`None`, and training, evaluation and source-binding masks remain integer zero.
+The original proposed graph's nominated source occurrence is custody evidence;
+it is not an admitted historical coordinate occurrence or governing statute.
+
+### One-output export and its lineage receipt
+
+Export requires an explicit ordinary integer `output_occurrence_ordinal`. It
+first validates the full report and complete output population. It rejects an
+unresolved selected slot and delegates one candidate to the unchanged
+`export_proposed_graph_candidate`. This is not an aggregate writer that silently
+exports a usable subset.
+
+The existing graph writer performs its own real bundle load/readback. The new
+wrapper neither replaces that serializer nor adds another graph format. Its
+receipt has schema `legal-coordinate-graph-corpus-output-export/v1` and binds:
+
+- Independently expected `corpus_report_sha256`.
+- The four exact selected output identity fields.
+- `candidate_record_cid` and the unchanged returned `graph_manifest`.
+- `graph_manifest_sha256`, SHA256 of `canonical_dag_json_bytes(graph_manifest)`.
+- The exact `snapshot_cid` and `delegated_writer_readback_performed=True`.
+- `full_candidate_retained_separately_required=True`, false authority and zero masks.
+
+The graph bundle still contains envelopes rather than the full corpus companion,
+raw proposal/source artifacts or replay originals. Retain the full ordinary
+report, full candidate and complete original inputs separately under their
+independent pins. A graph bundle or its manifest alone cannot replay custody or
+authenticate external content references.
+
+Export keeps genuine upstream custody open around the actual writer and closes
+it afterward. A late callback, source-table or input mutation raises even if the
+writer already created a loadable bundle. Failed written artifacts are retained;
+no qualified receipt is returned and this API does not delete, repair or take
+over their original resource owner.
+
+### Bounds and closing observations
+
+| Surface | Unchanged or lower bound |
+| --- | --- |
+| Ordinary outer report and complete output-input JSON list | 64 MiB each |
+| Complete output-slot population | At most 128 |
+| Upstream graph and eligibility request bytes | 128 KiB each |
+| Eligibility and join artifact bytes | 16 MiB each |
+| Original source-binding map | 8 MiB |
+| Original join replay inputs | Existing 8 MiB aggregate and per-field limits |
+| Each existing candidate/common sealed envelope | 1 MiB, depth 20, 25,000 JSON nodes |
+| Upstream graph population and graph payload | Existing graph-v2/source/eligibility bounds |
+
+The 64 MiB outer ceiling does not enlarge any 1 MiB candidate limit. A supplied
+candidate that exceeds its existing adapter bounds fails the operation; it is
+not truncated, sampled or silently omitted. Underlying HTML, normalized view,
+graph, CID and exchange bounds remain in force.
+
+Closing checks genuinely replay the upstream graph operation, compare live and
+detached intake/output originals with their independent commitments, inspect
+producer source hashes and operation callable identities, then recheck originals
+and producers after delegated closing work. The public validator also fences
+the offered report. Export additionally fences the offered and validated report
+around actual writing. Secondary failures are attached without replacing a
+primary `BaseException`.
+
+These are ordered source/callback/custody observations, not an atomic filesystem
+snapshot, arbitrary concurrent-writer protection or complete loaded-byte
+attestation. Replaying a candidate is not current source/review/revocation
+authorization. No current-edition crosswalk, legal meaning, governing definition,
+every-use applicability, training/gold admission, model accuracy or Lean proof
+follows from this profile. No model, new training, provider call or native Lean
+execution occurred in this focused engineering qualification.

@@ -231,3 +231,128 @@ def test_actual_classification_rule_records_are_ontology_observations_without_au
     assert observed[0]["observation_sha256"] != observed[1]["observation_sha256"]
     assert observed[0]["declared_classification_hint"] is None
     assert all(not value for record in observed for value in record["authority"].values())
+
+
+@pytest.mark.parametrize("records", [[], rows()])
+def test_v2_is_explicit_and_preserves_the_complete_default_v1_report(tmp_path, records):
+    path = tmp_path / "index.parquet"
+    request = write(path, records)
+    old = intake.census_parquet(path, **request)
+    detailed = intake.census_parquet(path, endpoint_details=True, **request)
+    assert old["schema"] == intake.SCHEMA
+    assert detailed["schema"] == intake.DETAILED_SCHEMA
+    assert "endpoint_integrity" not in old
+    projected = deepcopy(detailed)
+    projected.pop("endpoint_integrity")
+    projected.pop("census_sha256")
+    projected["schema"] = intake.SCHEMA
+    projected["census_sha256"] = intake._digest(projected)
+    assert projected == old
+    assert not any(detailed["authority"].values())
+    assert detailed["endpoint_integrity"]["semantic_identity_verified"] is False
+    assert detailed["census_sha256"] != old["census_sha256"]
+
+
+def test_v2_partitions_edges_and_retains_overlapping_diagnostics_and_multiplicity(tmp_path):
+    path = tmp_path / "mixed.parquet"
+    records = [row("node", node_id="A"), row("node", node_id="A", label="different record"),
+               row("node", node_id="B")]
+    endpoints = [("A", "B"), ("A", "B"), (None, "B"), ("", "ghost"),
+                 ("ghost", "B"), ("B", "ghost"), ("A", "ghost"), ("", "A"),
+                 (None, None), ("B", "B"), (" ", "B")]
+    records += [row("edge", src=src, dst=dst) for src, dst in endpoints]
+    records += [row("logical_relation", src="B", dst="B"), row("node", node_id=None)]
+    request = write(path, records)
+    result = intake.census_parquet(path, endpoint_details=True, **request)
+    detail = result["endpoint_integrity"]
+    assert detail["record_kind"] == "edge"
+    assert detail["edge_rows"] == 11
+    assert detail["missing_endpoint_values"] == {"source": 4, "target": 1, "both": 1, "either": 4}
+    assert detail["nonempty_dangling_references"] == {"source": 2, "target": 3, "either": 5}
+    assert detail["ambiguous_declared_references"] == {"source": 3, "target": 1, "either": 4}
+    assert detail["exclusive_edge_dispositions"] == {
+        "missing_endpoint_value": 4, "nonempty_dangling_endpoint": 4,
+        "ambiguous_declared_endpoint": 2, "unique_declared_endpoints": 1}
+    assert detail["endpoint_counts_may_overlap"] is True
+    assert sum(detail["exclusive_edge_dispositions"].values()) == len(endpoints)
+    assert result["edge_source_endpoint_missing_rows"] == 6
+    assert result["edge_target_endpoint_missing_rows"] == 4
+
+
+def test_v2_does_not_normalize_identifiers_or_turn_matching_into_semantic_identity(tmp_path):
+    path = tmp_path / "exact.parquet"
+    request = write(path, [row("node", node_id=" A"), row("node", node_id=" "),
+        row("edge", src=" A", dst=" "), row("edge", src="A", dst=" ")])
+    result = intake.census_parquet(path, endpoint_details=True, **request)
+    detail = result["endpoint_integrity"]
+    assert detail["exclusive_edge_dispositions"] == {
+        "missing_endpoint_value": 0, "nonempty_dangling_endpoint": 1,
+        "ambiguous_declared_endpoint": 0, "unique_declared_endpoints": 1}
+    assert detail["matching_policy"] == "exact_nonempty_node_id_equality_no_normalization"
+    assert detail["semantic_identity_verified"] is False
+    assert not any(result["authority"].values())
+
+
+def test_v2_replay_and_bindings_require_the_explicit_version_and_independent_pin(source, monkeypatch):
+    path, request = source
+    result = intake.census_parquet(path, endpoint_details=True, **request)
+    assert intake.validate_census(result, path, endpoint_details=True, **request) == result
+    with pytest.raises(intake.EntityIndexIntakeError, match="trusted full replay"):
+        intake.validate_census(result, path, **request)
+    def forbidden(*args):
+        pytest.fail("binding-only validator decoded rows")
+    monkeypatch.setattr(intake, "_rows", forbidden)
+    check = intake.validate_census_bindings(result, path, endpoint_details=True,
+        expected_census_sha256=result["census_sha256"], **request)
+    assert check["fresh_row_replay_performed"] is False
+    with pytest.raises(intake.EntityIndexIntakeError, match="closed prior census"):
+        intake.validate_census_bindings(result, path, expected_census_sha256=result["census_sha256"], **request)
+    altered = deepcopy(result)
+    altered["endpoint_integrity"]["exclusive_edge_dispositions"]["unique_declared_endpoints"] += 1
+    altered["census_sha256"] = intake._digest({k: v for k, v in altered.items() if k != "census_sha256"})
+    with pytest.raises(intake.EntityIndexIntakeError, match="independently pinned"):
+        intake.validate_census_bindings(altered, path, endpoint_details=True,
+            expected_census_sha256=result["census_sha256"], **request)
+
+
+@pytest.mark.parametrize("flag", [0, 1, None, "true", [], {}])
+def test_endpoint_details_rejects_coercible_nonboolean_requests_before_opening_source(tmp_path, flag):
+    request = dict(expected_file_sha256="0" * 64, expected_rows=0, max_rows=1, batch_size=1,
+                   endpoint_details=flag)
+    with pytest.raises(intake.EntityIndexIntakeError, match="boolean endpoint_details"):
+        intake.census_parquet(tmp_path / "absent.parquet", **request)
+    with pytest.raises(intake.EntityIndexIntakeError, match="boolean endpoint_details"):
+        intake.validate_census_bindings({}, tmp_path / "absent.parquet",
+            expected_census_sha256="0" * 64, **request)
+
+
+def test_v2_diagnostics_are_independent_of_batch_and_row_group_boundaries(tmp_path):
+    path = tmp_path / "index.parquet"
+    request = write(path, rows())
+    first = intake.census_parquet(path, endpoint_details=True, **request)
+    second = intake.census_parquet(path, endpoint_details=True, **{**request, "batch_size": 1})
+    assert first["endpoint_integrity"] == second["endpoint_integrity"]
+    assert first["ordered_stream_sha256"] == second["ordered_stream_sha256"]
+
+
+@pytest.mark.parametrize("field,value", [
+    ("schema", "wrong/v9"), ("matching_policy", "normalize_labels"), ("record_kind", "logical_relation"),
+    ("semantic_identity_verified", True), ("endpoint_counts_may_overlap", 1), ("extra", "ignored"),
+    ("edge_rows", True), ("edge_rows", -1), ("exclusive_edge_dispositions", {}),
+    ("missing_endpoint_values", None),
+    ("nonempty_dangling_references", {"source": True, "target": 1, "either": 1}),
+    ("ambiguous_declared_references", {"source": -1, "target": 3, "either": 2}),
+])
+def test_v2_pinned_bindings_still_validate_closed_semantics_and_counter_types(source, monkeypatch, field, value):
+    path, request = source
+    result = intake.census_parquet(path, endpoint_details=True, **request)
+    result["endpoint_integrity"][field] = value
+    result["census_sha256"] = intake._digest({k: v for k, v in result.items() if k != "census_sha256"})
+    def forbidden(*args):
+        pytest.fail("binding validation must not decode rows")
+    monkeypatch.setattr(intake, "_rows", forbidden)
+    # A matching independently supplied digest does not make invalid schema or
+    # claimed semantic authority admissible to the binding-only interface.
+    with pytest.raises(intake.EntityIndexIntakeError):
+        intake.validate_census_bindings(result, path, endpoint_details=True,
+            expected_census_sha256=result["census_sha256"], **request)

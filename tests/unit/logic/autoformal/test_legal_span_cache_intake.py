@@ -293,3 +293,870 @@ def test_actual_entity_cache_entrypoint_receives_the_complete_direct_row_populat
         assert cache._db.execute("SELECT * FROM entity_queue ORDER BY entity_id").fetchall() == before
     finally:
         cache.close()
+
+
+# Coordinate graph intake is a distinct, opt-in contract. These authored inputs
+# run the selected coordinate/Arrow/join/eligibility owners and the existing
+# official-HTML graph binder. They do not establish a statutory crosswalk.
+from html import escape as _html_escape
+from pathlib import Path
+
+from ipfs_datasets_py.logic.autoformal import legal_source_span_target_eligibility_v1 as eligibility
+from ipfs_datasets_py.logic.autoformal import legal_source_span_entity_join_v1 as coordinate_join_owner
+from tests.unit.logic.autoformal.test_legal_source_span_entity_coordinate_join_v2 import (
+    coordinate_join, prepare as _prepare_coordinate_join,
+)
+
+
+_COORDINATE_GRAPH_RULE = {
+    "modality": "O", "actor": "Clerk", "action": "file", "object": "report",
+    "conditions": [], "exceptions": [], "temporal": [],
+}
+_COORDINATE_GRAPH_DOCUMENT = {
+    "z_metadata": "first", "a_metadata": "second", "legal_id": "usc:us:5:551",
+    "text": "Unselected Ω context. Clerk shall file report.",
+}
+_supported_coordinate_graph = pytest.mark.parametrize("coordinate_join", [{
+    "documents": [_COORDINATE_GRAPH_DOCUMENT], "selected_indices": (1,),
+    "compiler_rule": _COORDINATE_GRAPH_RULE,
+}], ids=["authored-supported-coordinate"], indirect=True)
+_repeated_coordinate_graph = pytest.mark.parametrize("coordinate_join", [{
+    "documents": [_COORDINATE_GRAPH_DOCUMENT, _COORDINATE_GRAPH_DOCUMENT],
+    "selected_indices": (1, 3), "compiler_rule": _COORDINATE_GRAPH_RULE,
+}], ids=["authored-repeated-coordinate"], indirect=True)
+
+
+def _coordinate_graph_wire(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False, allow_nan=False).encode("utf-8")
+
+
+def _coordinate_graph_sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+@pytest.fixture
+def coordinate_graph_case(coordinate_join):
+    case = coordinate_join
+    join_raw = _coordinate_graph_wire(_prepare_coordinate_join(case))
+    joined = json.loads(join_raw)
+    original_request_raw = _coordinate_graph_wire(case["request"])
+    originals = {
+        "request_raw": original_request_raw, "source_request_raw": case["source_raw"],
+        "source_metadata_bytes": case["metadata"],
+        "paired_inventory_request_raw": _coordinate_graph_wire(case["paired_request"]),
+        "paired_manifest_bytes": case["manifests"], "entity_info_raw": case["info_raw"],
+        "expected_request_sha256": _coordinate_graph_sha(original_request_raw),
+        "legacy_join_inputs": None,
+    }
+    eligibility_request = {
+        "schema": eligibility.REQUEST_SCHEMA_V2,
+        "join_manifest_raw_sha256": _coordinate_graph_sha(join_raw),
+        "join_manifest_sha256": coordinate_join_owner.source_span_entity_join_manifest_sha256(joined),
+        "expected_physical_ids": [row["physical_identity_sha256"] for row in joined["physical_rows"]],
+        "decoder_profile": eligibility.DECODER_PROFILE, "latent_dimension": 0,
+        "join_originals_sha256": eligibility.source_span_target_join_originals_sha256(originals),
+        "source_coordinate_report_sha256": case["coordinate"]["pin"],
+    }
+    eligibility_request_raw = _coordinate_graph_wire(eligibility_request)
+    observed = eligibility.prepare_source_span_target_eligibility_v2(
+        eligibility_request_raw, join_raw,
+        expected_request_sha256=_coordinate_graph_sha(eligibility_request_raw),
+        join_originals=originals)
+    # Preserve deliberately noncanonical artifact bytes independently of its
+    # semantic report seal; an outer canonical serialization must not replace it.
+    eligibility_raw = json.dumps(observed, ensure_ascii=False, indent=2).encode("utf-8")
+    scope = graphs.bind_scope(jurisdiction="US-federal", instrument="USCode", edition=2024,
+        applicability="section-local", definition_scope="usc:us:5:551")
+    bindings = {}
+    revision = case["coordinate"]["report"]["release_id"]
+    payload_rows = joined["paired_bundles"][0]["payload_intake"]["rows"]
+    for physical, payload in zip(observed["physical_rows"], payload_rows):
+        source = json.loads(payload["derived_row_json"])["source"]
+        text = source["text"]
+        raw_html = (
+            '<meta charset="utf-8"><h3 class="section-head">§551. Authored graph fixture</h3>'
+            '<p class="statutory-body">(a) ' + _html_escape(text) + '</p>'
+            '<p class="statutory-body">(b) ' + _html_escape(text) + '</p>'
+        ).encode("utf-8")
+        document = context.extract_document(raw_html,
+            url="https://www.govinfo.gov/content/pkg/USCODE-2024-title5/html/USCODE-2024-title5-sec551.htm",
+            edition=2024, legal_id=source["legal_id"])
+        selectors = context.exact_view_occurrences(document, raw_html, text=text)
+        bindings[physical["physical_identity_sha256"]] = subject.make_source_binding(
+            document, raw_html, document_revision=revision, scope=scope,
+            candidate_selectors=[selectors[physical["physical_identity"]["row_ordinal"] % 2]],
+            context_observation={"status": "authored_unreviewed_no_edition_crosswalk"})
+    return {
+        "case": case, "joined": joined, "join_raw": join_raw, "originals": originals,
+        "eligibility": observed, "eligibility_raw": eligibility_raw,
+        "eligibility_request_raw": eligibility_request_raw, "bindings": bindings,
+    }
+
+
+def _coordinate_graph_request(case, **changes):
+    request = {
+        "schema": "legal-coordinate-source-graph-intake-request/v1",
+        "graph_profile": "canonical_rules_v1",
+        "eligibility_report_raw_sha256": _coordinate_graph_sha(case["eligibility_raw"]),
+        "eligibility_report_sha256": eligibility.source_span_target_eligibility_sha256(case["eligibility"]),
+        "eligibility_request_sha256": _coordinate_graph_sha(case["eligibility_request_raw"]),
+        "join_manifest_raw_sha256": _coordinate_graph_sha(case["join_raw"]),
+        "join_manifest_sha256": coordinate_join_owner.source_span_entity_join_manifest_sha256(case["joined"]),
+        "join_originals_sha256": eligibility.source_span_target_join_originals_sha256(case["originals"]),
+        "source_bindings_sha256": subject.source_bindings_sha256(case["bindings"]),
+        "expected_physical_ids": [row["physical_identity_sha256"] for row in case["eligibility"]["physical_rows"]],
+        **changes,
+    }
+    return _coordinate_graph_wire(request)
+
+
+def _prepare_coordinate_graph(case, *, request_raw=None):
+    raw = _coordinate_graph_request(case) if request_raw is None else request_raw
+    return subject.prepare_coordinate_source_graph_intake_v1(
+        raw, case["eligibility_raw"], case["eligibility_request_raw"], case["join_raw"],
+        expected_request_sha256=_coordinate_graph_sha(raw),
+        join_originals=case["originals"], source_bindings=case["bindings"])
+
+
+def _validate_coordinate_graph(case, report, *, expected_report_sha256=None):
+    raw = _coordinate_graph_request(case)
+    value = json.loads(report) if type(report) is bytes else report
+    pin = (subject.coordinate_source_graph_intake_sha256(value)
+           if expected_report_sha256 is None else expected_report_sha256)
+    return subject.validate_coordinate_source_graph_intake_v1(
+        report, raw, case["eligibility_raw"], case["eligibility_request_raw"], case["join_raw"],
+        expected_request_sha256=_coordinate_graph_sha(raw), expected_report_sha256=pin,
+        join_originals=case["originals"], source_bindings=case["bindings"])
+
+
+def _assert_coordinate_graph_authority_absent(report):
+    for row in [report, *report["output_occurrences"]]:
+        assert all(type(row[key]) is bool and row[key] is False for key in subject._FALSE)
+        assert type(row["training_mask"]) is int and row["training_mask"] == 0
+        assert type(row["evaluation_gold_mask"]) is int and row["evaluation_gold_mask"] == 0
+    for row in report["physical_rows"] + report["row_references"]:
+        assert type(row["training_mask"]) is int and row["training_mask"] == 0
+        assert type(row["evaluation_gold_mask"]) is int and row["evaluation_gold_mask"] == 0
+    for row in report["output_occurrences"]:
+        assert all(type(mask) is int and mask == 0 for mask in row["field_masks"].values())
+        assert row["eligibility_output"]["consumer_eligible"] is False
+        assert row["selected_occurrence"] is None
+        assert type(row["source_binding_mask"]) is int and row["source_binding_mask"] == 0
+        assert row["coordinate_to_graph_source_correspondence"] == "unverified_no_independent_crosswalk"
+        assert row["graph_source_relationship"] == "independently_nominated_exact_source_occurrence_crosswalk_unverified"
+        if row["graph"] is not None:
+            assert all(type(flag) is bool and flag is False for flag in row["graph"]["authority"].values())
+
+
+@_supported_coordinate_graph
+def test_coordinate_graph_genuine_supported_targets_roundtrip_without_authority(coordinate_graph_case, monkeypatch):
+    case = coordinate_graph_case
+    actual_graph = graphs.build_graph
+    actual_eligibility = eligibility.validate_source_span_target_eligibility_v2
+    graph_calls, eligibility_calls = [], []
+
+    def observe_graph(*args, **kwargs):
+        result = actual_graph(*args, **kwargs)
+        graph_calls.append(result["graph_id"])
+        return result
+
+    def observe_eligibility(*args, **kwargs):
+        result = actual_eligibility(*args, **kwargs)
+        eligibility_calls.append(eligibility.source_span_target_eligibility_sha256(result))
+        return result
+
+    monkeypatch.setattr(graphs, "build_graph", observe_graph)
+    monkeypatch.setattr(eligibility, "validate_source_span_target_eligibility_v2", observe_eligibility)
+    before = deepcopy(case["bindings"])
+    original_inputs = deepcopy(case["originals"])
+    report = _prepare_coordinate_graph(case)
+    assert len(graph_calls) == 2 and len(eligibility_calls) == 2
+    assert report["schema"] == "legal-coordinate-source-graph-intake/v1"
+    assert report["source_compatibility_profile"] == "paired-coordinate-source-graph-intake/v1"
+    assert report["eligibility_report_raw_utf8"].encode("utf-8") == case["eligibility_raw"]
+    assert report["eligibility_report"] == case["eligibility"]
+    assert report["join_manifest_raw_utf8"].encode("utf-8") == case["join_raw"]
+    assert _coordinate_graph_sha(case["eligibility_raw"]) != eligibility.source_span_target_eligibility_sha256(case["eligibility"])
+    assert report["physical_rows"] == case["eligibility"]["physical_rows"]
+    assert report["row_references"] == case["eligibility"]["row_references"]
+    assert [row["output_occurrence_ordinal"] for row in report["output_occurrences"]] == [0, 1]
+    assert [row["eligibility_output"] for row in report["output_occurrences"]] == case["eligibility"]["output_occurrences"]
+    assert [(row["eligibility_output"]["route"], row["eligibility_output"]["ordinal"])
+            for row in report["output_occurrences"]] == [
+        ("compiler.formal_outputs", 0), ("compiler.canonical_formal_outputs", 0)]
+    for row in report["output_occurrences"]:
+        original = row["eligibility_output"]
+        assert row["disposition"] == "proposed_unreviewed_graph"
+        assert graphs.graph_to_ast(row["graph"]) == original["canonical_ir"] == {"rules": [_COORDINATE_GRAPH_RULE]}
+        assert row["graph_request"]["ast"] == original["canonical_ir"]
+        assert row["source_binding"]["selector"]["text"] == "Clerk shall file report."
+        assert row["source_binding"]["document_revision"] == "authored-source-release"
+        assert original["source_coordinate_span_index"] == 1
+        assert original["source_provenance_json"] == case["case"]["coordinate"]["references"][0]
+    assert _validate_coordinate_graph(case, _coordinate_graph_wire(report)) == report
+    assert len(graph_calls) == 4 and len(eligibility_calls) == 4
+    assert case["bindings"] == before and case["originals"] == original_inputs
+    _assert_coordinate_graph_authority_absent(report)
+
+
+def test_coordinate_graph_unsupported_outputs_keep_complete_population_without_graphs(coordinate_graph_case):
+    case = coordinate_graph_case
+    report = _prepare_coordinate_graph(case)
+    assert len(report["physical_rows"]) == 2
+    assert report["physical_rows"] == case["eligibility"]["physical_rows"]
+    assert report["row_references"] == case["eligibility"]["row_references"]
+    assert [row["eligibility_output"] for row in report["output_occurrences"]] == case["eligibility"]["output_occurrences"]
+    assert all(row["eligibility_output"]["target_status"] != "mechanically_supported"
+               and row["graph"] is None and row["disposition"] == "unresolved"
+               for row in report["output_occurrences"])
+    assert len(report["output_occurrences"]) > 0
+    _assert_coordinate_graph_authority_absent(report)
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("damage", ["missing", "revision", "legal_id", "text", "ambiguous"])
+def test_coordinate_graph_independent_binding_mismatch_retains_each_unresolved_output(coordinate_graph_case, damage):
+    case = coordinate_graph_case
+    identity = case["eligibility"]["physical_rows"][0]["physical_identity_sha256"]
+    binding = case["bindings"][identity]
+    if damage == "missing":
+        case["bindings"].clear()
+    elif damage == "revision":
+        binding["document_revision"] = "different-authored-release"
+    elif damage == "legal_id":
+        binding["document"]["legal_id"] = "usc:us:5:552"
+    elif damage == "text":
+        binding["candidate_selectors"][0]["text"] += " "
+    else:
+        raw = __import__("base64").b64decode(binding["raw_html_base64"])
+        binding["candidate_selectors"] = context.exact_view_occurrences(
+            binding["document"], raw, text="Clerk shall file report.")
+        assert len(binding["candidate_selectors"]) == 2
+    report = _prepare_coordinate_graph(case)
+    assert len(report["output_occurrences"]) == 2
+    assert all(row["graph"] is None and row["disposition"] == "unresolved" and row["issues"]
+               for row in report["output_occurrences"])
+    assert [row["eligibility_output"] for row in report["output_occurrences"]] == case["eligibility"]["output_occurrences"]
+    _assert_coordinate_graph_authority_absent(report)
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("pin", ["eligibility_report_raw_sha256", "eligibility_report_sha256",
+                                  "join_originals_sha256", "source_bindings_sha256"])
+def test_coordinate_graph_outer_resealing_cannot_replace_independent_input_pins(coordinate_graph_case, pin):
+    case = coordinate_graph_case
+    request_raw = _coordinate_graph_request(case, **{pin: "0" * 64})
+    with pytest.raises(ValueError):
+        _prepare_coordinate_graph(case, request_raw=request_raw)
+
+
+@_repeated_coordinate_graph
+@pytest.mark.parametrize("damage", ["drop_output", "reverse_outputs", "reverse_references"])
+def test_coordinate_graph_rehashed_report_cannot_drop_or_reorder_occurrences(coordinate_graph_case, damage):
+    case = coordinate_graph_case
+    report = _prepare_coordinate_graph(case)
+    if damage == "drop_output":
+        report["output_occurrences"].pop()
+    elif damage == "reverse_outputs":
+        report["output_occurrences"].reverse()
+    else:
+        report["row_references"].reverse()
+    with pytest.raises(ValueError):
+        _validate_coordinate_graph(case, report)
+
+
+@_repeated_coordinate_graph
+def test_coordinate_graph_repeated_text_keeps_physical_and_output_occurrences_distinct(coordinate_graph_case):
+    case = coordinate_graph_case
+    report = _prepare_coordinate_graph(case)
+    physical = report["physical_rows"]
+    assert len(physical) == 2 and physical[0]["source_text"] == physical[1]["source_text"]
+    assert len({row["physical_identity_sha256"] for row in physical}) == 2
+    assert [row["source_coordinate_span_index"] for row in physical] == [1, 3]
+    outputs = report["output_occurrences"]
+    assert len(outputs) == 4
+    assert [row["output_occurrence_ordinal"] for row in outputs] == [0, 1, 2, 3]
+    assert [row["physical_identity_sha256"] for row in outputs] == [
+        physical[0]["physical_identity_sha256"], physical[0]["physical_identity_sha256"],
+        physical[1]["physical_identity_sha256"], physical[1]["physical_identity_sha256"]]
+    assert [row["eligibility_output"]["source_coordinate_span_index"] for row in outputs] == [1, 1, 3, 3]
+    assert all(graphs.graph_to_ast(row["graph"]) == {"rules": [_COORDINATE_GRAPH_RULE]} for row in outputs)
+    assert len({row["source_binding"]["selector"]["occurrence_id"] for row in outputs}) == 2
+    _assert_coordinate_graph_authority_absent(report)
+
+
+@_supported_coordinate_graph
+def test_coordinate_graph_wrong_report_pin_refuses_before_graph_execution(coordinate_graph_case, monkeypatch):
+    case = coordinate_graph_case
+    report = _prepare_coordinate_graph(case)
+    monkeypatch.setattr(graphs, "build_graph", lambda *args, **kwargs: pytest.fail("wrong report pin reached graph"))
+    with pytest.raises(ValueError):
+        _validate_coordinate_graph(case, report, expected_report_sha256="0" * 64)
+
+
+def _coordinate_graph_retained_table(case):
+    selected = case["case"]["coordinate"]
+    return (Path(selected["request"]["repository_root"])
+            / selected["written"]["paired_spans"]["path_in_repo"])
+
+
+@_supported_coordinate_graph
+def test_coordinate_graph_closing_eligibility_catches_live_table_drift_after_genuine_graph(coordinate_graph_case, monkeypatch):
+    case = coordinate_graph_case
+    actual = graphs.build_graph
+    calls = []
+
+    def drift_after_real_graph(*args, **kwargs):
+        graph = actual(*args, **kwargs)
+        calls.append(graph["graph_id"])
+        path = _coordinate_graph_retained_table(case)
+        path.write_bytes(path.read_bytes() + b"changed after genuine graph")
+        return graph
+
+    monkeypatch.setattr(graphs, "build_graph", drift_after_real_graph)
+    with pytest.raises(ValueError):
+        _prepare_coordinate_graph(case)
+    assert calls
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("offered", ["bindings", "originals"])
+def test_coordinate_graph_offered_input_mutation_after_genuine_graph_is_refused(coordinate_graph_case, monkeypatch, offered):
+    case = coordinate_graph_case
+    actual = graphs.build_graph
+    calls = []
+
+    def mutate_after_real_graph(*args, **kwargs):
+        graph = actual(*args, **kwargs)
+        calls.append(graph["graph_id"])
+        if offered == "bindings":
+            next(iter(case["bindings"].values()))["context_observation"]["status"] = "changed"
+        else:
+            case["originals"]["source_metadata_bytes"]["README.md"] += b"changed after graph"
+        return graph
+
+    monkeypatch.setattr(graphs, "build_graph", mutate_after_real_graph)
+    with pytest.raises(ValueError):
+        _prepare_coordinate_graph(case)
+    assert calls
+
+
+@_supported_coordinate_graph
+def test_coordinate_graph_primary_callback_error_preserves_secondary_closing_custody_failure(coordinate_graph_case, monkeypatch):
+    case = coordinate_graph_case
+    actual = graphs.build_graph
+    primary = RuntimeError("authored graph callback primary failure")
+    calls = []
+
+    def fail_after_real_graph(*args, **kwargs):
+        graph = actual(*args, **kwargs)
+        calls.append(graph["graph_id"])
+        path = _coordinate_graph_retained_table(case)
+        path.write_bytes(path.read_bytes() + b"changed before primary error")
+        raise primary
+
+    monkeypatch.setattr(graphs, "build_graph", fail_after_real_graph)
+    with pytest.raises(RuntimeError, match="authored graph callback primary failure") as observed:
+        _prepare_coordinate_graph(case)
+    assert observed.value is primary and calls
+    assert any("custody" in note or "closing" in note for note in getattr(primary, "__notes__", ()))
+
+
+@_supported_coordinate_graph
+def test_coordinate_graph_validator_detects_offered_report_mutation_after_real_graph(coordinate_graph_case, monkeypatch):
+    case = coordinate_graph_case
+    report = _prepare_coordinate_graph(case)
+    actual = graphs.build_graph
+    calls = []
+
+    def mutate_offered_after_real_graph(*args, **kwargs):
+        graph = actual(*args, **kwargs)
+        calls.append(graph["graph_id"])
+        report["output_occurrences"][0]["context_observation"] = {"late": "offered-report-mutation"}
+        return graph
+
+    monkeypatch.setattr(graphs, "build_graph", mutate_offered_after_real_graph)
+    with pytest.raises(ValueError):
+        _validate_coordinate_graph(case, report)
+    assert calls
+
+
+@_supported_coordinate_graph
+def test_coordinate_graph_callback_cannot_mutate_the_typed_ast_after_genuine_graph_success(coordinate_graph_case, monkeypatch):
+    case = coordinate_graph_case
+    actual = graphs.build_graph
+    calls = []
+
+    def mutate_ast_after_real_graph(*args, **kwargs):
+        graph = actual(*args, **kwargs)
+        calls.append(graph["graph_id"])
+        ast = kwargs["ast"] if "ast" in kwargs else args[0]
+        ast["rules"].append(deepcopy(ast["rules"][0]))
+        return graph
+
+    monkeypatch.setattr(graphs, "build_graph", mutate_ast_after_real_graph)
+    with pytest.raises(ValueError):
+        _prepare_coordinate_graph(case)
+    assert calls
+
+
+# Explicit graph-v2 original-input replay port. Historical graph-v1 tests and
+# fixture ASTs above remain unchanged and are retained under their old producer.
+# The selected new cohort uses the same authored source/transport fixtures and
+# delegates every successful integration step to the genuine current owners.
+@pytest.fixture
+def coordinate_graph_v2_case(coordinate_join):
+    case = coordinate_join
+    join_raw = _coordinate_graph_wire(_prepare_coordinate_join(case))
+    joined = json.loads(join_raw)
+    original_request_raw = _coordinate_graph_wire(case["request"])
+    originals = {
+        "request_raw": original_request_raw, "source_request_raw": case["source_raw"],
+        "source_metadata_bytes": case["metadata"],
+        "paired_inventory_request_raw": _coordinate_graph_wire(case["paired_request"]),
+        "paired_manifest_bytes": case["manifests"], "entity_info_raw": case["info_raw"],
+        "expected_request_sha256": _coordinate_graph_sha(original_request_raw),
+        "legacy_join_inputs": None,
+    }
+    eligibility_request = {
+        "schema": eligibility.REQUEST_SCHEMA_V3,
+        "source_compatibility_profile": "original-input-coordinate-target-eligibility/v1",
+        "join_manifest_raw_sha256": _coordinate_graph_sha(join_raw),
+        "join_manifest_sha256": coordinate_join_owner.source_span_entity_join_manifest_sha256(joined),
+        "expected_physical_ids": [row["physical_identity_sha256"] for row in joined["physical_rows"]],
+        "decoder_profile": eligibility.DECODER_PROFILE, "latent_dimension": 0,
+        "join_originals_sha256": eligibility.source_span_target_join_originals_sha256(originals),
+        "source_coordinate_report_sha256": case["coordinate"]["pin"],
+    }
+    eligibility_request_raw = _coordinate_graph_wire(eligibility_request)
+    observed = eligibility.prepare_source_span_target_eligibility_v3(
+        eligibility_request_raw, join_raw,
+        expected_request_sha256=_coordinate_graph_sha(eligibility_request_raw),
+        join_originals=originals)
+    # Preserve deliberately noncanonical artifact bytes independently of its
+    # semantic report seal; an outer canonical serialization must not replace it.
+    eligibility_raw = json.dumps(observed, ensure_ascii=False, indent=2).encode("utf-8")
+    scope = graphs.bind_scope(jurisdiction="US-federal", instrument="USCode", edition=2024,
+        applicability="section-local", definition_scope="usc:us:5:551")
+    bindings = {}
+    revision = case["coordinate"]["report"]["release_id"]
+    payload_rows = joined["paired_bundles"][0]["payload_intake"]["rows"]
+    for physical, payload in zip(observed["physical_rows"], payload_rows):
+        source = json.loads(payload["derived_row_json"])["source"]
+        text = source["text"]
+        raw_html = (
+            '<meta charset="utf-8"><h3 class="section-head">§551. Authored graph fixture</h3>'
+            '<p class="statutory-body">(a) ' + _html_escape(text) + '</p>'
+            '<p class="statutory-body">(b) ' + _html_escape(text) + '</p>'
+        ).encode("utf-8")
+        document = context.extract_document(raw_html,
+            url="https://www.govinfo.gov/content/pkg/USCODE-2024-title5/html/USCODE-2024-title5-sec551.htm",
+            edition=2024, legal_id=source["legal_id"])
+        selectors = context.exact_view_occurrences(document, raw_html, text=text)
+        bindings[physical["physical_identity_sha256"]] = subject.make_source_binding(
+            document, raw_html, document_revision=revision, scope=scope,
+            candidate_selectors=[selectors[physical["physical_identity"]["row_ordinal"] % 2]],
+            context_observation={"status": "authored_unreviewed_no_edition_crosswalk"})
+    return {
+        "case": case, "joined": joined, "join_raw": join_raw, "originals": originals,
+        "eligibility": observed, "eligibility_raw": eligibility_raw,
+        "eligibility_request_raw": eligibility_request_raw, "bindings": bindings,
+    }
+
+
+def _coordinate_graph_v2_request(case, **changes):
+    request = {
+        "schema": "legal-coordinate-source-graph-intake-request/v2",
+        "source_compatibility_profile": "original-input-coordinate-source-graph-intake/v1",
+        "graph_profile": "canonical_rules_v1",
+        "eligibility_report_raw_sha256": _coordinate_graph_sha(case["eligibility_raw"]),
+        "eligibility_report_sha256": eligibility.source_span_target_eligibility_sha256(case["eligibility"]),
+        "eligibility_request_sha256": _coordinate_graph_sha(case["eligibility_request_raw"]),
+        "join_manifest_raw_sha256": _coordinate_graph_sha(case["join_raw"]),
+        "join_manifest_sha256": coordinate_join_owner.source_span_entity_join_manifest_sha256(case["joined"]),
+        "join_originals_sha256": eligibility.source_span_target_join_originals_sha256(case["originals"]),
+        "source_bindings_sha256": subject.source_bindings_sha256(case["bindings"]),
+        "expected_physical_ids": [row["physical_identity_sha256"] for row in case["eligibility"]["physical_rows"]],
+        **changes,
+    }
+    return _coordinate_graph_wire(request)
+
+
+def _prepare_coordinate_graph_v2(case, *, request_raw=None):
+    raw = _coordinate_graph_v2_request(case) if request_raw is None else request_raw
+    return subject.prepare_coordinate_source_graph_intake_v2(
+        raw, case["eligibility_raw"], case["eligibility_request_raw"], case["join_raw"],
+        expected_request_sha256=_coordinate_graph_sha(raw),
+        join_originals=case["originals"], source_bindings=case["bindings"])
+
+
+def _validate_coordinate_graph_v2(case, report, *, expected_report_sha256=None):
+    raw = _coordinate_graph_v2_request(case)
+    value = json.loads(report) if type(report) is bytes else report
+    pin = (subject.coordinate_source_graph_intake_sha256(value)
+           if expected_report_sha256 is None else expected_report_sha256)
+    return subject.validate_coordinate_source_graph_intake_v2(
+        report, raw, case["eligibility_raw"], case["eligibility_request_raw"], case["join_raw"],
+        expected_request_sha256=_coordinate_graph_sha(raw), expected_report_sha256=pin,
+        join_originals=case["originals"], source_bindings=case["bindings"])
+
+
+@_supported_coordinate_graph
+def test_coordinate_graph_v2_genuine_supported_targets_roundtrip_without_authority(coordinate_graph_v2_case, monkeypatch):
+    case = coordinate_graph_v2_case
+    actual_graph = graphs.build_graph
+    actual_eligibility = eligibility.validate_source_span_target_eligibility_v3
+    graph_calls, eligibility_calls = ([], [])
+
+    def observe_graph(*args, **kwargs):
+        result = actual_graph(*args, **kwargs)
+        graph_calls.append(result['graph_id'])
+        return result
+
+    def observe_eligibility(*args, **kwargs):
+        result = actual_eligibility(*args, **kwargs)
+        eligibility_calls.append(eligibility.source_span_target_eligibility_sha256(result))
+        return result
+    monkeypatch.setattr(graphs, 'build_graph', observe_graph)
+    monkeypatch.setattr(eligibility, 'validate_source_span_target_eligibility_v3', observe_eligibility)
+    before = deepcopy(case['bindings'])
+    original_inputs = deepcopy(case['originals'])
+    report = _prepare_coordinate_graph_v2(case)
+    assert len(graph_calls) == 2 and len(eligibility_calls) == 2
+    assert report['schema'] == 'legal-coordinate-source-graph-intake/v2'
+    assert report['source_compatibility_profile'] == 'original-input-coordinate-source-graph-intake/v1'
+    assert report['eligibility_report_raw_utf8'].encode('utf-8') == case['eligibility_raw']
+    assert 'eligibility_report' not in report and 'join_manifest_raw_utf8' not in report
+    assert report['eligibility_report_reference'] == {'schema': 'legal-coordinate-source-graph-eligibility-reference/v1', 'container': 'eligibility_report_raw_utf8', 'report_artifact_sha256': _coordinate_graph_sha(case['eligibility_raw']), 'report_sha256': eligibility.source_span_target_eligibility_sha256(case['eligibility']), 'report_bytes': len(case['eligibility_raw'])}
+    assert report['join_manifest_reference'] == {'schema': 'legal-coordinate-source-graph-join-reference/v1', 'container': 'eligibility_report_raw_utf8', 'json_pointer': '/join_manifest_raw_utf8', 'join_manifest_raw_sha256': _coordinate_graph_sha(case['join_raw']), 'join_manifest_sha256': coordinate_join_owner.source_span_entity_join_manifest_sha256(case['joined']), 'join_manifest_bytes': len(case['join_raw'])}
+    retained_eligibility = json.loads(report['eligibility_report_raw_utf8'])
+    assert retained_eligibility == case['eligibility']
+    assert retained_eligibility['join_manifest_raw_utf8'].encode('utf-8') == case['join_raw']
+    assert _coordinate_graph_sha(case['eligibility_raw']) != eligibility.source_span_target_eligibility_sha256(case['eligibility'])
+    assert report['physical_rows'] == case['eligibility']['physical_rows']
+    assert report['row_references'] == case['eligibility']['row_references']
+    assert [row['output_occurrence_ordinal'] for row in report['output_occurrences']] == [0, 1]
+    assert [row['eligibility_output'] for row in report['output_occurrences']] == case['eligibility']['output_occurrences']
+    assert [(row['eligibility_output']['route'], row['eligibility_output']['ordinal']) for row in report['output_occurrences']] == [('compiler.formal_outputs', 0), ('compiler.canonical_formal_outputs', 0)]
+    for row in report['output_occurrences']:
+        original = row['eligibility_output']
+        assert row['disposition'] == 'proposed_unreviewed_graph'
+        assert graphs.graph_to_ast(row['graph']) == original['canonical_ir'] == {'rules': [_COORDINATE_GRAPH_RULE]}
+        assert row['graph_request']['ast'] == original['canonical_ir']
+        assert row['source_binding']['selector']['text'] == 'Clerk shall file report.'
+        assert row['source_binding']['document_revision'] == 'authored-source-release'
+        assert original['source_coordinate_span_index'] == 1
+        assert original['source_provenance_json'] == case['case']['coordinate']['references'][0]
+    assert _validate_coordinate_graph_v2(case, _coordinate_graph_wire(report)) == report
+    assert len(graph_calls) == 4 and len(eligibility_calls) == 4
+    assert case['bindings'] == before and case['originals'] == original_inputs
+    _assert_coordinate_graph_authority_absent(report)
+
+def test_coordinate_graph_v2_unsupported_outputs_keep_complete_population_without_graphs(coordinate_graph_v2_case):
+    case = coordinate_graph_v2_case
+    report = _prepare_coordinate_graph_v2(case)
+    assert len(report['physical_rows']) == 2
+    assert report['physical_rows'] == case['eligibility']['physical_rows']
+    assert report['row_references'] == case['eligibility']['row_references']
+    assert [row['eligibility_output'] for row in report['output_occurrences']] == case['eligibility']['output_occurrences']
+    assert all((row['eligibility_output']['target_status'] != 'mechanically_supported' and row['graph'] is None and (row['disposition'] == 'unresolved') for row in report['output_occurrences']))
+    assert len(report['output_occurrences']) > 0
+    _assert_coordinate_graph_authority_absent(report)
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize('damage', ['missing', 'revision', 'legal_id', 'text', 'ambiguous'], ids=['missing', 'revision', 'legal_id', 'text', 'ambiguous'])
+def test_coordinate_graph_v2_independent_binding_mismatch_retains_each_unresolved_output(coordinate_graph_v2_case, damage):
+    case = coordinate_graph_v2_case
+    identity = case['eligibility']['physical_rows'][0]['physical_identity_sha256']
+    binding = case['bindings'][identity]
+    if damage == 'missing':
+        case['bindings'].clear()
+    elif damage == 'revision':
+        binding['document_revision'] = 'different-authored-release'
+    elif damage == 'legal_id':
+        binding['document']['legal_id'] = 'usc:us:5:552'
+    elif damage == 'text':
+        binding['candidate_selectors'][0]['text'] += ' '
+    else:
+        raw = __import__('base64').b64decode(binding['raw_html_base64'])
+        binding['candidate_selectors'] = context.exact_view_occurrences(binding['document'], raw, text='Clerk shall file report.')
+        assert len(binding['candidate_selectors']) == 2
+    report = _prepare_coordinate_graph_v2(case)
+    assert len(report['output_occurrences']) == 2
+    assert all((row['graph'] is None and row['disposition'] == 'unresolved' and row['issues'] for row in report['output_occurrences']))
+    assert [row['eligibility_output'] for row in report['output_occurrences']] == case['eligibility']['output_occurrences']
+    _assert_coordinate_graph_authority_absent(report)
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize('pin', ['eligibility_report_raw_sha256', 'eligibility_report_sha256', 'join_originals_sha256', 'source_bindings_sha256'], ids=['eligibility_report_raw_sha256', 'eligibility_report_sha256', 'join_originals_sha256', 'source_bindings_sha256'])
+def test_coordinate_graph_v2_outer_resealing_cannot_replace_independent_input_pins(coordinate_graph_v2_case, pin):
+    case = coordinate_graph_v2_case
+    request_raw = _coordinate_graph_v2_request(case, **{pin: '0' * 64})
+    with pytest.raises(ValueError):
+        _prepare_coordinate_graph_v2(case, request_raw=request_raw)
+
+@_repeated_coordinate_graph
+@pytest.mark.parametrize('damage', ['drop_output', 'reverse_outputs', 'reverse_references'], ids=['drop_output', 'reverse_outputs', 'reverse_references'])
+def test_coordinate_graph_v2_rehashed_report_cannot_drop_or_reorder_occurrences(coordinate_graph_v2_case, damage):
+    case = coordinate_graph_v2_case
+    report = _prepare_coordinate_graph_v2(case)
+    if damage == 'drop_output':
+        report['output_occurrences'].pop()
+    elif damage == 'reverse_outputs':
+        report['output_occurrences'].reverse()
+    else:
+        report['row_references'].reverse()
+    with pytest.raises(ValueError):
+        _validate_coordinate_graph_v2(case, report)
+
+@_repeated_coordinate_graph
+def test_coordinate_graph_v2_repeated_text_keeps_physical_and_output_occurrences_distinct(coordinate_graph_v2_case):
+    case = coordinate_graph_v2_case
+    report = _prepare_coordinate_graph_v2(case)
+    physical = report['physical_rows']
+    assert len(physical) == 2 and physical[0]['source_text'] == physical[1]['source_text']
+    assert len({row['physical_identity_sha256'] for row in physical}) == 2
+    assert [row['source_coordinate_span_index'] for row in physical] == [1, 3]
+    outputs = report['output_occurrences']
+    assert len(outputs) == 4
+    assert [row['output_occurrence_ordinal'] for row in outputs] == [0, 1, 2, 3]
+    assert [row['physical_identity_sha256'] for row in outputs] == [physical[0]['physical_identity_sha256'], physical[0]['physical_identity_sha256'], physical[1]['physical_identity_sha256'], physical[1]['physical_identity_sha256']]
+    assert [row['eligibility_output']['source_coordinate_span_index'] for row in outputs] == [1, 1, 3, 3]
+    assert all((graphs.graph_to_ast(row['graph']) == {'rules': [_COORDINATE_GRAPH_RULE]} for row in outputs))
+    assert len({row['source_binding']['selector']['occurrence_id'] for row in outputs}) == 2
+    _assert_coordinate_graph_authority_absent(report)
+
+@_supported_coordinate_graph
+def test_coordinate_graph_v2_wrong_report_pin_refuses_before_graph_execution(coordinate_graph_v2_case, monkeypatch):
+    case = coordinate_graph_v2_case
+    report = _prepare_coordinate_graph_v2(case)
+    monkeypatch.setattr(graphs, 'build_graph', lambda *args, **kwargs: pytest.fail('wrong report pin reached graph'))
+    with pytest.raises(ValueError):
+        _validate_coordinate_graph_v2(case, report, expected_report_sha256='0' * 64)
+
+@_supported_coordinate_graph
+def test_coordinate_graph_v2_closing_eligibility_catches_live_table_drift_after_genuine_graph(coordinate_graph_v2_case, monkeypatch):
+    case = coordinate_graph_v2_case
+    actual = graphs.build_graph
+    calls = []
+
+    def drift_after_real_graph(*args, **kwargs):
+        graph = actual(*args, **kwargs)
+        calls.append(graph['graph_id'])
+        path = _coordinate_graph_retained_table(case)
+        path.write_bytes(path.read_bytes() + b'changed after genuine graph')
+        return graph
+    monkeypatch.setattr(graphs, 'build_graph', drift_after_real_graph)
+    with pytest.raises(ValueError):
+        _prepare_coordinate_graph_v2(case)
+    assert calls
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize('offered', ['bindings', 'originals'], ids=['bindings', 'originals'])
+def test_coordinate_graph_v2_offered_input_mutation_after_genuine_graph_is_refused(coordinate_graph_v2_case, monkeypatch, offered):
+    case = coordinate_graph_v2_case
+    actual = graphs.build_graph
+    calls = []
+
+    def mutate_after_real_graph(*args, **kwargs):
+        graph = actual(*args, **kwargs)
+        calls.append(graph['graph_id'])
+        if offered == 'bindings':
+            next(iter(case['bindings'].values()))['context_observation']['status'] = 'changed'
+        else:
+            case['originals']['source_metadata_bytes']['README.md'] += b'changed after graph'
+        return graph
+    monkeypatch.setattr(graphs, 'build_graph', mutate_after_real_graph)
+    with pytest.raises(ValueError):
+        _prepare_coordinate_graph_v2(case)
+    assert calls
+
+@_supported_coordinate_graph
+def test_coordinate_graph_v2_primary_callback_error_preserves_secondary_closing_custody_failure(coordinate_graph_v2_case, monkeypatch):
+    case = coordinate_graph_v2_case
+    actual = graphs.build_graph
+    primary = RuntimeError('authored graph callback primary failure')
+    calls = []
+
+    def fail_after_real_graph(*args, **kwargs):
+        graph = actual(*args, **kwargs)
+        calls.append(graph['graph_id'])
+        path = _coordinate_graph_retained_table(case)
+        path.write_bytes(path.read_bytes() + b'changed before primary error')
+        raise primary
+    monkeypatch.setattr(graphs, 'build_graph', fail_after_real_graph)
+    with pytest.raises(RuntimeError, match='authored graph callback primary failure') as observed:
+        _prepare_coordinate_graph_v2(case)
+    assert observed.value is primary and calls
+    assert any(('custody' in note or 'closing' in note for note in getattr(primary, '__notes__', ())))
+
+@_supported_coordinate_graph
+def test_coordinate_graph_v2_validator_detects_offered_report_mutation_after_real_graph(coordinate_graph_v2_case, monkeypatch):
+    case = coordinate_graph_v2_case
+    report = _prepare_coordinate_graph_v2(case)
+    actual = graphs.build_graph
+    calls = []
+
+    def mutate_offered_after_real_graph(*args, **kwargs):
+        graph = actual(*args, **kwargs)
+        calls.append(graph['graph_id'])
+        report['output_occurrences'][0]['context_observation'] = {'late': 'offered-report-mutation'}
+        return graph
+    monkeypatch.setattr(graphs, 'build_graph', mutate_offered_after_real_graph)
+    with pytest.raises(ValueError):
+        _validate_coordinate_graph_v2(case, report)
+    assert calls
+
+@_supported_coordinate_graph
+def test_coordinate_graph_v2_callback_cannot_mutate_the_typed_ast_after_genuine_graph_success(coordinate_graph_v2_case, monkeypatch):
+    case = coordinate_graph_v2_case
+    actual = graphs.build_graph
+    calls = []
+
+    def mutate_ast_after_real_graph(*args, **kwargs):
+        graph = actual(*args, **kwargs)
+        calls.append(graph['graph_id'])
+        ast = kwargs['ast'] if 'ast' in kwargs else args[0]
+        ast['rules'].append(deepcopy(ast['rules'][0]))
+        return graph
+    monkeypatch.setattr(graphs, 'build_graph', mutate_ast_after_real_graph)
+    with pytest.raises(ValueError):
+        _prepare_coordinate_graph_v2(case)
+    assert calls
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("profile", ["retained-v2", "historical-original-v2"],
+                         ids=["retained-v2", "historical-original-v2"])
+def test_coordinate_graph_v2_refuses_other_eligibility_profiles_before_graph(coordinate_graph_v2_case, monkeypatch, profile):
+    case = coordinate_graph_v2_case
+    request = json.loads(case["eligibility_request_raw"])
+    request["schema"] = "legal-source-span-target-eligibility-request/v2"
+    request.pop("source_compatibility_profile")
+    if profile == "retained-v2":
+        request.pop("join_originals_sha256")
+        request_raw = _coordinate_graph_wire(request)
+        observed = eligibility.prepare_source_span_target_eligibility_v2(
+            request_raw, case["join_raw"], expected_request_sha256=_coordinate_graph_sha(request_raw))
+        assert observed["upstream_reexecution_performed"] is False
+    else:
+        # Declared historical schema/profile ancestry must be refused even when
+        # every outer raw/canonical pin is independently updated. This is an
+        # adversarial offered artifact, not a claimed execution of old c8b code.
+        request_raw = _coordinate_graph_wire(request)
+        observed = deepcopy(case["eligibility"])
+        observed.update(schema="legal-source-span-target-eligibility/v2",
+                        source_compatibility_profile="paired-coordinate-target-eligibility/v1")
+    case["eligibility_request_raw"] = request_raw
+    case["eligibility"] = observed
+    case["eligibility_raw"] = _coordinate_graph_wire(observed)
+    actual = graphs.build_graph
+    calls = []
+    def observe(*args, **kwargs):
+        result = actual(*args, **kwargs)
+        calls.append(result["graph_id"])
+        return result
+    monkeypatch.setattr(graphs, "build_graph", observe)
+    with pytest.raises(ValueError):
+        _prepare_coordinate_graph_v2(case)
+    assert calls == []
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("damage", ["missing-profile", "retained-profile", "old-schema", "extra-field", "wrong-request-pin"],
+                         ids=["missing-profile", "retained-profile", "old-schema", "extra-field", "wrong-request-pin"])
+def test_coordinate_graph_v2_explicit_request_profile_is_required(coordinate_graph_v2_case, monkeypatch, damage):
+    case = coordinate_graph_v2_case
+    request = json.loads(_coordinate_graph_v2_request(case))
+    if damage == "missing-profile":
+        request.pop("source_compatibility_profile")
+    elif damage == "retained-profile":
+        request["source_compatibility_profile"] = "paired-coordinate-source-graph-intake/v1"
+    elif damage == "old-schema":
+        request["schema"] = "legal-coordinate-source-graph-intake-request/v1"
+    elif damage == "extra-field":
+        request["undeclared_profile_hint"] = "original-input-coordinate-source-graph-intake/v1"
+    raw = _coordinate_graph_wire(request)
+    actual = graphs.build_graph
+    calls = []
+    def observe(*args, **kwargs):
+        result = actual(*args, **kwargs)
+        calls.append(result["graph_id"])
+        return result
+    monkeypatch.setattr(graphs, "build_graph", observe)
+    with pytest.raises(ValueError):
+        subject.prepare_coordinate_source_graph_intake_v2(
+            raw, case["eligibility_raw"], case["eligibility_request_raw"], case["join_raw"],
+            expected_request_sha256="0" * 64 if damage == "wrong-request-pin" else _coordinate_graph_sha(raw),
+            join_originals=case["originals"], source_bindings=case["bindings"])
+    assert calls == []
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("damage", ["bindings", "originals", "graph-callable", "eligibility-callable", "runtime-describer"],
+                         ids=["bindings", "originals", "graph-callable", "eligibility-callable", "runtime-describer"])
+def test_coordinate_graph_v2_closing_replay_fences_live_changes(coordinate_graph_v2_case, monkeypatch, damage):
+    case = coordinate_graph_v2_case
+    actual_validate = eligibility.validate_source_span_target_eligibility_v3
+    actual_graph = graphs.build_graph
+    runtime = eligibility._owners()[4]
+    actual_describe = runtime.describe_runtime
+    calls = []
+    def replacement_graph(*args, **kwargs):
+        return actual_graph(*args, **kwargs)
+    def replacement_validate(*args, **kwargs):
+        return actual_validate(*args, **kwargs)
+    def replacement_describe(*args, **kwargs):
+        return actual_describe(*args, **kwargs)
+    def mutate_after_real_closing_replay(*args, **kwargs):
+        result = actual_validate(*args, **kwargs)
+        calls.append(eligibility.source_span_target_eligibility_sha256(result))
+        if len(calls) == 2:
+            if damage == "bindings":
+                next(iter(case["bindings"].values()))["context_observation"]["status"] = "changed after closing replay"
+            elif damage == "originals":
+                case["originals"]["source_metadata_bytes"]["README.md"] += b"changed after closing replay"
+            elif damage == "graph-callable":
+                monkeypatch.setattr(graphs, "build_graph", replacement_graph)
+            elif damage == "eligibility-callable":
+                monkeypatch.setattr(eligibility, "validate_source_span_target_eligibility_v3", replacement_validate)
+            else:
+                monkeypatch.setattr(runtime, "describe_runtime", replacement_describe)
+        return result
+    monkeypatch.setattr(eligibility, "validate_source_span_target_eligibility_v3", mutate_after_real_closing_replay)
+    with pytest.raises(ValueError):
+        _prepare_coordinate_graph_v2(case)
+    assert len(calls) == 2
+
+
+@_supported_coordinate_graph
+@pytest.mark.parametrize("damage", ["eligibility-artifact-pin", "join-pointer", "global-span-index", "output-provenance", "training-mask"],
+                         ids=["eligibility-artifact-pin", "join-pointer", "global-span-index", "output-provenance", "training-mask"])
+def test_coordinate_graph_v2_resealed_reference_or_provenance_change_is_rejected(coordinate_graph_v2_case, damage):
+    case = coordinate_graph_v2_case
+    report = _prepare_coordinate_graph_v2(case)
+    if damage == "eligibility-artifact-pin":
+        report["eligibility_report_reference"]["report_artifact_sha256"] = "0" * 64
+    elif damage == "join-pointer":
+        report["join_manifest_reference"]["json_pointer"] = "/invented_join_manifest"
+    elif damage == "global-span-index":
+        report["physical_rows"][0]["source_coordinate_span_index"] = 0
+    elif damage == "output-provenance":
+        report["output_occurrences"][0]["eligibility_output"]["source_provenance_json"] += " "
+    else:
+        report["output_occurrences"][0]["training_mask"] = 1
+    # The helper supplies this altered report's fresh complete canonical pin.
+    # Independent regeneration must still reject the changed commitment.
+    with pytest.raises(ValueError):
+        _validate_coordinate_graph_v2(case, report)
+
+
+@_supported_coordinate_graph
+def test_coordinate_graph_v2_request_cannot_silently_enter_historical_v1_api(coordinate_graph_v2_case):
+    case = coordinate_graph_v2_case
+    raw = _coordinate_graph_v2_request(case)
+    with pytest.raises(ValueError):
+        subject.prepare_coordinate_source_graph_intake_v1(
+            raw, case["eligibility_raw"], case["eligibility_request_raw"], case["join_raw"],
+            expected_request_sha256=_coordinate_graph_sha(raw),
+            join_originals=case["originals"], source_bindings=case["bindings"])

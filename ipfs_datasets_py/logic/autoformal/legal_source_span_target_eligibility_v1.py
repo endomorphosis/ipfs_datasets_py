@@ -1,15 +1,16 @@
-"""Census retained source/span targets without selecting or qualifying them.
+"""Census source/span targets without selecting or qualifying them.
 
-This owner replays candidate custody and audits the current source-copy decoder.
-Its independently pinned join report is retained evidence, not a fresh replay of
-upstream source, Parquet or entity files. The execution owner must replay those
-inputs separately. Neither structural support nor producer syntax is legal gold.
+V1 and V2 audit independently pinned retained join evidence without replaying the
+original source/span/entity operation. Explicit V3 separately replays its complete
+public original coordinate-join inputs before and after the same census. None of
+these profiles grants source-meaning, review, consumer, training or gold authority.
 """
 from __future__ import annotations
 
 from collections import Counter
 import hashlib
 import importlib
+import json
 from pathlib import Path
 import re
 
@@ -17,6 +18,10 @@ from .legal_paired_manifest_inventory_v1 import _keys, _read_json, _wire
 
 REQUEST_SCHEMA = "legal-source-span-target-eligibility-request/v1"
 SCHEMA = "legal-source-span-target-eligibility/v1"
+REQUEST_SCHEMA_V2 = "legal-source-span-target-eligibility-request/v2"
+SCHEMA_V2 = "legal-source-span-target-eligibility/v2"
+COORDINATE_PROFILE = "paired-coordinate-three-cache-join/v1"
+MAX_COORDINATE_ROWS = 64
 DECODER_PROFILE = "source_span_formula_v1"
 MAX_REQUEST_BYTES = 128 * 1024
 MAX_JOIN_BYTES = 16 * 1024 * 1024
@@ -87,20 +92,26 @@ def _owners():
     return join, adapter, contracts, span, runtime, pins
 
 
-def _preflight(request_raw, join_raw, expected_request_sha256):
+def _preflight(request_raw, join_raw, expected_request_sha256, *, coordinate=False):
     _digest(expected_request_sha256)
     _need(type(request_raw) is bytes and 0 < len(request_raw) <= MAX_REQUEST_BYTES
           and _sha(request_raw) == expected_request_sha256,
           "request bytes differ from independent pin")
     request = _read_json(request_raw, MAX_REQUEST_BYTES, "eligibility request")
-    _keys(request, {"schema", "join_manifest_raw_sha256", "join_manifest_sha256",
-                    "expected_physical_ids", "decoder_profile", "latent_dimension"}, "eligibility request")
-    _need(request["schema"] == REQUEST_SCHEMA and request["decoder_profile"] == DECODER_PROFILE,
+    fields = {"schema", "join_manifest_raw_sha256", "join_manifest_sha256",
+              "expected_physical_ids", "decoder_profile", "latent_dimension"}
+    if coordinate:
+        fields.add("source_coordinate_report_sha256")
+    _keys(request, fields, "eligibility request")
+    _need(request["schema"] == (REQUEST_SCHEMA_V2 if coordinate else REQUEST_SCHEMA)
+          and request["decoder_profile"] == DECODER_PROFILE,
           "unsupported eligibility profile")
     _need(type(request["latent_dimension"]) is int and request["latent_dimension"] in (0, 384),
           "explicit supported latent dimension required")
     for field in ("join_manifest_raw_sha256", "join_manifest_sha256"):
         _digest(request[field])
+    if coordinate:
+        _digest(request["source_coordinate_report_sha256"])
     _need(type(join_raw) is bytes and 0 < len(join_raw) <= MAX_JOIN_BYTES
           and _sha(join_raw) == request["join_manifest_raw_sha256"],
           "retained join bytes differ from independent pin")
@@ -115,8 +126,9 @@ def _preflight(request_raw, join_raw, expected_request_sha256):
     return request, join
 
 
-def _population(join, request):
-    _need(type(join) is dict and join.get("schema") == "legal-source-span-entity-join-manifest/v1"
+def _population(join, request, *, coordinate=False):
+    _need(type(join) is dict and join.get("schema") == ("legal-source-span-entity-join-manifest/v2"
+          if coordinate else "legal-source-span-entity-join-manifest/v1")
           and join.get("selection_complete") is True, "complete selected join report required")
     _need(join.get("training_mask") == 0 and type(join.get("training_mask")) is int
           and join.get("evaluation_gold_mask") == 0 and type(join.get("evaluation_gold_mask")) is int,
@@ -127,6 +139,13 @@ def _population(join, request):
     _need(type(bundles) is list and len(bundles) <= MAX_BUNDLES and type(refs) is list
           and len(refs) <= MAX_ROWS and type(physical) is list and len(physical) <= MAX_ROWS,
           "bounded complete join populations required")
+    if coordinate:
+        _need(len(bundles) == 1 and 1 <= len(refs) <= MAX_COORDINATE_ROWS
+              and 1 <= len(physical) <= MAX_COORDINATE_ROWS,
+              "one complete coordinate bundle and one through 64 physical rows required")
+        _need(join.get("source_compatibility_profile") == COORDINATE_PROFILE
+              and join.get("selection_scope") == "exact_selected_paired_v3_bundle_with_complete_source_coordinates",
+              "explicit retained coordinate join profile required")
     inventory = join.get("span_inventory")
     _need(type(inventory) is dict and type(inventory.get("manifests")) is list,
           "retained selected manifest inventory required")
@@ -136,13 +155,28 @@ def _population(join, request):
           [entry["path_in_repo"] for entry in selections], "bundle selection population/order differs")
     flattened = []
     for bundle, selected in zip(bundles, selections):
+        if coordinate:
+            _keys(bundle, {"manifest_path_in_repo", "payload_intake", "legacy_candidate_join"},
+                  "retained coordinate join bundle")
+            _need(bundle["legacy_candidate_join"] is None,
+                  "coordinate join cannot carry a legacy candidate ledger")
         intake = bundle["payload_intake"]
         table = selected["manifest"]["tables"]["paired_spans"]
         rows = intake["rows"]
         _need(type(rows) is list, "ordered payload rows required")
         for row in rows:
-            _keys(row, {"row_ordinal", "observation_id", "row_sha256", "derived_row_json",
-                        "disposition", "candidate", "error"}, "retained payload row")
+            fields = {"row_ordinal", "observation_id", "row_sha256", "derived_row_json",
+                      "disposition", "candidate", "error"}
+            if coordinate:
+                fields.update(("source_provenance_json", "source_coordinate_report_sha256",
+                               "source_coordinate_span_index"))
+            _keys(row, fields, "retained payload row")
+            if coordinate:
+                _need(type(row["source_provenance_json"]) is str
+                      and type(row["source_coordinate_span_index"]) is int
+                      and row["source_coordinate_span_index"] >= 0
+                      and row["source_coordinate_report_sha256"] == request["source_coordinate_report_sha256"],
+                      "exact coordinate provenance, report pin and integer global span index required")
             _need(type(row["derived_row_json"]) is str and type(row["observation_id"]) is str,
                   "retained row text identities required")
             _digest(row["row_sha256"])
@@ -173,6 +207,18 @@ def _population(join, request):
         _need(type(ref["training_mask"]) is int and ref["training_mask"] == 0
               and type(ref["evaluation_gold_mask"]) is int and ref["evaluation_gold_mask"] == 0,
               "row reference masks must remain zero")
+        if coordinate:
+            _need(all(_same(ref.get(key), row[key]) for key in
+                      ("source_provenance_json", "source_coordinate_report_sha256", "source_coordinate_span_index"))
+                  and ref.get("coordinate_transport_status") == "complete_report_occurrence_replayed"
+                  and ref.get("source_candidate_record") is None
+                  and type(row["disposition"]) is str
+                  and row["disposition"] in ("candidate_unbound", "adapter_rejected")
+                  and ref.get("source_disposition") == ("source_join_unavailable"
+                      if row["disposition"] == "candidate_unbound" else "paired_candidate_adapter_rejected")
+                  and ref.get("current_source_release_correspondence") == "unverified_no_independent_crosswalk"
+                  and ref.get("entity_binding") == "unavailable_semantic_companions_not_supplied",
+                  "row reference coordinate ancestry or unresolved source/entity custody differs")
         if digest not in derived:
             derived[digest] = {"physical_identity": identity, "physical_identity_sha256": digest,
                 "row_sha256": row["row_sha256"], "observation_id": row["observation_id"],
@@ -188,6 +234,10 @@ def _population(join, request):
           and counts.get("physical_paired_rows") == len(physical)
           and counts.get("selected_row_references") == len(refs) and counts.get("selected_bundles") == len(bundles),
           "retained join denominator differs")
+    if coordinate:
+        _need(type(counts.get("coordinate_occurrence_replayed_rows")) is int
+              and counts["coordinate_occurrence_replayed_rows"] == len(refs),
+              "coordinate occurrence denominator differs")
     return physical, refs, payloads
 
 
@@ -207,17 +257,110 @@ def _replay_row(row, adapter, contracts):
     return observed, candidate
 
 
-def prepare_source_span_target_eligibility(request_raw, join_manifest_raw, *, expected_request_sha256):
-    """Replay every retained physical candidate and census all outputs, without dispatch."""
-    request, retained = _preflight(request_raw, join_manifest_raw, expected_request_sha256)
-    physical, refs, payloads = _population(retained, request)
-    _freshness()
-    join, adapter, contracts, span, runtime, before = _owners()
-    before = _read_json(_wire(before, MAX_REQUEST_BYTES), MAX_REQUEST_BYTES, "owner pins")
-    _need(join.source_span_entity_join_manifest_sha256(retained) == request["join_manifest_sha256"],
-          "retained join owner canonical identity differs")
-    description = _read_json(_wire(runtime.describe_runtime("legal_ir", request["decoder_profile"]), MAX_REQUEST_BYTES),
-                             MAX_REQUEST_BYTES, "runtime description")
+def _ordered_wire(value, maximum):
+    """Retain ordinary mapping order as well as content for legacy source IDs."""
+    _wire(value, maximum)
+    return json.dumps(value, ensure_ascii=False, sort_keys=False,
+                      separators=(",", ":"), allow_nan=False).encode("utf-8")
+
+
+def _finish_custody(checks, primary):
+    failures = []
+    for label, check in checks:
+        try:
+            check()
+        except BaseException as error:
+            failures.append((label, error))
+    if primary is not None:
+        for label, error in failures:
+            primary.add_note("secondary eligibility custody failure (" + label + "): "
+                             + type(error).__name__ + ": " + str(error))
+    elif failures:
+        label, error = failures[0]
+        error.add_note("closing eligibility custody check: " + label)
+        for label, secondary in failures[1:]:
+            error.add_note("secondary eligibility custody failure (" + label + "): "
+                           + type(secondary).__name__ + ": " + str(secondary))
+        raise error
+
+
+def _coordinate_owners():
+    from . import span_cache, uscode_ingest
+    _need(callable(getattr(span_cache, "load_source_coordinate_report", None))
+          and callable(getattr(span_cache, "validate_source_coordinate_rows", None)),
+          "existing coordinate bytes and row validators required")
+    paths = [Path(module.__file__).resolve() for module in (span_cache, uscode_ingest)]
+    root = Path(__file__).resolve().parents[3]
+    _need(all(root in path.parents for path in paths), "coordinate owner escaped selected source tree")
+    return span_cache, {str(path): _sha(path.read_bytes()) for path in sorted(paths)}
+
+
+def _coordinate_transport(retained, request, cache):
+    """Recheck the retained carrier and exact selected references, without I/O."""
+    bundle = retained["paired_bundles"][0]
+    selected = retained["span_inventory"]["manifests"][0]
+    intake, manifest = bundle["payload_intake"], selected["manifest"]
+    pin = request["source_coordinate_report_sha256"]
+    _need(intake.get("schema") == "legal-paired-payload-intake/v2"
+          and manifest.get("schema") == "uscode-paired-span-bundle/v3"
+          and selected.get("bank") == "paired-v3"
+          and intake.get("manifest_schema") == manifest["schema"]
+          and intake.get("manifest_sha256") == selected.get("sha256")
+          and selected.get("source_coordinate_report_sha256") == pin,
+          "explicit pinned v3 manifest and coordinate payload intake required")
+    carrier = intake.get("source_coordinates")
+    _keys(carrier, {"report_raw_utf8", "report_bytes", "report_artifact_sha256", "report_sha256"},
+          "complete retained coordinate report carrier")
+    _need(type(carrier["report_raw_utf8"]) is str and type(carrier["report_bytes"]) is int
+          and 0 < carrier["report_bytes"] <= MAX_JOIN_BYTES and carrier["report_sha256"] == pin,
+          "bounded exact coordinate report string, byte count and independent pin required")
+    raw = carrier["report_raw_utf8"].encode("utf-8")
+    _need(len(raw) == carrier["report_bytes"] and _sha(raw) == carrier["report_artifact_sha256"],
+          "retained coordinate report raw byte identity differs")
+    transport = manifest.get("coordinate_transport")
+    _keys(transport, {"schema", "report_artifact_sha256", "report_sha256", "index_artifact_sha256"},
+          "coordinate manifest transport")
+    _need(transport["schema"] == "paired-source-coordinate-transport/v1"
+          and transport["report_sha256"] == pin
+          and transport["report_artifact_sha256"] == carrier["report_artifact_sha256"],
+          "retained report carrier differs from selected manifest transport")
+    _digest(transport["index_artifact_sha256"])
+    projected, indices, revisions = [], [], []
+    for row, reference in zip(intake["rows"], retained["row_references"]):
+        observed = _read_json(row["derived_row_json"].encode("utf-8"), 1024 * 1024, "coordinate paired row")
+        source = observed.get("source")
+        _need(observed.get("schema_version") == "uscode-paired-span-census/v2"
+              and type(source) is dict
+              and all(type(source.get(key)) is str for key in ("span_id", "text", "legal_id", "revision"))
+              and reference.get("producer_source_revision_label") == source["revision"],
+              "exact v2 coordinate source identity and declared revision required")
+        revisions.append(source["revision"])
+        projected.append({"source_span_id": source["span_id"], "text": source["text"],
+                          "legal_id": source["legal_id"], "source_provenance_json": row["source_provenance_json"]})
+        indices.append(row["source_coordinate_span_index"])
+    report = cache.load_source_coordinate_report(raw, expected_report_sha256=pin, max_bytes=MAX_JOIN_BYTES)
+    _need(all(revision == report["release_id"] for revision in revisions),
+          "paired source revision differs from retained coordinate report release")
+    report_snapshot, rows_snapshot = _ordered_wire(report, MAX_JOIN_BYTES), _ordered_wire(projected, MAX_JOIN_BYTES)
+    primary = None
+    try:
+        actual = cache.validate_source_coordinate_rows(report, projected, expected_report_sha256=pin)
+        _need(type(actual) is list and _same(actual, indices), "coordinate global index population/order differs")
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        _finish_custody((("coordinate report snapshot", lambda: _need(
+            _ordered_wire(report, MAX_JOIN_BYTES) == report_snapshot, "coordinate validator mutated retained report")),
+            ("coordinate row snapshot", lambda: _need(_ordered_wire(projected, MAX_JOIN_BYTES) == rows_snapshot,
+                "coordinate validator mutated selected rows"))), primary)
+    return _read_json(_wire(carrier, MAX_JOIN_BYTES), MAX_JOIN_BYTES, "coordinate carrier")
+
+
+def _target_census(request_raw, request, retained, physical, refs, payloads,
+        adapter, contracts, span, runtime, before, description, *,
+        expected_request_sha256, coordinate=False):
+    """One mechanical census shared by explicit retained and original-input profiles."""
     rows, outputs, groups = [], [], {}
     for physical_row in physical:
         identity = physical_row["physical_identity_sha256"]
@@ -286,7 +429,12 @@ def prepare_source_span_target_eligibility(request_raw, join_manifest_raw, *, ex
                     "field_masks": dict.fromkeys(FACETS, 0), "training_mask": 0, "evaluation_gold_mask": 0})
                 _need(len(outputs) <= MAX_OUTPUTS, "complete output population exceeds bound")
         _need(candidate is None or cursor == len(interpretations), "interpretation population incomplete")
-        rows.append({**physical_row, "source_text": text, "source_text_sha256": source_hash,
+        coordinate_fields = ({key: payloads[identity][key] for key in
+            ("source_provenance_json", "source_coordinate_report_sha256", "source_coordinate_span_index")}
+            if coordinate else {})
+        if coordinate:
+            coordinate_fields["coordinate_transport_status"] = "complete_report_occurrence_replayed"
+        rows.append({**physical_row, **coordinate_fields, "source_text": text, "source_text_sha256": source_hash,
             "declared_source_text_sha256": source.get("text_sha256"), "route_inventory": routes,
             "source_unit_status": "unestablished", "meaning_unit_id": None, "selected_occurrence": None,
             "context_status": "unresolved", "source_review_status": "unresolved",
@@ -317,7 +465,7 @@ def prepare_source_span_target_eligibility(request_raw, join_manifest_raw, *, ex
             blockers.add("consumer_requires_zero_latent")
         row["consumer_compatibility_blockers"] = sorted(blockers)
     statuses = Counter(output["target_status"] for output in outputs)
-    report = {"schema": SCHEMA, "request": request, "request_raw_utf8": request_raw.decode("utf-8"),
+    report = {"schema": SCHEMA_V2 if coordinate else SCHEMA, "request": request, "request_raw_utf8": request_raw.decode("utf-8"),
         "request_sha256": expected_request_sha256, "join_manifest_raw_sha256": request["join_manifest_raw_sha256"],
         "join_manifest_sha256": request["join_manifest_sha256"], "selection_complete": True,
         "selection_scope": "pinned_retained_join_report_only", "upstream_reexecution_performed": False,
@@ -333,14 +481,86 @@ def prepare_source_span_target_eligibility(request_raw, join_manifest_raw, *, ex
             "source_units_established": 0, "training_qualified_rows": 0, "evaluation_gold_rows": 0},
         "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0, "producer_pins": before,
         "producer_pins_scope": "listed_source_files_and_logic_tree_guard_not_complete_execution_closure"}
-    raw = _wire(report, MAX_REPORT_BYTES)
-    _need(_sha(_wire(retained, MAX_JOIN_BYTES)) == request["join_manifest_sha256"],
-          "retained join snapshot changed during delegation")
+    return report
+
+
+def _prepare_eligibility(request_raw, join_manifest_raw, *, expected_request_sha256, coordinate=False):
+    """Replay every retained physical candidate and census all outputs, without dispatch."""
+    request, retained = _preflight(request_raw, join_manifest_raw, expected_request_sha256, coordinate=coordinate)
+    physical, refs, payloads = _population(retained, request, coordinate=coordinate)
     _freshness()
-    _need(_same(_owners()[-1], before), "eligibility owners changed during preparation")
-    _need(_same(runtime.describe_runtime("legal_ir", request["decoder_profile"]), description),
-          "runtime description changed during preparation")
-    return _read_json(raw, MAX_REPORT_BYTES, "eligibility report")
+    join, adapter, contracts, span, runtime, before = _owners()
+    before = _read_json(_wire(before, MAX_REQUEST_BYTES), MAX_REQUEST_BYTES, "owner pins")
+    retained_snapshot = _ordered_wire(retained, MAX_JOIN_BYTES) if coordinate else None
+    coordinate_cache = coordinate_pins = coordinate_bindings = coordinate_carrier = None
+    primary = None
+    try:
+        if coordinate:
+            coordinate_cache, coordinate_pins = _coordinate_owners()
+            coordinate_bindings = (coordinate_cache.load_source_coordinate_report,
+                                   coordinate_cache.validate_source_coordinate_rows)
+            coordinate_carrier = _coordinate_transport(retained, request, coordinate_cache)
+        _need(join.source_span_entity_join_manifest_sha256(retained) == request["join_manifest_sha256"],
+              "retained join owner canonical identity differs")
+        description = _read_json(_wire(runtime.describe_runtime("legal_ir", request["decoder_profile"]), MAX_REQUEST_BYTES),
+                                 MAX_REQUEST_BYTES, "runtime description")
+        report = _target_census(request_raw, request, retained, physical, refs, payloads,
+            adapter, contracts, span, runtime, before, description,
+            expected_request_sha256=expected_request_sha256, coordinate=coordinate)
+        if coordinate:
+            report.update(source_coordinates=coordinate_carrier,
+                source_coordinate_report_sha256=request["source_coordinate_report_sha256"],
+                current_coordinate_producer_pins=coordinate_pins,
+                retained_join_producer_pins=retained.get("producer_pins", {}),
+                retained_join_producer_scope="historical_declaration_not_current_v2_join_execution",
+                coordinate_validation_scope="stored_supplied_documents_and_exact_selected_references_only")
+            report["counts"]["coordinate_rows_verified"] = len(physical)
+        raw = _wire(report, MAX_REPORT_BYTES)
+        _need(_sha(_wire(retained, MAX_JOIN_BYTES)) == request["join_manifest_sha256"],
+              "retained join snapshot changed during delegation")
+        _freshness()
+        _need(_same(_owners()[-1], before), "eligibility owners changed during preparation")
+        _need(_same(runtime.describe_runtime("legal_ir", request["decoder_profile"]), description),
+              "runtime description changed during preparation")
+        return _read_json(raw, MAX_REPORT_BYTES, "eligibility report")
+
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        if coordinate:
+            checks = [("eligibility producer", _freshness),
+                ("retained join snapshot", lambda: _need(
+                    _ordered_wire(retained, MAX_JOIN_BYTES) == retained_snapshot,
+                    "retained coordinate join changed during delegation")),
+                ("operation owners", lambda: _need(_same(_owners()[-1], before),
+                    "eligibility owners changed during preparation"))]
+            if coordinate_cache is not None:
+                checks.extend((("coordinate owners", lambda: _need(
+                    _same(_coordinate_owners()[1], coordinate_pins),
+                    "coordinate owners changed during preparation")),
+                    ("coordinate callable bindings", lambda: _need(
+                        coordinate_bindings == (coordinate_cache.load_source_coordinate_report,
+                                                coordinate_cache.validate_source_coordinate_rows),
+                        "coordinate helper changed during preparation"))))
+            _finish_custody(checks, primary)
+
+
+def prepare_source_span_target_eligibility(request_raw, join_manifest_raw, *, expected_request_sha256):
+    """Replay the strict original retained v1 join without coordinate coercion."""
+    return _prepare_eligibility(request_raw, join_manifest_raw,
+        expected_request_sha256=expected_request_sha256)
+
+
+def prepare_source_span_target_eligibility_v2(request_raw, join_manifest_raw, *, expected_request_sha256):
+    """Census one pinned retained coordinate join, without learning or source adoption.
+
+    Stored supplied documents and exact occurrence references are replayed. The
+    original physical source/span/entity operation is not executed here, and a
+    current v1 join owner is not asserted to be the producer of the v2 evidence.
+    """
+    return _prepare_eligibility(request_raw, join_manifest_raw,
+        expected_request_sha256=expected_request_sha256, coordinate=True)
 
 
 def source_span_target_eligibility_sha256(report):
@@ -360,3 +580,298 @@ def validate_source_span_target_eligibility(report, request_raw, join_manifest_r
     _need(_wire(offered, MAX_REPORT_BYTES) == _wire(expected, MAX_REPORT_BYTES),
           "eligibility report differs from full retained-input replay")
     return expected
+
+
+def validate_source_span_target_eligibility_v2(report, request_raw, join_manifest_raw, *,
+        expected_request_sha256, expected_report_sha256):
+    """Require the independent report pin and complete retained v2 input replay."""
+    _digest(expected_report_sha256)
+    if type(report) is bytes:
+        offered = _read_json(report, MAX_REPORT_BYTES, "coordinate eligibility report")
+    else:
+        offered = _read_json(_wire(report, MAX_REPORT_BYTES), MAX_REPORT_BYTES, "coordinate eligibility report")
+    original = _ordered_wire(offered, MAX_REPORT_BYTES)
+    _need(source_span_target_eligibility_sha256(offered) == expected_report_sha256,
+          "eligibility report SHA256 differs")
+    primary = None
+    try:
+        expected = prepare_source_span_target_eligibility_v2(request_raw, join_manifest_raw,
+            expected_request_sha256=expected_request_sha256)
+        _need(_same(offered, expected), "eligibility report differs from full retained-input replay")
+        return expected
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        def offered_unchanged():
+            current = (_read_json(report, MAX_REPORT_BYTES, "coordinate eligibility report")
+                       if type(report) is bytes else report)
+            _need(_ordered_wire(current, MAX_REPORT_BYTES) == original,
+                  "offered coordinate eligibility report changed during validation")
+        _finish_custody((("offered eligibility report", offered_unchanged),), primary)
+
+
+# Version 2 remains the retained-report audit above. This separate profile requires
+# genuine opening and closing replay of every public original coordinate-join input.
+REQUEST_SCHEMA_V3 = "legal-source-span-target-eligibility-request/v3"
+SCHEMA_V3 = "legal-source-span-target-eligibility/v3"
+ORIGINAL_REPLAY_PROFILE_V3 = "original-input-coordinate-target-eligibility/v1"
+COORDINATE_REFERENCE_SCHEMA = "legal-source-span-target-coordinate-carrier-reference/v1"
+MAX_COORDINATE_ORIGINAL_BYTES = 8 * 1024 * 1024
+_JOIN_ORIGINAL_FIELDS = {
+    "request_raw", "source_request_raw", "source_metadata_bytes",
+    "paired_inventory_request_raw", "paired_manifest_bytes", "entity_info_raw",
+    "expected_request_sha256", "legacy_join_inputs",
+}
+_COORDINATE_FIELDS = {
+    "source_provenance_json", "source_coordinate_report_sha256",
+    "source_coordinate_span_index",
+}
+
+
+def _replay_originals_v3(join_originals):
+    """Detach the closed public replay arguments without serializing code."""
+    _keys(join_originals, _JOIN_ORIGINAL_FIELDS, "coordinate join originals")
+    captured, identity, total = {}, {}, 0
+    for key in ("request_raw", "source_request_raw", "paired_inventory_request_raw", "entity_info_raw"):
+        raw = join_originals[key]
+        _need(type(raw) is bytes and 0 < len(raw) <= 256 * 1024,
+              "bounded exact original join bytes required: " + key)
+        captured[key] = raw
+        identity[key] = {"bytes": len(raw), "sha256": _sha(raw)}
+        total += len(raw)
+    for key in ("source_metadata_bytes", "paired_manifest_bytes"):
+        mapping = join_originals[key]
+        _need(type(mapping) is dict and 0 < len(mapping) <= 16,
+              "bounded ordinary original metadata mapping required")
+        captured[key], identity[key] = {}, {}
+        for name, raw in mapping.items():
+            _need(type(name) is str and 0 < len(name.encode("utf-8")) <= 512
+                  and type(raw) is bytes and 0 < len(raw) <= MAX_COORDINATE_ORIGINAL_BYTES,
+                  "bounded exact metadata names and bytes required")
+            captured[key][name] = raw
+            identity[key][name] = {"bytes": len(raw), "sha256": _sha(raw)}
+            total += len(raw)
+    _need(total <= MAX_COORDINATE_ORIGINAL_BYTES, "coordinate original input aggregate exceeds bound")
+    _digest(join_originals["expected_request_sha256"])
+    captured["expected_request_sha256"] = join_originals["expected_request_sha256"]
+    identity["expected_request_sha256"] = join_originals["expected_request_sha256"]
+    legacy = join_originals["legacy_join_inputs"]
+    _need(legacy is None or type(legacy) is dict and not legacy,
+          "coordinate profile cannot mix legacy occurrence inputs")
+    captured["legacy_join_inputs"] = None if legacy is None else {}
+    identity["legacy_join_inputs"] = captured["legacy_join_inputs"]
+    return captured, _sha(_wire(identity, MAX_REQUEST_BYTES))
+
+
+def source_span_target_join_originals_sha256(join_originals):
+    """Commit exact public replay inputs; this identity grants no authority."""
+    return _replay_originals_v3(join_originals)[1]
+
+
+def _replay_preflight_v3(request_raw, join_manifest_raw, expected_request_sha256, join_originals):
+    _digest(expected_request_sha256)
+    _need(type(request_raw) is bytes and 0 < len(request_raw) <= MAX_REQUEST_BYTES
+          and _sha(request_raw) == expected_request_sha256,
+          "request bytes differ from independent pin")
+    request = _read_json(request_raw, MAX_REQUEST_BYTES, "coordinate eligibility request")
+    _keys(request, {"schema", "join_manifest_raw_sha256", "join_manifest_sha256",
+        "expected_physical_ids", "decoder_profile", "latent_dimension", "join_originals_sha256",
+        "source_coordinate_report_sha256", "source_compatibility_profile"}, "coordinate eligibility request")
+    _need(request["schema"] == REQUEST_SCHEMA_V3 and request["decoder_profile"] == DECODER_PROFILE
+          and request["source_compatibility_profile"] == ORIGINAL_REPLAY_PROFILE_V3,
+          "unsupported coordinate eligibility profile")
+    _need(type(request["latent_dimension"]) is int and request["latent_dimension"] in (0, 384),
+          "explicit supported latent dimension required")
+    for key in ("join_manifest_raw_sha256", "join_manifest_sha256", "join_originals_sha256",
+                "source_coordinate_report_sha256"):
+        _digest(request[key])
+    _need(type(join_manifest_raw) is bytes and 0 < len(join_manifest_raw) <= MAX_JOIN_BYTES
+          and _sha(join_manifest_raw) == request["join_manifest_raw_sha256"],
+          "retained join bytes differ from independent pin")
+    retained = _read_json(join_manifest_raw, MAX_JOIN_BYTES, "coordinate join manifest")
+    _need(_sha(_wire(retained, MAX_JOIN_BYTES)) == request["join_manifest_sha256"],
+          "retained join canonical identity differs")
+    _need(type(retained) is dict and retained.get("schema") == "legal-source-span-entity-join-manifest/v2"
+          and retained.get("source_compatibility_profile") == "paired-coordinate-three-cache-join/v1",
+          "explicit coordinate join v2 required")
+    ids = request["expected_physical_ids"]
+    _need(type(ids) is list and 1 <= len(ids) <= MAX_COORDINATE_ROWS,
+          "bounded nonempty ordered coordinate physical population required")
+    for identity in ids:
+        _digest(identity)
+    _need(len(ids) == len(set(ids)), "duplicate expected physical identity")
+    captured, commitment = _replay_originals_v3(join_originals)
+    _need(commitment == request["join_originals_sha256"], "independent join originals commitment differs")
+    return request, retained, captured
+
+
+def _replay_population_v3(retained, request):
+    _need(retained.get("selection_complete") is True, "complete coordinate join required")
+    physical, refs, payloads = _population(retained, request, coordinate=True)
+    bundles = retained["paired_bundles"]
+    _need(len(bundles) == 1 and len(refs) == len(physical) <= MAX_COORDINATE_ROWS,
+          "one complete bounded coordinate bundle required")
+    intake = bundles[0]["payload_intake"]
+    _need(intake.get("schema") == "legal-paired-payload-intake/v2",
+          "explicit coordinate payload v2 required")
+    carrier = intake.get("source_coordinates")
+    _keys(carrier, {"report_raw_utf8", "report_bytes", "report_artifact_sha256", "report_sha256"},
+          "complete coordinate report carrier")
+    _need(carrier["report_sha256"] == request["source_coordinate_report_sha256"],
+          "coordinate report differs from independent eligibility pin")
+    _need(type(carrier["report_raw_utf8"]) is str and type(carrier["report_bytes"]) is int
+          and carrier["report_bytes"] == len(carrier["report_raw_utf8"].encode("utf-8"))
+          and carrier["report_artifact_sha256"] == _sha(carrier["report_raw_utf8"].encode("utf-8")),
+          "exact coordinate report artifact bytes required")
+    entity = retained.get("entity_metadata")
+    _need(type(entity) is dict and type(entity.get("verified_file_rows")) is int
+          and entity["verified_file_rows"] == 0
+          and entity.get("scope") == "metadata_only_no_entity_file_or_semantic_companions",
+          "entity declarations must remain metadata only")
+    by_physical = {}
+    for row in refs:
+        payload = payloads[row["physical_identity_sha256"]]
+        _need(row.get("coordinate_transport_status") == "complete_report_occurrence_replayed"
+              and row.get("current_source_release_correspondence") == "unverified_no_independent_crosswalk"
+              and row.get("entity_binding") == "unavailable_semantic_companions_not_supplied"
+              and row.get("source_candidate_record") is None,
+              "coordinate custody cannot select source, edition or entity semantics")
+        values = {key: row[key] for key in _COORDINATE_FIELDS}
+        _need(type(values["source_coordinate_span_index"]) is int
+              and values["source_coordinate_span_index"] >= 0
+              and type(values["source_provenance_json"]) is str
+              and values["source_coordinate_report_sha256"] == carrier["report_sha256"]
+              and all(payload[key] == value for key, value in values.items()),
+              "exact per-physical-row coordinate reference required")
+        by_physical[row["physical_identity_sha256"]] = values
+    return physical, refs, payloads, by_physical
+
+
+
+def prepare_source_span_target_eligibility_v3(request_raw, join_manifest_raw, *,
+        expected_request_sha256, join_originals):
+    """Census a complete coordinate join after genuine original-input replay.
+
+    The v3 schema and mandatory profile grant no statutory or learning authority.
+    The exact join artifact is retained once at this report layer; a typed path
+    references its original coordinate carrier without copying that carrier.
+    """
+    request, retained, captured = _replay_preflight_v3(request_raw, join_manifest_raw,
+        expected_request_sha256, join_originals)
+    _freshness()
+    join, adapter, contracts, span, runtime, before = _owners()
+    _need(all(callable(getattr(join, name, None)) for name in
+              ("validate_source_span_entity_join_manifest_v2", "_coordinate_owner_pins", "_owners")),
+          "original-input v3 requires the genuine coordinate join v2 owner")
+    before = _read_json(_wire(before, MAX_REQUEST_BYTES), MAX_REQUEST_BYTES, "owner pins")
+    bindings = (join.validate_source_span_entity_join_manifest_v2,
+                join._coordinate_owner_pins, join._owners)
+    coordinate_pins = join._coordinate_owner_pins(join._owners())
+    retained_snapshot = _ordered_wire(retained, MAX_JOIN_BYTES)
+    description, opened, primary = None, False, None
+
+    def originals_unchanged():
+        _need(_replay_originals_v3(join_originals)[1] == request["join_originals_sha256"]
+              and _replay_originals_v3(captured)[1] == request["join_originals_sha256"],
+              "coordinate eligibility originals changed during operation")
+
+    def producers_unchanged():
+        _freshness()
+        _need(_same(_owners()[-1], before)
+              and join._coordinate_owner_pins(join._owners()) == coordinate_pins,
+              "coordinate eligibility owners changed during operation")
+        _need(bindings == (join.validate_source_span_entity_join_manifest_v2,
+                           join._coordinate_owner_pins, join._owners),
+              "original-input coordinate join callable changed during operation")
+        _need(_ordered_wire(retained, MAX_JOIN_BYTES) == retained_snapshot,
+              "retained original-input coordinate join changed during delegation")
+        if description is not None:
+            _need(_same(runtime.describe_runtime("legal_ir", request["decoder_profile"]), description),
+                  "runtime description changed during preparation")
+
+    def replay_join():
+        bindings[0](retained, expected_report_sha256=request["join_manifest_sha256"], **captured)
+
+    def closing_join():
+        if opened:
+            replay_join()
+
+    try:
+        replay_join()
+        opened = True
+        physical, refs, payloads, coordinates = _replay_population_v3(retained, request)
+        description = _read_json(_wire(runtime.describe_runtime("legal_ir", request["decoder_profile"]),
+            MAX_REQUEST_BYTES), MAX_REQUEST_BYTES, "runtime description")
+        report = _target_census(request_raw, request, retained, physical, refs, payloads,
+            adapter, contracts, span, runtime, before, description,
+            expected_request_sha256=expected_request_sha256, coordinate=True)
+        carrier = retained["paired_bundles"][0]["payload_intake"]["source_coordinates"]
+        report.update(schema=SCHEMA_V3, source_compatibility_profile=ORIGINAL_REPLAY_PROFILE_V3,
+            selection_scope="fully_replayed_coordinate_join_original_inputs",
+            upstream_reexecution_performed=True,
+            upstream_reexecution_requirement="opening_and_closing_public_coordinate_join_replay",
+            join_manifest_raw_utf8=join_manifest_raw.decode("utf-8"),
+            join_originals_sha256=request["join_originals_sha256"],
+            source_coordinate_report_sha256=request["source_coordinate_report_sha256"],
+            source_coordinates_reference={"schema": COORDINATE_REFERENCE_SCHEMA,
+                "container": "join_manifest_raw_utf8",
+                "json_pointer": "/paired_bundles/0/payload_intake/source_coordinates",
+                "join_manifest_raw_sha256": request["join_manifest_raw_sha256"],
+                "report_sha256": carrier["report_sha256"],
+                "report_artifact_sha256": carrier["report_artifact_sha256"],
+                "report_bytes": carrier["report_bytes"]},
+            current_source_release_correspondence="unverified_no_independent_crosswalk",
+            entity_binding="unavailable_semantic_companions_not_supplied",
+            coordinate_validation_scope="complete_original_public_coordinate_join_operation",
+            producer_pins={"eligibility": before, "coordinate_join": coordinate_pins})
+        for row in report["physical_rows"]:
+            row.update(coordinates[row["physical_identity_sha256"]],
+                coordinate_transport_status="complete_report_occurrence_replayed")
+        for output in report["output_occurrences"]:
+            output.update(coordinates[output["physical_identity_sha256"]])
+        _need([row["physical_identity_sha256"] for row in report["physical_rows"]]
+              == request["expected_physical_ids"], "coordinate output population changed")
+        _need(all({key: row[key] for key in _COORDINATE_FIELDS}
+                  == coordinates[row["physical_identity_sha256"]]
+                  for row in report["physical_rows"] + report["output_occurrences"]),
+              "coordinate output references changed")
+        return _read_json(_wire(report, MAX_REPORT_BYTES), MAX_REPORT_BYTES, "original-input eligibility report")
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        _finish_custody((("original inputs", originals_unchanged),
+            ("producer sources", producers_unchanged), ("closing public join replay", closing_join),
+            ("post-replay original inputs", originals_unchanged),
+            ("post-replay producer sources", producers_unchanged)), primary)
+
+
+def validate_source_span_target_eligibility_v3(report, request_raw, join_manifest_raw, *,
+        expected_request_sha256, expected_report_sha256, join_originals):
+    """Validate the independent v3 identity and genuine original-input replay."""
+    _digest(expected_report_sha256)
+    raw = report if type(report) is bytes else _wire(report, MAX_REPORT_BYTES)
+    offered = _read_json(raw, MAX_REPORT_BYTES, "original-input eligibility report")
+    _need(source_span_target_eligibility_sha256(offered) == expected_report_sha256,
+          "eligibility report SHA256 differs")
+    # Canonical identity is order-independent; snapshot the actual offered
+    # object's order so an unchanged caller mapping is not a false mutation.
+    original = _ordered_wire(offered if type(report) is bytes else report, MAX_REPORT_BYTES)
+    primary = None
+    try:
+        expected = prepare_source_span_target_eligibility_v3(request_raw, join_manifest_raw,
+            expected_request_sha256=expected_request_sha256, join_originals=join_originals)
+        _need(_same(offered, expected),
+              "coordinate eligibility report differs from full original-input replay")
+        return expected
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        def offered_unchanged():
+            current = (_read_json(report, MAX_REPORT_BYTES, "offered coordinate eligibility report")
+                       if type(report) is bytes else report)
+            _need(_ordered_wire(current, MAX_REPORT_BYTES) == original,
+                  "offered coordinate eligibility report changed during validation")
+        _finish_custody((("offered report", offered_unchanged),), primary)

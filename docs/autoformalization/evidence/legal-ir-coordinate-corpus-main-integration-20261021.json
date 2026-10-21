@@ -1,0 +1,84 @@
+{
+  "base_main": "247490439dd0d40e9b1165d6bad05203beed54b9",
+  "delivered_behavior": [
+    "Strict-v1 and retained-row-v2 eligibility remain separate from explicit original-input-v3 replay.",
+    "Coordinate graph-v2 proposals retain physical references, unresolved slots and complete ordered ASTs.",
+    "Coordinate corpus custody/export uses existing graph exchange and independent input commitments.",
+    "Original no-child lifecycle and retained/unopened storage recovery keep their explicit profiles."
+  ],
+  "evaluation_gold_mask": 0,
+  "failed_attempts": [
+    {
+      "all_files_retained": true,
+      "attempt": "composition-01",
+      "normal_cleanup_receipt": false,
+      "result": "nonprivate directory constructor refusal before owner.open; zero tests, no resource grant/reservation acquisition; abnormal source-READ closeout independently reviewed"
+    },
+    {
+      "all_files_retained": true,
+      "attempt": "composition-02",
+      "result": "12 passed /43 setup errors: historical context private helper alias absent from newer main; original normal native/source cleanup verified",
+      "storage_promise_closeout": "separately recorded original-owner operation"
+    }
+  ],
+  "hosted_CI": "No hosted passing result is claimed; use actual PR checks.",
+  "legal_meaning_or_current_edition_qualified": false,
+  "main_composition_fix": {
+    "after_sha256": "c1e808323e2f7343637f269d017502283f986bb08a4cf009b3f48e7662f10c40",
+    "before_sha256": "1bb20996372672b67033f56bc844101c824d3371bb22df47158a9432f1ff7145",
+    "path": "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py",
+    "reason": "Pin maintained helper directly beside context; newer public context inlines dependency slots and has no private helper alias. Historical helper source remains pinned."
+  },
+  "models_training_or_native_Lean_executed": false,
+  "prior_qualified_profiles": "Original per-profile receipts remain historical; populations overlap and are not unique statutes. This composition cohort preserves three newer main dependencies.",
+  "proof_admission": false,
+  "qualification": {
+    "additional_current_main_graph_context_cases": 9,
+    "candidate_files": 234,
+    "cases_passed": 55,
+    "controller_complete": {
+      "bytes": 183,
+      "sha256": "f50f11cea72d3b6689cc21f23f3ed05e195b3d80fa0b836475a73e5155c7d052"
+    },
+    "elapsed_test_seconds": 101.05804111296311,
+    "existing_corpus_cases": 46,
+    "launch_and_cleanup": {
+      "bytes": 7748,
+      "sha256": "3709fbe167d4511956187b7e284cbd531e5cc41d81a3e9eda1fae80faae4c6d8"
+    },
+    "manifest": {
+      "bytes": 55534,
+      "sha256": "bf1c6fc8f09fc28afa52b8934a3dbc9432bdf9488f6aaa39d253f76dec102ce4"
+    },
+    "original_native_storage_and_READ_closed": true,
+    "outer_request_pins": 256,
+    "phases_passed": 165,
+    "request": {
+      "bytes": 59503,
+      "sha256": "6e7efd6d81d10543757448c1678d690eeb59eed275342cd564c692f2fdb6c648"
+    },
+    "test_result": {
+      "bytes": 14429,
+      "sha256": "91e31933a21afb5a27f00bd5ac58dff51fe69fdbd28b9bf98daf9057c4a6598e"
+    }
+  },
+  "recorded_at_utc": "2026-10-21T03:30:05.059002+00:00",
+  "remaining_work": [
+    "Exact selected statute/source/span/edition correspondence and independently supplied meaning/applicability decisions.",
+    "Complete norm, governing definition and two genuinely distinct statutory uses with supported typed IR/native projection.",
+    "Autonomous model reconstruction and separate IR-only prose/exact-byte measures on independent grouped targets."
+  ],
+  "schema": "legal-ir-coordinate-corpus-main-integration/v1",
+  "selected_head": "adce3ed285598d6c9d659313d733286403459163",
+  "selected_lineage": [
+    "d4f62d9db14d6064359d881d82695611cfc6d763",
+    "3623a46f713037b05f33236e7a308959aa206d09",
+    "43a937761c936fdb3feb083071b97b47f17dd3eb",
+    "2eed195955f10b6a054e1cd61bee8b23fe4646d4",
+    "adce3ed285598d6c9d659313d733286403459163"
+  ],
+  "source_binding_admission": false,
+  "source_qualification_limits": "Earlier native compiled artifacts keep their original complete dependency generations; this source/graph transport cohort does not renew native proof authority.",
+  "training_mask": 0,
+  "workspace_logs_published": false
+}
