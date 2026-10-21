@@ -1101,6 +1101,50 @@
       "path": "ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py",
       "required": true,
       "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "source_correspondence_original_bank_sha256",
+        "prepare_source_correspondence_requests_v1",
+        "source_correspondence_requests_sha256",
+        "validate_source_correspondence_requests_v1",
+        "prepare_source_correspondence_requests_v2",
+        "source_correspondence_requests_v2_sha256",
+        "validate_source_correspondence_requests_v2"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "coordinate-source-correspondence-selected-20261021",
+        "coordinate-source-correspondence-main-integration-20261021"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_correspondence_requests_v1.md",
+      "id": "source-correspondence-requests",
+      "notes": "Reuse the existing independent-bank v1 owner and explicit graph-v2/original-eligibility-v3 source-review request-custody extension. Complete graph originals and every supplied bank physical reference are replayed; repeated outputs, unsigned questions, missing source receipts and alternatives remain complete and unresolved. Original59 selected cases are a separate generation; current-main compatibility now passed the same59 authored cases under its own complete source/native/storage custody. No source/edition/meaning selection, legal admission, model, training or Lean execution.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_correspondence_requests_v1",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
+      "required": true,
+      "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "prepare_legacy_source_review_requests",
+        "validate_legacy_source_review_requests",
+        "assess_legacy_source_review",
+        "validate_legacy_source_review_assessment"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "coordinate-source-correspondence-selected-20261021",
+        "coordinate-source-correspondence-main-integration-20261021"
+      ],
+      "id": "legacy-source-review",
+      "notes": "Maintained delegated legacy source-review owner used by source-correspondence requests; fixed source/context question wording and genuine source-join replay retain unsigned/pending authority. Selected59 includes focused changed-delegate coverage and three existing regressions; the historical80-case owner campaign is not inherited as current-main qualification. No fabricated source receipts or reviewer endorsements.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.corpus_legacy_source_review",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_legacy_source_review.py",
+      "required": true,
+      "status": "implementation_present"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -2013,6 +2057,26 @@
       "root": "datasets_repository",
       "scope": "395cases/1185phases:complete275-case eligibility plus120-case graph/corpus/current-context cohort. Public original-v2 preserved; distinct retained-v1 and original-v3. No model/training/Lean/statutory admission.",
       "status": "qualified_public_profile_compatibility"
+    },
+    {
+      "id": "coordinate-source-correspondence-selected-20261021",
+      "observed_bytes": 8451,
+      "observed_sha256": "f865e4ec12e6cf77e254c193088dd9114bf151e34c16e01c4cd475780c11df29",
+      "path": "docs/autoformalization/evidence/legal-ir-coordinate-source-correspondence-20261021.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original2186 selected generation onadce:59cases/177phases(56new,3legacy),223qualified runtime files/222committed postimages with external validation-plugin/native15-parent exception. Genuine graph-v2/original-v3 custody to independently supplied unsigned source-review requests. Fresh main qualification separate; no operative physical source/edition crosswalk, meaning/adoption, model, training or Lean admission.",
+      "status": "qualified_selected_source_review_request_custody"
+    },
+    {
+      "id": "coordinate-source-correspondence-main-integration-20261021",
+      "observed_bytes": 13061,
+      "observed_sha256": "0a4c8ead42beec171c1837c0c0fd27e2dd3100f5fd85e6f6f63c514fec905521",
+      "path": "docs/autoformalization/evidence/legal-ir-coordinate-source-correspondence-main-integration-20261021.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "59 distinct authored engineering cases /177 phases passed against current main dependencies in disjoint30/29 cohorts. All223 runtime files and current native/plugin generation pinned; original native/storage/source READ custody closed. Original selected59 remains a separate generation. No operative source/edition crosswalk, legal meaning, model/training/Lean or gold qualification.",
+      "status": "current_main_focused_integration_qualified"
     }
   ]
 }
