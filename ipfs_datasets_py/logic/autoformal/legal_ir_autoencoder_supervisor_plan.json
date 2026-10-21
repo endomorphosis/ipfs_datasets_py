@@ -8443,22 +8443,20 @@
       "task_cid": "lir:task:LIRAE-WIDTH-08",
       "goal_id": "LIRAE-WIDTH",
       "goal_cid": "lir:goal:LIRAE-WIDTH",
-      "title": "Reuse the 8d donor on the born-alive sample",
+      "title": "Measure frozen spaCy8 feature reconstruction on the born-alive sample",
       "source_root": "ipfs_datasets",
       "residual_id": "",
       "identity_key": "LIRAE-WIDTH-08",
-      "predicted_files": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions.py"
-      ],
+      "predicted_files": [],
       "context_paths": [],
       "predicted_symbols": [],
       "acceptance_criteria": [
-        "No new 8d training run",
-        "Donor is not the corpus profile"
+        "Genuine spaCy8 producer and retained frozen linguistic checkpoint; no new training",
+        "Target-aware feature reconstruction only; no historical formula donor or corpus-default claim"
       ],
       "validation_commands": [
-        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py tests/unit/logic/test_paired_span_census.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions.py -q --tb=line",
-        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-08"
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/test_born_alive_width_replay_contract.py tests/unit/logic/test_born_alive_width_replay_owner.py::test_engineering_offline_verifier_recomputes_against_selected_exact_archive_without_encoder tests/unit/logic/test_born_alive_width_replay_owner.py::test_engineering_task_publisher_is_versioned_and_keeps_original_outputs -q --tb=line",
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/replay_born_alive_width.py --engineering-width-v2 --root . --task-id LIRAE-WIDTH-08 --output-directory docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/successor-v2 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-08"
       ],
       "dependencies": [],
       "conflicts": [],
@@ -8472,20 +8470,111 @@
       "mutation_authority": false,
       "seed_board_edit": false,
       "outputs": [
-        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/receipt.json"
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/successor-v2/receipt.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/successor-v2/observation.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/successor-v2/capture.zip"
       ],
       "allowed_paths": [
-        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08",
-        "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions.py",
-        "tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py",
-        "tests/unit/logic/test_paired_span_census.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions.py"
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/successor-v2"
       ],
-      "receipt_instructions": "Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-08 task_kind=width status=inventory|implemented authority={admitted:false,formalized:false}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. The required source-bound replay capability is currently unavailable: retain a blocked-input diagnostic, never claim this task completed from unavailable inventory or a different authored cohort. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.",
+      "receipt_instructions": "Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/successor-v2/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-08 task_kind=width status=inventory authority={admitted:false,formalized:false}. Retain exact independently selected capture bytes in capture.zip, the protected offline observation, and artifact hashes. Selection and independent review are protected plan inputs outside provider outputs. Both original complete born-alive subsection byte ranges and parent/source hashes remain fixed. No training, fabricated vectors, coordinate relabelling or statutory/semantic/proof authority. Frozen genuine spaCy8 feature reconstruction remains target-aware; it is not the historical formula donor and does not establish learned latent, text or formula fidelity. Ordinary capture replay and protected validation execute zero encoders and cannot recreate live native capabilities. The native proposal/merge and authoritative completion gates alone may update the board; provider receipts cannot mark completion.",
       "required_validation_executables": [
-        "legal-ir-born-alive-width-replay-v1"
-      ]
+        "python3"
+      ],
+      "superseded_width_contract": {
+        "schema": "legal-ir-superseded-width-contract/v1",
+        "task": {
+          "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+          "task_id": "LIRAE-WIDTH-08",
+          "task_cid": "lir:task:LIRAE-WIDTH-08",
+          "goal_id": "LIRAE-WIDTH",
+          "goal_cid": "lir:goal:LIRAE-WIDTH",
+          "title": "Reuse the 8d donor on the born-alive sample",
+          "source_root": "ipfs_datasets",
+          "residual_id": "",
+          "identity_key": "LIRAE-WIDTH-08",
+          "predicted_files": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions.py"
+          ],
+          "context_paths": [],
+          "predicted_symbols": [],
+          "acceptance_criteria": [
+            "No new 8d training run",
+            "Donor is not the corpus profile"
+          ],
+          "validation_commands": [
+            "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py tests/unit/logic/test_paired_span_census.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions.py -q --tb=line",
+            "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-08"
+          ],
+          "dependencies": [],
+          "conflicts": [],
+          "evidence_refs": [],
+          "resource_class": "cpu-medium",
+          "token_class": "medium",
+          "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+          "rationale": "parallel-width-sample",
+          "depth": 2,
+          "completion_authority": false,
+          "mutation_authority": false,
+          "seed_board_edit": false,
+          "outputs": [
+            "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/receipt.json"
+          ],
+          "allowed_paths": [
+            "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08",
+            "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions.py",
+            "tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py",
+            "tests/unit/logic/test_paired_span_census.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions.py"
+          ],
+          "receipt_instructions": "Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-08 task_kind=width status=inventory|implemented authority={admitted:false,formalized:false}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. The required source-bound replay capability is currently unavailable: retain a blocked-input diagnostic, never claim this task completed from unavailable inventory or a different authored cohort. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.",
+          "required_validation_executables": [
+            "legal-ir-born-alive-width-replay-v1"
+          ]
+        },
+        "board_block": "## LIRAE-WIDTH-08 Reuse the 8d donor on the born-alive sample\n\n- status: todo\n- goal id: LIRAE-WIDTH\n- depends on: none\n- board namespace: legal-ir-autoencoder-v1\n- shard: none\n- acceptance: No new 8d training run; Donor is not the corpus profile\n- completion: manual\n- priority: P1\n- track: legal-ir\n- outputs: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/receipt.json\n- allowed paths: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08, ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions.py, tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py, tests/unit/logic/test_paired_span_census.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions.py\n- receipt instructions: Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-08 task_kind=width status=inventory|implemented authority={admitted:false,formalized:false}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. The required source-bound replay capability is currently unavailable: retain a blocked-input diagnostic, never claim this task completed from unavailable inventory or a different authored cohort. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.\n- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py tests/unit/logic/test_paired_span_census.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions.py -q --tb=line; IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-08\n- required validation executables: legal-ir-born-alive-width-replay-v1\n\n",
+        "retained_evidence_directory": "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08",
+        "historical_development_result": null
+      },
+      "engineering_width_replay": "legal-ir-genuine-source-width/v2",
+      "engineering_width_capture": {
+        "capture": {
+          "bytes": 123871,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-spacy8-leanstral4096-board-20261021-01/attempt-spacy8-capture-01/artifacts/capture/capture.json",
+          "sha256": "0be351cda7d7527aeabcd31e95e5dd5b4c3d5481924936ce1aec52fe00a2bb7d"
+        },
+        "review": {
+          "bytes": 12928,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-spacy8-leanstral4096-board-20261021-01/independent-spacy8-capture-review-v01.json",
+          "sha256": "81f437e2e6e1013d55c4ee343b9823868efe0a8947d3e7e5b4215f2bc6e3c2d6"
+        },
+        "schema": "legal-ir-genuine-width-selection/v2"
+      },
+      "provider_role": "deterministic-only",
+      "context_budget_tokens": 0,
+      "semantic_key": "legal-ir-genuine-source-width/v2/LIRAE-WIDTH-08",
+      "required_validation_file_pins": [
+        {
+          "bytes": 123871,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-spacy8-leanstral4096-board-20261021-01/attempt-spacy8-capture-01/artifacts/capture/capture.json",
+          "sha256": "0be351cda7d7527aeabcd31e95e5dd5b4c3d5481924936ce1aec52fe00a2bb7d"
+        },
+        {
+          "bytes": 12928,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-spacy8-leanstral4096-board-20261021-01/independent-spacy8-capture-review-v01.json",
+          "sha256": "81f437e2e6e1013d55c4ee343b9823868efe0a8947d3e7e5b4215f2bc6e3c2d6"
+        }
+      ],
+      "proposal_artifact_envelope": {
+        "schema": "ipfs_accelerate_py/agent-supervisor/task-artifact-envelope@3",
+        "binary_paths": [
+          "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-08/successor-v2/capture.zip"
+        ],
+        "max_file_bytes": 8000000,
+        "max_patch_bytes": 16000000,
+        "max_output_bytes": 24000000
+      }
     },
     {
       "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
@@ -8738,22 +8827,21 @@
       "task_cid": "lir:task:LIRAE-WIDTH-4096",
       "goal_id": "LIRAE-WIDTH",
       "goal_cid": "lir:goal:LIRAE-WIDTH",
-      "title": "Reuse saved Leanstral 4096 vectors on the sample",
+      "title": "Measure fresh Leanstral4096 source embedding repeatability on the sample",
       "source_root": "ipfs_datasets",
       "residual_id": "",
       "identity_key": "LIRAE-WIDTH-4096",
-      "predicted_files": [
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_4096.py"
-      ],
+      "predicted_files": [],
       "context_paths": [],
       "predicted_symbols": [],
       "acceptance_criteria": [
-        "No encoder execution",
-        "The 0/12 development result stays attached"
+        "Exactly two original-owner fresh native operations on both complete source spans",
+        "Repeatability only; no training or learned4096 reconstruction claim",
+        "Historical saved-only contract and0/12 retained; ordinary validation executes zero encoders"
       ],
       "validation_commands": [
-        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py tests/unit/logic/test_paired_span_census.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_4096.py -q --tb=line",
-        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-4096"
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/test_born_alive_width_replay_contract.py tests/unit/logic/test_born_alive_width_replay_owner.py::test_engineering_offline_verifier_recomputes_against_selected_exact_archive_without_encoder tests/unit/logic/test_born_alive_width_replay_owner.py::test_engineering_task_publisher_is_versioned_and_keeps_original_outputs -q --tb=line",
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/replay_born_alive_width.py --engineering-width-v2 --root . --task-id LIRAE-WIDTH-4096 --output-directory docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/successor-v2 && IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-4096"
       ],
       "dependencies": [],
       "conflicts": [],
@@ -8767,20 +8855,114 @@
       "mutation_authority": false,
       "seed_board_edit": false,
       "outputs": [
-        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/receipt.json"
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/successor-v2/receipt.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/successor-v2/observation.json",
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/successor-v2/capture.zip"
       ],
       "allowed_paths": [
-        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096",
-        "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
-        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_4096.py",
-        "tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py",
-        "tests/unit/logic/test_paired_span_census.py",
-        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_4096.py"
+        "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/successor-v2"
       ],
-      "receipt_instructions": "Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-4096 task_kind=width status=inventory|implemented authority={admitted:false,formalized:false}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. The required source-bound replay capability is currently unavailable: retain a blocked-input diagnostic, never claim this task completed from unavailable inventory or a different authored cohort. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.",
+      "receipt_instructions": "Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/successor-v2/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-4096 task_kind=width status=inventory authority={admitted:false,formalized:false}. Retain exact independently selected capture bytes in capture.zip, the protected offline observation, and artifact hashes. Selection and independent review are protected plan inputs outside provider outputs. Both original complete born-alive subsection byte ranges and parent/source hashes remain fixed. No training, fabricated vectors, coordinate relabelling or statutory/semantic/proof authority. Two independently reviewed genuine Leanstral4096 full-forward operations on the same two sources supply cosine and repeatability_mean_squared_error, not learned4096 reconstruction. Preserve the historical saved-only no-encoder contract and0/12 result as superseded history; this explicitly selected successor allowed fresh original-owner encoder execution during acquisition only. Ordinary capture replay and protected validation execute zero encoders and cannot recreate live native capabilities. The native proposal/merge and authoritative completion gates alone may update the board; provider receipts cannot mark completion.",
       "required_validation_executables": [
-        "legal-ir-born-alive-width-replay-v1"
-      ]
+        "python3"
+      ],
+      "superseded_width_contract": {
+        "schema": "legal-ir-superseded-width-contract/v1",
+        "task": {
+          "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
+          "task_id": "LIRAE-WIDTH-4096",
+          "task_cid": "lir:task:LIRAE-WIDTH-4096",
+          "goal_id": "LIRAE-WIDTH",
+          "goal_cid": "lir:goal:LIRAE-WIDTH",
+          "title": "Reuse saved Leanstral 4096 vectors on the sample",
+          "source_root": "ipfs_datasets",
+          "residual_id": "",
+          "identity_key": "LIRAE-WIDTH-4096",
+          "predicted_files": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_4096.py"
+          ],
+          "context_paths": [],
+          "predicted_symbols": [],
+          "acceptance_criteria": [
+            "No encoder execution",
+            "The 0/12 development result stays attached"
+          ],
+          "validation_commands": [
+            "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py tests/unit/logic/test_paired_span_census.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_4096.py -q --tb=line",
+            "IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-4096"
+          ],
+          "dependencies": [],
+          "conflicts": [],
+          "evidence_refs": [],
+          "resource_class": "cpu-medium",
+          "token_class": "medium",
+          "stop_policy": "stop:planner-doctor-derived-refill@1:max-goals=8;max-tasks=24;max-open=48;max-retries=2;unchanged-backoff;no-seed-mutation;no-self-authorization",
+          "rationale": "parallel-width-sample",
+          "depth": 2,
+          "completion_authority": false,
+          "mutation_authority": false,
+          "seed_board_edit": false,
+          "outputs": [
+            "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/receipt.json"
+          ],
+          "allowed_paths": [
+            "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096",
+            "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_4096.py",
+            "tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py",
+            "tests/unit/logic/test_paired_span_census.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_4096.py"
+          ],
+          "receipt_instructions": "Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-4096 task_kind=width status=inventory|implemented authority={admitted:false,formalized:false}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. The required source-bound replay capability is currently unavailable: retain a blocked-input diagnostic, never claim this task completed from unavailable inventory or a different authored cohort. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.",
+          "required_validation_executables": [
+            "legal-ir-born-alive-width-replay-v1"
+          ]
+        },
+        "board_block": "## LIRAE-WIDTH-4096 Reuse saved Leanstral 4096 vectors on the sample\n\n- status: todo\n- goal id: LIRAE-WIDTH\n- depends on: none\n- board namespace: legal-ir-autoencoder-v1\n- shard: none\n- acceptance: No encoder execution; The 0/12 development result stays attached\n- completion: manual\n- priority: P1\n- track: legal-ir\n- outputs: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/receipt.json\n- allowed paths: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096, ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_4096.py, tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py, tests/unit/logic/test_paired_span_census.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_4096.py\n- receipt instructions: Write docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_id=LIRAE-WIDTH-4096 task_kind=width status=inventory|implemented authority={admitted:false,formalized:false}; artifacts=[{kind,path,sha256}] authenticate actual nonempty files inside this task directory. Read validator family function for exact fields. Preserve plaintext/source IDs/SHA256. Missing assets stay unavailable, never fabricate observations. Inventory/abstention does not assert full-corpus formalization. JSON observation artifact carries dimension,source_hashes for both born-alive inputs,profile_id,checkpoint_sha256,status=observed,training_executed=false,admitted=false,formalized=false,metrics={cosine_similarity,reconstruction_loss}. Retain actual checkpoint artifact kind checkpoint and replay evidence; hashes/metrics alone are insufficient. The required source-bound replay capability is currently unavailable: retain a blocked-input diagnostic, never claim this task completed from unavailable inventory or a different authored cohort. evidence.dimension matches. 8d role=donor corpus_default=false;384d corpus_default=true;768d token_ceiling=512;4096d encoder_executed=false development_result={successful:0,total:12}.\n- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest tests/unit/logic/formalization/autoencoder/test_ir_decoder_profile_inventory.py tests/unit/logic/test_paired_span_census.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_4096.py -q --tb=line; IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-WIDTH-4096\n- required validation executables: legal-ir-born-alive-width-replay-v1\n\n",
+        "retained_evidence_directory": "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096",
+        "historical_development_result": {
+          "successful": 0,
+          "total": 12
+        }
+      },
+      "engineering_width_replay": "legal-ir-genuine-source-width/v2",
+      "engineering_width_capture": {
+        "capture": {
+          "bytes": 1203127,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-spacy8-leanstral4096-board-20261021-01/attempt-leanstral4096-capture-01/artifacts/capture/capture.json",
+          "sha256": "0b2ceeaf56a0f9520ec3ab476a18850212e82f376d1d5135027f6e05d0e2cf28"
+        },
+        "review": {
+          "bytes": 11360,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-spacy8-leanstral4096-board-20261021-01/independent-native4096-capture-review-v01.json",
+          "sha256": "a90773872704d00afe93eb56ee3fb5ae06c59dc23c040c8c42db822cccac7f29"
+        },
+        "schema": "legal-ir-genuine-width-selection/v2"
+      },
+      "provider_role": "deterministic-only",
+      "context_budget_tokens": 0,
+      "semantic_key": "legal-ir-genuine-source-width/v2/LIRAE-WIDTH-4096",
+      "required_validation_file_pins": [
+        {
+          "bytes": 1203127,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-spacy8-leanstral4096-board-20261021-01/attempt-leanstral4096-capture-01/artifacts/capture/capture.json",
+          "sha256": "0b2ceeaf56a0f9520ec3ab476a18850212e82f376d1d5135027f6e05d0e2cf28"
+        },
+        {
+          "bytes": 11360,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-spacy8-leanstral4096-board-20261021-01/independent-native4096-capture-review-v01.json",
+          "sha256": "a90773872704d00afe93eb56ee3fb5ae06c59dc23c040c8c42db822cccac7f29"
+        }
+      ],
+      "proposal_artifact_envelope": {
+        "schema": "ipfs_accelerate_py/agent-supervisor/task-artifact-envelope@3",
+        "binary_paths": [
+          "docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-width-4096/successor-v2/capture.zip"
+        ],
+        "max_file_bytes": 8000000,
+        "max_patch_bytes": 16000000,
+        "max_output_bytes": 24000000
+      }
     },
     {
       "schema": "ipfs_accelerate_py/agent-supervisor/derived-task-proposal@1",
