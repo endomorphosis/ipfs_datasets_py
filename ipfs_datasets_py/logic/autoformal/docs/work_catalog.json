@@ -1397,7 +1397,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-22T18:53:07.051017+00:00",
+  "last_updated_at_utc": "2026-10-22T19:47:17.260521+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2509,6 +2509,16 @@
       "root": "datasets_repository",
       "scope": "One original same-P native run:2 exact13-tensor/16101-coordinate restores and2 BOS forwards;1074/1074 saved scores and2 singleton-matrix hashes match. Zero Adam/backward/generation/newtraining, all5denials0;89 completed paths/aliases under209 product/245 outer guards. Original reader1 failed metadata join preserved; distinct saved-onlyV02 passes without numerical rerun. Original source/native/storage closed,17files/8492351B. No fulltrajectory/nativeGTE/contextpermission/reconstruction/traininggain/100-IDfit/whole209/binary/freshclone/statutory/Lean qualification.",
       "status": "passed_two_authored_BOS_score_parity_original_closeout"
+    },
+    {
+      "id": "cp128-bos100-reconstruction-diagnostic-20261022-01",
+      "observed_bytes": 29589,
+      "observed_sha256": "47025f53ac648ad4491fc68ba3ab202d5f3d75da2f3c1a1d1c96b381dbfde284",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-bos100-reconstruction-20261022.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Bounded authored384D CP128 BOS-v2 diagnostic: exact token IDs 0/2; exact canonical compact-content AST 0/2; typed complete 2/2. At most100 new IDs per row; actual 200 forwards and 2 restores; zero optimizer/backward/training. Actual product/wrapper byte ledgers and unchanged16/24/2MiB bounds retained, failed indented failure preflight preserved and complete compact failure encoding qualified. Original source/native/storage closed. Legal text and full normative LegalIR meaning NOT_MEASURED; no nativeGTE, context-permission, legal, training or Lean promotion.",
+      "status": "completed_bounded_authored_compact_content_reconstruction_diagnostic"
     }
   ]
 }
