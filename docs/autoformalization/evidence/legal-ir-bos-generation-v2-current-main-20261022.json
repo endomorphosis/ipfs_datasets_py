@@ -1,0 +1,450 @@
+{
+  "api_contract": {
+    "context_may_be_target_derived": true,
+    "context_permission_verified": false,
+    "head_or_checkpoint_schema_changed": false,
+    "max_total_ids": 512,
+    "new_ids_including_EOS": [
+      1,
+      511
+    ],
+    "new_operation": "generate_from_bos_v2",
+    "old_generate_limit": [
+      1,
+      64
+    ],
+    "seed": [
+      1
+    ],
+    "vocabulary_entries": 537,
+    "whole_report_limit_bytes": 16777216
+  },
+  "authority": {
+    "Lean_admission": false,
+    "graph_admission": false,
+    "inference_context_permission": false,
+    "learned_reconstruction_accuracy": false,
+    "live_supervisor_claim_established": false,
+    "new_model_or_encoder_execution": false,
+    "statutory_meaning": false,
+    "trained_head_compatibility": false,
+    "training_gold": false
+  },
+  "current_main_qualification": {
+    "actual_model_restore_count": 0,
+    "actual_numerical_forward_count": 0,
+    "actual_raw_compiled_and_executed_sources": 30,
+    "all66_source_pins_rechecked": true,
+    "allowance511_actual_scripted_emissions": 100,
+    "cases": 67,
+    "forbidden_imports_or_operations": [],
+    "manifest_sources": 43,
+    "new_training_updates": 0,
+    "ordered_population_equal_original": true,
+    "outer_source_pins": 66,
+    "passed_phases": 201,
+    "project_module_aliases": 29,
+    "selectors": 30,
+    "worker_seconds": 33.67282682098448
+  },
+  "custody": {
+    "controller_exit": 0,
+    "native_lease_id": "64b3a40d52204ac4958f03881d8c8937",
+    "native_released": true,
+    "owner_birth": "165990994",
+    "owner_pid": 2188796,
+    "process_scope": "sampled_birth_bound_descendants",
+    "remaining_out_of_group": [],
+    "remaining_processes": 0,
+    "remaining_rss_bytes": 0,
+    "reservation_id": "7f0ecd0f7fb3451c95c79cab62a64ddc",
+    "retained_bytes": 115612,
+    "retained_files": 10,
+    "source_read_closed_after_original_cleanup": true,
+    "storage_cap_bytes": 134217728,
+    "storage_overrun": false,
+    "storage_status": "released"
+  },
+  "metadata_reconciliation": {
+    "component_ids": [
+      "arbitrary-native-source-cache",
+      "arbitrary-native-legal-ir-runtime",
+      "arbitrary-native-span-runtime",
+      "compact-content-tokens"
+    ],
+    "direct_missing_evidence_ids": [
+      "arbitrary-native-cache-existing-pilot-20261011",
+      "retained-pointer-cache-existing-pilot-20261011",
+      "existing-new-source-reuse-correction-20261021",
+      "selected-pilot-native384-source-preparation-20261021-01",
+      "compact-content-token-existing-intake-20261017",
+      "selected-pilot-native768-source-preparation-20261022-01"
+    ],
+    "eight_source_and_test_files_unchanged": true,
+    "new_runtime_readiness": false,
+    "optional_guide_gap": "Two migrated native guides and their migration manifest exist only in primary at the inspected public commit. Do not add missing guide paths to public required_documentation or import the primary documentation list. Source metadata indexing does not need a guide port.",
+    "required_documentation_unchanged": true
+  },
+  "next_runtime_dependency": {
+    "compact_head_pin_matches_public": true,
+    "existing_six_file_port": [
+      {
+        "original301_capture": {
+          "bytes": 71740,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-semantic-batch-binding-20261017-01/run-01/exports/loaded-source/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py",
+          "sha256": "663af1184aeb73d10213e9953fee501303119de076886fa526dabff2b16d2138"
+        },
+        "path": "ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py",
+        "primary_postimage": {
+          "bytes": 71740,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py",
+          "sha256": "663af1184aeb73d10213e9953fee501303119de076886fa526dabff2b16d2138"
+        },
+        "public_preimage": {
+          "bytes": 35317,
+          "path": "ipfs_datasets_py/logic/autoformal/legal_relational_batch_evaluation_v1.py",
+          "sha256": "b8517dc440827ebd0fbde89acdc80c92a4fb65bfc80cbdb577cd6ebbae378bc6"
+        }
+      },
+      {
+        "original301_capture": {
+          "bytes": 21736,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-semantic-batch-binding-20261017-01/run-01/exports/loaded-source/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_compact_codec_v1.py",
+          "sha256": "5af8894fdfea9bbe62e124bb6d4dca1d3a7b10739666741d5eea1e218a076eb8"
+        },
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_compact_codec_v1.py",
+        "primary_postimage": {
+          "bytes": 21736,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_compact_codec_v1.py",
+          "sha256": "5af8894fdfea9bbe62e124bb6d4dca1d3a7b10739666741d5eea1e218a076eb8"
+        },
+        "public_preimage": {
+          "expected_absent": true,
+          "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_compact_codec_v1.py"
+        }
+      },
+      {
+        "original301_capture": {
+          "bytes": 14961,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-semantic-batch-binding-20261017-01/run-01/exports/loaded-source/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_relational_compact_batch_evaluation_v1.py",
+          "sha256": "b9084727bed7cf2a9dedd3dd9fdc145d3982c2432d019e858fec34ed6cb3b031"
+        },
+        "path": "tests/unit/logic/autoformal/test_legal_relational_compact_batch_evaluation_v1.py",
+        "primary_postimage": {
+          "bytes": 14961,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_relational_compact_batch_evaluation_v1.py",
+          "sha256": "b9084727bed7cf2a9dedd3dd9fdc145d3982c2432d019e858fec34ed6cb3b031"
+        },
+        "public_preimage": {
+          "expected_absent": true,
+          "path": "tests/unit/logic/autoformal/test_legal_relational_compact_batch_evaluation_v1.py"
+        }
+      },
+      {
+        "original301_capture": {
+          "bytes": 27734,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-semantic-batch-binding-20261017-01/run-01/exports/loaded-source/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_relational_content_token_batch_evaluation_v1.py",
+          "sha256": "2dea1c96296eb12af281b00cb6d2e55ce9a903bb53299e805d92926a946b98c5"
+        },
+        "path": "tests/unit/logic/autoformal/test_legal_relational_content_token_batch_evaluation_v1.py",
+        "primary_postimage": {
+          "bytes": 27734,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_relational_content_token_batch_evaluation_v1.py",
+          "sha256": "2dea1c96296eb12af281b00cb6d2e55ce9a903bb53299e805d92926a946b98c5"
+        },
+        "public_preimage": {
+          "expected_absent": true,
+          "path": "tests/unit/logic/autoformal/test_legal_relational_content_token_batch_evaluation_v1.py"
+        }
+      },
+      {
+        "original301_capture": {
+          "bytes": 12813,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-semantic-batch-binding-20261017-01/run-01/exports/loaded-source/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_content_token_batch_binding_v1.py",
+          "sha256": "a004e020ab88957016fed24b63a4621fd090be785f9ff231380fde25512e1a67"
+        },
+        "path": "tests/unit/logic/autoformal/test_legal_content_token_batch_binding_v1.py",
+        "primary_postimage": {
+          "bytes": 12813,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_content_token_batch_binding_v1.py",
+          "sha256": "a004e020ab88957016fed24b63a4621fd090be785f9ff231380fde25512e1a67"
+        },
+        "public_preimage": {
+          "expected_absent": true,
+          "path": "tests/unit/logic/autoformal/test_legal_content_token_batch_binding_v1.py"
+        }
+      },
+      {
+        "original50_evidence": "Exact current primary bytes equal installed_files descriptor in recovery completion-summary; not in301selectedcohort.",
+        "path": "tests/unit/logic/autoformal/test_legal_relational_compact_codec_v1.py",
+        "primary_postimage": {
+          "bytes": 19815,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_relational_compact_codec_v1.py",
+          "sha256": "fb824d8517aee04f5451897398deb582cc4452c1eaaa5644d1eb1328235caeba"
+        },
+        "public_preimage": {
+          "expected_absent": true,
+          "path": "tests/unit/logic/autoformal/test_legal_relational_compact_codec_v1.py"
+        }
+      }
+    ],
+    "genuine_numerical_dispatch_qualified": false,
+    "hash_only_pin_refresh": false,
+    "prepared_v3_expected_batch_sha256": "663af1184aeb73d10213e9953fee501303119de076886fa526dabff2b16d2138",
+    "proposed_fresh_existing_cohort": {
+      "admission": "Root must derive/pin current dependency closure, preserve public plugin/router/helper successor and obtain ordinary original resource/source admission; this audit launches nothing.",
+      "basis": "Original301 exactselectednodes plus existing50codecownercases; no new tests. Preserve original node ordering per cohort and derive actual current collection/selector closure before launch.",
+      "existing_model_family_or_checkpoint_qualification": false,
+      "expected_cases": 351,
+      "numerical_runtime_claim": false,
+      "safe_scope": "Pure authored syntax/transport/replay/accounting with genuine fixed owner operations and negative-source simulations; private tmp payload writes. No encoder/checkpoint/optimizer/DB/solver/Lean/provider/network work.",
+      "six_selected_files_only": true
+    },
+    "public_batch_sha256": "b8517dc440827ebd0fbde89acdc80c92a4fb65bfc80cbdb577cd6ebbae378bc6"
+  },
+  "original_failed_attempts": [
+    {
+      "artifact_bytes": 24392,
+      "artifact_files": 6,
+      "cases": 0,
+      "closeout": {
+        "bytes": 7713,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-role-bos-generation-20261022-01/failed-role_bos_generation01-storage-closeout-v01.json",
+        "sha256": "f7f5ca02712b7b0eaf382bb10b4a9196b759621d27eca7b10b92d2e098dc420b"
+      },
+      "collection_errors": 2,
+      "id": "role-bos-generation-01",
+      "qualified": false,
+      "storage_closeout_verified": true
+    },
+    {
+      "artifact_bytes": 104318,
+      "artifact_files": 6,
+      "cases": 67,
+      "closeout": {
+        "bytes": 7714,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-role-bos-generation-20261022-01/failed-role_bos_generation02-storage-closeout-v01.json",
+        "sha256": "850c6ccb5922251cd25a8ab0471dc1e419bc568af829806c4ae071af21a9f9d8"
+      },
+      "collection_errors": 0,
+      "id": "role-bos-generation-02",
+      "qualified": false,
+      "storage_closeout_verified": true
+    },
+    {
+      "artifact_bytes": 93470,
+      "artifact_files": 6,
+      "cases": 67,
+      "closeout": {
+        "bytes": 7714,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-role-bos-generation-20261022-01/failed-role_bos_generation03-storage-closeout-v01.json",
+        "sha256": "71ae77fd7b44041fc4f41b6347f63da9b332eed060a04908d39eb7a5958255df"
+      },
+      "collection_errors": 0,
+      "id": "role-bos-generation-03",
+      "qualified": false,
+      "storage_closeout_verified": true
+    }
+  ],
+  "original_qualification": {
+    "bytes": 119683,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-role-bos-generation-20261022-01/qualification-summary-v01.json",
+    "sha256": "d0e1361a247d53dbe9744528ddde987136ff980d9615050fc68bfea85a58418d"
+  },
+  "original_qualification_scope": "Separate67cases/201phases;61owning=18retained+43added plus6policy regressions;27frozenfiles/50outerguards25aliases26compiled. Allthree failed predecessors preserved; source/native/storage closed for each. Original sourcefactory/syntax/typed-decoding tests use scripted checkpoint/session/scores. No actual model restores/forwards.",
+  "peer_native768_reuse": {
+    "authority": {
+      "Lean_admitted": false,
+      "checkpoint_promoted": false,
+      "conditioning_head_compatibility_verified": false,
+      "cross_width_same_source_population_complete": false,
+      "current_edition_reconciled": false,
+      "decoder_executed": false,
+      "entity_correspondence_bound": false,
+      "governing_source_selected": false,
+      "paired_cache_physical_row_bound": false,
+      "proof_authority": false,
+      "source_meaning_verified": false,
+      "training_executed": false
+    },
+    "four_forwards": 4,
+    "input_limit": 512,
+    "learning_masks": [
+      0,
+      0
+    ],
+    "qualification": {
+      "bytes": 11703,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-selected-native768-sources-20261022-01/qualification-summary-v03.json",
+      "sha256": "eacef109b1486cb7cd9de7edfa45a708908f1df130cf9f67154f4d1d440bcbf6"
+    },
+    "ready_rows": 2,
+    "reencoding_repeated": false,
+    "source_api_publication_not_qualified_by_this_BOS_port": true,
+    "token_counts": [
+      71,
+      55
+    ],
+    "two_source_utf8_bytes": [
+      284,
+      242
+    ]
+  },
+  "preserved_current_public_validation_pytest": {
+    "bytes": 1489,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+    "sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31"
+  },
+  "receipts": [
+    {
+      "bytes": 22366,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/request-bos-generation-v2-main-01.json",
+      "sha256": "9ab11709ac8cb2777fa7c59e106cc28c66f18ab98f6956701784f366ac2522a6"
+    },
+    {
+      "bytes": 24299,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/manifest-bos-generation-v2-main-01.json",
+      "sha256": "1ea87e5692652ba103fd1d6b74b67a5b199b7213b41362ee8534359e6e580ac5"
+    },
+    {
+      "bytes": 7775,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/launch-bos-generation-v2-main-01.json",
+      "sha256": "00a78b3054d2f28cecc756ef5df26d0c9ed2376b02235c45f1cdfa7a07673043"
+    },
+    {
+      "bytes": 183,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/qualification-controller-complete-01.json",
+      "sha256": "84c9d20e5ddf79311cc5cda8d7f6760d786615d93b1655d79c65d626f543a6ee"
+    },
+    {
+      "bytes": 16468,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/exports/test-result.json",
+      "sha256": "898b3fbdec2d6e342eff3e72ca42cd2b6a4fe3d4d231252af31411a7ea8d42ba"
+    },
+    {
+      "bytes": 56957,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/exports/test-collection.json",
+      "sha256": "70f1d78bc120da14437532dc805b5ef2adf0748d2e88c4872ade64795e4781a4"
+    },
+    {
+      "bytes": 15244,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/exports/import-origins.json",
+      "sha256": "ddaf85d9b97991431dd696036244ed3555211177c45ca368ce387524b366f246"
+    },
+    {
+      "bytes": 1802,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/logs/validation-durability.json",
+      "sha256": "fba5e5e2cd70a66192d3eeddb547515a7ebaf586720ff7cf350a4b73fb3c8d42"
+    },
+    {
+      "bytes": 39247,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-09/bos-v2-minimal-landing-audit-v01.json",
+      "sha256": "9c5d61d7854ad054099cb721d8822f4bbc1df156f6a7e8f301d5f71506ffd16f"
+    },
+    {
+      "bytes": 120730,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-09/batch-existing-owner-next-port-audit-v01.json",
+      "sha256": "0077ac3095e2ebf0d73f16e620adeb87a4d2ea7cf6acf4ecd8a373a2315f1392"
+    },
+    {
+      "bytes": 23800,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/metadata-candidate-v01.json",
+      "sha256": "5d09fba7675879f34309de3d2e68cdeb2cb9ae2a2df588a43fc634aacf1dc4fd"
+    },
+    {
+      "bytes": 11464,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/prelaunch-independent-review-v01.json",
+      "sha256": "a52ae7508ace91beab9d5f730054d7df498047d26b422382806395a850451d48"
+    },
+    {
+      "bytes": 16944,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/independent-qualification-review-v01.json",
+      "sha256": "c3d6024d58531edaf05bdb333ced94cd67607fb6106549307f38f2e097a2a4af"
+    },
+    {
+      "bytes": 12103,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/original-closeout-independent-review-v01.json",
+      "sha256": "3e6546ffc763718d55a869eef8018415a2c7fe2237bd7a6f09300c36356436a3"
+    }
+  ],
+  "recorded_at_utc": "2026-10-22T04:08:20.722388+00:00",
+  "retained_artifacts": [
+    {
+      "bytes": 15244,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/exports/import-origins.json",
+      "sha256": "ddaf85d9b97991431dd696036244ed3555211177c45ca368ce387524b366f246"
+    },
+    {
+      "bytes": 56957,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/exports/test-collection.json",
+      "sha256": "70f1d78bc120da14437532dc805b5ef2adf0748d2e88c4872ade64795e4781a4"
+    },
+    {
+      "bytes": 16468,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/exports/test-result.json",
+      "sha256": "898b3fbdec2d6e342eff3e72ca42cd2b6a4fe3d4d231252af31411a7ea8d42ba"
+    },
+    {
+      "bytes": 13706,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/exports/tests.xml",
+      "sha256": "1e4b9d13ee618397e780986cb58b22441db9298aabf687be9edc38bd867789c2"
+    },
+    {
+      "bytes": 5693,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/logs/execution.json",
+      "sha256": "d5b8aff5c8caee6499e751abd6f76f4d76926040fa3a4be2b785d4aa098498e3"
+    },
+    {
+      "bytes": 0,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/logs/pytest.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 5411,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/logs/result.json",
+      "sha256": "e02d602bd6a08703f5e73b10d88194773416a72af5f59117fb187d56bf445fa9"
+    },
+    {
+      "bytes": 0,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/logs/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 331,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/logs/stdout.log",
+      "sha256": "751dbd955ae70e794536fa7e6375869b56c9d6a422b1c59d50edc90c97e8b427"
+    },
+    {
+      "bytes": 1802,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/merge-06/qualification-v01/attempt-bos-generation-v2-main-01/logs/validation-durability.json",
+      "sha256": "fba5e5e2cd70a66192d3eeddb547515a7ebaf586720ff7cf350a4b73fb3c8d42"
+    }
+  ],
+  "schema": "legal-ir-bos-generation-v2-current-main/v1",
+  "scope": "Reuse exact existing BOS-v2 source/test; fresh finite current-main engineering integration; four already-public owners indexed by metadata only.",
+  "source_postimages": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_budget_runtime_v1.py": {
+      "postimage": {
+        "bytes": 17993,
+        "sha256": "77325d00ed754679997fbe95caf70f14aa214d1b32e9994ac40f2c0ef739d59e"
+      },
+      "preimage": {
+        "bytes": 16005,
+        "sha256": "feb59e061e169a65f3d5f7721ab3ee84d3ecd3d170ba433d3a7b49ef7e65c26b"
+      },
+      "reused_exact_original_candidate": true
+    },
+    "tests/unit/logic/autoformal/test_legal_compact_content_role_budget_runtime_v1.py": {
+      "postimage": {
+        "bytes": 37776,
+        "sha256": "29ca44a2d1c39313be727479646f800ce755bddf75b1b87a3b59d2db0a5c800e"
+      },
+      "preimage": {
+        "bytes": 12291,
+        "sha256": "d40c448537692aa71d1d93554b810d1251f3a6f6b20a7da3d395720af8a8f65f"
+      },
+      "reused_exact_original_candidate": true
+    }
+  },
+  "starting_public_main": "ff3b0b552d38a616a84daeb84bcc7e6433213aa9"
+}

@@ -12,8 +12,11 @@ from pathlib import Path
 
 SCHEMA = "legal-role-budget-content-generation/v1"
 PROFILE = "bounded-role-compact384-completion-budget-inference/v1"
+BOS_SCHEMA = "legal-role-budget-content-generation/v2"
+BOS_PROFILE = "bounded-bos-role-compact384-completion-budget-inference/v2"
 SERVING_SCHEMA = "legal-role-model-serving-view/v1"
 MAX_TOTAL_IDS = 512
+MAX_BOS_NEW_TOKENS = MAX_TOTAL_IDS - 1
 AUTHORITY = dict.fromkeys(("accepted", "admitted", "source_encoder_authenticated",
     "source_semantics_verified", "context_permission_verified", "prefix_origin_verified",
     "heldout_accuracy", "statutory_accuracy", "graph_admission", "Lean_admission", "native_admission"), False)
@@ -95,6 +98,33 @@ def generate(checkpoint, conditioning, prefix_ids, context_raw, *, expected_chec
     This opt-in profile changes inference selection only. It does not change or
     requalify historical training grammar, optimizer state or semantic quality.
     """
+    return _generate(checkpoint, conditioning, prefix_ids, context_raw,
+        expected_checkpoint_sha256=expected_checkpoint_sha256,
+        expected_policy_sha256=expected_policy_sha256, expected_context_sha256=expected_context_sha256,
+        max_new_tokens=max_new_tokens, prefix_origin=prefix_origin, context_origin=context_origin,
+        _schema=SCHEMA, _profile=PROFILE, _max_new_tokens=64)
+
+
+def generate_from_bos_v2(checkpoint, conditioning, context_raw, *, expected_checkpoint_sha256,
+                         expected_policy_sha256, expected_context_sha256, max_new_tokens, context_origin):
+    """Generate from fixed BOS with an explicit 1..511-new-ID completion allowance.
+
+    EOS consumes one ID. The 512-total-ID codec, checkpoint and selector remain
+    unchanged; this allowance does not guarantee completion or reconstruction.
+    Historical checkpoint validation still reads exposed training targets, and
+    the supplied context must retain its separately declared origin.
+    """
+    return _generate(checkpoint, conditioning, [1], context_raw,
+        expected_checkpoint_sha256=expected_checkpoint_sha256,
+        expected_policy_sha256=expected_policy_sha256, expected_context_sha256=expected_context_sha256,
+        max_new_tokens=max_new_tokens, prefix_origin="bos_seed", context_origin=context_origin,
+        _schema=BOS_SCHEMA, _profile=BOS_PROFILE, _max_new_tokens=MAX_BOS_NEW_TOKENS)
+
+
+def _generate(checkpoint, conditioning, prefix_ids, context_raw, *, expected_checkpoint_sha256,
+              expected_policy_sha256, expected_context_sha256, max_new_tokens, prefix_origin, context_origin,
+              _schema, _profile, _max_new_tokens):
+    """Share original custody, one prepared model and the complete generation loop."""
     legacy, budget, _, _ = _owners()
     _inputs, _checked = legacy._inputs, legacy._checked
     _serving, _identity = legacy._serving, legacy._identity
@@ -105,8 +135,8 @@ def generate(checkpoint, conditioning, prefix_ids, context_raw, *, expected_chec
         max_new_tokens=max_new_tokens, prefix_origin=prefix_origin, context_origin=context_origin)
     def work(data, owners, modules, loaded, pins, scope_pins, fence):
         helper, scope = owners['prepared'], owners['scope']
-        _need(type(data['max_new_tokens']) is int and 1 <= data['max_new_tokens'] <= 64,
-              'new-token allowance must be a plain integer in 1..64')
+        _need(type(data['max_new_tokens']) is int and 1 <= data['max_new_tokens'] <= _max_new_tokens,
+              f'new-token allowance must be a plain integer in 1..{_max_new_tokens}')
         scoring_inputs = dict(data, prefixes_ids=[data['prefix_ids']])
         _inputs(scoring_inputs, helper, owners['role'])
         value = _checked(data, owners, modules, fence)
@@ -210,7 +240,7 @@ def generate(checkpoint, conditioning, prefix_ids, context_raw, *, expected_chec
                   and ((status in ("complete", "supplied_complete")) == (decoded["status"] == "valid_candidate")),
                   "final public intake disagrees with generated prefix or terminal disposition")
             guard()
-            return dict(schema=SCHEMA, profile=PROFILE,
+            return dict(schema=_schema, profile=_profile,
                 **_identity(value, data),
                 serving_view_schema=SERVING_SCHEMA, serving_view_sha256=view_sha,
                 serving_view_fields=sorted(view), serving_view_contains_training_targets=False,
@@ -252,4 +282,4 @@ def generate(checkpoint, conditioning, prefix_ids, context_raw, *, expected_chec
     return _operation(original, work)
 
 
-__all__ = ["RoleBudgetRuntimeError", "generate"]
+__all__ = ["RoleBudgetRuntimeError", "generate", "generate_from_bos_v2"]
