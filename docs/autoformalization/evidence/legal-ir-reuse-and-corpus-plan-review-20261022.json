@@ -1,0 +1,377 @@
+{
+  "audit_sources": [
+    {
+      "bytes": 19243,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-08/comprehensive-plan-reuse-and-landing-refresh-v01.json",
+      "sha256": "94e8fa4abcf459873878fb836969d3c78cf49544ec356f561d6b834eaf94879c"
+    },
+    {
+      "bytes": 13587,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-08/four-width-reuse-status-audit-v01.json",
+      "sha256": "88ce6d36798c5a5d8c502fae98f4dec64226c8d4088201479bfa19db9d40c2ec"
+    },
+    {
+      "bytes": 6863,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-08/hub-dataset-metadata-observations-v01.json",
+      "sha256": "0129f9e382939a5093c59af95e2f07aae85f8bda97f32ef2f9557ac897588801"
+    },
+    {
+      "bytes": 13198,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-08/hub-metadata-detail-observations-v01.json",
+      "sha256": "c3081344fac2db8303a149b6b4a5db4ae384dfc48bc549d7e03baf6cd359d6f2"
+    },
+    {
+      "bytes": 30631,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-08/hub-cards-and-row-samples-v01.json",
+      "sha256": "e49da8c18ec90e753b2effbcb94051468ccc41e5d39ca01f85fbb93e94ada0a1"
+    }
+  ],
+  "authority": {
+    "authenticated_live_task_claim_established": false,
+    "new_database_operations": false,
+    "new_hub_payload_upload": false,
+    "new_lean_build": false,
+    "new_model_execution": false,
+    "new_parquet_or_weight_download": false,
+    "new_scientific_qualification": false,
+    "new_training": false,
+    "original_24_tasks_unchanged": true,
+    "successor_135_engineering_board_is_separate": true,
+    "viewer_row_samples_read": true
+  },
+  "bounded_reads": "Anonymous metadata/cards/one-row service samples,20s timeout,1MiB per response. One unselected full span API response exceeded cap and was refused; selected metadata query succeeded. No repository-wide payload enumeration or downloads.",
+  "catalog_reconciliation": {
+    "P_only_ids": [
+      "bound-native4096-checkpoint-loading",
+      "arbitrary-native-source-cache",
+      "arbitrary-native-legal-ir-runtime",
+      "arbitrary-native-span-runtime",
+      "compact-content-tokens"
+    ],
+    "metadata_only_gaps_not_new_implementations": [
+      {
+        "id": "arbitrary-native-source-cache",
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+        "source_and_test_primary_bytes_equal_public353": true,
+        "test": "tests/unit/logic/formalization/autoencoder/test_arbitrary_native_source_cache.py"
+      },
+      {
+        "id": "arbitrary-native-legal-ir-runtime",
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py",
+        "source_and_test_primary_bytes_equal_public353": true,
+        "test": "tests/unit/logic/formalization/autoencoder/test_arbitrary_native_legal_ir_runtime.py"
+      },
+      {
+        "id": "arbitrary-native-span-runtime",
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+        "source_and_test_primary_bytes_equal_public353": true,
+        "test": "tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py"
+      },
+      {
+        "id": "compact-content-tokens",
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_tokens_v1.py",
+        "source_and_test_primary_bytes_equal_public353": true,
+        "test": "tests/unit/logic/autoformal/test_legal_compact_content_tokens_v1.py"
+      }
+    ],
+    "public_only_must_preserve": [
+      "coordinate-corpus-custody",
+      "source-correspondence-requests",
+      "legacy-source-review"
+    ],
+    "union_existing_owner_IDs": 40,
+    "warning": "35versus37 is a net catalog difference, not two missing implementations. The catalog is not a complete inventory of every dependency/module; selected unindexed review and replay sources also need explicit reconciliation."
+  },
+  "cross_width_alignment": "Born-alive8/4096 captures and7213/7214native384cache are different exact origins. Four source widths and multiple distinct producers are not an isolated dimensionality ablation. Reuse current caches first; build missing intersections only under explicit same-source/context/edition identity.",
+  "dataset_observations": {
+    "entity_mixed_index_rows": 1960876,
+    "formal_logic_sample": {
+      "config": "formal_logic_text",
+      "fallback_origin": true,
+      "learned_formula_generation": false,
+      "length": 1,
+      "offset": 0
+    },
+    "paired_sample": {
+      "compiler": "abstain/no_parser_elements",
+      "config": "paired_spans",
+      "input_producer": "mock:stable-sha256",
+      "length": 1,
+      "offset": 0,
+      "projected_cosine": 1.0,
+      "projected_reconstruction_loss": 0.0,
+      "projected_target_conditioned": true,
+      "semantic_embeddings": false,
+      "whole_cache_failure_rate_inferred": false
+    },
+    "reuse_policy": "Existing typed table/manifests and bounded artifact decoders; authenticate selected immutable shard identity before adoption. Do not sum heterogeneous configs.",
+    "revisions": {
+      "justicedao/ipfs_uscode": "91ca1838853ac82d7a12dd4ab47d9686f47667f9",
+      "justicedao/uscode-autoformal-entity-cache": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19",
+      "justicedao/uscode-autoformal-span-cache": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3"
+    },
+    "source_viewer_status": "HTTP500 invalid slash-containing config; no physical-artifact absence inferred",
+    "span_config_rows": {
+      "census_v2": 26952,
+      "census_v3": 1184,
+      "deferred_goals": 4740,
+      "evidence_artifacts": 10091,
+      "formal_logic_text": 372,
+      "paired_spans": 4888,
+      "retained_outputs_v1": 32,
+      "supervisor_goals_v2": 28138
+    },
+    "viewer_counts_are_gold_or_unique_span_totals": false,
+    "viewer_counts_are_revision_addressed": false
+  },
+  "denominators": [
+    "N_enrolled",
+    "N_reviewed",
+    "N_representable",
+    "N_attempted",
+    "N_complete",
+    "N_exact",
+    "N_meaning_reviewed",
+    "N_graph_closed",
+    "N_kernel_checked"
+  ],
+  "four_width_reuse": [
+    {
+      "completed_source_successor": "Two born-alive subsection inputs,289/109 spaCy tokens; target-aware frozen feature reconstruction cosine1/MSE0; no formula head attached.",
+      "genuine_producer": "Retained spaCy en_core_web_sm3.8.0/spaCy3.8.14, legacy-linguistic-features-8d/v1; exact two-epoch checkpoint core498fa102\u2026",
+      "separate_formula_lineages": "Historical modal donor ffca8449\u2026:13 tensors/1918parameters,two synthetic examples,vocabulary18,output64. Later linguistic-feature formula sidecars have about1/48 development and0/48 exposedR6 exact.",
+      "teacher_disposition": "Feature oracle/limited structural auxiliary only; no statutory-formula teacher qualification.",
+      "width": 8
+    },
+    {
+      "matched_control_sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e",
+      "measured": "60/60 authored wording and31/48 exposedV3 exact forCE vs55/60 and20/48 zero-aux. Fixed32 output; no fresh statutory holdout.",
+      "new_source_work_already_done": "Eight original USC native384 inputs/16normative candidates; additionally two heading-derived7213/7214 inputs51/47tokens plus CE/zero source-only preparation and later compact-conditioning transport.",
+      "producer": {
+        "device": "cpu",
+        "dtype": "float32",
+        "max_tokens": 512,
+        "model_id": "thenlper/gte-small",
+        "normalization": "l2",
+        "pooling": "mean",
+        "revision": "17e1f347d17fe144873b1201da91788898c639cd",
+        "tokenizer_json_declared": {
+          "bytes": 711661,
+          "payload_hash_freshly_verified": false,
+          "sha256": "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0"
+        }
+      },
+      "selected_retained_CE_sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266",
+      "teacher_disposition": "Research initialization/behavioral donor for its matched codec; not reviewed statutory teacher.",
+      "width": 384
+    },
+    {
+      "matched_control_sha256": "c8beca3ef5ea2d477ebc9a1564c8922404b245098a0b56083197cd6185c3083f",
+      "measured": "60/60 authored wording inbotharms;48/48 exposedV3 exactCE vs46/48zero-aux. Actual retained comparisons capped512source/512output, not8192span qualification.",
+      "older_initialization": "Separate dual-donor initialized_unaligned branch copied13tensors/donor,27142parameters,zero optimizersteps; later fitted768states supersede it as default reuse candidate.",
+      "producer": {
+        "code_repository": "Alibaba-NLP/new-impl",
+        "code_revision": "40ced75c3017eb27626c9d4ea981bde21a2662f4",
+        "device": "cpu",
+        "dtype": "float32",
+        "experiment_tokens": 512,
+        "historical_profile_tokens": 8192,
+        "long_span_qualified": false,
+        "model_id": "Alibaba-NLP/gte-multilingual-base",
+        "normalization": "l2",
+        "pooling": "cls",
+        "revision": "9bbca17d9273fd0d03d5725c7a4b0f6b45142062",
+        "tokenizer_json_declared": {
+          "bytes": 17082756,
+          "payload_hash_freshly_verified": false,
+          "sha256": "f59925fcb90c92b894cb93e51bb9b4a6105c5c249fe54ce1c704420ac39b81af"
+        }
+      },
+      "selected_retained_CE_sha256": "aa2f75cad0ade34a3965a4f0b71bdc2fe962f5b863b38133927978ea2673aeb3",
+      "teacher_disposition": "Strongest exposed fixed32 research result, not full-law fidelity or qualified statutory teacher.",
+      "width": 768
+    },
+    {
+      "actual_geometry_example": "Retained bound source-span4096\u21924\u219216 path,hidden8/tokenembed4,requiredsource text;4096 is source width,not asserted compressed latent.",
+      "completed_source_successor": "Two independent original native operations/four full-forward source vectors for same born-alive subsections;299/111native tokens; repeatability cosine1/MSE0,not learned reconstruction.",
+      "model_load_and_delivery": "Three original bound checkpoint files publiclypublished/registered,69model tensors perstate restored in50-control model-only loader qualification; noforward inthat loader cohort.",
+      "producer": "Leanstral-1.5-119B-A6B-NVFP4.gguf sha4668fd2a\u2026; CPU1,last,L2,single-sequence,tokens512,layer-reclaim:v3",
+      "separate_decoder_history": "Three200-update arms fit2/2TRAIN; broader200-update arms7/12 and1/12TRAIN, both0/12exposeddev. October17 bound source-span pilot fourphysical updates with exactmodel/Adam/progress resume,0/2decoded/twooverlapabstentions.",
+      "teacher_disposition": "Native source cache and restricted research decoder; no statutory teacher.",
+      "width": 4096
+    }
+  ],
+  "latest_peer_reuse_do_not_rerun": [
+    {
+      "facts": "170distinctqualified cases=169passed in original170-case attempt+one corrected targeted retry;49nodes/6binders/6equalities,28entrycodec,293framedIDs,55provenance rows/35obligations. Target-derivedcontext; no general grammar, compatible head or complete norm.",
+      "reuse": "Existing counted owner and exact source/join/unsigned-review pipeline; retain old source generations/29regenerated derived IDs separately.",
+      "work": "counted170"
+    },
+    {
+      "facts": "Two actual prepare_compact_source_conditioning_v1 calls preserve original float32 bits and51/47tokens over284/242B heading-prefixed sources. No encoder/checkpoint bodies or model execution. All3separate full reference declarations are unsupported/OOV/over512 at1499/1499/3224IDs.",
+      "reuse": "Transport invocation is complete. Only trained conditioning-space compatibility and compatible complete targets remain missing; do not repeat encoding/preflight or compare these declaration sizes to the different293-ID counted fragment as a compression ratio.",
+      "work": "native384_conditioning_and_complete_fixed32_diagnostic"
+    },
+    {
+      "facts": "Existing finite source/test consumer supports1..511new IDs from fixedBOS; actual67/201 engineering qualification and all3failed predecessors closed.",
+      "reuse": "Do not create another generation-budget wrapper; qualify only selected missing real checkpoint/conditioning/output-contract boundary.",
+      "work": "BOSv2"
+    },
+    {
+      "facts": "130localsentence spans;15historical observations/13text hashes all matched;45references across32positions;3observations ambiguous, no occurrence selected.",
+      "reuse": "Reuse complete matched/unmatched ledger and original Parquet custody; next is exact physical span/entity/source occurrence binding, not another segmentation, raw source acquisition or full census.",
+      "work": "parent_coordinates"
+    },
+    {
+      "facts": "Same2completeborn-alive occurrences; genuine spaCy8target-aware feature reconstruction and4096repeatability from2independentfull-forwards/4vectors; offlineprotected consumer224cases.",
+      "reuse": "Reuse complete captures/producer identities/callbacks. Feature reconstruction and vector repeatability are not learned legal reconstruction or qualified teachers.",
+      "work": "8D_and4096_width_successors"
+    },
+    {
+      "facts": "Already completed fitted384/768 wording/contextual states, native cache/control campaigns and original HF/ModelManager publications retain separate profile/optimizer limits.",
+      "reuse": "Select strongest compatible fitted states before fresh random initialization or repeateddistillation. Existing8D donors are task-specific;4096Leanstral is frozen producer+separatedecoder, not a4096bottleneck guarantee.",
+      "work": "historical_training_assets"
+    }
+  ],
+  "next_scientific_gate": "One complete source-bound norm, governing definition and two distinct uses; then original20\u201340-provision pilot. Physical span/entity correspondence, edition and independent meaning/applicability remain unresolved.",
+  "reconstruction_contracts": [
+    "source-to-complete-canonical-LegalIR",
+    "IR-only-to-readable-legal-prose",
+    "original-UTF8-byte-restoration-with-explicit-surface-information"
+  ],
+  "recorded_at_utc": "2026-10-22T03:21:04.455189+00:00",
+  "registration_publication": {
+    "historical_publication": {
+      "all_runtime_ready_false": true,
+      "all_teacher_qualified_false": true,
+      "checkpoint_blobs": 665,
+      "latest_genuine_spacy_checkpoint_absent_from_this_old_batch_only": true,
+      "public_repositories": 17,
+      "scope_not_every_later_workspace_checkpoint": true
+    },
+    "inventory_key": "Family +schema/version +decoder task/format +source producer/revision/transform +sourcewidth +actualbottleneck/bypasses +codec +context/outputbudget +architecture/objective +lineage; separatefamily/dimensionwriters/DBs/HFrepos with explicit generations inside.",
+    "later_companions": "Eight original companion assets25,397,561B +manifest publishedPublicus/legal-ir-autoencoder@be0d0226\u2026; committedsize/blob verification, no postupload anonymous full-byte roundtrip.",
+    "later_native4096": "Three bound states registered687\u2192690; immutableHF7f1621e\u2026 with anonymous full-byte readback. No active MCP/other-manager refresh claim.",
+    "latest_selected_catalog_snapshot": "690bindings; exact four384/768CE/zero matches,trained declarations true and runtime_ready/teacher/proof false. Metadata discovery only.",
+    "service_adoption": "Configured running-supervisor store/catalog generation and supported refresh remain separate, not established by registration or historical board135/135 completion."
+  },
+  "release_identity": [
+    "IR_family",
+    "schema_version",
+    "decoder_task_format",
+    "producer_revision_transform",
+    "source_width",
+    "actual_bottleneck_bypasses",
+    "conditioning_profile",
+    "codec",
+    "input_context_limit",
+    "output_limit",
+    "checkpoint_hash",
+    "optimizer_generation",
+    "source_group_exposure",
+    "lineage"
+  ],
+  "remaining_selected_source_landing_groups": [
+    {
+      "closure": "Include existing owning tests, original104/158/170 qualification generations and genuine source/join/review replay dependencies. Complete norm/modality/definition-use meaning remains unqualified; do not mistake the fixed293-ID fragment for a full norm.",
+      "group": "counted_complete_profile_dependency_chain",
+      "priority": "High when developing the complete norm/graph profile; reuse qualified existing owners instead of another counted engine.",
+      "selected_deltas": [
+        {
+          "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_v1.py",
+          "primary_bytes": 48481,
+          "primary_sha256": "df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13",
+          "public_bytes": 22999,
+          "public_sha256": "72501580048e73be95638c4d2d291ceaa5e026516b2d09ba8d747d5d356ccc31"
+        },
+        {
+          "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+          "primary_bytes": 45716,
+          "primary_sha256": "f51377e4c2446d464cd6cbbc97f6838f591e652e50c460e8084771944e937976",
+          "public_bytes": 28971,
+          "public_sha256": "92d0c1a46b86b9cdecdc42477f67e6a2141481379498f8ebd90369f9d3b65f11"
+        },
+        {
+          "path": "ipfs_datasets_py/logic/autoformal/legal_norm_interpretation_review_v1.py",
+          "primary_bytes": 40652,
+          "primary_sha256": "53b4d316c7f0d7cde9b919da290ec8ef594575b5c47407efc5b35bab292087ad",
+          "public_present": false
+        }
+      ]
+    },
+    {
+      "group": "BOSv2_capacity_consumer",
+      "priority": "Reuse for an explicitly compatible complete-output experiment; do not implement again.",
+      "qualification": "67cases/201phases; originalv1new-tokenallowance1..64 unchanged, explicitBOSv2allows1..511under512total. Allowance511 case emits100scripted IDs. Zero genuine checkpoint restores/forwards; no trained-head/native-conditioning compatibility.",
+      "selected_deltas": [
+        {
+          "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_budget_runtime_v1.py",
+          "primary_bytes": 17993,
+          "primary_sha256": "77325d00ed754679997fbe95caf70f14aa214d1b32e9994ac40f2c0ef739d59e",
+          "public_bytes": 16005,
+          "public_sha256": "feb59e061e169a65f3d5f7721ab3ee84d3ecd3d170ba433d3a7b49ef7e65c26b"
+        },
+        {
+          "path": "tests/unit/logic/autoformal/test_legal_compact_content_role_budget_runtime_v1.py",
+          "primary_bytes": 37776,
+          "primary_sha256": "29ca44a2d1c39313be727479646f800ce755bddf75b1b87a3b59d2db0a5c800e",
+          "public_bytes": 12291,
+          "public_sha256": "d40c448537692aa71d1d93554b810d1251f3a6f6b20a7da3d395720af8a8f65f"
+        }
+      ]
+    },
+    {
+      "group": "4096_model_only_loader",
+      "missing_public_paths": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_bound_native4096.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_bound_dimensions.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_native4096_binding.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_native4096_numeric.py",
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py"
+      ],
+      "priority": "Dependency-complete selective source/test port only if needed for the selected compatible4096 consumer; no repeated model restore merely for discovery.",
+      "qualification": "Existing50controls, including3genuine retained CPU model-only restores/69tensors and9moment validations. No forward, source producer or training/optimizer-resume qualification."
+    },
+    {
+      "fresh_GitHub_commit_lookup_status": 422,
+      "group": "genuine8_and4096_supervisor_replay_successors",
+      "namespace_limit": "The completed135-taskLIRAE engineering board and its plan remain a separate historical/operational namespace. Do not replace the24scientificprogramme records or create a second maintained scientific queue.",
+      "priority": "Reuse completed genuine captures and original callbacks; selective source reconciliation, not re-encoding or wholesale worktree merge.",
+      "qualified_local_commit": "5ddceffb375e2f2defcb868c912885ef8c3430aa",
+      "receipt_remote_push_performed": false,
+      "selected_paths_absent_from_public353": [
+        "scripts/ops/legal_ir/replay_born_alive_width.py",
+        "scripts/ops/legal_ir/legal_ir_supervisor_contract.py",
+        "tests/unit/logic/test_born_alive_width_replay_contract.py",
+        "tests/unit/logic/test_born_alive_width_replay_owner.py",
+        "tests/unit/logic/test_legal_ir_width_replay_gate.py",
+        "ipfs_datasets_py/logic/autoformal/legal_ir_autoencoder_supervisor_plan.json",
+        "ipfs_datasets_py/logic/autoformal/LIRAE-TODO.md"
+      ]
+    }
+  ],
+  "schema": "legal-ir-reuse-and-corpus-plan-review/v1",
+  "scope": "Bounded metadata and selected existing artifact reconciliation; maintained plan update, not a new implementation, training campaign or task board.",
+  "selected_queue_owner_refresh": {
+    "current_authenticated_task_claim_authority": "unprovided_not_observed",
+    "current_four_queue_source_config_bytes_still_match_saved_generation": true,
+    "current_live_pilot_owner": "Unknown. No DB/RPC/credential/process query or task assignment was made. Historical fixed expected-CID completions do not authorize a new scientific-pilot claim.",
+    "database_uuid": "4c589646-c92d-400a-9ee7-633a72e9174e",
+    "namespace": "legal-ir-span-graph-lean-refinement-20261016",
+    "retired_sibling_compact_counted_source_and_guide_still_absent_in_selected_worktree": true,
+    "saved_observed_at_utc": "2026-10-22T02:25:26.855066+00:00",
+    "saved_projection_establishes_current_owner": false,
+    "saved_receipt_SHA256": "e42ffbad90e489dd78b960d59656ee770c2e5ee63a37350afd957053cfc2f8c7",
+    "saved_width_board_metadata_still456826B_SHA256": "47bfeead7ae0c673af8f7d3c17a76fd5f8767887d1580829d2ed768f47dac772",
+    "selected_worktree_counted_owner_still_old22999B_SHA256": "72501580048e73be95638c4d2d291ceaa5e026516b2d09ba8d747d5d356ccc31",
+    "store_id": "legal-ir-catalog02.duckdb",
+    "tasks": [
+      "LIR-0201",
+      "LIR-0202"
+    ]
+  },
+  "starting_public_revisions": {
+    "datasets": "353009c0be49ae7803222e409df782df66b73211",
+    "parent": "ba1a4216380a4e1e95e2b14771ac977265966cd9"
+  }
+}
