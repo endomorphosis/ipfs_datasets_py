@@ -1193,6 +1193,24 @@
         "normative-target-binding-current-main-20261022-01"
       ],
       "notes": "Preserves the original cached-target API. Adds pure normative 384D/768D fixed32 target inspection and source-only opening/closing preparation binding across the three existing normative contracts. Original 190/570 and 229/687 authored-fixture results remain historical; a separate current-main 229/687 cohort qualifies this selected source integration with nine newer public dependencies preserved. Null, OOV, overflow and unsupported labels remain evaluator-only. Per-file consistency does not qualify statutory meanings, producer execution, model quality, training eligibility or Lean authority. Usage: docs/guides/normative_cached_legal_ir_runtime.md#normative-target-inspection-apis."
+    },
+    {
+      "id": "compact-decoder-example",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_compact_decoder_example_v1.py",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_compact_decoder_example_v1",
+      "apis": [
+        "prepare_compact_decoder_example_v1",
+        "compact_decoder_example_sha256",
+        "validate_compact_decoder_example_v1"
+      ],
+      "required": true,
+      "status": "focused_tests_qualified",
+      "ownership_role": "existing_single_owner",
+      "evidence_ids": [
+        "compact-decoder-example-existing-qualification-20261017",
+        "compact-decoder-example-current-main-20261022-01"
+      ],
+      "notes": "Reuses the existing complete source-separated decoder-example companion and original test bytes. Preserves original model_input, separate target-derived content/context/identity labels, pending/null examples and zero masks. Original275-case qualification remains historical; fresh current-main03 passed275 cases/825 phases with ten explicit parameter-ID aliases and current public dependencies. No learned decoder/head, permitted inference context, source meaning, training eligibility, token savings or Lean authority. See docs/guides/legal_compact_decoder_example_v1.md."
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -1253,7 +1271,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-22T02:05:42.869034+00:00",
+  "last_updated_at_utc": "2026-10-22T02:55:37.760074+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2215,6 +2233,26 @@
       "required_for_catalog_check": false,
       "status": "fresh_current_main_authored_fixture_integration_qualified",
       "scope": "Fresh current-main 229 cases / 687 passed phases across the original ordered 71 selectors, 190 actual source files and 215 outer pins; three selected postimages and nine public successors preserved. 39 module origins / 41 compiled sources; no blocked operations or imports. Original source/native/storage closed with 5,623 files / 50,913,371 bytes retained. Original 190/570 and 229/687 fixture qualifications remain historical. Explicit native384/retained admission fixture doubles, admitted:false, cooperative sampled birth-bound custody and independent raw-payload review limits remain. No model/encoder execution, training/gold, reconstruction quality, legal meaning, service adoption or Lean qualification."
+    },
+    {
+      "id": "compact-decoder-example-existing-qualification-20261017",
+      "root": "artifact_workspace",
+      "path": "legal-ir-compact-example-20261017-01/qualification-summary.json",
+      "observed_bytes": 13627,
+      "observed_sha256": "7eaef5db078f8588d4fb81c05bf9b683f40202ee40a7dc0df86ee020d7fa17ca",
+      "required_for_catalog_check": false,
+      "status": "historical_engineering_qualification_reconciled",
+      "scope": "275 authored engineering cases:59 companion+216 existing,113 raw-source files compiled/executed. Exact current companion/test bytes match retained capture; later shared dependency generation is distinct. Original historical source/native/storage closeouts; no model/training/context permission, statutory review or Lean qualification."
+    },
+    {
+      "id": "compact-decoder-example-current-main-20261022-01",
+      "root": "datasets_repository",
+      "path": "docs/autoformalization/evidence/legal-ir-compact-decoder-example-current-main-20261022.json",
+      "observed_bytes": 10638,
+      "observed_sha256": "bea7fdc0f1c4145fb3bd18ba2451f62ec3202d33abc60885a1ee754510cb192b",
+      "required_for_catalog_check": false,
+      "status": "fresh_current_main_authored_fixture_integration_qualified",
+      "scope": "Fresh03:275 authored cases/825 passed phases,82 selectors,131 current sources/173 guards,110 loaded aliases and114 raw compiled/executed sources. Reuses exact original companion/test; historical275/113-source qualification stays separate. Ten readable parameter IDs preserve values/bodies. Both failed zero-case attempts preserved and independently closed; all11 successful files419,826 bytes retained, native/storage/source READ closed. Source input remains separate from target-derived labels. No model, training, inference-context permission, reconstruction quality, reviewed meaning, token savings or Lean authority."
     }
   ]
 }
