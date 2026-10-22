@@ -2,7 +2,8 @@
 
 `legal_compact_content_completion_budget_v1` is an additive, opt-in refinement
 of the existing lexical-scope selector. Historical token, selection, scope,
-training and role-runtime sources remain unchanged. This policy answers a narrow
+training and the original `role_trained_runtime_v1` owner remain unchanged.
+The existing budget consumer receives the additive API described below. This policy answers a narrow
 question: can a sound lower bound already rule out completion within the caller's
 remaining token allowance?
 
@@ -82,6 +83,57 @@ refusal to `status="budget_infeasible"`, retains final original decoding, and
 closes an allocated session on success and failure. Budget policy/source receipts
 are separate from unchanged training-grammar and checkpoint identities. Default
 routing and the historical v1 consumer remain unchanged.
+
+## Explicit BOS generation v2
+
+**Engineering qualification:** the [audited result](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-role-bos-generation-20261022-01/qualification-summary-v01.json)
+records 67 passed cases / 201 passed phases. Original source, native and storage
+custody closed for the successful cohort and all three retained failed attempts.
+
+The existing `legal_compact_content_role_budget_runtime_v1` owner adds an
+explicit operation:
+
+```python
+generate_from_bos_v2(
+    checkpoint, conditioning, context_raw, *,
+    expected_checkpoint_sha256, expected_policy_sha256,
+    expected_context_sha256, max_new_tokens, context_origin,
+)
+```
+
+It fixes the initial prefix to `[1]` and its origin to `bos_seed`. The required
+`max_new_tokens` is a plain integer in 1..511; EOS consumes one of those IDs.
+The codec retains 512 total IDs, including BOS/EOS, and 537 vocabulary entries.
+The report uses `legal-role-budget-content-generation/v2` and
+`bounded-bos-role-compact384-completion-budget-inference/v2`. The original
+`generate` keeps its 1..64 limit, schema, report and settings semantics.
+The whole report retains its original 16 MiB bound; oversized reports are
+refused. A larger allowance does not permit truncated traces or a larger report.
+
+Both public operations share one generation loop, intact role-checkpoint
+validation, the target-free serving projection and the original prepared-model
+lifetime. Checkpoint validation still reads exposed historical training targets.
+The new API receives no prefix, expected target or identity sidecar; supplied
+context can remain target-derived and must declare its origin. Required hashes,
+source fences, whole-prefix forwards, completion-policy checks, final decoding
+and failure cleanup retain their original owners.
+
+The new allowance can accommodate the retained 101-ID content shapes from BOS;
+it guarantees neither completion nor reconstruction. Generic prepared v3 consumes
+a different checkpoint type and is not a way to relabel the role checkpoint.
+This adds no counted grammar, native conditioning-space compatibility or new
+8D/768D/4096D decoder profile.
+
+The 67-case cohort contains 61 owning cases (18 retained and 43 added)
+and six existing policy regressions. The allowance 511 case emits 100 scripted
+IDs; this is not a 511-step observation. It uses genuine source-factory/pin checks,
+token/scope/completion-budget selection and typed decoding for a fictional 101-ID
+formula. Checkpoints, 537-score arrays, sessions and most outer-operation seams
+are authored simulations. These tests establish no actual model restore or
+forward, new training, statutory fidelity, graph or Lean admission. All three failed
+predecessors remain retained and unqualified, with their original custody closed.
+
+**Separate current-main integration:** [the fresh public-source qualification](../../../../../docs/autoformalization/evidence/legal-ir-bos-generation-v2-current-main-20261022.json) passed67 cases/201 phases with43 current sources/66 outer guards,30 raw compiled/executed bodies and29 module aliases. It reuses the exact original owner/test postimages and retains the original67-case result as a distinct generation. Original native/storage/source READ closed, retaining10 files/115,612bytes. Checkpoints, numerical sessions and score arrays remain authored controls; actual restores/forwards/training stay zero. At this public dependency generation, genuine prepared-v3 numerical dispatch still requires the separately identified compact/content batch and codec extension. Its guards remain intact; this capacity result supplies no full-runtime or legal reconstruction qualification.
 
 ## Validation and limits
 

@@ -680,14 +680,17 @@
     },
     {
       "apis": [
-        "generate"
+        "generate",
+        "generate_from_bos_v2"
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
-        "cp128-history"
+        "cp128-history",
+        "compact-role-bos-generation-v2-20261022-01",
+        "bos-generation-v2-current-main-20261022-01"
       ],
       "id": "compact-budget-generation",
-      "notes": "Budget completion was tested on two distinct exposed authored examples; exact reconstruction remained 0/2.",
+      "notes": "Budget completion was tested on two distinct exposed authored examples; exact reconstruction remained 0/2. Additive fixed-BOS v2 reuses this owner and loop, permits 1..511 new IDs under 512 total, and preserves original generate at 1..64. The finite 67-case/201-phase authored-controlflow and genuine source-factory/syntax-policy cohort passed with original custody closed. Allowance 511 emits 100 scripted IDs, not a 511-step observation; the whole report remains 16 MiB with overflow refusal. No actual model/checkpoint, new training or reconstruction result is supplied.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_role_budget_runtime_v1",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_budget_runtime_v1.py",
@@ -1211,6 +1214,84 @@
         "compact-decoder-example-current-main-20261022-01"
       ],
       "notes": "Reuses the existing complete source-separated decoder-example companion and original test bytes. Preserves original model_input, separate target-derived content/context/identity labels, pending/null examples and zero masks. Original275-case qualification remains historical; fresh current-main03 passed275 cases/825 phases with ten explicit parameter-ID aliases and current public dependencies. No learned decoder/head, permitted inference context, source meaning, training eligibility, token savings or Lean authority. See docs/guides/legal_compact_decoder_example_v1.md."
+    },
+    {
+      "apis": [
+        "plan_arbitrary_native_source_cache",
+        "validate_arbitrary_native_source_cache",
+        "producer_pins"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "arbitrary-native-cache-existing-pilot-20261011",
+        "existing-new-source-reuse-correction-20261021",
+        "selected-pilot-native384-source-preparation-20261021-01",
+        "selected-pilot-native768-source-preparation-20261022-01"
+      ],
+      "id": "arbitrary-native-source-cache",
+      "notes": "Already-existing numerical compatibility owner, indexed without source relocation or new execution. New input support does not expand output grammar or establish reviewed targets; original historical qualifications and custody limits remain separate.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_source_cache",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "required": true,
+      "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "prepare_arbitrary_native_legal_ir_runtime",
+        "open_arbitrary_native_legal_ir_autoencoder",
+        "source_owner_paths"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "arbitrary-native-cache-existing-pilot-20261011",
+        "existing-new-source-reuse-correction-20261021"
+      ],
+      "id": "arbitrary-native-legal-ir-runtime",
+      "notes": "Already-existing numerical compatibility owner, indexed without source relocation or new execution. New input support does not expand output grammar or establish reviewed targets; original historical qualifications and custody limits remain separate.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_legal_ir_runtime",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py",
+      "required": true,
+      "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "prepare_arbitrary_native_span_runtime",
+        "open_arbitrary_native_span_decoder",
+        "source_owner_paths"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "retained-pointer-cache-existing-pilot-20261011",
+        "existing-new-source-reuse-correction-20261021"
+      ],
+      "id": "arbitrary-native-span-runtime",
+      "notes": "Already-existing numerical compatibility owner, indexed without source relocation or new execution. New input support does not expand output grammar or establish reviewed targets; original historical qualifications and custody limits remain separate.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_span_runtime",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "required": true,
+      "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "build_compact_content_token_codec_v1",
+        "compact_content_token_codec_sha256",
+        "encode_compact_content_tokens_v1",
+        "compact_content_allowed_token_ids_v1",
+        "decode_compact_content_tokens_v1"
+      ],
+      "evidence_ids": [
+        "compact-content-token-existing-intake-20261017"
+      ],
+      "id": "compact-content-tokens",
+      "notes": "Existing fixed537-entry content codec with512-total-ID profile. Retained101-ID section7213 alternatives need100 new IDs from BOS; the original role/budget v1 cap64 is separate from explicit BOS-v2 allowance1..511. Original272-case intake uses target-derived context and encoded authored labels, no numerical model. Exact owner/test bytes match; historical generation/closeout limits preserved. See docs/guides/legal_compact_content_tokens_v1.md.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_tokens_v1",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_tokens_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -1271,7 +1352,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-22T03:23:05.673175+00:00",
+  "last_updated_at_utc": "2026-10-22T04:10:07.616166+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2263,6 +2344,86 @@
       "required_for_catalog_check": false,
       "status": "bounded_metadata_and_existing_evidence_planning_review",
       "scope": "Reconciles selected existing artifacts and publication gaps across8/384/768/4096; records unchanged three Hub heads and service-current heterogeneous counts/sample caveats. No new numerical, legal-meaning, runtime, training or Lean qualification; current live task claim unknown. Existing24 tasks unchanged; original receipts, embeddings, checkpoints and failures reused."
+    },
+    {
+      "id": "arbitrary-native-cache-existing-pilot-20261011",
+      "observed_bytes": 38009,
+      "observed_sha256": "789319de306b69934efaa0d844e6c5e80ca3f87e08a8c6ba9731948ce41be3ba",
+      "path": "docs/autoencoders/evidence/arbitrary-native-cache-20261011-01/manifest.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Existing source-bound384/768 contract; actual8native384encodings and16normative candidates,0updates. EOS/canonicalization are not semantic accuracy; exact admitted-review byte gap preserved.",
+      "status": "historical_executed_pilot_unqualified_legal_fidelity"
+    },
+    {
+      "id": "retained-pointer-cache-existing-pilot-20261011",
+      "observed_bytes": 97973,
+      "observed_sha256": "d9ee4e054f3632069b85d8e85a1bc565b4a957b4d2ea2d1cad000b2d7a4e21af",
+      "path": "docs/autoencoders/evidence/retained-pointer-cache-20261011-01/manifest.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Existing raw384/source-only pointer route;2heads x4controls x8sources=64dispositions,8unaccepted proposals and56overlap refusals.0encoder calls/updates; temporary restoration optimizer constructed. No legal/Lean admission.",
+      "status": "historical_executed_pilot_unqualified_legal_fidelity"
+    },
+    {
+      "id": "existing-new-source-reuse-correction-20261021",
+      "observed_bytes": 35833,
+      "observed_sha256": "4c4122b5864d8fd81711d832db69d14bc4417aa5c78e3b4bcab0ded18f9a5103",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-06/existing-new-source-reuse.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "3existing owners and2original manifests,4selected receipt bodies hash-matched. Broad missing-source-adapter claim withdrawn; no model/cache payload replay or runtime qualification.",
+      "status": "metadata_and_selected_receipt_review_only"
+    },
+    {
+      "id": "selected-pilot-native384-source-preparation-20261021-01",
+      "observed_bytes": 26993,
+      "observed_sha256": "5dfaf4a293a557e76bcc55197d2474258c1d14a65eb589955b6ba63f28440fe1",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/source-native-preparation-v01/observation-summary-v01.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Two exact local-derived historical candidates encoded by unchanged original native384 producer:2unique inputs/4aliases,51/47tokens,ready2/refused0,CPUfloat32/no truncation.53source/environment pins; original source/native/storage custody closed. Two failed attempts remain unqualified and preserved after original storage recovery. Compatible isolated library stack observed only for these inputs, no full historical runtime equivalence. Reuse existing source-cache/runtime and peer retained384/768catalog declarations; complete vocabulary/counting/whole-target and legal source/meaning gates remain unresolved. No decoder/training/gold/Lean qualification.",
+      "status": "passed_independent_saved_review"
+    },
+    {
+      "id": "compact-content-token-existing-intake-20261017",
+      "observed_bytes": 119096,
+      "observed_sha256": "2f389d9abc762621be10ec534ce2664633617c4d209cc0d1e629886fead94c97",
+      "path": "legal-ir-compact-decoder-intake-20261017-01/saved-result-readback.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "272 authored cases:92 token+109 content+71 relational;94 raw-source files compiled/executed. Two exposed section7213 alternatives/onephysicaloccurrence, each99lexical/101framedIDs/275contentbytes/2003contextbytes. Encoded-target replay and target-derivedcontext, not learned output. Historical group-only closeouts and later dependency-generation limits remain; no new qualification.",
+      "status": "historical_engineering_qualification_reconciled"
+    },
+    {
+      "id": "selected-pilot-native768-source-preparation-20261022-01",
+      "observed_bytes": 11703,
+      "observed_sha256": "eacef109b1486cb7cd9de7edfa45a708908f1df130cf9f67154f4d1d440bcbf6",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-selected-native768-sources-20261022-01/qualification-summary-v03.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Two exact local-derived heading-prefixed7213/7214 source vectors, complete138 CPU512 guarded producer and local-derived SourceSpan cache replay.100 authored cases/300phases include diagnostic doubles; native production is separate. No decoder/training/meaning/Lean qualification.",
+      "status": "bounded_native_source_preparation_and_authored_engineering_qualified"
+    },
+    {
+      "id": "compact-role-bos-generation-v2-20261022-01",
+      "observed_bytes": 119683,
+      "observed_sha256": "d0e1361a247d53dbe9744528ddde987136ff980d9615050fc68bfea85a58418d",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-role-bos-generation-20261022-01/qualification-summary-v01.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "67 passed cases / 201 phases: 61 owning (18 retained + 43 added) and six existing policy regressions. Genuine source-factory pin/origin checks and fictional 101-ID token/scope/budget/typed-decoding trajectories; fixed BOS v2 accepts 1..511 while original v1 stays 1..64, with unchanged 16 MiB whole-report bound and overflow refusal. Allowance 511 emits 100 scripted IDs, not 511 observed steps. Checkpoints/sessions/scores and most outer-operation seams are authored simulations; actual model restores/forwards zero, new training zero. All three failed predecessors retained and original source/native/storage closed for every attempt. 27 frozen files / 50 outer pins, 25 module origins / 26 compiled bodies; nine sealed artifacts / 110,564 bytes. No checkpoint/native conditioning-space compatibility, statutory fidelity, graph or Lean authority; masks zero.",
+      "status": "passed_independent_saved_review"
+    },
+    {
+      "id": "bos-generation-v2-current-main-20261022-01",
+      "root": "datasets_repository",
+      "path": "docs/autoformalization/evidence/legal-ir-bos-generation-v2-current-main-20261022.json",
+      "observed_bytes": 22331,
+      "observed_sha256": "abb4ef50f46c30e7b34a51d70a67e143687cfc00d4cc03bbab67ec5670b24040",
+      "required_for_catalog_check": false,
+      "status": "fresh_current_main_authored_fixture_integration_qualified",
+      "scope": "Fresh67cases/201phases,30selectors,43current sources/66outerguards,30raw compiled+executed bodies29modulealiases. Exact original2BOS source/test postimages and original8481Bguide reused; preserved public thinpytest. FixedBOS accepts1..511 under512total; oldgenerate1..64 and16MiBreport unchanged. Allowance511 emits100scripted IDs. No actual model restores/forwards/training/Lean, semantic quality or context permission. Original native/storage/sourceREAD fullyclosed;10retainedfiles115612B. Four already-public source/test owners indexed with six direct evidence rows only. Separate preparedbatch/codec source gap and peer native768 inputs retained, no reencoding."
     }
   ]
 }
