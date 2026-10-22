@@ -1271,7 +1271,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-22T02:55:37.760074+00:00",
+  "last_updated_at_utc": "2026-10-22T03:23:05.673175+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2253,6 +2253,16 @@
       "required_for_catalog_check": false,
       "status": "fresh_current_main_authored_fixture_integration_qualified",
       "scope": "Fresh03:275 authored cases/825 passed phases,82 selectors,131 current sources/173 guards,110 loaded aliases and114 raw compiled/executed sources. Reuses exact original companion/test; historical275/113-source qualification stays separate. Ten readable parameter IDs preserve values/bodies. Both failed zero-case attempts preserved and independently closed; all11 successful files419,826 bytes retained, native/storage/source READ closed. Source input remains separate from target-derived labels. No model, training, inference-context permission, reconstruction quality, reviewed meaning, token savings or Lean authority."
+    },
+    {
+      "id": "reuse-and-corpus-plan-review-20261022-01",
+      "root": "datasets_repository",
+      "path": "docs/autoformalization/evidence/legal-ir-reuse-and-corpus-plan-review-20261022.json",
+      "observed_bytes": 22502,
+      "observed_sha256": "9a865d0bcb7c4a4f96e1d43ae2c07263f6ad929dea7c2743cde010bc319cfbee",
+      "required_for_catalog_check": false,
+      "status": "bounded_metadata_and_existing_evidence_planning_review",
+      "scope": "Reconciles selected existing artifacts and publication gaps across8/384/768/4096; records unchanged three Hub heads and service-current heterogeneous counts/sample caveats. No new numerical, legal-meaning, runtime, training or Lean qualification; current live task claim unknown. Existing24 tasks unchanged; original receipts, embeddings, checkpoints and failures reused."
     }
   ]
 }
