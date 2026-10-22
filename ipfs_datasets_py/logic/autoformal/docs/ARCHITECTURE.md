@@ -39,6 +39,21 @@ The work catalog describes current filesystem owners and attributed evidence, wi
 
 ## Numerical implementation reuse
 
+
+The separate [bound native4096 loader](../../../optimizers/logic_theorem_optimizer/legal_span_bound_native4096.py)
+reuses the existing [native binding](../../../optimizers/logic_theorem_optimizer/legal_span_native4096_binding.py)
+and [numerical owner](../../../optimizers/logic_theorem_optimizer/legal_span_native4096_numeric.py),
+with the [dimensional](../../../optimizers/logic_theorem_optimizer/legal_span_bound_dimensions.py),
+[context](../../../optimizers/logic_theorem_optimizer/legal_span_context_binding.py) and
+[CPU restore](../../../optimizers/logic_theorem_optimizer/legal_span_dimensions_cpu_inference.py)
+dependencies. `load_bound_inference_checkpoint` validates a raw-pinned intact
+model file without live training batches; it restores internally and returns
+detached JSON, with no optimizer, forward or native capability. The existing
+[bound-training guide](guides/legal_source_span_bound_training.md#bound-native4096-model-only-checkpoint-loading)
+documents this distinct profile. The [portable publication observation](../../../../docs/autoformalization/evidence/legal-ir-bound4096-publication-20261022.json)
+separates historical 47-plus-three model-only qualification from any fresh
+public-checkout contract results; neither grants source/meaning or Lean authority.
+
 Compact content/role training and serving owners live under `ipfs_datasets_py.optimizers.logic_theorem_optimizer`. `legal_compact_content_role_trained_runtime_v1.score_prefixes` is the already-used bounded immutable score API. Preserve the selected checkpoint, source profile and original lifecycle observations rather than copy its model into a run directory.
 
 `decoder_distillation_experiment_v2.bind_persistent_model` already implements `every_step` and matched `first_step` injection. `contextual_legal_ir_numeric` already restores a retained contextual model using persistent conditioning. These are different checkpoint/codec/input profiles from compact537 CP128. Reuse their implementation under an explicitly compatible profile; equal input width does not make a checkpoint interchangeable.
