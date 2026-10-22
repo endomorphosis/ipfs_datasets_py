@@ -1,10 +1,10 @@
-"""Evaluation-only canonical target coverage for existing cached 384D assets.
+"""Evaluation-only target coverage for cached cells and declared normative labels.
 
-This stdlib preflight never loads a model, fits a vocabulary or changes assets.
-It mirrors two source-pinned lexical codecs, without invoking their native
-grammar validators. Coverage is necessary for that canonical encoding only;
-it establishes neither native validity, numerical runtime compatibility nor
-source fidelity. Cached gold targets belong solely to this evaluator.
+These stdlib evaluators never load models, fit vocabularies or change assets.
+Cached cell profiles retain their original source-pinned codec contracts. The
+normative branch inspects declared labels against the inherited fixed32 codec.
+Coverage establishes no native grammar, numerical compatibility, source fidelity
+or reviewed legal meaning. Targets remain solely inside evaluation.
 """
 from __future__ import annotations
 
@@ -16,6 +16,8 @@ import re
 
 from . import ir_cell_routing as routing
 from . import ir_cell_runtime as runtime
+from . import authored_scalar_holdout as authored
+from . import normative_legal_ir_runtime as normative
 
 SCHEMA = "ir-cell-cached-target-compatibility/v1"
 MAX_TARGET_BYTES = 512 * 1024  # Evaluator bound; not a Legal producer/token-budget claim.
@@ -297,4 +299,321 @@ def preflight_ir_cell_cached_targets(directory_plan_pin, inventory_pins, request
         raise TargetCompatibilityError("malformed target codec evaluation binding") from error
 
 
-__all__ = ["SCHEMA", "TargetCompatibilityError", "preflight_ir_cell_cached_targets"]
+NORMATIVE_REQUEST_SCHEMA = "normative-legal-ir-target-inspection-request/v1"
+NORMATIVE_SCHEMA = "normative-legal-ir-target-inspection/v1"
+MAX_NORMATIVE_REQUEST_BYTES = 2 * 1024 * 1024
+MAX_NORMATIVE_ROWS = 64
+_NORMATIVE_CODEC_SHA256 = "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2"
+# These identify existing input contracts, not new routes or authenticated assets.
+_NORMATIVE_CONTRACTS = (
+    "normative-selected-cached-legal-ir/v1",
+    "normative-retained-source-cache-legal-ir/v1",
+    "arbitrary-native-source-cache-legal-ir/v1",
+)
+
+
+def _normative_request(raw, expected):
+    _require(type(raw) is bytes and 0 < len(raw) <= MAX_NORMATIVE_REQUEST_BYTES,
+             "bounded exact normative inspection bytes required")
+    _require(runtime._hash(expected) and hashlib.sha256(raw).hexdigest() == expected,
+             "independent normative inspection request SHA256 differs")
+    value = json.loads(raw.decode("utf-8"), object_pairs_hook=routing._pairs,
+                       parse_float=routing._float, parse_constant=routing._constant)
+    # Bound complete JSON before canonicalization; reject lone Unicode surrogates.
+    pending, nodes = [(value, 0)], 0
+    while pending:
+        item, depth = pending.pop()
+        nodes += 1
+        _require(depth <= 64 and nodes <= 100_000, "normative inspection JSON exceeds structural bound")
+        if type(item) is str:
+            item.encode("utf-8")
+        elif type(item) is dict:
+            pending.extend((child, depth + 1) for pair in item.items() for child in pair)
+        elif type(item) is list:
+            pending.extend((child, depth + 1) for child in item)
+    _require(type(value) is dict and set(value) == {"schema", "decoder_request", "rows"}
+             and value["schema"] == NORMATIVE_REQUEST_SCHEMA, "closed normative inspection request required")
+    request = value["decoder_request"]
+    _require(type(request) is dict and request.get("decoder_contract_id") in _NORMATIVE_CONTRACTS,
+             "existing normative decoder contract declaration required")
+    normative._validate_request(request, _decoder_contract_id=request["decoder_contract_id"])
+    _require(request["ir_family_id"] == "legal_ir" and type(request["dimension"]) is int
+             and request["dimension"] in (384, 768) and request["dimension_role"] == "input_embedding"
+             and request["task_id"] == "semantic_IR_reconstruction" and runtime._hash(request["checkpoint_sha256"]),
+             "exact normative family, width, role, task and declared checkpoint SHA256 required")
+    rows = value["rows"]
+    _require(type(rows) is list and 1 <= len(rows) <= MAX_NORMATIVE_ROWS,
+             "one to 64 normative target rows required")
+    identifiers = set()
+    for row in rows:
+        _require(type(row) is dict and set(row) == {"id", "source_sha256", "canonical_ir"},
+                 "closed normative evaluation row required; runtime inputs remain separate")
+        runtime._text(row["id"], 512, "normative evaluation row id")
+        _require(row["id"] not in identifiers, "duplicate normative evaluation row id")
+        identifiers.add(row["id"])
+        _require(runtime._hash(row["source_sha256"]), "declared exact source SHA256 required")
+        target = row["canonical_ir"]
+        _require(target is None or type(target) is dict, "normative target must be a JSON object or null")
+        _require(target is None or len(_raw(target)) <= MAX_TARGET_BYTES,
+                 "normative target exceeds evaluator byte bound")
+    return value
+
+
+def _normative_target_shape(target):
+    """A restricted declaration fragment, not the inherited native recognizer.
+
+    Eight source/scalar slots are not a claim that native syntax ends at eight
+    rules. Role vocabularies and qualifier meanings are deliberately unassessed.
+    No target is normalized, flattened, sorted, deduplicated or repaired.
+    """
+    if set(target) != {"rules"} or type(target["rules"]) is not list:
+        return False
+    if not 1 <= len(target["rules"]) <= 8:
+        return False
+    for rule in target["rules"]:
+        if type(rule) is not dict or set(rule) != set(_FIELDS):
+            return False
+        for field in _FIELDS:
+            values = rule[field] if field in _FIELDS[4:] else [rule[field]]
+            if type(values) is not list:
+                return False
+            try:
+                for atom in values:
+                    _legal_atom(field, atom)
+            except TargetCompatibilityError:
+                return False
+    return True
+
+
+def inspect_normative_legal_ir_targets(request_raw: bytes, *, expected_request_sha256: str):
+    """Inspect complete supplied labels against the fixed normative32 codec.
+
+    This pure, evaluation-only API opens no paths, models, caches or network.
+    The independent request hash pins caller-supplied bytes only. Checkpoint and
+    source hashes are declarations: their payloads, physical occurrences, saved
+    transforms, runtime bindings, producer execution and legal review are NOT
+    authenticated. All supplied labels remain unreviewed; null stays pending.
+
+    Lexical coverage and complete BOS/EOS-inclusive length are independent of
+    the restricted seven-facet declaration shape and of native grammar. Every
+    selected row remains in order, including unsupported shapes and overflow.
+    """
+    try:
+        value = _normative_request(request_raw, expected_request_sha256)
+        vocabulary = tuple(normative._VOCABULARY)
+        # Reuse the actual historical encoder/canonicalizer, not its stricter
+        # TRAIN role bank. No numerical dependency is imported or invoked.
+        _require(vocabulary == tuple(authored.VOCABULARY) and len(vocabulary) == 32,
+                 "inherited normative codec inventories differ")
+        codec = {"schema": "typed-json-lexical/v1", "target_vocabulary": list(vocabulary)}
+        codec_sha = hashlib.sha256(authored.raw(codec)).hexdigest()
+        _require(codec_sha == _NORMATIVE_CODEC_SHA256, "fixed normative32 codec identity differs")
+        rows = []
+        for row in value["rows"]:
+            target = row["canonical_ir"]
+            result = dict(id=row["id"], source_sha256=row["source_sha256"],
+                source_identity_scope="caller_declared_hash_only", source_binding_verified=False,
+                target_sha256=None, target_digest_encoding="json-sort-compact-ensure_ascii-true/v1",
+                status="pending", reason="label_absent", lexical_encoding_covered=None, target_shape_supported=None,
+                token_count_including_bos_eos=None, lexical_token_count=None,
+                canonical_token_sequence_sha256=None, over_limit=None, missing_tokens=[],
+                native_grammar_verified=False, field_roles_verified=False, reviewed_target=False, target_inspection_scope="evaluation_only")
+            if target is not None:
+                target_raw = authored.raw(target)
+                lexical = _TOKEN.findall(target_raw.decode("utf-8"))
+                _require("".join(lexical).encode("utf-8") == target_raw,
+                         "complete normative target lexical analysis differs")
+                tokens = ["<bos>", *lexical, "<eos>"]
+                missing = [{"position": index, "token": token} for index, token in enumerate(tokens)
+                           if token not in vocabulary]
+                over = len(tokens) > 512
+                covered = not missing and not over
+                shape = _normative_target_shape(target)
+                result.update(target_sha256=hashlib.sha256(target_raw).hexdigest(),
+                    status="unsupported" if not shape else "covered" if covered else "incompatible",
+                    reason="outside_inspection_shape_profile" if not shape else None if covered else "fixed_codec_oov_or_output_limit",
+                    lexical_encoding_covered=covered, target_shape_supported=shape,
+                    token_count_including_bos_eos=len(tokens), lexical_token_count=len(lexical),
+                    over_limit=over, missing_tokens=missing,
+                    canonical_token_sequence_sha256=hashlib.sha256(_raw(tokens)).hexdigest())
+                if covered:
+                    # This is only the exact pure lexical encode/roundtrip; it
+                    # does not call a native grammar or inspect source meaning.
+                    ids = authored._encode(target, codec)
+                    _require(ids == [vocabulary.index(token) for token in tokens],
+                             "inherited normative lexical encoder differs")
+            rows.append(result)
+        return deepcopy(dict(schema=NORMATIVE_SCHEMA, request_sha256=expected_request_sha256,
+            request_bytes=len(request_raw), decoder_request=value["decoder_request"],
+            codec_profile=dict(schema=codec["schema"], codec_sha256=codec_sha, vocabulary_size=32,
+                vocabulary_changed=False, max_target_tokens=512, token_count_includes_bos_eos=True,
+                target_shape_profile="flat-seven-facet-declarations-one-to-eight-rules/v1",
+                qualifier_values="string_lists_preserved_without_normalization",
+                inherited_native_grammar_verified=False),
+            rows=rows, counts=dict(selected=len(rows),
+                covered=sum(row["status"] == "covered" for row in rows),
+                incompatible=sum(row["status"] == "incompatible" for row in rows),
+                unsupported=sum(row["status"] == "unsupported" for row in rows),
+                pending=sum(row["status"] == "pending" for row in rows),
+                with_oov=sum(bool(row["missing_tokens"]) for row in rows),
+                over_limit=sum(row["over_limit"] is True for row in rows)),
+            authority={**_AUTHORITY, "checkpoint_binding_verified": False, "source_binding_verified": False,
+                "preprocessing_binding_verified": False, "runtime_bindings_verified": False,
+                "reviewed_targets_established": False, "semantic_representability_verified": False},
+            model_load_performed=False, inference_executed=False, targets_forwarded_to_model=False,
+            file_io_performed=False, network_executed=False, source_payloads_replayed=False,
+            evaluation_scope="Caller-declared inputs and unreviewed labels only; fixed lexical codec and complete output budget. No source/checkpoint replay, native grammar, numerical compatibility, review, training eligibility or Lean admission."))
+    except TargetCompatibilityError:
+        raise
+    except (ValueError, TypeError, KeyError, UnicodeError, OverflowError, RecursionError) as error:
+        raise TargetCompatibilityError("malformed normative target inspection binding: " + str(error)) from error
+
+
+BOUND_NORMATIVE_SCHEMA = "normative-legal-ir-bound-target-inspection/v1"
+_RUNTIME_COMMON_OPTIONS = {"checkpoint_pin", "preprocessing_pin", "donor_checkpoint_pin",
+                           "source_owner_pins", "row_ids"}
+_RUNTIME_SOURCE_OPTIONS = {
+    _NORMATIVE_CONTRACTS[0]: {"source_inputs_pin", "source_contexts_pin"},
+    _NORMATIVE_CONTRACTS[1]: {"source_cache_pin", "source_plan_pin", "production_pin"},
+    _NORMATIVE_CONTRACTS[2]: {"source_cache_pin", "source_requests_pin", "native384_receipt_refs",
+                             "native768_report_refs", "source_artifact_pins"},
+}
+_RUNTIME_SOURCE_SCOPES = (
+    "original_saved_source_cache_rows",
+    "retained48_source_native_cache_rows",
+    "explicit_new_source_span_occurrences_and_native_record_consistency",
+)
+
+
+def _normative_runtime_options(value, expected, contract):
+    """Detach a pinned, bounded, plain JSON source-only preparation packet."""
+    _require(runtime._hash(expected), "independent canonical runtime options SHA256 required")
+    _require(type(value) is dict, "source-only runtime options object required")
+    required = _RUNTIME_COMMON_OPTIONS | _RUNTIME_SOURCE_OPTIONS[contract]
+    _require(len(value) <= len(required) + 2, "closed source-only runtime options required")
+    _require(required <= set(value) <= required | {"deadline_seconds", "max_reference_bytes"},
+             "closed source-only runtime options required; targets/request/extra fields forbidden")
+    pending, nodes, string_bytes = [(value, 0)], 0, 0
+    while pending:
+        item, depth = pending.pop()
+        nodes += 1
+        _require(depth <= 64 and nodes <= 100_000, "runtime options exceed structural bound")
+        _require(type(item) in (dict, list, str, int, float, bool, type(None)), "plain JSON runtime options required")
+        if type(item) is str:
+            _require(len(item) <= MAX_NORMATIVE_REQUEST_BYTES, "runtime option string exceeds bound")
+            string_bytes += len(item.encode("utf-8"))
+            _require(string_bytes <= MAX_NORMATIVE_REQUEST_BYTES, "runtime option strings exceed aggregate bound")
+        elif type(item) is dict:
+            _require(2 * len(item) <= 100_000 - nodes - len(pending), "runtime options exceed structural bound")
+            _require(all(type(key) is str for key in item), "exact string runtime option keys required")
+            pending.extend((child, depth + 1) for pair in item.items() for child in pair)
+        elif type(item) is list:
+            _require(len(item) <= 100_000 - nodes - len(pending), "runtime options exceed structural bound")
+            pending.extend((child, depth + 1) for child in item)
+    raw = _raw(value, ascii=False)
+    _require(len(raw) <= MAX_NORMATIVE_REQUEST_BYTES and runtime._hash(expected)
+             and hashlib.sha256(raw).hexdigest() == expected,
+             "independent canonical runtime options SHA256 differs or options exceed byte bound")
+    return json.loads(raw), raw
+
+
+def _prepare_normative_target_binding(request, options):
+    contract = request["decoder_contract_id"]
+    if contract == _NORMATIVE_CONTRACTS[0]:
+        prepare = normative.prepare_normative_legal_ir_runtime
+    elif contract == _NORMATIVE_CONTRACTS[1]:
+        from . import normative_cached_legal_ir_runtime as cached
+        prepare = cached.prepare_normative_cached_legal_ir_runtime
+    else:
+        from . import arbitrary_native_legal_ir_runtime as arbitrary
+        prepare = arbitrary.prepare_arbitrary_native_legal_ir_runtime
+    # Every call receives a fresh source-only packet; labels are never arguments.
+    packet = deepcopy(options)
+    declared = deepcopy(request)
+    result = prepare(declared, **packet)
+    _require(_raw(packet, ascii=False) == _raw(options, ascii=False)
+             and _raw(declared) == _raw(request), "preparation mutated its source-only arguments")
+    return result
+
+
+def preflight_normative_legal_ir_targets(request_raw: bytes, *, expected_request_sha256: str,
+        runtime_options, expected_runtime_options_sha256: str):
+    """Bind fixed-codec inspection to genuine opening/closing runtime preparation.
+
+    Runtime options use compact, sorted, ensure_ascii=False UTF8 JSON for their
+    independent expected digest. Existing preparation owners replay the selected
+    assets and source-only caches; no model is opened. Targets remain evaluator
+    inputs. Mechanical binding does not authenticate law/edition, meanings,
+    reviewer decisions, producer execution, numerical quality or Lean admission.
+    """
+    try:
+        selected = _normative_request(request_raw, expected_request_sha256)
+        request = selected["decoder_request"]
+        contract = request["decoder_contract_id"]
+        options, options_raw = _normative_runtime_options(runtime_options, expected_runtime_options_sha256, contract)
+        identifiers = [row["id"] for row in selected["rows"]]
+        _require(type(options["row_ids"]) is list and options["row_ids"] == identifiers,
+                 "inspection rows must exactly match selected runtime IDs and order")
+        live_opening = _prepare_normative_target_binding(request, options)
+        _require(type(live_opening) is dict, "prepared normative plan object required")
+        opening_raw = _raw(live_opening, ascii=False)
+        opening = json.loads(opening_raw)
+        _require(type(opening) is dict and _raw(opening["request"]) == _raw(request)
+                 and opening["row_ids"] == identifiers and opening["decoder_contract_id"] == contract,
+                 "prepared normative request or ordered row binding differs")
+        receipts = opening["row_receipts"]
+        sources = opening["source_inputs"]["rows"]
+        _require(type(receipts) is list and type(sources) is list
+                 and len(receipts) == len(sources) == len(identifiers), "complete prepared row population required")
+        for row, receipt, source in zip(selected["rows"], receipts, sources):
+            _require(receipt["id"] == source["id"] == row["id"]
+                     and receipt["source_sha256"] == row["source_sha256"]
+                     == hashlib.sha256(source["source_text"].encode("utf-8")).hexdigest(),
+                     "selected source text SHA256 or occurrence ID differs")
+        # Do not re-run generic source validation here: the arbitrary owner
+        # preserves distinct physical occurrences even when prose is identical.
+        inspection = inspect_normative_legal_ir_targets(
+            request_raw, expected_request_sha256=expected_request_sha256)
+        _require(opening["codec_sha256"] == inspection["codec_profile"]["codec_sha256"]
+                 and hashlib.sha256(_raw(opening["codec"])).hexdigest() == _NORMATIVE_CODEC_SHA256
+                 and type(opening["budgets"]["decoder_output_tokens"]) is int
+                 and opening["budgets"]["decoder_output_tokens"] == 512
+                 and opening["artifact_receipts"]["checkpoint"]["sha256"] == request["checkpoint_sha256"],
+                 "prepared checkpoint, frozen codec or complete output budget differs")
+        closing = _prepare_normative_target_binding(request, options)
+        _require(_raw(closing, ascii=False) == opening_raw, "runtime binding changed during target inspection")
+        _require(_raw(live_opening, ascii=False) == opening_raw, "opening preparation plan mutated during inspection")
+        _require(_raw(options, ascii=False) == options_raw, "captured runtime options changed during inspection")
+        selected_fields = ("artifact_receipts", "source_owner_receipts", "row_receipts", "codec_sha256",
+                           "model_tensor_sha256", "input_transform_sha256", "saved_preprocessing_sha256",
+                           "complete_runtime_io_contract", "input_contract", "decoder_contract", "consistency_scope")
+        binding = {name: deepcopy(opening[name]) for name in selected_fields}
+        binding.update(runtime_plan_schema=opening["schema"], decoder_contract_id=contract,
+            runtime_plan_sha256=hashlib.sha256(opening_raw).hexdigest(),
+            runtime_plan_digest_encoding="json-sort-compact-ensure_ascii-false/v1",
+            runtime_options_sha256=expected_runtime_options_sha256,
+            runtime_options_digest_encoding="json-sort-compact-ensure_ascii-false/v1",
+            source_binding_scope=_RUNTIME_SOURCE_SCOPES[_NORMATIVE_CONTRACTS.index(contract)],
+            source_text_bytes_matched=True, selected_order_matched=True,
+            physical_source_span_contract=contract == _NORMATIVE_CONTRACTS[2],
+            source_artifact_receipts=deepcopy(opening.get("source_artifact_receipts")),
+            source_cache_binding=deepcopy(opening.get("source_cache_binding")),
+            historical_evidence_receipts=deepcopy(opening.get("historical_evidence_receipts")),
+            historical_evidence_link_counts=deepcopy(opening.get("historical_evidence_link_counts")),
+            historical_evidence_policy=deepcopy(opening.get("historical_evidence_policy")))
+        return deepcopy(dict(schema=BOUND_NORMATIVE_SCHEMA, inspection=inspection, runtime_binding=binding,
+            counts=inspection["counts"], opening_and_closing_preparations_matched=True,
+            source_only_preparation_calls=2, targets_forwarded_to_preparation=False,
+            targets_forwarded_to_model=False, model_load_performed=False, inference_executed=False,
+            runtime_assets_read_by_existing_preparation=True,
+            authority={**_AUTHORITY, "producer_execution_authenticated": False, "legal_source_edition_authenticated": False,
+                       "reviewed_targets_established": False, "semantic_representability_verified": False},
+            evaluation_scope="Existing runtime asset/source-byte consistency plus fixed lexical target inspection. Per-file and repeated endpoint fences, not an atomic snapshot. No reviewed target/source meaning, producer attestation, numerical quality, training eligibility or Lean admission."))
+    except TargetCompatibilityError:
+        raise
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError, UnicodeError, OverflowError, RecursionError) as error:
+        raise TargetCompatibilityError("cannot bind normative target inspection: " + str(error)) from error
+
+__all__ = ["SCHEMA", "NORMATIVE_SCHEMA", "NORMATIVE_REQUEST_SCHEMA", "TargetCompatibilityError",
+           "preflight_ir_cell_cached_targets", "inspect_normative_legal_ir_targets",
+           "BOUND_NORMATIVE_SCHEMA", "preflight_normative_legal_ir_targets"]

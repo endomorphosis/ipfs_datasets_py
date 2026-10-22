@@ -123,3 +123,130 @@ comparison found 48/48 exact token/status/EOS agreement with each same-state
 archived exposed-v3 prediction file. These are replay results, not new gold or
 legal-prose scores. Source/result evidence is retained in the workspace's
 `artifacts/normative-retained-cache-runtime-20261007` contribution.
+
+## Normative target inspection APIs
+
+The existing `logic/formalization/autoencoder/ir_cell_target_compatibility.py`
+now exposes `inspect_normative_legal_ir_targets`, also delegated by
+`checkpoint_hub`. It adds pure fixed-codec inspection for declared normative
+384D/768D requests; `preflight_ir_cell_cached_targets` retains its original
+source-pinned 384D cell contracts. No source cache or runtime was replaced.
+The [historical original 190-case qualification](../../../../../docs/autoformalization/evidence/legal-ir-normative-target-binding-current-main-20261022.json)
+passed 190 cases / 570 phases: 131 existing owner cases and 59 new cases. The
+first collection attempt ran zero cases because its frozen source list omitted
+the genuine IPFS router availability probe. The retry added that source only;
+all product/test bytes and case selections remained unchanged. Original source,
+native and storage custody closed for both attempts; failed logs remain retained.
+
+### In-memory fixed-codec inspection
+
+Pass exact UTF8 JSON bytes and an independently expected raw SHA256. The closed
+request contains `schema`, `decoder_request` and `rows`:
+
+```python
+request = {
+    "schema": "normative-legal-ir-target-inspection-request/v1",
+    "decoder_request": selected_normative_request,
+    "rows": [
+        {"id": occurrence_id, "source_sha256": declared_source_sha256,
+         "canonical_ir": independently_supplied_target_or_none},
+    ],
+}
+report = checkpoint_hub.inspect_normative_legal_ir_targets(
+    request_raw, expected_request_sha256=expected_request_sha256,
+)
+```
+
+`selected_normative_request` is the existing closed seven-field declaration:
+family `legal_ir`, exact integer 384/768, role `input_embedding`, task
+`semantic_IR_reconstruction`, declared checkpoint SHA256, one of the three
+existing normative decoder contract IDs and recipe `normative-wording-zero`
+or `normative-wording-ce`. The inspector opens no files, runtime, model or
+network. The outer raw hash pins supplied request bytes; source/checkpoint
+hashes remain unverified declarations. Saved transforms, source occurrence,
+producer execution, exposure grouping and review are not authenticated here.
+Source text, vectors and expected targets never enter an inference call.
+
+The report reuses the original lexical encoder and exact 32-token codec hash.
+Whole quoted statutory atoms remain whole tokens: no character/subword fallback
+or vocabulary fitting occurs. Complete token counts include BOS/EOS and the
+fixed 512-ID budget; overflow is reported without truncation. Numeric, Boolean
+and null tokens inside a nonnull target are retained as OOV evidence rather
+than silently skipped. Duplicate JSON keys, nonfinite numbers, invalid UTF8,
+changed raw pins, extra request/row fields and duplicate IDs refuse. Bounds are
+2 MiB per request, 64 rows, 512 KiB per nonnull label, depth 64 and 100,000 nodes.
+
+Every selected row remains in order. `pending` means a null label; `unsupported`
+means outside the declared one-to-eight-rule/seven-facet shape; `incompatible`
+means a supported shape with OOV or overflow; `covered` means the inspected
+shape and lexical encoding fit. Lexical coverage, complete length and shape
+support are separate fields even for unsupported targets. Distinct IDs sharing
+a source hash remain distinct declarations, not proof of distinct physical uses.
+Known words swapped between roles, and nonempty or unsorted/duplicate qualifier
+strings, can be lexically covered. Qualifier order is preserved. Field-role
+meaning and inherited native grammar remain unverified; eight source/scalar
+slots do not assert that native syntax ends at eight rules. All labels remain
+unreviewed and all training, quality, producer, runtime and proof authority flags
+remain false. No checkpoint loading, inference or training ran in this cohort.
+
+### Runtime-bound fixed-codec inspection
+
+`preflight_normative_legal_ir_targets` in the same compatibility owner, also
+exposed by `checkpoint_hub`, binds the unchanged inspection request to existing
+source-only runtime preparation. Pass the exact pinned inspection bytes plus a
+closed `runtime_options` JSON object and its independently expected canonical
+SHA256. Canonical options bytes use sorted keys, compact separators,
+`ensure_ascii=False`, `allow_nan=False` and UTF8. The wrapper bounds options to
+2 MiB, depth 64 and 100,000 nodes before detaching them.
+
+```python
+report = checkpoint_hub.preflight_normative_legal_ir_targets(
+    request_raw,
+    expected_request_sha256=expected_request_sha256,
+    runtime_options=source_only_options,
+    expected_runtime_options_sha256=expected_options_sha256,
+)
+```
+
+Reuse the selected existing preparation owner's options, with its `request`
+argument removed. All profiles require `checkpoint_pin`, `preprocessing_pin`,
+`donor_checkpoint_pin`, `source_owner_pins` and ordered `row_ids`. The original
+saved-source profile additionally takes `source_inputs_pin` and
+`source_contexts_pin`; the retained-cache profile takes `source_cache_pin`,
+`source_plan_pin` and `production_pin`; the arbitrary-source profile takes
+`source_cache_pin`, `source_requests_pin`, `native384_receipt_refs`,
+`native768_report_refs` and `source_artifact_pins`. Only `deadline_seconds` and
+`max_reference_bytes` are optional. Labels, `request` and extra fields refuse.
+The corresponding decoder contract IDs are
+`normative-selected-cached-legal-ir/v1`,
+`normative-retained-source-cache-legal-ir/v1` and
+`arbitrary-native-source-cache-legal-ir/v1`, respectively.
+
+The wrapper calls the genuine selected public preparer twice, bracketing pure
+inspection, and requires identical complete plans. It binds ordered occurrence
+IDs, exact source-text hashes, selected checkpoint, saved preprocessing, owner
+receipts and the fixed32 codec/512-ID output budget. It returns a detached
+metadata report without source text, vectors or source-input packets. All target
+rows and diagnostic counts survive unchanged, including null, OOV, overflow and
+unsupported rows. Targets never enter preparation or model inputs. Mutation of
+preparation arguments or the returned opening plan refuses.
+
+Source custody remains profile-specific: original and retained source-cache
+rows do not acquire the arbitrary profile's physical-span contract. The arbitrary
+profile preserves explicit artifact/request/offset occurrence bindings, including
+distinct occurrences with identical prose. Retained historical evidence receipts
+and link policy keep their existing consistency scope. Source/native record
+consistency does not attest encoder execution. Repeated endpoint and per-file
+fences are not an atomic multi-file snapshot.
+
+The [historical original 229-case binding qualification](../../../../../docs/autoformalization/evidence/legal-ir-normative-target-binding-current-main-20261022.json)
+records 229 cases / 687 passed phases, comprising the existing
+190 controls and 39 added cases. Fixtures exercise all three genuine
+public preparation routes. Arbitrary cache planning/validation and physical
+source reads are genuine; native384 record admission alone uses declared
+fixture records. Retained-cache historical native admission also uses its
+existing fixture double. The qualification receipt preserves both failed attempts, the dependency-manifest
+fix and the exact receipt-only privacy-assertion correction. No encoder attestation, retained-asset numerical result,
+model restore/forward, optimizer update or legal review follows from these tests.
+
+**Separate current-main integration, 2026-10-22:** the [new current-main run](../../../../../docs/autoformalization/evidence/legal-ir-normative-target-binding-current-main-20261022.json) passed **229 cases / 687 phases** over the same ordered authored fixture population. It used 190 actual selected-checkout source files, preserved nine newer public successors and checked 215 outer source pins. Original source READ, native resources and storage closed after verified cleanup. This is a new source integration result; the historical 190/570 and 229/687 results above retain their original generations. It adds no model reconstruction score, encoder attestation, reviewed statutory target, training eligibility or Lean authority.

@@ -275,6 +275,20 @@ def preflight_ir_cell_cached_targets(directory_plan_pin, inventory_pins, request
         row_ids=row_ids, max_reference_bytes=max_reference_bytes)
 
 
+def inspect_normative_legal_ir_targets(request_raw: bytes, *, expected_request_sha256: str):
+    """Inspect declared normative labels in memory, without runtime/asset replay."""
+    from .ir_cell_target_compatibility import inspect_normative_legal_ir_targets as inspect
+    return inspect(request_raw, expected_request_sha256=expected_request_sha256)
+
+
+def preflight_normative_legal_ir_targets(request_raw: bytes, *, expected_request_sha256: str,
+        runtime_options, expected_runtime_options_sha256: str):
+    """Bind evaluation-only labels to existing source-only runtime preparation."""
+    from .ir_cell_target_compatibility import preflight_normative_legal_ir_targets as preflight
+    return preflight(request_raw, expected_request_sha256=expected_request_sha256,
+        runtime_options=runtime_options, expected_runtime_options_sha256=expected_runtime_options_sha256)
+
+
 def open_ir_original_corpus_autoencoder(directory_plan_pin, inventory_pins, request, *, package_manifest_pin,
         corpus_pin, corpus_split, row_ids, max_reference_bytes=512 * 1024 * 1024):
     """Opt in to exact original Intent/Security package corpus replay.
