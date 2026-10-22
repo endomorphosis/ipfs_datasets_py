@@ -88,3 +88,48 @@ The enclosing workspace's
 `artifacts/legal-source-span-bound-training-20261016-01/` records input-boundary
 qualification separately from the tiny numerical continuation fixture. Synthetic
 fixture updates do not advance the scientific training frontier.
+
+## Bound native4096 model-only checkpoint loading
+
+The separate [bound native4096 owner](../../../../optimizers/logic_theorem_optimizer/legal_span_bound_native4096.py)
+provides `load_bound_inference_checkpoint(path, *, expected_sha256)` for an
+intact `bound-native4096-source-span-checkpoint/v1` file. It needs no live
+training or tuning batches. Obtain the expected **raw file SHA256** from the
+independently retained checkpoint descriptor; this differs from the canonical
+checkpoint-content digest and includes the original file formatting.
+
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_bound_native4096 import (
+    load_bound_inference_checkpoint,
+)
+
+checkpoint = load_bound_inference_checkpoint(
+    checkpoint_path, expected_sha256=expected_raw_file_sha256,
+)
+```
+
+The loader restores the model internally to validate the complete weights,
+source-parent lineage and named optimizer moments, then returns detached
+checkpoint JSON. It returns no model handle, constructs or resumes no Adam or
+other optimizer, and performs no forward, backward, update or native encoder
+operation. The original checkpoint bytes, progress and caller CPU RNG remain
+protected. File intake retains its canonical-parent, single-link regular-file,
+64MiB bound and opening/closing identity checks; altered implementation or
+lineage commitments refuse rather than relabel the checkpoint.
+
+The historical retained-state qualification used CPU float32 and
+**Torch2.9.1+cpu from the selected virtual environment**. Its 50 cases comprise
+47 inert loader-contract controls and three genuine retained restorations;
+those three restored 69 tensors and performed nine named-moment validations.
+A different runtime is a separate compatibility question. This historical
+scope does not qualify every helper API or all five complete owning test files.
+The [portable publication observation](../../../../../docs/autoformalization/evidence/legal-ir-bound4096-publication-20261022.json)
+records the selected public source/test generation and any fresh contract
+qualification separately from those historical model observations.
+
+Returned JSON does not restore execution authority. `decode_bound_sources`
+still requires a freshly issued live native4096 capability and independently
+pinned source/producer/receipt inputs. A saved receipt cannot replace that
+capability. This loader supplies no new training, source compatibility,
+reconstruction-quality, statutory-meaning, graph or Lean admission.
+
