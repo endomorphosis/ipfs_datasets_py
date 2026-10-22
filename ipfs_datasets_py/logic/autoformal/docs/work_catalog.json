@@ -1397,7 +1397,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-22T06:16:37.464074+00:00",
+  "last_updated_at_utc": "2026-10-22T18:08:44.073491+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2489,6 +2489,16 @@
       "root": "datasets_repository",
       "scope": "Failed v03 preflight, rc1/completedfalse: genuine canonical11-field recipe/.local origin/post-bootstrap RNG fields match, but one unidentified read was refused. Actual model/restore/forward/Adam/training denial counters0 and observers restored.209 guarded product files/219 outer guards are not an execution denominator; origin/body-count export absent. All three failed generations and original closeouts preserved, including later selected storage release and complete4-file inventory. No zero-operations, preflight/runtime/source/model/reconstruction/binary/legal/training/graph/Lean qualification.",
       "status": "failed_preflight_retained_runtime_fields_reviewed"
+    },
+    {
+      "id": "cp128-runtime-preflight-20261022-01",
+      "observed_bytes": 19485,
+      "observed_sha256": "13dd4502f9cb8a582e123c2dd88ac30a9649979b29ab81c4f00af54166ffe8f5",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-runtime-preflight-20261022.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Proper v05 passed declared-runtime-only gate: genuine11 fields/.local origin/RNG match, zero blocked/model/restore/forward/Adam/training attempts and restored observers. Actual completed BufferLoader paths/aliases 66/66 under209 product/220 outer guards. One exact Beartype package metadata admission; original full source/native/storage/inventory closed. Oldfailed row/portable/all3failures immutable, stagedv04 diagnostic preserved. No full-source/binary-cache/fresh-clone/checkpoint/parity/conditioning/context/100-ID report/legal/Lean qualification.",
+      "status": "passed_declared_runtime_preflight_original_closeout"
     }
   ]
 }
