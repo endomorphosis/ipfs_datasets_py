@@ -1398,7 +1398,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-22T05:24:56.037930+00:00",
+  "last_updated_at_utc": "2026-10-22T17:46:52.647534+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2480,6 +2480,16 @@
       "root": "datasets_repository",
       "scope": "351 passed pytest cases/1053 phases/114 selectors;105 raw compiled/executed bodies107 aliases118 sources150 guards. Two expected historical JUnit properties and12 sibling payloads independently reviewed. Original wrapperrc1 remains failed; no rerun or manufactured success result. Original native/source plus selected original-owner128MiB storage closeout verified. Six existing source/test bytes and two owner entries;259-entry codec distinct537 head, declarations8/384/768only. No model/training/context permission/legal/graph/Lean authority.",
       "status": "fresh_pytest_passed_retained_metadata_reviewed_wrapper_failed"
+    },
+    {
+      "id": "cp128-runtime-recipe-observation-20261022-01",
+      "observed_bytes": 21664,
+      "observed_sha256": "646f8a5f0037f0a0f54b1806f624078233415e0bf63aef86ac7b7bd5eaf10346",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-runtime-recipe-20261022.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Failed v03 preflight, rc1/completedfalse: genuine canonical11-field recipe/.local origin/post-bootstrap RNG fields match, but one unidentified read was refused. Actual model/restore/forward/Adam/training denial counters0 and observers restored.209 guarded product files/219 outer guards are not an execution denominator; origin/body-count export absent. All three failed generations and original closeouts preserved, including later selected storage release and complete4-file inventory. No zero-operations, preflight/runtime/source/model/reconstruction/binary/legal/training/graph/Lean qualification.",
+      "status": "failed_preflight_retained_runtime_fields_reviewed"
     },
     {
       "id": "native768-source-api-current-main-20261022-01",
