@@ -1,0 +1,2394 @@
+{
+  "IR_family": "legal_ir",
+  "accepted_cohort_review": {
+    "bytes": 16867,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/audit/independent-cohort-review-v01.json",
+    "sha256": "8808c3c927b614687ec988148f42d2aa1f1e4acd53720e0da2e0f9abd1c6496b"
+  },
+  "accepted_cohort_summary": {
+    "bytes": 247966,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/audit/cohort-summary-v01.json",
+    "sha256": "1c52712317a0f4e0c7ed4a3cec62661c6a58aaeba10f2234746d2af9dadc7ada"
+  },
+  "actual_analysis_CLI": {
+    "exit_code": 0,
+    "final_tool_chunk": "eb2038",
+    "session": 75491
+  },
+  "actual_analysis_invocation": {
+    "bytes": 1339,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-saved-conditioning-trace-actual-invocation-v02.json",
+    "sha256": "edaea3b33d24467206badc48ab5053eae807379255cb9363003cda18c7672247"
+  },
+  "actual_control_review": {
+    "bytes": 2203,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-saved-conditioning-trace-root-source-review-v02.json",
+    "sha256": "faf3df55e49e417c89250589728cbe06d55958d2ddebd5b2dcb612126f93fde9"
+  },
+  "analysis": {
+    "bytes": 636877,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-saved-conditioning-trace-analysis-v02.json",
+    "sha256": "c197d159d10dd714b8360e9285d2511c4f3b9c9a88b8d79621f088a45f177b9f"
+  },
+  "analysis_control": {
+    "bytes": 29784,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/controls/analyze_cp128_saved_conditioning_traces_v02.py",
+    "sha256": "157616d0a8ce161a8f1e4368c2cf8dc6198e41beb26c75b8aedbbb5ab171805c"
+  },
+  "authority": {
+    "Lean": false,
+    "causal_conditioning_benefit": false,
+    "convergence": false,
+    "full_norm_reconstruction": false,
+    "graph": false,
+    "heldout_gold": false,
+    "legal_meaning": false,
+    "native_GTE_compatibility": false,
+    "prose_reconstruction": false,
+    "saturation": false,
+    "semantic_improvement": false
+  },
+  "case_files": [
+    {
+      "checkpoint_sha256": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+      "conditioning_sha256": "8580d6fd40155b911362eb2b53d47eb66121d1f18af83b14cd86f354a545140b",
+      "context_raw_sha256": "4e8ef56892ea48e243821c05121229e58741d618183332ed9e68c7c66eba8eeb",
+      "job_id": "cp128-warmstart-full537-step-1",
+      "report": {
+        "bytes": 17732483,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-full537-step-1/exports/case-cp128-warmstart-full537-step-1-row-0.json",
+        "sha256": "553b5b41b61b137f94b8f3d37239027663dd39ec1d38cc8ea7fb0378e8aad6d2"
+      },
+      "row_id": "fictional-retention",
+      "row_index": 0,
+      "scores_per_position": 537,
+      "trace_positions": 100
+    },
+    {
+      "checkpoint_sha256": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+      "conditioning_sha256": "53fa6c194264d11fdd3021c4af82ddf8893d9efc78fd7ab19a714f4a29ad19ad",
+      "context_raw_sha256": "111986f25b29e34fdaf87932a90a602350211edca695073ede5db354d8068bb1",
+      "job_id": "cp128-warmstart-full537-step-1",
+      "report": {
+        "bytes": 17733186,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-full537-step-1/exports/case-cp128-warmstart-full537-step-1-row-1.json",
+        "sha256": "66cde4bfb3e4a0f22abc8ea41c4ba389fb56cfa46d60d8ccf8a2dcf373242aeb"
+      },
+      "row_id": "fictional-inspection",
+      "row_index": 1,
+      "scores_per_position": 537,
+      "trace_positions": 100
+    },
+    {
+      "checkpoint_sha256": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+      "conditioning_sha256": "8580d6fd40155b911362eb2b53d47eb66121d1f18af83b14cd86f354a545140b",
+      "context_raw_sha256": "4e8ef56892ea48e243821c05121229e58741d618183332ed9e68c7c66eba8eeb",
+      "job_id": "cp128-warmstart-scope-conditional-step-1",
+      "report": {
+        "bytes": 17733195,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-scope-conditional-step-1/exports/case-cp128-warmstart-scope-conditional-step-1-row-0.json",
+        "sha256": "fd772ce6c67efdecff38012fe18a593ae1ad37b33a9bfd4b35851ad6f15a7f47"
+      },
+      "row_id": "fictional-retention",
+      "row_index": 0,
+      "scores_per_position": 537,
+      "trace_positions": 100
+    },
+    {
+      "checkpoint_sha256": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+      "conditioning_sha256": "53fa6c194264d11fdd3021c4af82ddf8893d9efc78fd7ab19a714f4a29ad19ad",
+      "context_raw_sha256": "111986f25b29e34fdaf87932a90a602350211edca695073ede5db354d8068bb1",
+      "job_id": "cp128-warmstart-scope-conditional-step-1",
+      "report": {
+        "bytes": 17733827,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-scope-conditional-step-1/exports/case-cp128-warmstart-scope-conditional-step-1-row-1.json",
+        "sha256": "2d21cfb488b0f761507463ed5ebdbe409a8615b2219ef8d5d1dce684c01bdefe"
+      },
+      "row_id": "fictional-inspection",
+      "row_index": 1,
+      "scores_per_position": 537,
+      "trace_positions": 100
+    },
+    {
+      "checkpoint_sha256": "3e1e528d0009b37f7608928f0af4a177f1ba3b43e08ef97e55d95c9de252fd8d",
+      "conditioning_sha256": "8580d6fd40155b911362eb2b53d47eb66121d1f18af83b14cd86f354a545140b",
+      "context_raw_sha256": "4e8ef56892ea48e243821c05121229e58741d618183332ed9e68c7c66eba8eeb",
+      "job_id": "cp128-warmstart-full537-step-2",
+      "report": {
+        "bytes": 17735486,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-full537-step-2/exports/case-cp128-warmstart-full537-step-2-row-0.json",
+        "sha256": "c6fe2b681aa314d99c0247adc82a1fa3ed6f3a91f51b97231e2ecb583be89428"
+      },
+      "row_id": "fictional-retention",
+      "row_index": 0,
+      "scores_per_position": 537,
+      "trace_positions": 100
+    },
+    {
+      "checkpoint_sha256": "3e1e528d0009b37f7608928f0af4a177f1ba3b43e08ef97e55d95c9de252fd8d",
+      "conditioning_sha256": "53fa6c194264d11fdd3021c4af82ddf8893d9efc78fd7ab19a714f4a29ad19ad",
+      "context_raw_sha256": "111986f25b29e34fdaf87932a90a602350211edca695073ede5db354d8068bb1",
+      "job_id": "cp128-warmstart-full537-step-2",
+      "report": {
+        "bytes": 17735819,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-full537-step-2/exports/case-cp128-warmstart-full537-step-2-row-1.json",
+        "sha256": "38fd4db9fe9b4868ae824dbeca1e0a38675ab47d5b56e18d802b903fbecb1b06"
+      },
+      "row_id": "fictional-inspection",
+      "row_index": 1,
+      "scores_per_position": 537,
+      "trace_positions": 100
+    },
+    {
+      "checkpoint_sha256": "afcf33352fd849ca95c70a893ccb7b9e9cf76638fb1a6a75b9402f37db47786a",
+      "conditioning_sha256": "8580d6fd40155b911362eb2b53d47eb66121d1f18af83b14cd86f354a545140b",
+      "context_raw_sha256": "4e8ef56892ea48e243821c05121229e58741d618183332ed9e68c7c66eba8eeb",
+      "job_id": "cp128-warmstart-scope-conditional-step-2",
+      "report": {
+        "bytes": 17732660,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-scope-conditional-step-2/exports/case-cp128-warmstart-scope-conditional-step-2-row-0.json",
+        "sha256": "f5a628ad9e374a2f873f04f245c74a27a9ab3cdf8db344454f4a29ec3d306887"
+      },
+      "row_id": "fictional-retention",
+      "row_index": 0,
+      "scores_per_position": 537,
+      "trace_positions": 100
+    },
+    {
+      "checkpoint_sha256": "afcf33352fd849ca95c70a893ccb7b9e9cf76638fb1a6a75b9402f37db47786a",
+      "conditioning_sha256": "53fa6c194264d11fdd3021c4af82ddf8893d9efc78fd7ab19a714f4a29ad19ad",
+      "context_raw_sha256": "111986f25b29e34fdaf87932a90a602350211edca695073ede5db354d8068bb1",
+      "job_id": "cp128-warmstart-scope-conditional-step-2",
+      "report": {
+        "bytes": 17733035,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-scope-conditional-step-2/exports/case-cp128-warmstart-scope-conditional-step-2-row-1.json",
+        "sha256": "e389ad029977294033f8fbd877699ba3b628b21ef50a030f48457770f01f2dc9"
+      },
+      "row_id": "fictional-inspection",
+      "row_index": 1,
+      "scores_per_position": 537,
+      "trace_positions": 100
+    }
+  ],
+  "centered_metric_definition": "For each paired prefix subtract its mean raw537 delta from every coordinate; aggregate RMS pools these per-prefix centered squared deltas.",
+  "centered_nonzero_prefix_pairs": 160,
+  "conditioning_dimension": 384,
+  "context_numerical_input_source_proof": [
+    {
+      "bytes": 20786,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_warmstart_runtime_v1.py",
+      "sha256": "6711203ecbc0b063afaed3a51e35940f61c05cee80f6240f937e0f394e36b771"
+    },
+    {
+      "bytes": 53267,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_prepared_runtime_v3.py",
+      "sha256": "a7d7cedfa482537ac76a9ccf9a49a79f6108e89268b02ca3b355abcfe774ec1e"
+    },
+    {
+      "bytes": 35427,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_latent_formula.py",
+      "sha256": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36"
+    }
+  ],
+  "cross_row_pair_prefix_denominator": 400,
+  "cross_row_pairs": [
+    {
+      "BOS_RMS_centered_score_delta": 0.00011894752525564197,
+      "RMS_centered_score_delta": 1.6009754080554298e-05,
+      "RMS_raw_score_delta": 1.601046488945515e-05,
+      "adjacent_RMS_decreases": 34,
+      "adjacent_RMS_increases": 6,
+      "adjacent_centered_RMS_decreases": 34,
+      "adjacent_centered_RMS_increases": 6,
+      "checkpoint_sha256": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+      "compared_prefixes": 100,
+      "compared_raw_coordinates": 53700,
+      "comparison_kind": "same_checkpoint_cross_authored_row_at_identical_prefix",
+      "context_is_not_direct_neural_input": true,
+      "decay_is_observed_not_assumed": true,
+      "equal_grammar_allowed_sets": 100,
+      "exact_equal_coordinates": 36018,
+      "final_RMS_centered_score_delta": 0.0,
+      "final_to_BOS_RMS_ratio": 0.0,
+      "final_to_BOS_centered_RMS_ratio": 0.0,
+      "fixed_position_windows": [
+        {
+          "RMS_centered_score_delta": {
+            "count": 1,
+            "maximum": 0.00011894752525564197,
+            "mean": 0.00011894752525564197,
+            "minimum": 0.00011894752525564197
+          },
+          "RMS_raw_score_delta": {
+            "count": 1,
+            "maximum": 0.00011895230403302042,
+            "mean": 0.00011895230403302042,
+            "minimum": 0.00011895230403302042
+          },
+          "aggregate_RMS_centered_score_delta": 0.00011894752525564197,
+          "first_prefix_length": 1,
+          "grammar_selection_agreements": 1,
+          "last_prefix_length": 1,
+          "maximum_absolute_centered_score_delta": 0.0003470115994885425,
+          "maximum_absolute_raw_score_delta": 0.00034618377685546875,
+          "mean_raw_score_delta": {
+            "count": 1,
+            "maximum": -1.0662412121753232e-06,
+            "mean": -1.0662412121753232e-06,
+            "minimum": -1.0662412121753232e-06
+          },
+          "prefixes": 1,
+          "raw_argmax_agreements": 1
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 4,
+            "maximum": 7.745451203781607e-05,
+            "mean": 4.798328965395076e-05,
+            "minimum": 2.8495712473661493e-05
+          },
+          "RMS_raw_score_delta": {
+            "count": 4,
+            "maximum": 7.745764926018813e-05,
+            "mean": 4.798578767855978e-05,
+            "minimum": 2.8496715708093373e-05
+          },
+          "aggregate_RMS_centered_score_delta": 5.1580916911770744e-05,
+          "first_prefix_length": 2,
+          "grammar_selection_agreements": 4,
+          "last_prefix_length": 5,
+          "maximum_absolute_centered_score_delta": 0.00022758865686382215,
+          "maximum_absolute_raw_score_delta": 0.0002282857894897461,
+          "mean_raw_score_delta": {
+            "count": 4,
+            "maximum": -2.391166374559065e-07,
+            "mean": -4.766302909233529e-07,
+            "minimum": -7.027515502441917e-07
+          },
+          "prefixes": 4,
+          "raw_argmax_agreements": 4
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 5,
+            "maximum": 1.9572362907074202e-05,
+            "mean": 1.1568594583640012e-05,
+            "minimum": 3.89282628523484e-06
+          },
+          "RMS_raw_score_delta": {
+            "count": 5,
+            "maximum": 1.9572410756380686e-05,
+            "mean": 1.1568874016449533e-05,
+            "minimum": 3.892840009365886e-06
+          },
+          "aggregate_RMS_centered_score_delta": 1.2872722610299408e-05,
+          "first_prefix_length": 6,
+          "grammar_selection_agreements": 5,
+          "last_prefix_length": 10,
+          "maximum_absolute_centered_score_delta": 4.3363803806862126e-05,
+          "maximum_absolute_raw_score_delta": 4.340708255767822e-05,
+          "mean_raw_score_delta": {
+            "count": 5,
+            "maximum": 4.327875081609303e-08,
+            "mean": -3.286304270581549e-08,
+            "minimum": -1.6280376544010651e-07
+          },
+          "prefixes": 5,
+          "raw_argmax_agreements": 5
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 15,
+            "maximum": 2.9399592065633437e-06,
+            "mean": 5.319070460053013e-07,
+            "minimum": 5.481922691126237e-08
+          },
+          "RMS_raw_score_delta": {
+            "count": 15,
+            "maximum": 2.940004241734385e-06,
+            "mean": 5.319329600673253e-07,
+            "minimum": 5.4836976674054985e-08
+          },
+          "aggregate_RMS_centered_score_delta": 8.865890725987516e-07,
+          "first_prefix_length": 11,
+          "grammar_selection_agreements": 15,
+          "last_prefix_length": 25,
+          "maximum_absolute_centered_score_delta": 6.845711894746127e-06,
+          "maximum_absolute_raw_score_delta": 6.861984729766846e-06,
+          "mean_raw_score_delta": {
+            "count": 15,
+            "maximum": 1.6272835020718184e-08,
+            "mean": 3.6344304228278688e-09,
+            "minimum": -2.2459268791937517e-10
+          },
+          "prefixes": 15,
+          "raw_argmax_agreements": 15
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 5.656351335289223e-08,
+            "mean": 2.0004969073573013e-08,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 5.6564580104844e-08,
+            "mean": 2.0023974027695092e-08,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 2.7792043167894343e-08,
+          "first_prefix_length": 26,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 50,
+          "maximum_absolute_centered_score_delta": 2.416027657812534e-07,
+          "maximum_absolute_raw_score_delta": 2.384185791015625e-07,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 3.18418667969091e-09,
+            "mean": 1.1773285277368191e-10,
+            "minimum": -3.999310720788256e-09
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 0.0,
+          "first_prefix_length": 51,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 75,
+          "maximum_absolute_centered_score_delta": 0.0,
+          "maximum_absolute_raw_score_delta": 0.0,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 0.0,
+          "first_prefix_length": 76,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 100,
+          "maximum_absolute_centered_score_delta": 0.0,
+          "maximum_absolute_raw_score_delta": 0.0,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        }
+      ],
+      "full_prefix_matrix_hashes_not_recomputed": true,
+      "grammar_selection_agreements": 100,
+      "job_id": "cp128-warmstart-full537-step-1",
+      "left_case": {
+        "bytes": 17732483,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-full537-step-1/exports/case-cp128-warmstart-full537-step-1-row-0.json",
+        "sha256": "553b5b41b61b137f94b8f3d37239027663dd39ec1d38cc8ea7fb0378e8aad6d2"
+      },
+      "left_forced_single_allowed_token_prefixes": 79,
+      "left_raw_argmax_grammar_allowed": 0,
+      "left_raw_argmax_selected": 0,
+      "left_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24707984924316406,
+        "mean": 0.09535633385181427,
+        "minimum": 0.0013889074325561523
+      },
+      "maximum_absolute_centered_score_delta": 0.0003470115994885425,
+      "maximum_absolute_raw_score_delta": 0.00034618377685546875,
+      "mean_raw_score_delta": {
+        "count": 100,
+        "maximum": 4.327875081609303e-08,
+        "mean": -3.079617811736052e-08,
+        "minimum": -1.0662412121753232e-06
+      },
+      "objective_kind": "full537",
+      "prefixes_with_any_raw_score_difference": 40,
+      "progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 1,
+        "row_cursor": 1
+      },
+      "raw_argmax_agreements": 100,
+      "right_case": {
+        "bytes": 17733186,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-full537-step-1/exports/case-cp128-warmstart-full537-step-1-row-1.json",
+        "sha256": "66cde4bfb3e4a0f22abc8ea41c4ba389fb56cfa46d60d8ccf8a2dcf373242aeb"
+      },
+      "right_forced_single_allowed_token_prefixes": 79,
+      "right_raw_argmax_grammar_allowed": 0,
+      "right_raw_argmax_selected": 0,
+      "right_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24707984924316406,
+        "mean": 0.09535633563995362,
+        "minimum": 0.0013889074325561523
+      },
+      "source_encoder_authenticated": false
+    },
+    {
+      "BOS_RMS_centered_score_delta": 0.00012255386636398534,
+      "RMS_centered_score_delta": 1.6493031862318593e-05,
+      "RMS_raw_score_delta": 1.649308162522553e-05,
+      "adjacent_RMS_decreases": 33,
+      "adjacent_RMS_increases": 5,
+      "adjacent_centered_RMS_decreases": 33,
+      "adjacent_centered_RMS_increases": 5,
+      "checkpoint_sha256": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+      "compared_prefixes": 100,
+      "compared_raw_coordinates": 53700,
+      "comparison_kind": "same_checkpoint_cross_authored_row_at_identical_prefix",
+      "context_is_not_direct_neural_input": true,
+      "decay_is_observed_not_assumed": true,
+      "equal_grammar_allowed_sets": 100,
+      "exact_equal_coordinates": 37141,
+      "final_RMS_centered_score_delta": 0.0,
+      "final_to_BOS_RMS_ratio": 0.0,
+      "final_to_BOS_centered_RMS_ratio": 0.0,
+      "fixed_position_windows": [
+        {
+          "RMS_centered_score_delta": {
+            "count": 1,
+            "maximum": 0.00012255386636398534,
+            "mean": 0.00012255386636398534,
+            "minimum": 0.00012255386636398534
+          },
+          "RMS_raw_score_delta": {
+            "count": 1,
+            "maximum": 0.00012255397902889682,
+            "mean": 0.00012255397902889682,
+            "minimum": 0.00012255397902889682
+          },
+          "aggregate_RMS_centered_score_delta": 0.00012255386636398534,
+          "first_prefix_length": 1,
+          "grammar_selection_agreements": 1,
+          "last_prefix_length": 1,
+          "maximum_absolute_centered_score_delta": 0.0003574364185610741,
+          "maximum_absolute_raw_score_delta": 0.0003572702407836914,
+          "mean_raw_score_delta": {
+            "count": 1,
+            "maximum": 1.661777773826926e-07,
+            "mean": 1.661777773826926e-07,
+            "minimum": 1.661777773826926e-07
+          },
+          "prefixes": 1,
+          "raw_argmax_agreements": 1
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 4,
+            "maximum": 7.985118331379705e-05,
+            "mean": 4.93991194914251e-05,
+            "minimum": 2.936862188148266e-05
+          },
+          "RMS_raw_score_delta": {
+            "count": 4,
+            "maximum": 7.985120539198339e-05,
+            "mean": 4.939935579709694e-05,
+            "minimum": 2.9368670906808693e-05
+          },
+          "aggregate_RMS_centered_score_delta": 5.3114647209004814e-05,
+          "first_prefix_length": 2,
+          "grammar_selection_agreements": 4,
+          "last_prefix_length": 5,
+          "maximum_absolute_centered_score_delta": 0.00023353122325624502,
+          "maximum_absolute_raw_score_delta": 0.00023359060287475586,
+          "mean_raw_score_delta": {
+            "count": 4,
+            "maximum": -1.825048636776886e-08,
+            "mean": -1.0841552159892918e-07,
+            "minimum": -3.0236993786259735e-07
+          },
+          "prefixes": 4,
+          "raw_argmax_agreements": 4
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 5,
+            "maximum": 2.0211994925652224e-05,
+            "mean": 1.1962487896018459e-05,
+            "minimum": 4.017452492657414e-06
+          },
+          "RMS_raw_score_delta": {
+            "count": 5,
+            "maximum": 2.021241111132287e-05,
+            "mean": 1.1962769757567439e-05,
+            "minimum": 4.017456247581395e-06
+          },
+          "aggregate_RMS_centered_score_delta": 1.3308745203288543e-05,
+          "first_prefix_length": 6,
+          "grammar_selection_agreements": 5,
+          "last_prefix_length": 10,
+          "maximum_absolute_centered_score_delta": 4.409693883475284e-05,
+          "maximum_absolute_raw_score_delta": 4.4226646423339844e-05,
+          "mean_raw_score_delta": {
+            "count": 5,
+            "maximum": 1.2970758858700482e-07,
+            "mean": -2.558007198984233e-09,
+            "minimum": -1.453240428057463e-07
+          },
+          "prefixes": 5,
+          "raw_argmax_agreements": 5
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 15,
+            "maximum": 3.009879309268315e-06,
+            "mean": 5.36228517438951e-07,
+            "minimum": 4.413858064147393e-08
+          },
+          "RMS_raw_score_delta": {
+            "count": 15,
+            "maximum": 3.009883161797121e-06,
+            "mean": 5.36246420433846e-07,
+            "minimum": 4.4141138590414e-08
+          },
+          "aggregate_RMS_centered_score_delta": 9.045639040991767e-07,
+          "first_prefix_length": 11,
+          "grammar_selection_agreements": 15,
+          "last_prefix_length": 25,
+          "maximum_absolute_centered_score_delta": 7.098381541100516e-06,
+          "maximum_absolute_raw_score_delta": 7.103197276592255e-06,
+          "mean_raw_score_delta": {
+            "count": 15,
+            "maximum": 6.320463143136471e-09,
+            "mean": 4.6132145635089956e-10,
+            "minimum": -5.987801483279056e-09
+          },
+          "prefixes": 15,
+          "raw_argmax_agreements": 15
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 4.424147629586855e-08,
+            "mean": 1.2624333333276328e-08,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 4.4249558398149075e-08,
+            "mean": 1.2629278423175312e-08,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 1.9814698196406713e-08,
+          "first_prefix_length": 26,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 50,
+          "maximum_absolute_centered_score_delta": 2.3859526157323653e-07,
+          "maximum_absolute_raw_score_delta": 2.384185791015625e-07,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 8.710554247683875e-10,
+            "mean": -1.5917681573822504e-11,
+            "minimum": -1.6960433339162467e-09
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 0.0,
+          "first_prefix_length": 51,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 75,
+          "maximum_absolute_centered_score_delta": 0.0,
+          "maximum_absolute_raw_score_delta": 0.0,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 0.0,
+          "first_prefix_length": 76,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 100,
+          "maximum_absolute_centered_score_delta": 0.0,
+          "maximum_absolute_raw_score_delta": 0.0,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        }
+      ],
+      "full_prefix_matrix_hashes_not_recomputed": true,
+      "grammar_selection_agreements": 100,
+      "job_id": "cp128-warmstart-scope-conditional-step-1",
+      "left_case": {
+        "bytes": 17733195,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-scope-conditional-step-1/exports/case-cp128-warmstart-scope-conditional-step-1-row-0.json",
+        "sha256": "fd772ce6c67efdecff38012fe18a593ae1ad37b33a9bfd4b35851ad6f15a7f47"
+      },
+      "left_forced_single_allowed_token_prefixes": 79,
+      "left_raw_argmax_grammar_allowed": 0,
+      "left_raw_argmax_selected": 0,
+      "left_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24740839004516602,
+        "mean": 0.09482201397418975,
+        "minimum": 3.4928321838378906e-05
+      },
+      "maximum_absolute_centered_score_delta": 0.0003574364185610741,
+      "maximum_absolute_raw_score_delta": 0.0003572702407836914,
+      "mean_raw_score_delta": {
+        "count": 100,
+        "maximum": 1.661777773826926e-07,
+        "mean": -2.7375246520202738e-09,
+        "minimum": -3.0236993786259735e-07
+      },
+      "objective_kind": "scope_conditional",
+      "prefixes_with_any_raw_score_difference": 38,
+      "progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 1,
+        "row_cursor": 1
+      },
+      "raw_argmax_agreements": 100,
+      "right_case": {
+        "bytes": 17733827,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-scope-conditional-step-1/exports/case-cp128-warmstart-scope-conditional-step-1-row-1.json",
+        "sha256": "2d21cfb488b0f761507463ed5ebdbe409a8615b2219ef8d5d1dce684c01bdefe"
+      },
+      "right_forced_single_allowed_token_prefixes": 79,
+      "right_raw_argmax_grammar_allowed": 0,
+      "right_raw_argmax_selected": 0,
+      "right_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24740839004516602,
+        "mean": 0.09482191622257233,
+        "minimum": 3.4928321838378906e-05
+      },
+      "source_encoder_authenticated": false
+    },
+    {
+      "BOS_RMS_centered_score_delta": 0.00013840331997302133,
+      "RMS_centered_score_delta": 1.8706559010226147e-05,
+      "RMS_raw_score_delta": 1.871023938974393e-05,
+      "adjacent_RMS_decreases": 37,
+      "adjacent_RMS_increases": 9,
+      "adjacent_centered_RMS_decreases": 37,
+      "adjacent_centered_RMS_increases": 9,
+      "checkpoint_sha256": "3e1e528d0009b37f7608928f0af4a177f1ba3b43e08ef97e55d95c9de252fd8d",
+      "compared_prefixes": 100,
+      "compared_raw_coordinates": 53700,
+      "comparison_kind": "same_checkpoint_cross_authored_row_at_identical_prefix",
+      "context_is_not_direct_neural_input": true,
+      "decay_is_observed_not_assumed": true,
+      "equal_grammar_allowed_sets": 100,
+      "exact_equal_coordinates": 33611,
+      "final_RMS_centered_score_delta": 0.0,
+      "final_to_BOS_RMS_ratio": 0.0,
+      "final_to_BOS_centered_RMS_ratio": 0.0,
+      "fixed_position_windows": [
+        {
+          "RMS_centered_score_delta": {
+            "count": 1,
+            "maximum": 0.00013840331997302133,
+            "mean": 0.00013840331997302133,
+            "minimum": 0.00013840331997302133
+          },
+          "RMS_raw_score_delta": {
+            "count": 1,
+            "maximum": 0.00013843248724498328,
+            "mean": 0.00013843248724498328,
+            "minimum": 0.00013843248724498328
+          },
+          "aggregate_RMS_centered_score_delta": 0.00013840331997302133,
+          "first_prefix_length": 1,
+          "grammar_selection_agreements": 1,
+          "last_prefix_length": 1,
+          "maximum_absolute_centered_score_delta": 0.0003975435321390962,
+          "maximum_absolute_raw_score_delta": 0.0003981590270996094,
+          "mean_raw_score_delta": {
+            "count": 1,
+            "maximum": -2.8415744364594612e-06,
+            "mean": -2.8415744364594612e-06,
+            "minimum": -2.8415744364594612e-06
+          },
+          "prefixes": 1,
+          "raw_argmax_agreements": 1
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 4,
+            "maximum": 9.07451107168053e-05,
+            "mean": 5.647048222288873e-05,
+            "minimum": 3.372825560138473e-05
+          },
+          "RMS_raw_score_delta": {
+            "count": 4,
+            "maximum": 9.076111620071833e-05,
+            "mean": 5.648106329585594e-05,
+            "minimum": 3.373285372805117e-05
+          },
+          "aggregate_RMS_centered_score_delta": 6.062362505568438e-05,
+          "first_prefix_length": 2,
+          "grammar_selection_agreements": 4,
+          "last_prefix_length": 5,
+          "maximum_absolute_centered_score_delta": 0.00026502635144770364,
+          "maximum_absolute_raw_score_delta": 0.00026673078536987305,
+          "mean_raw_score_delta": {
+            "count": 4,
+            "maximum": -5.569512777210836e-07,
+            "mean": -1.084023899858552e-06,
+            "minimum": -1.7044339221694074e-06
+          },
+          "prefixes": 4,
+          "raw_argmax_agreements": 4
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 5,
+            "maximum": 2.2791814676397346e-05,
+            "mean": 1.3442527156095602e-05,
+            "minimum": 4.345809666741411e-06
+          },
+          "RMS_raw_score_delta": {
+            "count": 5,
+            "maximum": 2.2791988018613537e-05,
+            "mean": 1.3443116941165081e-05,
+            "minimum": 4.345812795828794e-06
+          },
+          "aggregate_RMS_centered_score_delta": 1.499322492805391e-05,
+          "first_prefix_length": 6,
+          "grammar_selection_agreements": 5,
+          "last_prefix_length": 10,
+          "maximum_absolute_centered_score_delta": 5.0216397185796034e-05,
+          "maximum_absolute_raw_score_delta": 5.0127506256103516e-05,
+          "mean_raw_score_delta": {
+            "count": 5,
+            "maximum": -5.2150595565525954e-09,
+            "mean": -9.648511086519481e-08,
+            "minimum": -2.400651947010718e-07
+          },
+          "prefixes": 5,
+          "raw_argmax_agreements": 5
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 15,
+            "maximum": 3.1187264754795345e-06,
+            "mean": 5.53056845893901e-07,
+            "minimum": 6.21624033847503e-08
+          },
+          "RMS_raw_score_delta": {
+            "count": 15,
+            "maximum": 3.1187431249295484e-06,
+            "mean": 5.530992484005824e-07,
+            "minimum": 6.227904369830507e-08
+          },
+          "aggregate_RMS_centered_score_delta": 9.364060492751507e-07,
+          "first_prefix_length": 11,
+          "grammar_selection_agreements": 15,
+          "last_prefix_length": 25,
+          "maximum_absolute_centered_score_delta": 7.514895699368495e-06,
+          "maximum_absolute_raw_score_delta": 7.525086402893066e-06,
+          "mean_raw_score_delta": {
+            "count": 15,
+            "maximum": 1.1501920511824681e-08,
+            "mean": 4.5844894351292005e-09,
+            "minimum": 5.103196789210513e-10
+          },
+          "prefixes": 15,
+          "raw_argmax_agreements": 15
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 4.627154040477435e-08,
+            "mean": 2.7553301136364356e-08,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 4.631779002120526e-08,
+            "mean": 2.7566566541891848e-08,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 3.0690800634492974e-08,
+          "first_prefix_length": 26,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 50,
+          "maximum_absolute_centered_score_delta": 2.3833533239098234e-07,
+          "maximum_absolute_raw_score_delta": 2.384185791015625e-07,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 2.586934888940062e-09,
+            "mean": 4.517423939410757e-10,
+            "minimum": -9.22651042263379e-10
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 0.0,
+          "first_prefix_length": 51,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 75,
+          "maximum_absolute_centered_score_delta": 0.0,
+          "maximum_absolute_raw_score_delta": 0.0,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 0.0,
+          "first_prefix_length": 76,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 100,
+          "maximum_absolute_centered_score_delta": 0.0,
+          "maximum_absolute_raw_score_delta": 0.0,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        }
+      ],
+      "full_prefix_matrix_hashes_not_recomputed": true,
+      "grammar_selection_agreements": 100,
+      "job_id": "cp128-warmstart-full537-step-2",
+      "left_case": {
+        "bytes": 17735486,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-full537-step-2/exports/case-cp128-warmstart-full537-step-2-row-0.json",
+        "sha256": "c6fe2b681aa314d99c0247adc82a1fa3ed6f3a91f51b97231e2ecb583be89428"
+      },
+      "left_forced_single_allowed_token_prefixes": 79,
+      "left_raw_argmax_grammar_allowed": 0,
+      "left_raw_argmax_selected": 0,
+      "left_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.2461618185043335,
+        "mean": 0.09633777916431427,
+        "minimum": 0.0025748610496520996
+      },
+      "maximum_absolute_centered_score_delta": 0.0003975435321390962,
+      "maximum_absolute_raw_score_delta": 0.0003981590270996094,
+      "mean_raw_score_delta": {
+        "count": 100,
+        "maximum": 1.1501920511824681e-08,
+        "mean": -7.580034688844178e-08,
+        "minimum": -2.8415744364594612e-06
+      },
+      "objective_kind": "full537",
+      "prefixes_with_any_raw_score_difference": 46,
+      "progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 2,
+        "row_cursor": 0
+      },
+      "raw_argmax_agreements": 100,
+      "right_case": {
+        "bytes": 17735819,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-full537-step-2/exports/case-cp128-warmstart-full537-step-2-row-1.json",
+        "sha256": "38fd4db9fe9b4868ae824dbeca1e0a38675ab47d5b56e18d802b903fbecb1b06"
+      },
+      "right_forced_single_allowed_token_prefixes": 79,
+      "right_raw_argmax_grammar_allowed": 0,
+      "right_raw_argmax_selected": 0,
+      "right_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.2461618185043335,
+        "mean": 0.09633793473243714,
+        "minimum": 0.0025748610496520996
+      },
+      "source_encoder_authenticated": false
+    },
+    {
+      "BOS_RMS_centered_score_delta": 0.00014382217188217252,
+      "RMS_centered_score_delta": 1.9429382165100882e-05,
+      "RMS_raw_score_delta": 1.9429437879076738e-05,
+      "adjacent_RMS_decreases": 33,
+      "adjacent_RMS_increases": 3,
+      "adjacent_centered_RMS_decreases": 33,
+      "adjacent_centered_RMS_increases": 3,
+      "checkpoint_sha256": "afcf33352fd849ca95c70a893ccb7b9e9cf76638fb1a6a75b9402f37db47786a",
+      "compared_prefixes": 100,
+      "compared_raw_coordinates": 53700,
+      "comparison_kind": "same_checkpoint_cross_authored_row_at_identical_prefix",
+      "context_is_not_direct_neural_input": true,
+      "decay_is_observed_not_assumed": true,
+      "equal_grammar_allowed_sets": 100,
+      "exact_equal_coordinates": 36788,
+      "final_RMS_centered_score_delta": 0.0,
+      "final_to_BOS_RMS_ratio": 0.0,
+      "final_to_BOS_centered_RMS_ratio": 0.0,
+      "fixed_position_windows": [
+        {
+          "RMS_centered_score_delta": {
+            "count": 1,
+            "maximum": 0.00014382217188217252,
+            "mean": 0.00014382217188217252,
+            "minimum": 0.00014382217188217252
+          },
+          "RMS_raw_score_delta": {
+            "count": 1,
+            "maximum": 0.0001438221760364701,
+            "mean": 0.0001438221760364701,
+            "minimum": 0.0001438221760364701
+          },
+          "aggregate_RMS_centered_score_delta": 0.00014382217188217252,
+          "first_prefix_length": 1,
+          "grammar_selection_agreements": 1,
+          "last_prefix_length": 1,
+          "maximum_absolute_centered_score_delta": 0.0004159557794392442,
+          "maximum_absolute_raw_score_delta": 0.0004159212112426758,
+          "mean_raw_score_delta": {
+            "count": 1,
+            "maximum": 3.456819656840916e-08,
+            "mean": 3.456819656840916e-08,
+            "minimum": 3.456819656840916e-08
+          },
+          "prefixes": 1,
+          "raw_argmax_agreements": 1
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 4,
+            "maximum": 9.434472342535731e-05,
+            "mean": 5.855038331585428e-05,
+            "minimum": 3.502066613588043e-05
+          },
+          "RMS_raw_score_delta": {
+            "count": 4,
+            "maximum": 9.43448096668907e-05,
+            "mean": 5.8550706102850276e-05,
+            "minimum": 3.502072457028435e-05
+          },
+          "aggregate_RMS_centered_score_delta": 6.288529743190245e-05,
+          "first_prefix_length": 2,
+          "grammar_selection_agreements": 4,
+          "last_prefix_length": 5,
+          "maximum_absolute_centered_score_delta": 0.0002741730100782224,
+          "maximum_absolute_raw_score_delta": 0.00027430057525634766,
+          "mean_raw_score_delta": {
+            "count": 4,
+            "maximum": -3.3839137485906396e-08,
+            "mean": -1.5028266889152413e-07,
+            "minimum": -3.7575115447992274e-07
+          },
+          "prefixes": 4,
+          "raw_argmax_agreements": 4
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 5,
+            "maximum": 2.384142597573584e-05,
+            "mean": 1.4080471860621388e-05,
+            "minimum": 4.527918061123113e-06
+          },
+          "RMS_raw_score_delta": {
+            "count": 5,
+            "maximum": 2.3841871879470504e-05,
+            "mean": 1.4080805616086781e-05,
+            "minimum": 4.527921116017569e-06
+          },
+          "aggregate_RMS_centered_score_delta": 1.5706081876013563e-05,
+          "first_prefix_length": 6,
+          "grammar_selection_agreements": 5,
+          "last_prefix_length": 10,
+          "maximum_absolute_centered_score_delta": 5.133769642284185e-05,
+          "maximum_absolute_raw_score_delta": 5.148351192474365e-05,
+          "mean_raw_score_delta": {
+            "count": 5,
+            "maximum": 1.4581550190180152e-07,
+            "mean": -5.056443680563395e-09,
+            "minimum": -1.749261611902625e-07
+          },
+          "prefixes": 5,
+          "raw_argmax_agreements": 5
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 15,
+            "maximum": 3.212439791893188e-06,
+            "mean": 5.393251161074794e-07,
+            "minimum": 5.336483570002483e-08
+          },
+          "RMS_raw_score_delta": {
+            "count": 15,
+            "maximum": 3.2124398529348903e-06,
+            "mean": 5.393438875526351e-07,
+            "minimum": 5.3376952663884075e-08
+          },
+          "aggregate_RMS_centered_score_delta": 9.524773410751398e-07,
+          "first_prefix_length": 11,
+          "grammar_selection_agreements": 15,
+          "last_prefix_length": 25,
+          "maximum_absolute_centered_score_delta": 7.689625423252443e-06,
+          "maximum_absolute_raw_score_delta": 7.68899917602539e-06,
+          "mean_raw_score_delta": {
+            "count": 15,
+            "maximum": 4.806996213039817e-09,
+            "mean": -3.2186379550981045e-10,
+            "minimum": -1.140414898455476e-08
+          },
+          "prefixes": 15,
+          "raw_argmax_agreements": 15
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 4.807426780143164e-08,
+            "mean": 1.6462889956669435e-08,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 4.808125142942417e-08,
+            "mean": 1.6471257175109436e-08,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 2.548622715614634e-08,
+          "first_prefix_length": 26,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 50,
+          "maximum_absolute_centered_score_delta": 2.4147702856214796e-07,
+          "maximum_absolute_raw_score_delta": 2.384185791015625e-07,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 3.058449460585468e-09,
+            "mean": 5.886236160605091e-11,
+            "minimum": -1.3289123329592374e-09
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 0.0,
+          "first_prefix_length": 51,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 75,
+          "maximum_absolute_centered_score_delta": 0.0,
+          "maximum_absolute_raw_score_delta": 0.0,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "aggregate_RMS_centered_score_delta": 0.0,
+          "first_prefix_length": 76,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 100,
+          "maximum_absolute_centered_score_delta": 0.0,
+          "maximum_absolute_raw_score_delta": 0.0,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0,
+            "mean": 0.0,
+            "minimum": 0.0
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        }
+      ],
+      "full_prefix_matrix_hashes_not_recomputed": true,
+      "grammar_selection_agreements": 100,
+      "job_id": "cp128-warmstart-scope-conditional-step-2",
+      "left_case": {
+        "bytes": 17732660,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-scope-conditional-step-2/exports/case-cp128-warmstart-scope-conditional-step-2-row-0.json",
+        "sha256": "f5a628ad9e374a2f873f04f245c74a27a9ab3cdf8db344454f4a29ec3d306887"
+      },
+      "left_forced_single_allowed_token_prefixes": 79,
+      "left_raw_argmax_grammar_allowed": 0,
+      "left_raw_argmax_selected": 0,
+      "left_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24830889701843262,
+        "mean": 0.09544276237487793,
+        "minimum": 0.0001270771026611328
+      },
+      "maximum_absolute_centered_score_delta": 0.0004159557794392442,
+      "maximum_absolute_raw_score_delta": 0.0004159212112426758,
+      "mean_raw_score_delta": {
+        "count": 100,
+        "maximum": 1.4581550190180152e-07,
+        "mean": -5.952010952930002e-09,
+        "minimum": -3.7575115447992274e-07
+      },
+      "objective_kind": "scope_conditional",
+      "prefixes_with_any_raw_score_difference": 36,
+      "progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 2,
+        "row_cursor": 0
+      },
+      "raw_argmax_agreements": 100,
+      "right_case": {
+        "bytes": 17733035,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-trained-inference-v01-cp128-warmstart-scope-conditional-step-2/exports/case-cp128-warmstart-scope-conditional-step-2-row-1.json",
+        "sha256": "e389ad029977294033f8fbd877699ba3b628b21ef50a030f48457770f01f2dc9"
+      },
+      "right_forced_single_allowed_token_prefixes": 79,
+      "right_raw_argmax_grammar_allowed": 0,
+      "right_raw_argmax_selected": 0,
+      "right_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24830889701843262,
+        "mean": 0.09544266998767853,
+        "minimum": 0.0001270771026611328
+      },
+      "source_encoder_authenticated": false
+    }
+  ],
+  "decoder_task": "compact semantic IR autonomous reconstruction",
+  "full_position_statistics_omitted": true,
+  "independent_actual_review": {
+    "bytes": 9650,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-saved-conditioning-trace-independent-actual-review-v03.json",
+    "sha256": "1c518701dc452b4e47cf076a163c1d9fd0b758630b2290980431025a392595b1"
+  },
+  "interpretation": "Cross-row raw scores at identical checkpoint and prefix measure response to the two declared numeric conditioning inputs. Grammar argmax/margins and allowed sets are recorded separately. This does not identify why source meanings reconstruct incorrectly.",
+  "late_exact_row_score_equality": {
+    "accepted_position_and_window_scalars_checked": true,
+    "checkpoint_pairs": 4,
+    "first_prefix_length": 51,
+    "general_cause_established": false,
+    "last_prefix_length": 100,
+    "paired_coordinates": 107400,
+    "paired_prefixes": 200,
+    "raw_and_centered_RMS_and_max_exact_zero": true
+  },
+  "native_closed": true,
+  "no_failed_zero_payload_or_census_reopen": true,
+  "original_cohort_reader_invocation": {
+    "bytes": 1478,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/audit/actual-saved-reader-invocation-v01.json",
+    "sha256": "fb0e5a9c725710445eb90e5232e7be884365c43313f8e8f7448c5c967d8add31"
+  },
+  "original_zero_pipeline_qualified": false,
+  "positive_closed_controllers": [
+    {
+      "controller": {
+        "bytes": 1301,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/audit/actual-controller-cp128-warmstart-full537-step-1-v01.json",
+        "sha256": "b33894cf24aa9499fee2272596cd749adb309ca0d4b048fbded1f473f92b1d48"
+      },
+      "job_id": "cp128-warmstart-full537-step-1",
+      "launch": {
+        "bytes": 15602,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/launches/cp128-warmstart-full537-step-1.json",
+        "sha256": "c925b60f9ef1b5fcfc642e08b8ce4a9f764247e04d73f046e9714296d90743fd"
+      },
+      "request": {
+        "bytes": 52139,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/requests/cp128-warmstart-full537-step-1.json",
+        "sha256": "7071f0c642951e6caa8a98eb09b82647fdec159f991e887dfe75e4e0b94619f0"
+      }
+    },
+    {
+      "controller": {
+        "bytes": 1331,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/audit/actual-controller-cp128-warmstart-scope-conditional-step-1-v01.json",
+        "sha256": "7cf8e3a3cc1c46b9ab370ae3cbb83b5848e00b12611b390a78fabe56c0af1b78"
+      },
+      "job_id": "cp128-warmstart-scope-conditional-step-1",
+      "launch": {
+        "bytes": 15769,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/launches/cp128-warmstart-scope-conditional-step-1.json",
+        "sha256": "81cbee31b8effbdda5092747f4a0d21198226e70474304fc1d4ba80a88ef64c9"
+      },
+      "request": {
+        "bytes": 52269,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/requests/cp128-warmstart-scope-conditional-step-1.json",
+        "sha256": "c4e975c0aab8a271ce54c23e70d6d22a85287ed56c7a22006de24c372be51b2e"
+      }
+    },
+    {
+      "controller": {
+        "bytes": 1301,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/audit/actual-controller-cp128-warmstart-full537-step-2-v01.json",
+        "sha256": "ad15c29e832f21376f0cfb437e3c18966ed39b585230cd90576f32457b4ee298"
+      },
+      "job_id": "cp128-warmstart-full537-step-2",
+      "launch": {
+        "bytes": 15609,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/launches/cp128-warmstart-full537-step-2.json",
+        "sha256": "02f541accb49a338b917f280d854ace012e96638e5dde81d88574b77d3aacd2c"
+      },
+      "request": {
+        "bytes": 52139,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/requests/cp128-warmstart-full537-step-2.json",
+        "sha256": "aaf447fed9f18c2839635f39c22b6a160dfc561e2d1aef0860db23554fcfc073"
+      }
+    },
+    {
+      "controller": {
+        "bytes": 1331,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/audit/actual-controller-cp128-warmstart-scope-conditional-step-2-v01.json",
+        "sha256": "1c735e5e64a952552b50df0199df7044e7708482667dd6e299444eff00e4abc8"
+      },
+      "job_id": "cp128-warmstart-scope-conditional-step-2",
+      "launch": {
+        "bytes": 15768,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/launches/cp128-warmstart-scope-conditional-step-2.json",
+        "sha256": "08ed00f6af0839de614fc31d004f1fef4e4df6d2d2c278f16acc5b7f2b12504c"
+      },
+      "request": {
+        "bytes": 52269,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-trained-inference-v01/requests/cp128-warmstart-scope-conditional-step-2.json",
+        "sha256": "a7da09387ac257e875995b5e7b8d4deee0d2f9e7006ed63abfdd2edce9165234"
+      }
+    }
+  ],
+  "positive_trained_cases": 8,
+  "prefix_observation_denominator": 800,
+  "raw_argmax_allowed_count": 0,
+  "recorded_at_utc": "2026-10-23T02:08:50.492224+00:00",
+  "retained_partial_zero_cases": 4,
+  "reused_programme_context_audit": {
+    "bytes": 14864,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-real-span-crosswalk-compatibility-source-audit-v01.json",
+    "sha256": "0d1ed1af11ce580aedabcc4355e018dca06c32e53b6a10f9d16612861f1efe0a"
+  },
+  "schema": "legal-ir-cp128-warmstart-source-sensitivity-evidence/v1",
+  "selection_mask_scope": "All grammar_* metric keys refer to the recorded public scope, grammar and completion-budget allowed set, not an unbudgeted grammar mask.",
+  "selector_vs_raw_argmax_count": 0,
+  "single_allowed_token_count": 632,
+  "source_READ_closed": true,
+  "source_flow": "Qualified runtime gives context only to grammar/budget selection and typed decoding; PreparedModel restores checkpoint plus conditioning and forwards vector plus prefix. Context is not a direct neural input, although it can alter selected prefixes.",
+  "status": "accepted_saved_only_authored384_numeric_sensitivity_diagnostic",
+  "step1_to_step2_pairs": [
+    {
+      "BOS_RMS_centered_score_delta": 0.0017917527297493033,
+      "RMS_centered_score_delta": 0.002941888030395893,
+      "RMS_raw_score_delta": 0.0047614734634213295,
+      "adjacent_RMS_decreases": 50,
+      "adjacent_RMS_increases": 49,
+      "adjacent_centered_RMS_decreases": 51,
+      "adjacent_centered_RMS_increases": 48,
+      "compared_prefixes": 100,
+      "compared_raw_coordinates": 53700,
+      "comparison_kind": "same_row_different_saved_weight_snapshot_at_identical_prefix",
+      "decay_is_observed_not_assumed": true,
+      "earlier_job": "cp128-warmstart-full537-step-1",
+      "equal_grammar_allowed_sets": 100,
+      "exact_equal_coordinates": 1,
+      "final_RMS_centered_score_delta": 0.0014002679363808801,
+      "final_to_BOS_RMS_ratio": 0.7371952839607376,
+      "final_to_BOS_centered_RMS_ratio": 0.7815073548551543,
+      "fixed_position_windows": [
+        {
+          "RMS_centered_score_delta": {
+            "count": 1,
+            "maximum": 0.0017917527297493033,
+            "mean": 0.0017917527297493033,
+            "minimum": 0.0017917527297493033
+          },
+          "RMS_raw_score_delta": {
+            "count": 1,
+            "maximum": 0.0019234477849726032,
+            "mean": 0.0019234477849726032,
+            "minimum": 0.0019234477849726032
+          },
+          "aggregate_RMS_centered_score_delta": 0.0017917527297493033,
+          "first_prefix_length": 1,
+          "grammar_selection_agreements": 1,
+          "last_prefix_length": 1,
+          "maximum_absolute_centered_score_delta": 0.008990934028444565,
+          "maximum_absolute_raw_score_delta": 0.008291453123092651,
+          "mean_raw_score_delta": {
+            "count": 1,
+            "maximum": 0.000699480905351914,
+            "mean": 0.000699480905351914,
+            "minimum": 0.000699480905351914
+          },
+          "prefixes": 1,
+          "raw_argmax_agreements": 1
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 4,
+            "maximum": 0.0026609674478581453,
+            "mean": 0.0019565953811115267,
+            "minimum": 0.0013567815433149387
+          },
+          "RMS_raw_score_delta": {
+            "count": 4,
+            "maximum": 0.004226631992306442,
+            "mean": 0.0030677102781397694,
+            "minimum": 0.0021238394773549023
+          },
+          "aggregate_RMS_centered_score_delta": 0.0020344887438536853,
+          "first_prefix_length": 2,
+          "grammar_selection_agreements": 4,
+          "last_prefix_length": 5,
+          "maximum_absolute_centered_score_delta": 0.011937401251385276,
+          "maximum_absolute_raw_score_delta": 0.00961911678314209,
+          "mean_raw_score_delta": {
+            "count": 4,
+            "maximum": 0.0032838499112821267,
+            "mean": 0.002360573533580034,
+            "minimum": 0.0015355795032478733
+          },
+          "prefixes": 4,
+          "raw_argmax_agreements": 4
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 5,
+            "maximum": 0.0035977560575081277,
+            "mean": 0.002979025241281655,
+            "minimum": 0.002429075334158576
+          },
+          "RMS_raw_score_delta": {
+            "count": 5,
+            "maximum": 0.005677327011237794,
+            "mean": 0.00529540909174311,
+            "minimum": 0.004856946484005432
+          },
+          "aggregate_RMS_centered_score_delta": 0.0030167132450003367,
+          "first_prefix_length": 6,
+          "grammar_selection_agreements": 5,
+          "last_prefix_length": 10,
+          "maximum_absolute_centered_score_delta": 0.01621794118069015,
+          "maximum_absolute_raw_score_delta": 0.015476524829864502,
+          "mean_raw_score_delta": {
+            "count": 5,
+            "maximum": 0.004733139969609258,
+            "mean": 0.004352266853528914,
+            "minimum": 0.003957505224296889
+          },
+          "prefixes": 5,
+          "raw_argmax_agreements": 5
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 15,
+            "maximum": 0.004310200958758994,
+            "mean": 0.003345140583374755,
+            "minimum": 0.0027978339352953798
+          },
+          "RMS_raw_score_delta": {
+            "count": 15,
+            "maximum": 0.006531351114719485,
+            "mean": 0.00572345130233459,
+            "minimum": 0.005052496077481072
+          },
+          "aggregate_RMS_centered_score_delta": 0.003374233350243579,
+          "first_prefix_length": 11,
+          "grammar_selection_agreements": 15,
+          "last_prefix_length": 25,
+          "maximum_absolute_centered_score_delta": 0.018339854150553524,
+          "maximum_absolute_raw_score_delta": 0.015124022960662842,
+          "mean_raw_score_delta": {
+            "count": 15,
+            "maximum": 0.005120259195109188,
+            "mean": 0.00462223900631752,
+            "minimum": 0.0040553722606912895
+          },
+          "prefixes": 15,
+          "raw_argmax_agreements": 15
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0042062944361703205,
+            "mean": 0.003174056410050222,
+            "minimum": 0.0026183590851741895
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.006526195368717936,
+            "mean": 0.00521884179073998,
+            "minimum": 0.004428700909440667
+          },
+          "aggregate_RMS_centered_score_delta": 0.0031959057244869333,
+          "first_prefix_length": 26,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 50,
+          "maximum_absolute_centered_score_delta": 0.018123048351419327,
+          "maximum_absolute_raw_score_delta": 0.0148085355758667,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.005064564750802871,
+            "mean": 0.004133146202253061,
+            "minimum": 0.0035717765112568797
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0039676709845838706,
+            "mean": 0.003023009889171482,
+            "minimum": 0.0026072900003212413
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.006140861656412524,
+            "mean": 0.004948601726940089,
+            "minimum": 0.004144491302856418
+          },
+          "aggregate_RMS_centered_score_delta": 0.003040226706561441,
+          "first_prefix_length": 51,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 75,
+          "maximum_absolute_centered_score_delta": 0.0178324543197641,
+          "maximum_absolute_raw_score_delta": 0.012912333011627197,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.004920121308136904,
+            "mean": 0.003908713257499812,
+            "minimum": 0.0032184240553796892
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 21
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0034390298992116983,
+            "mean": 0.0023433826047786297,
+            "minimum": 0.0014002679363808801
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0051972414808753205,
+            "mean": 0.0031335958905506236,
+            "minimum": 0.00141795663602653
+          },
+          "aggregate_RMS_centered_score_delta": 0.002391645563037654,
+          "first_prefix_length": 76,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 100,
+          "maximum_absolute_centered_score_delta": 0.014990636144781088,
+          "maximum_absolute_raw_score_delta": 0.015569627285003662,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.00437141302695272,
+            "mean": 0.0017726861534262603,
+            "minimum": 0.00022047848503141762
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        }
+      ],
+      "full_prefix_matrix_hashes_not_recomputed": true,
+      "grammar_selection_agreements": 100,
+      "later_job": "cp128-warmstart-full537-step-2",
+      "left_forced_single_allowed_token_prefixes": 79,
+      "left_raw_argmax_grammar_allowed": 0,
+      "left_raw_argmax_selected": 0,
+      "left_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24707984924316406,
+        "mean": 0.09535633385181427,
+        "minimum": 0.0013889074325561523
+      },
+      "maximum_absolute_centered_score_delta": 0.018339854150553524,
+      "maximum_absolute_raw_score_delta": 0.015569627285003662,
+      "mean_raw_score_delta": {
+        "count": 100,
+        "maximum": 0.005120259195109188,
+        "mean": 0.003466003347315578,
+        "minimum": 0.00022047848503141762
+      },
+      "objective_arm": "full537",
+      "prefixes_with_any_raw_score_difference": 100,
+      "raw_argmax_agreements": 96,
+      "right_forced_single_allowed_token_prefixes": 79,
+      "right_raw_argmax_grammar_allowed": 0,
+      "right_raw_argmax_selected": 0,
+      "right_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.2461618185043335,
+        "mean": 0.09633777916431427,
+        "minimum": 0.0025748610496520996
+      },
+      "row_index": 0,
+      "source_causality_or_training_gain_established": false
+    },
+    {
+      "BOS_RMS_centered_score_delta": 0.001782168712742922,
+      "RMS_centered_score_delta": 0.0029416176744891907,
+      "RMS_raw_score_delta": 0.004761290581374216,
+      "adjacent_RMS_decreases": 50,
+      "adjacent_RMS_increases": 49,
+      "adjacent_centered_RMS_decreases": 51,
+      "adjacent_centered_RMS_increases": 48,
+      "compared_prefixes": 100,
+      "compared_raw_coordinates": 53700,
+      "comparison_kind": "same_row_different_saved_weight_snapshot_at_identical_prefix",
+      "decay_is_observed_not_assumed": true,
+      "earlier_job": "cp128-warmstart-full537-step-1",
+      "equal_grammar_allowed_sets": 100,
+      "exact_equal_coordinates": 1,
+      "final_RMS_centered_score_delta": 0.0014002679363808801,
+      "final_to_BOS_RMS_ratio": 0.7408824858203418,
+      "final_to_BOS_centered_RMS_ratio": 0.7857100881463341,
+      "fixed_position_windows": [
+        {
+          "RMS_centered_score_delta": {
+            "count": 1,
+            "maximum": 0.001782168712742922,
+            "mean": 0.001782168712742922,
+            "minimum": 0.001782168712742922
+          },
+          "RMS_raw_score_delta": {
+            "count": 1,
+            "maximum": 0.0019138752274006022,
+            "mean": 0.0019138752274006022,
+            "minimum": 0.0019138752274006022
+          },
+          "aggregate_RMS_centered_score_delta": 0.001782168712742922,
+          "first_prefix_length": 1,
+          "grammar_selection_agreements": 1,
+          "last_prefix_length": 1,
+          "maximum_absolute_centered_score_delta": 0.00899124485778742,
+          "maximum_absolute_raw_score_delta": 0.00829353928565979,
+          "mean_raw_score_delta": {
+            "count": 1,
+            "maximum": 0.00069770557212763,
+            "mean": 0.00069770557212763,
+            "minimum": 0.00069770557212763
+          },
+          "prefixes": 1,
+          "raw_argmax_agreements": 1
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 4,
+            "maximum": 0.00265722619685602,
+            "mean": 0.0019501304223644188,
+            "minimum": 0.0013466712991850312
+          },
+          "RMS_raw_score_delta": {
+            "count": 4,
+            "maximum": 0.004224030534879444,
+            "mean": 0.003063061238771028,
+            "minimum": 0.002117932869598636
+          },
+          "aggregate_RMS_centered_score_delta": 0.0020289713729860197,
+          "first_prefix_length": 2,
+          "grammar_selection_agreements": 4,
+          "last_prefix_length": 5,
+          "maximum_absolute_centered_score_delta": 0.011923314743801896,
+          "maximum_absolute_raw_score_delta": 0.009603381156921387,
+          "mean_raw_score_delta": {
+            "count": 4,
+            "maximum": 0.0032835320766418617,
+            "mean": 0.0023599661399710983,
+            "minimum": 0.0015348908795749256
+          },
+          "prefixes": 4,
+          "raw_argmax_agreements": 4
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 5,
+            "maximum": 0.0035960834115227425,
+            "mean": 0.002977915431899518,
+            "minimum": 0.0024274340086166517
+          },
+          "RMS_raw_score_delta": {
+            "count": 5,
+            "maximum": 0.005676164931454674,
+            "mean": 0.0052947464959192895,
+            "minimum": 0.004856069581498028
+          },
+          "aggregate_RMS_centered_score_delta": 0.003015636566508038,
+          "first_prefix_length": 6,
+          "grammar_selection_agreements": 5,
+          "last_prefix_length": 10,
+          "maximum_absolute_centered_score_delta": 0.016215886435301512,
+          "maximum_absolute_raw_score_delta": 0.015475094318389893,
+          "mean_raw_score_delta": {
+            "count": 5,
+            "maximum": 0.004733062708179997,
+            "mean": 0.004352203231460755,
+            "minimum": 0.003957489672337192
+          },
+          "prefixes": 5,
+          "raw_argmax_agreements": 5
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 15,
+            "maximum": 0.004310150768018613,
+            "mean": 0.003345111833813518,
+            "minimum": 0.002797833532630256
+          },
+          "RMS_raw_score_delta": {
+            "count": 15,
+            "maximum": 0.006531323134109218,
+            "mean": 0.005723434749790523,
+            "minimum": 0.005052450567864212
+          },
+          "aggregate_RMS_centered_score_delta": 0.003374204416477835,
+          "first_prefix_length": 11,
+          "grammar_selection_agreements": 15,
+          "last_prefix_length": 25,
+          "maximum_absolute_centered_score_delta": 0.01833949846841414,
+          "maximum_absolute_raw_score_delta": 0.015124022960662842,
+          "mean_raw_score_delta": {
+            "count": 15,
+            "maximum": 0.005120261140838456,
+            "mean": 0.004622239956376532,
+            "minimum": 0.004055373666400881
+          },
+          "prefixes": 15,
+          "raw_argmax_agreements": 15
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.004206290158921318,
+            "mean": 0.003174058371231399,
+            "minimum": 0.0026183590851741895
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.006526191100260297,
+            "mean": 0.005218843267531292,
+            "minimum": 0.004428700909440667
+          },
+          "aggregate_RMS_centered_score_delta": 0.0031959074160888617,
+          "first_prefix_length": 26,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 50,
+          "maximum_absolute_centered_score_delta": 0.018123049038204688,
+          "maximum_absolute_raw_score_delta": 0.014808416366577148,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.005064565437588233,
+            "mean": 0.004133146536262603,
+            "minimum": 0.0035717765112568797
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0039676709845838706,
+            "mean": 0.003023009889171482,
+            "minimum": 0.0026072900003212413
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.006140861656412524,
+            "mean": 0.004948601726940089,
+            "minimum": 0.004144491302856418
+          },
+          "aggregate_RMS_centered_score_delta": 0.003040226706561441,
+          "first_prefix_length": 51,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 75,
+          "maximum_absolute_centered_score_delta": 0.0178324543197641,
+          "maximum_absolute_raw_score_delta": 0.012912333011627197,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.004920121308136904,
+            "mean": 0.003908713257499812,
+            "minimum": 0.0032184240553796892
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 21
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0034390298992116983,
+            "mean": 0.0023433826047786297,
+            "minimum": 0.0014002679363808801
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0051972414808753205,
+            "mean": 0.0031335958905506236,
+            "minimum": 0.00141795663602653
+          },
+          "aggregate_RMS_centered_score_delta": 0.002391645563037654,
+          "first_prefix_length": 76,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 100,
+          "maximum_absolute_centered_score_delta": 0.014990636144781088,
+          "maximum_absolute_raw_score_delta": 0.015569627285003662,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.00437141302695272,
+            "mean": 0.0017726861534262603,
+            "minimum": 0.00022047848503141762
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        }
+      ],
+      "full_prefix_matrix_hashes_not_recomputed": true,
+      "grammar_selection_agreements": 100,
+      "later_job": "cp128-warmstart-full537-step-2",
+      "left_forced_single_allowed_token_prefixes": 79,
+      "left_raw_argmax_grammar_allowed": 0,
+      "left_raw_argmax_selected": 0,
+      "left_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24707984924316406,
+        "mean": 0.09535633563995362,
+        "minimum": 0.0013889074325561523
+      },
+      "maximum_absolute_centered_score_delta": 0.01833949846841414,
+      "maximum_absolute_raw_score_delta": 0.015569627285003662,
+      "mean_raw_score_delta": {
+        "count": 100,
+        "maximum": 0.005120261140838456,
+        "mean": 0.0034659583431468064,
+        "minimum": 0.00022047848503141762
+      },
+      "objective_arm": "full537",
+      "prefixes_with_any_raw_score_difference": 100,
+      "raw_argmax_agreements": 96,
+      "right_forced_single_allowed_token_prefixes": 79,
+      "right_raw_argmax_grammar_allowed": 0,
+      "right_raw_argmax_selected": 0,
+      "right_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.2461618185043335,
+        "mean": 0.09633793473243714,
+        "minimum": 0.0025748610496520996
+      },
+      "row_index": 1,
+      "source_causality_or_training_gain_established": false
+    },
+    {
+      "BOS_RMS_centered_score_delta": 0.0013314126704049548,
+      "RMS_centered_score_delta": 0.0022119222859573085,
+      "RMS_raw_score_delta": 0.002212883838308742,
+      "adjacent_RMS_decreases": 56,
+      "adjacent_RMS_increases": 43,
+      "adjacent_centered_RMS_decreases": 56,
+      "adjacent_centered_RMS_increases": 43,
+      "compared_prefixes": 100,
+      "compared_raw_coordinates": 53700,
+      "comparison_kind": "same_row_different_saved_weight_snapshot_at_identical_prefix",
+      "decay_is_observed_not_assumed": true,
+      "earlier_job": "cp128-warmstart-scope-conditional-step-1",
+      "equal_grammar_allowed_sets": 100,
+      "exact_equal_coordinates": 0,
+      "final_RMS_centered_score_delta": 0.00035215881365480617,
+      "final_to_BOS_RMS_ratio": 0.26519103098299757,
+      "final_to_BOS_centered_RMS_ratio": 0.26450012192515454,
+      "fixed_position_windows": [
+        {
+          "RMS_centered_score_delta": {
+            "count": 1,
+            "maximum": 0.0013314126704049548,
+            "mean": 0.0013314126704049548,
+            "minimum": 0.0013314126704049548
+          },
+          "RMS_raw_score_delta": {
+            "count": 1,
+            "maximum": 0.001332135954715617,
+            "mean": 0.001332135954715617,
+            "minimum": 0.001332135954715617
+          },
+          "aggregate_RMS_centered_score_delta": 0.0013314126704049548,
+          "first_prefix_length": 1,
+          "grammar_selection_agreements": 1,
+          "last_prefix_length": 1,
+          "maximum_absolute_centered_score_delta": 0.0044214496219069374,
+          "maximum_absolute_raw_score_delta": 0.004465341567993164,
+          "mean_raw_score_delta": {
+            "count": 1,
+            "maximum": 4.389194608622645e-05,
+            "mean": 4.389194608622645e-05,
+            "minimum": 4.389194608622645e-05
+          },
+          "prefixes": 1,
+          "raw_argmax_agreements": 1
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 4,
+            "maximum": 0.0021462027026731265,
+            "mean": 0.0017206832044891606,
+            "minimum": 0.001231917447074673
+          },
+          "RMS_raw_score_delta": {
+            "count": 4,
+            "maximum": 0.0021479625058289983,
+            "mean": 0.0017223880935769392,
+            "minimum": 0.0012333812398817848
+          },
+          "aggregate_RMS_centered_score_delta": 0.001771447988611124,
+          "first_prefix_length": 2,
+          "grammar_selection_agreements": 4,
+          "last_prefix_length": 5,
+          "maximum_absolute_centered_score_delta": 0.007860147238369109,
+          "maximum_absolute_raw_score_delta": 0.007959812879562378,
+          "mean_raw_score_delta": {
+            "count": 4,
+            "maximum": 9.966564119326946e-05,
+            "mean": 7.64176999754229e-05,
+            "minimum": 5.9002466470322244e-05
+          },
+          "prefixes": 4,
+          "raw_argmax_agreements": 4
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 5,
+            "maximum": 0.0031576523134077784,
+            "mean": 0.002535855642988786,
+            "minimum": 0.0022567091723705176
+          },
+          "RMS_raw_score_delta": {
+            "count": 5,
+            "maximum": 0.003157743102583323,
+            "mean": 0.002536971699241795,
+            "minimum": 0.0022589541025479104
+          },
+          "aggregate_RMS_centered_score_delta": 0.002559852016831266,
+          "first_prefix_length": 6,
+          "grammar_selection_agreements": 5,
+          "last_prefix_length": 10,
+          "maximum_absolute_centered_score_delta": 0.013638631539310683,
+          "maximum_absolute_raw_score_delta": 0.013662576675415039,
+          "mean_raw_score_delta": {
+            "count": 5,
+            "maximum": 0.00010068440175523333,
+            "mean": 5.057482710615445e-05,
+            "minimum": -2.39451361043566e-05
+          },
+          "prefixes": 5,
+          "raw_argmax_agreements": 5
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 15,
+            "maximum": 0.0032199876648648876,
+            "mean": 0.0025165701325646473,
+            "minimum": 0.0020618936284329064
+          },
+          "RMS_raw_score_delta": {
+            "count": 15,
+            "maximum": 0.003220714060550139,
+            "mean": 0.0025181057787498776,
+            "minimum": 0.0020636554696298968
+          },
+          "aggregate_RMS_centered_score_delta": 0.002548095559618925,
+          "first_prefix_length": 11,
+          "grammar_selection_agreements": 15,
+          "last_prefix_length": 25,
+          "maximum_absolute_centered_score_delta": 0.014592793347614035,
+          "maximum_absolute_raw_score_delta": 0.014661192893981934,
+          "mean_raw_score_delta": {
+            "count": 15,
+            "maximum": 0.00011634003157247017,
+            "mean": 5.643021781164622e-05,
+            "minimum": -6.874103177259928e-05
+          },
+          "prefixes": 15,
+          "raw_argmax_agreements": 15
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0031733823137701134,
+            "mean": 0.002458940677713835,
+            "minimum": 0.0019976881504385493
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.003174024279034348,
+            "mean": 0.002459871199356209,
+            "minimum": 0.0019981961988734896
+          },
+          "aggregate_RMS_centered_score_delta": 0.0024863528649654,
+          "first_prefix_length": 26,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 50,
+          "maximum_absolute_centered_score_delta": 0.014315554381563247,
+          "maximum_absolute_raw_score_delta": 0.014391064643859863,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0001005939506271809,
+            "mean": 2.9795140837053847e-05,
+            "minimum": -7.551026229661658e-05
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0030852049282287996,
+            "mean": 0.0023223439072566866,
+            "minimum": 0.0017711066251601144
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0030859344169283346,
+            "mean": 0.00232325771331862,
+            "minimum": 0.0017745709212232022
+          },
+          "aggregate_RMS_centered_score_delta": 0.002356292216497076,
+          "first_prefix_length": 51,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 75,
+          "maximum_absolute_centered_score_delta": 0.01410355138884219,
+          "maximum_absolute_raw_score_delta": 0.014170646667480469,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.00011082994525359417,
+            "mean": 2.4979260470126044e-05,
+            "minimum": -7.486435518820303e-05
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.003000375926275064,
+            "mean": 0.0012127492828186497,
+            "minimum": 0.00035215881365480617
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0030010488188961597,
+            "mean": 0.0012134077363080236,
+            "minimum": 0.00035327050724055423
+          },
+          "aggregate_RMS_centered_score_delta": 0.0014342605396000878,
+          "first_prefix_length": 76,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 100,
+          "maximum_absolute_centered_score_delta": 0.012458851692053009,
+          "maximum_absolute_raw_score_delta": 0.012522399425506592,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.00011006992894963638,
+            "mean": -9.345098902618022e-07,
+            "minimum": -6.354773345358281e-05
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        }
+      ],
+      "full_prefix_matrix_hashes_not_recomputed": true,
+      "grammar_selection_agreements": 100,
+      "later_job": "cp128-warmstart-scope-conditional-step-2",
+      "left_forced_single_allowed_token_prefixes": 79,
+      "left_raw_argmax_grammar_allowed": 0,
+      "left_raw_argmax_selected": 0,
+      "left_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24740839004516602,
+        "mean": 0.09482201397418975,
+        "minimum": 3.4928321838378906e-05
+      },
+      "maximum_absolute_centered_score_delta": 0.014592793347614035,
+      "maximum_absolute_raw_score_delta": 0.014661192893981934,
+      "mean_raw_score_delta": {
+        "count": 100,
+        "maximum": 0.00011634003157247017,
+        "mean": 2.794887434116336e-05,
+        "minimum": -7.551026229661658e-05
+      },
+      "objective_arm": "scope-conditional",
+      "prefixes_with_any_raw_score_difference": 100,
+      "raw_argmax_agreements": 100,
+      "right_forced_single_allowed_token_prefixes": 79,
+      "right_raw_argmax_grammar_allowed": 0,
+      "right_raw_argmax_selected": 0,
+      "right_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24830889701843262,
+        "mean": 0.09544276237487793,
+        "minimum": 0.0001270771026611328
+      },
+      "row_index": 0,
+      "source_causality_or_training_gain_established": false
+    },
+    {
+      "BOS_RMS_centered_score_delta": 0.0013120776887791394,
+      "RMS_centered_score_delta": 0.002211517552828863,
+      "RMS_raw_score_delta": 0.0022124791889375057,
+      "adjacent_RMS_decreases": 56,
+      "adjacent_RMS_increases": 43,
+      "adjacent_centered_RMS_decreases": 56,
+      "adjacent_centered_RMS_increases": 43,
+      "compared_prefixes": 100,
+      "compared_raw_coordinates": 53700,
+      "comparison_kind": "same_row_different_saved_weight_snapshot_at_identical_prefix",
+      "decay_is_observed_not_assumed": true,
+      "earlier_job": "cp128-warmstart-scope-conditional-step-1",
+      "equal_grammar_allowed_sets": 100,
+      "exact_equal_coordinates": 0,
+      "final_RMS_centered_score_delta": 0.00035215881365480617,
+      "final_to_BOS_RMS_ratio": 0.2690954914203798,
+      "final_to_BOS_centered_RMS_ratio": 0.2683978370080224,
+      "fixed_position_windows": [
+        {
+          "RMS_centered_score_delta": {
+            "count": 1,
+            "maximum": 0.0013120776887791394,
+            "mean": 0.0013120776887791394,
+            "minimum": 0.0013120776887791394
+          },
+          "RMS_raw_score_delta": {
+            "count": 1,
+            "maximum": 0.0013128072320196425,
+            "mean": 0.0013128072320196425,
+            "minimum": 0.0013128072320196425
+          },
+          "aggregate_RMS_centered_score_delta": 0.0013120776887791394,
+          "first_prefix_length": 1,
+          "grammar_selection_agreements": 1,
+          "last_prefix_length": 1,
+          "maximum_absolute_centered_score_delta": 0.004404355489147664,
+          "maximum_absolute_raw_score_delta": 0.004448115825653076,
+          "mean_raw_score_delta": {
+            "count": 1,
+            "maximum": 4.3760336505412166e-05,
+            "mean": 4.3760336505412166e-05,
+            "minimum": 4.3760336505412166e-05
+          },
+          "prefixes": 1,
+          "raw_argmax_agreements": 1
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 4,
+            "maximum": 0.0021413227153515924,
+            "mean": 0.0017134885080673462,
+            "minimum": 0.0012246911633483214
+          },
+          "RMS_raw_score_delta": {
+            "count": 4,
+            "maximum": 0.00214308589346198,
+            "mean": 0.0017151986817552471,
+            "minimum": 0.0012261599900054952
+          },
+          "aggregate_RMS_centered_score_delta": 0.0017650588445273139,
+          "first_prefix_length": 2,
+          "grammar_selection_agreements": 4,
+          "last_prefix_length": 5,
+          "maximum_absolute_centered_score_delta": 0.007858756842378706,
+          "maximum_absolute_raw_score_delta": 0.007958412170410156,
+          "mean_raw_score_delta": {
+            "count": 4,
+            "maximum": 9.965532803144896e-05,
+            "mean": 7.637583282813031e-05,
+            "minimum": 5.893428091070783e-05
+          },
+          "prefixes": 4,
+          "raw_argmax_agreements": 4
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 5,
+            "maximum": 0.003156724598150102,
+            "mean": 0.0025344881781530658,
+            "minimum": 0.002256242459248701
+          },
+          "RMS_raw_score_delta": {
+            "count": 5,
+            "maximum": 0.0031568154014732027,
+            "mean": 0.0025356045348145467,
+            "minimum": 0.002258487374012604
+          },
+          "aggregate_RMS_centered_score_delta": 0.0025585038104071665,
+          "first_prefix_length": 6,
+          "grammar_selection_agreements": 5,
+          "last_prefix_length": 10,
+          "maximum_absolute_centered_score_delta": 0.01363630861055203,
+          "maximum_absolute_raw_score_delta": 0.013660252094268799,
+          "mean_raw_score_delta": {
+            "count": 5,
+            "maximum": 0.00010067364927190503,
+            "mean": 5.0572328669672874e-05,
+            "minimum": -2.394348371676837e-05
+          },
+          "prefixes": 5,
+          "raw_argmax_agreements": 5
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 15,
+            "maximum": 0.0032199191238935633,
+            "mean": 0.002516527746948859,
+            "minimum": 0.002061902656782044
+          },
+          "RMS_raw_score_delta": {
+            "count": 15,
+            "maximum": 0.0032206455852419216,
+            "mean": 0.0025180633900174472,
+            "minimum": 0.0020636645176233025
+          },
+          "aggregate_RMS_centered_score_delta": 0.002548053770688829,
+          "first_prefix_length": 11,
+          "grammar_selection_agreements": 15,
+          "last_prefix_length": 25,
+          "maximum_absolute_centered_score_delta": 0.014592433355885663,
+          "maximum_absolute_raw_score_delta": 0.014660835266113281,
+          "mean_raw_score_delta": {
+            "count": 15,
+            "maximum": 0.0001163346152249689,
+            "mean": 5.642943462639436e-05,
+            "minimum": -6.87386605420776e-05
+          },
+          "prefixes": 15,
+          "raw_argmax_agreements": 15
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0031733917431340597,
+            "mean": 0.0024589417747764115,
+            "minimum": 0.0019976881504385493
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0031740337170509175,
+            "mean": 0.0024598722934800585,
+            "minimum": 0.0019981961988734896
+          },
+          "aggregate_RMS_centered_score_delta": 0.0024863541441107586,
+          "first_prefix_length": 26,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 50,
+          "maximum_absolute_centered_score_delta": 0.014315497624541302,
+          "maximum_absolute_raw_score_delta": 0.014391005039215088,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.00010059392439579554,
+            "mean": 2.9795215617097028e-05,
+            "minimum": -7.550741467378631e-05
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.0030852049282287996,
+            "mean": 0.0023223439072566866,
+            "minimum": 0.0017711066251601144
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0030859344169283346,
+            "mean": 0.00232325771331862,
+            "minimum": 0.0017745709212232022
+          },
+          "aggregate_RMS_centered_score_delta": 0.002356292216497076,
+          "first_prefix_length": 51,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 75,
+          "maximum_absolute_centered_score_delta": 0.01410355138884219,
+          "maximum_absolute_raw_score_delta": 0.014170646667480469,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.00011082994525359417,
+            "mean": 2.4979260470126044e-05,
+            "minimum": -7.486435518820303e-05
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        },
+        {
+          "RMS_centered_score_delta": {
+            "count": 25,
+            "maximum": 0.003000375926275064,
+            "mean": 0.0012127492828186497,
+            "minimum": 0.00035215881365480617
+          },
+          "RMS_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.0030010488188961597,
+            "mean": 0.0012134077363080236,
+            "minimum": 0.00035327050724055423
+          },
+          "aggregate_RMS_centered_score_delta": 0.0014342605396000878,
+          "first_prefix_length": 76,
+          "grammar_selection_agreements": 25,
+          "last_prefix_length": 100,
+          "maximum_absolute_centered_score_delta": 0.012458851692053009,
+          "maximum_absolute_raw_score_delta": 0.012522399425506592,
+          "mean_raw_score_delta": {
+            "count": 25,
+            "maximum": 0.00011006992894963638,
+            "mean": -9.345098902618022e-07,
+            "minimum": -6.354773345358281e-05
+          },
+          "prefixes": 25,
+          "raw_argmax_agreements": 25
+        }
+      ],
+      "full_prefix_matrix_hashes_not_recomputed": true,
+      "grammar_selection_agreements": 100,
+      "later_job": "cp128-warmstart-scope-conditional-step-2",
+      "left_forced_single_allowed_token_prefixes": 79,
+      "left_raw_argmax_grammar_allowed": 0,
+      "left_raw_argmax_selected": 0,
+      "left_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24740839004516602,
+        "mean": 0.09482191622257233,
+        "minimum": 3.4928321838378906e-05
+      },
+      "maximum_absolute_centered_score_delta": 0.014592433355885663,
+      "maximum_absolute_raw_score_delta": 0.014660835266113281,
+      "mean_raw_score_delta": {
+        "count": 100,
+        "maximum": 0.0001163346152249689,
+        "mean": 2.794565985486245e-05,
+        "minimum": -7.550741467378631e-05
+      },
+      "objective_arm": "scope-conditional",
+      "prefixes_with_any_raw_score_difference": 100,
+      "raw_argmax_agreements": 100,
+      "right_forced_single_allowed_token_prefixes": 79,
+      "right_raw_argmax_grammar_allowed": 0,
+      "right_raw_argmax_selected": 0,
+      "right_raw_top2_margin": {
+        "count": 100,
+        "maximum": 0.24830889701843262,
+        "mean": 0.09544266998767853,
+        "minimum": 0.0001270771026611328
+      },
+      "row_index": 1,
+      "source_causality_or_training_gain_established": false
+    }
+  ],
+  "storage_released": true,
+  "supplemental_independent_source_review": {
+    "bytes": 5111,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-saved-conditioning-trace-control-review-v02.json",
+    "sha256": "6b0e068e0220adf0e9ee877367006d5967abaf8415a3df6aea24fb8228a77168"
+  },
+  "unmasked_argmax_agreements": 400,
+  "zero_additional_forwards": true,
+  "zero_additional_model_restores": true,
+  "zero_late_wrapper_guards_completed": false,
+  "zero_source_archive_missing": true
+}

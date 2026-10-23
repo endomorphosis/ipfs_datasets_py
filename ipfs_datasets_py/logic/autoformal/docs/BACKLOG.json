@@ -17107,7 +17107,10 @@
       },
       "source_sampling_precondition": "Pure whole-source sampler and134canonical\u00a7101paragraphinputs are implemented; original9literalunits and20rowcache remain separate. Obtain actual source/meaning decisions and eligible targets before statutory training/evaluation.",
       "status": "in_progress",
-      "title": "Train reviewed relation and binding heads"
+      "title": "Train reviewed relation and binding heads",
+      "next_actions": [
+        " The saved-only eight-trained-case/800-position selector audit docs/autoformalization/evidence/legal-ir-cp128-saved-selector-audit-20261023.json records grammar replacing raw top1 at800/800 positions,0 scope winner overrides,8 budget winner overrides,632 final singleton choices and168 real postbudget branches; raw-score changes did not change recorded eligible winners. Reuse these traces before another full generation/fit. Require target-choice rank/margin and modality/ordered-argument progress at source-sensitive branches, plus a context-fixed conditioning control before attributing row insensitivity to the latent. First close reviewed complete real-law targets, governing definition/two distinct physical uses and independently permitted source context; keep all unknown meaning/native-space/eligibility masks0 and preserve the partial-zero failures."
+      ]
     },
     {
       "acceptance_criteria": [

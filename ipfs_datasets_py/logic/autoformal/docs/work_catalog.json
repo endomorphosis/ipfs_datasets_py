@@ -1458,7 +1458,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-23T00:48:47.764937+00:00",
+  "last_updated_at_utc": "2026-10-23T02:08:50.492224+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2631,6 +2631,26 @@
       "root": "datasets_repository",
       "scope": "All six saved objective/step states \u00d7 two exposed authored384 rows; Typed completion is 12/12; exact emitted-ID reconstruction including EOS is 0/12; exact canonical compact-content AST reconstruction is 0/12. 800 new generation forwards/8 restores; 4 retained partial-zero cases are not successful original pipelines. No zero rerun, extra scores/scripted controls/Adam/backward/update/reencoding. Numerical-only zero compatibility independently accepted after storage recovery. Legal prose/full norm and statutory/heldout/native-GTE/graph/Lean unmeasured.",
       "status": "closed_mixed_custody_authored384_paired_autonomous_generation"
+    },
+    {
+      "id": "cp128-saved-selector-score-audit-20261023-01",
+      "observed_bytes": 37530,
+      "observed_sha256": "a7ecbad579631ebd68ece8e8c7cfb2e714b5288cf4c5d81a443b0ea59f2eeff8",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-saved-selector-audit-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Eight closed trained cases/800 saved actual-prefix choices:800 grammar/raw overrides,0scope winner overrides,8budget winner overrides;632forced singletons/168branches. Twelve paired candidate/winner sequences unchanged despite raw-score changes; context/conditioning not isolated. No new model/selector/decoder/training or partial-zero payload reads; no legal/native-GTE/heldout gain.",
+      "status": "accepted_saved_only_authored384_selector_trace_diagnostic"
+    },
+    {
+      "id": "cp128-warmstart-source-sensitivity-20261023-01",
+      "observed_bytes": 97356,
+      "observed_sha256": "83388dfb4796eeebeb2fbd6cb02b57a2b3f714e3ffe84fb9736e6c71179cc4c9",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-warmstart-source-sensitivity-20261023.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Eight accepted positive case reports; four same-checkpoint cross-row pairs/400 identical prefixes. Centered relative-score metrics, raw argmax and public scope/grammar/completion-budget masking are separate. Zero additional model/forward/encoding/training work. Original4partial-zero versus8positive-trained scope preserved; no semantic improvement, causal explanation, saturation, prose/full norm, native-GTE or statutory/Lean authority.",
+      "status": "closed_saved_only_authored384_source_sensitivity_diagnostic"
     }
   ]
 }
