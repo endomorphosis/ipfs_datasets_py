@@ -1599,6 +1599,83 @@
       },
       "required": true,
       "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "build_compact_content_training_v2",
+        "compact_content_training_sha256",
+        "validate_compact_content_training_v2",
+        "compact_content_training_bytes_v2",
+        "load_compact_content_training_v2",
+        "train_compact_content_v2"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "generic-compact-owner-navigation-reviewed-20261023-01",
+        "generic-compact-varied-resume-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_training_v2.md",
+      "id": "compact-content-generic-training-v2",
+      "notes": "Existing generic authored384 training: 1–16 ordered rows, fixed537 codec/512 total IDs, validated v1 initialization, exact named-Adam resume and bounded calls. This navigation record adds no numerical qualification. The separate one-case four-row engineering resume qualification passed with ten physical updates and five unique update positions; source-space compatibility, reviewed statutory targets/context, model quality and legal/graph/Lean admission remain separate.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_training_v2",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_compact_content_training_v2.py"
+      ],
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_training_v2.py",
+      "required": true,
+      "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "inspect_compact_content_trained_checkpoint_v2",
+        "score_compact_content_trained_v2",
+        "generate_compact_content_trained_v2",
+        "compact_content_trained_generation_sha256",
+        "validate_compact_content_trained_generation_v2",
+        "prepare_compact_content_trained_batch_prediction_v2"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "generic-compact-owner-navigation-reviewed-20261023-01",
+        "generic-compact-varied-resume-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_trained_runtime_v2.md",
+      "id": "compact-content-trained-runtime-v2",
+      "notes": "Existing trained generic-v2 checkpoint inspection, model-only score/generation, exact original-input generation replay and CONTENT observation adapter;384/fixed537/512 only. No optimizer allocation or updates during inference. Implementation presence and attributed historical execution retain separate scopes; no new source-encoder compatibility, statutory accuracy, legal review, graph or Lean authority.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_trained_runtime_v2",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_compact_content_trained_runtime_v2.py"
+      ],
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_trained_runtime_v2.py",
+      "required": true,
+      "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "inspect_compact_content_prepared_checkpoint_v3",
+        "score_compact_content_prepared_v3",
+        "generate_compact_content_prepared_v3",
+        "compact_content_prepared_generation_sha256",
+        "validate_compact_content_prepared_generation_v3",
+        "prepare_compact_content_prepared_batch_prediction_v3"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "generic-compact-owner-navigation-reviewed-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_prepared_runtime_v3.md",
+      "id": "compact-content-prepared-runtime-v3",
+      "notes": "Existing explicit generic-v2 consumer with at most one operation-local evaluation-model restore per bounded public call; full prefixes and custody/runtime/RNG checks retained, no cross-call model cache. Historical34-case prepared-runtime engineering evidence is attributed separately, not a fresh current-closure qualification or qualification of the other owning suites. No training, numerical-quality improvement, source/meaning or Lean admission follows.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_prepared_runtime_v3",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_compact_content_prepared_runtime_v3.py"
+      ],
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_prepared_runtime_v3.py",
+      "required": true,
+      "status": "implementation_present"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -1659,7 +1736,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-23T05:07:07.823006+00:00",
+  "last_updated_at_utc": "2026-10-23T06:02:19.476907+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2219,7 +2296,7 @@
       "id": "source4096-reconciliation-20261020-01",
       "observed_bytes": 2829,
       "observed_sha256": "14793fe3a8673ae5fe57c71707aad1f39f7d6bebcbd931dae23eacd3e32a3e95",
-      "path": "workspace/test-logs/federal-corpus-audits/source4096-reconciliation-20261020-01/qualification-summary-01.json",
+      "path": "docs/autoformalization/evidence/legal-ir-source4096-reconciliation-20261020.json",
       "required_for_catalog_check": true,
       "root": "datasets_repository",
       "scope": "234 passed metadata/inert-manager controls: 144 current regressions, 46 public-v2 regressions, 41 reconciliation controls and three retained published-ID metadata checks. Three legacy filesystem controls excluded. Original source/compute/storage closed; exact candidates installed. No new native producer, real DB, model, training, publication or Lean execution.",
@@ -2892,6 +2969,26 @@
       "root": "datasets_repository",
       "scope": "Explicit legacy fleet; nonempty typed-owner scope prerequisite; strict preview with 135 accepted and 5 rejected rows, separate 24-task backlog; proposed eight-cell reference scoring. No native owner/task migration/model/training/reconstruction/graph/Lean qualification.",
       "status": "source_review_and_original_board_preview_only"
+    },
+    {
+      "id": "generic-compact-owner-navigation-reviewed-20261023-01",
+      "observed_bytes": 19973,
+      "observed_sha256": "2a5a7444bdd608efdd40afdd0755fcdced13855f7e0a4317143f4ba4db1e652e",
+      "path": "docs/autoformalization/evidence/legal-ir-generic-compact-owner-navigation-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Three already implemented generic compact owners, current APIs/guides/owning-test navigation and attributed historical prepared34-case evidence. No product/profile change, numerical/model/native/test execution, new qualification, reviewed statutory target or legal/graph/Lean admission. The four-row case was pending at this source-only cutoff; its later numerical qualification is indexed separately.",
+      "status": "source_only_navigation_review"
+    },
+    {
+      "id": "generic-compact-varied-resume-20261023-01",
+      "observed_bytes": 10624,
+      "observed_sha256": "8c3723de3ff4215d17b7aedaad720402b8adbe87f7eb4dfcdc8098381739e650",
+      "path": "docs/autoformalization/evidence/legal-ir-varied-compact-resume-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "One authored four-row engineering case/three phases: ten actual updates and twelve GRU forwards; five uninterrupted versus three-plus-two resumed states exactly match except immediate parent;1,074 paired BOS scores exact.18payloads verified; original source/native/storage closed. No old-cohort rerun, autonomous generation, statutory/heldout accuracy, source authentication, training gain or graph/Lean admission.",
+      "status": "passed_original_frozen_closure_saved_result_review"
     }
   ]
 }

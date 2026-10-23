@@ -2,6 +2,12 @@
 
 This is a compact reconciliation of completed work, not a new numerical campaign. Use the [work catalog](work_catalog.json) for selected model evidence and the [archive](ARCHIVE.md) for original checkpoints, optimizer moments, failed attempts and exposure declarations. Widths 8D, 384D, 768D and 4096D remain separate producer/checkpoint profiles.
 
+## Generic compact v2 varied-population resume
+
+The [2026-10-23 engineering qualification](../../../../docs/autoformalization/evidence/legal-ir-varied-compact-resume-20261023.json) exercised the existing generic384/fixed537 owner with four fictional source groups, one independent context and47/51/65-ID target lengths. Five uninterrupted updates and a separate three-plus-two resumed trajectory used ten physical updates over five unique positions. Model weights, named Adam state and progress match exactly; only immediate parent provenance differs. Final progress is one epoch and cursor1. All1,074 paired BOS scores and selector outputs match. The one-case/three-phase run used twelve GRU forwards, nineteen models, eighteen restores and six Adam constructions, with18 payloads verified and original custody closed.
+
+This is a distinct mechanics cohort, not another CP128 fit, the old two-row protocol, autonomous reconstruction or a width comparison. Arbitrary384 vectors remain unauthenticated; statutory meaning, permitted context, heldout accuracy, training gain, graph and Lean admission remain unestablished. Training and evaluation eligibility masks remain zero.
+
 ## Compact role-priority CP128
 
 | Identity | Value |

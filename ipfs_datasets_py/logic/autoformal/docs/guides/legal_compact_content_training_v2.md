@@ -1,9 +1,9 @@
 # Compact-content engineering training and exact resume, v2
 
-Intended module:
+Canonical implementation:
 `ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_training_v2`.
-This is an additive successor to the weights-only v1 head. Staging this file is
-not a training result, checkpoint qualification, or authorization to fit laws.
+This is an additive successor to the weights-only v1 head. Source presence alone
+is not a training result, checkpoint qualification, or authorization to fit laws.
 
 The owner reuses the existing residual projection, conditional GRU, Adam,
 named-state export and finite tensor restoration in `modal_latent_formula`.
@@ -175,9 +175,9 @@ stays null. Every semantic/permission authority flag stays false, and both
 updates. An actual update is not legal-gold qualification, source fidelity,
 holdout improvement, graph admission or Lean acceptance.
 
-## First qualification and subsequent gates
+## Qualification and subsequent gates
 
-The proposed owned CPU fixture uses two independently authored fictional
+The original two-row CPU protocol uses two independently authored fictional
 source/catalog contexts and explicit labels, plus arbitrary 384D vectors. Run
 two updates uninterrupted and compare them with one update → exclusive byte
 save → hash-checked load → one update. This is **four actual updates across two
@@ -186,11 +186,17 @@ permanent lineage bit-for-bit; immediate parent hashes legitimately differ.
 Retain observed actual optimizer calls, positive finite formula-to-projection
 gradients, input immutability, all artifacts and refusal controls.
 
-The next inference step needs an explicit trained v2 scorer/generator and a real
-source-producer receipt joined to the exact vector consumed. Do not relabel
+The existing [trained v2 scorer/generator](legal_compact_content_trained_runtime_v2.md)
+and [operation-local prepared v3 consumer](legal_compact_content_prepared_runtime_v3.md)
+already consume this checkpoint schema. Reuse those owners; a real source-producer
+receipt still needs to be joined to the exact vector consumed. Do not relabel
 this successor as a zero-step v1 head, fill an encoder identity with a decoder or
 vector hash, or use arbitrary engineering vectors to claim autoformalization.
 Statutory fitting additionally requires reviewed targets/contexts, source and
 edition/rights provenance, group/exposure guards, independent holdouts and
 qualification. Those gates, 768D/native4096 extensions and training quality
 comparisons remain separate work.
+
+The [four-row varied-population qualification](../../../../../docs/autoformalization/evidence/legal-ir-varied-compact-resume-20261023.json), completed2026-10-23, passed one selected case / three pytest phases. Four authored source groups share one independently constructed context; their target lengths are47,51 and65 total IDs. Five uninterrupted updates exactly match three updates followed by byte-save, hash-checked load and two resumed updates in model weights, named Adam state, population, runtime and progress. Immediate parent hashes legitimately differ. Final progress is five steps, one completed epoch and row cursor1.
+
+Independent Torch observers recorded ten physical updates, twelve GRU forwards, nineteen model constructions, eighteen state restores and six Adam constructions. The two model-only BOS observations on the same third row contain1,074 saved scores; all paired scores and selections are exactly equal. Eighteen complete payloads totaling11,487,753 bytes were read back; original source/native/storage custody closed. This cohort does not repeat the old two-row campaign or exercise autonomous generation. Source-encoder authentication, permitted context, heldout accuracy, training gain and legal/graph/Lean admission remain unestablished; both eligibility masks remain zero.

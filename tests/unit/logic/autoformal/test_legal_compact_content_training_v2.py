@@ -469,3 +469,362 @@ def test_bounds_refuse_without_update(initial, mutation, prohibit_updates):
             subject.build_compact_content_training_v2(initial["parent"], case["population_raw"], case["rows"],
                 expected_initial_checkpoint_sha256=digest(initial["parent"]),
                 expected_population_sha256=sha(case["population_raw"]))
+
+
+# Additive varied-population mechanics only. The module's original four-update
+# qualification above remains historical and is not selected by this new case.
+# This case proposes ten actual updates: five versus three plus two after load.
+# No numerical execution or qualification is established by staging this file.
+_VARIED_TRAINING_DECLARATIONS_V2 = [
+    {"id": "varied-fictional-permission", "source_group": "varied-source-group-a",
+     "source_utf8": "Fictional example A: every holder may retain every record.",
+     "conditioning_prefix": [.25, -.125, .0625, 0.],
+     "tree": ["forall", 0, ["forall", 1, ["extension", "P",
+         ["predicate", 0, [["variable", 0], ["variable", 1]]]]]]},
+    {"id": "varied-fictional-reversed-obligation", "source_group": "varied-source-group-b",
+     "source_utf8": "Fictional example B: some record must be retained by every holder.",
+     "conditioning_prefix": [-.5, .375, 0., -.125],
+     "tree": ["exists", 0, ["forall", 1, ["extension", "O",
+         ["predicate", 0, [["variable", 1], ["variable", 0]]]]]]},
+    {"id": "varied-fictional-conditional-prohibition", "source_group": "varied-source-group-c",
+     "source_utf8": "Fictional example C: if an object retains itself, it is forbidden from retaining itself.",
+     "conditioning_prefix": [.125, .25, -.375, .0625],
+     "tree": ["forall", 0, ["implies",
+         ["predicate", 0, [["variable", 0], ["variable", 0]]],
+         ["extension", "F", ["predicate", 0, [["variable", 0], ["variable", 0]]]]]]},
+    {"id": "varied-fictional-negated-obligation", "source_group": "varied-source-group-d",
+     "source_utf8": "Fictional example D: each holder has a record for which an obligation to retain it is negated.",
+     "conditioning_prefix": [-.25, -.125, .5, .125],
+     "tree": ["forall", 0, ["exists", 1, ["not", ["extension", "O",
+         ["predicate", 0, [["variable", 0], ["variable", 1]]]]]]]},
+]
+
+
+def _authored_varied_population_v2():
+    """Fix the complete context before constructing any of the four labels.
+
+    The binary Retain declaration and roles are authored input. Neither their
+    legal meaning nor the independence of a caller-supplied context is granted.
+    The fictional prose is retained/hash-bound; no encoder consumes its text.
+    """
+    from ipfs_datasets_py.logic.autoformal import legal_compact_content_v1 as compact
+
+    obj = signatures.LogicSort("Object")
+    signature = signatures.LogicSignature("authored-varied-fixed-context",
+        family="tdfol", profile="tdfol_default", sorts=(obj,), symbols=(
+            signatures.declare_predicate("Retain", (obj, obj)),))
+    signature_raw = wire(signature.to_dict())
+    roles_raw = wire([{"symbol": "Retain", "roles": ["holder", "record"]}])
+    context = compact.prepare_context_v1(signature_raw, roles_raw,
+        expected_signature_sha256=sha(signature_raw), expected_argument_roles_sha256=sha(roles_raw))
+    context_raw = wire(context)
+    # Everything above is fixed before reading a target declaration below.
+    frozen_context_raw = bytes(context_raw)
+    codec = tokens.build_compact_content_token_codec_v1()
+    codec_sha = tokens.compact_content_token_codec_sha256(codec)
+    rows, encodings = [], []
+    for authored in deepcopy(_VARIED_TRAINING_DECLARATIONS_V2):
+        target_raw = wire({"schema": "legal-relational-compact-content/v1", "tree": authored["tree"]})
+        encoded = tokens.encode_compact_content_tokens_v1(target_raw, frozen_context_raw,
+            expected_content_sha256=sha(target_raw), expected_context_sha256=sha(frozen_context_raw),
+            codec=codec, expected_codec_sha256=codec_sha)
+        assert encoded["status"] == "encoded_unreviewed_content"
+        assert encoded["target_ids"][0] == 1 and encoded["target_ids"][-1] == 2
+        assert 3 <= len(encoded["target_ids"]) <= 512
+        no_authority(encoded)
+        no_authority(encoded["prediction"])
+        rows.append({"id": authored["id"], "source_group": authored["source_group"],
+            "source_raw": authored["source_utf8"].encode("utf-8"), "context_raw": frozen_context_raw,
+            "target_raw": target_raw,
+            "conditioning": list(authored["conditioning_prefix"]) + [0.] * 380})
+        encodings.append(encoded)
+    assert context_raw == frozen_context_raw == wire(context)
+    assert len(rows) == len({row["id"] for row in rows}) == len({row["source_group"] for row in rows}) == 4
+    assert len({row["context_raw"] for row in rows}) == 1
+    assert len({row["target_raw"] for row in rows}) == len({digest(row["conditioning"]) for row in rows}) == 4
+    assert len({len(encoded["target_ids"]) for encoded in encodings}) == 3
+    assert [encoded["counts"]["nodes"] for encoded in encodings] == [6, 6, 9, 7]
+    assert [encoded["counts"]["quantifiers"] for encoded in encodings] == [2, 2, 1, 2]
+    assert [encoded["counts"]["predicate_occurrences"] for encoded in encodings] == [1, 1, 2, 1]
+    population = {"schema": "legal-compact-content-training-population/v2",
+        "origin": "authored_engineering_fixture", "partition": "engineering_training", "rows": [
+            {"id": row["id"], "source_group": row["source_group"],
+             "source_sha256": sha(row["source_raw"]), "context_sha256": sha(row["context_raw"]),
+             "target_sha256": sha(row["target_raw"]), "conditioning_sha256": digest(row["conditioning"])}
+            for row in rows]}
+    return {"population": population, "population_raw": wire(population) + b"\n", "rows": rows,
+        "context_raw": frozen_context_raw, "signature_raw": signature_raw, "roles_raw": roles_raw,
+        "codec": codec, "encodings": encodings}
+
+
+def test_varied_four_row_population_crosses_epoch_and_resumes_with_fixed_bos_parity(tmp_path):
+    """One finite positive case, not a new trainer or a legal accuracy experiment."""
+    from ipfs_datasets_py.logic.formalization.autoencoder import legal_compact_content_trained_runtime_v2 as runtime
+    from ipfs_datasets_py.logic.formalization.autoencoder import legal_compact_content_selection_v1 as selection
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_latent_formula as numerical
+
+    case = _authored_varied_population_v2()
+    before_case = deepcopy(case)
+    stage = {"value": "seed_create"}
+    counts = dict.fromkeys(("model_constructions", "state_restores", "adam_constructions",
+        "gru_forwards", "cross_entropy_calls", "autograd_grad_calls", "backward_calls",
+        "clip_calls", "optimizer_updates", "selector_calls"), 0)
+    events, updates, gradients, losses = [], [], [], []
+    real_init, real_load = torch.nn.GRU.__init__, torch.nn.Module.load_state_dict
+    real_adam, real_gru = torch.optim.Adam.__init__, torch.nn.GRU.forward
+    real_ce, real_grad = torch.nn.functional.cross_entropy, torch.autograd.grad
+    real_backward, real_clip = torch.Tensor.backward, torch.nn.utils.clip_grad_norm_
+    real_step, real_select = torch.optim.Adam.step, selection.select_compact_content_token_v1
+
+    def observed_init(model, *args, **kwargs):
+        result = real_init(model, *args, **kwargs)
+        counts["model_constructions"] += 1
+        events.append({"event": "model_construction", "stage": stage["value"]})
+        return result
+
+    def observed_load(model, *args, **kwargs):
+        result = real_load(model, *args, **kwargs)
+        counts["state_restores"] += 1
+        events.append({"event": "state_restore", "stage": stage["value"]})
+        return result
+
+    def observed_adam(optimizer, *args, **kwargs):
+        result = real_adam(optimizer, *args, **kwargs)
+        counts["adam_constructions"] += 1
+        events.append({"event": "adam_construction", "stage": stage["value"]})
+        return result
+
+    def observed_gru(model, inputs, *args, **kwargs):
+        result = real_gru(model, inputs, *args, **kwargs)
+        counts["gru_forwards"] += 1
+        events.append({"event": "gru_forward", "stage": stage["value"],
+            "input_shape": list(inputs.shape), "output_shape": list(result[0].shape),
+            "model_training": model.training})
+        return result
+
+    def observed_ce(logits, labels, *args, **kwargs):
+        result = real_ce(logits, labels, *args, **kwargs)
+        assert not args and kwargs == {"ignore_index": 0}
+        assert list(logits.shape) == [labels.numel(), 537]
+        label_ids = labels.detach().tolist()
+        assert label_ids and label_ids[-1] == 2 and 0 not in label_ids
+        matrix = logits.detach().double().tolist()
+        terms = []
+        for scores, target_id in zip(matrix, label_ids):
+            maximum = max(scores)
+            terms.append(maximum + math.log(math.fsum(math.exp(score - maximum) for score in scores)) - scores[target_id])
+        independent_mean = math.fsum(terms) / len(label_ids)
+        actual_mean = float(result.detach())
+        assert math.isclose(actual_mean, independent_mean, rel_tol=0., abs_tol=2e-6)
+        counts["cross_entropy_calls"] += 1
+        losses.append({"stage": stage["value"], "shape": list(logits.shape), "labels": label_ids,
+            "logits": matrix, "logits_sha256": digest(matrix), "eos_included": True,
+            "torch_mean_cross_entropy": actual_mean, "python_mean_cross_entropy": independent_mean})
+        return result
+
+    def observed_grad(*args, **kwargs):
+        result = real_grad(*args, **kwargs)
+        counts["autograd_grad_calls"] += 1
+        gradients.append({"stage": stage["value"],
+            "all_finite": all(value is not None and bool(torch.isfinite(value).all()) for value in result),
+            "squared_norm": sum(float(value.detach().double().square().sum()) for value in result)})
+        return result
+
+    def observed_backward(loss, *args, **kwargs):
+        counts["backward_calls"] += 1
+        return real_backward(loss, *args, **kwargs)
+
+    def observed_clip(*args, **kwargs):
+        counts["clip_calls"] += 1
+        return real_clip(*args, **kwargs)
+
+    def observed_step(optimizer, *args, **kwargs):
+        before = optimizer_snapshot(optimizer)
+        result = real_step(optimizer, *args, **kwargs)
+        after = optimizer_snapshot(optimizer)
+        counts["optimizer_updates"] += 1
+        updates.append({"stage": stage["value"], "before": before, "after": after})
+        return result
+
+    def observed_select(*args, **kwargs):
+        result = real_select(*args, **kwargs)
+        counts["selector_calls"] += 1
+        return result
+
+    def forbidden_in_score(*args, **kwargs):
+        pytest.fail("model-only fixed-BOS score allocated/restored Adam or reached training")
+
+    rng = torch.get_rng_state().clone()
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(torch.nn.GRU, "__init__", observed_init)
+        patch.setattr(torch.nn.Module, "load_state_dict", observed_load)
+        patch.setattr(torch.optim.Adam, "__init__", observed_adam)
+        patch.setattr(torch.nn.GRU, "forward", observed_gru)
+        patch.setattr(torch.nn.functional, "cross_entropy", observed_ce)
+        patch.setattr(torch.autograd, "grad", observed_grad)
+        patch.setattr(torch.Tensor, "backward", observed_backward)
+        patch.setattr(torch.nn.utils, "clip_grad_norm_", observed_clip)
+        patch.setattr(torch.optim.Adam, "step", observed_step)
+        patch.setattr(selection, "select_compact_content_token_v1", observed_select)
+        parent = head.create_compact_content_head_v1(config={"hidden_size": 8,
+            "token_embedding_dim": 8, "projection_width": 4, "seed": 1729})
+        before_parent = deepcopy(parent)
+        stage["value"] = "build"
+        start = subject.build_compact_content_training_v2(parent, case["population_raw"], case["rows"],
+            expected_initial_checkpoint_sha256=digest(parent),
+            expected_population_sha256=sha(case["population_raw"]), learning_rate=.001)
+        before_start = deepcopy(start)
+        stage["value"] = "uninterrupted"
+        uninterrupted = train(start, case, 5)
+        stage["value"] = "split_first"
+        first = train(start, case, 3)
+        stage["value"] = "checkpoint_bytes"
+        saved_raw = subject.compact_content_training_bytes_v2(first["checkpoint"],
+            expected_checkpoint_sha256=digest(first["checkpoint"]))
+        saved_path = tmp_path / "varied-split-first-exclusive-save.json"
+        write_exclusive(saved_path, saved_raw)
+        with pytest.raises(FileExistsError):
+            with saved_path.open("xb"):
+                pytest.fail("exclusive checkpoint save was replaced")
+        assert saved_path.read_bytes() == saved_raw
+        stage["value"] = "checkpoint_load"
+        restored = subject.load_compact_content_training_v2(saved_path.read_bytes(), expected_raw_sha256=sha(saved_raw))
+        assert restored == first["checkpoint"] and restored is not first["checkpoint"]
+        before_restored = deepcopy(restored)
+        stage["value"] = "resumed"
+        resumed = train(restored, case, 2)
+        assert restored == before_restored
+        before_scored = (deepcopy(uninterrupted["checkpoint"]), deepcopy(resumed["checkpoint"]))
+        before_score_counts = dict(counts)
+        # Only model tensors are restored. Pure checkpoint validation still
+        # reads retained training labels/population; this is no target-blind claim.
+        with pytest.MonkeyPatch.context() as score_patch:
+            for owner, name in ((torch.optim.Optimizer, "__init__"), (torch.optim.Adam, "__init__"),
+                    (torch.optim.Adam, "step"), (numerical, "_optimizer"), (subject, "_restore"),
+                    (subject, "build_compact_content_training_v2"), (subject, "train_compact_content_v2"),
+                    (torch.Tensor, "backward"), (torch.autograd, "grad")):
+                score_patch.setattr(owner, name, forbidden_in_score)
+            scores = []
+            row = case["rows"][2]
+            for name, checkpoint in (("uninterrupted_bos", uninterrupted["checkpoint"]),
+                                     ("resumed_bos", resumed["checkpoint"])):
+                stage["value"] = name
+                scores.append(runtime.score_compact_content_trained_v2(checkpoint,
+                    row["conditioning"], [1], row["context_raw"],
+                    expected_checkpoint_sha256=digest(checkpoint), expected_context_sha256=sha(row["context_raw"])))
+        assert (uninterrupted["checkpoint"], resumed["checkpoint"]) == before_scored
+        assert {name: counts[name] - before_score_counts[name] for name in counts} == {
+            "model_constructions": 2, "state_restores": 2, "adam_constructions": 0,
+            "gru_forwards": 2, "cross_entropy_calls": 0, "autograd_grad_calls": 0,
+            "backward_calls": 0, "clip_calls": 0, "optimizer_updates": 0, "selector_calls": 2}
+    assert counts == {"model_constructions": 19, "state_restores": 18, "adam_constructions": 6,
+        "gru_forwards": 12, "cross_entropy_calls": 10, "autograd_grad_calls": 10,
+        "backward_calls": 10, "clip_calls": 10, "optimizer_updates": 10, "selector_calls": 2}
+    assert parent == before_parent and start == before_start and case == before_case
+    assert torch.equal(rng, torch.get_rng_state()) and torch.get_num_threads() == 1
+    ids = [row["id"] for row in case["rows"]]
+    expected_rows = {"uninterrupted": ids + ids[:1], "split_first": ids[:3], "resumed": ids[3:] + ids[:1]}
+    label_counts = {row["id"]: len(encoded["target_ids"]) - 1
+        for row, encoded in zip(case["rows"], case["encodings"])}
+    assert len(set(label_counts.values())) == 3
+    for name, result in (("uninterrupted", uninterrupted), ("split_first", first), ("resumed", resumed)):
+        report, checkpoint = result["report"], result["checkpoint"]
+        row_sequence = expected_rows[name]
+        assert report["population_count"] == checkpoint["population_count"] == 4
+        assert report["optimizer_steps"] == len(row_sequence) and report["stopped_reason"] == "optimizer_step_budget"
+        assert [loss["row_id"] for loss in report["batch_losses"]] == row_sequence
+        assert [loss["token_count"] for loss in report["batch_losses"]] == [label_counts[row_id] for row_id in row_sequence]
+        assert report["token_count"] == sum(label_counts[row_id] for row_id in row_sequence)
+        assert report["objective"] == "compact_token_cross_entropy" and report["teacher_forcing"] is True
+        assert report["selection_performed"] is report["heldout_evaluated"] is report["free_running_evaluated"] is False
+        assert report["encoder_sha256"] is None and report["source_text_is_neural_input"] is False
+        assert report["conditioning_producer_verified"] is False
+        observed = [loss for loss in losses if loss["stage"] == name]
+        assert len(observed) == len(row_sequence)
+        for loss, row_id, observed_loss in zip(report["batch_losses"], row_sequence, observed):
+            encoded = case["encodings"][ids.index(row_id)]
+            assert observed_loss["labels"] == encoded["target_ids"][1:]
+            assert observed_loss["shape"] == [label_counts[row_id], 537]
+            assert loss["token_cross_entropy"] == observed_loss["torch_mean_cross_entropy"]
+        for parameter_group in ("projection", "decoder"):
+            evidence = report["parameter_evidence"][parameter_group]
+            assert evidence["gradient_norm_max"] > 0 and evidence["parameter_update_l2"] > 0
+        assert checkpoint["population_raw_utf8"].encode("utf-8") == case["population_raw"]
+        assert checkpoint["population_sha256"] == sha(case["population_raw"])
+        no_authority(checkpoint)
+        no_authority(report)
+    assert start["progress"] == {"optimizer_steps": 0, "epochs_completed": 0, "row_cursor": 0}
+    assert first["checkpoint"]["progress"] == {"optimizer_steps": 3, "epochs_completed": 0, "row_cursor": 3}
+    final_progress = {"optimizer_steps": 5, "epochs_completed": 1, "row_cursor": 1}
+    a, b = uninterrupted["checkpoint"], resumed["checkpoint"]
+    assert a["progress"] == b["progress"] == final_progress
+    assert a["model_state"] == b["model_state"] and a["weights_sha256"] == b["weights_sha256"] != start["weights_sha256"]
+    assert a["optimizer_state"] == b["optimizer_state"]
+    assert a["population_raw_utf8"] == b["population_raw_utf8"] == start["population_raw_utf8"]
+    assert a["runtime"] == b["runtime"] == start["runtime"]
+    assert a["parent_checkpoint_sha256"] == first["checkpoint"]["parent_checkpoint_sha256"] == digest(start)
+    assert b["parent_checkpoint_sha256"] == digest(first["checkpoint"])
+    assert a["parent_checkpoint_sha256"] != b["parent_checkpoint_sha256"] and digest(a) != digest(b)
+    assert {key: value for key, value in a.items() if key != "parent_checkpoint_sha256"} == {
+        key: value for key, value in b.items() if key != "parent_checkpoint_sha256"}
+    assert len(updates) == len(gradients) == 10
+    assert [row["stage"] for row in updates] == ["uninterrupted"] * 5 + ["split_first"] * 3 + ["resumed"] * 2
+    for update, gradient in zip(updates, gradients):
+        assert update["before"]["all_parameters_finite"] and update["after"]["all_parameters_finite"]
+        assert update["before"]["parameters_sha256"] != update["after"]["parameters_sha256"]
+        assert all(new == old + 1 for old, new in zip(update["before"]["state_steps"], update["after"]["state_steps"]))
+        assert gradient["all_finite"] and math.isfinite(gradient["squared_norm"]) and gradient["squared_norm"] > 0
+    assert len(scores) == 2 and scores[0]["logits"] == scores[1]["logits"]
+    assert len(scores[0]["logits"]) == 537 and all(math.isfinite(number) for number in scores[0]["logits"])
+    for checkpoint, score in zip((a, b), scores):
+        assert score["checkpoint_sha256"] == digest(checkpoint) and score["weights_sha256"] == checkpoint["weights_sha256"]
+        assert score["compact_training_steps"] == 5 and score["training_progress"] == final_progress
+        assert score["prefix_ids"] == [1] and score["output_shape"] == [1, 1, 537]
+        assert score["status"] == "scored" and score["runtime_verified"] is True
+        assert score["numerical_forward_executed"] is score["model_restore_performed"] is True
+        assert score["optimizer_constructed"] is score["optimizer_state_restored"] is score["optimizer_executed"] is False
+        assert score["logits_sha256"] == digest(score["logits"])
+        allowed = score["prefix_report"]["allowed_token_ids"]
+        assert score["selection"]["selected_token_id"] == min(allowed, key=lambda token: (-score["logits"][token], token))
+        no_authority(score)
+
+    # Preserve complete evidence without replacing any prior fixture artifact.
+    artifacts = {"population.json": case["population_raw"], "context.json": case["context_raw"],
+        "signature.json": case["signature_raw"], "argument-roles.json": case["roles_raw"],
+        "codec.json": wire(case["codec"]), "initial-parent-v1.json": wire(parent),
+        "initial-training-v2.json": wire(start), "uninterrupted-result.json": wire(uninterrupted),
+        "split-first-result.json": wire(first), "resumed-result.json": wire(resumed),
+        "uninterrupted-bos-score.json": wire(scores[0]), "resumed-bos-score.json": wire(scores[1]),
+        "observed-events.json": wire(events), "observed-updates.json": wire(updates),
+        "observed-gradients.json": wire(gradients), "observed-cross-entropy.json": wire(losses),
+        "authored-rows.json": wire([{"id": row["id"], "source_group": row["source_group"],
+            "source_utf8": row["source_raw"].decode("utf-8"), "context_utf8": row["context_raw"].decode("utf-8"),
+            "target_utf8": row["target_raw"].decode("utf-8"), "conditioning": row["conditioning"],
+            "encoding": encoded} for row, encoded in zip(case["rows"], case["encodings"])])}
+    references = {saved_path.name: {"path": str(saved_path), "bytes": len(saved_raw), "sha256": sha(saved_raw)}}
+    for filename, raw in artifacts.items():
+        path = tmp_path / filename
+        write_exclusive(path, raw)
+        references[filename] = {"path": str(path), "bytes": len(raw), "sha256": sha(raw)}
+    panel = {"schema": "authored-varied-compact-training-panel/v2", "artifacts": references,
+        "counts": counts, "population_rows": 4, "source_groups": 4, "context_count": 1,
+        "distinct_target_count": 4, "distinct_total_token_lengths": sorted({count + 1 for count in label_counts.values()}),
+        "row_label_counts_including_eos": label_counts, "expected_row_sequences": expected_rows,
+        "uninterrupted_steps": 5, "split_first_steps": 3, "resumed_steps": 2,
+        "final_progress": final_progress, "checkpoint_values_equal_except_immediate_parent": True,
+        "fixed_bos_score_rows": [ids[2], ids[2]], "saved_bos_logit_coordinates": 1074,
+        "scope": {"origin": "authored_engineering_fixture", "partition": "engineering_training",
+            "conditioning_profile": "caller_supplied_unverified384", "source_encoder_authenticated": False,
+            "context_constructed_before_targets": True, "context_permission_verified": False,
+            "strict_checkpoint_validation_reads_training_labels": True, "score_target_used_as_prefix": False,
+            "model_only_score_optimizer_allocations": 0, "model_only_score_selector_calls": 2,
+            "complete_free_running_generation_executed": False, "old_four_update_campaign_rerun": False,
+            "training_gain_established": False, "heldout_evaluated": False, "statutory_meaning_verified": False,
+            "reviewed_training_acceptance_closed": False, "Lean_executed": False,
+            "training_mask": 0, "evaluation_gold_mask": 0}}
+    write_exclusive(tmp_path / "authored-varied-compact-training-panel-v2.json", wire(panel))
+    descriptor = os.open(tmp_path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
