@@ -21,7 +21,7 @@ close/reopen, preserving all thirty normalized key dimensions. Independent
 readback verified all 123 exports, the unchanged 110 prior exports and the
 closed database file. No new Lean invocation, compiler probe or legal proof-cache
 write occurred. The
-[qualification receipt](../../../../../../../artifacts/legal-ir-corpus-index-20261015-01/qualification-receipt.json)
+[qualification receipt](../../../../../docs/autoformalization/evidence/legal-ir-preservation-publication-20261023.json)
 binds exact sources, requests and evidence. Unit packet claims remain explicitly
 synthetic; actual integration consumes the earlier qualified native packets.
 
@@ -128,3 +128,28 @@ for the complete entry JSON's `result_payload` paths. They are not established b
 exact-key storage and retrieval. Reviewed statutory source correspondence,
 broader logic constructors, general translation preservation, measured token
 savings and held-out model convergence remain independent gates.
+
+The retained reader accepts only the official V2 twelve-module, fifteen-theorem, 49-file preservation profile. Parent, shared/aggregate and direct-incremental native receipts have different packet and preparation contracts and remain unsupported here; schema relabeling or a matching hash cannot substitute for a compatible reader.
+
+## Current primary reconciliation — 153 cases / 459 phases passed
+
+The [closed current-source qualification](../../../../../docs/autoformalization/evidence/legal-ir-preservation-publication-20261023.json)
+passed 153 authored-fixture cases / 459 setup, call and teardown phases: 47
+real-SQL persistence cases, 47 packet-index cases and 59 store regressions. Packet
+execution claims in the unit fixtures remain synthetic. Real SQL writes and
+cold close/reopen concern fixture entries, separately from the historical
+DuckDB 1.5.5 replay of two compiled FOL/TDFOL packets. The cohort includes one
+unchanged exact stdlib cold-index child with its 20-second timeout. A declared
+path-only reasoning namespace executes genuine required leaf modules; the
+public reasoning package initializer was not executed and remains outside this
+qualification. Original native, storage and source READ custody closed.
+
+The original 153-case qualification and separate two-packet cold readback above
+retain their original source generation. This fresh fixture integration
+qualifies current dependencies without creating another receipt adapter or
+promoting old packets to a current replay. UNKNOWN/CANDIDATE/NONE observations
+remain nonauthorizing. Parent/shared/direct-incremental packets, theorem-specific
+legal proof cache, DuckLake/Quack activation, model/training and Lean admission
+remain unsupported or unqualified as before.
+
+At this publication-preparation cutoff, no new test cohort, historical packet/database replay, native or Lean run, or model execution has been performed. The linked portable evidence records the retained 153-case/459-phase primary composition and its declared reasoning namespace profile separately from the original 68-case packet qualification, original 153-case SQL/index qualification and historical two-packet replays. Those qualifications keep their original source/toolchain scopes. Preserved public companion differences do not establish whole-runtime byte identity with the 126 raw-compile observations/119 module origins or qualify the public reasoning initializer/reexports. Original receipts, packet/database exports and raw execution evidence remain unbundled and unavailable in a clean clone; the portable record supplies their immutable descriptors and scope, rather than substituting fresh runtime evidence.

@@ -1538,6 +1538,67 @@
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_counted_threshold_numerical_view_v2.py",
       "required": true,
       "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "packet_sha256",
+        "validate_definition_use_preservation_packet_v2"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "preservation-publication-qualified-source-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_corpus_definition_use_preservation_packet_v2.md",
+      "id": "definition-use-preservation-packet",
+      "notes": "Existing official-V2 twelve-module/fifteen-theorem/49-file observational profile. Historical qualifications remain attributed; no parent/shared/direct-incremental compatibility, proof usability or legal/model/training/Lean admission. Published with its existing preservation/AST and explicit-connection SQL dependencies. Qualification cohorts remain separately attributed in the portable ledger; no fresh runtime or reviewed statutory admission.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_preservation_packet_v2",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+      "preservation_index_primary_integration": {
+        "actual_historical_native_packets_replayed_again": false,
+        "cases": 153,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "preservation-index-primary-integration-qualified-20261022-01",
+        "parent_shared_incremental_supported": false,
+        "phases": 459,
+        "proof_usable": false,
+        "source_mutations_performed": false,
+        "status": "namespace_scoped_authored_composition_qualified",
+        "training_mask": 0
+      },
+      "required": true,
+      "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "prepare_definition_use_preservation_index_v2",
+        "write_definition_use_preservation_index_v2",
+        "lookup_definition_use_preservation_index_v2"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "preservation-publication-qualified-source-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_corpus_definition_use_preservation_index_v2.md",
+      "id": "definition-use-preservation-index",
+      "notes": "Existing official-V2 twelve-module/fifteen-theorem/49-file observational profile. Historical qualifications remain attributed; no parent/shared/direct-incremental compatibility, proof usability or legal/model/training/Lean admission. Published with its existing preservation/AST and explicit-connection SQL dependencies. Qualification cohorts remain separately attributed in the portable ledger; no fresh runtime or reviewed statutory admission.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_preservation_index_v2",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py",
+      "preservation_index_primary_integration": {
+        "actual_historical_native_packets_replayed_again": false,
+        "cases": 153,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "preservation-index-primary-integration-qualified-20261022-01",
+        "parent_shared_incremental_supported": false,
+        "phases": 459,
+        "proof_usable": false,
+        "source_mutations_performed": false,
+        "status": "namespace_scoped_authored_composition_qualified",
+        "training_mask": 0
+      },
+      "required": true,
+      "status": "implementation_present"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -1598,7 +1659,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-23T03:34:47.089428+00:00",
+  "last_updated_at_utc": "2026-10-23T04:33:18.782033+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2811,6 +2872,16 @@
       "root": "datasets_repository",
       "scope": "Four existing source owners; metadata79,seeded46,transfer39,view46 remain separate original qualification generations. No fresh combined/public pytest or model/native run, private-observer/checkpoint publication, training/source compatibility/statutory/graph/Lean authority.",
       "status": "historical_exact_counted_numerical_source_qualification_reused"
+    },
+    {
+      "id": "preservation-publication-qualified-source-20261023-01",
+      "observed_bytes": 165629,
+      "observed_sha256": "6ea849407b2a2d52da9f3366ebf9b3f279b240e89569005a19bd99188da78c9c",
+      "path": "docs/autoformalization/evidence/legal-ir-preservation-publication-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Existing official-V2 observational packet/index with dependency-complete AST/preservation/SQL source and owning tests. Historical153/459,68packet and ancestor qualifications stay separate; no fresh public runtime, actual native/DB replay, proof usability or source/meaning/model/training/gold/graph/Lean admission.",
+      "status": "qualified_existing_preservation_source_publication"
     }
   ]
 }

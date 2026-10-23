@@ -13,9 +13,9 @@ entry integrity are fail-closed: digest drift, unknown fields, and unknown
 schema versions never load as usable hits.
 
 Importing this module is inert: no DuckDB, network, or filesystem I/O.  A live
-DuckDB connection may be injected later; the default store is process-local
-and implements the verification-cache protocol so shadow and promotion work
-can proceed without a server.
+DuckDB connection may be injected later to persist the existing catalog with
+transactional readback; the default store is process-local and implements the
+verification-cache protocol without a server.
 
 Catalog tables (``proofs``):
 
@@ -28,8 +28,10 @@ Catalog tables (``proofs``):
 from __future__ import annotations
 
 import json
+import math
 import threading
 import time
+from contextlib import contextmanager
 from collections import OrderedDict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -67,6 +69,9 @@ DUCKDB_PROOF_STORE_SCHEMA_VERSION: Final = "duckdb-proof-store/v1"
 UNIFIED_PROOF_KEY_SCHEMA_VERSION: Final = "unified-proof-key/v1"
 UNIFIED_PROOF_ENTRY_SCHEMA_VERSION: Final = "unified-proof-entry/v1"
 PROOFS_CATALOG_NAME: Final = "proofs"
+SQL_MAX_ENTRY_JSON_BYTES: Final = 8 * 1024 * 1024
+SQL_MAX_KEY_JSON_BYTES: Final = 64 * 1024
+SQL_MAX_PREMISES: Final = 4096
 
 # Closed authority-dimension vocabulary.  Every producer (hammer obligation
 # cache, verification-cache protocol, legal-IR / corpus bridges) must project
@@ -1626,11 +1631,20 @@ class DuckDBProofStoreProtocol(Protocol):
 
 
 class DuckDBProofStore:
-    """In-process unified proof store implementing VerificationCacheProtocol@1.
+    """Unified proof store implementing VerificationCacheProtocol@1.
 
     Entries are keyed by the unified proof-key digest.  Lookups accept either
     a :class:`UnifiedProofKey` or a :class:`VerificationCacheKey` (projected
     comparison).  Exact key and integrity checks fail closed.
+
+    An explicitly supplied connection makes the existing SQL catalog the
+    authority for entries. The caller owns that connection, its exclusive use,
+    and its filesystem/resource custody; it must be outside a transaction when
+    invoking this store. No connection is opened here. SQL writes commit only
+    after exact readback. Without a connection the original process-local
+    behavior is retained. SQL capacity eviction uses bounded insertion
+    chronology (created_at, then key digest); in-process access counters and
+    single-flight coordination remain local to this instance.
     """
 
     def __init__(
@@ -1707,6 +1721,256 @@ class DuckDBProofStore:
     def authority_dimensions(self) -> tuple[str, ...]:
         return PROOF_AUTHORITY_DIMENSIONS
 
+    def _sql(self, statement: str, parameters: Any = None) -> Any:
+        try:
+            if parameters is None:
+                return self._connection.execute(statement)
+            return self._connection.execute(statement, parameters)
+        except Exception as error:
+            raise DuckDBProofStoreError("proof SQL operation failed") from error
+
+    @contextmanager
+    def _sql_transaction(self):
+        # A caller-owned transaction is deliberately not committed or adopted.
+        self._sql("BEGIN TRANSACTION")
+        try:
+            yield
+            self._sql("COMMIT")
+        except BaseException:
+            try:
+                self._sql("ROLLBACK")
+            except Exception:
+                pass
+            raise
+
+    def _sql_rows(self, table, columns, clause, parameters, *, limit, text_limits):
+        """Check SQL byte lengths before materializing bounded text rows."""
+        expressions = [f"octet_length(encode({name}))" for name in text_limits]
+        tail = f" FROM {table} {clause} LIMIT ?"
+        sizes = self._sql("SELECT " + ",".join(expressions) + tail,
+                          [*parameters, limit]).fetchall()
+        for row in sizes:
+            if len(row) != len(text_limits) or any(
+                type(size) is not int or size < 0 or size > maximum
+                for size, maximum in zip(row, text_limits.values())
+            ):
+                raise DuckDBProofStoreIntegrityError("SQL proof row exceeds byte bounds")
+        if sum(sum(row) for row in sizes) > SQL_MAX_ENTRY_JSON_BYTES:
+            raise DuckDBProofStoreIntegrityError("SQL proof result exceeds aggregate byte bounds")
+        rows = self._sql("SELECT " + ",".join(columns) + tail,
+                         [*parameters, limit]).fetchall()
+        if len(rows) != len(sizes):
+            raise DuckDBProofStoreIntegrityError("SQL proof row changed during bounded read")
+        for row in rows:
+            if len(row) != len(columns):
+                raise DuckDBProofStoreIntegrityError("SQL proof row shape differs")
+            for name, maximum in text_limits.items():
+                value = row[columns.index(name)]
+                if type(value) is not str or len(value.encode("utf-8")) > maximum:
+                    raise DuckDBProofStoreIntegrityError("SQL proof row exceeds byte bounds")
+        return rows
+
+    @staticmethod
+    def _sql_json(raw, maximum):
+        def pairs(items):
+            result = {}
+            for name, value in items:
+                if name in result:
+                    raise DuckDBProofStoreIntegrityError("duplicate SQL JSON field")
+                result[name] = value
+            return result
+        def nonfinite(_):
+            raise DuckDBProofStoreIntegrityError("non-finite SQL JSON")
+        try:
+            value = json.loads(raw, object_pairs_hook=pairs,
+                               parse_constant=nonfinite)
+            stack, nodes = [(value, 0)], 0
+            while stack:
+                item, depth = stack.pop()
+                nodes += 1
+                if nodes > 200000 or depth > 96:
+                    raise DuckDBProofStoreIntegrityError("SQL JSON structure exceeds bounds")
+                if type(item) is dict:
+                    stack.extend((child, depth + 1) for child in item.values())
+                elif type(item) is list:
+                    stack.extend((child, depth + 1) for child in item)
+            encoded = _canonical_bytes(value)
+            if len(encoded) > maximum or encoded.decode("utf-8") != raw:
+                raise DuckDBProofStoreIntegrityError("SQL JSON is not the exact canonical payload")
+            return value
+        except (ValueError, TypeError, RecursionError, UnicodeError) as error:
+            if isinstance(error, DuckDBProofStoreIntegrityError):
+                raise
+            raise DuckDBProofStoreIntegrityError("invalid bounded SQL JSON") from error
+
+    def _sql_count(self, *, extra=0):
+        count = self._sql("SELECT count(*) FROM proof_entries").fetchone()[0]
+        keys = self._sql("SELECT count(*) FROM proof_keys").fetchone()[0]
+        if (type(count) is not int or type(keys) is not int or count != keys
+                or not 0 <= count <= self.max_entries + extra):
+            raise DuckDBProofStoreIntegrityError("SQL proof catalog row count exceeds bounds or differs")
+        for table, parent, field, maximum in (
+            ("proof_key_dimensions", "proof_keys", "key_digest", 15),
+            ("premises", "proof_keys", "key_digest", SQL_MAX_PREMISES),
+            ("proof_evidence", "proof_entries", "entry_digest", 4096),
+        ):
+            rows = self._sql(f"SELECT count(*) FROM {table}").fetchone()[0]
+            orphaned = self._sql(f"SELECT count(*) FROM {table} child LEFT JOIN {parent} parent "
+                                f"ON child.{field}=parent.{field} WHERE parent.{field} IS NULL").fetchone()[0]
+            if rows > count * maximum or orphaned:
+                raise DuckDBProofStoreIntegrityError("SQL proof catalog normalized row bounds or ownership differ")
+        return count
+
+    def _sql_key(self, digest):
+        columns = ("key_digest", "schema_version", "ir_digest", "property_digest", "assumptions_digest",
+                   "premises_digest", "translator_digest", "solver_identities_digest", "toolchain_identity_digest",
+                   "theorem_registry_digest", "policy_digest", "resources_digest", "tree_digest", "backend_id",
+                   "backend_binary_digest", "backend_version", "backend_config_digest", "key_payload_json",
+                   "key_integrity_digest", "created_at")
+        bounds = {name: SQL_MAX_KEY_JSON_BYTES if name == "key_payload_json" else 1024
+                  for name in columns if name != "created_at"}
+        rows = self._sql_rows("proof_keys", columns, "WHERE key_digest=?", [digest], limit=2, text_limits=bounds)
+        if len(rows) != 1:
+            raise DuckDBProofStoreIntegrityError("SQL proof key is missing or ambiguous")
+        row = dict(zip(columns, rows[0]))
+        value = self._sql_json(row["key_payload_json"], SQL_MAX_KEY_JSON_BYTES)
+        try:
+            key = UnifiedProofKey.from_dict(value).require_all_dimensions()
+        except DuckDBProofStoreError as error:
+            raise DuckDBProofStoreIntegrityError("invalid SQL proof key") from error
+        if _canonical_bytes(key.to_dict()).decode() != row["key_payload_json"] or key.digest != digest:
+            raise DuckDBProofStoreIntegrityError("SQL proof key payload differs")
+        expected = {**key.to_dict(), "key_digest": key.digest, "premises_digest": key.premises_digest,
+                    "key_integrity_digest": key.digest}
+        for name in columns:
+            if name not in {"key_payload_json", "created_at"} and row[name] != expected[name]:
+                raise DuckDBProofStoreIntegrityError("SQL normalized proof key differs: " + name)
+        if type(row["created_at"]) not in {int, float} or not math.isfinite(row["created_at"]):
+            raise DuckDBProofStoreIntegrityError("SQL proof key timestamp is invalid")
+        dims = self._sql_rows("proof_key_dimensions", ("dimension_name", "dimension_digest"),
+            "WHERE key_digest=? ORDER BY dimension_name", [digest], limit=16,
+            text_limits={"dimension_name": 64, "dimension_digest": 71})
+        if dims != sorted(key.dimension_map().items()):
+            raise DuckDBProofStoreIntegrityError("SQL normalized proof dimensions differ")
+        premises = self._sql_rows("premises", ("premise_digest", "premise_ordinal"),
+            "WHERE key_digest=? ORDER BY premise_ordinal,premise_digest", [digest], limit=SQL_MAX_PREMISES + 1,
+            text_limits={"premise_digest": 71})
+        if len(key.selected_premise_digests) > SQL_MAX_PREMISES or premises != [
+            (item, ordinal) for ordinal, item in enumerate(key.selected_premise_digests)
+        ]:
+            raise DuckDBProofStoreIntegrityError("SQL normalized proof premises differ")
+        return key, row["created_at"]
+
+    def _sql_entry(self, key):
+        columns = ("entry_digest", "key_digest", "outcome", "trust_level", "status", "result_authority",
+                   "evidence_authority", "polarity", "created_at", "result_id", "payload_json", "envelope_content_id",
+                   "envelope_digest", "diagnostics_json", "schema_version", "verification_entry_digest")
+        bounds = {name: SQL_MAX_ENTRY_JSON_BYTES if name in {"payload_json", "diagnostics_json"} else 4096
+                  for name in columns if name != "created_at"}
+        rows = self._sql_rows("proof_entries", columns, "WHERE key_digest=?", [key.digest], limit=2, text_limits=bounds)
+        if not rows:
+            dangling = self._sql("SELECT count(*) FROM proof_keys WHERE key_digest=?", [key.digest]).fetchone()[0]
+            if dangling:
+                raise DuckDBProofStoreIntegrityError("SQL proof entry is missing for retained key")
+            return None
+        if len(rows) != 1:
+            raise DuckDBProofStoreIntegrityError("SQL proof entry is ambiguous")
+        row = dict(zip(columns, rows[0]))
+        stored_key, key_created = self._sql_key(key.digest)
+        if stored_key.to_dict() != key.to_dict():
+            raise DuckDBProofStoreIntegrityError("SQL requested full key differs")
+        value = self._sql_json(row["payload_json"], SQL_MAX_ENTRY_JSON_BYTES)
+        try:
+            entry = UnifiedProofEntry.from_dict(value).verify_integrity()
+        except DuckDBProofStoreError as error:
+            raise DuckDBProofStoreIntegrityError("invalid SQL proof entry") from error
+        if _canonical_bytes(entry.to_dict()).decode() != row["payload_json"] or entry.key.to_dict() != key.to_dict():
+            raise DuckDBProofStoreIntegrityError("SQL proof entry payload differs")
+        if not math.isfinite(entry.created_at) or entry.created_at != key_created:
+            raise DuckDBProofStoreIntegrityError("SQL proof entry timestamp differs")
+        expected = {name: getattr(entry, name) for name in ("entry_digest", "created_at", "result_id", "schema_version")}
+        expected.update({name: getattr(entry, name).value for name in
+                         ("outcome", "trust_level", "status", "result_authority", "evidence_authority", "polarity")})
+        expected.update(key_digest=key.digest,
+            envelope_content_id=entry.envelope.content_id if entry.envelope else "",
+            envelope_digest=entry.envelope.content_digest if entry.envelope else "",
+            diagnostics_json=_canonical_bytes(list(entry.diagnostics)).decode(),
+            verification_entry_digest=entry.to_verification_cache_entry().entry_digest)
+        if any(row[name] != expected[name] for name in columns if name != "payload_json"):
+            raise DuckDBProofStoreIntegrityError("SQL normalized proof entry differs")
+        evidence_columns = ("evidence_id", "entry_digest", "evidence_kind", "evidence_authority", "content_digest", "payload_json", "created_at")
+        evidence_rows = self._sql_rows("proof_evidence", evidence_columns,
+            "WHERE entry_digest=? ORDER BY evidence_id", [entry.entry_digest], limit=4097,
+            text_limits={name: SQL_MAX_ENTRY_JSON_BYTES if name == "payload_json" else 4096
+                         for name in evidence_columns if name != "created_at"})
+        expected_evidence = sorted((item.evidence_id, entry.entry_digest, item.evidence_kind,
+            item.evidence_authority.value, item.content_digest, _canonical_bytes(item.payload.to_dict()).decode(),
+            item.created_at) for item in entry.evidence)
+        if len(entry.evidence) > 4096 or evidence_rows != expected_evidence:
+            raise DuckDBProofStoreIntegrityError("SQL normalized proof evidence differs")
+        return entry
+
+    def _sql_delete(self, digest):
+        self._sql("DELETE FROM proof_evidence WHERE entry_digest IN (SELECT entry_digest FROM proof_entries WHERE key_digest=?)", [digest])
+        for table in ("proof_entries", "proof_key_dimensions", "premises", "proof_keys", "access_statistics"):
+            self._sql(f"DELETE FROM {table} WHERE key_digest=?", [digest])
+
+    def _sql_trim(self, *, now):
+        self._sql_count(extra=1)
+        ids = self._sql_rows("proof_keys", ("key_digest",), "ORDER BY created_at,key_digest", [],
+                            limit=self.max_entries + 2, text_limits={"key_digest": 71})
+        retained = []
+        for (digest,) in ids:
+            key, _ = self._sql_key(digest)
+            entry = self._sql_entry(key)
+            if entry is None:
+                raise DuckDBProofStoreIntegrityError("SQL proof catalog entry disappeared")
+            if entry.is_expired(positive_ttl_seconds=self.positive_ttl_seconds,
+                                negative_ttl_seconds=self.negative_ttl_seconds, now=now):
+                self._sql_delete(digest)
+            else:
+                retained.append(digest)
+        for digest in retained[:-self.max_entries]:
+            self._sql_delete(digest)
+
+    def _sql_put(self, entry, *, now):
+        raw, key_raw = _canonical_bytes(entry.to_dict()), _canonical_bytes(entry.key.to_dict())
+        if (len(raw) > SQL_MAX_ENTRY_JSON_BYTES or len(key_raw) > SQL_MAX_KEY_JSON_BYTES
+                or len(entry.key.selected_premise_digests) > SQL_MAX_PREMISES or len(entry.evidence) > 4096
+                or not math.isfinite(entry.created_at)):
+            raise DuckDBProofStoreError("SQL proof entry exceeds storage bounds")
+        key = entry.key
+        with self._sql_transaction():
+            self._sql_count()
+            self._sql_entry(key)
+            self._sql_delete(key.digest)
+            self._sql("INSERT INTO proof_keys VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [
+                key.digest, key.schema_version, key.ir_digest, key.property_digest, key.assumptions_digest,
+                key.premises_digest, key.translator_digest, key.solver_identities_digest, key.toolchain_identity_digest,
+                key.theorem_registry_digest, key.policy_digest, key.resources_digest, key.tree_digest, key.backend_id,
+                key.backend_binary_digest, key.backend_version, key.backend_config_digest, key_raw.decode(),
+                key.digest, entry.created_at])
+            for name, digest in key.dimension_map().items():
+                self._sql("INSERT INTO proof_key_dimensions VALUES (?,?,?)", [key.digest, name, digest])
+            for ordinal, digest in enumerate(key.selected_premise_digests):
+                self._sql("INSERT INTO premises VALUES (?,?,?)", [key.digest, digest, ordinal])
+            self._sql("INSERT INTO proof_entries VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [
+                entry.entry_digest, key.digest, entry.outcome.value, entry.trust_level.value, entry.status.value,
+                entry.result_authority.value, entry.evidence_authority.value, entry.polarity.value, entry.created_at,
+                entry.result_id, raw.decode(), entry.envelope.content_id if entry.envelope else "",
+                entry.envelope.content_digest if entry.envelope else "", _canonical_bytes(list(entry.diagnostics)).decode(),
+                entry.schema_version, entry.to_verification_cache_entry().entry_digest])
+            for item in entry.evidence:
+                self._sql("INSERT INTO proof_evidence VALUES (?,?,?,?,?,?,?)", [item.evidence_id, entry.entry_digest,
+                    item.evidence_kind, item.evidence_authority.value, item.content_digest,
+                    _canonical_bytes(item.payload.to_dict()).decode(), item.created_at])
+            observed = self._sql_entry(key)
+            if observed is None or observed.to_dict() != entry.to_dict():
+                raise DuckDBProofStoreIntegrityError("SQL write readback differs")
+            self._sql_trim(now=now)
+            if self._sql_entry(key) is None:
+                raise DuckDBProofStoreError("SQL write cannot retain an already expired or evicted entry")
+
     # -- key resolution ------------------------------------------------------
 
     def _resolve_unified_key(
@@ -1715,6 +1979,19 @@ class DuckDBProofStore:
         if isinstance(key, UnifiedProofKey):
             return key.require_all_dimensions()
         if isinstance(key, VerificationCacheKey):
+            if self._connection is not None:
+                with self._lock:
+                    self._sql_count()
+                    ids = self._sql_rows("proof_keys", ("key_digest",), "ORDER BY key_digest", [],
+                        limit=self.max_entries + 1, text_limits={"key_digest": 71})
+                    matches = []
+                    for (digest,) in ids:
+                        stored, _ = self._sql_key(digest)
+                        if stored.to_verification_cache_key().digest == key.digest:
+                            matches.append(stored)
+                    if len(matches) > 1:
+                        raise DuckDBProofStoreIntegrityError("SQL verification key is ambiguous")
+                    return matches[0] if matches else UnifiedProofKey.from_verification_cache_key(key)
             # Prefer a previously stored unified key with the same projected digest.
             with self._lock:
                 unified_digest = self._verification_index.get(key.digest)
@@ -1778,7 +2055,7 @@ class DuckDBProofStore:
         with self._lock:
             return {
                 **self._stats,
-                "size": len(self._entries),
+                "size": self._sql_count() if self._connection is not None else len(self._entries),
                 "in_flight": len(self._flights),
             }
 
@@ -1934,6 +2211,39 @@ class DuckDBProofStore:
             )
         current = time.time() if now is None else float(now)
         with self._lock:
+            if self._connection is not None:
+                if not math.isfinite(current):
+                    raise DuckDBProofStoreError("finite SQL observation time required")
+                with self._sql_transaction():
+                    self._sql_count()
+                    entry = self._sql_entry(unified)
+                    if entry is None:
+                        self._entries.pop(unified.digest, None)
+                        self._verification_index.pop(unified.to_verification_cache_key().digest, None)
+                        self._stats["misses"] += 1
+                        self._access_touch(unified.digest, miss=True, now=current)
+                        return VerificationCacheLookup(entry=None, hit=False, usable=False,
+                            reason=CacheLookupReason.MISS, key_digest=unified.digest)
+                    result = self._evaluate_entry(entry, unified, max_trust_level=ceiling, now=current)
+                    if result.usable and require_result_authority is not None:
+                        required = _enum(require_result_authority, ResultAuthority, "require_result_authority")
+                        if entry.result_authority is not required:
+                            self._stats["rejections"] += 1
+                            self._access_touch(unified.digest, rejection=True, now=current)
+                            return VerificationCacheLookup(entry=result.entry, hit=True, usable=False,
+                                reason=CacheLookupReason.AUTHORITY_MISMATCH, key_digest=unified.digest,
+                                age_seconds=result.age_seconds)
+                    if result.reason in {CacheLookupReason.EXPIRED, CacheLookupReason.TAMPERED, CacheLookupReason.STALE}:
+                        self._sql_delete(unified.digest)
+                        self._entries.pop(unified.digest, None)
+                        self._verification_index.pop(unified.to_verification_cache_key().digest, None)
+                    elif result.usable:
+                        self._entries[unified.digest] = entry
+                        self._verification_index[unified.to_verification_cache_key().digest] = unified.digest
+                        while len(self._entries) > self.max_entries:
+                            _, previous = self._entries.popitem(last=False)
+                            self._verification_index.pop(previous.key.to_verification_cache_key().digest, None)
+                    return result
             entry = self._entries.get(unified.digest)
             if entry is None and isinstance(key, VerificationCacheKey):
                 # Secondary index by verification-cache digest.
@@ -2017,6 +2327,10 @@ class DuckDBProofStore:
         if not result.usable:
             return None
         with self._lock:
+            if self._connection is not None:
+                with self._sql_transaction():
+                    self._sql_count()
+                    return self._sql_entry(unified)
             return self._entries.get(unified.digest)
 
     def put(
@@ -2039,11 +2353,18 @@ class DuckDBProofStore:
         ).verify_integrity()
         current = time.time() if now is None else float(now)
         with self._lock:
+            if self._connection is not None:
+                if not math.isfinite(current):
+                    raise DuckDBProofStoreError("finite SQL observation time required")
+                self._sql_put(unified_entry, now=current)
+                self._entries.clear()
+                self._verification_index.clear()
             self._entries[unified_entry.key.digest] = unified_entry
             self._entries.move_to_end(unified_entry.key.digest)
             vdigest = unified_entry.key.to_verification_cache_key().digest
             self._verification_index[vdigest] = unified_entry.key.digest
-            self._trim_locked(now=current)
+            if self._connection is None:
+                self._trim_locked(now=current)
             self._stats["writes"] += 1
             self._access_touch(unified_entry.key.digest, write=True, now=current)
             ventry = unified_entry.to_verification_cache_entry()
@@ -2141,6 +2462,12 @@ class DuckDBProofStore:
                     key_digest=unified.digest,
                     single_flight_shared=True,
                 )
+            if self._connection is not None:
+                result = self.lookup(key, require_result_authority=require_result_authority,
+                    max_evidence_authority=max_evidence_authority, max_trust_level=max_trust_level, now=now)
+                return VerificationCacheLookup(entry=result.entry, hit=result.hit, usable=result.usable,
+                    reason=CacheLookupReason.SINGLE_FLIGHT_SHARED if result.usable else result.reason,
+                    key_digest=result.key_digest, age_seconds=result.age_seconds, single_flight_shared=True)
             current = time.time() if now is None else float(now)
             ceiling = (
                 None
@@ -2199,6 +2526,18 @@ class DuckDBProofStore:
     def invalidate(self, key: UnifiedProofKey | VerificationCacheKey) -> bool:
         unified = self._resolve_unified_key(key)
         with self._lock:
+            if self._connection is not None:
+                with self._sql_transaction():
+                    self._sql_count()
+                    existing = self._sql_entry(unified)
+                    self._sql_delete(unified.digest)
+                    if self._sql_entry(unified) is not None:
+                        raise DuckDBProofStoreIntegrityError("SQL invalidation readback differs")
+                self._entries.pop(unified.digest, None)
+                self._verification_index.pop(unified.to_verification_cache_key().digest, None)
+                if existing is not None:
+                    self._stats["evictions"] += 1
+                return existing is not None
             removed_entry = self._entries.pop(unified.digest, None)
             if removed_entry is not None:
                 vdigest = removed_entry.key.to_verification_cache_key().digest
@@ -2217,6 +2556,13 @@ class DuckDBProofStore:
 
     def clear(self) -> None:
         with self._lock:
+            if self._connection is not None:
+                with self._sql_transaction():
+                    self._sql_count()
+                    for table in ("proof_evidence", "proof_entries", "proof_key_dimensions", "premises", "proof_keys", "access_statistics"):
+                        self._sql(f"DELETE FROM {table}")
+                    if self._sql_count() != 0:
+                        raise DuckDBProofStoreIntegrityError("SQL clear readback differs")
             self._entries.clear()
             self._verification_index.clear()
             for flight in self._flights.values():
@@ -2270,6 +2616,9 @@ __all__ = [
     "ProofEvidenceRecord",
     "ProofOutcomeKind",
     "ProofTrustLevel",
+    "SQL_MAX_ENTRY_JSON_BYTES",
+    "SQL_MAX_KEY_JSON_BYTES",
+    "SQL_MAX_PREMISES",
     "UNIFIED_PROOF_ENTRY_SCHEMA_VERSION",
     "UNIFIED_PROOF_KEY_SCHEMA_VERSION",
     "UnifiedProofEntry",
