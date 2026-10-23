@@ -265,3 +265,41 @@ is not ported here. The unused checkpoint-hub/target-compatibility/generation
 frontier sources in the frozen forest are not added or replaced. This publication
 performs no new tests, model operations or current public initializer/controller
 qualification and introduces no autonomous or statutory accuracy claim.
+
+## Explicit persistent forced-lookahead consumer, v2
+
+The separate `legal_compact_content_persistent_runtime_v2` reuses the immutable
+v1 serving projection and original checkpoint/model/runtime/RNG/parameter/close
+helpers. It requires an explicit forced-suffix horizon0..16, keeps the100-new-ID
+cap and one incremental model lifetime per nonempty call, and selects from all
+537 raw scores through the separate v2 policy. It preserves the nested old
+budget and raw-selector baselines. The intact validator still checks retained
+checkpoint targets and Adam metadata; neither enters the numerical serving view.
+
+The original two-mode/four-call fixture and independent BOS references are
+reused. All four outputs must be exclusive, fsynced and rehashed before the
+original target-comparison gate opens. Source/context/weights, fixture provenance
+and exposed-versus-heldout status remain fixed. No fitting or re-encoding is
+part of the policy intervention.
+
+The separate [accepted consumer qualification](https://github.com/endomorphosis/ipfs_datasets_py/blob/main/docs/autoformalization/evidence/legal-ir-compact-persistent-forced-lookahead-generation-20261023.json) passed2 cases/6 phases and retained4 calls across2 exposed authored source rows and both conditioning modes, with unchanged weights/inputs,100-ID cap and horizon8. All4 outputs blocked: typed candidates, exact token-ID matches and exact compact-content matches remain0/4. Emitted lengths are31/31 for every_step and49/49 for first_step. Actual work was162 GRU forwards including2 independent BOS references,160 selections,6 model constructions/12 state installations and zero training/optimizer work. All4 outputs were durable before reference comparison; original source/native/storage custody closed. This delays the retained dead end without establishing a valid completion, conditioning winner or reconstruction gain. The pure portable's earlier combined-bundle-pending flag remains a historical cutoff; this accepted consumer and joint source selection supersede that queue state without changing the pure qualification scope.
+
+The first v2 outer worker failed after two passing cases/six phases because it
+compared the old eight-field saved summary against the new eleven-field summary.
+Its independent late counters, callable bindings, reference-open observations
+and checked compile-buffer archive were never written. That attempt remains
+failed and unpromoted; its partial test-owned reports do not replace the missing
+independent witnesses. The versioned observer correction independently derives
+all old fields and all three v2 additions and enforces an exact closed schema.
+
+A separate future observer improvement should persist independent counters,
+callable bindings, reference-open observations and checked compile buffers
+before fallible post-run summary checks, while retaining explicit failed status.
+The minimal observer compatibility fix does not implement that refactor.
+
+Local feasibility, typed/exact IR, source-meaning reconstruction, legal-text
+reconstruction and exact source bytes retain separate metrics. Exposed fixture
+results establish no heldout/legal quality, learning gain, graph or Lean
+admission. Reviewed complete source/context/AST populations, native-space
+compatibility, grouped independent evaluation and explicit new-schema batch/graph
+intake remain separate next gates.

@@ -153,3 +153,31 @@ inputs and report all outcomes; it must not relabel the historical CP128 failure
 This profile concerns the existing compact384/fixed537 decoder. It makes no new
 768D/4096D, statutory, holdout, graph, Lean, throughput or token-saving claim.
 Source/resource admission remains with the existing operation owners.
+
+## Forced-singleton lookahead successor, v2
+
+The separate `legal_compact_content_completion_budget_v2` composes the unchanged
+v1 budget, scope and token owners. Each old allowed choice consumes one ID;
+only mandatory singleton continuations are then inspected, up to an explicit
+0..16 forced-suffix horizon (default8). EOS consumes an ID. Horizon0 preserves
+the exact old mask without post-choice probes. A typed terminal EOS supplies a
+completion witness. An incomplete empty old-policy frontier permits removal;
+branches and exhausted horizons remain unknown. Probe tokens never enter the
+model's generated history. This is bounded local feasibility.
+
+The [pure qualification](../../../../../docs/autoformalization/evidence/legal-ir-completion-forced-lookahead-qualification-20261023.json)
+records41 authored cases/123 passed phases with accepted original source,
+native and storage closeout. Its source profile observed20 product modules,
+the frozen-root bootstrap and selected test, with2 separate namespace entries
+and23 compile buffers. Test-root/unit initializers and the old helper's
+separately unobserved origin/buffer are outside its qualification. The original
+manifest and explicit clarification are retained. No Torch, model, checkpoint,
+training, source encoder, database or Lean operation ran in that pure cohort.
+
+The separate [accepted consumer qualification](https://github.com/endomorphosis/ipfs_datasets_py/blob/main/docs/autoformalization/evidence/legal-ir-compact-persistent-forced-lookahead-generation-20261023.json) passed2 cases/6 phases and retained4 calls across2 exposed authored source rows and both conditioning modes, with unchanged weights/inputs,100-ID cap and horizon8. All4 outputs blocked: typed candidates, exact token-ID matches and exact compact-content matches remain0/4. Emitted lengths are31/31 for every_step and49/49 for first_step. Actual work was162 GRU forwards including2 independent BOS references,160 selections,6 model constructions/12 state installations and zero training/optimizer work. All4 outputs were durable before reference comparison; original source/native/storage custody closed. This delays the retained dead end without establishing a valid completion, conditioning winner or reconstruction gain. The pure portable's earlier combined-bundle-pending flag remains a historical cutoff; this accepted consumer and joint source selection supersede that queue state without changing the pure qualification scope.
+
+If autonomous outputs remain blocked, the next policy intervention is a bounded
+branch-aware completion witness or beam using the same retained weights,
+contexts and100-ID cap. Qualify its owner separately, preserve every old policy
+and failed prefix, and count unknowns and all enrolled failures. Do not infer
+global completion or a conditioning winner from this local filter.
