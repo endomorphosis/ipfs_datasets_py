@@ -191,3 +191,28 @@ accepted `USES_DEFINITION` edge, law interpretation or learning target.
 Authored fixture checks and finite witnesses can test structure, conditional
 truth and rejection behavior. They do not establish legal fidelity, a native
 kernel result, or successful application to actual statutes.
+
+
+## Downstream complete-norm project profile
+
+The existing [Lake owner](legal_corpus_definition_use_lake_v2.md#complete-relational-norm-with-a-conditional-bound-definition-version-1)
+now implements `prepare_bound_norm_definition_corpus_v1` with matching validate,
+load/write and full-preparation hash APIs. Supply this complete report, its
+independent full hash, and the exact original five bound-owner replay inputs.
+This is a downstream profile; the conditional report and its APIs stay unchanged.
+
+Its nine-file/six-module project packages the byte-exact complete quantified/
+modal norm alongside the original definition and conditional instance using one
+shared `Interpretation`. There are two theorem obligations in instance mode and
+three in membership mode. `hDefinition` and any `hMembership` remain explicit;
+the added norm-preservation theorem proves only a definitional alias identity.
+No norm-driven membership, governing predicate bridge or source-meaning theorem
+is supplied. The [native owner](legal_corpus_definition_use_native_v2.md#bound-norm-definition-native-profile-version-1)
+has a separate replay/build/receipt profile; preparation itself executes no Lean.
+
+All alternatives, nominations, exact binder/role bindings and original source
+references survive. The norm's source binding remains null. Authored typed-use
+fixtures sharing one physical anchor do not establish distinct statutory uses.
+The selected retained 2024 Title 10 pilot still needs independent legal-as-of,
+meaning, governing-definition and every-use applicability decisions before
+source-bound statutory composition or learning/corpus admission.
