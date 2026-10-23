@@ -55,7 +55,7 @@ Native interval73.161353s, worker19.131915s and score call14.606968s are nested,
 
 ## Broader four-width retained results
 
-The [current four-width plan](HANDOFF.md#four-source-widths) and [chronological guide](guides/four_width_training.md) reconcile these separate profiles. Initial six fits of340updates and six later continuations of170updates already ran. Do not restart that campaign from an old “unavailable” paragraph.
+The [current four-width plan](HANDOFF.md#four-source-widths) and [chronological guide](guides/four_width_training.md) reconcile these separate profiles. Six initial fits of340updates each and six later continuations of170updates each already ran:3,060 physical updates within that campaign only. This is not a total across CP128, responsible-head or other campaigns. Do not restart that campaign from an old “unavailable” paragraph.
 
 | Profile | Retained result and limit |
 | --- | --- |
@@ -66,6 +66,10 @@ The [current four-width plan](HANDOFF.md#four-source-widths) and [chronological 
 | Genuine4096D source-span integration | Two actual native vectors, four physical decoder updates and exact state/Adam/progress resume.0/2decoded; two overlap abstentions. This is completed engineering, not a four-width legal-quality comparison. |
 
 The [retained reuse register](../../../../docs/autoencoders/evidence/legal-ir-four-dimension-reuse-20261018.json) preserves the original receipts and distinct checkpoint/producer identities. Native384/768 saved-vector custody verifiers already exist in the shared numerical package; they execute no encoder and supply no new statutory-meaning qualification.
+
+## Earlier responsible-head comparisons: N9–F19
+
+The selected [retained-training review](../../../../docs/autoformalization/evidence/legal-ir-comprehensive-reuse-review-20261023.json) reuses completed N9–F19 scoring and independent recounts. N11 improved TRAIN153→154/168 and N12 regressed to153/168. F17 and F18 retained154/168, below their155/168 promotion floor; fresh DEV/TEST exactness remained0/36. These authored task/readout experiments disabled latent conditioning, so they neither measure embedding benefit nor rank the four source widths. Their completed scoring and saved selector/predicate diagnostics must not be reassigned as new experiments.
 
 ## Additional completed compact/gated/journal comparisons
 
