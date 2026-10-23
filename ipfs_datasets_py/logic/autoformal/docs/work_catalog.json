@@ -1706,7 +1706,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_bound_variable_definition_v1.md",
       "id": "bound-variable-definition-v1",
-      "notes": "Exact original unary-definition conditional at one nominated variable/binder/ordered argument; full evidence replay, unchanged norm and alternatives. hDefinition is explicit; body mode additionally requires hMembership. Source presence and historical103-case/native observations are distinct from PENDING current public integration. No membership, governing applicability, semantic edge, training/gold or complete-norm corpus admission.",
+      "notes": "Exact original unary-definition conditional at one nominated variable/binder/ordered argument; full evidence replay, unchanged norm and alternatives. hDefinition is explicit; body mode additionally requires hMembership. Source presence and historical103-case/native observations are distinct from the separate passed52-case authored integration; other owning suites were not qualified by that cohort. No membership, governing applicability, semantic edge, training/gold or complete-norm corpus admission.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_bound_variable_definition_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -1728,7 +1728,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_definition_evidence_v1.md",
       "id": "norm-definition-evidence-v1",
-      "notes": "Original full norm/definition nomination evidence, preserving complete sources, alternatives, every link and original assessments. Links are nominated associations; source/meaning/governing-use decisions remain unresolved. Original relational generation only; current public integration PENDING.",
+      "notes": "Original full norm/definition nomination evidence, preserving complete sources, alternatives, every link and original assessments. Links are nominated associations; source/meaning/governing-use decisions remain unresolved. Original relational generation only; selected52-case authored integration passed; other owning suites remain unqualified by this cohort.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_definition_evidence_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -1752,7 +1752,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_interpretation_review_v1.md",
       "id": "norm-interpretation-review-v1",
-      "notes": "Original relational norm preparation/subject/assessment/replay domain. Full correspondence and optional context are replayed. Later private counted-only APIs are not included. Signature custody does not supply missing substantive source/meaning decisions; current public integration PENDING.",
+      "notes": "Original relational norm preparation/subject/assessment/replay domain. Full correspondence and optional context are replayed. Later private counted-only APIs are not included. Signature custody does not supply missing substantive source/meaning decisions; selected52-case authored integration passed; other owning suites remain unqualified by this cohort.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_interpretation_review_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -1774,7 +1774,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_scope_correspondence_v1.md",
       "id": "norm-scope-correspondence-v1",
-      "notes": "Original explicit source-scope to complete relational-node correspondence and exact replay. Preserves mappings/obligations without inferring source meaning or legal applicability; current public integration PENDING.",
+      "notes": "Original explicit source-scope to complete relational-node correspondence and exact replay. Preserves mappings/obligations without inferring source meaning or legal applicability; selected52-case authored integration passed; other owning suites remain unqualified by this cohort.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_scope_correspondence_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -1799,7 +1799,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_sampling_review.md",
       "id": "source-sampling-review-context",
-      "notes": "Existing bounded implementation delegated to by legal_source_sampling_review contextual wrappers. Complete original source/attachment replay; references and contextual responses do not establish legal applicability. Current public integration PENDING.",
+      "notes": "Existing bounded implementation delegated to by legal_source_sampling_review contextual wrappers. Complete original source/attachment replay; references and contextual responses do not establish legal applicability. Selected52-case authored integration passed; other owning suites remain unqualified by this cohort.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_sampling_review_context",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -1821,7 +1821,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_sampling_review.md",
       "id": "source-sampling-context-definition-binding-v2",
-      "notes": "Existing bounded contextual definition-binding implementation delegated to by legal_source_sampling_definition_binding_v2. Preserves exact occurrence/context nominations and original candidate identity; no governing definition inference. Current public integration PENDING.",
+      "notes": "Existing bounded contextual definition-binding implementation delegated to by legal_source_sampling_definition_binding_v2. Preserves exact occurrence/context nominations and original candidate identity; no governing definition inference. Selected52-case authored integration passed; other owning suites remain unqualified by this cohort.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_sampling_context_definition_binding_v2",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -1843,7 +1843,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_sampling_review.md",
       "id": "source-sampling-context-definition-review-v2",
-      "notes": "Existing contextual definition-review correspondence implementation delegated to by legal_source_sampling_definition_review_v2. Complete original binding/subject/candidate/context replay; no endpoint-signature upgrade or legal admission. Current public integration PENDING.",
+      "notes": "Existing contextual definition-review correspondence implementation delegated to by legal_source_sampling_definition_review_v2. Complete original binding/subject/candidate/context replay; no endpoint-signature upgrade or legal admission. Selected52-case authored integration passed; other owning suites remain unqualified by this cohort.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_sampling_context_definition_review_v2",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -1874,7 +1874,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_sampling_review.md",
       "id": "source-sampling-review",
-      "notes": "Existing source-sampling review API plus six original contextual delegation wrappers. Public baseline behavior and identities are preserved; additional evidence references are admitted only by the explicit context route. Current public integration PENDING.",
+      "notes": "Existing source-sampling review API plus six original contextual delegation wrappers. Public baseline behavior and identities are preserved; additional evidence references are admitted only by the explicit context route. Selected52-case authored integration passed; other owning suites remain unqualified by this cohort.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_sampling_review",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -1899,7 +1899,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_sampling_definition_binding_v2.md",
       "id": "source-sampling-definition-binding-v2",
-      "notes": "Existing source definition-binding API plus three original contextual wrappers; canonical implementation delegates contextual operations to its existing companion. No new extraction/definition engine or governing-use selection. Current public integration PENDING.",
+      "notes": "Existing source definition-binding API plus three original contextual wrappers; canonical implementation delegates contextual operations to its existing companion. No new extraction/definition engine or governing-use selection. Selected52-case authored integration passed; other owning suites remain unqualified by this cohort.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_sampling_definition_binding_v2",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -1924,7 +1924,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_sampling_definition_binding_v2.md",
       "id": "source-sampling-definition-review-v2",
-      "notes": "Existing definition-review correspondence API plus three original contextual wrappers; complete replay and signing domains remain separate. Current public integration PENDING.",
+      "notes": "Existing definition-review correspondence API plus three original contextual wrappers; complete replay and signing domains remain separate. Selected52-case authored integration passed; other owning suites remain unqualified by this cohort.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_sampling_definition_review_v2",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -1993,7 +1993,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-23T16:45:36.041806+00:00",
+  "last_updated_at_utc": "2026-10-23T16:47:42.807370+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
