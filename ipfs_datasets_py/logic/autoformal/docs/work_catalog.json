@@ -1736,7 +1736,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-23T06:02:19.476907+00:00",
+  "last_updated_at_utc": "2026-10-23T06:18:35.832179+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2989,6 +2989,26 @@
       "root": "datasets_repository",
       "scope": "One authored four-row engineering case/three phases: ten actual updates and twelve GRU forwards; five uninterrupted versus three-plus-two resumed states exactly match except immediate parent;1,074 paired BOS scores exact.18payloads verified; original source/native/storage closed. No old-cohort rerun, autonomous generation, statutory/heldout accuracy, source authentication, training gain or graph/Lean admission.",
       "status": "passed_original_frozen_closure_saved_result_review"
+    },
+    {
+      "id": "cp128-saved-predicate-reweight-20261023-01",
+      "observed_bytes": 31821,
+      "observed_sha256": "1b8ff0b1f6c42ef0792b7b2cf9cc62ea8351f9843097e12d94a58d7ee5f184be",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-saved-predicate-reweight-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Four own-domain original reports/184positions/98808saved score coordinates; three matrices/two exposed authored384 rows. Predicate-only1to4/sum67to70 loss and analytic logit-gradient identities checked:268/70 predicate versus67/70 other positions, conditional singletons0, fixed ranks/winners unchanged. Eight missing state/row cells and confounds preserved. Zero model/training/optimizer/native/DB/Lean; no efficacy or statutory admission.",
+      "status": "accepted_saved_only_authored384_objective_reweight_diagnostic"
+    },
+    {
+      "id": "legal-ir-programme-next-tasks-20261023-01",
+      "observed_bytes": 7284,
+      "observed_sha256": "86f6abc2282187b5cbd27456e66a0fdb7abded8634fcdfebf88b758bf24ceeea",
+      "path": "docs/autoformalization/evidence/legal-ir-programme-next-tasks-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Reuse existing seven goals/24tasks, unchanged Hub revisions and completed external publications; prepared7346 scope data and four-row genericv2 fixture remain unrun. No model, statutory, graph or Lean qualification.",
+      "status": "metadata_only_current_programme_next_tasks"
     }
   ]
 }

@@ -101,3 +101,20 @@ The accepted saved-only [source-sensitivity result](../../../../../docs/autoform
 No additional forward, model restore, Adam, training, encoding or evaluation trajectory occurred. Only eight case reports from the four successful trained pipelines were reopened; the four retained zero observations remain partial-custody evidence from two failed wrappers, with missing executed source archives and incomplete late wrapper guards. Their old payloads were not reopened. The earlier twelve cases remain 12/12 typed, 0/12 exact IDs and 0/12 exact ASTs, with 8/8 unchanged paired full-ID sequences. Sensitivity does not establish reconstruction improvement, convergence, saturation, legal meaning, source-held-out quality, prose/full-norm reconstruction, native-GTE compatibility or graph/Lean authority.
 
 See the [consumer table and mask diagnostics](legal_compact_content_role_warmstart_runtime_v1.md#saved-source-sensitivity-2026-10-23). This posthoc study changes no objective, optimizer, checkpoint or training eligibility.
+
+## Saved predicate-only reweighting, 2026-10-23
+
+The [saved-score diagnostic](../../../../../docs/autoformalization/evidence/legal-ir-cp128-saved-predicate-reweight-20261023.json) checks the standing hypothesis on the same four original teacher-prefix reports: predicate weight1 becomes4, the six structural choice weights remain4.5, all39 singleton weights remain1, and the complete normalization changes67 to70. Each report retains its original full537 or recorded-scope domain. This differs from the existing shared baseline policy, which gives all seven choices weight4 and still sums to67.
+
+| Domain | Saved pre-update state / row | Original /67 | Predicate-only /70 |
+| --- | --- | ---: | ---: |
+| `full537` | 0 / 0 | 5.889075307 | 5.921992570 |
+| `scope_conditional` | 0 / 0 | 0.400380339 | 0.484654019 |
+| `full537` | 1 / 1 | 5.907492610 | 5.939044747 |
+| `scope_conditional` | 1 / 1 | 0.423590641 | 0.506826090 |
+
+For unchanged scores, `L70 = (67 * L67 + 3 * CE_predicate) / 70`. The predicate analytic logit gradient scales by268/70 (3.828571429), while every other position scales by67/70 (0.957142857); the39 conditional singleton gradients remain exactly zero. Direct and algebraic calculations agree within8.89e-16 for losses and1.39e-17 for gradient coordinates. The original loss and logit gradients also match the saved same-backward observations within the fixed tolerances. The larger reweighted losses reflect increased allocation to a poorly predicted predicate; they are not evidence of better or worse reconstruction. Report a fixed common evaluation objective and autonomous semantic/AST metrics when comparing future trained policies.
+
+The audit reads184 positions/98,808 saved score coordinates across four reports, three distinct matrices and two exposed fictional authored384 rows. Initial full537 and scoped reports share one matrix; later reports change both state and row. All eight missing state/row cells remain unobserved. Fixed scores retain their original ranks and winners. No model/Torch import, checkpoint restore, forward, backward, optimizer update, encoding, production selector, grammar, DB or Lean build occurs. Analytic logit gradients do not establish parameter-gradient or Adam-update effects.
+
+The source-bound v1 trainer and model-only runtime retain their exact bytes and historical checkpoint contracts. This arithmetic recipe is not an executable objective API or a new trained profile. Any selected trial must define a versioned objective/consumer route that preserves retained v1 validation, freeze its normalization domain, same-row/state coverage, initialization, optimizer, budget and selector, and keep conditioning changes separate. Source compatibility, reviewed complete statutory targets/definitions/two uses and permitted inference context remain independent requirements; training/evaluation masks remain zero.
