@@ -2087,6 +2087,23 @@
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_persistent_runtime_v2.py",
       "required": true,
       "status": "focused_tests_qualified"
+    },
+    {
+      "id": "compact-content-completion-budget-v3",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_completion_budget_v3.py",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_completion_budget_v3",
+      "apis": [
+        "find_completion_witness"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "compact-branch-completion-witness-qualified-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_completion_budget_v1.md",
+      "ownership_role": "existing_single_owner",
+      "required": true,
+      "status": "focused_tests_qualified",
+      "notes": "New exact-source authored pure v3 cohort:41cases/123phases, no model/weights/training/runtime integration. Genuine test roots/helper origin/rawcompile/exec-filename gates passed;27moduleentries25physicalorigins(twoaliases),4namespaces26buffers.12files730289B originalownersealed;source/native/storagereleased. BOS UNKNOWN at24/32 with43/57unresolved roots; no default256/root-generation or full-generation affordability claim. Prior numerical0/4 unchanged. No legal/learning/graph/Lean authority; per-query caps only, future cumulative budget and explicit witness-selection/carried-suffix policy required."
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3520,6 +3537,16 @@
       "root": "datasets_repository",
       "scope": "Existing two owners extended: 42 pure cases/126 phases plus two actual Lean4.34.1 cases/six phases. Norm unchanged; explicit definition/membership premises and alias identity only. Successful retry source/compute/storage closed. First failed attempt retains 192MiB storage. Source meaning, statutory/graph/corpus admission and training/gold remain unqualified; masks0.",
       "status": "qualified_authored_conditional_corpus_engineering"
+    },
+    {
+      "id": "compact-branch-completion-witness-qualified-20261023-01",
+      "root": "datasets_repository",
+      "path": "docs/autoformalization/evidence/legal-ir-compact-branch-completion-witness-20261023.json",
+      "observed_bytes": 15868,
+      "observed_sha256": "61a1dc5c5fb2f7405c50510d72de8d48270fbf059a4822783900d8ec0343e2e2",
+      "required_for_catalog_check": true,
+      "status": "authored_pure_branch_completion_witness_qualified",
+      "scope": "New exact-source authored pure v3 cohort:41cases/123phases, no model/weights/training/runtime integration. Genuine test roots/helper origin/rawcompile/exec-filename gates passed;27moduleentries25physicalorigins(twoaliases),4namespaces26buffers.12files730289B originalownersealed;source/native/storagereleased. BOS UNKNOWN at24/32 with43/57unresolved roots; no default256/root-generation or full-generation affordability claim. Prior numerical0/4 unchanged. No legal/learning/graph/Lean authority; per-query caps only, future cumulative budget and explicit witness-selection/carried-suffix policy required."
     }
   ]
 }
