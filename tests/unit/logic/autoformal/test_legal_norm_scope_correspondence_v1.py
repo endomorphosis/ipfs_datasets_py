@@ -540,4 +540,3 @@ def test_producer_bytes_are_checked_after_owner_work_and_final_serialization(mon
         prepare(value)
     assert len(observed) == 1
     assert copied_owner.read_bytes() != original_bytes
-

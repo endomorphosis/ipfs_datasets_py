@@ -465,4 +465,3 @@ def test_wrong_independent_attachment_context_and_original_declaration_pins_refu
         review.validate_sampling_review_context(packet, sources, attachments, expected_context_sha256="0" * 64, expected_attachments_sha256=digest(attachments))
     with pytest.raises(ValueError):
         review.record_sampling_review_context_response(packet, value, sources, attachments, expected_context_sha256=digest(packet), expected_declaration_sha256="0" * 64, expected_attachments_sha256=digest(attachments))
-

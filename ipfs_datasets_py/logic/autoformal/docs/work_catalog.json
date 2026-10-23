@@ -3289,8 +3289,8 @@
     },
     {
       "id": "bound-definition-existing-owner-port-20261023-01",
-      "observed_bytes": 14132,
-      "observed_sha256": "f8834781ece37777be90b9f58e92cb43718738407e51348a999fccecfc8881d6",
+      "observed_bytes": 15246,
+      "observed_sha256": "1e4e1f7be740c9b5129411e8f2eefc64decc0097158f4fd568cc62b389e9f00e",
       "path": "docs/autoformalization/evidence/legal-ir-bound-definition-owner-port-20261023.json",
       "required_for_catalog_check": true,
       "root": "datasets_repository",

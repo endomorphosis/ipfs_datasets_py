@@ -2,6 +2,7 @@
   "canonical_documentation": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_bound_variable_definition_v1.md",
   "current_public_integration": {
     "all_current_owning_suites_qualified": false,
+    "all_published_test_bytes_identical_to_frozen_tests": false,
     "custody": {
       "final_attempt_bytes": 539257,
       "native_lease_released": true,
@@ -56,6 +57,27 @@
         "sha256": "556e3fccfbb2b0a7c3e1e205e07f8d7e7ece6e2e45a35af247b7b721ad62e9a6"
       }
     ],
+    "post_qualification_test_only_normalization": [
+      {
+        "AST_identical": true,
+        "change": "Remove one trailing blank line at EOF only.",
+        "path": "tests/unit/logic/autoformal/test_legal_norm_scope_correspondence_v1.py",
+        "published_bytes": 29917,
+        "published_sha256": "0194712dccaedd79a704f104b236185e345290d53675c1cbc16a83b4bb4d6a61",
+        "qualified_bytes": 29918,
+        "qualified_sha256": "e7888beae5486f8efc9feec84f6ab51ceb85e91e2bb6e768c55eb5b1de7563b8"
+      },
+      {
+        "AST_identical": true,
+        "change": "Remove one trailing blank line at EOF only.",
+        "path": "tests/unit/logic/autoformal/test_legal_source_sampling_review_context.py",
+        "published_bytes": 22709,
+        "published_sha256": "2b8059a5b59c2afc5e1d93402ae489c914c4a53ec368e1d60f2809a8a3fcca9f",
+        "qualified_bytes": 22710,
+        "qualified_sha256": "7d98b1139f65d9b472c40537f8aea8ed9d3d1ee8be54defbc6fbdcec272a5424"
+      }
+    ],
+    "published_product_bodies_match_qualified_generation": true,
     "qualification": {
       "bound_owner_cases": 32,
       "cases_passed": 52,
