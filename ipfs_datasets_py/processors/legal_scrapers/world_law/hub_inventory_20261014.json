@@ -1,0 +1,149 @@
+{
+  "captured_on": "2026-10-14",
+  "note": "Classified subset of the public Hub read. File counts are bound to the SHA on the same object. SHA equality of country IRs was not downloaded, so sha_gap stays unproven. This file is not a dump of every Hub id.",
+  "orgs": {
+    "endomorphosis": {"datasets": 265, "models": 20, "spaces": 0},
+    "justicedao": {"datasets": 273, "models": 0, "spaces": 0}
+  },
+  "family_partition": {
+    "national_pattern": 222,
+    "with_ir": 219,
+    "calendar_stale": 21,
+    "same_utc_day": 31,
+    "ir_newer": 167,
+    "municipal": 30,
+    "municipal_ir": 19,
+    "missing_municipal_ir": 11
+  },
+  "calendar_stale_slugs": [
+    {"slug": "indonesia", "source_day": "2026-10-11", "ir_day": "2026-09-27", "sha_gap": "unproven"},
+    {"slug": "uk", "source_day": "2026-10-08", "ir_day": "2026-10-02", "sha_gap": "unproven"},
+    {"slug": "ghana", "source_day": "2026-10-13", "ir_day": "2026-09-23", "sha_gap": "unproven"},
+    {"slug": "northmacedonia", "source_day": "2026-10-02", "ir_day": "2026-09-22", "sha_gap": "unproven"},
+    {"slug": "ethiopia", "source_day": "2026-10-11", "ir_day": "2026-09-27", "sha_gap": "unproven"},
+    {"slug": "jamaica", "source_day": "2026-10-01", "ir_day": "2026-09-26", "sha_gap": "unproven"},
+    {"slug": "dominicanrepublic", "source_day": "2026-10-11", "ir_day": "2026-10-01", "sha_gap": "unproven"},
+    {"slug": "tunisia", "source_day": "2026-10-11", "ir_day": "2026-09-23", "sha_gap": "unproven"},
+    {"slug": "georgia", "source_day": "2026-10-13", "ir_day": "2026-09-25", "sha_gap": "unproven"},
+    {"slug": "iran", "source_day": "2026-10-04", "ir_day": "2026-09-26", "sha_gap": "unproven"},
+    {"slug": "serbia", "source_day": "2026-10-11", "ir_day": "2026-09-23", "sha_gap": "unproven"},
+    {"slug": "albania", "source_day": "2026-10-11", "ir_day": "2026-09-25", "sha_gap": "unproven"},
+    {"slug": "bosnia", "source_day": "2026-10-14", "ir_day": "2026-10-13", "sha_gap": "unproven"},
+    {"slug": "laos", "source_day": "2026-10-11", "ir_day": "2026-09-26", "sha_gap": "unproven"},
+    {"slug": "malawi", "source_day": "2026-10-09", "ir_day": "2026-09-30", "sha_gap": "unproven"},
+    {"slug": "papua_new_guinea", "source_day": "2026-10-13", "ir_day": "2026-09-25", "sha_gap": "unproven"},
+    {"slug": "niger", "source_day": "2026-10-14", "ir_day": "2026-10-13", "sha_gap": "unproven"},
+    {"slug": "saotome", "source_day": "2026-10-13", "ir_day": "2026-09-26", "sha_gap": "unproven"},
+    {"slug": "eswatini", "source_day": "2026-10-14", "ir_day": "2026-10-13", "sha_gap": "unproven"},
+    {"slug": "palau", "source_day": "2026-10-14", "ir_day": "2026-09-25", "sha_gap": "unproven"},
+    {"slug": "el_salvador", "source_day": "2026-10-14", "ir_day": "2026-09-26", "sha_gap": "unproven"}
+  ],
+  "alias_pairs": [
+    ["dominican_republic", "dominicanrepublic"],
+    ["el_salvador", "elsalvador"],
+    ["north_korea", "northkorea"],
+    ["papua_new_guinea", "papuanewguinea"],
+    ["san_marino", "sanmarino"],
+    ["trinidad_and_tobago", "trinidad"]
+  ],
+  "municipal": [
+    {"slug": "andorra_municipal", "layout": "text", "ir_present": true},
+    {"slug": "austria_municipal", "layout": "text", "ir_present": false},
+    {"slug": "belgium_municipal", "layout": "html", "ir_present": false, "sha": "c02185d1fd62ed0f5f0e3a6f008af0368a799474", "html_parquet": 6},
+    {"slug": "brazil_municipal", "layout": "mixed", "ir_present": false, "sha_prefix": "db8c3a82bb6c", "text_shards": 3, "html_parquet": 28, "sidecar_not_projected": true},
+    {"slug": "canada_municipal", "layout": "html", "ir_present": false, "html_counts": [{"sha": "7ef1bd20e2eca296c2d106e50ff665bdc2d92c5e", "html_parquet": 27}, {"sha": "04f02e4cf3ed25558280408ef1bf96761df3cbdd", "html_parquet": 28}]},
+    {"slug": "czech_municipal", "layout": "exact", "ir_present": true, "sha": "34e3d33c5860ab4dcecd3910c7b66031241a6f0c"},
+    {"slug": "estonia_municipal", "layout": "exact", "ir_present": true, "sha": "9ef422a2a38a8c35418e6b6f0192c87bb4130db2"},
+    {"slug": "ethiopia_municipal", "layout": "text", "ir_present": true},
+    {"slug": "indonesia_municipal", "layout": "html", "ir_present": false, "sha": "5f76fbddbf12bd0e38a4de489926d53f3a46a7d6", "html_parquet": 53},
+    {"slug": "jordan_municipal", "layout": "text", "ir_present": true},
+    {"slug": "kenya_municipal", "layout": "text", "ir_present": true},
+    {"slug": "korea_municipal", "layout": "text", "ir_present": false},
+    {"slug": "latvia_municipal", "layout": "text", "ir_present": false},
+    {"slug": "malta_municipal", "layout": "text", "ir_present": true},
+    {"slug": "mauritius_municipal", "layout": "text", "ir_present": true},
+    {"slug": "mozambique_municipal", "layout": "text", "ir_present": true},
+    {"slug": "namibia_municipal", "layout": "text", "ir_present": true},
+    {"slug": "netherlands_municipal", "layout": "text", "ir_present": false},
+    {"slug": "new_zealand_municipal", "layout": "html", "ir_present": false, "sha": "52834ec1e35c5e44c18b0bcf777f284cc57236c2", "html_parquet": 19},
+    {"slug": "palestine_municipal", "layout": "text", "ir_present": true},
+    {"slug": "peru_municipal", "layout": "text", "ir_present": true},
+    {"slug": "portugal_municipal", "layout": "html", "ir_present": false, "sha": "9ba6f272d9648b1bcfe0b656fe707f57d5abfce4", "html_parquet": 305},
+    {"slug": "saudi_arabia_municipal", "layout": "text", "ir_present": true},
+    {"slug": "slovenia_municipal", "layout": "text", "ir_present": false},
+    {"slug": "south_africa_municipal", "layout": "mixed", "ir_present": true, "sha_prefix": "958470041ae3", "text_shards": 4, "html_parquet": 11, "sidecar_not_projected": true},
+    {"slug": "spain_municipal", "layout": "mixed", "ir_present": true, "sha": "74c7e5b14c2d8116b0c2d028ade9e0fd04fb2269", "text_shards": 1, "html_parquet": 83, "sidecar_not_projected": true},
+    {"slug": "tanzania_municipal", "layout": "text", "ir_present": true},
+    {"slug": "tunisia_municipal", "layout": "text", "ir_present": true},
+    {"slug": "uganda_municipal", "layout": "text", "ir_present": true},
+    {"slug": "zimbabwe_municipal", "layout": "text", "ir_present": true}
+  ],
+  "subnational_exact": [
+    {"id": "ipfs_egypt_governorate_laws", "sha": "d78a3c934596f9890de93124021ed34a3d4d49de", "route": "none", "coverage": "not_published"},
+    {"id": "ipfs_south_africa_provincial_laws", "sha": "1368446176bcdf6b936d3526a4a0ee6ab80a43fb", "route": "none", "coverage": "not_published"},
+    {"id": "ipfs_wallis_futuna_laws", "sha": "eff428b7ce17c1a960a63dce2c897635e5f0567e", "route": "none", "coverage": "not_published"}
+  ],
+  "uk_local_acts": {
+    "id": "ipfs_uk_local_acts",
+    "sha": "f1137461b62e4ec335e5ad39696c5792e5d70c3f",
+    "ir": "justicedao/ipfs_uk_local_acts_ir",
+    "ir_sha_prefix": "72e3f2bf5125",
+    "gb_route": false,
+    "gb_repo": "justicedao/ipfs_uk_laws_ir"
+  },
+  "common_crawl": [
+    {"id": "common_crawl_pointers_by_collection", "sha": "79285925bde88fd87aeaf3f098723f13a4c8e7ba"},
+    {"id": "common_crawl_meta_indexes", "sha": "0cbe864b597e08b75d94258ee4f9339dd0d58a1a"},
+    {"id": "common_crawl_municipal_index", "sha": "a69613bdffca52d77ce73cf84d42c340c6345550"},
+    {"id": "common_crawl_state_index", "sha": "3a882a674d88ac3d12941f675e064b61fab59621"},
+    {"id": "common_crawl_federal_index", "sha": "ba6df11d6aa5bd7625639b1f666e19f8ea873b88"}
+  ],
+  "non_corpus": [
+    "Caselaw_Access_Project_JSON",
+    "ipfs_embeddings_test",
+    "211-info",
+    "legal_scrapers",
+    "legal-ir-autoencoder-checkpoints",
+    "uscode-autoencoder-sparse",
+    "uscode-autoformal-span-cache",
+    "uscode-autoformal-entity-cache",
+    "open-us-law-span-cache",
+    "open-us-law-autoformal-span-cache"
+  ],
+  "world": {
+    "world_national_law": {
+      "sha": "ff1cc3146e646e670a986ac7d09dff49926c6379",
+      "admin_level": "country",
+      "export_status": "missing"
+    },
+    "world_municipal_law": {
+      "sha": "1f6823deab034387ea0fb5f8126086f5db798ce9",
+      "admin_level": "municipality",
+      "export_status": "missing",
+      "card_configs_without_files": ["CL", "HU"]
+    },
+    "sample_basenames": ["iso_AE_html.parquet", "places.parquet", "articles-00001.parquet"]
+  },
+  "norm_destinations": [
+    {"repo": "justicedao/world_national_law", "export_status": "missing"},
+    {"repo": "justicedao/world_municipal_law", "export_status": "missing"},
+    {"repo": "justicedao/american_municipal_law_norm", "export_status": "missing"}
+  ],
+  "blocked_repos": [
+    "justicedao/ipfs_state_laws",
+    "justicedao/ipfs_federal_register"
+  ],
+  "legacy_american": {
+    "repo": "justicedao/american_municipal_law",
+    "sha": "ec3e4457cb9ab7192db36b0292fd35bfbdc588aa",
+    "export_status": "present_stale_calendar"
+  },
+  "american_source": {
+    "repo": "endomorphosis/american_municipal_law",
+    "sha": "33f23d18d5382cfb6e6745bd7fc4dc726d4fb341",
+    "html_parquet": 12084
+  },
+  "models": [
+    {"id": "world_law_pipeline", "sha_prefix": "be358d31", "corpus": false}
+  ]
+}

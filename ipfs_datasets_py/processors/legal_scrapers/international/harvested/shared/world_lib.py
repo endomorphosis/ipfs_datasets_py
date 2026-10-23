@@ -420,8 +420,9 @@ def save_instrument(
         documents=docs,
         extra_meta=extra_meta,
     )
-    write_instrument(cc, rec)
-    return True
+    _dest = write_instrument(cc, rec)
+    # tip+30u fix (executor 06:4x PT Oct 2): a quality-filter reject returns the quarantine path -> report False so MAX_NEW counts only real saves
+    return bool(_dest) and Path(_dest).parent.name == "instruments" and Path(_dest).exists()
 
 
 def cdx_urls(host_or_url: str, *, limit: int = 200, match_type: str = "prefix", extra_filters=None) -> list[dict]:

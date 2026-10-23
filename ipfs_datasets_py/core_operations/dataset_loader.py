@@ -9,6 +9,7 @@ It is used by:
 """
 
 import logging
+from pathlib import Path
 from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -115,7 +116,18 @@ class DatasetLoader:
             
             # Load the dataset directly using Hugging Face datasets
             try:
-                dataset = hf_load_dataset(source, format=format, **options)
+                load_options = dict(options)
+                # Hugging Face chooses a builder with its first argument; a
+                # generic `format` keyword is forwarded to JsonConfig/CsvConfig
+                # and fails rather than loading any data. Local files select
+                # their real builder and become data_files, while named builders
+                # and Hub sources retain their normal HF semantics.
+                load_source = source
+                if Path(source).is_file():
+                    suffix = Path(source).suffix.lower().lstrip(".")
+                    load_source = format or {"jsonl": "json", "txt": "text"}.get(suffix, suffix)
+                    load_options.setdefault("data_files", source)
+                dataset = hf_load_dataset(load_source, **load_options)
                 
                 # Hugging Face datasets can return DatasetDict if multiple splits, handle this
                 if isinstance(dataset, dict) and "train" in dataset:

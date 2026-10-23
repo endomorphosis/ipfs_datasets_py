@@ -9,6 +9,7 @@ import anyio
 import os
 import json
 import requests
+from functools import partial
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
 
@@ -93,6 +94,11 @@ async def get_from_ipfs(
     try:
         logger.info(f"Getting content with CID {cid} from IPFS")
 
+        # An explicit gateway is an execution choice, not merely a hint after
+        # native failure. Read its actual bytes and retain any genuine error.
+        if gateway:
+            return await _fetch_via_http_gateway(cid, output_path, timeout_seconds, gateway)
+
         # Determine if we're using direct ipfs_kit_py or MCP client
         # Use environment variable or default to "direct"
         ipfs_kit_integration = os.environ.get("IPFS_KIT_INTEGRATION", "direct")
@@ -133,24 +139,11 @@ async def get_from_ipfs(
                     elif hasattr(ipfs_kit_py, "get"):
                         content = ipfs_kit_py.get(cid, timeout=timeout_seconds)
                     else:
-                        # No suitable method found, create mock response
-                        logger.warning("No suitable IPFS method found, creating mock response")
-                        return {
-                            "status": "success",
-                            "cid": cid,
-                            "content_type": "text",
-                            "content": f"Mock content for CID {cid}",
-                            "binary_size": 20,
-                        }
+                        logger.warning("No native IPFS read method found; trying the actual HTTP gateway")
+                        return await _fetch_via_http_gateway(cid, output_path, timeout_seconds, gateway)
                 except Exception as e:
-                    logger.warning(f"IPFS method call failed: {e}, creating mock response")
-                    return {
-                        "status": "success",
-                        "cid": cid,
-                        "content_type": "text",
-                        "content": f"Mock content for CID {cid}",
-                        "binary_size": 20,
-                    }
+                    logger.warning(f"IPFS method call failed: {e}; trying the actual HTTP gateway")
+                    return await _fetch_via_http_gateway(cid, output_path, timeout_seconds, gateway)
 
                 # Try to decode as UTF-8 if possible
                 try:
@@ -175,10 +168,7 @@ async def get_from_ipfs(
             try:
                 from modelcontextprotocol.client import MCPClient
             except ImportError:
-                # Use our mock for testing when the real package isn't available
-                from ...mock_modelcontextprotocol_for_testing import (
-                    MockMCPClientForTesting as MCPClient,
-                )
+                return await _fetch_via_http_gateway(cid, output_path, timeout_seconds, gateway)
 
             # Create client
             ipfs_kit_mcp_url = os.environ.get("IPFS_KIT_MCP_URL", "http://localhost:5001")
@@ -240,11 +230,12 @@ async def _fetch_via_http_gateway(
     gateways = []
     if gateway_override:
         gateways.append(gateway_override)
-    for env_var in ("IPFS_HTTP_GATEWAY", "IPFS_DATASETS_IPFS_GATEWAY"):
-        gw = os.environ.get(env_var)
-        if gw:
-            gateways.append(gw)
-    gateways.extend(["https://ipfs.io", "https://cloudflare-ipfs.com"])
+    else:
+        for env_var in ("IPFS_HTTP_GATEWAY", "IPFS_DATASETS_IPFS_GATEWAY"):
+            gw = os.environ.get(env_var)
+            if gw:
+                gateways.append(gw)
+        gateways.extend(["https://ipfs.io", "https://cloudflare-ipfs.com"])
 
     last_error = None
     for gw in gateways:
@@ -252,7 +243,7 @@ async def _fetch_via_http_gateway(
         url = f"{base}/ipfs/{cid}"
         try:
             resp = await anyio.to_thread.run_sync(
-                requests.get, url, timeout=timeout_seconds, stream=True
+                partial(requests.get, url, timeout=timeout_seconds, stream=True)
             )
             if resp.status_code == 200:
                 content = resp.content

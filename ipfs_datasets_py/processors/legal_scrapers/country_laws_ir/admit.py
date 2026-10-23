@@ -7,8 +7,11 @@ cards, website pages, newsletters, chrome, chapter captions, label tables,
 municipal and other sub-national corpora, and the excluded national harvests
 are refused. A shared
 numeric document id is not a citation. One leading article or section heading
-is copied onto the locator so the row can be queried. This module does not
-download, does not upload, and does not rewrite statute text.
+is copied onto the locator so the row can be queried. A heading that is still
+empty is filled from the source hierarchy, the record title, or an article or
+section number in the source URL. The scraped site is stored with that
+heading and is not used as a number. This module does not download, does not
+upload, and does not rewrite statute text.
 """
 
 from __future__ import annotations
@@ -26,6 +29,9 @@ from ipfs_datasets_py.processors.legal_data.iso_slug_crosswalk import (
 )
 from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.catalog import (
     EXCLUDED_SLUGS,
+)
+from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.heading_assignment import (
+    assign_heading,
 )
 from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.structure import (
     normalize_legal_text,
@@ -62,7 +68,16 @@ _FILL_COLUMNS = (
     "country",
     "source_url",
     "article_number",
+    "section_number",
+    "chapter_number",
+    "part_number",
+    "title_number",
+    "hierarchy_kind",
+    "hierarchy_path",
     "official_identifier",
+    "official_citation",
+    "source_type",
+    "collector",
     "metadata_json",
     "doc_type",
     "source_official",
@@ -182,7 +197,8 @@ def admit_source_law(
     stamped = tuple(_with_leading_heading(atom, language) for atom in kept)
     if not _queryable(stamped, cleaned, citation):
         return _refuse("not_queryable")
-    return SourceAdmission(True, "law", stamped)
+    placed = tuple(_with_assigned_heading(atom, row) for atom in stamped)
+    return SourceAdmission(True, "law", placed)
 
 
 def fill_source_rows(
@@ -381,28 +397,38 @@ def fill_country_corpus(
 
 
 def _fill_row(row: Mapping[str, object]) -> dict[str, object]:
-    title = row.get("title") if isinstance(row.get("title"), str) else row.get("instrument_title")
+    instrument = _cell(row, "instrument_title")
+    title = row.get("title") if isinstance(row.get("title"), str) else instrument
     text = row.get("text") if isinstance(row.get("text"), str) else row.get("body")
     entry = row.get("id") if isinstance(row.get("id"), str) else row.get("entry_cid")
     if not isinstance(entry, str):
         entry = row.get("cid")
-    return {
+    filled = {
         "id": entry if isinstance(entry, str) else "",
         "title": title if isinstance(title, str) else "",
+        "instrument_title": instrument,
         "text": text if isinstance(text, str) else "",
-        "language": row.get("language") if isinstance(row.get("language"), str) else "",
-        "jurisdiction": row.get("jurisdiction") if isinstance(row.get("jurisdiction"), str) else "",
-        "country": row.get("country") if isinstance(row.get("country"), str) else "",
-        "source_url": row.get("source_url") if isinstance(row.get("source_url"), str) else "",
-        "article_number": row.get("article_number") if isinstance(row.get("article_number"), str) else "",
-        "official_identifier": row.get("official_identifier")
-        if isinstance(row.get("official_identifier"), str)
-        else "",
-        "metadata_json": row.get("metadata_json") if isinstance(row.get("metadata_json"), str) else "",
-        "doc_type": row.get("doc_type") if isinstance(row.get("doc_type"), str) else "",
+        "language": _cell(row, "language"),
+        "jurisdiction": _cell(row, "jurisdiction"),
+        "country": _cell(row, "country"),
+        "source_url": _cell(row, "source_url"),
+        "article_number": _cell(row, "article_number"),
+        "section_number": _cell(row, "section_number"),
+        "chapter_number": _cell(row, "chapter_number"),
+        "part_number": _cell(row, "part_number"),
+        "title_number": _cell(row, "title_number"),
+        "hierarchy_kind": _cell(row, "hierarchy_kind"),
+        "hierarchy_path": _cell(row, "hierarchy_path"),
+        "official_identifier": _cell(row, "official_identifier"),
+        "official_citation": _cell(row, "official_citation"),
+        "source_type": _cell(row, "source_type"),
+        "collector": _cell(row, "collector"),
+        "metadata_json": _cell(row, "metadata_json"),
+        "doc_type": _cell(row, "doc_type"),
         "source_official": row.get("source_official"),
         "source_policy": row.get("source_policy"),
     }
+    return filled
 
 
 def _encode_fill_atom(atom: Mapping[str, object]) -> dict[str, str | None]:
@@ -540,6 +566,64 @@ def _string(value: object) -> str:
     if isinstance(value, str):
         return value.strip()
     return ""
+
+
+def _cell(row: Mapping[str, object], name: str) -> str:
+    value = row.get(name)
+    if isinstance(value, str):
+        return value
+    if isinstance(value, int) and not isinstance(value, bool):
+        return str(value)
+    return ""
+
+
+def _with_assigned_heading(
+    atom: dict[str, object],
+    row: Mapping[str, object],
+) -> dict[str, object]:
+    """Fill an empty locator. A heading the splitter already set is left as it is."""
+
+    provenance = atom.get("provenance")
+    if not isinstance(provenance, dict) or _located(provenance):
+        return atom
+    statute = provenance.get("statute")
+    assignment = assign_heading(
+        {
+            "title": atom.get("title"),
+            "text": atom.get("text"),
+            "citation": atom.get("citation"),
+            "statute": statute if isinstance(statute, str) else "",
+            "source_url": atom.get("source_url"),
+            "hierarchy_kind": row.get("hierarchy_kind"),
+            "hierarchy_path": row.get("hierarchy_path") or provenance.get("hierarchy_path"),
+            "section_number": row.get("section_number"),
+            "article_number": row.get("article_number"),
+            "chapter_number": row.get("chapter_number"),
+            "part_number": row.get("part_number"),
+            "title_number": row.get("title_number"),
+            "instrument_title": row.get("instrument_title"),
+            "official_citation": row.get("official_citation"),
+            "official_identifier": row.get("official_identifier"),
+            "source_type": row.get("source_type"),
+            "collector": row.get("collector"),
+        }
+    )
+    for key, value in assignment.locators:
+        current = provenance.get(key)
+        if not (isinstance(current, str) and current.strip()):
+            provenance[key] = value
+    if assignment.hierarchy_path:
+        path = provenance.get("hierarchy_path")
+        if not (isinstance(path, str) and path.strip()):
+            provenance["hierarchy_path"] = assignment.hierarchy_path
+    provenance["heading_status"] = assignment.status
+    provenance["heading_evidence"] = assignment.evidence
+    if assignment.site:
+        provenance["heading_site"] = assignment.site
+        provenance["heading_site_from"] = assignment.site_from
+    if assignment.instrument:
+        provenance["heading_instrument"] = assignment.instrument
+    return atom
 
 
 def _provision_number(value: object) -> str:
