@@ -1659,7 +1659,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-23T04:33:18.782033+00:00",
+  "last_updated_at_utc": "2026-10-23T05:07:07.823006+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2882,6 +2882,16 @@
       "root": "datasets_repository",
       "scope": "Existing official-V2 observational packet/index with dependency-complete AST/preservation/SQL source and owning tests. Historical153/459,68packet and ancestor qualifications stay separate; no fresh public runtime, actual native/DB replay, proof usability or source/meaning/model/training/gold/graph/Lean admission.",
       "status": "qualified_existing_preservation_source_publication"
+    },
+    {
+      "id": "legal-ir-supervisor-reference-plan-20261023-01",
+      "observed_bytes": 17834,
+      "observed_sha256": "b1d4554e037090ed98d333bac353caf4c0d965e892a87e68eff11516bd67a02c",
+      "path": "docs/autoformalization/evidence/legal-ir-supervisor-reference-plan-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Explicit legacy fleet; nonempty typed-owner scope prerequisite; strict preview with 135 accepted and 5 rejected rows, separate 24-task backlog; proposed eight-cell reference scoring. No native owner/task migration/model/training/reconstruction/graph/Lean qualification.",
+      "status": "source_review_and_original_board_preview_only"
     }
   ]
 }
