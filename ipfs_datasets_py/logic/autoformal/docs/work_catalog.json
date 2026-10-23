@@ -1696,6 +1696,72 @@
     },
     {
       "apis": [
+        "build_compact_content_persistent_v1",
+        "compact_content_persistent_sha256",
+        "compact_content_persistent_bytes_v1",
+        "load_compact_content_persistent_v1",
+        "train_compact_content_persistent_v1",
+        "score_compact_content_persistent_v1"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "compact-persistent-conditioning-qualified-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_training_v2.md",
+      "id": "compact-content-persistent-v1",
+      "notes": "Two authored384 mode cases qualify14 tensor training/checkpoint/model-only prefix scoring,20 physical updates/38 forwards, zero-adapter donor parity, real adapter updates, exact5vs3 + 2 resume apart from immediate parent and incremental parity. No autonomous generation, native encoder, statutory/heldout accuracy, learninggain or Lean claim. Original P-generation qualification is reused for exact source/test bytes; current public initializer and validation-controller qualification are not claimed.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_persistent_v1",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_persistent_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "policy",
+        "policy_sha256",
+        "objective"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "predicate-objective-diagnostic-qualified-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_role_warmstart_training_v1.md",
+      "id": "compact-predicate-objective-diagnostic",
+      "notes": "Fixed authored384/full537-or-conditional predicate1-to4/sum67-to70 diagnostic;75 authored cases/225 phases,2 test backwards/49,404 checked coordinates. One genuine unchanged old objective call; no model/optimizer lifecycle, new checkpoint/training profile, fitting/generation campaign, source meaning, gold, convergence, graph or Lean authority.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_predicate_objective_v1",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_predicate_objective_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "policy",
+        "policy_sha256",
+        "checkpoint_sha256",
+        "create",
+        "inspect",
+        "training_row",
+        "restore",
+        "objective",
+        "pack"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "predicate-training-qualified-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_role_warmstart_training_v1.md",
+      "id": "compact-predicate-training",
+      "notes": "Separate authored384/predicate-sum70 checkpoint and policy; genuine immutable row0/row1 references are context witnesses, never current model history. Original model/Adam mechanics and diagnostic scalar reused. 70cases/210phases;6physical updates/4restores,2unique ordered steps per normalization plus replay. Exact complete named-state save/load/replay; declared causal history and caller-logit origin remain unattested. Old serving runtime rejects this schema; no learning gain/convergence/native-GTE/source meaning/gold/graph/Lean authority.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_predicate_training_v1",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_predicate_training_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
         "bound_variable_definition_sha256",
         "prepare_bound_variable_definition_v1",
         "validate_bound_variable_definition_v1"
@@ -1993,7 +2059,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-23T16:47:42.807370+00:00",
+  "last_updated_at_utc": "2026-10-23T16:54:56.295824+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -3286,6 +3352,36 @@
       "root": "datasets_repository",
       "scope": "23 actual pytest cases/69 saved passed phases; original native/storage release and source READ closeout. New reference API source/test only; real checkpoint/Torch/numerical matrix/RNG, eight missing cells, training/gold/source/legal/graph/Lean qualification remain separate.",
       "status": "authored_leaf_API_contract_qualification_only"
+    },
+    {
+      "id": "compact-persistent-conditioning-qualified-20261023-01",
+      "observed_bytes": 16282,
+      "observed_sha256": "6b32f74bd113d6da79c540afc82e155f81c266158b4827ed7d4f4f0bdefca163",
+      "path": "docs/autoformalization/evidence/legal-ir-compact-persistent-conditioning-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Two authored384 mode cases qualify14 tensor training/checkpoint/model-only prefix scoring,20 physical updates/38 forwards, zero-adapter donor parity, real adapter updates, exact5vs3 + 2 resume apart from immediate parent and incremental parity. No autonomous generation, native encoder, statutory/heldout accuracy, learninggain or Lean claim. Original P-source/controller generation retained; no fresh public-checkout test or controller qualification.",
+      "status": "authored_persistent_compact_training_and_resume_qualified"
+    },
+    {
+      "id": "predicate-objective-diagnostic-qualified-20261023-01",
+      "observed_bytes": 3851,
+      "observed_sha256": "8410d9a21278fcfe1618cf7898ae468fbf8a117708beb7a44dd20d15239dc4cd",
+      "path": "docs/autoformalization/evidence/legal-ir-predicate-objective-qualification-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original 75 authored cases/225 phases only; exact source/test publication, public helper preserved, no current-public execution qualification, generation/learning gain/source/gold/graph/Lean authority.",
+      "status": "original_source_pinned_engineering_qualification_only"
+    },
+    {
+      "id": "predicate-training-qualified-20261023-01",
+      "observed_bytes": 6391,
+      "observed_sha256": "736e98e494570a4d99e5cdf67a58eaade1d087755a1f341024dbe2e4813eeddd",
+      "path": "docs/autoformalization/evidence/legal-ir-predicate-training-qualification-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original 70 authored cases/210 phases only; exact source/test publication, public helper preserved, no current-public execution qualification, generation/learning gain/source/gold/graph/Lean authority.",
+      "status": "original_source_pinned_engineering_qualification_only"
     },
     {
       "id": "bound-definition-existing-owner-port-20261023-01",
