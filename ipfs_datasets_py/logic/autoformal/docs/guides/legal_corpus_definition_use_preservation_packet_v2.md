@@ -12,7 +12,7 @@ FOL/TDFOL packets, retaining all 98 packet files and 30 historical theorem
 observations. Independent readback checked all 110 exports and reconstructed
 the four AST roles in each family. Three altered-evidence controls refused.
 There were zero new Lean invocations, compiler probes or cache writes. The
-[qualification receipt](../../../../../../../artifacts/legal-ir-corpus-packet-20261015-01/qualification-receipt.json)
+[qualification receipt](../../../../../docs/autoformalization/evidence/legal-ir-preservation-publication-20261023.json)
 binds the exact inputs, sources, requests and readback evidence. Unit packet
 fixtures contain explicitly synthetic historical claims and remain separate
 from the replay of actual earlier native evidence.
@@ -120,3 +120,29 @@ activation and clean-build equivalence each require separate qualification.
 Reviewed statutory source correspondence, broader logic constructors and model
 convergence also remain separate acceptance gates. No token savings or model
 quality improvement is measured by retained packet readback.
+
+The earlier next-step paragraph records the historical packet-reader boundary. The bounded observational projection already exists in the [preservation index owner](legal_corpus_definition_use_preservation_index_v2.md); reuse its UNKNOWN result, CANDIDATE/NONE authority boundary, visible failures and complete key dimensions rather than implementing another adapter.
+
+The retained reader accepts only the official V2 twelve-module, fifteen-theorem, 49-file preservation profile. Parent, shared/aggregate and direct-incremental native receipts have different packet and preparation contracts and remain unsupported here; schema relabeling or a matching hash cannot substitute for a compatible reader.
+
+## Current primary reconciliation — 153 cases / 459 phases passed
+
+The [closed current-source qualification](../../../../../docs/autoformalization/evidence/legal-ir-preservation-publication-20261023.json)
+passed 153 authored-fixture cases / 459 setup, call and teardown phases: 47
+real-SQL persistence cases, 47 packet-index cases and 59 store regressions. Unit
+packet execution claims remain authored fixture data. Real SQL writes and cold
+close/reopen exercise fixture entries; this cohort does not replay the two
+historical compiled packets or invoke Lean. One unchanged exact stdlib cold-index
+child retains its 20-second timeout. The declared path-only reasoning namespace
+executes genuine required leaf modules; the public reasoning package initializer
+was not executed and its import surface remains unqualified. Original native,
+storage and source READ custody closed for this generation.
+
+The historical 68-case packet qualification, 153-case index qualification and
+separate DuckDB 1.5.5 two-packet replay/readback above retain their original pins
+and scopes. This current fixture qualification reuses the existing official-V2
+reader and index; it adds no parent/shared/direct-incremental packet support,
+proof usability, statutory meaning, training/gold, model quality or Lean
+admission. All authority ceilings and zero masks remain unchanged.
+
+At this publication-preparation cutoff, no new test cohort, historical packet/database replay, native or Lean run, or model execution has been performed. The linked portable evidence records the retained 153-case/459-phase primary composition and its declared reasoning namespace profile separately from the original 68-case packet qualification, original 153-case SQL/index qualification and historical two-packet replays. Those qualifications keep their original source/toolchain scopes. Preserved public companion differences do not establish whole-runtime byte identity with the 126 raw-compile observations/119 module origins or qualify the public reasoning initializer/reexports. Original receipts, packet/database exports and raw execution evidence remain unbundled and unavailable in a clean clone; the portable record supplies their immutable descriptors and scope, rather than substituting fresh runtime evidence.
