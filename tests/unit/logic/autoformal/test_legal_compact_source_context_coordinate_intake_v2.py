@@ -253,3 +253,61 @@ def test_coordinate_request_does_not_silently_enter_legacy_context_profile(coord
     args, options = arguments(coordinate_context)
     with pytest.raises(ValueError, match="paired selection|paired manifest"):
         subject.prepare_source_context_cache_intake_v1(*args, **options)
+
+
+@pytest.mark.parametrize("unsupported_pin", [
+    "0c25ad7ea4008a90b2bb64627c863b1f880b41421ec9bffa862d0483f9ce62bd",
+    "442d96a5f442a5f471a7cad923bfb2f73fd97a370acd4acd03415586f23259de",
+], ids=["historical-cache", "different-primary-cache"])
+def test_coordinate_source_fence_rejects_other_generations_before_delegates(
+        coordinate_context, monkeypatch, unsupported_pin):
+    """Historical and primary pins are no alternate public compatibility list."""
+    case = coordinate_context
+    calls = {"resolver": 0, "payload": 0}
+
+    def forbidden_resolver(*args, **kwargs):
+        calls["resolver"] += 1
+        raise AssertionError("source resolver ran before the producer source fence")
+
+    def forbidden_payload(*args, **kwargs):
+        calls["payload"] += 1
+        raise AssertionError("payload intake ran before the producer source fence")
+
+    case["inventory_originals"]["source_resolver"] = forbidden_resolver
+    monkeypatch.setattr(payload, "prepare_paired_payload_intake_v2", forbidden_payload)
+    monkeypatch.setitem(subject._COORDINATE_SOURCE_PINS, "span_cache", unsupported_pin)
+    with pytest.raises(subject.SourceContextCacheIntakeError,
+                       match="producer source changed or fixed pin differs"):
+        prepare(case)
+    assert calls == {"resolver": 0, "payload": 0}
+
+
+def test_coordinate_closing_source_fence_refuses_injected_read_drift_after_real_payload(
+        coordinate_context, monkeypatch):
+    """Inject read bytes only; keep actual source files and fence logic intact."""
+    producer_path = subject._SELF_PATH.with_name("span_cache.py")
+    real_read = Path.read_bytes
+    original_bytes = real_read(producer_path)
+    real_payload = payload.prepare_paired_payload_intake_v2
+    observed = {"payload_completed": 0, "injected_source_reads": 0}
+
+    def real_payload_then_arm(*args, **kwargs):
+        result = real_payload(*args, **kwargs)
+        observed["payload_completed"] += 1
+        return result
+
+    def injected_read(path):
+        raw = real_read(path)
+        if path == producer_path and observed["payload_completed"]:
+            observed["injected_source_reads"] += 1
+            return raw + b"\n# authored closing-source-read drift\n"
+        return raw
+
+    monkeypatch.setattr(payload, "prepare_paired_payload_intake_v2", real_payload_then_arm)
+    monkeypatch.setattr(Path, "read_bytes", injected_read)
+    with pytest.raises(subject.SourceContextCacheIntakeError,
+                       match="producer source changed or fixed pin differs"):
+        prepare(coordinate_context)
+    assert observed["payload_completed"] == 1
+    assert observed["injected_source_reads"] >= 1
+    assert real_read(producer_path) == original_bytes

@@ -58,7 +58,7 @@ _SOURCE_PINS = {
     "learned_formula_observation": "75f241160e1e09d8414fbf43d7effc0f615f821a5de91b91f0e8447eb7fe04ad",
 }
 _COORDINATE_SOURCE_PINS = {
-    "span_cache": "0c25ad7ea4008a90b2bb64627c863b1f880b41421ec9bffa862d0483f9ce62bd",
+    "span_cache": "e35f5333fc4776d5b519ec84a38f42715a76ff7b20a776a35b7e01ea9342b068",
     "uscode_ingest": "a0d79a7459186c19c3a32cc03405acc3e4a4e0e2b33fc7bae9525be7b5246e92",
 }
 _INVENTORY_KEYS = {"population_raw", "occurrences_raw", "catalog_raw", "access_raw",
