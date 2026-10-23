@@ -1,0 +1,343 @@
+{
+  "schema": "legal-ir-compact-persistent-forced-lookahead-generation-qualification/v1",
+  "recorded_at_utc": "2026-10-23T21:23:12.553956+00:00",
+  "publication_ready": true,
+  "independent_saved_result_acceptance": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/independent-saved-result-review-v01.json",
+    "bytes": 11453,
+    "sha256": "e961b99b179186525701d14e7946b58e35c399764a95e62ce6cd360957f3ffad"
+  },
+  "qualification_summary": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/qualification-summary-v01.json",
+    "bytes": 37088,
+    "sha256": "079c18ad55635dc8ad22b8af65016a35b3b3a3654cc4189117304e978b1c1ca5"
+  },
+  "scope": "Original exact-source retained exposed authored384/two-row/two-conditioning-mode autonomous generation under100-IDcap and horizon8. Bounded local forced-singleton policy/runtime control qualification, not global completion or legal reconstruction quality.",
+  "source": {
+    "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_persistent_runtime_v2.py",
+    "bytes": 16981,
+    "sha256": "b2a215076eef2482870ff171d69d4725023ab1fd364ecd7fbca6337a25c5821c"
+  },
+  "owning_test": {
+    "repository_path": "tests/unit/logic/autoformal/test_legal_compact_content_persistent_runtime_v2.py",
+    "bytes": 16319,
+    "sha256": "bfb9f0215e48d94c143e040df72758051dea4714d9367dcc0eb629d283d41766"
+  },
+  "policy_source": {
+    "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_completion_budget_v2.py",
+    "bytes": 12629,
+    "sha256": "e04e214be49eb17e87544b250b0308ca2b7adf35c01957afeb56b7e300b6db14"
+  },
+  "policy_pure_qualification": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/public-staging-v01/final-pure-v02/docs/autoformalization/evidence/legal-ir-completion-forced-lookahead-qualification-20261023.json",
+    "bytes": 7809,
+    "sha256": "d1b239dec3fb7fd3769231291ee68e7f8a9f3397bd6329e26d8fe2c4702d05b4"
+  },
+  "v1_runtime_and_weights_unchanged": true,
+  "original_retained_input_metadata_reuse": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/public-staging-v01/source-tree/docs/autoformalization/evidence/legal-ir-compact-persistent-generation-20261023.json",
+    "bytes": 27486,
+    "sha256": "38c9e807db7b75e7df04f2677b22e406dab1a380e038555394b7401472794bd0"
+  },
+  "new_encoder_capture_or_training": false,
+  "actual_cases": 2,
+  "actual_function_selectors": 1,
+  "actual_passed_phases": 6,
+  "actual_nodes": [
+    "tests/unit/logic/autoformal/test_legal_compact_content_persistent_runtime_v2.py::test_retained_persistent_v2_autonomous_generation_and_saved_comparison[every_step]",
+    "tests/unit/logic/autoformal/test_legal_compact_content_persistent_runtime_v2.py::test_retained_persistent_v2_autonomous_generation_and_saved_comparison[first_step]"
+  ],
+  "phase_outcomes": {
+    "call": {
+      "passed": 2
+    },
+    "setup": {
+      "passed": 2
+    },
+    "teardown": {
+      "passed": 2
+    }
+  },
+  "scientific_bounds": {
+    "BOS_references": 2,
+    "ID_cap": 100,
+    "forced_horizon": 8,
+    "generation_calls": 4,
+    "maximum_forwards": 402,
+    "maximum_models": 6,
+    "maximum_state_installations": 12
+  },
+  "actual_counts": {
+    "adam_constructions": 0,
+    "autograd_grad_calls": 0,
+    "backward_calls": 0,
+    "clip_calls": 0,
+    "cross_entropy_calls": 0,
+    "gru_forwards": 162,
+    "model_constructions": 6,
+    "optimizer_updates": 0,
+    "selector_calls": 160,
+    "state_restores": 12
+  },
+  "source_rows": 2,
+  "source_groups": 2,
+  "generation_calls": 4,
+  "typed_candidates": 0,
+  "exact_token_id_matches": 0,
+  "exact_compact_content_matches": 0,
+  "all_enrolled_denominator": 4,
+  "per_mode": {
+    "every_step": {
+      "BOS_score_max_absolute_error": 0.0,
+      "counts": {
+        "adam_constructions": 0,
+        "autograd_grad_calls": 0,
+        "backward_calls": 0,
+        "clip_calls": 0,
+        "cross_entropy_calls": 0,
+        "gru_constructions": 3,
+        "gru_forwards": 63,
+        "optimizer_updates": 0,
+        "selector_calls": 62,
+        "state_restores": 6
+      },
+      "forced_singleton_positions": 44,
+      "generated_lengths": [
+        31,
+        31
+      ],
+      "generation_reports": [
+        {
+          "bytes": 853383,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/pytest/cases/test_retained_persistent_v2_autonomous_generatio-m2487fnk/generation-row-0.json",
+          "sha256": "4c6ef611c5327cd874f9c0663c3af17abdcf5c18d65a6fbab9a0d7fbe2b93200"
+        },
+        {
+          "bytes": 853217,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/pytest/cases/test_retained_persistent_v2_autonomous_generatio-m2487fnk/generation-row-1.json",
+          "sha256": "3e818ee6acb504a69b9218b3af935f7592c95ea972593bbe3b4b61b87c7301db"
+        }
+      ],
+      "panel": {
+        "bytes": 5595,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/pytest/cases/test_retained_persistent_v2_autonomous_generatio-m2487fnk/authored-persistent-generation-mode-panel-v1.json",
+        "sha256": "9a3e9a8e15e9e64d84c7103502232e19278892f715246850ec5e45b77781462b"
+      },
+      "semantic_choice_positions": 18,
+      "statuses": [
+        "blocked",
+        "blocked"
+      ]
+    },
+    "first_step": {
+      "BOS_score_max_absolute_error": 0.0,
+      "counts": {
+        "adam_constructions": 0,
+        "autograd_grad_calls": 0,
+        "backward_calls": 0,
+        "clip_calls": 0,
+        "cross_entropy_calls": 0,
+        "gru_constructions": 3,
+        "gru_forwards": 99,
+        "optimizer_updates": 0,
+        "selector_calls": 98,
+        "state_restores": 6
+      },
+      "forced_singleton_positions": 80,
+      "generated_lengths": [
+        49,
+        49
+      ],
+      "generation_reports": [
+        {
+          "bytes": 1333707,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/pytest/cases/test_retained_persistent_v2_autonomous_generatio-qksw_wu1/generation-row-0.json",
+          "sha256": "8f4ab7b0506d3a80617bbe813555d4d49ff2beef2664196beb9b96c3d516f7c5"
+        },
+        {
+          "bytes": 1333651,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/pytest/cases/test_retained_persistent_v2_autonomous_generatio-qksw_wu1/generation-row-1.json",
+          "sha256": "69fa85d1f7fe9cb3e1a2dd8292cf8efab83b9237f106a7c580c1eb934853c51f"
+        }
+      ],
+      "panel": {
+        "bytes": 5599,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/pytest/cases/test_retained_persistent_v2_autonomous_generatio-qksw_wu1/authored-persistent-generation-mode-panel-v1.json",
+        "sha256": "d09aba54ce022460730ea9588620d26fe69064c5886baeab0b0a999586606774"
+      },
+      "semantic_choice_positions": 18,
+      "statuses": [
+        "blocked",
+        "blocked"
+      ]
+    }
+  },
+  "reference_opened_after_all_four_outputs": true,
+  "reference_open_observations": [
+    {
+      "barrier": {
+        "bytes": 1807,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/pytest/cases/persistent-generation-cohort/four-output-durability-barrier.json",
+        "sha256": "46f1b9f8172fa5c89a23b9da843b7a01c8a546cc2ffd47f24b94a1e5430c60e4"
+      },
+      "four_reports_hashed_before_open": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-generation-v01/inputs/reference-targets-v01.json",
+      "sequence": 1
+    },
+    {
+      "barrier": {
+        "bytes": 1807,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/pytest/cases/persistent-generation-cohort/four-output-durability-barrier.json",
+        "sha256": "46f1b9f8172fa5c89a23b9da843b7a01c8a546cc2ffd47f24b94a1e5430c60e4"
+      },
+      "four_reports_hashed_before_open": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/compact-persistent-generation-v01/inputs/reference-targets-v01.json",
+      "sequence": 2
+    }
+  ],
+  "independent_observer_witnesses": {
+    "bytes": 20950,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/exports/numerical-observer-witnesses.json",
+    "sha256": "65a6b8808ea173da568b28e30fc83d3cd4d2ed8fb74d93caab1f055474393d90"
+  },
+  "checked_source_buffers": {
+    "bytes": 3870362,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/exports/checked-source-buffers.json",
+    "sha256": "9e57286841d9a8d97930d2f9804aece9c6a3689aa16eedb6a1ba1f02906b08cd"
+  },
+  "owned_output_hash_fsync_verification": true,
+  "metadata_reader_rehashed_all_numerical_outputs": false,
+  "metadata_reader_raw_checkpoint_conditioning_reference_or_score_payload_reads": false,
+  "complete_attempt_file_count": 29,
+  "complete_attempt_bytes": 8454946,
+  "pytest_artifact_count": 17,
+  "pytest_artifact_bytes": 4497995,
+  "source_pin_count": 236,
+  "canonical_dependencies_reverified": 186,
+  "frozen_sources_reverified": 190,
+  "observed_module_count": 88,
+  "observed_namespace_count": 1,
+  "checked_compile_buffers": 87,
+  "package_initializer_scope": "Original genuine generation profile: actual pinned package/test initializers execute where imported, natural fileless namespaces retained. No fake leaf origins; whole public-package/environment behavior remains unqualified.",
+  "omitted_empty_initializers": [],
+  "original_native_cleanup_proven": true,
+  "original_resource_lease_released": true,
+  "original_source_READ_closed": true,
+  "original_storage_terminal_status": "released",
+  "original_closeouts": [
+    {
+      "bytes": 82211,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/request-generation-v03.json",
+      "sha256": "b1028da50653f201059c371dfa0791785cfe78e27c76108eac492fc0782e6e60"
+    },
+    {
+      "bytes": 8886,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/source-freeze-receipt-v02.json",
+      "sha256": "bc51de395719691e7e46a7ee1af892cc3481a8ee8c01c9220003c1957c5144ac"
+    },
+    {
+      "bytes": 8026,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/launch-generation-v02.json",
+      "sha256": "f227ed757b64dcdf999fc67f942497600f794d8f152251c1eabec3a4fd33b757"
+    },
+    {
+      "bytes": 929,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/controller-complete-generation-v02.json",
+      "sha256": "2219fc078bddaf4364d2cd710bbffc3f0c15a4c0e024586ed23f31dcfcfadf2b"
+    },
+    {
+      "bytes": 6048,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/logs/validation-durability.json",
+      "sha256": "7e0624acf3c16ef314205b68d847f67b3fe2acc2a6eb37728a5b586723c84b87"
+    },
+    {
+      "bytes": 875,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v02/attempt-generation-v02/logs/result.json",
+      "sha256": "ef6c29770340ef9c67ae3838362f8325d3086c15b3af24bde18b8acba593498a"
+    }
+  ],
+  "failed_first_attempt": {
+    "qualification_granted": false,
+    "cases_aggregated_into_this_cohort": 0,
+    "passed_inner_cases": 2,
+    "passed_inner_phases": 6,
+    "cause": "Post-pytest observer compared original8-field saved summary against v2 eleven-field summary; late independent outer witnesses were never saved. Full saved recovery is unavailable.",
+    "preserved_failure": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v01/failed-wrapper-projected-observation-v01.json",
+      "bytes": 38646,
+      "sha256": "96e2ae9c5ca669c97657bbc0a22c5ab12ffe06418908ec43317119a7a5394ad8"
+    },
+    "minimal_versioned_observer_fix": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/observer-fix-v01/candidate-manifest-v01.json",
+      "bytes": 3010,
+      "sha256": "1417c8613e2eab72b877dbbc2eebc90194791ce52254649944934c51ccff054d"
+    },
+    "independent_worker_static_review": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/observer-fix-v01/independent-worker-static-review-v01.json",
+      "bytes": 4557,
+      "sha256": "b8ad8b4063490d25595d2276fc6ec1da66ee59667f908f9320beacb67bfd079f"
+    },
+    "storage_disposition": "Original retained storage closed separately through its existing owner; raw outputs preserved.",
+    "no_failed_case_credit_or_counts_aggregation": true,
+    "original_storage_closeout": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/consumer-v01/execution-v01/storage-closeout-v01/summary.json",
+      "bytes": 1607,
+      "sha256": "002f447ee52b8267cd430d74fe69fa76afce84d82cc554352e582eb265234af3"
+    }
+  },
+  "comparison_to_original_v1": {
+    "same_weights_contexts_source_vectors_ID_cap": true,
+    "original_v1_four_call_lengths": [
+      17,
+      17,
+      17,
+      17
+    ],
+    "v2_four_call_lengths": [
+      31,
+      31,
+      49,
+      49
+    ],
+    "typed_or_exact_reconstruction_gain_established": false,
+    "all_four_v2_outputs_blocked": true,
+    "interpretation": "The local filter delays the retained dead end; it does not supply a valid completion, global feasibility, conditioning winner or reconstruction gain."
+  },
+  "training_executed": false,
+  "physical_optimizer_updates": 0,
+  "source_encoder_executed": false,
+  "generation_executed": true,
+  "heldout_evaluated": false,
+  "training_mask": 0,
+  "evaluation_gold_mask": 0,
+  "authority": {
+    "Lean": false,
+    "global_completion": false,
+    "graph_truth": false,
+    "heldout_accuracy": false,
+    "legal_meaning": false,
+    "training_gain": false
+  },
+  "limitations": [
+    "Authored two-source/two-mode cohort; generation/score accounting and bounded policy control qualification only.",
+    "Complete-output byte/hash/fsync verification was performed by the original admitted worker and durability owner; this metadata reader rechecks their seals and file stat bindings without opening numerical reports.",
+    "Original cooperative admission and sampled birth-bound descendant observation; no kernel containment or global task authority.",
+    "Actual third-party loader/cached-bytecode equivalence remains unverified; archived raw-source and callable witnesses retain their original scope.",
+    "First observer-failed execution remains failed and separate; its 2/6 observations receive no combined qualification credit.",
+    "The source-frozen selected package/test initializer cohort is distinct from pure metadata namespace qualification and supplies no whole current public-package or environment qualification.",
+    "Original public validation helper is preserved; historical private control sources are not shipped as runtime dependencies.",
+    "Latent width/profile, text reconstruction and exact byte restoration remain separate claims; no new weights, ModelManager registration or Hub model upload is required by this policy-only delivery."
+  ],
+  "next_tasks": [
+    "Qualify a separate bounded branch-aware completion witness/beam under the same retained weights, contexts and100-IDcap before more fitting.",
+    "Persist independent observer counters, callable/source bindings, reference-open observations and compiled buffers before fallible post-run checks, retaining explicit failed status.",
+    "Close reviewed complete source/context/AST and governing-definition/distinct-use populations, native-space compatibility, grouped evaluation and explicit batch/graph admission through existing owners."
+  ],
+  "new_execution_for_documentation": false,
+  "original_24_task_statuses_dependencies_acceptance_history_preserved": true,
+  "pure_portable_historical_cutoff": {
+    "pure_record_sha256": "d1b239dec3fb7fd3769231291ee68e7f8a9f3397bd6329e26d8fe2c4702d05b4",
+    "earlier_whole_publication_bundle_ready_false_preserved": true,
+    "superseding_scope": "This independently accepted consumer cohort enables the separate joint source publication candidate. It neither changes the pure41/123 cohort nor qualifies the excluded pure test initializers/helper execution/full package."
+  }
+}
