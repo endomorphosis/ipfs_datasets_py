@@ -545,8 +545,50 @@ def validate_definition_review_correspondence_v2(
     return expected
 
 
+def prepare_contextual_definition_review_correspondence_v2(
+    binding_result, review_subject, *, expected_binding_sha256,
+    expected_subject_sha256, contextual_replay_inputs, candidate_inputs,
+    expected_candidate_pin, context_inputs, expected_context_population,
+    dependency_manifest, expected_manifest_sha256, required_dependency_ids,
+):
+    """Link distinct contextual declarations without changing the review domain."""
+    from . import legal_source_sampling_context_definition_review_v2 as contextual
+
+    return contextual.prepare(
+        binding_result, review_subject, expected_binding_sha256=expected_binding_sha256,
+        expected_subject_sha256=expected_subject_sha256,
+        contextual_replay_inputs=contextual_replay_inputs,
+        candidate_inputs=candidate_inputs, expected_candidate_pin=expected_candidate_pin,
+        context_inputs=context_inputs, expected_context_population=expected_context_population,
+        dependency_manifest=dependency_manifest, expected_manifest_sha256=expected_manifest_sha256,
+        required_dependency_ids=required_dependency_ids,
+    )
+
+
+def contextual_definition_review_correspondence_sha256(correspondence):
+    """Hash the complete distinct contextual envelope, granting no authority."""
+    from . import legal_source_sampling_context_definition_review_v2 as contextual
+
+    return contextual.correspondence_sha256(correspondence)
+
+
+def validate_contextual_definition_review_correspondence_v2(
+    correspondence, *args, expected_correspondence_sha256, **kwargs,
+):
+    """Independently pin and regenerate the complete contextual correspondence."""
+    from . import legal_source_sampling_context_definition_review_v2 as contextual
+
+    return contextual.validate(
+        correspondence, *args,
+        expected_correspondence_sha256=expected_correspondence_sha256, **kwargs,
+    )
+
+
 __all__ = [
     "prepare_definition_review_correspondence_v2",
     "validate_definition_review_correspondence_v2",
     "definition_review_correspondence_sha256",
+    "prepare_contextual_definition_review_correspondence_v2",
+    "contextual_definition_review_correspondence_sha256",
+    "validate_contextual_definition_review_correspondence_v2",
 ]
