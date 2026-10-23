@@ -341,3 +341,79 @@ genuine rendering boundaries; exact closed no-overwrite transport; and refusal
 through official/native entry points. Signed fixtures remain authored test
 credentials and confer no real statutory or Lean authority. This addition
 reports no new model, test or native execution result by itself.
+
+
+## Complete relational norm with a conditional bound definition, version 1
+
+The same owner now implements a distinct authored engineering profile:
+`legal-corpus-bound-norm-definition-lake-preparation/v1`, with profile
+`replayed-bound-norm-definition-conditional-project/v1`. It replays the existing
+[bound-variable definition report](legal_bound_variable_definition_v1.md) and
+its complete original inputs. Official V2 and literal-parent entry points keep
+their existing contracts; changing a schema label does not cross profiles.
+
+```python
+prepare_bound_norm_definition_corpus_v1(
+    bound_report, *, expected_bound_report_sha256,
+    bound_definition_inputs, toolchain)
+validate_bound_norm_definition_corpus_v1(
+    preparation, bound_report, *, expected_preparation_sha256,
+    expected_bound_report_sha256, bound_definition_inputs, toolchain)
+write_bound_norm_definition_corpus_v1(
+    preparation, directory, bound_report, *, expected_preparation_sha256,
+    expected_bound_report_sha256, bound_definition_inputs, toolchain)
+load_bound_norm_definition_corpus_v1(
+    directory, bound_report, *, expected_manifest_sha256,
+    expected_preparation_sha256, expected_bound_report_sha256,
+    bound_definition_inputs, toolchain)
+bound_norm_definition_preparation_sha256(preparation)
+```
+
+`bound_definition_inputs` has exactly `companion`, `request_raw`,
+`expected_companion_sha256`, `expected_request_sha256`, and `companion_inputs`.
+The last field retains the bound owner's complete six-field evidence replay.
+The report pin commits the complete original bound report; the preparation pin
+commits compact sorted UTF8 JSON of the parsed full manifest and every file
+pair. It is distinct from the exact manifest-file SHA required by loading.
+Validation and writing reject a wrong preparation pin before operation-owner
+lookup, then regenerate every output through the original public validators.
+
+The return type remains `DefinitionUseCorpusPreparation`: exactly nine files
+and six modules under `LegalCorpusBoundNormDefinition`. They contain one shared
+`Prelude`, the byte-exact complete original `Norm`, the unchanged definition
+and `headAt`/`bodyAt` prefix, its original conditional theorem suffix in an
+`Occurrence` module, a `Preservation` module, and the root. The other files are
+`lakefile.toml`, `lean-toolchain`, and `bound-norm-input-bindings.json`. Existing
+`FormulaRenderer` and `PRELUDE` supply the native representation.
+
+All fragments share an arbitrary `Entity` carrier and `Interpretation`; the
+conditional instance uses a supplied binder valuation and fixed `Nat` time.
+`instance_only` produces two theorem obligations: the original definition
+instance under `hDefinition`, and `original_norm_preserved`. Membership mode
+adds the original body consequence under both `hDefinition` and
+`hMembership`, for three obligations. Preservation proves only the definitional
+alias identity `originalNormAt i t ↔ Norm.formula_0 i t` by `Iff.rfl`.
+It proves neither the norm nor a connection from the norm to membership.
+Quantifiers, modalities, relations, argument roles and the original norm body
+are unchanged. No witness, predicate bridge, definition substitution or modal
+rewrite is inferred.
+
+The manifest retains every original alternative and nomination, exact selected
+link/binder/argument/source references, native receipts and producer pins. The
+relational fragment still has `source_binding=null` and `source_bound=false`.
+Source meaning, governing definition priority, per-use applicability and actual
+membership remain pending; selections stay null and learning masks stay zero.
+The authored fixture's two typed uses share one physical source anchor and do
+not supply two distinct statutory uses.
+
+This narrower profile retains the existing 48-MiB/1,000,000-value/depth-48
+complete-input fence, one-MiB manifest contract, eight-MiB project bound and
+20-MiB full preparation-wire bound. Original upstream bounds also apply;
+overflow refuses without dropping evidence. Caller, detached-input, offered
+project and producer comparisons close even when an operation fails. Local
+transport reuses the existing exclusive writer and complete readback.
+
+Preparation executes no compiler. Its handoff stays `build_eligible=false`,
+`not_run`/`pending`, even though a distinct [native route](legal_corpus_definition_use_native_v2.md#bound-norm-definition-native-profile-version-1)
+is implemented in the existing executor. Current qualification and the retained
+2024 Title 10 pilot boundary are recorded in the [handoff](../HANDOFF.md#bound-norm-corpus-engineering-profile-2026-10-23).

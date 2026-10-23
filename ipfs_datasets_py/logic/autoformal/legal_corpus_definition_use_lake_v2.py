@@ -1043,3 +1043,406 @@ __all__ = [
     "write_parent_definition_use_corpus_v1",
     "load_parent_definition_use_corpus_v1",
 ]
+
+
+# A separate bounded profile keeps complete relational norms beside conditional
+# exact-occurrence definitions.  It never widens the existing V2/parent routes.
+BOUND_NORM_SCHEMA = "legal-corpus-bound-norm-definition-lake-preparation/v1"
+BOUND_NORM_PROFILE = "replayed-bound-norm-definition-conditional-project/v1"
+BOUND_NORM_INPUT_BINDING_SCHEMA = "legal-corpus-bound-norm-definition-input-binding/v1"
+BOUND_NORM_FALSE_FLAGS = {
+    **FALSE_FLAGS,
+    **dict.fromkeys(("norm_truth_proved", "definition_applied_to_norm",
+        "membership_assumption_verified", "source_adoption_verified",
+        "governing_definition_use_verified"), False),
+}
+_BOUND_NORM_INPUT_FIELDS = {
+    "bound_report", "expected_bound_report_sha256", "bound_definition_inputs", "toolchain"
+}
+_BOUND_DEFINITION_INPUT_FIELDS = {
+    "companion", "request_raw", "expected_companion_sha256",
+    "expected_request_sha256", "companion_inputs",
+}
+_BOUND_NORM_NAMESPACE = "LegalCorpusBoundNormDefinition"
+_BOUND_NORM_OPERATION_PINS = None
+
+
+def _bound_norm_storage(preparation):
+    _need(type(preparation) is DefinitionUseCorpusPreparation,
+          "typed bound norm definition preparation required")
+    data = object.__getattribute__(preparation, "__dict__")
+    _need(type(data) is dict and set(data) == {"manifest_json", "files"},
+          "closed bound norm definition preparation storage required")
+    offered = _parent_offered(preparation)
+    text = offered["manifest_json"]
+    _need(0 < len(text) <= contracts.MAX_RECORD_BYTES,
+          "bounded bound norm definition manifest required")
+    try:
+        raw = text.encode("utf-8")
+    except UnicodeError as error:
+        raise ValueError("ordinary bound norm definition manifest UTF8 required") from error
+    _need(len(raw) <= contracts.MAX_RECORD_BYTES,
+          "bound norm definition manifest byte bound exceeded")
+    names, total = [], 0
+    for name, body in offered["files"]:
+        _need(len(name) <= 256
+              and re.fullmatch(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)?", name)
+              and all(part not in (".", "..") for part in name.split("/")),
+              "closed two-level bound norm project path required")
+        _need("\x00" not in body and len(body) <= MAX_PROJECT_BYTES,
+              "bounded ordinary bound norm project source required")
+        try:
+            total += len(body.encode("utf-8"))
+        except UnicodeError as error:
+            raise ValueError("ordinary bound norm project UTF8 required") from error
+        _need(total <= MAX_PROJECT_BYTES, "complete bound norm project byte bound exceeded")
+        names.append(name)
+    _need(names == sorted(set(names)), "distinct sorted bound norm project files required")
+    return offered
+
+
+def bound_norm_definition_preparation_sha256(preparation):
+    """Commit the full parsed manifest and all nine file texts, not authority.
+
+    The wire recipe is the existing native owner's preparation commitment:
+    compact sorted ordinary UTF8 JSON of {manifest: object, files: pairs}.
+    """
+    offered = _bound_norm_storage(preparation)
+    raw = offered["manifest_json"].encode("utf-8")
+    manifest = contracts.load_record_bytes(raw, expected_sha256=_sha(raw))
+    document = {"manifest": manifest, "files": offered["files"]}
+    _ParentInputBudget().copy(document)
+    wire = json.dumps(document, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False, allow_nan=False).encode("utf-8")
+    _need(len(wire) <= 20 * 1024 * 1024,
+          "complete bound norm native preparation commitment exceeds 20 MiB")
+    return _sha(wire)
+
+
+def _bound_norm_capture(original, offered=None):
+    _need(type(original) is dict and set(original) == _BOUND_NORM_INPUT_FIELDS,
+          "closed bound norm definition preparation inputs required")
+    _need(type(original["bound_report"]) is dict,
+          "complete original bound-variable report required")
+    inputs = original["bound_definition_inputs"]
+    _need(type(inputs) is dict and set(inputs) == _BOUND_DEFINITION_INPUT_FIELDS,
+          "complete original bound-variable replay inputs required")
+    contracts.require_sha256(original["expected_bound_report_sha256"],
+                             "independent complete bound-variable report")
+    toolchain = original["toolchain"]
+    _need(type(toolchain) is str and len(toolchain) <= 128
+          and _TOOLCHAIN.fullmatch(toolchain), "exact version-pinned Lean toolchain required")
+    graph = {**original, "offered": None if offered is None else _bound_norm_storage(offered)}
+    copied = _ParentInputBudget().copy(graph)
+    base = {key: value for key, value in copied.items() if key != "offered"}
+    return copied, _parent_commitment(copied), _parent_commitment(base)
+
+
+def _bound_norm_pins(bound, owners):
+    global _BOUND_NORM_OPERATION_PINS
+    pure = _pure_pins()
+    _need(pure == _IMPORTED_PURE_PINS, "bound norm pure producers changed since import")
+    observed = dict(pure)
+    sources = [bound._pins(bound._owners()), owners[0].producer_pins()]
+    sources.append({str(Path(module.__file__).resolve()):
+                    _sha(Path(module.__file__).read_bytes()) for module in (bound, *owners)})
+    for source in sources:
+        for path, pin in source.items():
+            _need(path not in observed or observed[path] == pin,
+                  "bound norm producer observations disagree")
+            observed[path] = pin
+    if _BOUND_NORM_OPERATION_PINS is None:
+        _BOUND_NORM_OPERATION_PINS = dict(observed)
+    _need(observed == _BOUND_NORM_OPERATION_PINS,
+          "bound norm producers changed since first use")
+    return observed
+
+
+def _bound_norm_operation(original, operation, offered=None):
+    _need(_pure_pins() == _IMPORTED_PURE_PINS,
+          "bound norm pure producers changed since import")
+    copied, commitment, base_commitment = _bound_norm_capture(original, offered)
+    from . import legal_bound_variable_definition_v1 as bound
+    _need(bound.bound_variable_definition_sha256(copied["bound_report"])
+          == copied["expected_bound_report_sha256"],
+          "independent complete bound-variable report pin differs")
+    # This is the existing pure preflight.  Full endpoint/source replay follows
+    # only after complete input bounds and independent commitments pass.
+    bound._preflight(copied["bound_definition_inputs"])
+    owners = _owners()
+    pins = _bound_norm_pins(bound, owners)
+
+    def fence():
+        _need(_bound_norm_capture(original, offered)[1] == commitment,
+              "caller bound norm project inputs changed during operation")
+        _need(_parent_commitment(_ParentInputBudget().copy(copied)) == commitment,
+              "detached bound norm project inputs changed during operation")
+        _need(_bound_norm_pins(bound, owners) == pins,
+              "bound norm project producers changed during operation")
+
+    failure = None
+    try:
+        fence()
+        return operation(copied, base_commitment, bound, owners, pins, fence)
+    except BaseException as error:
+        failure = error
+        raise
+    finally:
+        try:
+            fence()
+        except BaseException:
+            if failure is None:
+                raise
+            BaseException.add_note(failure, "A closing bound norm Lake input or producer comparison also failed.")
+
+
+def _render_bound_norm_definition(checked, norm, toolchain, binding, owners):
+    routes, emitter, _ = owners
+    namespace = _BOUND_NORM_NAMESPACE
+    norm_native = routes.prepare_native_fragment(family="deontic_fol",
+        formula=norm["native_formula"], expected_ast=norm["native_ast"])
+    _need(norm_native == norm["native_fragment"]
+          and norm_native["lean_body"] == norm["lean_body"],
+          "complete original norm native rendering changed")
+    source = checked["lean_source"]
+    prefix = "namespace LegalBoundVariableDefinition\n" + emitter.PRELUDE + "\n"
+    suffix = "end LegalBoundVariableDefinition\n"
+    _need(source.startswith(prefix) and source.endswith(suffix),
+          "exact original bound-variable source framing required")
+    body = source[len(prefix):-len(suffix)]
+    marker = "\ntheorem definition_instance "
+    _need(body.count(marker) == 1, "one original conditional theorem boundary required")
+    definition_body, tail = body.split(marker, 1)
+    theorem_body = "theorem definition_instance " + tail
+    definition_native = checked["definition_native_fragment"]
+    _need(definition_body.startswith(definition_native["lean_body"] + "\n"),
+          "whole original definition native body must remain exact")
+    norm_module = namespace + ".Norm_" + _digest({
+        "native": norm_native, "original_norm": checked["original_norm"],
+        "input": binding["original_input_commitment_sha256"]})
+    definition_module = namespace + ".Definition_" + _digest(definition_native)
+    occurrence_module = namespace + ".Occurrence_" + binding["bound_definition_report_sha256"]
+    preservation_module = namespace + ".Preservation_" + _digest(binding)
+    prelude = namespace + ".Prelude"
+    modules = [prelude, norm_module, definition_module, occurrence_module,
+               preservation_module, namespace]
+    imports = {prelude: [], norm_module: [prelude], definition_module: [prelude],
+        occurrence_module: [norm_module, definition_module],
+        preservation_module: [norm_module, occurrence_module], namespace: [preservation_module]}
+    _need(len(set(modules)) == 6, "six distinct bound norm modules required")
+    position = {name: index for index, name in enumerate(modules)}
+    _need(all(position[dependency] < position[name] for name in modules
+              for dependency in imports[name]), "closed acyclic bound norm import population required")
+    files = {
+        "lakefile.toml": 'name = "legal_corpus_bound_norm_definition"\nversion = "0.1.0"\n\n'
+            '[[lean_lib]]\nname = "legal"\nroots = ["' + namespace + '"]\n',
+        "lean-toolchain": toolchain + "\n",
+        "bound-norm-input-bindings.json": canonical_dag_json_bytes(binding).decode() + "\n",
+        prelude.replace(".", "/") + ".lean": "namespace " + namespace + "\n"
+            + emitter.PRELUDE + "\nend " + namespace + "\n",
+        norm_module.replace(".", "/") + ".lean": _file(norm_module, imports[norm_module],
+                                                          norm_native["lean_body"]),
+        definition_module.replace(".", "/") + ".lean": _file(definition_module,
+            imports[definition_module], definition_body),
+        occurrence_module.replace(".", "/") + ".lean": _file(occurrence_module,
+            imports[occurrence_module], "open " + definition_module + "\n" + theorem_body),
+        preservation_module.replace(".", "/") + ".lean": _file(preservation_module,
+            imports[preservation_module],
+            "def originalNormAt {Entity Agent : Type} (i : Interpretation Entity Agent) : Nat → Prop := "
+            + norm_module + ".formula_0 i\n"
+            + "theorem original_norm_preserved {Entity Agent : Type} "
+            + "(i : Interpretation Entity Agent) (t : Nat) :\n"
+            + "    originalNormAt i t ↔ " + norm_module + ".formula_0 i t := by\n"
+            + "  exact Iff.rfl\n#print axioms original_norm_preserved\n"),
+        namespace + ".lean": "import " + preservation_module + "\n",
+    }
+    source_map = []
+    for original in checked["conditional_theorems"]:
+        _need(original.startswith("LegalBoundVariableDefinition."),
+              "original bound theorem namespace differs")
+        source_map.append({"original": original,
+                           "project": occurrence_module + "." + original.rsplit(".", 1)[1]})
+    theorems = [row["project"] for row in source_map] + [preservation_module + ".original_norm_preserved"]
+    _need(len(theorems) in (2, 3), "two or three explicit conditional obligations required")
+    for module in modules:
+        actual = re.findall(r"(?m)^import ([A-Za-z][A-Za-z0-9_.]*)$",
+                            files[module.replace(".", "/") + ".lean"])
+        _need(actual == imports[module] and not _REFUSED.search(
+            files[module.replace(".", "/") + ".lean"]),
+            "bound norm generated imports or keyword contract differs")
+    _need(len(files) == MAX_FILES
+          and sum(len(text.encode("utf-8")) for text in files.values()) <= MAX_PROJECT_BYTES,
+          "complete bound norm project storage bound exceeded")
+    fragments = [{"role": "norm", "module": norm_module, "native": norm_native},
+                 {"role": "definition", "module": definition_module, "native": definition_native}]
+    source_binding = {"original_lean_source_sha256": _sha(source.encode()),
+        "definition_body_sha256": _sha(definition_body.encode()),
+        "conditional_theorem_body_sha256": _sha(theorem_body.encode()),
+        "original_namespace": "LegalBoundVariableDefinition", "theorem_names": source_map,
+        "namespace_packaging_only": True, "norm_body_byte_exact": True,
+        "definition_applied_to_norm": False, "norm_driven_membership_inferred": False}
+    return files, fragments, modules, imports, theorems, source_binding
+
+
+def _prepare_bound_norm_definition(copied, input_commitment, bound, owners, pins, fence):
+    checked = bound.validate_bound_variable_definition_v1(copied["bound_report"],
+        expected_report_sha256=copied["expected_bound_report_sha256"],
+        **copied["bound_definition_inputs"])
+    fence()
+    inputs = copied["bound_definition_inputs"]["companion_inputs"]
+    preparation = inputs["norm_preparation"]
+    norm = preparation["correspondence"]["relational_fragment"]
+    norm_digest = bound.evidence.norm.norm_review_sha256
+    original = checked["original_norm"]
+    _need(original["unchanged"] is True
+          and original["preparation_sha256"] == inputs["expected_norm_preparation_sha256"]
+          and original["correspondence_sha256"] == preparation["correspondence_sha256"]
+          and original["ast_sha256"] == norm_digest(norm["typed_expression"])
+          and original["native_ast_sha256"] == norm_digest(norm["native_ast"]),
+          "complete original norm/AST/correspondence commitments differ")
+    _need(norm["source_binding"] is None and norm["source_bound"] is False,
+          "original relational source-binding scope must remain unchanged")
+    binding = contracts.seal_record({"schema": BOUND_NORM_INPUT_BINDING_SCHEMA,
+        "profile": BOUND_NORM_PROFILE, "original_input_commitment_sha256": input_commitment,
+        "bound_definition_report_sha256": copied["expected_bound_report_sha256"],
+        "bound_definition_request_sha256": checked["request_sha256"],
+        "companion_sha256": checked["companion_sha256"], "original_norm": original,
+        "source_context_sha256": norm_digest(copied["bound_definition_inputs"]["companion"]["source_context"]),
+        "selected_link_sha256": norm_digest(checked["selected_link"]),
+        "occurrence_binding_sha256": norm_digest(checked["occurrence_binding"]),
+        "definition_alternatives_sha256": norm_digest(checked["definition_alternatives"]),
+        "nomination_inventory_sha256": norm_digest(checked["nomination_inventory"]),
+        "bound_definition_mode": checked["request"]["mode"]})
+    files, fragments, modules, imports, theorems, source_binding = _render_bound_norm_definition(
+        checked, norm, copied["toolchain"], binding, owners)
+    fence()
+    manifest = contracts.seal_record({"schema": BOUND_NORM_SCHEMA, "profile": BOUND_NORM_PROFILE,
+        "toolchain": copied["toolchain"], "review_intake_binding": binding,
+        "original_input_commitment_sha256": input_commitment,
+        "bound_definition_report_sha256": copied["expected_bound_report_sha256"],
+        "original_norm": original, "occurrence_binding": checked["occurrence_binding"],
+        "selected_link": checked["selected_link"],
+        "definition_alternatives": checked["definition_alternatives"],
+        "nomination_inventory": checked["nomination_inventory"],
+        "bound_definition_mode": checked["request"]["mode"],
+        "conditional_source_binding": source_binding,
+        "review_evidence_status": "unsigned_pending_source_meaning_and_applicability",
+        "review_blockers": copied["bound_definition_inputs"]["companion"]["norm_obligations"],
+        "review_prerequisites_satisfied_under_selected_trust": False,
+        "native_fragments": fragments, "expected_modules": modules,
+        "module_imports": imports,
+        "file_sha256": {name: _sha(text.encode()) for name, text in sorted(files.items())},
+        "conditional_theorems": theorems,
+        "theorem_assumptions": [
+            "One arbitrary Entity carrier, Interpretation and fixed Nat time are shared by the exact original norm and definition modules.",
+            "The conditional definition instance assumes hDefinition; deriving its body additionally assumes hMembership at the same supplied entity valuation.",
+            "No existential witness, actual membership, governing applicability, source meaning or norm truth is inferred.",
+            "The complete supplied norm AST and native body are unchanged. The preservation obligation is only a definitional alias identity, not a source-meaning theorem.",
+            "No definition is substituted into a predicate, quantifier or modality of the norm; all original alternatives and nominations remain retained.",
+        ],
+        "producer_pins": pins, "native_producer_pins": fragments[0]["native"]["producer_pins"],
+        "execution_handoff": {"status": "bound_norm_build_execution_adapter_not_registered",
+            "target": "legal", "argv_recipe": ["<verified-native-lake>", "--offline", "--no-cache", "build", "legal"],
+            "expected_olean_paths": [".lake/build/lib/lean/" + name.replace(".", "/") + ".olean" for name in modules],
+            "expected_theorem_axiom_dependencies": {name: [] for name in theorems},
+            "observed_theorem_axiom_dependencies": None, "installed_binary_pins": None,
+            "processes_executed": 0, "build_eligible": False},
+        "input_budget": {"bytes": MAX_INPUT_BYTES, "expanded_values": 1_000_000, "depth": 48},
+        "preparation_only": True, "lean_compilation_status": "not_run", "proof_status": "pending",
+        "authority": dict(bound.AUTHORITY), "native_ast_rewritten": False,
+        "norm_interpretation_ready": False, "selected_interpretation": None,
+        "governing_definition_use": None, "training_mask": 0, "evaluation_gold_mask": 0,
+        "external_complete_inputs_required": True,
+        **BOUND_NORM_FALSE_FLAGS})
+    result = DefinitionUseCorpusPreparation(canonical_dag_json_bytes(manifest).decode(),
+                                             tuple(sorted(files.items())))
+    bound_norm_definition_preparation_sha256(result)
+    fence()
+    return result
+
+
+def prepare_bound_norm_definition_corpus_v1(bound_report, *, expected_bound_report_sha256,
+        bound_definition_inputs, toolchain):
+    """Prepare one unchanged complete relational norm and conditional definition.
+
+    This bounded sibling profile executes no build and supplies no source,
+    membership, governing-definition, review, graph or corpus authority.
+    """
+    original = dict(bound_report=bound_report, expected_bound_report_sha256=expected_bound_report_sha256,
+                    bound_definition_inputs=bound_definition_inputs, toolchain=toolchain)
+    return _bound_norm_operation(original, _prepare_bound_norm_definition)
+
+
+def _validate_bound_norm_definition(preparation, copied, commitment, expected, bound, owners, pins, fence):
+    contracts.require_sha256(expected, "independent full bound norm preparation")
+    _need(bound_norm_definition_preparation_sha256(preparation) == expected,
+          "independent complete bound norm preparation pin differs")
+    checked = _prepare_bound_norm_definition(copied, commitment, bound, owners, pins, fence)
+    _need(copied["offered"] == _bound_norm_storage(checked),
+          "bound norm project differs from complete original-input regeneration")
+    return checked
+
+
+def validate_bound_norm_definition_corpus_v1(preparation, bound_report, *,
+        expected_preparation_sha256, expected_bound_report_sha256,
+        bound_definition_inputs, toolchain):
+    contracts.require_sha256(expected_preparation_sha256, "independent full bound norm preparation")
+    _need(bound_norm_definition_preparation_sha256(preparation) == expected_preparation_sha256,
+          "independent complete bound norm preparation pin differs")
+    original = dict(bound_report=bound_report, expected_bound_report_sha256=expected_bound_report_sha256,
+                    bound_definition_inputs=bound_definition_inputs, toolchain=toolchain)
+    def validate(copied, commitment, bound, owners, pins, fence):
+        return _validate_bound_norm_definition(preparation, copied, commitment,
+            expected_preparation_sha256, bound, owners, pins, fence)
+    return _bound_norm_operation(original, validate, preparation)
+
+
+def load_bound_norm_definition_corpus_v1(directory, bound_report, *, expected_manifest_sha256,
+        expected_preparation_sha256, expected_bound_report_sha256, bound_definition_inputs, toolchain):
+    contracts.require_sha256(expected_manifest_sha256, "independent bound norm project manifest")
+    contracts.require_sha256(expected_preparation_sha256, "independent complete bound norm preparation")
+    original = dict(bound_report=bound_report, expected_bound_report_sha256=expected_bound_report_sha256,
+                    bound_definition_inputs=bound_definition_inputs, toolchain=toolchain)
+    def load(copied, commitment, bound, owners, pins, fence):
+        expected = _prepare_bound_norm_definition(copied, commitment, bound, owners, pins, fence)
+        _need(bound_norm_definition_preparation_sha256(expected) == expected_preparation_sha256,
+              "independent bound norm project commitment differs")
+        transport = owners[2]
+        files = transport._read_files(directory,
+            {name for name, _ in expected.files} | {transport.MANIFEST_FILE}, maximum_files=MAX_FILES)
+        raw = files.pop(transport.MANIFEST_FILE)
+        contracts.load_record_bytes(raw, expected_sha256=expected_manifest_sha256)
+        _need(raw == expected.manifest_json.encode()
+              and files == {name: text.encode() for name, text in expected.files},
+              "bound norm project transport differs from complete regeneration")
+        fence()
+        return expected
+    return _bound_norm_operation(original, load)
+
+
+def write_bound_norm_definition_corpus_v1(preparation, directory, bound_report, *,
+        expected_preparation_sha256, expected_bound_report_sha256, bound_definition_inputs, toolchain):
+    contracts.require_sha256(expected_preparation_sha256, "independent full bound norm preparation")
+    _need(bound_norm_definition_preparation_sha256(preparation) == expected_preparation_sha256,
+          "independent complete bound norm preparation pin differs")
+    original = dict(bound_report=bound_report, expected_bound_report_sha256=expected_bound_report_sha256,
+                    bound_definition_inputs=bound_definition_inputs, toolchain=toolchain)
+    def write(copied, commitment, bound, owners, pins, fence):
+        checked = _validate_bound_norm_definition(preparation, copied, commitment,
+            expected_preparation_sha256, bound, owners, pins, fence)
+        def readback(root, raw):
+            load_bound_norm_definition_corpus_v1(root, copied["bound_report"],
+                expected_manifest_sha256=_sha(raw), expected_preparation_sha256=expected_preparation_sha256,
+                expected_bound_report_sha256=copied["expected_bound_report_sha256"],
+                bound_definition_inputs=copied["bound_definition_inputs"], toolchain=copied["toolchain"])
+        result = owners[2]._write_project(checked, directory, readback=readback, maximum_files=MAX_FILES)
+        fence()
+        return result
+    return _bound_norm_operation(original, write, preparation)
+
+
+__all__ += [
+    "prepare_bound_norm_definition_corpus_v1", "validate_bound_norm_definition_corpus_v1",
+    "load_bound_norm_definition_corpus_v1", "write_bound_norm_definition_corpus_v1",
+    "bound_norm_definition_preparation_sha256",
+]

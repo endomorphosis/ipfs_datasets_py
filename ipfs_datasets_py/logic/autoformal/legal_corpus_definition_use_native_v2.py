@@ -23,6 +23,14 @@ PARENT_BUILD_SCHEMA = "legal-corpus-parent-definition-use-native-build/v1"
 PARENT_PROFILE = "replayed-parent-definition-use-conditional-native-build/v1"
 PARENT_SHARED_BUILD_SCHEMA = "legal-corpus-parent-shared-definition-use-native-build/v1"
 PARENT_SHARED_PROFILE = "replayed-parent-shared-definition-use-conditional-native-build/v1"
+BOUND_NORM_BUILD_SCHEMA = "legal-corpus-bound-norm-definition-native-build/v1"
+BOUND_NORM_PROFILE = "replayed-bound-norm-definition-conditional-native-build/v1"
+_BOUND_NORM_PREPARATION_SCHEMA = "legal-corpus-bound-norm-definition-lake-preparation/v1"
+_BOUND_NORM_PREPARATION_PROFILE = "replayed-bound-norm-definition-conditional-project/v1"
+_BOUND_DEFINITION_INPUT_FIELDS = {
+    "companion", "request_raw", "expected_companion_sha256",
+    "expected_request_sha256", "companion_inputs",
+}
 MAX_RECORD_BYTES = 1024 * 1024
 MAX_INPUT_BYTES = 48 * MAX_RECORD_BYTES
 MAX_PROJECT_BYTES = 8 * MAX_RECORD_BYTES
@@ -85,6 +93,7 @@ AUTHORITY = dict.fromkeys(
 )
 _SELF_PIN = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 _OPERATION_PINS = None
+_BOUND_NORM_OPERATION_PINS = None
 
 
 def _need(condition, message):
@@ -307,8 +316,8 @@ def _owners():
             legal_pilot_lake, process, legal_corpus_shared_lake)
 
 
-def _pins(owners, manifest):
-    global _OPERATION_PINS
+def _observed_producer_pins(owners, manifest):
+    """Observe original producer custody without joining profile cache domains."""
     _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
           "native definition-use owner changed since import")
     pins = dict(manifest["producer_pins"])
@@ -321,9 +330,25 @@ def _pins(owners, manifest):
         _pin(expected, "native definition-use producer")
         _need(_sha(Path(path).read_bytes()) == expected,
               "native definition-use producer changed: " + path)
+    return pins
+
+
+def _pins(owners, manifest):
+    global _OPERATION_PINS
+    pins = _observed_producer_pins(owners, manifest)
     if _OPERATION_PINS is None:
         _OPERATION_PINS = dict(pins)
     _need(pins == _OPERATION_PINS, "native definition-use operation owners changed since first use")
+    return pins
+
+
+def _bound_norm_pins(owners, manifest):
+    global _BOUND_NORM_OPERATION_PINS
+    pins = _observed_producer_pins(owners, manifest)
+    if _BOUND_NORM_OPERATION_PINS is None:
+        _BOUND_NORM_OPERATION_PINS = dict(pins)
+    _need(pins == _BOUND_NORM_OPERATION_PINS,
+          "bound norm native operation owners changed since first use")
     return pins
 
 
@@ -516,9 +541,12 @@ def _build_validated_native(preparation, validated, *, replay,
         expected_preparation_sha256, toolchain, lake_executable, output_directory,
         timeout_seconds, cancellation, build_schema, profile, flags, receipt_binding,
         maximum_files=MAX_FILES, maximum_modules=MAX_MODULES,
-        maximum_theorems=None):
+        maximum_theorems=None, producer_pin_reader=None, receipt_scope=None):
     """One bounded native execution path, with each source profile replayed by its owner."""
     owners = _owners()
+    # Resolve the legacy reader dynamically: existing callers and monkeypatches
+    # retain the original cache domain unless a new public profile opts in.
+    pin_reader = _pins if producer_pin_reader is None else producer_pin_reader
     preparer, transport, _, process, _ = owners
     # Keep a private immutable snapshot for invocation and failed-run transport.
     # A caller changing its original object during execution must not replace
@@ -530,7 +558,7 @@ def _build_validated_native(preparation, validated, *, replay,
           "frozen native preparation differs from independent complete pin")
     manifest = checked.to_dict()
     receipt_binding = receipt_binding(manifest)
-    producers = _pins(owners, manifest)
+    producers = pin_reader(owners, manifest)
     output = transport._path(output_directory)
     transport._check_directories(output.parent, allow_missing=True)
     _need(not output.exists() and not output.is_symlink(), "fresh native build output directory required")
@@ -571,6 +599,7 @@ def _build_validated_native(preparation, validated, *, replay,
                 "preparation_cid": manifest["record_cid"],
                 "preparation_full_canonical_sha256": expected_preparation_sha256,
                 **receipt_binding,
+                **({"scope": receipt_scope} if receipt_scope is not None else {}),
                 "conditional_theorems": theorems,
                 "toolchain": toolchain, "expected_command": list(command),
                 "build_passed": False, "status": "owned_native_cleanup_unresolved",
@@ -592,7 +621,7 @@ def _build_validated_native(preparation, validated, *, replay,
     try:
         replay()
         _need(preparation == checked, "original preparation changed during native compilation")
-        _need(_pins(owners, manifest) == producers, "native producers changed during compilation")
+        _need(pin_reader(owners, manifest) == producers, "native producers changed during compilation")
     except (ValueError, TypeError, KeyError, IndexError, OSError, UnicodeError, RecursionError) as error:
         post_error = {"type": type(error).__name__, "message": str(error)[:2048]}
     try:
@@ -682,7 +711,8 @@ def _build_validated_native(preparation, validated, *, replay,
         "status": "conditional_native_checks_passed" if passed else "conditional_native_checks_failed",
         "alias_assumption_proved": False, "source_to_model_equivalence_proved": False,
         "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
-        "scope": "Exact conditional kernel theorems under the retained donor, consumer and alias hypotheses; no source-fidelity proof, legal truth, review admission or model-convergence claim.",
+        "scope": (receipt_scope if receipt_scope is not None else
+                  "Exact conditional kernel theorems under the retained donor, consumer and alias hypotheses; no source-fidelity proof, legal truth, review admission or model-convergence claim."),
         **(flags | {"backend_executed": native_runtime, "lean_compilation_verified": passed,
                     "proof_checked": passed, "kernel_proofs_checked": passed,
                     "conditional_proofs_verified": passed}),
@@ -866,10 +896,155 @@ def parent_shared_compilation_receipt_sha256(receipt):
     return _sha(_wire(receipt, MAX_RECEIPT_BYTES))
 
 
+
+def _bound_norm_preflight(preparation, bound_report, *, expected_preparation_sha256,
+        expected_bound_report_sha256, bound_definition_inputs, toolchain):
+    """Reject bounded wire/profile/pin failures before loading replay owners."""
+    _pin(expected_preparation_sha256, "complete bound norm definition preparation")
+    _pin(expected_bound_report_sha256, "complete original bound definition report")
+    _need(type(toolchain) is str and len(toolchain) <= 128 and _TOOLCHAIN.fullmatch(toolchain),
+          "explicit version-pinned Lean toolchain required")
+    document = _preparation_document(preparation)
+    manifest = document["manifest"]
+    _need(manifest.get("schema") == _BOUND_NORM_PREPARATION_SCHEMA
+          and manifest.get("profile") == _BOUND_NORM_PREPARATION_PROFILE,
+          "exact bound norm definition preparation profile required")
+    _need(type(bound_report) is dict, "complete original bound definition report required")
+    _need(type(bound_definition_inputs) is dict
+          and set(bound_definition_inputs) == _BOUND_DEFINITION_INPUT_FIELDS,
+          "closed original bound definition replay inputs required")
+    _need(type(bound_definition_inputs["companion"]) is dict
+          and type(bound_definition_inputs["companion_inputs"]) is dict,
+          "ordinary complete original companion replay objects required")
+    request_raw = bound_definition_inputs["request_raw"]
+    _need(type(request_raw) is bytes and 0 < len(request_raw) <= 128 * 1024,
+          "bounded original bound definition request bytes required")
+    _pin(bound_definition_inputs["expected_companion_sha256"], "original companion")
+    _pin(bound_definition_inputs["expected_request_sha256"], "original request bytes")
+    _bound_tree({"preparation": document, "bound_report": bound_report,
+                 "bound_definition_inputs": bound_definition_inputs, "toolchain": toolchain},
+                MAX_INPUT_BYTES, allow_bytes=True)
+    _need(_sha(_wire(document, MAX_PREPARATION_BYTES)) == expected_preparation_sha256,
+          "independent complete bound norm preparation pin differs")
+    _need(_sha(_wire(bound_report, MAX_PROJECT_BYTES)) == expected_bound_report_sha256,
+          "independent complete bound definition report pin differs")
+    _need(_sha(request_raw) == bound_definition_inputs["expected_request_sha256"],
+          "independent original bound definition request pin differs")
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
+          "native definition-use owner changed since import")
+
+
+def validate_bound_norm_definition_native_v1(preparation, bound_report, *,
+        expected_preparation_sha256, expected_bound_report_sha256,
+        bound_definition_inputs, toolchain):
+    """Replay the exact complete norm and conditional occurrence project.
+
+    This accepts only its separate preparation profile. It does not select an
+    interpretation, establish membership or adopt a definition into the norm.
+    """
+    _bound_norm_preflight(preparation, bound_report,
+        expected_preparation_sha256=expected_preparation_sha256,
+        expected_bound_report_sha256=expected_bound_report_sha256,
+        bound_definition_inputs=bound_definition_inputs, toolchain=toolchain)
+    owners = _owners()
+    preparer = owners[0]
+    _need(type(preparation) is preparer.DefinitionUseCorpusPreparation,
+          "exact existing bound norm preparation type required")
+    checked = preparer.validate_bound_norm_definition_corpus_v1(
+        preparation, bound_report, expected_preparation_sha256=expected_preparation_sha256,
+        expected_bound_report_sha256=expected_bound_report_sha256,
+        bound_definition_inputs=bound_definition_inputs, toolchain=toolchain)
+    _need(checked == preparation
+          and preparation_sha256(checked) == expected_preparation_sha256,
+          "replayed bound norm preparation differs from complete original pin")
+    manifest = checked.to_dict()
+    mode = manifest.get("bound_definition_mode")
+    _need(mode in ("instance_only", "body_with_membership")
+          and type(manifest.get("conditional_theorems")) is list
+          and len(manifest["conditional_theorems"]) == (2 if mode == "instance_only" else 3),
+          "exact mode-dependent bound norm conditional theorem population required")
+    _need(manifest["bound_definition_report_sha256"] == expected_bound_report_sha256
+          and manifest["schema"] == preparer.BOUND_NORM_SCHEMA
+          and manifest["profile"] == preparer.BOUND_NORM_PROFILE,
+          "native bound norm preparation must retain exact source/review profile")
+    _bound_norm_pins(owners, manifest)
+    return checked
+
+
+def build_bound_norm_definition_native_v1(preparation, bound_report, *,
+        expected_preparation_sha256, expected_bound_report_sha256,
+        bound_definition_inputs, toolchain, lake_executable, output_directory,
+        timeout_seconds=60, cancellation=None):
+    """Observe only the exact conditional project with original resource owners.
+
+    The complete unchanged relational norm and bound unary definition retain
+    their original sources. Successful compilation supplies no source meaning,
+    membership, governing applicability, accepted graph or corpus admission.
+    """
+    _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+          and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+
+    def replay():
+        return validate_bound_norm_definition_native_v1(
+            preparation, bound_report, expected_preparation_sha256=expected_preparation_sha256,
+            expected_bound_report_sha256=expected_bound_report_sha256,
+            bound_definition_inputs=bound_definition_inputs, toolchain=toolchain)
+
+    validated = replay()
+
+    def binding(manifest):
+        # The frozen nine-file project retains the complete structures. Bind
+        # their full canonical contents here without duplicating a near-limit
+        # preparation manifest in the separate one-MiB observation receipt.
+        commitments = {key: _sha(_wire(manifest[key], MAX_RECORD_BYTES)) for key in (
+            "original_norm", "occurrence_binding", "selected_link",
+            "definition_alternatives", "nomination_inventory", "review_intake_binding",
+            "conditional_source_binding")}
+        return {
+            "bound_definition_report_sha256": expected_bound_report_sha256,
+            "original_input_commitment_sha256": manifest["original_input_commitment_sha256"],
+            "bound_definition_mode": manifest["bound_definition_mode"],
+            "retained_manifest_field_sha256": commitments,
+            "definition_alternatives_count": len(manifest["definition_alternatives"]),
+            "nomination_inventory_count": len(manifest["nomination_inventory"]),
+            "review_evidence_status": manifest["review_evidence_status"],
+            "review_blockers": manifest["review_blockers"],
+            "review_prerequisites_satisfied_under_selected_trust":
+                manifest["review_prerequisites_satisfied_under_selected_trust"],
+            "original_preparation_build_eligible": manifest["build_eligible"],
+            "original_preparation_execution_handoff": manifest["execution_handoff"],
+        }
+
+    flags = dict(_owners()[0].BOUND_NORM_FALSE_FLAGS)
+    flags.update(FALSE_FLAGS)
+    return _build_validated_native(preparation, validated,
+        replay=replay, expected_preparation_sha256=expected_preparation_sha256,
+        toolchain=toolchain, lake_executable=lake_executable,
+        output_directory=output_directory, timeout_seconds=timeout_seconds,
+        cancellation=cancellation, build_schema=BOUND_NORM_BUILD_SCHEMA,
+        profile=BOUND_NORM_PROFILE, flags=flags, receipt_binding=binding,
+        maximum_theorems=MAX_THEOREMS, producer_pin_reader=_bound_norm_pins,
+        receipt_scope=("Exact conditional definition theorems and definitional preservation "
+            "of the complete unchanged norm under explicit carrier, Interpretation, fixed "
+            "time, binder valuation, hDefinition and any declared hMembership premises. "
+            "No norm truth, actual membership, source meaning, governing applicability, "
+            "graph admission, corpus admission or model-convergence claim."))
+
+
+def bound_norm_definition_compilation_receipt_sha256(receipt):
+    """Commit the full bounded native observation, without granting authority."""
+    _need(type(receipt) is dict and receipt.get("schema") == BOUND_NORM_BUILD_SCHEMA,
+          "bound norm definition native compilation receipt required")
+    return _sha(_wire(receipt, MAX_RECEIPT_BYTES))
+
+
 __all__ = ["preparation_sha256", "validate_definition_use_native_v2",
            "build_definition_use_native_v2", "compilation_receipt_sha256",
            "validate_parent_definition_use_native_v1", "build_parent_definition_use_native_v1",
            "parent_compilation_receipt_sha256", "parent_shared_preparation_sha256",
            "validate_parent_shared_definition_use_native_v1",
            "build_parent_shared_definition_use_native_v1",
-           "parent_shared_compilation_receipt_sha256"]
+           "parent_shared_compilation_receipt_sha256",
+           "validate_bound_norm_definition_native_v1",
+           "build_bound_norm_definition_native_v1",
+           "bound_norm_definition_compilation_receipt_sha256"]

@@ -622,3 +622,348 @@ def test_project_loader_requires_independent_manifest_pin_and_writer_never_overw
     assert before == {
         str(path): path.read_bytes() for path in directory.rglob("*") if path.is_file()
     }
+
+
+# Complete original norms and bound-variable conditionals share one closed
+# project without selecting a governing definition or rewriting the norm.
+_BOUND_NORM_FIXTURE_BASELINE = None
+
+
+def bound_norm_definition_data(mode="body_with_membership", *, link_index=0):
+    """Reuse the existing fictional source/evidence fixture only when called.
+
+    Two typed actor uses share one physical source anchor. They do not become
+    two independent statutory occurrences, and all substantive reviews stay open.
+    """
+    global _BOUND_NORM_FIXTURE_BASELINE
+    from ipfs_datasets_py.logic.autoformal import legal_bound_variable_definition_v1 as bound
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as lake
+
+    if _BOUND_NORM_FIXTURE_BASELINE is None:
+        helper = fixture_module("test_legal_bound_variable_definition_v1.py",
+                                "bound_norm_definition_original_fixture")
+        _BOUND_NORM_FIXTURE_BASELINE = (helper, helper.baseline.__wrapped__())
+    helper, baseline = _BOUND_NORM_FIXTURE_BASELINE
+    request = helper.declaration(baseline, link_index=link_index, mode=mode)
+    report = baseline["report"] if mode == "instance_only" and link_index == 0 else \
+        helper.prepare(baseline, request)
+    request_raw = helper.wire(request)
+    data = deepcopy({
+        "bound_report": report,
+        "expected_bound_report_sha256": bound.bound_variable_definition_sha256(report),
+        "bound_definition_inputs": {
+            "companion": baseline["companion"], "request_raw": request_raw,
+            "expected_companion_sha256": baseline["companion_sha256"],
+            "expected_request_sha256": sha(request_raw),
+            "companion_inputs": baseline["inputs"],
+        },
+        "toolchain": TOOLCHAIN,
+    })
+    return data, lake.prepare_bound_norm_definition_corpus_v1(**data)
+
+
+@pytest.fixture(scope="module")
+def bound_norm_instance():
+    return bound_norm_definition_data("instance_only")
+
+
+@pytest.fixture(scope="module")
+def bound_norm_body():
+    return bound_norm_definition_data("body_with_membership")
+
+
+def _bound_norm_validate(owner, data, prepared):
+    return owner.validate_bound_norm_definition_corpus_v1(prepared,
+        expected_preparation_sha256=owner.bound_norm_definition_preparation_sha256(prepared),
+        **data)
+
+
+def _bound_norm_write(owner, data, prepared, directory):
+    return owner.write_bound_norm_definition_corpus_v1(prepared, directory,
+        expected_preparation_sha256=owner.bound_norm_definition_preparation_sha256(prepared),
+        **data)
+
+
+def _bound_norm_load(owner, data, prepared, directory, manifest_pin):
+    return owner.load_bound_norm_definition_corpus_v1(directory,
+        expected_manifest_sha256=manifest_pin,
+        expected_preparation_sha256=owner.bound_norm_definition_preparation_sha256(prepared),
+        **data)
+
+
+def _bound_norm_no_authority(owner, manifest):
+    assert all(manifest[key] is False for key in owner.BOUND_NORM_FALSE_FLAGS)
+    assert all(value is False for value in manifest["authority"].values())
+    assert manifest["norm_interpretation_ready"] is False
+    assert manifest["selected_interpretation"] is None
+    assert manifest["governing_definition_use"] is None
+    assert type(manifest["training_mask"]) is int and manifest["training_mask"] == 0
+    assert type(manifest["evaluation_gold_mask"]) is int and manifest["evaluation_gold_mask"] == 0
+    assert manifest["execution_handoff"]["build_eligible"] is False
+    assert manifest["execution_handoff"]["processes_executed"] == 0
+    assert manifest["execution_handoff"]["observed_theorem_axiom_dependencies"] is None
+    assert manifest["execution_handoff"]["installed_binary_pins"] is None
+
+
+@pytest.mark.parametrize("mode,theorem_count", [("instance_only", 2), ("body_with_membership", 3)],
+                         ids=["instance", "membership"])
+def test_bound_norm_project_preserves_complete_norm_and_conditional_source(
+    owner, bound_norm_instance, bound_norm_body, mode, theorem_count
+):
+    data, prepared = bound_norm_instance if mode == "instance_only" else bound_norm_body
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    bound = data["bound_report"]
+    original_norm = data["bound_definition_inputs"]["companion_inputs"]["norm_preparation"][
+        "correspondence"]["relational_fragment"]
+    fragments = {row["role"]: row for row in manifest["native_fragments"]}
+    assert set(fragments) == {"norm", "definition"}
+    assert fragments["norm"]["native"] == original_norm["native_fragment"]
+    assert fragments["definition"]["native"] == bound["definition_native_fragment"]
+    assert original_norm["source_binding"] is None and original_norm["source_bound"] is False
+    assert manifest["original_norm"] == bound["original_norm"]
+    assert manifest["occurrence_binding"] == bound["occurrence_binding"]
+    assert manifest["selected_link"] == bound["selected_link"]
+    assert manifest["definition_alternatives"] == bound["definition_alternatives"]
+    assert manifest["nomination_inventory"] == bound["nomination_inventory"]
+    assert len(manifest["definition_alternatives"]) == 2
+    assert len(manifest["nomination_inventory"]) == 4
+    assert len({row["request_link"]["target"]["typed_path"]
+                for row in manifest["nomination_inventory"]}) == 2
+    assert {tuple(row["request_link"]["source_paths"])
+            for row in manifest["nomination_inventory"]} == {("/occurrences/0/anchor",)}
+    assert manifest["schema"] == owner.BOUND_NORM_SCHEMA
+    assert manifest["profile"] == owner.BOUND_NORM_PROFILE
+    assert len(files) == 9 and len(manifest["expected_modules"]) == 6
+    assert all(sha(body.encode()) == manifest["file_sha256"][name]
+               for name, body in files.items())
+    modules, imports = manifest["expected_modules"], manifest["module_imports"]
+    for index, name in enumerate(modules):
+        text = files[name.replace(".", "/") + ".lean"]
+        assert re.findall(r"(?m)^import ([A-Za-z][A-Za-z0-9_.]*)$", text) == imports[name]
+        assert all(dependency in modules[:index] for dependency in imports[name])
+    norm_source = files[fragments["norm"]["module"].replace(".", "/") + ".lean"]
+    assert original_norm["lean_body"] in norm_source
+    source_binding = manifest["conditional_source_binding"]
+    occurrence_module = source_binding["theorem_names"][0]["project"].rsplit(".", 1)[0]
+    occurrence = files[occurrence_module.replace(".", "/") + ".lean"]
+    original_tail = "theorem definition_instance " + bound["lean_source"].split(
+        "\ntheorem definition_instance ", 1)[1].removesuffix("end LegalBoundVariableDefinition\n")
+    assert original_tail in occurrence
+    assert source_binding["conditional_theorem_body_sha256"] == sha(original_tail.encode())
+    assert len(manifest["conditional_theorems"]) == theorem_count
+    all_lean = "\n".join(body for name, body in files.items() if name.endswith(".lean"))
+    assert len(re.findall(r"(?m)^theorem ", all_lean)) == theorem_count
+    assert all_lean.count("#print axioms ") == theorem_count
+    assert "exact Iff.rfl" in all_lean and "original_norm_preserved" in all_lean
+    assert "hNorm" not in all_lean
+    assert not re.search(r"\b(?:sorry|admit|axiom|unsafe)\b", all_lean)
+    assert ("hMembership" in occurrence) is (mode == "body_with_membership")
+    assert ("theorem body_instance " in occurrence) is (mode == "body_with_membership")
+    assert "exact hDefinition entity" in occurrence
+    if mode == "body_with_membership":
+        assert "exact (hDefinition entity).mp hMembership" in occurrence
+    _bound_norm_no_authority(owner, manifest)
+    assert _bound_norm_validate(owner, data, prepared) == prepared
+
+
+@pytest.mark.parametrize("link_index", [2, 1], ids=["second-typed-use", "other-definition"])
+def test_bound_norm_selection_retains_all_alternatives_and_exact_typed_use(
+    owner, bound_norm_body, link_index
+):
+    baseline_data, baseline = bound_norm_body
+    data, prepared = bound_norm_definition_data(link_index=link_index)
+    first, current = baseline.to_dict(), prepared.to_dict()
+    assert current["original_norm"] == first["original_norm"]
+    assert current["definition_alternatives"] == first["definition_alternatives"]
+    assert current["nomination_inventory"] == first["nomination_inventory"]
+    assert current["selected_link"] != first["selected_link"]
+    assert current["occurrence_binding"] == data["bound_report"]["occurrence_binding"]
+    assert current["review_intake_binding"]["bound_definition_report_sha256"] == \
+        data["expected_bound_report_sha256"]
+    assert owner.bound_norm_definition_preparation_sha256(prepared) != \
+        owner.bound_norm_definition_preparation_sha256(baseline)
+    if link_index == 2:
+        assert data["bound_report"]["request"]["alternative_id"] == \
+            baseline_data["bound_report"]["request"]["alternative_id"]
+        assert current["occurrence_binding"]["target"] != first["occurrence_binding"]["target"]
+    else:
+        assert data["bound_report"]["request"]["alternative_id"] != \
+            baseline_data["bound_report"]["request"]["alternative_id"]
+    _bound_norm_no_authority(owner, current)
+
+
+@pytest.mark.parametrize("damage", ["bound-pin", "request-pin", "companion-pin", "missing-input", "toolchain"],
+                         ids=["bound-pin", "request-pin", "companion-pin", "missing-input", "toolchain"])
+def test_bound_norm_independent_inputs_refuse_before_operation_owners(
+    owner, bound_norm_body, monkeypatch, damage
+):
+    data = deepcopy(bound_norm_body[0])
+    if damage == "bound-pin":
+        data["expected_bound_report_sha256"] = "0" * 64
+    elif damage == "request-pin":
+        data["bound_definition_inputs"]["expected_request_sha256"] = "0" * 64
+    elif damage == "companion-pin":
+        data["bound_definition_inputs"]["expected_companion_sha256"] = "0" * 64
+    elif damage == "missing-input":
+        data["bound_definition_inputs"].pop("companion_inputs")
+    else:
+        data["toolchain"] = "leanprover/lean4:stable"
+    def forbidden():
+        raise AssertionError("invalid independent input reached operation owners")
+    monkeypatch.setattr(owner, "_owners", forbidden)
+    with pytest.raises(ValueError):
+        owner.prepare_bound_norm_definition_corpus_v1(**data)
+
+
+@pytest.mark.parametrize("operation", ["validate", "write"], ids=["validate", "write"])
+def test_bound_norm_preparation_commitment_refuses_before_owners(
+    owner, bound_norm_body, tmp_path, monkeypatch, operation
+):
+    data, prepared = bound_norm_body
+    def forbidden():
+        raise AssertionError("wrong preparation commitment reached operation owners")
+    monkeypatch.setattr(owner, "_owners", forbidden)
+    with pytest.raises(ValueError):
+        if operation == "validate":
+            owner.validate_bound_norm_definition_corpus_v1(prepared,
+                expected_preparation_sha256="0" * 64, **data)
+        else:
+            owner.write_bound_norm_definition_corpus_v1(prepared, tmp_path / "never-written",
+                expected_preparation_sha256="0" * 64, **data)
+    assert not (tmp_path / "never-written").exists()
+
+
+@pytest.mark.parametrize("damage", ["membership", "alternative"], ids=["membership", "alternative"])
+def test_bound_norm_rehashed_bound_report_cannot_promote_or_drop_original_evidence(
+    owner, bound_norm_body, damage
+):
+    from ipfs_datasets_py.logic.autoformal import legal_bound_variable_definition_v1 as bound
+    data = deepcopy(bound_norm_body[0])
+    if damage == "membership":
+        data["bound_report"]["authority"]["membership_assumption_verified"] = True
+    else:
+        data["bound_report"]["definition_alternatives"].pop()
+    data["expected_bound_report_sha256"] = bound.bound_variable_definition_sha256(data["bound_report"])
+    with pytest.raises(ValueError):
+        owner.prepare_bound_norm_definition_corpus_v1(**data)
+
+
+@pytest.mark.parametrize("damage", ["authority", "norm-body", "premise"],
+                         ids=["authority", "norm-body", "premise"])
+def test_bound_norm_resealed_project_cannot_change_authority_norm_or_membership_premise(
+    owner, bound_norm_body, damage
+):
+    data, prepared = bound_norm_body
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    if damage == "authority":
+        manifest["norm_truth_proved"] = True
+    else:
+        if damage == "norm-body":
+            row = next(row for row in manifest["native_fragments"] if row["role"] == "norm")
+            path = row["module"].replace(".", "/") + ".lean"
+            files[path] += "\n-- changed complete norm source\n"
+        else:
+            name = manifest["conditional_source_binding"]["theorem_names"][0]["project"]
+            path = name.rsplit(".", 1)[0].replace(".", "/") + ".lean"
+            assert "(hMembership : headAt i entity t)" in files[path]
+            files[path] = files[path].replace("(hMembership : headAt i entity t)", "")
+        manifest["file_sha256"][path] = sha(files[path].encode())
+    changed = replace(prepared, files=tuple(sorted(files.items())))
+    changed = modified_manifest(changed, manifest)
+    with pytest.raises(ValueError):
+        _bound_norm_validate(owner, data, changed)
+
+
+@pytest.mark.parametrize("damage", ["bytes", "cycle", "depth"], ids=["bytes", "cycle", "depth"])
+def test_bound_norm_complete_input_bounds_precede_operation_owners(
+    owner, bound_norm_body, monkeypatch, damage
+):
+    data = deepcopy(bound_norm_body[0])
+    if damage == "bytes":
+        monkeypatch.setattr(owner, "MAX_INPUT_BYTES", 1)
+    else:
+        inputs = data["bound_definition_inputs"]["companion_inputs"]["norm_inputs"]
+        if damage == "cycle":
+            inputs["budget_probe"] = inputs
+        else:
+            nested = None
+            for _ in range(60):
+                nested = [nested]
+            inputs["budget_probe"] = nested
+    def forbidden():
+        raise AssertionError("unbounded complete graph reached operation owners")
+    monkeypatch.setattr(owner, "_owners", forbidden)
+    with pytest.raises(ValueError):
+        owner.prepare_bound_norm_definition_corpus_v1(**data)
+
+
+def test_bound_norm_replay_is_input_immutable_and_never_probes_native_tools(
+    owner, bound_norm_body
+):
+    from ipfs_datasets_py.logic.autoformal import legal_pilot_lake
+    from ipfs_datasets_py.logic.backends import process
+    data, prepared = bound_norm_body
+    before = deepcopy(data)
+    def forbidden(*args, **kwargs):
+        raise AssertionError("bound norm preparation cannot run or probe a tool")
+    with patch("subprocess.Popen", forbidden), \
+         patch.object(process.BoundedToolRunner, "run", forbidden), \
+         patch.object(legal_pilot_lake, "_installed_toolchain", forbidden):
+        assert _bound_norm_validate(owner, data, prepared) == prepared
+    assert data == before
+
+
+@pytest.mark.parametrize("damage", ["changed", "missing", "extra", "alias"],
+                         ids=["changed", "missing", "extra", "alias"])
+def test_bound_norm_loader_refuses_modified_or_aliased_complete_project(
+    owner, bound_norm_body, tmp_path, damage
+):
+    data, prepared = bound_norm_body
+    directory = tmp_path / "bound-norm-project"
+    _bound_norm_write(owner, data, prepared, directory)
+    manifest_pin = sha((directory / "corpus-manifest.json").read_bytes())
+    root = prepared.to_dict()["expected_modules"][-1].replace(".", "/") + ".lean"
+    source = directory / root
+    offered = directory
+    descriptor = None
+    if damage == "changed":
+        source.write_text(source.read_text() + "\n-- transport changed\n")
+    elif damage == "missing":
+        source.unlink()
+    elif damage == "extra":
+        (directory / "foreign.lean").write_text("def foreign : Prop := True\n")
+    else:
+        # An existing proc-fd directory alias exercises literal-path refusal
+        # without creating an owned symlink that violates managed inventory.
+        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        offered = Path("/proc/self/fd") / str(descriptor)
+    try:
+        with pytest.raises((ValueError, OSError)):
+            _bound_norm_load(owner, data, prepared, offered, manifest_pin)
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
+def test_bound_norm_writer_loader_exact_bytes_and_independent_pins(owner, bound_norm_body, tmp_path):
+    data, prepared = bound_norm_body
+    directory = tmp_path / "bound-norm-project"
+    assert _bound_norm_write(owner, data, prepared, directory) == prepared.to_dict()
+    raw = (directory / "corpus-manifest.json").read_bytes()
+    assert raw == prepared.manifest_json.encode()
+    assert _bound_norm_load(owner, data, prepared, directory, sha(raw)) == prepared
+    assert {str(path.relative_to(directory)) for path in directory.rglob("*") if path.is_file()} == \
+        {"corpus-manifest.json", *dict(prepared.files)}
+    with pytest.raises((ValueError, OSError)):
+        _bound_norm_load(owner, data, prepared, directory, "0" * 64)
+    with pytest.raises((ValueError, OSError)):
+        _bound_norm_write(owner, data, prepared, directory)
+
+
+def test_bound_norm_profile_does_not_change_legacy_preparation_in_same_process(
+    owner, base, frozen, bound_norm_body
+):
+    assert prepare(owner, base) == frozen
+    data, prepared = bound_norm_body
+    assert _bound_norm_validate(owner, data, prepared) == prepared
+    assert prepare(owner, base) == frozen
