@@ -6,10 +6,11 @@ an optimizer. It adds scoring, bounded continuation, deterministic replay, and a
 single-observation adapter to the existing CONTENT batch contract. It does not
 change the original head, trainer, token grammar, selector, or evaluator.
 
-The intended installed location is
+The canonical implementation is
 `ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_trained_runtime_v2.py`.
-This staged source and guide do not establish that the new owner has passed
-runtime qualification. That requires a separately retained execution receipt.
+Its [owning tests](../../../../../tests/unit/logic/autoformal/test_legal_compact_content_trained_runtime_v2.py)
+and [prepared v3 consumer](legal_compact_content_prepared_runtime_v3.md) already exist.
+Source presence and each separately retained execution qualification have distinct scopes.
 
 ## Checkpoint compatibility and lineage
 

@@ -1,0 +1,398 @@
+{
+  "canonical_preimages": [
+    {
+      "bytes": 338187,
+      "name": "CATALOG",
+      "path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+      "sha256": "eb26b34f3fdd1c92a26a15840135a2025bcfb65ed0e19cc20808b080b1f6c6a5"
+    },
+    {
+      "bytes": 10202,
+      "name": "TRAINING_GUIDE",
+      "path": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_training_v2.md",
+      "sha256": "dc39d87fec21243ed4ebfa1998e1f32ab17aed68b447f58d0e96a2e742cd818f"
+    },
+    {
+      "bytes": 12695,
+      "name": "TRAINED_GUIDE",
+      "path": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_trained_runtime_v2.md",
+      "sha256": "491d88072ddb15a494fa4eae38ae80c56ea0882ff0c18b43d0a99de27e8d8b02"
+    },
+    {
+      "bytes": 2861,
+      "name": "PREPARED_GUIDE",
+      "path": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_prepared_runtime_v3.md",
+      "sha256": "1e9278da5f3fe9f9e3a008d0cef08c9d54ce6905b8c4701660c6dcaef4987861"
+    },
+    {
+      "bytes": 29280,
+      "name": "ARCHITECTURE",
+      "path": "ipfs_datasets_py/logic/autoformal/docs/ARCHITECTURE.md",
+      "sha256": "03abcc4a10a38211b57f855849ef43d8ab2017b29aeed6436df36b8c6b5ac684"
+    }
+  ],
+  "findings": [],
+  "historical_prepared_runtime_metadata": [
+    {
+      "bytes": 11373,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-prepared-runtime-20261018-01/COMPLETION_MANIFEST.json",
+      "sha256": "6a7ccf16c07ac2f459520c5a0a986e98e6f3da9a99cbf51bd6abfbc209e67c0f"
+    },
+    {
+      "bytes": 46210,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-prepared-runtime-20261018-01/qualification-01.json",
+      "sha256": "87e0d060565a559b42425c5fb0f8b3e6ce34ba1fc916f64c9204793715978ccc"
+    }
+  ],
+  "historical_scope": {
+    "attributed_GRU_forwards": 57,
+    "attributed_authored_cases": 34,
+    "attributed_model_restores": 38,
+    "attributed_training_updates": 0,
+    "other_two_owning_suites_qualified_by_that_request": false,
+    "source_pin_match": "Original request pins all three current product sources and prepared-v3 owning test only; this review does not reexecute the cohort or requalify the current closure."
+  },
+  "new_catalog_components": [
+    {
+      "apis": [
+        "build_compact_content_training_v2",
+        "compact_content_training_sha256",
+        "validate_compact_content_training_v2",
+        "compact_content_training_bytes_v2",
+        "load_compact_content_training_v2",
+        "train_compact_content_v2"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "generic-compact-owner-navigation-reviewed-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_training_v2.md",
+      "id": "compact-content-generic-training-v2",
+      "notes": "Existing generic authored384 training: 1\u201316 ordered rows, fixed537 codec/512 total IDs, validated v1 initialization, exact named-Adam resume and bounded calls. This navigation record adds no numerical qualification. The prepared four-row regression remains pending; source-space compatibility, reviewed statutory targets/context, model quality and legal/graph/Lean admission remain separate.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_training_v2",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_compact_content_training_v2.py"
+      ],
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_training_v2.py",
+      "required": true,
+      "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "inspect_compact_content_trained_checkpoint_v2",
+        "score_compact_content_trained_v2",
+        "generate_compact_content_trained_v2",
+        "compact_content_trained_generation_sha256",
+        "validate_compact_content_trained_generation_v2",
+        "prepare_compact_content_trained_batch_prediction_v2"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "generic-compact-owner-navigation-reviewed-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_trained_runtime_v2.md",
+      "id": "compact-content-trained-runtime-v2",
+      "notes": "Existing trained generic-v2 checkpoint inspection, model-only score/generation, exact original-input generation replay and CONTENT observation adapter;384/fixed537/512 only. No optimizer allocation or updates during inference. Implementation presence and attributed historical execution retain separate scopes; no new source-encoder compatibility, statutory accuracy, legal review, graph or Lean authority.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_trained_runtime_v2",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_compact_content_trained_runtime_v2.py"
+      ],
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_trained_runtime_v2.py",
+      "required": true,
+      "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "inspect_compact_content_prepared_checkpoint_v3",
+        "score_compact_content_prepared_v3",
+        "generate_compact_content_prepared_v3",
+        "compact_content_prepared_generation_sha256",
+        "validate_compact_content_prepared_generation_v3",
+        "prepare_compact_content_prepared_batch_prediction_v3"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "generic-compact-owner-navigation-reviewed-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_prepared_runtime_v3.md",
+      "id": "compact-content-prepared-runtime-v3",
+      "notes": "Existing explicit generic-v2 consumer with at most one operation-local evaluation-model restore per bounded public call; full prefixes and custody/runtime/RNG checks retained, no cross-call model cache. Historical34-case prepared-runtime engineering evidence is attributed separately, not a fresh current-closure qualification or qualification of the other owning suites. No training, numerical-quality improvement, source/meaning or Lean admission follows.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_prepared_runtime_v3",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_compact_content_prepared_runtime_v3.py"
+      ],
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_prepared_runtime_v3.py",
+      "required": true,
+      "status": "implementation_present"
+    }
+  ],
+  "new_relative_links_checked": [
+    {
+      "document": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_training_v2.md",
+      "href": "legal_compact_content_prepared_runtime_v3.md",
+      "is_file": true,
+      "resolved": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_prepared_runtime_v3.md"
+    },
+    {
+      "document": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_training_v2.md",
+      "href": "legal_compact_content_trained_runtime_v2.md",
+      "is_file": true,
+      "resolved": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_trained_runtime_v2.md"
+    },
+    {
+      "document": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_trained_runtime_v2.md",
+      "href": "../../../../../tests/unit/logic/autoformal/test_legal_compact_content_trained_runtime_v2.py",
+      "is_file": true,
+      "resolved": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_compact_content_trained_runtime_v2.py"
+    },
+    {
+      "document": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_trained_runtime_v2.md",
+      "href": "legal_compact_content_prepared_runtime_v3.md",
+      "is_file": true,
+      "resolved": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_prepared_runtime_v3.md"
+    },
+    {
+      "document": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_prepared_runtime_v3.md",
+      "href": "../../../../../../../artifacts/legal-ir-prepared-runtime-20261018-01/COMPLETION_MANIFEST.json",
+      "is_file": true,
+      "resolved": "/home/barberb/lift_coding/artifacts/legal-ir-prepared-runtime-20261018-01/COMPLETION_MANIFEST.json"
+    },
+    {
+      "document": "ipfs_datasets_py/logic/autoformal/docs/ARCHITECTURE.md",
+      "href": "guides/legal_compact_content_prepared_runtime_v3.md",
+      "is_file": true,
+      "resolved": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_prepared_runtime_v3.md"
+    },
+    {
+      "document": "ipfs_datasets_py/logic/autoformal/docs/ARCHITECTURE.md",
+      "href": "guides/legal_compact_content_trained_runtime_v2.md",
+      "is_file": true,
+      "resolved": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_trained_runtime_v2.md"
+    },
+    {
+      "document": "ipfs_datasets_py/logic/autoformal/docs/ARCHITECTURE.md",
+      "href": "guides/legal_compact_content_training_v2.md",
+      "is_file": true,
+      "resolved": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_training_v2.md"
+    }
+  ],
+  "original_source_lease": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_lease.py",
+    "sha256": "42e9f07d0d458177079269d9f495f0b70512180c1adc2f7fe0bfdb05518a12f9"
+  },
+  "owners": [
+    {
+      "canonical_guide_relative_path": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_training_v2.md",
+      "guide_after": {
+        "bytes": 10396,
+        "path": "/tmp/legal-ir-generic-owner-navigation-20261023-01/TRAINING_GUIDE.after",
+        "sha256": "63c25a179bed9ad906047fa5048d28f2d2d7fde9af37ac0b02b6bf690983ad01"
+      },
+      "guide_before": {
+        "bytes": 10202,
+        "path": "/tmp/legal-ir-generic-owner-navigation-20261023-01/TRAINING_GUIDE.before",
+        "sha256": "dc39d87fec21243ed4ebfa1998e1f32ab17aed68b447f58d0e96a2e742cd818f"
+      },
+      "owner": {
+        "bytes": 33914,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_training_v2.py",
+        "sha256": "3ff34b8094a8bb19315741a03873c95f7d809654b35717fd4cee97e074fd2b59"
+      },
+      "owning_test_at_original_READ": {
+        "bytes": 26539,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_compact_content_training_v2.py",
+        "sha256": "9d5c8d93c05e153ff671d5ea9f6d6893591dcf57157de4e38dbe87373305ca37"
+      },
+      "public_exception_classes": [
+        "CompactContentTrainingError"
+      ],
+      "public_functions": [
+        {
+          "line": 357,
+          "name": "build_compact_content_training_v2",
+          "signature": "initial_checkpoint, population_raw, rows, *, expected_initial_checkpoint_sha256, expected_population_sha256, learning_rate=0.001"
+        },
+        {
+          "line": 389,
+          "name": "compact_content_training_sha256",
+          "signature": "checkpoint"
+        },
+        {
+          "line": 399,
+          "name": "validate_compact_content_training_v2",
+          "signature": "checkpoint, *, expected_checkpoint_sha256"
+        },
+        {
+          "line": 408,
+          "name": "compact_content_training_bytes_v2",
+          "signature": "checkpoint, *, expected_checkpoint_sha256"
+        },
+        {
+          "line": 417,
+          "name": "load_compact_content_training_v2",
+          "signature": "checkpoint_raw, *, expected_raw_sha256"
+        },
+        {
+          "line": 427,
+          "name": "train_compact_content_v2",
+          "signature": "checkpoint, population_raw, rows, *, expected_checkpoint_sha256, expected_population_sha256, max_optimizer_steps, max_seconds=60"
+        }
+      ]
+    },
+    {
+      "canonical_guide_relative_path": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_trained_runtime_v2.md",
+      "guide_after": {
+        "bytes": 12829,
+        "path": "/tmp/legal-ir-generic-owner-navigation-20261023-01/TRAINED_GUIDE.after",
+        "sha256": "81068644f4b37e3c58918835a74bd08933cde2ea9b68a68dfe25b3eaac718983"
+      },
+      "guide_before": {
+        "bytes": 12695,
+        "path": "/tmp/legal-ir-generic-owner-navigation-20261023-01/TRAINED_GUIDE.before",
+        "sha256": "491d88072ddb15a494fa4eae38ae80c56ea0882ff0c18b43d0a99de27e8d8b02"
+      },
+      "owner": {
+        "bytes": 49460,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_trained_runtime_v2.py",
+        "sha256": "43037fe64c58de0bcfc2072178eabe1276b4a020863e20b9498a634763b56e5a"
+      },
+      "owning_test_at_original_READ": {
+        "bytes": 28846,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_compact_content_trained_runtime_v2.py",
+        "sha256": "2865051521a97b8d8cbac8ca731aa5d4a0cdf6e9aba15dcb13a937854f1a00c2"
+      },
+      "public_exception_classes": [
+        "CompactContentGenerationError"
+      ],
+      "public_functions": [
+        {
+          "line": 386,
+          "name": "inspect_compact_content_trained_checkpoint_v2",
+          "signature": "checkpoint, *, expected_checkpoint_sha256"
+        },
+        {
+          "line": 444,
+          "name": "score_compact_content_trained_v2",
+          "signature": "checkpoint, conditioning, prefix_ids, context_raw, *, expected_checkpoint_sha256, expected_context_sha256"
+        },
+        {
+          "line": 512,
+          "name": "generate_compact_content_trained_v2",
+          "signature": "checkpoint, conditioning, prefix_ids, context_raw, *, expected_checkpoint_sha256, expected_context_sha256, max_new_tokens, prefix_origin, context_origin"
+        },
+        {
+          "line": 621,
+          "name": "compact_content_trained_generation_sha256",
+          "signature": "report"
+        },
+        {
+          "line": 632,
+          "name": "validate_compact_content_trained_generation_v2",
+          "signature": "report, checkpoint, conditioning, prefix_ids, context_raw, *, expected_report_sha256, expected_checkpoint_sha256, expected_context_sha256, max_new_tokens, prefix_origin, context_origin"
+        },
+        {
+          "line": 652,
+          "name": "prepare_compact_content_trained_batch_prediction_v2",
+          "signature": "report, checkpoint, conditioning, prefix_ids, context_raw, population_raw, *, expected_generation_sha256, expected_population_sha256, occurrence_id, expected_checkpoint_sha256, expected_context_sha256, max_new_tokens, prefix_origin, context_origin"
+        }
+      ]
+    },
+    {
+      "canonical_guide_relative_path": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_prepared_runtime_v3.md",
+      "guide_after": {
+        "bytes": 3397,
+        "path": "/tmp/legal-ir-generic-owner-navigation-20261023-01/PREPARED_GUIDE.after",
+        "sha256": "f57ac665b37d6352c63a3ba6d0ab7bbae71e3af7bd511f5e9214eeaac549a471"
+      },
+      "guide_before": {
+        "bytes": 2861,
+        "path": "/tmp/legal-ir-generic-owner-navigation-20261023-01/PREPARED_GUIDE.before",
+        "sha256": "1e9278da5f3fe9f9e3a008d0cef08c9d54ce6905b8c4701660c6dcaef4987861"
+      },
+      "owner": {
+        "bytes": 53267,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_prepared_runtime_v3.py",
+        "sha256": "a7d7cedfa482537ac76a9ccf9a49a79f6108e89268b02ca3b355abcfe774ec1e"
+      },
+      "owning_test_at_original_READ": {
+        "bytes": 31019,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_compact_content_prepared_runtime_v3.py",
+        "sha256": "984e615e4996ef001e367200c806eaacf2391aa0171f26105a13b92b5cc6f7b0"
+      },
+      "public_exception_classes": [
+        "CompactContentGenerationError"
+      ],
+      "public_functions": [
+        {
+          "line": 368,
+          "name": "inspect_compact_content_prepared_checkpoint_v3",
+          "signature": "checkpoint, *, expected_checkpoint_sha256"
+        },
+        {
+          "line": 597,
+          "name": "score_compact_content_prepared_v3",
+          "signature": "checkpoint, conditioning, prefix_ids, context_raw, *, expected_checkpoint_sha256, expected_context_sha256"
+        },
+        {
+          "line": 615,
+          "name": "generate_compact_content_prepared_v3",
+          "signature": "checkpoint, conditioning, prefix_ids, context_raw, *, expected_checkpoint_sha256, expected_context_sha256, max_new_tokens, prefix_origin, context_origin"
+        },
+        {
+          "line": 738,
+          "name": "compact_content_prepared_generation_sha256",
+          "signature": "report"
+        },
+        {
+          "line": 749,
+          "name": "validate_compact_content_prepared_generation_v3",
+          "signature": "report, checkpoint, conditioning, prefix_ids, context_raw, *, expected_report_sha256, expected_checkpoint_sha256, expected_context_sha256, max_new_tokens, prefix_origin, context_origin"
+        },
+        {
+          "line": 769,
+          "name": "prepare_compact_content_prepared_batch_prediction_v3",
+          "signature": "report, checkpoint, conditioning, prefix_ids, context_raw, population_raw, *, expected_generation_sha256, expected_population_sha256, occurrence_id, expected_checkpoint_sha256, expected_context_sha256, max_new_tokens, prefix_origin, context_origin"
+        }
+      ]
+    }
+  ],
+  "passed": true,
+  "preservation": {
+    "all_prior_records_whole_and_ordered": true,
+    "canonical_writes": 0,
+    "checkpoint_payload_reads": 0,
+    "four_row_regression_status": "Pending; no execution result observed or promoted by this documentation operation.",
+    "model_and_runtime_source_changes": 0,
+    "model_test_training_native_DB_Lean_network_operations": 0,
+    "new_profile_or_framework": false,
+    "original_backlog": {
+      "bytes": 964264,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+      "sha256": "4869b5bafeaaa2a66eb357e70f07c4a4f14908a1f2e0c60355ae458b79cdc829"
+    },
+    "original_task_count": 24,
+    "owning_test_pin_scope": "Source-only original READ cutoff. Later authorized append-only four-row test installation, if any, is a distinct observed generation.",
+    "prior_catalog_components": 51,
+    "prior_selected_evidence": 177,
+    "registered_owner_imports": 0
+  },
+  "recorded_at_utc": "2026-10-23T05:38:21.887483+00:00",
+  "schema": "legal-ir-generic-compact-owner-navigation-review/v1",
+  "scope": "Existing source/API navigation and historical evidence attribution only; no new numerical qualification or execution.",
+  "selected_source_and_preimage_bytes_unchanged_at_READ_closing": true,
+  "source_READ": {
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "cooperative": true,
+    "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+    "mode": "read",
+    "schema_version": "autoencoder-source-lease/v1",
+    "waited_seconds": 3.6943936720490456e-05
+  },
+  "source_READ_acquired": true,
+  "source_READ_closed": true,
+  "source_READ_default_wait_seconds": 300,
+  "source_only": true
+}

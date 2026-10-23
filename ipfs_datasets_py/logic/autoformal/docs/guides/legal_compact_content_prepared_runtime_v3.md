@@ -48,3 +48,5 @@ engineering result, not improved statutory reconstruction. See the parent
 workspace `artifacts/legal-ir-prepared-runtime-20261018-01/` for the selected
 cohort, original execution outcome and measured costs; source presence alone
 is not an execution receipt.
+
+The existing [historical completion metadata](../../../../../docs/autoformalization/evidence/legal-ir-generic-compact-owner-navigation-20261023.json) records34 authored cases,57 GRU forwards and38 restores, with zero training. Its original request pins the current three generic trainer/runtime bodies and the prepared-v3 owning test. These are attributed historical observations, not a fresh qualification of the current dependency closure or the other two owning suites. The four-row varied-population regression is a separate selected test.
