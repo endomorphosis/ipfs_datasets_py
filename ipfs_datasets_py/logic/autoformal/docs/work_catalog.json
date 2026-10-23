@@ -1074,16 +1074,23 @@
     {
       "apis": [
         "build_ir_source_representation_profile",
-        "validate_ir_source_representation_profile"
+        "validate_ir_source_representation_profile",
+        "build_counted_content_head_spec_v1",
+        "counted_content_head_spec_sha256",
+        "validate_counted_content_head_spec_v1",
+        "plan_counted_content_head_transfer_v1",
+        "counted_content_head_transfer_sha256",
+        "validate_counted_content_head_transfer_v1"
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
         "source4096-registration-20261020-01",
         "native4096-retained-assets-20261020",
-        "source4096-reconciliation-20261020-01"
+        "source4096-reconciliation-20261020-01",
+        "counted-numerical-source-publication-reuse-20261023-01"
       ],
       "id": "source-representation-profile",
-      "notes": "Separate LegalIR4096 declared expected-producer metadata contract. Original 12 lanes, asset IDs and detached components preserved. Tests use exact private candidates and an inert manager; installed bytes match. No historical source receipt authentication, tensor IO/load, physical-store, runtime, publication, training or legal qualification. Separate retained-asset delivery: three original checkpoints are now public and genuinely registered in the selected retained catalog687→690 through the distinct merged Wv2 importer; see native4096-retained-assets-20261020. The existing canonical importer now exposes both explicit APIs with shared registration logic, qualified by 234 controls including three preserved published-ID metadata cases. Schemas, IDs and path-sensitive versus multiset library identity remain distinct; no automatic conversion or real catalog rewrite occurred. Runtime, producer compatibility and active-supervisor integration remain pending.",
+      "notes": "Separate LegalIR4096 declared expected-producer metadata contract. Original 12 lanes, asset IDs and detached components preserved. Tests use exact private candidates and an inert manager; installed bytes match. No historical source receipt authentication, tensor IO/load, physical-store, runtime, publication, training or legal qualification. Separate retained-asset delivery: three original checkpoints are now public and genuinely registered in the selected retained catalog687→690 through the distinct merged Wv2 importer; see native4096-retained-assets-20261020. The existing canonical importer now exposes both explicit APIs with shared registration logic, qualified by 234 controls including three preserved published-ID metadata cases. Schemas, IDs and path-sensitive versus multiset library identity remain distinct; no automatic conversion or real catalog rewrite occurred. Runtime, producer compatibility and active-supervisor integration remain pending. Separate counted28 spec/transfer-plan APIs retain historical79-case/237-phase metadata qualification, including one private observer. Exact declared shapes and row-mean requests are not actual transfer, runtime/source compatibility, learning, legal meaning or Lean authority. The separate numerical owners retain their own historical cohorts; no new execution is claimed by this publication.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.ir_decoder_profile_inventory",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
@@ -1467,6 +1474,70 @@
       "path": "ipfs_datasets_py/logic/autoformal/legal_counted_threshold_codec_v2.py",
       "required": true,
       "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "create_counted_content_head_v1",
+        "counted_content_head_sha256",
+        "validate_counted_content_head_v1",
+        "counted_content_head_bytes_v1",
+        "load_counted_content_head_v1",
+        "score_counted_content_head_v1",
+        "evaluate_counted_content_head_v1"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "counted-numerical-source-publication-reuse-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_head_v1.md",
+      "id": "counted-content-numerical-head",
+      "notes": "Seeded384/count28 weights-only profile; genuine unchanged residualGRU, strict checkpoint restore and unmasked teacher-forced loss. No optimizer, donor transfer, grammar mask, autonomous generation, source fidelity or reviewed training authority. Exact original source-generation qualification is reused subject to the final public dependency review; no new public test/model run or private-observer/checkpoint publication.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_counted_content_head_v1",
+      "ownership_role": "separate_profile_adapter_reusing_existing_numerical_kernel",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_counted_content_head_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "create_transferred_counted_content_head_v1",
+        "transferred_counted_content_head_sha256",
+        "validate_transferred_counted_content_head_v1",
+        "score_transferred_counted_content_head_v1",
+        "evaluate_transferred_counted_content_head_v1"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "counted-numerical-source-publication-reuse-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_head_v1.md",
+      "id": "counted-content-head-transfer",
+      "notes": "Validated537-to-counted28 donor-required weights-only transfer profile; genuine existing domain transfer and residualGRU,13 tensor replay,10 copies/23shared+5mean lexical rows. Principal adapter has no optimizer; separate retained-ancestor observer restores original Adam only, zero new updates. No conditioning compatibility, varied training, autonomous generation, statutory or Lean authority. Exact original source-generation qualification is reused subject to the final public dependency review; no new public test/model run or private-observer/checkpoint publication.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_counted_content_head_transfer_v1",
+      "ownership_role": "separate_donor_transfer_profile_reusing_existing_numerical_kernel",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_counted_content_head_transfer_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "build_counted_threshold_numerical_view_v2",
+        "counted_threshold_numerical_view_sha256",
+        "score_counted_threshold_numerical_view_v2",
+        "evaluate_counted_threshold_numerical_view_v2"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "counted-numerical-source-publication-reuse-20261023-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_head_v1.md",
+      "id": "counted-threshold-numerical-view",
+      "notes": "Three-form unmasked scoring/evaluation through unchanged seeded counted28 weights. Fixed metadata view: 27 exact spellings, one explicit schema-role relabel and identity numeric IDs. No new checkpoint/weights, donor transfer, optimizer/training/generation, source compatibility, reviewed statutory gold, graph or Lean authority. Exact original source-generation qualification is reused subject to the final public dependency review; no new public test/model run or private-observer/checkpoint publication.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_counted_threshold_numerical_view_v2",
+      "ownership_role": "versioned_vocabulary_view_of_unchanged_seeded_counted_head",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_counted_threshold_numerical_view_v2.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -1527,7 +1598,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-23T02:33:11.074604+00:00",
+  "last_updated_at_utc": "2026-10-23T03:34:47.089428+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2730,6 +2801,16 @@
       "root": "datasets_repository",
       "scope": "Existing fixed-three compact append170 distinct aggregate (169+corrected1), authored threshold factory67/201 and finite codec/prefix81/243 remain separate. No fresh combined/public pytest, native/model run, numerical consumer, legal source/meaning, training/gold, graph or Lean qualification.",
       "status": "historical_exact_symbolic_source_qualification_reused"
+    },
+    {
+      "id": "counted-numerical-source-publication-reuse-20261023-01",
+      "observed_bytes": 121461,
+      "observed_sha256": "98fd766813fda3d8172a49142a925b83b23d50071f52f6e1728c59fe631c7930",
+      "path": "docs/autoformalization/evidence/legal-ir-counted-numerical-publication-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Four existing source owners; metadata79,seeded46,transfer39,view46 remain separate original qualification generations. No fresh combined/public pytest or model/native run, private-observer/checkpoint publication, training/source compatibility/statutory/graph/Lean authority.",
+      "status": "historical_exact_counted_numerical_source_qualification_reused"
     }
   ]
 }
