@@ -1736,7 +1736,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-23T06:18:35.832179+00:00",
+  "last_updated_at_utc": "2026-10-23T06:45:41.862730+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -3009,6 +3009,16 @@
       "root": "datasets_repository",
       "scope": "Reuse existing seven goals/24tasks, unchanged Hub revisions and completed external publications; prepared7346 scope data and four-row genericv2 fixture remain unrun. No model, statutory, graph or Lean qualification.",
       "status": "metadata_only_current_programme_next_tasks"
+    },
+    {
+      "id": "comprehensive-reuse-review-20261023-01",
+      "observed_bytes": 4359,
+      "observed_sha256": "852e101604ef160b9f22624d0bb1bc61c51c162a12fdab2e25825636dbc56337",
+      "path": "docs/autoformalization/evidence/legal-ir-comprehensive-reuse-review-20261023.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Bounded card/revision refresh and selected retained-training/alignment metadata review. Reuses two-source/eight-vector panel, generic variable-population trainer and existing Lean renderer; corrects stale planning claims. No dataset payload, model, test, training or native execution and no statutory authority.",
+      "status": "source_and_saved_metadata_planning_review"
     }
   ]
 }
