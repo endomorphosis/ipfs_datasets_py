@@ -87,15 +87,15 @@ def fetch_pdf(url: str) -> dict:
         return {"status": "error", "error": "not_pdf"}
     if len(raw) > MAX_PDF:
         return {"status": "error", "error": f"pdf_too_large:{len(raw)}"}
-    ocr_lang = os.environ.get("OCR_LANG", "nld+eng" if Path("/home/box/tessdata/nld.traineddata").exists() else "eng")
+    ocr_lang = os.environ.get("OCR_LANG", "nld+eng" if (Path(os.environ.get("IPFS_DATASETS_TESSDATA", str(Path.home() / ".ipfs_datasets" / "tessdata"))) / "nld.traineddata").exists() else "eng")
     ocr_pages = env_int("OCR_PAGES", 8)
-    os.environ.setdefault("TESSDATA_PREFIX", "/home/box/tessdata")
+    os.environ.setdefault("TESSDATA_PREFIX", os.environ.get("IPFS_DATASETS_TESSDATA", str(Path.home() / ".ipfs_datasets" / "tessdata")))
     text, how, pages = extract_pdf_text(
         raw, enable_ocr=True, ocr_lang=ocr_lang.split("+")[0] if "+" in ocr_lang else ocr_lang,
         ocr_max_pages=ocr_pages,
     )
     # pdf_extract_lib may not accept nld+eng; if nld available try nld then eng
-    if (not text or len(text) < 120) and Path("/home/box/tessdata/nld.traineddata").exists():
+    if (not text or len(text) < 120) and (Path(os.environ.get("IPFS_DATASETS_TESSDATA", str(Path.home() / ".ipfs_datasets" / "tessdata"))) / "nld.traineddata").exists():
         text, how, pages = extract_pdf_text(raw, enable_ocr=True, ocr_lang="nld", ocr_max_pages=ocr_pages)
     if not text or len(text) < 100:
         return {"status": "error", "error": f"extract_failed:{how}", "method": how}

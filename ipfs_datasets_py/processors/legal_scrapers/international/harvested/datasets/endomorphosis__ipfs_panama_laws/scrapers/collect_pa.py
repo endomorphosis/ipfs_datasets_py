@@ -50,7 +50,7 @@ ART = re.compile(r"(?im)^\s*((?:Art(?:[íi]culo|\.|iculo)?|ART[IÍ]CULO)\s+[\d]+
 log = logging.getLogger("pa")
 
 OFFICIAL_HOSTS = ("gacetaoficial.gob.pa", "www.gacetaoficial.gob.pa")
-os.environ.setdefault("TESSDATA_PREFIX", "/home/box/tessdata")
+os.environ.setdefault("TESSDATA_PREFIX", os.environ.get("IPFS_DATASETS_TESSDATA", str(Path.home() / ".ipfs_datasets" / "tessdata")))
 
 
 def is_thin_es(text: str) -> bool:

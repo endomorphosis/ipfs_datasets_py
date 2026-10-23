@@ -206,7 +206,7 @@ def discover():
 
 
 def ocr_pdf(raw: bytes) -> tuple[str, str, int]:
-    os.environ.setdefault("TESSDATA_PREFIX", "/home/box/tessdata")
+    os.environ.setdefault("TESSDATA_PREFIX", os.environ.get("IPFS_DATASETS_TESSDATA", str(Path.home() / ".ipfs_datasets" / "tessdata")))
     ocr_pages = env_int("OCR_PAGES", 10)
     lang = "eng"
     return extract_pdf_text(raw, enable_ocr=True, ocr_lang=lang, ocr_max_pages=ocr_pages)

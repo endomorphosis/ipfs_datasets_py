@@ -13,7 +13,7 @@ async def semantic_search_from_parameters(
     *,
     vector_service: Any,
     query: str,
-    model: str = "sentence-transformers/all-MiniLM-L6-v2",
+    model: str = "thenlper/gte-small",
     top_k: int = 5,
     collection: str = "default",
     filters: Optional[Dict[str, Any]] = None,
@@ -42,6 +42,8 @@ async def semantic_search_from_parameters(
     # No vector_service: use the genuine vector-store search. This embeds the
     # query with the real model and searches the FAISS index. If the collection
     # has no index, search_vector_index raises an honest error.
+    if model != "thenlper/gte-small":
+        raise ValueError("The local FAISS manager uses thenlper/gte-small; provide a compatible vector_service for another model")
     from ipfs_datasets_py.mcp_server.tools.vector_tools.vector_store_management import (
         search_vector_index,
     )
@@ -51,6 +53,8 @@ async def semantic_search_from_parameters(
         top_k=top_k,
         filters=filters or {},
     )
+    if not isinstance(result, dict) or result.get("status") != "success" or result.get("error"):
+        raise RuntimeError(str(result.get("error", "Vector search did not succeed")) if isinstance(result, dict) else "Invalid vector search result")
     # Normalize to the semantic_search response shape.
     results = result.get("results", [])
     return {

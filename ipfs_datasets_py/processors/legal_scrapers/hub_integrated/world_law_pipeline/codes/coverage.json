@@ -1,0 +1,1343 @@
+{
+ "built_at": "2026-10-17T05:02:46Z",
+ "rows": 287655,
+ "places_with_any_code": 133631,
+ "places_in_list": 273040,
+ "places_from_additions": 2307,
+ "places_only_in_staging": 0,
+ "official_sources": {
+  "eurostat_lau_2024": "https://ec.europa.eu/eurostat/documents/345175/501971/EU-27-LAU-2024-NUTS-2024.xlsx",
+  "statistik_austria_gemliste_2026": "https://www.statistik.at/verzeichnis/reglisten/gemliste_knz.csv",
+  "istat_elenco_comuni": "https://www.istat.it/storage/codici-unita-amministrative/Elenco-comuni-italiani.csv",
+  "insee_cog_2025": "https://www.insee.fr/fr/statistiques/fichier/8377162/cog_ensemble_2025_csv.zip",
+  "ibge_api_localidades": "https://servicodados.ibge.gov.br/api/v1/localidades/municipios",
+  "soumu_dantai_code_r6": "https://www.soumu.go.jp/main_content/000925835.xlsx",
+  "ine_diccionario_2025": "https://www.ine.es/daco/daco42/codmun/diccionario25.xlsx",
+  "inei_ubigeo_2022": "https://www.datosabiertos.gob.pe/sites/default/files/UBIGEO%202022_1891%20distritos.xlsx",
+  "statcan_98100002_csd_2021": "https://www150.statcan.gc.ca/n1/tbl/csv/98100002-eng.zip (table 98-10-0002-01, 2021 Census subdivisions, CSDUID + CSD type)",
+  "psa_psgc_1q2026": "https://psa.gov.ph/classification/psgc (PSGC 1Q 2026 Publication Datafile, as parsed into JSON by github.com/alkevintan/psgc-rb data/*.json; regions, provinces, cities, municipalities, sub-municipalities)",
+  "gus_bdl_units_level5": "https://bdl.stat.gov.pl/api/v1/units?level=5 (powiats only; 7-digit TERC unchecked)",
+  "tooi_rwc_waterschappen_compleet_2": "https://repository.officiele-overheidspublicaties.nl/waardelijsten/rwc_waterschappen_compleet/2/json/rwc_waterschappen_compleet_2.json"
+ },
+ "wikidata_source": "https://qlever.dev/api/wikidata (dump latest-all.ttl 2026-08-10, live updates)",
+ "coverage": {
+  "AT": {
+   "places_total": 2095,
+   "places_municipality": 2086,
+   "systems": {
+    "at_gkz": {
+     "places_with_code": 2084,
+     "by_source": {
+      "wikidata": 2084
+     },
+     "official_check": {
+      "match": 2076,
+      "match_code_name_differs": 8
+     },
+     "conflicts": {
+      "name_differs": 8
+     }
+    },
+    "eu_lau": {
+     "places_with_code": 2083,
+     "by_source": {
+      "derived": 2083
+     },
+     "official_check": {
+      "match": 2083
+     },
+     "conflicts": {}
+    },
+    "eu_nuts": {
+     "places_with_code": 9,
+     "by_source": {
+      "wikidata": 9
+     },
+     "official_check": {
+      "match": 9
+     },
+     "conflicts": {}
+    },
+    "eu_nuts3": {
+     "places_with_code": 2083,
+     "by_source": {
+      "derived": 2083
+     },
+     "official_check": {
+      "match": 2083
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 2086,
+    "state": 9
+   }
+  },
+  "BA": {
+   "places_total": 63,
+   "places_municipality": 60,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 3,
+     "by_source": {
+      "wikidata": 3
+     },
+     "official_check": {
+      "no_official_list": 3
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 60,
+    "region": 2,
+    "adm1": 1
+   }
+  },
+  "BE": {
+   "places_total": 572,
+   "places_municipality": 569,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 3,
+     "by_source": {
+      "wikidata": 3
+     },
+     "official_check": {
+      "no_official_list": 3
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 569,
+    "region": 3
+   }
+  },
+  "BG": {
+   "places_total": 293,
+   "places_municipality": 265,
+   "systems": {
+    "eu_lau": {
+     "places_with_code": 265,
+     "by_source": {
+      "wikidata": 265
+     },
+     "official_check": {
+      "no_official_list": 265
+     },
+     "conflicts": {}
+    },
+    "eu_nuts": {
+     "places_with_code": 28,
+     "by_source": {
+      "wikidata": 28
+     },
+     "official_check": {
+      "no_official_list": 28
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 265,
+    "oblast": 28
+   }
+  },
+  "BR": {
+   "places_total": 5616,
+   "places_municipality": 5589,
+   "systems": {
+    "br_ibge": {
+     "places_with_code": 5570,
+     "by_source": {
+      "wikidata": 5570
+     },
+     "official_check": {
+      "match": 5562,
+      "match_code_name_differs": 8
+     },
+     "conflicts": {
+      "name_differs": 8
+     }
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 5589,
+    "state": 27
+   }
+  },
+  "CA": {
+   "places_total": 4830,
+   "places_municipality": 3645,
+   "systems": {
+    "ca_sgc_cd": {
+     "places_with_code": 88,
+     "by_source": {
+      "wikidata": 88
+     },
+     "official_check": {
+      "no_official_list": 88
+     },
+     "conflicts": {}
+    },
+    "ca_sgc_csd": {
+     "places_with_code": 4536,
+     "by_source": {
+      "wikidata": 4534,
+      "name_match": 2
+     },
+     "official_check": {
+      "match": 4482,
+      "not_in_official_list": 10,
+      "match_code_name_differs": 42,
+      "name_match_only": 2
+     },
+     "conflicts": {
+      "wikidata_code_not_in_official_list": 14,
+      "name_differs": 43
+     }
+    },
+    "ca_sgc_dpl": {
+     "places_with_code": 2,
+     "by_source": {
+      "wikidata": 2
+     },
+     "official_check": {
+      "no_official_list": 2
+     },
+     "conflicts": {}
+    },
+    "ca_sgc_pr": {
+     "places_with_code": 13,
+     "by_source": {
+      "wikidata": 13
+     },
+     "official_check": {
+      "no_official_list": 13
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 3645,
+    "indian_reserve": 960,
+    "parish": 127,
+    "district": 47,
+    "state": 23,
+    "county": 15,
+    "province": 10,
+    "territory": 3
+   }
+  },
+  "CH": {
+   "places_total": 2170,
+   "places_municipality": 2144,
+   "systems": {
+    "ch_bfs": {
+     "places_with_code": 2109,
+     "by_source": {
+      "wikidata": 2109
+     },
+     "official_check": {
+      "match": 2099,
+      "not_in_official_list": 7,
+      "match_code_name_differs": 3
+     },
+     "conflicts": {
+      "wikidata_code_not_in_official_list": 8,
+      "name_differs": 3
+     }
+    },
+    "eu_lau": {
+     "places_with_code": 2103,
+     "by_source": {
+      "derived": 2102,
+      "wikidata": 1
+     },
+     "official_check": {
+      "match": 2102,
+      "not_in_official_list": 1
+     },
+     "conflicts": {
+      "wikidata_code_not_in_official_list": 1
+     }
+    },
+    "eu_nuts": {
+     "places_with_code": 26,
+     "by_source": {
+      "wikidata": 26
+     },
+     "official_check": {
+      "match": 26
+     },
+     "conflicts": {}
+    },
+    "eu_nuts3": {
+     "places_with_code": 2103,
+     "by_source": {
+      "derived": 2103
+     },
+     "official_check": {
+      "match": 2103
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 2144,
+    "canton": 26
+   }
+  },
+  "CL": {
+   "places_total": 374,
+   "places_municipality": 358,
+   "systems": {
+    "cl_cut": {
+     "places_with_code": 300,
+     "by_source": {
+      "wikidata": 300
+     },
+     "official_check": {
+      "no_official_list": 300
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 358,
+    "region": 16
+   }
+  },
+  "CZ": {
+   "places_total": 6280,
+   "places_municipality": 6267,
+   "systems": {
+    "cz_ruian_obec": {
+     "places_with_code": 6258,
+     "by_source": {
+      "wikidata": 6258
+     },
+     "official_check": {
+      "match": 6257,
+      "match_code_name_differs": 1
+     },
+     "conflicts": {
+      "name_differs": 1
+     }
+    },
+    "eu_lau": {
+     "places_with_code": 6258,
+     "by_source": {
+      "wikidata": 6258
+     },
+     "official_check": {
+      "match": 6257,
+      "not_in_official_list": 1
+     },
+     "conflicts": {
+      "wikidata_code_not_in_official_list": 1,
+      "name_differs": 1
+     }
+    },
+    "eu_nuts": {
+     "places_with_code": 14,
+     "by_source": {
+      "wikidata": 14
+     },
+     "official_check": {
+      "match": 14
+     },
+     "conflicts": {}
+    },
+    "eu_nuts3": {
+     "places_with_code": 6258,
+     "by_source": {
+      "derived": 6258
+     },
+     "official_check": {
+      "match": 6258
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 6267,
+    "region": 13
+   }
+  },
+  "DE": {
+   "places_total": 11180,
+   "places_municipality": 11135,
+   "systems": {
+    "de_ags": {
+     "places_with_code": 11026,
+     "by_source": {
+      "wikidata": 11025,
+      "name_match": 1
+     },
+     "official_check": {
+      "match": 10732,
+      "not_in_official_list": 276,
+      "name_match_only": 1,
+      "match_code_name_differs": 17
+     },
+     "conflicts": {
+      "wikidata_code_not_in_official_list": 276,
+      "name_differs": 17
+     }
+    },
+    "eu_lau": {
+     "places_with_code": 10750,
+     "by_source": {
+      "wikidata": 12,
+      "derived": 10738
+     },
+     "official_check": {
+      "not_in_official_list": 9,
+      "match": 10741
+     },
+     "conflicts": {
+      "wikidata_code_not_in_official_list": 11
+     }
+    },
+    "eu_nuts": {
+     "places_with_code": 121,
+     "by_source": {
+      "wikidata": 121
+     },
+     "official_check": {
+      "match": 120,
+      "not_in_official_list": 1
+     },
+     "conflicts": {}
+    },
+    "eu_nuts3": {
+     "places_with_code": 10750,
+     "by_source": {
+      "derived": 10750
+     },
+     "official_check": {
+      "match": 10750
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 11135,
+    "district": 29,
+    "state": 16
+   }
+  },
+  "DK": {
+   "places_total": 104,
+   "places_municipality": 98,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 5,
+     "by_source": {
+      "wikidata": 5
+     },
+     "official_check": {
+      "no_official_list": 5
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 98,
+    "region": 6
+   }
+  },
+  "EE": {
+   "places_total": 94,
+   "places_municipality": 79,
+   "systems": {
+    "ee_ehak": {
+     "places_with_code": 15,
+     "by_source": {
+      "other": 15
+     },
+     "official_check": {
+      "no_official_list": 15
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 79,
+    "county": 15
+   }
+  },
+  "ES": {
+   "places_total": 8156,
+   "places_municipality": 8138,
+   "systems": {
+    "es_ine": {
+     "places_with_code": 8130,
+     "by_source": {
+      "wikidata": 8130
+     },
+     "official_check": {
+      "match": 8079,
+      "match_code_name_differs": 51
+     },
+     "conflicts": {
+      "name_differs": 51,
+      "bad_format_on_wikidata": 3
+     }
+    },
+    "eu_lau": {
+     "places_with_code": 8130,
+     "by_source": {
+      "derived": 8130
+     },
+     "official_check": {
+      "match": 8130
+     },
+     "conflicts": {}
+    },
+    "eu_nuts": {
+     "places_with_code": 18,
+     "by_source": {
+      "wikidata": 18
+     },
+     "official_check": {
+      "match": 18
+     },
+     "conflicts": {}
+    },
+    "eu_nuts3": {
+     "places_with_code": 8130,
+     "by_source": {
+      "derived": 8130
+     },
+     "official_check": {
+      "match": 8130
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 8138,
+    "adm1": 15,
+    "region": 3
+   }
+  },
+  "FI": {
+   "places_total": 330,
+   "places_municipality": 311,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 19,
+     "by_source": {
+      "wikidata": 19
+     },
+     "official_check": {
+      "no_official_list": 19
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 311,
+    "region": 19
+   }
+  },
+  "FR": {
+   "places_total": 35045,
+   "places_municipality": 35020,
+   "systems": {
+    "eu_lau": {
+     "places_with_code": 34862,
+     "by_source": {
+      "derived": 34862
+     },
+     "official_check": {
+      "match": 34862
+     },
+     "conflicts": {}
+    },
+    "eu_nuts": {
+     "places_with_code": 18,
+     "by_source": {
+      "wikidata": 18
+     },
+     "official_check": {
+      "match": 14,
+      "not_in_official_list": 4
+     },
+     "conflicts": {}
+    },
+    "eu_nuts3": {
+     "places_with_code": 34862,
+     "by_source": {
+      "derived": 34862
+     },
+     "official_check": {
+      "match": 34862
+     },
+     "conflicts": {}
+    },
+    "fr_insee_cog": {
+     "places_with_code": 34907,
+     "by_source": {
+      "wikidata": 34907
+     },
+     "official_check": {
+      "match": 34859,
+      "match_code_name_differs": 14,
+      "not_in_official_list": 34
+     },
+     "conflicts": {
+      "name_differs": 15,
+      "wikidata_code_not_in_official_list": 34
+     }
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 35020,
+    "region": 18,
+    "territory": 6,
+    "adm1": 1
+   }
+  },
+  "GB": {
+   "places_total": 12099,
+   "places_municipality": 262,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 63,
+     "by_source": {
+      "wikidata": 63
+     },
+     "official_check": {
+      "no_official_list": 63
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "parish": 10733,
+    "community": 900,
+    "municipality": 262,
+    "unitary_authority": 104,
+    "council_area": 35,
+    "principal_area": 22,
+    "county": 22,
+    "territory": 18,
+    "adm1": 2,
+    "district": 1
+   }
+  },
+  "GR": {
+   "places_total": 379,
+   "places_municipality": 359,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 13,
+     "by_source": {
+      "wikidata": 13
+     },
+     "official_check": {
+      "no_official_list": 13
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 359,
+    "region": 20
+   }
+  },
+  "HR": {
+   "places_total": 706,
+   "places_municipality": 686,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 2,
+     "by_source": {
+      "wikidata": 2
+     },
+     "official_check": {
+      "no_official_list": 2
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 686,
+    "county": 20
+   }
+  },
+  "HU": {
+   "places_total": 3176,
+   "places_municipality": 3153,
+   "systems": {
+    "eu_lau": {
+     "places_with_code": 3154,
+     "by_source": {
+      "derived": 3152,
+      "wikidata": 2
+     },
+     "official_check": {
+      "match": 3154
+     },
+     "conflicts": {}
+    },
+    "eu_nuts": {
+     "places_with_code": 20,
+     "by_source": {
+      "wikidata": 20
+     },
+     "official_check": {
+      "match": 20
+     },
+     "conflicts": {}
+    },
+    "eu_nuts3": {
+     "places_with_code": 3154,
+     "by_source": {
+      "derived": 3154
+     },
+     "official_check": {
+      "match": 3154
+     },
+     "conflicts": {}
+    },
+    "hu_ksh": {
+     "places_with_code": 3154,
+     "by_source": {
+      "wikidata": 3154
+     },
+     "official_check": {
+      "match": 3154
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 3153,
+    "county": 23
+   }
+  },
+  "ID": {
+   "places_total": 1095,
+   "places_municipality": 639,
+   "systems": {
+    "id_bps": {
+     "places_with_code": 542,
+     "by_source": {
+      "wikidata": 542
+     },
+     "official_check": {
+      "no_official_list": 542
+     },
+     "conflicts": {}
+    },
+    "id_kemendagri": {
+     "places_with_code": 546,
+     "by_source": {
+      "wikidata": 546
+     },
+     "official_check": {
+      "no_official_list": 546
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 639,
+    "district": 418,
+    "province": 38
+   }
+  },
+  "IE": {
+   "places_total": 183,
+   "places_municipality": 1,
+   "systems": {
+    "eu_lau": {
+     "places_with_code": 1,
+     "by_source": {
+      "wikidata": 1
+     },
+     "official_check": {
+      "no_official_list": 1
+     },
+     "conflicts": {}
+    },
+    "eu_nuts": {
+     "places_with_code": 3,
+     "by_source": {
+      "wikidata": 3
+     },
+     "official_check": {
+      "no_official_list": 3
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "district": 148,
+    "county": 28,
+    "adm1": 3,
+    "city": 3,
+    "municipality": 1
+   }
+  },
+  "IS": {
+   "places_total": 72,
+   "places_municipality": 64,
+   "systems": {
+    "eu_lau": {
+     "places_with_code": 57,
+     "by_source": {
+      "wikidata": 57
+     },
+     "official_check": {
+      "no_official_list": 57
+     },
+     "conflicts": {}
+    },
+    "eu_nuts": {
+     "places_with_code": 1,
+     "by_source": {
+      "wikidata": 1
+     },
+     "official_check": {
+      "no_official_list": 1
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 64,
+    "region": 8
+   }
+  },
+  "IT": {
+   "places_total": 7921,
+   "places_municipality": 7906,
+   "systems": {
+    "eu_lau": {
+     "places_with_code": 7752,
+     "by_source": {
+      "derived": 7752
+     },
+     "official_check": {
+      "match": 7752
+     },
+     "conflicts": {}
+    },
+    "eu_nuts": {
+     "places_with_code": 16,
+     "by_source": {
+      "wikidata": 16
+     },
+     "official_check": {
+      "match": 15,
+      "not_in_official_list": 1
+     },
+     "conflicts": {}
+    },
+    "eu_nuts3": {
+     "places_with_code": 7752,
+     "by_source": {
+      "derived": 7752
+     },
+     "official_check": {
+      "match": 7752
+     },
+     "conflicts": {}
+    },
+    "it_istat": {
+     "places_with_code": 7909,
+     "by_source": {
+      "wikidata": 7909
+     },
+     "official_check": {
+      "match": 7649,
+      "not_municipal_level": 15,
+      "not_in_official_list": 138,
+      "match_code_name_differs": 107
+     },
+     "conflicts": {
+      "wikidata_code_not_in_official_list": 138,
+      "name_differs": 107
+     }
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 7906,
+    "region": 15
+   }
+  },
+  "JP": {
+   "places_total": 1802,
+   "places_municipality": 1755,
+   "systems": {
+    "jp_dantai": {
+     "places_with_code": 1792,
+     "by_source": {
+      "wikidata": 1792
+     },
+     "official_check": {
+      "match": 1792
+     },
+     "conflicts": {}
+    },
+    "jp_jis_x0402": {
+     "places_with_code": 1792,
+     "by_source": {
+      "derived": 1792
+     },
+     "official_check": {
+      "match": 1792
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 1755,
+    "prefecture": 47
+   }
+  },
+  "KG": {
+   "places_total": 595,
+   "places_municipality": 585,
+   "systems": {
+    "kg_cbd_body": {
+     "places_with_code": 501,
+     "by_source": {
+      "other": 416,
+      "name_match": 85
+     },
+     "official_check": {
+      "no_official_list": 501
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 585,
+    "region": 7,
+    "adm1": 3
+   }
+  },
+  "LU": {
+   "places_total": 113,
+   "places_municipality": 101,
+   "systems": {
+    "eu_lau": {
+     "places_with_code": 109,
+     "by_source": {
+      "wikidata": 109
+     },
+     "official_check": {
+      "no_official_list": 109
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 101,
+    "canton": 12
+   }
+  },
+  "MX": {
+   "places_total": 2497,
+   "places_municipality": 2465,
+   "systems": {
+    "mx_inegi": {
+     "places_with_code": 2458,
+     "by_source": {
+      "wikidata": 2458
+     },
+     "official_check": {
+      "no_official_list": 2458
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 2465,
+    "state": 32
+   }
+  },
+  "NL": {
+   "places_total": 379,
+   "places_municipality": 346,
+   "systems": {
+    "eu_lau": {
+     "places_with_code": 342,
+     "by_source": {
+      "derived": 342
+     },
+     "official_check": {
+      "match": 342
+     },
+     "conflicts": {}
+    },
+    "eu_nuts": {
+     "places_with_code": 14,
+     "by_source": {
+      "wikidata": 14
+     },
+     "official_check": {
+      "match": 12,
+      "not_in_official_list": 2
+     },
+     "conflicts": {}
+    },
+    "eu_nuts3": {
+     "places_with_code": 342,
+     "by_source": {
+      "derived": 342
+     },
+     "official_check": {
+      "match": 342
+     },
+     "conflicts": {}
+    },
+    "nl_cbs_gemeente": {
+     "places_with_code": 345,
+     "by_source": {
+      "wikidata": 344,
+      "name_match": 1
+     },
+     "official_check": {
+      "match": 340,
+      "name_match_only": 1,
+      "not_in_official_list": 3,
+      "match_code_name_differs": 1
+     },
+     "conflicts": {
+      "wikidata_code_not_in_official_list": 3,
+      "name_differs": 1
+     }
+    },
+    "nl_tooi": {
+     "places_with_code": 377,
+     "by_source": {
+      "wikidata": 377
+     },
+     "official_check": {
+      "no_official_list": 356,
+      "match": 21
+     },
+     "conflicts": {}
+    },
+    "nl_waterschapscode": {
+     "places_with_code": 21,
+     "by_source": {
+      "derived": 21
+     },
+     "official_check": {
+      "match": 21
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 346,
+    "water_board": 21,
+    "adm1": 12
+   }
+  },
+  "NO": {
+   "places_total": 365,
+   "places_municipality": 355,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 9,
+     "by_source": {
+      "wikidata": 9
+     },
+     "official_check": {
+      "no_official_list": 9
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 355,
+    "county": 8,
+    "adm1": 2
+   }
+  },
+  "PE": {
+   "places_total": 1918,
+   "places_municipality": 1892,
+   "systems": {
+    "pe_ubigeo": {
+     "places_with_code": 1878,
+     "by_source": {
+      "name_match": 1829,
+      "wikidata": 49
+     },
+     "official_check": {
+      "name_match_only": 1829,
+      "match": 23,
+      "match_code_name_differs": 1,
+      "not_municipal_level": 25
+     },
+     "conflicts": {
+      "name_differs": 1
+     }
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 1892,
+    "department": 25,
+    "adm1": 1
+   }
+  },
+  "PH": {
+   "places_total": 1742,
+   "places_municipality": 1642,
+   "systems": {
+    "ph_psgc": {
+     "places_with_code": 1740,
+     "by_source": {
+      "wikidata": 1740
+     },
+     "official_check": {
+      "match": 1679,
+      "match_code_name_differs": 25,
+      "not_in_official_list": 36
+     },
+     "conflicts": {
+      "name_differs": 25,
+      "wikidata_code_not_in_official_list": 36
+     }
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 1642,
+    "province": 82,
+    "region": 18
+   }
+  },
+  "PL": {
+   "places_total": 3109,
+   "places_municipality": 2745,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 20,
+     "by_source": {
+      "wikidata": 20
+     },
+     "official_check": {
+      "match": 18,
+      "not_in_official_list": 2
+     },
+     "conflicts": {}
+    },
+    "pl_nts": {
+     "places_with_code": 438,
+     "by_source": {
+      "wikidata": 438
+     },
+     "official_check": {
+      "no_official_list": 438
+     },
+     "conflicts": {}
+    },
+    "pl_teryt_terc": {
+     "places_with_code": 2405,
+     "by_source": {
+      "wikidata": 2392,
+      "derived": 13
+     },
+     "official_check": {
+      "no_official_list": 2025,
+      "match": 379,
+      "match_code_name_differs": 1
+     },
+     "conflicts": {
+      "bad_format_on_wikidata": 2,
+      "name_differs": 1
+     }
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 2745,
+    "county": 314,
+    "district": 27,
+    "voivodeship": 16,
+    "state": 5,
+    "department": 2
+   }
+  },
+  "PT": {
+   "places_total": 328,
+   "places_municipality": 308,
+   "systems": {
+    "eu_lau": {
+     "places_with_code": 11,
+     "by_source": {
+      "wikidata": 11
+     },
+     "official_check": {
+      "no_official_list": 11
+     },
+     "conflicts": {}
+    },
+    "eu_nuts": {
+     "places_with_code": 2,
+     "by_source": {
+      "wikidata": 2
+     },
+     "official_check": {
+      "no_official_list": 2
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 308,
+    "district": 18,
+    "region": 2
+   }
+  },
+  "RO": {
+   "places_total": 3004,
+   "places_municipality": 2962,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 1,
+     "by_source": {
+      "wikidata": 1
+     },
+     "official_check": {
+      "no_official_list": 1
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 2962,
+    "county": 40,
+    "adm1": 1,
+    "district": 1
+   }
+  },
+  "RS": {
+   "places_total": 4687,
+   "places_municipality": 4655,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 32,
+     "by_source": {
+      "wikidata": 32
+     },
+     "official_check": {
+      "no_official_list": 32
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 4655,
+    "district": 30,
+    "province": 2
+   }
+  },
+  "SE": {
+   "places_total": 313,
+   "places_municipality": 291,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 21,
+     "by_source": {
+      "wikidata": 21
+     },
+     "official_check": {
+      "no_official_list": 21
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 291,
+    "county": 21,
+    "adm1": 1
+   }
+  },
+  "SK": {
+   "places_total": 2896,
+   "places_municipality": 2888,
+   "systems": {
+    "eu_lau": {
+     "places_with_code": 2887,
+     "by_source": {
+      "wikidata": 2887
+     },
+     "official_check": {
+      "no_official_list": 2887
+     },
+     "conflicts": {}
+    },
+    "eu_nuts": {
+     "places_with_code": 8,
+     "by_source": {
+      "wikidata": 8
+     },
+     "official_check": {
+      "no_official_list": 8
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 2888,
+    "region": 8
+   }
+  },
+  "TR": {
+   "places_total": 1771,
+   "places_municipality": 707,
+   "systems": {
+    "eu_nuts": {
+     "places_with_code": 81,
+     "by_source": {
+      "wikidata": 81
+     },
+     "official_check": {
+      "no_official_list": 81
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "district": 985,
+    "municipality": 707,
+    "province": 79
+   }
+  },
+  "US": {
+   "places_total": 38839,
+   "places_municipality": 19513,
+   "systems": {
+    "us_census_geoid": {
+     "places_with_code": 31696,
+     "by_source": {
+      "other": 31696
+     },
+     "official_check": {
+      "no_official_list": 31696
+     },
+     "conflicts": {}
+    }
+   },
+   "places_by_admin_level": {
+    "municipality": 19513,
+    "township": 12621,
+    "town": 3564,
+    "county": 3140,
+    "adm2": 1
+   }
+  }
+ }
+}
