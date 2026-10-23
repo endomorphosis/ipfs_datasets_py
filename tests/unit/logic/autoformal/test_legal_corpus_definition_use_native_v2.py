@@ -786,3 +786,321 @@ def test_unresolved_native_cleanup_preserves_same_exception_and_handle(
         assert receipt[flag] is False
     for name, text in preparation.files:
         assert (output / "project" / name).read_bytes() == text.encode("utf-8")
+
+
+# The new complete-norm profile reuses the authored fixture and original native
+# boundary. Synthetic observations below never supply real Lean proof evidence.
+def bound_norm_native_data(mode="body_with_membership"):
+    data, preparation = _FIXTURE.bound_norm_definition_data(mode)
+    return data, preparation
+
+
+def bound_norm_native_arguments(data, preparation):
+    return {
+        "expected_preparation_sha256": preparer.bound_norm_definition_preparation_sha256(preparation),
+        "expected_bound_report_sha256": data["expected_bound_report_sha256"],
+        "bound_definition_inputs": data["bound_definition_inputs"],
+        "toolchain": data["toolchain"],
+    }
+
+
+def bound_norm_native_validate(data, preparation, **overrides):
+    return native.validate_bound_norm_definition_native_v1(
+        preparation, data["bound_report"],
+        **(bound_norm_native_arguments(data, preparation) | overrides))
+
+
+def bound_norm_native_build(data, preparation, executable, output, **overrides):
+    return native.build_bound_norm_definition_native_v1(
+        preparation, data["bound_report"],
+        **(bound_norm_native_arguments(data, preparation) | {
+            "lake_executable": str(executable), "output_directory": output,
+            "timeout_seconds": 12,
+        } | overrides))
+
+
+@pytest.fixture(scope="module")
+def bound_norm_native_base():
+    return bound_norm_native_data()
+
+
+@pytest.mark.parametrize("mode,theorem_count", [
+    ("instance_only", 2), ("body_with_membership", 3),
+])
+def test_bound_norm_native_exact_mode_handoff_retains_frozen_originals(
+        mode, theorem_count, synthetic_compiler, tmp_path):
+    data, preparation = bound_norm_native_data(mode)
+    original_inputs = deepcopy(data)
+    assert native.preparation_sha256(preparation) == (
+        preparer.bound_norm_definition_preparation_sha256(preparation))
+    assert bound_norm_native_validate(data, preparation) == preparation
+    executable, calls = synthetic_compiler(preparation)
+    output = tmp_path / "complete-norm-project"
+    receipt = bound_norm_native_build(data, preparation, executable, output)
+    manifest = preparation.to_dict()
+    assert len(calls) == 1 and receipt["build_passed"] is True
+    assert receipt["schema"] == native.BOUND_NORM_BUILD_SCHEMA
+    assert receipt["profile"] == native.BOUND_NORM_PROFILE
+    assert len(receipt["conditional_theorems"]) == theorem_count
+    assert receipt["theorem_axiom_dependencies"] == {
+        name: [] for name in manifest["conditional_theorems"]}
+    assert len(receipt["artifact_sha256"]) == 6
+    assert len(receipt["executed_project_sha256"]) == 9
+    assert receipt["bound_definition_report_sha256"] == data["expected_bound_report_sha256"]
+    assert receipt["bound_definition_mode"] == mode
+    assert receipt["original_input_commitment_sha256"] == manifest["original_input_commitment_sha256"]
+    for key, pin in receipt["retained_manifest_field_sha256"].items():
+        assert pin == sha(canonical(manifest[key])), key
+    assert receipt["definition_alternatives_count"] == len(manifest["definition_alternatives"])
+    assert receipt["nomination_inventory_count"] == len(manifest["nomination_inventory"])
+    assert receipt["review_evidence_status"] == "unsigned_pending_source_meaning_and_applicability"
+    assert receipt["review_blockers"] == manifest["review_blockers"]
+    assert receipt["review_prerequisites_satisfied_under_selected_trust"] is False
+    assert receipt["original_preparation_build_eligible"] is False
+    for key in ("norm_truth_proved", "definition_applied_to_norm",
+                "membership_assumption_verified", "source_adoption_verified",
+                "governing_definition_use_verified"):
+        assert receipt[key] is False, key
+    assert receipt["theorem_assumptions"] == manifest["theorem_assumptions"]
+    assert "complete unchanged norm" in receipt["scope"]
+    assert_no_authority(receipt)
+    for name, text in preparation.files:
+        assert (output / "project" / name).read_text() == text
+        assert (output / "executed-inputs" / name).read_bytes() == text.encode("utf-8")
+    assert json.loads((output / "build-receipt.json").read_bytes()) == receipt
+    assert native.bound_norm_definition_compilation_receipt_sha256(receipt) == sha(canonical(receipt))
+    assert data == original_inputs
+
+
+@pytest.mark.parametrize("failure", [
+    "wrong_profile", "preparation_pin", "bound_report_pin", "extra_replay_input",
+    "request_pin", "complete_input_bound",
+])
+def test_bound_norm_native_preflight_refuses_before_lazy_owners(
+        bound_norm_native_base, monkeypatch, failure):
+    data, preparation = bound_norm_native_base
+    offered = deepcopy(data)
+    kwargs = bound_norm_native_arguments(offered, preparation)
+    if failure == "wrong_profile":
+        manifest = preparation.to_dict()
+        manifest["profile"] = preparer.PROFILE
+        preparation = reseal_manifest(preparation, manifest)
+        kwargs["expected_preparation_sha256"] = native.preparation_sha256(preparation)
+    elif failure == "preparation_pin":
+        kwargs["expected_preparation_sha256"] = "0" * 64
+    elif failure == "bound_report_pin":
+        kwargs["expected_bound_report_sha256"] = "0" * 64
+    elif failure == "extra_replay_input":
+        kwargs["bound_definition_inputs"]["unexpected"] = None
+    elif failure == "request_pin":
+        kwargs["bound_definition_inputs"]["expected_request_sha256"] = "0" * 64
+    else:
+        kwargs["bound_definition_inputs"]["companion_inputs"]["too_large"] = "x" * (49 * 1024**2)
+    def forbidden():
+        raise AssertionError("invalid native inputs reached replay owners")
+    monkeypatch.setattr(native, "_owners", forbidden)
+    with pytest.raises(ValueError):
+        native.validate_bound_norm_definition_native_v1(
+            preparation, offered["bound_report"], **kwargs)
+
+
+def test_bound_norm_native_legacy_cache_remains_separate(
+        bound_norm_native_base, base):
+    old_data, old_preparation = base
+    data, preparation = bound_norm_native_base
+    assert validate(old_data, old_preparation) == old_preparation
+    old_cache = dict(native._OPERATION_PINS)
+    assert bound_norm_native_validate(data, preparation) == preparation
+    bound_cache = dict(native._BOUND_NORM_OPERATION_PINS)
+    assert native._OPERATION_PINS == old_cache
+    assert bound_cache != old_cache
+    assert validate(old_data, old_preparation) == old_preparation
+    assert native._OPERATION_PINS == old_cache
+    assert native._BOUND_NORM_OPERATION_PINS == bound_cache
+
+
+@pytest.mark.parametrize("fault", ["artifact_missing", "source_changed", "input_changed", "missing_axiom"])
+def test_bound_norm_native_failed_observation_retains_original_project(
+        bound_norm_native_base, synthetic_compiler, tmp_path, fault):
+    original_data, preparation = bound_norm_native_base
+    before = deepcopy(original_data)
+    data = deepcopy(original_data)
+    kwargs = {}
+    if fault == "artifact_missing":
+        kwargs["output_edit"] = lambda outputs, artifacts, sources: outputs.pop(artifacts[0])
+    elif fault == "source_changed":
+        kwargs["output_edit"] = lambda outputs, artifacts, sources: outputs.__setitem__(
+            sources[0], b"changed executed input")
+    elif fault == "input_changed":
+        kwargs["after"] = lambda: data["bound_definition_inputs"]["companion"].__setitem__(
+            "selected_interpretation", "unsupported post-run caller mutation")
+    else:
+        kwargs["stdout"] = "\n".join(axiom_stdout(preparation).splitlines()[:-1]) + "\n"
+    executable, calls = synthetic_compiler(preparation, **kwargs)
+    output = tmp_path / "failed-complete-norm-project"
+    receipt = bound_norm_native_build(data, preparation, executable, output)
+    assert len(calls) == 1 and receipt["build_passed"] is False
+    assert receipt["lean_compilation_verified"] is False
+    assert receipt["conditional_proofs_verified"] is False
+    assert receipt["status"] == "conditional_native_checks_failed"
+    assert_no_authority(receipt)
+    for name, text in preparation.files:
+        assert (output / "project" / name).read_text() == text
+    assert json.loads((output / "build-receipt.json").read_bytes()) == receipt
+    if fault == "input_changed":
+        assert receipt["post_run_validation_passed"] is False
+    assert original_data == before
+
+
+
+@pytest.fixture(scope="module")
+def bound_norm_installed_lake():
+    """Skip before constructing replay inputs unless original custody admits Lean."""
+    value = os.environ.get("IPFS_DATASETS_BOUND_NORM_NATIVE_LAKE")
+    if not value:
+        pytest.skip("set IPFS_DATASETS_BOUND_NORM_NATIVE_LAKE for admitted installed Lean checks")
+    executable = Path(value)
+    expected = Path("/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake")
+    assert executable.is_absolute() and executable == executable.resolve() == expected
+    pins = {
+        str(executable): "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+        str(executable.parent / "lean"): "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085",
+    }
+    for name, pin in pins.items():
+        path = Path(name)
+        assert path.is_file() and not path.is_symlink()
+        raw = path.read_bytes()
+        assert raw.startswith(b"\x7fELF") and sha(raw) == pin
+    return executable, pins
+
+
+@pytest.fixture(scope="module")
+def bound_norm_actual_project(bound_norm_installed_lake, tmp_path_factory):
+    # The opt-in prerequisite resolves before this intentionally expensive
+    # complete source/definition replay. The two cases share one positive build.
+    executable, binary_pins = bound_norm_installed_lake
+    data, preparation = bound_norm_native_data("body_with_membership")
+    output = tmp_path_factory.mktemp("bound-norm-native", numbered=False) / "positive"
+    receipt = native.build_bound_norm_definition_native_v1(
+        preparation, data["bound_report"],
+        **bound_norm_native_arguments(data, preparation),
+        lake_executable=str(executable), output_directory=output, timeout_seconds=60)
+    return data, preparation, output, receipt, executable, binary_pins
+
+
+def test_bound_norm_native_installed_lean_three_conditional_theorems(bound_norm_actual_project):
+    """One actual offline build plus the unchanged owner's two version probes."""
+    data, preparation, output, receipt, executable, binary_pins = bound_norm_actual_project
+    manifest = preparation.to_dict()
+    assert receipt["build_passed"] is True, receipt
+    assert receipt["runtime"] == "native" and receipt["native_runtime_verified"] is True
+    assert type(receipt["pid"]) is int and receipt["pid"] > 0
+    assert receipt["binary_sha256"] == binary_pins
+    assert receipt["command"] == [str(executable), "--offline", "--no-cache", "build", "legal"]
+    assert receipt["cleanup_confirmed"] is True
+    assert receipt["observed_process_scope_passed"] is True
+    assert receipt["original_preparation_unchanged"] is True
+    assert receipt["post_run_validation_passed"] is True
+    assert receipt["manifest_coverage_passed"] is True
+    assert receipt["executed_project_readback_passed"] is True
+    assert len(receipt["compiled_modules"]) == 6
+    assert len(receipt["conditional_theorems"]) == 3
+    assert receipt["theorem_axiom_dependencies"] == {
+        name: [] for name in manifest["conditional_theorems"]}
+    assert receipt["review_evidence_status"] == "unsigned_pending_source_meaning_and_applicability"
+    assert receipt["review_prerequisites_satisfied_under_selected_trust"] is False
+    assert receipt["original_preparation_build_eligible"] is False
+    for key in ("norm_truth_proved", "definition_applied_to_norm",
+                "membership_assumption_verified", "source_adoption_verified",
+                "governing_definition_use_verified"):
+        assert receipt[key] is False, key
+    assert_no_authority(receipt)
+    for name, text in preparation.files:
+        assert (output / "project" / name).read_bytes() == text.encode("utf-8")
+        assert (output / "executed-inputs" / name).read_bytes() == text.encode("utf-8")
+    for module in manifest["expected_modules"]:
+        assert (output / "compiled" / (module.replace(".", "/") + ".olean")).stat().st_size > 0
+    for name, pin in receipt["log_sha256"].items():
+        assert sha((output / name).read_bytes()) == pin
+    assert json.loads((output / "build-receipt.json").read_bytes()) == receipt
+    assert native.bound_norm_definition_compilation_receipt_sha256(receipt) == sha(canonical(receipt))
+
+
+def test_bound_norm_native_installed_lean_norm_is_not_membership(bound_norm_actual_project):
+    """A separate original-runner negative cannot turn hNorm into hMembership."""
+    data, preparation, positive_output, positive, executable, binary_pins = bound_norm_actual_project
+    assert positive["build_passed"] is True and positive["binary_sha256"] == binary_pins
+    assert native._binary_recheck(binary_pins)
+    manifest = preparation.to_dict()
+    norm_module = next(row["module"] for row in manifest["native_fragments"] if row["role"] == "norm")
+    definition_module = next(row["module"] for row in manifest["native_fragments"] if row["role"] == "definition")
+    namespace = manifest["expected_modules"][-1]
+    files = dict(preparation.files)
+    root_name = namespace + ".lean"
+    files[root_name] = (
+        "import " + norm_module + "\nimport " + definition_module + "\n"
+        "namespace " + namespace + "\nopen " + definition_module + "\n"
+        "theorem invalid_norm_driven_body {Entity Agent : Type} "
+        "(i : Interpretation Entity Agent) (t : Nat) (entity : Entity)\n"
+        "    (hNorm : " + norm_module + ".formula_0 i t) "
+        "(hDefinition : formula_0 i t) : bodyAt i entity t := by\n"
+        "  exact (hDefinition entity).mp hNorm\n"
+        "end " + namespace + "\n")
+    for module in (manifest["expected_modules"][0], norm_module, definition_module):
+        name = module.replace(".", "/") + ".lean"
+        assert files[name] == dict(preparation.files)[name]
+    # The production API must reject this forged project before discovering
+    # toolchain or running a compiler; only this bounded negative control runs it.
+    forged = reseal_manifest(preparation, manifest, files)
+    with patch.object(native, "_installed_toolchain", side_effect=AssertionError("forged native dispatch")):
+        with pytest.raises(ValueError):
+            bound_norm_native_validate(data, forged,
+                expected_preparation_sha256=native.preparation_sha256(forged))
+    command = tuple(positive["command"])
+    request = process.ToolRunRequest(
+        argv=command, input_files=files, output_paths=tuple(sorted(files)),
+        owned_process_observation=True,
+        environment={"ELAN_TOOLCHAIN": TOOLCHAIN, "LEAN_NUM_THREADS": "1"},
+        limits=process.ToolRunLimits(
+            timeout_seconds=60, cpu_seconds=60, resident_memory_bytes=2 * 1024**3,
+            max_output_bytes=2 * 1024**2, max_input_bytes=8 * 1024**2,
+            max_workspace_bytes=128 * 1024**2, max_output_files=len(files)))
+    run = process.BoundedToolRunner().run(request)
+    assert native._binary_recheck(binary_pins)
+    assert tuple(run.command) == command and run.runtime is process.ToolRuntime.NATIVE
+    assert type(run.pid) is int and run.pid > 0
+    assert run.returncode is not None and run.returncode > 0 and not run.ok
+    assert not (run.unavailable or run.timed_out or run.cancelled or run.resource_exhausted
+                or run.workspace_limit_exceeded or run.output_truncated or run.error)
+    assert run.workspace_cleaned and run.native_lifecycle.cleanup_confirmed
+    assert native._observed_process_scope(run.native_lifecycle, run.pid, process)
+    assert run.output_files == {name: body.encode("utf-8") for name, body in files.items()}
+    diagnostics = run.stdout + "\n" + run.stderr
+    assert "type mismatch" in diagnostics.lower() and "hNorm" in diagnostics
+    assert all(text not in diagnostics.lower() for text in (
+        "unknown identifier", "unknown constant", "unknown module", "sorry"))
+    output = positive_output.parent / "negative-norm-is-not-membership"
+    output.mkdir()
+    for name, text in sorted(files.items()):
+        retained = output / "executed-inputs" / name
+        retained.parent.mkdir(parents=True, exist_ok=True)
+        retained.write_bytes(run.output_files[name])
+        assert retained.read_bytes() == text.encode("utf-8")
+    (output / "stdout.txt").write_bytes(run.stdout.encode("utf-8"))
+    (output / "stderr.txt").write_bytes(run.stderr.encode("utf-8"))
+    observation = {
+        "schema": "authored-bound-norm-no-membership-negative/v1",
+        "positive_preparation_sha256": native.preparation_sha256(preparation),
+        "positive_native_receipt_sha256": native.bound_norm_definition_compilation_receipt_sha256(positive),
+        "input_sha256": {name: sha(text.encode("utf-8")) for name, text in sorted(files.items())},
+        "unchanged_modules": [manifest["expected_modules"][0], norm_module, definition_module],
+        "command": list(run.command), "binary_sha256": binary_pins,
+        "pid": run.pid, "returncode": run.returncode,
+        "native_lifecycle": run.native_lifecycle.to_dict(),
+        "expected_failure": "hNorm has the complete norm type, not headAt membership",
+        "expected_compiler_type_mismatch_observed": True,
+        "source_readback_passed": True, "authority": dict(native.AUTHORITY),
+        "training_mask": 0, "evaluation_gold_mask": 0,
+    }
+    (output / "negative-observation.json").write_bytes(canonical(observation))
+    assert json.loads((output / "negative-observation.json").read_bytes()) == observation
