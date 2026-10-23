@@ -1458,7 +1458,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-22T23:16:47.750176+00:00",
+  "last_updated_at_utc": "2026-10-23T00:48:47.764937+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -2621,6 +2621,16 @@
       "root": "datasets_repository",
       "scope": "20 authored controls plus4 genuine fixed-BOS forwards;2148 scores within preregistered math.isclose2e-6,780 exact-value equal,maxerror1.1920928955078125e-07. Full sealed15files/3863942B and source/native/storage closed. No training, real autonomous generation, all-six-state scoring, efficacy or legal/native-GTE/graph/Lean admission.",
       "status": "closed_authored_serving_controls_and_four_real_BOS_scores"
+    },
+    {
+      "id": "cp128-warmstart-generation-qualified-20261022-01",
+      "observed_bytes": 56297,
+      "observed_sha256": "1a73c14e51cf0187fdaf51d2ea4d74a6d3f79275497760b11c2429c714ecacc6",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-warmstart-generation-20261022.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "All six saved objective/step states \u00d7 two exposed authored384 rows; Typed completion is 12/12; exact emitted-ID reconstruction including EOS is 0/12; exact canonical compact-content AST reconstruction is 0/12. 800 new generation forwards/8 restores; 4 retained partial-zero cases are not successful original pipelines. No zero rerun, extra scores/scripted controls/Adam/backward/update/reencoding. Numerical-only zero compatibility independently accepted after storage recovery. Legal prose/full norm and statutory/heldout/native-GTE/graph/Lean unmeasured.",
+      "status": "closed_mixed_custody_authored384_paired_autonomous_generation"
     }
   ]
 }
