@@ -1,0 +1,121 @@
+{
+  "completed_training": {
+    "CP128_warmstart_BOS100": {
+      "enrolled_observations": 12,
+      "exact_ASTs": 0,
+      "exact_IDs": 0,
+      "scope": "Two exposed authored384 rows; successful trained and partial-custody zero observations remain distinct.",
+      "typed": 12
+    },
+    "Context150": {
+      "child_exact": [
+        0,
+        60
+      ],
+      "child_fields": [
+        142,
+        240
+      ],
+      "parent_exact": [
+        2,
+        60
+      ],
+      "parent_fields": [
+        96,
+        240
+      ]
+    },
+    "generic_four_row_resume": {
+      "case_passes": 1,
+      "phase_passes": 3,
+      "physical_updates": 10,
+      "public_evidence": "docs/autoformalization/evidence/legal-ir-varied-compact-resume-20261023.json",
+      "state_equal_except_immediate_parent": true,
+      "unique_update_positions": 5
+    },
+    "initial_six_fits_plus_six_continuations": {
+      "physical_updates": 3060,
+      "scope": "This340-plus170update campaign only, not a global total."
+    },
+    "responsible_heads": {
+      "F17_F18_fresh_DEV_TEST_exact": [
+        0,
+        36
+      ],
+      "F17_TRAIN": [
+        154,
+        168
+      ],
+      "F18_TRAIN": [
+        154,
+        168
+      ],
+      "N11_TRAIN": [
+        154,
+        168
+      ],
+      "N12_TRAIN": [
+        153,
+        168
+      ],
+      "conditioning_disabled": true,
+      "scope": "Distinct authored cohorts; no cross-width ranking."
+    }
+  },
+  "decisions": [
+    "Reuse the already-retained two-source/eight-vector panel; do not recreate it.",
+    "Original384/768 producer/cache packets and operation closeout remain missing; alignment is not current runtime or training compatibility.",
+    "Generic compactv2 already handles1\u201316 authored rows and variable lengths; extend its existing profile only for demonstrated statutory requirements.",
+    "Existing quantified/modal Lean rendering stays the owner; add only missing source-bound complete-norm corpus composition.",
+    "One reviewed norm, governing definition and two physical uses precede the20\u201340provision pilot.",
+    "Keep vector reconstruction, autonomous complete AST accuracy, graph closure and Lean preservation as distinct evaluation gates."
+  ],
+  "evaluation_gold_mask": 0,
+  "hub_metadata": [
+    {
+      "README_bytes": 3476,
+      "README_sha256": "a3b0aaa50d3274d4dc18c7ea24989c7eaf69b78b9e085b8b2ce6019fd5eb312e",
+      "dataset": "justicedao/ipfs_uscode",
+      "observation": "Bounded repository metadata and pinned card only; no dataset payload adoption.",
+      "revision": "91ca1838853ac82d7a12dd4ab47d9686f47667f9"
+    },
+    {
+      "README_bytes": 13863,
+      "README_sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6",
+      "dataset": "justicedao/uscode-autoformal-span-cache",
+      "observation": "Bounded repository metadata and pinned card only; no dataset payload adoption.",
+      "revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3"
+    },
+    {
+      "README_bytes": 581,
+      "README_sha256": "5ef5c8cb742e67cdbafa91315ddec88a38fc6d803467629a493b7148bbab6bd4",
+      "dataset": "justicedao/uscode-autoformal-entity-cache",
+      "observation": "Bounded repository metadata and pinned card only; no dataset payload adoption.",
+      "revision": "79d54378c5d6a89ab56e7a27e0f0ba867e800e19"
+    }
+  ],
+  "new_execution": {
+    "dataset_payload_reads": 0,
+    "models": 0,
+    "native_Lean": 0,
+    "tests": 0,
+    "training_updates": 0
+  },
+  "qualification_or_legal_authority": false,
+  "recorded_at_utc": "2026-10-23T06:45:41.862730+00:00",
+  "retained_inputs": [
+    {
+      "bytes": 11702,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-retained-four-width-alignment-20261022-01/alignment-summary-01.json",
+      "sha256": "9cab9c0270ba20571de75aec88b86a52a8a537943badd8e6e11166359dd851de"
+    },
+    {
+      "bytes": 38836,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-03/reviews/retained-training-four-width-review-v01.json",
+      "sha256": "d592f131aff699917160df68e49138e437038b1b7441113ad21121318dccee5a"
+    }
+  ],
+  "schema": "legal-ir-comprehensive-plan-reuse-review/v1",
+  "scope": "In-place corrections to the existing comprehensive plan and training history; original24taskrecords and single-owner architecture preserved.",
+  "training_mask": 0
+}
