@@ -462,3 +462,484 @@ def validate_counted_frame(report, request_raw, *, expected_request_sha256,
     _need(_wire(report, MAX_REPORT_BYTES) == _wire(regenerated, MAX_REPORT_BYTES),
           "counted-frame report differs from complete authoritative replay")
     return regenerated
+
+
+# This additive archival transport has its own grammar.  It neither widens the
+# Object/Bool compact-content profile nor migrates a numerical checkpoint.
+COMPACT_CONTENT_SCHEMA = "legal-counted-compact-content/v1"
+COMPACT_CONTEXT_SCHEMA = "legal-counted-compact-context/v1"
+COMPACT_IDENTITY_SCHEMA = "legal-counted-compact-identity/v1"
+COMPACT_PROJECTION_SCHEMA = "legal-counted-compact-projection/v1"
+COMPACT_PREDICTION_SCHEMA = "legal-counted-compact-prediction/v1"
+COMPACT_RECONSTRUCTION_SCHEMA = "legal-counted-compact-reconstruction/v1"
+COMPACT_CODEC_SCHEMA = "legal-counted-compact-token-codec/v1"
+COMPACT_ENCODING_SCHEMA = "legal-counted-compact-token-encoding/v1"
+COMPACT_CANDIDATE_SCHEMA = "legal-counted-compact-token-candidate/v1"
+COMPACT_PROFILE = "authored-at-most-three-many-sorted-compact/v1"
+MAX_COMPACT_SEQUENCE_TOKENS = 512
+COMPACT_PAD_ID, COMPACT_BOS_ID, COMPACT_EOS_ID = 0, 1, 2
+_COMPACT_COUNTS = {"nodes": 49, "quantifiers": 6, "membership_occurrences": 4,
+                   "equality_occurrences": 6, "variable_occurrences": 24}
+_COMPACT_AUTHORITY = {**AUTHORITY, **dict.fromkeys((
+    "training_qualified", "checkpoint_compatibility_verified",
+    "permitted_inference_context_verified", "source_encoder_verified",
+), False)}
+_COMPACT_LIMITATIONS = [
+    "Only the existing fixed authored counted frame is represented; no general many-sorted or numerical decoder profile is introduced.",
+    "Projection context is target-derived declaration data, not independently permitted source-only model input.",
+    "Canonical request reconstruction preserves complete original identities; original transport whitespace is not reconstructed.",
+    "Lexical transport and genuine typed replay supply finite engineering evidence, not source meaning, training, convergence, checkpoint compatibility or Lean admission.",
+    "Named source fences do not attest executed bytecode, an interpreter/third-party closure or a hermetic runtime.",
+]
+
+
+def _compact_capture(value, maximum=MAX_REPORT_BYTES):
+    """Detach bounded ordinary JSON before allocating complete serialized text."""
+    remaining, budget, active = 20000, maximum, set()
+
+    def charge(size):
+        nonlocal budget
+        budget -= size
+        _need(budget >= 0, "complete counted compact byte bound exceeded")
+
+    def visit(item, depth):
+        nonlocal remaining
+        remaining -= 1
+        _need(remaining >= 0 and depth <= 64, "counted compact item/depth bound exceeded")
+        if type(item) in (dict, list):
+            _need(id(item) not in active, "cyclic counted compact JSON refused")
+            _need(len(item) <= remaining, "counted compact population bound exceeded")
+            active.add(id(item))
+            charge(2 + max(0, len(item) - 1))
+            try:
+                if type(item) is dict:
+                    result = {}
+                    for key, child in item.items():
+                        _need(type(key) is str, "ordinary counted compact string keys required")
+                        charge(1)
+                        result[visit(key, depth + 1)] = visit(child, depth + 1)
+                    return result
+                return [visit(child, depth + 1) for child in item]
+            finally:
+                active.remove(id(item))
+        if type(item) is str:
+            _need(len(item) <= maximum, "bounded counted compact text required")
+            charge(2)
+            for character in item:
+                code = ord(character)
+                _need(code != 0 and not 0xD800 <= code <= 0xDFFF,
+                      "ordinary non-NUL scalar UTF8 required")
+                if character in '\"\\\b\f\n\r\t':
+                    charge(2)
+                elif code < 32:
+                    charge(6)
+                else:
+                    charge(1 if code < 128 else 2 if code < 2048 else 3 if code < 65536 else 4)
+        elif item is None or type(item) is bool:
+            charge(4 if item is None or item is True else 5)
+        elif type(item) is int:
+            _need(-(1 << 63) < item < (1 << 63), "bounded counted compact plain integer required")
+            charge(len(str(item)))
+        else:
+            raise ValueError("ordinary counted compact JSON without floats required")
+        return item
+
+    return visit(value, 0)
+
+
+def _compact_wire(value, maximum=MAX_REPORT_BYTES):
+    captured = _compact_capture(value, maximum)
+    raw = json.dumps(captured, sort_keys=True, separators=(",", ":"),
+                     ensure_ascii=False, allow_nan=False).encode("utf-8")
+    _need(len(raw) <= maximum, "complete counted compact JSON bound exceeded")
+    return raw
+
+
+def _compact_hash(value, maximum=MAX_REPORT_BYTES):
+    return hashlib.sha256(_compact_wire(value, maximum)).hexdigest()
+
+
+def _compact_parse(raw, expected, label):
+    _digest(expected, label)
+    _need(type(raw) is bytes and 0 < len(raw) <= MAX_REQUEST_BYTES,
+          "bounded exact counted compact bytes required: " + label)
+    _need(hashlib.sha256(raw).hexdigest() == expected, label + " raw SHA256 mismatch")
+    return _compact_capture(_read_json(raw, MAX_REQUEST_BYTES, label), MAX_REQUEST_BYTES)
+
+
+def _compact_context():
+    declaration = _declaration()
+    return {
+        "schema": COMPACT_CONTEXT_SCHEMA,
+        "sorts": ["Object", "EventFrame", "TimeFrame"],
+        "predicate": {"name": "Member", "domain": ["Object", "EventFrame", "TimeFrame"],
+                      "range": "Bool"},
+        **{key: declaration[key] for key in (
+            "frame", "membership", "distinctness", "maximum", "object_variables")},
+    }
+
+
+def _compact_fixed_content():
+    def variable(index):
+        return ["variable", index]
+
+    def fold(kind, items):
+        result = items[0]
+        for item in items[1:]:
+            result = [kind, result, item]
+        return result
+
+    membership = [["predicate", 0, [variable(index), variable(0), variable(1)]]
+                  for index in range(2, 6)]
+    names = {name: index for index, (name, _) in enumerate(_BINDERS)}
+    equalities = [["equality", variable(names[left]), variable(names[right])]
+                  for left, right in _PAIRS]
+    tree = ["implies", fold("and", membership), fold("or", equalities)]
+    for index in reversed(range(len(_BINDERS))):
+        tree = ["forall", index, _BINDERS[index][1], tree]
+    return {"schema": COMPACT_CONTENT_SCHEMA, "tree": tree}
+
+
+def _compact_checked_inputs(content_raw, context_raw, expected_content_sha256,
+                            expected_context_sha256):
+    content = _compact_parse(content_raw, expected_content_sha256, "content")
+    context = _compact_parse(context_raw, expected_context_sha256, "context")
+    _need(_compact_wire(content) == _compact_wire(_compact_fixed_content()),
+          "exact closed many-sorted counted content required")
+    _need(_compact_wire(context) == _compact_wire(_compact_context()),
+          "exact counted frame, signature and ordered-role context required")
+    return content, context
+
+
+def _compact_fence(before, observed=()):
+    for original, detached, token in observed:
+        _need(_compact_wire(original) == token and _compact_wire(detached) == token,
+              "counted compact caller or captured input changed")
+    _need(_owners()[-1] == before, "counted compact producers changed")
+
+
+def _compact_finish(report, before, observed=()):
+    _compact_fence(before, observed)
+    result = _compact_capture(report)
+    _compact_wire(result)
+    _compact_fence(before, observed)
+    return result
+
+
+def _compact_base(schema, before):
+    return {"schema": schema, "profile": COMPACT_PROFILE,
+            "producer_pins": dict(before), "authority": dict(_COMPACT_AUTHORITY),
+            "training_mask": 0, "evaluation_gold_mask": 0,
+            "checkpoint_compatibility_verified": False,
+            "limitations": list(_COMPACT_LIMITATIONS)}
+
+
+def _compact_project_tree(root):
+    node_ids, binder_names = [], []
+
+    def walk(node, bound):
+        node_ids.append(node["node_id"])
+        kind = node["kind"]
+        if kind == "variable":
+            _need(node["symbol"] in bound, "counted compact variable must be lexically bound")
+            return [kind, bound[node["symbol"]]]
+        if kind == "predicate":
+            return [kind, 0, [walk(child, bound) for child in node["arguments"]]]
+        if kind == "forall":
+            binder = node["binders"][0]
+            index = len(binder_names)
+            binder_names.append(binder["name"])
+            return [kind, index, binder["sort"]["name"],
+                    walk(node["arguments"][0], {**bound, binder["name"]: index})]
+        return [kind, *(walk(child, bound) for child in node["arguments"])]
+
+    return {"schema": COMPACT_CONTENT_SCHEMA, "tree": walk(root, {})}, node_ids, binder_names
+
+
+def _compact_identity(request, content, context, raw_sha):
+    expression = request["expression"]
+    _, node_ids, binder_names = _compact_project_tree(expression["root"])
+    return {"schema": COMPACT_IDENTITY_SCHEMA,
+            "expression_id": expression["expression_id"],
+            "signature_id": expression["signature"]["signature_id"],
+            "node_ids": node_ids, "binder_names": binder_names,
+            "content_sha256": _compact_hash(content), "context_sha256": _compact_hash(context),
+            "original_request_sha256": raw_sha,
+            "original_request_canonical_sha256": _compact_hash(request),
+            "original_expression_sha256": _compact_hash(expression)}
+
+
+def project_counted_frame_request_v1(request_raw, *, expected_request_sha256):
+    """Project the fixed authored frame; target-derived context stays a label."""
+    request = _parse(request_raw, expected_request_sha256)
+    owners = _owners()
+    before = owners[-1]
+    checked = prepare_counted_frame(request_raw, expected_request_sha256=expected_request_sha256)
+    _compact_fence(before)
+    _need(_compact_wire(checked["request"]) == _compact_wire(request),
+          "public counted preparation changed its original request")
+    _need(_compact_wire(checked["counts"]) == _compact_wire(_COMPACT_COUNTS) and
+          checked["producer_pins"] == before,
+          "public counted preparation changed counts or producer identities")
+    content, _, _ = _compact_project_tree(checked["typed_expression"]["root"])
+    context = _compact_context()
+    _need(_compact_wire(content) == _compact_wire(_compact_fixed_content()),
+          "public counted preparation differs from fixed compact content")
+    identity = _compact_identity(request, content, context, expected_request_sha256)
+    restored, _, restored_checked = _compact_prediction(content, context, owners, before, identity)
+    _need(_compact_wire(restored) == _compact_wire(request) and
+          _compact_wire(restored_checked["typed_expression"]) ==
+          _compact_wire(checked["typed_expression"]),
+          "counted compact projection is not an exact archival inverse")
+    result = _compact_base(COMPACT_PROJECTION_SCHEMA, before)
+    result.update(status="authored_counted_content_projected_unreviewed", content=content,
+        context=context, identity_sidecar=identity,
+        content_sha256=identity["content_sha256"], context_sha256=identity["context_sha256"],
+        identity_sha256=_compact_hash(identity), original_request_sha256=expected_request_sha256,
+        original_request_canonical_sha256=identity["original_request_canonical_sha256"],
+        original_expression_sha256=identity["original_expression_sha256"],
+        counted_report=checked, counts=dict(_COMPACT_COUNTS),
+        context_origin="target_derived_authored_declaration",
+        roundtrip_receipt={"canonical_request_exact": True, "typed_expression_exact": True,
+            "node_identity_exact": True, "original_transport_whitespace_restored": False})
+    return _compact_finish(result, before)
+
+
+def validate_counted_frame_projection_v1(report, request_raw, *, expected_report_sha256,
+                                         expected_request_sha256):
+    """Independently pin the whole projection and repeat original public replay."""
+    _digest(expected_report_sha256, "counted compact projection")
+    _parse(request_raw, expected_request_sha256)
+    original = report
+    if type(report) is bytes:
+        report = _read_json(report, MAX_REPORT_BYTES, "counted compact projection")
+    captured = _compact_capture(report)
+    token = _compact_wire(captured)
+    _need(hashlib.sha256(token).hexdigest() == expected_report_sha256,
+          "counted compact projection SHA256 mismatch")
+    observed = () if type(original) is bytes else ((original, captured, token),)
+    before = _owners()[-1]
+    _compact_fence(before, observed)
+    regenerated = project_counted_frame_request_v1(request_raw,
+        expected_request_sha256=expected_request_sha256)
+    _compact_fence(before, observed)
+    _need(token == _compact_wire(regenerated), "counted compact projection differs from public replay")
+    return _compact_finish(regenerated, before, observed)
+
+
+def _compact_materialize(owners, identity=None, seed=None):
+    ast, signatures = owners[:2]
+    seed = seed or _compact_hash({"content": _compact_fixed_content(), "context": _compact_context()})
+    expression = _fixed_expression(ast, signatures,
+        expression_id=identity["expression_id"] if identity else "counted-compact-expression:" + seed,
+        signature_id=identity["signature_id"] if identity else "counted-compact-signature:" + seed).to_dict()
+    serial = 0
+
+    def identify(node):
+        nonlocal serial
+        node["node_id"] = identity["node_ids"][serial] if identity else "counted-compact-node:" + seed + ":" + str(serial)
+        serial += 1
+        for child in node["arguments"]:
+            identify(child)
+
+    identify(expression["root"])
+    _need(serial == MAX_NODES, "complete counted compact node population required")
+    # Existing TypedExpression recomputes its own digest after identity changes.
+    expression.pop("content_digest")
+    expression = ast.TypedExpression.from_dict(expression).to_dict()
+    return {**_declaration(), "expression": expression}
+
+
+def _compact_prediction(content, context, owners, before, identity=None):
+    request = _compact_materialize(owners, identity)
+    raw = _compact_wire(request, MAX_REQUEST_BYTES)
+    checked = prepare_counted_frame(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+    _compact_fence(before)
+    _need(_compact_wire(checked["counts"]) == _compact_wire(_COMPACT_COUNTS) and
+          checked["producer_pins"] == before and
+          _compact_wire(checked["request"]) == raw,
+          "public counted decoding changed request, counts or producer identities")
+    projected, _, _ = _compact_project_tree(checked["typed_expression"]["root"])
+    _need(_compact_wire(projected) == _compact_wire(content) and
+          _compact_wire(context) == _compact_wire(_compact_context()),
+          "decoded typed frame differs from complete compact inputs")
+    return request, raw, checked
+
+
+def decode_counted_frame_content_v1(content_raw, context_raw, *, expected_content_sha256,
+                                   expected_context_sha256):
+    """Decode this fixed content/context without a target, source or sidecar."""
+    content, context = _compact_checked_inputs(content_raw, context_raw,
+        expected_content_sha256, expected_context_sha256)
+    owners = _owners()
+    before = owners[-1]
+    request, raw, checked = _compact_prediction(content, context, owners, before)
+    result = _compact_base(COMPACT_PREDICTION_SCHEMA, before)
+    result.update(status="authored_counted_content_decoded_unreviewed", request=request,
+        request_sha256=hashlib.sha256(raw).hexdigest(), counted_report=checked,
+        content_sha256=_compact_hash(content), context_sha256=_compact_hash(context),
+        content_raw_sha256=expected_content_sha256, context_raw_sha256=expected_context_sha256,
+        counts=dict(_COMPACT_COUNTS), identity_mode="generated")
+    return _compact_finish(result, before)
+
+
+def reconstruct_counted_frame_request_v1(content_raw, context_raw, identity_raw,
+                                         original_request_raw, *, expected_content_sha256,
+                                         expected_context_sha256, expected_identity_sha256,
+                                         expected_original_request_sha256):
+    """Restore exact canonical original identities against independent raw input."""
+    content, context = _compact_checked_inputs(content_raw, context_raw,
+        expected_content_sha256, expected_context_sha256)
+    identity = _compact_parse(identity_raw, expected_identity_sha256, "identity")
+    original = _parse(original_request_raw, expected_original_request_sha256)
+    _keys(identity, {"schema", "expression_id", "signature_id", "node_ids", "binder_names",
+        "content_sha256", "context_sha256", "original_request_sha256",
+        "original_request_canonical_sha256", "original_expression_sha256"}, "counted compact identity")
+    _need(identity["schema"] == COMPACT_IDENTITY_SCHEMA, "counted compact identity schema differs")
+    _need(_compact_wire(identity) == _compact_wire(
+        _compact_identity(original, content, context, expected_original_request_sha256)),
+        "identity sidecar differs from independently pinned complete original request")
+    owners = _owners()
+    before = owners[-1]
+    original_checked = prepare_counted_frame(original_request_raw,
+        expected_request_sha256=expected_original_request_sha256)
+    _compact_fence(before)
+    request, raw, checked = _compact_prediction(content, context, owners, before, identity)
+    _need(_compact_wire(request) == _compact_wire(original) and
+          _compact_wire(checked["typed_expression"]) == _compact_wire(original_checked["typed_expression"]),
+          "counted compact archival reconstruction is not exact")
+    result = _compact_base(COMPACT_RECONSTRUCTION_SCHEMA, before)
+    result.update(status="authored_counted_request_reconstructed_unreviewed", request=request,
+        request_sha256=hashlib.sha256(raw).hexdigest(), counted_report=checked,
+        original_request_sha256=expected_original_request_sha256,
+        original_request_canonical_sha256=_compact_hash(original),
+        content_sha256=_compact_hash(content), context_sha256=_compact_hash(context),
+        identity_sha256=_compact_hash(identity), counts=dict(_COMPACT_COUNTS), identity_mode="restored")
+    result.update(content_raw_sha256=expected_content_sha256,
+        context_raw_sha256=expected_context_sha256, identity_raw_sha256=expected_identity_sha256)
+    return _compact_finish(result, before)
+
+
+def _compact_fixed_codec():
+    literals = ("schema", "tree", COMPACT_CONTENT_SCHEMA, "variable", "predicate",
+                "equality", "forall", "and", "or", "implies", "Object", "EventFrame", "TimeFrame")
+    lexical = {json.dumps(value, ensure_ascii=False) for value in literals}
+    lexical.update("{}[],:")
+    lexical.update(str(index) for index in range(6))
+    vocabulary = ["<pad>", "<bos>", "<eos>", *sorted(lexical)]
+    return {"schema": COMPACT_CODEC_SCHEMA, "profile": COMPACT_PROFILE,
+        "format": "fixed-json-lexical-counted-content/v1",
+        "content_schema": COMPACT_CONTENT_SCHEMA, "context_schema": COMPACT_CONTEXT_SCHEMA,
+        "vocabulary": vocabulary, "vocabulary_size": len(vocabulary),
+        "pad_id": COMPACT_PAD_ID, "bos_id": COMPACT_BOS_ID, "eos_id": COMPACT_EOS_ID,
+        "max_sequence_tokens": MAX_COMPACT_SEQUENCE_TOKENS,
+        "integer_min": 0, "integer_max": 5, "max_nodes": 49, "max_binders": 6,
+        "checkpoint_compatibility_verified": False, "numerical_head_compatible": False}
+
+
+def build_counted_frame_token_codec_v1():
+    """Publish a fixed counted-only lexical codec; use no model or checkpoint."""
+    _compact_self_fence()
+    result = _compact_capture(_compact_fixed_codec())
+    _compact_wire(result)
+    _compact_self_fence()
+    return result
+
+
+def _compact_self_fence():
+    _need(hashlib.sha256(Path(__file__).read_bytes()).hexdigest() == _SELF_PIN,
+          "counted compact producer changed since import")
+
+
+def counted_frame_token_codec_sha256(codec):
+    """Hash only the complete exact counted codec, never a legacy codec alias."""
+    _compact_self_fence()
+    captured = _compact_capture(codec)
+    token = _compact_wire(captured)
+    _need(token == _compact_wire(_compact_fixed_codec()), "exact counted compact codec required")
+    _need(_compact_wire(codec) == token, "counted compact codec changed during hashing")
+    _compact_self_fence()
+    return hashlib.sha256(token).hexdigest()
+
+
+def _compact_codec(codec, expected):
+    _digest(expected, "counted compact codec")
+    captured = _compact_capture(codec)
+    token = _compact_wire(captured)
+    _need(hashlib.sha256(token).hexdigest() == expected and
+          token == _compact_wire(_compact_fixed_codec()), "independent exact counted codec SHA256 differs")
+    return captured, (codec, captured, token)
+
+
+def _compact_lexical(content):
+    raw = _compact_wire(content, MAX_REQUEST_BYTES).decode("utf-8")
+    lexical = re.findall(r'"[^"\\\x00-\x1f]*"|[0-5]|[{}\[\],:]', raw)
+    _need("".join(lexical) == raw, "complete counted compact lexical coverage differs")
+    return lexical
+
+
+def _compact_ids(generated_ids):
+    _need(type(generated_ids) is list and 2 <= len(generated_ids) <= MAX_COMPACT_SEQUENCE_TOKENS,
+          "complete counted token ID list within512 required; no truncation")
+    vocabulary_size = len(_compact_fixed_codec()["vocabulary"])
+    _need(all(type(item) is int and 0 <= item < vocabulary_size
+              for item in generated_ids), "plain in-range counted token integers required")
+    captured = list(generated_ids)
+    _need(captured[0] == COMPACT_BOS_ID and captured[-1] == COMPACT_EOS_ID and
+          all(item >= 3 for item in captured[1:-1]),
+          "single BOS and terminal EOS without PAD/interior specials required")
+    return captured, (generated_ids, captured, _compact_wire(captured))
+
+
+def encode_counted_frame_tokens_v1(content_raw, context_raw, *, expected_content_sha256,
+                                   expected_context_sha256, codec, expected_codec_sha256):
+    """Encode complete fixed counted content after genuine typed preparation."""
+    content, context = _compact_checked_inputs(content_raw, context_raw,
+        expected_content_sha256, expected_context_sha256)
+    fixed, observed = _compact_codec(codec, expected_codec_sha256)
+    before = _owners()[-1]
+    _compact_fence(before, (observed,))
+    prediction = decode_counted_frame_content_v1(content_raw, context_raw,
+        expected_content_sha256=expected_content_sha256, expected_context_sha256=expected_context_sha256)
+    _compact_fence(before, (observed,))
+    lexical = _compact_lexical(content)
+    indices = {token: index for index, token in enumerate(fixed["vocabulary"])}
+    _need(all(token in indices for token in lexical), "counted content outside fixed vocabulary")
+    ids, _ = _compact_ids([COMPACT_BOS_ID, *(indices[token] for token in lexical), COMPACT_EOS_ID])
+    result = _compact_base(COMPACT_ENCODING_SCHEMA, before)
+    result.update(status="encoded_unreviewed_counted_content", target_ids=ids,
+        lexical_tokens=lexical, lexical_token_count=len(lexical), total_token_count=len(ids),
+        canonical_content_raw_utf8=_compact_wire(content).decode("utf-8"),
+        content_sha256=_compact_hash(content), context_sha256=_compact_hash(context),
+        codec_sha256=expected_codec_sha256, prediction=prediction, counts=dict(_COMPACT_COUNTS))
+    result.update(content_raw_sha256=expected_content_sha256,
+        context_raw_sha256=expected_context_sha256)
+    return _compact_finish(result, before, (observed,))
+
+
+def decode_counted_frame_tokens_v1(generated_ids, context_raw, *, expected_context_sha256,
+                                   codec, expected_codec_sha256):
+    """Decode one complete lexical sequence, without original identities/target."""
+    fixed, codec_observed = _compact_codec(codec, expected_codec_sha256)
+    ids, ids_observed = _compact_ids(generated_ids)
+    observed = (codec_observed, ids_observed)
+    raw = "".join(fixed["vocabulary"][index] for index in ids[1:-1]).encode("utf-8")
+    content_sha = hashlib.sha256(raw).hexdigest()
+    content, context = _compact_checked_inputs(raw, context_raw, content_sha, expected_context_sha256)
+    _need(_compact_wire(content) == raw, "canonical counted token JSON required; no aliases")
+    _need([fixed["vocabulary"][index] for index in ids[1:-1]] == _compact_lexical(content),
+          "counted token lexical segmentation differs")
+    before = _owners()[-1]
+    _compact_fence(before, observed)
+    prediction = decode_counted_frame_content_v1(raw, context_raw,
+        expected_content_sha256=content_sha, expected_context_sha256=expected_context_sha256)
+    _compact_fence(before, observed)
+    result = _compact_base(COMPACT_CANDIDATE_SCHEMA, before)
+    result.update(status="valid_candidate", generated_ids=ids,
+        canonical_content_raw_utf8=raw.decode("utf-8"), content_sha256=content_sha,
+        context_sha256=_compact_hash(context), codec_sha256=expected_codec_sha256,
+        prediction=prediction, counts=dict(_COMPACT_COUNTS),
+        framing={"bos_present": True, "eos_terminal": True, "token_ids_valid": True,
+                 "interior_special_tokens": False, "terminated": True})
+    result["context_raw_sha256"] = expected_context_sha256
+    return _compact_finish(result, before, observed)

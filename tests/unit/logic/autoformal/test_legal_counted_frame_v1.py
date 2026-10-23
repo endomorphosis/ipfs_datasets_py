@@ -488,3 +488,464 @@ def test_all_declared_small_membership_sets_match_distinct_count_definition(orig
     for mask in range(1 << len(universe)):
         rows = [row for index, row in enumerate(universe) if mask & (1 << index)]
         assert truth(original, rows) is (len({row[0] for row in rows}) <= 3)
+
+
+# The following controls qualify a new serialization profile, independently of
+# the retained model, original native build and statutory-meaning evidence.
+@pytest.fixture(scope="module")
+def compact_projection(original):
+    raw = wire(original)
+    return counted.project_counted_frame_request_v1(raw, expected_request_sha256=sha(raw))
+
+
+@pytest.fixture(scope="module")
+def compact_codec():
+    return counted.build_counted_frame_token_codec_v1()
+
+
+def _compact_parts(projection):
+    return tuple(wire(projection[key]) for key in ("content", "context", "identity_sidecar"))
+
+
+def _compact_decode(projection):
+    content_raw, context_raw, _ = _compact_parts(projection)
+    return counted.decode_counted_frame_content_v1(content_raw, context_raw,
+        expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw))
+
+
+def _compact_restore(projection, original_raw):
+    content_raw, context_raw, identity_raw = _compact_parts(projection)
+    return counted.reconstruct_counted_frame_request_v1(
+        content_raw, context_raw, identity_raw, original_raw,
+        expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw),
+        expected_identity_sha256=sha(identity_raw), expected_original_request_sha256=sha(original_raw))
+
+
+def _compact_encode(projection, codec):
+    content_raw, context_raw, _ = _compact_parts(projection)
+    return counted.encode_counted_frame_tokens_v1(content_raw, context_raw,
+        expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw),
+        codec=codec, expected_codec_sha256=counted.counted_frame_token_codec_sha256(codec))
+
+
+def _compact_tokens_decode(ids, projection, codec):
+    context_raw = wire(projection["context"])
+    return counted.decode_counted_frame_tokens_v1(ids, context_raw,
+        expected_context_sha256=sha(context_raw), codec=codec,
+        expected_codec_sha256=counted.counted_frame_token_codec_sha256(codec))
+
+
+def _compact_assert_no_authority(report):
+    assert report["authority"] and all(type(flag) is bool and flag is False
+                                       for flag in report["authority"].values())
+    for key in ("training_mask", "evaluation_gold_mask"):
+        assert type(report[key]) is int and report[key] == 0
+
+
+def test_compact_projection_and_validation_replay_genuine_complete_requests(
+        original, compact_projection, monkeypatch):
+    actual, replayed = counted.prepare_counted_frame, []
+
+    def observed(raw, **kwargs):
+        result = actual(raw, **kwargs)
+        replayed.append(deepcopy(result))
+        return result
+
+    monkeypatch.setattr(counted, "prepare_counted_frame", observed)
+    raw = wire(original)
+    projection = counted.project_counted_frame_request_v1(raw, expected_request_sha256=sha(raw))
+    assert projection == compact_projection
+    assert replayed and replayed[0]["request"] == original
+    assert len(replayed) >= 2, "original and decoded requests both require the public counted owner"
+    assert counted.validate_counted_frame_projection_v1(projection, raw,
+        expected_report_sha256=counted.counted_frame_report_sha256(projection),
+        expected_request_sha256=sha(raw)) == projection
+    assert projection["counts"] == {"nodes": 49, "quantifiers": 6,
+        "membership_occurrences": 4, "equality_occurrences": 6, "variable_occurrences": 24}
+    for key, pin in (("content", "content_sha256"), ("context", "context_sha256"),
+                     ("identity_sidecar", "identity_sha256")):
+        assert sha(wire(projection[key])) == projection[pin]
+    _compact_assert_no_authority(projection)
+
+
+def test_compact_identity_sidecar_restores_all_arbitrary_physical_ids(original):
+    request = deepcopy(original)
+    request["expression"]["expression_id"] = "independent:counted:expression:ascii_omega"
+    request["expression"]["signature"]["signature_id"] = "independent:counted:signature:ascii_omega"
+    for index, node in enumerate(nodes(request["expression"]["root"])):
+        node["node_id"] = "independent:counted:physical:ascii_omega:" + str(index)
+    request = reseal(request)
+    raw = wire(request)
+    projection = counted.project_counted_frame_request_v1(raw, expected_request_sha256=sha(raw))
+    restored = _compact_restore(projection, raw)
+    assert restored["identity_mode"] == "restored"
+    assert restored["request"] == request
+    assert restored["request_sha256"] == sha(wire(request))
+    assert restored["original_request_sha256"] == sha(raw)
+    assert [row["node_id"] for row in nodes(restored["request"]["expression"]["root"])] == [
+        row["node_id"] for row in nodes(request["expression"]["root"])]
+    _compact_assert_no_authority(restored)
+
+
+def test_compact_same_content_is_independent_of_expression_signature_and_node_ids(
+        original, compact_projection):
+    request = deepcopy(original)
+    request["expression"]["expression_id"] = "independent:different-expression"
+    request["expression"]["signature"]["signature_id"] = "independent:different-signature"
+    for index, node in enumerate(nodes(request["expression"]["root"])):
+        node["node_id"] = "independent:different-node:" + str(index)
+    raw = wire(reseal(request))
+    other = counted.project_counted_frame_request_v1(raw, expected_request_sha256=sha(raw))
+    assert other["content"] == compact_projection["content"]
+    assert other["context"] == compact_projection["context"]
+    assert other["content_sha256"] == compact_projection["content_sha256"]
+    assert other["identity_sidecar"] != compact_projection["identity_sidecar"]
+    assert other["original_expression_sha256"] != compact_projection["original_expression_sha256"]
+    predicted = _compact_decode(other)
+    assert predicted["identity_mode"] == "generated"
+    assert predicted["request"] != request
+    assert predicted["counts"] == compact_projection["counts"]
+    _compact_assert_no_authority(predicted)
+
+
+def test_compact_exact_recovery_is_canonical_and_retains_separate_raw_transport_pin(original):
+    raw = json.dumps(original, indent=2, ensure_ascii=True).encode("utf-8")
+    assert raw != wire(original)
+    projection = counted.project_counted_frame_request_v1(raw, expected_request_sha256=sha(raw))
+    restored = _compact_restore(projection, raw)
+    assert restored["request"] == original
+    assert restored["request_sha256"] == sha(wire(original))
+    assert projection["original_request_sha256"] == sha(raw)
+    assert projection["original_request_canonical_sha256"] == sha(wire(original))
+    assert restored["original_request_sha256"] != restored["request_sha256"]
+    content_raw = json.dumps(projection["content"], indent=2).encode()
+    context_raw = json.dumps(projection["context"], indent=2).encode()
+    identity_raw = json.dumps(projection["identity_sidecar"], indent=2).encode()
+    prediction = counted.decode_counted_frame_content_v1(content_raw, context_raw,
+        expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw))
+    assert prediction["content_sha256"] == projection["content_sha256"]
+    assert prediction["context_sha256"] == projection["context_sha256"]
+    assert prediction["content_raw_sha256"] == sha(content_raw) != projection["content_sha256"]
+    assert prediction["context_raw_sha256"] == sha(context_raw) != projection["context_sha256"]
+    restored_pretty = counted.reconstruct_counted_frame_request_v1(
+        content_raw, context_raw, identity_raw, raw,
+        expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw),
+        expected_identity_sha256=sha(identity_raw), expected_original_request_sha256=sha(raw))
+    assert restored_pretty["request"] == original
+    assert restored_pretty["identity_sha256"] == projection["identity_sha256"]
+    assert restored_pretty["identity_raw_sha256"] == sha(identity_raw) != projection["identity_sha256"]
+
+
+def test_compact_prediction_accepts_no_identity_sidecar_or_original_reference(compact_projection):
+    content_raw, context_raw, identity_raw = _compact_parts(compact_projection)
+    args = dict(expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw))
+    with pytest.raises(TypeError):
+        counted.decode_counted_frame_content_v1(content_raw, context_raw, identity_raw=identity_raw, **args)
+    with pytest.raises(TypeError):
+        counted.decode_counted_frame_content_v1(content_raw, context_raw,
+            original_request_raw=b"reference must not be a prediction input", **args)
+    prediction = counted.decode_counted_frame_content_v1(content_raw, context_raw, **args)
+    assert prediction["counted_report"]["request"] == prediction["request"]
+    assert prediction["counted_report"]["counts"] == prediction["counts"]
+    _compact_assert_no_authority(prediction)
+
+
+@pytest.mark.parametrize("part", ["content", "context", "identity_sidecar", "counts", "authority", "producer_pins"])
+def test_compact_resealed_projection_cannot_replace_original_public_regeneration(
+        original, compact_projection, part):
+    offered = deepcopy(compact_projection)
+    if part == "counts": offered[part]["nodes"] -= 1
+    elif part == "authority": offered[part][next(iter(offered[part]))] = True
+    elif part == "producer_pins": offered[part] = {}
+    else: offered[part]["unsupported_projection_field"] = "must not be authenticated by resealing"
+    raw = wire(original)
+    with pytest.raises(ValueError):
+        counted.validate_counted_frame_projection_v1(offered, raw,
+            expected_report_sha256=counted.counted_frame_report_sha256(offered),
+            expected_request_sha256=sha(raw))
+
+
+@pytest.mark.parametrize("part", ["request", "content", "context", "identity", "original", "codec", "projection"])
+def test_compact_independent_input_pins_fail_before_operation_owner_discovery(
+        original, compact_projection, compact_codec, monkeypatch, part):
+    raw = wire(original)
+    content_raw, context_raw, identity_raw = _compact_parts(compact_projection)
+    monkeypatch.setattr(counted, "_owners", lambda: pytest.fail("operation owner loaded for wrong independent pin"))
+    with pytest.raises(ValueError):
+        if part == "request":
+            counted.project_counted_frame_request_v1(raw, expected_request_sha256="0" * 64)
+        elif part in {"content", "context"}:
+            counted.decode_counted_frame_content_v1(content_raw, context_raw,
+                expected_content_sha256="0" * 64 if part == "content" else sha(content_raw),
+                expected_context_sha256="0" * 64 if part == "context" else sha(context_raw))
+        elif part in {"identity", "original"}:
+            counted.reconstruct_counted_frame_request_v1(content_raw, context_raw, identity_raw, raw,
+                expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw),
+                expected_identity_sha256="0" * 64 if part == "identity" else sha(identity_raw),
+                expected_original_request_sha256="0" * 64 if part == "original" else sha(raw))
+        elif part == "codec":
+            counted.encode_counted_frame_tokens_v1(content_raw, context_raw,
+                expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw),
+                codec=compact_codec, expected_codec_sha256="0" * 64)
+        else:
+            counted.validate_counted_frame_projection_v1(compact_projection, raw,
+                expected_report_sha256="0" * 64, expected_request_sha256=sha(raw))
+
+
+@pytest.mark.parametrize("damage", ["maximum_bool", "maximum_four", "roles", "sorts", "frame", "distinctness", "predicate_domain"])
+def test_compact_context_changes_are_not_silently_repaired_or_defaulted(
+        compact_projection, monkeypatch, damage):
+    context = deepcopy(compact_projection["context"])
+    if damage == "maximum_bool": context["maximum"] = True
+    elif damage == "maximum_four": context["maximum"] = 4
+    elif damage == "roles": context["membership"]["argument_roles"].reverse()
+    elif damage == "sorts": context["sorts"].reverse()
+    elif damage == "frame": context["frame"]["policy"] = "unreviewed_global_lifetime"
+    elif damage == "distinctness": context["distinctness"] = "occurrence_multiplicity"
+    else: context["predicate"]["domain"].reverse()
+    content_raw, context_raw = wire(compact_projection["content"]), wire(context)
+    monkeypatch.setattr(counted, "_owners", lambda: pytest.fail("operation owner loaded for altered counted context"))
+    with pytest.raises(ValueError):
+        counted.decode_counted_frame_content_v1(content_raw, context_raw,
+            expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw))
+
+
+@pytest.mark.parametrize("raw", [b"", b"{", b"[]", b'{"schema":1,"schema":2}',
+    b'{"schema":NaN}', b'{"schema":"\\ud800"}'])
+def test_compact_malformed_content_is_refused_before_operation_owner_load(
+        compact_projection, monkeypatch, raw):
+    context_raw = wire(compact_projection["context"])
+    monkeypatch.setattr(counted, "_owners", lambda: pytest.fail("owner loaded for malformed compact content"))
+    with pytest.raises(ValueError):
+        counted.decode_counted_frame_content_v1(raw, context_raw,
+            expected_content_sha256=sha(raw), expected_context_sha256=sha(context_raw))
+
+
+def test_compact_fixed_lexical_codec_roundtrip_retains_full_many_sorted_counted_tree(
+        compact_projection, compact_codec, monkeypatch):
+    before = deepcopy(compact_codec)
+    with monkeypatch.context() as patch:
+        patch.setattr(counted, "_owners", lambda: pytest.fail("fixed codec construction or hashing imported operation owners"))
+        assert counted.build_counted_frame_token_codec_v1() == compact_codec
+        assert counted.counted_frame_token_codec_sha256(compact_codec) == sha(wire(compact_codec))
+        patch.setattr(counted, "_SELF_PIN", "0" * 64)
+        with pytest.raises(ValueError):
+            counted.build_counted_frame_token_codec_v1()
+    encoded = _compact_encode(compact_projection, compact_codec)
+    ids = encoded["target_ids"]
+    assert ids[0] == 1 and ids[-1] == 2
+    assert all(type(item) is int and item >= 3 for item in ids[1:-1])
+    assert len(ids) == encoded["total_token_count"] <= 512
+    assert encoded["lexical_token_count"] == len(encoded["lexical_tokens"]) == len(ids) - 2
+    decoded = _compact_tokens_decode(ids, compact_projection, compact_codec)
+    assert decoded["status"] == "valid_candidate"
+    assert decoded["generated_ids"] == ids
+    assert decoded["prediction"]["identity_mode"] == "generated"
+    assert decoded["counts"] == compact_projection["counts"]
+    assert decoded["canonical_content_raw_utf8"].encode() == wire(compact_projection["content"])
+    assert decoded["content_sha256"] == compact_projection["content_sha256"]
+    assert decoded["framing"] == {"bos_present": True, "eos_terminal": True,
+        "token_ids_valid": True, "interior_special_tokens": False, "terminated": True}
+    malformed = ids[:2] + ids[3:]
+    assert malformed[0] == 1 and malformed[-1] == 2
+    with monkeypatch.context() as patch:
+        patch.setattr(counted, "_owners", lambda: pytest.fail("malformed lexical content reached operation owners"))
+        with pytest.raises(ValueError):
+            _compact_tokens_decode(malformed, compact_projection, compact_codec)
+    assert compact_codec == before
+    _compact_assert_no_authority(encoded)
+    _compact_assert_no_authority(decoded)
+
+
+@pytest.mark.parametrize("damage", ["missing_bos", "missing_eos", "pad", "interior_bos", "interior_eos", "after_eos", "bool", "out_of_range", "empty", "over_budget"])
+def test_compact_generated_lexical_tokens_require_exact_complete_framing(
+        compact_projection, compact_codec, damage):
+    ids = list(_compact_encode(compact_projection, compact_codec)["target_ids"])
+    if damage == "missing_bos": ids = ids[1:]
+    elif damage == "missing_eos": ids = ids[:-1]
+    elif damage == "pad": ids.insert(2, 0)
+    elif damage == "interior_bos": ids.insert(2, 1)
+    elif damage == "interior_eos": ids.insert(2, 2)
+    elif damage == "after_eos": ids.append(ids[1])
+    elif damage == "bool": ids[2] = True
+    elif damage == "out_of_range": ids[2] = 1_000_000
+    elif damage == "empty": ids = []
+    else: ids = [1] + [ids[1]] * 511 + [2]
+    with pytest.raises(ValueError):
+        _compact_tokens_decode(ids, compact_projection, compact_codec)
+
+
+def test_compact_wrong_legacy_codec_cannot_be_rehashed_as_counted_codec(
+        compact_projection, compact_codec, monkeypatch):
+    codec = deepcopy(compact_codec)
+    codec["schema"] = "legal-compact-content-token-codec/v1"
+    content_raw, context_raw, _ = _compact_parts(compact_projection)
+    pin = sha(wire(codec))
+    monkeypatch.setattr(counted, "_owners", lambda: pytest.fail("owner loaded for wrong fixed codec profile"))
+    with pytest.raises(ValueError):
+        counted.encode_counted_frame_tokens_v1(content_raw, context_raw,
+            expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw),
+            codec=codec, expected_codec_sha256=pin)
+
+
+def _compact_independent_tree(node, bound=()):
+    """Serialize the original AST independently of the projection's helpers."""
+    kind = node["kind"]
+    if kind == "forall":
+        binder = node["binders"][0]
+        return [kind, len(bound), binder["sort"]["name"],
+                _compact_independent_tree(node["arguments"][0], bound + (binder["name"],))]
+    if kind == "variable":
+        return [kind, bound.index(node["symbol"])]
+    if kind == "predicate":
+        assert node["symbol"] == "Member"
+        return [kind, 0, [_compact_independent_tree(child, bound) for child in node["arguments"]]]
+    assert kind in {"equality", "and", "or", "implies"}
+    assert len(node["arguments"]) == 2
+    return [kind, *[_compact_independent_tree(child, bound) for child in node["arguments"]]]
+
+
+def _compact_tagged_nodes(value):
+    if type(value) is list:
+        if value and type(value[0]) is str and value[0] in {
+                "forall", "variable", "predicate", "equality", "and", "or", "implies"}:
+            yield value
+        for child in value:
+            yield from _compact_tagged_nodes(child)
+
+
+def test_compact_projection_preserves_independently_derived_ordered_tree_and_context(
+        original, compact_projection):
+    content = compact_projection["content"]
+    assert set(content) == {"schema", "tree"}
+    assert content["tree"] == _compact_independent_tree(original["expression"]["root"])
+    tree_nodes = list(_compact_tagged_nodes(content["tree"]))
+    assert len(tree_nodes) == 49
+    assert [(row[1], row[2]) for row in tree_nodes if row[0] == "forall"] == [
+        (0, "EventFrame"), (1, "TimeFrame"), (2, "Object"),
+        (3, "Object"), (4, "Object"), (5, "Object")]
+    assert [[row[1][1], row[2][1]] for row in tree_nodes if row[0] == "equality"] == [
+        [2, 3], [2, 4], [2, 5], [3, 4], [3, 5], [4, 5]]
+    assert [[term[1] for term in row[2]] for row in tree_nodes if row[0] == "predicate"] == [
+        [2, 0, 1], [3, 0, 1], [4, 0, 1], [5, 0, 1]]
+    context = compact_projection["context"]
+    assert context["sorts"] == ["Object", "EventFrame", "TimeFrame"]
+    assert context["predicate"] == {"name": "Member", "domain": ["Object", "EventFrame", "TimeFrame"], "range": "Bool"}
+    for key in ("frame", "membership", "distinctness", "maximum", "object_variables"):
+        assert context[key] == original[key]
+
+
+@pytest.mark.parametrize("damage", ["reversed_equality", "swapped_member_roles", "binder_sort", "binder_bool", "unbound", "predicate_index", "missing_node"])
+def test_compact_resealed_tree_mutations_cannot_change_counting_or_binding_meaning(
+        compact_projection, damage):
+    content = deepcopy(compact_projection["content"])
+    rows = list(_compact_tagged_nodes(content["tree"]))
+    if damage == "reversed_equality":
+        row = next(row for row in rows if row[0] == "equality")
+        row[1], row[2] = row[2], row[1]
+    elif damage == "swapped_member_roles":
+        row = next(row for row in rows if row[0] == "predicate")
+        row[2][0], row[2][1] = row[2][1], row[2][0]
+    elif damage == "binder_sort": next(row for row in rows if row[0] == "forall")[2] = "Object"
+    elif damage == "binder_bool": next(row for row in rows if row[0] == "forall")[1] = False
+    elif damage == "unbound": next(row for row in rows if row[0] == "variable")[1] = 6
+    elif damage == "predicate_index": next(row for row in rows if row[0] == "predicate")[1] = 1
+    else: content["tree"].pop()
+    content_raw, context_raw = wire(content), wire(compact_projection["context"])
+    with pytest.raises(ValueError):
+        counted.decode_counted_frame_content_v1(content_raw, context_raw,
+            expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw))
+
+
+@pytest.mark.parametrize("damage", ["duplicate_node_id", "missing_node_id", "foreign_original_pin"])
+def test_compact_resealed_identity_sidecar_requires_complete_exact_original_identity(
+        original, compact_projection, damage):
+    identity = deepcopy(compact_projection["identity_sidecar"])
+    if damage == "duplicate_node_id": identity["node_ids"][1] = identity["node_ids"][0]
+    elif damage == "missing_node_id": identity["node_ids"].pop()
+    else: identity["original_request_sha256"] = "0" * 64
+    content_raw, context_raw, identity_raw = wire(compact_projection["content"]), wire(compact_projection["context"]), wire(identity)
+    raw = wire(original)
+    with pytest.raises(ValueError):
+        counted.reconstruct_counted_frame_request_v1(content_raw, context_raw, identity_raw, raw,
+            expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw),
+            expected_identity_sha256=sha(identity_raw), expected_original_request_sha256=sha(raw))
+
+
+@pytest.mark.parametrize("boundary", ["public_replay", "final_wire"])
+def test_compact_producer_fences_cover_public_replay_and_final_serialization(
+        original, compact_projection, monkeypatch, boundary):
+    source_path = next(path for path in compact_projection["producer_pins"] if path.endswith("/parsers/fol.py"))
+    actual_read, actual_prepare = Path.read_bytes, counted.prepare_counted_frame
+    actual_wire = counted._compact_wire
+    changed = False
+
+    def read(path):
+        raw = actual_read(path)
+        return raw + b"\n# Authored post-boundary change\n" if changed and str(path.resolve()) == source_path else raw
+
+    def replay(*args, **kwargs):
+        nonlocal changed
+        result = actual_prepare(*args, **kwargs)
+        if boundary == "public_replay": changed = True
+        return result
+
+    def serialize(value, *args, **kwargs):
+        nonlocal changed
+        result = actual_wire(value, *args, **kwargs)
+        if boundary == "final_wire" and type(value) is dict and value.get("schema") == "legal-counted-compact-projection/v1":
+            changed = True
+        return result
+
+    monkeypatch.setattr(Path, "read_bytes", read)
+    monkeypatch.setattr(counted, "prepare_counted_frame", replay)
+    monkeypatch.setattr(counted, "_compact_wire", serialize)
+    raw = wire(original)
+    with pytest.raises(ValueError):
+        counted.project_counted_frame_request_v1(raw, expected_request_sha256=sha(raw))
+
+
+@pytest.mark.parametrize("target", ["generated_ids", "codec"])
+def test_compact_mutable_prediction_inputs_are_fenced_around_genuine_replay(
+        compact_projection, compact_codec, monkeypatch, target):
+    ids = list(_compact_encode(compact_projection, compact_codec)["target_ids"])
+    codec = deepcopy(compact_codec)
+    actual = counted.prepare_counted_frame
+
+    def replay(*args, **kwargs):
+        result = actual(*args, **kwargs)
+        if target == "generated_ids": ids.append(2)
+        else: codec["mutation_after_replay"] = True
+        return result
+
+    monkeypatch.setattr(counted, "prepare_counted_frame", replay)
+    with pytest.raises(ValueError):
+        _compact_tokens_decode(ids, compact_projection, codec)
+
+
+def test_compact_projection_validator_fences_offered_report_during_regeneration(
+        original, compact_projection, monkeypatch):
+    offered = deepcopy(compact_projection)
+    actual = counted.project_counted_frame_request_v1
+
+    def regenerate(*args, **kwargs):
+        result = actual(*args, **kwargs)
+        offered["counts"]["nodes"] -= 1
+        return result
+
+    monkeypatch.setattr(counted, "project_counted_frame_request_v1", regenerate)
+    raw = wire(original)
+    pin = counted.counted_frame_report_sha256(offered)
+    with pytest.raises(ValueError):
+        counted.validate_counted_frame_projection_v1(offered, raw,
+            expected_report_sha256=pin, expected_request_sha256=sha(raw))
+
+
+def test_compact_lowered_content_bound_refuses_complete_input_without_truncation(
+        compact_projection, monkeypatch):
+    content_raw, context_raw, _ = _compact_parts(compact_projection)
+    monkeypatch.setattr(counted, "MAX_REQUEST_BYTES", len(content_raw) - 1)
+    monkeypatch.setattr(counted, "_owners", lambda: pytest.fail("owner loaded beyond lowered content bound"))
+    with pytest.raises(ValueError):
+        counted.decode_counted_frame_content_v1(content_raw, context_raw,
+            expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw))
