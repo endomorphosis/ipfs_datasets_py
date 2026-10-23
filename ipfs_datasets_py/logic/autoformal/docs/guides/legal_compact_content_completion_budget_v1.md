@@ -181,3 +181,63 @@ branch-aware completion witness or beam using the same retained weights,
 contexts and100-ID cap. Qualify its owner separately, preserve every old policy
 and failed prefix, and count unknowns and all enrolled failures. Do not infer
 global completion or a conditioning winner from this local filter.
+
+## Pure bounded branch completion witness, v3
+
+`legal_compact_content_completion_budget_v3.find_completion_witness` performs
+pure depth-first search over the unchanged public completion-v1 policy. It orders
+only the original allowed IDs by their existing minimum-token bound, then ID.
+It takes no logits, checkpoint, reference answer or target, and supplies no
+mask, selector or model-runtime integration. Every root, forced and branching
+inspection consumes the same explicit budget: default256, hard1,024. Added-ID
+depth and pending-frontier caps are at most512; EOS consumes an ID, and the
+original total512-ID limit still applies. The retained numerical consumer keeps
+its separate100-new-ID profile.
+
+`WITNESS` requires terminal EOS and the original public typed decoder's valid
+candidate. Its suffix is a syntactic certificate, never a learned or generated
+model continuation. `DEAD_END` requires complete exhaustion of the exact old
+policy tree. Any inspection, depth, frontier or report cutoff is `UNKNOWN`;
+pending siblings and immediate unexpanded child roots remain explicit. Their
+count does not enumerate all descendants. Source, input and owner failures
+propagate as failures. No source text, context or prefix repair is performed.
+
+The lean certificate stores the root prefix once and parent/via-ID edges with
+a fixed135-hex-digit537-bit choice mask. It preserves the original2MiB report,
+100,000-item and96-depth limits; a1MiB/50,000-item trace budget reserves space
+for headers and unresolved work. Actual inspections and recorded nodes remain
+separate if a report cap prevents recording the final inspected node.
+
+These inspection, depth, frontier and report limits apply to one pure query.
+They do not demonstrate an affordable full-generation budget. A future model
+consumer needs an explicit cumulative grammar-work budget and a separately
+named witness-backed selection or carried-suffix policy. `UNKNOWN` choices
+cannot be silently removed, and proof tokens cannot be reported as model
+tokens. Any carried witness must be revalidated against its exact current
+prefix and remaining budget before reuse.
+
+Pure grammar witnesses can be shared across dimension lanes only when the IR
+family, schema/version, codec, context, prefix, remaining budget and pinned
+source identities all match. Model inventories, decoder tasks and checkpoints
+remain separate for each lane. This increment implements no witness cache,
+registry or cross-lane model conversion.
+
+The [accepted pure-v3 qualification](https://github.com/endomorphosis/ipfs_datasets_py/blob/main/docs/autoformalization/evidence/legal-ir-compact-branch-completion-witness-20261023.json) passed 41 authored cases / 123 phases, including a genuine branching-positive fixture and an independently closed finite negative tree. Both bounded BOS diagnostics remain UNKNOWN: one predicate used 24 inspections with 43 unresolved frontier roots; two predicates used 32 with 57. Neither produced a typed witness, and the default 256-inspection BOS query remains unrun. Original source/native/storage custody closed, with 12 retained files / 730,289 bytes. The source census has 27 module entries representing 25 unique physical origins (two initializer aliases), 4 namespaces and 26 checked compile-buffer/exec-filename sources; code-object identity and full public-package/environment behavior remain unqualified.
+
+The source profile preserves original product path-only namespaces. Only product
+initializers actually demanded by imports execute. Genuine test-root/unit
+initializers and the original v1 fixture helper require independent physical
+origin, raw compile-buffer and exec-filename observations; test logic/autoformal
+namespaces are naturally fileless. The versioned worker uses `--assert=plain`
+and `--import-mode=importlib`. This supplies no whole public-package/environment
+qualification.
+
+Previous pure-v2 and retained model cohorts keep their own receipts. The last
+accepted numerical v2 cohort still has0/4 typed, exact-ID or exact-IR outputs,
+with lengths31/31/49/49; this pure API changes no weights, conditioning, loss or
+decoder profile. Review actual bounded BOS diagnostics before selecting further
+search ordering or a separately qualified runtime integration. Do not paste a
+witness suffix into generated history or label it a learned target. Any model
+comparison must keep retained inputs/weights/contexts and100-ID cap fixed, bind
+its own cumulative search/forward limits and retain all failures. Source meaning,
+text/exact-byte reconstruction, graph and Lean admission remain separate gates.
