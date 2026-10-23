@@ -200,3 +200,68 @@ comparisons remain separate work.
 The [four-row varied-population qualification](../../../../../docs/autoformalization/evidence/legal-ir-varied-compact-resume-20261023.json), completed2026-10-23, passed one selected case / three pytest phases. Four authored source groups share one independently constructed context; their target lengths are47,51 and65 total IDs. Five uninterrupted updates exactly match three updates followed by byte-save, hash-checked load and two resumed updates in model weights, named Adam state, population, runtime and progress. Immediate parent hashes legitimately differ. Final progress is five steps, one completed epoch and row cursor1.
 
 Independent Torch observers recorded ten physical updates, twelve GRU forwards, nineteen model constructions, eighteen state restores and six Adam constructions. The two model-only BOS observations on the same third row contain1,074 saved scores; all paired scores and selections are exactly equal. Eighteen complete payloads totaling11,487,753 bytes were read back; original source/native/storage custody closed. This cohort does not repeat the old two-row campaign or exercise autonomous generation. Source-encoder authentication, permitted context, heldout accuracy, training gain and legal/graph/Lean admission remain unestablished; both eligibility masks remain zero.
+
+## Persistent compact source-conditioning profile, v1
+
+The separate numerical owner `legal_compact_content_persistent_v1` now reuses
+`decoder_distillation_experiment_v2.bind_persistent_model` under an explicit
+compact384/537 checkpoint and training contract. The original v2 source and
+checkpoint profile above remain unchanged. This new profile is for the same
+authored engineering population contract, with all authority flags false and
+both training/evaluation masks zero. Its [closed two-mode qualification](../../../../../docs/autoformalization/evidence/legal-ir-compact-persistent-conditioning-20261023.json)
+passed two cases / six phases,20 physical updates and38 forwards; these are five
+unique trajectory steps per arm, each repeated through a3 + 2 resume. All46artifact
+references, complete checkpoints, dense CE matrices and observed adapter updates
+remain retained under the original source/native/storage owners.
+
+The public API is `build_compact_content_persistent_v1`,
+`compact_content_persistent_sha256`, `compact_content_persistent_bytes_v1`,
+`load_compact_content_persistent_v1`, `train_compact_content_persistent_v1` and
+`score_compact_content_persistent_v1`. Build accepts only a valid original v1
+head and the unchanged complete population/row contract. It copies thirteen
+body tensors, adds the zero-initialized `source_to_embedding.weight`, and creates
+fresh Adam for all fourteen named parameters. The donor and initialized
+persistent weights have separate permanent commitments. Genericv2/CP128
+checkpoints or optimizer moments cannot be relabeled into this profile.
+
+`conditioning_mode` is exactly `every_step` or `first_step`; `source_space` is
+a nonempty caller-declared unverified string. Resume and model-only scoring
+require independently supplied `expected_conditioning_mode` and
+`expected_source_space` matching the checkpoint. A dimension or string match
+does not establish native encoder compatibility. Both modes have identical
+capacity and start from identical tensors; `first_step` learns a residual at
+BOS and is distinct from the original initial-hidden-only donor.
+
+Training retains the existing full537 way CE, ordered complete targets, one-row
+batches, maximum16 updates per call and exact named Adam/runtime/population
+resume. Both modes matched donor logits with a zero adapter, then showed real
+nonzero adapter gradients and updates. The5 versus 3 + 2 traces reproduce complete
+final checkpoint values apart from immediate-parent lineage. Closed controls
+reject wrong modes/spaces/profiles, changed populations, malformed tensors or
+Adam steps and duplicate JSON before updates.
+
+Checkpoint transport performs complete structural/runtime checks without model
+or Adam restoration. Training restores both; scoring restores model tensors
+only and creates no optimizer or backward/update work. Prefix scoring returns
+all 537 logits at each supplied position, preserves explicit per-sequence source
+and consumed-prefix state, and supports a bounded incremental mode. The fixture
+compares every position of the independently fixed `[1,3,4]` prefix within 1e-6.
+This is raw prefix scoring, not grammar selection or autonomous generation.
+
+Zero and shifted conditioning reports change both inherited and new source
+paths. They are retained observations, not an isolated adapter effect or a
+source-fidelity/accuracy measurement. Real-law fitting still requires reviewed
+complete source/context/AST targets, permitted inference context, compatible
+source-space evidence and grouped independent selection/evaluation. A compatible
+autonomous typed consumer remains a separate implementation. No encoder capture,
+held-out/statutory accuracy gain, graph admission or Lean qualification follows.
+
+Qualification boundary for this publication: the linked receipt remains the original
+P-generation two-case/six-phase qualification, with20 physical updates and38
+forwards. Its existing imported numerical/test leaf sources match this selected
+public baseline; the exact new owner and owning-test bytes are unchanged. The
+historical `validation_pytest.py` qualification controller differs publicly and
+is not ported here. The unused checkpoint-hub/target-compatibility/generation
+frontier sources in the frozen forest are not added or replaced. This publication
+performs no new tests, model operations or current public initializer/controller
+qualification and introduces no autonomous or statutory accuracy claim.
