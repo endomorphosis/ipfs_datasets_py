@@ -1,0 +1,222 @@
+{
+  "API": "score_reference",
+  "accepted_authored_cohort": {
+    "canonical_dependencies": 213,
+    "cases_passed": 23,
+    "controller_CLI_exit": 0,
+    "frozen_source_bytes": 6192164,
+    "frozen_source_files": 215,
+    "observed_phase_basis": "Exact saved collection reports independently counted:23unique nodes each have one passed setup/call/teardown, with no xfail, skip, deselection or collection error;23 matching terminal JUnit cases.",
+    "phases_passed": 69,
+    "request_pins": 245,
+    "request_sha256": "e3bdc37494ca5813cdc668da14e54c98434777e7dcf2431a501a85e9c16e5c12",
+    "scope": "Authored metadata/control-flow source qualification under original leaf-API/path-only namespace profile; tensors/checkpoints/models/scores are authored doubles. Full public initializer and real numerical behavior remain separate."
+  },
+  "authority": {
+    "Lean_admission": false,
+    "context_permission_verified": false,
+    "graph_admission": false,
+    "heldout_accuracy": false,
+    "reconstruction_gain": false,
+    "source_encoder_authenticated": false,
+    "source_semantics_verified": false,
+    "statutory_accuracy": false,
+    "training_gold": false
+  },
+  "contract": {
+    "BOS_APIs_or_old_owner_bytes_changed": false,
+    "BOS_id": 1,
+    "EOS_id": 2,
+    "independently_pinned": [
+      "checkpoint",
+      "policy",
+      "context",
+      "reference"
+    ],
+    "input_dimension": 384,
+    "intact_checkpoint_validation_reused": true,
+    "labels": "reference_ids[1:]",
+    "new_private_method": "forward_reference",
+    "no_checkpoint_schema_conversion": true,
+    "original_checkpoint_row_binds": [
+      "conditioning",
+      "context",
+      "reference"
+    ],
+    "prefix": "reference_ids[:-1]",
+    "private_prepared_model_constructor_guard_forward_close_unchanged": true,
+    "raw_output_shape": [
+      1,
+      46,
+      537
+    ],
+    "raw_unmasked_scores": true,
+    "reference_ids": 47,
+    "row_index": [
+      0,
+      1
+    ],
+    "selection_independent_of_progress_cursor": true,
+    "target_and_optimizer_free_model_view_reused": true
+  },
+  "evidence_data_bundled": false,
+  "limitations": [
+    "No genuine checkpoint restore,13tensor/RNG numerical custody exercise or real1x46x537matrix observation was enrolled; inherit the original guarded lifetime in source without upgrading this authored cohort.",
+    "The eight missing matched reference cells still require separate source/input/checkpoint manifest and native/resource admission; no scoring or training rerun is inferred.",
+    "Syntax, source compatibility, legal meaning, training/gold, autonomous reconstruction gain, graph and Lean admission remain false or unmeasured.",
+    "The original released storage claim retains9ordinary evidence files; data retention is separate from a retained reservation.",
+    "Earlier v01 request/guard preparation failures remain separate zero-native/zero-case observations.",
+    "Qualification uses the original leaf-API/path-only namespace profile. Full public initializer behavior remains unqualified here.",
+    "The two original exposed authored384 rows are label diagnostics; native GTE source-space compatibility and independent legal targets are not established."
+  ],
+  "next_genuine_cohort": {
+    "checkpoint_identities": 6,
+    "labels": 368,
+    "maximum_full_reference_forwards": 8,
+    "maximum_restores": 8,
+    "missing_cells": 8,
+    "requires": "Fresh exact original checkpoint/vector/context/reference manifest, original native/resource admission and numerical/state/RNG/cleanup observation; reuse saved-only audits rather than replay them.",
+    "score_coordinates": 197616,
+    "semantic_choices": 56,
+    "singleton_positions": 312,
+    "status": "unrun_not_admitted_by_this_receipt"
+  },
+  "operations": {
+    "native_Lean_or_provider_or_SQL_enrolled": false,
+    "new_reference_matrix_cells_measured": 0,
+    "optimizer_or_training_or_generation_enrolled": false,
+    "real_Torch_forwards": 0,
+    "real_model_restores": 0,
+    "review_rerun_or_model_payload_or_live_resource_queries": 0
+  },
+  "optional_local_evidence": [
+    {
+      "bytes": 13219,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/independent-saved-result-review-v01.json",
+      "sha256": "f44baaf76f2e597b9a59a2a0e2a0ab69e17fcc3860d642f859feb10aa746c37b"
+    },
+    {
+      "bytes": 88253,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/request-reference-score-v02.json",
+      "sha256": "e3bdc37494ca5813cdc668da14e54c98434777e7dcf2431a501a85e9c16e5c12"
+    },
+    {
+      "bytes": 47821,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/validation-manifest-reference-score-v01.json",
+      "sha256": "13132772760e73df2504d2910f5ff9c8c5865779ede34ea0993bc842bf488153"
+    },
+    {
+      "bytes": 5154,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/source-freeze-receipt-v02.json",
+      "sha256": "2099b2af6de4e90f4e1013d6777cab3164e7e5f3330517b76b41e86b079f01c1"
+    },
+    {
+      "bytes": 19091,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/controls/launch_reference_score_qualification_v02.py",
+      "sha256": "0ebd5b76da3ede2c8acf892368fd84beb58f7e5ad8bd4e25c258a343710f0cc3"
+    },
+    {
+      "bytes": 515,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/controller-complete-reference-score-v02.json",
+      "sha256": "fe5bef729c1512d7cce752b8daf052f52fe98f38129b20a12e3ed0efdb77dc1e"
+    },
+    {
+      "bytes": 7986,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/launch-reference-score-v02.json",
+      "sha256": "d460634fd1ad6d97896b20af1225583a9e8a614aab7f5a511699847c535e3900"
+    },
+    {
+      "bytes": 481,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/source-READ-reference-score-v02.json",
+      "sha256": "2fac03c6371b995792376d9eb10aa91965d4a3652cf6da023214a1ba9ce06372"
+    },
+    {
+      "bytes": 4599,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/attempt-reference-score-v01/logs/result.json",
+      "sha256": "ce59a09aa61274bb968f76e4433c952c5e7385416fa143b64c3fd53a16fd94ad"
+    },
+    {
+      "bytes": 4827,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/attempt-reference-score-v01/logs/execution.json",
+      "sha256": "d0ad836754cfc10c3052aed796e8d10da03f4a9217116fe5b40fb3e0663e58a4"
+    },
+    {
+      "bytes": 1654,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/attempt-reference-score-v01/logs/validation-durability.json",
+      "sha256": "136bd2354ad3ebdf5b7a8f6dc612408c1c91c3b4a9720e1a9b9917a6d701518a"
+    },
+    {
+      "bytes": 8228,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/attempt-reference-score-v01/exports/test-result.json",
+      "sha256": "ca390c4edd874e9aadeeed287b37655a4f8c3ace82bbe2d3f81bff867b9a448a"
+    },
+    {
+      "bytes": 19717,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/attempt-reference-score-v01/exports/test-collection.json",
+      "sha256": "21ee482f4ba115c7a024d5cf6b6e479b02ba546107f31b0232c6ddb8c780f96c"
+    },
+    {
+      "bytes": 13760,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/attempt-reference-score-v01/exports/import-origins.json",
+      "sha256": "eae66a635fb0fcb90246db830d8c1f6f676df37769ee5da4619142ccc509633d"
+    },
+    {
+      "bytes": 4897,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-reference-score-candidate-v02/execution-v01/attempt-reference-score-v01/exports/tests.xml",
+      "sha256": "032015811395d3cf8571b2ca4fc1e89b4916e096f13b089be3ad6e74366b639d"
+    }
+  ],
+  "optional_local_evidence_root": "datasets_repository",
+  "product_profile": "authored384-fixed537-warmstart-two-row-reference46/v1",
+  "product_schema": "legal-role-warmstart-reference-scores/v1",
+  "qualified_owning_test": {
+    "bytes": 23968,
+    "path": "tests/unit/logic/autoformal/test_legal_compact_content_role_warmstart_reference_runtime_v1.py",
+    "sha256": "653c1d4f5f8d2f5da1759a4c2948a520f0c1b1dd141cfd0783ce0e7c3a2b4312"
+  },
+  "qualified_source": {
+    "bytes": 14195,
+    "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_warmstart_reference_runtime_v1.py",
+    "sha256": "70db22133e2eb12235b5d299918b2257fc94c574dce05a797bf4aafb0d5a952e"
+  },
+  "recorded_at_utc": "2026-10-23T06:46:55.237689+00:00",
+  "retained_preparations": "Earlier source/test drafts and v01 control/request metadata refusals remain unexecuted predecessor evidence; their zero-case preparation observations are not added to this23-case cohort.",
+  "schema": "legal-ir-cp128-reference-score-authored-qualification/v1",
+  "scope": "Separate reference API source/control-flow qualification; no genuine checkpoint, Torch model, training, generation or eight-cell score-matrix execution",
+  "selected_original_native_custody": {
+    "cleanup_errors": null,
+    "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota",
+    "native_lease_id": "0df83d531760495f86f3eedd17a2f7c0",
+    "observed_live_processes": 0,
+    "observed_out_of_group_live_identities": [],
+    "owner_birth": "175530617",
+    "owner_pid": 1061382,
+    "product_admitted_false_is_not_resource_admission_failure": true,
+    "resource_lease_released": true
+  },
+  "selected_original_storage_custody": {
+    "all_seal_hash_size_device_inode_and_complete_attempt_inventory_verified": true,
+    "explicit_release_observed_not_inferred_from_worker": true,
+    "final_attempt_bytes": 57781,
+    "final_external_charged_bytes": 0,
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "ordinary_retained_evidence_files": 9,
+    "original_durability_completed": true,
+    "original_terminal_status": "released",
+    "reservation_id": "1e2368d9a51a4267bd8e759263e721a7",
+    "sealed_output_files": 8,
+    "storage_bytes_reserved": 268435456
+  },
+  "source_custody": {
+    "actual_blocked_import_attempts": [],
+    "actual_imported_leaf_modules": 30,
+    "blocked_operations": [],
+    "canonical_dependencies": 213,
+    "frozen_files": 215,
+    "frozen_source_bytes": 6192164,
+    "original_controller_READ_closed_after_verified_cleanup": true,
+    "request_pins_current_and_unchanged": 245,
+    "review_READ_closed": true,
+    "source_compile_observations": 31
+  }
+}
