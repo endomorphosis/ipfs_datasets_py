@@ -1617,19 +1617,39 @@
       "apis": [
         "prepare_compact_decoder_example_v1",
         "compact_decoder_example_sha256",
-        "validate_compact_decoder_example_v1"
+        "validate_compact_decoder_example_v1",
+        "prepare_counted_compact_decoder_example_v1",
+        "validate_counted_compact_decoder_example_v1"
       ],
       "evidence_ids": [
         "compact-decoder-example-existing-qualification-20261017",
-        "compact-decoder-example-current-main-20261022-01"
+        "compact-decoder-example-current-main-20261022-01",
+        "counted-decoder-example-head-spec-qualified-20261022-01",
+        "counted-source-label-public-source-reconciliation-20261024-01"
       ],
       "id": "compact-decoder-example",
-      "notes": "Reuses the existing complete source-separated decoder-example companion and original test bytes. Preserves original model_input, separate target-derived content/context/identity labels, pending/null examples and zero masks. Original275-case qualification remains historical; fresh current-main03 passed275 cases/825 phases with ten explicit parameter-ID aliases and current public dependencies. No learned decoder/head, permitted inference context, source meaning, training eligibility, token savings or Lean authority. See docs/guides/legal_compact_decoder_example_v1.md.",
+      "notes": "Reuses the existing complete source-separated decoder-example companion and original test bytes. Preserves original model_input, separate target-derived content/context/identity labels, pending/null examples and zero masks. Original275-case qualification remains historical; fresh current-main03 passed275 cases/825 phases with ten explicit parameter-ID aliases and current public dependencies. No learned decoder/head, permitted inference context, source meaning, training eligibility, token savings or Lean authority. See docs/guides/legal_compact_decoder_example_v1.md. The additive counted companion retains a complete source-only example and separate target-derived counted labels. Its frozen249-case qualification remains separate from all prior companion populations. The public source/fixture/initializer reconciliation is static and supplies no new execution, legal meaning or model accuracy; training/evaluation masks remain zero.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_compact_decoder_example_v1",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_compact_decoder_example_v1.py",
       "required": true,
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "counted_companion_v1": {
+        "apis": [
+          "prepare_counted_compact_decoder_example_v1",
+          "validate_counted_compact_decoder_example_v1"
+        ],
+        "schema": "legal-counted-compact-decoder-example/v1",
+        "profile": "source-only-example-with-partial-counted-label/v1",
+        "qualification": "docs/autoformalization/evidence/legal-ir-counted-decoder-example-20261022.json",
+        "cases_passed": 249,
+        "qualification_scope": "original frozen source generation; no phase count asserted",
+        "source_review": "docs/autoformalization/evidence/legal-ir-counted-public-source-reconciliation-20261024.json",
+        "source_only_model_input_path": "/source_example/model_input",
+        "target_derived_context_is_model_input": false,
+        "training_mask": 0,
+        "evaluation_gold_mask": 0
+      }
     },
     {
       "apis": [
@@ -2665,6 +2685,26 @@
       "path": "ipfs_datasets_py/logic/autoformal/legal_norm_definition_applicability_v1.py",
       "required": true,
       "status": "focused_tests_qualified"
+    },
+    {
+      "id": "source-typed-norm-join",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_typed_norm_join_v1",
+      "ownership_role": "existing_single_owner",
+      "required": true,
+      "status": "focused_tests_qualified",
+      "apis": [
+        "prepare_source_typed_norm_join_v1",
+        "source_typed_norm_join_sha256",
+        "validate_source_typed_norm_join_v1",
+        "prepare_source_typed_norm_join_v2",
+        "validate_source_typed_norm_join_v2"
+      ],
+      "evidence_ids": [
+        "counted-source-correspondence-qualified-20261021-01",
+        "counted-source-label-public-source-reconciliation-20261024-01"
+      ],
+      "notes": "Existing v1 relational/source-only and additive v2 counted correspondence owner. Retains complete original source replay, unreviewed partial hypotheses and unresolved node/binder correspondences. Original158-case qualification used its frozen counted producer; no phase count or new execution is claimed. Public source reconciliation preserves the distinct249-case companion generation. No source meaning, complete norm, model accuracy, graph/Lean admission or training/gold authority; masks remain zero."
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -4348,6 +4388,36 @@
       "root": "datasets_repository",
       "scope": "Three existing correspondence-v3 cases/nine phases on238 frozen public943e source/fixture leaves with exact8fcc/830b overlays,236 public dependencies,e35f cache/cef7 helper and all7review owners. Full provenance and256pins retain14explicit context exclusions and separate private orchestration. Historical103/309 is not rerun or pooled; no model, whole-package or legal/graph/Lean authority.",
       "status": "focused_current_public_wire_correspondence_fixture_qualified"
+    },
+    {
+      "id": "counted-source-correspondence-qualified-20261021-01",
+      "observed_bytes": 4266,
+      "observed_sha256": "81e8a20c049029651cceb1ec8fb7223cfbe088cea29ad01c9bccc73c34d92d33",
+      "path": "docs/autoformalization/evidence/legal-ir-counted-source-correspondence-20261021.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "158 authored cases; original frozen source generation and closeout reused, no phase-count claim.",
+      "status": "original_authored_counted_correspondence_qualification_reused"
+    },
+    {
+      "id": "counted-decoder-example-head-spec-qualified-20261022-01",
+      "observed_bytes": 7857,
+      "observed_sha256": "1b5f83261a2455f3ff07a65536e961e86885dd8ed565ef1dc1d2f948314f302a",
+      "path": "docs/autoformalization/evidence/legal-ir-counted-decoder-example-20261022.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "249 frozen companion/metadata-spec cases, genuine source-only input and separate counted labels; no invented phases or numerical runtime qualification.",
+      "status": "original_frozen_counted_companion_metadata_qualification_reused"
+    },
+    {
+      "id": "counted-source-label-public-source-reconciliation-20261024-01",
+      "observed_bytes": 23601,
+      "observed_sha256": "ba3f468ab97de401cc685efbb486f385d8b812af152726d497ae0e7c7828f89a",
+      "path": "docs/autoformalization/evidence/legal-ir-counted-public-source-reconciliation-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Static named29 producer and nine-initializer source reuse on publicf7ca2d plus exact four overlays; no fresh runtime qualification.",
+      "status": "bounded_static_public_source_reuse_review"
     }
   ]
 }
