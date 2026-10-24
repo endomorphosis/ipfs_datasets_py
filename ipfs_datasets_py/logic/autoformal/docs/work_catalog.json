@@ -1112,15 +1112,48 @@
         "source_span_entity_census_sha256",
         "validate_source_span_entity_census_v1",
         "prepare_source_span_entity_census_v2",
-        "validate_source_span_entity_census_v2"
+        "validate_source_span_entity_census_v2",
+        "prepare_source_span_entity_census_v3",
+        "validate_source_span_entity_census_v3"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
         "entity-census-completion",
         "entity-census-readback",
         "coordinate-entity-census-qualified-20261021-01",
-        "coordinate-entity-census-git-20261021-01"
+        "coordinate-entity-census-git-20261021-01",
+        "uscode-hf-wire-coordinate-entity-census-qualified-20261024-01",
+        "uscode-hf-wire-coordinate-entity-census-public-integration-qualified-20261024-01"
       ],
+      "focused_public_dependency_integration": {
+        "actual_fileless_test_namespaces": 2,
+        "actual_initializer_bypasses": 1,
+        "bypass_eligible_sources": 8,
+        "cases": 3,
+        "checked_public_product_source_files": 45,
+        "comprehensive_network_API_claim": false,
+        "database_observer_enrolled": false,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "uscode-hf-wire-coordinate-entity-census-public-integration-qualified-20261024-01",
+        "fresh_entity_row_replay_enrolled": false,
+        "frozen_source_fixture_files": 224,
+        "genuine_initializer_aliases": 8,
+        "genuine_initializer_physical_paths": 6,
+        "global_readonly_payload_observer_claim": false,
+        "historical64_and192_separate": true,
+        "loaded_module_alias_count": 47,
+        "measured_public_base": "943e85c247cfc31cdb990518c6ae3bfedf210ceb",
+        "model_widths_executed": [],
+        "owning_test_sha256": "83dcb4a78a7bef04c5a0e7b5a8c1e4348a97c5f92fbd5f4c9af6b77692b3125e",
+        "phases": 9,
+        "private_dc6_orchestration_separate": true,
+        "public_dependency_files": 222,
+        "publication_base": "2b32d87bcaae678c479a521d3289aa22dee060d4",
+        "scope": "Only the three selected census cases under their original Python audit/namespace profile, with original64 separate. No original cohort rerun, whole-package, binary I/O, source meaning, semantic entity, model or graph/Lean admission.",
+        "semantic_entity_bindings": null,
+        "source_sha256": "21d9a7514092c80b2f7bcf79d75f57669c6b62c8ed536c72a240879b1856adb4",
+        "training_mask": 0
+      },
       "id": "source-span-entity-census",
       "main_integration": {
         "base_main": "5beb7f4f7f03307f37684908cbb85ae977fc08b6",
@@ -1170,7 +1203,18 @@
         "pushed": false,
         "scope": "Historical selected-delivery cutoff; separate scoped main integration/publication remains pending."
       },
-      "status": "implementation_present"
+      "status": "implementation_present",
+      "wire_entity_census_v3": {
+        "cases": 64,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "uscode-hf-wire-coordinate-entity-census-qualified-20261024-01",
+        "phase_passes": 192,
+        "profile": "paired-coordinate-hf-wire-entity-census/v1",
+        "scope": "Explicit wire census v3 binds genuine join-v3/source-intake-v2 and a pinned prior entity census. 64 cases/192 phases (62 new,2 existingv2); no entity rescan or semantic association, false authority, null binding count and plain0 masks. Original41/corpus90/parent42 cohorts remain separate.",
+        "semantic_entity_bindings": null,
+        "source_sha256": "21d9a7514092c80b2f7bcf79d75f57669c6b62c8ed536c72a240879b1856adb4",
+        "training_mask": 0
+      }
     },
     {
       "apis": [
@@ -2640,7 +2684,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-24T17:35:39.865238+00:00",
+  "last_updated_at_utc": "2026-10-24T17:50:42.816698+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -4213,6 +4257,26 @@
       "root": "datasets_repository",
       "scope": "All81catalogedowners/80paths/368declaredAPIs source-present at943e; three already implemented/qualified primary extensions remain unpublished. Four-width training reuse preserves successful8+partial4CP128 distinction, completed2x4vector panel, adverse results and task/profile boundaries. Three dataset cards pinned; no table scan. One reviewed complete norm/definition/two uses then20-40provisions, manual path before decoder success. Original24taskbytes unchanged; no new training, model, Lean or semantic admission.",
       "status": "metadata_review_and_consolidated_plan_no_new_execution"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-entity-census-qualified-20261024-01",
+      "observed_bytes": 11851,
+      "observed_sha256": "2578fbd5450b8e6d052ade4917d9542ce648cc4a3f1ece0f927de735c919039b",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-entity-census-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Explicit wire census v3 binds genuine join-v3/source-intake-v2 and a pinned prior entity census. 64 cases/192 phases (62 new,2 existingv2); no entity rescan or semantic association, false authority, null binding count and plain0 masks. Original41/corpus90/parent42 cohorts remain separate.",
+      "status": "explicit_wire_coordinate_entity_census_fixture_qualified"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-entity-census-public-integration-qualified-20261024-01",
+      "observed_bytes": 16812,
+      "observed_sha256": "506aa88dcd582ee4f7380bacb2075177f885aaeabc51fbeaac6fcb14d54e7057",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-entity-census-public-integration-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Three existing census-v3 cases / nine phases on224 actual public Git leaves with only exact21d9 source/83dc test overlays. Historical64/192 is separate; no row rescan or semantic association. Actual47 aliases/45 public source buffers retain separate private dc6 orchestration,6 initializer paths/8 aliases,1 logic bypass/2 fileless namespaces, and8 bypass-eligible sources. Only original scoped Python audits apply; no global DB/readonly-payload/comprehensive network proof or whole-package/model/graph/Lean admission. Measured943 and docs-only publication2b32 preserve identical runtime bytes.",
+      "status": "focused_current_public_wire_entity_census_fixture_qualified"
     }
   ]
 }

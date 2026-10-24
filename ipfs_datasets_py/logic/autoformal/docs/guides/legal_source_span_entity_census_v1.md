@@ -288,3 +288,97 @@ No graph admission, governing-definition resolution, semantic review,
 training/gold eligibility, model execution or Lean admission follows from this
 companion. New qualification receipts must be appended only after the original
 resource/source owners close and the actual outcomes have been reviewed.
+
+## Explicit wire census v3
+
+Use `prepare_source_span_entity_census_v3` and
+`validate_source_span_entity_census_v3` in this same owner for an explicit
+`legal-source-span-entity-census/v3` report with
+`source_compatibility_profile="paired-coordinate-hf-wire-entity-census/v1"`.
+Their arguments match v2: `request_raw`, `join_report`, `census_raw`, the
+original absolute `entity_path`, independent `expected_request_sha256`, and
+complete `join_originals`; validation additionally takes the report and its
+independent `expected_report_sha256`. The existing
+`source_span_entity_census_sha256` serves all three report versions. Earlier
+entrypoints keep their closed schemas and reject the wire-v3 request.
+
+The request schema is `legal-source-span-entity-census-request/v3`. Its closed
+ten-key population is the original eight request fields plus two wire fields:
+
+```text
+schema
+join_report_sha256
+census_raw_sha256
+census_sha256
+entity
+census_limits
+join_originals_sha256
+source_coordinate_report_sha256
+metadata_profile
+source_metadata_intake_sha256
+```
+
+`metadata_profile` must be `hf-default-parquet-envelope/v1`. The independently
+retained complete intake hash must match the genuine source-package-intake-v2
+report inside the join. V3 requires the explicit wire join-v3 profile, its
+source-request-v2 ancestry and a matching reconciled source-intake-v2 report.
+It does not relabel a join-v2 report. **Paired-v3 manifests still contain
+payload-intake-v2 reports.** The complete wire intake is retained once inside
+the unchanged join; the census adds its profile and canonical hash linkage.
+
+Reuse `source_span_entity_census_join_originals_sha256` and the same closed
+eight-field `join_originals` mapping described above. Its exact raw requests,
+metadata byte mappings and original request pin remain mandatory, with no
+legacy occurrence inputs. The existing **8 MiB** complete-original bound and
+**1–64** complete physical paired-row bound remain. Full report output retains
+the **32 MiB** limit; the v3 ordinary-input fingerprint additionally bounds
+captured input material to **64 MiB**, 100,000 nodes and depth 32. Overflow
+refuses the operation rather than dropping rows or truncating evidence.
+
+Supply the complete independently pinned detailed entity census v2, its exact
+raw bytes, original limits and original absolute entity-file path. A copied
+entity file does not authorize rewriting the prior census locator. The genuine
+entity owner rehashes that file and checks its footer on opening and closing;
+the companion does not decode entity rows or reconstruct an entity graph.
+
+Opening and closing genuine wire-join and source-intake validation preserve
+physical order and complete coordinate ancestry. Final checks retain the actual
+join, intake and entity-binding returns, check both original and detached
+inputs and fence the parsed offered report. Validation fixes canonical offered
+bytes immediately after checking the independent complete report pin; full
+original regeneration must match those bytes. The held finalizer still runs
+after callback replacement; final encoding is followed by physical, producer,
+input and retained-return checks and direct output-byte comparison. A primary
+failure remains primary when another closing check fails. These ordered
+observations do not provide an atomic multi-file snapshot or complete loaded
+byte identity.
+
+`entity_semantic_binding` and its aggregate count remain `null`;
+`fresh_entity_rows_decoded` remains `0`. Authority flags remain false and
+training/evaluation-gold masks remain plain integer zero. Exact wire metadata,
+physical span coordinates and a prior entity census establish custody, not
+remote history authentication, current-edition equivalence, scoped entity or
+definition meaning, independently reviewed context, graph admission or Lean
+admission.
+
+The [selected focused qualification](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-entity-census-20261024.json) passed **64 cases / 192 phases
+from 20 selectors**: 62 new wire-census cases and two genuine existing v2
+object/byte controls. It uses authored wire fixtures and one tiny prior
+16-row entity census. Reordered source indices use genuine paired bundles;
+the repeated-index projection is separately synthetic and its resealed join
+is refused. Original source READ, native compute and retained storage custody
+closed. The eight declared namespace-initializer bypasses, entire owning test
+module, full package startup and complete third-party runtime remain outside
+this qualification. Earlier census 41/123, wire corpus 90/270 and the uninstalled
+parent-response 42/126 alternative retain their own sources and are not pooled here. No model,
+training, encoder capture or Lean build ran for this companion qualification.
+
+## Focused current-public dependency qualification
+
+The [separate current-public check](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-entity-census-public-integration-20261024.json) passed **three existing cases / nine phases**: a complete byte-input roundtrip and closing drift refusals for the original entity and paired files. The original **64 cases / 192 phases**, including its earlier failed generation and separate closeouts, remain unchanged and are not repeated or pooled. No entity-row rescan was enrolled; semantic bindings remain unavailable.
+
+The measured public base is `943e85c247cfc31cdb990518c6ae3bfedf210ceb`. The publication base `2b32d87bcaae678c479a521d3289aa22dee060d4` adds the peer comprehensive plan and metadata only; all 224 runtime leaf bytes and the two exact qualified census source/test overlays remain identical. All 224 leaves are present in public Git, including nine files absent only from the sparse worktree. The profile preserves 222 current-public leaves, including public `span_cache` (`e35f…`) and helper (`cef7…`) bytes.
+
+Actual observations retain 47 module aliases and 45 checked public source files, with 22 required public sources and separately observed private pytest orchestration (`dc6…`). Six physical initializer files occur under eight aliases, including both ordinary and `frozen.tests`/`frozen.tests.unit` names. One logic initializer bypass and two genuine fileless test namespaces were observed; the eight bypass-eligible source files are a separate set. Public helper bytes remain unexecuted context. This does not qualify whole-package startup.
+
+The original four socket events and process/owned-write Python audits remain bounded observations. No global database-connection, comprehensive network API or readonly-payload observer is claimed. Third-party C I/O/cached bytecode and the initial worker loader remain outside attestation. Original source READ, native compute and retained storage closed, and independent saved-result review accepted the scoped result using the original opaque seals and stat-only payload readback. No model, encoder, training or Lean work was enrolled; authority remains false and training/gold masks remain integer zero.
