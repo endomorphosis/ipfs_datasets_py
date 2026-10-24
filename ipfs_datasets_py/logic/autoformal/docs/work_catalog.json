@@ -488,7 +488,9 @@
         "prepare_retained_source_span_target_eligibility_v1",
         "validate_retained_source_span_target_eligibility_v1",
         "prepare_source_span_target_eligibility_v3",
-        "validate_source_span_target_eligibility_v3"
+        "validate_source_span_target_eligibility_v3",
+        "prepare_source_span_target_eligibility_v4",
+        "validate_source_span_target_eligibility_v4"
       ],
       "compatibility_dependency": false,
       "current_compatibility_generation": {
@@ -504,8 +506,16 @@
         "coordinate-target-eligibility-git-20261020-01",
         "coordinate-supported-target-qualified-20261021-01",
         "coordinate-supported-target-git-20261021-01",
-        "public-v2-retained-v1-original-v3-qualified-20261021"
+        "public-v2-retained-v1-original-v3-qualified-20261021",
+        "uscode-hf-wire-coordinate-eligibility-qualified-20261024-01",
+        "uscode-hf-wire-coordinate-eligibility-public-integration-qualified-20261024-01"
       ],
+      "focused_public_dependency_integration": {
+        "cases": 3,
+        "evidence_id": "uscode-hf-wire-coordinate-eligibility-public-integration-qualified-20261024-01",
+        "phases": 9,
+        "scope": "Three existing current-public eligibility-v4 cases only; historical 318/954 and namespace/private-orchestration scopes remain separate. No P/private full-profile requalification or model/legal authority."
+      },
       "id": "target-eligibility",
       "main_integration": {
         "base_main": "5beb7f4f7f03307f37684908cbb85ae977fc08b6",
@@ -557,7 +567,53 @@
         "pushed": false,
         "scope": "Historical selected-delivery cutoff; separate scoped main integration/publication remains pending."
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "wire_coordinate_v4": {
+        "all_previous_contracts_preserved": true,
+        "authority": {
+          "Lean_admitted": false,
+          "evaluation_gold_qualified": false,
+          "graph_admitted": false,
+          "legal_meaning_reviewed": false,
+          "source_authenticated": false,
+          "source_current": false,
+          "training_qualified": false
+        },
+        "cases": 318,
+        "declared_latent_dimensions": [
+          0,
+          384
+        ],
+        "decoder_profile": "source_span_formula_v1",
+        "evaluation_gold_mask": 0,
+        "evidence_id": "uscode-hf-wire-coordinate-eligibility-qualified-20261024-01",
+        "inference_authorized": false,
+        "legacy_cases": 275,
+        "metadata_profile": "hf-default-parquet-envelope/v1",
+        "new_cases": 43,
+        "owning_test": {
+          "bytes": 141184,
+          "path": "tests/unit/logic/autoformal/test_legal_source_span_target_eligibility_v1.py",
+          "sha256": "c7f07b2de1cf2cc8e893437117e8ab1e645273fdb1b001e46c9e2f940e209487"
+        },
+        "phase_passes": 954,
+        "report_schema": "legal-source-span-target-eligibility/v4",
+        "request_schema": "legal-source-span-target-eligibility-request/v4",
+        "requires_all_original_join_inputs": true,
+        "scope": "Original-input target enumeration and custody only; source/edition/meaning, context, entity/definition, training/gold and graph/Lean decisions remain unresolved.",
+        "source": {
+          "bytes": 89898,
+          "path": "ipfs_datasets_py/logic/autoformal/legal_source_span_target_eligibility_v1.py",
+          "sha256": "ff73ae6f16e17bcaae412ed7e53a86a006facd81744940782ec06e051e799a7b"
+        },
+        "source_aliases_mapped": false,
+        "source_compatibility_profile": "original-input-wire-coordinate-target-eligibility/v1",
+        "status": "focused_authored_fixture_tests_qualified",
+        "test_functions": 117,
+        "training_mask": 0,
+        "upstream_join_profile": "paired-coordinate-hf-wire-three-cache-join/v1",
+        "upstream_join_schema": "legal-source-span-entity-join-manifest/v3"
+      }
     },
     {
       "apis": [
@@ -2271,48 +2327,48 @@
       "status": "focused_tests_qualified"
     },
     {
-      "id": "norm-content-declaration-v1",
-      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_declaration_v1.py",
-      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_content_declaration_v1",
       "apis": [
         "prepare_norm_content_declaration",
         "validate_norm_content_declaration",
         "norm_content_declaration_sha256"
       ],
-      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_declaration_v1.md",
-      "owning_tests": [
-        "tests/unit/logic/autoformal/test_legal_norm_content_declaration_v1.py"
-      ],
-      "ownership_role": "existing_single_owner",
       "compatibility_dependency": true,
-      "required": true,
-      "status": "focused_tests_qualified",
       "evidence_ids": [
         "norm-content-declaration-binding-public-integration-20261024-01"
       ],
-      "notes": "Existing unsigned declaration owner/test are byte-exact4d72/5252 to original144-case generation, whose documented source READ/storage/resource/durability scope remains separate. Fresh six declaration controls belong to accepted21/63, not a rerun or additional credit for144. Complete source/AST/context/coverage and definition-use proposals remain retained, unsigned and unapplied. No actual reviews, meaning/governing choice, physical join or semantic/learning/gold/Lean authority; masks zero."
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_declaration_v1.md",
+      "id": "norm-content-declaration-v1",
+      "notes": "Existing unsigned declaration owner/test are byte-exact4d72/5252 to original144-case generation, whose documented source READ/storage/resource/durability scope remains separate. Fresh six declaration controls belong to accepted21/63, not a rerun or additional credit for144. Complete source/AST/context/coverage and definition-use proposals remain retained, unsigned and unapplied. No actual reviews, meaning/governing choice, physical join or semantic/learning/gold/Lean authority; masks zero.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_content_declaration_v1",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_norm_content_declaration_v1.py"
+      ],
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_declaration_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     },
     {
-      "id": "norm-content-declaration-binding-v1",
-      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_declaration_binding_v1.py",
-      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_content_declaration_binding_v1",
       "apis": [
         "prepare_norm_content_declaration_binding_v1",
         "validate_norm_content_declaration_binding_v1",
         "norm_content_declaration_binding_sha256"
       ],
-      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_declaration_binding_v1.md",
-      "owning_tests": [
-        "tests/unit/logic/autoformal/test_legal_norm_content_declaration_binding_v1.py"
-      ],
-      "ownership_role": "existing_single_owner",
       "compatibility_dependency": true,
-      "required": true,
-      "status": "focused_tests_qualified",
       "evidence_ids": [
         "norm-content-declaration-binding-public-integration-20261024-01"
       ],
-      "notes": "Existing later7fd/637 binding generation has one raw-length ledger mark and three appended cases relative to original494a/b184 64-case qualification; not byte-exact original64 or a previously established67-case result. Fresh21/63 covers12 original binding controls+3later cases+6unsigned controls. Six complete inputs keep independent raw/canonical pins, complete current replay and both generation/obligation identities. Historical raw bytes remain unverified; current raw bytes/length are independently checked. Combined fresh profile:119 compile/exec sources,114 module entries/112 physical origins,4 ordinary origins/23 physical paths; dynamic helpers claim no canonical origins. Six bypasses declared, onlylogic observed/five unused. Genuine cryptography49 fixture APIs, without independent operation count/binary/code-object/whole-environment attestation. Original compute/storage/source READs closed with10files2957288bytes. No actual review, applied meaning/applicability, source/span/entity join, model/training or graph/Lean admission. All four-width gates unchanged; masks zero."
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_declaration_binding_v1.md",
+      "id": "norm-content-declaration-binding-v1",
+      "notes": "Existing later7fd/637 binding generation has one raw-length ledger mark and three appended cases relative to original494a/b184 64-case qualification; not byte-exact original64 or a previously established67-case result. Fresh21/63 covers12 original binding controls+3later cases+6unsigned controls. Six complete inputs keep independent raw/canonical pins, complete current replay and both generation/obligation identities. Historical raw bytes remain unverified; current raw bytes/length are independently checked. Combined fresh profile:119 compile/exec sources,114 module entries/112 physical origins,4 ordinary origins/23 physical paths; dynamic helpers claim no canonical origins. Six bypasses declared, onlylogic observed/five unused. Genuine cryptography49 fixture APIs, without independent operation count/binary/code-object/whole-environment attestation. Original compute/storage/source READs closed with10files2957288bytes. No actual review, applied meaning/applicability, source/span/entity join, model/training or graph/Lean admission. All four-width gates unchanged; masks zero.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_content_declaration_binding_v1",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_norm_content_declaration_binding_v1.py"
+      ],
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_declaration_binding_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3856,6 +3912,26 @@
       "root": "datasets_repository",
       "scope": "Two existing owners/four source files: unchanged unsigned144 lineage, later binding one-line/three-case delta versus old64, and separately accepted21 cases/63 phases. Existing later7fd/637 binding generation has one raw-length ledger mark and three appended cases relative to original494a/b184 64-case qualification; not byte-exact original64 or a previously established67-case result. Fresh21/63 covers12 original binding controls+3later cases+6unsigned controls. Six complete inputs keep independent raw/canonical pins, complete current replay and both generation/obligation identities. Historical raw bytes remain unverified; current raw bytes/length are independently checked. Combined fresh profile:119 compile/exec sources,114 module entries/112 physical origins,4 ordinary origins/23 physical paths; dynamic helpers claim no canonical origins. Six bypasses declared, onlylogic observed/five unused. Genuine cryptography49 fixture APIs, without independent operation count/binary/code-object/whole-environment attestation. Original compute/storage/source READs closed with10files2957288bytes. No actual review, applied meaning/applicability, source/span/entity join, model/training or graph/Lean admission. All four-width gates unchanged; masks zero.",
       "status": "current_public_unsigned_declaration_and_later_binding_engineering_qualified_no_semantic_promotion"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-eligibility-qualified-20261024-01",
+      "observed_bytes": 13831,
+      "observed_sha256": "cb78f10af6e8e962e5f714deff465c9094c5a30d7394741e73a5eb5bb006818f",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-eligibility-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Eligibility v4 passed 318 authored cases / 954 phases across 117 test functions:275 preserved cases plus 43 new controls. Genuine wire-coordinate join-v3 original-input replay and source_span_formula_v1 target audit preserve false authority and zero masks; downstream graph/corpus/census and legal/Lean adoption remain separate.",
+      "status": "explicit_wire_coordinate_target_eligibility_fixture_qualified"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-eligibility-public-integration-qualified-20261024-01",
+      "observed_bytes": 9504,
+      "observed_sha256": "e697250288b1d81cf748d286554fd05279506bbb00263b02055693faf8c44e31",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-eligibility-public-integration-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Three existing cases / nine phases on 234 current-public source/fixture files with exact ff73 source/c7 test overlays and preserved public cache/helper. Source/native/storage closed; historical 318/954 is not rerun or pooled. The 0/384 values are metadata-only declarations; no inference, model, legal, graph/corpus or Lean admission.",
+      "status": "focused_current_public_wire_eligibility_fixture_qualified"
     }
   ]
 }
