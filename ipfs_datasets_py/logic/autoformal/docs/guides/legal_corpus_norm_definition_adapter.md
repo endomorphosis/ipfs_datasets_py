@@ -148,3 +148,53 @@ executes no model, training, solver, Lean build, publication or accepted-state
 mutation. Engineering fixtures qualify custody and rejection behavior only;
 actual governing definition application and independently reviewed statutory
 composition remain separate requirements.
+
+
+## Source publication and qualification generations
+
+This graph-only source delivery retains the original adapter buffer. Its owning
+test module preserves the original 25-case prefix and adds one case sharing the
+same original companion with conditional complete-norm preparations. The branch
+selector was independently published in PR1367; its source, guide and task
+actions are reused. This graph delivery adds no second selector implementation.
+
+The original `artifacts/legal-norm-definition-graph-20261017-01` qualification
+passed 81 authored cases: 25 adapter, 20 graph and 36 exchange, with one
+package-startup case deliberately deselected and no skipped selected cases.
+Source/resource leases closed and child exit was observed. The original
+512-MiB sampled scratch limit was not a named-root aggregate storage reservation.
+Enrolled adapter/test equality was checked after launch; ordinary root package
+startup, complete instantiated input archival and legal meaning were unqualified.
+
+The separate [portable current-public integration record](../../../../../docs/autoformalization/evidence/legal-ir-graph-companion-integration-20261024.json) records **33 cases / 99 phases**:
+26 adapter cases including the new shared-companion check, two existing
+endpoint/genuine Parquet controls and five selector compatibility controls.
+The retained candidate contains two alternatives, two typed uses, four ordered
+nominations, 13 graph nodes and 24 custody edges. Both typed uses share one
+fictional physical source target. No `USES_DEFINITION`, semantic entity,
+governing-use edge or actual membership is inferred. The original complete norm
+and conditional definition/membership premises remain unchanged. Statutory
+source joins and meaning/applicability decisions remain null, with zero masks.
+
+Two owning-test exports performed genuine Parquet write/load checks. The later
+saved reader checked their durable bytes, framing and bookkeeping without
+re-decoding Parquet rows or rerunning tests. The cohort used the genuine public
+pytest helper, plain-source compilation and 149 checked compile/exec-filename
+observations. Six initializer bypasses were declared and pinned; only
+`logic/__init__.py` was observed bypassed, and the other five were uninstantiated.
+Neither code-object identity, third-party cached bytecode nor whole-package or
+environment behavior is attested. Original compute/storage and source READs
+closed with 20 retained files / 3,962,353 bytes. No new model, training or Lean
+execution occurred. The original 81-case graph, 30-case selector and 41-case core
+qualifications remain separate and are not added to this cohort.
+
+The first attempt remains a collection failure with zero tests. Its seven
+regular files / 190,089 bytes remain unchanged after the original recovery owner
+released its 128-MiB storage promise. That closeout does not qualify the failure
+or alter the older retained native-v01 192-MiB reservation. Reuse the retained
+2024 Title 10 dossier and exact producer-lineage gate in the
+[handoff](../HANDOFF.md#selected-pilot-and-replay-input-follow-up); do not repeat
+the exhausted paired rosters, progress lookup or census. Legal-as-of,
+meaning and every-use applicability remain independent decisions. The published
+selector's compatible persistent consumer remains separate work; numerical
+baseline accuracy stays 0/4 typed or exact ID/AST matches.
