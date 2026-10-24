@@ -148,32 +148,12 @@
   "documentation": {
     "archive_root": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01",
     "incoming_anchors_preserved": [
-      {
-        "anchor": "four-source-widths",
-        "observed_referrers": [
-          "autoformal/README.md:9",
-          "docs/TRAINING_HISTORY.md:64"
-        ]
-      },
-      {
-        "anchor": "bound-norm-corpus-engineering-profile-2026-10-23",
-        "observed_referrers": [
-          "docs/ARCHITECTURE.md:43"
-        ]
-      },
-      {
-        "anchor": "selected-pilot-and-replay-input-follow-up",
-        "observed_referrers": [
-          "docs/ARCHITECTURE.md:49",
-          "previously pinned guides/legal_corpus_norm_definition_adapter.md:196"
-        ]
-      },
-      {
-        "anchor": "latest-transport-delivery-and-remaining-graph-boundary",
-        "observed_referrers": [
-          "docs/ARCHITECTURE.md:53"
-        ]
-      }
+      "bound-norm-corpus-engineering-profile-2026-10-23",
+      "cache-producer-and-offsets",
+      "evaluation-release-and-immediate-queue",
+      "four-source-widths",
+      "latest-transport-delivery-and-remaining-graph-boundary",
+      "selected-pilot-and-replay-input-follow-up"
     ],
     "indexed_review_inputs": [
       {
@@ -236,7 +216,8 @@
         "cases": 64,
         "evidence": {
           "bytes": 11851,
-          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-entity-census-20261024.json",
+          "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-entity-census-20261024.json",
+          "root": "datasets_repository",
           "sha256": "2578fbd5450b8e6d052ade4917d9542ce648cc4a3f1ece0f927de735c919039b"
         },
         "phase_passes": 192,
@@ -246,7 +227,8 @@
         "cases": 103,
         "evidence": {
           "bytes": 10468,
-          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-source-correspondence-20261024.json",
+          "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-source-correspondence-20261024.json",
+          "root": "datasets_repository",
           "sha256": "e513c1dfcb5a697a12b3a3ecce6e9ef8875b0d36bba5e544135937e366197c59"
         },
         "phase_passes": 309,

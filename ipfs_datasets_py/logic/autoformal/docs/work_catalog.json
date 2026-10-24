@@ -4206,8 +4206,8 @@
     },
     {
       "id": "comprehensive-delivery-plan-review-20261024-03",
-      "observed_bytes": 32787,
-      "observed_sha256": "4fc4fd342fb6a43b421a5da040e174264373e5f9b961bc7dcb4688ce7c4f3659",
+      "observed_bytes": 32305,
+      "observed_sha256": "333edbba493269168d5ad24f7037296eb6f107f1db64efd9f1d13e4d9a3fc21c",
       "path": "docs/autoformalization/evidence/legal-ir-comprehensive-delivery-plan-review-20261024.json",
       "required_for_catalog_check": true,
       "root": "datasets_repository",
