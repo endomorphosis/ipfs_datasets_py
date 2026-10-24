@@ -2788,7 +2788,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-24T20:59:31.862975+00:00",
+  "last_updated_at_utc": "2026-10-24T21:51:28.097857+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -4461,6 +4461,16 @@
       "root": "datasets_repository",
       "scope": "One new local physical cohort over three already exposed retained2024Title10 official-source views; actual3-row/8-field independent parent replay and1649 uncompiled source spans. Existing source identity retained; no legacy HF cache repair or legal/admission decision.",
       "status": "new_local_physical_source_cohort_and_decoded_coordinate_replay_qualified"
+    },
+    {
+      "id": "retained-pilot-source-unit-crosswalk-20261024-01",
+      "observed_bytes": 35136,
+      "observed_sha256": "4f4fa06c31c28072f414e130a6d3001e98f210a036f4be742b48bc587393e9f3",
+      "path": "docs/autoformalization/evidence/legal-ir-retained-pilot-source-crosswalk-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "One actual ownedDATA operation binds four original retained2024source units to exact interior selectors in three existing local-cohort physical rows and three containing coordinate spans. Separate metadata observations bind two normalized input texts to retained384/768text preparations. No new source acquisition, sampler, source ID, numerical run or semantic admission.",
+      "status": "four_source_unit_literal_physical_crosswalk_qualified_meaning_pending"
     }
   ]
 }

@@ -93,3 +93,18 @@ The local cohort is bound to actual Git commit `79f6f5538747095de6512dcc071e92b0
 Existing `usc:us:10:101`, `usc:us:10:7213` and `usc:us:10:7214` legal IDs remain display/source identifiers. The query is `retained-official-pilot:2024:10:101,7213,7214:v1` and the release is `retained-official-pilot/2024-title10/v1`. Their new physical cohort, row/field witnesses and source-span identities must remain distinct from legacy cache records. Offsets refer to decoded normalized-text characters and UTF-8 bytes; they supply neither encoded-HTML offsets nor Parquet-file byte mappings. The descriptor includes the actual local repository path: moving the files requires a new descriptor and replay, while the original descriptor and evidence remain unchanged.
 
 This cohort creates no entity annotations, semantic review or legacy cache repair. Legacy rows retain `producer_lineage_unavailable` and null Hugging Face physical joins. Source authenticity, governing edition, context, complete meaning, definition applicability and the existing interpretation alternatives remain pending; training/evaluation masks stay zero and graph/Lean authority stays false. No source sampler, reviewer template, encoder, training run or Lean build was regenerated. Reuse these physical witnesses for the next source-bound review instead of repeating the source capture.
+
+### Retained source units and exact physical selectors
+
+The [retained-unit crosswalk evidence](../../../../../docs/autoformalization/evidence/legal-ir-retained-pilot-source-crosswalk-20261024.json) reuses the existing three-row cohort and all 1,649 inventory spans. Existing public owners replayed three retained source versions and four original source-occurrence records, enumerated every literal candidate, and selected the sole exact match for each retained unit. Four bounded data checks passed with original native/storage release and final controller source-READ closeout; no source sampler, cohort capture or reviewer template was regenerated.
+
+These half-open ranges address the decoded `text` field of the named physical row. Character positions count Unicode code points; byte positions count its UTF-8 encoding.
+
+| Retained unit label | Section / physical row | Character range | UTF-8 byte range |
+| --- | --- | --- | --- |
+| Title-scope candidate | §101 / 0 | [6425, 6527) | [6447, 6551) |
+| Officer-definition candidate | §101 / 0 | [6528, 6591) | [6552, 6615) |
+| Officer-use candidate | §7213 / 1 | [431, 624) | [432, 625) |
+| Officer-use candidate | §7214 / 2 | [407, 570) | [408, 571) |
+
+Each selected unit lies inside one inventory span. The two §101 units share a containing span, so four unit selectors link to three spans; none is identical to its entire containing span. Preserve the full overlap population and each original USC ID, source-version/unit/occurrence CID, context reference, blank-guide reference and unanswered review question. The selected labels do not resolve their source roles, governing definition, meaning or applicability. Coordinates establish no encoded-HTML or Parquet-file byte mapping, registered occurrence alias, historical Hugging Face join, entity annotation, semantic graph edge or Lean admission; training/evaluation masks remain zero. This data worker observed ten ordinary project origins, twelve checked compile buffers and four initializer bypasses, with multiformats 0.3.1 from the trusted installed runtime; Arrow and NumPy remained absent. These runtime observations do not attest whole third-party binaries or qualify a model/profile.
