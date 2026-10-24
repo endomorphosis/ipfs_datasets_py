@@ -65,9 +65,13 @@ def finite(node, members, domains, environment=None):
     if kind == "variable":
         return environment[node["symbol"]]
     if kind == "predicate":
-        assert node["symbol"] == "Member"
+        if isinstance(members, dict):
+            relation = members[node["symbol"]]
+        else:
+            assert node["symbol"] == "Member"
+            relation = members
         return tuple(finite(child, members, domains, environment)
-                     for child in node["arguments"]) in members
+                     for child in node["arguments"]) in relation
     if kind == "equality":
         return finite(node["arguments"][0], members, domains, environment) == finite(
             node["arguments"][1], members, domains, environment)
@@ -949,3 +953,322 @@ def test_compact_lowered_content_bound_refuses_complete_input_without_truncation
     with pytest.raises(ValueError):
         counted.decode_counted_frame_content_v1(content_raw, context_raw,
             expected_content_sha256=sha(content_raw), expected_context_sha256=sha(context_raw))
+
+
+# Pointwise relation-to-count transport is a caller-authored conditional theorem.
+from ipfs_datasets_py.logic.autoformal import legal_counted_relation_binding_v1 as binding
+
+# These fixtures do not interpret a statute or assert its inclusion premise.
+@pytest.fixture(scope="module")
+def relation_binding_request():
+    return binding.authored_counted_relation_binding_request_v1()
+
+
+def _relation_binding_prepare(request):
+    raw = wire(request)
+    return binding.prepare_counted_relation_binding_v1(
+        raw, expected_request_sha256=sha(raw))
+
+
+def _relation_binding_parts(request):
+    root = request["expression"]["root"]
+    for expected in ("actor", "event", "time"):
+        assert root["kind"] == "forall"
+        assert root["binders"][0]["name"] == expected
+        root = root["arguments"][0]
+    assert root["kind"] == "implies"
+    premises, conclusion = root["arguments"]
+    assert premises["kind"] == "and"
+    cap_member, bridge = premises["arguments"]
+    assert bridge["kind"] == "forall"
+    assert bridge["binders"][0]["name"] == "object"
+    return cap_member, bridge, conclusion
+
+
+def _relation_binding_domains(*, objects=(0, 1, 2, 3), events=("e0",), times=("t0",)):
+    return {"Object": objects, "EventFrame": events, "TimeFrame": times}
+
+
+def _relation_binding_table(member_objects, detail_objects, *, actor=0, event="e0", time="t0"):
+    return {"Member": {(item, event, time) for item in member_objects},
+            "Detail": {(actor, item, event, time) for item in detail_objects}}
+
+
+def test_relation_binding_public_replay_preserves_114_nodes_12_binders_and_cap_lineage(
+        original, relation_binding_request):
+    request = deepcopy(relation_binding_request)
+    before = deepcopy(request)
+    raw = wire(request)
+    report = _relation_binding_prepare(request)
+    replay = binding.validate_counted_relation_binding_v1(
+        report, raw, expected_request_sha256=sha(raw),
+        expected_report_sha256=binding.counted_relation_binding_report_sha256(report))
+    assert replay == report and request == before
+    assert report["schema"] == "legal-counted-relation-binding-report/v1"
+    assert report["profile"] == "explicit-pointwise-actor-frame-subrelation-cap3/v1"
+    assert report["request"] == request and report["request_raw_utf8"].encode() == raw
+    assert report["request_sha256"] == sha(raw)
+    assert report["typed_expression"] == request["expression"]
+    physical = list(nodes(request["expression"]["root"]))
+    assert len(physical) == 114 and len({row["node_id"] for row in physical}) == 114
+    assert sum(row["kind"] == "forall" for row in physical) == 12
+    assert sum(row["kind"] == "equality" for row in physical) == 12
+    assert sum(row["kind"] == "predicate" for row in physical) == 10
+    assert sum(row["kind"] == "variable" for row in physical) == 59
+    assert report["counts"] == {"nodes": 114, "quantifiers": 12,
+        "predicate_occurrences": 10, "equality_occurrences": 12,
+        "variable_occurrences": 59, "binder_rows": 12}
+    assert len(report["binder_ledger"]) == 12
+    cap_member, bridge, cap_detail = _relation_binding_parts(request)
+    original_root = original["expression"]["root"]
+    original_core = original_root["arguments"][0]["arguments"][0]
+    assert len(list(nodes(original_root))) == 49
+    assert len(list(nodes(cap_member))) == 47 and cap_member == original_core
+    assert len(list(nodes(cap_detail))) == 51
+    assert json.loads(request["counted_request_raw_utf8"]) == original
+    assert report["original_counted_report"]["typed_expression"] == original["expression"]
+    lineage = report["cap_lineage"]
+    assert lineage["original_nodes"] == 49 and lineage["retained_core_nodes"] == 47
+    assert lineage["original_root_sha256"] == sha(wire(original_root))
+    assert lineage["retained_core_sha256"] == sha(wire(original_core))
+    assert lineage["source_core_original_typed_path"] == "/root/arguments/0/arguments/0"
+    assert lineage["frame_variable_renamings"] == []
+    assert request["scope"]["modal_transport"] == "none"
+    assert report["source_binding"] is None and not report["source_bound"]
+    assert not report["native_build_executed"] and not any(report["authority"].values())
+    assert type(report["training_mask"]) is int and report["training_mask"] == 0
+    assert type(report["evaluation_gold_mask"]) is int and report["evaluation_gold_mask"] == 0
+
+
+def test_relation_binding_empty_member_exposes_old_loophole_without_asserting_the_premise(
+        original, relation_binding_request):
+    cap_member, bridge, cap_detail = _relation_binding_parts(relation_binding_request)
+    domains = _relation_binding_domains()
+    env = {"actor": 0, "event": "e0", "time": "t0"}
+    table = _relation_binding_table((), (0, 1, 2, 3))
+    assert finite(original["expression"]["root"], set(), domains) is True
+    assert finite(cap_member, table, domains, env) is True
+    assert finite(cap_detail, table, domains, env) is False
+    assert finite(bridge, table, domains, env) is False
+    # The new expression is conditional: this model violates its inclusion premise.
+    assert finite(relation_binding_request["expression"]["root"], table, domains) is True
+
+
+def test_relation_binding_nonempty_three_and_four_separate_premises_and_conclusion(
+        relation_binding_request):
+    cap_member, bridge, cap_detail = _relation_binding_parts(relation_binding_request)
+    domains = _relation_binding_domains()
+    env = {"actor": 0, "event": "e0", "time": "t0"}
+    three = _relation_binding_table((0, 1, 2), (0, 1, 2))
+    assert finite(cap_member, three, domains, env) is True
+    assert finite(bridge, three, domains, env) is True
+    assert finite(cap_detail, three, domains, env) is True
+    four = _relation_binding_table((0, 1, 2, 3), (0, 1, 2, 3))
+    assert finite(bridge, four, domains, env) is True
+    assert finite(cap_member, four, domains, env) is False
+    assert finite(cap_detail, four, domains, env) is False
+    assert finite(relation_binding_request["expression"]["root"], three, domains) is True
+    assert finite(relation_binding_request["expression"]["root"], four, domains) is True
+
+
+def test_relation_binding_reverse_only_has_a_nonempty_four_detail_countermodel(
+        relation_binding_request):
+    cap_member, bridge, cap_detail = _relation_binding_parts(relation_binding_request)
+    domains = _relation_binding_domains()
+    env = {"actor": 0, "event": "e0", "time": "t0"}
+    table = _relation_binding_table((0, 1, 2), (0, 1, 2, 3))
+    reverse = deepcopy(bridge)
+    reverse["arguments"][0]["arguments"].reverse()
+    assert finite(cap_member, table, domains, env) is True
+    assert finite(reverse, table, domains, env) is True
+    assert finite(bridge, table, domains, env) is False
+    assert finite(cap_detail, table, domains, env) is False
+    wrong_conditional = deepcopy(relation_binding_request)
+    _, wrong_bridge, _ = _relation_binding_parts(wrong_conditional)
+    wrong_bridge["arguments"][0]["arguments"].reverse()
+    assert finite(wrong_conditional["expression"]["root"], table, domains) is False
+
+
+def test_relation_binding_actor_fiber_does_not_substitute_another_actor(
+        relation_binding_request):
+    cap_member, bridge, cap_detail = _relation_binding_parts(relation_binding_request)
+    domains = _relation_binding_domains()
+    table = _relation_binding_table((0, 1, 2), (0, 1, 2), actor=1)
+    table["Detail"] |= {(0, item, "e0", "t0") for item in (0, 1, 2, 3)}
+    target = {"actor": 0, "event": "e0", "time": "t0"}
+    other = target | {"actor": 1}
+    assert finite(cap_member, table, domains, target) is True
+    assert finite(bridge, table, domains, other) is True
+    assert finite(cap_detail, table, domains, other) is True
+    assert finite(bridge, table, domains, target) is False
+    assert finite(cap_detail, table, domains, target) is False
+
+
+def test_relation_binding_event_crossing_does_not_transport_a_local_cap(
+        relation_binding_request):
+    cap_member, bridge, cap_detail = _relation_binding_parts(relation_binding_request)
+    domains = _relation_binding_domains(events=("e0", "e1"))
+    table = _relation_binding_table((0, 1, 2), (0, 1, 2, 3))
+    table["Member"] |= {(item, "e1", "t0") for item in (0, 1, 2, 3)}
+    env = {"actor": 0, "event": "e0", "time": "t0", "other_event": "e1"}
+    wrong = deepcopy(bridge)
+    member = wrong["arguments"][0]["arguments"][1]
+    assert member["symbol"] == "Member"
+    member["arguments"][1]["symbol"] = "other_event"
+    assert finite(cap_member, table, domains, env) is True
+    assert finite(wrong, table, domains, env) is True
+    assert finite(bridge, table, domains, env) is False
+    assert finite(cap_detail, table, domains, env) is False
+    # This is a LOCAL-premise counterexample, not a counterexample to global cap transport.
+    assert finite(cap_member, table, domains, env | {"event": "e1"}) is False
+
+
+def test_relation_binding_time_crossing_does_not_transport_a_local_cap(
+        relation_binding_request):
+    cap_member, bridge, cap_detail = _relation_binding_parts(relation_binding_request)
+    domains = _relation_binding_domains(times=("t0", "t1"))
+    table = _relation_binding_table((0, 1, 2), (0, 1, 2, 3))
+    table["Member"] |= {(item, "e0", "t1") for item in (0, 1, 2, 3)}
+    env = {"actor": 0, "event": "e0", "time": "t0", "other_time": "t1"}
+    wrong = deepcopy(bridge)
+    member = wrong["arguments"][0]["arguments"][1]
+    assert member["symbol"] == "Member"
+    member["arguments"][2]["symbol"] = "other_time"
+    assert finite(cap_member, table, domains, env) is True
+    assert finite(wrong, table, domains, env) is True
+    assert finite(bridge, table, domains, env) is False
+    assert finite(cap_detail, table, domains, env) is False
+    assert finite(cap_member, table, domains, env | {"time": "t1"}) is False
+
+
+def test_relation_binding_per_frame_cap_does_not_become_a_global_lifetime_cap(
+        original, relation_binding_request):
+    cap_member, bridge, cap_detail = _relation_binding_parts(relation_binding_request)
+    domains = _relation_binding_domains(objects=(0, 1, 2, 3, 4, 5), events=("e0", "e1"))
+    table = _relation_binding_table((0, 1, 2), (0, 1, 2))
+    table["Member"] |= {(item, "e1", "t0") for item in (3, 4, 5)}
+    table["Detail"] |= {(0, item, "e1", "t0") for item in (3, 4, 5)}
+    assert finite(original["expression"]["root"], table["Member"], domains) is True
+    for event in ("e0", "e1"):
+        env = {"actor": 0, "event": event, "time": "t0"}
+        assert finite(cap_member, table, domains, env) is True
+        assert finite(bridge, table, domains, env) is True
+        assert finite(cap_detail, table, domains, env) is True
+    assert len({row[1] for row in table["Detail"]}) == 6
+
+
+def test_relation_binding_has_no_implicit_permission_or_world_transport(
+        relation_binding_request):
+    cap_member, bridge, _ = _relation_binding_parts(relation_binding_request)
+    assert relation_binding_request["scope"]["evaluation"] == "single_interpretation"
+    assert relation_binding_request["scope"]["modal_transport"] == "none"
+    assert not any(row["kind"] == "extension"
+                   for row in nodes(relation_binding_request["expression"]["root"]))
+    domains = _relation_binding_domains()
+    env = {"actor": 0, "event": "e0", "time": "t0"}
+    worlds = (_relation_binding_table((0, 1, 2), (0, 1, 2)),
+              _relation_binding_table((0, 1, 2, 3), (0, 1, 2, 3)))
+    caps = tuple(finite(cap_member, table, domains, env) for table in worlds)
+    inclusions = tuple(finite(bridge, table, domains, env) for table in worlds)
+    assert caps == (True, False) and inclusions == (True, True)
+    # Explicit finite fixture only: P chooses world1. It is not an interpreter for
+    # the whole mixed proposal and does not select legal permission semantics.
+    permission = lambda values: values[1]
+    assert (not caps[0] or permission(inclusions)) is True
+    assert permission(tuple(cap and inclusion for cap, inclusion in zip(caps, inclusions))) is False
+    # An unconstrained P need not preserve a mere one-way implication.
+    unconstrained_P = lambda value: not value
+    assert (not False or True) is True
+    assert unconstrained_P(False) is True and unconstrained_P(True) is False
+
+
+def test_relation_binding_invalid_json_and_independent_hash_fail_before_owner_discovery(
+        relation_binding_request, monkeypatch):
+    monkeypatch.setattr(binding, "_relation_binding_owners", lambda:
+        pytest.fail("operation owner discovered before raw input rejection"))
+    for raw in (b"", b"{", b"[]", b'{"schema":1,"schema":2}', b'{"x":NaN}',
+                b'{"x":"\\ud800"}', b" " * (binding.MAX_REQUEST_BYTES + 1)):
+        with pytest.raises(ValueError):
+            binding.prepare_counted_relation_binding_v1(raw, expected_request_sha256=sha(raw))
+    raw = wire(relation_binding_request)
+    with pytest.raises(ValueError):
+        binding.prepare_counted_relation_binding_v1(raw, expected_request_sha256="0" * 64)
+
+
+def test_relation_binding_direction_roles_frame_masks_and_inner_bytes_are_closed_before_owners(
+        relation_binding_request, monkeypatch):
+    damaged = []
+    request = deepcopy(relation_binding_request)
+    request["relation_binding"]["direction"] = "counted_implies_target"
+    damaged.append(request)
+    request = deepcopy(relation_binding_request)
+    request["relation_binding"]["target_argument_roles"] = ["object", "actor", "event", "time"]
+    damaged.append(request)
+    request = deepcopy(relation_binding_request)
+    request["scope"]["frame_binding"] = "different_event_and_time"
+    damaged.append(request)
+    request = deepcopy(relation_binding_request)
+    request["scope"]["modal_transport"] = "permission_monotonicity"
+    damaged.append(request)
+    request = deepcopy(relation_binding_request)
+    request["training_mask"] = 1
+    damaged.append(request)
+    request = deepcopy(relation_binding_request)
+    request["source_binding"] = {"claimed": "reviewed"}
+    damaged.append(request)
+    request = deepcopy(relation_binding_request)
+    request["counted_request_raw_utf8"] += " "
+    damaged.append(request)
+    request = deepcopy(relation_binding_request)
+    _, bridge, _ = _relation_binding_parts(request)
+    bridge["arguments"][0]["arguments"].reverse()
+    reseal(request)
+    damaged.append(request)
+    request = deepcopy(relation_binding_request)
+    _, bridge, _ = _relation_binding_parts(request)
+    bridge["arguments"][0]["arguments"][1]["arguments"][1]["symbol"] = "other_event"
+    reseal(request)
+    damaged.append(request)
+    monkeypatch.setattr(binding, "_relation_binding_owners", lambda:
+        pytest.fail("operation owner discovered before fixed declaration/typed-shape rejection"))
+    for request in damaged:
+        with pytest.raises(ValueError):
+            _relation_binding_prepare(request)
+
+
+def test_relation_binding_resealed_reports_and_final_serialization_mutations_are_refused(
+        relation_binding_request, monkeypatch):
+    report = _relation_binding_prepare(relation_binding_request)
+    raw = wire(relation_binding_request)
+    for field, value in (("training_mask", 1), ("source_bound", True)):
+        changed = deepcopy(report)
+        changed[field] = value
+        with pytest.raises(ValueError):
+            binding.validate_counted_relation_binding_v1(
+                changed, raw, expected_request_sha256=sha(raw),
+                expected_report_sha256=binding.counted_relation_binding_report_sha256(changed))
+    source = next(path for path in report["producer_pins"] if path.endswith("/syntax_core/ast.py"))
+    actual_read, actual_wire = Path.read_bytes, binding._relation_binding_wire
+    for boundary in ("producer", "output"):
+        changed_after_wire = False
+
+        def read(path):
+            result = actual_read(path)
+            return result + b"\n# changed after final binding serialization\n" if (
+                changed_after_wire and str(path.resolve()) == source) else result
+
+        def serialize(value, *args, **kwargs):
+            nonlocal changed_after_wire
+            result = actual_wire(value, *args, **kwargs)
+            if type(value) is dict and value.get("schema") == "legal-counted-relation-binding-report/v1":
+                if boundary == "producer":
+                    changed_after_wire = True
+                else:
+                    value["training_mask"] = 1
+            return result
+
+        with monkeypatch.context() as patch:
+            patch.setattr(Path, "read_bytes", read)
+            patch.setattr(binding, "_relation_binding_wire", serialize)
+            with pytest.raises(ValueError):
+                _relation_binding_prepare(relation_binding_request)

@@ -371,3 +371,31 @@ Five actual data checks passed: retained geometry/origin, genuine typed round-tr
 The successful original compute/storage claim and both source READs closed. An earlier empty0775directory failed before native admission; its missing normal terminal and separate responsible administrative controller/READ-descriptor closeout remain preserved and unqualified. The success does not reclassify that failure.
 
 No counted owner/parser replay, encoder/model/optimizer operation, signature, semantic graph export or Lean build occurred. The Object-only relational adapter and fixed counted Lean template do not accept the mixed equality/many-sort/modal trees. Reuse the data for substantive review and a separately declared compositional lowering; do not rename an old profile or train on these drafts as gold.
+
+
+## Explicit pointwise relation binding
+
+The separate `legal_counted_relation_binding_v1` consumer prepares an explicit conditional over the existing counted owner. It preserves the original count, threshold, codec and numerical producer contracts; it does not copy their kernel, introduce a renderer or establish statutory coverage. The [qualification record](../../../../../docs/autoformalization/evidence/legal-ir-counted-relation-binding-20261024.json) retains the exact source and execution generation.
+
+The four APIs are `authored_counted_relation_binding_request_v1()`, `prepare_counted_relation_binding_v1(raw, expected_request_sha256=...)`, `counted_relation_binding_report_sha256(report)` and `validate_counted_relation_binding_v1(report, raw, expected_request_sha256=..., expected_report_sha256=...)`. The authored factory supplies a mathematical fixture, not a law-derived target. A caller must commit the complete 11-field request, its embedded original counted raw request and independent counted-report hash, the fixed ordered relation roles, and the complete typed conditional. Requests retain the existing 128 KiB bound and reports the 1 MiB bound; overflow refuses without truncation.
+
+The exact pointwise contract is:
+
+```text
+forall actor, event, time:
+  (CapMember(event,time)
+   and (forall object: Detail(actor,object,event,time) -> Member(object,event,time)))
+  -> CapDetail(actor,event,time)
+```
+
+Both caps use built-in object identity and the same event/time pair. `Detail` has ordered actor/object/event/time arguments; `Member` has object/event/time arguments. The required `Detail -> Member` inclusion is an explicit conditional premise. Preparing this schema does not establish that the premise holds in a statute. The opposite `Member -> Detail` direction allows four detailed objects outside a capped Member set. A bridge for another actor, event, time or interpretation does not discharge this local premise. No global lifetime cap, permission monotonicity, world accessibility or O/P/F lifting is supplied.
+
+The full closed conditional has 114 core nodes and 12 binder rows. It retains the original 49-node cap report and its exact 47-node inner core, preserves the frame/binder lineage, and constructs the 51-node actor-indexed Detail cap with explicit projection records. Genuine many-sorted `TypedExpression` elaboration, complete replay and canonical FOL print/two-alpha-reparse checks preserve this exact profile. This is a separate target and does not acquire the old counted codecs or native profile by renaming them.
+
+`CountedProofs.subrelation_preserves_bound` already has an authored native qualification. This consumer references that existing theorem and records constant-frame substitution data: `member_prime x _ _ = Member(x,event,time)` and `smaller_prime x _ _ = Detail(actor,x,event,time)`. It generates no new Lean proof or renderer and performs no new theorem build or kernel-checked application. `hMemberBound` and `hCoverage` remain explicit assumptions; source meaning, legal entities, definition applicability, reviews, graph/corpus admission and learning/gold masks remain pending or zero.
+
+The current focused qualification passed **16 cases / 48 phases**: 12 new contract controls, two existing counted regressions, one existing threshold case and one existing codec case. It checks nonempty positives, the reverse-direction loophole, actor/event/time/lifetime/world scope, complete typed replay, pre-owner refusals and final input/producer/output mutation refusals. These counts are separate from the old counted/threshold/codec campaigns. The observed scope is 24 module origins and 25 compile observations, with the `logic` initializer bypassed and the `families` namespace fileless; it is not whole-package, binary or code-object attestation.
+
+An earlier 13-pass/3-fail run patched three hooks on the old module after the API moved. Only those test targets changed before the fresh passing run; product code stayed unchanged. Preserve that failed generation and its separate compute/source/storage evidence. Its 32 MiB storage promise was retained at the failed-run cutoff; any later recovery requires its own original-owner record and is not inferred from the successful retry.
+
+The retained §7214 draft packet (`dd72e2b9…`) is unchanged. Neither modal alternative automatically gains this binding, and no `Detail -> Member` statutory premise is selected. Substantive source/context/meaning and every-use review are still required before application. No model, encoder, optimizer, law scan, semantic graph admission or new Lean execution was performed by this qualification.
