@@ -770,24 +770,108 @@ def _v2_bindings(request, graph, rows, source_preparation, banks, bounds):
     return physical_bindings, outputs
 
 
-def prepare_source_correspondence_requests_v2(request_raw, graph_report_raw, source_request_raw, *,
-        expected_request_sha256, graph_originals, original_banks, limits=None):
-    """Bind genuine coordinate rows to complete independent existing review banks.
+REQUEST_SCHEMA_V3 = "legal-source-correspondence-request/v3"
+SCHEMA_V3 = "legal-source-correspondence-requests/v3"
+PROFILE_V3 = "original-input-wire-coordinate-graph-v3-source-review-request-custody/v1"
+METADATA_PROFILE_V3 = "hf-default-parquet-envelope/v1"
 
-    Banks are nonempty. Receipt None/None remains a genuine unavailable-source
-    preparation; missing per-row nominations remain unresolved. No legacy
-    receipt, original join, source edition or governing occurrence is generated.
+
+def _coordinate_correspondence_owners(profile_version):
+    if profile_version == 2:
+        return _v2_owners()
+    _need(type(profile_version) is int and profile_version == 3,
+          "explicit coordinate correspondence profile required")
+    from . import corpus_proposed_graph_adapter as corpus
+    from . import legal_span_cache_intake as intake
+    from . import legal_source_span_target_eligibility_v1 as eligibility
+    _need(callable(getattr(intake, "validate_coordinate_source_graph_intake_v3", None)),
+          "explicit wire graph-v3 owner required without historical fallback")
+    return corpus, intake, eligibility
+
+
+def _coordinate_correspondence_callbacks(owners, profile_version):
+    result = _v2_callbacks(owners)
+    if profile_version == 3:
+        corpus, intake, eligibility = owners
+        from . import legal_paired_manifest_inventory_v1 as ordinary
+        result += (*intake._coordinate_graph_callables(eligibility, eligibility_version=4),
+            intake.validate_coordinate_source_graph_intake_v3,
+            intake._coordinate_graph_wire_unqualified, intake._coordinate_graph_runtime,
+            corpus._corpus_wire_physical_plan, corpus._corpus_read,
+            ordinary._read_json, ordinary._pairs, ordinary._wire, ordinary._need,
+            eligibility._owners, _wire_correspondence_rows,
+            _coordinate_correspondence_owners, _coordinate_correspondence_callbacks,
+            _coordinate_correspondence_setup, _wire_correspondence_unprivileged,
+            _prepare_source_correspondence_requests, _validate_source_correspondence_requests,
+            prepare_source_correspondence_requests_v3, validate_source_correspondence_requests_v3,
+            source_correspondence_requests_v3_sha256)
+    return result
+
+
+def _wire_correspondence_unprivileged(value):
+    _need(type(value) is dict and value.get("schema") == SCHEMA_V3
+          and value.get("profile") == PROFILE_V3
+          and value.get("metadata_profile") == METADATA_PROFILE_V3,
+          "explicit wire correspondence-v3 report required")
+    _digest(value.get("source_metadata_intake_sha256"), "wire source metadata intake")
+    try:
+        _v2_unprivileged(value, v2=True)
+        _v2_unprivileged(value["source_preparation"])
+    except (KeyError, TypeError, IndexError) as error:
+        raise SourceCorrespondenceRequestsError("complete unprivileged wire correspondence report required") from error
+    _need(value.get("atomic_snapshot_verified") is False
+          and value.get("external_complete_inputs_required") is True,
+          "wire correspondence cannot grant atomic or incomplete-input authority")
+
+
+def _wire_correspondence_rows(corpus, graph, original_join_raw, bounds, hold):
+    """Project exact row fields from the already genuinely validated wire join.
+
+    The existing ordinary parser owns finite-float metadata and its full-join
+    bounds. The legacy row parser receives only its required row fields; the
+    complete original metadata stays in the independently pinned raw carrier.
     """
+    joined = corpus._corpus_read(original_join_raw, 16 * 1024**2,
+        "genuinely replayed correspondence wire join")
+    hold(joined, "genuine ordinary wire join parser return")
+    _need(type(joined) is dict
+          and joined.get("schema") == "legal-source-span-entity-join-manifest/v3"
+          and joined.get("source_compatibility_profile") == "paired-coordinate-hf-wire-three-cache-join/v1"
+          and joined.get("source_metadata_profile") == graph.get("metadata_profile") == METADATA_PROFILE_V3
+          and joined.get("source_metadata_intake_sha256") == graph.get("source_metadata_intake_sha256"),
+          "genuinely replayed wire join metadata differs from the graph")
+    bundles = joined.get("paired_bundles")
+    _need(type(bundles) is list, "complete genuine wire bundle population required")
+    projection = {"paired_bundles": []}
+    for bundle in bundles:
+        _need(type(bundle) is dict and type(bundle.get("payload_intake")) is dict
+              and type(bundle["payload_intake"].get("rows")) is list,
+              "complete genuine wire row population required")
+        rows = []
+        for row in bundle["payload_intake"]["rows"]:
+            _need(type(row) is dict and type(row.get("derived_row_json")) is str
+                  and type(row.get("row_sha256")) is str,
+                  "exact genuine wire paired-row text and hash required")
+            rows.append({"derived_row_json": row["derived_row_json"], "row_sha256": row["row_sha256"]})
+        projection["paired_bundles"].append({"payload_intake": {"rows": rows}})
+    hold(projection, "exact private wire row projection")
+    return _v2_rows(graph, _wire(projection), bounds)
+
+
+def _coordinate_correspondence_setup(request_raw, graph_report_raw, source_request_raw, *,
+        expected_request_sha256, graph_originals, original_banks, limits, profile_version):
+    _need(type(profile_version) is int and profile_version in (2, 3),
+          "explicit coordinate correspondence profile required")
     _v2_check_authority()
     bounds = _v2_limits(limits)
-    _digest(expected_request_sha256, "v2 request")
+    _digest(expected_request_sha256, "v2 request" if profile_version == 2 else "wire v3 request")
     _need(type(request_raw) is bytes and 0 < len(request_raw) <= bounds["max_request_bytes"]
           and type(graph_report_raw) is bytes and 0 < len(graph_report_raw) <= 64 * 1024**2
           and type(source_request_raw) is bytes
           and 0 < len(source_request_raw) <= min(bounds["max_request_bytes"], DEFAULT_LIMITS["max_request_bytes"]),
-          "bounded exact v2 request, graph artifact and existing v1 request bytes required")
+          "bounded exact coordinate request, graph artifact and existing v1 request bytes required")
     _need(_sha(request_raw) == expected_request_sha256,
-          "v2 request differs from independent raw pin")
+          "coordinate request differs from independent raw pin")
     _keys(graph_originals, _V2_GRAPH_FIELDS, "complete graph original arguments")
     _shape(original_banks, bounds)
     original = {"request_raw": request_raw, "graph_report_raw": graph_report_raw,
@@ -795,10 +879,13 @@ def prepare_source_correspondence_requests_v2(request_raw, graph_report_raw, sou
         "original_banks": original_banks, "expected_request_sha256": expected_request_sha256}
     detached, commitment = _v2_snapshot(original, bounds)
     request = _v2_parse(detached["request_raw"], bounds["max_request_bytes"], bounds,
-                        "v2 request", canonical=True)
-    _keys(request, _V2_REQUEST_FIELDS, "v2 source correspondence request")
-    _need(request["schema"] == REQUEST_SCHEMA_V2 and request["profile"] == PROFILE_V2,
-          "explicit v2 source correspondence domain required")
+                        "v2 request" if profile_version == 2 else "wire v3 request", canonical=True)
+    _keys(request, _V2_REQUEST_FIELDS, "v2 source correspondence request" if profile_version == 2
+          else "wire v3 source correspondence request")
+    _need(request["schema"] == (REQUEST_SCHEMA_V2 if profile_version == 2 else REQUEST_SCHEMA_V3)
+          and request["profile"] == (PROFILE_V2 if profile_version == 2 else PROFILE_V3),
+          "explicit v2 source correspondence domain required" if profile_version == 2
+          else "explicit wire v3 source correspondence domain required")
     for key in _V2_REQUEST_FIELDS - {"schema", "profile", "physical_review_nominations"}:
         _digest(request[key], key)
     _need(type(detached["graph_report_raw"]) is bytes
@@ -810,47 +897,186 @@ def prepare_source_correspondence_requests_v2(request_raw, graph_report_raw, sou
           and _sha(detached["source_request_raw"]) == request["source_request_sha256"],
           "v2 exact upstream artifact or v1 request pin differs")
     offered = _v2_parse(detached["graph_report_raw"], 64 * 1024**2, bounds, "graph report")
-    _need(type(offered) is dict and offered.get("schema") == "legal-coordinate-source-graph-intake/v2"
-          and offered.get("source_compatibility_profile") == "original-input-coordinate-source-graph-intake/v1"
+    _need(type(offered) is dict and offered.get("schema") == (
+              "legal-coordinate-source-graph-intake/v2" if profile_version == 2
+              else "legal-coordinate-source-graph-intake/v3")
+          and offered.get("source_compatibility_profile") == (
+              "original-input-coordinate-source-graph-intake/v1" if profile_version == 2
+              else "original-input-wire-coordinate-source-graph-intake/v1")
           and _sha(_wire(offered)) == request["graph_report_sha256"],
-          "v2 requires the independently pinned explicit original-input graph profile")
+          "v2 requires the independently pinned explicit original-input graph profile" if profile_version == 2
+          else "wire v3 requires the independently pinned explicit wire graph profile")
+    graph_request = eligibility_request = None
+    if profile_version == 3:
+        graph_request = _v2_parse(detached["graph_originals"]["request_raw"], 128 * 1024,
+            bounds, "wire graph v3 request")
+        eligibility_request = _v2_parse(detached["graph_originals"]["eligibility_request_raw"],
+            128 * 1024, bounds, "wire eligibility v4 request")
+        _need(type(graph_request) is dict and type(eligibility_request) is dict
+              and graph_request.get("schema") == "legal-coordinate-source-graph-intake-request/v3"
+              and graph_request.get("source_compatibility_profile") == "original-input-wire-coordinate-source-graph-intake/v1"
+              and eligibility_request.get("schema") == "legal-source-span-target-eligibility-request/v4"
+              and eligibility_request.get("source_compatibility_profile") == "original-input-wire-coordinate-target-eligibility/v1"
+              and offered.get("metadata_profile") == graph_request.get("metadata_profile")
+              == eligibility_request.get("metadata_profile") == METADATA_PROFILE_V3,
+              "matching explicit wire graph3 and eligibility4 requests required")
     legacy_bounds = _limits({key: min(value, DEFAULT_LIMITS[key]) for key, value in bounds.items()})
-    # Validate the independently pinned v1 request/bank commitments before any
-    # optional graph operation owner is loaded.
     banks, _, bank_pins = _capture(detached["original_banks"], legacy_bounds)
     _request(detached["source_request_raw"], request["source_request_sha256"], banks, bank_pins, legacy_bounds)
-    owners = _v2_owners()
+    owners = _coordinate_correspondence_owners(profile_version)
+    corpus, intake, eligibility = owners
+    pins = _v2_sources(owners)
+    base_callbacks = _v2_callbacks(owners)
+    callbacks = _coordinate_correspondence_callbacks(owners, profile_version)
+    guard, sources, base_producers, producers, finish = (
+        _v2_fence, _v2_sources, _v2_callbacks, _coordinate_correspondence_callbacks, _v2_finish)
+    offered_raw = _wire(offered)
+    question_prompts_raw = _wire(review.wording.PROMPTS)
+    request_snapshot, bounds_snapshot, limits_snapshot = _wire(request), _wire(bounds), _wire(limits)
+    parsed_snapshots = tuple(_wire(item) for item in (graph_request, eligibility_request))
+    pins_snapshot = _wire(pins)
+    held, plan, plan_raw, files_raw = [], None, None, None
+    runtime, runtime_pins, runtime_description, runtime_function, runtime_self = (None,) * 5
+
+    def hold(value, label):
+        if profile_version == 3:
+            _need(len(held) < 1024, "bounded wire correspondence return population required")
+            held.append((value, _wire(value), label))
+        return value
+
+    def producers_unchanged():
+        _v2_check_authority()
+        _need(sources(owners) == pins, "wire correspondence producer sources changed")
+        current_base = base_producers(owners)
+        _need(len(current_base) == len(base_callbacks)
+              and all(left is right for left, right in zip(current_base, base_callbacks, strict=True)),
+              "wire correspondence legacy producer callbacks changed")
+        current = producers(owners, profile_version)
+        _need(len(current) == len(callbacks)
+              and all(left is right for left, right in zip(current, callbacks, strict=True)),
+              "wire correspondence operation callbacks changed")
+        if runtime is not None:
+            current_runtime, current_pins = intake._coordinate_graph_runtime(eligibility)
+            operation = current_runtime.describe_runtime
+            _need(current_runtime is runtime and _wire(current_pins) == runtime_pins
+                  and getattr(operation, "__func__", operation) is runtime_function
+                  and getattr(operation, "__self__", None) is runtime_self
+                  and _wire(operation("legal_ir", eligibility_request["decoder_profile"])) == runtime_description,
+                  "wire correspondence runtime identity or metadata changed")
+
+    def original_fence():
+        guard(original, detached, commitment, limits, bounds, owners, pins, base_callbacks)
+        _need(_wire(offered) == offered_raw, "v2 offered graph changed during operation")
+        _need(_wire(review.wording.PROMPTS) == question_prompts_raw,
+              "v2 genuine source review wording changed during operation")
+        _need(corpus.coordinate_graph_corpus_originals_sha256(detached["graph_originals"])
+              == request["graph_originals_sha256"], "v2 graph originals commitment differs")
+
+    def parsed_unchanged():
+        _need(_wire(request) == request_snapshot and _wire(bounds) == bounds_snapshot
+              and _wire(limits) == limits_snapshot and _wire(pins) == pins_snapshot
+              and tuple(_wire(item) for item in (graph_request, eligibility_request)) == parsed_snapshots,
+              "wire correspondence captured parsed requests, pins or limits changed")
+        _need(_wire(offered) == offered_raw and _wire(review.wording.PROMPTS) == question_prompts_raw,
+              "wire correspondence offered graph or review wording changed")
+
+    def returns_unchanged():
+        for value, snapshot, label in held:
+            _need(_wire(value) == snapshot, "genuine wire correspondence return changed: " + label)
+
+    def physical_unchanged():
+        if files_raw is not None:
+            _need(_wire(plan) == plan_raw, "wire correspondence file nomination changed before I/O")
+            join = eligibility._owners()[0]
+            _need(_wire(join._coordinate_file_witnesses(*plan)) == files_raw,
+                  "wire correspondence physical inputs changed after genuine graph replay")
+
+    def fence():
+        if profile_version == 2:
+            original_fence()
+            return
+        checks = (("original correspondence inputs", original_fence),
+            ("parsed wire correspondence inputs", parsed_unchanged),
+            ("wire correspondence sources/runtime/callbacks", producers_unchanged),
+            ("live genuine correspondence returns", returns_unchanged),
+            ("physical wire correspondence inputs", physical_unchanged),
+            ("post-callback original inputs", original_fence),
+            ("post-callback parsed inputs", parsed_unchanged),
+            ("post-callback producers/runtime", producers_unchanged),
+            ("post-callback live returns", returns_unchanged),
+            ("final physical inputs", physical_unchanged),
+            ("final original inputs", original_fence),
+            ("final parsed inputs", parsed_unchanged),
+            ("final live returns", returns_unchanged))
+        finish(checks, None)
+
+    def adopt(genuine, label):
+        nonlocal plan, plan_raw, files_raw, runtime, runtime_pins, runtime_description, runtime_function, runtime_self
+        _need(profile_version == 3, "wire adoption requires explicit correspondence v3")
+        hold(genuine, label)
+        # Outer parsed/caller mutations must be refused before physical nomination.
+        fence()
+        _need(_wire(genuine) == offered_raw,
+              "genuinely regenerated wire graph differs from independently pinned original")
+        intake._coordinate_graph_wire_unqualified(genuine)
+        if plan is None:
+            plan = list(corpus._corpus_wire_physical_plan(intake, eligibility, genuine,
+                detached["graph_originals"]))
+            plan_raw = _wire(plan)
+            files_raw = _wire(eligibility._owners()[0]._coordinate_file_witnesses(*plan))
+            runtime, observed_pins = intake._coordinate_graph_runtime(eligibility)
+            runtime_pins, runtime_description = _wire(observed_pins), _wire(genuine["runtime_description"])
+            operation = runtime.describe_runtime
+            runtime_function, runtime_self = getattr(operation, "__func__", operation), getattr(operation, "__self__", None)
+            producers_unchanged()
+        return genuine
+
+    return {"original": original, "detached": detached, "bounds": bounds,
+        "request": request, "offered_graph": offered, "graph_request": graph_request,
+        "eligibility_request": eligibility_request, "owners": owners, "pins": pins,
+        "banks": banks, "legacy_bounds": legacy_bounds, "fence": fence,
+        "producers_unchanged": producers_unchanged, "hold": hold, "adopt": adopt,
+        "finish": finish, "offered_raw": offered_raw}
+
+
+def _prepare_source_correspondence_requests(request_raw, graph_report_raw, source_request_raw, *,
+        expected_request_sha256, graph_originals, original_banks, limits, profile_version):
+    """Share complete ordered associations without generating source-review inputs."""
+    state = _coordinate_correspondence_setup(request_raw, graph_report_raw, source_request_raw,
+        expected_request_sha256=expected_request_sha256, graph_originals=graph_originals,
+        original_banks=original_banks, limits=limits, profile_version=profile_version)
+    original, detached, bounds = state["original"], state["detached"], state["bounds"]
+    request, offered = state["request"], state["offered_graph"]
+    owners, pins, banks, legacy_bounds = state["owners"], state["pins"], state["banks"], state["legacy_bounds"]
     corpus, intake, _ = owners
-    pins, callbacks = _v2_sources(owners), _v2_callbacks(owners)
     opened_graph = opened_source = None
     graph_raw = source_raw = result_raw = None
     primary = None
-    guard = _v2_fence
-    offered_raw = _wire(offered)
-    question_prompts_raw = _wire(review.wording.PROMPTS)
+    validator = intake.validate_coordinate_source_graph_intake_v3 if profile_version == 3 else None
 
     def fence():
-        guard(original, detached, commitment, limits, bounds, owners, pins, callbacks)
-        _need(_wire(offered) == offered_raw, "v2 offered graph changed during operation")
+        state["fence"]()
         _need(opened_graph is None or _wire(opened_graph) == graph_raw,
               "v2 genuine opened graph changed during operation")
         _need(opened_source is None or _wire(opened_source) == source_raw,
               "v2 genuine opened source preparation changed during operation")
         if opened_source is not None:
             _v2_unprivileged(opened_source)
-        _need(_wire(review.wording.PROMPTS) == question_prompts_raw,
-              "v2 genuine source review wording changed during operation")
-        _need(corpus.coordinate_graph_corpus_originals_sha256(detached["graph_originals"])
-              == request["graph_originals_sha256"], "v2 graph originals commitment differs")
 
     def replay_graph():
         arguments = detached["graph_originals"]
-        return intake.validate_coordinate_source_graph_intake_v2(offered,
+        if profile_version == 3:
+            state["producers_unchanged"]()
+        operation = intake.validate_coordinate_source_graph_intake_v2 if profile_version == 2 else validator
+        value = operation(offered,
             arguments["request_raw"], arguments["eligibility_report_raw"],
             arguments["eligibility_request_raw"], arguments["join_manifest_raw"],
             expected_request_sha256=arguments["expected_request_sha256"],
             expected_report_sha256=request["graph_report_sha256"],
             join_originals=arguments["join_originals"], source_bindings=arguments["source_bindings"])
+        if profile_version == 3:
+            state["adopt"](value, "genuine graph validation return")
+        return value
 
     def close_graph():
         if opened_graph is not None:
@@ -862,6 +1088,7 @@ def prepare_source_correspondence_requests_v2(request_raw, graph_report_raw, sou
                 detached["source_request_raw"], expected_report_sha256=_sha(source_raw),
                 expected_request_sha256=request["source_request_sha256"],
                 original_banks=detached["original_banks"], limits=legacy_bounds)
+            state["hold"](checked, "genuine closing v1 source validation return")
             _need(_wire(checked) == source_raw and _wire(opened_source) == source_raw,
                   "v2 closing genuine source preparation replay differs")
 
@@ -871,14 +1098,20 @@ def prepare_source_correspondence_requests_v2(request_raw, graph_report_raw, sou
         graph_raw = _wire(opened_graph)
         _need(graph_raw == _wire(offered), "v2 public graph replay differs from offered complete report")
         fence()
-        rows = _v2_rows(opened_graph, detached["graph_originals"]["join_manifest_raw"], bounds)
+        if profile_version == 3:
+            rows = _wire_correspondence_rows(corpus, opened_graph,
+                detached["graph_originals"]["join_manifest_raw"], bounds, state["hold"])
+        else:
+            rows = _v2_rows(opened_graph, detached["graph_originals"]["join_manifest_raw"], bounds)
         opened_source = prepare_source_correspondence_requests_v1(detached["source_request_raw"],
             expected_request_sha256=request["source_request_sha256"],
             original_banks=detached["original_banks"], limits=legacy_bounds)
+        state["hold"](opened_source, "genuine opened v1 source preparation")
         source_raw = _wire(opened_source)
         fence()
         physical, outputs = _v2_bindings(request, opened_graph, rows, opened_source, banks, bounds)
-        result = {"schema": SCHEMA_V2, "profile": PROFILE_V2,
+        result = {"schema": SCHEMA_V2 if profile_version == 2 else SCHEMA_V3,
+            "profile": PROFILE_V2 if profile_version == 2 else PROFILE_V3,
             "request": request, "request_raw_utf8": request_raw.decode("utf-8"),
             "request_sha256": expected_request_sha256,
             "graph_report_raw_utf8": detached["graph_report_raw"].decode("utf-8"),
@@ -892,7 +1125,8 @@ def prepare_source_correspondence_requests_v2(request_raw, graph_report_raw, sou
             "physical_review_bindings": physical, "output_occurrence_bindings": outputs,
             "population_complete": True,
             "upstream_reexecution_performed": True,
-            "upstream_reexecution_requirement": "opening_and_closing_original_input_graph_v2_public_validation",
+            "upstream_reexecution_requirement": ("opening_and_closing_original_input_graph_v2_public_validation"
+                if profile_version == 2 else "opening_and_closing_original_input_wire_graph_v3_public_validation"),
             "counts": {"physical_rows": len(physical), "row_references": len(opened_graph["row_references"]),
                 "output_occurrences": len(outputs), "banks": len(banks),
                 "source_logical_requests": opened_source["coverage"]["logical_requests"],
@@ -915,18 +1149,41 @@ def prepare_source_correspondence_requests_v2(request_raw, graph_report_raw, sou
                 "Complete upstream graph bytes and the unchanged v1 preparation are retained once; all original replay inputs remain required.",
                 "Other ordinary original strings retain the combined profile's at-most-512KiB ceiling even where an upstream owner accepts larger source or binding strings; such complete inputs are refused, never truncated.",
                 "Source/edition/meaning reviews, complete norms, genuinely distinct uses, training/gold eligibility and Lean admission remain unavailable."]}
+        if profile_version == 3:
+            result.update(metadata_profile=METADATA_PROFILE_V3,
+                source_metadata_intake_sha256=opened_graph["source_metadata_intake_sha256"])
+            state["hold"](result, "live assembled wire correspondence report")
         result, result_raw = _v2_plain(result, bounds)
         _v2_unprivileged(result, v2=True)
+        if profile_version == 3:
+            state["hold"](result, "detached prepared wire correspondence report")
+            _wire_correspondence_unprivileged(result)
     except BaseException as error:
         primary = error
         raise
     finally:
-        _v2_finish((("genuine closing source preparation replay", close_source),
+        state["finish"]((("genuine closing source preparation replay", close_source),
                     ("genuine closing graph replay", close_graph),
                     ("inputs sources callbacks and original commitment", fence)), primary)
-    _need(_v2_plain(result, bounds)[1] == result_raw, "v2 detached result changed during closing replay")
-    _v2_unprivileged(result, v2=True)
-    return _v2_plain(result, bounds)[0]
+    if profile_version == 2:
+        _need(_v2_plain(result, bounds)[1] == result_raw, "v2 detached result changed during closing replay")
+        _v2_unprivileged(result, v2=True)
+        return _v2_plain(result, bounds)[0]
+    primary = None
+    try:
+        _need(_v2_plain(result, bounds)[1] == result_raw,
+              "wire correspondence report changed during closing replay")
+        final, final_raw = _v2_plain(result, bounds)
+        state["hold"](final, "final detached wire correspondence report")
+        _wire_correspondence_unprivileged(final)
+        _need(final_raw == result_raw and _v2_plain(final, bounds)[1] == result_raw,
+              "final wire correspondence serialization changed")
+        return final
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        state["finish"]((("wire correspondence final serialization custody", fence),), primary)
 
 
 def source_correspondence_requests_v2_sha256(report, *, limits=None):
@@ -934,20 +1191,38 @@ def source_correspondence_requests_v2_sha256(report, *, limits=None):
     return _sha(_v2_plain(report, _v2_limits(limits))[1])
 
 
-def validate_source_correspondence_requests_v2(report, request_raw, graph_report_raw, source_request_raw, *,
-        expected_report_sha256, expected_request_sha256, graph_originals, original_banks, limits=None):
-    """Regenerate all coordinate/source associations from independent originals."""
+def _validate_source_correspondence_requests(report, request_raw, graph_report_raw, source_request_raw, *,
+        expected_report_sha256, expected_request_sha256, graph_originals, original_banks, limits, profile_version):
+    """Regenerate the complete association with wire-only outer custody fences."""
     bounds = _v2_limits(limits)
-    _digest(expected_report_sha256, "complete v2 report")
+    _digest(expected_report_sha256, "complete v2 report" if profile_version == 2 else "complete wire v3 report")
     checked, original = _v2_plain(report, bounds)
     _need(_sha(original) == expected_report_sha256, "independent complete v2 report pin differs")
-    primary = None
+    state = None
+    if profile_version == 3:
+        _wire_correspondence_unprivileged(checked)
+        state = _coordinate_correspondence_setup(request_raw, graph_report_raw, source_request_raw,
+            expected_request_sha256=expected_request_sha256, graph_originals=graph_originals,
+            original_banks=original_banks, limits=limits, profile_version=3)
+        state["hold"](checked, "outer detached offered wire correspondence report")
+    primary, expected = None, None
     try:
-        expected = prepare_source_correspondence_requests_v2(request_raw, graph_report_raw,
+        prepare = prepare_source_correspondence_requests_v2 if profile_version == 2 else prepare_source_correspondence_requests_v3
+        expected = prepare(request_raw, graph_report_raw,
             source_request_raw, expected_request_sha256=expected_request_sha256,
             graph_originals=graph_originals, original_banks=original_banks, limits=limits)
+        if state is not None:
+            state["hold"](expected, "outer genuine prepared correspondence report")
         _need(_v2_plain(expected, bounds)[1] == original,
               "v2 report differs from complete original-input regeneration")
+        if state is not None:
+            state["fence"]()
+            raw = expected["graph_report_raw_utf8"].encode("utf-8")
+            _need(raw == state["detached"]["graph_report_raw"],
+                  "genuinely prepared wire correspondence must retain the exact original graph artifact")
+            genuine_graph = _v2_parse(raw, 64 * 1024**2, bounds, "graph report")
+            state["adopt"](genuine_graph, "outer genuinely regenerated wire graph")
+            _wire_correspondence_unprivileged(checked)
         return checked
     except BaseException as error:
         primary = error
@@ -957,8 +1232,55 @@ def validate_source_correspondence_requests_v2(report, request_raw, graph_report
             _need(_v2_limits(limits) == bounds and _v2_plain(report, bounds)[1] == original,
                   "offered v2 report or limits changed during validation")
             _need(_v2_plain(checked, bounds)[1] == original, "detached offered v2 report changed during validation")
-        _v2_finish((("offered v2 report", unchanged),), primary)
+            if state is not None and expected is not None:
+                _need(_v2_plain(expected, bounds)[1] == original,
+                      "genuine prepared wire correspondence changed during outer validation")
+        if state is None:
+            _v2_finish((("offered v2 report", unchanged),), primary)
+        else:
+            state["finish"]((("offered wire correspondence report", unchanged),
+                ("outer original/parsed/live/physical wire custody", state["fence"]),
+                ("final offered wire correspondence report", unchanged),
+                ("final outer wire correspondence custody", state["fence"])), primary)
+
+
+def prepare_source_correspondence_requests_v2(request_raw, graph_report_raw, source_request_raw, *,
+        expected_request_sha256, graph_originals, original_banks, limits=None):
+    """Bind graph-v2 originals to complete independently supplied v1 review banks."""
+    return _prepare_source_correspondence_requests(request_raw, graph_report_raw, source_request_raw,
+        expected_request_sha256=expected_request_sha256, graph_originals=graph_originals,
+        original_banks=original_banks, limits=limits, profile_version=2)
+
+
+def validate_source_correspondence_requests_v2(report, request_raw, graph_report_raw, source_request_raw, *,
+        expected_report_sha256, expected_request_sha256, graph_originals, original_banks, limits=None):
+    """Regenerate the complete graph-v2 association from independent originals."""
+    return _validate_source_correspondence_requests(report, request_raw, graph_report_raw, source_request_raw,
+        expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256,
+        graph_originals=graph_originals, original_banks=original_banks, limits=limits, profile_version=2)
+
+
+def prepare_source_correspondence_requests_v3(request_raw, graph_report_raw, source_request_raw, *,
+        expected_request_sha256, graph_originals, original_banks, limits=None):
+    """Bind genuine wire graph-v3 originals to unchanged independently supplied review banks."""
+    return _prepare_source_correspondence_requests(request_raw, graph_report_raw, source_request_raw,
+        expected_request_sha256=expected_request_sha256, graph_originals=graph_originals,
+        original_banks=original_banks, limits=limits, profile_version=3)
+
+
+def source_correspondence_requests_v3_sha256(report, *, limits=None):
+    """Hash the complete bounded report with the unchanged ordinary identity recipe."""
+    return source_correspondence_requests_v2_sha256(report, limits=limits)
+
+
+def validate_source_correspondence_requests_v3(report, request_raw, graph_report_raw, source_request_raw, *,
+        expected_report_sha256, expected_request_sha256, graph_originals, original_banks, limits=None):
+    """Regenerate every wire correspondence under original, return and physical custody."""
+    return _validate_source_correspondence_requests(report, request_raw, graph_report_raw, source_request_raw,
+        expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256,
+        graph_originals=graph_originals, original_banks=original_banks, limits=limits, profile_version=3)
 
 
 __all__ += ["prepare_source_correspondence_requests_v2", "validate_source_correspondence_requests_v2",
-            "source_correspondence_requests_v2_sha256"]
+            "source_correspondence_requests_v2_sha256", "prepare_source_correspondence_requests_v3",
+            "validate_source_correspondence_requests_v3", "source_correspondence_requests_v3_sha256"]

@@ -1066,3 +1066,531 @@ def test_coordinate_correspondence_final_graph_replay_catches_table_change_after
     monkeypatch.setattr(owner, 'validate_source_correspondence_requests_v1', change_after_genuine_closing_source)
     with pytest.raises(ValueError): _prepare_coordinate_correspondence(case)
     assert calls
+
+
+# Reuse the existing receipt-producing coordinate_join override above. The
+# existing wire join/eligibility/graph fixtures consume it without another
+# producer or an independently copied HTML/source-binding recipe.
+from tests.unit.logic.autoformal.test_legal_span_cache_intake import (
+    wire_coordinate_join,
+    wire_original_replay_v4,
+    wire_graph_v3_case,
+    _prepare_wire_graph_v3,
+    _wire_graph_v3_request,
+    _coordinate_graph_retained_table,
+)
+
+
+_WIRE_CORRESPONDENCE_SCHEMA = 'legal-source-correspondence-requests/v3'
+_WIRE_CORRESPONDENCE_PROFILE = 'original-input-wire-coordinate-graph-v3-source-review-request-custody/v1'
+_WIRE_CORRESPONDENCE_METADATA = 'hf-default-parquet-envelope/v1'
+
+
+@pytest.fixture
+def wire_correspondence_case(wire_graph_v3_case):
+    upstream = wire_graph_v3_case
+    graph = _prepare_wire_graph_v3(upstream)
+    graph_request = _wire_graph_v3_request(upstream)
+    originals = {'request_raw': graph_request, 'eligibility_report_raw': upstream['eligibility_raw'],
+        'eligibility_request_raw': upstream['eligibility_request_raw'], 'join_manifest_raw': upstream['join_raw'],
+        'expected_request_sha256': sha(graph_request), 'join_originals': upstream['originals'],
+        'source_bindings': upstream['bindings']}
+    options = upstream['case']['_correspondence_options']
+    payload = upstream['joined']['paired_bundles'][0]['payload_intake']['rows']
+    coverage = options.get('covered_rows', len(payload))
+    rows = [row['derived_row_json'].encode('utf-8') for row in payload[:coverage]]
+    join_inputs = deepcopy(upstream['case']['_correspondence_originals'])
+    join_inputs['expected_population'] = [{
+        'row_sha256': sha(raw), 'source_span_id': json.loads(raw)['source']['span_id'],
+        'text_sha256': json.loads(raw)['source']['text_sha256'],
+        'source_revision': json.loads(raw)['source']['revision'],
+    } for raw in rows]
+    ledger = _coordinate_legacy_join.build_legacy_source_join(rows, **join_inputs)
+    banks = []
+    for index in range(options.get('banks', 1)):
+        physical = []
+        for ordinal, row in enumerate(graph['physical_rows'][:coverage]):
+            identity = deepcopy(row['physical_identity'])
+            identity['artifact_sha256'] = identity.pop('file_sha256')
+            physical.append({'physical_row_ordinal': ordinal, 'request_ordinal': ordinal,
+                'physical_identity': identity})
+        banks.append({'bank_id': 'authored-coordinate-source-bank:' + str(index),
+            'join_bytes': wire(ledger), 'paired_row_bytes': list(rows),
+            'join_inputs': deepcopy(join_inputs), 'physical_rows': physical})
+    slots = [{'physical_row_ordinal': ordinal,
+        'physical_identity_sha256': row['physical_identity_sha256'],
+        'review_nominations': [{'bank_ordinal': index, 'bank_physical_row_ordinal': ordinal}
+            for index in range(len(banks))] if ordinal < coverage else []}
+        for ordinal, row in enumerate(graph['physical_rows'])]
+    return {'upstream': upstream, 'graph': graph,
+        'graph_raw': (json.dumps(graph, ensure_ascii=False, indent=2) + '\n').encode('utf-8'),
+        'originals': originals, 'banks': banks, 'source_raw': wire(request_for(banks)), 'slots': slots}
+
+
+def _wire_correspondence_request(case, **changes):
+    return wire({'schema': 'legal-source-correspondence-request/v3',
+        'profile': _WIRE_CORRESPONDENCE_PROFILE,
+        'graph_report_raw_sha256': sha(case['graph_raw']),
+        'graph_report_sha256': _coordinate_graph.coordinate_source_graph_intake_sha256(case['graph']),
+        'graph_originals_sha256': _coordinate_corpus.coordinate_graph_corpus_originals_sha256(case['originals']),
+        'source_request_sha256': sha(case['source_raw']),
+        'physical_review_nominations': case['slots'], **changes})
+
+
+def _prepare_wire_correspondence(case, *, request_raw=None, limits=None, **changes):
+    raw = _wire_correspondence_request(case) if request_raw is None else request_raw
+    return owner.prepare_source_correspondence_requests_v3(raw, case['graph_raw'], case['source_raw'],
+        **{'expected_request_sha256': sha(raw), 'graph_originals': case['originals'],
+           'original_banks': case['banks'], 'limits': limits, **changes})
+
+
+def _validate_wire_correspondence(case, report, *, limits=None, **changes):
+    raw = _wire_correspondence_request(case)
+    value = json.loads(report) if type(report) is bytes else report
+    return owner.validate_source_correspondence_requests_v3(report, raw, case['graph_raw'], case['source_raw'],
+        **{'expected_report_sha256': sha(wire(value)), 'expected_request_sha256': sha(raw),
+           'graph_originals': case['originals'], 'original_banks': case['banks'], 'limits': limits, **changes})
+
+
+def _wire_correspondence_metadata_drift(case):
+    case['originals']['join_originals']['source_metadata_bytes']['README.md'] += b'changed wire correspondence metadata'
+
+
+def _wire_correspondence_bank_drift(case):
+    case['banks'][0]['join_inputs']['source_sections'][0]['text'] += 'changed wire correspondence bank'
+
+
+def _assert_wire_correspondence_unreviewed(report, case):
+    _coordinate_correspondence_no_authority(report)
+    assert report['schema'] == _WIRE_CORRESPONDENCE_SCHEMA
+    assert report['profile'] == _WIRE_CORRESPONDENCE_PROFILE
+    assert report['metadata_profile'] == _WIRE_CORRESPONDENCE_METADATA
+    assert report['source_metadata_intake_sha256'] == case['upstream']['joined']['source_metadata_intake_sha256']
+    assert report['atomic_snapshot_verified'] is False
+    assert report['counts']['selected_occurrences'] == report['counts']['source_decisions_applied'] == 0
+
+    def check(value):
+        if type(value) is dict:
+            for key, item in value.items():
+                if key.endswith('_mask'):
+                    assert type(item) is int and item == 0
+                elif key == 'field_masks':
+                    assert type(item) is dict and all(type(mask) is int and mask == 0 for mask in item.values())
+                elif key == 'authority':
+                    assert type(item) is dict and all(type(flag) is bool and flag is False for flag in item.values())
+                check(item)
+        elif type(value) is list:
+            for item in value:
+                check(item)
+    check(report)
+
+
+@pytest.mark.parametrize('offered', ['object', 'serialized_roundtrip'])
+def test_wire_correspondence_v3_genuine_graph_and_source_owners_roundtrip(wire_correspondence_case, monkeypatch, offered):
+    case = wire_correspondence_case
+    genuine_graph = _coordinate_graph.validate_coordinate_source_graph_intake_v3
+    genuine_prepare = owner.prepare_source_correspondence_requests_v1
+    genuine_validate = owner.validate_source_correspondence_requests_v1
+    calls = {'graph': [], 'source_prepare': [], 'source_validate': []}
+
+    def graph(*args, **kwargs):
+        result = genuine_graph(*args, **kwargs)
+        calls['graph'].append(result)
+        return result
+
+    def prepare_source(*args, **kwargs):
+        result = genuine_prepare(*args, **kwargs)
+        calls['source_prepare'].append(result)
+        return result
+
+    def validate_source(*args, **kwargs):
+        result = genuine_validate(*args, **kwargs)
+        calls['source_validate'].append(result)
+        return result
+
+    monkeypatch.setattr(_coordinate_graph, 'validate_coordinate_source_graph_intake_v3', graph)
+    monkeypatch.setattr(owner, 'prepare_source_correspondence_requests_v1', prepare_source)
+    monkeypatch.setattr(owner, 'validate_source_correspondence_requests_v1', validate_source)
+    original = deepcopy(case['originals']), deepcopy(case['banks']), deepcopy(case['slots'])
+    report = _prepare_wire_correspondence(case)
+    assert len(calls['graph']) == 2 and len(calls['source_validate']) == 1
+    assert len(calls['source_prepare']) == 2
+    assert report['source_preparation'] == calls['source_prepare'][0]
+    assert report['physical_rows'] == case['graph']['physical_rows']
+    assert report['row_references'] == case['graph']['row_references']
+    assert len(report['physical_review_bindings']) == 2 and len(report['output_occurrence_bindings']) == 4
+    assert report['source_preparation']['coverage']['candidate_occurrence_references'] == 4
+    assert assert_geometry(report['source_preparation']) == 4
+    assert all(row['source_disposition'] == 'ambiguous_exact_candidates'
+        for row in report['source_preparation']['physical_rows'])
+    for output, upstream in zip(report['output_occurrence_bindings'], case['graph']['output_occurrences'], strict=True):
+        assert {key: output[key] for key in ('output_occurrence_ordinal', 'physical_identity_sha256', 'route', 'ordinal')} == {
+            key: upstream[key] for key in ('output_occurrence_ordinal', 'physical_identity_sha256', 'route', 'ordinal')}
+    assert (case['originals'], case['banks'], case['slots']) == original
+    assert owner.source_correspondence_requests_v3_sha256(report) == sha(wire(report))
+    _assert_wire_correspondence_unreviewed(report, case)
+    value = json.loads(wire(report)) if offered == 'serialized_roundtrip' else report
+    assert sha(wire(value)) == sha(wire(report))
+    assert _validate_wire_correspondence(case, value) == report
+    assert len(calls['graph']) == 4 and len(calls['source_validate']) == 2
+
+
+@pytest.mark.parametrize('coordinate_join', [{'banks': 2}], indirect=True)
+def test_wire_correspondence_v3_equal_text_multibank_keeps_every_physical_and_output_alternative(wire_correspondence_case):
+    case = wire_correspondence_case
+    report = _prepare_wire_correspondence(case)
+    assert len(report['physical_rows']) == len(report['physical_review_bindings']) == 2
+    assert report['physical_rows'][0]['source_text'] == report['physical_rows'][1]['source_text']
+    assert len({row['physical_identity_sha256'] for row in report['physical_rows']}) == 2
+    assert [row['output_occurrence_ordinal'] for row in report['output_occurrence_bindings']] == [0, 1, 2, 3]
+    assert [row['route'] for row in report['output_occurrence_bindings']] == [
+        'compiler.formal_outputs', 'compiler.canonical_formal_outputs'] * 2
+    assert report['source_preparation']['coverage']['banks'] == 2
+    assert report['source_preparation']['coverage']['logical_requests'] == 4
+    for physical in report['physical_review_bindings']:
+        assert [ref['bank_ordinal'] for ref in physical['review_references']] == [0, 1]
+    for output in report['output_occurrence_bindings']:
+        assert output['review_references'] == report['physical_review_bindings'][output['physical_row_ordinal']]['review_references']
+    assert _validate_wire_correspondence(case, report) == report
+    _assert_wire_correspondence_unreviewed(report, case)
+
+
+@pytest.mark.parametrize('coordinate_join', [{'receipt': False}], indirect=True)
+def test_wire_correspondence_v3_real_missing_receipt_remains_unavailable(wire_correspondence_case):
+    case = wire_correspondence_case
+    report = _prepare_wire_correspondence(case)
+    assert report['source_preparation']['coverage']['candidate_occurrence_references'] == 0
+    assert all(row['source_disposition'] == 'producer_source_unavailable'
+        for row in report['source_preparation']['physical_rows'])
+    assert _validate_wire_correspondence(case, report) == report
+    _assert_wire_correspondence_unreviewed(report, case)
+
+
+@pytest.mark.parametrize('coordinate_join', [{'covered_rows': 1}], indirect=True)
+def test_wire_correspondence_v3_uncovered_physical_slot_remains_explicit(wire_correspondence_case):
+    case = wire_correspondence_case
+    report = _prepare_wire_correspondence(case)
+    assert len(report['physical_review_bindings']) == 2
+    assert report['physical_review_bindings'][1]['review_nominations'] == []
+    assert report['physical_review_bindings'][1]['review_references'] == []
+    assert report['physical_review_bindings'][1]['disposition'] == 'review_inputs_unavailable'
+    assert all(row['review_references'] == [] for row in report['output_occurrence_bindings'] if row['physical_row_ordinal'] == 1)
+    _assert_wire_correspondence_unreviewed(report, case)
+
+
+@pytest.mark.parametrize('coordinate_join', [{'unsupported': True}], indirect=True)
+def test_wire_correspondence_v3_unsupported_outputs_keep_full_review_population(wire_correspondence_case):
+    case = wire_correspondence_case
+    assert case['graph']['output_occurrences'] and all(row['graph'] is None for row in case['graph']['output_occurrences'])
+    report = _prepare_wire_correspondence(case)
+    assert len(report['output_occurrence_bindings']) == len(case['graph']['output_occurrences']) == 4
+    assert all(row['review_references'] for row in report['output_occurrence_bindings'])
+    assert _validate_wire_correspondence(case, report) == report
+    _assert_wire_correspondence_unreviewed(report, case)
+
+
+def test_wire_correspondence_v3_raw_graph_and_source_carriers_remain_exact_once(wire_correspondence_case):
+    case = wire_correspondence_case
+    report = _prepare_wire_correspondence(case)
+    assert report['graph_report_raw_utf8'].encode('utf-8') == case['graph_raw']
+    assert sha(case['graph_raw']) != sha(wire(case['graph']))
+    assert report['source_request_raw_utf8'].encode('utf-8') == case['source_raw']
+    eligibility = json.loads(json.loads(report['graph_report_raw_utf8'])['eligibility_report_raw_utf8'])
+    assert eligibility['join_manifest_raw_utf8'].encode('utf-8') == case['upstream']['join_raw']
+
+    def count(value, key):
+        if type(value) is dict:
+            return int(key in value) + sum(count(child, key) for child in value.values())
+        return sum(count(child, key) for child in value) if type(value) is list else 0
+    assert count(report, 'graph_report_raw_utf8') == count(report, 'source_preparation') == 1
+    _assert_wire_correspondence_unreviewed(report, case)
+
+
+@pytest.mark.parametrize('route', ['old_graph_into_wire', 'wire_graph_into_old'])
+def test_wire_correspondence_v3_refuses_both_genuine_foreign_graph_routes(request, coordinate_join, monkeypatch, route):
+    case = request.getfixturevalue('coordinate_correspondence_case' if route == 'old_graph_into_wire' else 'wire_correspondence_case')
+    monkeypatch.setattr(legacy_review, 'prepare_legacy_source_review_requests',
+        lambda *args, **kwargs: pytest.fail('foreign graph profile reached source-review preparation'))
+    with pytest.raises(ValueError):
+        (_prepare_wire_correspondence if route == 'old_graph_into_wire' else _prepare_coordinate_correspondence)(case)
+
+
+@pytest.mark.parametrize('axis', ['metadata_profile', 'source_metadata_intake_sha256'])
+def test_wire_correspondence_v3_resealed_metadata_axes_require_genuine_wire_ancestry(wire_correspondence_case, monkeypatch, axis):
+    case = wire_correspondence_case
+    case['graph'][axis] = 'foreign-wire-metadata-profile' if axis == 'metadata_profile' else '0' * 64
+    case['graph_raw'] = wire(case['graph'])
+    monkeypatch.setattr(legacy_review, 'prepare_legacy_source_review_requests',
+        lambda *args, **kwargs: pytest.fail('resealed wire metadata reached source-review preparation'))
+    with pytest.raises(ValueError):
+        _prepare_wire_correspondence(case)
+
+
+@pytest.mark.parametrize('pin', ['outer_request', 'graph_report_raw_sha256', 'graph_report_sha256',
+    'graph_originals_sha256', 'source_request_sha256'])
+def test_wire_correspondence_v3_every_independent_commitment_is_required(wire_correspondence_case, pin):
+    case = wire_correspondence_case
+    with pytest.raises(ValueError):
+        if pin == 'outer_request':
+            _prepare_wire_correspondence(case, expected_request_sha256='0' * 64)
+        else:
+            _prepare_wire_correspondence(case, request_raw=_wire_correspondence_request(case, **{pin: '0' * 64}))
+
+
+@pytest.mark.parametrize('damage', ['drop_slot', 'reorder_slots', 'duplicate_nomination', 'boolean_ordinal', 'whole_row_same_text'])
+def test_wire_correspondence_v3_recommitted_nominations_require_exact_complete_original_rows(wire_correspondence_case, damage):
+    case = wire_correspondence_case
+    if damage == 'drop_slot':
+        case['slots'].pop()
+    elif damage == 'reorder_slots':
+        case['slots'].reverse()
+    elif damage == 'duplicate_nomination':
+        case['slots'][0]['review_nominations'].append(deepcopy(case['slots'][0]['review_nominations'][0]))
+    elif damage == 'boolean_ordinal':
+        case['slots'][0]['review_nominations'][0]['bank_ordinal'] = False
+    else:
+        bank = case['banks'][0]
+        row = json.loads(bank['paired_row_bytes'][0])
+        row['provenance']['code_identity'] = 'equal-text-independent-producer-substitution'
+        bank['paired_row_bytes'][0] = wire(row)
+        bank['join_inputs']['expected_population'][0]['row_sha256'] = sha(bank['paired_row_bytes'][0])
+        bank['join_bytes'] = wire(_coordinate_legacy_join.build_legacy_source_join(bank['paired_row_bytes'], **bank['join_inputs']))
+    _coordinate_correspondence_repin_banks(case)
+    with pytest.raises(ValueError):
+        _prepare_wire_correspondence(case)
+
+
+@pytest.mark.parametrize('damage', ['drop_output', 'output_pointer', 'answered_question', 'mask', 'authority'])
+def test_wire_correspondence_v3_rehashed_reports_require_complete_unsigned_regeneration(wire_correspondence_case, damage):
+    case = wire_correspondence_case
+    report = _prepare_wire_correspondence(case)
+    if damage == 'drop_output':
+        report['output_occurrence_bindings'].pop()
+    elif damage == 'output_pointer':
+        report['output_occurrence_bindings'][0]['upstream_output_reference']['json_pointer'] = '/output_occurrences/1'
+    elif damage == 'answered_question':
+        report['source_preparation']['banks'][0]['preparation']['requests'][0]['review_questions'][0]['answer'] = 'invented signed meaning'
+    elif damage == 'mask':
+        report['physical_review_bindings'][0]['source_binding_mask'] = True
+    else:
+        report['authority']['source_correspondence_verified'] = True
+    with pytest.raises(ValueError):
+        _validate_wire_correspondence(case, report)
+
+
+@pytest.mark.parametrize('damage', ['original_bank', 'detached_bank', 'graph_metadata', 'retained_table', 'callback'])
+def test_wire_correspondence_v3_late_changes_after_genuine_review_are_refused(wire_correspondence_case, monkeypatch, damage):
+    case = wire_correspondence_case
+    genuine = legacy_review.prepare_legacy_source_review_requests
+    calls = []
+
+    def mutate(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        calls.append(result)
+        if len(calls) == 1:
+            if damage == 'original_bank':
+                _wire_correspondence_bank_drift(case)
+            elif damage == 'detached_bank':
+                kwargs['source_sections'][0]['text'] += 'changed after real question preparation'
+            elif damage == 'graph_metadata':
+                _wire_correspondence_metadata_drift(case)
+            elif damage == 'retained_table':
+                path = _coordinate_graph_retained_table(case['upstream'])
+                path.write_bytes(path.read_bytes() + b'changed after real wire source preparation')
+            else:
+                monkeypatch.setattr(_coordinate_graph, 'validate_coordinate_source_graph_intake_v3',
+                    lambda *args, **kwargs: pytest.fail('substituted graph callback was invoked'))
+        return result
+
+    monkeypatch.setattr(legacy_review, 'prepare_legacy_source_review_requests', mutate)
+    with pytest.raises(ValueError):
+        _prepare_wire_correspondence(case)
+    assert calls
+
+
+def test_wire_correspondence_v3_primary_baseexception_retains_actual_closing_graph_failure(wire_correspondence_case, monkeypatch):
+    case = wire_correspondence_case
+    genuine_review = legacy_review.prepare_legacy_source_review_requests
+    genuine_graph = _coordinate_graph.validate_coordinate_source_graph_intake_v3
+    attempts, failures, calls = [], [], []
+
+    class Primary(BaseException):
+        pass
+    primary = Primary('authored wire source-review primary failure')
+
+    def graph(*args, **kwargs):
+        attempts.append(True)
+        try:
+            return genuine_graph(*args, **kwargs)
+        except BaseException as error:
+            failures.append(error)
+            raise
+
+    def fail(*args, **kwargs):
+        result = genuine_review(*args, **kwargs)
+        calls.append(result)
+        path = _coordinate_graph_retained_table(case['upstream'])
+        path.write_bytes(path.read_bytes() + b'changed after actual wire review before primary failure')
+        raise primary
+
+    monkeypatch.setattr(_coordinate_graph, 'validate_coordinate_source_graph_intake_v3', graph)
+    monkeypatch.setattr(legacy_review, 'prepare_legacy_source_review_requests', fail)
+    with pytest.raises(Primary) as caught:
+        _prepare_wire_correspondence(case)
+    assert caught.value is primary and calls and len(attempts) == 2 and len(failures) == 1
+    detail = type(failures[0]).__name__ + ': ' + str(failures[0])[:512]
+    assert any(detail in note for note in getattr(primary, '__notes__', ()))
+
+
+@pytest.mark.parametrize('returned', ['opening_graph', 'source_preparation', 'source_validation', 'closing_graph'])
+def test_wire_correspondence_v3_actual_genuine_returns_remain_guarded_after_closing(wire_correspondence_case, monkeypatch, returned):
+    case = wire_correspondence_case
+    genuine_graph = _coordinate_graph.validate_coordinate_source_graph_intake_v3
+    genuine_prepare = owner.prepare_source_correspondence_requests_v1
+    genuine_validate = owner.validate_source_correspondence_requests_v1
+    genuine_plain = owner._v2_plain
+    graphs, sources, checks, changed = [], [], [], []
+
+    def prepare_source(*args, **kwargs):
+        result = genuine_prepare(*args, **kwargs)
+        sources.append(result)
+        return result
+
+    def validate_source(*args, **kwargs):
+        result = genuine_validate(*args, **kwargs)
+        checks.append(result)
+        return result
+
+    def graph(*args, **kwargs):
+        result = genuine_graph(*args, **kwargs)
+        graphs.append(result)
+        if len(graphs) == 2 and returned != 'closing_graph':
+            assert sources and checks
+            if returned == 'opening_graph':
+                graphs[0]['output_occurrences'][0]['training_mask'] = 1
+            else:
+                selected = sources[0] if returned == 'source_preparation' else checks[0]
+                selected['physical_rows'][0]['training_mask'] = 1
+            changed.append(returned)
+        return result
+
+    def plain(*args, **kwargs):
+        result = genuine_plain(*args, **kwargs)
+        if (returned == 'closing_graph' and len(graphs) == 2 and not changed
+                and result[0].get('schema') == _WIRE_CORRESPONDENCE_SCHEMA):
+            # The genuine closing validator has returned and its result has
+            # already passed adoption and immediate replay equality checks.
+            graphs[1]['output_occurrences'][0]['training_mask'] = 1
+            changed.append(returned)
+        return result
+
+    monkeypatch.setattr(owner, 'prepare_source_correspondence_requests_v1', prepare_source)
+    monkeypatch.setattr(owner, 'validate_source_correspondence_requests_v1', validate_source)
+    monkeypatch.setattr(_coordinate_graph, 'validate_coordinate_source_graph_intake_v3', graph)
+    monkeypatch.setattr(owner, '_v2_plain', plain)
+    with pytest.raises(ValueError):
+        _prepare_wire_correspondence(case)
+    assert changed == [returned] and len(graphs) == 2
+
+
+@pytest.mark.parametrize('inputs', ['banks', 'graph_originals'])
+def test_wire_correspondence_v3_outer_validation_guards_callers_after_real_inner_prepare(wire_correspondence_case, monkeypatch, inputs):
+    case = wire_correspondence_case
+    report = _prepare_wire_correspondence(case)
+    genuine = owner._prepare_source_correspondence_requests
+    changed = []
+
+    def mutate(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        assert kwargs['profile_version'] == 3
+        (_wire_correspondence_bank_drift if inputs == 'banks' else _wire_correspondence_metadata_drift)(case)
+        changed.append(inputs)
+        return result
+
+    monkeypatch.setattr(owner, '_prepare_source_correspondence_requests', mutate)
+    with pytest.raises(ValueError):
+        _validate_wire_correspondence(case, report)
+    assert changed == [inputs]
+
+
+def test_wire_correspondence_v3_outer_parsed_graph_cannot_nominate_foreign_files(wire_correspondence_case, monkeypatch):
+    case = wire_correspondence_case
+    report = _prepare_wire_correspondence(case)
+    genuine_setup = owner._coordinate_correspondence_setup
+    genuine_prepare = owner._prepare_source_correspondence_requests
+    genuine_plan = _coordinate_corpus._corpus_wire_physical_plan
+    states, changed, plans = [], [], []
+
+    def setup(*args, **kwargs):
+        result = genuine_setup(*args, **kwargs)
+        states.append(result)
+        return result
+
+    def mutate(*args, **kwargs):
+        result = genuine_prepare(*args, **kwargs)
+        assert kwargs['profile_version'] == 3 and len(states) >= 2
+        graph = states[0]['offered_graph']
+        eligibility = json.loads(graph['eligibility_report_raw_utf8'])
+        joined = json.loads(eligibility['join_manifest_raw_utf8'])
+        joined['span_inventory']['manifests'][0]['manifest']['tables']['paired_spans']['path_in_repo'] = 'unselected/outer-wire-source-review.parquet'
+        eligibility['join_manifest_raw_utf8'] = wire(joined).decode('utf-8')
+        graph['eligibility_report_raw_utf8'] = wire(eligibility).decode('utf-8')
+        changed.append(True)
+        return result
+
+    def plan(*args, **kwargs):
+        assert not changed, 'mutated outer source-review graph reached physical nomination'
+        plans.append(True)
+        return genuine_plan(*args, **kwargs)
+
+    monkeypatch.setattr(owner, '_coordinate_correspondence_setup', setup)
+    monkeypatch.setattr(owner, '_prepare_source_correspondence_requests', mutate)
+    monkeypatch.setattr(_coordinate_corpus, '_corpus_wire_physical_plan', plan)
+    with pytest.raises(ValueError):
+        _validate_wire_correspondence(case, report)
+    assert changed == [True] and plans
+
+
+@pytest.mark.parametrize('damage', ['original_bank', 'detached_report'])
+def test_wire_correspondence_v3_postclosing_serialization_guards_originals_and_detached_result(wire_correspondence_case, monkeypatch, damage):
+    case = wire_correspondence_case
+    genuine_graph = _coordinate_graph.validate_coordinate_source_graph_intake_v3
+    genuine_plain, genuine_wire = owner._v2_plain, owner._wire
+    graphs, detached, changed = [], [], []
+
+    def graph(*args, **kwargs):
+        result = genuine_graph(*args, **kwargs)
+        graphs.append(result)
+        return result
+
+    def plain(*args, **kwargs):
+        result = genuine_plain(*args, **kwargs)
+        if result[0].get('schema') == _WIRE_CORRESPONDENCE_SCHEMA:
+            detached.append(result[0])
+        return result
+
+    def wire_value(value):
+        raw = genuine_wire(value)
+        eligible = type(value) is dict and value.get('schema') == _WIRE_CORRESPONDENCE_SCHEMA
+        if damage == 'detached_report':
+            eligible = eligible and any(value is item for item in detached)
+        if len(graphs) == 2 and eligible and not changed:
+            if damage == 'original_bank':
+                _wire_correspondence_bank_drift(case)
+            else:
+                value['counts']['mapped_physical_rows'] += 1
+            changed.append(damage)
+        return raw
+
+    monkeypatch.setattr(_coordinate_graph, 'validate_coordinate_source_graph_intake_v3', graph)
+    monkeypatch.setattr(owner, '_v2_plain', plain)
+    monkeypatch.setattr(owner, '_wire', wire_value)
+    with pytest.raises(ValueError):
+        _prepare_wire_correspondence(case)
+    assert changed == [damage] and len(graphs) == 2
+
+
+@pytest.mark.parametrize('limits', [{'max_original_bytes': 1}, {'max_report_bytes': 1}, {'max_physical_rows': 1}])
+def test_wire_correspondence_v3_preserves_unchanged_lower_only_whole_population_caps(wire_correspondence_case, limits):
+    with pytest.raises(ValueError):
+        _prepare_wire_correspondence(wire_correspondence_case, limits=limits)
