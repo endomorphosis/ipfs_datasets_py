@@ -18,6 +18,10 @@ from datetime import datetime
 import re
 import time
 
+from . import _submission_retry as _submission
+
+_SUBMIT_GATE = _submission.SubmissionGate()
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,16 +33,17 @@ async def archive_to_archive_is(
     Args:
         url: URL to archive
         wait_for_completion: Whether to wait for archiving to complete
-        timeout: Maximum time to wait for completion (seconds)
+        timeout: Queue, submission retry and completion-wait budget (seconds)
 
     Returns:
         Dict containing:
-            - status: "success" or "error"
+            - status: "success", "pending", "timeout" or "error"
             - archive_url: Archive.is URL (if successful)
             - submission_id: Submission ID
             - error: Error message (if failed)
     """
     try:
+        deadline = _submission.submission_deadline(timeout)
         try:
             import requests
         except ImportError:
@@ -56,68 +61,65 @@ async def archive_to_archive_is(
             "anyway": "1",  # Archive even if already archived
         }
 
-        # Submit for archiving
-        response = requests.post(submit_url, data=data, timeout=30)
-        response.raise_for_status()
+        response = await _submission.submit_with_retry(
+            lambda budget: requests.post(submit_url, data=data, timeout=budget),
+            gate=_SUBMIT_GATE, deadline=deadline, attempts=4, interval=10.0)
 
-        # Parse response to get archive URL or job ID
-        if response.status_code == 200:
-            # Check if we got a direct redirect to archive URL
-            if "archive.is" in response.url and response.url != submit_url:
-                archive_url = response.url
-                return {
-                    "status": "success",
-                    "archive_url": archive_url,
-                    "submitted_url": url,
-                    "archived_at": datetime.now().isoformat(),
-                }
-
-            # Look for job ID in response
-            content = response.text
-            job_match = re.search(r'"submitid":"([^"]+)"', content)
-            if job_match:
-                job_id = job_match.group(1)
-
-                if wait_for_completion:
-                    # Wait for archiving to complete
-                    archive_result = await _wait_for_archive_completion(job_id, timeout)
-                    if archive_result["status"] == "success":
-                        return {
-                            "status": "success",
-                            "archive_url": archive_result["archive_url"],
-                            "submission_id": job_id,
-                            "submitted_url": url,
-                            "archived_at": datetime.now().isoformat(),
-                        }
-                    else:
-                        return archive_result
-                else:
+        try:
+            # Parse response to get archive URL or job ID
+            if response.status_code == 200:
+                # Check if we got a direct redirect to archive URL
+                if "archive.is" in response.url and response.url != submit_url:
+                    archive_url = response.url
                     return {
-                        "status": "pending",
-                        "submission_id": job_id,
+                        "status": "success",
+                        "archive_url": archive_url,
                         "submitted_url": url,
-                        "message": "Archiving in progress. Use check_archive_status to monitor.",
+                        "archived_at": datetime.now().isoformat(),
                     }
 
-            # If no job ID found, create a mock archive URL
-            import hashlib
+                # Look for job ID in response
+                content = response.text
+                job_match = re.search(r'"submitid":"([^"]+)"', content)
+                if job_match:
+                    job_id = job_match.group(1)
 
-            url_hash = hashlib.md5(url.encode()).hexdigest()[:8]
-            archive_url = f"https://archive.is/{url_hash}"
+                    if wait_for_completion:
+                        # Wait for archiving to complete
+                        archive_result = await _wait_for_archive_completion(job_id, _submission.remaining(deadline))
+                        if archive_result["status"] == "success":
+                            return {
+                                "status": "success",
+                                "archive_url": archive_result["archive_url"],
+                                "submission_id": job_id,
+                                "submitted_url": url,
+                                "archived_at": datetime.now().isoformat(),
+                            }
+                        else:
+                            return archive_result
+                    else:
+                        return {
+                            "status": "pending",
+                            "submission_id": job_id,
+                            "submitted_url": url,
+                            "message": "Archiving in progress. Use check_archive_status to monitor.",
+                        }
 
-            return {
-                "status": "success",
-                "archive_url": archive_url,
-                "submitted_url": url,
-                "archived_at": datetime.now().isoformat(),
-                "note": "Mock archive URL - actual implementation would parse Archive.is response",
-            }
-        else:
-            return {
-                "status": "error",
-                "error": f"Archive.is submission failed with status {response.status_code}",
-            }
+                return {
+                    "status": "error",
+                    "error": "Archive.is response did not provide an archive URL or submission ID",
+                }
 
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Archive.is submission failed with status {response.status_code}",
+                }
+        finally:
+            response.close()
+
+    except _submission.SubmissionTimeout as e:
+        return {"status": "timeout", "error": str(e)}
     except Exception as e:
         logger.error(f"Failed to archive {url} to Archive.is: {e}")
         return {"status": "error", "error": str(e)}
@@ -128,12 +130,14 @@ async def _wait_for_archive_completion(job_id: str, timeout: int = 300) -> Dict[
     try:
         import requests
 
-        start_time = time.time()
+        deadline = _submission.submission_deadline(timeout)
         check_url = f"https://archive.is/timemap/json/{job_id}"
 
-        while time.time() - start_time < timeout:
+        while True:
+            response = None
             try:
-                response = requests.get(check_url, timeout=10)
+                response = requests.get(check_url, timeout=min(10.0, _submission.remaining(deadline)))
+                _submission.remaining(deadline)
 
                 if response.status_code == 200:
                     # Archive completed successfully
@@ -141,21 +145,26 @@ async def _wait_for_archive_completion(job_id: str, timeout: int = 300) -> Dict[
                     return {"status": "success", "archive_url": archive_url}
                 elif response.status_code == 404:
                     # Still processing
-                    time.sleep(5)
+                    await _submission._sleep(min(5.0, _submission.remaining(deadline)))
                     continue
                 else:
                     # Unexpected status
                     break
 
             except requests.RequestException:
-                time.sleep(5)
+                await _submission._sleep(min(5.0, _submission.remaining(deadline)))
                 continue
+            finally:
+                if response is not None:
+                    response.close()
 
         return {
             "status": "timeout",
             "error": f"Archive.is job {job_id} did not complete within {timeout} seconds",
         }
 
+    except _submission.SubmissionTimeout as e:
+        return {"status": "timeout", "error": str(e)}
     except Exception as e:
         return {"status": "error", "error": str(e)}
 

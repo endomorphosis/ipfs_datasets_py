@@ -1589,45 +1589,39 @@ async def _get_wayback_content_direct(
         return {"status": "error", "error": str(e)}
 
 
-async def archive_to_wayback(url: str) -> Dict[str, Any]:
-    """Archive a URL to Wayback Machine.
+from ._submission_retry import SubmissionGate as _SubmissionGate
 
-    Args:
-        url: URL to archive
+_WAYBACK_SUBMIT_GATE = _SubmissionGate()
 
-    Returns:
-        Dict containing archived_url, job_id and metadata
+
+async def archive_to_wayback(url: str, timeout: int = 60) -> Dict[str, Any]:
+    """Submit a URL using real transport with a finite retry/queue budget.
+
+    Installing ``internetarchive`` alone is not a successful submission.
     """
-    try:
-        try:
-            import internetarchive as ia  # noqa: F401
-        except ImportError:
-            return await _archive_to_wayback_direct(url)
-
-        archive_url = f"https://web.archive.org/save/{url}"
-        return {
-            "status": "success",
-            "archived_url": archive_url,
-            "message": f"Submitted {url} for archiving to Wayback Machine",
-        }
-    except Exception as e:
-        logger.error(f"Failed to archive {url} to Wayback Machine: {e}")
-        return {"status": "error", "error": str(e)}
+    return await _archive_to_wayback_direct(url, timeout=timeout)
 
 
-async def _archive_to_wayback_direct(url: str) -> Dict[str, Any]:
-    """Direct archive submission fallback."""
+async def _archive_to_wayback_direct(url: str, timeout: int = 60) -> Dict[str, Any]:
+    """Submit to the save endpoint; confirm success only after an HTTP response."""
+    from . import _submission_retry as submission
     try:
         import requests
-
+        deadline = submission.submission_deadline(timeout)
         save_url = f"https://web.archive.org/save/{url}"
-        response = requests.get(save_url, timeout=60)
-        response.raise_for_status()
-        return {
-            "status": "success",
-            "archived_url": save_url,
-            "message": f"Successfully submitted {url} for archiving",
-        }
-    except Exception as e:
-        logger.error(f"Direct archive submission failed for {url}: {e}")
-        return {"status": "error", "error": str(e)}
+        response = await submission.submit_with_retry(
+            lambda budget: requests.get(save_url, timeout=budget),
+            gate=_WAYBACK_SUBMIT_GATE, deadline=deadline, attempts=3, interval=2.0)
+        try:
+            return {
+                "status": "success",
+                "archived_url": save_url,
+                "message": f"Successfully submitted {url} for archiving",
+            }
+        finally:
+            response.close()
+    except submission.SubmissionTimeout as error:
+        return {"status": "timeout", "error": str(error)}
+    except Exception as error:
+        logger.error(f"Direct archive submission failed for {url}: {error}")
+        return {"status": "error", "error": str(error)}
