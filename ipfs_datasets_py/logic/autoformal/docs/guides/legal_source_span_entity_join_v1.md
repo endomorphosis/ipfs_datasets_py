@@ -219,3 +219,96 @@ verified before the fresh run. All 286 failed-attempt files remain preserved;
 the existing recovery owner released its unused 128 MiB storage promise.
 Product and test bytes were unchanged between attempts. No model, training,
 provider/network, entity census scan, graph admission or Lean execution occurred.
+
+
+## HF wire intake v2 boundary qualification
+
+The existing `prepare_source_package_intake_v2` and `validate_source_package_intake_v2` APIs accept the explicit `REQUEST_SCHEMA_V2` request with `metadata_profile=METADATA_PROFILE_V2` (`hf-default-parquet-envelope/v1`). The other six request fields remain `repository_id`, `revision`, `expected_release_identity`, `expected_graph_population`, `files` and `schema`. Supply independent original request/report hashes and the five exact metadata files; `source_package_intake_sha256` hashes the complete `SCHEMA_V2` report.
+
+This strict v2 profile refuses inconsistent wire declarations. It checks exact file inventory, standard infos, canonical named card regions and logical config roles. Frontmatter delimiters must occupy whole lines; literal triple-hyphen filenames remain valid. Role flags must be plain booleans with the declared role, and the logical default retains its key and ordered features. V1 keeps its original observation/discrepancy semantics.
+
+The explicit wire metadata intake passed 108 authored cases / 324 phases, including all 99 prior cases and nine focused controls; the same five retained HF49 metadata files were reused. Intake reconciles declarations only: it reads no tables and does not measure Arrow bytes, authenticate a remote revision, map source aliases or grant legal/training/gold/graph/Lean authority.
+
+The earlier 99-case result remains historical. The separate 120-case alternate API was not installed when the source comparison detected the concurrent delivery. This generation extends the one existing v2 owner. Reports bind their actual owner source generation; prepare a fresh report instead of relabeling an old source-pinned report. The original v1/v2 source/span/entity joins retain v1 intake. The explicit v3 consumer below selects wire intake v2.
+
+The [closed boundary qualification](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-intake-boundaries-20261024.json) retains original cleanup receipts. The selected run closed its compute/storage/source custody; the earlier peer zero-worker failure separately retains an unsupported 64 MiB storage reservation. Optional package initializers, source adoption, legal meaning, training/gold and graph/Lean admission remain outside this metadata qualification.
+
+## Explicit HF wire coordinate join v3
+
+Use `prepare_source_span_entity_join_manifest_v3` and
+`validate_source_span_entity_join_manifest_v3` with the existing join argument
+layout. The closed six-field outer request uses
+`legal-source-span-entity-join-request/v3`; its independent source-request hash
+binds an explicit `legal-source-package-intake-request/v2` request with
+`metadata_profile="hf-default-parquet-envelope/v1"`. The complete report uses
+`legal-source-span-entity-join-manifest/v3` and
+`source_compatibility_profile="paired-coordinate-hf-wire-three-cache-join/v1"`.
+The existing `source_span_entity_join_manifest_sha256` helper hashes this report.
+
+V3 selects genuine `prepare_source_package_intake_v2` and closing
+`validate_source_package_intake_v2`; it never falls back to legacy intake.
+The opening source report is detached and byte-pinned. Closing checks compare
+both source report objects before and after genuine validation, then check
+original metadata, owner sources, retained files and the complete returned join.
+Secondary custody failures remain attached to the original exception.
+
+One complete paired-v3 bundle, 1–64 physical rows, original coordinate indices
+and the complete coordinate report remain governed by the existing payload
+owner. The 8 MiB original-input and 16 MiB complete-report bounds are unchanged.
+The wire source intake reconciles declarations only; it does not read source
+tables, measure Arrow bytes, authenticate a remote revision or map source aliases.
+Local authored paired tables are verified by the existing coordinate payload
+reader. Entity file verification and semantic bindings are not added.
+
+The [closed v3 qualification](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-join-20261024.json)
+passed 123 authored cases / 369 phases: all 48 legacy cases and 75 coordinate
+cases, including the original 35 coordinate cases and 40 v3 controls. The same
+five retained HF49 metadata files were reused; no HF loader, release producer,
+model, training or Lean run was repeated. Optional package initializers and the
+whole installed package remain outside this namespace-scoped qualification.
+
+V1/v2 retain their original schemas and legacy intake. Census, eligibility,
+crosswalk, graph and native consumers have not adopted join v3; each needs an
+explicit compatible profile and its own qualification. Selected occurrence
+remains null, current-source correspondence and entity bindings unresolved,
+masks strict integer zero and all authority false. Source/edition/meaning review,
+training/gold, remote publication and graph/Lean admission remain separate.
+
+The selected `hf-wire-v02` alone supplies this 123-case qualification. The earlier v01 logging failure retains zero case/phase credit and its original 256 MiB retained terminal; a later separately reviewed existing-owner [storage closeout](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/independent-result-review-v01.json) released that promise while preserving all three failure logs (5,763 bytes). Administrative recovery does not turn the failed attempt into validation success.
+
+
+## Downstream wire profile boundary
+
+The qualified wire-coordinate join is `legal-source-span-entity-join-manifest/v3`, with profile
+`paired-coordinate-hf-wire-three-cache-join/v1`. Its legacy v1/v2 predecessors
+remain separate. The current downstream compatibility is:
+
+| Consumer | Current accepted join contract | Wire-v3 status |
+| --- | --- | --- |
+| Coordinate entity census v2 | `legal-source-span-entity-join-manifest/v2`, `paired-coordinate-three-cache-join/v1` | Separate explicit integration required |
+| Original-input target eligibility v2/v3 | Original join-v2 inputs and authoritative v2 replay | Separate explicit integration required |
+| Coordinate graph/corpus routes | Their declared eligibility and original-input ancestry | No automatic adoption from join-v3 qualification |
+
+When selecting that boundary, extend the existing consumer owner with an
+explicit request/report contract, preserve old profiles and replay original
+join inputs at opening and closeout. Keep source/edition correspondence,
+occurrence selection, entity semantics, definition applicability and review
+eligibility unresolved until their actual evidence exists. A wire-compatible
+report alone cannot enable training/gold or graph/Lean admission.
+
+The [delivery reconciliation](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-join-01/peer-delivery-reconciliation-v01.json)
+verifies the current 123-case delivery. A concurrently staged ordinary-v3 /
+coordinate-v4 alternative was never installed or executed and remains
+unselected; its API names are not reserved. Reuse the qualified coordinate-v3
+owner instead of porting those temporary drafts.
+
+
+## Focused public dependency integration (2026-10-24)
+
+The [accepted integration receipt](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-public-dependency-integration-20261024.json) records three existing cases / nine passed phases: one positive wire-intake case, one positive wire-coordinate join-v3 case and one legacy/profile-separation negative. They use the unchanged five authored metadata fixture files and local authored Arrow only. The complete historical intake 108/324 and join 123/369 cohorts were not repeated or pooled with these cases.
+
+The measured source base was `ad4c1256`; all 44 selected files remain identical at this publication base after the exact two-product/two-test/five-fixture overlays. Public `span_cache.py` remains `e35f5333` and public `validation_pytest.py` remains `cef7fd00`. The historical cache adds only two transport methods with no references in the selected code/test closure; removing them restores the complete public module AST. Those historical receipts contain no per-method call telemetry. Current coordinate producers hash their actual owner files dynamically, so no output-hash parity or transplanted producer commitment is claimed.
+
+The private `dc6ae4f1` pytest plugin is declared qualification orchestration and is not a product/test dependency or a public source port. The namespace profile uses explicit parent containers; optional initializers and whole public-package behavior remain unqualified. The check observed 35 loaded source entries and 28 checked import-compile sources. PyArrow 25.0.1 executed authored fixture work; DuckDB 1.4.3 was imported with zero database connections. Original source/native/resource/storage custody closed with 25 retained files / 281,592 bytes. The early snapshot remains `UNQUALIFIED_OBSERVATION_ONLY`, separate from accepted final gates.
+
+No model, encoder, embedding, law-cache table scan, download or Lean work occurred. This receipt does not requalify the distinct P/private dependency profile. The original failed attempts and original 108/123 scope limits remain intact. Downstream census, original-input eligibility, crosswalk, graph/native adoption and source/meaning/training/gold admission remain separately selected work.

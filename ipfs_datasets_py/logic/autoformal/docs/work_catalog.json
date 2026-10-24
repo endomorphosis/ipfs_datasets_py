@@ -123,15 +123,25 @@
     {
       "apis": [
         "prepare_source_package_intake",
-        "validate_source_package_intake"
+        "validate_source_package_intake",
+        "prepare_source_package_intake_v2",
+        "validate_source_package_intake_v2"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
         "source-package-main-integration-20261020-01",
         "selected-coordinate-paired-transport-20261020-01",
         "selected-coordinate-context-intake-20261020-01",
-        "selected-coordinate-three-cache-join-20261020-01"
+        "selected-coordinate-three-cache-join-20261020-01",
+        "uscode-hf-wire-intake-boundaries-qualified-20261024-01",
+        "hf-wire-public-dependency-integration-qualified-20261024-01"
       ],
+      "focused_public_dependency_integration": {
+        "cases": 3,
+        "evidence_id": "hf-wire-public-dependency-integration-qualified-20261024-01",
+        "phases": 9,
+        "scope": "Three existing cases only; historical108/123, private orchestration and optional initializers remain separate. No whole public-package or P/private-profile requalification."
+      },
       "id": "source-intake",
       "notes": "Require authenticated selected source/edition; card declarations alone do not supply adoption. Separate independent sparse-main integration passed the same 45 existing synthetic intake cases; all 28 declared pins, five durable outputs and original source/native/storage closeout verified. PR #1326 merged at a3345ce01107. Five captured runtime overlays were private validation inputs, excluded from publication; no model, Lean, statutory meaning or gold qualification. Newer opt-in raw/paired/context/join transport is separately qualified and committed on431c9c7; see selected_git_delivery. Legacy historical transport flags retain their original observation scope; default adoption/publication and semantic/crosswalk gates remain separate.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_package_intake_v1",
@@ -159,7 +169,19 @@
         "pushed": false,
         "scope": "Separate selected postimage; top-level APIs/status retain installed-primary profile and historical qualification scope."
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "wire_metadata_intake_v2_boundary_qualification": {
+        "cases": 108,
+        "evidence_id": "uscode-hf-wire-intake-boundaries-qualified-20261024-01",
+        "existing_join_consumer_compatibility_qualified": false,
+        "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_span_entity_join_v1.md",
+        "phases": 324,
+        "profile": "hf-default-parquet-envelope/v1",
+        "scope": "The explicit wire metadata intake passed 108 authored cases / 324 phases, including all 99 prior cases and nine focused controls; the same five retained HF49 metadata files were reused. Intake reconciles declarations only: it reads no tables and does not measure Arrow bytes, authenticate a remote revision, map source aliases or grant legal/training/gold/graph/Lean authority.",
+        "source_sha256": "0bdd297291690449d29427ae6cee875e410a0a970abc04e29915d2bcd760b01a",
+        "status": "focused_tests_qualified",
+        "test_sha256": "eff22313d206478b6f1805b78b902022163a45a4fdadb60270ea5596d15cec19"
+      }
     },
     {
       "apis": [
@@ -316,7 +338,11 @@
     {
       "apis": [
         "prepare_source_span_entity_join_manifest",
-        "validate_source_span_entity_join_manifest"
+        "validate_source_span_entity_join_manifest",
+        "prepare_source_span_entity_join_manifest_v2",
+        "validate_source_span_entity_join_manifest_v2",
+        "prepare_source_span_entity_join_manifest_v3",
+        "validate_source_span_entity_join_manifest_v3"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
@@ -329,8 +355,30 @@
         "selected-coordinate-three-cache-join-20261020-01",
         "selected-pilot-progress-identity-lookup-20261021-01",
         "comprehensive-reuse-plan-review-20261021-07",
-        "selected-pilot-paired-membership-lookup-20261021-01"
+        "selected-pilot-paired-membership-lookup-20261021-01",
+        "uscode-hf-wire-coordinate-join-qualified-20261024-01",
+        "hf-wire-public-dependency-integration-qualified-20261024-01"
       ],
+      "focused_public_dependency_integration": {
+        "cases": 3,
+        "evidence_id": "hf-wire-public-dependency-integration-qualified-20261024-01",
+        "phases": 9,
+        "scope": "Three existing cases only; historical108/123, private orchestration and optional initializers remain separate. No whole public-package or P/private-profile requalification."
+      },
+      "hf_wire_coordinate_join_v3_qualification": {
+        "cases": 123,
+        "coordinate_test_sha256": "275aa3bccb00ff064c6710c51e767652d6ebb37dc09e8aa8c44b69bd8e62bb45",
+        "downstream_consumer_adoption": false,
+        "evidence_id": "uscode-hf-wire-coordinate-join-qualified-20261024-01",
+        "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_span_entity_join_v1.md",
+        "legacy_test_unchanged": true,
+        "metadata_profile": "hf-default-parquet-envelope/v1",
+        "phases": 369,
+        "profile": "paired-coordinate-hf-wire-three-cache-join/v1",
+        "scope": "Explicit wire-coordinate join v3 passed 123 authored cases / 369 phases: 48 unchanged legacy and 75 coordinate cases, including 35 prior coordinate and 40 v3 controls. Genuine intake-v2 and complete coordinate payload replay preserve false authority and zero masks. Downstream census/eligibility/crosswalk/graph/native adoption and legal/source/Lean admission remain separate.",
+        "source_sha256": "246a7e0599f175e695f9c98c0d04d3f4decb312dd075dc7b09acad9d5f64dc13",
+        "status": "focused_tests_qualified"
+      },
       "id": "source-span-entity-join",
       "notes": "Join custody does not establish legal meaning or target eligibility. Historical census companion preserves missing endpoints and unselected source occurrences; evidence navigation does not admit a semantic graph. Newer opt-in raw/paired/context/join transport is separately qualified and committed on431c9c7; see selected_git_delivery. Legacy historical transport flags retain their original observation scope; default adoption/publication and semantic/crosswalk gates remain separate.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_span_entity_join_v1",
@@ -3724,6 +3772,36 @@
       "root": "datasets_repository",
       "scope": "Unchanged common norm-content adjudication owner/test. Fresh current-public integration passed 13 existing adjudication-only cases / 39 phases, with no response-control cohort or new tests. Historical 63 fictional signed-source/adjudicator cases and the failed first assertion attempt keep their separate legacy scope. Common-body validity, authentication and current source/partial prerequisites remain distinct; all variants and dissent remain and choices stay unapplied. Fresh evidence covers 3 ordinary pytest origins and 21 physical source paths; dynamic response/norm helpers have physical-source evidence without canonical-origin claims. It retained 117 compile/exec filenames, 112 module entries / 110 physical origins, within 173 sources / 199 pins. Six initializer bypasses were declared; only logic was observed, five unused. Genuine cryptography 49.0.0 fixture APIs; no independent operation counts, binary/code-object or whole-environment qualification. Original compute/storage and source READs closed, retaining 10 regular files / 2882943 bytes. No actual statutory adjudication, legal-as-of or governing decision, source/span/entity join, model/training or graph/Lean admission. Masks remain zero; declaration-binding/applicability migrations stay separate.",
       "status": "selected_current_public_norm_adjudication_engineering_qualified_choices_unapplied"
+    },
+    {
+      "id": "uscode-hf-wire-intake-boundaries-qualified-20261024-01",
+      "observed_bytes": 5509,
+      "observed_sha256": "c4631d28fe339649de8c4d148e2aa070fbfe2f08b9835757d3f676e479ff0ab9",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-intake-boundaries-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "The explicit wire metadata intake passed 108 authored cases / 324 phases, including all 99 prior cases and nine focused controls; the same five retained HF49 metadata files were reused. Intake reconciles declarations only: it reads no tables and does not measure Arrow bytes, authenticate a remote revision, map source aliases or grant legal/training/gold/graph/Lean authority.",
+      "status": "explicit_wire_metadata_intake_fixture_qualified"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-join-qualified-20261024-01",
+      "observed_bytes": 13533,
+      "observed_sha256": "94d44fb6caa62a266f4d198206eaab79b1fd693eabc6212c9b45c18939e59cc2",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-join-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Explicit wire-coordinate join v3 passed 123 authored cases / 369 phases: 48 unchanged legacy and 75 coordinate cases, including 35 prior coordinate and 40 v3 controls. Genuine intake-v2 and complete coordinate payload replay preserve false authority and zero masks. Downstream census/eligibility/crosswalk/graph/native adoption and legal/source/Lean admission remain separate.",
+      "status": "explicit_wire_coordinate_join_fixture_qualified"
+    },
+    {
+      "id": "hf-wire-public-dependency-integration-qualified-20261024-01",
+      "observed_bytes": 6833,
+      "observed_sha256": "dc3c64658365043fe615da9177fc22fef0f673db553c44420782e55a846a0ef6",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-public-dependency-integration-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Three existing cases / nine phases on the measured public44-file dependency snapshot with exact intake-v2/join-v3/test/metadata overlays, preserved e35f span_cache and cef7 public helper, and separate private dc6 orchestration. Original source/native/storage closed; historical108/324 and123/369 are not rerun or pooled. No P/private full-profile, corpus/model/Lean or semantic admission claim.",
+      "status": "focused_current_public_dependency_fixture_qualified"
     }
   ]
 }

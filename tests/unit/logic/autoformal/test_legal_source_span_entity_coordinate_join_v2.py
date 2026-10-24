@@ -362,3 +362,452 @@ def test_late_offered_report_mutation_refuses_after_genuine_validator_replay(coo
     with pytest.raises(ValueError, match="offered coordinate join report changed during validation"):
         validate(case, result)
     assert observed == [payload.SCHEMA_V2]
+
+
+# Explicit v3 composes the same genuine coordinate/Arrow owners with the
+# already-qualified strict source-intake v2. Its five HF49 metadata fixtures
+# remain small retained bytes; no new source corpus, model or loader is used.
+@pytest.fixture
+def wire_coordinate_join(coordinate_join):
+    from tests.unit.logic.autoformal.test_legal_source_package_intake_v1 import wire_intake_inputs
+
+    case = coordinate_join
+    request, metadata = wire_intake_inputs()
+    case["source_raw"], case["metadata"] = wire(request), metadata
+    case["request"]["schema"] = join.REQUEST_SCHEMA_V3
+    case["request"]["source_request_sha256"] = sha(case["source_raw"])
+    return case
+
+
+def prepare_wire_join(case, *, legacy_join_inputs=None):
+    raw = wire(case["request"])
+    return join.prepare_source_span_entity_join_manifest_v3(
+        raw, case["source_raw"], case["metadata"], wire(case["paired_request"]),
+        case["manifests"], case["info_raw"], expected_request_sha256=sha(raw),
+        legacy_join_inputs=legacy_join_inputs)
+
+
+def validate_wire_join(case, report, *, expected=None):
+    raw = wire(case["request"])
+    pin = join.source_span_entity_join_manifest_sha256(report) if expected is None else expected
+    return join.validate_source_span_entity_join_manifest_v3(
+        report, raw, case["source_raw"], case["metadata"], wire(case["paired_request"]),
+        case["manifests"], case["info_raw"], expected_request_sha256=sha(raw),
+        expected_report_sha256=pin)
+
+
+def replace_wire_source_request(case, request):
+    case["source_raw"] = wire(request)
+    case["request"]["source_request_sha256"] = sha(case["source_raw"])
+
+
+def reseal_wire_join_source(case):
+    from tests.unit.logic.autoformal.test_legal_source_package_intake_v1 import wire_intake_reseal
+
+    request = json.loads(case["source_raw"])
+    wire_intake_reseal(request, case["metadata"])
+    replace_wire_source_request(case, request)
+
+
+def assert_wire_join_is_unreviewed(result):
+    assert result["schema"] == join.SCHEMA_V3
+    assert result["source_compatibility_profile"] == join.WIRE_COORDINATE_PROFILE
+    assert result["source_compatibility_profile"] == "paired-coordinate-hf-wire-three-cache-join/v1"
+    assert result["source_metadata_profile"] == source.METADATA_PROFILE_V2
+    assert result["source_metadata_request_schema"] == source.REQUEST_SCHEMA_V2
+    nested = result["source_metadata_intake"]
+    assert nested["schema"] == source.SCHEMA_V2 and nested["metadata_profile"] == source.METADATA_PROFILE_V2
+    assert result["source_metadata_intake_sha256"] == source.source_package_intake_sha256(nested)
+    assert nested["source_identity"]["aliases_mapped"] is False
+    assert nested["metadata_validation"]["table_bodies_read"] is False
+    assert nested["metadata_validation"]["Arrow_loaded"] is False
+    assert nested["count_reconciliation"]["arrow_bytes_physically_measured_here"] is False
+    assert result["entity_metadata"]["verified_file_rows"] == result["counts"]["entity_file_rows_verified"] == 0
+    assert all(value is False for value in result["authority"].values())
+    assert all(value is False for value in nested["authority"].values())
+    for row in [result, nested, *result["row_references"]]:
+        assert type(row["training_mask"]) is type(row["evaluation_gold_mask"]) is int
+        assert row["training_mask"] == row["evaluation_gold_mask"] == 0
+    for row in result["row_references"]:
+        assert row["selected_occurrence"] is None
+        assert row["source_candidate_record"] is None
+        assert row["current_source_release_correspondence"] == "unverified_no_independent_crosswalk"
+        assert row["entity_binding"] == "unavailable_semantic_companions_not_supplied"
+
+
+def test_wire_coordinate_join_genuine_roundtrip_preserves_five_files_and_one_complete_carrier(wire_coordinate_join):
+    case = wire_coordinate_join
+    original_metadata = dict(case["metadata"])
+    result = prepare_wire_join(case)
+    assert validate_wire_join(case, result) == result
+    assert validate_wire_join(case, wire(result),
+        expected=join.source_span_entity_join_manifest_sha256(result)) == result
+    assert case["metadata"] == original_metadata
+    nested = result["source_metadata_intake"]
+    assert nested["request_raw_utf8"].encode() == case["source_raw"]
+    assert len(nested["files"]) == 5
+    for entry in nested["files"]:
+        assert entry["raw_utf8"].encode() == case["metadata"][entry["path_in_repo"]]
+        assert entry["sha256"] == sha(case["metadata"][entry["path_in_repo"]])
+    assert nested["issues"] == [] and nested["status"] == "selected_wire_metadata_reconciled"
+    assert result["span_inventory"]["schema"] == inventory.SCHEMA_V2
+    payload_report = result["paired_bundles"][0]["payload_intake"]
+    assert payload_report["schema"] == payload.SCHEMA_V2
+    carrier = payload_report["source_coordinates"]
+    artifact = next(row for row in case["coordinate"]["bundle"]["artifacts"]
+                    if row["kind"] == "source_coordinate_report")
+    assert carrier["report_raw_utf8"].encode() == paired.decode_artifact(artifact)
+    assert carrier["report_sha256"] == case["coordinate"]["pin"]
+    assert len(json.loads(carrier["report_raw_utf8"])["spans"]) == 4
+
+    def carriers(value):
+        if type(value) is dict:
+            return ("report_raw_utf8" in value) + sum(carriers(item) for item in value.values())
+        return sum(carriers(item) for item in value) if type(value) is list else 0
+
+    assert carriers(result) == 1 and MARKER not in carrier["report_raw_utf8"]
+    assert [row["source_coordinate_span_index"] for row in result["row_references"]] == [1, 3]
+    assert [row["source_provenance_json"] for row in result["row_references"]] == case["coordinate"]["references"]
+    assert len({row["physical_identity_sha256"] for row in result["row_references"]}) == 2
+    assert result["counts"]["physical_paired_rows"] == result["counts"]["selected_row_references"] == 2
+    assert_wire_join_is_unreviewed(result)
+
+
+def test_wire_join_dispatches_genuine_v2_source_and_closing_validation_without_legacy_fallback(wire_coordinate_join, monkeypatch):
+    case = wire_coordinate_join
+    source_prepare = source.prepare_source_package_intake_v2
+    source_validate = source.validate_source_package_intake_v2
+    payload_prepare = payload.prepare_paired_payload_intake_v2
+    calls = []
+
+    def observe_source(*args, **kwargs):
+        result = source_prepare(*args, **kwargs)
+        calls.append(("source_v2", result["schema"]))
+        return result
+
+    def observe_validation(*args, **kwargs):
+        calls.append(("source_validate_v2", kwargs["expected_report_sha256"]))
+        return source_validate(*args, **kwargs)
+
+    def observe_payload(*args, **kwargs):
+        result = payload_prepare(*args, **kwargs)
+        calls.append(("payload_v2", result["schema"]))
+        return result
+
+    monkeypatch.setattr(source, "prepare_source_package_intake_v2", observe_source)
+    monkeypatch.setattr(source, "validate_source_package_intake_v2", observe_validation)
+    monkeypatch.setattr(source, "prepare_source_package_intake",
+        lambda *a, **k: pytest.fail("wire join fell back to legacy source intake"))
+    monkeypatch.setattr(payload, "prepare_paired_payload_intake_v2", observe_payload)
+    result = prepare_wire_join(case)
+    assert [kind for kind, _ in calls] == ["source_v2", "payload_v2", "source_validate_v2", "source_v2"]
+    assert calls[2][1] == result["source_metadata_intake_sha256"]
+    assert_wire_join_is_unreviewed(result)
+
+
+@pytest.mark.parametrize("version", [1, 2])
+def test_older_join_entrypoints_refuse_the_explicit_wire_join_request(wire_coordinate_join, monkeypatch, version):
+    case = wire_coordinate_join
+    monkeypatch.setattr(join, "_owners", lambda: pytest.fail("new outer profile reached old owners"))
+    prepare_old = (join.prepare_source_span_entity_join_manifest if version == 1
+                   else join.prepare_source_span_entity_join_manifest_v2)
+    raw = wire(case["request"])
+    with pytest.raises(ValueError):
+        prepare_old(raw, case["source_raw"], case["metadata"], wire(case["paired_request"]),
+            case["manifests"], case["info_raw"], expected_request_sha256=sha(raw))
+
+
+@pytest.mark.parametrize("damage", ["legacy_schema", "missing_profile", "unknown_profile", "boolean_profile"])
+def test_wire_join_requires_explicit_nested_source_v2_profile_before_owners(wire_coordinate_join, monkeypatch, damage):
+    case = wire_coordinate_join
+    request = json.loads(case["source_raw"])
+    if damage == "legacy_schema": request["schema"] = source.REQUEST_SCHEMA
+    elif damage == "missing_profile": request.pop("metadata_profile")
+    elif damage == "unknown_profile": request["metadata_profile"] = "unqualified/v9"
+    else: request["metadata_profile"] = True
+    replace_wire_source_request(case, request)
+    monkeypatch.setattr(join, "_owners", lambda: pytest.fail("unsupported nested source profile reached owners"))
+    with pytest.raises(ValueError):
+        prepare_wire_join(case)
+
+
+@pytest.mark.parametrize("damage", ["schema", "extra", "missing", "source_pin", "paired_pin"])
+def test_wire_join_keeps_closed_outer_request_and_exact_nested_byte_pins(wire_coordinate_join, monkeypatch, damage):
+    case = wire_coordinate_join
+    if damage == "schema": case["request"]["schema"] = join.REQUEST_SCHEMA_V2
+    elif damage == "extra": case["request"]["source_metadata_profile"] = source.METADATA_PROFILE_V2
+    elif damage == "missing": case["request"].pop("entity")
+    elif damage == "source_pin": case["request"]["source_request_sha256"] = "0" * 64
+    else: case["request"]["paired_inventory_request_sha256"] = "0" * 64
+    monkeypatch.setattr(join, "_owners", lambda: pytest.fail("invalid outer request reached owners"))
+    with pytest.raises(ValueError):
+        prepare_wire_join(case)
+
+
+def test_wire_join_does_not_infer_coordinate_transport_from_legacy_inventory(wire_coordinate_join, monkeypatch):
+    case = wire_coordinate_join
+    case["paired_request"]["schema"] = inventory.REQUEST_SCHEMA
+    case["request"]["paired_inventory_request_sha256"] = sha(wire(case["paired_request"]))
+    monkeypatch.setattr(source, "prepare_source_package_intake_v2",
+        lambda *a, **k: pytest.fail("legacy inventory reached wire source preparation"))
+    monkeypatch.setattr(payload, "prepare_paired_payload_intake_v2",
+        lambda *a, **k: pytest.fail("legacy inventory reached coordinate payload loading"))
+    with pytest.raises(ValueError):
+        prepare_wire_join(case)
+
+
+def test_wire_join_cannot_mix_legacy_candidate_inputs(wire_coordinate_join, monkeypatch):
+    case = wire_coordinate_join
+    path = case["request"]["paired_bundles"][0]["manifest_path_in_repo"]
+    case["request"]["legacy_joins"][path] = "0" * 64
+    monkeypatch.setattr(join, "_owners", lambda: pytest.fail("mixed legacy inputs reached wire owners"))
+    with pytest.raises(ValueError):
+        prepare_wire_join(case)
+
+
+@pytest.mark.parametrize("damage", ["wire_count", "infos_feature", "card_delimiter"])
+def test_wire_join_resealed_source_discrepancies_refuse_before_payload_loading(wire_coordinate_join, monkeypatch, damage):
+    case = wire_coordinate_join
+    if damage == "wire_count":
+        value = json.loads(case["metadata"]["dataset_configs.json"])
+        value["wire_metadata"]["num_examples"] += 1
+        case["metadata"]["dataset_configs.json"] = wire(value)
+    elif damage == "infos_feature":
+        value = json.loads(case["metadata"]["dataset_infos.json"])
+        value["publicus-ir-graphrag-v2"]["features"]["entry_cid"]["dtype"] = "int64"
+        case["metadata"]["dataset_infos.json"] = wire(value)
+    else:
+        case["metadata"]["README.md"] = case["metadata"]["README.md"].replace(b"\n---\n", b"\n---garbage\n", 1)
+    reseal_wire_join_source(case)
+    monkeypatch.setattr(payload, "prepare_paired_payload_intake_v2",
+        lambda *a, **k: pytest.fail("inconsistent wire metadata reached payload loading"))
+    with pytest.raises(ValueError):
+        prepare_wire_join(case)
+
+
+@pytest.mark.parametrize("field", ["schema", "metadata_profile", "status"])
+def test_wire_join_refuses_incompatible_genuine_source_return_before_payload(wire_coordinate_join, monkeypatch, field):
+    genuine = source.prepare_source_package_intake_v2
+    observed = []
+
+    def alter_after_genuine_preparation(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        observed.append(result["schema"])
+        result[field] = "incompatible/v9"
+        return result
+
+    monkeypatch.setattr(source, "prepare_source_package_intake_v2", alter_after_genuine_preparation)
+    monkeypatch.setattr(payload, "prepare_paired_payload_intake_v2",
+        lambda *a, **k: pytest.fail("incompatible source return reached payload loading"))
+    with pytest.raises(ValueError):
+        prepare_wire_join(wire_coordinate_join)
+    assert observed == [source.SCHEMA_V2]
+
+
+@pytest.mark.parametrize("damage", [
+    "schema", "source_profile", "source_request_schema", "source_commitment", "coordinate_index",
+    "carrier", "authority", "mask", "entity_binding",
+])
+def test_wire_join_rehashed_report_requires_full_source_and_coordinate_regeneration(wire_coordinate_join, damage):
+    case = wire_coordinate_join
+    result = prepare_wire_join(case)
+    if damage == "schema": result["schema"] = join.SCHEMA_V2
+    elif damage == "source_profile": result["source_metadata_profile"] = "unqualified/v9"
+    elif damage == "source_request_schema": result["source_metadata_request_schema"] = source.REQUEST_SCHEMA
+    elif damage == "source_commitment": result["source_metadata_intake_sha256"] = "0" * 64
+    elif damage == "coordinate_index": result["row_references"][0]["source_coordinate_span_index"] = 0
+    elif damage == "carrier": result["paired_bundles"][0]["payload_intake"]["source_coordinates"]["report_raw_utf8"] += " "
+    elif damage == "authority": result["authority"]["source_semantics_verified"] = True
+    elif damage == "mask": result["row_references"][0]["training_mask"] = True
+    else: result["row_references"][0]["entity_binding"] = {"inferred_from_legal_id": True}
+    with pytest.raises(ValueError):
+        validate_wire_join(case, result)
+
+
+def test_wire_join_wrong_independent_report_pin_refuses_before_owners(wire_coordinate_join, monkeypatch):
+    result = prepare_wire_join(wire_coordinate_join)
+    monkeypatch.setattr(join, "_owners", lambda: pytest.fail("wrong report pin reached wire owners"))
+    with pytest.raises(ValueError):
+        validate_wire_join(wire_coordinate_join, result, expected="0" * 64)
+
+
+def test_wire_join_late_original_source_metadata_mutation_refuses(wire_coordinate_join, monkeypatch):
+    case = wire_coordinate_join
+    genuine = source.prepare_source_package_intake_v2
+    observed = []
+
+    def mutate_after_real_source(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        observed.append(result["schema"])
+        case["metadata"]["README.md"] += b"late original wire mapping mutation"
+        return result
+
+    monkeypatch.setattr(source, "prepare_source_package_intake_v2", mutate_after_real_source)
+    with pytest.raises(ValueError):
+        prepare_wire_join(case)
+    assert observed and set(observed) == {source.SCHEMA_V2}
+
+
+def test_wire_join_mutable_genuine_source_return_is_fenced_after_payload(wire_coordinate_join, monkeypatch):
+    case = wire_coordinate_join
+    genuine_source = source.prepare_source_package_intake_v2
+    genuine_payload = payload.prepare_paired_payload_intake_v2
+    returned = []
+    payload_calls = []
+
+    def retain_genuine_source(*args, **kwargs):
+        result = genuine_source(*args, **kwargs)
+        returned.append(result)
+        return result
+
+    def mutate_source_after_real_payload(*args, **kwargs):
+        result = genuine_payload(*args, **kwargs)
+        payload_calls.append(result["schema"])
+        returned[0]["source_identity"]["aliases_mapped"] = True
+        return result
+
+    monkeypatch.setattr(source, "prepare_source_package_intake_v2", retain_genuine_source)
+    monkeypatch.setattr(payload, "prepare_paired_payload_intake_v2", mutate_source_after_real_payload)
+    with pytest.raises(ValueError):
+        prepare_wire_join(case)
+    assert payload_calls == [payload.SCHEMA_V2]
+    assert returned[0]["source_identity"]["aliases_mapped"] is True
+
+
+def test_wire_join_late_retained_table_mutation_refuses_after_real_payload(wire_coordinate_join, monkeypatch):
+    case = wire_coordinate_join
+    genuine = payload.prepare_paired_payload_intake_v2
+    observed = []
+
+    def mutate_after_real_payload(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        observed.append(result["schema"])
+        descriptor = case["coordinate"]["written"]["artifacts"]
+        path = Path(case["coordinate"]["request"]["repository_root"]) / descriptor["path_in_repo"]
+        path.write_bytes(path.read_bytes() + b"late wire-join table mutation")
+        return result
+
+    monkeypatch.setattr(payload, "prepare_paired_payload_intake_v2", mutate_after_real_payload)
+    with pytest.raises(ValueError):
+        prepare_wire_join(case)
+    assert observed == [payload.SCHEMA_V2]
+
+
+def test_wire_join_primary_payload_failure_preserves_all_original_custody_failures(wire_coordinate_join, monkeypatch):
+    case = wire_coordinate_join
+    genuine = payload.prepare_paired_payload_intake_v2
+    genuine_validation = source.validate_source_package_intake_v2
+    sentinel = RuntimeError("authored wire-join primary payload failure")
+    observed = []
+    closing_validations = []
+
+    def observe_genuine_closing_validation(*args, **kwargs):
+        result = genuine_validation(*args, **kwargs)
+        closing_validations.append(result["schema"])
+        return result
+
+    def fail_after_real_payload(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        observed.append(result["schema"])
+        case["metadata"]["README.md"] += b"authored late wire metadata failure"
+        descriptor = case["coordinate"]["written"]["artifacts"]
+        path = Path(case["coordinate"]["request"]["repository_root"]) / descriptor["path_in_repo"]
+        path.write_bytes(path.read_bytes() + b"authored late wire file failure")
+        raise sentinel
+
+    monkeypatch.setattr(payload, "prepare_paired_payload_intake_v2", fail_after_real_payload)
+    monkeypatch.setattr(source, "validate_source_package_intake_v2", observe_genuine_closing_validation)
+    with pytest.raises(RuntimeError, match="authored wire-join primary payload failure") as caught:
+        prepare_wire_join(case)
+    assert caught.value is sentinel and observed == [payload.SCHEMA_V2]
+    assert closing_validations == [source.SCHEMA_V2]
+    notes = getattr(sentinel, "__notes__", [])
+    for label in ("original inputs", "retained files"):
+        assert any(label in note for note in notes)
+
+
+def test_wire_join_offered_report_mutation_during_genuine_replay_refuses(wire_coordinate_join, monkeypatch):
+    case = wire_coordinate_join
+    result = prepare_wire_join(case)
+    genuine = payload.prepare_paired_payload_intake_v2
+    observed = []
+
+    def mutate_after_real_payload(*args, **kwargs):
+        prepared = genuine(*args, **kwargs)
+        observed.append(prepared["schema"])
+        result["row_references"][0]["training_mask"] = True
+        return prepared
+
+    monkeypatch.setattr(payload, "prepare_paired_payload_intake_v2", mutate_after_real_payload)
+    with pytest.raises(ValueError):
+        validate_wire_join(case, result)
+    assert observed == [payload.SCHEMA_V2]
+
+
+def test_wire_join_complete_output_is_detached_from_original_wire_and_coordinate_inputs(wire_coordinate_join):
+    case = wire_coordinate_join
+    original_metadata = dict(case["metadata"])
+    original_coordinate = deepcopy(case["coordinate"]["report"])
+    result = prepare_wire_join(case)
+    result["source_metadata_intake"]["files"].clear()
+    result["source_metadata_intake"]["source_identity"]["aliases_mapped"] = True
+    result["paired_bundles"][0]["payload_intake"]["source_coordinates"]["report_raw_utf8"] = "changed"
+    assert case["metadata"] == original_metadata and case["coordinate"]["report"] == original_coordinate
+    fresh = prepare_wire_join(case)
+    assert len(fresh["source_metadata_intake"]["files"]) == 5
+    assert_wire_join_is_unreviewed(fresh)
+
+
+@pytest.mark.parametrize("target", ["original", "detached"])
+def test_wire_join_source_reports_remain_fenced_after_genuine_closing_validator_returns(wire_coordinate_join, monkeypatch, target):
+    genuine_prepare = source.prepare_source_package_intake_v2
+    genuine_validate = source.validate_source_package_intake_v2
+    returned = []
+    validated = []
+
+    def retain_genuine_source(*args, **kwargs):
+        result = genuine_prepare(*args, **kwargs)
+        returned.append(result)
+        return result
+
+    def mutate_after_genuine_validation(report, *args, **kwargs):
+        result = genuine_validate(report, *args, **kwargs)
+        assert returned[0] is not report
+        observed = returned[0] if target == "original" else report
+        observed["source_identity"]["aliases_mapped"] = True
+        validated.append(result["schema"])
+        return result
+
+    monkeypatch.setattr(source, "prepare_source_package_intake_v2", retain_genuine_source)
+    monkeypatch.setattr(source, "validate_source_package_intake_v2", mutate_after_genuine_validation)
+    with pytest.raises(ValueError, match="wire source intake report changed during coordinate join"):
+        prepare_wire_join(wire_coordinate_join)
+    assert len(returned) == 2 and validated == [source.SCHEMA_V2]
+
+
+def test_wire_join_final_result_is_fenced_after_genuine_closing_validation(wire_coordinate_join, monkeypatch):
+    genuine_assemble = join._assemble_join
+    genuine_validate = source.validate_source_package_intake_v2
+    assembled = []
+    validated = []
+
+    def retain_genuine_join(*args, **kwargs):
+        result = genuine_assemble(*args, **kwargs)
+        assembled.append(result)
+        return result
+
+    def mutate_after_genuine_validation(*args, **kwargs):
+        result = genuine_validate(*args, **kwargs)
+        assert len(assembled) == 1
+        assembled[0]["training_mask"] = True
+        assembled[0]["authority"]["admitted"] = True
+        validated.append(result["schema"])
+        return result
+
+    monkeypatch.setattr(join, "_assemble_join", retain_genuine_join)
+    monkeypatch.setattr(source, "validate_source_package_intake_v2", mutate_after_genuine_validation)
+    with pytest.raises(ValueError, match="wire coordinate join result changed during closing custody"):
+        prepare_wire_join(wire_coordinate_join)
+    assert validated == [source.SCHEMA_V2]
+    assert assembled[0]["training_mask"] is True and assembled[0]["authority"]["admitted"] is True
+
