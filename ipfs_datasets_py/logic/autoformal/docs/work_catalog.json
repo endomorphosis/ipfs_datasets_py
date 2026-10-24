@@ -2640,7 +2640,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-24T13:52:14.020345+00:00",
+  "last_updated_at_utc": "2026-10-24T17:35:39.865238+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -4203,6 +4203,16 @@
       "root": "datasets_repository",
       "scope": "Independent10existingcases/30phases:9wire/cross-profilecontrols+1old-v1positive overalready-publishedcorpus-v2; no newsource/tests or poolingwithhistorical90/270 orpeer3/9. Actualbasee37 retained; all229frozeninputs byte-equalpeer9368, no rerun.229files7765073bytes/256pins;139checkedcompileexec,140entries138origins,oneowningtest/12criticalpaths. Nine namespace-creation bypass declarations/8observed routes differfrom6unexecutedproductbodies+2testparentslaterexecutedby5collectionaliases/3physicalbodies;10ordinaryproductinitializers/3of5filelessobserved. Successfulv03 originalcompute/selectedstorage/durability/READsclosed with103files9249778bytes. Earliercurrentv02precollectionfailure retains128MiBstorage at savedcutoff; preparation/control and failedsaved-reader records separate. No codeobject/binary/fullpackage, model/training/Lean or source/meaning/governing/gold/corpus admission; masks0 and fourwidthgatesunchanged.",
       "status": "independent_focused_public_wire_corpus_compatibility_qualified_no_semantic_admission"
+    },
+    {
+      "id": "comprehensive-delivery-plan-review-20261024-03",
+      "observed_bytes": 32305,
+      "observed_sha256": "333edbba493269168d5ad24f7037296eb6f107f1db64efd9f1d13e4d9a3fc21c",
+      "path": "docs/autoformalization/evidence/legal-ir-comprehensive-delivery-plan-review-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "All81catalogedowners/80paths/368declaredAPIs source-present at943e; three already implemented/qualified primary extensions remain unpublished. Four-width training reuse preserves successful8+partial4CP128 distinction, completed2x4vector panel, adverse results and task/profile boundaries. Three dataset cards pinned; no table scan. One reviewed complete norm/definition/two uses then20-40provisions, manual path before decoder success. Original24taskbytes unchanged; no new training, model, Lean or semantic admission.",
+      "status": "metadata_review_and_consolidated_plan_no_new_execution"
     }
   ]
 }
