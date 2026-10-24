@@ -417,3 +417,39 @@ Preparation executes no compiler. Its handoff stays `build_eligible=false`,
 `not_run`/`pending`, even though a distinct [native route](legal_corpus_definition_use_native_v2.md#bound-norm-definition-native-profile-version-1)
 is implemented in the existing executor. Current qualification and the retained
 2024 Title 10 pilot boundary are recorded in the [handoff](../HANDOFF.md#bound-norm-corpus-engineering-profile-2026-10-23).
+
+
+## Complete authored norm from an exact parent occurrence
+
+The explicit `prepare_parent_norm_corpus_v1` profile projects the complete
+supplied relational norm from a genuine parent correspondence-v2 report into a
+modular Lean project. Supply `correspondence`, its independent
+`expected_correspondence_sha256`, the complete original
+`correspondence_inputs`, and an exact version-pinned `toolchain`.
+Use `parent_norm_preparation_sha256` for the full preparation commitment and
+`validate_parent_norm_corpus_v1` with `expected_preparation_sha256` and the same
+original inputs for regeneration.
+
+The four-module/seven-file project retains the exact original norm body,
+quantifiers, ordered arguments, modality and condition placement. The manifest
+retains the complete correspondence, physical parent identity, unresolved issues
+and unavailable context. A separate input-binding record commits the original
+source scope, correspondence and typed/native norm. Original inputs are replayed at opening
+and closing. The preservation statement is a definitional alias identity for
+that unchanged authored formula; it is not a proof of statutory meaning or
+general correctness of the AST lowering.
+
+The selected source is an exact literal occurrence, whose complete legal scope
+and governing edition remain unresolved. Original relational `source_binding`
+stays null and `source_bound` false. Meaning and definition applicability remain
+unselected; authority flags are false and training/gold masks zero. Definition
+composition requires its own explicit compatible profile and substantive review.
+Preparation and validation perform no Lean execution. The existing definition-use
+and bound-norm build receipts do not qualify this new project profile. The separate
+[direct parent-norm native route](legal_corpus_definition_use_native_v2.md#complete-authored-parent-norm-native-observations)
+now supplies explicit validation, build and receipt APIs. Its independently
+accepted [native result](../../../../../docs/autoformalization/evidence/legal-ir-parent-complete-norm-native-20261024.json)
+qualifies its selected authored engineering scope. The preparation and its
+original 68-case qualification retain their no-build scope.
+
+The [focused qualification](../../../../../docs/autoformalization/evidence/legal-ir-parent-complete-norm-project-20261024.json) passed 68 authored cases / 204 phases: 26 new cases and 42 selected bound-norm regressions. Its frozen-source namespace profile retains eight unexecuted initializer paths; whole-package startup and the 150 unselected cases from both owning modules remain outside this result. Original source/native/storage custody closed. No new model, training, statutory meaning or actual Lean compilation qualification is supplied.

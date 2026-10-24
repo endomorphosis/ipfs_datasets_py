@@ -1446,3 +1446,447 @@ __all__ += [
     "load_bound_norm_definition_corpus_v1", "write_bound_norm_definition_corpus_v1",
     "bound_norm_definition_preparation_sha256",
 ]
+
+
+# Explicit complete authored norm project over genuine decoded-parent custody.
+# This sibling does not widen the HTML/definition-use/bound-definition profiles.
+PARENT_NORM_SCHEMA = "legal-corpus-parent-norm-lake-preparation/v1"
+PARENT_NORM_PROFILE = "replayed-parent-literal-complete-authored-norm-project/v1"
+PARENT_NORM_INPUT_BINDING_SCHEMA = "legal-corpus-parent-norm-input-binding/v1"
+_PARENT_NORM_NAMESPACE = "LegalCorpusParentNorm"
+_PARENT_NORM_INPUT_FIELDS = {"correspondence", "expected_correspondence_sha256",
+                             "correspondence_inputs", "toolchain"}
+_PARENT_NORM_REPLAY_FIELDS = {"scope_report", "relational_report", "mapping_request_raw",
+    "expected_scope_report_sha256", "expected_relational_report_sha256",
+    "expected_mapping_request_sha256", "scope_replay_inputs", "relational_request_raw",
+    "expected_relational_request_sha256"}
+PARENT_NORM_FALSE_FLAGS = {**FALSE_FLAGS, **dict.fromkeys((
+    "source_bound", "source_meaning_verified", "source_edition_verified",
+    "source_region_complete", "definition_applied_to_norm", "membership_assumption_verified",
+    "governing_definition_use_verified", "norm_truth_proved", "semantic_graph_admitted",
+    "Lean_admitted", "model_executed", "training_executed"), False)}
+_PARENT_NORM_OPERATION_PINS = None
+
+
+def _parent_norm_storage(preparation):
+    _need(type(preparation) is DefinitionUseCorpusPreparation,
+          "typed parent norm preparation required")
+    data = object.__getattribute__(preparation, "__dict__")
+    _need(type(data) is dict and set(data) == {"manifest_json", "files"},
+          "closed parent norm preparation storage required")
+    text, files = data["manifest_json"], data["files"]
+    _need(type(text) is str and 0 < len(text) <= contracts.MAX_RECORD_BYTES
+          and type(files) is tuple and len(files) == 7,
+          "bounded parent norm manifest and exactly seven files required")
+    try:
+        _need(len(text.encode("utf-8")) <= contracts.MAX_RECORD_BYTES,
+              "parent norm manifest byte bound exceeded")
+    except UnicodeError:
+        _fail("ordinary parent norm manifest UTF8 required")
+    result, names, total = [], [], 0
+    for pair in files:
+        _need(type(pair) is tuple and len(pair) == 2
+              and all(type(value) is str for value in pair), "ordinary parent norm file pair required")
+        name, body = pair
+        _need(len(name) <= 256
+              and re.fullmatch(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)?", name)
+              and all(part not in (".", "..") for part in name.split("/"))
+              and "\x00" not in body and len(body) <= MAX_PROJECT_BYTES,
+              "closed bounded parent norm project path/source required")
+        try:
+            total += len(body.encode("utf-8"))
+        except UnicodeError:
+            _fail("ordinary parent norm project UTF8 required")
+        _need(total <= MAX_PROJECT_BYTES, "complete parent norm project byte bound exceeded")
+        names.append(name); result.append([name, body])
+    _need(names == sorted(set(names)), "distinct sorted parent norm files required")
+    return {"manifest_json": text, "files": result}
+
+
+def parent_norm_preparation_sha256(preparation):
+    """Commit complete parsed manifest and all seven files; grant no proof authority."""
+    storage = _parent_norm_storage(preparation)
+    raw = storage["manifest_json"].encode("utf-8")
+    manifest = contracts.load_record_bytes(raw, expected_sha256=_sha(raw))
+    _need(manifest.get("schema") == PARENT_NORM_SCHEMA and manifest.get("profile") == PARENT_NORM_PROFILE,
+          "explicit parent norm preparation schema/profile required")
+    document = {"manifest": manifest, "files": storage["files"]}
+    _ParentInputBudget().copy(document)
+    wire = json.dumps(document, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False, allow_nan=False).encode("utf-8")
+    _need(len(wire) <= 20 * 1024**2, "complete parent norm preparation commitment exceeds 20 MiB")
+    return _sha(wire)
+
+
+def _parent_norm_capture(original, offered=None):
+    _need(type(original) is dict and set(original) == _PARENT_NORM_INPUT_FIELDS,
+          "closed complete parent norm preparation inputs required")
+    _need(type(original["correspondence"]) is dict
+          and type(original["correspondence_inputs"]) is dict
+          and set(original["correspondence_inputs"]) == _PARENT_NORM_REPLAY_FIELDS,
+          "complete original parent correspondence and nine-field replay required")
+    contracts.require_sha256(original["expected_correspondence_sha256"],
+                             "independent complete parent correspondence")
+    toolchain = original["toolchain"]
+    _need(type(toolchain) is str and len(toolchain) <= 128 and _TOOLCHAIN.fullmatch(toolchain),
+          "exact version-pinned Lean toolchain required")
+    graph = {**original, "offered": None if offered is None else _parent_norm_storage(offered)}
+    copied = _ParentInputBudget().copy(graph)
+    base = {key: value for key, value in copied.items() if key != "offered"}
+    return copied, _parent_commitment(copied), _parent_commitment(base)
+
+
+def _parent_norm_pins(correspondence, owners):
+    global _PARENT_NORM_OPERATION_PINS
+    pure = _pure_pins()
+    _need(pure == _IMPORTED_PURE_PINS, "parent norm pure producers changed since import")
+    from . import legal_producer_lineage as lineage
+    pins = dict(pure)
+    sources = [correspondence._parent_correspondence_pins(correspondence._owners()),
+               owners[0].producer_pins()]
+    sources.append({str(Path(module.__file__).resolve()): _sha(Path(module.__file__).read_bytes())
+                    for module in (correspondence, lineage, lineage.provenance, *owners)})
+    for source in sources:
+        for path, pin in source.items():
+            _need(path not in pins or pins[path] == pin, "parent norm producer observations disagree")
+            pins[path] = pin
+    if _PARENT_NORM_OPERATION_PINS is None:
+        _PARENT_NORM_OPERATION_PINS = dict(pins)
+    _need(pins == _PARENT_NORM_OPERATION_PINS, "parent norm producers changed since first use")
+    return pins
+
+
+def _parent_norm_preflight(copied, correspondence):
+    """Check independent complete original commitments before operation replay."""
+    replay = copied["correspondence_inputs"]
+    request = correspondence._parse(replay["mapping_request_raw"],
+        replay["expected_mapping_request_sha256"], request_schema=correspondence.REQUEST_SCHEMA_V2)
+    scope, relational = correspondence._owners()  # Standard-library-only public owners.
+    relational_request = relational._parse(replay["relational_request_raw"],
+                                           replay["expected_relational_request_sha256"])
+    for field in ("expected_scope_report_sha256", "expected_relational_report_sha256"):
+        contracts.require_sha256(replay[field], "independent complete " + field)
+    _need(request["scope_report_sha256"] == replay["expected_scope_report_sha256"]
+          and request["relational_report_sha256"] == replay["expected_relational_report_sha256"],
+          "mapping must bind independently pinned parent scope and relational reports")
+    snapshot, commitments = correspondence._parent_correspondence_snapshot(
+        replay["scope_report"], replay["relational_report"], replay["scope_replay_inputs"], scope)
+    _need(commitments["scope_report"]["sha256"] == replay["expected_scope_report_sha256"]
+          and commitments["relational_report"]["sha256"] == replay["expected_relational_report_sha256"],
+          "independent complete parent scope or relational report pin differs")
+    _need(sum(row["bytes"] for row in commitments.values()) + len(replay["mapping_request_raw"])
+          + len(replay["relational_request_raw"]) <= correspondence.MAX_TOTAL_BYTES,
+          "aggregate complete parent correspondence original input bound exceeded")
+    _need(snapshot["scope_report"].get("schema") == scope.PARENT_SCHEMA
+          and snapshot["scope_report"].get("profile") == scope.PARENT_PROFILE,
+          "explicit parent literal scope required before operation replay")
+    return {"mapping_request": request, "relational_request": relational_request,
+            "snapshot": snapshot, "commitments": commitments}
+
+
+def _parent_norm_file_plan(replay):
+    """Select only genuinely replayed parent/cache witnesses, never offered paths."""
+    from . import legal_producer_lineage as lineage
+    inputs = replay["scope_replay_inputs"]["replay_inputs"]
+    manifest = inputs["lineage_inputs"]["witness_manifest"]
+    sources = [(inputs["parent_text_views_inputs"]["parent_descriptor"], lineage.MAX_FILE_BYTES)]
+    sources += [(row["descriptor"], lineage.MAX_FILE_BYTES) for row in manifest["parents"]]
+    for report in manifest["reports"]:
+        sources.extend(((report, lineage.MAX_REPORT_BYTES),
+                        (report["origin"]["container"], lineage.MAX_REPORT_BYTES)))
+    # Cache rows are closed original values; their supplied physical backing is
+    # the retained producer JSON and original artifact container above. Catalog
+    # source bytes remain independent physical evidence, never executed here.
+    for report in inputs["provenance_reports"]:
+        for pin in report["catalog_source_pins"]:
+            sources.append(({"local_path": pin["path"], "sha256": pin["source_sha256"],
+                             "bytes": Path(pin["path"]).lstat().st_size},
+                            lineage.provenance.MAX_SOURCE_BYTES))
+    by_path = {}
+    for source, maximum in sources:
+        descriptor = {key: source[key] for key in ("local_path", "sha256", "bytes")}
+        previous = by_path.get(descriptor["local_path"])
+        _need(previous is None or previous["descriptor"] == descriptor,
+              "original parent/cache physical witnesses disagree")
+        by_path[descriptor["local_path"]] = {"descriptor": descriptor,
+            "maximum": maximum if previous is None else min(maximum, previous["maximum"])}
+    _need(bool(by_path) and len(by_path) <= 1 + lineage.MAX_PARENT_FILES
+          + 2 * lineage.MAX_REPORTS + lineage.MAX_RECORDS * lineage.provenance.MAX_SOURCES,
+          "bounded complete parent/cache physical witness population required")
+    return [by_path[path] for path in sorted(by_path)]
+
+
+def _parent_norm_file_witness(plan):
+    """Reuse complete pinned file hashing and FD/path custody without decoding."""
+    from . import legal_producer_lineage as lineage
+    identities = []
+    for item in plan:
+        with lineage._opened(item["descriptor"], item["maximum"]) as stream:
+            observed = lineage.os.fstat(stream.fileno())
+            identities.append([observed.st_dev, observed.st_ino, observed.st_mode,
+                observed.st_size, observed.st_mtime_ns, observed.st_ctime_ns])
+    return identities
+
+
+def _parent_norm_callbacks(correspondence, owners):
+    from . import legal_producer_lineage as lineage
+    scope, relational = correspondence._owners()
+    functions = (correspondence.validate_norm_scope_correspondence_v2,
+        correspondence.prepare_norm_scope_correspondence_v2,
+        correspondence.norm_scope_correspondence_sha256, correspondence._parent_correspondence_snapshot,
+        correspondence._parent_correspondence_pins, correspondence._wire,
+        correspondence._owners, correspondence._parse, correspondence._raw,
+        scope._parent_snapshot, scope._load, relational._parse, relational._pairs,
+        lineage._opened, lineage._opened.__wrapped__, lineage._need,
+        lineage.os.open, lineage.os.fdopen, lineage.os.fstat,
+        scope.validate_parent_norm_scope_v1, scope._parent_finish, scope._parent_serialized_fence,
+        relational.validate_relational_norm_v1, relational.prepare_relational_norm_v1,
+        owners[0].prepare_native_fragment, owners[0].producer_pins,
+        contracts.seal_record, contracts.load_record_bytes, canonical_dag_json_bytes,
+        _ParentInputBudget.copy, _parent_commitment, _file, _parent_norm_capture,
+        _parent_norm_pins, _parent_norm_preflight, _parent_norm_file_plan,
+        _parent_norm_file_witness, _parent_norm_callbacks, _parent_norm_runtime,
+        _render_parent_norm, _parent_norm_storage, _parent_norm_serialized_fence,
+        parent_norm_preparation_sha256, _parent_norm_operation,
+        prepare_parent_norm_corpus_v1, validate_parent_norm_corpus_v1,
+        DefinitionUseCorpusPreparation.to_dict)
+    return tuple((function, getattr(function, "__code__", None),
+                  id(getattr(function, "__defaults__", None)), id(getattr(function, "__kwdefaults__", None)))
+                 for function in functions)
+
+
+def _parent_norm_runtime(owners):
+    from . import legal_producer_lineage as lineage
+    return {"schema": PARENT_NORM_SCHEMA, "profile": PARENT_NORM_PROFILE,
+        "binding_schema": PARENT_NORM_INPUT_BINDING_SCHEMA, "namespace": _PARENT_NORM_NAMESPACE,
+        "authority": dict(PARENT_NORM_FALSE_FLAGS), "prelude": owners[1].PRELUDE,
+        "input_bytes": MAX_INPUT_BYTES, "project_bytes": MAX_PROJECT_BYTES,
+        "record_bytes": contracts.MAX_RECORD_BYTES, "input_nodes": 1_000_000, "depth": 48,
+        "input_fields": sorted(_PARENT_NORM_INPUT_FIELDS), "replay_fields": sorted(_PARENT_NORM_REPLAY_FIELDS),
+        "toolchain_pattern": _TOOLCHAIN.pattern, "refused_pattern": _REFUSED.pattern,
+        "parent_file_bytes": lineage.MAX_FILE_BYTES, "producer_report_bytes": lineage.MAX_REPORT_BYTES,
+        "catalog_source_bytes": lineage.provenance.MAX_SOURCE_BYTES,
+        "parent_files": lineage.MAX_PARENT_FILES, "producer_reports": lineage.MAX_REPORTS,
+        "cache_records": lineage.MAX_RECORDS, "catalog_sources": lineage.provenance.MAX_SOURCES}
+
+
+def _parent_norm_serialized_fence(preparation, expected_storage):
+    _need(_parent_norm_storage(preparation) == expected_storage,
+          "parent norm preparation changed after final serialization")
+
+
+def _render_parent_norm(correspondence, norm_native, toolchain, binding, owners):
+    namespace = _PARENT_NORM_NAMESPACE
+    identity = _digest(binding)
+    prelude, norm_module, preservation = (namespace + ".Prelude", namespace + ".Norm_" + identity,
+                                         namespace + ".Preservation_" + identity)
+    modules = [prelude, norm_module, preservation, namespace]
+    imports = {prelude: [], norm_module: [prelude], preservation: [norm_module], namespace: [preservation]}
+    theorem = preservation + ".original_norm_preserved"
+    body = ("def originalNormAt {Entity Agent : Type} (i : Interpretation Entity Agent) : Nat → Prop := "
+        + norm_module + ".formula_0 i\n"
+        + "theorem original_norm_preserved {Entity Agent : Type} "
+        + "(i : Interpretation Entity Agent) (t : Nat) :\n"
+        + "    originalNormAt i t ↔ " + norm_module + ".formula_0 i t := by\n"
+        + "  exact Iff.rfl\n#print axioms original_norm_preserved\n")
+    files = {
+        "lakefile.toml": 'name = "legal_corpus_parent_norm"\nversion = "0.1.0"\n\n'
+            '[[lean_lib]]\nname = "legal"\nroots = ["' + namespace + '"]\n',
+        "lean-toolchain": toolchain + "\n",
+        "parent-norm-input-bindings.json": canonical_dag_json_bytes(binding).decode("utf-8") + "\n",
+        prelude.replace(".", "/") + ".lean": "namespace " + namespace + "\n"
+            + owners[1].PRELUDE + "\nend " + namespace + "\n",
+        norm_module.replace(".", "/") + ".lean": _file(norm_module, imports[norm_module], norm_native["lean_body"]),
+        preservation.replace(".", "/") + ".lean": _file(preservation, imports[preservation], body),
+        namespace + ".lean": "import " + preservation + "\n",
+    }
+    _need(len(files) == 7 and len(set(modules)) == 4
+          and sum(len(text.encode("utf-8")) for text in files.values()) <= MAX_PROJECT_BYTES,
+          "exact bounded four-module/seven-file parent norm project required")
+    position = {module: index for index, module in enumerate(modules)}
+    for module in modules:
+        text = files[module.replace(".", "/") + ".lean"]
+        _need(re.findall(r"(?m)^import ([A-Za-z][A-Za-z0-9_.]*)$", text) == imports[module]
+              and all(position[dependency] < position[module] for dependency in imports[module])
+              and not _REFUSED.search(text), "closed acyclic parent norm imports and safe source required")
+    return files, modules, imports, [theorem], [{"role": "norm", "module": norm_module, "native": norm_native}]
+
+
+def _parent_norm_operation(original, offered=None, expected_preparation_sha256=None):
+    copied, commitment, base_commitment = _parent_norm_capture(original, offered)
+    if offered is not None:
+        contracts.require_sha256(expected_preparation_sha256, "independent complete parent norm preparation")
+        _need(parent_norm_preparation_sha256(offered) == expected_preparation_sha256,
+              "independent complete parent norm preparation pin differs")
+    from . import legal_norm_scope_correspondence_v1 as correspondence
+    _need(copied["correspondence"].get("schema") == correspondence.SCHEMA_V2
+          and copied["correspondence"].get("profile") == "parent-literal-occurrence-authored-correspondence/v2",
+          "explicit genuine parent correspondence v2 required, never HTML relabeling")
+    _need(correspondence.norm_scope_correspondence_sha256(copied["correspondence"])
+          == copied["expected_correspondence_sha256"], "independent complete parent correspondence pin differs")
+    preflight = _parent_norm_preflight(copied, correspondence)
+    owners = _owners()
+    pins = _parent_norm_pins(correspondence, owners)
+    callbacks = _parent_norm_callbacks(correspondence, owners)
+    runtime = _ParentInputBudget().copy(_parent_norm_runtime(owners))
+    held = []
+    state = {"opened": None, "closed": None, "native": None, "preparation": None, "storage": None,
+             "physical_plan": None, "physical_witness": None}
+    started = False
+    primary = None
+
+    def hold(value, label):
+        snapshot = _parent_commitment(_ParentInputBudget().copy(value))
+        held.append((value, snapshot, label))
+        return value
+
+    hold(preflight, "pure independently pinned original requests and reports")
+
+    def fence():
+        _need(_parent_norm_capture(original, offered)[1] == commitment,
+              "original parent norm input or offered preparation changed")
+        _need(_parent_commitment(_ParentInputBudget().copy(copied)) == commitment,
+              "detached parent norm inputs changed")
+        _need(_parent_norm_callbacks(correspondence, owners) == callbacks,
+              "parent norm operation callable changed")
+        _need(_parent_norm_runtime(owners) == runtime, "parent norm runtime declarations changed")
+        _need(_parent_norm_pins(correspondence, owners) == pins, "parent norm source producer changed")
+        for value, snapshot, label in held:
+            _need(_parent_commitment(_ParentInputBudget().copy(value)) == snapshot,
+                  "retained parent norm return changed: " + label)
+        if state["physical_plan"] is not None:
+            _need(_parent_norm_file_witness(state["physical_plan"]) == state["physical_witness"],
+                  "original parent/cache physical file witness changed")
+        if state["preparation"] is not None:
+            _need(_parent_norm_storage(state["preparation"]) == state["storage"],
+                  "parent norm preparation changed after genuine serialized storage check")
+
+    def closing():
+        if started:
+            fence()
+            closed = correspondence.validate_norm_scope_correspondence_v2(copied["correspondence"],
+                expected_report_sha256=copied["expected_correspondence_sha256"],
+                **copied["correspondence_inputs"])
+            state["closed"] = hold(closed, "closing genuine parent correspondence")
+            if state["opened"] is not None:
+                _need(_parent_commitment(closed) == _parent_commitment(state["opened"]),
+                      "closing genuine parent correspondence differs from opening")
+
+    def final_storage():
+        if state["preparation"] is not None:
+            _parent_norm_serialized_fence(state["preparation"], state["storage"])
+
+    try:
+        fence()
+        started = True
+        checked = correspondence.validate_norm_scope_correspondence_v2(copied["correspondence"],
+            expected_report_sha256=copied["expected_correspondence_sha256"],
+            **copied["correspondence_inputs"])
+        state["opened"] = hold(checked, "opening genuine parent correspondence")
+        _need(_parent_commitment(checked) == _parent_commitment(copied["correspondence"]),
+              "genuine parent correspondence differs from offered original")
+        fence()  # Original/detached/actual-return guards precede path nomination.
+        state["physical_plan"] = hold(_parent_norm_file_plan(copied["correspondence_inputs"]),
+                                      "complete genuine parent/cache physical plan")
+        state["physical_witness"] = hold(_parent_norm_file_witness(state["physical_plan"]),
+                                         "opening complete parent/cache file identities")
+        fence()
+        norm = checked["relational_fragment"]
+        _need(norm["source_binding"] is None and norm["source_bound"] is False
+              and all(value is False for value in checked["authority"].values())
+              and all(type(checked[key]) is int and checked[key] == 0
+                      for key in ("training_mask", "evaluation_gold_mask")),
+              "original null relational source binding and unsigned parent authority required")
+        native = owners[0].prepare_native_fragment(family="deontic_fol",
+            formula=norm["native_formula"], expected_ast=norm["native_ast"])
+        state["native"] = hold(native, "genuine complete original native fragment")
+        _need(native == norm["native_fragment"] and native["lean_body"] == norm["lean_body"],
+              "complete original parent norm native rendering changed")
+        fence()
+        context = checked["source_scope"]["source_context_record"]
+        original_norm = {"relational_report_sha256": checked["input_pins"]["relational_report_sha256"],
+            "typed_expression_sha256": norm["typed_expression_sha256"],
+            "native_ast_sha256": _digest(norm["native_ast"]),
+            "native_fragment_sha256": _digest(native), "lean_body_sha256": _sha(native["lean_body"].encode("utf-8")),
+            "source_binding": None, "source_bound": False, "unchanged": True}
+        binding = hold(contracts.seal_record({"schema": PARENT_NORM_INPUT_BINDING_SCHEMA,
+            "profile": PARENT_NORM_PROFILE, "original_input_commitment_sha256": base_commitment,
+            "correspondence_sha256": copied["expected_correspondence_sha256"],
+            "parent_source_binding_sha256": _digest(checked["source_scope"]["parent_source_binding"]),
+            "source_scope_sha256": checked["input_pins"]["scope_report_sha256"],
+            "mapping_request_raw_sha256": checked["input_pins"]["mapping_request_raw_sha256"],
+            "original_norm": original_norm}), "sealed parent norm input binding")
+        files, modules, imports, theorems, fragments = _render_parent_norm(
+            checked, native, copied["toolchain"], binding, owners)
+        hold(files, "rendered parent norm project files")
+        fence()
+        manifest = contracts.seal_record({"schema": PARENT_NORM_SCHEMA, "profile": PARENT_NORM_PROFILE,
+            "toolchain": copied["toolchain"], "review_intake_binding": binding,
+            "original_input_commitment_sha256": base_commitment,
+            "correspondence": checked, "correspondence_sha256": copied["expected_correspondence_sha256"],
+            "parent_source_binding_sha256": binding["parent_source_binding_sha256"], "original_norm": original_norm,
+            "original_parent_context": context, "declared_semantic_coverage": checked["declared_semantic_coverage"],
+            "review_blockers": {"missing_context": context["missing_requirements"],
+                                "unresolved": checked["retained_unresolved"]},
+            "native_fragments": fragments, "expected_modules": modules, "module_imports": imports,
+            "file_sha256": {name: _sha(text.encode("utf-8")) for name, text in sorted(files.items())},
+            "conditional_theorems": theorems,
+            "theorem_assumptions": [
+                "The complete supplied authored relational AST and native body are unchanged, with O/P/F as separate uninterpreted parameters.",
+                "The preservation theorem is only a definitional alias identity, not a proof of the norm or its source meaning.",
+                "No definition is applied, no membership or governing applicability is inferred, and all source/context/edition issues remain open."],
+            "producer_pins": pins, "native_producer_pins": native["producer_pins"],
+            "execution_handoff": {"status": "parent_norm_execution_adapter_not_registered", "target": "legal",
+                "argv_recipe": ["<verified-native-lake>", "--offline", "--no-cache", "build", "legal"],
+                "expected_olean_paths": [".lake/build/lib/lean/" + module.replace(".", "/") + ".olean" for module in modules],
+                "expected_theorem_axiom_dependencies": {theorem: [] for theorem in theorems},
+                "observed_theorem_axiom_dependencies": None, "installed_binary_pins": None,
+                "processes_executed": 0, "build_eligible": False},
+            "input_budget": {"bytes": MAX_INPUT_BYTES, "expanded_values": 1_000_000, "depth": 48},
+            "preparation_only": True, "lean_compilation_status": "not_run", "proof_status": "pending",
+            "authority": dict(PARENT_NORM_FALSE_FLAGS), "native_ast_rewritten": False,
+            "norm_interpretation_ready": False, "selected_interpretation": None,
+            "governing_definition_use": None, "training_mask": 0, "evaluation_gold_mask": 0,
+            "external_complete_inputs_required": True, **PARENT_NORM_FALSE_FLAGS})
+        hold(manifest, "sealed complete parent norm manifest")
+        text = canonical_dag_json_bytes(manifest).decode("utf-8")
+        result = DefinitionUseCorpusPreparation(text, tuple(sorted(files.items())))
+        state["preparation"] = result
+        state["storage"] = _ParentInputBudget().copy(_parent_norm_storage(result))
+        parent_norm_preparation_sha256(result)
+        if offered is not None:
+            _need(copied["offered"] == state["storage"],
+                  "parent norm preparation differs from complete original regeneration")
+        fence()
+        return result
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        scope = correspondence._owners()[0]
+        scope._parent_finish((fence, closing, fence, final_storage, fence,
+                              final_storage, fence), primary)
+
+
+def prepare_parent_norm_corpus_v1(correspondence, *, expected_correspondence_sha256,
+                                  correspondence_inputs, toolchain):
+    """Prepare one complete authored norm project with original parent custody.
+
+    This never classifies a source region, accepts legal meaning, applies a
+    definition, writes files, probes a toolchain or executes a native process.
+    """
+    original = dict(correspondence=correspondence, expected_correspondence_sha256=expected_correspondence_sha256,
+                    correspondence_inputs=correspondence_inputs, toolchain=toolchain)
+    return _parent_norm_operation(original)
+
+
+def validate_parent_norm_corpus_v1(preparation, correspondence, *, expected_preparation_sha256,
+        expected_correspondence_sha256, correspondence_inputs, toolchain):
+    """Regenerate the complete explicit parent norm project from original inputs."""
+    original = dict(correspondence=correspondence, expected_correspondence_sha256=expected_correspondence_sha256,
+                    correspondence_inputs=correspondence_inputs, toolchain=toolchain)
+    return _parent_norm_operation(original, preparation, expected_preparation_sha256)
+
+
+__all__ += ["PARENT_NORM_SCHEMA", "PARENT_NORM_PROFILE", "PARENT_NORM_FALSE_FLAGS",
+    "prepare_parent_norm_corpus_v1", "validate_parent_norm_corpus_v1", "parent_norm_preparation_sha256"]

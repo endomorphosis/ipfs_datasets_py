@@ -626,3 +626,72 @@ behavior and compile-origin observations; it does not compare every compile
 event payload. Actual-v02 explicitly uses `--assert=plain` and verifies exact
 candidate compile buffers. Its bounded compiler/process evidence remains
 separate from the retained first failure. No model or training work was performed.
+
+
+## Complete authored parent norm: native observations
+
+The existing native owner exposes `validate_parent_norm_native_v1`,
+`build_parent_norm_native_v1` and `parent_norm_compilation_receipt_sha256` for
+the [direct parent-norm preparation](legal_corpus_definition_use_lake_v2.md#complete-authored-norm-from-an-exact-parent-occurrence).
+The separate receipt schema is `legal-corpus-parent-norm-native-build/v1`; its
+profile is `replayed-parent-literal-complete-authored-norm-native-build/v1`.
+
+Validation takes the typed preparation, original `correspondence`, independently
+retained `expected_preparation_sha256` and `expected_correspondence_sha256`,
+complete original `correspondence_inputs`, and exact `toolchain`. Building adds
+`lake_executable`, a fresh `output_directory`, finite `timeout_seconds` in
+`(0,60]` and optional `cancellation`. Validation executes no tool. A build uses
+the existing pinned native Lake/Lean verifier, offline bounded process runner
+and exclusive project/artifact/log writer. The existing explicit
+`IPFS_DATASETS_BOUND_NORM_NATIVE_LAKE` test gate selects the installed tool;
+actual execution still requires the original owned validation enrollment.
+
+This route preserves four modules, seven input files and one
+`original_norm_preserved` theorem. That theorem is a definitional alias identity
+for the unchanged authored formula under its supplied interpretation and time;
+it establishes no norm truth or source-to-typed equivalence. Definition
+composition and membership remain absent. The original preparation's
+`build_eligible=false` and no-build handoff remain unchanged; separate native
+receipt observations describe any actual invocation.
+
+During a build, original parent inputs and physical files, genuine opening/closing
+preparation returns, the frozen invocation, actual runner outputs, binary pins, persisted
+readbacks and receipt bytes remain checked through closing custody. Post-run caller/physical custody failures, while the original persistence
+callbacks remain unchanged, retain the frozen observations with a false receipt
+before refusal. Replaced persistence callbacks refuse before the writer; retained
+output is not promised for that path. Later drift after genuine persistence preserves the written
+observation and refuses a successful current-source return; it supplies no
+rollback, repair or current corpus admission. Existing nine-file and shared
+profiles retain their default readers and qualification scopes.
+
+The separately [qualified native result](../../../../../docs/autoformalization/evidence/legal-ir-parent-complete-norm-native-20261024.json) records
+**23 cases / 69 phases from
+12 selectors**: 21 pure
+controls and 2 actual Lean controls. The
+shared positive build compiled the exact four modules and seven authored inputs
+on leanprover/lean4:v4.34.1; its one `original_norm_preserved` observation
+reported no axioms and remains a definitional alias identity. The production API
+refused a rehashed root-module change before toolchain entry. A separately
+enrolled original bounded runner compiled that changed root and observed the
+intended type mismatch when `hAlias` was offered as norm truth; the other six
+inputs remained exact.
+
+The failed native-v01 observed 21 pure call passes and two native setup errors;
+no native command started and it received zero complete-cohort/native credit.
+Its original one-call storage closeout released only the 192 MiB promise and
+retained all 307 files / 7,167,104 bytes. A separately reviewed control-only
+DEVNULL preparation correction preceded the qualifying native-v02. These
+generations and the older 68/204 pure and bound-norm native receipts remain
+separate; no counts are pooled.
+
+The accepted record binds exact collection, all phases/JUnit, four real bounded
+commands, binary pins, compiled/executed source buffers and the observed
+namespace/initializer scope, plus original compute/storage/source-READ closure.
+Whole-package startup, unselected tests and cached third-party/stdlib bytecode
+are outside that qualification.
+
+Governing source/edition, complete source meaning, definition applicability,
+statutory truth, semantic graph or Lean corpus admission, learned reconstruction
+and convergence remain separate. Training and evaluation-gold masks stay zero.
+
+The positive receipt retains `installed_toolchain_verified=false`, `native_build_profile_registered=false`, `build_eligible=false` and `toolchain_probed=false`. It separately records two successful actual version probes and `binaries_unchanged=true`; successful engineering observations introduce no global registration or default adoption.

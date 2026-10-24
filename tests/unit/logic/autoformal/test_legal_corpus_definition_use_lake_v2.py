@@ -967,3 +967,388 @@ def test_bound_norm_profile_does_not_change_legacy_preparation_in_same_process(
     data, prepared = bound_norm_body
     assert _bound_norm_validate(owner, data, prepared) == prepared
     assert prepare(owner, base) == frozen
+
+
+# Direct parent complete-norm preparation is separate from HTML bound-definition
+# composition. These authored fixtures preserve the whole relational norm and
+# original physical parent replay; no meaning, definition or build is supplied.
+@pytest.fixture(scope="module")
+def parent_norm_helpers():
+    return fixture_module("test_legal_norm_scope_correspondence_v1.py",
+                          "parent_complete_norm_original_correspondence_fixture")
+
+
+def _parent_norm_materialize(helper, directory, *, selected=0, variant="necessary"):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_scope_correspondence_v1 as correspondence
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    source = helper.scope_fixture.parent_case(directory, selected=selected)
+    original_request = helper.authored_request
+    with patch.object(helper, "authored_request", lambda: original_request(
+            sufficient=variant == "sufficient", swapped=variant == "swapped_roles")):
+        value = helper.parent_correspondence_case(directory, source_value=source)
+    report = helper.parent_correspondence_prepare(value)
+    positional, keyword = helper.parent_correspondence_arguments(value)
+    inputs = dict(zip(("scope_report", "relational_report", "mapping_request_raw"),
+                      positional, strict=True)) | keyword
+    return {"correspondence": report,
+            "expected_correspondence_sha256": correspondence.norm_scope_correspondence_sha256(report),
+            "correspondence_inputs": inputs, "toolchain": TOOLCHAIN}
+
+
+@pytest.fixture(scope="module")
+def parent_norm_base(parent_norm_helpers, tmp_path_factory):
+    return _parent_norm_materialize(parent_norm_helpers,
+        tmp_path_factory.mktemp("parent-complete-norm-originals", numbered=False))
+
+
+def _parent_norm_prepare(owner, data):
+    return owner.prepare_parent_norm_corpus_v1(**data)
+
+
+def _parent_norm_validate(owner, prepared, data, **overrides):
+    return owner.validate_parent_norm_corpus_v1(prepared,
+        expected_preparation_sha256=owner.parent_norm_preparation_sha256(prepared),
+        **(data | overrides))
+
+
+def _parent_norm_parent_path(data):
+    replay = data["correspondence_inputs"]["scope_replay_inputs"]["replay_inputs"]
+    return Path(replay["parent_text_views_inputs"]["parent_descriptor"]["local_path"])
+
+
+def _parent_norm_assert_unsigned(manifest):
+    assert manifest["authority"] and all(value is False for value in manifest["authority"].values())
+    for name in ("training_mask", "evaluation_gold_mask"):
+        assert type(manifest[name]) is int and manifest[name] == 0
+    assert manifest["preparation_only"] is True
+    assert manifest["lean_compilation_status"] == "not_run"
+    assert manifest["proof_status"] == "pending"
+    assert manifest["execution_handoff"]["build_eligible"] is False
+    assert manifest["execution_handoff"]["processes_executed"] == 0
+    assert manifest["execution_handoff"]["observed_theorem_axiom_dependencies"] is None
+    assert manifest["execution_handoff"]["installed_binary_pins"] is None
+
+
+@pytest.mark.parametrize("variant", ["necessary", "sufficient", "swapped_roles"])
+def test_parent_complete_norm_project_preserves_full_relational_content_and_closed_imports(
+        owner, parent_norm_helpers, parent_norm_base, tmp_path, monkeypatch, variant):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_scope_correspondence_v1 as correspondence
+    from ipfs_datasets_py.logic.autoformal import legal_statutory_context as markup
+    data = parent_norm_base if variant == "necessary" else _parent_norm_materialize(
+        parent_norm_helpers, tmp_path / "originals", variant=variant)
+    before = deepcopy(data)
+    observed = []
+    genuine = correspondence.validate_norm_scope_correspondence_v2
+    def replayed(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        observed.append(result)
+        return result
+    def forbidden(*args, **kwargs):
+        raise AssertionError("parent norm preparation must neither invent HTML nor execute a process")
+    monkeypatch.setattr(correspondence, "validate_norm_scope_correspondence_v2", replayed)
+    monkeypatch.setattr(markup, "extract_document", forbidden)
+    monkeypatch.setattr(subprocess, "Popen", forbidden)
+    monkeypatch.setattr(subprocess, "run", forbidden)
+    monkeypatch.setattr(os, "system", forbidden)
+    prepared = _parent_norm_prepare(owner, data)
+    assert len(observed) == 2
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    original = data["correspondence"]
+    norm = original["relational_fragment"]
+    assert type(prepared) is owner.DefinitionUseCorpusPreparation
+    assert manifest["schema"] == owner.PARENT_NORM_SCHEMA
+    assert manifest["profile"] == owner.PARENT_NORM_PROFILE
+    assert manifest["correspondence"] == original
+    assert manifest["correspondence_sha256"] == data["expected_correspondence_sha256"]
+    assert manifest["original_norm"]["source_binding"] is None
+    assert manifest["original_norm"]["source_bound"] is False
+    assert manifest["original_norm"]["unchanged"] is True
+    assert norm["source_binding"] is None and norm["source_bound"] is False
+    assert manifest["declared_semantic_coverage"] == original["declared_semantic_coverage"] == "partial"
+    assert original["source_scope"]["parent_source_binding"]["context"]["availability"] == "required_unavailable"
+    assert manifest["original_parent_context"] == original["source_scope"]["source_context_record"]
+    assert manifest["review_blockers"]
+    assert manifest["native_fragments"] == [{"role": "norm",
+        "module": manifest["native_fragments"][0]["module"], "native": norm["native_fragment"]}]
+    expression = norm["typed_expression"]
+    assert expression == data["correspondence_inputs"]["relational_report"]["typed_expression"]
+    if variant != "necessary":
+        baseline_norm = parent_norm_base["correspondence"]["relational_fragment"]
+        assert expression != baseline_norm["typed_expression"]
+        assert norm["typed_expression_content_digest"] != baseline_norm["typed_expression_content_digest"]
+        assert norm["native_formula"] != baseline_norm["native_formula"]
+        assert norm["native_ast"] != baseline_norm["native_ast"]
+    assert len([row for row in norm["structural_mapping"] if row["kind"] == "binder"]) == 2
+    assert norm["argument_roles"] == data["correspondence_inputs"]["relational_report"]["argument_roles"]
+    assert len(files) == len(prepared.files) == 7
+    modules = manifest["expected_modules"]
+    assert len(modules) == 4 and modules[0] == "LegalCorpusParentNorm.Prelude"
+    assert modules[-1] == "LegalCorpusParentNorm"
+    assert files["lean-toolchain"] == TOOLCHAIN + "\n"
+    assert "parent-norm-input-bindings.json" in files
+    assert not {"v2-input-bindings.json", "parent-input-bindings.json"} & files.keys()
+    for index, module in enumerate(modules):
+        body = files[module.replace(".", "/") + ".lean"]
+        imports = re.findall(r"(?m)^import ([A-Za-z][A-Za-z0-9_.]*)$", body)
+        assert imports == manifest["module_imports"][module]
+        assert all(dependency in modules[:index] for dependency in imports)
+    assert all(sha(body.encode("utf-8")) == manifest["file_sha256"][name]
+               for name, body in files.items())
+    norm_module = manifest["native_fragments"][0]["module"]
+    assert norm["lean_body"] in files[norm_module.replace(".", "/") + ".lean"]
+    lean = "\n".join(body for name, body in files.items() if name.endswith(".lean"))
+    assert len(manifest["conditional_theorems"]) == 1
+    assert manifest["conditional_theorems"][0].endswith(".original_norm_preserved")
+    assert len(re.findall(r"(?m)^theorem ", lean)) == 1
+    assert lean.count("#print axioms ") == 1 and "Iff.rfl" in lean
+    assert not re.search(r"\b(?:sorry|admit|axiom|unsafe|hDefinition|hMembership)\b", lean)
+    _parent_norm_assert_unsigned(manifest)
+    assert _parent_norm_validate(owner, prepared, data) == prepared
+    assert len(observed) == 4 and data == before
+
+
+@pytest.mark.parametrize("selected", [1, 2], ids=["other-offset", "other-physical-row"])
+def test_parent_complete_norm_equal_literals_keep_original_physical_identity(
+        owner, parent_norm_helpers, parent_norm_base, tmp_path, selected):
+    data = _parent_norm_materialize(parent_norm_helpers, tmp_path, selected=selected)
+    first = _parent_norm_prepare(owner, parent_norm_base)
+    other = _parent_norm_prepare(owner, data)
+    assert data["correspondence"]["relational_fragment"] == parent_norm_base["correspondence"]["relational_fragment"]
+    binding = data["correspondence"]["source_scope"]["parent_source_binding"]
+    previous = parent_norm_base["correspondence"]["source_scope"]["parent_source_binding"]
+    assert binding["selector"]["span_text"] == previous["selector"]["span_text"]
+    assert binding["selector"]["record_cid"] != previous["selector"]["record_cid"]
+    assert other.to_dict()["parent_source_binding_sha256"] != first.to_dict()["parent_source_binding_sha256"]
+    assert owner.parent_norm_preparation_sha256(other) != owner.parent_norm_preparation_sha256(first)
+    _parent_norm_assert_unsigned(other.to_dict())
+
+
+@pytest.mark.parametrize("pin", ["correspondence", "request", "preparation"])
+def test_parent_complete_norm_independent_commitments_refuse_before_replay(
+        owner, parent_norm_base, monkeypatch, pin):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_scope_correspondence_v1 as correspondence
+    data = deepcopy(parent_norm_base)
+    prepared = _parent_norm_prepare(owner, data) if pin == "preparation" else None
+    def forbidden(*args, **kwargs):
+        raise AssertionError("independent commitment failed after correspondence replay")
+    monkeypatch.setattr(correspondence, "validate_norm_scope_correspondence_v2", forbidden)
+    if pin == "correspondence":
+        data["expected_correspondence_sha256"] = "0" * 64
+    elif pin == "request":
+        data["correspondence_inputs"]["expected_mapping_request_sha256"] = "0" * 64
+    with pytest.raises(ValueError):
+        if prepared is None:
+            _parent_norm_prepare(owner, data)
+        else:
+            owner.validate_parent_norm_corpus_v1(prepared,
+                expected_preparation_sha256="0" * 64, **data)
+
+
+@pytest.mark.parametrize("damage", ["report-bytes", "physical-parent"])
+def test_parent_complete_norm_repaired_outer_pins_cannot_replace_original_parent_replay(
+        owner, parent_norm_helpers, tmp_path, damage):
+    data = _parent_norm_materialize(parent_norm_helpers, tmp_path)
+    replay = data["correspondence_inputs"]["scope_replay_inputs"]
+    if damage == "report-bytes":
+        replay["report_bytes"]["parent_text_views"] += b" "
+        replay["expected_report_pins"]["parent_text_views"]["raw_sha256"] = sha(
+            replay["report_bytes"]["parent_text_views"])
+    else:
+        path = _parent_norm_parent_path(data)
+        path.write_bytes(path.read_bytes() + b" changed after genuine parent preparation")
+    with pytest.raises(ValueError):
+        _parent_norm_prepare(owner, data)
+
+
+@pytest.mark.parametrize("damage", ["typed-target", "source-row"])
+def test_parent_complete_norm_rehashed_correspondence_cannot_drop_complete_accounting(
+        owner, parent_norm_base, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_scope_correspondence_v1 as correspondence
+    data = deepcopy(parent_norm_base)
+    key = "typed_rows" if damage == "typed-target" else "source_rows"
+    data["correspondence"]["request"][key].pop()
+    data["expected_correspondence_sha256"] = correspondence.norm_scope_correspondence_sha256(data["correspondence"])
+    with pytest.raises(ValueError):
+        _parent_norm_prepare(owner, data)
+
+
+@pytest.mark.parametrize("damage", ["norm-body", "imports", "authority"])
+def test_parent_complete_norm_rehashed_project_cannot_change_norm_imports_or_authority(
+        owner, parent_norm_base, damage):
+    prepared = _parent_norm_prepare(owner, parent_norm_base)
+    manifest, files = prepared.to_dict(), dict(prepared.files)
+    if damage == "authority":
+        manifest["authority"][next(iter(manifest["authority"]))] = True
+    else:
+        module = manifest["native_fragments"][0]["module"] if damage == "norm-body" else manifest["expected_modules"][-1]
+        path = module.replace(".", "/") + ".lean"
+        if damage == "norm-body":
+            old = manifest["correspondence"]["relational_fragment"]["lean_body"]
+            assert old in files[path]
+            files[path] = files[path].replace(old, old.replace("formula_0", "changed_norm", 1), 1)
+        else:
+            files[path] += "\nimport LegalCorpusParentNorm.Unsupplied\n"
+        manifest["file_sha256"][path] = sha(files[path].encode())
+    offered = replace(modified_manifest(prepared, manifest), files=tuple(sorted(files.items())))
+    with pytest.raises(ValueError):
+        _parent_norm_validate(owner, offered, parent_norm_base)
+
+
+def test_parent_complete_norm_refuses_genuine_html_correspondence_profile(
+        owner, parent_norm_helpers, parent_norm_base):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_scope_correspondence_v1 as correspondence
+    value = parent_norm_helpers.case()
+    report = parent_norm_helpers.prepare(value)
+    positional, keywords = parent_norm_helpers.arguments(value)
+    data = dict(correspondence=report,
+        expected_correspondence_sha256=correspondence.norm_scope_correspondence_sha256(report),
+        correspondence_inputs=dict(zip(("scope_report", "relational_report", "mapping_request_raw"),
+                                       positional, strict=True)) | keywords,
+        toolchain=TOOLCHAIN)
+    with pytest.raises(ValueError):
+        _parent_norm_prepare(owner, data)
+
+
+@pytest.mark.parametrize("location", ["caller", "detached"])
+def test_parent_complete_norm_late_original_inputs_are_fenced_after_genuine_replay(
+        owner, parent_norm_base, monkeypatch, location):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_scope_correspondence_v1 as correspondence
+    data = deepcopy(parent_norm_base)
+    genuine = correspondence.validate_norm_scope_correspondence_v2
+    observed = []
+    def changed(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        if not observed:
+            observed.append("genuine_opening_correspondence_completed")
+            target = data["correspondence"] if location == "caller" else args[0]
+            target["training_mask"] = False
+        return result
+    monkeypatch.setattr(correspondence, "validate_norm_scope_correspondence_v2", changed)
+    with pytest.raises(ValueError):
+        _parent_norm_prepare(owner, data)
+    assert observed == ["genuine_opening_correspondence_completed"]
+
+
+@pytest.mark.parametrize("return_index", [0, 1], ids=["opening", "closing"])
+def test_parent_complete_norm_actual_validator_returns_remain_held_after_final_serialization(
+        owner, parent_norm_base, monkeypatch, return_index):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_scope_correspondence_v1 as correspondence
+    data = deepcopy(parent_norm_base)
+    genuine = correspondence.validate_norm_scope_correspondence_v2
+    actual_returns, observed = [], []
+    def retained(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        actual_returns.append(result)
+        return result
+    serialized = owner._parent_norm_serialized_fence
+    def changed(preparation, expected_storage):
+        result = serialized(preparation, expected_storage)
+        if not observed:
+            assert len(actual_returns) == 2
+            observed.append("genuine_final_storage_check_completed")
+            actual_returns[return_index]["training_mask"] = False
+        return result
+    monkeypatch.setattr(correspondence, "validate_norm_scope_correspondence_v2", retained)
+    monkeypatch.setattr(owner, "_parent_norm_serialized_fence", changed)
+    with pytest.raises(ValueError):
+        _parent_norm_prepare(owner, data)
+    assert observed == ["genuine_final_storage_check_completed"]
+    assert len(actual_returns) == 2
+
+
+def test_parent_complete_norm_physical_parent_remains_bound_after_final_storage_check(
+        owner, parent_norm_helpers, tmp_path, monkeypatch):
+    data = _parent_norm_materialize(parent_norm_helpers, tmp_path)
+    path = _parent_norm_parent_path(data)
+    original = path.read_bytes()
+    serialized = owner._parent_norm_serialized_fence
+    observed = []
+    def changed(preparation, expected_storage):
+        result = serialized(preparation, expected_storage)
+        if not observed:
+            observed.append("genuine_final_storage_check_completed")
+            path.write_bytes(original + b" changed after complete parent replay")
+        return result
+    monkeypatch.setattr(owner, "_parent_norm_serialized_fence", changed)
+    with pytest.raises(ValueError):
+        _parent_norm_prepare(owner, data)
+    assert observed == ["genuine_final_storage_check_completed"]
+    assert path.read_bytes() != original
+
+
+def test_parent_complete_norm_producer_remains_bound_after_final_storage_check(
+        owner, parent_norm_base, tmp_path, monkeypatch):
+    original = Path(owner.__file__).read_bytes()
+    copied = tmp_path / "copied_complete_parent_norm_lake_owner.py"
+    copied.write_bytes(original)
+    monkeypatch.setattr(owner, "__file__", str(copied))
+    monkeypatch.setattr(owner, "_IMPORTED_PURE_PINS", owner._pure_pins())
+    monkeypatch.setattr(owner, "_PARENT_NORM_OPERATION_PINS", None)
+    serialized = owner._parent_norm_serialized_fence
+    observed = []
+    def changed(preparation, expected_storage):
+        result = serialized(preparation, expected_storage)
+        if not observed:
+            observed.append("genuine_final_storage_check_completed")
+            copied.write_bytes(original + b"\n# producer changed after complete parent replay\n")
+        return result
+    monkeypatch.setattr(owner, "_parent_norm_serialized_fence", changed)
+    with pytest.raises(ValueError):
+        _parent_norm_prepare(owner, deepcopy(parent_norm_base))
+    assert observed == ["genuine_final_storage_check_completed"]
+    assert copied.read_bytes() != original
+
+
+def test_parent_complete_norm_final_preparation_storage_cannot_change_after_genuine_check(
+        owner, parent_norm_base, monkeypatch):
+    serialized = owner._parent_norm_serialized_fence
+    observed = []
+    def changed(preparation, expected_storage):
+        result = serialized(preparation, expected_storage)
+        observed.append("genuine_final_storage_check_completed")
+        if len(observed) == 2:
+            object.__setattr__(preparation, "manifest_json", preparation.manifest_json + " ")
+        return result
+    monkeypatch.setattr(owner, "_parent_norm_serialized_fence", changed)
+    with pytest.raises(ValueError):
+        _parent_norm_prepare(owner, deepcopy(parent_norm_base))
+    assert observed == ["genuine_final_storage_check_completed"] * 2
+
+
+@pytest.mark.parametrize("damage", ["bytes", "cycle"])
+def test_parent_complete_norm_complete_input_bounds_precede_original_replay(
+        owner, parent_norm_base, monkeypatch, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_scope_correspondence_v1 as correspondence
+    data = deepcopy(parent_norm_base)
+    if damage == "bytes":
+        monkeypatch.setattr(owner, "MAX_INPUT_BYTES", 1)
+    else:
+        nested = data["correspondence_inputs"]["scope_replay_inputs"]
+        nested["budget_probe"] = nested
+    def forbidden(*args, **kwargs):
+        raise AssertionError("unbounded complete parent population reached genuine replay")
+    monkeypatch.setattr(correspondence, "validate_norm_scope_correspondence_v2", forbidden)
+    with pytest.raises(ValueError):
+        _parent_norm_prepare(owner, data)
+
+
+def test_parent_complete_norm_primary_error_keeps_secondary_custody_failure_note(
+        owner, parent_norm_base, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_scope_correspondence_v1 as correspondence
+    data = deepcopy(parent_norm_base)
+    genuine = correspondence.validate_norm_scope_correspondence_v2
+    primary = RuntimeError("authored primary complete-norm replay failure")
+    observed = []
+    def changed(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        observed.append("genuine_correspondence_completed")
+        if len(observed) == 1:
+            data["correspondence"]["training_mask"] = False
+            raise primary
+        return result
+    monkeypatch.setattr(correspondence, "validate_norm_scope_correspondence_v2", changed)
+    with pytest.raises(RuntimeError) as caught:
+        _parent_norm_prepare(owner, data)
+    assert caught.value is primary
+    assert observed and getattr(primary, "__notes__", [])

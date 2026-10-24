@@ -143,7 +143,7 @@ def _raw(raw, expected, maximum, label):
     _need(hashlib.sha256(raw).hexdigest() == expected, "independent byte pin differs: " + label)
 
 
-def _parse(raw, expected):
+def _parse(raw, expected, *, request_schema=REQUEST_SCHEMA):
     _raw(raw, expected, MAX_REQUEST_BYTES, "mapping request")
 
     def pairs(entries):
@@ -163,7 +163,7 @@ def _parse(raw, expected):
     _wire(request, MAX_REQUEST_BYTES)
     _keys(request, {"schema", "interpretation_status", "alternative_id", "scope_report_sha256",
                     "relational_report_sha256", "source_rows", "typed_rows"}, "mapping request")
-    _need(request["schema"] == REQUEST_SCHEMA and
+    _need(request["schema"] == request_schema and
           request["interpretation_status"] == "authored_unreviewed_correspondence",
           "authored unreviewed correspondence required")
     _need(type(request["alternative_id"]) is str and _ID.fullmatch(request["alternative_id"]) is not None,
@@ -449,5 +449,220 @@ def validate_norm_scope_correspondence_v1(report, *args, expected_report_sha256,
     return regenerated
 
 
+
+
+# Explicit parent-occurrence route; the HTML v1 replay and pin state are kept
+# separate and the original relational fragment remains source_binding:null.
+REQUEST_SCHEMA_V2 = "legal-norm-scope-correspondence-request/v2"
+SCHEMA_V2 = "legal-norm-scope-correspondence-report/v2"
+_PARENT_OWNER_PINS = None
+
+
+def _parent_correspondence_pins(owners):
+    global _PARENT_OWNER_PINS
+    scope, relational = owners
+    _need(hashlib.sha256(Path(__file__).read_bytes()).hexdigest() == _SELF_PIN,
+          "parent correspondence producer changed since import")
+    pins = scope._parent_pins()
+    for path, value in relational._owners()[-1].items():
+        _need(path not in pins or pins[path] == value, "inconsistent parent correspondence producers")
+        pins[path] = value
+    pins[str(Path(__file__).resolve())] = _SELF_PIN
+    if _PARENT_OWNER_PINS is None:
+        _PARENT_OWNER_PINS = dict(pins)
+    _need(pins == _PARENT_OWNER_PINS, "parent correspondence owners changed since first use")
+    return dict(pins)
+
+
+def _parent_correspondence_snapshot(scope_report, relational_report, replay, scope):
+    detached_replay, original = scope._parent_snapshot(replay)
+    detached, commitments = {}, {"parent_replay/" + key: value for key, value in original.items()}
+    for key, value, maximum in (("scope_report", scope_report, scope.MAX_REPORT_BYTES),
+                                ("relational_report", relational_report, 8 * 1024**2)):
+        raw = _wire(value, maximum)
+        detached[key] = json.loads(raw)
+        commitments[key] = {"sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw),
+                            "encoding": "canonical_json"}
+    _need(sum(row["bytes"] for row in commitments.values()) <= MAX_TOTAL_BYTES,
+          "aggregate complete parent correspondence input bound exceeded")
+    detached["scope_replay_inputs"] = detached_replay
+    return detached, commitments
+
+
+def prepare_norm_scope_correspondence_v2(
+    scope_report, relational_report, mapping_request_raw, *,
+    expected_scope_report_sha256, expected_relational_report_sha256,
+    expected_mapping_request_sha256, scope_replay_inputs, relational_request_raw,
+    expected_relational_request_sha256,
+):
+    """Check authored correspondence over exact original parent occurrence scope.
+
+    This explicit request/report profile does not accept sampled HTML replay.
+    Parent scope and the original null-source relational owner are regenerated
+    at opening and closing; this establishes custody and syntax, not meaning.
+    """
+    request = _parse(mapping_request_raw, expected_mapping_request_sha256,
+                     request_schema=REQUEST_SCHEMA_V2)
+    for value, label in ((expected_scope_report_sha256, "parent scope report"),
+                          (expected_relational_report_sha256, "relational report")):
+        _sha(value, label)
+    _need(request["scope_report_sha256"] == expected_scope_report_sha256
+          and request["relational_report_sha256"] == expected_relational_report_sha256,
+          "mapping must bind independently pinned parent scope and relational reports")
+    _raw(relational_request_raw, expected_relational_request_sha256, 524288, "relational request")
+    owners = _owners()  # These two public modules have standard-library-only imports.
+    scope, relational = owners
+    snapshot, commitments = _parent_correspondence_snapshot(scope_report, relational_report,
+                                                           scope_replay_inputs, scope)
+    _need(sum(row["bytes"] for row in commitments.values()) + len(mapping_request_raw)
+          + len(relational_request_raw) <= MAX_TOTAL_BYTES,
+          "aggregate parent correspondence input bound exceeded")
+    _need(commitments["scope_report"]["sha256"] == expected_scope_report_sha256
+          and commitments["relational_report"]["sha256"] == expected_relational_report_sha256,
+          "independent complete parent scope or relational report pin differs")
+    offered_scope = snapshot["scope_report"]
+    _need(type(offered_scope) is dict and offered_scope.get("schema") == scope.PARENT_SCHEMA
+          and offered_scope.get("profile") == scope.PARENT_PROFILE,
+          "explicit parent literal occurrence scope required for correspondence v2")
+    relational._parse(relational_request_raw, expected_relational_request_sha256)
+    request_wire = _wire(request, MAX_REQUEST_BYTES)
+    pins = _parent_correspondence_pins(owners)
+    replay = snapshot["scope_replay_inputs"]
+    opening_validation = opening_relational = None
+    opening_validation_wire = opening_relational_wire = None
+    checked = scope_validation = None
+    report = serialized = None
+    replay_started = False
+    primary = None
+
+    def fence():
+        _need(_parent_correspondence_snapshot(scope_report, relational_report, scope_replay_inputs, scope)[1]
+              == commitments, "original parent correspondence inputs changed during preparation")
+        _need(_parent_correspondence_snapshot(snapshot["scope_report"], snapshot["relational_report"],
+                                             replay, scope)[1] == commitments,
+              "detached parent correspondence inputs changed during preparation")
+        _need(_wire(request, MAX_REQUEST_BYTES) == request_wire,
+              "parsed parent correspondence request changed during preparation")
+        _need(_parent_correspondence_pins(owners) == pins,
+              "parent correspondence sources changed during preparation")
+
+    def returned_fence():
+        if opening_validation_wire is not None:
+            _need(_wire(opening_validation, MAX_REPORT_BYTES) == opening_validation_wire
+                  and _wire(scope_validation, MAX_REPORT_BYTES) == opening_validation_wire,
+                  "opening parent scope validation changed during correspondence")
+        if opening_relational_wire is not None:
+            _need(_wire(opening_relational, MAX_REPORT_BYTES) == opening_relational_wire
+                  and _wire(checked, MAX_REPORT_BYTES) == opening_relational_wire,
+                  "opening relational validation changed during correspondence")
+
+    def closing_scope():
+        if replay_started:
+            closed = scope.validate_parent_norm_scope_v1(snapshot["scope_report"],
+                expected_report_sha256=expected_scope_report_sha256, **replay)
+            if opening_validation_wire is not None:
+                _need(_wire(closed, MAX_REPORT_BYTES) == opening_validation_wire,
+                      "closing original parent scope validation differs from opening")
+
+    def closing_relational():
+        if replay_started:
+            closed = relational.validate_relational_norm_v1(snapshot["relational_report"],
+                relational_request_raw, expected_request_sha256=expected_relational_request_sha256,
+                expected_report_sha256=expected_relational_report_sha256)
+            if opening_relational_wire is not None:
+                _need(_wire(closed, MAX_REPORT_BYTES) == opening_relational_wire,
+                      "closing relational validation differs from opening")
+
+    def output_fence():
+        if serialized is not None:
+            scope._parent_serialized_fence(report, serialized, MAX_REPORT_BYTES, _wire)
+
+    try:
+        fence()
+        replay_started = True
+        opening_validation = scope.validate_parent_norm_scope_v1(snapshot["scope_report"],
+            expected_report_sha256=expected_scope_report_sha256, **replay)
+        opening_validation_wire = _wire(opening_validation, MAX_REPORT_BYTES)
+        scope_validation = json.loads(opening_validation_wire)
+        fence()
+        opening_relational = relational.validate_relational_norm_v1(snapshot["relational_report"],
+            relational_request_raw, expected_request_sha256=expected_relational_request_sha256,
+            expected_report_sha256=expected_relational_report_sha256)
+        opening_relational_wire = _wire(opening_relational, MAX_REPORT_BYTES)
+        checked = json.loads(opening_relational_wire)
+        fence()
+        contexts = _join(request, snapshot["scope_report"], checked)
+        report = {
+            "schema": SCHEMA_V2, "profile": "parent-literal-occurrence-authored-correspondence/v2",
+            "status": "unreviewed_correspondence_transport_checked",
+            "request": request, "alternative_id": request["alternative_id"],
+            "input_pins": {"scope_report_sha256": expected_scope_report_sha256,
+                "relational_report_sha256": expected_relational_report_sha256,
+                "mapping_request_raw_sha256": expected_mapping_request_sha256,
+                "mapping_request_raw_bytes": len(mapping_request_raw),
+                "relational_request_raw_sha256": expected_relational_request_sha256,
+                "relational_request_raw_bytes": len(relational_request_raw), "replay_inputs": commitments},
+            "source_scope": snapshot["scope_report"], "source_scope_validation": scope_validation,
+            "relational_fragment": checked, "typed_context_inventory": contexts,
+            "retained_unresolved": snapshot["scope_report"]["scope_declaration"]["unresolved"],
+            "declared_semantic_coverage": snapshot["scope_report"]["declared_semantic_coverage"],
+            "counts": {"source_anchors": len(request["source_rows"]), "typed_targets": len(contexts),
+                "proposed_links": sum(len(row["targets"]) for row in request["source_rows"]),
+                "authored_scaffolding": sum(row["disposition"] == "authored_scaffolding" for row in request["typed_rows"])},
+            "transport_checked": True, "source_bound": False, "source_translation_performed": False,
+            "selected_interpretation": None, "governing_definition_use": None,
+            "original_signatures_cover_correspondence": False,
+            "human_reviews": 0, "signatures_constructed": 0, "admissions": 0,
+            "training_mask": 0, "evaluation_gold_mask": 0,
+            "authority": dict(AUTHORITY), "producer_pins": pins,
+            "limitations": [
+                "The source is one exact original literal occurrence; no paragraph, complete law, governing edition or classified source region is established.",
+                "Declared correspondence and complete authored typed syntax are unreviewed nominations, not legal equivalence, source translation or complete source semantics.",
+                "Exact original source and offset custody does not authorize the original null-source relational declaration or its signatures for governing use.",
+                "Original unresolved issues, partial coverage and all six unavailable context obligations remain open; dependency and ambiguity inventories are not exhaustive.",
+                "No interpretation selection, meaning review, learned target, graph admission, model, training, solver or Lean execution is supplied.",
+            ],
+        }
+        serialized = _wire(report, MAX_REPORT_BYTES)
+        report = json.loads(serialized)
+        return report
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        scope._parent_finish((fence, returned_fence, closing_scope, closing_relational,
+                              fence, returned_fence, output_fence, fence), primary)
+
+
+def validate_norm_scope_correspondence_v2(report, *args, expected_report_sha256, **kwargs):
+    """Validate only the explicit parent profile against complete original replay."""
+    _sha(expected_report_sha256, "parent correspondence report")
+    offered = _wire(report, MAX_REPORT_BYTES)
+    _need(hashlib.sha256(offered).hexdigest() == expected_report_sha256,
+          "independent parent correspondence report pin differs")
+    _need(type(report) is dict and report.get("schema") == SCHEMA_V2
+          and report.get("profile") == "parent-literal-occurrence-authored-correspondence/v2",
+          "explicit parent correspondence report profile required")
+    primary = None
+    regenerated = serialized = None
+    try:
+        regenerated = prepare_norm_scope_correspondence_v2(*args, **kwargs)
+        serialized = _wire(regenerated, MAX_REPORT_BYTES)
+        _need(offered == serialized, "parent correspondence report differs from complete original replay")
+        return regenerated
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        def offered_fence():
+            scope._parent_serialized_fence(report, offered, MAX_REPORT_BYTES, _wire)
+        def result_fence():
+            if serialized is not None:
+                scope._parent_serialized_fence(regenerated, serialized, MAX_REPORT_BYTES, _wire)
+        from . import legal_source_norm_scope_v1 as scope
+        scope._parent_finish((offered_fence, result_fence), primary)
+
+
 __all__ = ["prepare_norm_scope_correspondence_v1", "norm_scope_correspondence_sha256",
-           "validate_norm_scope_correspondence_v1"]
+           "validate_norm_scope_correspondence_v1", "prepare_norm_scope_correspondence_v2",
+           "validate_norm_scope_correspondence_v2"]

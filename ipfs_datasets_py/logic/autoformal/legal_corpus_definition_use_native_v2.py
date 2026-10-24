@@ -186,7 +186,7 @@ def _parse(raw, maximum):
     return result
 
 
-def _preparation_document(preparation, *, parent_shared=False):
+def _preparation_document(preparation, *, parent_shared=False, expected_files=None):
     # The exact class is checked after all caller-controlled inputs are bounded.
     # Reading the frozen dataclass storage here does not import its owner.
     cls = type(preparation)
@@ -202,9 +202,11 @@ def _preparation_document(preparation, *, parent_shared=False):
     _need(type(text) is str and 0 < len(text) <= MAX_RECORD_BYTES,
           "bounded original V2 preparation manifest text required")
     manifest = _parse(text.encode("utf-8"), MAX_RECORD_BYTES)
+    _need(expected_files is None or (not parent_shared and type(expected_files) is int
+          and expected_files == 7), "only the explicit seven-file parent norm reader may opt in")
     _need(type(original_files) is tuple and
           (1 <= len(original_files) <= MAX_PARENT_SHARED_FILES if parent_shared
-           else len(original_files) == MAX_FILES),
+           else len(original_files) == (MAX_FILES if expected_files is None else expected_files)),
           "bounded complete parent shared project required" if parent_shared
           else "exact nine-file V2 definition-use project required")
     names, files, total = [], [], 0
@@ -541,7 +543,8 @@ def _build_validated_native(preparation, validated, *, replay,
         expected_preparation_sha256, toolchain, lake_executable, output_directory,
         timeout_seconds, cancellation, build_schema, profile, flags, receipt_binding,
         maximum_files=MAX_FILES, maximum_modules=MAX_MODULES,
-        maximum_theorems=None, producer_pin_reader=None, receipt_scope=None):
+        maximum_theorems=None, producer_pin_reader=None, receipt_scope=None,
+        preparation_document_reader=None, closing_custody_guard=None):
     """One bounded native execution path, with each source profile replayed by its owner."""
     owners = _owners()
     # Resolve the legacy reader dynamically: existing callers and monkeypatches
@@ -553,12 +556,17 @@ def _build_validated_native(preparation, validated, *, replay,
     # the retained project with different bytes after the native observation.
     checked = type(validated)(validated.manifest_json, tuple(validated.files))
     shared_type = type(checked) is owners[4].ParentSharedCorpusPreparation
-    snapshot_document = _preparation_document(checked, parent_shared=shared_type)
+    snapshot_document = (_preparation_document(checked, parent_shared=shared_type)
+                         if preparation_document_reader is None
+                         else preparation_document_reader(checked))
     _need(_sha(_wire(snapshot_document, MAX_PREPARATION_BYTES)) == expected_preparation_sha256,
           "frozen native preparation differs from independent complete pin")
     manifest = checked.to_dict()
     receipt_binding = receipt_binding(manifest)
     producers = pin_reader(owners, manifest)
+    if closing_custody_guard is not None:
+        closing_custody_guard("snapshot", dict(checked=checked, manifest=manifest,
+            receipt_binding=receipt_binding, producers=producers))
     output = transport._path(output_directory)
     transport._check_directories(output.parent, allow_missing=True)
     _need(not output.exists() and not output.is_symlink(), "fresh native build output directory required")
@@ -575,6 +583,8 @@ def _build_validated_native(preparation, validated, *, replay,
           "complete bounded conditional theorem population required")
     executable, binaries, probes = _installed_toolchain(lake_executable, toolchain)
     _need(_binary_recheck(binaries), "installed compiler binaries changed during version probes")
+    if closing_custody_guard is not None:
+        closing_custody_guard("toolchain", dict(binaries=binaries, probes=probes))
     command = (str(executable), "--offline", "--no-cache", "build", "legal")
     artifact_paths = tuple(".lake/build/lib/lean/" + name.replace(".", "/") + ".olean"
                            for name in modules)
@@ -617,6 +627,8 @@ def _build_validated_native(preparation, validated, *, replay,
         except (ValueError, TypeError, OSError) as preservation_error:
             error.add_note("Native cleanup refusal preservation also failed: " + type(preservation_error).__name__)
         raise
+    if closing_custody_guard is not None:
+        closing_custody_guard("runner_returned", dict(run=run))
     post_error, binary_error = None, None
     try:
         replay()
@@ -718,8 +730,26 @@ def _build_validated_native(preparation, validated, *, replay,
                     "conditional_proofs_verified": passed}),
     })
     executed_sources = {name: run.output_files[name] for name in source_files if name in run.output_files}
+    if closing_custody_guard is not None:
+        custody_error = closing_custody_guard("before_persistence", dict(checked=checked, manifest=manifest,
+            run=run, artifacts=artifacts, executed_sources=executed_sources, logs=logs,
+            receipt=receipt, output=output))
+        if custody_error is not None:
+            receipt = transport.contracts.seal_record({
+                **{key: value for key, value in receipt.items() if key not in {"record_cid", "cid_scope"}},
+                "build_passed": False, "status": "conditional_native_checks_failed",
+                "original_preparation_unchanged": False, "post_run_validation_passed": False,
+                "post_run_validation_error": receipt["post_run_validation_error"] or custody_error,
+                "post_run_custody_error": custody_error,
+                "conditional_kernel_status": "not_verified", "lean_compilation_verified": False,
+                "proof_checked": False, "kernel_proofs_checked": False, "conditional_proofs_verified": False})
+            closing_custody_guard("refused_persistence", dict(receipt=receipt))
     _persist_build(checked, output, owners, artifacts, executed_sources, logs, receipt,
                    maximum_files=maximum_files, maximum_modules=maximum_modules)
+    if closing_custody_guard is not None:
+        closing_custody_guard("after_persistence", dict(checked=checked, manifest=manifest,
+            run=run, artifacts=artifacts, executed_sources=executed_sources, logs=logs,
+            receipt=receipt, output=output))
     return receipt
 
 
@@ -1048,3 +1078,402 @@ __all__ = ["preparation_sha256", "validate_definition_use_native_v2",
            "validate_bound_norm_definition_native_v1",
            "build_bound_norm_definition_native_v1",
            "bound_norm_definition_compilation_receipt_sha256"]
+
+
+# Explicit direct complete authored norm execution; no definition profile is widened.
+PARENT_NORM_BUILD_SCHEMA = "legal-corpus-parent-norm-native-build/v1"
+PARENT_NORM_NATIVE_PROFILE = "replayed-parent-literal-complete-authored-norm-native-build/v1"
+_PARENT_NORM_PREPARATION_SCHEMA = "legal-corpus-parent-norm-lake-preparation/v1"
+_PARENT_NORM_PREPARATION_PROFILE = "replayed-parent-literal-complete-authored-norm-project/v1"
+_PARENT_NORM_REPLAY_FIELDS = {"scope_report", "relational_report", "mapping_request_raw",
+    "expected_scope_report_sha256", "expected_relational_report_sha256",
+    "expected_mapping_request_sha256", "scope_replay_inputs", "relational_request_raw",
+    "expected_relational_request_sha256"}
+_PARENT_NORM_OPERATION_PINS = None
+
+
+def _parent_norm_native_document(preparation):
+    return _preparation_document(preparation, expected_files=7)
+
+
+def _parent_norm_native_preflight(preparation, original):
+    """Bound all original inputs and independent pins before operation imports."""
+    _need(type(original) is dict and set(original) == {"correspondence",
+        "expected_correspondence_sha256", "correspondence_inputs", "toolchain"},
+        "closed original complete parent norm native inputs required")
+    document = _parent_norm_native_document(preparation)
+    manifest = document["manifest"]
+    _need(manifest.get("schema") == _PARENT_NORM_PREPARATION_SCHEMA
+          and manifest.get("profile") == _PARENT_NORM_PREPARATION_PROFILE,
+          "explicit direct parent norm preparation profile required")
+    toolchain = original["toolchain"]
+    _need(type(toolchain) is str and len(toolchain) <= 128 and _TOOLCHAIN.fullmatch(toolchain)
+          and manifest.get("toolchain") == toolchain, "exact pinned parent norm toolchain required")
+    replay = original["correspondence_inputs"]
+    _need(type(original["correspondence"]) is dict and type(replay) is dict
+          and set(replay) == _PARENT_NORM_REPLAY_FIELDS,
+          "complete parent correspondence and closed nine-field originals required")
+    _bound_tree({"preparation": document, "original": original}, MAX_INPUT_BYTES, allow_bytes=True)
+    _pin(original["expected_correspondence_sha256"], "full original parent correspondence")
+    _need(_sha(_wire(original["correspondence"], MAX_PROJECT_BYTES))
+          == original["expected_correspondence_sha256"], "independent parent correspondence pin differs")
+    from . import legal_norm_scope_correspondence_v1 as correspondence
+    _need(original["correspondence"].get("schema") == correspondence.SCHEMA_V2
+          and original["correspondence"].get("profile")
+          == "parent-literal-occurrence-authored-correspondence/v2",
+          "genuine parent correspondence v2 required; no HTML relabeling")
+    mapping = correspondence._parse(replay["mapping_request_raw"],
+        replay["expected_mapping_request_sha256"], request_schema=correspondence.REQUEST_SCHEMA_V2)
+    scope, relational = correspondence._owners()  # Stdlib-only public owners.
+    relational_request = relational._parse(replay["relational_request_raw"],
+                                           replay["expected_relational_request_sha256"])
+    snapshot, commitments = correspondence._parent_correspondence_snapshot(
+        replay["scope_report"], replay["relational_report"], replay["scope_replay_inputs"], scope)
+    for field in ("scope_report", "relational_report"):
+        expected = replay["expected_" + field + "_sha256"]
+        _pin(expected, "full original " + field)
+        _need(mapping[field + "_sha256"] == commitments[field]["sha256"] == expected,
+              "independent complete parent original report pin differs")
+    _need(sum(row["bytes"] for row in commitments.values()) + len(replay["mapping_request_raw"])
+          + len(replay["relational_request_raw"]) <= correspondence.MAX_TOTAL_BYTES,
+          "complete parent original correspondence bound exceeded")
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
+          "parent norm native producer changed before operation imports")
+    return {"document": document, "mapping_request": mapping,
+            "relational_request": relational_request, "snapshot": snapshot, "commitments": commitments}
+
+
+def _parent_norm_native_pins(owners, manifest):
+    global _PARENT_NORM_OPERATION_PINS
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
+          "parent norm native owner changed since import")
+    sources = [manifest["producer_pins"], manifest["native_producer_pins"], owners[1]._pins(),
+        {str(Path(module.__file__).resolve()): _sha(Path(module.__file__).read_bytes()) for module in owners},
+        {str(Path(__file__).resolve()): _SELF_PIN}]
+    pins = {}
+    for source in sources:
+        for path, expected in source.items():
+            _pin(expected, "parent norm native producer")
+            _need(path not in pins or pins[path] == expected,
+                  "parent norm native producer observations disagree")
+            _need(_sha(Path(path).read_bytes()) == expected, "parent norm native producer changed: " + path)
+            pins[path] = expected
+    if _PARENT_NORM_OPERATION_PINS is None:
+        _PARENT_NORM_OPERATION_PINS = dict(pins)
+    _need(pins == _PARENT_NORM_OPERATION_PINS,
+          "parent norm native producer closure changed since first use")
+    return pins
+
+
+def _parent_norm_native_callbacks(owners):
+    preparer, transport, _, process, shared = owners
+    from . import legal_norm_scope_correspondence_v1 as correspondence
+    functions = (_preparation_document, _parent_norm_native_document, _parent_norm_native_preflight,
+        _parent_norm_native_pins, _parent_norm_native_callbacks, _parent_norm_native_runtime,
+        _parent_norm_native_operation, _parent_norm_native_serialized_fence,
+        _parent_norm_native_run_value, _parent_norm_native_persisted,
+        validate_parent_norm_native_v1, build_parent_norm_native_v1,
+        parent_norm_compilation_receipt_sha256, _bound_tree, _wire, _parse,
+        _build_validated_native, _installed_toolchain, _binary_recheck,
+        _axiom_observations, _observed_process_scope, _persist_build,
+        process.BoundedToolRunner.run, process.ToolRunResult.to_dict,
+        process.NativeToolLifecycleObservation.to_dict,
+        preparer.validate_parent_norm_corpus_v1, preparer.parent_norm_preparation_sha256,
+        preparer._parent_norm_capture, preparer._parent_norm_storage,
+        preparer._parent_norm_file_plan, preparer._parent_norm_file_witness,
+        transport._read_files, transport._write_new_file,
+        shared._write_frozen_project, shared._write_compiled,
+        transport.contracts.seal_record, transport.contracts.load_record_bytes)
+    observed = tuple((function, getattr(function, "__code__", None),
+        id(getattr(function, "__defaults__", None)), id(getattr(function, "__kwdefaults__", None)))
+        for function in functions)
+    return observed + preparer._parent_norm_callbacks(correspondence, preparer._owners())
+
+
+def _parent_norm_native_runtime(owners):
+    return {"build_schema": PARENT_NORM_BUILD_SCHEMA, "native_profile": PARENT_NORM_NATIVE_PROFILE,
+        "preparation_schema": _PARENT_NORM_PREPARATION_SCHEMA,
+        "preparation_profile": _PARENT_NORM_PREPARATION_PROFILE,
+        "replay_fields": sorted(_PARENT_NORM_REPLAY_FIELDS), "authority": dict(AUTHORITY),
+        "false_flags": dict(FALSE_FLAGS), "record_bytes": MAX_RECORD_BYTES,
+        "input_bytes": MAX_INPUT_BYTES, "project_bytes": MAX_PROJECT_BYTES,
+        "preparation_bytes": MAX_PREPARATION_BYTES, "capture_bytes": MAX_CAPTURE_BYTES,
+        "log_preview_bytes": MAX_LOG_PREVIEW_BYTES, "receipt_bytes": MAX_RECEIPT_BYTES,
+        "legacy_files": MAX_FILES, "legacy_modules": MAX_MODULES, "legacy_theorems": MAX_THEOREMS,
+        "selected_files": 7, "selected_modules": 4, "selected_theorems": 1,
+        "toolchain_pattern": _TOOLCHAIN.pattern,
+        "preparer_runtime": owners[0]._parent_norm_runtime(owners[0]._owners())}
+
+
+def _parent_norm_native_run_value(run, process):
+    _need(type(run) is process.ToolRunResult, "genuine typed bounded native runner result required")
+    value = run.to_dict()
+    # The ordinary diagnostic to_dict decodes arbitrary binary artifacts with
+    # replacement. Custody retains every original binary byte independently.
+    _need(all(type(path) is str and type(body) is bytes for path, body in run.output_files.items()),
+          "ordinary exact native output byte population required")
+    value["output_files"] = dict(run.output_files)
+    return value
+
+
+def _parent_norm_native_serialized_fence(receipt, expected_wire):
+    _need(_wire(receipt, MAX_RECEIPT_BYTES) == expected_wire,
+          "parent norm native receipt changed after serialization")
+    direct = json.dumps(receipt, sort_keys=True, separators=(",", ":"),
+                        ensure_ascii=False, allow_nan=False).encode("utf-8")
+    _need(direct == expected_wire, "parent norm native receipt changed after final encoder returned")
+
+
+def _parent_norm_native_persisted(checked, output, owners, artifacts, executed_sources, logs, receipt):
+    """Read the existing writer layout; no new transport or receipt format."""
+    transport = owners[1]
+    expected_project = {name: text.encode("utf-8") for name, text in checked.files}
+    expected_project[transport.MANIFEST_FILE] = checked.manifest_json.encode("utf-8")
+    expected_compiled = {name.removeprefix(".lake/build/lib/lean/"): raw for name, raw in artifacts.items()}
+    groups = (("project", expected_project, 8), ("compiled", expected_compiled, 4),
+              ("executed-inputs", executed_sources, 7))
+    actual, plan = [], []
+    for directory, expected, maximum in groups:
+        values = transport._read_files(output / directory, set(expected), maximum_files=maximum)
+        _need(values == expected, "retained direct parent norm native files differ")
+        actual.append(values)
+        for name, raw in expected.items():
+            plan.append({"descriptor": {"local_path": str(output / directory / name),
+                "sha256": _sha(raw), "bytes": len(raw)}, "maximum": 128 * MAX_RECORD_BYTES})
+    for name, raw in {**logs, "build-receipt.json": _wire(receipt, MAX_RECEIPT_BYTES)}.items():
+        plan.append({"descriptor": {"local_path": str(output / name), "sha256": _sha(raw),
+                                    "bytes": len(raw)}, "maximum": 128 * MAX_RECORD_BYTES})
+    return actual, plan
+
+
+def _parent_norm_native_operation(preparation, original, *, expected_preparation_sha256, operation=None):
+    _pin(expected_preparation_sha256, "complete direct parent norm preparation")
+    preflight = _parent_norm_native_preflight(preparation, original)
+    _need(_sha(_wire(preflight["document"], MAX_PREPARATION_BYTES)) == expected_preparation_sha256,
+          "independent complete direct parent norm preparation pin differs")
+    owners = _owners()
+    preparer, _, _, process, _ = owners
+    _need(type(preparation) is preparer.DefinitionUseCorpusPreparation,
+          "exact existing direct parent norm preparation type required")
+    copied, commitment, _ = preparer._parent_norm_capture(original, preparation)
+    from . import legal_norm_scope_correspondence_v1 as correspondence
+    scope = correspondence._owners()[0]
+    held, run_holds, preparation_holds = [], [], []
+    state = dict(opened=None, closed=None, receipt=None, receipt_wire=None,
+                 physical_plan=None, physical_witness=None, output_plan=None, output_witness=None,
+                 binaries=None, binary_plan=None, binary_witness=None)
+    callbacks = _parent_norm_native_callbacks(owners)
+    runtime = _parent_norm_native_runtime(owners)
+    pins = None
+    primary = None
+
+    def commitment_of(value):
+        _bound_tree(value, 128 * MAX_RECORD_BYTES, allow_bytes=True)
+        return preparer._parent_commitment(value)
+
+    def hold(value, label):
+        held.append((value, commitment_of(value), label))
+        return value
+
+    hold(preflight, "original parsed native preflight")
+
+    def fence():
+        _need(preparer._parent_norm_capture(original, preparation)[1] == commitment,
+              "caller parent norm native originals or preparation changed")
+        _need(preparer._parent_commitment(preparer._ParentInputBudget().copy(copied)) == commitment,
+              "detached parent norm native originals changed")
+        _need(_parent_norm_native_callbacks(owners) == callbacks,
+              "parent norm native operation callable changed")
+        _need(_parent_norm_native_runtime(owners) == runtime, "parent norm native runtime declarations changed")
+        if pins is not None:
+            _need(_parent_norm_native_pins(owners, state["opened"].to_dict()) == pins,
+                  "parent norm native source producer changed")
+        for value, expected, label in held:
+            _need(commitment_of(value) == expected, "held direct parent norm native return changed: " + label)
+        for value, expected in preparation_holds:
+            _need(commitment_of(preparer._parent_norm_storage(value)) == expected,
+                  "actual parent norm preparation raw storage changed after capture")
+        for run, expected in run_holds:
+            _need(commitment_of(_parent_norm_native_run_value(run, process)) == expected,
+                  "actual native runner return changed after capture")
+        if state["binaries"] is not None:
+            _need(_binary_recheck(state["binaries"])
+                  and preparer._parent_norm_file_witness(state["binary_plan"]) == state["binary_witness"],
+                  "installed native sibling binaries changed after genuine probes")
+        if state["physical_plan"] is not None:
+            _need(preparer._parent_norm_file_witness(state["physical_plan"]) == state["physical_witness"],
+                  "original parent/cache physical files changed during native operation")
+        if state["output_plan"] is not None:
+            _need(preparer._parent_norm_file_witness(state["output_plan"]) == state["output_witness"],
+                  "persisted parent norm native files changed after genuine readback")
+        for name in ("opened", "closed"):
+            if state[name] is not None:
+                _need(commitment_of(preparer._parent_norm_storage(state[name]))
+                      == commitment_of(copied["offered"]),
+                      "actual genuine parent norm preparation raw return changed")
+        if state["receipt"] is not None:
+            _need(_wire(state["receipt"], MAX_RECEIPT_BYTES) == state["receipt_wire"],
+                  "direct parent norm native receipt changed after genuine final check")
+
+    def replay():
+        fence()
+        checked = preparer.validate_parent_norm_corpus_v1(preparation, copied["correspondence"],
+            expected_preparation_sha256=expected_preparation_sha256,
+            expected_correspondence_sha256=copied["expected_correspondence_sha256"],
+            correspondence_inputs=copied["correspondence_inputs"], toolchain=copied["toolchain"])
+        _need(commitment_of(preparer._parent_norm_storage(checked)) == commitment_of(copied["offered"])
+              and preparer.parent_norm_preparation_sha256(checked) == expected_preparation_sha256,
+              "genuine direct parent norm preparation differs from original complete pin")
+        name = "opened" if state["opened"] is None else "closed"
+        state[name] = checked
+        preparation_holds.append((checked, commitment_of(preparer._parent_norm_storage(checked))))
+        hold(checked.to_dict(), "genuine " + name + " direct parent norm manifest")
+        return checked
+
+    def guard(stage, payload):
+        if stage == "snapshot":
+            for name in ("manifest", "receipt_binding", "producers"):
+                hold(payload[name], "actual engine " + name)
+            document = _parent_norm_native_document(payload["checked"])
+            preparation_holds.append((payload["checked"],
+                                      commitment_of(preparer._parent_norm_storage(payload["checked"]))))
+            hold(document, "engine frozen preparation")
+        elif stage == "toolchain":
+            hold(payload["binaries"], "actual installed binary pins")
+            hold(payload["probes"], "actual installed version probes")
+            state["binaries"] = payload["binaries"]
+            plan = [{"descriptor": {"local_path": path, "sha256": expected,
+                "bytes": Path(path).lstat().st_size}, "maximum": 512 * MAX_RECORD_BYTES}
+                for path, expected in sorted(payload["binaries"].items())]
+            state["binary_plan"] = hold(plan, "actual installed binary physical plan")
+            state["binary_witness"] = hold(preparer._parent_norm_file_witness(plan),
+                                            "actual installed binary physical identities")
+        elif stage == "runner_returned":
+            run = payload["run"]
+            run_holds.append((run, commitment_of(_parent_norm_native_run_value(run, process))))
+        elif stage == "before_persistence":
+            for name in ("artifacts", "executed_sources", "logs", "receipt"):
+                hold(payload[name], "actual native " + name)
+            state["receipt"] = payload["receipt"]
+            state["receipt_wire"] = _wire(payload["receipt"], MAX_RECEIPT_BYTES)
+            # A changed writer callback must never be invoked. Other post-run
+            # custody failures retain an explicitly false receipt and the exact
+            # frozen observations before the terminal fence raises.
+            _need(_parent_norm_native_callbacks(owners) == callbacks,
+                  "native persistence callable changed before failed observation retention")
+            try:
+                fence()
+            except (ValueError, TypeError, KeyError, IndexError, OSError, UnicodeError, RecursionError) as error:
+                return {"type": type(error).__name__, "message": str(error)[:2048]}
+        elif stage == "refused_persistence":
+            state["receipt"] = hold(payload["receipt"], "sealed unqualified native custody refusal")
+            state["receipt_wire"] = _wire(payload["receipt"], MAX_RECEIPT_BYTES)
+        elif stage == "after_persistence":
+            actual, plan = _parent_norm_native_persisted(payload["checked"], payload["output"], owners,
+                payload["artifacts"], payload["executed_sources"], payload["logs"], payload["receipt"])
+            for values in actual:
+                hold(values, "actual persisted native file readback")
+            state["output_plan"] = hold(plan, "retained native output file plan")
+            state["output_witness"] = hold(preparer._parent_norm_file_witness(plan),
+                                           "retained native output file identities")
+            fence()
+        else:
+            raise ValueError("unknown direct parent norm native custody stage")
+
+    def final_receipt():
+        if state["receipt"] is not None:
+            _parent_norm_native_serialized_fence(state["receipt"], state["receipt_wire"])
+
+    try:
+        fence()
+        checked = replay()
+        manifest = checked.to_dict()
+        _need(len(manifest["expected_modules"]) == 4
+              and len(manifest["conditional_theorems"]) == 1
+              and manifest["conditional_theorems"][0].endswith(".original_norm_preserved")
+              and manifest["original_norm"]["source_binding"] is None
+              and manifest["original_norm"]["source_bound"] is False
+              and manifest["build_eligible"] is False
+              and all(value is False for value in manifest["authority"].values())
+              and all(type(manifest[key]) is int and manifest[key] == 0
+                      for key in ("training_mask", "evaluation_gold_mask")),
+              "exact unadmitted complete parent norm alias project required")
+        pins = _parent_norm_native_pins(owners, manifest)
+        fence()  # Only genuine original replay authorizes physical nominations.
+        state["physical_plan"] = hold(preparer._parent_norm_file_plan(copied["correspondence_inputs"]),
+                                      "complete original parent/cache file plan")
+        state["physical_witness"] = hold(preparer._parent_norm_file_witness(state["physical_plan"]),
+                                         "original parent/cache file identities")
+        fence()
+        return checked if operation is None else operation(checked, replay, guard, owners)
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        scope._parent_finish((fence, final_receipt, fence, final_receipt, fence), primary)
+
+
+def validate_parent_norm_native_v1(preparation, correspondence, *, expected_preparation_sha256,
+        expected_correspondence_sha256, correspondence_inputs, toolchain):
+    """Validate the exact complete authored parent project; execute no tool."""
+    original = dict(correspondence=correspondence, expected_correspondence_sha256=expected_correspondence_sha256,
+                    correspondence_inputs=correspondence_inputs, toolchain=toolchain)
+    return _parent_norm_native_operation(preparation, original,
+        expected_preparation_sha256=expected_preparation_sha256)
+
+
+def build_parent_norm_native_v1(preparation, correspondence, *, expected_preparation_sha256,
+        expected_correspondence_sha256, correspondence_inputs, toolchain,
+        lake_executable, output_directory, timeout_seconds=60, cancellation=None):
+    """Observe only the unchanged authored norm's definitional alias identity.
+
+    An actual build grants no source meaning, governing edition, definition
+    applicability, norm truth, graph/corpus admission, training or convergence.
+    """
+    _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+          and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+    original = dict(correspondence=correspondence, expected_correspondence_sha256=expected_correspondence_sha256,
+                    correspondence_inputs=correspondence_inputs, toolchain=toolchain)
+
+    def execute(checked, replay, guard, owners):
+        def binding(manifest):
+            return {"correspondence_sha256": expected_correspondence_sha256,
+                "original_input_commitment_sha256": manifest["original_input_commitment_sha256"],
+                "parent_source_binding_sha256": manifest["parent_source_binding_sha256"],
+                "original_norm_sha256": _sha(_wire(manifest["original_norm"], MAX_RECORD_BYTES)),
+                "review_intake_binding_sha256": _sha(_wire(manifest["review_intake_binding"], MAX_RECORD_BYTES)),
+                "source_context_sha256": _sha(_wire(manifest["original_parent_context"], MAX_RECORD_BYTES)),
+                "retained_unresolved_sha256": _sha(_wire(manifest["correspondence"]["retained_unresolved"], MAX_RECORD_BYTES)),
+                "review_blockers": manifest["review_blockers"],
+                "original_preparation_build_eligible": manifest["build_eligible"],
+                "original_preparation_execution_handoff": manifest["execution_handoff"],
+                "preservation_kind": "definitional_alias_identity_only"}
+        flags = dict(owners[0].PARENT_NORM_FALSE_FLAGS)
+        flags.update(FALSE_FLAGS)
+        return _build_validated_native(preparation, checked, replay=replay,
+            expected_preparation_sha256=expected_preparation_sha256, toolchain=toolchain,
+            lake_executable=lake_executable, output_directory=output_directory,
+            timeout_seconds=timeout_seconds, cancellation=cancellation,
+            build_schema=PARENT_NORM_BUILD_SCHEMA, profile=PARENT_NORM_NATIVE_PROFILE,
+            flags=flags, receipt_binding=binding, maximum_files=7, maximum_modules=4,
+            maximum_theorems=1, producer_pin_reader=_parent_norm_native_pins,
+            preparation_document_reader=_parent_norm_native_document,
+            closing_custody_guard=guard,
+            receipt_scope=("Only original_norm_preserved, a definitional alias identity under explicit "
+                "Entity, Agent, Interpretation and time. No norm truth, source meaning, governing edition, "
+                "definition applicability, graph/corpus admission, model equivalence or convergence claim."))
+
+    return _parent_norm_native_operation(preparation, original,
+        expected_preparation_sha256=expected_preparation_sha256, operation=execute)
+
+
+def parent_norm_compilation_receipt_sha256(receipt):
+    """Commit the complete bounded engineering receipt; grant no admission."""
+    _need(type(receipt) is dict and receipt.get("schema") == PARENT_NORM_BUILD_SCHEMA
+          and receipt.get("profile") == PARENT_NORM_NATIVE_PROFILE,
+          "explicit direct parent norm native compilation receipt required")
+    return _sha(_wire(receipt, MAX_RECEIPT_BYTES))
+
+
+__all__ += ["validate_parent_norm_native_v1", "build_parent_norm_native_v1",
+            "parent_norm_compilation_receipt_sha256"]
