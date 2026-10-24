@@ -1,0 +1,90 @@
+{
+  "Arrow_bytes_measured_by_intake": false,
+  "cases": 108,
+  "downloads_models_training_or_Lean_execution": false,
+  "existing_join_consumer_compatibility_qualified": false,
+  "hosted_dataset_or_selected_release_changed": false,
+  "legacy_cases": 45,
+  "legal_source_alias_or_admission_authority": false,
+  "namespace_scope": "Explicit namespace parents; optional package initializers not qualified.",
+  "phase_passes": 324,
+  "prior_peer_failed_storage_retained_bytes": 67108864,
+  "profile": "hf-default-parquet-envelope/v1",
+  "receipts": [
+    {
+      "bytes": 24726,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/manifest-hf-wire-v01.json",
+      "sha256": "f9d752e874c40f3bcfc755f89084e5dff28b09064edebc137fabe34aa420d6c0"
+    },
+    {
+      "bytes": 16622,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/request-hf-wire-v01.json",
+      "sha256": "0c45670f225b5b396e998a54636d169497cd594bf9827e1de67c6f145f0627d6"
+    },
+    {
+      "bytes": 308,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/controller-complete-hf-wire-v01.json",
+      "sha256": "052b75ecb07007c643a346064a28275818c70562629f38de901d07d0718c72d1"
+    },
+    {
+      "bytes": 7919,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/launch-hf-wire-v01.json",
+      "sha256": "296e363634bf5696246cf960962b610a490854b0d71f259903e8d0f1154e9e8f"
+    },
+    {
+      "bytes": 11078,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/independent-result-review-v01.json",
+      "sha256": "9c10398832aed7e3923a0f98a647b00f4ccabb704b9bc76fbf3917198a52af35"
+    },
+    {
+      "bytes": 49221,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/attempt-hf-wire-v01/exports/test-result.json",
+      "sha256": "7634b1499c2d36d4d629c00ca27df80c53e5023b29488c22ef2cd9c168f13088"
+    },
+    {
+      "bytes": 14325,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/attempt-hf-wire-v01/exports/junit.xml",
+      "sha256": "dede84011f49de9b5fa55599b40cb91509e71ee0a5ed9d457fb5c2781c1806c9"
+    },
+    {
+      "bytes": 3535,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/independent-product-review-v01.json",
+      "sha256": "a06b0b745a9b23a3831a857a03252c8f5041f7ddac27cedd775181b2c80d2dd6"
+    },
+    {
+      "bytes": 5558,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/independent-tests-review-v01.json",
+      "sha256": "b81725528dd4810dfc550b058485fea4abce3d3aa8b873db6249ae83c9035998"
+    },
+    {
+      "bytes": 4394,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/baseline-capture-v01.json",
+      "sha256": "a7c787e08728db0e03bd1a89bbe265f8f8054d2b8d3e61da1a8b8e974eb72cd3"
+    },
+    {
+      "bytes": 10026,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-wire-intake-01/qualification-summary-v01.json",
+      "sha256": "1f7d297199ad5376d455ad549e8e61dd8ab2472aa7f92802ee3cc49cbe72be4c"
+    },
+    {
+      "bytes": 1742,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/superseded-candidate-v01.json",
+      "sha256": "47f4a8198043f2c7ae7ce97d44021ffdc5aa2cbf14df1cc6a7bbdea712b2fcd6"
+    }
+  ],
+  "recorded_at_utc": "2026-10-24T01:00:39.889565+00:00",
+  "schema": "legal-ir-hf-wire-metadata-intake-qualification/v1",
+  "scope": "The explicit wire metadata intake passed 108 authored cases / 324 phases, including all 99 prior cases and nine focused controls; the same five retained HF49 metadata files were reused. Intake reconciles declarations only: it reads no tables and does not measure Arrow bytes, authenticate a remote revision, map source aliases or grant legal/training/gold/graph/Lean authority.",
+  "selected_run_source_compute_storage_closed": true,
+  "source": {
+    "bytes": 43854,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/candidate-v01/ipfs_datasets_py/logic/autoformal/legal_source_package_intake_v1.py",
+    "sha256": "0bdd297291690449d29427ae6cee875e410a0a970abc04e29915d2bcd760b01a"
+  },
+  "status": "focused_authored_fixture_tests_qualified",
+  "test": {
+    "bytes": 42228,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/source-intake-v01/peer-reuse-v01/candidate-v01/tests/unit/logic/autoformal/test_legal_source_package_intake_v1.py",
+    "sha256": "eff22313d206478b6f1805b78b902022163a45a4fdadb60270ea5596d15cec19"
+  }
+}

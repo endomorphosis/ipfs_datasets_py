@@ -20,6 +20,10 @@ SCHEMA = "legal-source-span-entity-join-manifest/v1"
 REQUEST_SCHEMA_V2 = "legal-source-span-entity-join-request/v2"
 SCHEMA_V2 = "legal-source-span-entity-join-manifest/v2"
 COORDINATE_PROFILE = "paired-coordinate-three-cache-join/v1"
+REQUEST_SCHEMA_V3 = "legal-source-span-entity-join-request/v3"
+SCHEMA_V3 = "legal-source-span-entity-join-manifest/v3"
+WIRE_COORDINATE_PROFILE = "paired-coordinate-hf-wire-three-cache-join/v1"
+WIRE_SOURCE_METADATA_PROFILE = "hf-default-parquet-envelope/v1"
 MAX_REQUEST_BYTES = 256 * 1024
 MAX_REPORT_BYTES = 16 * 1024 * 1024
 MAX_BUNDLES = 16
@@ -89,20 +93,30 @@ def _owners():
 
 
 def _preflight(request_raw, source_request_raw, paired_request_raw, entity_info_raw,
-               expected_request_sha256, legacy_join_inputs, *, coordinate=False):
+               expected_request_sha256, legacy_join_inputs, *, coordinate=False, wire_source=False):
     _digest(expected_request_sha256)
     _need(type(request_raw) is bytes and _sha(request_raw) == expected_request_sha256,
           "request bytes differ from independent pin")
     request = _read_json(request_raw, MAX_REQUEST_BYTES, "join request")
     _keys(request, {"schema", "source_request_sha256", "paired_inventory_request_sha256",
                     "paired_bundles", "legacy_joins", "entity"}, "join request")
-    _need(request["schema"] == (REQUEST_SCHEMA_V2 if coordinate else REQUEST_SCHEMA),
+    _need(not wire_source or coordinate, "wire source requires the coordinate join profile")
+    schema = REQUEST_SCHEMA_V3 if wire_source else REQUEST_SCHEMA_V2 if coordinate else REQUEST_SCHEMA
+    _need(request["schema"] == schema,
           "unsupported join request profile")
     for field, raw in (("source_request_sha256", source_request_raw),
                        ("paired_inventory_request_sha256", paired_request_raw)):
         _digest(request[field])
         _need(type(raw) is bytes and 0 < len(raw) <= MAX_REQUEST_BYTES and _sha(raw) == request[field],
               "nested request bytes differ: " + field)
+    if wire_source:
+        source_request = _read_json(source_request_raw, MAX_REQUEST_BYTES, "wire source request")
+        _keys(source_request, {"schema", "repository_id", "revision", "expected_release_identity",
+            "expected_graph_population", "files", "metadata_profile"}, "wire source request")
+        _need(source_request["schema"] == "legal-source-package-intake-request/v2"
+              and type(source_request["metadata_profile"]) is str
+              and source_request["metadata_profile"] == WIRE_SOURCE_METADATA_PROFILE,
+              "explicit wire intake v2 request and metadata profile required")
     bundles = request["paired_bundles"]
     _need(type(bundles) is list and len(bundles) <= MAX_BUNDLES, "bounded ordered bundle selection required")
     if coordinate:
@@ -232,9 +246,10 @@ def _finish_coordinate_custody(checks, primary):
 
 def _prepare_join(request_raw, source_request_raw, source_metadata_bytes,
         paired_inventory_request_raw, paired_manifest_bytes, entity_info_raw, *,
-        expected_request_sha256, legacy_join_inputs=None, coordinate=False):
+        expected_request_sha256, legacy_join_inputs=None, coordinate=False, wire_source=False):
     request, joins, info = _preflight(request_raw, source_request_raw, paired_inventory_request_raw,
-        entity_info_raw, expected_request_sha256, legacy_join_inputs, coordinate=coordinate)
+        entity_info_raw, expected_request_sha256, legacy_join_inputs,
+        coordinate=coordinate, wire_source=wire_source)
     snapshots = (_coordinate_metadata_snapshot(source_metadata_bytes, paired_manifest_bytes,
         (request_raw, source_request_raw, paired_inventory_request_raw, entity_info_raw)) if coordinate else None)
     owners = _owners()
@@ -251,6 +266,25 @@ def _prepare_join(request_raw, source_request_raw, source_metadata_bytes,
     source_snapshot, paired_snapshot = snapshots
     before = _coordinate_owner_pins(owners)
     files, selected, primary = None, None, None
+    offered_source_report, source_report, source_report_bytes = None, None, None
+    assembled_report, assembled_bytes = None, None
+
+    def wire_source_report_unchanged():
+        if wire_source and source_report_bytes is not None:
+            _need(_wire(offered_source_report, MAX_REPORT_BYTES) == source_report_bytes
+                  and _wire(source_report, MAX_REPORT_BYTES) == source_report_bytes,
+                  "wire source intake report changed during coordinate join")
+
+    def wire_source_report_valid():
+        if wire_source and source_report_bytes is not None:
+            source.validate_source_package_intake_v2(source_report, source_request_raw,
+                dict(source_snapshot), expected_request_sha256=request["source_request_sha256"],
+                expected_report_sha256=_sha(source_report_bytes))
+
+    def wire_join_report_unchanged():
+        if wire_source and assembled_bytes is not None:
+            _need(_wire(assembled_report, MAX_REPORT_BYTES) == assembled_bytes,
+                  "wire coordinate join result changed during closing custody")
 
     def originals_unchanged():
         for offered, captured in ((source_metadata_bytes, source_snapshot),
@@ -286,17 +320,36 @@ def _prepare_join(request_raw, source_request_raw, source_metadata_bytes,
         _need(type(count) is int and 1 <= count <= MAX_COORDINATE_ROWS,
               "bounded complete coordinate row population required")
         files = _coordinate_file_witnesses(request["paired_bundles"][0], selected)
-        source_report = source.prepare_source_package_intake(source_request_raw, dict(source_snapshot),
-            expected_request_sha256=request["source_request_sha256"])
-        return _assemble_join(request, joins, info, source_report, source_identity, span_report, owners,
+        if wire_source:
+            offered_source_report = source.prepare_source_package_intake_v2(
+                source_request_raw, dict(source_snapshot),
+                expected_request_sha256=request["source_request_sha256"])
+            _need(type(offered_source_report) is dict
+                  and offered_source_report.get("schema") == source.SCHEMA_V2
+                  and offered_source_report.get("metadata_profile") == WIRE_SOURCE_METADATA_PROFILE
+                  and offered_source_report.get("status") == "selected_wire_metadata_reconciled",
+                  "wire source delegate returned an incompatible intake report")
+            source_report_bytes = _wire(offered_source_report, MAX_REPORT_BYTES)
+            source_report = _read_json(source_report_bytes, MAX_REPORT_BYTES, "wire source intake report")
+        else:
+            source_report = source.prepare_source_package_intake(source_request_raw, dict(source_snapshot),
+                expected_request_sha256=request["source_request_sha256"])
+        assembled_report = _assemble_join(request, joins, info, source_report, source_identity, span_report, owners,
             request_raw, entity_info_raw, expected_request_sha256, coordinate=True,
-            coordinate_pins=before, file_witnesses=files)
+            coordinate_pins=before, file_witnesses=files, wire_source=wire_source)
+        if wire_source:
+            assembled_bytes = _wire(assembled_report, MAX_REPORT_BYTES)
+        return assembled_report
     except BaseException as error:
         primary = error
         raise
     finally:
-        _finish_coordinate_custody((("original inputs", originals_unchanged),
-            ("owner sources", sources_unchanged), ("retained files", files_unchanged)), primary)
+        checks = (("wire source report before validation", wire_source_report_unchanged),
+                  ("wire source validation", wire_source_report_valid),
+                  ("wire source report after validation", wire_source_report_unchanged)) if wire_source else ()
+        closing_result = (("wire join result", wire_join_report_unchanged),) if wire_source else ()
+        _finish_coordinate_custody(checks + (("original inputs", originals_unchanged),
+            ("owner sources", sources_unchanged), ("retained files", files_unchanged)) + closing_result, primary)
 
 
 def prepare_source_span_entity_join_manifest(request_raw, source_request_raw, source_metadata_bytes,
@@ -320,7 +373,7 @@ def prepare_source_span_entity_join_manifest_v2(request_raw, source_request_raw,
 
 def _assemble_join(request, joins, info, source_report, source_identity, span_report, owners,
                    request_raw, entity_info_raw, expected_request_sha256, *, coordinate=False,
-                   coordinate_pins=None, file_witnesses=None):
+                   coordinate_pins=None, file_witnesses=None, wire_source=False):
     source, inventory, payload, legacy, entity, before = owners
     selections = span_report["manifests"]
     _need([row["manifest_path_in_repo"] for row in request["paired_bundles"]]
@@ -414,7 +467,7 @@ def _assemble_join(request, joins, info, source_report, source_identity, span_re
               and physical[identity]["observation_id"] == row["observation_id"],
               "conflicting observations for one physical table row")
         physical[identity]["row_reference_ordinals"].append(ordinal)
-    report = {"schema": SCHEMA_V2 if coordinate else SCHEMA,
+    report = {"schema": SCHEMA_V3 if wire_source else SCHEMA_V2 if coordinate else SCHEMA,
         "request": request, "request_raw_utf8": request_raw.decode("utf-8"),
         "request_sha256": expected_request_sha256,
         "source_repository": {"repository_id": source_identity["repository_id"], "revision": source_identity["revision"]},
@@ -436,9 +489,13 @@ def _assemble_join(request, joins, info, source_report, source_identity, span_re
         "producer_pins_scope": "selected_owner_file_observations_not_complete_execution_closure",
         "training_mask": 0, "evaluation_gold_mask": 0}
     if coordinate:
-        report["source_compatibility_profile"] = COORDINATE_PROFILE
+        report["source_compatibility_profile"] = WIRE_COORDINATE_PROFILE if wire_source else COORDINATE_PROFILE
         report["retained_file_witnesses"] = file_witnesses
         report["counts"]["coordinate_occurrence_replayed_rows"] = len(physical_rows)
+    if wire_source:
+        report["source_metadata_profile"] = WIRE_SOURCE_METADATA_PROFILE
+        report["source_metadata_request_schema"] = source_identity["schema"]
+        report["source_metadata_intake_sha256"] = source.source_package_intake_sha256(source_report)
     _wire(report, MAX_REPORT_BYTES)
     _need(_owners()[-1] == before, "join manifest owners changed during preparation")
     return _read_json(_wire(report, MAX_REPORT_BYTES), MAX_REPORT_BYTES, "join report")
@@ -478,4 +535,40 @@ def validate_source_span_entity_join_manifest_v2(report, *inputs, expected_repor
         def offered_unchanged():
             _need(_wire(report, MAX_REPORT_BYTES) == original,
                   "offered coordinate join report changed during validation")
+        _finish_coordinate_custody((("offered report", offered_unchanged),), primary)
+
+
+def prepare_source_span_entity_join_manifest_v3(request_raw, source_request_raw, source_metadata_bytes,
+        paired_inventory_request_raw, paired_manifest_bytes, entity_info_raw, *,
+        expected_request_sha256, legacy_join_inputs=None):
+    """Explicit wire-intake-v2/coordinate composition without semantic admission.
+
+    One complete paired-v3 bundle retains the existing coordinate/file custody.
+    HF aliases do not establish source correspondence or entity endpoints.
+    """
+    return _prepare_join(request_raw, source_request_raw, source_metadata_bytes,
+        paired_inventory_request_raw, paired_manifest_bytes, entity_info_raw,
+        expected_request_sha256=expected_request_sha256, legacy_join_inputs=legacy_join_inputs,
+        coordinate=True, wire_source=True)
+
+
+def validate_source_span_entity_join_manifest_v3(report, *inputs, expected_report_sha256, **kwargs):
+    """Regenerate the full wire-coordinate join and fence the offered report."""
+    _digest(expected_report_sha256)
+    if type(report) is bytes:
+        report = _read_json(report, MAX_REPORT_BYTES, "wire coordinate join report")
+    original = _wire(report, MAX_REPORT_BYTES)
+    _need(_sha(original) == expected_report_sha256, "join report SHA256 differs")
+    primary = None
+    try:
+        expected = prepare_source_span_entity_join_manifest_v3(*inputs, **kwargs)
+        _need(original == _wire(expected, MAX_REPORT_BYTES), "join report differs from full replay")
+        return expected
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        def offered_unchanged():
+            _need(_wire(report, MAX_REPORT_BYTES) == original,
+                  "offered wire coordinate join report changed during validation")
         _finish_coordinate_custody((("offered report", offered_unchanged),), primary)
