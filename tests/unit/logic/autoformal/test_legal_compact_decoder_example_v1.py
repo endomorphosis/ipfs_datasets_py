@@ -435,3 +435,344 @@ def test_projection_expression_commitment_cannot_be_substituted_at_public_owner_
     monkeypatch.setattr(compact, 'project_request_v1', substituted)
     with pytest.raises(ValueError): prepare(case)
     assert observed == [sha(wire(json.loads(case['value']['kwargs']['relational_request_raw'])['expression']))]
+
+
+# The counted companion retains the entire original source-only example; its
+# target is a separate authored fixed grammar, never an inferred legal meaning.
+def _counted_companion_owner():
+    from ipfs_datasets_py.logic.autoformal import legal_counted_frame_v1 as counted
+    return counted
+
+
+def _counted_companion_case(*, source=None, alternative='fixture:counted-companion:one'):
+    counted = _counted_companion_owner()
+    old = make_case(source_only=True, source=source)
+    request = counted.authored_counted_frame_request()
+    request_raw = wire(request)
+    counted_report = counted.prepare_counted_frame(request_raw, expected_request_sha256=sha(request_raw))
+    inventory = joins._independent_counted_paths(request['expression'])
+    code = 'all_counted_frame_semantics_unreviewed'
+    raw_join = wire({'schema': 'legal-source-typed-norm-join-request/v2',
+        'interpretation_status': 'unreviewed_correspondence_proposal',
+        'component_id': 'fixture:counted-companion', 'alternative_id': alternative,
+        'selected_unit_ref': deepcopy(old['value']['join_request']['selected_unit_ref']),
+        'node_correspondences': [{'typed_path': path, 'source_anchor_paths': [],
+            'disposition': 'introduced_unresolved', 'unresolved_codes': [code],
+            'rationale': 'Authored syntax nomination with no selected source meaning.'}
+            for path, _, _ in inventory],
+        'introduced_unresolved': [{'code': code,
+            'rationale': 'Carrier, event/time, identity and complete statutory semantics are unreviewed.',
+            'affected_typed_paths': [path for path, _, _ in inventory]}]})
+    counted_inputs = {'scope_report': deepcopy(old['value']['scope_report']),
+        'counted_report': counted_report, 'join_request_raw': raw_join,
+        'expected_join_request_sha256': sha(raw_join),
+        'expected_scope_report_sha256': old['value']['kwargs']['expected_scope_report_sha256'],
+        'expected_counted_report_sha256': counted.counted_frame_report_sha256(counted_report),
+        'scope_replay_inputs': deepcopy(old['value']['kwargs']['scope_replay_inputs']),
+        'counted_request_raw': request_raw, 'expected_counted_request_sha256': sha(request_raw)}
+    counted_join = joins.subject.prepare_source_typed_norm_join_v2(**counted_inputs)
+    codec = counted.build_counted_frame_token_codec_v1()
+    options = {'expected_source_example_sha256': examples.subject.relational_decoder_example_sha256(old['source']),
+        'expected_counted_join_sha256': joins.subject.source_typed_norm_join_sha256(counted_join),
+        'source_example_inputs': {'join_report': deepcopy(old['join']), **deepcopy(old['options'])},
+        'counted_join_inputs': counted_inputs, 'codec': codec,
+        'expected_codec_sha256': counted.counted_frame_token_codec_sha256(codec)}
+    return {'source': old['source'], 'counted_join': counted_join, 'options': options,
+            'old': old}
+
+
+@pytest.fixture(scope='module')
+def counted_companion_case():
+    return _counted_companion_case()
+
+
+def _counted_companion_prepare(case):
+    return subject.prepare_counted_compact_decoder_example_v1(
+        case['source'], case['counted_join'], **case['options'])
+
+
+def _counted_companion_validate(report, case):
+    return subject.validate_counted_compact_decoder_example_v1(
+        report, case['source'], case['counted_join'],
+        expected_report_sha256=subject.compact_decoder_example_sha256(report), **case['options'])
+
+
+def _assert_counted_companion_limits(report):
+    for value in (report, report['source_example'], report['compact_label'], report['compact_encoding']):
+        assert value['authority'] and all(flag is False for flag in value['authority'].values())
+        assert type(value['training_mask']) is type(value['evaluation_gold_mask']) is int
+        assert value['training_mask'] == value['evaluation_gold_mask'] == 0
+    assert report['source_example']['split'] == 'unassigned'
+    assert report['source_example']['label'] is None
+    assert report['source_example']['status'] == 'source_only_pending_target'
+    assert report['compact_label']['context_origin'] == 'target_derived_authored_declaration'
+    assert report['compact_label']['checkpoint_compatibility_verified'] is False
+    assert 'model_input' not in report and 'target' not in report['source_example']['model_input']
+
+
+def test_counted_companion_calls_all_original_public_owners_and_keeps_source_separate(
+        counted_companion_case, monkeypatch):
+    case = deepcopy(counted_companion_case)
+    calls = []
+    for owner, name, label in ((examples.subject, 'validate_relational_decoder_example_v1', 'source'),
+            (joins.subject, 'validate_source_typed_norm_join_v2', 'counted_join'),
+            (_counted_companion_owner(), 'project_counted_frame_request_v1', 'projection'),
+            (_counted_companion_owner(), 'encode_counted_frame_tokens_v1', 'encoding')):
+        actual = getattr(owner, name)
+        def observed(*args, _actual=actual, _label=label, **kwargs):
+            result = _actual(*args, **kwargs)
+            calls.append(_label)
+            return result
+        monkeypatch.setattr(owner, name, observed)
+    report = _counted_companion_prepare(case)
+    assert _counted_companion_validate(report, case) == report
+    assert all(calls.count(name) >= 2 for name in ('source', 'counted_join', 'projection', 'encoding'))
+    assert report['schema'] == 'legal-counted-compact-decoder-example/v1'
+    assert report['profile'] == 'source-only-example-with-partial-counted-label/v1'
+    assert report['ir_family_id'] == 'legal_ir'
+    assert report['task_id'] == 'typed_counted_frame_IR_reconstruction'
+    assert report['source_example'] == case['source']
+    assert report['source_example_sha256'] == sha(wire(case['source']))
+    assert report['counted_correspondence'] == case['counted_join']
+    assert report['counted_correspondence_sha256'] == sha(wire(case['counted_join']))
+    assert set(report['source_example']['model_input']) == {'source_text', 'context'}
+    assert report['source_example']['model_input'] == case['old']['value']['scope_report']['scope_request']
+    assert len(report['counted_correspondence']['provenance_ledger']) == 55
+    assert report['compact_label']['counts'] == {'nodes': 49, 'quantifiers': 6,
+        'membership_occurrences': 4, 'equality_occurrences': 6, 'variable_occurrences': 24}
+    assert report['compact_encoding']['prediction']['request']['source_binding'] is None
+    assert len(report['compact_encoding']['target_ids']) == 293
+    assert report['codec_sha256'] == case['options']['expected_codec_sha256']
+    _assert_counted_companion_limits(report)
+
+
+def test_counted_alternatives_share_exact_source_group_without_becoming_independent_cases(
+        counted_companion_case):
+    left = _counted_companion_prepare(deepcopy(counted_companion_case))
+    right_case = _counted_companion_case(alternative='fixture:counted-companion:other')
+    right = _counted_companion_prepare(right_case)
+    for key in ('model_input', 'source_input_sha256', 'source_identity', 'source_group_sha256'):
+        assert left['source_example'][key] == right['source_example'][key]
+    assert left['compact_label']['content'] == right['compact_label']['content']
+    assert left['counted_correspondence']['alternative_id'] != right['counted_correspondence']['alternative_id']
+    _assert_counted_companion_limits(right)
+
+
+def test_counted_identical_source_text_at_two_physical_occurrences_has_distinct_groups():
+    source = joins.source_case(duplicate=True)
+    left, right = deepcopy(source), deepcopy(source)
+    left['unit'], right['unit'] = source['units'][0], source['units'][1]
+    a = _counted_companion_prepare(_counted_companion_case(source=left))
+    b = _counted_companion_prepare(_counted_companion_case(source=right))
+    assert a['source_example']['model_input'] == b['source_example']['model_input']
+    assert a['compact_label']['content'] == b['compact_label']['content']
+    assert a['source_example']['source_group_sha256'] != b['source_example']['source_group_sha256']
+
+
+@pytest.mark.parametrize('damage', ['source_pin', 'counted_pin', 'source_missing', 'source_extra',
+    'counted_missing', 'counted_extra', 'codec_pin'])
+def test_counted_companion_wrong_pins_or_closed_original_bundles_refuse_before_owner_loading(
+        counted_companion_case, monkeypatch, damage):
+    case = deepcopy(counted_companion_case)
+    options = case['options']
+    if damage == 'source_pin': options['expected_source_example_sha256'] = '0' * 64
+    elif damage == 'counted_pin': options['expected_counted_join_sha256'] = '0' * 64
+    elif damage == 'source_missing': options['source_example_inputs'].pop('join_report')
+    elif damage == 'source_extra': options['source_example_inputs']['extra'] = None
+    elif damage == 'counted_missing': options['counted_join_inputs'].pop('counted_request_raw')
+    elif damage == 'counted_extra': options['counted_join_inputs']['extra'] = None
+    else: options['expected_codec_sha256'] = '0' * 64
+    monkeypatch.setattr(subject, '_counted_example_owners', lambda: pytest.fail('counted operation owners loaded before pure preflight refusal'))
+    with pytest.raises(ValueError):
+        _counted_companion_prepare(case)
+
+
+@pytest.mark.parametrize('different', ['occurrence', 'edition'])
+def test_counted_companion_rejects_fully_valid_other_source_even_with_identical_model_text(
+        counted_companion_case, different):
+    if different == 'occurrence':
+        source = joins.source_case(duplicate=True)
+        old_source = deepcopy(source)
+        old_source['unit'] = source['units'][1]
+        other = _counted_companion_case(source=old_source)
+        original = _counted_companion_case(source=source)
+    else:
+        original = deepcopy(counted_companion_case)
+        other = _counted_companion_case(source=joins.source_case(edition=2025))
+    assert original['source']['model_input'] == other['source']['model_input']
+    original['counted_join'] = other['counted_join']
+    original['options']['counted_join_inputs'] = other['options']['counted_join_inputs']
+    original['options']['expected_counted_join_sha256'] = other['options']['expected_counted_join_sha256']
+    with pytest.raises(ValueError):
+        _counted_companion_prepare(original)
+
+
+def test_counted_companion_requires_an_original_source_only_example_not_a_labelled_relational_example(
+        counted_companion_case):
+    case = deepcopy(counted_companion_case)
+    labelled = make_case()
+    assert labelled['source']['model_input'] == case['source']['model_input']
+    case['source'] = labelled['source']
+    case['options']['expected_source_example_sha256'] = sha(wire(labelled['source']))
+    case['options']['source_example_inputs'] = {'join_report': labelled['join'], **labelled['options']}
+    with pytest.raises(ValueError):
+        _counted_companion_prepare(case)
+
+
+@pytest.mark.parametrize('damage', ['source', 'source_pin', 'counted_correspondence', 'counted_pin',
+    'content', 'context', 'sidecar', 'token_ids', 'producer', 'authority', 'mask'])
+def test_counted_companion_resealed_output_cannot_replace_public_regeneration(
+        counted_companion_case, damage):
+    case = deepcopy(counted_companion_case)
+    report = _counted_companion_prepare(case)
+    if damage == 'source': report['source_example']['model_input']['source_text'] += 'changed'
+    elif damage == 'source_pin': report['source_example_sha256'] = '0' * 64
+    elif damage == 'counted_correspondence': report['counted_correspondence']['provenance_ledger'].pop()
+    elif damage == 'counted_pin': report['counted_correspondence_sha256'] = '0' * 64
+    elif damage == 'content': report['compact_label']['content']['tree'][0] = 'exists'
+    elif damage == 'context': report['compact_label']['context']['maximum'] = True
+    elif damage == 'sidecar': report['compact_label']['identity_sidecar']['node_ids'].reverse()
+    elif damage == 'token_ids': report['compact_encoding']['target_ids'].pop()
+    elif damage == 'producer': report['producer_pins'] = {}
+    elif damage == 'authority': report['authority'][next(iter(report['authority']))] = True
+    else: report['training_mask'] = 1
+    with pytest.raises(ValueError):
+        _counted_companion_validate(report, case)
+
+
+@pytest.mark.parametrize('location', ['source', 'counted_correspondence', 'counted_report'])
+def test_counted_companion_offered_foreign_producer_paths_are_not_opened(
+        counted_companion_case, monkeypatch, tmp_path, location):
+    case = deepcopy(counted_companion_case)
+    foreign = tmp_path / 'never-read-counted-owner.py'
+    target = case['source'] if location == 'source' else case['counted_join']
+    if location == 'counted_report': target = target['counted_frame_report']
+    target['producer_pins'][str(foreign)] = '0' * 64
+    if location == 'source': case['options']['expected_source_example_sha256'] = sha(wire(case['source']))
+    else: case['options']['expected_counted_join_sha256'] = sha(wire(case['counted_join']))
+    read = Path.read_bytes
+    def guarded(path):
+        assert path != foreign, 'offered foreign producer path was opened'
+        return read(path)
+    monkeypatch.setattr(Path, 'read_bytes', guarded)
+    with pytest.raises(ValueError):
+        _counted_companion_prepare(case)
+
+
+@pytest.mark.parametrize('boundary', ['source', 'counted_join', 'projection', 'encoding'])
+def test_counted_companion_caller_inputs_are_fenced_after_genuine_owner_callbacks(
+        counted_companion_case, monkeypatch, boundary):
+    case = deepcopy(counted_companion_case)
+    owner, name = {'source': (examples.subject, 'validate_relational_decoder_example_v1'),
+        'counted_join': (joins.subject, 'validate_source_typed_norm_join_v2'),
+        'projection': (_counted_companion_owner(), 'project_counted_frame_request_v1'),
+        'encoding': (_counted_companion_owner(), 'encode_counted_frame_tokens_v1')}[boundary]
+    actual, seen = getattr(owner, name), []
+    def changed(*args, **kwargs):
+        result = actual(*args, **kwargs)
+        seen.append(True)
+        case['source']['model_input']['source_text'] += 'caller changed after public replay'
+        return result
+    monkeypatch.setattr(owner, name, changed)
+    with pytest.raises(ValueError):
+        _counted_companion_prepare(case)
+    assert seen
+
+
+@pytest.mark.parametrize('boundary', ['public_replay', 'final_wire'])
+def test_counted_companion_producer_fences_cover_replay_and_complete_serialization(
+        counted_companion_case, monkeypatch, boundary):
+    case = deepcopy(counted_companion_case)
+    watched = Path(subject.__file__)
+    snapshot, ordinary_wire = subject._snapshot, subject._wire
+    actual = examples.subject.validate_relational_decoder_example_v1
+    armed, seen = [False], []
+    def changed_snapshot(path):
+        value = snapshot(path)
+        if armed[0] and Path(path) == watched:
+            seen.append(True)
+            return ('0' * 64, value[1])
+        return value
+    def replay(*args, **kwargs):
+        value = actual(*args, **kwargs)
+        if boundary == 'public_replay': armed[0] = True
+        return value
+    def serialize(value, *args, **kwargs):
+        result = ordinary_wire(value, *args, **kwargs)
+        if boundary == 'final_wire' and type(value) is dict and value.get('schema') == 'legal-counted-compact-decoder-example/v1':
+            armed[0] = True
+        return result
+    monkeypatch.setattr(subject, '_snapshot', changed_snapshot)
+    monkeypatch.setattr(subject, '_wire', serialize)
+    monkeypatch.setattr(examples.subject, 'validate_relational_decoder_example_v1', replay)
+    with pytest.raises(ValueError):
+        _counted_companion_prepare(case)
+    assert seen
+
+
+def test_counted_companion_validator_fences_offered_report_during_full_regeneration(
+        counted_companion_case, monkeypatch):
+    case = deepcopy(counted_companion_case)
+    offered = _counted_companion_prepare(case)
+    actual = subject.prepare_counted_compact_decoder_example_v1
+    def regenerate(*args, **kwargs):
+        result = actual(*args, **kwargs)
+        offered['compact_encoding']['target_ids'].pop()
+        return result
+    monkeypatch.setattr(subject, 'prepare_counted_compact_decoder_example_v1', regenerate)
+    with pytest.raises(ValueError):
+        _counted_companion_validate(offered, case)
+
+
+def test_counted_companion_originals_and_returned_labels_are_detached(counted_companion_case):
+    case = deepcopy(counted_companion_case)
+    before = deepcopy(case)
+    report = _counted_companion_prepare(case)
+    preserved = deepcopy(report)
+    report['compact_label']['content']['tree'][0] = 'changed'
+    report['source_example']['model_input']['context']['text'] = 'changed'
+    assert case == before
+    assert _counted_companion_prepare(case) == preserved
+
+
+@pytest.mark.parametrize('owner_kind', ['source', 'counted_join'])
+def test_counted_companion_operational_public_replay_errors_propagate_unchanged(
+        counted_companion_case, monkeypatch, owner_kind):
+    owner, name = ((examples.subject, 'validate_relational_decoder_example_v1') if owner_kind == 'source'
+                   else (joins.subject, 'validate_source_typed_norm_join_v2'))
+    failure = OSError('authored operational dependency is unavailable')
+    def unavailable(*args, **kwargs):raise failure
+    monkeypatch.setattr(owner, name, unavailable)
+    with pytest.raises(OSError) as raised:
+        _counted_companion_prepare(deepcopy(counted_companion_case))
+    assert raised.value is failure
+
+
+def test_counted_companion_complete_input_bound_refuses_before_owner_discovery(
+        counted_companion_case, monkeypatch):
+    monkeypatch.setattr(subject, 'MAX_INPUT_BYTES', 1)
+    monkeypatch.setattr(subject, '_counted_example_owners', lambda: pytest.fail('owner discovery after complete input overflow'))
+    with pytest.raises(ValueError):
+        _counted_companion_prepare(deepcopy(counted_companion_case))
+
+
+@pytest.mark.parametrize('returned_value', ['expression_commitment', 'truncated_token_ids'])
+def test_counted_companion_refuses_inconsistent_genuine_public_projection_or_encoding_returns(
+        counted_companion_case, monkeypatch, returned_value):
+    """Corrupt only one returned field after each genuine owner has succeeded."""
+    counted = _counted_companion_owner()
+    name = ('project_counted_frame_request_v1' if returned_value == 'expression_commitment'
+            else 'encode_counted_frame_tokens_v1')
+    actual, observed = getattr(counted, name), []
+    def changed(*args, **kwargs):
+        result = actual(*args, **kwargs)
+        observed.append(True)
+        if returned_value == 'expression_commitment':
+            result['original_expression_sha256'] = '0' * 64
+        else:
+            result['target_ids'].pop()
+        return result
+    monkeypatch.setattr(counted, name, changed)
+    with pytest.raises(ValueError):
+        _counted_companion_prepare(deepcopy(counted_companion_case))
+    assert observed == [True]

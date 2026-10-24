@@ -1,0 +1,440 @@
+{
+  "authority": {
+    "evaluation_gold_mask": 0,
+    "graph_or_Lean_admitted": false,
+    "model_quality_or_convergence_established": false,
+    "permitted_inference_context_verified": false,
+    "source_edition_or_meaning_adopted": false,
+    "source_to_model_equivalence_verified": false,
+    "training_mask": 0,
+    "training_qualified": false
+  },
+  "evidence_id": "counted-source-label-public-source-reconciliation-20261024-01",
+  "fixture_helpers": [
+    {
+      "comparison": "same_as_canonical",
+      "frozen249_sha256": "e8327895dc0ac315168f3e8b40a962cf00617a0063db95e937d1f7a6637254d8",
+      "path": "tests/unit/logic/autoformal/test_legal_relational_decoder_example_v1.py",
+      "public_bytes": 16863,
+      "public_git_blob_sha": "b8702948c642373b2dd8ea274531691178e6df88"
+    },
+    {
+      "comparison": "different_from_canonical_and_frozen_249",
+      "frozen249_sha256": "8d9b72ba28d61e749a2d08f07890bad289f328e55b26c3b100ace68f84f92e1d",
+      "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+      "public_bytes": 22714,
+      "public_git_blob_sha": "7ca98c075144ec609089a294413c00426d95b160"
+    },
+    {
+      "comparison": "same_as_frozen_249",
+      "frozen249_sha256": "538b70505780cdf61cc64e837e145ec4fa76140a5e28a57bdded3649831bb7b1",
+      "path": "tests/unit/logic/autoformal/test_legal_source_norm_scope_v1.py",
+      "public_bytes": 23401,
+      "public_git_blob_sha": "a1128ae9120493e8555c75d28083af3cb9eb2dea"
+    },
+    {
+      "comparison": "same_as_canonical",
+      "frozen249_sha256": "961ea149d94d155b402884a9857e24e5255690301ea1891017f0b0fb2707aeec",
+      "path": "tests/unit/logic/autoformal/test_legal_source_sampling.py",
+      "public_bytes": 15837,
+      "public_git_blob_sha": "d793e513874215ac3ab3669378874e7afa38782a"
+    }
+  ],
+  "initializer_and_orchestration_review": {
+    "bytes": 44132,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-decoder-example-20261022-01/public-dependency-integration-v01/initializer-reuse-review-v01.json",
+    "root": "datasets_repository",
+    "sha256": "abef5178f08cff64b6741863edd6326bb92cf278398e0cbfca17fc5c6583128a"
+  },
+  "initializer_scope": {
+    "controller_namespace_code_scope": "Separate owned-validation-request/v2 no-grant classifier branch; the original successful request was v1.",
+    "fresh_metadata_exact_count": 9,
+    "fresh_metadata_exact_initializers": [
+      {
+        "bytes": 56829,
+        "fresh_public_exact_blob_and_size": true,
+        "frozen249_sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9",
+        "path": "ipfs_datasets_py/__init__.py",
+        "public_git_blob_sha": "7d8b29b674206355ec12a84f69920a819338e43c"
+      },
+      {
+        "bytes": 4434,
+        "fresh_public_exact_blob_and_size": true,
+        "frozen249_sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79",
+        "path": "ipfs_datasets_py/logic/__init__.py",
+        "public_git_blob_sha": "950f95b6c859021bbd76326adcf602bdd4d19482"
+      },
+      {
+        "bytes": 60251,
+        "fresh_public_exact_blob_and_size": true,
+        "frozen249_sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71",
+        "path": "ipfs_datasets_py/logic/autoformal/__init__.py",
+        "public_git_blob_sha": "73ccdf01af83355d103a17f0c7bfa1f180c940db"
+      },
+      {
+        "bytes": 97,
+        "fresh_public_exact_blob_and_size": true,
+        "frozen249_sha256": "82206d6ca08b8626b2afd37534679ac3ea001005f934ed211aa0f1f4eb81f073",
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/__init__.py",
+        "public_git_blob_sha": "94864ddd315dab1b20d0d5ae0f5824be1b4fb95e"
+      },
+      {
+        "bytes": 2708,
+        "fresh_public_exact_blob_and_size": true,
+        "frozen249_sha256": "53ce51e56a292ea3210010fa17b352e9d40eb5b59cf15c5e732147000b40fee1",
+        "path": "ipfs_datasets_py/logic/legal_ir/__init__.py",
+        "public_git_blob_sha": "049082bd3528682a395698fea6ae778421ddf156"
+      },
+      {
+        "bytes": 8980,
+        "fresh_public_exact_blob_and_size": true,
+        "frozen249_sha256": "e75f0c2ffea0f0706a3d1768a794849e6c013b6647dc59ba331f44797c233386",
+        "path": "ipfs_datasets_py/logic/parsers/__init__.py",
+        "public_git_blob_sha": "c7a25d447dbb1f70d660529f0c15f8a92ca47876"
+      },
+      {
+        "bytes": 8285,
+        "fresh_public_exact_blob_and_size": true,
+        "frozen249_sha256": "20dd418d90360cdb42c64ba8b87bedcdb640228b460ef6c6ae60312365130e81",
+        "path": "ipfs_datasets_py/logic/syntax_core/__init__.py",
+        "public_git_blob_sha": "9d0f887ec3d4d8b559d7cd546b39f4c6c6de3ee7"
+      },
+      {
+        "bytes": 69336,
+        "fresh_public_exact_blob_and_size": true,
+        "frozen249_sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+        "public_git_blob_sha": "ba048421b90e32e87300c10b13e199da350b6207"
+      },
+      {
+        "bytes": 175,
+        "fresh_public_exact_blob_and_size": true,
+        "frozen249_sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2",
+        "path": "ipfs_datasets_py/utils/__init__.py",
+        "public_git_blob_sha": "dd98bbea10f2938d6f040b8aa5c4377bbb14beb9"
+      }
+    ],
+    "original_successful_request_schema": "owned-validation-request/v1",
+    "original_successful_worker_defined_product_namespaces": false,
+    "original_successful_worker_installed_product_loader_substitutions": false,
+    "original_successful_worker_used_ordinary_product_imports": true,
+    "other_initializer_whole_tree_comparison_claimed": false,
+    "other_original_initializer_paths_without_fresh_metadata": [
+      "ipfs_datasets_py/logic/CEC/__init__.py",
+      "ipfs_datasets_py/logic/CEC/native/__init__.py",
+      "ipfs_datasets_py/logic/TDFOL/__init__.py",
+      "ipfs_datasets_py/logic/common/__init__.py",
+      "ipfs_datasets_py/logic/deontic/__init__.py",
+      "ipfs_datasets_py/logic/deontic/utils/__init__.py",
+      "ipfs_datasets_py/logic/formalization/__init__.py",
+      "ipfs_datasets_py/logic/intent_ir/__init__.py",
+      "ipfs_datasets_py/logic/ir_core/__init__.py",
+      "ipfs_datasets_py/logic/modal/__init__.py",
+      "ipfs_datasets_py/logic/proof_corpus/__init__.py",
+      "ipfs_datasets_py/logic/software_verification/__init__.py",
+      "ipfs_datasets_py/optimizers/__init__.py",
+      "ipfs_datasets_py/processors/__init__.py",
+      "ipfs_datasets_py/processors/legal_data/__init__.py",
+      "ipfs_datasets_py/retrieval/__init__.py",
+      "ipfs_datasets_py/retrieval/hf_graphrag/__init__.py"
+    ],
+    "other_original_initializer_sources_without_fresh_metadata_count": 17,
+    "scope": "Nine initializer Git blobs and sizes match the original frozen249 capture. Other original initialization and execution paths retain their historical scope without a fresh whole-tree attestation."
+  },
+  "limits": [
+    "Only nine initializer sources have fresh metadata comparison in these three readmaps; other original initializer files listed above retain their original source scope and receive no fresh whole-tree comparison claim.",
+    "The named29 producer comparison does not attest an exhaustive interpreter, optional import, mutable-global, third-party binary, installed environment or sys.modules closure.",
+    "The source-only findings do not requalify later APIs, combine158 and249 cohorts, establish learned reconstruction, legal meaning, permitted context, graph/Lean admission or training eligibility.",
+    "Git blob identities were calculated from retained source bytes and compared with the root-fetched immutable public directory maps. Source hashes are not a new runtime test.",
+    "The29 named producer comparison and nine initializer checks do not attest an exhaustive interpreter, third-party binary, optional-import, installed-environment or mutable sys.modules closure.",
+    "The six optional controls remain unexecuted preparation only unless a later review identifies a concrete changed dependency boundary."
+  ],
+  "named_counted_producer_reuse": {
+    "count": 29,
+    "exact_selected_product_overlays": 2,
+    "fixed_direct_owner_pins": {
+      "companion_required_counted_frame_sha256": "df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13",
+      "companion_required_join_sha256": "f51377e4c2446d464cd6cbbc97f6838f591e652e50c460e8084771944e937976",
+      "companion_required_relational_example_sha256": "4aed1fde35efce9cdd6579be83be6901143003e996611850f6b35f0cce3f705c",
+      "new_fixed_pin_profile_changes_required": false,
+      "post_selected_overlay_all_29_named_product_blobs_equal_frozen_249": true,
+      "pre_overlay_public_join_mismatch": true,
+      "scope_303_public_must_not_be_replaced_by_private_913": true
+    },
+    "fresh_public_exact_named_producers": 27,
+    "new_fixed_pin_profile_required": false,
+    "post_overlay_all29_match_frozen249": true,
+    "producer_pins": [
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "b89146e2471b7335f23115222c5a9bc5298a20bb02f02cce5d91496e6563d8aa",
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_contracts.py",
+        "public_git_blob_sha": "ed221d9fd65568935377c6fe24203941ca761f86"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "6e4be77cfc27a750b11aa57bb92baa92617c57d5c4a26316e25563aa715ec257",
+        "path": "ipfs_datasets_py/logic/autoformal/corpus_source.py",
+        "public_git_blob_sha": "4505f96bb99dfa53965c185fdfb1ce900b4764a3"
+      },
+      {
+        "comparison": "selected_exact_existing_source_overlay",
+        "frozen249_sha256": "d62b629d86c241e60cf0ecad41ae09c11883ec83fea22a41deeca4f6507ed604",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_compact_decoder_example_v1.py",
+        "public_git_blob_sha": null
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "8b637a6c1947c152abefef3396b86b95739e214dde80e17739ad3f483e2c0482",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_context_obligations.py",
+        "public_git_blob_sha": "f87baf4b3bbf1b36e42a8a3fff7714a195e88c29"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_v1.py",
+        "public_git_blob_sha": "01e7bd225dccfdc60c1a5c4d62b2435d8d887fca"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_official_document_views.py",
+        "public_git_blob_sha": "6ccdf4d682d2e09956786e07e79db5167a7b1741"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py",
+        "public_git_blob_sha": "38a4589f9d9d15fc458f4c4d2cc52f9e1f9ea2c9"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "30343ada53f17b7c39c4b1ce1fbc5bc14234396b5d28fb753e14141423d17039",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_norm_scope_v1.py",
+        "public_git_blob_sha": "3ed073eb84be1791b6e42c7763f80e99191aba56"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "bdf8a76c13e5e3dd67e5cd2b18230726063d65a97c6db5a018c26dcadefc2489",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_sampling.py",
+        "public_git_blob_sha": "cbb1a2bca8a626645ac18c4241d0bc10a2acbddf"
+      },
+      {
+        "comparison": "selected_exact_existing_source_overlay",
+        "frozen249_sha256": "f51377e4c2446d464cd6cbbc97f6838f591e652e50c460e8084771944e937976",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+        "public_git_blob_sha": null
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "1f1e607c7c8d1e479ae5b79e17f928571e3da49f0ad4180dfc93e609d0d47dc2",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+        "public_git_blob_sha": "0d09b8593d42510acaf7a481a52f9617a75198e6"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "2f4e2895e29d6a7fcefdb240c73b732b8e0504b918af62994a04964bc572a13e",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_statutory_context_v2.py",
+        "public_git_blob_sha": "12ea11aca96e6addceadb4029b135f66247eec1e"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "ba097e653158a812d66ead978d6405d61adaa293521305333579b19bd69a432d",
+        "path": "ipfs_datasets_py/logic/families/namespaces.py",
+        "public_git_blob_sha": "2ff6102d93759b4bfd30e2d0054353db733e6e2b"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "4aed1fde35efce9cdd6579be83be6901143003e996611850f6b35f0cce3f705c",
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_decoder_example_v1.py",
+        "public_git_blob_sha": "8eb7c9ca923baaf1706b063239af17dfeeced94a"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "66c2f4fb4280add56913d7629ad80b91c581aae54b2f832fa359f412d9d7bdf5",
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_relational_target_codec_v1.py",
+        "public_git_blob_sha": "52b447e4004387ffea3254828d71e0f80fef30b7"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+        "path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+        "public_git_blob_sha": "1bf4da481ff84ccb3554ae0dd1126dfc4cbffb6b"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a",
+        "path": "ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py",
+        "public_git_blob_sha": "18783070b45c280067552f110bc48748a210e53e"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "7e74f5ea2230549165fd0cb0230b2b8baaa0016cc2352d5a422c70c20f5e4da8",
+        "path": "ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py",
+        "public_git_blob_sha": "fcd144ab4dea928a260634e6a513945db2b53799"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "e75f0c2ffea0f0706a3d1768a794849e6c013b6647dc59ba331f44797c233386",
+        "path": "ipfs_datasets_py/logic/parsers/__init__.py",
+        "public_git_blob_sha": "c7a25d447dbb1f70d660529f0c15f8a92ca47876"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "af5e730aa9f92676ff07c8be43e834652a98e6f7a015a04cd8ee0546c2b18e0f",
+        "path": "ipfs_datasets_py/logic/parsers/fol.py",
+        "public_git_blob_sha": "6b9a536e4579af880dd21da647c6cf2e7c6d4913"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "20dd418d90360cdb42c64ba8b87bedcdb640228b460ef6c6ae60312365130e81",
+        "path": "ipfs_datasets_py/logic/syntax_core/__init__.py",
+        "public_git_blob_sha": "9d0f887ec3d4d8b559d7cd546b39f4c6c6de3ee7"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7",
+        "path": "ipfs_datasets_py/logic/syntax_core/algebra.py",
+        "public_git_blob_sha": "3e38b32b0cdb97ff50f84e415c0d4425ab0d0c94"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4",
+        "path": "ipfs_datasets_py/logic/syntax_core/ast.py",
+        "public_git_blob_sha": "129c5c4079d2ef05924bcf62c76fb7d3fd22d5e7"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8",
+        "path": "ipfs_datasets_py/logic/syntax_core/contracts.py",
+        "public_git_blob_sha": "09d79a0e6ae23d8e71f31fbba9bbebfdb84f4546"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "a291db3c2cea04ae8dd9221a5e5ddbebd419679c02a5a008034e3755e7650d8f",
+        "path": "ipfs_datasets_py/logic/syntax_core/diagnostics.py",
+        "public_git_blob_sha": "4b436f9aa0346ede2ef01a0f5a2400bc63abe0d5"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "f666e9759323508f4e90964c0d71164645af9ce1de60bed778e5f64f7f4a3aea",
+        "path": "ipfs_datasets_py/logic/syntax_core/lexer.py",
+        "public_git_blob_sha": "dbb9e3f995404a0283fe6bcf5dc83f2d2d145eb4"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "eff5ca12d748eff1e9463b737a8243c97d89cac51e1b604fe2c765aed885cb44",
+        "path": "ipfs_datasets_py/logic/syntax_core/registry.py",
+        "public_git_blob_sha": "a909ce3a3ea1712f9d2aa35ba2c5d2e4eb097f56"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf",
+        "path": "ipfs_datasets_py/logic/syntax_core/signatures.py",
+        "public_git_blob_sha": "ce8eb3447fdb9ed57c348e0cb16fe60528d440b6"
+      },
+      {
+        "comparison": "fresh_public_metadata_exact_frozen249_blob",
+        "frozen249_sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf",
+        "path": "ipfs_datasets_py/utils/cid_utils.py",
+        "public_git_blob_sha": "36944fb73c85e541b0b9c47531ebfd7b79791534"
+      }
+    ],
+    "total_source_and_test_overlays": 4
+  },
+  "operations": {
+    "Git_or_API_operations": 0,
+    "Lean_builds": 0,
+    "canonical_writes": 0,
+    "leases_or_admission": 0,
+    "model_or_encoder_calls": 0,
+    "native_validation": 0,
+    "product_or_fixture_imports": 0,
+    "source_metadata_or_AST_review_only": true,
+    "tests_executed": 0,
+    "training_calls": 0
+  },
+  "original_source_closure_review": {
+    "bytes": 64523,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-decoder-example-20261022-01/public-dependency-integration-v01/source-closure-reconciliation-v01.json",
+    "root": "datasets_repository",
+    "sha256": "bb3c20c2b28aca6161befffd6a803541b422dce702a159ffe5ca55180015f4de"
+  },
+  "preserved_profiles": [
+    "Keep public/frozen249 source-scope30343ada rather than replace it with private parent extension9131a433.",
+    "The frozen158 counted owner72501580 preserves its19 original function/class ASTs and exact byte prefix in laterdf91798d. The249 campaign already qualifieddf91798d with selectedf51377e4/d62b629d. This is not a rerun of158.",
+    "The old companion5de4bf91/test41426956 current-main275 qualification remains separate from the counted249 source generation and its original closure.",
+    "Later BOS-preflight metadata APIs and other appended private parent/profile APIs retain their own independent qualification boundaries."
+  ],
+  "public_base": "f7ca2d799555ddde866d877cb775c2a1ee8edca6",
+  "public_directory_metadata": [
+    {
+      "bytes": 268179,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-decoder-example-20261022-01/public-dependency-integration-v01/public-directory-map-v01.json",
+      "root": "datasets_repository",
+      "sha256": "e02196c64bad756935bde05f414cd448f20d50e00c36147c6065c1a3ac4771c5"
+    },
+    {
+      "bytes": 28142,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-decoder-example-20261022-01/public-dependency-integration-v01/public-directory-map-v02.json",
+      "root": "datasets_repository",
+      "sha256": "106f1bb6f59f3bcf03cd4dfe212c389b0db2df635e8276c1e09e08082b1aa190"
+    },
+    {
+      "bytes": 72912,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-decoder-example-20261022-01/public-dependency-integration-v01/public-directory-map-v03.json",
+      "root": "datasets_repository",
+      "sha256": "2853995747d6d40e81da960a22911c8b977dfbbe424601ec6ad595a78ac9f46d"
+    }
+  ],
+  "qualification_reuse": {
+    "companion249_public_record": "docs/autoformalization/evidence/legal-ir-counted-decoder-example-20261022.json",
+    "demonstrated_changed_named_counted_runtime_boundary": false,
+    "fresh_runtime_required_solely_for_this_publication": false,
+    "historical_158_and249_and275_pooled": false,
+    "historical_cohorts_requalified": false,
+    "join158_public_record": "docs/autoformalization/evidence/legal-ir-counted-source-correspondence-20261021.json",
+    "new_case_or_phase_passes": 0,
+    "six_optional_controls_executed": false,
+    "six_optional_existing_case_controls_prepared": true
+  },
+  "recorded_at_utc": "2026-10-24T19:31:16.170722+00:00",
+  "schema": "legal-ir-counted-public-source-reconciliation/v1",
+  "scope": "Bounded static source/metadata/AST reconciliation supporting reuse of the existing frozen249 counted source/label consumer qualification for four selected publication overlays. No fresh public runtime, fixture or whole-package qualification.",
+  "selected_source_and_test_overlays": [
+    {
+      "bytes": 45716,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+      "sha256": "f51377e4c2446d464cd6cbbc97f6838f591e652e50c460e8084771944e937976"
+    },
+    {
+      "bytes": 65641,
+      "path": "tests/unit/logic/autoformal/test_legal_source_typed_norm_join_v1.py",
+      "sha256": "81a5614a3a1be569e346407fd9189e60cb47c87775ed80cdddbd2fff7c0d539e"
+    },
+    {
+      "bytes": 54842,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_compact_decoder_example_v1.py",
+      "sha256": "d62b629d86c241e60cf0ecad41ae09c11883ec83fea22a41deeca4f6507ed604"
+    },
+    {
+      "bytes": 42714,
+      "path": "tests/unit/logic/autoformal/test_legal_compact_decoder_example_v1.py",
+      "sha256": "48b42f095fda58cc6779ff4e34a395059007175df58b1ce05d19ede9704d2043"
+    }
+  ],
+  "unselected_helper_test_delta": {
+    "changed_function_or_class_names": [
+      "test_preflight_rejections_happen_before_operation_owner_loading"
+    ],
+    "old_function_class_count": 26,
+    "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+    "private_fixture_overlay_required": false,
+    "public_git_blob_sha": "7ca98c075144ec609089a294413c00426d95b160",
+    "public_sha256": "c8b8f7410b697e6d0b047011c4c80eb7e9759f845c5362e7b7c68c2908f94e8a",
+    "scope": "Ten explicit parameter IDs were added to one unselected preflight test. Referenced fixture-builder/request helper ASTs are unchanged.",
+    "unchanged_function_class_count": 25,
+    "used_Builder_AST_identical": true,
+    "used_request_for_AST_identical": true
+  }
+}
