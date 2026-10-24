@@ -1,0 +1,684 @@
+{
+  "all_requested_rows_and_eight_fields_verified": true,
+  "artifacts": {
+    "data1_manifest": {
+      "bytes": 144682,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/cohort-manifest-data1.json",
+      "sha256": "93ed3e40b8e7bd74b8828205e1cdcd51e86dfc8dd25a89d2605a5b3225c75b5c"
+    },
+    "data2_manifest": {
+      "bytes": 157648,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/cohort-manifest-data2.json",
+      "sha256": "f212050e8afa7616d2f98ca2dd7e5c4633f541a107f26635b104edc270b3c32a"
+    },
+    "documents": {
+      "bytes": 83276,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/documents.json",
+      "sha256": "73ef8f120b9712c01d2de02f8c1668b8d6c49a599c5638a41ceed3227c7c5eaf"
+    },
+    "parent_page_preflight": {
+      "bytes": 23564,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-page-preflight.json",
+      "sha256": "03ac15e10a003c1810acfbdcd5f2c6e9f1fce16f302f807c08fcb5c090c6dc75"
+    },
+    "parent_selected_rows": {
+      "bytes": 94295,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+      "sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+    },
+    "parent_text_views": {
+      "bytes": 222905,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+      "sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+    },
+    "producer_recipe": {
+      "bytes": 10557,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/producer-recipe.json",
+      "sha256": "0c5af801aebfab1306f9b6021aea8cdbb94952704845031ba6778dcc87909a2d"
+    },
+    "source_coordinates": {
+      "bytes": 1526931,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/source-coordinates.json",
+      "sha256": "af6d07501c6c262147053c31a2ae404eebdf982e23f008eb1291c27af77d7c48"
+    },
+    "source_coordinates_reread": {
+      "bytes": 1526931,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/source-coordinates-reread.json",
+      "sha256": "af6d07501c6c262147053c31a2ae404eebdf982e23f008eb1291c27af77d7c48"
+    }
+  },
+  "authority": {
+    "Lean_admitted": false,
+    "context_closed": false,
+    "definition_applicability_verified": false,
+    "evaluation_gold_qualified": false,
+    "governing_edition_selected": false,
+    "meaning_review_completed": false,
+    "semantic_graph_admitted": false,
+    "source_authority_authenticated": false,
+    "source_semantics_verified": false,
+    "training_gold_qualified": false
+  },
+  "backlog_tasks_closed": [],
+  "cohort_id": "retained-official-2024-title10-three-source/v1",
+  "column_count": 8,
+  "coordinate_origin": "Half-open Unicode/UTF8 coordinates in exact decoded supplied text; physical page/row custody does not map encoded Parquet bytes or rawHTML byte positions to characters.",
+  "data1": {
+    "artifacts_durable": true,
+    "attempt": "data1-v02",
+    "checked_compile_count": 9,
+    "controller": {
+      "bytes": 8594,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/controller-complete-data1-v02.json",
+      "sha256": "c053c424083f0f65eb0af85464b4e0f4a42b436d54f514c29b6565692b6d2e6f"
+    },
+    "durability": {
+      "bytes": 2009,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/logs/validation-durability.json",
+      "sha256": "df966c05de60e56eccc4761769ebefb88779dd4abbf339d6354a5c1d64d9ab2a"
+    },
+    "envelope": {
+      "child_process_slots": 2,
+      "cpu_slots": 1,
+      "memory_mb": 1024,
+      "storage_bytes": 33554432,
+      "timeout_seconds": 180
+    },
+    "live_processes_at_terminal": 0,
+    "namespace_bypasses": {
+      "ipfs_datasets_py": {
+        "initializer": {
+          "bytes": 56829,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/__init__.py",
+          "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+        },
+        "initializer_body_bypassed": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py"
+      },
+      "ipfs_datasets_py.logic": {
+        "initializer": {
+          "bytes": 4434,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/__init__.py",
+          "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+        },
+        "initializer_body_bypassed": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic"
+      },
+      "ipfs_datasets_py.logic.autoformal": {
+        "initializer": {
+          "bytes": 60251,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/__init__.py",
+          "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+        },
+        "initializer_body_bypassed": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal"
+      }
+    },
+    "native_compute_released": true,
+    "native_lease_id": "5564c34624f94a539505b6300035837a",
+    "native_storage_released": true,
+    "ordinary_project_origins": {
+      "ipfs_datasets_py.logic.autoformal.constitution_inventory": {
+        "bytes": 11156,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+        "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_official_document_views": {
+        "bytes": 24944,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_official_document_views.py",
+        "sha256": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_official_source_custody": {
+        "bytes": 19956,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py",
+        "sha256": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_parent_parquet_pages": {
+        "bytes": 71640,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_parent_parquet_pages.py",
+        "sha256": "fcf2f111f1b95450caf09e818b2298e8080ad53774944b844ac46d729af767c7"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_parent_text_views": {
+        "bytes": 13849,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_parent_text_views.py",
+        "sha256": "94855a18b9ed466a38382715675052f7cb5952c9c672f28c255e376bd28d76cc"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_statutory_context": {
+        "bytes": 23949,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+        "sha256": "1f1e607c7c8d1e479ae5b79e17f928571e3da49f0ad4180dfc93e609d0d47dc2"
+      },
+      "ipfs_datasets_py.logic.autoformal.uscode_ingest": {
+        "bytes": 23313,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+        "sha256": "a0d79a7459186c19c3a32cc03405acc3e4a4e0e2b33fc7bae9525be7b5246e92"
+      }
+    },
+    "process_scope": "sampled_birth_bound_descendants",
+    "request": {
+      "bytes": 11589,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/request-data1-v02.json",
+      "sha256": "9b0d71685b98e36a5168defd4cc461f3fb2c984fe90fbfb5bb48d06feffd5941"
+    },
+    "reservation_id": "a1605aeea95147fe9b8764ffcf9abb4e",
+    "runtime_observations": {
+      "numpy": {
+        "path": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/numpy/__init__.py",
+        "version": "2.1.3"
+      },
+      "pyarrow": {
+        "path": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/pyarrow/__init__.py",
+        "version": "25.0.1"
+      },
+      "pyarrow.parquet": {
+        "path": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/pyarrow/parquet/__init__.py",
+        "version": null
+      }
+    },
+    "selected_checks": [
+      {
+        "details": {
+          "normalized_UTF8_bytes": [
+            72592,
+            1912,
+            3858
+          ],
+          "raw_HTML_bytes": [
+            98879,
+            4049,
+            7017
+          ],
+          "retained_document_and_view_ids_unchanged": true,
+          "sampler_or_review_template_regenerated": false,
+          "sections": [
+            "101",
+            "7213",
+            "7214"
+          ],
+          "whole_documents": 3
+        },
+        "name": "retained_official_views_replayed",
+        "passed": true
+      },
+      {
+        "details": {
+          "compiled": false,
+          "documents": 3,
+          "full_report_sha256": "5b3fc636a5ebe717e5cc9da047359ecd1e18b7b1aa2615b9f612c58f9fa4513b",
+          "query": "retained-official-pilot:2024:10:101,7213,7214:v1",
+          "release_id": "retained-official-pilot/2024-title10/v1",
+          "spans": 1649,
+          "stable_legal_unit_display_aliases_are_not_physical_keys": true
+        },
+        "name": "fresh_source_coordinate_inventory_prepared",
+        "passed": true
+      },
+      {
+        "details": {
+          "column_count": 8,
+          "cpu_count": 1,
+          "documents": {
+            "bytes": 83276,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/documents.json",
+            "sha256": "73ef8f120b9712c01d2de02f8c1668b8d6c49a599c5638a41ceed3227c7c5eaf"
+          },
+          "io_thread_count": 1,
+          "manifest": {
+            "bytes": 144682,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/cohort-manifest-data1.json",
+            "sha256": "93ed3e40b8e7bd74b8828205e1cdcd51e86dfc8dd25a89d2605a5b3225c75b5c"
+          },
+          "parquet": {
+            "bytes": 80951,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/source-documents.parquet",
+            "sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315"
+          },
+          "producer_recipe": {
+            "bytes": 10557,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/producer-recipe.json",
+            "sha256": "0c5af801aebfab1306f9b6021aea8cdbb94952704845031ba6778dcc87909a2d"
+          },
+          "row_count": 3
+        },
+        "name": "three_row_parquet_and_manifests_written",
+        "passed": true
+      },
+      {
+        "details": {
+          "Lean_builds": 0,
+          "authority": {
+            "Lean_admitted": false,
+            "context_closed": false,
+            "definition_applicability_verified": false,
+            "evaluation_gold_qualified": false,
+            "governing_edition_selected": false,
+            "meaning_review_completed": false,
+            "semantic_graph_admitted": false,
+            "source_authority_authenticated": false,
+            "source_semantics_verified": false,
+            "training_gold_qualified": false
+          },
+          "cohort_id": "retained-official-2024-title10-three-source/v1",
+          "encoder_calls": 0,
+          "entity_rows": 0,
+          "legacy_HF_join": null,
+          "model_calls": 0,
+          "source_sampling_or_review_templates_regenerated": false,
+          "training_updates": 0
+        },
+        "name": "semantic_authority_stays_pending",
+        "passed": true
+      }
+    ],
+    "source_READs_closed": true,
+    "source_pin_count": 37,
+    "worker_observation": {
+      "bytes": 12801,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/worker-observation.json",
+      "sha256": "14ea1d6b1a13c57214d4d1230699897a5a7a4875fe36679c3d66e50396d402e7"
+    }
+  },
+  "data2": {
+    "artifacts_durable": true,
+    "attempt": "data2-v01",
+    "checked_compile_count": 9,
+    "controller": {
+      "bytes": 8590,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/controller-complete-data2-v01.json",
+      "sha256": "8217bde3e3023ab93077e981a999ac66c420d1c0bb9392da2424f68ae830f608"
+    },
+    "durability": {
+      "bytes": 2032,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/logs/validation-durability.json",
+      "sha256": "f251bd1f84141e411ac447edfc8de7bf6afb8e33f71ec1217293595c96c31ffc"
+    },
+    "envelope": {
+      "child_process_slots": 2,
+      "cpu_slots": 1,
+      "memory_mb": 1024,
+      "storage_bytes": 33554432,
+      "timeout_seconds": 180
+    },
+    "live_processes_at_terminal": 0,
+    "namespace_bypasses": {
+      "ipfs_datasets_py": {
+        "initializer": {
+          "bytes": 56829,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/__init__.py",
+          "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+        },
+        "initializer_body_bypassed": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py"
+      },
+      "ipfs_datasets_py.logic": {
+        "initializer": {
+          "bytes": 4434,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/__init__.py",
+          "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+        },
+        "initializer_body_bypassed": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic"
+      },
+      "ipfs_datasets_py.logic.autoformal": {
+        "initializer": {
+          "bytes": 60251,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/__init__.py",
+          "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+        },
+        "initializer_body_bypassed": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal"
+      }
+    },
+    "native_compute_released": true,
+    "native_lease_id": "b5ab92ab0b8d4e4e8d238b650c1b36e2",
+    "native_storage_released": true,
+    "ordinary_project_origins": {
+      "ipfs_datasets_py.logic.autoformal.constitution_inventory": {
+        "bytes": 11156,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+        "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_official_document_views": {
+        "bytes": 24944,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_official_document_views.py",
+        "sha256": "204e91255e5587a5e79d0de263a035934c811c5f7ab8b780dd28f433f97f95e4"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_official_source_custody": {
+        "bytes": 19956,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_official_source_custody.py",
+        "sha256": "876bb6618fd76f6be33b995e9597796e4a5b4d95fa6689129beb3fb918b796e7"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_parent_parquet_pages": {
+        "bytes": 71640,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_parent_parquet_pages.py",
+        "sha256": "fcf2f111f1b95450caf09e818b2298e8080ad53774944b844ac46d729af767c7"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_parent_text_views": {
+        "bytes": 13849,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_parent_text_views.py",
+        "sha256": "94855a18b9ed466a38382715675052f7cb5952c9c672f28c255e376bd28d76cc"
+      },
+      "ipfs_datasets_py.logic.autoformal.legal_statutory_context": {
+        "bytes": 23949,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/legal_statutory_context.py",
+        "sha256": "1f1e607c7c8d1e479ae5b79e17f928571e3da49f0ad4180dfc93e609d0d47dc2"
+      },
+      "ipfs_datasets_py.logic.autoformal.uscode_ingest": {
+        "bytes": 23313,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+        "sha256": "a0d79a7459186c19c3a32cc03405acc3e4a4e0e2b33fc7bae9525be7b5246e92"
+      }
+    },
+    "process_scope": "sampled_birth_bound_descendants",
+    "request": {
+      "bytes": 14870,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/request-data2-v01.json",
+      "sha256": "414afdc827cccf3720dc96cc7a77771fb7f8322cf099fc05f9880df0a8bb15f6"
+    },
+    "reservation_id": "6b83d60ba3084c72a6ff22862b5f1661",
+    "runtime_observations": {
+      "numpy": null,
+      "pyarrow": null,
+      "pyarrow.parquet": null
+    },
+    "selected_checks": [
+      {
+        "details": {
+          "Git_subprocess_executed_by_DATA2": false,
+          "actual_Git_query_belongs_to_independently_pinned_parent_receipt": true,
+          "parent_descriptor_sha256": "03193ab96c495cf7e5d0f3211d6c6fbc63665fdbf66d090bc38ce95974622b8c",
+          "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+          "revision": "79f6f5538747095de6512dcc071e92b025570017",
+          "tracked_files": 3
+        },
+        "name": "declared_local_git_revision_and_data1_pins_bound",
+        "passed": true
+      },
+      {
+        "details": {
+          "Arrow_or_NumPy_decoder_used": false,
+          "all_eight_fields_equal_to_pre_Arrow_rows": true,
+          "page_preflight": {
+            "bytes": 23564,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-page-preflight.json",
+            "sha256": "03ac15e10a003c1810acfbdcd5f2c6e9f1fce16f302f807c08fcb5c090c6dc75"
+          },
+          "row_count": 3,
+          "selected_rows": {
+            "bytes": 94295,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+            "sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+          },
+          "unclassified_text_views": {
+            "bytes": 222905,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+            "sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+          }
+        },
+        "name": "three_physical_parent_rows_independently_reread",
+        "passed": true
+      },
+      {
+        "details": {
+          "documents": 3,
+          "full_report_sha256": "5b3fc636a5ebe717e5cc9da047359ecd1e18b7b1aa2615b9f612c58f9fa4513b",
+          "identical_DATA1_full_coordinate_report": true,
+          "manifest": {
+            "bytes": 157648,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/cohort-manifest-data2.json",
+            "sha256": "f212050e8afa7616d2f98ca2dd7e5c4633f541a107f26635b104edc270b3c32a"
+          },
+          "source_spans": 1649
+        },
+        "name": "source_coordinates_replayed_from_physical_rows",
+        "passed": true
+      },
+      {
+        "details": {
+          "Lean_builds": 0,
+          "authority": {
+            "Lean_admitted": false,
+            "context_closed": false,
+            "definition_applicability_verified": false,
+            "evaluation_gold_qualified": false,
+            "governing_edition_selected": false,
+            "meaning_review_completed": false,
+            "semantic_graph_admitted": false,
+            "source_authority_authenticated": false,
+            "source_semantics_verified": false,
+            "training_gold_qualified": false
+          },
+          "cohort_id": "retained-official-2024-title10-three-source/v1",
+          "encoder_calls": 0,
+          "entity_rows": 0,
+          "legacy_HF_join": null,
+          "model_calls": 0,
+          "source_sampling_or_review_templates_regenerated": false,
+          "training_updates": 0
+        },
+        "name": "semantic_authority_stays_pending",
+        "passed": true
+      }
+    ],
+    "source_READs_closed": true,
+    "source_pin_count": 49,
+    "worker_observation": {
+      "bytes": 12450,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/worker-observation.json",
+      "sha256": "8835a5126d6d18f1ecef84c2a427cec9ec5fce1b02d58bf82b7658d8bdea2268"
+    }
+  },
+  "evaluation_gold_mask": 0,
+  "existing_owners_reused": [
+    "legal_official_document_views.prepare_official_document_view/validate_official_document_view",
+    "uscode_ingest.inventory_uscode_source_coordinates/validate_uscode_source_coordinates",
+    "legal_parent_parquet_pages.preflight_parent_pages/read_selected_parent_rows",
+    "legal_parent_text_views.prepare_parent_text_views"
+  ],
+  "failed_data1_v01": {
+    "accepted": false,
+    "cause": "Final observation stored live IO counter dictionary, then its own save/readback changed that dictionary. Final readback failed; preliminarypassedTrue does not override originalexit1.",
+    "completed_builder_checks_before_failure": 4,
+    "controller": {
+      "bytes": 12311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/controller-complete-data1-v01.json",
+      "sha256": "53a676f058e7082a4b196fc4a3811899da630292b0b720a82ada92fc00c77b06"
+    },
+    "later_closing_status": "released",
+    "later_original_owner_storage_closeout": {
+      "bytes": 2747,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/review/failure-storage-recovery/original-closeout-v01/recovery-receipt-v01.json",
+      "sha256": "457f704bb5cc28e4b9fce9f12e9737ff07f2121a880cfbadb826dc3d49f4deb6"
+    },
+    "later_outstanding_charge_bytes": 0,
+    "payloads_preserved": true,
+    "preliminary_observation_passed_field": true,
+    "qualification_upgraded_by_recovery": false,
+    "storage_retained_at_failed_cutoff_bytes": 33554432,
+    "whole_operation_returncode": 1,
+    "worker_only_fix": {
+      "bytes": 2341,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/review/worker/worker-readback-fix-v02.json",
+      "sha256": "938c5cb96fe3bdce171fa931c8a00e55710935219ae0590915d83f5d260ffaf9"
+    }
+  },
+  "four_width_profiles_changed": false,
+  "independent_reader_used_Arrow_or_NumPy": false,
+  "independent_saved_reviews": [
+    {
+      "bytes": 18808,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/review/graph-lean/data1-independent-saved-review-v01.json",
+      "sha256": "69bf1d885ad8c55611004241b9dead76d30734ae8ec44e0347c5fd68f75a7b6e"
+    },
+    {
+      "bytes": 167312,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/review/graph-lean/data2-independent-saved-review-v01.json",
+      "sha256": "551c2e98ef28576b63b92d491f30060c42e296f2dd3912cf456e230565209d02"
+    }
+  ],
+  "legacy_HF_source_span_entity_physical_join": null,
+  "legacy_source_producer_status": "producer_lineage_unavailable",
+  "legal_as_of_civil_date": null,
+  "limits": [
+    "This captures already exposed text and is not held-out or independently reviewed statutory data.",
+    "Only selected project compile buffers/origins execute under three declared initializer bypasses; whole-package/stdlib/third-party binary/code-object attestation is not supplied.",
+    "DATA1 actually observes Arrow25.0.1/NumPy2.1.3; historicalArrow23/NumPy1.26 runs retain separate scope. DATA2 imports neither.",
+    "Cooperative sampled-descendant resource observation and CPython audit hooks are not arbitrary native containment.",
+    "Absolute local source/repository/descriptor paths remain explicit. Moving machines requires separately pinned descriptor/source-location rebinding; no drop-in checkpoint or transport portability is claimed.",
+    "The current declaredHFus/pl/119/102 release remains separate from retained2024 material.",
+    "No trusted source/meaning/applicability decision, legal clock, entity cache release, three-cache release, gold, graph or Lean admission follows."
+  ],
+  "local_git": {
+    "Hub_revision_claimed": false,
+    "actual_committed_blob_readback": true,
+    "receipt": {
+      "bytes": 4001,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/local-git-commit-receipt-v01.json",
+      "sha256": "6de73532b86eabac722a26c95759cb6f8678e11fc265a2cd6790ab12607699c3"
+    },
+    "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+    "revision": "79f6f5538747095de6512dcc071e92b025570017",
+    "tracked_files": [
+      {
+        "bytes": 80951,
+        "git_blob_sha": "0967cf3e02b548e8646bd42f4c96e33002a0be29",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort/source-documents.parquet",
+        "path_in_repo": "source-documents.parquet",
+        "sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315"
+      },
+      {
+        "bytes": 83276,
+        "git_blob_sha": "1c4f7d60b6704d0684ad1c9ae1b5a93c9af9d418",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort/documents.json",
+        "path_in_repo": "documents.json",
+        "sha256": "73ef8f120b9712c01d2de02f8c1668b8d6c49a599c5638a41ceed3227c7c5eaf"
+      },
+      {
+        "bytes": 10557,
+        "git_blob_sha": "347298d9aead15b0ce741089811fb5edec976069",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort/producer-recipe.json",
+        "path_in_repo": "producer-recipe.json",
+        "sha256": "0c5af801aebfab1306f9b6021aea8cdbb94952704845031ba6778dcc87909a2d"
+      }
+    ],
+    "tree": "86218652c62341125ad42a18ecf299fba2a1e6e9"
+  },
+  "new_Lean_builds_or_admissions": 0,
+  "new_entity_annotations": 0,
+  "new_heldout_laws": false,
+  "new_model_encoder_inference_or_training_runs": 0,
+  "new_physical_file": {
+    "bytes": 80951,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/source-documents.parquet",
+    "sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315"
+  },
+  "new_semantic_graph_admissions": 0,
+  "new_source_acquisition": false,
+  "ordinary_API_or_numerical_implementation_changes": false,
+  "parent_descriptor": {
+    "bytes": 80951,
+    "local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort/source-documents.parquet",
+    "path_in_repo": "source-documents.parquet",
+    "profile": "legacy_laws_parquet/v1",
+    "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+    "revision": "79f6f5538747095de6512dcc071e92b025570017",
+    "row_count": 3,
+    "sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315"
+  },
+  "parent_descriptor_sha256": "03193ab96c495cf7e5d0f3211d6c6fbc63665fdbf66d090bc38ce95974622b8c",
+  "publication_base": "348e61e65422a952d8ca4c348a4eaac0a119b1e3",
+  "pytest_cases_or_phases_run": 0,
+  "query": "retained-official-pilot:2024:10:101,7213,7214:v1",
+  "raw_HTML_character_byte_mapping_verified": false,
+  "recorded_at_utc": "2026-10-24T20:59:31.862975+00:00",
+  "release_id": "retained-official-pilot/2024-title10/v1",
+  "retained_source_and_view_lineage": [
+    {
+      "legal_id": "usc:us:10:101",
+      "raw_HTML_coordinate_mapping_verified": false,
+      "raw_html_bytes": 98879,
+      "raw_html_sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b",
+      "raw_row_sha256": "a7fe4b3971e3074a9af106ded561ab02dd03430c5120274decf6493e8e90793d",
+      "retained_document_id": "govinfo-markup-v2-html-sha256:4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b",
+      "retained_full_view_report_sha256": "26ac99daae8452bfa43f799da7f455b6f4f228b3636712dbde203f6705b94192",
+      "retained_view_id": "legal-official-markup-view:sha256:6a4190668d49d48b72067e555ff274380e76d58a3501088f43137f41dabe7973",
+      "section": "101",
+      "whole_document_UTF8_bytes": 72592,
+      "whole_document_characters": 71598,
+      "whole_document_text_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+    },
+    {
+      "legal_id": "usc:us:10:7213",
+      "raw_HTML_coordinate_mapping_verified": false,
+      "raw_html_bytes": 4049,
+      "raw_html_sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+      "raw_row_sha256": "ebc70566b71e5e258246d0067682cadfc8bc4949cf731c487655bb25e71c0002",
+      "retained_document_id": "govinfo-markup-v2-html-sha256:671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef",
+      "retained_full_view_report_sha256": "e3359aec9b6d637b1d73e3d7b589640d6878e067424a46ff5d1011030d363c98",
+      "retained_view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13",
+      "section": "7213",
+      "whole_document_UTF8_bytes": 1912,
+      "whole_document_characters": 1887,
+      "whole_document_text_sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963"
+    },
+    {
+      "legal_id": "usc:us:10:7214",
+      "raw_HTML_coordinate_mapping_verified": false,
+      "raw_html_bytes": 7017,
+      "raw_html_sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e",
+      "raw_row_sha256": "7e53ea0aec792fdb168b3177b6552de1a3091aecef5137af43f7386c624fbc86",
+      "retained_document_id": "govinfo-markup-v2-html-sha256:9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e",
+      "retained_full_view_report_sha256": "59c6d6abd3b93dda95f92b44f8ecbfc30974bd1b85109f328b004cecc7fe290a",
+      "retained_view_id": "legal-official-markup-view:sha256:25a28893afb8dbd67bc9b404a88470b214a9bb548c338abf6f67f444ca8ef107",
+      "section": "7214",
+      "whole_document_UTF8_bytes": 3858,
+      "whole_document_characters": 3817,
+      "whole_document_text_sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64"
+    }
+  ],
+  "row_count": 3,
+  "row_fields_in_order": [
+    "legal_id",
+    "title",
+    "section",
+    "law_name",
+    "source_url",
+    "raw_html_sha256",
+    "cohort_id",
+    "text"
+  ],
+  "sampler_or_review_templates_regenerated": false,
+  "schema": "legal-ir-retained-official-pilot-qualification/v1",
+  "scope": "One new local physical cohort over three already exposed retained2024Title10 official-source views; actual3-row/8-field independent parent replay and1649 uncompiled source spans. Existing source identity retained; no legacy HF cache repair or legal/admission decision.",
+  "source_closure": {
+    "bytes": 4280,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/source-closure-v01.json",
+    "sha256": "412cbc16d70a61114bc4cc7dbebcf275e60075f6d7e747e42c7b102456254eb4"
+  },
+  "source_coordinates_full_sha256": "5b3fc636a5ebe717e5cc9da047359ecd1e18b7b1aa2615b9f612c58f9fa4513b",
+  "source_edition": 2024,
+  "source_legal_ids": [
+    "usc:us:10:101",
+    "usc:us:10:7213",
+    "usc:us:10:7214"
+  ],
+  "source_parquet_byte_mapping_verified": false,
+  "source_repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+  "source_revision": "348e61e65422a952d8ca4c348a4eaac0a119b1e3",
+  "source_sections": [
+    "101",
+    "7213",
+    "7214"
+  ],
+  "source_span_count": 1649,
+  "source_span_identity_scope": "Original USC legal_id/unit display aliases may repeat. New query/release-bound source_span_id plus complete report commitment and actual physical row witnesses identify this cohort. No old cache population is aliased.",
+  "source_spans_formalized": false,
+  "status": "new_local_physical_source_cohort_and_decoded_coordinate_replay_qualified",
+  "successful_data_checks": 8,
+  "training_mask": 0,
+  "whole_view_UTF8_bytes": [
+    72592,
+    1912,
+    3858
+  ]
+}
