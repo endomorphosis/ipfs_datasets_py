@@ -121,3 +121,13 @@ physical use and contain no submitted reviews or selected meanings. Actual
 statutory responses require supplied substantive reviews and selected trust inputs.
 Content adjudication, governing-definition applicability, reviewed target masks,
 graph/Lean4 admission and training remain subsequent integrations.
+
+## Public source integration (2026-10-24)
+
+The existing owner and owning test are published unchanged from the original source-pinned generation. The [fresh 11-case / 33-phase integration](../../../../../docs/autoformalization/evidence/legal-ir-norm-content-responses-public-integration-20261024.json) covers nine response cases and two original norm-review controls. The historical 121 cases remain separate: 67 response cases plus 54 norm-review regressions, with their original legacy resource lease. The fresh cases reuse existing tests; the full 121-case population and original statutory template preparations were not rerun.
+
+The public 25,432-byte norm-review owner and its fixture match that original generation; the later counted successor is not substituted. The paired-manifest reader preserves the exact `_wire` and `_read_json` helper bodies consumed here. Fresh checks required 19 source execution paths and four genuine pytest modules, within 171 source files / 4,342,668 bytes and 197 request pins. They retained 115 actual source compile/exec-filename observations, 112 module entries and 110 physical origins.
+
+The signature fixtures used genuine Profile G Ed25519 API bindings from cryptography 49.0.0. The worker performed no extra signature operations and does not attest independent crypto operation counts or third-party binary equivalence. Six pinned initializer bypasses were declared; only `logic/__init__.py` was observed bypassed and five were unused. Checked source buffers do not establish code-object identity, the initial worker loader, cached third-party bytecode or full public-package/environment equivalence. Original compute/storage and source READs closed, retaining ten files / 2,803,822 bytes. The 24.405-second worker and 74.701-second owned interval are nested, not additive.
+
+Keep the older blank A/B templates bound to their original subjects. This source publication supplies no substantive response, signature authority, civil legal-as-of date, selected meaning, governing definition, second statutory norm, training target or graph/Lean admission. Obtain the missing independently supplied review/context/applicability inputs through the existing owners; declaration-binding, adjudication and applicability source migrations remain separate.

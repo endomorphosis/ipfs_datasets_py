@@ -2173,6 +2173,30 @@
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_persistent_runtime_v3.py",
       "required": true,
       "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "norm_content_sha256",
+        "build_norm_content_template_v1",
+        "build_norm_content_response_v1",
+        "assess_norm_content_responses_v1",
+        "validate_norm_content_assessment_v1"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "norm-content-responses-public-integration-20261024-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_responses_v1.md",
+      "id": "norm-content-responses-v1",
+      "notes": "Unchanged typed norm-content response owner/test; selected current-public integration passed11cases/33phases (9response+2original norm controls), separate from historical121=67response+54norm-review cases and its legacy resource scope. Exact whole-body references bind original-domain signed claims; pending answers/dissent remain, with no selected meaning or governing definition and zero learning/gold masks. Actual A/B products remain blank templates. Fresh profile retained115checked source compile/exec filenames,112module entries/110physical origins;171source files/197pins. Six pinned initializer bypasses declared; onlylogic observed, five unused. Genuine cryptography49.0.0 ProfileG API bindings and positive fixture tests; no independent crypto-operation counts, binary/code-object identity or whole-package/environment qualification. New original compute/storage/source READs closed, retaining10files/2803822bytes. No actual review, legal-as-of decision, source/span/entity join, model/training or graph/Lean admission. Declaration-binding/adjudication/applicability migrations remain separate.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_content_responses_v1",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_norm_content_responses_v1.py"
+      ],
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_responses_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3646,6 +3670,16 @@
       "root": "datasets_repository",
       "scope": "Separate fake-loop 6-case/18-phase and genuine 2-case/6-phase qualifications; source/native/storage custody closed. Four calls plus two BOS references produced 0/4 typed candidates, exact compact IDs and exact compact ASTs. Actual work: 128 GRU forwards, 126 selector decisions, 6 models, 12 state installs and 4,032 prefix calls; zero training. Retained 32 files / 15,549,555 bytes. Every_step selected 30/30 IDs then blocked; first_step selected 32/32 then exhausted the grammar budget. The qualified authored 384D CPU comparison used 32/1,024 inspection settings, a 100-new-ID cap and a 1,200-second deadline: 714.7-second test / 766.5-second owned execution. API ranges remain separate. No reconstruction gain, saturation, conditioning winner, heldout/legal/graph/Lean authority; legal text/source bytes unmeasured. Earlier failures and pure cohorts stay separate; public validation plugin/full-package execution unqualified, old profiles/checkpoints preserved.",
       "status": "authored_bounded_branch_runtime_generation_qualified_no_reconstruction_gain"
+    },
+    {
+      "id": "norm-content-responses-public-integration-20261024-01",
+      "observed_bytes": 27790,
+      "observed_sha256": "35852a121ccf2118f923422333d879afd832a2efb11c6f953f30823a989307cc",
+      "path": "docs/autoformalization/evidence/legal-ir-norm-content-responses-public-integration-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Unchanged typed norm-content response owner/test; selected current-public integration passed11cases/33phases (9response+2original norm controls), separate from historical121=67response+54norm-review cases and its legacy resource scope. Exact whole-body references bind original-domain signed claims; pending answers/dissent remain, with no selected meaning or governing definition and zero learning/gold masks. Actual A/B products remain blank templates. Fresh profile retained115checked source compile/exec filenames,112module entries/110physical origins;171source files/197pins. Six pinned initializer bypasses declared; onlylogic observed, five unused. Genuine cryptography49.0.0 ProfileG API bindings and positive fixture tests; no independent crypto-operation counts, binary/code-object identity or whole-package/environment qualification. New original compute/storage/source READs closed, retaining10files/2803822bytes. No actual review, legal-as-of decision, source/span/entity join, model/training or graph/Lean admission. Declaration-binding/adjudication/applicability migrations remain separate.",
+      "status": "selected_current_public_norm_response_engineering_qualified_no_statutory_admission"
     }
   ]
 }
