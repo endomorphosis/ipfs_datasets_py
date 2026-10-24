@@ -463,3 +463,58 @@ bridge.
 ## Current-main compatibility integration
 
 The [current-main integration receipt](../../../../../docs/autoformalization/evidence/legal-ir-coordinate-source-correspondence-main-integration-20261021.json) records59 authored cases /177 phases on the current223-file dependency closure, using the current native owners and strict pytest plugin. Both original native/storage/source-READ owners closed. This is a separate source generation from the original external-plugin capsule above; neither qualification supplies statutory source/edition/meaning decisions or reconstruction accuracy. Public original-v2, retained-v1 and explicit original-v3 APIs remain separate.
+
+
+## Explicit wire-coordinate source-review requests v3
+
+The existing owner now exposes `prepare_source_correspondence_requests_v3`,
+`validate_source_correspondence_requests_v3` and
+`source_correspondence_requests_v3_sha256`. V1 and v2 retain their contracts.
+Prepare and validate retain the v2 arguments; the report remains an ordinary
+dictionary, including after a JSON serialize/parse roundtrip. Native byte-report
+acceptance is not added.
+
+Use request schema `legal-source-correspondence-request/v3`, report schema
+`legal-source-correspondence-requests/v3` and
+`profile="original-input-wire-coordinate-graph-v3-source-review-request-custody/v1"`.
+The route genuinely replays wire graph v3, eligibility v4 and wire join v3 with
+source intake v2 and `metadata_profile="hf-default-parquet-envelope/v1"`.
+Supply every original request/raw report, the independently pinned complete
+seven-field `graph_originals` group and the nonempty independent unchanged v1
+review banks. Nomination text cannot manufacture a bank or original source.
+Full wire metadata retains finite floats without coercion; legacy v1/v2 scalar
+grammars remain unchanged.
+
+The existing corpus owner supplies the unchanged originals commitment and
+physical-file-plan helper; this route neither consumes nor generates a corpus-v2
+report or exports a graph bundle. Opening/closing original replay and final
+input, parsed-request, live-return, callable and physical-file fences preserve
+every source/output alternative and unanswered review question. They are
+sequential custody observations, not an atomic snapshot or arbitrary runtime
+attestation. Existing lower-only bounds still refuse complete overflow.
+
+The [historical local qualification](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-source-correspondence-20261024.json)
+passed **103 cases / 309 phases**: 59 preceding controls and 44 wire controls in
+selected attempt 02. Its earlier failed attempt, source generation, original
+capture and closeouts remain separate. The [focused public dependency check](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-source-correspondence-public-integration-20261024.json)
+passed **three existing cases / nine phases** on public `943e85c2` plus the exact
+qualified source `8fccd02c` and test `830ba4a4` overlays. It covers the object
+roundtrip, complete unsupported-output population and late retained-table
+refusal; the historical 103-case cohort was not rerun or pooled.
+
+The public check preserves all other 236 source/fixture leaves, including public
+span cache `e35f5333` and validation helper `cef7fd00`, and requires all seven
+public review owners. Its 238-file provenance and 256-pin limit retain 14
+explicit unexecuted context exclusions, 15 separate private native/resource
+owners and 17 support inputs. Fourteen namespace parents remain unexecuted;
+ten genuine initializer routes retain only their observed scope. The original
+private orchestration plugin (`dc6ae4f1`), controls and run-specific captures
+remain local evidence and are not bundled by this publication. There is no
+whole-package, tooling or model-width qualification. Descriptor bridge usage
+and graph export were zero; no earlier campaign events are pooled.
+
+All source/edition/as-of choices, intended occurrences, substantive meaning,
+definition applicability and reviewed authority remain unresolved. Requests
+remain unsigned, selections null and training/gold masks integer zero. No model,
+encoder, training, source-law-table processing, convergence or Lean operation ran;
+these fixtures confer no graph/corpus or Lean admission.

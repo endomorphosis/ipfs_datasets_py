@@ -1516,12 +1516,17 @@
         "validate_source_correspondence_requests_v1",
         "prepare_source_correspondence_requests_v2",
         "source_correspondence_requests_v2_sha256",
-        "validate_source_correspondence_requests_v2"
+        "validate_source_correspondence_requests_v2",
+        "prepare_source_correspondence_requests_v3",
+        "validate_source_correspondence_requests_v3",
+        "source_correspondence_requests_v3_sha256"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
         "coordinate-source-correspondence-selected-20261021",
-        "coordinate-source-correspondence-main-integration-20261021"
+        "coordinate-source-correspondence-main-integration-20261021",
+        "uscode-hf-wire-coordinate-source-correspondence-qualified-20261024-01",
+        "uscode-hf-wire-coordinate-source-correspondence-public-integration-qualified-20261024-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_correspondence_requests_v1.md",
       "id": "source-correspondence-requests",
@@ -1530,7 +1535,43 @@
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
       "required": true,
-      "status": "implementation_present"
+      "status": "implementation_present",
+      "wire_coordinate_v3": {
+        "profile": "original-input-wire-coordinate-graph-v3-source-review-request-custody/v1",
+        "report_schema": "legal-source-correspondence-requests/v3",
+        "evidence_id": "uscode-hf-wire-coordinate-source-correspondence-qualified-20261024-01",
+        "status": "focused_authored_fixture_tests_qualified",
+        "cases": 103,
+        "phase_passes": 309,
+        "legacy_cases": 59,
+        "new_cases": 44,
+        "source_sha256": "8fccd02c6a596a06f6d3d0105a9bdffb040f11266cd4e835dbff5f74ad066aed",
+        "owning_test_sha256": "830ba4a4c4e29c222ced7522dd9dde0aeb5fb16c766f00145610f5e07165aa02",
+        "source_review_completed": false,
+        "training_mask": 0,
+        "evaluation_gold_mask": 0,
+        "scope": "Original local attempt02 qualification and namespace/private-orchestration generation only; unchanged independent v1 banks, complete wire graph-v3/eligibility-v4/join-v3 original custody and unanswered unsigned questions. Failed01 and historical59 remain separate; no model, meaning or graph/Lean admission."
+      },
+      "current_public_wire_coordinate_v3": {
+        "profile": "original-input-wire-coordinate-graph-v3-source-review-request-custody/v1",
+        "evidence_id": "uscode-hf-wire-coordinate-source-correspondence-public-integration-qualified-20261024-01",
+        "status": "focused_current_public_dependency_fixture_qualified",
+        "cases": 3,
+        "phase_passes": 9,
+        "public_base": "943e85c247cfc31cdb990518c6ae3bfedf210ceb",
+        "source_sha256": "8fccd02c6a596a06f6d3d0105a9bdffb040f11266cd4e835dbff5f74ad066aed",
+        "owning_test_sha256": "830ba4a4c4e29c222ced7522dd9dde0aeb5fb16c766f00145610f5e07165aa02",
+        "public_span_cache_sha256": "e35f5333fc4776d5b519ec84a38f42715a76ff7b20a776a35b7e01ea9342b068",
+        "public_validation_pytest_sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31",
+        "frozen_source_and_fixture_files": 238,
+        "qualified_source_test_overlays": 2,
+        "public_dependency_files": 236,
+        "required_review_product_owners": 7,
+        "source_review_completed": false,
+        "training_mask": 0,
+        "evaluation_gold_mask": 0,
+        "scope": "Three already-authored public-dependency fixture cases only; historical103/309 is not rerun or pooled. Public cache/helper and seven review owners preserved; explicit namespace exclusions and original private orchestration/resource owners remain separate. No source/edition/meaning, model, whole-package, graph/corpus or Lean admission."
+      }
     },
     {
       "apis": [
@@ -4277,6 +4318,26 @@
       "root": "datasets_repository",
       "scope": "Three existing census-v3 cases / nine phases on224 actual public Git leaves with only exact21d9 source/83dc test overlays. Historical64/192 is separate; no row rescan or semantic association. Actual47 aliases/45 public source buffers retain separate private dc6 orchestration,6 initializer paths/8 aliases,1 logic bypass/2 fileless namespaces, and8 bypass-eligible sources. Only original scoped Python audits apply; no global DB/readonly-payload/comprehensive network proof or whole-package/model/graph/Lean admission. Measured943 and docs-only publication2b32 preserve identical runtime bytes.",
       "status": "focused_current_public_wire_entity_census_fixture_qualified"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-source-correspondence-qualified-20261024-01",
+      "observed_bytes": 10468,
+      "observed_sha256": "e513c1dfcb5a697a12b3a3ecce6e9ef8875b0d36bba5e544135937e366197c59",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-source-correspondence-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Correspondence v3:103 authored cases/309 phases in original local attempt02 (59 preceding plus44 wire controls). Exact8fcc source/830b test; complete independent v1 banks, genuine graph3/eligibility4/join3 originals and unsigned unresolved custody only. Historical59, failed01 and subsequent public3/9 retain separate generations; no model/training or legal/graph/Lean admission.",
+      "status": "explicit_wire_coordinate_source_correspondence_fixture_qualified"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-source-correspondence-public-integration-qualified-20261024-01",
+      "observed_bytes": 12087,
+      "observed_sha256": "7daefa6ab0e6f19474b94c4f505ca256712e4e7e7fb5db366fdcf249bfad053f",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-source-correspondence-public-integration-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Three existing correspondence-v3 cases/nine phases on238 frozen public943e source/fixture leaves with exact8fcc/830b overlays,236 public dependencies,e35f cache/cef7 helper and all7review owners. Full provenance and256pins retain14explicit context exclusions and separate private orchestration. Historical103/309 is not rerun or pooled; no model, whole-package or legal/graph/Lean authority.",
+      "status": "focused_current_public_wire_correspondence_fixture_qualified"
     }
   ]
 }
