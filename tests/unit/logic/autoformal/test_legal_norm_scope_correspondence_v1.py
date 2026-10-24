@@ -540,3 +540,195 @@ def test_producer_bytes_are_checked_after_owner_work_and_final_serialization(mon
         prepare(value)
     assert len(observed) == 1
     assert copied_owner.read_bytes() != original_bytes
+
+
+
+# Parent correspondence uses genuine physical parent replay plus the unchanged
+# relational typed owner. All proposed meaning remains authored and unreviewed.
+def parent_correspondence_case(tmp_path, *, source_value=None):
+    source = scope_fixture.parent_case(tmp_path) if source_value is None else source_value
+    scope_report = scope_fixture.parent_prepare(source)
+    scope_args,scope_kwargs = scope_fixture.parent_arguments(source)
+    request = authored_request()
+    request_raw = wire(request)
+    relational_report = relational.prepare_relational_norm_v1(request_raw,
+        expected_request_sha256=hashlib.sha256(request_raw).hexdigest())
+    expression = relational_report["typed_expression"]
+    def chosen(kind=None,symbol=None,binder=None):
+        result = []
+        for target in relational_report["structural_mapping"]:
+            if kind is not None and target["kind"] != kind: continue
+            if binder is not None and target.get("binder_name") != binder: continue
+            if symbol is not None and pointer(expression,target["typed_path"]).get("symbol") != symbol: continue
+            result.append(deepcopy(target))
+        return result
+    choices = {
+        "/occurrences/0/anchor":chosen("binder",binder="actor")+chosen("variable","actor"),
+        "/occurrences/1/anchor":chosen("legacy.deontic/v1"),
+        "/occurrences/2/anchor":chosen("predicate","Retain"),
+        "/occurrences/3/anchor":chosen("binder",binder="object")+chosen("variable","object"),
+        "/unresolved/0/span":chosen("predicate","Approved")+chosen("implies")}
+    source_rows = []
+    for item in scope_report["anchor_mappings"]:
+        targets = choices.get(item["declaration_path"],[])
+        source_rows.append(dict(anchor_mapping=deepcopy(item),disposition="proposed_mapping" if targets else "literal_accounting",
+            targets=targets,rationale="Authored correspondence; no reviewed source meaning."))
+    value = dict(source=source,scope_report=scope_report,relational_report=relational_report,
+        scope_replay_inputs=dict(parent_bundle=scope_args[0],scope_request_raw=scope_args[1],scope_declaration_raw=scope_args[2],**scope_kwargs),
+        relational_request_raw=request_raw,
+        mapping=dict(schema="legal-norm-scope-correspondence-request/v2",interpretation_status="authored_unreviewed_correspondence",
+            alternative_id="parent-literal-authored-approval",source_rows=source_rows,typed_rows=[],
+            scope_report_sha256=source_scope.parent_norm_scope_report_sha256(scope_report),
+            relational_report_sha256=relational.relational_norm_report_sha256(relational_report)))
+    rebuild_inverse(value)
+    return value
+
+
+def parent_correspondence_arguments(value,mapping_raw=None):
+    raw = wire(value["mapping"]) if mapping_raw is None else mapping_raw
+    return (value["scope_report"],value["relational_report"],raw),dict(
+        expected_scope_report_sha256=source_scope.parent_norm_scope_report_sha256(value["scope_report"]),
+        expected_relational_report_sha256=relational.relational_norm_report_sha256(value["relational_report"]),
+        expected_mapping_request_sha256=hashlib.sha256(raw).hexdigest(),scope_replay_inputs=value["scope_replay_inputs"],
+        relational_request_raw=value["relational_request_raw"],
+        expected_relational_request_sha256=hashlib.sha256(value["relational_request_raw"]).hexdigest())
+
+
+def parent_correspondence_prepare(value):
+    args,kwargs = parent_correspondence_arguments(value)
+    return subject.prepare_norm_scope_correspondence_v2(*args,**kwargs)
+
+
+def parent_correspondence_validate(report,value):
+    args,kwargs = parent_correspondence_arguments(value)
+    return subject.validate_norm_scope_correspondence_v2(report,*args,
+        expected_report_sha256=subject.norm_scope_correspondence_sha256(report),**kwargs)
+
+
+def test_parent_correspondence_v2_accounts_for_all_literal_and_typed_paths_without_authority(tmp_path):
+    value = parent_correspondence_case(tmp_path);report = parent_correspondence_prepare(value)
+    assert report["schema"] == "legal-norm-scope-correspondence-report/v2"
+    assert report["source_scope"] == value["scope_report"]
+    assert report["relational_fragment"] == value["relational_report"]
+    assert report["retained_unresolved"] == value["scope_report"]["scope_declaration"]["unresolved"]
+    assert report["declared_semantic_coverage"] == "partial"
+    assert report["counts"]["source_anchors"] == len(value["scope_report"]["anchor_mappings"])
+    assert report["counts"]["typed_targets"] == len(value["relational_report"]["structural_mapping"])
+    assert len(report["request"]["source_rows"]) == len(value["scope_report"]["anchor_mappings"])
+    assert len(report["request"]["typed_rows"]) == len(value["relational_report"]["structural_mapping"])
+    for row in report["request"]["typed_rows"]:
+        paths = [item["anchor_mapping"]["declaration_path"] for item in report["request"]["source_rows"] if row["target"] in item["targets"]]
+        assert row["source_paths"] == paths
+    assert report["source_scope"]["parent_source_binding"]["context"]["availability"] == "required_unavailable"
+    assert report["selected_interpretation"] is None and report["source_translation_performed"] is False
+    assert_no_authority(report)
+    assert parent_correspondence_validate(report,value) == report
+
+
+def test_parent_correspondence_v2_identical_physical_text_does_not_alias_source_identity(tmp_path):
+    first = parent_correspondence_case(tmp_path)
+    source = first["source"]
+    other = dict(source)
+    companion = source["companions"][2]
+    other["arguments"] = source["physical"].binding_arguments(source["original"],companion)
+    other["source"] = source["physical"].bind(source["original"],companion)
+    second = parent_correspondence_case(tmp_path,source_value=other)
+    left,right = parent_correspondence_prepare(first),parent_correspondence_prepare(second)
+    assert left["relational_fragment"] == right["relational_fragment"]
+    assert left["source_scope"]["scope_request"] == right["source_scope"]["scope_request"]
+    assert left["source_scope"]["source_selector"]["record_cid"] != right["source_scope"]["source_selector"]["record_cid"]
+    assert subject.norm_scope_correspondence_sha256(left) != subject.norm_scope_correspondence_sha256(right)
+
+
+@pytest.mark.parametrize("damage",["missing_source","missing_typed","cross_occurrence","semantic_promotion"])
+def test_parent_correspondence_v2_resealed_mapping_cannot_drop_or_promote_source_meaning(tmp_path,damage):
+    value = parent_correspondence_case(tmp_path)
+    if damage == "missing_source": value["mapping"]["source_rows"].pop()
+    elif damage == "missing_typed": value["mapping"]["typed_rows"].pop()
+    elif damage == "cross_occurrence":
+        value["mapping"]["source_rows"][0]["anchor_mapping"]["parent_selector"]["source_occurrence_cid"] = value["source"]["companions"][1]["source_occurrence_cid"]
+    else: value["mapping"]["interpretation_status"] = "reviewed_source_translation"
+    with pytest.raises(ValueError): parent_correspondence_prepare(value)
+
+
+@pytest.mark.parametrize("damage",["report_bytes","parent_file"])
+def test_parent_correspondence_v2_replays_original_parent_even_with_repaired_outer_pins(tmp_path,damage):
+    value = parent_correspondence_case(tmp_path);replay = value["scope_replay_inputs"]
+    if damage == "report_bytes":
+        replay["report_bytes"]["parent_text_views"] += b" "
+        replay["expected_report_pins"]["parent_text_views"]["raw_sha256"] = hashlib.sha256(
+            replay["report_bytes"]["parent_text_views"]).hexdigest()
+    else:
+        path = Path(replay["replay_inputs"]["parent_text_views_inputs"]["parent_descriptor"]["local_path"])
+        path.write_bytes(path.read_bytes()+b"changed after scope preparation")
+    with pytest.raises(ValueError): parent_correspondence_prepare(value)
+
+
+@pytest.mark.parametrize("damage",["extra_replay_key","missing_replay_key"])
+def test_parent_correspondence_v2_requires_closed_original_parent_replay_inputs(tmp_path,monkeypatch,damage):
+    value = parent_correspondence_case(tmp_path)
+    if damage == "extra_replay_key": value["scope_replay_inputs"]["loader_callback"] = "not accepted"
+    else: del value["scope_replay_inputs"]["companion_record_cid"]
+    monkeypatch.setattr(subject,"_parent_correspondence_pins",lambda *args:pytest.fail("physical operation owners loaded before closed replay preflight"))
+    with pytest.raises(ValueError): parent_correspondence_prepare(value)
+
+
+def test_parent_correspondence_v2_and_html_v1_remain_distinct_profiles(tmp_path):
+    parent_value = parent_correspondence_case(tmp_path);parent_report = parent_correspondence_prepare(parent_value)
+    html_value = case();html_report = prepare(html_value)
+    args,kwargs = parent_correspondence_arguments(parent_value)
+    with pytest.raises(ValueError): subject.prepare_norm_scope_correspondence_v1(*args,**kwargs)
+    old_args,old_kwargs = arguments(html_value)
+    with pytest.raises(ValueError): subject.prepare_norm_scope_correspondence_v2(*old_args,**old_kwargs)
+    assert html_report["schema"] != parent_report["schema"]
+
+
+@pytest.mark.parametrize("location",["caller","detached"])
+def test_parent_correspondence_v2_refuses_late_scope_report_mutation(tmp_path,monkeypatch,location):
+    value = parent_correspondence_case(tmp_path)
+    real = source_scope.validate_parent_norm_scope_v1;observed = []
+    def changed_after_real_validation(report,*args,**kwargs):
+        result = real(report,*args,**kwargs)
+        if not observed:
+            observed.append("genuine_parent_validation_completed")
+            target = value["scope_report"] if location == "caller" else report
+            target["training_mask"] = False
+        return result
+    monkeypatch.setattr(source_scope,"validate_parent_norm_scope_v1",changed_after_real_validation)
+    with pytest.raises(ValueError): parent_correspondence_prepare(value)
+    assert observed == ["genuine_parent_validation_completed"]
+
+
+def test_parent_correspondence_v2_producer_change_after_serialization_is_refused(tmp_path,monkeypatch):
+    value = parent_correspondence_case(tmp_path)
+    original_bytes = Path(subject.__file__).read_bytes()
+    copied = tmp_path/"copied_legal_norm_scope_correspondence_v1.py"
+    copied.write_bytes(original_bytes)
+    monkeypatch.setattr(subject,"__file__",str(copied))
+    monkeypatch.setattr(subject,"_PARENT_OWNER_PINS",None)
+    real = subject._wire;observed = []
+    def changed_after_serialization(report,maximum):
+        raw = real(report,maximum)
+        if type(report) is dict and report.get("schema") == subject.SCHEMA_V2 and not observed:
+            observed.append("parent_correspondence_serialized")
+            copied.write_bytes(original_bytes+b"\n# changed after correspondence serialization\n")
+        return raw
+    monkeypatch.setattr(subject,"_wire",changed_after_serialization)
+    with pytest.raises(ValueError): parent_correspondence_prepare(value)
+    assert observed == ["parent_correspondence_serialized"] and copied.read_bytes() != original_bytes
+
+
+def test_parent_correspondence_v2_secondary_closeout_errors_preserve_primary_error(tmp_path,monkeypatch):
+    value = parent_correspondence_case(tmp_path)
+    real = relational.validate_relational_norm_v1;observed = []
+    def real_relational_validation_then_primary(*args,**kwargs):
+        real(*args,**kwargs)
+        observed.append("genuine_relational_validation_completed")
+        value["scope_report"]["training_mask"] = False
+        raise ValueError("primary authored correspondence failure")
+    monkeypatch.setattr(relational,"validate_relational_norm_v1",real_relational_validation_then_primary)
+    with pytest.raises(ValueError) as caught:
+        parent_correspondence_prepare(value)
+    assert str(caught.value) == "primary authored correspondence failure"
+    assert observed
+    assert any("secondary parent custody failure" in note for note in getattr(caught.value,"__notes__",[]))
