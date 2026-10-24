@@ -243,7 +243,9 @@
         "validate_coordinate_source_graph_intake_v1",
         "coordinate_source_graph_intake_sha256",
         "prepare_coordinate_source_graph_intake_v2",
-        "validate_coordinate_source_graph_intake_v2"
+        "validate_coordinate_source_graph_intake_v2",
+        "prepare_coordinate_source_graph_intake_v3",
+        "validate_coordinate_source_graph_intake_v3"
       ],
       "compatibility_dependency": false,
       "current_compatibility_generation": {
@@ -257,8 +259,28 @@
       "evidence_ids": [
         "coordinate-graph-intake-adopted-20261021-01",
         "coordinate-graph-intake-git-20261021-01",
-        "public-v2-retained-v1-original-v3-qualified-20261021"
+        "public-v2-retained-v1-original-v3-qualified-20261021",
+        "uscode-hf-wire-coordinate-graph-intake-qualified-20261024-01",
+        "uscode-hf-wire-coordinate-graph-public-integration-qualified-20261024-01"
       ],
+      "focused_public_dependency_integration": {
+        "cases": 3,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "uscode-hf-wire-coordinate-graph-public-integration-qualified-20261024-01",
+        "frozen_source_fixture_files": 224,
+        "genuine_package_initializers": 10,
+        "historical101_and303_separate": true,
+        "measured_public_base": "bc5f60c576477abcb5667448ee84585d0e387e14",
+        "model_widths_executed": [],
+        "namespace_parents_unexecuted": 14,
+        "owning_test_sha256": "c8ed369e42651bdad659b0d1b157e3d8017c2e1fc4ffb26e4371cf9f5b8027b3",
+        "phases": 9,
+        "private_context_missing_and_import_denied": 9,
+        "public_dependency_files": 222,
+        "scope": "Only three existing current-public graph-v3 cases, with unchanged public cache/helper and private orchestration separate. Historical101/303 and whole-package/native-tooling, census/corpus/source-correspondence, model and legal/Lean profiles remain separate.",
+        "source_sha256": "e37cefaf27608856b94bac44135fdcc522f179b2d119dfef7fc7666f982f7743",
+        "training_mask": 0
+      },
       "id": "span-intake",
       "main_integration": {
         "base_main": "5beb7f4f7f03307f37684908cbb85ae977fc08b6",
@@ -314,7 +336,65 @@
         "pushed": false,
         "scope": "Historical selected-delivery cutoff; separate scoped main integration/publication remains pending."
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "wire_coordinate_v3": {
+        "all_previous_contracts_preserved": true,
+        "authority": {
+          "Lean_admitted": false,
+          "evaluation_gold_qualified": false,
+          "graph_admitted": false,
+          "legal_meaning_reviewed": false,
+          "source_authenticated": false,
+          "source_current": false,
+          "training_qualified": false
+        },
+        "cases": 101,
+        "convergence_claimed": false,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "uscode-hf-wire-coordinate-graph-intake-qualified-20261024-01",
+        "fixtures_latent_dimensions": [
+          0
+        ],
+        "full_owning_cases": 133,
+        "full_owning_functions": 67,
+        "graph_profile": "canonical_rules_v1",
+        "inference_authorized": false,
+        "inherited_latent_dimensions": [
+          0,
+          384
+        ],
+        "legacy_cases": 65,
+        "metadata_profile": "hf-default-parquet-envelope/v1",
+        "model_widths_executed": [],
+        "new_cases": 36,
+        "owning_test": {
+          "bytes": 89828,
+          "path": "tests/unit/logic/autoformal/test_legal_span_cache_intake.py",
+          "sha256": "c8ed369e42651bdad659b0d1b157e3d8017c2e1fc4ffb26e4371cf9f5b8027b3"
+        },
+        "phase_passes": 303,
+        "preserved_old_owning_cases": 97,
+        "proposals_unreviewed": true,
+        "report_schema": "legal-coordinate-source-graph-intake/v3",
+        "request_schema": "legal-coordinate-source-graph-intake-request/v3",
+        "requires_all_original_join_inputs": true,
+        "scope": "Wire-original custody and mechanically supported typed-deontic canonical_rules_v1 proposals only; source/edition/meaning, context, entity/definition applicability, learning/gold and graph/Lean admission remain unresolved.",
+        "source": {
+          "bytes": 79061,
+          "path": "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py",
+          "sha256": "e37cefaf27608856b94bac44135fdcc522f179b2d119dfef7fc7666f982f7743"
+        },
+        "source_aliases_mapped": false,
+        "source_compatibility_profile": "original-input-wire-coordinate-source-graph-intake/v1",
+        "status": "focused_authored_fixture_tests_qualified",
+        "test_functions": 51,
+        "training_mask": 0,
+        "unselected_old_cases": 32,
+        "upstream_eligibility_profile": "original-input-wire-coordinate-target-eligibility/v1",
+        "upstream_eligibility_schema": "legal-source-span-target-eligibility/v4",
+        "upstream_join_profile": "paired-coordinate-hf-wire-three-cache-join/v1",
+        "upstream_join_schema": "legal-source-span-entity-join-manifest/v3"
+      }
     },
     {
       "apis": [
@@ -2372,9 +2452,6 @@
       "status": "focused_tests_qualified"
     },
     {
-      "id": "norm-definition-applicability-v1",
-      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_definition_applicability_v1.py",
-      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_definition_applicability_v1",
       "apis": [
         "build_norm_definition_applicability_template_v1",
         "build_norm_definition_applicability_declaration_v1",
@@ -2382,18 +2459,21 @@
         "validate_norm_definition_applicability_v1",
         "norm_definition_applicability_sha256"
       ],
-      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_definition_applicability_v1.md",
-      "owning_tests": [
-        "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py"
-      ],
-      "ownership_role": "existing_single_owner",
       "compatibility_dependency": true,
-      "required": true,
-      "status": "focused_tests_qualified",
       "evidence_ids": [
         "norm-definition-applicability-public-integration-20261024-01"
       ],
-      "notes": "Unchanged original65 owner/test2d569/c12f with separately accepted20 existing cases/60phases under current nine-dependency legacy route; original65 and recovered exact7fd/637 binding67+twoA/B histories stay separate. Complete nominated-use/alternative/endpoint replay retains original/current trust/evidence/time identities. Genuine public/current-endpoint controls and labelled pure/outer-context precision isolates have distinct scopes. Actual observations:131 compile/exec filenames,121 entries/119 physical origins,3 ordinary modules/37 physical paths including11 dynamic helpers. Six bypasses declared; onlylogic observed/five unused. Genuine cryptography49 fixture API bindings, no independent operation count/binary/code-object/full-environment proof. Original compute/storage/source READs closed,10files3258473bytes. Qualification75ef; publicationff0 preserves all179 source bytes with no rerun. No actual statutory review/applicability/legal-asof/trust clock, applied definition, physical join, model/training or graph/Lean admission. Governing/meaning null, masks0; four-width gates unchanged. Recovered67 success and failed40MB-at-cutoff claims are background only, not current ledger/recovery or extra case credit."
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_definition_applicability_v1.md",
+      "id": "norm-definition-applicability-v1",
+      "notes": "Unchanged original65 owner/test2d569/c12f with separately accepted20 existing cases/60phases under current nine-dependency legacy route; original65 and recovered exact7fd/637 binding67+twoA/B histories stay separate. Complete nominated-use/alternative/endpoint replay retains original/current trust/evidence/time identities. Genuine public/current-endpoint controls and labelled pure/outer-context precision isolates have distinct scopes. Actual observations:131 compile/exec filenames,121 entries/119 physical origins,3 ordinary modules/37 physical paths including11 dynamic helpers. Six bypasses declared; onlylogic observed/five unused. Genuine cryptography49 fixture API bindings, no independent operation count/binary/code-object/full-environment proof. Original compute/storage/source READs closed,10files3258473bytes. Qualification75ef; publicationff0 preserves all179 source bytes with no rerun. No actual statutory review/applicability/legal-asof/trust clock, applied definition, physical join, model/training or graph/Lean admission. Governing/meaning null, masks0; four-width gates unchanged. Recovered67 success and failed40MB-at-cutoff claims are background only, not current ledger/recovery or extra case credit.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_definition_applicability_v1",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py"
+      ],
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_definition_applicability_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -2454,7 +2534,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-23T22:16:06.354365+00:00",
+  "last_updated_at_utc": "2026-10-24T07:39:03.747082+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -3967,6 +4047,26 @@
       "root": "datasets_repository",
       "scope": "Unchanged original65 owner/test2d569/c12f with separately accepted20 existing cases/60phases under current nine-dependency legacy route; original65 and recovered exact7fd/637 binding67+twoA/B histories stay separate. Complete nominated-use/alternative/endpoint replay retains original/current trust/evidence/time identities. Genuine public/current-endpoint controls and labelled pure/outer-context precision isolates have distinct scopes. Actual observations:131 compile/exec filenames,121 entries/119 physical origins,3 ordinary modules/37 physical paths including11 dynamic helpers. Six bypasses declared; onlylogic observed/five unused. Genuine cryptography49 fixture API bindings, no independent operation count/binary/code-object/full-environment proof. Original compute/storage/source READs closed,10files3258473bytes. Qualification75ef; publicationff0 preserves all179 source bytes with no rerun. No actual statutory review/applicability/legal-asof/trust clock, applied definition, physical join, model/training or graph/Lean admission. Governing/meaning null, masks0; four-width gates unchanged. Recovered67 success and failed40MB-at-cutoff claims are background only, not current ledger/recovery or extra case credit.",
       "status": "unchanged_applicability_owner_current_public_engineering_qualified_statutory_decisions_pending"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-graph-intake-qualified-20261024-01",
+      "observed_bytes": 7660,
+      "observed_sha256": "3ad3c0309033b8e2575b512199261d37707ccf62796f8b942435e69048408efe",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-graph-intake-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Graph v3 passed 101 authored cases / 303 phases across 51 selected functions: 65 previously selected graph-intake controls plus 36 wire controls; all 97 older owning cases are preserved with 32 unselected. Genuine eligibility-v4 and wire join-v3 replay, shared ordered projection and final original/return/physical custody preserve unreviewed proposals, false authority and plain integer zero masks. No model/width/training/convergence, corpus/census adoption or legal/Lean admission.",
+      "status": "explicit_wire_coordinate_graph_intake_fixture_qualified"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-graph-public-integration-qualified-20261024-01",
+      "observed_bytes": 10712,
+      "observed_sha256": "8e98ffde66bceddc3e749aef08c57f805cffda1c6840c2b067e5bcc8acfaa23a",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-graph-public-integration-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Three existing graph-v3 cases / nine phases on224 frozen current-public source/fixture files with exact e37 source/c8 test overlays, public e35f cache/cef7 helper and separate original private orchestration. All233 historical commitments and nine import-denied missing private owners remain provenance; original101/303 is not rerun or pooled. Namespace14/genuine10 and dimension0 fixtures grant no whole-package, model-width, corpus/census/source-correspondence or legal/graph/Lean admission.",
+      "status": "focused_current_public_wire_graph_intake_fixture_qualified"
     }
   ]
 }
