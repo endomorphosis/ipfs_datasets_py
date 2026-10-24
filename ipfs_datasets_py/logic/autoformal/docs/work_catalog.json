@@ -2705,6 +2705,29 @@
         "counted-source-label-public-source-reconciliation-20261024-01"
       ],
       "notes": "Existing v1 relational/source-only and additive v2 counted correspondence owner. Retains complete original source replay, unreviewed partial hypotheses and unresolved node/binder correspondences. Original158-case qualification used its frozen counted producer; no phase count or new execution is claimed. Public source reconciliation preserves the distinct249-case companion generation. No source meaning, complete norm, model accuracy, graph/Lean admission or training/gold authority; masks remain zero."
+    },
+    {
+      "apis": [
+        "authored_counted_relation_binding_request_v1",
+        "prepare_counted_relation_binding_v1",
+        "counted_relation_binding_report_sha256",
+        "validate_counted_relation_binding_v1"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "counted-relation-binding-qualified-20261024-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_counted_frame_v1.md",
+      "id": "counted-relation-binding-v1",
+      "notes": "Explicit pointwise actor/frame Detail->Member hypothesis implies cap3 transfer; genuine114-node/12-binder conditional retains old49->47 lineage. Current16cases/48phases (12new+4old),108frozen/122pins,24origins/25compiles; observedlogic bypass/families fileless only. Old counted/threshold/codec/numerical owners and five raw-pin consumers preserved. Existing Lean subrelation theorem referenced with constant-frame data only; no new renderer/proof/build or kernel-checked application. Earlier13pass/3fail test-hook generation remains unqualified with separate32MiB-at-cutoff storage history. Prior7214dd72draft unchanged; inclusion not legally established, no modal/world transport, masks0/no source/meaning/applicability/gold/graph/Lean/model admission. Four-width gates unchanged.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_counted_relation_binding_v1",
+      "ownership_role": "versioned_semantic_consumer_of_unchanged_pinned_counted_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py"
+      ],
+      "path": "ipfs_datasets_py/logic/autoformal/legal_counted_relation_binding_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -2765,7 +2788,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-24T18:52:57.694198+00:00",
+  "last_updated_at_utc": "2026-10-24T20:20:10.037265+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -4418,6 +4441,16 @@
       "root": "datasets_repository",
       "scope": "Static named29 producer and nine-initializer source reuse on publicf7ca2d plus exact four overlays; no fresh runtime qualification.",
       "status": "bounded_static_public_source_reuse_review"
+    },
+    {
+      "id": "counted-relation-binding-qualified-20261024-01",
+      "observed_bytes": 18163,
+      "observed_sha256": "ad017b9a311c727dc945f9eb314c02a2213af91c43e81bf2af6c6a9b55eb5502",
+      "path": "docs/autoformalization/evidence/legal-ir-counted-relation-binding-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Explicit same-actor, same-event/time, same-interpretation subrelation-cap conditional; exact16 selected owning cases/48 phases. Caller inclusion is an unreviewed mathematical hypothesis, never a law-derived fact. Existing counted/threshold/codec/numerical profiles and prior7214 drafts remain separate.",
+      "status": "focused_typed_conditional_fixture_qualified"
     }
   ]
 }
