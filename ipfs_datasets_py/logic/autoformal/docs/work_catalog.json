@@ -2269,6 +2269,50 @@
       "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_adjudication_v1.py",
       "required": true,
       "status": "focused_tests_qualified"
+    },
+    {
+      "id": "norm-content-declaration-v1",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_declaration_v1.py",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_content_declaration_v1",
+      "apis": [
+        "prepare_norm_content_declaration",
+        "validate_norm_content_declaration",
+        "norm_content_declaration_sha256"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_declaration_v1.md",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_norm_content_declaration_v1.py"
+      ],
+      "ownership_role": "existing_single_owner",
+      "compatibility_dependency": true,
+      "required": true,
+      "status": "focused_tests_qualified",
+      "evidence_ids": [
+        "norm-content-declaration-binding-public-integration-20261024-01"
+      ],
+      "notes": "Existing unsigned declaration owner/test are byte-exact4d72/5252 to original144-case generation, whose documented source READ/storage/resource/durability scope remains separate. Fresh six declaration controls belong to accepted21/63, not a rerun or additional credit for144. Complete source/AST/context/coverage and definition-use proposals remain retained, unsigned and unapplied. No actual reviews, meaning/governing choice, physical join or semantic/learning/gold/Lean authority; masks zero."
+    },
+    {
+      "id": "norm-content-declaration-binding-v1",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_declaration_binding_v1.py",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_content_declaration_binding_v1",
+      "apis": [
+        "prepare_norm_content_declaration_binding_v1",
+        "validate_norm_content_declaration_binding_v1",
+        "norm_content_declaration_binding_sha256"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_declaration_binding_v1.md",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_norm_content_declaration_binding_v1.py"
+      ],
+      "ownership_role": "existing_single_owner",
+      "compatibility_dependency": true,
+      "required": true,
+      "status": "focused_tests_qualified",
+      "evidence_ids": [
+        "norm-content-declaration-binding-public-integration-20261024-01"
+      ],
+      "notes": "Existing later7fd/637 binding generation has one raw-length ledger mark and three appended cases relative to original494a/b184 64-case qualification; not byte-exact original64 or a previously established67-case result. Fresh21/63 covers12 original binding controls+3later cases+6unsigned controls. Six complete inputs keep independent raw/canonical pins, complete current replay and both generation/obligation identities. Historical raw bytes remain unverified; current raw bytes/length are independently checked. Combined fresh profile:119 compile/exec sources,114 module entries/112 physical origins,4 ordinary origins/23 physical paths; dynamic helpers claim no canonical origins. Six bypasses declared, onlylogic observed/five unused. Genuine cryptography49 fixture APIs, without independent operation count/binary/code-object/whole-environment attestation. Original compute/storage/source READs closed with10files2957288bytes. No actual review, applied meaning/applicability, source/span/entity join, model/training or graph/Lean admission. All four-width gates unchanged; masks zero."
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3802,6 +3846,16 @@
       "root": "datasets_repository",
       "scope": "Three existing cases / nine phases on the measured public44-file dependency snapshot with exact intake-v2/join-v3/test/metadata overlays, preserved e35f span_cache and cef7 public helper, and separate private dc6 orchestration. Original source/native/storage closed; historical108/324 and123/369 are not rerun or pooled. No P/private full-profile, corpus/model/Lean or semantic admission claim.",
       "status": "focused_current_public_dependency_fixture_qualified"
+    },
+    {
+      "id": "norm-content-declaration-binding-public-integration-20261024-01",
+      "observed_bytes": 47669,
+      "observed_sha256": "2eecee0c58542977aef757633fa960fb4dd4e5fec02e52d0aff7309e5390a7ee",
+      "path": "docs/autoformalization/evidence/legal-ir-norm-content-declaration-binding-public-integration-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Two existing owners/four source files: unchanged unsigned144 lineage, later binding one-line/three-case delta versus old64, and separately accepted21 cases/63 phases. Existing later7fd/637 binding generation has one raw-length ledger mark and three appended cases relative to original494a/b184 64-case qualification; not byte-exact original64 or a previously established67-case result. Fresh21/63 covers12 original binding controls+3later cases+6unsigned controls. Six complete inputs keep independent raw/canonical pins, complete current replay and both generation/obligation identities. Historical raw bytes remain unverified; current raw bytes/length are independently checked. Combined fresh profile:119 compile/exec sources,114 module entries/112 physical origins,4 ordinary origins/23 physical paths; dynamic helpers claim no canonical origins. Six bypasses declared, onlylogic observed/five unused. Genuine cryptography49 fixture APIs, without independent operation count/binary/code-object/whole-environment attestation. Original compute/storage/source READs closed with10files2957288bytes. No actual review, applied meaning/applicability, source/span/entity join, model/training or graph/Lean admission. All four-width gates unchanged; masks zero.",
+      "status": "current_public_unsigned_declaration_and_later_binding_engineering_qualified_no_semantic_promotion"
     }
   ]
 }
