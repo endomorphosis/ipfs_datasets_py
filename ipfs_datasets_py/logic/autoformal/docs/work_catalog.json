@@ -2356,11 +2356,12 @@
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
-        "norm-content-declaration-binding-public-integration-20261024-01"
+        "norm-content-declaration-binding-public-integration-20261024-01",
+        "norm-definition-applicability-public-integration-20261024-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_declaration_binding_v1.md",
       "id": "norm-content-declaration-binding-v1",
-      "notes": "Existing later7fd/637 binding generation has one raw-length ledger mark and three appended cases relative to original494a/b184 64-case qualification; not byte-exact original64 or a previously established67-case result. Fresh21/63 covers12 original binding controls+3later cases+6unsigned controls. Six complete inputs keep independent raw/canonical pins, complete current replay and both generation/obligation identities. Historical raw bytes remain unverified; current raw bytes/length are independently checked. Combined fresh profile:119 compile/exec sources,114 module entries/112 physical origins,4 ordinary origins/23 physical paths; dynamic helpers claim no canonical origins. Six bypasses declared, onlylogic observed/five unused. Genuine cryptography49 fixture APIs, without independent operation count/binary/code-object/whole-environment attestation. Original compute/storage/source READs closed with10files2957288bytes. No actual review, applied meaning/applicability, source/span/entity join, model/training or graph/Lean admission. All four-width gates unchanged; masks zero.",
+      "notes": "Existing later7fd/637 binding generation has one raw-length ledger mark and three appended cases relative to original494a/b184 64-case qualification; not byte-exact original64. An indexed-history audit recovered the separate original67-case qualification of this same7fd/637 pair; it is distinct from fresh21/63. Fresh21/63 covers12 original binding controls+3later cases+6unsigned controls. Six complete inputs keep independent raw/canonical pins, complete current replay and both generation/obligation identities. Historical raw bytes remain unverified; current raw bytes/length are independently checked. Combined fresh profile:119 compile/exec sources,114 module entries/112 physical origins,4 ordinary origins/23 physical paths; dynamic helpers claim no canonical origins. Six bypasses declared, onlylogic observed/five unused. Genuine cryptography49 fixture APIs, without independent operation count/binary/code-object/whole-environment attestation. Original compute/storage/source READs closed with10files2957288bytes. No actual review, applied meaning/applicability, source/span/entity join, model/training or graph/Lean admission. All four-width gates unchanged; masks zero.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_content_declaration_binding_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -2369,6 +2370,30 @@
       "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_declaration_binding_v1.py",
       "required": true,
       "status": "focused_tests_qualified"
+    },
+    {
+      "id": "norm-definition-applicability-v1",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_definition_applicability_v1.py",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_definition_applicability_v1",
+      "apis": [
+        "build_norm_definition_applicability_template_v1",
+        "build_norm_definition_applicability_declaration_v1",
+        "assess_norm_definition_applicability_v1",
+        "validate_norm_definition_applicability_v1",
+        "norm_definition_applicability_sha256"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_definition_applicability_v1.md",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_norm_definition_applicability_v1.py"
+      ],
+      "ownership_role": "existing_single_owner",
+      "compatibility_dependency": true,
+      "required": true,
+      "status": "focused_tests_qualified",
+      "evidence_ids": [
+        "norm-definition-applicability-public-integration-20261024-01"
+      ],
+      "notes": "Unchanged original65 owner/test2d569/c12f with separately accepted20 existing cases/60phases under current nine-dependency legacy route; original65 and recovered exact7fd/637 binding67+twoA/B histories stay separate. Complete nominated-use/alternative/endpoint replay retains original/current trust/evidence/time identities. Genuine public/current-endpoint controls and labelled pure/outer-context precision isolates have distinct scopes. Actual observations:131 compile/exec filenames,121 entries/119 physical origins,3 ordinary modules/37 physical paths including11 dynamic helpers. Six bypasses declared; onlylogic observed/five unused. Genuine cryptography49 fixture API bindings, no independent operation count/binary/code-object/full-environment proof. Original compute/storage/source READs closed,10files3258473bytes. Qualification75ef; publicationff0 preserves all179 source bytes with no rerun. No actual statutory review/applicability/legal-asof/trust clock, applied definition, physical join, model/training or graph/Lean admission. Governing/meaning null, masks0; four-width gates unchanged. Recovered67 success and failed40MB-at-cutoff claims are background only, not current ledger/recovery or extra case credit."
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3910,7 +3935,7 @@
       "path": "docs/autoformalization/evidence/legal-ir-norm-content-declaration-binding-public-integration-20261024.json",
       "required_for_catalog_check": true,
       "root": "datasets_repository",
-      "scope": "Two existing owners/four source files: unchanged unsigned144 lineage, later binding one-line/three-case delta versus old64, and separately accepted21 cases/63 phases. Existing later7fd/637 binding generation has one raw-length ledger mark and three appended cases relative to original494a/b184 64-case qualification; not byte-exact original64 or a previously established67-case result. Fresh21/63 covers12 original binding controls+3later cases+6unsigned controls. Six complete inputs keep independent raw/canonical pins, complete current replay and both generation/obligation identities. Historical raw bytes remain unverified; current raw bytes/length are independently checked. Combined fresh profile:119 compile/exec sources,114 module entries/112 physical origins,4 ordinary origins/23 physical paths; dynamic helpers claim no canonical origins. Six bypasses declared, onlylogic observed/five unused. Genuine cryptography49 fixture APIs, without independent operation count/binary/code-object/whole-environment attestation. Original compute/storage/source READs closed with10files2957288bytes. No actual review, applied meaning/applicability, source/span/entity join, model/training or graph/Lean admission. All four-width gates unchanged; masks zero.",
+      "scope": "Two existing owners/four source files: unchanged unsigned144 lineage, later binding one-line/three-case delta versus old64, and separately accepted21 cases/63 phases. Existing later7fd/637 binding generation has one raw-length ledger mark and three appended cases relative to original494a/b184 64-case qualification; not byte-exact original64. An indexed-history audit recovered the separate original67-case qualification of this same7fd/637 pair; it is distinct from fresh21/63. Fresh21/63 covers12 original binding controls+3later cases+6unsigned controls. Six complete inputs keep independent raw/canonical pins, complete current replay and both generation/obligation identities. Historical raw bytes remain unverified; current raw bytes/length are independently checked. Combined fresh profile:119 compile/exec sources,114 module entries/112 physical origins,4 ordinary origins/23 physical paths; dynamic helpers claim no canonical origins. Six bypasses declared, onlylogic observed/five unused. Genuine cryptography49 fixture APIs, without independent operation count/binary/code-object/whole-environment attestation. Original compute/storage/source READs closed with10files2957288bytes. No actual review, applied meaning/applicability, source/span/entity join, model/training or graph/Lean admission. All four-width gates unchanged; masks zero.",
       "status": "current_public_unsigned_declaration_and_later_binding_engineering_qualified_no_semantic_promotion"
     },
     {
@@ -3932,6 +3957,16 @@
       "root": "datasets_repository",
       "scope": "Three existing cases / nine phases on 234 current-public source/fixture files with exact ff73 source/c7 test overlays and preserved public cache/helper. Source/native/storage closed; historical 318/954 is not rerun or pooled. The 0/384 values are metadata-only declarations; no inference, model, legal, graph/corpus or Lean admission.",
       "status": "focused_current_public_wire_eligibility_fixture_qualified"
+    },
+    {
+      "id": "norm-definition-applicability-public-integration-20261024-01",
+      "observed_bytes": 50057,
+      "observed_sha256": "342f31b0a08adecb3559275a543273d62d8e966672106f58468d52bd0635cbb1",
+      "path": "docs/autoformalization/evidence/legal-ir-norm-definition-applicability-public-integration-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Unchanged original65 owner/test2d569/c12f with separately accepted20 existing cases/60phases under current nine-dependency legacy route; original65 and recovered exact7fd/637 binding67+twoA/B histories stay separate. Complete nominated-use/alternative/endpoint replay retains original/current trust/evidence/time identities. Genuine public/current-endpoint controls and labelled pure/outer-context precision isolates have distinct scopes. Actual observations:131 compile/exec filenames,121 entries/119 physical origins,3 ordinary modules/37 physical paths including11 dynamic helpers. Six bypasses declared; onlylogic observed/five unused. Genuine cryptography49 fixture API bindings, no independent operation count/binary/code-object/full-environment proof. Original compute/storage/source READs closed,10files3258473bytes. Qualification75ef; publicationff0 preserves all179 source bytes with no rerun. No actual statutory review/applicability/legal-asof/trust clock, applied definition, physical join, model/training or graph/Lean admission. Governing/meaning null, masks0; four-width gates unchanged. Recovered67 success and failed40MB-at-cutoff claims are background only, not current ledger/recovery or extra case credit.",
+      "status": "unchanged_applicability_owner_current_public_engineering_qualified_statutory_decisions_pending"
     }
   ]
 }
