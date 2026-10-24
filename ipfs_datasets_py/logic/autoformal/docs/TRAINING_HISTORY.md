@@ -35,6 +35,8 @@ The fixed CP38→CP128 continuation completed 90 updates, 246 observed forwards,
 | Context150 concat-GRU branch | 142/240 fields, 0/60 exact versus parent96/240 fields,2/60 exact | Completed adverse exactness result. A field increase is not exact reconstruction improvement. |
 | Persistent conditioning mechanism | Existing `every_step` / `first_step` implementation and retained contextual restore | Reuse the existing matched control. No drop-in CP128 compatibility or new qualification is inferred. |
 
+The later [CP128 warm-start generation](../../../../docs/autoformalization/evidence/legal-ir-cp128-warmstart-generation-20261022.json) records **12/12 typed completions and 0/12 exact token-ID or canonical compact-content AST reconstructions**, reusing only two unique exposed authored source rows. These are eight outputs from the successful trained-state pipeline plus four retained step-0 outputs from a failed wrapper with posthoc original storage recovery. The original zero-step pipeline remains unqualified; its partial custody is not promoted by combining the descriptive counts. These are different checkpoint/objective observations, not twelve independent sources or a held-out statutory result.
+
 The two authored rows are fictional retention/inspection fixtures. They do not establish cache-producer compatibility, source encoder authentication, statutory meaning or held-out generalization. The original budget policy forced a constructor at prefix 39 where only one token remained eligible; agreement at that budget-masked choice cannot diagnose model invariance.
 
 ### Retained branch-consumer source forks
@@ -71,7 +73,7 @@ The [current four-width plan](HANDOFF.md#four-source-widths) and [chronological 
 | Genuine4096D conditioning | Three200-update arms fit2/2TRAIN. Broader two200-update arms had7/12 and1/12TRAIN exact, both0/12 exact on exposed development. |
 | Genuine4096D source-span integration | Two actual native vectors, four physical decoder updates and exact state/Adam/progress resume.0/2decoded; two overlap abstentions. This is completed engineering, not a four-width legal-quality comparison. |
 
-The [retained reuse register](../../../../docs/autoencoders/evidence/legal-ir-four-dimension-reuse-20261018.json) preserves the original receipts and distinct checkpoint/producer identities. Native384/768 saved-vector custody verifiers already exist in the shared numerical package; they execute no encoder and supply no new statutory-meaning qualification.
+The [public comprehensive reuse review](../../../../docs/autoformalization/evidence/legal-ir-comprehensive-reuse-review-20261023.json) reconciles completed training and identifies the retained training/alignment receipts. Preserve their distinct checkpoint/producer identities and original qualification scopes. Native384/768 saved-vector custody verifiers already exist in the shared numerical package; they execute no encoder and supply no new statutory-meaning qualification.
 
 ## Earlier responsible-head comparisons: N9–F19
 
