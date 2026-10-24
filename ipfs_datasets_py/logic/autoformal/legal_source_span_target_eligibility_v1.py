@@ -1,9 +1,9 @@
 """Census source/span targets without selecting or qualifying them.
 
-V1 and V2 audit independently pinned retained join evidence without replaying the
-original source/span/entity operation. Explicit V3 separately replays its complete
-public original coordinate-join inputs before and after the same census. None of
-these profiles grants source-meaning, review, consumer, training or gold authority.
+Legacy V1 and the explicitly named retained-coordinate V1 audit saved join
+evidence. Public V2 and explicit V3 replay their complete original coordinate-join
+inputs before and after the census under separate schemas. None of these profiles
+grants source-meaning, review, consumer, training or gold authority.
 """
 from __future__ import annotations
 
@@ -129,9 +129,12 @@ def _preflight(request_raw, join_raw, expected_request_sha256, *, coordinate=Fal
     return request, join
 
 
-def _population(join, request, *, coordinate=False):
-    _need(type(join) is dict and join.get("schema") == ("legal-source-span-entity-join-manifest/v2"
-          if coordinate else "legal-source-span-entity-join-manifest/v1")
+def _population(join, request, *, coordinate=False, wire_source=False):
+    _need(not wire_source or coordinate, "wire metadata requires a coordinate population")
+    schema = ("legal-source-span-entity-join-manifest/v3" if wire_source
+              else "legal-source-span-entity-join-manifest/v2" if coordinate
+              else "legal-source-span-entity-join-manifest/v1")
+    _need(type(join) is dict and join.get("schema") == schema
           and join.get("selection_complete") is True, "complete selected join report required")
     _need(join.get("training_mask") == 0 and type(join.get("training_mask")) is int
           and join.get("evaluation_gold_mask") == 0 and type(join.get("evaluation_gold_mask")) is int,
@@ -146,7 +149,8 @@ def _population(join, request, *, coordinate=False):
         _need(len(bundles) == 1 and 1 <= len(refs) <= MAX_COORDINATE_ROWS
               and 1 <= len(physical) <= MAX_COORDINATE_ROWS,
               "one complete coordinate bundle and one through 64 physical rows required")
-        _need(join.get("source_compatibility_profile") == COORDINATE_JOIN_PROFILE
+        _need(join.get("source_compatibility_profile") == (WIRE_JOIN_PROFILE_V4 if wire_source
+                                                         else COORDINATE_JOIN_PROFILE)
               and join.get("selection_scope") == "exact_selected_paired_v3_bundle_with_complete_source_coordinates",
               "explicit retained coordinate join profile required")
     inventory = join.get("span_inventory")
@@ -292,9 +296,13 @@ def _coordinate_owners():
     _need(callable(getattr(span_cache, "load_source_coordinate_report", None))
           and callable(getattr(span_cache, "validate_source_coordinate_rows", None)),
           "existing coordinate bytes and row validators required")
-    paths = [Path(module.__file__).resolve() for module in (span_cache, uscode_ingest)]
-    root = Path(__file__).resolve().parents[3]
-    _need(all(root in path.parents for path in paths), "coordinate owner escaped selected source tree")
+    root = Path(__file__).resolve().parent
+    filenames = [module.__dict__.get("__file__") for module in (span_cache, uscode_ingest)]
+    expected = [root / "span_cache.py", root / "uscode_ingest.py"]
+    _need(all(type(name) is str and name == str(path) for name, path in zip(filenames, expected)),
+          "coordinate owner escaped selected source tree")
+    paths = [Path(name) for name in filenames]
+    _need(all(path.resolve() == path for path in paths), "coordinate owner escaped selected source tree")
     return span_cache, {str(path): _sha(path.read_bytes()) for path in sorted(paths)}
 
 
@@ -621,6 +629,11 @@ def validate_retained_source_span_target_eligibility_v1(report, request_raw, joi
 REQUEST_SCHEMA_V3 = "legal-source-span-target-eligibility-request/v3"
 SCHEMA_V3 = "legal-source-span-target-eligibility/v3"
 ORIGINAL_REPLAY_PROFILE_V3 = "original-input-coordinate-target-eligibility/v1"
+REQUEST_SCHEMA_V4 = "legal-source-span-target-eligibility-request/v4"
+SCHEMA_V4 = "legal-source-span-target-eligibility/v4"
+ORIGINAL_WIRE_REPLAY_PROFILE_V4 = "original-input-wire-coordinate-target-eligibility/v1"
+WIRE_JOIN_PROFILE_V4 = "paired-coordinate-hf-wire-three-cache-join/v1"
+WIRE_METADATA_PROFILE_V4 = "hf-default-parquet-envelope/v1"
 COORDINATE_REFERENCE_SCHEMA = "legal-source-span-target-coordinate-carrier-reference/v1"
 MAX_COORDINATE_ORIGINAL_BYTES = 8 * 1024 * 1024
 _JOIN_ORIGINAL_FIELDS = {
@@ -674,18 +687,25 @@ def source_span_target_join_originals_sha256(join_originals):
     return _coordinate_originals(join_originals)[1]
 
 
-def _replay_preflight_v3(request_raw, join_manifest_raw, expected_request_sha256, join_originals):
+def _replay_preflight_v3(request_raw, join_manifest_raw, expected_request_sha256, join_originals, *,
+                         wire_source=False):
     _digest(expected_request_sha256)
     _need(type(request_raw) is bytes and 0 < len(request_raw) <= MAX_REQUEST_BYTES
           and _sha(request_raw) == expected_request_sha256,
           "request bytes differ from independent pin")
     request = _read_json(request_raw, MAX_REQUEST_BYTES, "coordinate eligibility request")
-    _keys(request, {"schema", "join_manifest_raw_sha256", "join_manifest_sha256",
+    fields = {"schema", "join_manifest_raw_sha256", "join_manifest_sha256",
         "expected_physical_ids", "decoder_profile", "latent_dimension", "join_originals_sha256",
-        "source_coordinate_report_sha256", "source_compatibility_profile"}, "coordinate eligibility request")
-    _need(request["schema"] == REQUEST_SCHEMA_V3 and request["decoder_profile"] == DECODER_PROFILE
-          and request["source_compatibility_profile"] == ORIGINAL_REPLAY_PROFILE_V3,
+        "source_coordinate_report_sha256", "source_compatibility_profile"}
+    _keys(request, fields | ({"metadata_profile"} if wire_source else set()), "coordinate eligibility request")
+    _need(request["schema"] == (REQUEST_SCHEMA_V4 if wire_source else REQUEST_SCHEMA_V3)
+          and request["decoder_profile"] == DECODER_PROFILE
+          and request["source_compatibility_profile"] == (ORIGINAL_WIRE_REPLAY_PROFILE_V4 if wire_source
+                                                          else ORIGINAL_REPLAY_PROFILE_V3),
           "unsupported coordinate eligibility profile")
+    if wire_source:
+        _need(request["metadata_profile"] == WIRE_METADATA_PROFILE_V4,
+              "explicit wire metadata profile required")
     _need(type(request["latent_dimension"]) is int and request["latent_dimension"] in (0, 384),
           "explicit supported latent dimension required")
     for key in ("join_manifest_raw_sha256", "join_manifest_sha256", "join_originals_sha256",
@@ -697,9 +717,14 @@ def _replay_preflight_v3(request_raw, join_manifest_raw, expected_request_sha256
     retained = _read_json(join_manifest_raw, MAX_JOIN_BYTES, "coordinate join manifest")
     _need(_sha(_wire(retained, MAX_JOIN_BYTES)) == request["join_manifest_sha256"],
           "retained join canonical identity differs")
-    _need(type(retained) is dict and retained.get("schema") == "legal-source-span-entity-join-manifest/v2"
-          and retained.get("source_compatibility_profile") == "paired-coordinate-three-cache-join/v1",
-          "explicit coordinate join v2 required")
+    _need(type(retained) is dict
+          and retained.get("schema") == ("legal-source-span-entity-join-manifest/v3" if wire_source
+                                         else "legal-source-span-entity-join-manifest/v2")
+          and retained.get("source_compatibility_profile") == (WIRE_JOIN_PROFILE_V4 if wire_source
+                                                               else COORDINATE_JOIN_PROFILE),
+          "explicit wire-coordinate join v3 required" if wire_source else "explicit coordinate join v2 required")
+    if wire_source:
+        _wire_eligibility_source_binding(retained)
     ids = request["expected_physical_ids"]
     _need(type(ids) is list and 1 <= len(ids) <= MAX_COORDINATE_ROWS,
           "bounded nonempty ordered coordinate physical population required")
@@ -711,9 +736,9 @@ def _replay_preflight_v3(request_raw, join_manifest_raw, expected_request_sha256
     return request, retained, captured
 
 
-def _replay_population_v3(retained, request):
+def _replay_population_v3(retained, request, *, wire_source=False):
     _need(retained.get("selection_complete") is True, "complete coordinate join required")
-    physical, refs, payloads = _population(retained, request, coordinate=True)
+    physical, refs, payloads = _population(retained, request, coordinate=True, wire_source=wire_source)
     bundles = retained["paired_bundles"]
     _need(len(bundles) == 1 and len(refs) == len(physical) <= MAX_COORDINATE_ROWS,
           "one complete bounded coordinate bundle required")
@@ -754,40 +779,49 @@ def _replay_population_v3(retained, request):
 
 
 
-def prepare_source_span_target_eligibility_v3(request_raw, join_manifest_raw, *,
-        expected_request_sha256, join_originals):
-    """Census a complete coordinate join after genuine original-input replay.
+def _prepare_original_coordinate_eligibility(request_raw, join_manifest_raw, *,
+        expected_request_sha256, join_originals, wire_source=False):
+    """One original-input census for the separately declared coordinate profiles.
 
     The v3 schema and mandatory profile grant no statutory or learning authority.
     The exact join artifact is retained once at this report layer; a typed path
     references its original coordinate carrier without copying that carrier.
     """
     request, retained, captured = _replay_preflight_v3(request_raw, join_manifest_raw,
-        expected_request_sha256, join_originals)
+        expected_request_sha256, join_originals, wire_source=wire_source)
     _freshness()
     join, adapter, contracts, span, runtime, before = _owners()
-    _need(all(callable(getattr(join, name, None)) for name in
-              ("validate_source_span_entity_join_manifest_v2", "_coordinate_owner_pins", "_owners")),
-          "original-input v3 requires the genuine coordinate join v2 owner")
+    validator_name = ("validate_source_span_entity_join_manifest_v3" if wire_source
+                      else "validate_source_span_entity_join_manifest_v2")
+    names = (validator_name, "_coordinate_owner_pins", "_owners")
+    if wire_source:
+        names += ("_coordinate_file_witnesses",)
+    _need(all(callable(getattr(join, name, None)) for name in names),
+          "original-input v4 requires the genuine wire-coordinate join v3 owner" if wire_source
+          else "original-input v3 requires the genuine coordinate join v2 owner")
     before = _read_json(_wire(before, MAX_REQUEST_BYTES), MAX_REQUEST_BYTES, "owner pins")
-    bindings = (join.validate_source_span_entity_join_manifest_v2,
-                join._coordinate_owner_pins, join._owners)
+    bindings = tuple(getattr(join, name) for name in names)
     coordinate_pins = join._coordinate_owner_pins(join._owners())
     retained_snapshot = _ordered_wire(retained, MAX_JOIN_BYTES)
     description, opened, primary = None, False, None
+    request_snapshot = _ordered_wire(request, MAX_REQUEST_BYTES) if wire_source else None
+    replay_returns = []
+    file_plan, files, report, serialized, detached = (None,) * 5
 
     def originals_unchanged():
         _need(_replay_originals_v3(join_originals)[1] == request["join_originals_sha256"]
               and _replay_originals_v3(captured)[1] == request["join_originals_sha256"],
               "coordinate eligibility originals changed during operation")
+        if wire_source:
+            _need(_ordered_wire(request, MAX_REQUEST_BYTES) == request_snapshot,
+                  "wire eligibility captured request changed during operation")
 
     def producers_unchanged():
         _freshness()
         _need(_same(_owners()[-1], before)
               and join._coordinate_owner_pins(join._owners()) == coordinate_pins,
               "coordinate eligibility owners changed during operation")
-        _need(bindings == (join.validate_source_span_entity_join_manifest_v2,
-                           join._coordinate_owner_pins, join._owners),
+        _need(bindings == tuple(getattr(join, name) for name in names),
               "original-input coordinate join callable changed during operation")
         _need(_ordered_wire(retained, MAX_JOIN_BYTES) == retained_snapshot,
               "retained original-input coordinate join changed during delegation")
@@ -796,26 +830,61 @@ def prepare_source_span_target_eligibility_v3(request_raw, join_manifest_raw, *,
                   "runtime description changed during preparation")
 
     def replay_join():
-        bindings[0](retained, expected_report_sha256=request["join_manifest_sha256"], **captured)
+        value = bindings[0](retained, expected_report_sha256=request["join_manifest_sha256"], **captured)
+        if wire_source:
+            _need(_same(value, retained),
+                  "genuine wire join return differs from the independently pinned retained join")
+            replay_returns.append((value, _ordered_wire(value, MAX_JOIN_BYTES)))
 
     def closing_join():
         if opened:
             replay_join()
 
+    def files_unchanged():
+        if wire_source and files is not None:
+            location, selected = file_plan
+            _need(_same(bindings[3](location, selected), files),
+                  "wire eligibility paired files changed after original-input replay")
+
+    def returns_unchanged():
+        if wire_source:
+            for value, original in replay_returns:
+                _need(_ordered_wire(value, MAX_JOIN_BYTES) == original,
+                      "genuine wire join return changed during eligibility preparation")
+            if serialized is not None:
+                _wire_eligibility_unqualified(report)
+                _wire_eligibility_unqualified(detached)
+                _need(_wire(report, MAX_REPORT_BYTES) == serialized
+                      and _wire(detached, MAX_REPORT_BYTES) == serialized,
+                      "wire eligibility result changed during closing or final serialization")
+
     try:
         replay_join()
         opened = True
-        physical, refs, payloads, coordinates = _replay_population_v3(retained, request)
+        if wire_source:
+            # A full genuine opening replay precedes all path nomination here.
+            original_request = _read_json(captured["request_raw"], 256 * 1024, "original wire join request")
+            location = original_request["paired_bundles"][0]
+            selected = retained["span_inventory"]["manifests"][0]
+            file_plan = (_read_json(_wire(location, MAX_REQUEST_BYTES), MAX_REQUEST_BYTES, "wire file root"),
+                         _read_json(_wire(selected, MAX_JOIN_BYTES), MAX_JOIN_BYTES, "wire manifest witness"))
+            files = bindings[3](*file_plan)
+        physical, refs, payloads, coordinates = _replay_population_v3(retained, request,
+                                                                    wire_source=wire_source)
         description = _read_json(_wire(runtime.describe_runtime("legal_ir", request["decoder_profile"]),
             MAX_REQUEST_BYTES), MAX_REQUEST_BYTES, "runtime description")
         report = _target_census(request_raw, request, retained, physical, refs, payloads,
             adapter, contracts, span, runtime, before, description,
             expected_request_sha256=expected_request_sha256, coordinate=True)
         carrier = retained["paired_bundles"][0]["payload_intake"]["source_coordinates"]
-        report.update(schema=SCHEMA_V3, source_compatibility_profile=ORIGINAL_REPLAY_PROFILE_V3,
-            selection_scope="fully_replayed_coordinate_join_original_inputs",
+        report.update(schema=SCHEMA_V4 if wire_source else SCHEMA_V3,
+            source_compatibility_profile=(ORIGINAL_WIRE_REPLAY_PROFILE_V4 if wire_source
+                                          else ORIGINAL_REPLAY_PROFILE_V3),
+            selection_scope=("fully_replayed_wire_coordinate_join_original_inputs" if wire_source
+                             else "fully_replayed_coordinate_join_original_inputs"),
             upstream_reexecution_performed=True,
-            upstream_reexecution_requirement="opening_and_closing_public_coordinate_join_replay",
+            upstream_reexecution_requirement=("opening_and_closing_public_wire_coordinate_join_replay" if wire_source
+                                              else "opening_and_closing_public_coordinate_join_replay"),
             join_manifest_raw_utf8=join_manifest_raw.decode("utf-8"),
             join_originals_sha256=request["join_originals_sha256"],
             source_coordinate_report_sha256=request["source_coordinate_report_sha256"],
@@ -828,8 +897,12 @@ def prepare_source_span_target_eligibility_v3(request_raw, join_manifest_raw, *,
                 "report_bytes": carrier["report_bytes"]},
             current_source_release_correspondence="unverified_no_independent_crosswalk",
             entity_binding="unavailable_semantic_companions_not_supplied",
-            coordinate_validation_scope="complete_original_public_coordinate_join_operation",
+            coordinate_validation_scope=("complete_original_public_wire_coordinate_join_operation" if wire_source
+                                          else "complete_original_public_coordinate_join_operation"),
             producer_pins={"eligibility": before, "coordinate_join": coordinate_pins})
+        if wire_source:
+            report.update(metadata_profile=WIRE_METADATA_PROFILE_V4,
+                          source_metadata_intake_sha256=retained["source_metadata_intake_sha256"])
         for row in report["physical_rows"]:
             row.update(coordinates[row["physical_identity_sha256"]],
                 coordinate_transport_status="complete_report_occurrence_replayed")
@@ -841,34 +914,113 @@ def prepare_source_span_target_eligibility_v3(request_raw, join_manifest_raw, *,
                   == coordinates[row["physical_identity_sha256"]]
                   for row in report["physical_rows"] + report["output_occurrences"]),
               "coordinate output references changed")
+        if wire_source:
+            _wire_eligibility_unqualified(report)
+            serialized = _wire(report, MAX_REPORT_BYTES)
+            detached = _read_json(serialized, MAX_REPORT_BYTES, "wire original-input eligibility report")
+            return detached
         return _read_json(_wire(report, MAX_REPORT_BYTES), MAX_REPORT_BYTES, "original-input eligibility report")
     except BaseException as error:
         primary = error
         raise
     finally:
-        _finish_custody((("original inputs", originals_unchanged),
+        checks = (("original inputs", originals_unchanged),
             ("producer sources", producers_unchanged), ("closing public join replay", closing_join),
             ("post-replay original inputs", originals_unchanged),
-            ("post-replay producer sources", producers_unchanged)), primary)
+            ("post-replay producer sources", producers_unchanged))
+        if wire_source:
+            checks += (("wire delegate and result witnesses", returns_unchanged),
+                       ("wire paired files", files_unchanged),
+                       ("final original inputs", originals_unchanged),
+                       ("final producer sources", producers_unchanged))
+        _finish_custody(checks, primary)
 
 
-def validate_source_span_target_eligibility_v3(report, request_raw, join_manifest_raw, *,
-        expected_request_sha256, expected_report_sha256, join_originals):
-    """Validate the independent v3 identity and genuine original-input replay."""
+def prepare_source_span_target_eligibility_v3(request_raw, join_manifest_raw, *,
+        expected_request_sha256, join_originals):
+    """Census coordinate join v2 with its existing explicit original-input contract."""
+    return _prepare_original_coordinate_eligibility(request_raw, join_manifest_raw,
+        expected_request_sha256=expected_request_sha256, join_originals=join_originals)
+
+
+def _validate_original_coordinate_eligibility(report, request_raw, join_manifest_raw, *,
+        expected_request_sha256, expected_report_sha256, join_originals, wire_source=False):
+    """Share authoritative original replay without converting either public schema."""
     _digest(expected_report_sha256)
     raw = report if type(report) is bytes else _wire(report, MAX_REPORT_BYTES)
     offered = _read_json(raw, MAX_REPORT_BYTES, "original-input eligibility report")
     _need(source_span_target_eligibility_sha256(offered) == expected_report_sha256,
           "eligibility report SHA256 differs")
+    if wire_source:
+        _need(type(offered) is dict and offered.get("schema") == SCHEMA_V4
+              and offered.get("source_compatibility_profile") == ORIGINAL_WIRE_REPLAY_PROFILE_V4
+              and offered.get("metadata_profile") == WIRE_METADATA_PROFILE_V4,
+              "explicit wire-coordinate eligibility v4 report required")
     # Canonical identity is order-independent; snapshot the actual offered
     # object's order so an unchanged caller mapping is not a false mutation.
     original = _ordered_wire(offered if type(report) is bytes else report, MAX_REPORT_BYTES)
     primary = None
+    expected, expected_snapshot, file_plan, file_witnesses = (None,) * 4
+    if wire_source:
+        request, retained, captured = _replay_preflight_v3(request_raw, join_manifest_raw,
+            expected_request_sha256, join_originals, wire_source=True)
+        request_snapshot = _ordered_wire(request, MAX_REQUEST_BYTES)
+        retained_snapshot = _ordered_wire(retained, MAX_JOIN_BYTES)
+        originals_commitment = request["join_originals_sha256"]
+        _freshness()
+        join, _, _, _, _, before = _owners()
+        coordinate_pins = join._coordinate_owner_pins(join._owners())
+        bindings = (join.validate_source_span_entity_join_manifest_v3, join._coordinate_file_witnesses,
+                    join._coordinate_owner_pins, join._owners)
+
+    def wire_outer_unchanged():
+        if wire_source:
+            _need(_ordered_wire(request, MAX_REQUEST_BYTES) == request_snapshot
+                  and _ordered_wire(retained, MAX_JOIN_BYTES) == retained_snapshot,
+                  "wire eligibility outer parsed request or join changed during validation")
+            _need(_replay_originals_v3(join_originals)[1] == originals_commitment
+                  and _replay_originals_v3(captured)[1] == originals_commitment,
+                  "wire eligibility originals changed during validation finalization")
+            _freshness()
+            _need(_same(_owners()[-1], before)
+                  and join._coordinate_owner_pins(join._owners()) == coordinate_pins
+                  and bindings == (join.validate_source_span_entity_join_manifest_v3,
+                      join._coordinate_file_witnesses, join._coordinate_owner_pins, join._owners),
+                  "wire eligibility validation producer custody changed")
+            if expected_snapshot is not None:
+                _need(_ordered_wire(expected, MAX_REPORT_BYTES) == expected_snapshot,
+                      "regenerated wire eligibility report changed during validation")
+                _need(source_span_target_eligibility_sha256(expected) == expected_report_sha256,
+                      "regenerated wire eligibility independent report commitment changed")
+            if file_witnesses is not None:
+                _need(_same(bindings[1](*file_plan), file_witnesses),
+                      "wire eligibility physical files changed after full regeneration")
     try:
-        expected = prepare_source_span_target_eligibility_v3(request_raw, join_manifest_raw,
-            expected_request_sha256=expected_request_sha256, join_originals=join_originals)
+        if wire_source:
+            expected = _prepare_original_coordinate_eligibility(request_raw, join_manifest_raw,
+                expected_request_sha256=expected_request_sha256, join_originals=join_originals,
+                wire_source=True)
+        else:
+            expected = prepare_source_span_target_eligibility_v3(request_raw, join_manifest_raw,
+                expected_request_sha256=expected_request_sha256, join_originals=join_originals)
         _need(_same(offered, expected),
               "coordinate eligibility report differs from full original-input replay")
+        if wire_source:
+            expected_snapshot = _ordered_wire(expected, MAX_REPORT_BYTES)
+            _need(source_span_target_eligibility_sha256(expected) == expected_report_sha256,
+                  "wire eligibility regenerated report identity changed during serialization")
+            wire_outer_unchanged()
+            # The genuinely regenerated expected artifact nominates paths; the
+            # independently hashed outer preflight objects never supply them.
+            expected_join_raw = expected["join_manifest_raw_utf8"].encode("utf-8")
+            _need(expected_join_raw == join_manifest_raw,
+                  "regenerated wire eligibility retained different original join bytes")
+            expected_join = _read_json(expected_join_raw, MAX_JOIN_BYTES, "regenerated original wire join")
+            original_request = _read_json(expected_join["request_raw_utf8"].encode("utf-8"),
+                                         256 * 1024, "regenerated original wire join request")
+            file_plan = (original_request["paired_bundles"][0],
+                         expected_join["span_inventory"]["manifests"][0])
+            file_witnesses = bindings[1](*file_plan)
         return expected
     except BaseException as error:
         primary = error
@@ -879,7 +1031,18 @@ def validate_source_span_target_eligibility_v3(report, request_raw, join_manifes
                        if type(report) is bytes else report)
             _need(_ordered_wire(current, MAX_REPORT_BYTES) == original,
                   "offered coordinate eligibility report changed during validation")
-        _finish_custody((("offered report", offered_unchanged),), primary)
+        checks = (("offered report", offered_unchanged),)
+        if wire_source:
+            checks += (("wire validation originals/owners/files", wire_outer_unchanged),)
+        _finish_custody(checks, primary)
+
+
+def validate_source_span_target_eligibility_v3(report, request_raw, join_manifest_raw, *,
+        expected_request_sha256, expected_report_sha256, join_originals):
+    """Validate the existing explicit v3 identity and original coordinate-join v2 replay."""
+    return _validate_original_coordinate_eligibility(report, request_raw, join_manifest_raw,
+        expected_request_sha256=expected_request_sha256, expected_report_sha256=expected_report_sha256,
+        join_originals=join_originals)
 
 
 # Preserve the published original-input v2 contract beside explicit retained v1
@@ -1201,5 +1364,73 @@ def validate_source_span_target_eligibility_v2(report, request_raw, join_manifes
             _need(_wire(current, MAX_REPORT_BYTES) == original,
                   "offered coordinate eligibility report changed during validation")
         _finish_coordinate_eligibility((("offered report", offered_unchanged),), primary)
+
+
+def _wire_eligibility_source_binding(retained):
+    """Check explicit metadata identity; the genuine join owns full reconciliation."""
+    source = retained.get("source_metadata_intake")
+    _need(retained.get("source_metadata_profile") == WIRE_METADATA_PROFILE_V4
+          and retained.get("source_metadata_request_schema") == "legal-source-package-intake-request/v2"
+          and type(source) is dict and source.get("schema") == "legal-source-package-intake/v2"
+          and source.get("metadata_profile") == WIRE_METADATA_PROFILE_V4
+          and source.get("status") == "selected_wire_metadata_reconciled",
+          "wire eligibility requires the explicit reconciled source-intake v2 identity")
+    digest = retained.get("source_metadata_intake_sha256")
+    _digest(digest)
+    _need(_sha(_wire(source, MAX_JOIN_BYTES)) == digest,
+          "wire join source-intake report commitment differs")
+    _need(type(source.get("source_identity")) is dict
+          and source["source_identity"].get("aliases_mapped") is False,
+          "wire aliases cannot establish source correspondence")
+
+
+def _wire_eligibility_unqualified(report):
+    """Keep a mechanical target census separate from any authorized inference view."""
+    _need(type(report.get("authority")) is dict and set(report["authority"]) == set(AUTHORITY)
+          and all(value is False for value in report["authority"].values()),
+          "wire eligibility cannot grant authority")
+    for key in ("training_mask", "evaluation_gold_mask"):
+        _need(type(report.get(key)) is int and report[key] == 0,
+              "wire eligibility learning masks must remain plain zero integers")
+    for row in report["physical_rows"] + report["output_occurrences"]:
+        _need(row.get("consumer_eligible") is False,
+              "wire metadata cannot make a target consumer-eligible")
+        for key, value in row.items():
+            if key.endswith("_mask"):
+                _need(type(value) is int and value == 0, "wire target masks must remain plain zero integers")
+        fields = row.get("field_masks")
+        _need(type(fields) is dict and set(fields) == set(FACETS)
+              and all(type(value) is int and value == 0 for value in fields.values()),
+              "wire target field masks must remain plain zero integers")
+    for row in report["physical_rows"]:
+        _need(row.get("meaning_unit_id") is None and row.get("selected_occurrence") is None
+              and row.get("context_status") == "unresolved"
+              and row.get("source_review_status") == "unresolved"
+              and row.get("semantic_review_status") == "unresolved",
+              "wire metadata cannot create meaning, context or source/review authorization")
+    for key in ("consumer_eligible_rows", "source_units_established", "training_qualified_rows", "evaluation_gold_rows"):
+        _need(type(report["counts"].get(key)) is int and report["counts"][key] == 0,
+              "wire metadata cannot promote census counts into eligibility")
+
+
+def prepare_source_span_target_eligibility_v4(request_raw, join_manifest_raw, *,
+        expected_request_sha256, join_originals):
+    """Enumerate targets after opening/closing wire-coordinate join v3 replay.
+
+    The existing source_span_formula_v1 audit and zero/384 declarations remain
+    metadata mechanics. No inference view, source binding, review or model is
+    authorized by the selected HF wire metadata.
+    """
+    return _prepare_original_coordinate_eligibility(request_raw, join_manifest_raw,
+        expected_request_sha256=expected_request_sha256, join_originals=join_originals,
+        wire_source=True)
+
+
+def validate_source_span_target_eligibility_v4(report, request_raw, join_manifest_raw, *,
+        expected_request_sha256, expected_report_sha256, join_originals):
+    """Regenerate an explicit v4 report from every independently committed original."""
+    return _validate_original_coordinate_eligibility(report, request_raw, join_manifest_raw,
+        expected_request_sha256=expected_request_sha256, expected_report_sha256=expected_report_sha256,
+        join_originals=join_originals, wire_source=True)
 
 

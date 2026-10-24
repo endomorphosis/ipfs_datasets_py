@@ -488,7 +488,9 @@
         "prepare_retained_source_span_target_eligibility_v1",
         "validate_retained_source_span_target_eligibility_v1",
         "prepare_source_span_target_eligibility_v3",
-        "validate_source_span_target_eligibility_v3"
+        "validate_source_span_target_eligibility_v3",
+        "prepare_source_span_target_eligibility_v4",
+        "validate_source_span_target_eligibility_v4"
       ],
       "compatibility_dependency": false,
       "current_compatibility_generation": {
@@ -504,8 +506,16 @@
         "coordinate-target-eligibility-git-20261020-01",
         "coordinate-supported-target-qualified-20261021-01",
         "coordinate-supported-target-git-20261021-01",
-        "public-v2-retained-v1-original-v3-qualified-20261021"
+        "public-v2-retained-v1-original-v3-qualified-20261021",
+        "uscode-hf-wire-coordinate-eligibility-qualified-20261024-01",
+        "uscode-hf-wire-coordinate-eligibility-public-integration-qualified-20261024-01"
       ],
+      "focused_public_dependency_integration": {
+        "cases": 3,
+        "evidence_id": "uscode-hf-wire-coordinate-eligibility-public-integration-qualified-20261024-01",
+        "phases": 9,
+        "scope": "Three existing current-public eligibility-v4 cases only; historical 318/954 and namespace/private-orchestration scopes remain separate. No P/private full-profile requalification or model/legal authority."
+      },
       "id": "target-eligibility",
       "main_integration": {
         "base_main": "5beb7f4f7f03307f37684908cbb85ae977fc08b6",
@@ -557,7 +567,53 @@
         "pushed": false,
         "scope": "Historical selected-delivery cutoff; separate scoped main integration/publication remains pending."
       },
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "wire_coordinate_v4": {
+        "all_previous_contracts_preserved": true,
+        "authority": {
+          "Lean_admitted": false,
+          "evaluation_gold_qualified": false,
+          "graph_admitted": false,
+          "legal_meaning_reviewed": false,
+          "source_authenticated": false,
+          "source_current": false,
+          "training_qualified": false
+        },
+        "cases": 318,
+        "declared_latent_dimensions": [
+          0,
+          384
+        ],
+        "decoder_profile": "source_span_formula_v1",
+        "evaluation_gold_mask": 0,
+        "evidence_id": "uscode-hf-wire-coordinate-eligibility-qualified-20261024-01",
+        "inference_authorized": false,
+        "legacy_cases": 275,
+        "metadata_profile": "hf-default-parquet-envelope/v1",
+        "new_cases": 43,
+        "owning_test": {
+          "bytes": 141184,
+          "path": "tests/unit/logic/autoformal/test_legal_source_span_target_eligibility_v1.py",
+          "sha256": "c7f07b2de1cf2cc8e893437117e8ab1e645273fdb1b001e46c9e2f940e209487"
+        },
+        "phase_passes": 954,
+        "report_schema": "legal-source-span-target-eligibility/v4",
+        "request_schema": "legal-source-span-target-eligibility-request/v4",
+        "requires_all_original_join_inputs": true,
+        "scope": "Original-input target enumeration and custody only; source/edition/meaning, context, entity/definition, training/gold and graph/Lean decisions remain unresolved.",
+        "source": {
+          "bytes": 89898,
+          "path": "ipfs_datasets_py/logic/autoformal/legal_source_span_target_eligibility_v1.py",
+          "sha256": "ff73ae6f16e17bcaae412ed7e53a86a006facd81744940782ec06e051e799a7b"
+        },
+        "source_aliases_mapped": false,
+        "source_compatibility_profile": "original-input-wire-coordinate-target-eligibility/v1",
+        "status": "focused_authored_fixture_tests_qualified",
+        "test_functions": 117,
+        "training_mask": 0,
+        "upstream_join_profile": "paired-coordinate-hf-wire-three-cache-join/v1",
+        "upstream_join_schema": "legal-source-span-entity-join-manifest/v3"
+      }
     },
     {
       "apis": [
@@ -3802,6 +3858,26 @@
       "root": "datasets_repository",
       "scope": "Three existing cases / nine phases on the measured public44-file dependency snapshot with exact intake-v2/join-v3/test/metadata overlays, preserved e35f span_cache and cef7 public helper, and separate private dc6 orchestration. Original source/native/storage closed; historical108/324 and123/369 are not rerun or pooled. No P/private full-profile, corpus/model/Lean or semantic admission claim.",
       "status": "focused_current_public_dependency_fixture_qualified"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-eligibility-qualified-20261024-01",
+      "observed_bytes": 13831,
+      "observed_sha256": "cb78f10af6e8e962e5f714deff465c9094c5a30d7394741e73a5eb5bb006818f",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-eligibility-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Eligibility v4 passed 318 authored cases / 954 phases across 117 test functions:275 preserved cases plus 43 new controls. Genuine wire-coordinate join-v3 original-input replay and source_span_formula_v1 target audit preserve false authority and zero masks; downstream graph/corpus/census and legal/Lean adoption remain separate.",
+      "status": "explicit_wire_coordinate_target_eligibility_fixture_qualified"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-eligibility-public-integration-qualified-20261024-01",
+      "observed_bytes": 9504,
+      "observed_sha256": "e697250288b1d81cf748d286554fd05279506bbb00263b02055693faf8c44e31",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-eligibility-public-integration-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Three existing cases / nine phases on 234 current-public source/fixture files with exact ff73 source/c7 test overlays and preserved public cache/helper. Source/native/storage closed; historical 318/954 is not rerun or pooled. The 0/384 values are metadata-only declarations; no inference, model, legal, graph/corpus or Lean admission.",
+      "status": "focused_current_public_wire_eligibility_fixture_qualified"
     }
   ]
 }
