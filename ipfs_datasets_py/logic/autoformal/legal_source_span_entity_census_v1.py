@@ -343,15 +343,19 @@ def source_span_entity_census_join_originals_sha256(join_originals):
     return _coordinate_originals(join_originals)[1]
 
 
-def _coordinate_preflight(request_raw, join_report, census_raw, entity_path, expected_request_sha256):
+def _coordinate_preflight(request_raw, join_report, census_raw, entity_path, expected_request_sha256, *, wire=False):
     _digest(expected_request_sha256, "coordinate companion request")
     _need(type(request_raw) is bytes and 0 < len(request_raw) <= MAX_REQUEST_BYTES
           and _sha(request_raw) == expected_request_sha256,
           "coordinate companion request differs from independent pin")
     request = _read_json(request_raw, MAX_REQUEST_BYTES, "coordinate companion request")
-    _keys(request, {"schema", "join_report_sha256", "census_raw_sha256", "census_sha256", "entity", "census_limits",
-                    "join_originals_sha256", "source_coordinate_report_sha256"}, "coordinate census request")
-    _need(request["schema"] == REQUEST_SCHEMA_V2, "unsupported coordinate census companion profile")
+    fields = {"schema", "join_report_sha256", "census_raw_sha256", "census_sha256", "entity", "census_limits",
+              "join_originals_sha256", "source_coordinate_report_sha256"}
+    if wire:
+        fields |= {"metadata_profile", "source_metadata_intake_sha256"}
+    _keys(request, fields, "coordinate census request")
+    _need(request["schema"] == (REQUEST_SCHEMA_V3 if wire else REQUEST_SCHEMA_V2),
+          "unsupported coordinate census companion profile")
     for key in ("join_report_sha256", "census_raw_sha256", "census_sha256",
                 "join_originals_sha256", "source_coordinate_report_sha256"):
         _digest(request[key], key)
@@ -359,9 +363,13 @@ def _coordinate_preflight(request_raw, join_report, census_raw, entity_path, exp
                         MAX_JOIN_BYTES, "original coordinate join report")
     _need(_sha(_wire(joined, MAX_JOIN_BYTES)) == request["join_report_sha256"],
           "original coordinate join report pin differs")
-    _need(type(joined) is dict and joined.get("schema") == "legal-source-span-entity-join-manifest/v2"
-          and joined.get("source_compatibility_profile") == "paired-coordinate-three-cache-join/v1",
-          "explicit coordinate join v2 required")
+    _need(type(joined) is dict and joined.get("schema") == (
+              "legal-source-span-entity-join-manifest/v3" if wire else "legal-source-span-entity-join-manifest/v2")
+          and joined.get("source_compatibility_profile") == (
+              "paired-coordinate-hf-wire-three-cache-join/v1" if wire else "paired-coordinate-three-cache-join/v1"),
+          "explicit wire coordinate join v3 required" if wire else "explicit coordinate join v2 required")
+    if wire:
+        _wire_census_metadata(joined, request)
     _need(type(census_raw) is bytes and 0 < len(census_raw) <= MAX_CENSUS_BYTES
           and _sha(census_raw) == request["census_raw_sha256"], "prior census bytes differ from independent raw pin")
     census = _read_json(census_raw, MAX_CENSUS_BYTES, "prior census")
@@ -611,3 +619,325 @@ def validate_source_span_entity_census_v2(report, request_raw, join_report, cens
 
 __all__ += ["prepare_source_span_entity_census_v2", "validate_source_span_entity_census_v2",
             "source_span_entity_census_join_originals_sha256"]
+
+
+# Wire census custody is a new domain. Earlier entrypoints keep their closed
+# request fields and dispatch; paired-v3 manifests still contain payload-v2.
+import json as _wire_census_json
+import math as _wire_census_math
+
+REQUEST_SCHEMA_V3 = "legal-source-span-entity-census-request/v3"
+SCHEMA_V3 = "legal-source-span-entity-census/v3"
+WIRE_COORDINATE_PROFILE = "paired-coordinate-hf-wire-entity-census/v1"
+WIRE_METADATA_PROFILE = "hf-default-parquet-envelope/v1"
+_WIRE_CENSUS_PINS = None
+_WIRE_CENSUS_AUTHORITY_KEYS = frozenset(AUTHORITY)
+
+
+def _wire_census_metadata(joined, request):
+    _digest(request["source_metadata_intake_sha256"], "wire source metadata intake")
+    _need(request["metadata_profile"] == joined.get("source_metadata_profile") == WIRE_METADATA_PROFILE
+          and joined.get("source_metadata_request_schema") == "legal-source-package-intake-request/v2",
+          "explicit matching wire source metadata profile required")
+    intake = joined.get("source_metadata_intake")
+    _need(type(intake) is dict and intake.get("schema") == "legal-source-package-intake/v2"
+          and intake.get("metadata_profile") == WIRE_METADATA_PROFILE
+          and intake.get("status") == "selected_wire_metadata_reconciled"
+          and _sha(_wire(intake, MAX_JOIN_BYTES)) == joined.get("source_metadata_intake_sha256")
+              == request["source_metadata_intake_sha256"],
+          "complete independently pinned wire metadata intake required")
+
+
+def _wire_census_owners():
+    join, entity, _ = _owners()
+    upstream = join._owners()
+    source = upstream[0]
+    root = Path(__file__).resolve().parents[3]
+    pins = {}
+    for module in (join, entity, *upstream[:-1]):
+        path = Path(module.__file__).resolve()
+        _need(path == root.joinpath(*module.__name__.split(".")).with_suffix(".py"),
+              "wire census owner escaped selected source tree")
+        pins[str(path)] = _sha(path.read_bytes())
+    pins[str(Path(__file__).resolve())] = _SELF_PIN
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN, "wire census source changed since import")
+    global _WIRE_CENSUS_PINS
+    if _WIRE_CENSUS_PINS is None:
+        _WIRE_CENSUS_PINS = dict(pins)
+    _need(pins == _WIRE_CENSUS_PINS, "wire census owners changed since first wire use")
+    return join, entity, source, pins
+
+
+def _wire_census_fingerprint(value):
+    """Bounded byte-aware identity without the delegated JSON encoder."""
+    remaining, byte_count = 100000, 0
+    dumps = _wire_census_json.dumps
+
+    def capture(item, depth):
+        nonlocal remaining, byte_count
+        remaining -= 1
+        if remaining < 0 or depth > 32:
+            raise ValueError("bounded complete wire census inputs required")
+        kind = type(item)
+        if kind is bytes:
+            byte_count += len(item)
+            result = ["bytes", len(item), hashlib.sha256(item).hexdigest()]
+        elif kind is dict:
+            if any(type(key) is not str for key in item):
+                raise ValueError("ordinary wire census keys required")
+            result = ["dict", [[capture(key, depth + 1), capture(child, depth + 1)]
+                               for key, child in sorted(item.items())]]
+        elif kind is list:
+            result = ["list", [capture(child, depth + 1) for child in item]]
+        elif kind is str:
+            if "\x00" in item or any(0xD800 <= ord(char) <= 0xDFFF for char in item):
+                raise ValueError("ordinary UTF8 wire census strings required")
+            byte_count += len(item.encode("utf-8"))
+            result = ["str", item]
+        elif item is None or kind is bool:
+            result = ["null" if item is None else "bool", item]
+        elif kind is int and -(1 << 63) <= item < (1 << 63):
+            result = ["int", item]
+        elif kind is float and _wire_census_math.isfinite(item):
+            result = ["float", item]
+        else:
+            raise ValueError("ordinary finite complete wire census inputs required")
+        if byte_count > 64 * 1024**2:
+            raise ValueError("wire census input aggregate exceeds 64 MiB; no truncation")
+        return result
+
+    raw = dumps(capture(value, 0), ensure_ascii=False, allow_nan=False,
+                sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _wire_census_unqualified(report):
+    _keys(AUTHORITY, _WIRE_CENSUS_AUTHORITY_KEYS, "wire census false authority defaults")
+    _need(all(flag is False for flag in AUTHORITY.values()), "wire census cannot promote authority")
+    _keys(report["authority"], _WIRE_CENSUS_AUTHORITY_KEYS, "wire census false authority")
+    _need(all(flag is False for flag in report["authority"].values()), "wire census authority remains false")
+    for row in [report, *report["row_references"]]:
+        _need(all(type(row[key]) is int and row[key] == 0 for key in ("training_mask", "evaluation_gold_mask")),
+              "wire census masks remain plain integer zero")
+    _need(all(row["entity_semantic_binding"] is None for row in report["row_references"])
+          and report["counts"]["entity_semantic_bindings"] is None,
+          "wire census supplies no entity semantic association")
+
+
+def _wire_census_operation(request_raw, join_report, census_raw, entity_path, *,
+        expected_request_sha256, join_originals, offered=None, expected_report_sha256=None, validating=False):
+    finish, encoder, direct_dumps = _finish_coordinate_custody, _wire, _wire_census_json.dumps
+    _need(type(entity_path) in (str,type(Path())), "ordinary original wire entity source path required")
+    original = dict(request_raw=request_raw,join_report=join_report,census_raw=census_raw,
+        entity_path=str(entity_path),expected_request_sha256=expected_request_sha256,join_originals=join_originals,
+        offered=offered,expected_report_sha256=expected_report_sha256)
+    caller_identity = _wire_census_fingerprint(original)
+    request, joined, census, path = _coordinate_preflight(request_raw, join_report, census_raw,
+        entity_path, expected_request_sha256, wire=True)
+    originals, original_identity = _coordinate_originals(join_originals)
+    _need(original_identity == request["join_originals_sha256"], "independent wire originals commitment differs")
+    offered_raw = offered_canonical = parsed_offered = None
+    if validating:
+        _digest(expected_report_sha256, "wire census companion report")
+        offered_raw = encoder(offered, MAX_REPORT_BYTES) if type(offered) is not bytes else offered
+        parsed_offered = _read_json(offered_raw, MAX_REPORT_BYTES, "wire census companion report")
+        _need(type(parsed_offered) is dict and parsed_offered.get("schema") == SCHEMA_V3
+              and parsed_offered.get("source_compatibility_profile") == WIRE_COORDINATE_PROFILE
+              and parsed_offered.get("metadata_profile") == WIRE_METADATA_PROFILE,
+              "explicit wire census companion v3 required")
+        offered_canonical = encoder(parsed_offered, MAX_REPORT_BYTES)
+        _need(_sha(offered_canonical) == expected_report_sha256,
+              "wire census companion report pin differs")
+    detached = dict(original,join_report=joined,join_originals=originals)
+    # Normalize only the join transport for the detached identity; raw-byte and
+    # ordinary-dictionary transports remain separately fenced on the caller.
+    detached_identity = _wire_census_fingerprint(detached)
+    parsed_identity = _wire_census_fingerprint(dict(request=request,census=census,offered=parsed_offered))
+    joined_raw = encoder(joined, MAX_JOIN_BYTES)
+    join, entity, source, pins = _wire_census_owners()
+    selection = request["entity"]
+    retained, paired_closure, binding_identity = [], None, None
+    result = serialized = None
+    replay_started = False
+    primary = None
+
+    def callbacks():
+        return (join.validate_source_span_entity_join_manifest_v3,join._coordinate_file_witnesses,
+            source.validate_source_package_intake_v2,entity.validate_census_bindings,
+            _coordinate_preflight,_coordinate_originals,_coordinate_references,_wire_census_owners,
+            _wire_census_metadata,_wire_census_fingerprint,_wire_census_unqualified,_wire_census_operation,
+            prepare_source_span_entity_census_v3,validate_source_span_entity_census_v3)
+
+    selected_callbacks = callbacks()
+
+    def input_fence():
+        _need(_wire_census_fingerprint(original) == caller_identity
+              and _wire_census_fingerprint(detached) == detached_identity
+              and _wire_census_fingerprint(dict(request=request,census=census,offered=parsed_offered)) == parsed_identity,
+              "wire census caller detached or parsed inputs changed")
+
+    def returned_fence():
+        for value, identity in retained:
+            _need(_wire_census_fingerprint(value) == identity,
+                  "wire census actual retained dependency return changed")
+
+    def source_fence():
+        _need(_wire_census_owners()[-1] == pins and callbacks() == selected_callbacks
+              and _finish_coordinate_custody is finish and _wire is encoder,
+              "wire census producer sources or callbacks changed")
+
+    def remember(value):
+        retained.append((value,_wire_census_fingerprint(value)))
+        return value
+
+    def bind_entity():
+        nonlocal binding_identity
+        binding = remember(entity.validate_census_bindings(census,path,
+            expected_census_sha256=request["census_sha256"],expected_file_sha256=selection["file_sha256"],
+            expected_rows=selection["rows"],revision=selection["revision"],endpoint_details=True,
+            **request["census_limits"]))
+        identity = _wire_census_fingerprint(binding)
+        expected_binding = {"schema":"legal-materialized-entity-index-bindings-validation/v1",
+            "census_sha256":request["census_sha256"],"file_sha256":selection["file_sha256"],
+            "status":"pinned_prior_census_custody_verified","fresh_row_replay_performed":False,
+            "coverage_scope":"immutable_file_and_independently_pinned_prior_census_only",
+            "authority":dict.fromkeys(("admitted","formalized","source_semantics_verified","semantic_review_verified",
+                "source_occurrences_bound","globally_consistent","proof_authority","training_qualified",
+                "typed_graph_assertions_generated","surface_labels_merged"),False)}
+        _need(identity == _wire_census_fingerprint(expected_binding),
+              "wire census entity binding returned another closed custody contract")
+        if binding_identity is None:
+            binding_identity = identity
+        _need(identity == binding_identity, "wire census closing entity binding return differs")
+        return binding
+
+    def replay_join():
+        return remember(join.validate_source_span_entity_join_manifest_v3(joined,
+            originals["request_raw"],originals["source_request_raw"],originals["source_metadata_bytes"],
+            originals["paired_inventory_request_raw"],originals["paired_manifest_bytes"],originals["entity_info_raw"],
+            expected_report_sha256=request["join_report_sha256"],
+            expected_request_sha256=originals["expected_request_sha256"],
+            legacy_join_inputs=originals["legacy_join_inputs"]))
+
+    def replay_intake():
+        return remember(source.validate_source_package_intake_v2(joined["source_metadata_intake"],
+            originals["source_request_raw"],originals["source_metadata_bytes"],
+            expected_request_sha256=_sha(originals["source_request_raw"]),
+            expected_report_sha256=request["source_metadata_intake_sha256"]))
+
+    def paired_fence():
+        if paired_closure is not None:
+            location, selected, witness = paired_closure
+            _need(encoder(join._coordinate_file_witnesses(location,selected),MAX_REQUEST_BYTES) == witness,
+                  "wire census paired physical files changed after replay")
+
+    def final_output():
+        if serialized is not None:
+            _need(encoder(result,MAX_REPORT_BYTES) == serialized, "wire census output changed after final encoder")
+            # A final encoder is itself a callback boundary. Close physical
+            # evidence after it, then fence actual objects with no encoders.
+            bind_entity()
+            paired_fence()
+            source_fence()
+            input_fence()
+            returned_fence()
+            _wire_census_unqualified(result)
+            raw = direct_dumps(result,ensure_ascii=False,allow_nan=False,sort_keys=True,
+                               separators=(",", ":")).encode("utf-8")
+            _need(raw == serialized, "wire census final returned report differs")
+
+    try:
+        source_fence();input_fence()
+        ceilings = (entity.MAX_ROWS,entity.MAX_BATCH_SIZE,entity.MAX_FILE_BYTES,entity.MAX_DECODED_BYTES,
+                    entity.MAX_ROW_GROUP_BYTES,entity.MAX_BATCH_BYTES,entity.MAX_ROW_BYTES,entity.MAX_SCRATCH_BYTES)
+        _need(all(request["census_limits"][key] <= ceiling for key,ceiling in zip(_LIMITS,ceilings)),
+              "wire census limit exceeds existing entity owner bound")
+        replay_started = True
+        binding = bind_entity()
+        original_request = _read_json(originals["request_raw"],256*1024,"wire join original request")
+        locations,selections = original_request["paired_bundles"],joined["span_inventory"]["manifests"]
+        _need(type(locations) is list and len(locations) == 1 and type(selections) is list and len(selections) == 1,
+              "one complete bounded wire census bundle required")
+        paired_closure = (locations[0],_read_json(encoder(selections[0],MAX_JOIN_BYTES),MAX_JOIN_BYTES,
+            "retained wire census manifest"),encoder(joined["retained_file_witnesses"],MAX_REQUEST_BYTES))
+        opened = replay_join()
+        _need(encoder(opened,MAX_JOIN_BYTES) == joined_raw, "wire census genuine join replay differs")
+        intake = replay_intake()
+        _need(encoder(intake,MAX_JOIN_BYTES) == encoder(joined["source_metadata_intake"],MAX_JOIN_BYTES),
+              "wire census genuine source intake replay differs")
+        metadata = opened["entity_metadata"]
+        _need(all(metadata[key] == selection[key] for key in ("repository_id","revision","configuration"))
+              and type(metadata["declared_rows"]) is int and metadata["declared_rows"] == selection["rows"]
+              and metadata["schema_fields"] == list(entity.FIELDS)
+              and type(metadata["verified_file_rows"]) is int and metadata["verified_file_rows"] == 0
+              and metadata["scope"] == "metadata_only_no_entity_file_or_semantic_companions",
+              "wire census physical entity identity differs from original join metadata")
+        rows = _coordinate_references(opened,request)
+        result = {"schema":SCHEMA_V3,"source_compatibility_profile":WIRE_COORDINATE_PROFILE,
+            "metadata_profile":WIRE_METADATA_PROFILE,"source_metadata_request_schema":opened["source_metadata_request_schema"],
+            "source_metadata_intake_sha256":request["source_metadata_intake_sha256"],
+            "request":request,"request_raw_utf8":request_raw.decode("utf-8"),"request_sha256":expected_request_sha256,
+            "join_report":opened,"join_report_sha256":request["join_report_sha256"],
+            "join_originals_sha256":original_identity,
+            "source_coordinate_report_sha256":request["source_coordinate_report_sha256"],
+            "census":{"raw_utf8":census_raw.decode("utf-8"),"raw_sha256":request["census_raw_sha256"],
+                      "census_sha256":request["census_sha256"],"report":census},
+            "entity_file":{"path":path,**selection,"schema_fields":list(entity.FIELDS)},
+            "census_binding_validation":binding,"row_references":rows,
+            "counts":{"selected_paired_row_references":len(rows),
+                "selected_physical_paired_rows":opened["counts"]["physical_paired_rows"],
+                "coordinate_occurrence_replayed_rows":len(rows),"prior_entity_census_rows":census["rows"],
+                "fresh_entity_rows_decoded":0,"entity_semantic_bindings":None},
+            "evidence":{"source_span_join_replayed":True,"upstream_reexecution_performed":True,
+                "wire_source_metadata_intake_replayed":True,"prior_entity_row_census_retained":True,
+                "fresh_entity_file_and_footer_verified":True,"closing_entity_file_and_footer_verified":True,
+                "closing_paired_bundle_file_witnesses_verified":True,"fresh_entity_row_replay_performed":False,
+                "source_current_rows_replayed":False,"atomic_multi_file_snapshot_verified":False},
+            "authority":dict(AUTHORITY),"training_mask":0,"evaluation_gold_mask":0,"producer_pins":pins,
+            "producer_pins_scope":"listed_wire_census_owner_files_not_complete_execution_closure",
+            "loaded_byte_identity_verified":False,
+            "limitations":["Complete wire metadata, physical coordinate order and independently pinned prior entity census are custody evidence only.",
+                "The genuine entity owner rehashes the original file and verifies its footer; this companion decodes no entity rows.",
+                "Exact wire metadata is not remote history authentication, governing edition or current-source equivalence.",
+                "Source/term/entity semantic associations, definitions, context and legal meaning remain unreviewed; masks stay zero.",
+                "No model, training, graph admission, solver or Lean execution is supplied; all original inputs remain required."]}
+        _wire_census_unqualified(result)
+        serialized = encoder(result,MAX_REPORT_BYTES)
+        _need(not validating or serialized == offered_canonical,
+              "wire census companion differs from complete original regeneration")
+        result = _read_json(serialized,MAX_REPORT_BYTES,"detached wire census report")
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        def close_join():
+            if replay_started:
+                _need(encoder(replay_join(),MAX_JOIN_BYTES) == joined_raw,"wire census closing join replay differs")
+        def close_intake():
+            if replay_started:
+                _need(encoder(replay_intake(),MAX_JOIN_BYTES)
+                      == encoder(joined["source_metadata_intake"],MAX_JOIN_BYTES),"wire census closing intake replay differs")
+        finish((("entity prior census binding",lambda: bind_entity() if replay_started else None),
+            ("genuine wire join replay",close_join),("genuine wire intake replay",close_intake),
+            ("paired physical witnesses",paired_fence),("wire census producer sources",source_fence),
+            ("original detached and parsed inputs",input_fence),("actual retained returns",returned_fence),
+            ("final returned report",final_output)),primary)
+    return result
+
+
+def prepare_source_span_entity_census_v3(request_raw, join_report, census_raw, entity_path, *,
+        expected_request_sha256, join_originals):
+    """Bind a genuine wire join to a prior entity census without semantic promotion."""
+    return _wire_census_operation(request_raw,join_report,census_raw,entity_path,
+        expected_request_sha256=expected_request_sha256,join_originals=join_originals)
+
+
+def validate_source_span_entity_census_v3(report, request_raw, join_report, census_raw, entity_path, *,
+        expected_report_sha256, expected_request_sha256, join_originals):
+    """Regenerate the complete explicit wire companion from all original inputs."""
+    return _wire_census_operation(request_raw,join_report,census_raw,entity_path,
+        expected_request_sha256=expected_request_sha256,join_originals=join_originals,
+        offered=report,expected_report_sha256=expected_report_sha256,validating=True)
+
+
+__all__ += ["prepare_source_span_entity_census_v3","validate_source_span_entity_census_v3"]
