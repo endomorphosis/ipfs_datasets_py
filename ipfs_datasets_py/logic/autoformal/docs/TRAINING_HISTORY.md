@@ -37,6 +37,12 @@ The fixed CP38→CP128 continuation completed 90 updates, 246 observed forwards,
 
 The two authored rows are fictional retention/inspection fixtures. They do not establish cache-producer compatibility, source encoder authentication, statutory meaning or held-out generalization. The original budget policy forced a constructor at prefix 39 where only one token remained eligible; agreement at that budget-masked choice cannot diagnose model invariance.
 
+### Retained branch-consumer source forks
+
+The [published persistent v3 consumer](../../../../docs/autoformalization/evidence/legal-ir-compact-persistent-branch-generation-20261024.json) pins source `9c19f559f15e4e612f911af1e116643a383bc5617c756b05df88eb85015e2a5b`: separate 6-case / 18-phase fake-loop and full accepted 2-case / 6-phase genuine profiles, with four exposed calls remaining 0/4 typed or exact compact reconstruction. Its qualified settings are 32 inspections per decision, 1,024 per generation and 100 new IDs; the genuine comparison is the 1,200-second retry, while the failed 600-second attempt remains separate.
+
+The distinct [archived recovered-focused-tests summary](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/selector-v01/runtime-v03/result-recovery-v01/qualification-summary-v01.json) pins source `fb5ab477ea5c1f903f24152466e6b66d000f256cb1188276254017bf31f1a0c0` and records 9 cases / 27 phases recovered from a failed native job. That native job remains failed with zero native-job credit; unavailable independent global observer exports and raw compile buffers remain unavailable. Its primary four calls also remain 0/4 typed or exact. These sources share a filename, schema and profile but have incompatible budget APIs/accounting: the archived fork uses `max_total_prefix_inspections` plus singleton/search/frontier settings; the published source uses `max_prefix_inspections_per_generation`. Use each receipt's exact full source and settings pins; do not interchange settings, pool qualification credit or infer legal, graph, Lean or training gain.
+
 ## Actual zero-conditioning observation
 
 The supplied vector was exactly 384 zeros. The call retained original row 0 context bytes and the exact previously autonomous prefixes of lengths19 and39 including BOS. Raw scores were durable before saved-reference comparison. Actual conditioning, model state/tensors, RNG, cleanup and original source/native releases passed the closed saved audit.
