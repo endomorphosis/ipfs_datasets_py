@@ -195,7 +195,7 @@ links do not supply meaning review, governing definition use, admission or a
 training target. Existing relational parsing and Lean text generation remain
 separate from any Lean build; no model, training, solver or Lean process runs.
 
-The [saved qualification audit](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/execution-v03/independent-saved-result-audit-v01.json)
+The [saved qualification summary](../../../../../docs/autoformalization/evidence/legal-ir-parent-norm-scope-correspondence-20261024.json)
 accepts the combined two-module cohort: 185 cases and 555 passing phases,
 including 149 existing compatibility cases and 36 parent-profile cases. Both
 guides refer to this same cohort. The exact qualification profile is

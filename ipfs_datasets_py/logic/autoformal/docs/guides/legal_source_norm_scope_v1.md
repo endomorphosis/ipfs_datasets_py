@@ -166,7 +166,7 @@ There is no formal norm AST, lowered IR, selected interpretation, graph
 admission, learned target or meaning review. No model, training, solver or Lean
 process is executed.
 
-The [saved qualification audit](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-scope-20261024-root-932c992e/execution-v03/independent-saved-result-audit-v01.json)
+The [saved qualification summary](../../../../../docs/autoformalization/evidence/legal-ir-parent-norm-scope-correspondence-20261024.json)
 accepts the combined two-module cohort: 185 cases and 555 passing phases,
 including 149 existing compatibility cases and 36 parent-profile cases. Both
 guides refer to this same cohort. The exact qualification profile is
