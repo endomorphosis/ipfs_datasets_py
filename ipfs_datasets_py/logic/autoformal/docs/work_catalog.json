@@ -1343,20 +1343,125 @@
         "coordinate_graph_corpus_sha256",
         "prepare_coordinate_graph_corpus_v1",
         "validate_coordinate_graph_corpus_v1",
-        "export_coordinate_graph_corpus_output_v1"
+        "export_coordinate_graph_corpus_output_v1",
+        "prepare_coordinate_graph_corpus_v2",
+        "validate_coordinate_graph_corpus_v2",
+        "export_coordinate_graph_corpus_output_v2"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
         "selected-coordinate-corpus-custody-20261021",
-        "public-v2-retained-v1-original-v3-qualified-20261021"
+        "public-v2-retained-v1-original-v3-qualified-20261021",
+        "uscode-hf-wire-coordinate-graph-corpus-qualified-20261024-01",
+        "uscode-hf-wire-coordinate-graph-corpus-public-integration-qualified-20261024-01"
       ],
+      "focused_public_dependency_integration": {
+        "cases": 3,
+        "descriptor_relative_observer_counts": {
+          "audit_events": 70,
+          "context_errors": 0,
+          "contexts": 70,
+          "failed_syscalls": 0,
+          "successful_pending_writes": 2,
+          "successful_reads": 62,
+          "successful_writes": 8,
+          "validation_refusals": 5
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_id": "uscode-hf-wire-coordinate-graph-corpus-public-integration-qualified-20261024-01",
+        "frozen_source_fixture_files": 225,
+        "genuine_package_initializers": 10,
+        "historical90_and270_separate": true,
+        "measured_public_base": "e37f0117843ebd1ed8c559da12a959cabec51537",
+        "model_widths_executed": [],
+        "namespace_parents_unexecuted": 14,
+        "owning_test_sha256": "9af3eb50500d473fb5fa27b592f2f5a07625f8e86ef50cf65e64509c76e4be35",
+        "phases": 9,
+        "private_context_missing_and_import_denied": 7,
+        "public_dependency_files": 223,
+        "scope": "Only three existing current-public corpus-v2 cases, including actual writer/readback and closing refusal, with unchanged public cache/helper and private orchestration separate. Original90/270 and whole-package/native-tooling, census/source-correspondence, model and legal/Lean profiles remain separate.",
+        "separate_excluded_review_seed_modules": 3,
+        "source_sha256": "0de6dafb9f8e65283e1ee646b94a8ef4eb354d709e2cfce497379a33060cc4f4",
+        "training_mask": 0
+      },
       "id": "coordinate-corpus-custody",
       "notes": "Existing corpus adapter; additive graph-v2/original-eligibility-v3 proposal custody/export, not another graph implementation. Complete slots, ordered ASTs and independent commitments retained. No source crosswalk, entity meanings, complete norm, gold, models or Lean admission.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.corpus_proposed_graph_adapter",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py",
       "required": true,
-      "status": "focused_tests_qualified"
+      "status": "focused_tests_qualified",
+      "wire_coordinate_corpus_v2": {
+        "all_previous_contracts_preserved": true,
+        "authority": {
+          "Lean_admitted": false,
+          "evaluation_gold_qualified": false,
+          "graph_admitted": false,
+          "legal_meaning_reviewed": false,
+          "source_authenticated": false,
+          "source_current": false,
+          "training_qualified": false
+        },
+        "cases": 90,
+        "census_adoption_performed": false,
+        "convergence_claimed": false,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "uscode-hf-wire-coordinate-graph-corpus-qualified-20261024-01",
+        "export_schema": "legal-coordinate-graph-corpus-output-export/v2",
+        "fixtures_latent_dimensions": [
+          0
+        ],
+        "full_owning_cases": 116,
+        "full_owning_functions": 56,
+        "graph_profile": "canonical_rules_v1",
+        "inference_authorized": false,
+        "inherited_latent_dimensions": [
+          0,
+          384
+        ],
+        "intake_input_fields": 7,
+        "legacy_cases": 46,
+        "metadata_profile": "hf-default-parquet-envelope/v1",
+        "model_widths_executed": [],
+        "new_cases": 44,
+        "normal_graph_validation_calls": {
+          "export": 4,
+          "prepare": 2,
+          "validate": 2
+        },
+        "original_hash_recipes_preserved": true,
+        "output_input_fields": 9,
+        "owning_test": {
+          "bytes": 77509,
+          "path": "tests/unit/logic/autoformal/test_corpus_proposed_graph_adapter.py",
+          "sha256": "9af3eb50500d473fb5fa27b592f2f5a07625f8e86ef50cf65e64509c76e4be35"
+        },
+        "phase_passes": 270,
+        "preserved_old_owning_cases": 72,
+        "proposals_unreviewed": true,
+        "public_dependency_adoption_performed": false,
+        "report_schema": "legal-coordinate-graph-corpus/v2",
+        "requires_all_original_join_inputs": true,
+        "scope": "Explicit wire graph-v3/eligibility-v4/join-v3 candidate custody and existing exclusive export/readback only, with final original/parsed/live-return/runtime/callback/physical-file fences; source/edition/meaning, context, entity/definition applicability, learning/gold and graph/Lean admission remain unresolved.",
+        "source": {
+          "bytes": 76545,
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py",
+          "sha256": "0de6dafb9f8e65283e1ee646b94a8ef4eb354d709e2cfce497379a33060cc4f4"
+        },
+        "source_aliases_mapped": false,
+        "source_compatibility_profile": "original-input-wire-coordinate-graph-v3-corpus-custody/v1",
+        "source_correspondence_adoption_performed": false,
+        "status": "focused_authored_fixture_tests_qualified",
+        "test_functions": 45,
+        "training_mask": 0,
+        "unselected_old_cases": 26,
+        "upstream_eligibility_profile": "original-input-wire-coordinate-target-eligibility/v1",
+        "upstream_eligibility_schema": "legal-source-span-target-eligibility/v4",
+        "upstream_graph_profile": "original-input-wire-coordinate-source-graph-intake/v1",
+        "upstream_graph_schema": "legal-coordinate-source-graph-intake/v3",
+        "upstream_join_profile": "paired-coordinate-hf-wire-three-cache-join/v1",
+        "upstream_join_schema": "legal-source-span-entity-join-manifest/v3"
+      }
     },
     {
       "apis": [
@@ -2534,7 +2639,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-24T07:39:03.747082+00:00",
+  "last_updated_at_utc": "2026-10-24T13:52:14.020345+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -4067,6 +4172,26 @@
       "root": "datasets_repository",
       "scope": "Three existing graph-v3 cases / nine phases on224 frozen current-public source/fixture files with exact e37 source/c8 test overlays, public e35f cache/cef7 helper and separate original private orchestration. All233 historical commitments and nine import-denied missing private owners remain provenance; original101/303 is not rerun or pooled. Namespace14/genuine10 and dimension0 fixtures grant no whole-package, model-width, corpus/census/source-correspondence or legal/graph/Lean admission.",
       "status": "focused_current_public_wire_graph_intake_fixture_qualified"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-graph-corpus-qualified-20261024-01",
+      "observed_bytes": 11343,
+      "observed_sha256": "673fe91a4d5b4773080d727527601fcc791e5cee1a1034e6b57b1082c66be1f0",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-graph-corpus-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Corpus v2 passed 90 authored cases / 270 phases across 45 selected functions: 46 preceding corpus controls plus 44 wire controls; all 72 older owning cases preserved with 26 unselected. Genuine graph-v3/eligibility-v4/wire-join-v3 originals, one shared candidate loop, unchanged hash/candidate/export formats and final original/live-return/file custody preserve false authority and plain integer zero masks. No model/width/training/convergence, source-correspondence/census/public dependency adoption or legal/graph/Lean admission.",
+      "status": "explicit_wire_coordinate_graph_corpus_fixture_qualified"
+    },
+    {
+      "id": "uscode-hf-wire-coordinate-graph-corpus-public-integration-qualified-20261024-01",
+      "observed_bytes": 12527,
+      "observed_sha256": "63ef0e87d823b9bd5d08f33e35edd711083d096b9cb02a8c71b95d4b5b84f204",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-graph-corpus-public-integration-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Three existing corpus-v2 cases / nine phases on225 frozen current-public source/fixture files with exact0de source/9af test overlays and preserved public e35f cache/cef7 helper. Original232 provenance, seven missing private owners and three excluded review seeds remain separate; original90/270 is not rerun or pooled. Genuine writer/readback and retained four-file refusal preserve zero masks and false legal/graph/Lean authority. Namespace14/genuine10 and dimension0 fixtures grant no whole-package, model-width, census/source-correspondence adoption or legal admission.",
+      "status": "focused_current_public_wire_graph_corpus_fixture_qualified"
     }
   ]
 }
