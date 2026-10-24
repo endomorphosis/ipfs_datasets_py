@@ -1,0 +1,342 @@
+{
+  "actual_project_source_execution": [
+    {
+      "bytes": 34262,
+      "module": "ipfs_datasets_py.logic.families.namespaces",
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/families/namespaces.py",
+      "sha256": "ba097e653158a812d66ead978d6405d61adaa293521305333579b19bd69a432d"
+    },
+    {
+      "bytes": 75291,
+      "module": "ipfs_datasets_py.logic.syntax_core.contracts",
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/syntax_core/contracts.py",
+      "sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8"
+    },
+    {
+      "bytes": 30488,
+      "module": "ipfs_datasets_py.logic.syntax_core.signatures",
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/syntax_core/signatures.py",
+      "sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf"
+    },
+    {
+      "bytes": 56966,
+      "module": "ipfs_datasets_py.logic.syntax_core.ast",
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/syntax_core/ast.py",
+      "sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4"
+    }
+  ],
+  "authority": {
+    "Lean_admitted": false,
+    "evaluation_gold_qualified": false,
+    "governing_use_verified": false,
+    "independently_reviewed": false,
+    "legal_roles_verified": false,
+    "semantic_graph_admitted": false,
+    "source_semantics_verified": false,
+    "training_gold_qualified": false
+  },
+  "counts": {
+    "Lean_builds": 0,
+    "Pytest_cases": 0,
+    "alternatives": 2,
+    "authored_unreviewed_scaffolding_rows_per_alternative": 95,
+    "binder_rows_per_alternative": 12,
+    "core_AST_nodes_per_alternative": 98,
+    "encoder_calls": 0,
+    "exact_reused_counted_inner_nodes": 47,
+    "inventory_rows_per_alternative": 111,
+    "legacy_extension_payloads_per_alternative": 1,
+    "literal_partition_segments": 20,
+    "model_forwards": 0,
+    "omission_mapping_refusals": 4,
+    "optimizer_updates": 0,
+    "original_counted_nodes": 49,
+    "pending_linked_inverse_rows_per_alternative": 16,
+    "source_characters": 163,
+    "source_features": 11,
+    "source_utf8_bytes": 163,
+    "typed_omission_controls": 4
+  },
+  "data_checks": [
+    {
+      "details": {
+        "counted_inner_nodes": 47,
+        "counted_origin_nodes": 49,
+        "original_counted_profile_replayed": false,
+        "source_chars": 163
+      },
+      "name": "retained_source_and_counted_origin",
+      "passed": true
+    },
+    {
+      "details": {
+        "alternatives": 2,
+        "distinct_content_digests": true,
+        "feature_links_each": 11,
+        "inventory_rows": [
+          111,
+          111
+        ]
+      },
+      "name": "two_typed_alternatives_roundtrip_and_source_links",
+      "passed": true
+    },
+    {
+      "details": {
+        "mapping_refusals": 2,
+        "meaning_or_semantic_exhaustiveness_established": false,
+        "typed_omissions": 2
+      },
+      "name": "omission_control_AssignedTo",
+      "passed": true
+    },
+    {
+      "details": {
+        "mapping_refusals": 2,
+        "meaning_or_semantic_exhaustiveness_established": false,
+        "typed_omissions": 2
+      },
+      "name": "omission_control_PurposeAssistInDischarging",
+      "passed": true
+    },
+    {
+      "details": {
+        "fileless_namespaces": 1,
+        "initializer_bodies_bypassed": 3,
+        "namespace_declarations": 4,
+        "new_training_model_Lean_or_signing": false,
+        "ordinary_modules": 4
+      },
+      "name": "pending_authority_and_exact_source_closure",
+      "passed": true
+    }
+  ],
+  "evaluation_gold_mask": 0,
+  "local_reproduction_limits": "Original source/producer paths and full control receipts remain pinned at their retained absolute identities. The public packet and source bytes are portable data; moving a directory does not requalify a native execution or recover a legacy cache join.",
+  "namespace_profile": {
+    "declarations": 4,
+    "details": [
+      {
+        "fileless": false,
+        "initializer_body_bypassed": true,
+        "initializer_relative_path": "ipfs_datasets_py/__init__.py",
+        "initializer_sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9",
+        "module": "ipfs_datasets_py",
+        "namespace_path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py"
+      },
+      {
+        "fileless": false,
+        "initializer_body_bypassed": true,
+        "initializer_relative_path": "ipfs_datasets_py/logic/__init__.py",
+        "initializer_sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79",
+        "module": "ipfs_datasets_py.logic",
+        "namespace_path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic"
+      },
+      {
+        "fileless": false,
+        "initializer_body_bypassed": true,
+        "initializer_relative_path": "ipfs_datasets_py/logic/syntax_core/__init__.py",
+        "initializer_sha256": "20dd418d90360cdb42c64ba8b87bedcdb640228b460ef6c6ae60312365130e81",
+        "module": "ipfs_datasets_py.logic.syntax_core",
+        "namespace_path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/syntax_core"
+      },
+      {
+        "exact_git_head": "fdab590e69dbe26a646ecf29db9c3270d57a8387",
+        "fileless": true,
+        "filesystem_initializer_absent": true,
+        "git_ls_tree_output": "",
+        "initializer_body_bypassed": false,
+        "initializer_relative_path": "ipfs_datasets_py/logic/families/__init__.py",
+        "module": "ipfs_datasets_py.logic.families",
+        "namespace_path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/families"
+      }
+    ],
+    "fileless_namespaces": 1,
+    "full_package_startup_qualified": false,
+    "initializer_bodies_bypassed": 3
+  },
+  "native_result": {
+    "durability": {
+      "bytes": 1360,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/complete-7214-proposal-v01/attempt-v03/logs/validation-durability.json",
+      "sha256": "072fcdae8c0b6db90ff72a1f8da0c94e682663380bde155338a21cffb7955d36"
+    },
+    "final_controller": {
+      "bytes": 8525,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/complete-7214-proposal-v01/controller-complete-v03.json",
+      "sha256": "a45c303f4975aad0041f3bd9f44cef9258da82a8cc14ecbe6f9dde5253140f6f"
+    },
+    "native_lease_id": "8ca228cf370044fc8d9379bbfcfea933",
+    "observed_live_processes": 0,
+    "original_native_compute_released": true,
+    "original_storage_claim_released": true,
+    "request": {
+      "bytes": 9621,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/complete-7214-proposal-v01/request-v03.json",
+      "sha256": "50b4eb2371062d5ab5bce507f8c0dd6277083ffc920adbd3371c03911ba61ac0"
+    },
+    "reservation_id": "47f0b00dcefd402ca4acdeaf632e967f",
+    "result": {
+      "bytes": 847,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/complete-7214-proposal-v01/attempt-v03/logs/result.json",
+      "sha256": "902925a6d6bede0ce282dae4ca60a8b4e5b4c690c59d7a4eaabcefe9a5f57722"
+    },
+    "retained_bytes": 671932,
+    "retained_files": 7,
+    "source_READs_closed": true,
+    "worker_check": {
+      "bytes": 5438,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/complete-7214-proposal-v01/attempt-v03/exports/preparation-check.json",
+      "sha256": "147bc12663c7ca82846dedb152a0b552e3d0d25678c58885a609cf5f13839f74"
+    }
+  },
+  "next_engineering_boundary": "A separately declared compositional equality/many-sort/modal lowering and complete source/meaning binding are required. Existing Object-only relational and fixed-counted native profiles do not accept these trees; do not reuse either by renaming the profile.",
+  "packet": {
+    "bytes": 662668,
+    "path": "docs/autoformalization/evidence/legal-ir-title10-7214-pending-compositions-20261024.json",
+    "raw_byte_exact_to_saved_native_output": true,
+    "root": "datasets_repository",
+    "sha256": "dd72e2b92ed5a44a77acfb72dd27ca8614250878400db89742c0437438d59dda"
+  },
+  "portable_source_evidence": {
+    "acquisition_descriptor": {
+      "edition": 2024,
+      "granule_id": "USCODE-2024-title10-subtitleB-partII-chap723-sec7214",
+      "http_provenance": {
+        "content_type": "text/html",
+        "etag": null,
+        "final_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm",
+        "last_modified": "Fri, 22 Aug 2025 18:43:47 GMT",
+        "requested_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm",
+        "status_code": 200
+      },
+      "legal_id": "usc:us:10:7214",
+      "package_id": "USCODE-2024-title10",
+      "raw_bytes": 7017,
+      "raw_sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e",
+      "retrieved_at": "2026-10-15T16:42:18.675126+00:00",
+      "schema": "legal-official-source-acquisition/v1",
+      "url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm"
+    },
+    "legacy_HF_physical_join": null,
+    "normalized_view": {
+      "bytes": 3858,
+      "sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64",
+      "text": "10 U.S.C.\nUnited States Code, 2024 Edition\nTitle 10 - ARMED FORCES\nSubtitle B - Army\nPART II - PERSONNEL\nCHAPTER 723 - SPECIAL APPOINTMENTS, ASSIGNMENTS, DETAILS, AND DUTIES\nSec. 7214 - Corps of Engineers: detail of officers to assist Mayor of District of Columbia\nFrom the U.S. Government Publishing Office, www.gpo.gov\n§7214. Corps of Engineers: detail of officers to assist Mayor of District of Columbia\nThe President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.\n(Aug. 10, 1956, ch. 1041, 70A Stat. 201, §3534; Pub. L. 90–623, §2(5), Oct. 22, 1968, 82 Stat. 1314; Pub. L. 96–513, title V, §512(5)(A), (B), Dec. 12, 1980, 94 Stat. 2929; renumbered §7214, Pub. L. 115–232, div. A, title VIII, §808(b)(6), Aug. 13, 2018, 132 Stat. 1838.)\nHistorical and Revision Notes\nRevised section\nSource (U.S. Code)\nSource (Statutes at Large)\n3534(a)\n3534(b)\n10:189 (less 1st sentence).\n10:190.\nJune 11, 1878, ch. 180, §2 (48th through 56th words of 1st sentence, and 2d sentence), 20 Stat. 103.\nJune 11, 1878, ch. 180, §5 (last sentence); restated Aug. 7, 1894, ch. 232 (proviso under \"For Engineer's Office\"), 28 Stat. 246.\nMar. 3, 1881, ch. 134 (words after last semicolon of 1st par. under \"General Expenses\"), 21 Stat. 460.\nDec. 24, 1890, J. Res. 7 (last sentence), 26 Stat. 1113.\nIn subsection (a), the words \"whose grade is above first lieutenant\" are substituted for the words \"from among the captains or officers of higher grade\". The words \"in the discretion of\" and \"from time to time, from the Corps of Engineers, by the President, for this duty\" are omitted as surplusage. 10:189 (last sentence) is omitted as obsolete.\nIn subsections (a) and (b), the words \"assigned to\" are substituted for the word \"of\", since, under section 3063 of this title, officers are assigned to, rather than commissioned in, the Corps of Engineers.\nIn subsection (b), the words \"assist that officer\" are substituted for the words \"act as assistants to said engineer commissioner\". The words \"his duties\" are substituted for the words \"the special duties imposed upon him\".\nEditorial Notes\nPrior Provisions\nA prior section 7214 was renumbered section 8614 of this title.\nA prior section 7215, act Aug. 10, 1956, ch. 1041, 70A Stat. 445, authorized Secretary of the Navy to maintain and operate naval prisons and prison farms and to provide for subsistence, welfare, recreation, and education of naval prisoners, prior to repeal by Pub. L. 90–377, §6(2), July 5, 1968, 82 Stat. 288.\nAmendments\n2018—Pub. L. 115–232 renumbered section 3534 of this title as this section.\n1980—Pub. L. 96–513 substituted \"Mayor\" for \"Commissioner\" in section catchline and text.\n1968—Pub. L. 90–623 substituted \"Corps of Engineers: detail of officers to assist Commissioner of District of Columbia\" for \"Engineer Commissioner of the District of Columbia; assistants: detail\" as section catchline and struck out provisions for the appointment of an Engineer Commissioner of the District of Columbia.\nStatutory Notes and Related Subsidiaries\nEffective Date of 2018 Amendment\nAmendment by Pub. L. 115–232 effective Feb. 1, 2019, with provision for the coordination of amendments and special rule for certain redesignations, see section 800 of Pub. L. 115–232, set out as a note preceding section 3001 of this title.\nEffective Date of 1980 Amendment\nAmendment by Pub. L. 96–513 effective Dec. 12, 1980, see section 701(b)(3) of Pub. L. 96–513, set out as a note under section 101 of this title.\nEffective Date of 1968 Amendment\nAmendment by Pub. L. 90–623 intended to restate without substantive change the law in effect on Oct. 22, 1968, see section 6 of Pub. L. 90–623, set out as a note under section 5334 of Title 5, Government Organization and Employees."
+    },
+    "raw_HTML": {
+      "bytes": 7017,
+      "data": "PGh0bWw+PGhlYWQ+PGxpbmsgcmVsPSJzdHlsZXNoZWV0IiB0eXBlPSJ0ZXh0L2NzcyIgaHJlZj0idXNjLmNzcyIvPjx0aXRsZT5VLlMuQy4gVGl0bGUgMTAgLSBBUk1FRCBGT1JDRVM8L3RpdGxlPjwvaGVhZD48Ym9keT4KPHNwYW4gc3R5bGU9ImZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjEycHQ7Ij4xMCBVLlMuQy4gPC9zcGFuPjxici8+CjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTBwdCI+VW5pdGVkIFN0YXRlcyBDb2RlLCAyMDI0IEVkaXRpb248L3NwYW4+PGJyLz4KPHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMHB0Ij5UaXRsZSAxMCAtIEFSTUVEIEZPUkNFUzwvc3Bhbj48YnIvPgo8c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwcHQiPlN1YnRpdGxlIEIgLSBBcm15PC9zcGFuPjxici8+CjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTBwdCI+UEFSVCBJSSAtIFBFUlNPTk5FTDwvc3Bhbj48YnIvPgo8c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwcHQiPkNIQVBURVIgNzIzIC0gU1BFQ0lBTCBBUFBPSU5UTUVOVFMsIEFTU0lHTk1FTlRTLCBERVRBSUxTLCBBTkQgRFVUSUVTPC9zcGFuPjxici8+CjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTBwdCI+U2VjLiA3MjE0IC0gQ29ycHMgb2YgRW5naW5lZXJzOiBkZXRhaWwgb2Ygb2ZmaWNlcnMgdG8gYXNzaXN0IE1heW9yIG9mIERpc3RyaWN0IG9mIENvbHVtYmlhPC9zcGFuPjxici8+CjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTBwdCI+RnJvbSB0aGUgVS5TLiBHb3Zlcm5tZW50IFB1Ymxpc2hpbmcgT2ZmaWNlLCA8YSBocmVmPSJodHRwOi8vd3d3Lmdwby5nb3YiPnd3dy5ncG8uZ292PC9hPjwvc3Bhbj48YnIvPjxici8+CjwhLS0gZG9jdW1lbnRpZDoxMF83MjE0ICB1c2NrZXk6MTAwMDAwMDAwNzIxNDAwMDAwMDAwMDAwMDAwMDAwMDAwIGN1cnJlbnR0aHJvdWdoOjIwMjUwMTA2IGRvY3VtZW50UERGUGFnZTozMDA3IC0tPgo8IS0tIGl0ZW1wYXRoOi8xMDAvU3VidGl0bGUgQi9QQVJUIElJL0NIQVBURVIgNzIzL1NlYy4gNzIxNCAtLT4KPCEtLSBpdGVtc29ydGtleToxMDBBRUpZIC0tPgo8IS0tIGV4cGNpdGU6VElUTEUgMTAtQVJNRUQgRk9SQ0VTIUAhU3VidGl0bGUgQi1Bcm15IUAhUEFSVCBJSS1QRVJTT05ORUwhQCFDSEFQVEVSIDcyMy1TUEVDSUFMIEFQUE9JTlRNRU5UUywgQVNTSUdOTUVOVFMsIERFVEFJTFMsIEFORCBEVVRJRVMhQCFTZWMuIDcyMTQgLS0+CjwhLS0gZmllbGQtc3RhcnQ6aGVhZCAtLT4KPGgzIGNsYXNzPSJzZWN0aW9uLWhlYWQiPiZzZWN0OzcyMTQuIENvcnBzIG9mIEVuZ2luZWVyczogZGV0YWlsIG9mIG9mZmljZXJzIHRvIGFzc2lzdCBNYXlvciBvZiBEaXN0cmljdCBvZiBDb2x1bWJpYTwvaDM+CjwhLS0gZmllbGQtZW5kOmhlYWQgLS0+CjwhLS0gZmllbGQtc3RhcnQ6c3RhdHV0ZSAtLT4KPHAgY2xhc3M9InN0YXR1dG9yeS1ib2R5Ij5UaGUgUHJlc2lkZW50IG1heSBkZXRhaWwgbm90IG1vcmUgdGhhbiB0aHJlZSBvZmZpY2VycyBhc3NpZ25lZCB0byB0aGUgQ29ycHMgb2YgRW5naW5lZXJzIHRvIGFzc2lzdCB0aGUgTWF5b3Igb2YgdGhlIERpc3RyaWN0IG9mIENvbHVtYmlhIGluIGRpc2NoYXJnaW5nIGhpcyBkdXRpZXMuPC9wPgo8IS0tIGZpZWxkLWVuZDpzdGF0dXRlIC0tPgo8IS0tIGZpZWxkLXN0YXJ0OnNvdXJjZWNyZWRpdCAtLT4KPHAgY2xhc3M9InNvdXJjZS1jcmVkaXQiPihBdWcuIDEwLCAxOTU2LCBjaC4gMTA0MSwgNzBBIFN0YXQuIDIwMSwgJnNlY3Q7MzUzNDsgUHViLiBMLiA5MCZuZGFzaDs2MjMsICZzZWN0OzIoNSksIE9jdC4gMjIsIDE5NjgsIDgyIFN0YXQuIDEzMTQ7IFB1Yi4gTC4gOTYmbmRhc2g7NTEzLCB0aXRsZSBWLCAmc2VjdDs1MTIoNSkoQSksIChCKSwgRGVjLiAxMiwgMTk4MCwgOTQgU3RhdC4gMjkyOTsgcmVudW1iZXJlZCAmc2VjdDs3MjE0LCBQdWIuIEwuIDExNSZuZGFzaDsyMzIsIGRpdi4gQSwgdGl0bGUgVklJSSwgJnNlY3Q7ODA4KGIpKDYpLCBBdWcuIDEzLCAyMDE4LCAxMzIgU3RhdC4gMTgzOC4pPC9wPgo8IS0tIFBERlBhZ2U6MzAwOCAtLT48IS0tIGZpZWxkLWVuZDpzb3VyY2VjcmVkaXQgLS0+CjwhLS0gZmllbGQtc3RhcnQ6bm90ZXMgLS0+CjwhLS0gZmllbGQtc3RhcnQ6aGlzdG9yaWNhbGFuZHJldmlzaW9uLW5vdGUgLS0+Cjx0YWJsZSBjbGFzcz0idXNjaGlzdHJldiIgY2VsbHNwYWNpbmc9IjAiIHdpZHRoPSI3MDAiPjxjYXB0aW9uPjxjYXAtc21hbGxjYXA+SGlzdG9yaWNhbCBhbmQgUmV2aXNpb24gTm90ZXM8L2NhcC1zbWFsbGNhcD48L2NhcHRpb24+Cjx0cj48dGggaWQ9InJvdzBjb2wwIj48aT5SZXZpc2VkIHNlY3Rpb248L2k+PC90aD48dGggaWQ9InJvdzBjb2wxIj48aT5Tb3VyY2UgKFUuUy4gQ29kZSk8L2k+PC90aD48dGggaWQ9InJvdzBjb2wyIj48aT5Tb3VyY2UgKFN0YXR1dGVzIGF0IExhcmdlKTwvaT48L3RoPjwvdHI+Cjx0cj4KPHRkIGNsYXNzPSJsZWZ0Ij4zNTM0KGEpPHAgY2xhc3M9ImludGFibGVkYXRhIj4zNTM0KGIpIDwvcD48L3RkPgo8dGQgY2xhc3M9Im1pZGRsZSI+MTA6MTg5IChsZXNzIDFzdCBzZW50ZW5jZSkuPHAgY2xhc3M9ImludGFibGVkYXRhIj4xMDoxOTAuIDwvcD48L3RkPgo8dGQgY2xhc3M9InJpZ2h0Ij5KdW5lIDExLCAxODc4LCBjaC4gMTgwLCAmc2VjdDsyICg0OHRoIHRocm91Z2ggNTZ0aCB3b3JkcyBvZiAxc3Qgc2VudGVuY2UsIGFuZCAyZCBzZW50ZW5jZSksIDIwIFN0YXQuIDEwMy48L3RkPgo8L3RyPgo8dHI+Cjx0ZCBjbGFzcz0ibGVmdCI+JiMxNjA7IDwvdGQ+Cjx0ZCBjbGFzcz0ibWlkZGxlIj4gPC90ZD4KPHRkIGNsYXNzPSJyaWdodCI+SnVuZSAxMSwgMTg3OCwgY2guIDE4MCwgJnNlY3Q7NSAobGFzdCBzZW50ZW5jZSk7IHJlc3RhdGVkIEF1Zy4gNywgMTg5NCwgY2guIDIzMiAocHJvdmlzbyB1bmRlciAmcXVvdDtGb3IgRW5naW5lZXIncyBPZmZpY2UmcXVvdDspLCAyOCBTdGF0LiAyNDYuPC90ZD4KPC90cj4KPHRyPgo8dGQgY2xhc3M9ImxlZnQiPiYjMTYwOyA8L3RkPgo8dGQgY2xhc3M9Im1pZGRsZSI+IDwvdGQ+Cjx0ZCBjbGFzcz0icmlnaHQiPk1hci4gMywgMTg4MSwgY2guIDEzNCAod29yZHMgYWZ0ZXIgbGFzdCBzZW1pY29sb24gb2YgMXN0IHBhci4gdW5kZXIgJnF1b3Q7R2VuZXJhbCBFeHBlbnNlcyZxdW90OyksIDIxIFN0YXQuIDQ2MC48L3RkPgo8L3RyPgo8dHI+Cjx0ZCBjbGFzcz0ibGVmdCI+JiMxNjA7IDwvdGQ+Cjx0ZCBjbGFzcz0ibWlkZGxlIj4gPC90ZD4KPHRkIGNsYXNzPSJyaWdodCI+RGVjLiAyNCwgMTg5MCwgSi4gUmVzLiA3IChsYXN0IHNlbnRlbmNlKSwgMjYgU3RhdC4gMTExMy48L3RkPgo8L3RyPgoKPC90YWJsZT4KCjxwIGNsYXNzPSJub3RlLWJvZHkiPkluIHN1YnNlY3Rpb24gKGEpLCB0aGUgd29yZHMgJnF1b3Q7d2hvc2UgZ3JhZGUgaXMgYWJvdmUgZmlyc3QgbGlldXRlbmFudCZxdW90OyBhcmUgc3Vic3RpdHV0ZWQgZm9yIHRoZSB3b3JkcyAmcXVvdDtmcm9tIGFtb25nIHRoZSBjYXB0YWlucyBvciBvZmZpY2VycyBvZiBoaWdoZXIgZ3JhZGUmcXVvdDsuIFRoZSB3b3JkcyAmcXVvdDtpbiB0aGUgZGlzY3JldGlvbiBvZiZxdW90OyBhbmQgJnF1b3Q7ZnJvbSB0aW1lIHRvIHRpbWUsIGZyb20gdGhlIENvcnBzIG9mIEVuZ2luZWVycywgYnkgdGhlIFByZXNpZGVudCwgZm9yIHRoaXMgZHV0eSZxdW90OyBhcmUgb21pdHRlZCBhcyBzdXJwbHVzYWdlLiAxMDoxODkgKGxhc3Qgc2VudGVuY2UpIGlzIG9taXR0ZWQgYXMgb2Jzb2xldGUuPC9wPgo8cCBjbGFzcz0ibm90ZS1ib2R5Ij5JbiBzdWJzZWN0aW9ucyAoYSkgYW5kIChiKSwgdGhlIHdvcmRzICZxdW90O2Fzc2lnbmVkIHRvJnF1b3Q7IGFyZSBzdWJzdGl0dXRlZCBmb3IgdGhlIHdvcmQgJnF1b3Q7b2YmcXVvdDssIHNpbmNlLCB1bmRlciBzZWN0aW9uIDMwNjMgb2YgdGhpcyB0aXRsZSwgb2ZmaWNlcnMgYXJlIGFzc2lnbmVkIHRvLCByYXRoZXIgdGhhbiBjb21taXNzaW9uZWQgaW4sIHRoZSBDb3JwcyBvZiBFbmdpbmVlcnMuPC9wPgo8cCBjbGFzcz0ibm90ZS1ib2R5Ij5JbiBzdWJzZWN0aW9uIChiKSwgdGhlIHdvcmRzICZxdW90O2Fzc2lzdCB0aGF0IG9mZmljZXImcXVvdDsgYXJlIHN1YnN0aXR1dGVkIGZvciB0aGUgd29yZHMgJnF1b3Q7YWN0IGFzIGFzc2lzdGFudHMgdG8gc2FpZCBlbmdpbmVlciBjb21taXNzaW9uZXImcXVvdDsuIFRoZSB3b3JkcyAmcXVvdDtoaXMgZHV0aWVzJnF1b3Q7IGFyZSBzdWJzdGl0dXRlZCBmb3IgdGhlIHdvcmRzICZxdW90O3RoZSBzcGVjaWFsIGR1dGllcyBpbXBvc2VkIHVwb24gaGltJnF1b3Q7LjwvcD4KPGJyIGNsYXNzPSJRMDQiIC8+CjwhLS0gZmllbGQtZW5kOmhpc3RvcmljYWxhbmRyZXZpc2lvbi1ub3RlIC0tPgo8IS0tIGZpZWxkLXN0YXJ0Om1pc2NlbGxhbmVvdXMtbm90ZSAtLT4KPGg0IGNsYXNzPSJub3RlLWhlYWQiPjxzdHJvbmc+RWRpdG9yaWFsIE5vdGVzPC9zdHJvbmc+PC9oND4KPCEtLSBmaWVsZC1lbmQ6bWlzY2VsbGFuZW91cy1ub3RlIC0tPgo8IS0tIGZpZWxkLXN0YXJ0OnByaW9ycHJvdmlzaW9ucy1ub3RlIC0tPgo8aDQgY2xhc3M9Im5vdGUtaGVhZCI+UHJpb3IgUHJvdmlzaW9uczwvaDQ+CjxwIGNsYXNzPSJub3RlLWJvZHkiPkEgcHJpb3Igc2VjdGlvbiA3MjE0IHdhcyByZW51bWJlcmVkIHNlY3Rpb24gODYxNCBvZiB0aGlzIHRpdGxlLjwvcD4KPHAgY2xhc3M9Im5vdGUtYm9keSI+QSBwcmlvciBzZWN0aW9uIDcyMTUsIGFjdCBBdWcuIDEwLCAxOTU2LCBjaC4gMTA0MSwgNzBBIFN0YXQuIDQ0NSwgYXV0aG9yaXplZCBTZWNyZXRhcnkgb2YgdGhlIE5hdnkgdG8gbWFpbnRhaW4gYW5kIG9wZXJhdGUgbmF2YWwgcHJpc29ucyBhbmQgcHJpc29uIGZhcm1zIGFuZCB0byBwcm92aWRlIGZvciBzdWJzaXN0ZW5jZSwgd2VsZmFyZSwgcmVjcmVhdGlvbiwgYW5kIGVkdWNhdGlvbiBvZiBuYXZhbCBwcmlzb25lcnMsIHByaW9yIHRvIHJlcGVhbCBieSBQdWIuIEwuIDkwJm5kYXNoOzM3NywgJnNlY3Q7NigyKSwgSnVseSA1LCAxOTY4LCA4MiBTdGF0LiAyODguPC9wPgo8IS0tIGZpZWxkLWVuZDpwcmlvcnByb3Zpc2lvbnMtbm90ZSAtLT4KPCEtLSBmaWVsZC1zdGFydDphbWVuZG1lbnQtbm90ZSAtLT4KPGg0IGNsYXNzPSJub3RlLWhlYWQiPkFtZW5kbWVudHM8L2g0Pgo8cCBjbGFzcz0ibm90ZS1ib2R5Ij48Yj4yMDE4PC9iPiZtZGFzaDtQdWIuIEwuIDExNSZuZGFzaDsyMzIgcmVudW1iZXJlZCBzZWN0aW9uIDM1MzQgb2YgdGhpcyB0aXRsZSBhcyB0aGlzIHNlY3Rpb24uPC9wPgo8cCBjbGFzcz0ibm90ZS1ib2R5Ij48Yj4xOTgwPC9iPiZtZGFzaDtQdWIuIEwuIDk2Jm5kYXNoOzUxMyBzdWJzdGl0dXRlZCAmcXVvdDtNYXlvciZxdW90OyBmb3IgJnF1b3Q7Q29tbWlzc2lvbmVyJnF1b3Q7IGluIHNlY3Rpb24gY2F0Y2hsaW5lIGFuZCB0ZXh0LjwvcD4KPHAgY2xhc3M9Im5vdGUtYm9keSI+PGI+MTk2ODwvYj4mbWRhc2g7UHViLiBMLiA5MCZuZGFzaDs2MjMgc3Vic3RpdHV0ZWQgJnF1b3Q7Q29ycHMgb2YgRW5naW5lZXJzOiBkZXRhaWwgb2Ygb2ZmaWNlcnMgdG8gYXNzaXN0IENvbW1pc3Npb25lciBvZiBEaXN0cmljdCBvZiBDb2x1bWJpYSZxdW90OyBmb3IgJnF1b3Q7RW5naW5lZXIgQ29tbWlzc2lvbmVyIG9mIHRoZSBEaXN0cmljdCBvZiBDb2x1bWJpYTsgYXNzaXN0YW50czogZGV0YWlsJnF1b3Q7IGFzIHNlY3Rpb24gY2F0Y2hsaW5lIGFuZCBzdHJ1Y2sgb3V0IHByb3Zpc2lvbnMgZm9yIHRoZSBhcHBvaW50bWVudCBvZiBhbiBFbmdpbmVlciBDb21taXNzaW9uZXIgb2YgdGhlIERpc3RyaWN0IG9mIENvbHVtYmlhLjwvcD4KPGJyIGNsYXNzPSJRMDQiIC8+CjwhLS0gZmllbGQtZW5kOmFtZW5kbWVudC1ub3RlIC0tPgo8IS0tIGZpZWxkLXN0YXJ0Om1pc2NlbGxhbmVvdXMtbm90ZSAtLT4KPGg0IGNsYXNzPSJub3RlLWhlYWQiPjxzdHJvbmc+U3RhdHV0b3J5IE5vdGVzIGFuZCBSZWxhdGVkIFN1YnNpZGlhcmllczwvc3Ryb25nPjwvaDQ+CjwhLS0gZmllbGQtZW5kOm1pc2NlbGxhbmVvdXMtbm90ZSAtLT4KPCEtLSBmaWVsZC1zdGFydDplZmZlY3RpdmVkYXRlLWFtZW5kbWVudC1ub3RlIC0tPgo8aDQgY2xhc3M9Im5vdGUtaGVhZCI+RWZmZWN0aXZlIERhdGUgb2YgMjAxOCBBbWVuZG1lbnQ8L2g0Pgo8cCBjbGFzcz0ibm90ZS1ib2R5Ij5BbWVuZG1lbnQgYnkgUHViLiBMLiAxMTUmbmRhc2g7MjMyIGVmZmVjdGl2ZSBGZWIuIDEsIDIwMTksIHdpdGggcHJvdmlzaW9uIGZvciB0aGUgY29vcmRpbmF0aW9uIG9mIGFtZW5kbWVudHMgYW5kIHNwZWNpYWwgcnVsZSBmb3IgY2VydGFpbiByZWRlc2lnbmF0aW9ucywgc2VlIHNlY3Rpb24gODAwIG9mIFB1Yi4gTC4gMTE1Jm5kYXNoOzIzMiwgc2V0IG91dCBhcyBhIG5vdGUgcHJlY2VkaW5nIHNlY3Rpb24gMzAwMSBvZiB0aGlzIHRpdGxlLjwvcD4KPGg0IGNsYXNzPSJub3RlLWhlYWQiPkVmZmVjdGl2ZSBEYXRlIG9mIDE5ODAgQW1lbmRtZW50PC9oND4KPHAgY2xhc3M9Im5vdGUtYm9keSI+QW1lbmRtZW50IGJ5IFB1Yi4gTC4gOTYmbmRhc2g7NTEzIGVmZmVjdGl2ZSBEZWMuIDEyLCAxOTgwLCBzZWUgc2VjdGlvbiA3MDEoYikoMykgb2YgUHViLiBMLiA5NiZuZGFzaDs1MTMsIHNldCBvdXQgYXMgYSBub3RlIHVuZGVyIHNlY3Rpb24gMTAxIG9mIHRoaXMgdGl0bGUuPC9wPgo8aDQgY2xhc3M9Im5vdGUtaGVhZCI+RWZmZWN0aXZlIERhdGUgb2YgMTk2OCBBbWVuZG1lbnQ8L2g0Pgo8cCBjbGFzcz0ibm90ZS1ib2R5Ij5BbWVuZG1lbnQgYnkgUHViLiBMLiA5MCZuZGFzaDs2MjMgaW50ZW5kZWQgdG8gcmVzdGF0ZSB3aXRob3V0IHN1YnN0YW50aXZlIGNoYW5nZSB0aGUgbGF3IGluIGVmZmVjdCBvbiBPY3QuIDIyLCAxOTY4LCBzZWUgc2VjdGlvbiA2IG9mIFB1Yi4gTC4gOTAmbmRhc2g7NjIzLCBzZXQgb3V0IGFzIGEgbm90ZSB1bmRlciBzZWN0aW9uIDUzMzQgb2YgVGl0bGUgNSwgR292ZXJubWVudCBPcmdhbml6YXRpb24gYW5kIEVtcGxveWVlcy48L3A+CjwhLS0gZmllbGQtZW5kOmVmZmVjdGl2ZWRhdGUtYW1lbmRtZW50LW5vdGUgLS0+CjwhLS0gZmllbGQtZW5kOm5vdGVzIC0tPgoKCjwvYm9keT48L2h0bWw+",
+      "encoding": "base64",
+      "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+    },
+    "raw_HTML_to_normalized_geometry_replayed_this_run": false,
+    "selected_source": {
+      "chars": 163,
+      "normalized_selector": {
+        "char_end": 570,
+        "char_start": 407,
+        "document_id": "govinfo-markup-v2-html-sha256:9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e",
+        "occurrence_id": "legal-official-markup-occurrence:sha256:fe3913900a1cc06c73febdda4fb842a66c2641228008c6d60651bd775fb4e483",
+        "schema": "legal-official-markup-occurrence-selector/v2",
+        "text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+        "text_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+        "utf8_byte_end": 571,
+        "utf8_byte_start": 408,
+        "view_id": "legal-official-markup-view:sha256:25a28893afb8dbd67bc9b404a88470b214a9bb548c338abf6f67f444ca8ef107"
+      },
+      "normalized_view": {
+        "byte_coordinate_system": "UTF8 bytes of v2 document_text; half-open",
+        "char_coordinate_system": "Unicode code points in v2 document_text; half-open",
+        "decoder_profile": "legal_statutory_context-declared-encoding-BOM-strict-default-UTF8/v1",
+        "document_id": "govinfo-markup-v2-html-sha256:9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e",
+        "document_text_sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64",
+        "edition": 2024,
+        "heading_profile": "literal-section-token-with-ASCII-hyphen-or-en-dash-render/v1",
+        "html_sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e",
+        "legal_id": "usc:us:10:7214",
+        "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+        "parser_profile": "stdlib-html-parser-balanced-GovInfo-markup-events/v1",
+        "raw_html_coordinate_mapping_verified": false,
+        "schema": "legal-official-markup-normalized-view/v2",
+        "source_url": "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm",
+        "unicode_code_points": 3817,
+        "utf8_bytes": 3858,
+        "view_id": "legal-official-markup-view:sha256:25a28893afb8dbd67bc9b404a88470b214a9bb548c338abf6f67f444ca8ef107"
+      },
+      "raw_html_coordinate_mapping_verified": false,
+      "selected_unit_ref": {
+        "record_cid": "baguqeera632lzwmnhvsgkmnw6ydcqxmhepnxg7nssnnq2ayxcihfgevvlbrq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+      },
+      "sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+      "source_occurrence": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+        "end_char": 570,
+        "end_utf8": 571,
+        "historical_aliases": [],
+        "record_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja",
+        "schema": "legal-corpus-source-occurrence/v1",
+        "source_version_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+        "span_cid": "bafkreib4qjsk7xusaa5jmlocksz3yamsqwgn7ivv63y63awndynifqjrhy",
+        "span_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+        "span_text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+        "start_char": 407,
+        "start_utf8": 408
+      },
+      "text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+      "utf8_bytes": 163
+    }
+  },
+  "preserved_failure": {
+    "administrative_controller_READ_descriptor_closeout": {
+      "bytes": 1290,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/complete-7214-proposal-v01/responsible-controller-stop-readback-v01.json",
+      "sha256": "ae3ed8be60219cfd87aa8626553485765870fb5fc0f8a90014b1c0a6f4fcfe41"
+    },
+    "cause": "Original resource constructor rejected the empty0775attempt before owner.open, native grant or worker launch.",
+    "ledger_or_scheduler_mutation": false,
+    "normal_native_cleanup_verdict": null,
+    "qualified_by_later_success": false,
+    "request": {
+      "bytes": 9621,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/complete-7214-proposal-v01/request-v02.json",
+      "sha256": "ebf1fa80574ede9cb58722fb290a168040a42d144c1c6a96396aff1205169099"
+    },
+    "startup_stderr": {
+      "bytes": 1356,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/complete-7214-proposal-v01/native-owner-v02.stderr",
+      "sha256": "6070b9fd841b421716850944241081fa350dd7970c627a628e4e5c50a2a10e76"
+    },
+    "storage_release_performed": false,
+    "two_exact_request_absence_observations": [
+      {
+        "bytes": 3231,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/complete-7214-proposal-v01/preconstructor-absence-observation-v01.json",
+        "sha256": "487ca6a64f9f7771bb9a57f3d560ec6fcb8ce2b7778a1bf9d50a235b2ec757cd"
+      },
+      {
+        "bytes": 2291,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/complete-7214-proposal-v01/preconstructor-absence-observation-v02.json",
+        "sha256": "4bfec0741f64ac73094341c2cd334e0249cd6246596d0279f8f5465b910a908e"
+      }
+    ],
+    "typed_no_child_classifier_verdict": null
+  },
+  "qualified_source_baseline": "fdab590e69dbe26a646ecf29db9c3270d57a8387",
+  "recorded_at_utc": "2026-10-24T18:39:33.320428+00:00",
+  "remaining_semantic_questions": [
+    "The two same-frame cap-inside-permission and cap-as-permission-guard alternatives are not selected or exhaustive.",
+    "Member→Officer/AssignedTo/Detail/Purpose is a proposed direction only. Detail→Member is not asserted: the packet does not establish that every detailed officer is in the capped set.",
+    "The intended-purpose relation remains an uninterpreted five-argument primitive, not an expanded or reviewed theory of assistance, discharge or success.",
+    "Mayor as antecedent of his, duties identity/existence, office/entity identities and argument roles remain authored hypotheses.",
+    "Event/time-frame meaning, possibly vacuous role guards and all original context/meaning/application questions require review.",
+    "No §101 definition alternative or per-use applicability is selected; the complete reviewed norm/definition/two-use milestone remains open."
+  ],
+  "schema": "legal-ir-retained7214-pending-composition-preparation/v1",
+  "scope": "One retained2024Title10 §7214 paragraph; source geometry, typed syntax and proposed correspondence integrity only. No production API, encoder, learner, signing, graph or Lean execution added.",
+  "status": "five_data_checks_passed_two_unreviewed_alternatives_no_semantic_admission",
+  "training_mask": 0
+}

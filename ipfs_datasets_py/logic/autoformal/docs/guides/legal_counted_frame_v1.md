@@ -348,3 +348,26 @@ edition, counting-unit, definition, purpose/anaphora and applicability questions
 remain open.
 
 
+## Retained §7214 full-sentence proposed compositions
+
+The [preparation record](../../../../../docs/autoformalization/evidence/legal-ir-title10-7214-pending-composition-preparation-20261024.json) and [exact saved data](../../../../../docs/autoformalization/evidence/legal-ir-title10-7214-pending-compositions-20261024.json) extend the retained 2024 paragraph beyond the old cap-only proposal. This is a fixed data preparation through existing `syntax_core` owners, not a new public API, counted profile, decoder target admission or legal interpretation. Start with this summary; load the full generated packet only when working on that target.
+
+The original 49-node counted expression remains intact as provenance. Each draft uses its byte-exact 47-node inner core under shared `event`/`time` binders, retaining the original binder lineage without variable renaming. Two alternative trees express `G → P(Cap ∧ Body)` and `(G ∧ Cap) → P(Body)` at the same frame. Neither is selected or exhaustive.
+
+| Source material | Explicit proposed structure |
+| --- | --- |
+| President, may, detail | `President(p)`, versioned permission `P`, ordered `Detail(p,o,event,time)` |
+| Not more than three officers | Existing four-object identity expansion over `Member(o,event,time)`; no source-verified counting frame |
+| Corps assignment | Separate `CorpsEngineers(c)` and `AssignedTo(o,c)` |
+| Mayor of the District of Columbia | Separate `DistrictColumbia(dc)` and `MayorOf(m,dc)` |
+| Assistance, discharge and his duties | Intended-purpose primitive, existential duties collection and proposed `DutiesOf(d,m)` pronoun relation |
+
+Every source character is retained by the 20-segment literal partition. All 11 lexical features have pending typed links. Each alternative has 98 core AST nodes, one legacy extension payload and 12 binder rows: 111 inventory rows, not 111 AST nodes. All inverse rows are explicit: 16 pending linked rows and 95 introduced, unreviewed scaffolding rows. Geometry and mapping are not semantic completeness.
+
+Important open meaning: the body proposes `Member → Officer ∧ AssignedTo ∧ Detail ∧ Purpose`; it does not state `Detail → Member`. Consequently it does not establish that all detailed officers are covered by the cap. The purpose predicate remains an uninterpreted five-argument relation, not a reviewed decomposition of assistance or duty discharge. Event/time interpretation, office identity/uniqueness and potentially vacuous guards, duties existence, pronoun antecedent and §101 definition applicability remain open. Legal-as-of, source/context/meaning review and governing-use decisions are not supplied. Both alternatives retain null source/admission bindings and zero learning/gold masks.
+
+Five actual data checks passed: retained geometry/origin, genuine typed round-trip and all feature links, two assignment omission refusals, two purpose omission refusals, and pending-authority/source-closure checks. The four omission edits remain valid typed expressions but fail their original source-link inventory; this is an integrity control, not proof that all legal omissions are detected. Four genuine core modules executed under three declared initializer bypasses and one fileless namespace. This is not whole-package, binary or code-object attestation.
+
+The successful original compute/storage claim and both source READs closed. An earlier empty0775directory failed before native admission; its missing normal terminal and separate responsible administrative controller/READ-descriptor closeout remain preserved and unqualified. The success does not reclassify that failure.
+
+No counted owner/parser replay, encoder/model/optimizer operation, signature, semantic graph export or Lean build occurred. The Object-only relational adapter and fixed counted Lean template do not accept the mixed equality/many-sort/modal trees. Reuse the data for substantive review and a separately declared compositional lowering; do not rename an old profile or train on these drafts as gold.
