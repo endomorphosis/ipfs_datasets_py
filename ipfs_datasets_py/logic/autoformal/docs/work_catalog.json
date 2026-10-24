@@ -1353,7 +1353,8 @@
         "selected-coordinate-corpus-custody-20261021",
         "public-v2-retained-v1-original-v3-qualified-20261021",
         "uscode-hf-wire-coordinate-graph-corpus-qualified-20261024-01",
-        "uscode-hf-wire-coordinate-graph-corpus-public-integration-qualified-20261024-01"
+        "uscode-hf-wire-coordinate-graph-corpus-public-integration-qualified-20261024-01",
+        "wire-corpus-focused-compatibility-20261024-01"
       ],
       "focused_public_dependency_integration": {
         "cases": 3,
@@ -4192,6 +4193,16 @@
       "root": "datasets_repository",
       "scope": "Three existing corpus-v2 cases / nine phases on225 frozen current-public source/fixture files with exact0de source/9af test overlays and preserved public e35f cache/cef7 helper. Original232 provenance, seven missing private owners and three excluded review seeds remain separate; original90/270 is not rerun or pooled. Genuine writer/readback and retained four-file refusal preserve zero masks and false legal/graph/Lean authority. Namespace14/genuine10 and dimension0 fixtures grant no whole-package, model-width, census/source-correspondence adoption or legal admission.",
       "status": "focused_current_public_wire_graph_corpus_fixture_qualified"
+    },
+    {
+      "id": "wire-corpus-focused-compatibility-20261024-01",
+      "observed_bytes": 44633,
+      "observed_sha256": "ebafbc25d00b649452d12e05e393d65ddd03a28e4fd4ccee6a446845b4bec129",
+      "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-graph-corpus-focused-compatibility-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Independent10existingcases/30phases:9wire/cross-profilecontrols+1old-v1positive overalready-publishedcorpus-v2; no newsource/tests or poolingwithhistorical90/270 orpeer3/9. Actualbasee37 retained; all229frozeninputs byte-equalpeer9368, no rerun.229files7765073bytes/256pins;139checkedcompileexec,140entries138origins,oneowningtest/12criticalpaths. Nine namespace-creation bypass declarations/8observed routes differfrom6unexecutedproductbodies+2testparentslaterexecutedby5collectionaliases/3physicalbodies;10ordinaryproductinitializers/3of5filelessobserved. Successfulv03 originalcompute/selectedstorage/durability/READsclosed with103files9249778bytes. Earliercurrentv02precollectionfailure retains128MiBstorage at savedcutoff; preparation/control and failedsaved-reader records separate. No codeobject/binary/fullpackage, model/training/Lean or source/meaning/governing/gold/corpus admission; masks0 and fourwidthgatesunchanged.",
+      "status": "independent_focused_public_wire_corpus_compatibility_qualified_no_semantic_admission"
     }
   ]
 }
