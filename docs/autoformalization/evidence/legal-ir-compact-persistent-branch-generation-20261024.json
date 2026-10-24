@@ -1,0 +1,338 @@
+{
+  "IR_checkpoint_inventory_boundary": "Families/schema versions/decoder tasks and8D/384D/768D/4096D checkpoints remain separate; pure witness reuse across widths requires exact logical identity. No new weights, encoder, ModelManager registration or HuggingFace model upload is created by this code delivery.",
+  "actual_work": {
+    "Adam_constructions": 0,
+    "GRU_forwards_including_BOS": 128,
+    "loss_backward_autograd_clip_calls": 0,
+    "models": 6,
+    "optimizer_updates": 0,
+    "selector_decisions": 126,
+    "source_encoder_calls": 0,
+    "state_installs": 12
+  },
+  "authority": {
+    "Lean": false,
+    "global_completion": false,
+    "graph_truth": false,
+    "heldout_accuracy": false,
+    "legal_meaning": false,
+    "training_gain": false,
+    "training_gold": false
+  },
+  "early_observer_snapshot": {
+    "future_per_call_durability_implemented": false,
+    "implemented_window": "after pytest returns/raises and before fallible final gates",
+    "retained": true,
+    "retroactively_relabelled_qualified": false,
+    "status": "UNQUALIFIED_OBSERVATION_ONLY"
+  },
+  "failed_populations_preserved": [
+    {
+      "case_credit": 0,
+      "controller": {
+        "bytes": 1834,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/simulation-qualification-v01/execution-v01/controller-complete-runtime-simulation-v01.json",
+        "sha256": "e4490113574157e235545605d306f434788efaeaac3015598cde802d425723c7"
+      },
+      "profile": "first_pure_loop",
+      "status": "failed_before_tests_missing_frozen_source"
+    },
+    {
+      "case_credit": 0,
+      "controller": {
+        "bytes": 968,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v01/controller-complete-generation-v01.json",
+        "sha256": "53d1c5aeaf1af954d9a8f531a4e95dced3b0be3741d674a3f501758cb6615081"
+      },
+      "profile": "first_numerical_600s",
+      "request": {
+        "bytes": 93294,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v01/request-generation-v01.json",
+        "sha256": "07ef3f1e53df845e6439adb3bf33e5db546bd87bff5135be9cda9de8a3b9a10e"
+      },
+      "retained_bytes": 6182550,
+      "retained_files": 15,
+      "status": "failed_deadline_before_complete_four_call_barrier_and_observers",
+      "storage_resource_only_closeout": {
+        "bytes": 3119,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v01/storage-closeout-v01/independent-storage-closeout-review-v01.json",
+        "sha256": "c6acb2079d1e935b8f772eff7ede69e066f14f246dd9d37eab568e677c959390"
+      },
+      "storage_status": "released"
+    },
+    {
+      "corrected_source": {
+        "bytes": 28955,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v02/controls/collect_saved_qualification_v02.py",
+        "sha256": "2f892826e12b161356257dae5038b4bbdc184cb04ab8cc49a555fa783ae30481"
+      },
+      "independent_source_schema_review": {
+        "bytes": 2468,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v02/independent-collector-v02-source-schema-review-v01.json",
+        "sha256": "c3ffc6f70d4c72d8764c45ce17cc360a8e67e7ee3fba5a420ab1f9754c0cbd72"
+      },
+      "model_or_test_rerun": false,
+      "profile": "first_metadata_collector",
+      "source": {
+        "bytes": 27731,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v02/controls/collect_saved_qualification_v01.py",
+        "sha256": "78f86eef85979347a69d55b1255e57a686b44538902003fec5490c09ac74ab32"
+      },
+      "status": "failed_reader_origin_field_schema"
+    }
+  ],
+  "fixed_bounds": {
+    "BOS_references": 2,
+    "ID_cap": 100,
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "generation_calls": 4,
+    "maximum_all4_generation_prefix_inspections": 4096,
+    "maximum_cohort_prefix_inspections": 4100,
+    "maximum_forwards": 402,
+    "maximum_models": 6,
+    "maximum_state_installations": 12,
+    "memory_mb": 3072,
+    "prefix_inspections_per_decision": 32,
+    "prefix_inspections_per_generation": 1024,
+    "scope": "Finite deadline for this authored384 CPU profile only, not a default for8D/768D/4096D or the corpus.",
+    "storage_bytes": 268435456,
+    "timeout_seconds": 1200,
+    "zero_model_control_prefix_inspections": 4
+  },
+  "future_engineering_not_implemented": [
+    "Profile source checking, grammar search, model steps and report/durable-write CPU/wall costs before corpus scheduling.",
+    "Durable independent completed-call observations, explicitly unqualified until final original closeout.",
+    "Investigate deterministic grammar-certificate reuse through existing shared proof-store/cache owners using full IR/schema/task/codec/context/prefix/budget/source/checker identities, fixed logical charges and separately reported actual CPU/cache work."
+  ],
+  "limitations": [
+    "UNKNOWN/unqueried choices remain; only retained closed DEAD_END certificates prune. Current full537scores select every emitted token, and proof suffixes are never injected.",
+    "The two conditioning modes end differently: every_step is blocked with34 inspections remaining; first_step exhausts1024. Exact reason strings were not projected, and this does not select a conditioning winner.",
+    "Outer saved arithmetic verifier is disclosed as a source copy of owning-test assert_saved_trace; independent actual counters/bindings/ref-open/source-buffer observations remain distinct.",
+    "Original cooperative admission/sampled descendant/source custody scopes remain; actual third-party cached-bytecode equivalence and whole public-package/environment qualification are excluded.",
+    "All earlier failed populations, pure6/18 and core/selector prerequisites stay separate from genuine2/6.",
+    "32 retained files15,549,555bytes are archival local evidence, not bundled raw reports or model payloads."
+  ],
+  "metric_legend": {
+    "exact_compact_IDs": "Generated compact token sequence equals retained authored reference IDs.",
+    "exact_compact_content_AST": "Decoded canonical compact content equals retained authored reference AST.",
+    "legal_text_source_bytes": "Unmeasured here; separate text decoder task/head and separately checked reconstruction/retained-source sidecar contract required.",
+    "reviewed_semantics": "Authored compact exactness is separate from reviewed complete LegalIR/source/role fidelity and graph/Lean admission.",
+    "typed_valid_candidate": "Generated IDs decode to a compact candidate valid under the selected syntax/context contract."
+  },
+  "next_scientific_gate": "Reviewed representable complete source/context/AST targets, independently permitted conditioning, compatible source spaces and source/definition-grouped evaluation; no blind refit or larger encoder claim.",
+  "numerical_generation": {
+    "BOS_score_max_absolute_error": {
+      "every_step": 0.0,
+      "first_step": 0.0
+    },
+    "actual_cases": 2,
+    "actual_counts": {
+      "adam_constructions": 0,
+      "autograd_grad_calls": 0,
+      "backward_calls": 0,
+      "clip_calls": 0,
+      "cross_entropy_calls": 0,
+      "gru_forwards": 128,
+      "model_constructions": 6,
+      "optimizer_updates": 0,
+      "selector_calls": 126,
+      "state_restores": 12
+    },
+    "actual_function_selectors": 1,
+    "actual_original_prefix_calls": 4032,
+    "actual_passed_phases": 6,
+    "exact_compact_content_AST_matches": 0,
+    "exact_token_ID_matches": 0,
+    "exposed_authored_source_groups": 2,
+    "exposed_authored_source_rows": 2,
+    "generated_calls": 4,
+    "genuine_generation_prefix_inspections": 4028,
+    "independent_BOS_references": 2,
+    "independent_saved_result_acceptance": {
+      "bytes": 11204,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v02/independent-saved-result-review-v01.json",
+      "sha256": "214633308bcbdcaa28eda9a3c0e2aa955be9862a3abf44519d489fcbb3397a3b"
+    },
+    "owned_execution_elapsed_seconds": 766.5149914128706,
+    "per_call_outcomes": [
+      {
+        "exact_compact_content": false,
+        "exact_reason_string_projected": false,
+        "exact_token_ids": false,
+        "mode": "every_step",
+        "numerical_forward_count": 31,
+        "prefix_inspections": 990,
+        "raw_report_opened_by_metadata_reader": false,
+        "remaining_prefix_inspections_derived": 34,
+        "report": {
+          "bytes": 1997566,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v02/attempt-generation-v01/pytest/cases/test_retained_persistent_v3_autonomous_generatio-upsh62az/generation-row-0.json",
+          "sha256": "829db363e00659a8c00380228e7a5a55087effdd56768bb3ab2edf24fada89c1"
+        },
+        "row_id": "varied-fictional-permission",
+        "selected_ID_count": 30,
+        "source_group": "varied-source-group-a",
+        "state_positions_consumed_derived": 31,
+        "status": "blocked",
+        "terminal_no_selection_count_derived": 1,
+        "typed_candidate": false
+      },
+      {
+        "exact_compact_content": false,
+        "exact_reason_string_projected": false,
+        "exact_token_ids": false,
+        "mode": "every_step",
+        "numerical_forward_count": 31,
+        "prefix_inspections": 990,
+        "raw_report_opened_by_metadata_reader": false,
+        "remaining_prefix_inspections_derived": 34,
+        "report": {
+          "bytes": 1997247,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v02/attempt-generation-v01/pytest/cases/test_retained_persistent_v3_autonomous_generatio-upsh62az/generation-row-1.json",
+          "sha256": "3a4bcd65e32611b9f98d28976a6d3df7078e576c635649061aff860d3a170c66"
+        },
+        "row_id": "varied-fictional-reversed-obligation",
+        "selected_ID_count": 30,
+        "source_group": "varied-source-group-b",
+        "state_positions_consumed_derived": 31,
+        "status": "blocked",
+        "terminal_no_selection_count_derived": 1,
+        "typed_candidate": false
+      },
+      {
+        "exact_compact_content": false,
+        "exact_reason_string_projected": false,
+        "exact_token_ids": false,
+        "mode": "first_step",
+        "numerical_forward_count": 32,
+        "prefix_inspections": 1024,
+        "raw_report_opened_by_metadata_reader": false,
+        "remaining_prefix_inspections_derived": 0,
+        "report": {
+          "bytes": 2069779,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v02/attempt-generation-v01/pytest/cases/test_retained_persistent_v3_autonomous_generatio-5ewdtvxq/generation-row-0.json",
+          "sha256": "ffa9a7145fb0d74bfbaae4a5bb54f97ced219bc8b2b03c9ed6d15ace3e9bc131"
+        },
+        "row_id": "varied-fictional-permission",
+        "selected_ID_count": 32,
+        "source_group": "varied-source-group-a",
+        "state_positions_consumed_derived": 32,
+        "status": "grammar_budget_exhausted",
+        "terminal_no_selection_count_derived": 0,
+        "typed_candidate": false
+      },
+      {
+        "exact_compact_content": false,
+        "exact_reason_string_projected": false,
+        "exact_token_ids": false,
+        "mode": "first_step",
+        "numerical_forward_count": 32,
+        "prefix_inspections": 1024,
+        "raw_report_opened_by_metadata_reader": false,
+        "remaining_prefix_inspections_derived": 0,
+        "report": {
+          "bytes": 2069575,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v02/attempt-generation-v01/pytest/cases/test_retained_persistent_v3_autonomous_generatio-5ewdtvxq/generation-row-1.json",
+          "sha256": "e273a157a602e1838ab0106a794e5c1161caa5cbe10002d2ede126fd252f517f"
+        },
+        "row_id": "varied-fictional-reversed-obligation",
+        "selected_ID_count": 32,
+        "source_group": "varied-source-group-b",
+        "state_positions_consumed_derived": 32,
+        "status": "grammar_budget_exhausted",
+        "terminal_no_selection_count_derived": 0,
+        "typed_candidate": false
+      }
+    ],
+    "qualification_summary": {
+      "bytes": 55583,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/numerical-execution-v02/qualification-summary-v01.json",
+      "sha256": "e0b52e3a7613bd3416a87361447db522c84447a257eb50aea480b87b842a6916"
+    },
+    "reconstruction_denominator": 4,
+    "refused_runtime_API_calls": 28,
+    "runtime_API_entries": 36,
+    "scope": "Same retained authored384 CPU checkpoints/conditioning/context/codec; no reencoding, fitting or new weights. Generation/observer mechanics qualified; no reconstruction gain, conditioning winner, saturation or statutory quality result.",
+    "successful_runtime_API_calls": 8,
+    "test_elapsed_seconds": 714.7309150679503,
+    "typed_valid_candidates": 0,
+    "zero_model_control_prefix_inspections": 4
+  },
+  "numerical_owning_test": {
+    "bytes": 24200,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/source-publication-v01/final-bundle-v01/assets/tests/unit/logic/autoformal/test_legal_compact_content_persistent_runtime_v3.py",
+    "sha256": "0e46d64caca3c802ecca0e5ef573cf0607a0118e49b6eb950f25acb682e15b7c"
+  },
+  "original_closeout": {
+    "all_output_hashes_and_fsync_verified_by_original_owners": true,
+    "complete_attempt_bytes": 15549555,
+    "complete_attempt_files": 32,
+    "native_cleanup_proven": true,
+    "resource_lease_released": true,
+    "reviewer_read_raw_generation_logits_vectors_weights_or_reference_targets": false,
+    "source_READ_closed": true,
+    "storage_status": "released"
+  },
+  "publication_ready": true,
+  "pure_runtime_loop": {
+    "actual_cases": 6,
+    "actual_function_selectors": 5,
+    "actual_passed_phases": 18,
+    "complete_attempt_bytes": 757675,
+    "complete_attempt_files": 10,
+    "independent_saved_result_acceptance": {
+      "bytes": 6224,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/simulation-qualification-v01/execution-v02/independent-saved-result-review-v01.json",
+      "sha256": "4935fdd39202bd9753068bbc65ea2d3271d8311cde6068bdd0dea3e14a871100"
+    },
+    "qualification_summary": {
+      "bytes": 18906,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/simulation-qualification-v01/execution-v02/qualification-summary-v01.json",
+      "sha256": "0431a66e07ba286c364cb31c5146157bdb8e948a882f7b5b0af2d66b0a58046f"
+    },
+    "scope": "Explicit fake outer tensor/head/checkpoint/runtime/model seams; no real Torch/GRU/embedding/provider/model generation or numerical accuracy evidence. Scripted terminal controls make no fabricated DEAD_END proof."
+  },
+  "qualification_publication_boundary": {
+    "current_public_plugin_or_full_package_execution_qualified": false,
+    "new_post_publication_test_run": false,
+    "original_plugin_SHA256": "dc6ae4f1cd27628a56db13fc656156c1b84df8ff999d4158ff25e70fac89f7a6",
+    "original_qualification_worker_injects_validation_pytest_plugin": true,
+    "public_plugin_preserved_SHA256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31",
+    "runtime_and_owning_tests_import_or_call_validation_pytest": false,
+    "source_and_historical_frozen_namespace_qualification_only": true
+  },
+  "qualified_dependencies_reused_not_rerun": [
+    {
+      "cases": 41,
+      "phases": 123,
+      "profile": "pure_witness_core",
+      "source_sha256": "38387c5573c42a03f41c99f6fbedf6a70f0755f3ac564990cafa481498c52e7f"
+    },
+    {
+      "cases": 30,
+      "phases": 90,
+      "profile": "pure_branch_selector",
+      "source_sha256": "f443d7a9e498fe27802fa0fbd31f14a3bf504821be2ff2626d2efb752a91d0ce"
+    }
+  ],
+  "schema": "legal-ir-compact-persistent-branch-generation-portable-evidence/v1",
+  "simulation_owning_test": {
+    "bytes": 13688,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/source-publication-v01/final-bundle-v01/assets/tests/unit/logic/autoformal/test_legal_compact_content_persistent_runtime_v3_simulation.py",
+    "sha256": "73ca511aa26cf63c25e2781ab22dac90dd81780eb4f1ade0b60ba68758f59177"
+  },
+  "source": {
+    "bytes": 22987,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/completion-forced-lookahead-v01/branch-aware-witness-v01/consumer-v3-v01/source-publication-v01/final-bundle-v01/assets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_persistent_runtime_v3.py",
+    "sha256": "9c19f559f15e4e612f911af1e116643a383bc5617c756b05df88eb85015e2a5b"
+  },
+  "source_observation_scope": {
+    "compile_exec_buffers": 88,
+    "module_entries": 89,
+    "namespaces": 1,
+    "unique_physical_origins": 87,
+    "whole_public_package_or_cached_bytecode_equivalence_qualified": false
+  },
+  "status": "qualified_authored_source_and_bounded_generation_control_no_reconstruction_gain"
+}

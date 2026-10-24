@@ -2089,9 +2089,6 @@
       "status": "focused_tests_qualified"
     },
     {
-      "id": "compact-content-completion-budget-v3",
-      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_completion_budget_v3.py",
-      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_completion_budget_v3",
       "apis": [
         "find_completion_witness"
       ],
@@ -2100,15 +2097,15 @@
         "compact-branch-completion-witness-qualified-20261023-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_completion_budget_v1.md",
+      "id": "compact-content-completion-budget-v3",
+      "notes": "New exact-source authored pure v3 cohort:41cases/123phases, no model/weights/training/runtime integration. Genuine test roots/helper origin/rawcompile/exec-filename gates passed;27moduleentries25physicalorigins(twoaliases),4namespaces26buffers.12files730289B originalownersealed;source/native/storagereleased. BOS UNKNOWN at24/32 with43/57unresolved roots; no default256/root-generation or full-generation affordability claim. Prior numerical0/4 unchanged. No legal/learning/graph/Lean authority; per-query caps only, future cumulative budget and explicit witness-selection/carried-suffix policy required.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_completion_budget_v3",
       "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_completion_budget_v3.py",
       "required": true,
-      "status": "focused_tests_qualified",
-      "notes": "New exact-source authored pure v3 cohort:41cases/123phases, no model/weights/training/runtime integration. Genuine test roots/helper origin/rawcompile/exec-filename gates passed;27moduleentries25physicalorigins(twoaliases),4namespaces26buffers.12files730289B originalownersealed;source/native/storagereleased. BOS UNKNOWN at24/32 with43/57unresolved roots; no default256/root-generation or full-generation affordability claim. Prior numerical0/4 unchanged. No legal/learning/graph/Lean authority; per-query caps only, future cumulative budget and explicit witness-selection/carried-suffix policy required."
+      "status": "focused_tests_qualified"
     },
     {
-      "id": "compact-content-branch-selection-v1",
-      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_branch_selection_v1.py",
-      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_branch_selection_v1",
       "apis": [
         "select_token"
       ],
@@ -2118,15 +2115,15 @@
         "graph-companion-public-integration-20261024-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_completion_budget_v1.md",
+      "id": "compact-content-branch-selection-v1",
+      "notes": "Pure score-ranked selector only: 30 authored cases / 90 passed phases, 19 functions; 10 retained files / 693648 bytes; original source/native/storage closed. Reuses the qualified witness core without rerunning its 41-case cohort. Root and all candidate queries share one finite allowance per selection decision; only retained closed DEAD_END certificates prune. UNKNOWN/unqueried/omitted proofs retain choices; one scored token, no witness suffix injection. No model/training/generation/Lean execution. Existing numerical v2 remains 0/4 typed/exact reconstructions. A successor runtime and cumulative generation query budget, including terminal no_selection forward/state accounting, remain unqualified. A separate current-public graph-companion integration includes5representative existing selector cases within33cases/99phases against the genuine public pytest helper; those5are a fresh namespace-scoped integration observation, not a repeat or enlargement of the original30-case selector cohort. No new numerical consumer, model output or reconstruction benefit is qualified.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_branch_selection_v1",
       "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_branch_selection_v1.py",
       "required": true,
-      "status": "focused_tests_qualified",
-      "notes": "Pure score-ranked selector only: 30 authored cases / 90 passed phases, 19 functions; 10 retained files / 693648 bytes; original source/native/storage closed. Reuses the qualified witness core without rerunning its 41-case cohort. Root and all candidate queries share one finite allowance per selection decision; only retained closed DEAD_END certificates prune. UNKNOWN/unqueried/omitted proofs retain choices; one scored token, no witness suffix injection. No model/training/generation/Lean execution. Existing numerical v2 remains 0/4 typed/exact reconstructions. A successor runtime and cumulative generation query budget, including terminal no_selection forward/state accounting, remain unqualified. A separate current-public graph-companion integration includes5representative existing selector cases within33cases/99phases against the genuine public pytest helper; those5are a fresh namespace-scoped integration observation, not a repeat or enlargement of the original30-case selector cohort. No new numerical consumer, model output or reconstruction benefit is qualified."
+      "status": "focused_tests_qualified"
     },
     {
-      "id": "norm-definition-graph-adapter",
-      "path": "ipfs_datasets_py/logic/autoformal/corpus_norm_definition_adapter.py",
-      "owner_module": "ipfs_datasets_py.logic.autoformal.corpus_norm_definition_adapter",
       "apis": [
         "norm_definition_graph_sha256",
         "build_norm_definition_graph_v1",
@@ -2138,19 +2135,44 @@
         "graph-companion-public-integration-20261024-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_corpus_norm_definition_adapter.md",
+      "id": "norm-definition-graph-adapter",
+      "notes": "Existing custody-only norm/definition graph projection; original81-case historical graph cohort is reused distinctly, not aggregated. Fresh current-public qualification passed33cases/99phases:26graph adapter/shared-companion handoff,2legacy graph/exchange and5existing selector cases. Two real Parquet bundles/four payloads retain the candidate and upstream companions; the authored candidate has13nodes/24custody edges,2typed uses/4nominations and one physical norm target, with0accepted semantic USES_DEFINITION edges. Namespace-scoped checked raw compile/exec-filename observations; no whole-package or code-object attestation. No new Lean/model/training or statutory meaning/applicability/admission; masks0.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.corpus_norm_definition_adapter",
       "ownership_role": "existing_single_owner",
-      "required": true,
-      "status": "focused_tests_qualified",
+      "owning_test": {
+        "bytes": 20881,
+        "path": "tests/unit/logic/autoformal/test_corpus_norm_definition_adapter.py",
+        "sha256": "b4b8890795df1fa41ff88639602dd66e089c699826b4ba4ce095abf0a7a119b6"
+      },
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_norm_definition_adapter.py",
       "qualified_source": {
         "bytes": 17169,
         "sha256": "6ac21282f97f4ba9cf7b99b8d8af86e2c2a51ba40c2f50e6066e3c699c4e5425"
       },
-      "owning_test": {
-        "path": "tests/unit/logic/autoformal/test_corpus_norm_definition_adapter.py",
-        "bytes": 20881,
-        "sha256": "b4b8890795df1fa41ff88639602dd66e089c699826b4ba4ce095abf0a7a119b6"
-      },
-      "notes": "Existing custody-only norm/definition graph projection; original81-case historical graph cohort is reused distinctly, not aggregated. Fresh current-public qualification passed33cases/99phases:26graph adapter/shared-companion handoff,2legacy graph/exchange and5existing selector cases. Two real Parquet bundles/four payloads retain the candidate and upstream companions; the authored candidate has13nodes/24custody edges,2typed uses/4nominations and one physical norm target, with0accepted semantic USES_DEFINITION edges. Namespace-scoped checked raw compile/exec-filename observations; no whole-package or code-object attestation. No new Lean/model/training or statutory meaning/applicability/admission; masks0."
+      "required": true,
+      "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "generate_from_bos",
+        "generation_sha256"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "compact-persistent-branch-generation-qualified-20261024-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_completion_budget_v1.md",
+      "id": "compact-content-persistent-runtime-v3",
+      "notes": "Separate fake-loop 6-case/18-phase and genuine 2-case/6-phase qualifications; source/native/storage custody closed. Four calls plus two BOS references produced 0/4 typed candidates, exact compact IDs and exact compact ASTs. Actual work: 128 GRU forwards, 126 selector decisions, 6 models, 12 state installs and 4,032 prefix calls; zero training. Retained 32 files / 15,549,555 bytes. Every_step selected 30/30 IDs then blocked; first_step selected 32/32 then exhausted the grammar budget. The qualified authored 384D CPU comparison used 32/1,024 inspection settings, a 100-new-ID cap and a 1,200-second deadline: 714.7-second test / 766.5-second owned execution. API ranges remain separate. No reconstruction gain, saturation, conditioning winner, heldout/legal/graph/Lean authority; legal text/source bytes unmeasured. Earlier failures and pure cohorts stay separate; public validation plugin/full-package execution unqualified, old profiles/checkpoints preserved.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_persistent_runtime_v3",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_compact_content_persistent_runtime_v3.py",
+        "tests/unit/logic/autoformal/test_legal_compact_content_persistent_runtime_v3_simulation.py"
+      ],
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_persistent_runtime_v3.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3587,33 +3609,43 @@
     },
     {
       "id": "compact-branch-completion-witness-qualified-20261023-01",
-      "root": "datasets_repository",
-      "path": "docs/autoformalization/evidence/legal-ir-compact-branch-completion-witness-20261023.json",
       "observed_bytes": 15868,
       "observed_sha256": "61a1dc5c5fb2f7405c50510d72de8d48270fbf059a4822783900d8ec0343e2e2",
+      "path": "docs/autoformalization/evidence/legal-ir-compact-branch-completion-witness-20261023.json",
       "required_for_catalog_check": true,
-      "status": "authored_pure_branch_completion_witness_qualified",
-      "scope": "New exact-source authored pure v3 cohort:41cases/123phases, no model/weights/training/runtime integration. Genuine test roots/helper origin/rawcompile/exec-filename gates passed;27moduleentries25physicalorigins(twoaliases),4namespaces26buffers.12files730289B originalownersealed;source/native/storagereleased. BOS UNKNOWN at24/32 with43/57unresolved roots; no default256/root-generation or full-generation affordability claim. Prior numerical0/4 unchanged. No legal/learning/graph/Lean authority; per-query caps only, future cumulative budget and explicit witness-selection/carried-suffix policy required."
+      "root": "datasets_repository",
+      "scope": "New exact-source authored pure v3 cohort:41cases/123phases, no model/weights/training/runtime integration. Genuine test roots/helper origin/rawcompile/exec-filename gates passed;27moduleentries25physicalorigins(twoaliases),4namespaces26buffers.12files730289B originalownersealed;source/native/storagereleased. BOS UNKNOWN at24/32 with43/57unresolved roots; no default256/root-generation or full-generation affordability claim. Prior numerical0/4 unchanged. No legal/learning/graph/Lean authority; per-query caps only, future cumulative budget and explicit witness-selection/carried-suffix policy required.",
+      "status": "authored_pure_branch_completion_witness_qualified"
     },
     {
       "id": "compact-branch-selection-qualified-20261023-01",
-      "root": "datasets_repository",
-      "path": "docs/autoformalization/evidence/legal-ir-compact-branch-selection-20261023.json",
       "observed_bytes": 12037,
       "observed_sha256": "7a9e9825caacf22fca5d7358a16b90a1dee6deccee11ae2356d76f4e28b39c40",
+      "path": "docs/autoformalization/evidence/legal-ir-compact-branch-selection-20261023.json",
       "required_for_catalog_check": true,
-      "status": "authored_pure_branch_selection_qualified",
-      "scope": "Pure score-ranked selector only: 30 authored cases / 90 passed phases, 19 functions; 10 retained files / 693648 bytes; original source/native/storage closed. Reuses the qualified witness core without rerunning its 41-case cohort. Root and all candidate queries share one finite allowance per selection decision; only retained closed DEAD_END certificates prune. UNKNOWN/unqueried/omitted proofs retain choices; one scored token, no witness suffix injection. No model/training/generation/Lean execution. Existing numerical v2 remains 0/4 typed/exact reconstructions. A successor runtime and cumulative generation query budget, including terminal no_selection forward/state accounting, remain unqualified."
+      "root": "datasets_repository",
+      "scope": "Pure score-ranked selector only: 30 authored cases / 90 passed phases, 19 functions; 10 retained files / 693648 bytes; original source/native/storage closed. Reuses the qualified witness core without rerunning its 41-case cohort. Root and all candidate queries share one finite allowance per selection decision; only retained closed DEAD_END certificates prune. UNKNOWN/unqueried/omitted proofs retain choices; one scored token, no witness suffix injection. No model/training/generation/Lean execution. Existing numerical v2 remains 0/4 typed/exact reconstructions. A successor runtime and cumulative generation query budget, including terminal no_selection forward/state accounting, remain unqualified.",
+      "status": "authored_pure_branch_selection_qualified"
     },
     {
       "id": "graph-companion-public-integration-20261024-01",
-      "root": "datasets_repository",
-      "path": "docs/autoformalization/evidence/legal-ir-graph-companion-integration-20261024.json",
       "observed_bytes": 43587,
       "observed_sha256": "f7091ad7ea655af0a792dce4852efd4db448b9485f737b933c48fdd12b124090",
+      "path": "docs/autoformalization/evidence/legal-ir-graph-companion-integration-20261024.json",
       "required_for_catalog_check": true,
-      "status": "qualified_current_public_graph_companion_engineering",
-      "scope": "Separate current-public33cases/99phases:26graph including same-companion conditional-Lake handoff,2legacy graph/real-Parquet regressions,5existing selector integrations. Two exports/four Parquet payloads;13nodes/24custody edges and0accepted semantic USES_DEFINITION edges.168source files/194pins,149checked compile buffers/exec-filename observations under explicit namespace scope; original compute/storage/source READs closed. Original81graph/30selector/41core cohorts remain distinct, with no historical case aggregation. No new Lean/model/training, physical statutory join or source/meaning/applicability/gold/graph admission; masks0."
+      "root": "datasets_repository",
+      "scope": "Separate current-public33cases/99phases:26graph including same-companion conditional-Lake handoff,2legacy graph/real-Parquet regressions,5existing selector integrations. Two exports/four Parquet payloads;13nodes/24custody edges and0accepted semantic USES_DEFINITION edges.168source files/194pins,149checked compile buffers/exec-filename observations under explicit namespace scope; original compute/storage/source READs closed. Original81graph/30selector/41core cohorts remain distinct, with no historical case aggregation. No new Lean/model/training, physical statutory join or source/meaning/applicability/gold/graph admission; masks0.",
+      "status": "qualified_current_public_graph_companion_engineering"
+    },
+    {
+      "id": "compact-persistent-branch-generation-qualified-20261024-01",
+      "observed_bytes": 19631,
+      "observed_sha256": "9465fb6c2f874c7f9a9dd3e0df13e369a347c23f45edda1a04b11b8b10f83487",
+      "path": "docs/autoformalization/evidence/legal-ir-compact-persistent-branch-generation-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Separate fake-loop 6-case/18-phase and genuine 2-case/6-phase qualifications; source/native/storage custody closed. Four calls plus two BOS references produced 0/4 typed candidates, exact compact IDs and exact compact ASTs. Actual work: 128 GRU forwards, 126 selector decisions, 6 models, 12 state installs and 4,032 prefix calls; zero training. Retained 32 files / 15,549,555 bytes. Every_step selected 30/30 IDs then blocked; first_step selected 32/32 then exhausted the grammar budget. The qualified authored 384D CPU comparison used 32/1,024 inspection settings, a 100-new-ID cap and a 1,200-second deadline: 714.7-second test / 766.5-second owned execution. API ranges remain separate. No reconstruction gain, saturation, conditioning winner, heldout/legal/graph/Lean authority; legal text/source bytes unmeasured. Earlier failures and pure cohorts stay separate; public validation plugin/full-package execution unqualified, old profiles/checkpoints preserved.",
+      "status": "authored_bounded_branch_runtime_generation_qualified_no_reconstruction_gain"
     }
   ]
 }
