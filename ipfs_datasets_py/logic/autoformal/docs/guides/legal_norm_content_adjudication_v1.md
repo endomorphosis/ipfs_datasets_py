@@ -105,3 +105,13 @@ complete cohort passed without product-code changes. No actual statutory
 adjudication was prepared because actual typed reviews, selected trust and an
 evaluation clock were not supplied. Existing real A/B response packets remain
 unsubmitted; definition applicability and all decisions remain pending.
+
+## Public source integration (2026-10-24)
+
+The owner and owning test are published unchanged from their original source-pinned generation. The [fresh integration](../../../../../docs/autoformalization/evidence/legal-ir-norm-content-adjudication-public-integration-20261024.json) passed 13 existing adjudication cases / 39 phases, with no new tests or response-control cohort. Historical 63-case qualification and its failed first test-message assertion attempt remain separate; the original complete cohort was not rerun. The already-published response owner and original 25,432-byte norm-review owner are reused. Declaration-binding and applicability remain separate profiles and future source migrations.
+
+The fresh profile required three ordinary pytest-module origins and 21 physical source execution paths. Dynamic response/norm helpers were checked and executed as physical source buffers; their canonical module names are not claimed. It retained 117 actual source compile/exec-filename observations, 112 module entries and 110 physical origins, within 173 source files / 4,414,236 bytes and 199 request pins. The public 1,489-byte pytest helper was checked and executed.
+
+Genuine cryptography 49.0.0 Ed25519 API bindings matched Profile G during the selected fictional signature tests. The worker performed no extra signature operations and attests no independent operation counts or third-party binary equivalence. Six pinned initializer bypasses were declared; only `logic/__init__.py` was observed bypassed and five were unused. Raw-buffer checks do not attest code-object identity, the initial worker loader, cached third-party bytecode or full public-package/environment behavior. Original compute/storage and source READs closed, retaining ten regular files / 2,882,943 bytes. The 33.642-second worker and 83.730-second owned interval are nested, not additive.
+
+No actual statutory adjudication or supplied human review is created by publication. Body validity, cryptographic authentication and current source/partial prerequisites remain separate from complete-context readiness. Every choice stays unapplied; selected interpretations, governing-definition use and legal-as-of decisions remain null, and semantic/learning/gold/graph/Lean authority remains false or zero. Obtain the missing substantive review, independently selected trust/context/clock and per-use applicability inputs through the existing owners.

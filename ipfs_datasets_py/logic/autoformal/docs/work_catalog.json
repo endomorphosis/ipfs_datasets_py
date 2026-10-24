@@ -2197,6 +2197,30 @@
       "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_responses_v1.py",
       "required": true,
       "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "norm_content_adjudication_sha256",
+        "build_norm_content_adjudication_template_v1",
+        "build_norm_content_adjudication_declaration_v1",
+        "assess_norm_content_adjudication_v1",
+        "validate_norm_content_adjudication_v1"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "norm-content-adjudication-public-integration-20261024-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_content_adjudication_v1.md",
+      "id": "norm-content-adjudication-v1",
+      "notes": "Unchanged common norm-content adjudication owner/test. Fresh current-public integration passed 13 existing adjudication-only cases / 39 phases, with no response-control cohort or new tests. Historical 63 fictional signed-source/adjudicator cases and the failed first assertion attempt keep their separate legacy scope. Common-body validity, authentication and current source/partial prerequisites remain distinct; all variants and dissent remain and choices stay unapplied. Fresh evidence covers 3 ordinary pytest origins and 21 physical source paths; dynamic response/norm helpers have physical-source evidence without canonical-origin claims. It retained 117 compile/exec filenames, 112 module entries / 110 physical origins, within 173 sources / 199 pins. Six initializer bypasses were declared; only logic was observed, five unused. Genuine cryptography 49.0.0 fixture APIs; no independent operation counts, binary/code-object or whole-environment qualification. Original compute/storage and source READs closed, retaining 10 regular files / 2882943 bytes. No actual statutory adjudication, legal-as-of or governing decision, source/span/entity join, model/training or graph/Lean admission. Masks remain zero; declaration-binding/applicability migrations stay separate.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_content_adjudication_v1",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py"
+      ],
+      "path": "ipfs_datasets_py/logic/autoformal/legal_norm_content_adjudication_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3690,6 +3714,16 @@
       "root": "datasets_repository",
       "scope": "Two cases / six phases qualify genuine first-forward proof-backed no_selection and explicit score-replaced EOS instrumentation on existing runtime `9c19`. Actual work: 35 forwards and selector calls, 45 prefix inspections, two models and four installs, with zero training or learned accuracy credit; source/native/storage closed. Failed E1 stays unqualified, the prior primary 0/4 result and unmeasured legal-text reconstruction stay unchanged.",
       "status": "target_free_runtime_mechanics_qualified_no_learned_accuracy_credit"
+    },
+    {
+      "id": "norm-content-adjudication-public-integration-20261024-01",
+      "observed_bytes": 33300,
+      "observed_sha256": "3526e468703c87d0d611f4a626dc66ea2ea466d11f67392255afdd934b5dd582",
+      "path": "docs/autoformalization/evidence/legal-ir-norm-content-adjudication-public-integration-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Unchanged common norm-content adjudication owner/test. Fresh current-public integration passed 13 existing adjudication-only cases / 39 phases, with no response-control cohort or new tests. Historical 63 fictional signed-source/adjudicator cases and the failed first assertion attempt keep their separate legacy scope. Common-body validity, authentication and current source/partial prerequisites remain distinct; all variants and dissent remain and choices stay unapplied. Fresh evidence covers 3 ordinary pytest origins and 21 physical source paths; dynamic response/norm helpers have physical-source evidence without canonical-origin claims. It retained 117 compile/exec filenames, 112 module entries / 110 physical origins, within 173 sources / 199 pins. Six initializer bypasses were declared; only logic was observed, five unused. Genuine cryptography 49.0.0 fixture APIs; no independent operation counts, binary/code-object or whole-environment qualification. Original compute/storage and source READs closed, retaining 10 regular files / 2882943 bytes. No actual statutory adjudication, legal-as-of or governing decision, source/span/entity join, model/training or graph/Lean admission. Masks remain zero; declaration-binding/applicability migrations stay separate.",
+      "status": "selected_current_public_norm_adjudication_engineering_qualified_choices_unapplied"
     }
   ]
 }
