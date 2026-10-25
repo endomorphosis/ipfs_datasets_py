@@ -26,6 +26,8 @@ PROFILES = ("canonical_rules_v1", "normative_scope_v1", "relational_norm_v1")
 MAX_BYTES = 1024 * 1024
 MAX_NODES = 4096
 MAX_DEPTH = 24
+# Complete authored relational requests retain their signature and binder JSON.
+RELATIONAL_MAX_DEPTH = 32
 MAX_ENTITIES = 256
 MAX_ASSERTIONS = 512
 MAX_REFS = 128
@@ -282,6 +284,11 @@ def _check_bindings(source, scope):
     require(wire(scope) == wire(expected) and source["edition"] == scope["edition"], "source/scope edition or scope identity differs")
 
 
+def _profile_depth_limit(profile):
+    require(profile in PROFILES, "unsupported graph AST profile")
+    return RELATIONAL_MAX_DEPTH if profile == "relational_norm_v1" else MAX_DEPTH
+
+
 def _validate_ast(ast, profile, source, scope_request):
     wire(ast)
     require(profile in PROFILES, "unsupported graph AST profile")
@@ -313,10 +320,10 @@ def _kind(value):
     return "record"
 
 
-def _tree(ast, seed):
+def _tree(ast, seed, *, maximum_depth=MAX_DEPTH):
     nodes, edges = [], []
     def visit(value, path, depth):
-        require(depth <= MAX_DEPTH and len(nodes) < MAX_NODES, "ordered AST graph bound exceeded")
+        require(depth <= maximum_depth and len(nodes) < MAX_NODES, "ordered AST graph bound exceeded")
         kind = _kind(value)
         if type(value) is dict:
             data = {"keys": sorted(value)}
@@ -449,10 +456,11 @@ def build_graph(ast, *, profile, source, scope, semantic_declarations=None,
                 dependency_refs=(), evidence_refs=(), scope_request=None):
     """Build an ordered proposal; independently reviewed legal meaning is absent."""
     _check_bindings(source, scope)
+    maximum_depth = _profile_depth_limit(profile)
     _validate_ast(ast, profile, source, scope_request)
     seed = digest({"profile": profile, "ast_sha256": digest(ast),
                    "source_binding_sha256": source["source_binding_sha256"], "scope_id": scope["scope_id"]})
-    root, nodes, edges = _tree(ast, seed)
+    root, nodes, edges = _tree(ast, seed, maximum_depth=maximum_depth)
     entities, assertions = _semantics(semantic_declarations, ast, source, scope)
     body = {"schema": SCHEMA, "profile": profile, "ast_sha256": digest(ast), "tree_seed_sha256": seed,
         "root_node_id": root, "nodes": nodes, "edges": edges, "source": deepcopy(source), "scope": deepcopy(scope),
@@ -468,6 +476,7 @@ def graph_to_ast(graph):
     """Decode an ordered tree, rejecting dangling/aliased/orphan/cyclic nodes."""
     _closed(graph, _GRAPH_KEYS, "proposed graph")
     require(graph["schema"] == SCHEMA, "versioned proposed graph required")
+    maximum_depth = _profile_depth_limit(graph["profile"])
     wire(graph)
     require(graph.get("graph_id") == "legal-proposed-graph:sha256:" + digest(
         {key: value for key, value in graph.items() if key != "graph_id"}), "graph content identity differs")
@@ -492,7 +501,7 @@ def graph_to_ast(graph):
         parents.add(edge["child_id"]); children[edge["parent_id"]].append(edge)
     visited = set()
     def decode(identity, path, depth):
-        require(identity in table and identity not in visited and depth <= MAX_DEPTH, "unknown/cyclic/deep AST reference")
+        require(identity in table and identity not in visited and depth <= maximum_depth, "unknown/cyclic/deep AST reference")
         visited.add(identity); node = table[identity]
         require(node["path"] == path, "AST path binding differs")
         links = sorted(children[identity], key=lambda edge: edge["ordinal"])
@@ -512,7 +521,7 @@ def graph_to_ast(graph):
         return {edge["role"]: decode(edge["child_id"], path + "/" + edge["role"].replace("~", "~0").replace("/", "~1"), depth + 1) for edge in links}
     ast = decode(graph["root_node_id"], "", 0)
     require(len(visited) == len(table) and graph["root_node_id"] not in parents and digest(ast) == graph["ast_sha256"], "orphan nodes or AST digest differs")
-    root, nodes, edges = _tree(ast, graph["tree_seed_sha256"])
+    root, nodes, edges = _tree(ast, graph["tree_seed_sha256"], maximum_depth=maximum_depth)
     require(wire([root, nodes, edges]) == wire([graph["root_node_id"], graph["nodes"], graph["edges"]]), "AST node typing or ordered graph representation differs")
     _check_bindings(graph["source"], graph["scope"])
     _validate_ast(ast, graph["profile"], graph["source"], graph["scope_request"])
