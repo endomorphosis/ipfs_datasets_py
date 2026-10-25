@@ -216,3 +216,84 @@ fixtures sharing one physical anchor do not establish distinct statutory uses.
 The selected retained 2024 Title 10 pilot still needs independent legal-as-of,
 meaning, governing-definition and every-use applicability decisions before
 source-bound statutory composition or learning/corpus admission.
+
+
+## Explicit parent-literal conditional instances
+
+The same existing owner exposes `prepare_parent_bound_variable_definition_v1`
+and `validate_parent_bound_variable_definition_v1`. Use the unchanged
+`bound_variable_definition_sha256` helper for the complete report commitment.
+The request schema is `legal-parent-bound-variable-definition-request/v1`, the
+report schema is `legal-parent-bound-variable-definition-report/v1`, and the
+profile is `conditional-parent-unary-definition-at-bound-variable/v1`.
+The existing HTML APIs retain their original schemas and default behavior.
+
+```python
+prepared = prepare_parent_bound_variable_definition_v1(
+    companion, request_raw,
+    expected_companion_sha256=independent_companion_hash,
+    expected_request_sha256=independent_raw_request_hash,
+    companion_inputs=complete_original_companion_inputs,
+)
+validate_parent_bound_variable_definition_v1(
+    prepared, companion, request_raw,
+    expected_report_sha256=independent_complete_report_hash,
+    expected_companion_sha256=independent_companion_hash,
+    expected_request_sha256=independent_raw_request_hash,
+    companion_inputs=complete_original_companion_inputs,
+)
+```
+
+Supply the complete original parent nomination companion and all six original
+preparation arguments: `norm_preparation`, `request_raw`,
+`expected_norm_preparation_sha256`, `expected_request_sha256`, `norm_inputs`
+and `definitions`. The outer request has its own independent raw-byte pin;
+it does not replace the nomination request retained inside `companion_inputs`.
+Both opening and closing public nomination validation replay the complete norm
+and every supplied definition alternative. The original parent/cache/provenance
+files, occurrence selectors, definition candidates and raw native donor receipt
+remain required; a report hash, saved success flag or selected endpoint alone
+cannot replace them.
+
+The closed request uses the same exact occurrence, binder, ordered argument,
+role, inverse source paths, whole definition references and explicit carrier/
+interpretation/time declarations documented above, under the distinct parent
+schema/profile. The selected donor remains the existing unary Boolean
+`forall x, D x iff Body x` profile. The whole original parent donor native
+receipt is regenerated before its exact head and body subtrees are rendered.
+Every definition alternative and nominated occurrence remains in the report.
+Two typed uses of one physical anchor do not establish two statutory uses.
+
+`instance_only` assumes explicit unverified `hDefinition` and generates the
+instance `D entity iff Body entity` at the supplied shared interpretation and
+fixed formal `Nat` time. `body_with_membership` additionally requires the exact
+explicit unverified `hMembership` for the same head, entity, interpretation and
+time. Neither mode extracts a witness, establishes membership or converts a
+civil legal-as-of date into formal time.
+
+Original/detached inputs, parsed requests and native donor records, genuine
+upstream/native/rendering returns, producer sources, renderer class/methods/
+helpers, policy/bounds and all original physical norm/definition file witnesses
+remain checked through closing replay and final direct serialization. The
+parent snapshot retains its 1,500,000-node and 128-MiB aggregate input profile,
+128-KiB request and 8-MiB report bounds. Complete overflow refuses; alternatives
+and evidence are not truncated. These are input bounds, not process quotas.
+
+Preparation returns complete generated `lean_source`, exact native subtrees,
+rendering and named conditional statements. Retain the full report and text
+with their original replay inputs; generated `#print axioms` commands are text.
+This API supplies no Lake project, compiler process, native build receipt or
+registered execution profile. Any qualification's saved text artifacts need
+separate actual artifact readback; a test assertion alone is not a kernel result.
+
+The unchanged relational `source_binding` remains null and `source_bound` false.
+The whole companion retains both original physical source populations and their
+unresolved contexts. Governing use and selected interpretation remain null;
+all authority flags stay false, the norm AST is unchanged, and semantic,
+consumer, training and evaluation-gold masks remain integer zero. Conditional
+text does not establish source meaning, definition applicability, substitution,
+a semantic graph edge, corpus admission or a learning target.
+
+The [separate conditional qualification](../../../../../docs/autoformalization/evidence/legal-ir-parent-bound-variable-definition-20261025.json) passed **29 cases / 87 phases / 16 selectors**: 27 new controls and two selected legacy positives, on source `c3dc3df3...` and owning test `1d394670...`, including the renderer callback correction. Both concrete mode reports, original request bytes and generated Lean texts were independently inspected. Instance mode retains one hDefinition conditional; body mode retains that conditional plus the explicit hMembership consequence. The generated text was not compiled or kernel checked. Original compute/storage/source custody closed, retaining47 files/6,080,076 bytes. The earlier v01 source-mismatch refusal dispatched no native job and retains zero qualification credit.
+
+Keep this campaign separate from the prior parent nomination **29/87/14** qualification (`f83919d1...`/`625610be...`, `test_parent_nomination_*` case identities). It qualifies selected authored controls, not entire owning modules or full-package startup; the14 scoped namespaces/eight bypassed initializers retain their declared limits. Governing applicability, source meaning, two distinct physical statutory uses and later parent Lake composition remain separate. Existing8D,384D,768D and Leanstral4096D lanes/checkpoints are unchanged.

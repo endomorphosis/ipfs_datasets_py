@@ -150,3 +150,119 @@ candidate. It requires newly signed whole-body evidence references in the
 existing domain; earlier claims without those references cannot authenticate
 later-added answers. It preserves every original obligation and pending variant,
 with definition applicability unresolved and all semantic/training masks zero.
+
+## Unsigned parent literal-occurrence review evidence
+
+`prepare_parent_norm_review_evidence_v1` and
+`validate_parent_norm_review_evidence_v1` add an explicit unsigned companion for
+[parent literal-occurrence correspondence v2](legal_norm_scope_correspondence_v1.md#explicit-parent-occurrence-correspondence-v2).
+The existing relational signing domain and counted APIs keep
+their original closed contracts. This companion creates neither a signable
+subject nor a review assessment.
+
+The schema is `legal-parent-norm-review-evidence/v1`; the profile is
+`unsigned-parent-literal-occurrence-review/v1`.
+
+```python
+parent_preparation = norm_review.prepare_parent_norm_review_evidence_v1(
+    parent_correspondence,
+    expected_correspondence_sha256=independent_parent_correspondence_sha256,
+    correspondence_inputs=original_parent_correspondence_inputs,
+)
+norm_review.validate_parent_norm_review_evidence_v1(
+    parent_preparation,
+    parent_correspondence,
+    expected_report_sha256=independent_parent_preparation_sha256,
+    expected_correspondence_sha256=independent_parent_correspondence_sha256,
+    correspondence_inputs=original_parent_correspondence_inputs,
+)
+```
+
+`correspondence_inputs` has exactly the nine fields shown in the original input
+example above. Here its `scope_report` is the explicit parent scope profile,
+its mapping request has schema `legal-norm-scope-correspondence-request/v2`,
+and `scope_replay_inputs` contains all original arguments for
+`prepare_parent_norm_scope_v1`: complete parent bundle, explicit manifest,
+occurrence and companion CIDs, all three original report byte populations and
+raw/canonical pins, complete physical replay inputs, lexical request/declaration
+bytes and their pins, plus any original lower-only limits. Sampled HTML or
+counted inputs cannot replace this closed parent profile. This API has no
+`context_inputs` argument and applies no external context nominations.
+
+The complete independently pinned correspondence is regenerated through the
+existing public v2 validator at opening and closing. That validator itself
+replays the original parent and relational inputs. Caller and detached inputs,
+parsed requests, trusted producer sources, returned upstream objects and final
+serialized output are checked on success and failure. Once replay begins,
+closing checks are attempted even if the body fails; a primary error retains
+its identity while secondary custody failures become notes. These are
+sequential checks, not an atomic physical snapshot or permission to reuse a
+stored validation flag.
+
+The selected producer closure and first-use baseline are separate from the
+legacy relational and counted baselines. Offered producer maps must equal the
+trusted parent-correspondence closure before the upstream validator is called;
+caller-supplied paths are not opened to discover trust. The dependency owner
+retains its known sibling path and reviewed SHA256
+`86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8`.
+
+The report retains the entire correspondence and genuine
+`original_parent_context`. Its `source_identity` explicitly records the parent
+manifest, source-version, occurrence, companion and context CIDs, plus the
+original source-binding SHA256. `source_identity_sha256` hashes that explicit
+identity JSON. It does not reinterpret a CID as the SHA256 of source bytes.
+
+`obligations` preserves this order without deduplication:
+
+1. All six original missing context requirements, in their original order:
+   definition, authority, antecedent, shared qualifier, temporal origin and
+   referenced provision.
+2. Every original unresolved issue, including repeated payloads.
+3. The seven existing semantic interpretation questions.
+
+Each context obligation has kind `original_parent_context`. Its `original`
+contains the whole exact genuine context record, source-version/occurrence/
+context CIDs, requirement ordinal and requirement name. Its ID is
+`parent-norm-context:` followed by the canonical SHA256 of this explicit JSON:
+
+```json
+{
+  "schema": "legal-parent-norm-review-context-id/v1",
+  "source_version_cid": "<original CID>",
+  "source_occurrence_cid": "<original CID>",
+  "context_record_cid": "<original CID>",
+  "requirement_ordinal": 0,
+  "missing_requirement": "definition"
+}
+```
+
+These are newly derived parent-review IDs, not original HTML dependency-slot
+IDs. Equal text at another physical occurrence retains different provenance.
+Issue and question IDs also commit the parent preparation schema, complete
+correspondence hash, original ordinal and payload. `obligation_ids` retains the
+full order; `context_obligation_ids` identifies the six parent-context rows.
+All six requirements remain `required_unavailable`; the inventory is not an
+exhaustive account of legal dependencies or ambiguities.
+
+The existing dependency owner builds and validates `dependency_manifest` over
+the complete correspondence, explicit identity JSON, retained input commitments
+and trusted producer map. `required_dependency_ids` gives its exact ordered
+population. The manifest is declared artifact custody only. It supplies no
+current observations, freshness decision, legal dependency closure or semantic
+graph admission. Its `manifest_sha256` recipe remains distinct from the full
+`norm_review_sha256(parent_preparation)` output hash. Retain the latter in an
+independent manifest before validation.
+
+The existing bounds remain 8 MiB for complete output, 128 MiB aggregate snapshot
+inputs and 512 complete obligations, with inherited byte/node/depth limits.
+The parent correspondence's own larger output allowance does not raise this
+review profile's 8 MiB bound. Oversized input or output is refused without
+truncation or omission.
+
+The [separate closing-custody summary](../../../../../docs/autoformalization/evidence/legal-ir-parent-norm-review-closing-custody-20261024.json)
+records 16 authored cases / 48 phases across the parent review and separate
+content worksheet owners. Its original source generations and case scopes
+remain separate from the parent nomination qualification. The parent review
+APIs retain unresolved source, edition, context and meaning; governing
+definition applicability and graph/Lean admission remain open, with false
+authority and integer-zero semantic, consumer, training and gold masks.
