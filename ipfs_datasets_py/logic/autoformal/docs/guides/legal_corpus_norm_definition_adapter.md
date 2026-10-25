@@ -100,8 +100,8 @@ The adapter, corpus primitives and actual upstream producer closure are pinned
 and checked across the operation. Caller-supplied producer paths are not opened
 as authoritative source locations.
 
-The existing evidence snapshot budget applies to the report plus complete
-replay arguments: 128 MiB aggregate input, 4,000,000 traversed values, depth 96
+For the original HTML/contextual profile, the existing evidence snapshot
+budget applies to the report plus complete replay arguments: 128 MiB aggregate input, 4,000,000 traversed values, depth 96
 and a 32-MiB maximum individual byte body. Original endpoint limits still apply.
 The upstream report retains its existing 8-MiB bound. Each companion and the
 complete sealed projection obey the unchanged corpus limits: 1 MiB, JSON depth
@@ -148,6 +148,61 @@ executes no model, training, solver, Lean build, publication or accepted-state
 mutation. Engineering fixtures qualify custody and rejection behavior only;
 actual governing definition application and independently reviewed statutory
 composition remain separate requirements.
+
+
+## Explicit parent-literal nomination projection
+
+The same owner provides `build_parent_norm_definition_graph_v1`,
+`validate_parent_norm_definition_graph_v1` and
+`export_parent_norm_definition_graph_v1` for the complete
+[parent nomination report](legal_norm_definition_evidence_v1.md#explicit-parent-literal-nomination-companion).
+Use the examples above with these explicit parent function names and the unchanged
+arguments to `prepare_parent_norm_definition_evidence_v1`. Keep the independent
+full-report and full-candidate hashes; `norm_definition_graph_sha256` serves both
+profiles. The original HTML/contextual APIs retain their separate contract.
+
+The parent candidate uses schema `legal-corpus-parent-norm-definition-graph/v1`
+and profile `parent-literal-term-definition-nomination-custody/v1`. Genuine
+opening and closing upstream replay retains the whole original norm and every
+definition preparation/candidate externally. Sealed companions reference their
+complete source bindings, ordered source occurrences, original parent contexts,
+unavailable requirements and typed-use evidence. Context JSON hashes identify
+those complete records; they are not hashes of newly extracted source bytes.
+Every alternative, exact typed use and nomination remains unselected. Equal
+spelling supplies no entity merge or governing-definition decision.
+
+The route reuses the existing graph builders and Parquet exchange. Export
+completes genuine upstream validation before bundle transport; physical-original
+validation does not extend through the later writer. It emits only
+`DERIVED_FROM`, `CITES` and `HAS_SOURCE` custody edges with closed local endpoints.
+Retain the full candidate, upstream report and independently pinned replay inputs
+beside the four-file graph bundle. The bundle does not contain or retrieve those
+complete inputs. All authority flags stay false; selected interpretation and
+governing definition use remain null; semantic, consumer, training and evaluation
+gold masks remain integer zero.
+
+The parent aggregate snapshot allows 1,500,000 traversed values, retaining the
+128-MiB input, depth-96 and 32-MiB individual-byte-body limits. Existing corpus
+record/graph bounds remain unchanged. Overflow refuses without truncation.
+This explicit parent route supplies no mixed-sort/equality/modal lowering for
+the retained §7214 alternatives and no reviewed statutory applicability.
+
+The [accepted parent graph observation](../../../../../docs/autoformalization/evidence/legal-ir-parent-norm-definition-graph-20261025.json) passed **15 cases / 45 phases / 11 selectors**
+(14 new cases and one legacy case) on the pinned `a9c8fbfd…` public snapshot
+with two candidate overlays. The saved candidate has 55 nodes / 160 custody edges, two
+alternatives, three exact typed uses, six nominations and 42 opaque source
+references. Both alternatives retain nine source-occurrence and nine context
+population members each; those totals do not count distinct statutory uses.
+The norm retains six unavailable context requirements. The selected export/load
+test performed a genuine Parquet roundtrip; the saved reader checked bytes and
+framing without decoding Parquet again. Original compute/storage and both source
+READs closed. This is a finite fixture result, separate from the original
+81-case, 33-case and 29-case nomination observations. The later `fc3d8bbd…`
+base changes one previously executed dependency and has separate source-only
+compatibility review; identity is conditional on both old/new input bounds.
+The added per-AST4096 limit may introduce unmeasured refusals. The combined
+delivery generation was not executed or requalified. No model, training or Lean build ran; full-package behavior and
+statutory meaning remain unqualified.
 
 
 ## Source publication and qualification generations
