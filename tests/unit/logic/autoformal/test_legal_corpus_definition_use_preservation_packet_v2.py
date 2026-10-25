@@ -548,3 +548,580 @@ def test_valid_rejected_review_is_retained_as_rejected_after_packet_readback(bas
 def test_wrong_complete_preservation_pin_requires_and_fails_genuine_current_regeneration(base, no_execution):
     with pytest.raises(ValueError):
         read(base, expected_preparation_sha256="0" * 64)
+
+
+# Direct complete parent-norm packets are a separate receipt-consistency profile.
+# Every runtime/artifact value below is deliberately synthetic authored data.
+# Original outer-operation acceptance is unavailable to this bytes-only API.
+from dataclasses import replace as _parent_norm_packet_replace
+from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as _parent_norm_packet_preparer
+from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_native_v2 as _parent_norm_packet_native
+
+
+@pytest.fixture(scope="module")
+def parent_norm_packet_base(tmp_path_factory):
+    import tempfile
+    lake_fixture = _FIXTURE._FIXTURE
+    helpers = lake_fixture.parent_norm_helpers.__wrapped__()
+    data = lake_fixture._parent_norm_materialize(
+        helpers, Path(tempfile.mkdtemp(prefix="parent-norm-packet-originals-",
+                                       dir=tmp_path_factory.getbasetemp())))
+    preparation = _parent_norm_packet_preparer.prepare_parent_norm_corpus_v1(**data)
+    manifest = preparation.to_dict()
+    sources = {name: body.encode("utf-8") for name, body in preparation.files}
+    artifacts = {".lake/build/lib/lean/" + module.replace(".", "/") + ".olean":
+                 b"explicitly synthetic parent-norm artifact; never compiled"
+                 for module in manifest["expected_modules"]}
+    theorem = manifest["conditional_theorems"][0]
+    stdout = "'" + theorem + "' does not depend on any axioms\n"
+    logs = {"stdout.txt": stdout.encode(), "stderr.txt": b"", "runner-error.txt": b""}
+    life = historical_lifecycle()
+    command = [LAKE, "--offline", "--no-cache", "build", "legal"]
+    version = TOOLCHAIN.rsplit(":v", 1)[1]
+    flags = dict(_parent_norm_packet_preparer.PARENT_NORM_FALSE_FLAGS)
+    flags.update(_parent_norm_packet_native.FALSE_FLAGS)
+    flags.update(backend_executed=True, lean_compilation_verified=True,
+                 proof_checked=True, kernel_proofs_checked=True, conditional_proofs_verified=True)
+    receipt = seal({
+        "schema": _parent_norm_packet_native.PARENT_NORM_BUILD_SCHEMA,
+        "profile": _parent_norm_packet_native.PARENT_NORM_NATIVE_PROFILE,
+        "preparation_cid": manifest["record_cid"],
+        "preparation_full_canonical_sha256": _parent_norm_packet_preparer.parent_norm_preparation_sha256(preparation),
+        "preparation_manifest_sha256": sha(preparation.manifest_json.encode()),
+        "correspondence_sha256": data["expected_correspondence_sha256"],
+        "original_input_commitment_sha256": manifest["original_input_commitment_sha256"],
+        "parent_source_binding_sha256": manifest["parent_source_binding_sha256"],
+        "original_norm_sha256": sha(canonical(manifest["original_norm"])),
+        "review_intake_binding_sha256": sha(canonical(manifest["review_intake_binding"])),
+        "source_context_sha256": sha(canonical(manifest["original_parent_context"])),
+        "retained_unresolved_sha256": sha(canonical(manifest["correspondence"]["retained_unresolved"])),
+        "review_blockers": manifest["review_blockers"],
+        "original_preparation_build_eligible": manifest["build_eligible"],
+        "original_preparation_execution_handoff": manifest["execution_handoff"],
+        "preservation_kind": "definitional_alias_identity_only",
+        "original_preparation_unchanged": True,
+        "toolchain": TOOLCHAIN, "command": command, "expected_command": command,
+        "runtime": "native", "pid": life["leader"]["pid"], "returncode": 0,
+        "expected_modules": manifest["expected_modules"],
+        "compiled_modules": manifest["expected_modules"],
+        "manifest_coverage_passed": True, "executed_project_readback_passed": True,
+        "executed_project_sha256": {name: sha(raw) for name, raw in sources.items()},
+        "producer_pins": _parent_norm_packet_native._parent_norm_native_pins(
+            _parent_norm_packet_native._owners(), manifest),
+        "binary_sha256": dict(BINARIES), "binaries_unchanged": True,
+        "version_probes": {name: {"command": [path, "--version"], "returncode": 0,
+                                   "stdout": "synthetic " + name + " version " + version + "\n", "stderr": ""}
+                           for name, path in (("lake", LAKE), ("lean", LEAN))},
+        "post_run_validation_passed": True, "post_run_validation_error": None,
+        "binary_recheck_error": None,
+        "artifact_sha256": {name: sha(raw) for name, raw in artifacts.items()},
+        "artifact_bytes": {name: len(raw) for name, raw in artifacts.items()},
+        "artifact_files": {name: "compiled/" + name.removeprefix(".lake/build/lib/lean/")
+                           for name in artifacts},
+        "conditional_theorems": manifest["conditional_theorems"],
+        "conditional_kernel_status": "checked_under_explicit_hypotheses",
+        "theorem_axiom_dependencies": {theorem: []},
+        "axiom_observations_passed": True, "axiom_observation_errors": [],
+        "theorem_assumptions": [text for text in manifest["theorem_assumptions"] if text not in {
+            "Modular joint equivalence is a generated definitional obligation; native kernel checking has not run.",
+            "This profile prepares files only; native and incremental qualification have not run."}],
+        "original_preparation_theorem_assumptions": manifest["theorem_assumptions"],
+        "stdout": stdout, "stderr": "", "error": "",
+        "log_sha256": {name: sha(raw) for name, raw in logs.items()},
+        "log_bytes": {name: len(raw) for name, raw in logs.items()},
+        "receipt_text_truncated": False, "elapsed_seconds": 0.01, "termination_reason": "",
+        "timed_out": False, "cancelled": False, "unavailable": False,
+        "output_truncated": False, "workspace_limit_exceeded": False, "resource_exhausted": False,
+        "workspace_cleaned": True, "process_tree_terminated": False,
+        "native_lifecycle": life, "cleanup_confirmed": True, "observed_process_scope_passed": True,
+        "ownership_is_sampled": True, "kernel_containment_attested": False,
+        "build_passed": True, "native_runtime_verified": True,
+        "status": "conditional_native_checks_passed", "alias_assumption_proved": False,
+        "source_to_model_equivalence_proved": False,
+        "authority": dict(_parent_norm_packet_native.AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
+        "scope": "Only original_norm_preserved, a definitional alias identity under explicit "
+                 "Entity, Agent, Interpretation and time. No norm truth, source meaning, governing edition, "
+                 "definition applicability, graph/corpus admission, model equivalence or convergence claim.",
+        **flags,
+    })
+    packet = {"project/" + name: raw for name, raw in sources.items()}
+    packet["project/corpus-manifest.json"] = preparation.manifest_json.encode()
+    packet.update({"executed-inputs/" + name: raw for name, raw in sources.items()})
+    packet.update({"compiled/" + name.removeprefix(".lake/build/lib/lean/"): raw
+                   for name, raw in artifacts.items()})
+    packet.update(logs)
+    packet["build-receipt.json"] = canonical(receipt)
+    assert len(packet) == 23 and len(preparation.files) == 7
+    return SyntheticPacket(data, preparation, tuple(sorted(packet.items())))
+
+
+@pytest.fixture
+def parent_norm_packet_no_execution(no_execution, monkeypatch):
+    def forbidden(*args, **kwargs):
+        pytest.fail("parent packet reader reached native execution or installed binary inspection")
+    monkeypatch.setattr(_parent_norm_packet_native, "build_parent_norm_native_v1", forbidden)
+    monkeypatch.setattr(_parent_norm_packet_native, "_installed_toolchain", forbidden)
+    monkeypatch.setattr(_parent_norm_packet_native, "_binary_recheck", forbidden)
+
+
+def _parent_norm_packet_arguments(base, files=None):
+    files = base.files if files is None else files
+    return {
+        "expected_preparation_sha256": _parent_norm_packet_preparer.parent_norm_preparation_sha256(base.preparation),
+        "expected_correspondence_sha256": base.data["expected_correspondence_sha256"],
+        "correspondence_inputs": base.data["correspondence_inputs"], "toolchain": TOOLCHAIN,
+        "expected_receipt_file_sha256": sha(dict(files)["build-receipt.json"]),
+        "expected_bundle_sha256": owner.parent_norm_packet_sha256(files),
+        "expected_binary_sha256": dict(BINARIES),
+    }
+
+
+def _parent_norm_packet_read(base, files=None, *, repin=False, preparation=None, **overrides):
+    files = base.files if files is None else files
+    return owner.validate_parent_norm_native_packet_v1(
+        files, base.preparation if preparation is None else preparation, base.data["correspondence"],
+        **(_parent_norm_packet_arguments(base, files if repin else None) | overrides))
+
+
+def _parent_norm_packet_edit_receipt(base, edit):
+    files = dict(base.files)
+    receipt = json.loads(files["build-receipt.json"])
+    edit(receipt)
+    files["build-receipt.json"] = canonical(seal(receipt))
+    return tuple(sorted(files.items()))
+
+
+def _parent_norm_packet_edit_log(base, text):
+    files = dict(base.files)
+    receipt = json.loads(files["build-receipt.json"])
+    raw = text.encode()
+    files["stdout.txt"] = raw
+    receipt["stdout"] = raw[:owner.MAX_LOG_PREVIEW_BYTES].decode(errors="replace").replace("\x00", "\\u0000")
+    receipt["log_sha256"]["stdout.txt"] = sha(raw)
+    receipt["log_bytes"]["stdout.txt"] = len(raw)
+    receipt["receipt_text_truncated"] = len(raw) > owner.MAX_LOG_PREVIEW_BYTES
+    files["build-receipt.json"] = canonical(seal(receipt))
+    return tuple(sorted(files.items()))
+
+
+def test_parent_norm_packet_complete_genuine_replay_is_receipt_consistency_only(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch):
+    base = parent_norm_packet_base
+    before = deepcopy(base.data)
+    genuine = _parent_norm_packet_native.validate_parent_norm_native_v1
+    replays = []
+    def counted(*args, **kwargs):
+        checked = genuine(*args, **kwargs)
+        replays.append(checked)
+        return checked
+    monkeypatch.setattr(_parent_norm_packet_native, "validate_parent_norm_native_v1", counted)
+    result = _parent_norm_packet_read(base)
+    value = result.to_dict()
+    assert len(replays) == 2 and all(checked == base.preparation for checked in replays)
+    assert result.files == base.files and base.data == before
+    assert value["schema"] == owner.PARENT_NORM_PACKET_SCHEMA
+    assert value["profile"] == owner.PARENT_NORM_PACKET_PROFILE
+    assert value["readback_verified"] is value["current_preparation_replayed"] is True
+    assert value["packet_bundle_sha256"] == owner.parent_norm_packet_sha256(base.files)
+    assert value["historical_native_receipt"] == json.loads(dict(base.files)["build-receipt.json"])
+    assert value["historical_producer_pins"] == value["historical_native_receipt"]["producer_pins"]
+    assert value["accepted_execution"] is value["accepted_outer_operation"] is False
+    assert value["accepted_operation_result_bound"] is False
+    assert value["outer_operation_outcome"] == "unprovided" and value["receipt_consistency_only"] is True
+    assert value["authority"] and all(flag is False for flag in value["authority"].values())
+    assert type(value["training_mask"]) is type(value["evaluation_gold_mask"]) is int
+    assert value["training_mask"] == value["evaluation_gold_mask"] == 0
+    assert all(value[name] is False for name in owner.FALSE_FLAGS)
+    # The old official digest/profile stays exactly49 files, never a23-file alias.
+    with pytest.raises(ValueError):
+        owner.packet_sha256(base.files)
+
+
+def test_parent_norm_packet_persisted_true_before_failed_outer_closeout_is_not_acceptance(
+        parent_norm_packet_base, parent_norm_packet_no_execution):
+    # A later outer failure is information outside the packet. Even a completely
+    # consistent persisted true receipt cannot establish that absent final result.
+    outside_outer_result = {"completed": False, "qualified": False,
+                            "failure": "closing physical source witness changed after persistence"}
+    original = dict(parent_norm_packet_base.files)["build-receipt.json"]
+    assert json.loads(original)["build_passed"] is True and outside_outer_result["qualified"] is False
+    observed = _parent_norm_packet_read(parent_norm_packet_base).to_dict()
+    assert observed["historical_native_receipt"]["build_passed"] is True
+    assert observed["accepted_execution"] is observed["accepted_outer_operation"] is False
+    assert observed["accepted_operation_result_bound"] is False
+    assert observed["outer_operation_outcome"] == "unprovided"
+    assert observed["receipt_consistency_only"] is True
+    assert dict(parent_norm_packet_base.files)["build-receipt.json"] == original
+
+
+@pytest.mark.parametrize("field", ["expected_preparation_sha256", "expected_correspondence_sha256",
+                                   "expected_receipt_file_sha256", "expected_bundle_sha256"])
+def test_parent_norm_packet_independent_wrong_pins_refuse(
+        parent_norm_packet_base, parent_norm_packet_no_execution, field):
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(parent_norm_packet_base, **{field: "0" * 64})
+
+
+@pytest.mark.parametrize("damage", ["list", "mutable_bytes", "duplicate", "unsorted", "missing", "extra"])
+def test_parent_norm_packet_closed_transport_refuses_before_delegates(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch, damage):
+    base = parent_norm_packet_base
+    files = base.files
+    if damage == "list":
+        files = list(files)
+    elif damage == "mutable_bytes":
+        files = (files[0][0], bytearray(files[0][1])), *files[1:]
+    elif damage == "duplicate":
+        files = files[:-1] + (files[0],)
+    elif damage == "unsorted":
+        files = tuple(reversed(files))
+    elif damage == "missing":
+        files = files[:-1]
+    else:
+        files = files + (("project/extra.txt", b"unexpected"),)
+    def forbidden(*args, **kwargs):
+        pytest.fail("invalid parent packet entered operation dependencies")
+    monkeypatch.setattr(owner, "_parent_norm_packet_owners", forbidden)
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(base, files)
+
+
+@pytest.mark.parametrize("damage", ["boolean_mask", "claimed_legal_truth", "claimed_global_toolchain",
+                                    "wrong_profile", "wrong_schema", "failed_status", "failed_closing",
+                                    "extra_field", "wrong_producer_path"])
+def test_parent_norm_packet_resealed_receipt_claims_refuse(
+        parent_norm_packet_base, parent_norm_packet_no_execution, damage):
+    def edit(receipt):
+        if damage == "boolean_mask":
+            receipt["training_mask"] = False
+        elif damage == "claimed_legal_truth":
+            receipt["norm_truth_proved"] = True
+        elif damage == "claimed_global_toolchain":
+            receipt["installed_toolchain_verified"] = True
+        elif damage == "wrong_profile":
+            receipt["profile"] = native.PROFILE
+        elif damage == "wrong_schema":
+            receipt["schema"] = native.BUILD_SCHEMA
+        elif damage == "failed_status":
+            receipt["status"] = "conditional_native_checks_failed"
+        elif damage == "failed_closing":
+            receipt["post_run_validation_passed"] = False
+            receipt["post_run_validation_error"] = {"type": "ValueError", "message": "closing custody failed"}
+            receipt["post_run_custody_error"] = dict(receipt["post_run_validation_error"])
+        elif damage == "extra_field":
+            receipt["outer_operation_accepted"] = True
+        else:
+            key = next(iter(receipt["producer_pins"]))
+            receipt["producer_pins"]["/different-generation/" + Path(key).name] = receipt["producer_pins"].pop(key)
+    files = _parent_norm_packet_edit_receipt(parent_norm_packet_base, edit)
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(parent_norm_packet_base, files, repin=True)
+
+
+@pytest.mark.parametrize("damage", ["manifest", "executed_source", "empty_artifact", "wrong_artifact_hash", "input_commitment", "rehashed_norm_preparation"])
+def test_parent_norm_packet_rehashed_members_cannot_replace_current_originals(
+        parent_norm_packet_base, parent_norm_packet_no_execution, damage):
+    base = parent_norm_packet_base
+    files = dict(base.files)
+    receipt = json.loads(files["build-receipt.json"])
+    offered, overrides = base.preparation, {}
+    if damage == "manifest":
+        manifest = json.loads(files["project/corpus-manifest.json"])
+        manifest["original_norm"]["native_ast_sha256"] = "0" * 64
+        files["project/corpus-manifest.json"] = canonical(seal(manifest))
+        receipt["preparation_manifest_sha256"] = sha(files["project/corpus-manifest.json"])
+    elif damage == "executed_source":
+        name = next(name for name in files if name.startswith("executed-inputs/") and name.endswith(".lean"))
+        files[name] += b"-- altered executed source\n"
+        receipt["executed_project_sha256"][name.removeprefix("executed-inputs/")] = sha(files[name])
+    elif damage == "input_commitment":
+        receipt["original_input_commitment_sha256"] = "0" * 64
+    elif damage == "rehashed_norm_preparation":
+        manifest = base.preparation.to_dict()
+        originals = dict(base.preparation.files)
+        name = next(name for name in originals if "/Norm_" in name and name.endswith(".lean"))
+        originals[name] += "\n-- an edited, rehashed norm is not authoritative regeneration\n"
+        manifest["file_sha256"][name] = sha(originals[name].encode())
+        offered = _parent_norm_packet_replace(base.preparation,
+            manifest_json=canonical(seal(manifest)).decode(), files=tuple(sorted(originals.items())))
+        overrides["expected_preparation_sha256"] = _parent_norm_packet_preparer.parent_norm_preparation_sha256(offered)
+        for original_name, text in offered.files:
+            files["project/" + original_name] = files["executed-inputs/" + original_name] = text.encode()
+        files["project/corpus-manifest.json"] = offered.manifest_json.encode()
+        receipt["preparation_cid"] = offered.to_dict()["record_cid"]
+        receipt["preparation_full_canonical_sha256"] = overrides["expected_preparation_sha256"]
+        receipt["preparation_manifest_sha256"] = sha(files["project/corpus-manifest.json"])
+        receipt["executed_project_sha256"][name] = sha(originals[name].encode())
+    else:
+        name = next(name for name in files if name.startswith("compiled/"))
+        observed = ".lake/build/lib/lean/" + name.removeprefix("compiled/")
+        if damage == "empty_artifact":
+            files[name] = b""
+            receipt["artifact_bytes"][observed] = 0
+            receipt["artifact_sha256"][observed] = sha(b"")
+        else:
+            receipt["artifact_sha256"][observed] = "0" * 64
+    files["build-receipt.json"] = canonical(seal(receipt))
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(base, tuple(sorted(files.items())), repin=True,
+                                 preparation=offered, **overrides)
+
+
+@pytest.mark.parametrize("damage", ["missing_axiom", "unexpected_axiom", "late_axiom_after_preview", "invalid_utf8"])
+def test_parent_norm_packet_full_logs_refuse_resealed_false_observations(
+        parent_norm_packet_base, parent_norm_packet_no_execution, damage):
+    base = parent_norm_packet_base
+    theorem = base.preparation.to_dict()["conditional_theorems"][0]
+    if damage == "missing_axiom":
+        files = _parent_norm_packet_edit_log(base, "synthetic compilation omitted theorem observation\n")
+    elif damage == "unexpected_axiom":
+        files = _parent_norm_packet_edit_log(base, "'" + theorem + "' depends on axioms: [Classical.choice]\n")
+    elif damage == "late_axiom_after_preview":
+        text = dict(base.files)["stdout.txt"].decode() + " " * (owner.MAX_LOG_PREVIEW_BYTES + 1)
+        files = _parent_norm_packet_edit_log(base, text + "\n'" + theorem + "' depends on axioms: [sorryAx]\n")
+    else:
+        values = dict(base.files)
+        receipt = json.loads(values["build-receipt.json"])
+        values["stdout.txt"] = b"\xff"
+        receipt["stdout"] = "\ufffd"
+        receipt["log_sha256"]["stdout.txt"] = sha(b"\xff")
+        receipt["log_bytes"]["stdout.txt"] = 1
+        values["build-receipt.json"] = canonical(seal(receipt))
+        files = tuple(sorted(values.items()))
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(base, files, repin=True)
+
+
+@pytest.mark.parametrize("field,value", [("training_mask", 1), ("evaluation_gold_mask", True),
+                                       ("authority", {"proof": True})])
+def test_parent_norm_packet_authority_never_promotes(
+        parent_norm_packet_base, parent_norm_packet_no_execution, field, value):
+    files = _parent_norm_packet_edit_receipt(parent_norm_packet_base,
+                                           lambda receipt: receipt.__setitem__(field, value))
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(parent_norm_packet_base, files, repin=True)
+
+
+@pytest.mark.parametrize("after", [1, 2])
+def test_parent_norm_packet_originals_changed_after_genuine_replay_refuse(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch, after):
+    base = parent_norm_packet_base
+    inputs = deepcopy(base.data["correspondence_inputs"])
+    genuine = _parent_norm_packet_native.validate_parent_norm_native_v1
+    observed = []
+    def returned(*args, **kwargs):
+        checked = genuine(*args, **kwargs)
+        observed.append(checked)
+        if len(observed) == after:
+            inputs["expected_mapping_request_sha256"] = "0" * 64
+        return checked
+    monkeypatch.setattr(_parent_norm_packet_native, "validate_parent_norm_native_v1", returned)
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(base, correspondence_inputs=inputs)
+    assert len(observed) == after
+
+
+@pytest.mark.parametrize("after", [1, 2])
+def test_parent_norm_packet_late_delegate_replacement_refuses_before_changed_callback(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch, after):
+    genuine = _parent_norm_packet_native.validate_parent_norm_native_v1
+    observed, unexpected = [], []
+    def replacement(*args, **kwargs):
+        unexpected.append(True)
+        return parent_norm_packet_base.preparation
+    def returned(*args, **kwargs):
+        checked = genuine(*args, **kwargs)
+        observed.append(checked)
+        if len(observed) == after:
+            monkeypatch.setattr(owner, "_parent_norm_packet_receipt_matches", replacement)
+        return checked
+    monkeypatch.setattr(_parent_norm_packet_native, "validate_parent_norm_native_v1", returned)
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(parent_norm_packet_base)
+    assert len(observed) == after and unexpected == []
+
+
+@pytest.mark.parametrize("after", [1, 2])
+def test_parent_norm_packet_local_source_drift_after_genuine_replay_refuses(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch, tmp_path, after):
+    copied_source = tmp_path / "copied_packet_source.py"
+    copied_source.write_bytes(Path(owner.__file__).read_bytes())
+    monkeypatch.setattr(owner, "__file__", str(copied_source))
+    genuine = _parent_norm_packet_native.validate_parent_norm_native_v1
+    observed = []
+    def returned(*args, **kwargs):
+        checked = genuine(*args, **kwargs)
+        observed.append(checked)
+        if len(observed) == after:
+            copied_source.write_bytes(copied_source.read_bytes() + b"\n# late test-local source drift\n")
+        return checked
+    monkeypatch.setattr(_parent_norm_packet_native, "validate_parent_norm_native_v1", returned)
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(parent_norm_packet_base)
+    assert len(observed) == after
+
+
+def test_parent_norm_packet_late_observation_serialization_mutation_refuses(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch):
+    genuine = owner._wire
+    changed = []
+    def encoded(value, *args, **kwargs):
+        result = genuine(value, *args, **kwargs)
+        if type(value) is dict and value.get("schema") == owner.PARENT_NORM_PACKET_SCHEMA:
+            value["accepted_execution"] = True
+            changed.append(True)
+        return result
+    monkeypatch.setattr(owner, "_wire", encoded)
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(parent_norm_packet_base)
+    assert changed
+
+
+@pytest.mark.parametrize("damage", ["nonordinary_inputs", "oversized_log", "invalid_binary", "boolean_preparation_pin"])
+def test_parent_norm_packet_bounded_preflight_refuses_before_delegates(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch, damage):
+    base = parent_norm_packet_base
+    kwargs = _parent_norm_packet_arguments(base)
+    files = base.files
+    if damage == "nonordinary_inputs":
+        class DictSubclass(dict):
+            pass
+        kwargs["correspondence_inputs"] = DictSubclass(base.data["correspondence_inputs"])
+    elif damage == "oversized_log":
+        values = dict(files)
+        values["stdout.txt"] = b"x" * (owner.MAX_LOG_BYTES + 1)
+        files = tuple(sorted(values.items()))
+    elif damage == "invalid_binary":
+        kwargs["expected_binary_sha256"] = {LAKE: "0" * 64, "/other/bin/lean": "1" * 64}
+    else:
+        kwargs["expected_preparation_sha256"] = True
+    def forbidden(*args, **kwargs):
+        pytest.fail("invalid parent packet preflight entered operation dependencies")
+    monkeypatch.setattr(owner, "_parent_norm_packet_owners", forbidden)
+    with pytest.raises(ValueError):
+        owner.validate_parent_norm_native_packet_v1(
+            files, base.preparation, base.data["correspondence"], **kwargs)
+
+
+def test_parent_norm_packet_profile_is_not_official_preservation_or_legacy_storage(
+        parent_norm_packet_base, base, parent_norm_packet_no_execution, monkeypatch):
+    # Both source-qualified historical profiles keep distinct closed populations.
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(parent_norm_packet_base, base.files)
+    with pytest.raises(ValueError):
+        read(base, parent_norm_packet_base.files)
+    assert owner.MAX_FILES == 49 and owner.MAX_MODULES == 12 and owner.MAX_THEOREMS == 15
+
+
+
+def test_parent_norm_packet_wrong_independent_binary_hash_refuses_before_replay(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch):
+    binaries = dict(BINARIES)
+    binaries[LEAN] = "0" * 64
+    def forbidden(*args, **kwargs):
+        pytest.fail("wrong independent historical binary commitment reached replay")
+    monkeypatch.setattr(owner, "_parent_norm_packet_owners", forbidden)
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(parent_norm_packet_base, expected_binary_sha256=binaries)
+
+
+def test_parent_norm_packet_late_native_validator_replacement_never_invokes_changed_call(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch):
+    genuine = _parent_norm_packet_native.validate_parent_norm_native_v1
+    observed, unexpected = [], []
+    def replacement(*args, **kwargs):
+        unexpected.append(True)
+        return parent_norm_packet_base.preparation
+    def returned(*args, **kwargs):
+        checked = genuine(*args, **kwargs)
+        observed.append(checked)
+        monkeypatch.setattr(_parent_norm_packet_native, "validate_parent_norm_native_v1", replacement)
+        return checked
+    monkeypatch.setattr(_parent_norm_packet_native, "validate_parent_norm_native_v1", returned)
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(parent_norm_packet_base)
+    assert len(observed) == 1 and unexpected == []
+
+
+
+@pytest.mark.parametrize("after", [1, 2])
+def test_parent_norm_packet_primary_callback_failure_survives_secondary_terminal_custody_failure(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch, after):
+    base = parent_norm_packet_base
+    inputs = deepcopy(base.data["correspondence_inputs"])
+    genuine = owner._parent_norm_packet_current_preparation
+    calls = []
+    class PrimaryCallbackFailure(ValueError):
+        pass
+    primary = PrimaryCallbackFailure("explicit primary parent-packet callback failure")
+    def failed_after_genuine_return(*args, **kwargs):
+        checked = genuine(*args, **kwargs)
+        calls.append(checked)
+        if len(calls) == after:
+            inputs["expected_mapping_request_sha256"] = "0" * 64
+            raise primary
+        return checked
+    monkeypatch.setattr(owner, "_parent_norm_packet_current_preparation", failed_after_genuine_return)
+    with pytest.raises(PrimaryCallbackFailure, match="explicit primary") as caught:
+        _parent_norm_packet_read(base, correspondence_inputs=inputs)
+    assert caught.value is primary and len(calls) == after
+    notes = getattr(primary, "__notes__", [])
+    assert notes and any(any(word in note.lower() for word in ("closing", "custody", "fence"))
+                         for note in notes)
+
+
+
+@pytest.mark.parametrize("delegate", ["seal", "constructor"])
+def test_parent_norm_packet_genuine_final_delegate_cannot_substitute_accepted_execution(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch, delegate):
+    changed = []
+    if delegate == "seal":
+        genuine = contracts.seal_record
+        def substituted(value, *args, **kwargs):
+            result = genuine(value, *args, **kwargs)
+            if type(value) is dict and value.get("schema") == owner.PARENT_NORM_PACKET_SCHEMA:
+                edited = {key: item for key, item in deepcopy(result).items()
+                          if key not in {"record_cid", "cid_scope"}}
+                edited["accepted_execution"] = True
+                changed.append(True)
+                return genuine(edited)
+            return result
+        monkeypatch.setattr(contracts, "seal_record", substituted)
+    else:
+        genuine = owner.RetainedDefinitionUsePreservationPacket.__init__
+        def substituted(result, *args, **kwargs):
+            genuine(result, *args, **kwargs)
+            edited = json.loads(result.observation_json)
+            if edited.get("schema") == owner.PARENT_NORM_PACKET_SCHEMA:
+                edited["accepted_execution"] = True
+                object.__setattr__(result, "observation_json", canonical(seal(edited)).decode())
+                changed.append(True)
+        monkeypatch.setattr(owner.RetainedDefinitionUsePreservationPacket, "__init__", substituted)
+    with pytest.raises(ValueError):
+        _parent_norm_packet_read(parent_norm_packet_base)
+    assert changed
+
+
+
+@pytest.mark.parametrize("after", [1, 2])
+def test_parent_norm_packet_original_physical_file_drift_after_genuine_replay_refuses(
+        parent_norm_packet_base, parent_norm_packet_no_execution, monkeypatch, after):
+    base = parent_norm_packet_base
+    parent_file = _FIXTURE._FIXTURE._parent_norm_parent_path(base.data)
+    original_bytes = parent_file.read_bytes()
+    genuine = _parent_norm_packet_native.validate_parent_norm_native_v1
+    observed = []
+    def returned(*args, **kwargs):
+        checked = genuine(*args, **kwargs)
+        observed.append(checked)
+        if len(observed) == after:
+            parent_file.write_bytes(original_bytes + b"\nlate physical parent witness drift\n")
+        return checked
+    monkeypatch.setattr(_parent_norm_packet_native, "validate_parent_norm_native_v1", returned)
+    try:
+        with pytest.raises(ValueError):
+            _parent_norm_packet_read(base)
+        assert len(observed) == after
+    finally:
+        parent_file.write_bytes(original_bytes)
+        assert parent_file.read_bytes() == original_bytes
