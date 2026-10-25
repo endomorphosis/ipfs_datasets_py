@@ -240,3 +240,29 @@ The [accepted source-audit-reconciled index qualification](../../../../docs/auto
 The [existing graph owner](guides/legal_relational_graph_v1.md#profile-specific-depth-and-retained-qualification) now supports depth32 only for `relational_norm_v1`; canonical/normative profiles remain24, with other node/wire/schema/identity limits unchanged. Reuse the [original13-case/eight-selector qualification](../../../../docs/autoformalization/evidence/legal-ir-source7346-relational-graph-depth-focused-20261025.json) and its explicit `semantic-graph-depth-parent:numbered_false/v1` temporary-factory adapter. No phase count, ordinary-unadapted-pytest or current-public whole-package runtime claim follows; source/test bytes remain exactly b7/c841, earlier failures stay failed and the unselected test-fix is excluded.
 
 The [separate §7346 parent-graph observation](../../../../docs/autoformalization/evidence/legal-ir-source7346-parent-proposed-graphs-20261025.json) preserves837 parent records/16 cache rows and two unchanged authored alternatives, each693 nodes/692 edges/depth27. Four shared lexical mentions remain within one selected(c) occurrence, with zero assertions. Meaning, edition and governing definition remain unselected; no distinct second typed use or fresh current scope/correspondence replay is supplied. Reuse this graph work instead of another graph engine, census or focused cohort. Fresh public originals/current producer pins are required; private artifacts are not resealed or normalized into a new generation. Earlier depth24 deployment cutoffs remain historical. LIR-04/07–11/13–15 corpus transport and source/meaning/definition/two-use review remain separate; all authority/masks stay false/zero, without new model/training/gold, graph-corpus or Lean admission.
+
+## Adopted relational parent-corpus transport
+
+The existing [proposal adapter](../corpus_proposed_graph_adapter.py) now carries
+the relational depth-32 AST allowance through its independent input custody and
+AST_JSONv2 restoration. Common contracts, non-AST metadata and legacy profiles
+retain depth 20; shared input budgets remain 25,000 nodes and 1 MiB. The
+[current guide](guides/legal_corpus_proposed_graph_adapter.md#qualified-relational-depth-and-literal-parent-corpus-transport)
+records the two separate original qualifications: 16 authored cases across 13
+selected functions with no temporary-path adapter and no phase-count claim;
+and actual complete 837-parent replay preserving both original depth 27 ASTs
+through one candidate-only 16-node/15-edge exchange bundle with genuine readback.
+No whole-public or installed-package pytest campaign was added by publication.
+
+Reuse this qualified delivery for LIR-04 and LIR-08–11 instead of authoring a
+second graph or corpus implementation. The four existing mentions remain
+opaque in the original proposals; there are zero independent entity/term/
+definition nodes and zero relationship assertions. The same one physical (c)
+occurrence, undeclared governing edition, unresolved meaning/definition/
+every-use applicability and missing second distinct typed use remain explicit.
+Current source/proposal originals and producer pins are required for future
+replay; retained private identities are not resealed or relabelled. Historical
+wire 90/270, public 3/9, graph 13 and earlier failed attempts keep their original
+scopes. Training/gold masks remain 0, authority false, and model, semantic-corpus
+and Lean admission remain separate gates. All preceding handoff content and
+the original 24-task board are preserved.

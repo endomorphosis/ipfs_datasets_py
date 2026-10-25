@@ -14,6 +14,7 @@ from ipfs_datasets_py.utils.cid_utils import canonical_dag_json_bytes, cid_for_d
 
 from . import legal_semantic_graph as proposed
 from . import legal_statutory_context as context
+from . import corpus_contracts as contracts
 from .corpus_contracts import (
     CorpusContractError,
     clone_json,
@@ -52,9 +53,70 @@ def _fail(message):
     raise CorpusContractError(message)
 
 
+def _clone_relational_inputs(value):
+    """Detach one relational AST without relaxing ordinary corpus metadata.
+
+    The unchanged common owner validates every scalar and shallow key carrier.
+    One traversal budgets the actual complete input, while only its ``ast``
+    subtree receives the graph owner's existing depth/node allowance.
+    """
+    if type(value) is not dict or len(value) != len(TRUSTED_INPUT_FIELDS):
+        _fail("closed independently supplied proposal inputs fields required")
+    require_keys(value, TRUSTED_INPUT_FIELDS, "independently supplied proposal inputs")
+    if type(value["profile"]) is not str or value["profile"] != "relational_norm_v1":
+        _fail("explicit relational profile required for relational AST custody")
+    remaining = contracts.MAX_JSON_NODES
+    remaining_bytes = contracts.MAX_RECORD_BYTES
+    ast_nodes = 0
+
+    def visit(node, depth, ast_depth=None):
+        nonlocal remaining, remaining_bytes, ast_nodes
+        remaining -= 1
+        if remaining < 0:
+            _fail("proposal inputs exceed aggregate JSON node bound")
+        if ast_depth is None:
+            if depth > contracts.MAX_JSON_DEPTH:
+                _fail("proposal metadata exceeds JSON depth bound")
+        else:
+            ast_nodes += 1
+            if ast_depth > proposed.RELATIONAL_MAX_DEPTH or ast_nodes > proposed.MAX_NODES:
+                _fail("relational AST exceeds graph JSON depth/node bounds")
+        if type(node) is dict:
+            # Zero is a minimum-size JSON value. This carrier validates every
+            # original key without imposing extra nesting or a larger byte cost.
+            if len(node) > remaining:
+                _fail("proposal inputs exceed aggregate JSON node bound")
+            clone_json(dict.fromkeys(node, 0))
+            result = {}
+            for key, item in node.items():
+                remaining_bytes -= len(key.encode("utf-8"))
+                child_ast_depth = (ast_depth + 1 if ast_depth is not None else
+                                   0 if depth == 0 and key == "ast" else None)
+                result[key] = visit(item, depth + 1, child_ast_depth)
+        elif type(node) is list:
+            if len(node) > remaining:
+                _fail("proposal inputs exceed aggregate JSON node bound")
+            child_ast_depth = None if ast_depth is None else ast_depth + 1
+            result = [visit(item, depth + 1, child_ast_depth) for item in node]
+        else:
+            result = clone_json(node)
+            if type(node) is str:
+                remaining_bytes -= len(node.encode("utf-8"))
+        if remaining_bytes < 0:
+            _fail("proposal inputs exceed aggregate byte bound")
+        return result
+
+    checked = visit(value, 0)
+    if len(canonical_dag_json_bytes(checked)) > contracts.MAX_RECORD_BYTES:
+        _fail("proposal inputs exceed aggregate byte bound")
+    return checked
+
+
 def _inputs(value, expected_sha256):
     require_sha256(expected_sha256, "expected_inputs_sha256")
-    checked = clone_json(value)
+    relational = (type(value) is dict and type(value.get("profile")) is str
+                  and value["profile"] == "relational_norm_v1")
+    checked = _clone_relational_inputs(value) if relational else clone_json(value)
     require_keys(checked, TRUSTED_INPUT_FIELDS, "independently supplied proposal inputs")
     if hashlib.sha256(canonical_dag_json_bytes(checked)).hexdigest() != expected_sha256:
         _fail("original proposal inputs differ from independently expected SHA256")
@@ -303,9 +365,15 @@ def restore_proposed_graph_ast(record, **validation_inputs):
         return clone_json(custody["ast"])
     if custody["schema"] != AST_JSON_SCHEMA or custody["profile"] != "relational_norm_v1":
         _fail("unsupported AST custody schema/profile")
+    # Full candidate regeneration above already authenticated this canonical
+    # string against the independently supplied AST. Recover through the same
+    # bounded input policy, rather than parse it again under the legacy depth20.
+    ast = _inputs(validation_inputs["trusted_proposal_inputs"],
+                  validation_inputs["expected_inputs_sha256"])["ast"]
     raw = custody["ast_json"].encode("utf-8")
-    ast = load_json_bytes(raw, expected_sha256=custody["ast_sha256"])
-    if canonical_dag_json_bytes(ast) != raw or cid_for_dag_json(ast) != custody["ast_cid"]:
+    if (canonical_dag_json_bytes(ast) != raw
+            or hashlib.sha256(raw).hexdigest() != custody["ast_sha256"]
+            or cid_for_dag_json(ast) != custody["ast_cid"]):
         _fail("canonical AST custody bytes or identity differ")
     return ast
 
