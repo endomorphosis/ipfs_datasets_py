@@ -2,6 +2,8 @@
 
 This module owns the path from source-bound law text and cached spans to scoped term/entity/definition graphs and a checked Lean4 corpus. Start with the [handoff](docs/HANDOFF.md) for what is complete, what remains open and where to make the next change.
 
+The [retained section7346(b) candidates](../../../docs/autoformalization/evidence/legal-ir-source7346-full-b-partial-candidates-20261025.json) include both exact authored v02 requests and their predicate/semantic-gap glossary. Two whole structural replay cases passed in the existing relational owner. These hypotheses remain partial, non-exhaustive, unreviewed and source-unbound, with all15 questions unanswered and zero supervision masks; they establish no whole-law formalization or width-specific numerical gain.
+
 | Need | Canonical document |
 | --- | --- |
 | Continue the work or hand it to another coding agent | [Current status and next work](docs/HANDOFF.md) |

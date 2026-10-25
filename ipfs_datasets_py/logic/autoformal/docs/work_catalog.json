@@ -3038,6 +3038,24 @@
         "training_mask": 0
       },
       "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "prepare_relational_norm_v1",
+        "relational_norm_report_sha256",
+        "validate_relational_norm_v1"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "source7346-full-b-partial-candidates-qualified-20261025-01"
+      ],
+      "id": "relational-norm-fragment",
+      "notes": "Index the existing relational implementation once. This evidence is a current-primary structural replay of authored partial hypotheses; selected public producer-byte equality is not public runtime or semantic admission.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_relational_norm_v1",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "required": true,
+      "status": "implementation_present"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3098,7 +3116,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-25T06:47:09.803469+00:00",
+  "last_updated_at_utc": "2026-10-25T17:13:23.544622+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -4931,6 +4949,16 @@
       "root": "datasets_repository",
       "scope": "Original837-parent/16-cache observation; two unchanged A/B693-node/692-edge/depth27 graphs, four shared lexical mentions in one(c) occurrence, zero assertions. No fresh current scope/correspondence, meaning/edition/definition, second distinct use, entity resolution, graph-corpus/model/training/gold/Lean admission.",
       "status": "qualified_original_real_parent_proposed_graph_transport"
+    },
+    {
+      "id": "source7346-full-b-partial-candidates-qualified-20261025-01",
+      "observed_bytes": 224115,
+      "observed_sha256": "90f01ed9b35dfea9088d8aca51eb8fb141e7589a50708c6e568ca6cb5f8b1634",
+      "path": "docs/autoformalization/evidence/legal-ir-source7346-full-b-partial-candidates-20261025.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Two whole passed JUnit cases; four actual prepare-wrapper entries. Two direct validate calls and full-report equality follow pinned executed observer assertions. No phase-event inventory or inferred six phases. Each51nodes/5binders/1modal/14predicates/57mapping rows. Partial/nonexhaustive/unreviewed/source-unbound,15questions unanswered and zero masks. Static23-producer comparison at publicc59 is not public deployment, source correspondence, model/width or Lean admission.",
+      "status": "qualified_current_primary_authored_partial_relational_replay"
     }
   ]
 }
