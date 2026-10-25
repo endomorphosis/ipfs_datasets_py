@@ -81,7 +81,7 @@ def _pins(owners):
     return result
 
 
-def _parse(raw, expected_sha256):
+def _parse(raw, expected_sha256, *, parent=False):
     _sha(expected_sha256, "bound-variable request")
     _need(type(raw) is bytes and 0 < len(raw) <= MAX_REQUEST_BYTES,
           "bounded exact bound-variable request bytes required")
@@ -101,7 +101,8 @@ def _parse(raw, expected_sha256):
         raise ValueError("bounded duplicate-free bound-variable request required") from error
     _need(len(_wire(request)) <= MAX_REQUEST_BYTES, "canonical bound-variable request exceeds bound")
     _keys(request, REQUEST_FIELDS, "bound-variable request")
-    _need(request["schema"] == REQUEST_SCHEMA and request["profile"] == PROFILE,
+    _need(request["schema"] == (PARENT_REQUEST_SCHEMA if parent else REQUEST_SCHEMA)
+          and request["profile"] == (PARENT_PROFILE if parent else PROFILE),
           "exact conditional bound-variable profile required")
     for field in ("companion_sha256", "link_sha256"):
         _sha(request[field], field)
@@ -120,11 +121,12 @@ def _at(value, path):
     return evidence.norm.correspondence_owner._at(value, path)
 
 
-def _unary_definition(endpoint):
+def _unary_definition(endpoint, *, parent=False):
     """Restrict the existing V2 native body before the broader renderer loads."""
     term, ast_record = endpoint["term_record"], endpoint["ast_record"]
     _need(endpoint["family"] in ("fol", "tdfol") and
-          ast_record["profile"] == "declared-scope-v2-source-unary-predicate-definition/v1",
+          ast_record["profile"] == ("declared-literal-parent-unary-predicate-definition/v1" if parent
+                                    else "declared-scope-v2-source-unary-predicate-definition/v1"),
           "existing V2 unary Boolean definition profile required")
     _need(term["kind"] == "declared_unary_category" and type(term["arity"]) is int
           and term["arity"] == 1 and term["carrier"] == "Entity", "unary Entity definition required")
@@ -181,8 +183,9 @@ def _unary_definition(endpoint):
     return ast, formula["left"], formula["right"]
 
 
-def _selection(companion, request, inputs):
-    _need(companion["schema"] == evidence.SCHEMA and companion["profile"] == evidence.PROFILE,
+def _selection(companion, request, inputs, *, parent=False):
+    _need(companion["schema"] == (evidence.PARENT_SCHEMA if parent else evidence.SCHEMA)
+          and companion["profile"] == (evidence.PARENT_PROFILE if parent else evidence.PROFILE),
           "complete existing norm definition evidence required")
     _need(companion["native_ast_rewritten"] is False and companion["selected_interpretation"] is None
           and companion["governing_definition_use"] is None
@@ -206,7 +209,7 @@ def _selection(companion, request, inputs):
           "selected nomination belongs to another alternative")
     endpoints = [row for row in companion["definitions"] if row["alternative_id"] == request["alternative_id"]]
     _need(len(endpoints) == 1, "one exact retained definition alternative required")
-    endpoint = endpoints[0]
+    endpoint = endpoints[0]["candidate"] if parent else endpoints[0]
     _need(_same(_reference(endpoint["term_record"]), request["definition_term_ref"])
           and _same(_reference(endpoint["ast_record"]), request["definition_ast_ref"]),
           "selected endpoint differs from nomination commitments")
@@ -250,7 +253,7 @@ def _selection(companion, request, inputs):
     _need((request["mode"] == "instance_only" and request["membership_assumption"] is None)
           or (request["mode"] == "body_with_membership" and _same(request["membership_assumption"], membership)),
           "body output requires an explicit matching unverified membership hypothesis")
-    ast, head, body = _unary_definition(endpoint)
+    ast, head, body = _unary_definition(endpoint, parent=parent)
     return link, endpoint, binder, native_variable, predicate, ast, head, body
 
 
@@ -272,21 +275,28 @@ def _preflight(original):
     return detached, commitment, request
 
 
-def _render(endpoint, inputs, request, ast, head, body, owners):
+def _render(endpoint, inputs, request, ast, head, body, owners, *, parent=False, hold=None):
     emitter, routes = owners
     endpoints = [row for row in inputs["definitions"] if row["alternative_id"] == request["alternative_id"]]
     _need(len(endpoints) == 1, "one original selected endpoint replay required")
     # The complete public evidence replay has already validated these original
     # bounded report bytes. They supply a receipt, never a caller-selected path.
-    raw = endpoints[0]["correspondence_inputs"]["candidate_inputs"]["report_raw"]
+    raw = (endpoints[0]["preparation_inputs"] if parent else endpoints[0]["correspondence_inputs"])["candidate_inputs"]["report_raw"]
     original = json.loads(raw.decode("utf-8"))["native"]
+    if parent and hold is not None:
+        hold("donor_original_native", original)
     _need(_same(original["native_ast"], ast) and original["family"] == endpoint["family"],
           "original donor native receipt differs from exact endpoint")
     native = routes.prepare_native_fragment(family=endpoint["family"],
         formula=original["formula"], expected_ast=ast)
+    if parent and hold is not None:
+        hold("native_fragment", native)
     _need(_same(native, original) and native["lean_body"] == endpoint["ast_record"]["lean_body"],
           "whole original donor native rendering differs")
     rendering, source, theorems = _render_conditionals(native, ast, head, body, request["mode"], emitter)
+    if parent and hold is not None:
+        hold("rendering", rendering)
+        hold("theorems", theorems)
     return native, rendering, source, theorems
 
 
@@ -403,3 +413,277 @@ def validate_bound_variable_definition_v1(record, companion, request_raw, *, exp
 
 __all__ = ["REQUEST_SCHEMA", "SCHEMA", "PROFILE", "CARRIER_MAP", "EVALUATION_CONTEXT", "AUTHORITY",
     "bound_variable_definition_sha256", "prepare_bound_variable_definition_v1", "validate_bound_variable_definition_v1"]
+
+
+# Explicit decoded-parent conditional consumer. Legacy public APIs retain the
+# original HTML nomination, grammar, renderer and snapshot defaults.
+PARENT_REQUEST_SCHEMA = "legal-parent-bound-variable-definition-request/v1"
+PARENT_SCHEMA = "legal-parent-bound-variable-definition-report/v1"
+PARENT_PROFILE = "conditional-parent-unary-definition-at-bound-variable/v1"
+_PARENT_BOUND_PINS = None
+
+
+def _parent_bound_snapshot(value):
+    return evidence._parent_definition_snapshot(value)
+
+
+def _parent_bound_preflight(original):
+    """Bind full original commitments and narrow syntax before render owners."""
+    _pure_pins()
+    detached, commitment = _parent_bound_snapshot(original)
+    _sha(detached["expected_companion_sha256"], "complete parent nomination companion")
+    companion = detached["companion"]
+    _need(evidence.norm_definition_evidence_sha256(companion) == detached["expected_companion_sha256"],
+          "independent complete parent companion pin differs")
+    _need(type(companion) is dict and companion.get("schema") == evidence.PARENT_SCHEMA
+          and companion.get("profile") == evidence.PARENT_PROFILE,
+          "explicit parent nomination companion required")
+    _need(all(type(companion[key]) is int and companion[key] == 0 for key in
+              ("semantic_mask", "consumer_mask", "training_mask", "evaluation_gold_mask"))
+          and companion["external_context_nominations_applied"] is False
+          and companion["shared_context_inferred"] is False,
+          "parent nomination masks and unresolved context must remain unchanged")
+    request = _parse(detached["request_raw"], detached["expected_request_sha256"], parent=True)
+    _need(request["companion_sha256"] == detached["expected_companion_sha256"],
+          "parent bound request names another complete companion")
+    inputs = detached["companion_inputs"]
+    _keys(inputs, COMPANION_FIELDS, "complete original parent companion replay inputs")
+    if detached["validating"]:
+        _sha(detached["expected_report_sha256"], "complete parent bound report")
+        _need(bound_variable_definition_sha256(detached["offered"]) == detached["expected_report_sha256"],
+              "independent complete parent bound report pin differs")
+        _need(type(detached["offered"]) is dict and detached["offered"].get("schema") == PARENT_SCHEMA
+              and detached["offered"].get("profile") == PARENT_PROFILE,
+              "explicit parent bound report required")
+    # Reuse the upstream pure preflight, including all independently pinned
+    # norm, candidate, report and request bodies. No original physical replay
+    # or native renderer is dispatched by this check.
+    replay = dict(inputs, offered=None, expected_report_sha256=None, validating=False)
+    _, _, upstream_parsed = evidence._parent_definition_preflight(replay)
+    _selection(companion, request, inputs, parent=True)
+    _pure_pins()
+    return detached, commitment, {"request": request, "companion": upstream_parsed}
+
+
+def _parent_bound_pins(owners, evidence_owners):
+    global _PARENT_BOUND_PINS
+    result = _pure_pins()
+    for observed in (evidence._parent_definition_pins(evidence_owners), owners[1].producer_pins(),
+                     {str(Path(module.__file__).resolve()): hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()
+                      for module in owners}):
+        for path, pin in observed.items():
+            _need(path not in result or result[path] == pin, "parent bound producer observations disagree")
+            result[path] = pin
+    if _PARENT_BOUND_PINS is None:
+        _PARENT_BOUND_PINS = dict(result)
+    _need(result == _PARENT_BOUND_PINS, "parent bound producers changed since first use")
+    return result
+
+
+def _parent_bound_callbacks(owners, evidence_owners):
+    functions = (_parent_bound_snapshot, _parent_bound_preflight, _parent_bound_pins,
+        _parent_bound_callbacks, _parent_bound_runtime, _parent_bound_serialized_fence,
+        _parent_bound_operation, prepare_parent_bound_variable_definition_v1,
+        validate_parent_bound_variable_definition_v1, _parse, _selection, _unary_definition,
+        _render, _render_conditionals, _owners, _pure_pins, _wire, _same, _reference, _at,
+        bound_variable_definition_sha256, owners[1].prepare_native_fragment,
+        owners[1].producer_pins, owners[0].FormulaRenderer,
+        owners[0].FormulaRenderer.__init__, owners[0].FormulaRenderer.step,
+        owners[0].FormulaRenderer.signature, owners[0].FormulaRenderer.term,
+        owners[0].FormulaRenderer.formula, owners[0].require, owners[0].string,
+        evidence.validate_parent_norm_definition_evidence_v1,
+        evidence.prepare_parent_norm_definition_evidence_v1,
+        evidence._parent_definition_preflight, evidence._parent_definition_snapshot,
+        evidence.norm._parent_review_fingerprint, evidence.norm._parent_review_pure_wire,
+        json.loads, json.dumps)
+    return evidence._parent_definition_callbacks(evidence_owners) + tuple(
+        (function, getattr(function, "__code__", None), id(getattr(function, "__defaults__", None)),
+         id(getattr(function, "__kwdefaults__", None))) for function in functions)
+
+
+def _parent_bound_runtime(owners, evidence_owners):
+    return {"schema": PARENT_SCHEMA, "request_schema": PARENT_REQUEST_SCHEMA, "profile": PARENT_PROFILE,
+        "authority": dict(AUTHORITY), "carrier_map": CARRIER_MAP, "evaluation_context": EVALUATION_CONTEXT,
+        "request_fields": sorted(REQUEST_FIELDS), "companion_fields": sorted(COMPANION_FIELDS),
+        "max_request_bytes": MAX_REQUEST_BYTES, "max_report_bytes": MAX_REPORT_BYTES,
+        "prelude": owners[0].PRELUDE, "upstream": evidence._parent_definition_runtime(evidence_owners)}
+
+
+def _parent_bound_serialized_fence(report, expected_wire):
+    _need(evidence.norm._parent_review_pure_wire(report) == expected_wire,
+          "parent bound report changed after final serialization")
+
+
+def _parent_bound_operation(original):
+    detached, commitment, parsed = _parent_bound_preflight(original)
+    owners, evidence_owners = _owners(), evidence._parent_definition_owners()
+    _, lineage, scope = evidence_owners
+    pins = _parent_bound_pins(owners, evidence_owners)
+    callbacks = _parent_bound_callbacks(owners, evidence_owners)
+    runtime = evidence.norm._parent_review_pure_wire(_parent_bound_runtime(owners, evidence_owners))
+    parsed_commitment = evidence.norm._parent_review_fingerprint(parsed)
+    held, physical = [], []
+    replay_started = False
+    result = serialized = None
+    primary = None
+
+    def hold(label, value):
+        raw = _wire(value)
+        held.append((label, value, raw))
+        return raw
+
+    def fence():
+        _need(_parent_bound_callbacks(owners, evidence_owners) == callbacks,
+              "parent bound replay, renderer or custody callbacks changed")
+        _need(evidence.norm._parent_review_pure_wire(_parent_bound_runtime(owners, evidence_owners)) == runtime,
+              "parent bound policy or bounds changed")
+        _need(_parent_bound_pins(owners, evidence_owners) == pins, "parent bound producer source changed")
+        for plan, witness, frozen in physical:
+            _need(evidence.norm._parent_review_fingerprint(plan) == frozen,
+                  "parent bound physical file plan changed")
+            _need(evidence._parent_definition_file_witness(plan, lineage) == witness,
+                  "parent bound original physical parent/cache file changed")
+        _need(evidence.norm._parent_review_fingerprint(original) == commitment
+              and evidence.norm._parent_review_fingerprint(detached) == commitment,
+              "parent bound original or detached input changed")
+        _need(evidence.norm._parent_review_fingerprint(parsed) == parsed_commitment,
+              "parent bound parsed input changed")
+        for label, value, raw in held:
+            _need(evidence.norm._parent_review_pure_wire(value) == raw,
+                  "parent bound actual replay or renderer return changed: " + label)
+
+    def replay():
+        checked = evidence.validate_parent_norm_definition_evidence_v1(detached["companion"],
+            expected_report_sha256=detached["expected_companion_sha256"], **detached["companion_inputs"])
+        raw = hold("nomination_companion", checked)
+        _need(hashlib.sha256(raw).hexdigest() == detached["expected_companion_sha256"],
+              "complete parent nomination regeneration differs")
+        evidence._observe(pins, checked["producer_pins"])
+        return checked
+
+    def closing_replay():
+        if replay_started:
+            fence()  # Refuse altered callbacks before any closing dispatch.
+            replay()
+
+    def output_fence():
+        if serialized is not None:
+            _parent_bound_serialized_fence(result, serialized)
+            fence()
+            _parent_bound_serialized_fence(result, serialized)
+
+    def terminal_fence():
+        fence()
+        if serialized is not None:
+            _need(evidence.norm._parent_review_pure_wire(result) == serialized,
+                  "parent bound output changed after final custody callback")
+            _need(json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+                             allow_nan=False).encode("utf-8") == serialized,
+                  "parent bound output changed after final direct encoding")
+
+    try:
+        fence()
+        replay_started = True
+        checked = replay()
+        fence()
+        inputs = detached["companion_inputs"]
+        replays = [inputs["norm_inputs"]["correspondence_inputs"]["scope_replay_inputs"]["replay_inputs"]]
+        replays.extend(endpoint["preparation_inputs"]["parent_inputs"]["replay_inputs"]
+                       for endpoint in inputs["definitions"])
+        for replay_inputs in replays:
+            fence()
+            plan = evidence._parent_definition_file_plan(replay_inputs, lineage)
+            frozen = evidence.norm._parent_review_fingerprint(plan)
+            witness = evidence._parent_definition_file_witness(plan, lineage)
+            physical.append((plan, witness, frozen))
+            fence()
+        request = parsed["request"]
+        link, endpoint, binder, native_variable, predicate, ast, head, body = _selection(
+            checked, request, inputs, parent=True)
+        native, rendering, lean_source, theorems = _render(endpoint, inputs, request, ast, head, body,
+            owners, parent=True, hold=hold)
+        fence()
+        preparation = checked["norm_preparation"]
+        correspondence = preparation["correspondence"]
+        relational = correspondence["relational_fragment"]
+        _need(relational["source_binding"] is None and relational["source_bound"] is False,
+              "original relational source binding must remain explicitly unresolved")
+        context = link["typed_context"]
+        statements = [{"theorem": theorems[0], "status": "generated_under_explicit_unverified_hypotheses",
+            "hypotheses": ["hDefinition : formula_0 i t"],
+            "conclusion": "headAt i entity t ↔ bodyAt i entity t", "kernel_checked": False}]
+        if request["mode"] == "body_with_membership":
+            statements.append({"theorem": theorems[1], "status": "generated_under_explicit_unverified_hypotheses",
+                "hypotheses": ["hDefinition : formula_0 i t", "hMembership : headAt i entity t"],
+                "conclusion": "bodyAt i entity t", "kernel_checked": False})
+        result = {"schema": PARENT_SCHEMA, "profile": PARENT_PROFILE,
+            "status": "conditional_unverified_parent_instance_prepared",
+            "request": request, "request_sha256": detached["expected_request_sha256"],
+            "companion_sha256": detached["expected_companion_sha256"], "companion": checked,
+            "selected_link": link,
+            "definition_alternative_refs": [{"ordinal": ordinal, "alternative_id": alternative["alternative_id"],
+                "preparation_sha256": alternative["preparation_sha256"],
+                "candidate_ref": _reference(alternative["candidate"])}
+                for ordinal, alternative in enumerate(checked["definitions"])],
+            "nomination_inventory": [{"ordinal": ordinal, "link_sha256": evidence.norm_definition_evidence_sha256(row),
+                "request_link": row["request_link"]} for ordinal, row in enumerate(checked["links"])],
+            "occurrence_binding": {"target": request["target"], "binding": context["binding"],
+                "binder_target": binder, "argument": context["argument"], "typed_node": link["typed_node"],
+                "native_variable": native_variable, "native_predicate": predicate,
+                "source_paths": request["source_paths"], "source_rows": link["source_rows"], "ancestry": context["ancestry"],
+                "norm_source_identity": preparation["source_identity"],
+                "definition_candidate_ref": link["definition_candidate_ref"]},
+            "original_norm": {"preparation_sha256": checked["norm_preparation_sha256"],
+                "correspondence_sha256": preparation["correspondence_sha256"],
+                "ast_sha256": preparation["ast_sha256"], "native_ast_sha256": preparation["native_ast_sha256"],
+                "source_identity": preparation["source_identity"], "source_binding": relational["source_binding"],
+                "source_bound": relational["source_bound"], "unchanged": True},
+            "definition_native_ast": ast, "head_native_ast": head, "body_native_ast": body,
+            "definition_native_fragment": native, "rendering": rendering, "lean_source": lean_source,
+            "conditional_theorems": theorems, "conditional_theorem_statements": statements,
+            "producer_pins": pins, "authority": dict(AUTHORITY),
+            "native_ast_rewritten": False, "norm_interpretation_ready": False,
+            "selected_interpretation": None, "governing_definition_use": None,
+            "semantic_mask": 0, "consumer_mask": 0, "training_mask": 0, "evaluation_gold_mask": 0,
+            "backend_executed": False, "lean_compilation_verified": False,
+            "external_complete_inputs_required": True, "original_signatures_cover_instance": False,
+            "assumptions": [
+                "hDefinition is an explicit unverified premise for the complete unchanged unary donor at one formal interpretation and fixed Nat time.",
+                "The original Object binder is explicitly valued in the same arbitrary Entity carrier; no legal actor, coercion, membership or existential witness is inferred.",
+                "Only body_with_membership additionally assumes hMembership for that same selected head, entity, interpretation and time.",
+                "The original whole parent nomination, norm AST, every definition alternative and both unavailable source-context populations remain unchanged.",
+                "Generated conditional consequences establish no governing definition, source edition, legal meaning, contextual closure, accepted graph edge or learning target.",
+                "No substitution into the norm, modality/quantifier rewriting, Lake project, Lean build, signature, model or training is performed.",
+            ]}
+        serialized = _wire(result)
+        if detached["validating"]:
+            _need(serialized == _wire(detached["offered"]),
+                  "parent bound report differs from complete original regeneration")
+        result = json.loads(serialized)
+        fence()
+        return result
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        scope._parent_finish((fence, closing_replay, fence, output_fence, terminal_fence), primary)
+
+
+def prepare_parent_bound_variable_definition_v1(companion, request_raw, *, expected_companion_sha256,
+        expected_request_sha256, companion_inputs):
+    """Generate conditional unary text from fully replayed parent nominations."""
+    return _parent_bound_operation(dict(companion=companion, request_raw=request_raw,
+        expected_companion_sha256=expected_companion_sha256, expected_request_sha256=expected_request_sha256,
+        companion_inputs=companion_inputs, offered=None, expected_report_sha256=None, validating=False))
+
+
+def validate_parent_bound_variable_definition_v1(record, companion, request_raw, *, expected_report_sha256,
+        expected_companion_sha256, expected_request_sha256, companion_inputs):
+    """Require an independent full report commitment and complete parent replay."""
+    return _parent_bound_operation(dict(companion=companion, request_raw=request_raw,
+        expected_companion_sha256=expected_companion_sha256, expected_request_sha256=expected_request_sha256,
+        companion_inputs=companion_inputs, offered=record, expected_report_sha256=expected_report_sha256,
+        validating=True))
+
+
+__all__ += ["prepare_parent_bound_variable_definition_v1", "validate_parent_bound_variable_definition_v1"]

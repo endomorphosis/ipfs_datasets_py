@@ -124,3 +124,79 @@ is rejected without truncation; these byte bounds are not process-memory quotas.
 No model, training, solver, Lean build, publication or automatic corpus admission
 is performed. Native Lean qualification and independently reviewed learning
 targets remain downstream requirements.
+
+
+## Explicit parent-literal nomination companion
+
+The same existing owner exposes `prepare_parent_norm_definition_evidence_v1`
+and `validate_parent_norm_definition_evidence_v1`. Use the unchanged
+`norm_definition_evidence_sha256` helper for a complete canonical commitment.
+This separate profile is `unsigned-parent-literal-term-definition-nominations/v1`;
+its report schema is `legal-parent-norm-definition-evidence/v1` and request
+schema is `legal-parent-norm-definition-evidence-request/v1`. The original
+HTML/contextual APIs, signatures and four-million-node aggregate profile remain
+unchanged.
+
+Preparation takes the complete parent `norm_preparation`, original `request_raw`,
+independent `expected_norm_preparation_sha256` and `expected_request_sha256`,
+complete original `norm_inputs`, and ordered `definitions`. Validation adds the
+complete report and its independently retained `expected_report_sha256`; it
+regenerates both endpoint populations. `norm_inputs` has exactly `correspondence`,
+`expected_correspondence_sha256` and `correspondence_inputs`, as required by
+`prepare_parent_norm_review_evidence_v1`.
+
+Each definition endpoint has exactly `alternative_id`, `preparation`,
+`expected_preparation_sha256` and `preparation_inputs`. The latter carries the
+original five named parent-definition-review inputs: `candidate_inputs`,
+`expected_candidate_pin`, `parent_inputs`, `context_inputs` and
+`expected_context_population`, plus optional `parent_limits`. Every original
+candidate/report/request byte body and independent pin remains required.
+
+The closed request contains `schema`, `profile`, `interpretation_status`,
+`norm_preparation_sha256` and `links`; the interpretation status is
+`authored_unreviewed_definition_nomination`. A link has exactly `alternative_id`,
+`target`, `source_paths`, `definition_term_ref`, `definition_ast_ref` and authored
+`rationale`. Each reference contains `record_cid` and the canonical `sha256` of
+the complete original term or AST record. A target must be the complete exact
+source-linked variable/predicate mapping, with its full ordered inverse source
+paths. Binder, argument position/role and modal ancestry stay attached to the
+selected occurrence. Names or lexical similarity do not establish identity.
+
+Both public parent review validators run genuine opening and closing replay.
+The output retains the whole checked norm preparation, each whole checked
+definition preparation and its complete original candidate, including separate
+physical source identities and unavailable context. Every supplied alternative
+must be referenced; duplicate alternatives/links refuse. Repeated uses remain
+distinct, rival alternatives remain unselected, and no common HTML context or
+governing edition is inferred. No signatures are created or extended.
+
+This parent profile accepts 1–16 alternatives and 1–128 links, with a 1 MiB
+request, 128 MiB aggregate input, **1,500,000 aggregate nodes**, and 8 MiB output.
+It reuses the existing parent snapshot/fingerprint contract; the original
+HTML companion keeps its separate 4,000,000-node profile. Existing endpoint
+limits apply and complete overflow refuses without truncation. These are
+finite input bounds, not kernel memory quotas.
+
+Original/detached inputs, parsed requests/candidates, actual upstream returns,
+producer/callback policies, physical files and final encoded output remain
+checked through closing custody. `selected_interpretation` and
+`governing_definition_use` remain null; authority flags stay false and
+`semantic_mask`, `consumer_mask`, `training_mask` and `evaluation_gold_mask`
+remain integer zero. `native_ast_rewritten=false` preserves the supplied norm.
+
+This companion creates no `hDefinition` or `hMembership` hypothesis, bound
+instance, predicate substitution, definition application, graph admission, Lake
+project, Lean execution, model or training. Applicable legal meaning, governing
+source/edition, substantive review and any later conditional composition are
+separate boundaries.
+
+The [focused qualification](../../../../../docs/autoformalization/evidence/legal-ir-parent-norm-definition-evidence-20261024.json) passed **29 authored cases /
+87 phases from 14 selectors**, with original execution/storage/source-READ
+custody closed. The 42 original HTML cases were not selected. Assertions in
+the actual passed owning test retain two alternatives, six links and three
+typed targets, and observe two genuine norm-review and four genuine
+definition-review validator calls. The checked compiled/executed test
+source authenticates those assertions; no separately persisted product
+nomination artifact or artifact CID is claimed. The recorded namespace,
+source-buffer and sampled process scopes do not qualify whole-package
+startup, the entire owning module, statutory meaning or Lean execution.

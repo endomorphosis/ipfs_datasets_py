@@ -2202,20 +2202,65 @@
       "apis": [
         "bound_variable_definition_sha256",
         "prepare_bound_variable_definition_v1",
-        "validate_bound_variable_definition_v1"
+        "validate_bound_variable_definition_v1",
+        "prepare_parent_bound_variable_definition_v1",
+        "validate_parent_bound_variable_definition_v1"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
-        "bound-definition-existing-owner-port-20261023-01"
+        "bound-definition-existing-owner-port-20261023-01",
+        "parent-bound-variable-definition-qualified-20261025-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_bound_variable_definition_v1.md",
       "id": "bound-variable-definition-v1",
-      "notes": "Exact original unary-definition conditional at one nominated variable/binder/ordered argument; full evidence replay, unchanged norm and alternatives. hDefinition is explicit; body mode additionally requires hMembership. Source presence and historical103-case/native observations are distinct from the separate passed52-case authored integration; other owning suites were not qualified by that cohort. No membership, governing applicability, semantic edge, training/gold or complete-norm corpus admission.",
+      "notes": "Exact original unary-definition conditional at one nominated variable/binder/ordered argument; full evidence replay, unchanged norm and alternatives. hDefinition is explicit; body mode additionally requires hMembership. Source presence and historical103-case/native observations are distinct from the separate passed52-case authored integration; other owning suites were not qualified by that cohort. No membership, governing applicability, semantic edge, training/gold or complete-norm corpus admission. The explicit parent conditional profile passed29/87/16 authored controls on correctedC3/1d, including two legacy positives. Two full mode reports/requests/uncompiled Lean texts were independently read with original source/compute/storage closeout. Whole norms/all definitions and unverified hDefinition/optional hMembership remain; no norm rewrite, governing meaning, membership/witness proof, model quality or Lean/corpus admission.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_bound_variable_definition_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
         "tests/unit/logic/autoformal/test_legal_bound_variable_definition_v1.py"
       ],
+      "parent_literal_conditional_v1": {
+        "Lean_executions": 0,
+        "all_definition_alternatives_retained": true,
+        "cases": 29,
+        "concrete_mode_reports_requests_and_uncompiled_Lean_independently_read": true,
+        "consumer_mask": 0,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "parent-bound-variable-definition-qualified-20261025-01",
+        "full_owning_module_or_package_qualified": false,
+        "governing_definition_use": null,
+        "model_forwards": 0,
+        "native_AST_rewritten": false,
+        "new_cases": 27,
+        "optimizer_steps": 0,
+        "original_compute_storage_source_READ_closed": true,
+        "owning_test_sha256": "1d394670b7f8d3bca7618177be1e301fa519aa2092c16f88638b65193ef173cb",
+        "phases": 87,
+        "physical_norm_and_all_definition_populations_replayed": true,
+        "profile": "conditional-parent-unary-definition-at-bound-variable/v1",
+        "qualification_summary": {
+          "bytes": 15732,
+          "path": "docs/autoformalization/evidence/legal-ir-parent-bound-variable-definition-20261025.json",
+          "root": "datasets_repository",
+          "sha256": "f660ef2d5be8cbbcfa7e6ab3b829abafb77abce7aa6871957386e777d2881669"
+        },
+        "qualified_cases": 29,
+        "qualified_phases": 87,
+        "qualified_selectors": 16,
+        "renderer_callback_correction": true,
+        "report_schema": "legal-parent-bound-variable-definition-report/v1",
+        "request_schema": "legal-parent-bound-variable-definition-request/v1",
+        "selected_interpretation": null,
+        "selected_legacy_cases": 2,
+        "selectors": 16,
+        "semantic_mask": 0,
+        "source_binding": null,
+        "source_bound": false,
+        "source_sha256": "c3dc3df3a86fd23fb2e4a89c33565928d0de53396972db5d366d1a8bbec6deed",
+        "status": "namespace_scoped_authored_parent_conditional_tests_qualified",
+        "training_mask": 0,
+        "whole_original_native_donor_replayed": true
+      },
       "path": "ipfs_datasets_py/logic/autoformal/legal_bound_variable_definition_v1.py",
       "required": true,
       "status": "implementation_present"
@@ -2224,20 +2269,47 @@
       "apis": [
         "norm_definition_evidence_sha256",
         "prepare_norm_definition_evidence_v1",
-        "validate_norm_definition_evidence_v1"
+        "validate_norm_definition_evidence_v1",
+        "prepare_parent_norm_definition_evidence_v1",
+        "validate_parent_norm_definition_evidence_v1"
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
-        "bound-definition-existing-owner-port-20261023-01"
+        "bound-definition-existing-owner-port-20261023-01",
+        "parent-norm-definition-evidence-qualified-20261024-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_definition_evidence_v1.md",
       "id": "norm-definition-evidence-v1",
-      "notes": "Original full norm/definition nomination evidence, preserving complete sources, alternatives, every link and original assessments. Links are nominated associations; source/meaning/governing-use decisions remain unresolved. Original relational generation only; selected52-case authored integration passed; other owning suites remain unqualified by this cohort.",
+      "notes": "Original full norm/definition nomination evidence, preserving complete sources, alternatives, every link and original assessments. Links are nominated associations; source/meaning/governing-use decisions remain unresolved. Original relational generation only; selected52-case authored integration passed; other owning suites remain unqualified by this cohort. The explicit parent-literal nomination profile passed its separate29/87/14 authored custody cohort on f839/6256. Every definition alternative and typed occurrence remains unselected, with unavailable context and zero masks; conditional29/87/16 is a separate source/case generation.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_definition_evidence_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
         "tests/unit/logic/autoformal/test_legal_norm_definition_evidence_v1.py"
       ],
+      "parent_literal_nomination_v1": {
+        "cases": 29,
+        "consumer_mask": 0,
+        "default_adoption": false,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "parent-norm-definition-evidence-qualified-20261024-01",
+        "legacy_HTML_max_input_nodes_unchanged": 4000000,
+        "max_input_nodes": 1500000,
+        "nomination_artifact_independently_read": false,
+        "phases": 87,
+        "planned_cases": 29,
+        "planned_phases": 87,
+        "planned_selectors": 14,
+        "product_nomination_report_persisted": false,
+        "profile": "unsigned-parent-literal-term-definition-nominations/v1",
+        "request_schema": "legal-parent-norm-definition-evidence-request/v1",
+        "schema": "legal-parent-norm-definition-evidence/v1",
+        "selectors": 14,
+        "semantic_mask": 0,
+        "source_sha256": "f83919d11c18ee01759022de39c992486c5b06eb940b1135709e1344c9f793d1",
+        "status": "focused_parent_nomination_tests_qualified",
+        "test_sha256": "625610bec6073ddd062721b567b4735ed248d611919bd0b818b9550db6ae8f67",
+        "training_mask": 0
+      },
       "path": "ipfs_datasets_py/logic/autoformal/legal_norm_definition_evidence_v1.py",
       "required": true,
       "status": "implementation_present"
@@ -2248,20 +2320,33 @@
         "prepare_norm_review_evidence_v1",
         "build_norm_review_subject_v1",
         "assess_norm_reviews_v1",
-        "validate_norm_review_assessment_v1"
+        "validate_norm_review_assessment_v1",
+        "prepare_parent_norm_review_evidence_v1",
+        "validate_parent_norm_review_evidence_v1"
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
-        "bound-definition-existing-owner-port-20261023-01"
+        "bound-definition-existing-owner-port-20261023-01",
+        "parent-norm-review-closing-custody-qualified-20261024-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_interpretation_review_v1.md",
       "id": "norm-interpretation-review-v1",
-      "notes": "Original relational norm preparation/subject/assessment/replay domain. Full correspondence and optional context are replayed. Later private counted-only APIs are not included. Signature custody does not supply missing substantive source/meaning decisions; selected52-case authored integration passed; other owning suites remain unqualified by this cohort.",
+      "notes": "Original relational norm preparation/subject/assessment/replay domain. Full correspondence and optional context are replayed. Counted-only APIs retain their separate source and qualification scope. Signature custody does not supply missing substantive source/meaning decisions; selected52-case authored integration passed; other owning suites remain unqualified by this cohort. The explicit parent review prerequisites preserve unsigned complete original occurrence/context replay. Separate original closing custody16/48 covers review and worksheet owners; its test37ce generation differs only by an unselected cold-import control from current test39d7 checked in the separate nomination/conditional source closures. No whole owning module or governing interpretation is admitted.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_norm_interpretation_review_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
         "tests/unit/logic/autoformal/test_legal_norm_interpretation_review_v1.py"
       ],
+      "parent_literal_review_prerequisite_v1": {
+        "current_owning_test_sha256": "39d7a774ce3e1cc7b48159a3cf26bed044093cba931778c5d076fa191ae87db5",
+        "evidence_id": "parent-norm-review-closing-custody-qualified-20261024-01",
+        "governing_meaning_admitted": false,
+        "original_closing_owning_test_sha256": "37ce09a6409f473b418318cf93f6f37dca66e1e83f0046de9de5a2aae54dece4",
+        "original_shared_campaign_cases": 16,
+        "original_shared_campaign_phases": 48,
+        "source_sha256": "bdb61ffa938b6d6b26fe81507f54f55263a81c8e38720d027c8d97ea754927b6",
+        "whole_module_or_package_qualified": false
+      },
       "path": "ipfs_datasets_py/logic/autoformal/legal_norm_interpretation_review_v1.py",
       "required": true,
       "status": "implementation_present"
@@ -4558,6 +4643,36 @@
       "root": "datasets_repository",
       "scope": "Eight original sum67 checkpoint-row reference matrices were physically captured under a failed wrapper. Strict storage recovery preserved the files; saved-only arithmetic combines them with four original matrices. A separate successful zero-model dependency probe identifies a denied metadata read. No numerical replay repairs the failed wrapper.",
       "status": "eight_new_matrices_retained_from_failed_wrapper_descriptive_grid_complete_native_qualification_gap_open"
+    },
+    {
+      "id": "parent-norm-definition-evidence-qualified-20261024-01",
+      "observed_bytes": 11153,
+      "observed_sha256": "9587bfe7f27cc84b90674e021c3a9d453a54e597949151327bf76ff267496505",
+      "path": "docs/autoformalization/evidence/legal-ir-parent-norm-definition-evidence-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "29 new authored cases/87 phases/14 selectors. Genuine norm/definition replay assertions, exact whole candidate and occurrence custody, unknown contexts and zero masks. No persisted product nomination artifact, governing applicability, conditional instance, graph/Lean admission or learning qualification.",
+      "status": "namespace_scoped_authored_parent_nomination_qualified"
+    },
+    {
+      "id": "parent-norm-review-closing-custody-qualified-20261024-01",
+      "observed_bytes": 32210,
+      "observed_sha256": "e77aa38020bee13ec1f04098fb6fa351b362fc885917d5ab406ce3ce5aead5d4",
+      "path": "docs/autoformalization/evidence/legal-ir-parent-norm-review-closing-custody-20261024.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Selected peer unsigned parent review and blank worksheet contracts reused; only closing custody is hardened. Fresh focused16/48; original peer40/120 and uninstalled alternate74/222 retain separate source generations. Source edition, meaning, every-use definition applicability and semantic graph/Lean admission remain unprovided.",
+      "status": "parent_review_peer_reuse_closing_custody_qualified"
+    },
+    {
+      "id": "parent-bound-variable-definition-qualified-20261025-01",
+      "observed_bytes": 15732,
+      "observed_sha256": "f660ef2d5be8cbbcfa7e6ab3b829abafb77abce7aa6871957386e777d2881669",
+      "path": "docs/autoformalization/evidence/legal-ir-parent-bound-variable-definition-20261025.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "29cases/87phases/16selectors,27new+twolegacy positives; exactC3/1d,151checked buffers, two independently inspected mode reports/requests/uncompiled Lean outputs. Original source/compute/storage closed. Prior nomination29/87/14 and prelaunch-refusedv01 remain separate; no source meaning, governing applicability, ASTrewrite, model/training or Lean/corpus admission.",
+      "status": "namespace_scoped_authored_parent_conditional_qualified"
     }
   ]
 }

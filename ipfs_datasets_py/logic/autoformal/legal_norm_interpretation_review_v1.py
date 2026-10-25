@@ -424,3 +424,627 @@ def validate_norm_review_assessment_v1(report, *args, **kwargs):
 
 __all__ = ["prepare_norm_review_evidence_v1", "build_norm_review_subject_v1",
            "assess_norm_reviews_v1", "validate_norm_review_assessment_v1", "norm_review_sha256"]
+
+
+# This unsigned companion has no subject, claim, action or signing audience.
+# The original relational review and every original signing domain stay strict.
+COUNTED_PREPARATION_SCHEMA = "legal-counted-norm-review-evidence/v1"
+COUNTED_PROFILE = "unsigned-source-counted-frame-review/v1"
+_COUNTED_REPLAY_FIELDS = {
+    "scope_report", "counted_report", "join_request_raw", "expected_join_request_sha256",
+    "expected_scope_report_sha256", "expected_counted_report_sha256", "scope_replay_inputs",
+    "counted_request_raw", "expected_counted_request_sha256",
+}
+_COUNTED_REVIEW_OWNER_PINS = None
+_COUNTED_DEPENDENCIES_SHA256 = "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8"
+
+
+def _counted_review_preflight(correspondence, inputs):
+    """Reuse bounded pure request parsers before discovering operation owners."""
+    _keys(inputs, _COUNTED_REPLAY_FIELDS, "complete counted correspondence replay inputs")
+    from . import legal_source_typed_norm_join_v1 as join
+    _need(type(correspondence) is dict
+          and correspondence.get("schema") == join.SCHEMA_V2
+          and correspondence.get("profile") == join.PROFILE_V2,
+          "explicit counted-only correspondence required")
+    request = join._request_for_schema(inputs["join_request_raw"],
+        inputs["expected_join_request_sha256"], join.REQUEST_SCHEMA_V2)
+    join._pinned_copy(inputs["scope_report"], inputs["expected_scope_report_sha256"],
+                      "complete scope report", join.MAX_SCOPE_REPORT_BYTES)
+    join._pinned_copy(inputs["counted_report"], inputs["expected_counted_report_sha256"],
+                      "complete counted report", join.MAX_COUNTED_REPORT_BYTES)
+    replay = join._replay_inputs(inputs["scope_replay_inputs"])
+    _need(request["selected_unit_ref"] == replay["selected_unit_ref"],
+          "counted review selected unit differs from original replay")
+    source_scope, counted = join._counted_owners()  # Public stdlib-only modules.
+    source_scope._load(replay["scope_request_raw"], replay["expected_scope_request_sha256"],
+                       "scope request")
+    source_scope._load(replay["scope_declaration_raw"], replay["expected_scope_declaration_sha256"],
+                       "scope declaration")
+    counted._parse(inputs["counted_request_raw"], inputs["expected_counted_request_sha256"])
+
+
+def _counted_review_owners():
+    from . import legal_source_typed_norm_join_v1, legal_graph_dependencies
+    return legal_source_typed_norm_join_v1, legal_graph_dependencies
+
+
+def _counted_review_pins(owners, correspondence, inputs):
+    """Check actual owner closure before offered producer paths affect reads."""
+    global _COUNTED_REVIEW_OWNER_PINS
+    _need(hashlib.sha256(Path(__file__).read_bytes()).hexdigest() == _SELF_PIN,
+          "counted review producer changed since import")
+    _need(hashlib.sha256(Path(correspondence_owner.__file__).read_bytes()).hexdigest() == _BASE_PIN,
+          "counted review scalar/snapshot base changed since import")
+    join, dependencies = owners
+    trusted = join._counted_producer_pins(*join._counted_owners(),
+        inputs["scope_report"], inputs["counted_report"])
+    _need(type(correspondence.get("producer_pins")) is dict
+          and correspondence["producer_pins"] == trusted,
+          "counted correspondence producer commitments differ from trusted owners")
+    dependency_path = Path(__file__).resolve().with_name("legal_graph_dependencies.py")
+    _need(Path(dependencies.__file__).resolve() == dependency_path,
+          "known sibling counted review dependency owner required")
+    _need(hashlib.sha256(dependency_path.read_bytes()).hexdigest() == _COUNTED_DEPENDENCIES_SHA256,
+          "counted review dependency producer differs from reviewed baseline")
+    pins = dict(trusted)
+    direct = {
+        str(Path(__file__).resolve()): _SELF_PIN,
+        str(Path(correspondence_owner.__file__).resolve()): _BASE_PIN,
+        str(dependency_path): _COUNTED_DEPENDENCIES_SHA256,
+    }
+    for path, expected in direct.items():
+        _need(path not in pins or pins[path] == expected,
+              "shared counted review producer commitments differ")
+        pins[path] = expected
+    join._check_producer_pins(pins)
+    if _COUNTED_REVIEW_OWNER_PINS is None:
+        _COUNTED_REVIEW_OWNER_PINS = dict(pins)
+    _need(pins == _COUNTED_REVIEW_OWNER_PINS,
+          "counted review producers changed since first use")
+    return pins
+
+
+def _counted_review_obligations(checked, expected_correspondence_sha256):
+    """Keep every declared obligation in original order without deduplication."""
+    obligations, seen = [], set()
+
+    def append(kind, original, index, *, original_slot=None, question=False):
+        _need(len(obligations) < MAX_OBLIGATIONS,
+              "complete counted review obligation bound exceeded; no truncation")
+        slot = original_slot if original_slot is not None else "counted-norm-review:" + norm_review_sha256([
+            COUNTED_PREPARATION_SCHEMA, expected_correspondence_sha256, kind, index, original])
+        _need(type(slot) is str and bool(slot) and slot not in seen,
+              "distinct complete counted review obligation identities required")
+        seen.add(slot)
+        obligations.append({"slot_id": slot, "kind": kind,
+                            "question" if question else "original": original})
+
+    source = checked["source_scope_report"]
+    for index, row in enumerate(source["source_context_packet"]["dependency_slots"]):
+        append("original_context", row, index, original_slot=row["slot_id"])
+    for index, issue in enumerate(checked["original_unresolved"]):
+        append("original_unresolved_issue", issue, index)
+    for index, issue in enumerate(checked["introduced_unresolved"]):
+        append("introduced_unresolved_issue", issue, index)
+    for index, assumption in enumerate(checked["counted_frame_report"]["assumptions"]):
+        append("authored_counted_assumption", assumption, index)
+    for index, question in enumerate(SEMANTIC_QUESTIONS):
+        append("interpretation_question", question, index, question=True)
+    return obligations
+
+
+def _counted_review_artifacts(checked, expected_correspondence_sha256, pins, dependencies):
+    """Declare original input custody, not a legal graph or current observation."""
+    prefix = "counted-norm-correspondence:" + expected_correspondence_sha256
+    original = checked["input_pins"]
+    source = original["source_scope_input_pins"]
+    sampler = source["sampler_replay_inputs"]
+    items = [
+        ("scope-report", original["scope_report_full_canonical_sha256"]),
+        ("counted-report", original["counted_report_full_canonical_sha256"]),
+        ("join-request-raw", original["join_request_raw_sha256"]),
+        ("counted-request-raw", original["counted_request_raw_sha256"]),
+        ("sampling-report", source["sampling_report_full_canonical_sha256"]),
+        ("source-html", sampler["expected_raw_sha256"]),
+        ("source-descriptor", sampler["expected_descriptor_sha256"]),
+        ("scope-request-raw", source["scope_request_raw_sha256"]),
+        ("scope-declaration-raw", source["scope_declaration_raw_sha256"]),
+        ("selected-source-unit", source["selected_unit_ref"]["sha256"]),
+        ("review-producers", norm_review_sha256(pins)),
+    ]
+    artifacts = []
+
+    def artifact(identity, pin, *, policy=()):
+        _sha(pin, "counted review dependency artifact")
+        artifacts.append({"artifact_id": identity, "artifact_sha256": pin,
+            "dependency_pins": {kind: list(policy) if kind == "policy" else []
+                                for kind in dependencies.PIN_KINDS}})
+
+    artifact(prefix, expected_correspondence_sha256)
+    for label, pin in items:
+        artifact(prefix + ":" + label, pin, policy=(
+            [{"key": path, "sha256": expected} for path, expected in sorted(pins.items())]
+            if label == "review-producers" else ()))
+    identities = [row["artifact_id"] for row in artifacts]
+    edges = [{"dependent_id": prefix, "dependency_id": identity} for identity in identities[1:]]
+    return artifacts, edges, identities
+
+
+def prepare_counted_norm_review_evidence_v1(correspondence, *, expected_correspondence_sha256,
+                                           correspondence_inputs):
+    """Prepare an unsigned counted-fragment inventory through full join replay.
+
+    External contextual nominations and all signing/assessment entry points are
+    deliberately absent. The original source's open context remains evidence.
+    """
+    _sha(expected_correspondence_sha256, "counted correspondence")
+    _keys(correspondence_inputs, _COUNTED_REPLAY_FIELDS,
+          "complete counted correspondence replay inputs")
+    original = {"correspondence": correspondence, "correspondence_inputs": correspondence_inputs}
+    detached, commitment = _snapshot(original)
+    _need(norm_review_sha256(detached["correspondence"]) == expected_correspondence_sha256,
+          "independently pinned complete counted correspondence differs")
+    _counted_review_preflight(detached["correspondence"], detached["correspondence_inputs"])
+    owners = _counted_review_owners()
+    pins = _counted_review_pins(owners, detached["correspondence"], detached["correspondence_inputs"])
+
+    def fence():
+        _need(_snapshot(original)[1] == commitment and _snapshot(detached)[1] == commitment,
+              "counted review inputs changed during preparation")
+        _need(_counted_review_pins(owners, detached["correspondence"],
+                                 detached["correspondence_inputs"]) == pins,
+              "counted review producers changed during preparation")
+
+    fence()
+    join, dependencies = owners
+    checked = join.validate_source_typed_norm_join_v2(detached["correspondence"],
+        expected_report_sha256=expected_correspondence_sha256,
+        **detached["correspondence_inputs"])
+    fence()
+    obligations = _counted_review_obligations(checked, expected_correspondence_sha256)
+    artifacts, edges, identities = _counted_review_artifacts(
+        checked, expected_correspondence_sha256, pins, dependencies)
+    fence()
+    manifest = dependencies.build_dependency_manifest(artifacts, edges,
+        expected_artifact_ids=identities)
+    fence()
+    manifest = dependencies.validate_dependency_manifest(manifest,
+        expected_manifest_sha256=manifest["manifest_sha256"])
+    fence()
+    source = checked["source_scope_report"]
+    ledger = checked["provenance_ledger"]
+    report = {
+        "schema": COUNTED_PREPARATION_SCHEMA, "profile": COUNTED_PROFILE,
+        "status": "unsigned_counted_fragment_review_evidence_prepared",
+        "correspondence": checked, "correspondence_sha256": expected_correspondence_sha256,
+        "selected_unit_ref": source["input_pins"]["selected_unit_ref"],
+        "typed_inventory": {"path": "/correspondence/provenance_ledger",
+            "sha256": norm_review_sha256(ledger), "rows": len(ledger),
+            "nodes": checked["counted_frame_report"]["counts"]["nodes"],
+            "binders": len(checked["counted_frame_report"]["binder_ledger"])},
+        "obligations": obligations, "obligation_ids": [row["slot_id"] for row in obligations],
+        "original_context_slot_ids": [row["slot_id"]
+            for row in source["source_context_packet"]["dependency_slots"]],
+        "dependency_manifest": manifest, "required_dependency_ids": identities,
+        "producer_pins": pins, "external_context_not_supplied": True,
+        "external_context_nominations_applied": False,
+        "original_signatures_cover_counted_review": False,
+        "selected_interpretation": None, "governing_definition_use": None,
+        "formal_norm_ast": None, "lowered_IR": None, "native_output_for_source": None,
+        "graph": None, "accepted_lookup": None,
+        "norm_interpretation_ready": False, "native_build_executed": False,
+        "authority": {**FALSE_FLAGS, **checked["authority"]},
+        "training_mask": 0, "evaluation_gold_mask": 0,
+        "human_reviews": 0, "signatures_constructed": 0, "admissions": 0,
+        "model_calls": 0, "training_calls": 0, "native_processes": 0,
+        "limitations": [
+            "The complete counted correspondence and its55 syntax/binder rows remain an unreviewed partial hypothesis, not a complete statutory norm.",
+            "Original context, source issues, introduced groups and authored counted assumptions remain separate obligations in exact order; similar wording is not deduplicated.",
+            "The returned dependency manifest binds declared artifacts and producer identities only. Its reverse index accepts no fabricated current observations or legal completeness claim.",
+            "No native AST, native mapping, signing subject or new signing domain is manufactured for the counted fragment.",
+            "Existing relational review, definition applicability/application and native/signature consumers retain their original closed contracts.",
+            "No external context nomination, governing choice, review authentication, graph admission, model, training or Lean execution is supplied.",
+        ],
+    }
+    raw = _wire(report)
+    fence()
+    return json.loads(raw)
+
+
+def validate_counted_norm_review_evidence_v1(report, correspondence, *, expected_report_sha256,
+                                            **preparation_inputs):
+    """Require an independent unsigned report pin and complete original replay."""
+    _sha(expected_report_sha256, "counted review evidence")
+    _keys(preparation_inputs, {"expected_correspondence_sha256", "correspondence_inputs"},
+          "complete counted review preparation inputs")
+    original = {"report": report, "correspondence": correspondence, "inputs": preparation_inputs}
+    detached, commitment = _snapshot(original)
+    _need(norm_review_sha256(detached["report"]) == expected_report_sha256,
+          "independently pinned complete counted review evidence differs")
+    _sha(detached["inputs"]["expected_correspondence_sha256"], "counted correspondence")
+    _need(norm_review_sha256(detached["correspondence"]) ==
+          detached["inputs"]["expected_correspondence_sha256"],
+          "independently pinned complete counted correspondence differs")
+    inputs = detached["inputs"]["correspondence_inputs"]
+    _counted_review_preflight(detached["correspondence"], inputs)
+    owners = _counted_review_owners()
+    pins = _counted_review_pins(owners, detached["correspondence"], inputs)
+
+    def fence():
+        _need(_snapshot(original)[1] == commitment and _snapshot(detached)[1] == commitment,
+              "counted review validation inputs changed during replay")
+        _need(_counted_review_pins(owners, detached["correspondence"], inputs) == pins,
+              "counted review producers changed during validation")
+
+    fence()
+    regenerated = prepare_counted_norm_review_evidence_v1(
+        detached["correspondence"], **detached["inputs"])
+    fence()
+    _need(_same(detached["report"], regenerated),
+          "counted review evidence differs from complete original replay")
+    fence()
+    return regenerated
+
+
+__all__ += ["prepare_counted_norm_review_evidence_v1", "validate_counted_norm_review_evidence_v1"]
+
+
+# Parent review is unsigned custody/worksheet evidence. Existing relational
+# signing domains and the separate counted profile keep their closed contracts.
+PARENT_PREPARATION_SCHEMA = "legal-parent-norm-review-evidence/v1"
+PARENT_REVIEW_PROFILE = "unsigned-parent-literal-occurrence-review/v1"
+_PARENT_REVIEW_OWNER_PINS = None
+_PARENT_REVIEW_DEPENDENCIES_SHA256 = "86cb7c3b09102a94237d0455d610d437e558cca4250242201becd06c775ca2e8"
+_PARENT_CONTEXT_REQUIREMENTS = (
+    "definition", "authority", "antecedent", "shared_qualifier", "temporal_origin", "referenced_provision",
+)
+_PARENT_SCALAR_WIRE = correspondence_owner._scalar_wire
+
+
+def _parent_review_fingerprint(value):
+    """Verify the existing snapshot commitment without operation callbacks.
+
+    Retain the original finite, type-separated recipe and limits. The trusted
+    scalar encoder is captured directly, bypassing the instrumentable general
+    correspondence encoder used by the original detaching snapshot.
+    """
+    budget, nodes = MAX_INPUT_BYTES, 1_500_000
+    digest = hashlib.sha256()
+
+    def token(tag, raw):
+        nonlocal budget
+        budget -= len(raw) + 16
+        _need(budget >= 0, "aggregate review input byte bound exceeded")
+        digest.update(tag + str(len(raw)).encode() + b":" + raw)
+
+    def visit(item, depth):
+        nonlocal nodes
+        nodes -= 1
+        _need(nodes >= 0 and depth <= 96, "bounded review input structure required")
+        if type(item) is dict:
+            _need(len(item) <= nodes and all(type(key) is str for key in item),
+                  "ordinary review mapping required")
+            token(b"d", str(len(item)).encode())
+            for key in sorted(item):
+                visit(key, depth + 1)
+                visit(item[key], depth + 1)
+        elif type(item) is list:
+            _need(len(item) <= nodes, "bounded review list required")
+            token(b"l", str(len(item)).encode())
+            for child in item:
+                visit(child, depth + 1)
+        elif type(item) is bytes:
+            _need(len(item) <= min(budget, 32 * 1024**2), "bounded exact review bytes required")
+            token(b"b", item)
+        else:
+            token(b"j", _PARENT_SCALAR_WIRE(item, min(budget, MAX_INPUT_BYTES)))
+
+    visit(value, 0)
+    return digest.hexdigest()
+
+
+def _parent_review_pure_wire(value):
+    """Bound ordinary values, then encode directly for the final custody check."""
+    _parent_review_fingerprint(value)
+    raw = json.dumps(value, sort_keys=True, separators=(",", ":"),
+                     ensure_ascii=False, allow_nan=False).encode("utf-8")
+    _need(len(raw) <= MAX_BYTES, "complete JSON byte bound exceeded")
+    return raw
+
+
+def _parent_review_owners():
+    from . import legal_graph_dependencies
+    from . import legal_source_norm_scope_v1
+    return correspondence_owner, legal_graph_dependencies, legal_source_norm_scope_v1
+
+
+def _parent_review_pins(owners):
+    """Discover trusted selected owners; never open an offered producer path."""
+    global _PARENT_REVIEW_OWNER_PINS
+    base, dependencies, source = owners
+    _need(hashlib.sha256(Path(__file__).read_bytes()).hexdigest() == _SELF_PIN,
+          "parent review producer changed since import")
+    _need(hashlib.sha256(Path(base.__file__).read_bytes()).hexdigest() == _BASE_PIN,
+          "parent correspondence producer changed since review import")
+    pins = base._parent_correspondence_pins(base._owners())
+    dependency_path = Path(__file__).resolve().with_name("legal_graph_dependencies.py")
+    _need(Path(dependencies.__file__).resolve() == dependency_path
+          and hashlib.sha256(dependency_path.read_bytes()).hexdigest() == _PARENT_REVIEW_DEPENDENCIES_SHA256,
+          "known parent review dependency owner differs from reviewed baseline")
+    _need(str(Path(source.__file__).resolve()) in pins,
+          "genuine parent scope utility owner absent from selected closure")
+    pins[str(dependency_path)] = _PARENT_REVIEW_DEPENDENCIES_SHA256
+    pins[str(Path(__file__).resolve())] = _SELF_PIN
+    if _PARENT_REVIEW_OWNER_PINS is None:
+        _PARENT_REVIEW_OWNER_PINS = dict(pins)
+    _need(pins == _PARENT_REVIEW_OWNER_PINS,
+          "parent review selected producers changed since first use")
+    return dict(pins)
+
+
+def _parent_review_preflight(correspondence, inputs):
+    """Use only existing bounded pure parsers before operation dependencies."""
+    base = correspondence_owner
+    _keys(inputs, _REPLAY_FIELDS, "complete original parent correspondence inputs")
+    _need(type(correspondence) is dict and correspondence.get("schema") == base.SCHEMA_V2
+          and correspondence.get("profile") == "parent-literal-occurrence-authored-correspondence/v2",
+          "explicit parent correspondence v2 required")
+    parsed = {"mapping_request": base._parse(inputs["mapping_request_raw"],
+        inputs["expected_mapping_request_sha256"], request_schema=base.REQUEST_SCHEMA_V2)}
+    source, relational = base._owners()  # Both are stdlib-only public modules.
+    copied, commitments = base._parent_correspondence_snapshot(
+        inputs["scope_report"], inputs["relational_report"], inputs["scope_replay_inputs"], source)
+    for name in ("scope_report", "relational_report"):
+        _sha(inputs["expected_" + name + "_sha256"], name)
+        _need(commitments[name]["sha256"] == inputs["expected_" + name + "_sha256"],
+              "independent parent correspondence input report pin differs")
+        _need(parsed["mapping_request"][name + "_sha256"] == inputs["expected_" + name + "_sha256"],
+              "parent mapping request binds another input report")
+    _need(copied["scope_report"].get("schema") == source.PARENT_SCHEMA
+          and copied["scope_report"].get("profile") == source.PARENT_PROFILE,
+          "whole selected parent literal scope profile required")
+    replay = copied["scope_replay_inputs"]
+    parsed["scope_request"] = source._load(replay["scope_request_raw"],
+        replay["expected_scope_request_sha256"], "scope request")
+    parsed["scope_declaration"] = source._load(replay["scope_declaration_raw"],
+        replay["expected_scope_declaration_sha256"], "scope declaration")
+    parsed["relational_request"] = relational._parse(inputs["relational_request_raw"],
+        inputs["expected_relational_request_sha256"])
+    _wire(parsed)
+    return parsed
+
+
+def _parent_review_identity(checked):
+    source = checked["source_scope"]
+    binding = source["parent_source_binding"]
+    context, occurrence = binding["context"], binding["selector"]
+    _need(_same(context, source["source_context_record"])
+          and _same(occurrence, source["source_selector"]),
+          "retained parent source/context bodies differ")
+    _need(context["availability"] == "required_unavailable"
+          and context["missing_requirements"] == list(_PARENT_CONTEXT_REQUIREMENTS),
+          "all six original parent context requirements must remain open in order")
+    identity = {"schema": "legal-parent-norm-review-source-identity/v1",
+        "parent_manifest_cid": binding["parent_manifest_cid"],
+        "source_version_cid": binding["source_version"]["record_cid"],
+        "source_occurrence_cid": occurrence["record_cid"],
+        "companion_record_cid": binding["companion_record"]["record_cid"],
+        "context_record_cid": context["record_cid"],
+        "source_binding_sha256": binding["source_binding_sha256"]}
+    _need(identity["source_version_cid"] == occurrence["source_version_cid"]
+          and identity["source_occurrence_cid"] == source["input_pins"]["source_occurrence_cid"]
+          and identity["companion_record_cid"] == source["input_pins"]["companion_record_cid"]
+          and identity["parent_manifest_cid"] == source["input_pins"]["parent_manifest_cid"],
+          "explicit parent review source identities differ")
+    return identity, context
+
+
+def _parent_review_obligations(checked, correspondence_sha256, identity, context):
+    obligations, seen = [], set()
+
+    def append(row):
+        _need(len(obligations) < MAX_OBLIGATIONS and row["slot_id"] not in seen,
+              "complete distinct parent review obligation bound exceeded; no truncation")
+        seen.add(row["slot_id"])
+        obligations.append(row)
+
+    for ordinal, requirement in enumerate(context["missing_requirements"]):
+        source = {key: identity[key] for key in
+                  ("source_version_cid", "source_occurrence_cid", "context_record_cid")}
+        slot_identity = {"schema": "legal-parent-norm-review-context-id/v1", **source,
+                         "requirement_ordinal": ordinal, "missing_requirement": requirement}
+        append({"slot_id": "parent-norm-context:" + norm_review_sha256(slot_identity),
+            "kind": "original_parent_context",
+            "original": {"schema": "legal-parent-norm-review-context-requirement/v1", **source,
+                "requirement_ordinal": ordinal, "missing_requirement": requirement, "context": context}})
+    for ordinal, issue in enumerate(checked["retained_unresolved"]):
+        append({"slot_id": "parent-norm-issue:" + norm_review_sha256(
+            [PARENT_PREPARATION_SCHEMA, correspondence_sha256, ordinal, issue]),
+            "kind": "original_unresolved_issue", "original": issue})
+    for ordinal, question in enumerate(SEMANTIC_QUESTIONS):
+        append({"slot_id": "parent-norm-question:" + norm_review_sha256(
+            [PARENT_PREPARATION_SCHEMA, correspondence_sha256, ordinal, question]),
+            "kind": "interpretation_question", "question": question})
+    return obligations
+
+
+def _parent_review_render(checked, correspondence_sha256, pins, dependencies, returned):
+    identity, context = _parent_review_identity(checked)
+    obligations = _parent_review_obligations(checked, correspondence_sha256, identity, context)
+    root = "parent-norm-correspondence:" + correspondence_sha256
+    artifacts = []
+
+    def artifact(label, pin, *, policy=()):
+        _sha(pin, "parent review declared custody artifact")
+        artifacts.append({"artifact_id": root if label is None else root + ":" + label,
+            "artifact_sha256": pin, "dependency_pins": {
+                kind: list(policy) if kind == "policy" else [] for kind in dependencies.PIN_KINDS}})
+
+    artifact(None, correspondence_sha256)
+    # CIDs remain identities. This SHA commits the explicitly retained identity
+    # JSON; it is not presented as a CID payload or original-source byte digest.
+    artifact("source-identity-json", norm_review_sha256(identity))
+    for ordinal, (label, observation) in enumerate(sorted(checked["input_pins"]["replay_inputs"].items())):
+        artifact("input-" + str(ordinal) + ":" + label, observation["sha256"])
+    for label in ("mapping_request_raw_sha256", "relational_request_raw_sha256"):
+        artifact(label, checked["input_pins"][label])
+    artifact("review-producers", norm_review_sha256(pins),
+             policy=[{"key": path, "sha256": pin} for path, pin in sorted(pins.items())])
+    identities = [row["artifact_id"] for row in artifacts]
+    edges = [{"dependent_id": root, "dependency_id": identifier} for identifier in identities[1:]]
+    manifest = dependencies.build_dependency_manifest(artifacts, edges, expected_artifact_ids=identities)
+    raw = _wire(manifest)
+    returned.append((manifest, raw))
+    verified = dependencies.validate_dependency_manifest(manifest,
+        expected_manifest_sha256=manifest["manifest_sha256"])
+    _need(_wire(verified) == raw, "parent review custody manifest replay differs")
+    returned.append((verified, raw))
+    manifest = json.loads(raw)
+    return {"schema": PARENT_PREPARATION_SCHEMA, "profile": PARENT_REVIEW_PROFILE,
+        "status": "unsigned_parent_literal_review_evidence_prepared",
+        "correspondence": checked, "correspondence_sha256": correspondence_sha256,
+        "source_identity": identity, "source_identity_sha256": norm_review_sha256(identity),
+        "original_parent_context": context, "obligations": obligations,
+        "obligation_ids": [row["slot_id"] for row in obligations],
+        "context_obligation_ids": [row["slot_id"] for row in obligations[:6]],
+        "typed_context_inventory": checked["typed_context_inventory"],
+        "source_rows": checked["request"]["source_rows"],
+        "ast_sha256": norm_review_sha256(checked["relational_fragment"]["typed_expression"]),
+        "native_ast_sha256": norm_review_sha256(checked["relational_fragment"]["native_ast"]),
+        "dependency_manifest": manifest, "required_dependency_ids": identities,
+        "input_commitments": checked["input_pins"]["replay_inputs"], "producer_pins": pins,
+        "counts": {"original_parent_context": 6, "original_unresolved_issues": len(checked["retained_unresolved"]),
+                   "interpretation_questions": len(SEMANTIC_QUESTIONS), "obligations": len(obligations)},
+        "subject": None, "signature": None, "clock": None, "registry": None,
+        "external_context_not_supplied": True, "external_context_nominations_applied": False,
+        "original_signatures_cover_parent_review": False,
+        "selected_interpretation": None, "accepted_interpretation": None, "governing_definition_use": None,
+        "norm_interpretation_ready": False, "authority": dict(FALSE_FLAGS),
+        "semantic_mask": 0, "consumer_mask": 0, "training_mask": 0, "evaluation_gold_mask": 0,
+        "human_reviews": 0, "signatures_constructed": 0, "admissions": 0,
+        "model_calls": 0, "training_calls": 0, "native_processes": 0,
+        "limitations": [
+            "Context obligations are explicitly derived from genuine parent context provenance; they are not original HTML dependency slots or verified legal dependencies.",
+            "The whole selected literal occurrence may be a fragment or unclassified region. Edition, all six context requirements and caller issues remain unresolved.",
+            "The complete authored correspondence and seven existing semantic questions are retained without selecting an interpretation or claiming exhaustive legal coverage.",
+            "Dependency SHA values commit exact declared input bytes, JSON and producers. Source CIDs are retained in explicit identity JSON, not treated as source-byte SHA256 values.",
+            "No signing subject, registry, clock, signature, authenticated response, content adjudication, graph admission, model, training or Lean process is supplied.",
+        ]}
+
+
+def _parent_review_operation(correspondence, expected_correspondence_sha256, correspondence_inputs,
+                             *, offered=None, expected_report_sha256=None, validating=False):
+    _sha(expected_correspondence_sha256, "complete parent correspondence")
+    original = dict(correspondence=correspondence, expected_correspondence_sha256=expected_correspondence_sha256,
+                    correspondence_inputs=correspondence_inputs, offered=offered,
+                    expected_report_sha256=expected_report_sha256)
+    detached, commitment = _snapshot(original)
+    correspondence_raw = _wire(detached["correspondence"])
+    _need(hashlib.sha256(correspondence_raw).hexdigest() == expected_correspondence_sha256,
+          "independently pinned complete parent correspondence differs")
+    if validating:
+        _sha(expected_report_sha256, "complete unsigned parent review evidence")
+        offered_raw = _wire(detached["offered"])
+        _need(hashlib.sha256(offered_raw).hexdigest() == expected_report_sha256,
+              "independently pinned unsigned parent review evidence differs")
+        _need(type(detached["offered"]) is dict
+              and detached["offered"].get("schema") == PARENT_PREPARATION_SCHEMA
+              and detached["offered"].get("profile") == PARENT_REVIEW_PROFILE,
+              "explicit unsigned parent review evidence profile required")
+    else:
+        offered_raw = None
+    parsed = _parent_review_preflight(detached["correspondence"], detached["correspondence_inputs"])
+    parsed_raw = _wire(parsed)
+    owners = _parent_review_owners()
+    base, dependencies, source = owners
+    pins = _parent_review_pins(owners)
+    trusted = base._parent_correspondence_pins(base._owners())
+    _need(_same(detached["correspondence"].get("producer_pins"), trusted),
+          "parent correspondence producer commitments differ from trusted owners")
+    opening = checked = result = serialized = opening_raw = None
+    returned = []
+    replay_started = False
+    primary = None
+    encoder = lambda value, maximum: _wire(value)  # Existing fixed8MiB recipe.
+
+    def input_fence():
+        _need(_parent_review_fingerprint(original) == commitment
+              and _parent_review_fingerprint(detached) == commitment,
+              "parent review caller or detached inputs changed during operation")
+        _need(_parent_review_pure_wire(parsed) == parsed_raw,
+              "parent review parsed requests changed during operation")
+
+    def fence():
+        _need(_parent_review_pins(owners) == pins, "parent review producers changed during operation")
+        input_fence()
+
+    def pure_returned_fence():
+        if opening_raw is not None:
+            _need(_parent_review_pure_wire(opening) == opening_raw
+                  and _parent_review_pure_wire(checked) == opening_raw,
+                  "parent review returned correspondence changed during operation")
+        for value, raw in returned:
+            _need(_parent_review_pure_wire(value) == raw,
+                  "parent review retained dependency or closing return changed during operation")
+
+    def returned_fence():
+        if opening_raw is not None:
+            source._parent_serialized_fence(opening, opening_raw, MAX_BYTES, encoder)
+            source._parent_serialized_fence(checked, opening_raw, MAX_BYTES, encoder)
+        for value, raw in returned:
+            source._parent_serialized_fence(value, raw, MAX_BYTES, encoder)
+
+    def closing_replay():
+        if replay_started:
+            closing = base.validate_norm_scope_correspondence_v2(detached["correspondence"],
+                expected_report_sha256=expected_correspondence_sha256, **detached["correspondence_inputs"])
+            source._parent_serialized_fence(closing, correspondence_raw, MAX_BYTES, encoder)
+            returned.append((closing, correspondence_raw))
+
+    def output_fence():
+        if serialized is not None:
+            def final_encoder(value, maximum):
+                raw = encoder(value, maximum)
+                input_fence()
+                pure_returned_fence()
+                return raw
+            source._parent_serialized_fence(result, serialized, MAX_BYTES, final_encoder)
+
+    try:
+        fence()
+        replay_started = True
+        opening = base.validate_norm_scope_correspondence_v2(detached["correspondence"],
+            expected_report_sha256=expected_correspondence_sha256, **detached["correspondence_inputs"])
+        opening_raw = _wire(opening)
+        _need(opening_raw == correspondence_raw, "validated parent correspondence changed after return")
+        checked = json.loads(opening_raw)
+        fence()
+        result = _parent_review_render(checked, expected_correspondence_sha256, pins, dependencies, returned)
+        serialized = _wire(result)
+        _need(not validating or serialized == offered_raw,
+              "unsigned parent review evidence differs from complete original regeneration")
+        result = json.loads(serialized)
+        return result
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        source._parent_finish((fence, returned_fence, closing_replay, fence,
+                               returned_fence, fence, output_fence), primary)
+
+
+def prepare_parent_norm_review_evidence_v1(correspondence, *, expected_correspondence_sha256,
+                                          correspondence_inputs):
+    """Prepare unsigned parent review custody; apply no meaning or trust."""
+    return _parent_review_operation(correspondence, expected_correspondence_sha256, correspondence_inputs)
+
+
+def validate_parent_norm_review_evidence_v1(report, correspondence, *, expected_report_sha256,
+                                           expected_correspondence_sha256, correspondence_inputs):
+    """Regenerate the entire unsigned profile against original parent inputs."""
+    return _parent_review_operation(correspondence, expected_correspondence_sha256, correspondence_inputs,
+        offered=report, expected_report_sha256=expected_report_sha256, validating=True)
+
+
+__all__ += ["prepare_parent_norm_review_evidence_v1", "validate_parent_norm_review_evidence_v1"]

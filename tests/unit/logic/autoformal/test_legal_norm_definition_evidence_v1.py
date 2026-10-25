@@ -428,3 +428,429 @@ def test_repeated_shared_input_copies_remain_distinct_and_mutation_bound():
     detached[1]['members'][0] = 1
     assert owner._snapshot(detached)[1] != commitment
     assert owner._snapshot(original)[1] == commitment
+
+
+# Explicit parent nomination evidence reuses genuine physical parent review.
+# No conditional definition instance, source meaning, signer or Lean is supplied.
+@pytest.fixture(scope='module')
+def parent_nomination_helpers():
+    return fixture('_parent_nomination_definition_fixture', 'test_plaintext_definition_review.py')
+
+
+def _parent_nomination_ref(record):
+    return {'record_cid': record['record_cid'], 'sha256': digest(record)}
+
+
+def _parent_nomination_links(preparation, definitions):
+    correspondence = preparation['correspondence']
+    variables = [row for row in correspondence['request']['typed_rows']
+                 if row['disposition'] == 'source_linked'
+                 and row['target']['kind'] == 'variable'
+                 and row['source_paths'] == ['/occurrences/0/anchor']]
+    predicates = [row for row in correspondence['request']['typed_rows']
+                  if row['disposition'] == 'source_linked'
+                  and row['target']['kind'] == 'predicate']
+    assert len(variables) == 2 and predicates
+    result = []
+    for row in [*variables, predicates[0]]:
+        for endpoint in definitions:
+            candidate = json.loads(endpoint['preparation_inputs']['candidate_inputs']['candidate_raw'])
+            result.append({'alternative_id': endpoint['alternative_id'],
+                'target': deepcopy(row['target']), 'source_paths': deepcopy(row['source_paths']),
+                'definition_term_ref': _parent_nomination_ref(candidate['term_record']),
+                'definition_ast_ref': _parent_nomination_ref(candidate['ast_record']),
+                'rationale': 'Explicit fictional nomination; spelling, governing use and meaning remain unresolved.'})
+    return result
+
+
+def _parent_nomination_materialize(helper, directory, *, selected=0, definitions=None):
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / 'norm').mkdir()
+    value = NORM.parent_review_materialize(norm, directory / 'norm', selected=selected)
+    if definitions is None:
+        (directory / 'definition').mkdir()
+        support = helper.fixtures.__wrapped__()
+        parent = support.definition.parent_case.__wrapped__(directory / 'definition')
+        definitions = []
+        for index in range(2):
+            original = helper.make_case(support, parent, parent_index=index)
+            prepared = definition_review.prepare_parent_definition_review_evidence_v1(**original['arguments'])
+            definitions.append({'alternative_id': 'authored-parent-alternative-' + str(index),
+                'preparation': prepared, 'expected_preparation_sha256': digest(prepared),
+                'preparation_inputs': original['arguments']})
+    else:
+        definitions = deepcopy(definitions)
+    request = {'schema': owner.PARENT_REQUEST_SCHEMA, 'profile': owner.PARENT_PROFILE,
+        'interpretation_status': 'authored_unreviewed_definition_nomination',
+        'norm_preparation_sha256': digest(value['preparation']),
+        'links': _parent_nomination_links(value['preparation'], definitions)}
+    raw = wire(request)
+    return {'norm_preparation': value['preparation'], 'request_raw': raw,
+        'expected_norm_preparation_sha256': digest(value['preparation']),
+        'expected_request_sha256': sha(raw), 'norm_inputs': value['arguments'], 'definitions': definitions}
+
+
+def _parent_nomination_prepare(case):
+    return owner.prepare_parent_norm_definition_evidence_v1(**case)
+
+
+def _parent_nomination_validate(case, report, **overrides):
+    return owner.validate_parent_norm_definition_evidence_v1(report,
+        expected_report_sha256=digest(report), **(case | overrides))
+
+
+def _parent_nomination_request(case, edit):
+    result = deepcopy(case)
+    request = json.loads(result['request_raw'])
+    edit(request)
+    result['request_raw'] = wire(request)
+    result['expected_request_sha256'] = sha(result['request_raw'])
+    return result
+
+
+def _parent_nomination_parent_path(case, endpoint):
+    if endpoint == 'norm':
+        replay = case['norm_inputs']['correspondence_inputs']['scope_replay_inputs']['replay_inputs']
+    else:
+        replay = case['definitions'][0]['preparation_inputs']['parent_inputs']['replay_inputs']
+    return Path(replay['parent_text_views_inputs']['parent_descriptor']['local_path'])
+
+
+def _parent_nomination_unqualified(report):
+    assert report['schema'] == owner.PARENT_SCHEMA and report['profile'] == owner.PARENT_PROFILE
+    assert report['authority'] and all(value is False for value in report['authority'].values())
+    for field in ('semantic_mask', 'consumer_mask', 'training_mask', 'evaluation_gold_mask'):
+        assert type(report[field]) is int and report[field] == 0
+    assert report['selected_interpretation'] is None and report['governing_definition_use'] is None
+    assert report['native_ast_rewritten'] is False
+    assert report['original_signatures_cover_companion'] is False
+    assert not {'lean_source', 'conditional_theorems', 'definition_instance', 'body_instance'} & report.keys()
+
+
+@pytest.fixture(scope='module')
+def parent_nomination_base(parent_nomination_helpers, tmp_path_factory):
+    return _parent_nomination_materialize(parent_nomination_helpers,
+        tmp_path_factory.mktemp('parent-nomination-originals', numbered=False))
+
+
+@pytest.fixture(scope='module')
+def parent_nomination_report(parent_nomination_base):
+    return _parent_nomination_prepare(parent_nomination_base)
+
+
+def test_parent_nomination_genuine_reviews_preserve_complete_norm_and_definition_records(
+        parent_nomination_base, parent_nomination_report, monkeypatch):
+    case, report = parent_nomination_base, parent_nomination_report
+    real_norm = norm.validate_parent_norm_review_evidence_v1
+    real_definition = definition_review.validate_parent_definition_review_evidence_v1
+    calls = {'norm': 0, 'definition': 0}
+    def checked_norm(*args, **kwargs):
+        result = real_norm(*args, **kwargs)
+        calls['norm'] += 1
+        return result
+    def checked_definition(*args, **kwargs):
+        result = real_definition(*args, **kwargs)
+        calls['definition'] += 1
+        return result
+    monkeypatch.setattr(norm, 'validate_parent_norm_review_evidence_v1', checked_norm)
+    monkeypatch.setattr(definition_review, 'validate_parent_definition_review_evidence_v1', checked_definition)
+    assert _parent_nomination_validate(case, report) == report
+    assert calls == {'norm': 2, 'definition': 4}
+    assert report['norm_preparation'] == case['norm_preparation']
+    assert report['request'] == json.loads(case['request_raw'])
+    assert report['request_raw_sha256'] == case['expected_request_sha256']
+    assert report['norm_preparation_sha256'] == case['expected_norm_preparation_sha256']
+    for supplied, checked in zip(case['definitions'], report['definitions'], strict=True):
+        candidate = json.loads(supplied['preparation_inputs']['candidate_inputs']['candidate_raw'])
+        assert checked['preparation'] == supplied['preparation'] and checked['candidate'] == candidate
+        assert checked['preparation_sha256'] == supplied['expected_preparation_sha256']
+        assert checked['definition_term_ref'] == _parent_nomination_ref(candidate['term_record'])
+        assert checked['definition_ast_ref'] == _parent_nomination_ref(candidate['ast_record'])
+        assert checked['preparation']['contexts'] == supplied['preparation']['contexts']
+        assert checked['preparation']['context_slot_ids'] == supplied['preparation']['context_slot_ids']
+        assert checked['candidate']['source_version']['edition'] == candidate['source_version']['edition']
+    assert report['norm_preparation']['original_parent_context'] == case['norm_preparation']['original_parent_context']
+    assert report['norm_preparation']['external_context_not_supplied'] is True
+    assert len(report['norm_preparation']['context_obligation_ids']) == 6
+    assert report['shared_context_inferred'] is False
+    assert report['external_context_nominations_applied'] is False
+    assert report['all_norm_term_uses_enumerated'] is False
+    _parent_nomination_unqualified(report)
+
+
+def test_parent_nomination_competing_alternatives_and_repeated_typed_uses_stay_unselected(
+        parent_nomination_base, parent_nomination_report):
+    case, report = parent_nomination_base, parent_nomination_report
+    links = json.loads(case['request_raw'])['links']
+    assert len(report['definitions']) == 2 and len(report['links']) == len(links) == 6
+    assert len({digest(row['target']) for row in links}) == 3
+    assert len({row['alternative_id'] for row in links}) == 2
+    for original, result in zip(links, report['links'], strict=True):
+        assert result['request_link'] == original
+        assert result['typed_row']['target'] == original['target']
+        assert result['typed_row']['source_paths'] == original['source_paths']
+        assert result['definition_term_ref'] == original['definition_term_ref']
+        assert result['definition_ast_ref'] == original['definition_ast_ref']
+        assert [row['anchor_mapping']['declaration_path'] for row in result['source_rows']] == original['source_paths']
+        assert result['governing_definition_use'] is None
+        assert all(value is False for value in result['authority'].values())
+    variables = [row for row in report['links'] if row['request_link']['target']['kind'] == 'variable']
+    assert len(variables) == 4
+    assert all(row['typed_context']['binding']['name'] == 'actor' for row in variables)
+    assert {row['typed_context']['argument']['symbol'] for row in variables} == {'Retain', 'Approved'}
+    assert all(row['typed_context']['argument']['role'] == 'actor' for row in variables)
+    _parent_nomination_unqualified(report)
+
+
+@pytest.mark.parametrize('selected', [1, 2], ids=['other-offset', 'other-physical-row'])
+def test_parent_nomination_equal_literals_keep_independent_original_parent_identity(
+        parent_nomination_helpers, parent_nomination_base, parent_nomination_report, tmp_path, selected):
+    case = _parent_nomination_materialize(parent_nomination_helpers, tmp_path,
+        selected=selected, definitions=parent_nomination_base['definitions'])
+    report = _parent_nomination_prepare(case)
+    assert report['norm_preparation']['source_identity'] != parent_nomination_report['norm_preparation']['source_identity']
+    assert report['norm_preparation']['ast_sha256'] == parent_nomination_report['norm_preparation']['ast_sha256']
+    assert digest(report) != digest(parent_nomination_report)
+    with pytest.raises(ValueError):
+        _parent_nomination_validate(case, parent_nomination_report)
+
+
+@pytest.mark.parametrize('pin', ['norm', 'request', 'report'])
+def test_parent_nomination_independent_complete_pins_refuse_before_upstream_replay(
+        parent_nomination_base, parent_nomination_report, monkeypatch, pin):
+    case = deepcopy(parent_nomination_base)
+    calls = []
+    def denied(*args, **kwargs):
+        calls.append('upstream')
+        pytest.fail('independent complete pins must refuse before original review replay')
+    monkeypatch.setattr(norm, 'validate_parent_norm_review_evidence_v1', denied)
+    monkeypatch.setattr(definition_review, 'validate_parent_definition_review_evidence_v1', denied)
+    if pin == 'report':
+        with pytest.raises(ValueError):
+            owner.validate_parent_norm_definition_evidence_v1(parent_nomination_report,
+                expected_report_sha256='0' * 64, **case)
+    else:
+        case['expected_norm_preparation_sha256' if pin == 'norm' else 'expected_request_sha256'] = '0' * 64
+        with pytest.raises(ValueError):
+            _parent_nomination_prepare(case)
+    assert calls == []
+
+
+@pytest.mark.parametrize('damage', ['target', 'inverse-source-paths', 'argument-role'])
+def test_parent_nomination_exact_typed_target_inverse_paths_and_context_cannot_be_retargeted(
+        parent_nomination_base, parent_nomination_report, damage):
+    if damage == 'argument-role':
+        report = deepcopy(parent_nomination_report)
+        report['links'][0]['typed_context']['argument']['role'] = 'object'
+        with pytest.raises(ValueError):
+            _parent_nomination_validate(parent_nomination_base, report)
+        return
+    def change(request):
+        row = request['links'][0]
+        if damage == 'target': row['target']['typed_path'] = '/not-an-original-target'
+        else: row['source_paths'] = ['/occurrences/3/anchor']
+    with pytest.raises(ValueError):
+        _parent_nomination_prepare(_parent_nomination_request(parent_nomination_base, change))
+
+
+@pytest.mark.parametrize('damage', ['independent-endpoint-pin', 'whole-term-ast-reference'])
+def test_parent_nomination_whole_original_definition_preparation_and_candidate_refs_are_bound(
+        parent_nomination_base, monkeypatch, damage):
+    case = deepcopy(parent_nomination_base)
+    if damage == 'independent-endpoint-pin':
+        case['definitions'][0]['expected_preparation_sha256'] = '0' * 64
+        calls = []
+        def denied(*args, **kwargs):
+            calls.append('upstream')
+            pytest.fail('definition preparation pin must refuse before review replay')
+        monkeypatch.setattr(norm, 'validate_parent_norm_review_evidence_v1', denied)
+        monkeypatch.setattr(definition_review, 'validate_parent_definition_review_evidence_v1', denied)
+        with pytest.raises(ValueError): _parent_nomination_prepare(case)
+        assert calls == []
+    else:
+        # Both CID and digest are internally plausible but refer to a different
+        # complete record, so repairing the request hash supplies no authority.
+        other = json.loads(case['definitions'][1]['preparation_inputs']['candidate_inputs']['candidate_raw'])
+        case = _parent_nomination_request(case, lambda request: request['links'][0].update(
+            definition_term_ref=_parent_nomination_ref(other['term_record']),
+            definition_ast_ref=_parent_nomination_ref(other['ast_record'])))
+        with pytest.raises(ValueError): _parent_nomination_prepare(case)
+
+
+@pytest.mark.parametrize('endpoint', ['norm', 'definition'])
+def test_parent_nomination_original_physical_sources_remain_bound_after_final_serialization(
+        parent_nomination_helpers, tmp_path, monkeypatch, endpoint):
+    case = _parent_nomination_materialize(parent_nomination_helpers, tmp_path)
+    path = _parent_nomination_parent_path(case, endpoint)
+    original = path.read_bytes()
+    real = owner._parent_definition_serialized_fence
+    calls = []
+    def checked_then_change(report, expected):
+        result = real(report, expected)
+        calls.append('genuine-final-storage')
+        if len(calls) == 2: path.write_bytes(original + b'\nlate physical parent mutation\n')
+        return result
+    monkeypatch.setattr(owner, '_parent_definition_serialized_fence', checked_then_change)
+    with pytest.raises(ValueError): _parent_nomination_prepare(case)
+    assert len(calls) == 2 and path.read_bytes() != original
+
+
+@pytest.mark.parametrize('route', ['legacy-refuses-parent', 'parent-refuses-legacy'])
+def test_parent_nomination_profiles_do_not_silently_widen_existing_html_contracts(
+        parent_nomination_base, monkeypatch, route):
+    case = deepcopy(parent_nomination_base)
+    calls = []
+    def denied(*args, **kwargs):
+        calls.append('upstream')
+        pytest.fail('wrong explicit profile must refuse before upstream replay')
+    monkeypatch.setattr(norm, 'validate_parent_norm_review_evidence_v1', denied)
+    monkeypatch.setattr(definition_review, 'validate_parent_definition_review_evidence_v1', denied)
+    if route == 'legacy-refuses-parent':
+        with pytest.raises(ValueError): owner.prepare_norm_definition_evidence_v1(**case)
+    else:
+        case = _parent_nomination_request(case, lambda request: request.update(schema=owner.REQUEST_SCHEMA))
+        with pytest.raises(ValueError): _parent_nomination_prepare(case)
+    assert calls == []
+
+
+@pytest.mark.parametrize('damage', ['duplicate-key', 'bounded-complete-input'])
+def test_parent_nomination_closed_bounded_preflight_refuses_before_operation_owners(
+        parent_nomination_base, monkeypatch, damage):
+    case = deepcopy(parent_nomination_base)
+    calls = []
+    def denied(*args, **kwargs):
+        calls.append('upstream')
+        pytest.fail('malformed bounded input must refuse before operation replay')
+    monkeypatch.setattr(norm, 'validate_parent_norm_review_evidence_v1', denied)
+    monkeypatch.setattr(definition_review, 'validate_parent_definition_review_evidence_v1', denied)
+    if damage == 'duplicate-key':
+        case['request_raw'] = case['request_raw'][:-1] + b',"links":[]}'
+        case['expected_request_sha256'] = sha(case['request_raw'])
+        with pytest.raises(ValueError): _parent_nomination_prepare(case)
+        duplicate = _parent_nomination_request(parent_nomination_base,
+            lambda request: request['links'].append(deepcopy(request['links'][0])))
+        with pytest.raises(ValueError): _parent_nomination_prepare(duplicate)
+        unreferenced = _parent_nomination_request(parent_nomination_base,
+            lambda request: request.update(links=[row for row in request['links']
+                if row['alternative_id'] == 'authored-parent-alternative-0']))
+        with pytest.raises(ValueError): _parent_nomination_prepare(unreferenced)
+    else:
+        oversized = deepcopy(case)
+        oversized['request_raw'] = b'x' * (owner.MAX_REQUEST_BYTES + 1)
+        oversized['expected_request_sha256'] = sha(oversized['request_raw'])
+        with pytest.raises(ValueError): _parent_nomination_prepare(oversized)
+        unknown = _parent_nomination_request(parent_nomination_base,
+            lambda request: request.update(unreviewed_extra_field=True))
+        with pytest.raises(ValueError): _parent_nomination_prepare(unknown)
+        case['definitions'].append(case['definitions'])
+        with pytest.raises(ValueError): _parent_nomination_prepare(case)
+    assert calls == []
+
+
+@pytest.mark.parametrize('damage', ['governing-authority', 'boolean-zero-mask'])
+def test_parent_nomination_rehashed_output_cannot_promote_authority_or_erase_mask_types(
+        parent_nomination_base, parent_nomination_report, damage):
+    report = deepcopy(parent_nomination_report)
+    if damage == 'governing-authority':
+        report['authority']['definition_applicability_verified'] = True
+        report['governing_definition_use'] = report['links'][0]['definition_term_ref']
+    else: report['training_mask'] = False
+    with pytest.raises(ValueError): _parent_nomination_validate(parent_nomination_base, report)
+
+
+@pytest.mark.parametrize('location', ['caller', 'detached', 'parsed-request'])
+def test_parent_nomination_actual_original_detached_and_parsed_inputs_survive_last_callback(
+        parent_nomination_base, monkeypatch, location):
+    case = deepcopy(parent_nomination_base)
+    copies, parsed, checks = [], [], []
+    real_validate = norm.validate_parent_norm_review_evidence_v1
+    real_parse = owner._parent_definition_parse
+    real_finish = owner._parent_definition_serialized_fence
+    def record_replay(*args, **kwargs):
+        result = real_validate(*args, **kwargs)
+        copies.append(kwargs['correspondence_inputs'])
+        return result
+    def record_parse(*args, **kwargs):
+        result = real_parse(*args, **kwargs)
+        parsed.append(result)
+        return result
+    def checked_then_change(report, expected):
+        result = real_finish(report, expected)
+        checks.append('genuine-storage')
+        if len(checks) == 2:
+            if location == 'caller': case['norm_inputs']['correspondence']['retained_unresolved'].append({'late': True})
+            elif location == 'detached': copies[0]['scope_report']['late_mutation'] = True
+            else: parsed[0]['links'][0]['rationale'] += ' mutated after complete final callback'
+        return result
+    monkeypatch.setattr(norm, 'validate_parent_norm_review_evidence_v1', record_replay)
+    monkeypatch.setattr(owner, '_parent_definition_parse', record_parse)
+    monkeypatch.setattr(owner, '_parent_definition_serialized_fence', checked_then_change)
+    with pytest.raises(ValueError): _parent_nomination_prepare(case)
+    assert len(checks) == 2 and copies and parsed
+
+
+@pytest.mark.parametrize('held', ['norm-opening', 'norm-closing', 'definition-opening', 'definition-closing'])
+def test_parent_nomination_actual_genuine_review_returns_stay_held_through_second_storage_check(
+        parent_nomination_base, monkeypatch, held):
+    norm_returns, definition_returns, checks = [], [], []
+    real_norm = norm.validate_parent_norm_review_evidence_v1
+    real_definition = definition_review.validate_parent_definition_review_evidence_v1
+    real_finish = owner._parent_definition_serialized_fence
+    def held_norm(*args, **kwargs):
+        result = real_norm(*args, **kwargs)
+        norm_returns.append(result)
+        return result
+    def held_definition(*args, **kwargs):
+        result = real_definition(*args, **kwargs)
+        definition_returns.append(result)
+        return result
+    def checked_then_change(report, expected):
+        result = real_finish(report, expected)
+        checks.append('genuine-storage')
+        if len(checks) == 2:
+            returns = norm_returns if held.startswith('norm') else definition_returns
+            returned = returns[0] if held.endswith('opening') else returns[-1]
+            returned['training_mask'] = False
+        return result
+    monkeypatch.setattr(norm, 'validate_parent_norm_review_evidence_v1', held_norm)
+    monkeypatch.setattr(definition_review, 'validate_parent_definition_review_evidence_v1', held_definition)
+    monkeypatch.setattr(owner, '_parent_definition_serialized_fence', checked_then_change)
+    with pytest.raises(ValueError): _parent_nomination_prepare(deepcopy(parent_nomination_base))
+    assert len(checks) == 2 and len(norm_returns) == 2 and len(definition_returns) == 4
+
+
+def test_parent_nomination_source_producer_is_rechecked_after_second_genuine_storage_check(
+        parent_nomination_base, monkeypatch, tmp_path):
+    original_path = Path(owner.__file__)
+    original = original_path.read_bytes()
+    private = tmp_path / original_path.name
+    private.write_bytes(original)
+    monkeypatch.setattr(owner, '__file__', str(private))
+    monkeypatch.setattr(owner, '_SELF_PATH', private)
+    monkeypatch.setattr(owner, '_SELF_PIN', sha(original))
+    monkeypatch.setattr(owner, '_PARENT_DEFINITION_PINS', None)
+    real = owner._parent_definition_serialized_fence
+    calls = []
+    def checked_then_change(report, expected):
+        result = real(report, expected)
+        calls.append('genuine-storage')
+        if len(calls) == 2: private.write_bytes(original + b'\n# late private producer mutation\n')
+        return result
+    monkeypatch.setattr(owner, '_parent_definition_serialized_fence', checked_then_change)
+    with pytest.raises(ValueError): _parent_nomination_prepare(deepcopy(parent_nomination_base))
+    assert len(calls) == 2 and private.read_bytes() != original
+    assert original_path.read_bytes() == original
+
+
+def test_parent_nomination_final_output_cannot_change_after_second_genuine_storage_check(
+        parent_nomination_base, monkeypatch):
+    real = owner._parent_definition_serialized_fence
+    calls = []
+    def checked_then_change(report, expected):
+        result = real(report, expected)
+        calls.append('genuine-storage')
+        if len(calls) == 2: report['training_mask'] = False
+        return result
+    monkeypatch.setattr(owner, '_parent_definition_serialized_fence', checked_then_change)
+    with pytest.raises(ValueError): _parent_nomination_prepare(deepcopy(parent_nomination_base))
+    assert len(calls) == 2
