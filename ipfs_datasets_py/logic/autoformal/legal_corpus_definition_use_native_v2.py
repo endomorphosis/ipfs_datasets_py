@@ -1224,14 +1224,16 @@ def _parent_norm_native_serialized_fence(receipt, expected_wire):
     _need(direct == expected_wire, "parent norm native receipt changed after final encoder returned")
 
 
-def _parent_norm_native_persisted(checked, output, owners, artifacts, executed_sources, logs, receipt):
+def _parent_norm_native_persisted(checked, output, owners, artifacts, executed_sources, logs, receipt, *,
+                                  maximum_files=7, maximum_modules=4):
     """Read the existing writer layout; no new transport or receipt format."""
     transport = owners[1]
     expected_project = {name: text.encode("utf-8") for name, text in checked.files}
     expected_project[transport.MANIFEST_FILE] = checked.manifest_json.encode("utf-8")
     expected_compiled = {name.removeprefix(".lake/build/lib/lean/"): raw for name, raw in artifacts.items()}
-    groups = (("project", expected_project, 8), ("compiled", expected_compiled, 4),
-              ("executed-inputs", executed_sources, 7))
+    groups = (("project", expected_project, maximum_files + 1),
+              ("compiled", expected_compiled, maximum_modules),
+              ("executed-inputs", executed_sources, maximum_files))
     actual, plan = [], []
     for directory, expected, maximum in groups:
         values = transport._read_files(output / directory, set(expected), maximum_files=maximum)
@@ -1477,3 +1479,468 @@ def parent_norm_compilation_receipt_sha256(receipt):
 
 __all__ += ["validate_parent_norm_native_v1", "build_parent_norm_native_v1",
             "parent_norm_compilation_receipt_sha256"]
+
+# Explicit parent-bound conditional projects; legacy preparation domains stay closed.
+PARENT_BOUND_NORM_BUILD_SCHEMA = "legal-corpus-parent-bound-norm-definition-native-build/v1"
+PARENT_BOUND_NORM_NATIVE_PROFILE = "replayed-parent-bound-norm-definition-conditional-native-build/v1"
+_PARENT_BOUND_NORM_PREPARATION_SCHEMA = "legal-corpus-parent-bound-norm-definition-lake-preparation/v1"
+_PARENT_BOUND_NORM_PREPARATION_PROFILE = "replayed-parent-bound-norm-definition-conditional-project/v1"
+_PARENT_BOUND_NORM_REPORT_SCHEMA = "legal-parent-bound-variable-definition-report/v1"
+_PARENT_BOUND_NORM_REPORT_PROFILE = "conditional-parent-unary-definition-at-bound-variable/v1"
+_PARENT_BOUND_NORM_REQUEST_SCHEMA = "legal-parent-bound-variable-definition-request/v1"
+_PARENT_BOUND_NORM_NATIVE_INPUT_FIELDS = {"bound_report", "expected_bound_report_sha256",
+                                        "bound_definition_inputs", "toolchain"}
+_PARENT_BOUND_NORM_COMPANION_INPUT_FIELDS = {"norm_preparation", "request_raw",
+    "expected_norm_preparation_sha256", "expected_request_sha256", "norm_inputs", "definitions"}
+_PARENT_BOUND_NORM_NATIVE_OPERATION_PINS = None
+
+
+def _parent_bound_norm_native_preparer():
+    """Load the existing explicit preparation owner only after pure preflight."""
+    from . import legal_corpus_parent_bound_norm_lake_v1
+    return legal_corpus_parent_bound_norm_lake_v1
+
+
+def _parent_bound_norm_native_preflight(preparation, original, *, expected_preparation_sha256):
+    """Bound complete originals and independent domains before lazy imports."""
+    _pin(expected_preparation_sha256, "complete parent bound norm preparation")
+    _need(type(original) is dict and set(original) == _PARENT_BOUND_NORM_NATIVE_INPUT_FIELDS,
+          "closed original parent bound norm native inputs required")
+    document = _preparation_document(preparation)
+    manifest = document["manifest"]
+    _need(manifest.get("schema") == _PARENT_BOUND_NORM_PREPARATION_SCHEMA
+          and manifest.get("profile") == _PARENT_BOUND_NORM_PREPARATION_PROFILE,
+          "explicit parent bound norm preparation profile required")
+    toolchain = original["toolchain"]
+    _need(type(toolchain) is str and len(toolchain) <= 128 and _TOOLCHAIN.fullmatch(toolchain)
+          and manifest.get("toolchain") == toolchain,
+          "exact version-pinned parent bound norm toolchain required")
+    report, inputs = original["bound_report"], original["bound_definition_inputs"]
+    _need(type(report) is dict and type(inputs) is dict
+          and set(inputs) == _BOUND_DEFINITION_INPUT_FIELDS,
+          "complete parent bound report and closed five-field originals required")
+    _need(type(inputs["companion"]) is dict and type(inputs["companion_inputs"]) is dict
+          and set(inputs["companion_inputs"]) == _PARENT_BOUND_NORM_COMPANION_INPUT_FIELDS,
+          "complete parent nomination and closed original companion inputs required")
+    request_raw = inputs["request_raw"]
+    _need(type(request_raw) is bytes and 0 < len(request_raw) <= 128 * 1024,
+          "bounded original parent bound request bytes required")
+    _bound_tree({"preparation": document, "original": original}, MAX_INPUT_BYTES, allow_bytes=True)
+    _pin(original["expected_bound_report_sha256"], "complete original parent bound report")
+    _pin(inputs["expected_companion_sha256"], "complete original parent nomination")
+    _pin(inputs["expected_request_sha256"], "original parent bound request")
+    _need(_sha(_wire(document, MAX_PREPARATION_BYTES)) == expected_preparation_sha256,
+          "independent complete parent bound preparation pin differs")
+    _need(_sha(_wire(report, MAX_PROJECT_BYTES)) == original["expected_bound_report_sha256"],
+          "independent complete parent bound report pin differs")
+    _need(_sha(_wire(inputs["companion"], MAX_PROJECT_BYTES)) == inputs["expected_companion_sha256"],
+          "independent complete parent nomination pin differs")
+    _need(_sha(request_raw) == inputs["expected_request_sha256"],
+          "independent original parent bound request pin differs")
+    _need(report.get("schema") == _PARENT_BOUND_NORM_REPORT_SCHEMA
+          and report.get("profile") == _PARENT_BOUND_NORM_REPORT_PROFILE,
+          "explicit genuine parent bound report required, never HTML relabeling")
+    request = _parse(request_raw, 128 * 1024)
+    _need(request.get("schema") == _PARENT_BOUND_NORM_REQUEST_SCHEMA
+          and request.get("profile") == _PARENT_BOUND_NORM_REPORT_PROFILE
+          and request.get("companion_sha256") == inputs["expected_companion_sha256"]
+          and report.get("companion_sha256") == inputs["expected_companion_sha256"]
+          and report.get("request_sha256") == inputs["expected_request_sha256"]
+          and _wire(report.get("request"), 128 * 1024) == _wire(request, 128 * 1024),
+          "parent bound report/request/companion domains differ")
+    mode = request.get("mode")
+    _need(type(mode) is str and mode in ("instance_only", "body_with_membership")
+          and manifest.get("bound_definition_mode") == mode
+          and type(manifest.get("conditional_theorems")) is list
+          and len(manifest["conditional_theorems"]) == (2 if mode == "instance_only" else 3),
+          "exact mode-dependent parent bound theorem population required")
+    _need(all(type(report.get(key)) is int and report[key] == 0 for key in
+              ("semantic_mask", "consumer_mask", "training_mask", "evaluation_gold_mask"))
+          and report.get("selected_interpretation") is None
+          and report.get("governing_definition_use") is None,
+          "original parent bound masks and unresolved decisions must remain unchanged")
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
+          "parent bound native owner changed before operation imports")
+    return {"document": document, "request": request}
+
+
+def _parent_bound_norm_native_pins(owners, manifest):
+    """Keep one strict producer generation separate from every legacy cache."""
+    global _PARENT_BOUND_NORM_NATIVE_OPERATION_PINS
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
+          "parent bound native owner changed since import")
+    sources = [manifest["producer_pins"], manifest["native_producer_pins"], owners[1]._pins(),
+        {str(Path(module.__file__).resolve()): _sha(Path(module.__file__).read_bytes())
+         for module in owners}, {str(Path(__file__).resolve()): _SELF_PIN}]
+    pins = {}
+    for source in sources:
+        _need(type(source) is dict, "ordinary complete parent bound producer map required")
+        for path, expected in source.items():
+            _need(type(path) is str and Path(path).is_absolute(),
+                  "absolute parent bound native producer path required")
+            _pin(expected, "parent bound native producer")
+            _need(path not in pins or pins[path] == expected,
+                  "parent bound native producer observations disagree")
+            _need(_sha(Path(path).read_bytes()) == expected,
+                  "parent bound native producer changed: " + path)
+            pins[path] = expected
+    if _PARENT_BOUND_NORM_NATIVE_OPERATION_PINS is None:
+        _PARENT_BOUND_NORM_NATIVE_OPERATION_PINS = dict(pins)
+    _need(pins == _PARENT_BOUND_NORM_NATIVE_OPERATION_PINS,
+          "parent bound native producer closure changed since first use")
+    return pins
+
+
+def _parent_bound_norm_native_callbacks(owners, preparer, bound_owners, evidence_owners):
+    _, transport, _, process, shared = owners
+    functions = (_parent_bound_norm_native_preparer, _parent_bound_norm_native_preflight,
+        _parent_bound_norm_native_pins, _parent_bound_norm_native_callbacks,
+        _parent_bound_norm_native_runtime, _parent_bound_norm_native_operation,
+        validate_parent_bound_norm_definition_native_v1,
+        build_parent_bound_norm_definition_native_v1,
+        parent_bound_norm_definition_compilation_receipt_sha256,
+        _owners, _preparation_document, preparation_sha256, _bound_tree, _wire, _parse, _sha, _pin, _need,
+        _build_validated_native, _installed_toolchain, _binary_recheck,
+        _axiom_observations, _observed_process_scope, _persist_build,
+        _parent_norm_native_run_value, _parent_norm_native_serialized_fence,
+        _parent_norm_native_persisted,
+        process.BoundedToolRunner.run, process.ToolRunResult.to_dict,
+        process.NativeToolLifecycleObservation.to_dict,
+        transport._read_files, transport._write_new_file,
+        shared._write_frozen_project, shared._write_compiled,
+        transport.contracts.seal_record, transport.contracts.load_record_bytes,
+        json.dumps, json.loads)
+    observed = tuple((function, getattr(function, "__code__", None),
+        id(getattr(function, "__defaults__", None)), id(getattr(function, "__kwdefaults__", None)))
+        for function in functions)
+    return observed + preparer._parent_bound_norm_callbacks(
+        preparer.lake._owners(), bound_owners, evidence_owners)
+
+
+def _parent_bound_norm_native_runtime(owners, preparer, bound_owners, evidence_owners):
+    return {"build_schema": PARENT_BOUND_NORM_BUILD_SCHEMA,
+        "native_profile": PARENT_BOUND_NORM_NATIVE_PROFILE,
+        "preparation_schema": _PARENT_BOUND_NORM_PREPARATION_SCHEMA,
+        "preparation_profile": _PARENT_BOUND_NORM_PREPARATION_PROFILE,
+        "report_schema": _PARENT_BOUND_NORM_REPORT_SCHEMA,
+        "report_profile": _PARENT_BOUND_NORM_REPORT_PROFILE,
+        "request_schema": _PARENT_BOUND_NORM_REQUEST_SCHEMA,
+        "input_fields": sorted(_PARENT_BOUND_NORM_NATIVE_INPUT_FIELDS),
+        "bound_definition_fields": sorted(_BOUND_DEFINITION_INPUT_FIELDS),
+        "companion_fields": sorted(_PARENT_BOUND_NORM_COMPANION_INPUT_FIELDS),
+        "authority": dict(AUTHORITY), "false_flags": dict(FALSE_FLAGS),
+        "record_bytes": MAX_RECORD_BYTES, "input_bytes": MAX_INPUT_BYTES,
+        "project_bytes": MAX_PROJECT_BYTES, "preparation_bytes": MAX_PREPARATION_BYTES,
+        "capture_bytes": MAX_CAPTURE_BYTES, "receipt_bytes": MAX_RECEIPT_BYTES,
+        "log_preview_bytes": MAX_LOG_PREVIEW_BYTES,
+        "legacy_files": MAX_FILES, "legacy_modules": MAX_MODULES,
+        "legacy_theorems": MAX_THEOREMS, "preparation_module": _PREPARATION_MODULE,
+        "selected_files": 9, "selected_modules": 6, "maximum_theorems": 3,
+        "toolchain_pattern": _TOOLCHAIN.pattern,
+        "document_reader_kwdefaults": (None if _preparation_document.__kwdefaults__ is None
+            else dict(_preparation_document.__kwdefaults__)),
+        "persisted_reader_kwdefaults": (None if _parent_norm_native_persisted.__kwdefaults__ is None
+            else dict(_parent_norm_native_persisted.__kwdefaults__)),
+        "engine_kwdefaults": (None if _build_validated_native.__kwdefaults__ is None
+            else dict(_build_validated_native.__kwdefaults__)),
+        "preparer_runtime": preparer._parent_bound_norm_runtime(
+            preparer.lake._owners(), bound_owners, evidence_owners)}
+
+
+def _parent_bound_norm_native_operation(preparation, original, *, expected_preparation_sha256,
+                                      operation=None):
+    preflight = _parent_bound_norm_native_preflight(preparation, original,
+        expected_preparation_sha256=expected_preparation_sha256)
+    preparer = _parent_bound_norm_native_preparer()
+    _need(type(preparation) is preparer.DefinitionUseCorpusPreparation,
+          "exact existing parent bound preparation type required")
+    copied, commitment, _ = preparer._parent_bound_norm_capture(original, preparation)
+    pure_preflight = preparer._parent_bound_norm_preflight(copied)
+    owners = _owners()
+    bound = preparer.bound
+    bound_owners = bound._owners()
+    evidence_owners = bound.evidence._parent_definition_owners()
+    _, lineage, scope = evidence_owners
+    held, run_holds, preparation_holds, physical = [], [], [], []
+    state = dict(opened=None, closed=None, receipt=None, receipt_wire=None,
+                 output_plan=None, output_witness=None, binaries=None,
+                 binary_plan=None, binary_witness=None)
+    callbacks = _parent_bound_norm_native_callbacks(owners, preparer, bound_owners, evidence_owners)
+    pins = None
+    primary = None
+
+    def commitment_of(value):
+        _bound_tree(value, 128 * MAX_RECORD_BYTES, allow_bytes=True)
+        return preparer.lake._parent_commitment(value)
+
+    runtime = commitment_of(_parent_bound_norm_native_runtime(
+        owners, preparer, bound_owners, evidence_owners))
+
+    def hold(value, label):
+        held.append((value, commitment_of(value), label))
+        return value
+
+    hold(preflight, "original bounded native preflight")
+    hold(list(pure_preflight), "complete original parent-bound pure preflight")
+
+    def fence():
+        _need(preparer._parent_bound_norm_capture(original, preparation)[1] == commitment,
+              "caller parent bound native originals or preparation changed")
+        _need(preparer.lake._parent_commitment(preparer.lake._ParentInputBudget().copy(copied))
+              == commitment, "detached parent bound native originals changed")
+        _need(_parent_bound_norm_native_callbacks(owners, preparer, bound_owners, evidence_owners)
+              == callbacks, "parent bound native operation callable changed")
+        _need(commitment_of(_parent_bound_norm_native_runtime(
+                  owners, preparer, bound_owners, evidence_owners)) == runtime,
+              "parent bound native runtime declarations changed")
+        if pins is not None:
+            _need(_parent_bound_norm_native_pins(owners, state["opened"].to_dict()) == pins,
+                  "parent bound native source producer changed")
+        for value, expected, label in held:
+            _need(commitment_of(value) == expected,
+                  "held parent bound native return changed: " + label)
+        for value, expected in preparation_holds:
+            _need(commitment_of(preparer._parent_bound_norm_storage(value)) == expected,
+                  "actual parent bound preparation raw storage changed after capture")
+        for run, expected in run_holds:
+            _need(commitment_of(_parent_norm_native_run_value(run, owners[3])) == expected,
+                  "actual parent bound native runner return changed after capture")
+        for plan, witness, frozen in physical:
+            _need(commitment_of(plan) == frozen
+                  and bound.evidence._parent_definition_file_witness(plan, lineage) == witness,
+                  "original parent norm or definition physical files changed")
+        for prefix, message in (("binary", "installed native sibling binaries"),
+                                ("output", "persisted parent bound native files")):
+            if state[prefix + "_plan"] is not None:
+                _need(bound.evidence._parent_definition_file_witness(
+                          state[prefix + "_plan"], lineage) == state[prefix + "_witness"],
+                      message + " changed after genuine readback")
+        if state["binaries"] is not None:
+            _need(_binary_recheck(state["binaries"]),
+                  "installed parent bound compiler binaries changed")
+        for name in ("opened", "closed"):
+            if state[name] is not None:
+                _need(commitment_of(preparer._parent_bound_norm_storage(state[name]))
+                      == commitment_of(copied["offered"]),
+                      "actual genuine parent bound preparation raw return changed")
+        if state["receipt"] is not None:
+            _need(_wire(state["receipt"], MAX_RECEIPT_BYTES) == state["receipt_wire"],
+                  "parent bound native receipt changed after genuine final check")
+
+    def replay():
+        fence()
+        checked = preparer.validate_parent_bound_norm_definition_corpus_v1(
+            preparation, copied["bound_report"],
+            expected_preparation_sha256=expected_preparation_sha256,
+            expected_bound_report_sha256=copied["expected_bound_report_sha256"],
+            bound_definition_inputs=copied["bound_definition_inputs"], toolchain=copied["toolchain"])
+        _need(commitment_of(preparer._parent_bound_norm_storage(checked))
+              == commitment_of(copied["offered"])
+              and preparer.parent_bound_norm_definition_preparation_sha256(checked)
+                  == expected_preparation_sha256,
+              "genuine parent bound preparation differs from original complete pin")
+        name = "opened" if state["opened"] is None else "closed"
+        state[name] = checked
+        preparation_holds.append((checked,
+            commitment_of(preparer._parent_bound_norm_storage(checked))))
+        hold(checked.to_dict(), "genuine " + name + " parent bound manifest")
+        return checked
+
+    def guard(stage, payload):
+        if stage == "native_flags":
+            hold(payload["document"], "actual validated native flags project document")
+            hold(payload["flags"], "actual exact-false native profile flags")
+            fence()
+        elif stage == "snapshot":
+            for name in ("manifest", "receipt_binding", "producers"):
+                hold(payload[name], "actual engine " + name)
+            preparation_holds.append((payload["checked"],
+                commitment_of(preparer._parent_bound_norm_storage(payload["checked"]))))
+            hold(_preparation_document(payload["checked"]), "engine frozen parent bound preparation")
+            fence()
+        elif stage == "toolchain":
+            hold(payload["binaries"], "actual installed binary pins")
+            hold(payload["probes"], "actual installed version probes")
+            state["binaries"] = payload["binaries"]
+            plan = [{"descriptor": {"local_path": path, "sha256": expected,
+                "bytes": Path(path).lstat().st_size}, "maximum": 512 * MAX_RECORD_BYTES}
+                for path, expected in sorted(payload["binaries"].items())]
+            state["binary_plan"] = hold(plan, "actual installed binary physical plan")
+            state["binary_witness"] = hold(
+                bound.evidence._parent_definition_file_witness(plan, lineage),
+                "actual installed binary physical identities")
+            fence()  # A late probe mutation must refuse before the compiler call.
+        elif stage == "runner_returned":
+            run = payload["run"]
+            run_holds.append((run, commitment_of(_parent_norm_native_run_value(run, owners[3]))))
+        elif stage == "before_persistence":
+            for name in ("artifacts", "executed_sources", "logs", "receipt"):
+                hold(payload[name], "actual parent bound native " + name)
+            state["receipt"] = payload["receipt"]
+            state["receipt_wire"] = _wire(payload["receipt"], MAX_RECEIPT_BYTES)
+            _need(_parent_bound_norm_native_callbacks(owners, preparer, bound_owners, evidence_owners)
+                  == callbacks, "native persistence callable changed before failed observation retention")
+            try:
+                fence()
+            except (ValueError, TypeError, KeyError, IndexError, OSError, UnicodeError, RecursionError) as error:
+                return {"type": type(error).__name__, "message": str(error)[:2048]}
+        elif stage == "refused_persistence":
+            state["receipt"] = hold(payload["receipt"], "sealed unqualified parent bound custody refusal")
+            state["receipt_wire"] = _wire(payload["receipt"], MAX_RECEIPT_BYTES)
+        elif stage == "after_persistence":
+            actual, plan = _parent_norm_native_persisted(payload["checked"], payload["output"], owners,
+                payload["artifacts"], payload["executed_sources"], payload["logs"], payload["receipt"],
+                maximum_files=9, maximum_modules=6)
+            hold(actual, "whole actual persisted parent bound native readback")
+            for values in actual:
+                hold(values, "actual persisted parent bound native file readback")
+            state["output_plan"] = hold(plan, "retained parent bound native output file plan")
+            state["output_witness"] = hold(
+                bound.evidence._parent_definition_file_witness(plan, lineage),
+                "retained parent bound native output file identities")
+            fence()
+        else:
+            raise ValueError("unknown parent bound norm native custody stage")
+
+    def final_receipt():
+        if state["receipt"] is not None:
+            _parent_norm_native_serialized_fence(state["receipt"], state["receipt_wire"])
+
+    def terminal():
+        fence()
+        if state["receipt"] is not None:
+            _parent_norm_native_serialized_fence(state["receipt"], state["receipt_wire"])
+            # Observe mutations after the last overridable receipt helper returns.
+            fence()
+            direct = json.dumps(state["receipt"], sort_keys=True, separators=(",", ":"),
+                                ensure_ascii=False, allow_nan=False).encode("utf-8")
+            _need(direct == state["receipt_wire"],
+                  "parent bound native receipt changed after final direct encoding")
+
+    try:
+        fence()
+        checked = replay()
+        manifest = hold(checked.to_dict(), "actual verified parent bound native manifest")
+        mode = manifest["bound_definition_mode"]
+        _need(len(manifest["expected_modules"]) == 6 and len(checked.files) == 9
+              and len(manifest["conditional_theorems"]) == (2 if mode == "instance_only" else 3)
+              and manifest["conditional_theorems"][-1].endswith(".original_norm_preserved")
+              and manifest["original_norm"]["source_binding"] is None
+              and manifest["original_norm"]["source_bound"] is False
+              and manifest["build_eligible"] is False
+              and manifest["selected_interpretation"] is None
+              and manifest["governing_definition_use"] is None
+              and all(value is False for value in manifest["authority"].values())
+              and all(type(manifest[key]) is int and manifest[key] == 0 for key in
+                      ("semantic_mask", "consumer_mask", "training_mask", "evaluation_gold_mask")),
+              "exact unadmitted parent norm and conditional definition project required")
+        pins = _parent_bound_norm_native_pins(owners, manifest)
+        fence()  # Only complete genuine replay authorizes physical nominations.
+        inputs = copied["bound_definition_inputs"]["companion_inputs"]
+        replays = [inputs["norm_inputs"]["correspondence_inputs"]["scope_replay_inputs"]["replay_inputs"]]
+        replays.extend(endpoint["preparation_inputs"]["parent_inputs"]["replay_inputs"]
+                       for endpoint in inputs["definitions"])
+        for replay_inputs in replays:
+            fence()
+            plan = hold(bound.evidence._parent_definition_file_plan(replay_inputs, lineage),
+                        "complete original parent norm/definition physical plan")
+            witness = hold(bound.evidence._parent_definition_file_witness(plan, lineage),
+                           "complete original parent norm/definition physical identities")
+            physical.append((plan, witness, commitment_of(plan)))
+            fence()
+        return checked if operation is None else operation(checked, replay, guard, owners)
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        # The peer preparation validator already replays original parent-bound
+        # evidence at opening and closing. Only the existing engine's post-run
+        # replay adds another semantic validation; terminal custody adds none.
+        scope._parent_finish((fence, final_receipt, fence, final_receipt, terminal), primary)
+
+
+def validate_parent_bound_norm_definition_native_v1(preparation, bound_report, *,
+        expected_preparation_sha256, expected_bound_report_sha256,
+        bound_definition_inputs, toolchain):
+    """Replay the exact nine-file parent-bound project without executing tools."""
+    original = dict(bound_report=bound_report, expected_bound_report_sha256=expected_bound_report_sha256,
+                    bound_definition_inputs=bound_definition_inputs, toolchain=toolchain)
+    return _parent_bound_norm_native_operation(preparation, original,
+        expected_preparation_sha256=expected_preparation_sha256)
+
+
+def build_parent_bound_norm_definition_native_v1(preparation, bound_report, *,
+        expected_preparation_sha256, expected_bound_report_sha256,
+        bound_definition_inputs, toolchain, lake_executable, output_directory,
+        timeout_seconds=60, cancellation=None):
+    """Observe conditional definition proofs beside the complete unchanged norm.
+
+    Source meaning, governing applicability, membership, corpus/graph admission,
+    source-to-model equivalence and convergence remain unverified.
+    """
+    _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+          and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+    original = dict(bound_report=bound_report, expected_bound_report_sha256=expected_bound_report_sha256,
+                    bound_definition_inputs=bound_definition_inputs, toolchain=toolchain)
+
+    def execute(checked, replay, guard, owners):
+        def binding(manifest):
+            keys = ("original_norm", "occurrence_binding", "selected_link",
+                "definition_alternative_refs", "nomination_inventory", "review_intake_binding",
+                "conditional_source_binding", "original_parent_context_bindings",
+                "parent_bound_definition_report_ref", "conditional_theorem_statements")
+            return {"bound_definition_report_sha256": expected_bound_report_sha256,
+                "original_input_commitment_sha256": manifest["original_input_commitment_sha256"],
+                "bound_definition_mode": manifest["bound_definition_mode"],
+                "retained_manifest_field_sha256": {
+                    key: _sha(_wire(manifest[key], MAX_RECORD_BYTES)) for key in keys},
+                "parent_bound_definition_report_ref": manifest["parent_bound_definition_report_ref"],
+                "definition_alternative_refs_count": len(manifest["definition_alternative_refs"]),
+                "nomination_inventory_count": len(manifest["nomination_inventory"]),
+                "review_evidence_status": manifest["review_evidence_status"],
+                "review_blockers": manifest["review_blockers"],
+                "review_prerequisites_satisfied_under_selected_trust":
+                    manifest["review_prerequisites_satisfied_under_selected_trust"],
+                "original_preparation_build_eligible": manifest["build_eligible"],
+                "original_preparation_execution_handoff": manifest["execution_handoff"],
+                "preservation_kind": "definitional_alias_identity_only",
+                "selected_interpretation": None, "governing_definition_use": None,
+                "norm_interpretation_ready": False,
+                "semantic_mask": 0, "consumer_mask": 0}
+
+        document = _preparation_document(checked)
+        authority = document["manifest"].get("authority")
+        _need(type(authority) is dict and bool(authority)
+              and all(value is False for value in authority.values()),
+              "exact unadmitted validated parent bound authority required")
+        flags = dict(authority)
+        flags.update(FALSE_FLAGS)
+        guard("native_flags", dict(document=document, flags=flags))
+        return _build_validated_native(preparation, checked, replay=replay,
+            expected_preparation_sha256=expected_preparation_sha256, toolchain=toolchain,
+            lake_executable=lake_executable, output_directory=output_directory,
+            timeout_seconds=timeout_seconds, cancellation=cancellation,
+            build_schema=PARENT_BOUND_NORM_BUILD_SCHEMA, profile=PARENT_BOUND_NORM_NATIVE_PROFILE,
+            flags=flags, receipt_binding=binding, maximum_files=9, maximum_modules=6,
+            maximum_theorems=3, producer_pin_reader=_parent_bound_norm_native_pins,
+            closing_custody_guard=guard,
+            receipt_scope=("Only exact conditional definition instances under explicit hDefinition "
+                "and any matching hMembership premises, plus definitional alias preservation of the "
+                "complete unchanged norm. No norm truth, governing applicability, membership proof, "
+                "source meaning, corpus/graph admission, model equivalence or convergence claim."))
+
+    return _parent_bound_norm_native_operation(preparation, original,
+        expected_preparation_sha256=expected_preparation_sha256, operation=execute)
+
+
+def parent_bound_norm_definition_compilation_receipt_sha256(receipt):
+    """Commit the complete bounded engineering receipt; grant no admission."""
+    _need(type(receipt) is dict and receipt.get("schema") == PARENT_BOUND_NORM_BUILD_SCHEMA
+          and receipt.get("profile") == PARENT_BOUND_NORM_NATIVE_PROFILE,
+          "explicit parent bound norm native compilation receipt required")
+    return _sha(_wire(receipt, MAX_RECEIPT_BYTES))
+
+
+__all__ += ["PARENT_BOUND_NORM_BUILD_SCHEMA", "PARENT_BOUND_NORM_NATIVE_PROFILE",
+    "validate_parent_bound_norm_definition_native_v1", "build_parent_bound_norm_definition_native_v1",
+    "parent_bound_norm_definition_compilation_receipt_sha256"]
