@@ -1544,3 +1544,548 @@ def test_parent_norm_native_installed_lean_alias_identity_does_not_prove_norm_tr
         "authority": dict(native.AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0}
     (output / "negative-observation.json").write_bytes(canonical(observation))
     assert json.loads((output / "negative-observation.json").read_bytes()) == observation
+
+
+# Explicit parent-bound definition native integration. The real parent-bound
+# fixture is shared; only the tests explicitly named instrumented replace the
+# upstream project validator. Such cases test native custody boundaries, never
+# original source replay, native proof authority or a legal interpretation.
+_PARENT_BOUND_NORM_NATIVE_HELPER = None
+_PARENT_BOUND_NORM_NATIVE_BASELINE = None
+
+
+def _parent_bound_norm_native_new(directory):
+    global _PARENT_BOUND_NORM_NATIVE_HELPER
+    if _PARENT_BOUND_NORM_NATIVE_HELPER is None:
+        _PARENT_BOUND_NORM_NATIVE_HELPER = _FIXTURE.fixture_module(
+            "test_legal_corpus_parent_bound_norm_lake_v1.py",
+            "parent_bound_norm_native_original_fixture")
+    helper = _PARENT_BOUND_NORM_NATIVE_HELPER
+    conditional = helper.parent_bound_norm_helpers.__wrapped__()
+    nomination = conditional.parent_bound_helpers.__wrapped__()
+    inputs = nomination._parent_nomination_materialize(
+        nomination.parent_nomination_helpers.__wrapped__(), Path(directory))
+    companion = nomination._parent_nomination_prepare(inputs)
+    original = {"inputs": inputs, "companion": companion,
+                "companion_sha256": nomination.owner.norm_definition_evidence_sha256(companion)}
+    producer = native._parent_bound_norm_native_preparer()
+    modes = {}
+    for mode in ("instance_only", "body_with_membership"):
+        data = helper._parent_bound_norm_data(conditional, original, mode=mode)
+        modes[mode] = (data, producer.prepare_parent_bound_norm_definition_corpus_v1(**data))
+    return modes
+
+
+def _parent_bound_norm_native_cached(directory):
+    global _PARENT_BOUND_NORM_NATIVE_BASELINE
+    if _PARENT_BOUND_NORM_NATIVE_BASELINE is None:
+        _PARENT_BOUND_NORM_NATIVE_BASELINE = _parent_bound_norm_native_new(directory)
+    return _PARENT_BOUND_NORM_NATIVE_BASELINE
+
+
+@pytest.fixture(scope="module")
+def parent_bound_norm_native_modes(tmp_path_factory):
+    return _parent_bound_norm_native_cached(
+        tmp_path_factory.mktemp("parent-bound-norm-native-originals", numbered=False))
+
+
+def _parent_bound_norm_native_arguments(data, preparation):
+    producer = native._parent_bound_norm_native_preparer()
+    return {"expected_preparation_sha256":
+                producer.parent_bound_norm_definition_preparation_sha256(preparation),
+            "expected_bound_report_sha256": data["expected_bound_report_sha256"],
+            "bound_definition_inputs": data["bound_definition_inputs"],
+            "toolchain": data["toolchain"]}
+
+
+def _parent_bound_norm_native_validate(data, preparation, **overrides):
+    return native.validate_parent_bound_norm_definition_native_v1(
+        preparation, data["bound_report"],
+        **(_parent_bound_norm_native_arguments(data, preparation) | overrides))
+
+
+def _parent_bound_norm_native_build(data, preparation, executable, output, **overrides):
+    return native.build_parent_bound_norm_definition_native_v1(
+        preparation, data["bound_report"],
+        **(_parent_bound_norm_native_arguments(data, preparation) | {
+            "lake_executable": str(executable), "output_directory": output,
+            "timeout_seconds": 12} | overrides))
+
+
+def _parent_bound_norm_native_no_promotion(receipt, *, owned_observation=True):
+    if owned_observation:
+        assert_no_authority(receipt)
+    else:
+        # No complete runner result exists on this exception branch. Retain
+        # only its explicit false authorities; do not invent a lifecycle attestation.
+        for name in FALSE_AUTHORITY:
+            assert receipt[name] is False, name
+    assert receipt["authority"] and all(value is False for value in receipt["authority"].values())
+    assert receipt["selected_interpretation"] is None
+    assert receipt["governing_definition_use"] is None
+    assert receipt["norm_interpretation_ready"] is False
+    for key in ("semantic_mask", "consumer_mask", "training_mask", "evaluation_gold_mask"):
+        assert type(receipt[key]) is int and receipt[key] == 0
+    for key in ("norm_truth_proved", "definition_applied_to_norm", "membership_assumption_verified",
+                "governing_definition_use_verified"):
+        assert receipt[key] is False
+    if owned_observation:
+        # The generic completed-run engine supplies this field; its unresolved
+        # cleanup refusal has no complete process observation and omits it.
+        assert receipt["source_to_model_equivalence_proved"] is False
+
+
+def _parent_bound_norm_native_readback(output, preparation, data, *, executed_source_overrides=None):
+    actual_overrides = {} if executed_source_overrides is None else dict(executed_source_overrides)
+    assert set(actual_overrides) <= dict(preparation.files).keys()
+    for name, text in preparation.files:
+        frozen = text.encode("utf-8")
+        assert (output / "project" / name).read_bytes() == frozen
+        # Failed observations retain the bytes actually returned by the runner;
+        # they must never be overwritten with the expected source to look valid.
+        expected_actual = actual_overrides.get(name, frozen)
+        assert (output / "executed-inputs" / name).read_bytes() == expected_actual
+    assert (output / "project/corpus-manifest.json").read_bytes() == preparation.manifest_json.encode("utf-8")
+    input_name = "bound-norm-input-bindings.json"
+    stored = json.loads((output / "project" / input_name).read_bytes())
+    assert canonical(stored["parent_bound_definition_report"]) == canonical(data["bound_report"])
+    if input_name not in actual_overrides:
+        assert (output / "executed-inputs" / input_name).read_bytes() == (output / "project" / input_name).read_bytes()
+
+
+@pytest.fixture
+def instrumented_parent_bound_norm_replay(monkeypatch):
+    """Replace only the peer validator after real shared preparation exists.
+
+    These returns deliberately provide NO original replay qualification. Fresh
+    raw-storage copies expose actual-return/final-storage custody independently
+    of the expensive genuine upstream validation exercised by separate tests.
+    """
+    producer = native._parent_bound_norm_native_preparer()
+    calls = []
+
+    def copied(offered, bound_report, **kwargs):
+        returned = replace(offered)
+        calls.append({"preparation": returned, "bound_report": bound_report, "kwargs": kwargs})
+        return returned
+
+    monkeypatch.setattr(producer, "validate_parent_bound_norm_definition_corpus_v1", copied)
+    return calls
+
+
+def test_parent_bound_norm_native_explicit_reader_preserves_existing_storage_defaults():
+    files = tuple(("Shape" + str(i) + ".lean", "-- storage shape only\n") for i in range(9))
+    shape = preparer.DefinitionUseCorpusPreparation("{}", files)
+    assert len(native._preparation_document(shape)["files"]) == 9
+    assert native.preparation_sha256(shape) == sha(canonical(native._preparation_document(shape)))
+    seven = replace(shape, files=files[:7])
+    assert len(native._parent_norm_native_document(seven)["files"]) == 7
+    with pytest.raises(ValueError):
+        native._preparation_document(seven)
+    assert native.MAX_FILES == 9 and native.MAX_MODULES == 6
+    defaults = native._parent_norm_native_persisted.__kwdefaults__
+    assert defaults == {"maximum_files": 7, "maximum_modules": 4}
+    assert all(type(value) is int for value in defaults.values())
+
+
+def test_parent_bound_norm_native_receipt_commitment_has_separate_profile_and_mask_types():
+    value = {"schema": native.PARENT_BOUND_NORM_BUILD_SCHEMA,
+             "profile": native.PARENT_BOUND_NORM_NATIVE_PROFILE, "training_mask": 0}
+    assert native.parent_bound_norm_definition_compilation_receipt_sha256(value) == sha(canonical(value))
+    changed = value | {"training_mask": False}
+    assert native.parent_bound_norm_definition_compilation_receipt_sha256(changed) != \
+        native.parent_bound_norm_definition_compilation_receipt_sha256(value)
+    with pytest.raises(ValueError):
+        native.parent_bound_norm_definition_compilation_receipt_sha256(
+            value | {"profile": native.BOUND_NORM_PROFILE})
+
+
+@pytest.mark.parametrize("damage", ["preparation", "report", "request", "companion", "profile", "mask-type"])
+def test_parent_bound_norm_native_independent_preflight_refuses_before_operation_owners(
+        parent_bound_norm_native_modes, monkeypatch, damage):
+    original, baseline = parent_bound_norm_native_modes["body_with_membership"]
+    data, preparation = deepcopy(original), replace(baseline)
+    kwargs = _parent_bound_norm_native_arguments(data, preparation)
+    if damage == "preparation": kwargs["expected_preparation_sha256"] = "0" * 64
+    elif damage == "report": kwargs["expected_bound_report_sha256"] = "0" * 64
+    elif damage in ("request", "companion"):
+        kwargs["bound_definition_inputs"]["expected_" + damage + "_sha256"] = "0" * 64
+    elif damage == "mask-type":
+        data["bound_report"]["training_mask"] = False
+        kwargs["expected_bound_report_sha256"] = sha(canonical(data["bound_report"]))
+    else:
+        manifest = preparation.to_dict()
+        manifest["profile"] = preparer.BOUND_NORM_PROFILE
+        preparation = reseal_manifest(preparation, manifest)
+        kwargs["expected_preparation_sha256"] = sha(canonical({
+            "manifest": preparation.to_dict(), "files": [list(row) for row in preparation.files]}))
+    def forbidden(*args, **kwargs):
+        raise AssertionError("invalid parent-bound native inputs reached operation owners")
+    monkeypatch.setattr(native, "_owners", forbidden)
+    monkeypatch.setattr(native, "_parent_bound_norm_native_preparer", forbidden)
+    with pytest.raises(ValueError):
+        native.validate_parent_bound_norm_definition_native_v1(
+            preparation, data["bound_report"], **kwargs)
+
+
+@pytest.mark.parametrize("damage", ["boolean-timeout", "above60", "input-budget"])
+def test_parent_bound_norm_native_execution_bounds_refuse_without_tools_or_export(
+        parent_bound_norm_native_modes, monkeypatch, tmp_path, damage):
+    data, preparation = parent_bound_norm_native_modes["body_with_membership"]
+    kwargs = _parent_bound_norm_native_arguments(data, preparation) | {
+        "lake_executable": str(tmp_path / "unused-lake"),
+        "output_directory": tmp_path / "not-created", "timeout_seconds": 12}
+    if damage == "input-budget": monkeypatch.setattr(native, "MAX_INPUT_BYTES", 1)
+    else: kwargs["timeout_seconds"] = True if damage == "boolean-timeout" else 61
+    def forbidden(*args, **kwargs):
+        raise AssertionError("invalid parent-bound native budget reached operation owners")
+    monkeypatch.setattr(native, "_owners", forbidden)
+    monkeypatch.setattr(native, "_parent_bound_norm_native_preparer", forbidden)
+    with pytest.raises(ValueError):
+        native.build_parent_bound_norm_definition_native_v1(
+            preparation, data["bound_report"], **kwargs)
+    assert not kwargs["output_directory"].exists()
+
+
+@pytest.mark.parametrize("mode", ["instance_only", "body_with_membership"], ids=["instance", "membership"])
+def test_parent_bound_norm_native_genuine_public_validation_replays_both_modes_without_tools(
+        parent_bound_norm_native_modes, monkeypatch, mode):
+    data, preparation = parent_bound_norm_native_modes[mode]
+    producer = native._parent_bound_norm_native_preparer()
+    before = deepcopy(data)
+    legacy_caches = (native._OPERATION_PINS, native._BOUND_NORM_OPERATION_PINS, native._PARENT_NORM_OPERATION_PINS)
+    genuine = producer.validate_parent_bound_norm_definition_corpus_v1
+    observed = []
+    def validated(*args, **kwargs):
+        result = genuine(*args, **kwargs)
+        observed.append(result)
+        return result
+    def forbidden(*args, **kwargs):
+        raise AssertionError("pure parent-bound native validation executed a tool")
+    monkeypatch.setattr(producer, "validate_parent_bound_norm_definition_corpus_v1", validated)
+    monkeypatch.setattr(native, "_installed_toolchain", forbidden)
+    monkeypatch.setattr(process.BoundedToolRunner, "run", forbidden)
+    assert _parent_bound_norm_native_validate(data, preparation) == preparation
+    assert len(observed) == 1 and observed[0] == preparation and data == before
+    assert all(now is old for now, old in zip(
+        (native._OPERATION_PINS, native._BOUND_NORM_OPERATION_PINS, native._PARENT_NORM_OPERATION_PINS),
+        legacy_caches, strict=True))
+    manifest = preparation.to_dict()
+    assert len(preparation.files) == 9 and len(manifest["expected_modules"]) == 6
+    assert len(manifest["conditional_theorems"]) == (2 if mode == "instance_only" else 3)
+    assert manifest["original_norm"]["source_binding"] is None
+    assert manifest["original_norm"]["source_bound"] is False
+    assert manifest["original_norm"]["unchanged"] is True
+    assert manifest["parent_bound_definition_report_ref"]["report_sha256"] == data["expected_bound_report_sha256"]
+    assert all(value is False for value in manifest["authority"].values())
+    for key in ("semantic_mask", "consumer_mask", "training_mask", "evaluation_gold_mask"):
+        assert type(manifest[key]) is int and manifest[key] == 0
+    report = data["bound_report"]
+    assert report["backend_executed"] is False and report["lean_compilation_verified"] is False
+    assert all(row["kernel_checked"] is False for row in report["conditional_theorem_statements"])
+    assert manifest["conditional_theorem_statements"] == report["conditional_theorem_statements"]
+    assert manifest["execution_handoff"]["processes_executed"] == 0
+
+
+@pytest.mark.parametrize("mode", ["instance_only", "body_with_membership"], ids=["instance", "membership"])
+def test_parent_bound_norm_native_instrumented_handoff_preserves_complete_project_and_pending_meaning(
+        parent_bound_norm_native_modes, instrumented_parent_bound_norm_replay,
+        synthetic_compiler, tmp_path, mode):
+    data, preparation = parent_bound_norm_native_modes[mode]
+    before = deepcopy(data)
+    executable, calls = synthetic_compiler(preparation)
+    output = tmp_path / "parent-bound-synthetic"
+    receipt = _parent_bound_norm_native_build(data, preparation, executable, output)
+    manifest = preparation.to_dict()
+    assert len(calls) == 1 and len(instrumented_parent_bound_norm_replay) == 2
+    assert receipt["schema"] == native.PARENT_BOUND_NORM_BUILD_SCHEMA
+    assert receipt["profile"] == native.PARENT_BOUND_NORM_NATIVE_PROFILE
+    assert receipt["build_passed"] is True and receipt["conditional_proofs_verified"] is True
+    assert receipt["bound_definition_report_sha256"] == data["expected_bound_report_sha256"]
+    assert receipt["bound_definition_mode"] == mode
+    retained_fields = ("original_norm", "occurrence_binding", "selected_link", "definition_alternative_refs",
+        "nomination_inventory", "review_intake_binding", "conditional_source_binding",
+        "original_parent_context_bindings", "parent_bound_definition_report_ref", "conditional_theorem_statements")
+    assert receipt["retained_manifest_field_sha256"] == {name: sha(canonical(manifest[name]))
+                                                        for name in retained_fields}
+    assert receipt["parent_bound_definition_report_ref"] == manifest["parent_bound_definition_report_ref"]
+    assert receipt["definition_alternative_refs_count"] == len(manifest["definition_alternative_refs"])
+    assert receipt["nomination_inventory_count"] == len(manifest["nomination_inventory"])
+    assert receipt["expected_modules"] == receipt["compiled_modules"] == manifest["expected_modules"]
+    assert len(receipt["artifact_sha256"]) == 6 and len(receipt["executed_project_sha256"]) == 9
+    assert receipt["theorem_axiom_dependencies"] == {name: [] for name in manifest["conditional_theorems"]}
+    assert receipt["original_preparation_theorem_assumptions"] == manifest["theorem_assumptions"]
+    assert receipt["original_preparation_build_eligible"] is False
+    assert receipt["original_preparation_execution_handoff"] == manifest["execution_handoff"]
+    assert receipt["preservation_kind"] == "definitional_alias_identity_only"
+    _parent_bound_norm_native_no_promotion(receipt)
+    _parent_bound_norm_native_readback(output, preparation, data)
+    assert json.loads((output / "build-receipt.json").read_bytes()) == receipt
+    assert native.parent_bound_norm_definition_compilation_receipt_sha256(receipt) == sha(canonical(receipt))
+    assert data == before
+
+
+@pytest.mark.parametrize("damage", ["missing-module", "changed-source", "missing-axiom"])
+def test_parent_bound_norm_native_instrumented_outputs_cannot_replace_full_project_observations(
+        parent_bound_norm_native_modes, instrumented_parent_bound_norm_replay,
+        synthetic_compiler, tmp_path, damage):
+    data, preparation = parent_bound_norm_native_modes["body_with_membership"]
+    options, actual_source_edits = {}, {}
+    if damage == "missing-module":
+        options["output_edit"] = lambda outputs, artifacts, sources: outputs.pop(artifacts[-1])
+    elif damage == "changed-source":
+        def changed(outputs, artifacts, sources):
+            actual_source_edits[sources[0]] = b"changed source"
+            outputs[sources[0]] = actual_source_edits[sources[0]]
+        options["output_edit"] = changed
+    else: options["stdout"] = ""
+    executable, calls = synthetic_compiler(preparation, **options)
+    output = tmp_path / "parent-bound-incomplete"
+    receipt = _parent_bound_norm_native_build(data, preparation, executable, output)
+    assert len(calls) == 1 and len(instrumented_parent_bound_norm_replay) == 2
+    assert receipt["build_passed"] is False and receipt["lean_compilation_verified"] is False
+    assert receipt["conditional_proofs_verified"] is False
+    _parent_bound_norm_native_no_promotion(receipt)
+    _parent_bound_norm_native_readback(output, preparation, data,
+                                      executed_source_overrides=actual_source_edits)
+    for name, actual in actual_source_edits.items():
+        assert receipt["executed_project_sha256"][name] == sha(actual)
+    if damage == "changed-source":
+        assert actual_source_edits and receipt["executed_project_readback_passed"] is False
+
+
+@pytest.mark.parametrize("damage", ["caller", "detached", "binary"])
+def test_parent_bound_norm_native_instrumented_postrunner_drift_retains_unqualified_observation(
+        parent_bound_norm_native_modes, instrumented_parent_bound_norm_replay,
+        synthetic_compiler, tmp_path, damage):
+    original, baseline = parent_bound_norm_native_modes["body_with_membership"]
+    data, preparation = deepcopy(original), replace(baseline)
+    executable = None
+    def changed():
+        if damage == "caller": data["bound_report"]["training_mask"] = False
+        elif damage == "detached":
+            instrumented_parent_bound_norm_replay[0]["bound_report"]["training_mask"] = False
+        else: executable.write_bytes(executable.read_bytes() + b" changed binary")
+    executable, calls = synthetic_compiler(preparation, after=changed)
+    output = tmp_path / "parent-bound-postrunner-refusal"
+    with pytest.raises(ValueError):
+        _parent_bound_norm_native_build(data, preparation, executable, output)
+    assert len(calls) == 1
+    saved = json.loads((output / "build-receipt.json").read_bytes())
+    assert saved["build_passed"] is False and saved["post_run_validation_passed"] is False
+    _parent_bound_norm_native_no_promotion(saved)
+    _parent_bound_norm_native_readback(output, preparation, original)
+
+
+@pytest.mark.parametrize("return_index", [0, 1], ids=["opening", "closing"])
+def test_parent_bound_norm_native_instrumented_actual_preparer_returns_keep_raw_storage(
+        parent_bound_norm_native_modes, instrumented_parent_bound_norm_replay,
+        synthetic_compiler, tmp_path, monkeypatch, return_index):
+    data, preparation = parent_bound_norm_native_modes["body_with_membership"]
+    executable, calls = synthetic_compiler(preparation)
+    serialized = native._parent_norm_native_serialized_fence
+    observed = []
+    def changed(receipt, expected_wire):
+        result = serialized(receipt, expected_wire)
+        if receipt.get("schema") == native.PARENT_BOUND_NORM_BUILD_SCHEMA and not observed:
+            assert len(instrumented_parent_bound_norm_replay) == 2
+            observed.append("native final serialization completed")
+            target = instrumented_parent_bound_norm_replay[return_index]["preparation"]
+            object.__setattr__(target, "manifest_json", target.manifest_json + " ")
+        return result
+    monkeypatch.setattr(native, "_parent_norm_native_serialized_fence", changed)
+    output = tmp_path / "parent-bound-held-return-refusal"
+    with pytest.raises(ValueError):
+        _parent_bound_norm_native_build(data, preparation, executable, output)
+    assert len(calls) == 1 and len(instrumented_parent_bound_norm_replay) == 2
+    assert observed == ["native final serialization completed"]
+    _parent_bound_norm_native_readback(output, preparation, data)
+
+
+def test_parent_bound_norm_native_instrumented_actual_runner_return_is_held_through_final_encoding(
+        parent_bound_norm_native_modes, instrumented_parent_bound_norm_replay,
+        synthetic_compiler, tmp_path, monkeypatch):
+    data, preparation = parent_bound_norm_native_modes["body_with_membership"]
+    executable, calls = synthetic_compiler(preparation)
+    actual = []
+    run = process.BoundedToolRunner.run
+    def retained(self, request, **kwargs):
+        result = run(self, request, **kwargs)
+        actual.append(result)
+        return result
+    monkeypatch.setattr(process.BoundedToolRunner, "run", retained)
+    serialized = native._parent_norm_native_serialized_fence
+    changed = []
+    def mutate(receipt, expected_wire):
+        result = serialized(receipt, expected_wire)
+        if receipt.get("schema") == native.PARENT_BOUND_NORM_BUILD_SCHEMA and not changed:
+            changed.append("final serialized receipt checked")
+            object.__setattr__(actual[0], "stdout", actual[0].stdout + " changed actual runner return")
+        return result
+    monkeypatch.setattr(native, "_parent_norm_native_serialized_fence", mutate)
+    with pytest.raises(ValueError):
+        _parent_bound_norm_native_build(data, preparation, executable, tmp_path / "parent-bound-held-runner")
+    assert len(calls) == len(actual) == 1 and changed == ["final serialized receipt checked"]
+
+
+@pytest.mark.parametrize("damage", ["persisted-file", "receipt"])
+def test_parent_bound_norm_native_instrumented_late_persistence_drift_refuses_without_rollback(
+        parent_bound_norm_native_modes, instrumented_parent_bound_norm_replay,
+        synthetic_compiler, tmp_path, monkeypatch, damage):
+    data, preparation = parent_bound_norm_native_modes["body_with_membership"]
+    executable, calls = synthetic_compiler(preparation)
+    genuine = native._persist_build
+    observed = []
+    def changed(checked, output, owners, artifacts, executed_sources, logs, receipt, **kwargs):
+        result = genuine(checked, output, owners, artifacts, executed_sources, logs, receipt, **kwargs)
+        observed.append("original persistence completed")
+        if damage == "persisted-file":
+            path = output / "executed-inputs/lean-toolchain"
+            path.write_bytes(path.read_bytes() + b" changed retained input")
+        else: receipt["preservation_kind"] = "unsupported norm truth promotion"
+        return result
+    monkeypatch.setattr(native, "_persist_build", changed)
+    output = tmp_path / "parent-bound-late-persistence"
+    with pytest.raises(ValueError):
+        _parent_bound_norm_native_build(data, preparation, executable, output)
+    assert len(calls) == 1 and observed == ["original persistence completed"]
+    saved = json.loads((output / "build-receipt.json").read_bytes())
+    assert saved["preservation_kind"] == "definitional_alias_identity_only"
+    _parent_bound_norm_native_no_promotion(saved)
+
+
+def test_parent_bound_norm_native_instrumented_late_policy_drift_distinguishes_false_from_zero(
+        parent_bound_norm_native_modes, instrumented_parent_bound_norm_replay,
+        synthetic_compiler, tmp_path, monkeypatch):
+    data, preparation = parent_bound_norm_native_modes["body_with_membership"]
+    producer = native._parent_bound_norm_native_preparer()
+    executable, calls = synthetic_compiler(preparation)
+    serialized = native._parent_norm_native_serialized_fence
+    changed = []
+    assert producer.PARENT_BOUND_NORM_FALSE_FLAGS["source_bound"] is False
+    def mutate(receipt, expected_wire):
+        result = serialized(receipt, expected_wire)
+        if receipt.get("schema") == native.PARENT_BOUND_NORM_BUILD_SCHEMA and not changed:
+            changed.append("final serialized receipt checked")
+            monkeypatch.setitem(producer.PARENT_BOUND_NORM_FALSE_FLAGS, "source_bound", 0)
+        return result
+    monkeypatch.setattr(native, "_parent_norm_native_serialized_fence", mutate)
+    with pytest.raises(ValueError):
+        _parent_bound_norm_native_build(data, preparation, executable, tmp_path / "parent-bound-policy-drift")
+    assert len(calls) == 1 and changed == ["final serialized receipt checked"]
+
+
+def test_parent_bound_norm_native_instrumented_changed_persistence_callback_is_never_called(
+        parent_bound_norm_native_modes, instrumented_parent_bound_norm_replay,
+        synthetic_compiler, tmp_path, monkeypatch):
+    data, preparation = parent_bound_norm_native_modes["body_with_membership"]
+    unexpected = []
+    def forbidden(*args, **kwargs):
+        unexpected.append("changed persistence callback called")
+        raise AssertionError("changed persistence callback must not execute")
+    executable, calls = synthetic_compiler(preparation,
+        after=lambda: monkeypatch.setattr(native, "_persist_build", forbidden))
+    with pytest.raises(ValueError):
+        _parent_bound_norm_native_build(data, preparation, executable, tmp_path / "parent-bound-callback-drift")
+    assert len(calls) == 1 and unexpected == []
+
+
+def test_parent_bound_norm_native_instrumented_cleanup_error_keeps_original_owner_handle(
+        parent_bound_norm_native_modes, instrumented_parent_bound_norm_replay,
+        synthetic_compiler, tmp_path, monkeypatch):
+    data, preparation = parent_bound_norm_native_modes["body_with_membership"]
+    executable, _ = synthetic_compiler(preparation)
+    handle = object()
+    original = process.OwnedToolCleanupError(handle, "authored unresolved parent-bound native cleanup")
+    def fail(self, request, *, cancellation=None):
+        assert request.owned_process_observation is True
+        raise original
+    monkeypatch.setattr(process.BoundedToolRunner, "run", fail)
+    output = tmp_path / "parent-bound-cleanup-refusal"
+    with pytest.raises(process.OwnedToolCleanupError) as caught:
+        _parent_bound_norm_native_build(data, preparation, executable, output)
+    assert caught.value is original and caught.value.cleanup_handle is handle
+    receipt = json.loads((output / "build-receipt.json").read_bytes())
+    assert receipt["build_passed"] is False and receipt["cleanup_owner_retained_on_exception"] is True
+    assert receipt["cleanup_confirmed"] is False and receipt["artifact_sha256"] == {}
+    _parent_bound_norm_native_no_promotion(receipt, owned_observation=False)
+
+
+@pytest.mark.parametrize("damage", ["caller", "receipt"])
+def test_parent_bound_norm_native_instrumented_last_helper_return_cannot_change_terminal_custody(
+        parent_bound_norm_native_modes, instrumented_parent_bound_norm_replay,
+        synthetic_compiler, tmp_path, monkeypatch, damage):
+    original, baseline = parent_bound_norm_native_modes["body_with_membership"]
+    data, preparation = deepcopy(original), replace(baseline)
+    executable, calls = synthetic_compiler(preparation)
+    genuine = native._parent_norm_native_serialized_fence
+    changed = []
+    def mutate(receipt, expected_wire):
+        result = genuine(receipt, expected_wire)
+        # Target the final native operation stage, not an incidental earlier
+        # helper call count. The wrapper itself is held before entry and first
+        # delegates the exact genuine helper; only its return causes the drift.
+        frame = sys._getframe(1)
+        if (receipt.get("schema") == native.PARENT_BOUND_NORM_BUILD_SCHEMA
+                and frame.f_code.co_name == "terminal"
+                and Path(frame.f_code.co_filename).resolve() == Path(native.__file__).resolve()
+                and not changed):
+            changed.append("final terminal helper returned")
+            if damage == "caller": data["bound_report"]["training_mask"] = False
+            else: receipt["preservation_kind"] = "unsupported norm truth promotion"
+        return result
+    monkeypatch.setattr(native, "_parent_norm_native_serialized_fence", mutate)
+    output = tmp_path / "parent-bound-final-helper-drift"
+    with pytest.raises(ValueError):
+        _parent_bound_norm_native_build(data, preparation, executable, output)
+    assert len(calls) == 1 and len(instrumented_parent_bound_norm_replay) == 2
+    assert changed == ["final terminal helper returned"]
+    saved = json.loads((output / "build-receipt.json").read_bytes())
+    assert saved["preservation_kind"] == "definitional_alias_identity_only"
+    _parent_bound_norm_native_no_promotion(saved)
+
+
+@pytest.fixture(scope="module")
+def parent_bound_norm_native_actual_modes(bound_norm_installed_lake, tmp_path_factory):
+    # Resolve the existing explicit native gate before building any source inputs.
+    executable, binary_pins = bound_norm_installed_lake
+    modes = _parent_bound_norm_native_cached(
+        tmp_path_factory.mktemp("parent-bound-norm-actual-originals", numbered=False))
+    return executable, binary_pins, modes
+
+
+@pytest.mark.parametrize("mode", ["instance_only", "body_with_membership"], ids=["instance", "membership"])
+def test_parent_bound_norm_native_installed_lean_builds_each_explicit_mode_with_genuine_replay(
+        parent_bound_norm_native_actual_modes, tmp_path, mode):
+    executable, binary_pins, modes = parent_bound_norm_native_actual_modes
+    data, preparation = modes[mode]
+    before = deepcopy(data)
+    output = tmp_path / ("native-" + mode)
+    # Every call keeps the genuine installed-toolchain probes and peer validator;
+    # no validator, producer cache, runner, compiler output or source is replaced.
+    receipt = native.build_parent_bound_norm_definition_native_v1(
+        preparation, data["bound_report"], **_parent_bound_norm_native_arguments(data, preparation),
+        lake_executable=str(executable), output_directory=output, timeout_seconds=60)
+    manifest = preparation.to_dict()
+    assert receipt["schema"] == native.PARENT_BOUND_NORM_BUILD_SCHEMA
+    assert receipt["profile"] == native.PARENT_BOUND_NORM_NATIVE_PROFILE
+    assert receipt["build_passed"] is True and receipt["lean_compilation_verified"] is True
+    assert receipt["kernel_proofs_checked"] is True and receipt["conditional_proofs_verified"] is True
+    assert receipt["native_runtime_verified"] is True and receipt["cleanup_confirmed"] is True
+    assert receipt["binary_sha256"] == binary_pins
+    assert receipt["expected_modules"] == receipt["compiled_modules"] == manifest["expected_modules"]
+    assert len(receipt["compiled_modules"]) == len(receipt["artifact_sha256"]) == 6
+    assert len(receipt["executed_project_sha256"]) == 9
+    assert len(receipt["conditional_theorems"]) == (2 if mode == "instance_only" else 3)
+    assert receipt["theorem_axiom_dependencies"] == {name: [] for name in manifest["conditional_theorems"]}
+    assert receipt["bound_definition_report_sha256"] == data["expected_bound_report_sha256"]
+    assert receipt["bound_definition_mode"] == mode
+    assert receipt["original_preparation_build_eligible"] is False
+    assert receipt["preservation_kind"] == "definitional_alias_identity_only"
+    _parent_bound_norm_native_no_promotion(receipt)
+    _parent_bound_norm_native_readback(output, preparation, data)
+    for name, path in receipt["artifact_files"].items():
+        raw = (output / path).read_bytes()
+        assert raw and sha(raw) == receipt["artifact_sha256"][name]
+    assert json.loads((output / "build-receipt.json").read_bytes()) == receipt
+    assert data == before

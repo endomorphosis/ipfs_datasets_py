@@ -583,6 +583,12 @@ zero processes, `not_run` compilation and `pending` proof status. Existing
 legacy bound-norm and parent-norm native/packet profiles retain their own exact
 schemas and qualifications; their receipts do not qualify this successor.
 
+The existing native owner now supplies a separate [explicit parent-bound
+execution API](legal_corpus_definition_use_native_v2.md#parent-bound-definition-native-contract).
+This leaves this pure preparer, its static unregistered handoff and false
+`build_eligible` flag unchanged. Its original R-source native receipts and the
+separate current-public pure compatibility check retain their own generations.
+
 The relational `source_binding` remains null and `source_bound` false.
 Governing use and selected interpretation stay null, all authority remains
 false, and semantic, consumer, training and evaluation-gold masks remain integer

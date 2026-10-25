@@ -695,3 +695,130 @@ statutory truth, semantic graph or Lean corpus admission, learned reconstruction
 and convergence remain separate. Training and evaluation-gold masks stay zero.
 
 The positive receipt retains `installed_toolchain_verified=false`, `native_build_profile_registered=false`, `build_eligible=false` and `toolchain_probed=false`. It separately records two successful actual version probes and `binaries_unchanged=true`; successful engineering observations introduce no global registration or default adoption.
+
+## Parent bound definition: native contract
+
+The extension of this existing native owner consumes the explicit
+[companion parent-bound preparation](legal_corpus_definition_use_lake_v2.md#parent-literal-norm-with-a-conditional-bound-definition).
+Its receipt schema is
+`legal-corpus-parent-bound-norm-definition-native-build/v1`; its profile is
+`replayed-parent-bound-norm-definition-conditional-native-build/v1`.
+The existing official-V2, literal-parent, shared-parent, bound-norm and direct
+parent-norm routes retain their original profiles, defaults and evidence.
+
+```python
+validate_parent_bound_norm_definition_native_v1(
+    preparation, bound_report, *, expected_preparation_sha256,
+    expected_bound_report_sha256, bound_definition_inputs, toolchain)
+
+build_parent_bound_norm_definition_native_v1(
+    preparation, bound_report, *, expected_preparation_sha256,
+    expected_bound_report_sha256, bound_definition_inputs, toolchain,
+    lake_executable, output_directory, timeout_seconds=60,
+    cancellation=None)
+
+parent_bound_norm_definition_compilation_receipt_sha256(receipt)
+```
+
+Use independent complete preparation and bound-report hashes and the same closed
+five-field original `bound_definition_inputs` required by the companion preparer.
+A build also requires an explicitly installed Lake ELF executable with its
+sibling Lean binary, a fresh output directory and a finite compiler timeout in
+`(0, 60]`. The receipt hash helper commits the separate receipt profile and
+exact mask types; it does not admit the preparation or its legal content.
+
+Pure validation executes no tool. A build uses the existing installed-toolchain,
+bounded process and exclusive persistence owners for an offline
+`lake --offline --no-cache build legal`. Each build performs two ordinary bounded
+version probes and one owned Lake build. The version probes have no per-probe
+owned lifecycle receipt; their bounded observations and the owned build lifecycle
+remain different claims. The existing explicit
+`IPFS_DATASETS_BOUND_NORM_NATIVE_LAKE` test gate does not itself authorize or run a
+native campaign.
+
+The new route keeps all nine source/input files, six expected modules and both
+mode-dependent theorem populations: two for `instance_only`, three for
+`body_with_membership`. The norm remains unchanged; `hDefinition` and any
+`hMembership` remain unverified premises. Original preparation
+`build_eligible=false`, no-build handoff, null governing interpretation, false
+semantic authority and all four exact integer-zero masks remain unchanged.
+Only a separate actual native receipt can describe compiler and conditional
+kernel observations; it cannot establish norm truth, statutory meaning, governing
+applicability, source-to-model equivalence or convergence.
+
+Independent pins and bounded shape checks precede operation-owner discovery.
+Public validation calls the genuine companion validator once; a build calls it
+at opening and after the real runner returns. Each companion validation already
+opens and closes original parent-bound replay. Final custody adds no extra
+semantic replay. Original/detached inputs, actual delegate and runner returns,
+physical files, callbacks, policy types, compiler binaries, persisted readbacks
+and final receipt bytes remain fenced through the final direct encoding.
+These full replays are substantial work; producer-pin caches are not validated
+fixture or proof caches.
+
+Successful persistence retains `project/`, `executed-inputs/`, `compiled/`,
+`stdout.txt`, `stderr.txt`, `runner-error.txt` and `build-receipt.json`. Receipts
+commit the full original preparation and report, selected mode, thin retained
+manifest-field hashes, alternative/inventory counts, exact source and artifact
+hashes, assumptions, theorem axiom observations and the owned build lifecycle.
+They do not duplicate the whole report, norm and contexts. Failed observations
+retain actual returned bytes when the unchanged persistence path permits it;
+refusal supplies no rollback or successful current-source receipt. An unresolved
+owned cleanup exception retains its original owner handle and false observation.
+
+The retained R-source [integration qualification](../../../../../docs/autoformalization/evidence/legal-ir-parent-bound-norm-definition-native-integration-20261025.json) keeps two cohorts separate.
+The original R-source pure cohort passed 32 selected cases / 96 phases from 16 selectors, including
+two genuine public validation modes, bounded early refusals, explicitly
+instrumented compiler/late-custody controls and one existing storage/default
+regression. Its synthetic compiler results supply no native theorem evidence.
+All selected cases use one owning-test module and shared original fixture,
+avoiding interleaved module reentry.
+
+The separate original R-source actual-native cohort passed two cases / six phases, one for each mode,
+against the exact same 197-source generation. It uses genuine original validators,
+pinned Lean4.34.1 and the compiler, with no validator substitution or version-cache
+injection. Six observed commands comprise four ordinary bounded version probes
+and two owned build lifecycles. Each project retained six nonempty compiled
+modules and nine exact executed inputs. Instance/membership modes respectively
+reported two/three theorem observations with empty axiom dependencies, including
+the unchanged norm's definitional alias identity. This cohort adds no new native
+bad-proof test; historical standalone rejection and synthetic refusal controls
+keep their own scopes.
+
+The result retains 167 actual compiled/executed Python source buffers, ten
+observed namespace containers from fourteen declarations, and the declared
+initializer bypasses. Whole-package startup, unselected tests, worker initial
+loader compilation and third-party/stdlib cached bytecode remain outside this
+qualification. Earlier failed peer-fixture, standalone retained-source and direct
+parent-norm observations are preserved without pooling. Canonical producer/path
+changes still require fresh original-input preparation; frozen outputs cannot be
+relabelled as canonical current outputs.
+
+At the retained native run’s cutoff, the subsequent compatibility boundary
+used the already qualified
+[direct parent-norm packet/index route](legal_corpus_definition_use_preservation_index_v2.md#opt-in-direct-parent-norm-preservation-index)
+for its existing 23-file observations and stated source-generation limits. It
+does not cover this parent-bound project’s 29 retained files. This source publication supplies no new packet/index API or proof-cache
+admission; any later compatibility work retains its own evidence. Legal review, graph/corpus admission, numerical fitting and
+model convergence retain their independent gates.
+
+### Public dependency compatibility
+
+The source/test bodies published here are the existing qualified native
+extension (`6e6dd821…` / `02acd69d…`), adopted byte-exact. The original 32/96 pure and 2/6 actual-native cohorts above use their captured
+`current-canonical-R-dependencies-plus-four-reviewed-native-overlays/v1`
+generation. Their installed-source readback does not establish a new public
+native execution: the readiness comparison identified nine dependency-path
+differences beyond the two adopted owner/test files. Moving source or receipts
+does not change those original producer identities.
+
+The separate [retained c59 public pure compatibility observation](../../../../../docs/autoformalization/evidence/legal-ir-parent-bound-norm-native-public-integration-20261025.json) passed four selected cases / twelve phases from four literal selectors against 195 public dependency files plus the two byte-exact retained native owner/test overlays. One genuine public native validation exercised body-with-membership mode; the instance-only genuine validation case was unselected. Both instrumented handoff modes and an independent request-pin refusal passed. The two 29-file captures contain synthetic compiler versions, PIDs, compiled buffers and axiom stdout; they supply no new actual Lean build. Original selected compute, storage and both source READs closed. Twenty-nine other authored new cases, including both actual-native cases, remain outside this public run.
+
+
+The preparer source `014dc6d2…`, old renderer `5c98152d…`, pure manifest
+handoff and `build_eligible=false` remain unchanged. The separate explicit
+native API does not register a global/default build profile or resolve source
+meaning, governing applicability, legal-as-of decisions or learning/gold
+eligibility.
+
+A later [source-only compatibility review](../../../../../docs/autoformalization/evidence/legal-ir-parent-bound-norm-native-public-integration-20261025.json) compared upstream `8b6e7461…` with the completed `c59ce54c…` execution snapshot: 194 of 195 public dependency files were unchanged. The sole change, `legal_semantic_graph.py` (`f929572c…` → `b7d2f994…`), expands the relational depth limit from 24 to 32 while preserving the old accepted-domain algorithm, wire fields and other bounds; the new bytes exactly match the graph source in the original R qualification. This is bounded source/metadata review. No affected saved semantic graph or its depth was observed, and the combined 194-dependency/new-graph/two-overlay generation was not run. The four-case result above remains pinned to c59; no new pure run, actual Lean build or current-generation runtime qualification follows.
