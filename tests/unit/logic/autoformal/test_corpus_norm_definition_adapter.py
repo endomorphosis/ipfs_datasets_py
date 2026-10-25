@@ -386,3 +386,294 @@ def test_graph_and_conditional_corpus_share_original_companion_without_promoting
         assert all(value is False for value in graph_record["authority"].values())
     assert len(set(selected_targets)) == 2
     assert companion == report_before and inputs == inputs_before
+
+
+# The original parent-nomination helper already owns complete physical norm and
+# definition populations. Reuse that route; a report-shaped stub is not enough.
+@pytest.fixture(scope="module")
+def parent_graph_baseline(tmp_path_factory):
+    helper = fixture_helper()
+    definition_helper = helper.fixture(
+        "_parent_graph_definition_fixture", "test_plaintext_definition_review.py")
+    case = helper._parent_nomination_materialize(definition_helper,
+        tmp_path_factory.mktemp("parent-graph-originals", numbered=False))
+    report = helper._parent_nomination_prepare(case)
+    pin = evidence.norm_definition_evidence_sha256(report)
+    record = owner.build_parent_norm_definition_graph_v1(
+        report, expected_report_sha256=pin, **case)
+    return {"inputs": case, "report": report, "record": record,
+        "report_sha256": pin, "helper": helper,
+        "graph_sha256": owner.norm_definition_graph_sha256(record)}
+
+
+def validate_parent_graph(baseline, record=None, **overrides):
+    record = baseline["record"] if record is None else record
+    return owner.validate_parent_norm_definition_graph_v1(record, baseline["report"],
+        expected_graph_sha256=owner.norm_definition_graph_sha256(record),
+        **{"expected_report_sha256": baseline["report_sha256"],
+            **baseline["inputs"], **overrides})
+
+
+def forbid_parent_graph_replay(monkeypatch):
+    def unexpected(*args, **kwargs):
+        pytest.fail("malformed parent graph reached expensive original replay")
+    monkeypatch.setattr(evidence, "validate_parent_norm_definition_evidence_v1", unexpected)
+
+
+def assert_parent_graph_ref(reference, original):
+    assert reference["sha256"] == evidence.norm_definition_evidence_sha256(original)
+    if type(original) is dict and "record_cid" in original:
+        assert reference["record_cid"] == original["record_cid"]
+
+
+def test_parent_graph_genuine_validation_replays_original_companion_without_tools(
+        parent_graph_baseline, monkeypatch):
+    import subprocess
+
+    baseline = parent_graph_baseline
+    original = evidence.validate_parent_norm_definition_evidence_v1
+    observed = []
+
+    def traced(report, *args, **kwargs):
+        observed.append((evidence.norm_definition_evidence_sha256(report),
+            kwargs["expected_report_sha256"]))
+        return original(report, *args, **kwargs)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("parent graph custody attempted a native probe or process")
+
+    before = canonical_dag_json_bytes(baseline["record"])
+    report_before = deepcopy(baseline["report"])
+    inputs_before = deepcopy(baseline["inputs"])
+    monkeypatch.setattr(evidence, "validate_parent_norm_definition_evidence_v1", traced)
+    monkeypatch.setattr(subprocess, "Popen", forbidden)
+    monkeypatch.setattr(subprocess, "run", forbidden)
+    assert validate_parent_graph(baseline) == baseline["record"]
+    assert observed == [(baseline["report_sha256"], baseline["report_sha256"])]
+    assert canonical_dag_json_bytes(baseline["record"]) == before
+    assert baseline["report"] == report_before and baseline["inputs"] == inputs_before
+    assert corpus_graph.validate_graph_snapshot(baseline["record"]["graph"]) == baseline["record"]["graph"]
+
+
+def test_parent_graph_three_exact_uses_and_six_ordered_nominations_remain_distinct(
+        parent_graph_baseline):
+    record, report = parent_graph_baseline["record"], parent_graph_baseline["report"]
+    assert record["schema"] == owner.PARENT_SCHEMA and record["profile"] == owner.PARENT_PROFILE
+    assert record["counts"]["alternatives"] == len(report["definitions"]) == 2
+    assert record["counts"]["typed_uses"] == len(record["use_records"]) == 3
+    assert record["counts"]["nominations"] == len(report["links"]) == 6
+    assert [row["ordinal"] for row in record["definition_records"]] == [0, 1]
+    assert [row["alternative_id"] for row in record["definition_records"]] == [
+        row["alternative_id"] for row in report["definitions"]]
+    uses = {row["record_cid"]: row for row in record["use_records"]}
+    definitions = {row["alternative_id"]: row for row in record["definition_records"]}
+    sources = {row["record_cid"]: row for row in record["source_records"]}
+
+    def source_reference(cid, kind, original):
+        retained = sources[cid]
+        assert retained["reference_kind"] == kind and retained["custody_only"] is True
+        assert_parent_graph_ref(retained["reference"], original)
+        assert retained["reference_sha256"] == evidence.norm_definition_evidence_sha256(original)
+
+    norm = report["norm_preparation"]
+    norm_record = record["norm_record"]
+    assert norm_record["norm_preparation_sha256"] == report["norm_preparation_sha256"]
+    assert_parent_graph_ref(norm_record["preparation_ref"], norm)
+    assert_parent_graph_ref(norm_record["correspondence_ref"], norm["correspondence"])
+    assert norm_record["source_identity"] == norm["source_identity"]
+    for field in ("source_identity", "original_parent_context", "obligations",
+            "context_obligation_ids", "typed_context_inventory", "source_rows"):
+        assert_parent_graph_ref(norm_record[field + "_ref"], norm[field])
+    original_binding = norm["correspondence"]["source_scope"]["parent_source_binding"]
+    assert_parent_graph_ref(norm_record["source_binding_ref"], original_binding)
+    source_reference(norm_record["parent_source_record_cid"], "norm_parent_source_binding", original_binding)
+    source_reference(norm_record["context_record_cid"], "norm_original_parent_context", norm["original_parent_context"])
+    assert len(norm["context_obligation_ids"]) == 6 and norm["external_context_not_supplied"] is True
+    occurrence_count = context_count = 0
+    for offered, endpoint in zip(record["definition_records"], report["definitions"], strict=True):
+        prepared, candidate = endpoint["preparation"], endpoint["candidate"]
+        assert_parent_graph_ref(offered["endpoint_ref"], endpoint)
+        assert_parent_graph_ref(offered["preparation_ref"], prepared)
+        assert_parent_graph_ref(offered["candidate_ref"], candidate)
+        assert offered["preparation_sha256"] == endpoint["preparation_sha256"]
+        assert offered["candidate_pin"] == prepared["candidate_pin"]
+        for field in ("source_version", "source_bindings", "contexts", "expected_context_population", "context_slot_ids"):
+            assert_parent_graph_ref(offered[field + "_ref"], prepared[field])
+        for field in ("term_record", "ast_record", "definition_record", "scope_record"):
+            assert_parent_graph_ref(offered[field + "_ref"], candidate[field])
+        assert offered["definition_term_ref"] == endpoint["definition_term_ref"]
+        assert offered["definition_ast_ref"] == endpoint["definition_ast_ref"]
+        assert offered["original_review_covers_projection"] is False
+        source_reference(offered["parent_source_record_cid"],
+            "definition_parent_source_binding", prepared["parent_source_binding"])
+        for field, refs, cids, kind in (
+                ("source_occurrences", "source_occurrence_refs", "source_occurrence_record_cids", "definition_source_occurrence"),
+                ("contexts", "context_refs", "context_record_cids", "definition_context")):
+            assert len(offered[refs]) == len(offered[cids]) == len(prepared[field])
+            for reference, cid, original in zip(offered[refs], offered[cids], prepared[field], strict=True):
+                assert_parent_graph_ref(reference, original)
+                source_reference(cid, kind, original)
+        occurrence_count += len(prepared["source_occurrences"])
+        context_count += len(prepared["contexts"])
+    assert record["counts"]["definition_source_occurrences"] == occurrence_count
+    assert record["counts"]["definition_contexts"] == context_count
+    variables = [row for row in uses.values() if row["target"]["kind"] == "variable"]
+    assert len(variables) == 2 and variables[0]["typed_node"]["symbol"] == variables[1]["typed_node"]["symbol"]
+    assert variables[0]["target"]["typed_path"] != variables[1]["target"]["typed_path"]
+    assert len({row["record_cid"] for row in uses.values()}) == 3
+    for ordinal, (offered, original) in enumerate(zip(
+            record["nomination_records"], report["links"], strict=True)):
+        use = uses[offered["use_record_cid"]]
+        assert offered["ordinal"] == ordinal
+        assert offered["request_link"] == original["request_link"]
+        assert_parent_graph_ref(offered["link_ref"], original)
+        assert offered["definition_record_cid"] == definitions[
+            original["request_link"]["alternative_id"]]["record_cid"]
+        assert use["target"] == original["request_link"]["target"]
+        for field in ("typed_node", "typed_context", "typed_row", "source_rows"):
+            assert use[field] == original[field]
+        assert use["source_paths"] == original["request_link"]["source_paths"]
+        assert offered["definition_candidate_ref"] == original["definition_candidate_ref"]
+        assert offered["definition_term_ref"] == original["definition_term_ref"]
+        assert offered["definition_ast_ref"] == original["definition_ast_ref"]
+        assert offered["governing_definition_use"] is None
+        assert len(offered["norm_source_record_cids"]) == len(original["source_rows"])
+        for cid, source in zip(offered["norm_source_record_cids"], original["source_rows"], strict=True):
+            source_reference(cid, "norm_source_row", source)
+        assert offered["definition_source_record_cids"] == definitions[
+            original["request_link"]["alternative_id"]]["source_occurrence_record_cids"]
+
+
+def test_parent_graph_closed_custody_edges_and_pending_masks_confer_no_meaning(
+        parent_graph_baseline):
+    record = parent_graph_baseline["record"]
+    graph = record["graph"]
+    assert {row["node_type"] for row in graph["nodes"]} == {"interpretation", "expression"}
+    assert {row["relation"] for row in graph["edges"]} == {"DERIVED_FROM", "CITES", "HAS_SOURCE"}
+    ids = {row["record_cid"] for row in graph["nodes"]}
+    assert all(row["src_cid"] in ids and row["dst_cid"] in ids for row in graph["edges"])
+    assert all(row["source_occurrence_cids"] == [] for row in graph["nodes"])
+    assert record["counts"]["source_references"] == len(record["source_records"])
+    assert all(row["custody_only"] is True for row in record["source_records"])
+    assert record["authority"] == owner.FALSE_FLAGS
+    assert all(value is False for value in record["authority"].values())
+    assert record["view"] == graph["view"] == "candidate"
+    assert record["external_complete_inputs_required"] is True
+    assert record["selected_interpretation"] is record["governing_definition_use"] is None
+    assert graph["admitted"] is graph["formalized"] is graph["source_semantics_verified"] is False
+    for key in ("semantic_mask", "consumer_mask", "training_mask", "evaluation_gold_mask"):
+        assert type(record[key]) is int and record[key] == 0
+
+
+@pytest.mark.parametrize("pin", ["expected_graph_sha256", "expected_report_sha256"])
+def test_parent_graph_independent_pins_refuse_before_original_replay(
+        parent_graph_baseline, monkeypatch, pin):
+    forbid_parent_graph_replay(monkeypatch)
+    baseline = parent_graph_baseline
+    arguments = {"expected_graph_sha256": baseline["graph_sha256"],
+        "expected_report_sha256": baseline["report_sha256"], **baseline["inputs"]}
+    arguments[pin] = "0" * 64
+    with pytest.raises(ValueError):
+        owner.validate_parent_norm_definition_graph_v1(
+            baseline["record"], baseline["report"], **arguments)
+
+
+def test_parent_graph_resealed_reordering_refuses_before_original_replay(
+        parent_graph_baseline, monkeypatch):
+    changed = deepcopy(parent_graph_baseline["record"])
+    changed["nomination_records"].reverse()
+    forbid_parent_graph_replay(monkeypatch)
+    with pytest.raises(ValueError):
+        validate_parent_graph(parent_graph_baseline, reseal(changed))
+
+
+@pytest.mark.parametrize("damage", ["binder_context", "definition_ref", "dropped_edge"])
+def test_parent_graph_resealed_occurrence_and_endpoint_damage_cannot_hide_behind_closed_graph(
+        parent_graph_baseline, monkeypatch, damage):
+    changed = deepcopy(parent_graph_baseline["record"])
+    if damage == "binder_context":
+        use = changed["use_records"][0]
+        use["typed_context"] = {}
+        changed["use_records"][0] = reseal(use)
+    elif damage == "definition_ref":
+        nomination = changed["nomination_records"][0]
+        nomination["definition_ast_ref"]["sha256"] = "0" * 64
+        changed["nomination_records"][0] = reseal(nomination)
+    else:
+        changed["graph"] = corpus_graph.build_graph_snapshot(changed["graph"]["nodes"], [])
+    forbid_parent_graph_replay(monkeypatch)
+    with pytest.raises(ValueError):
+        validate_parent_graph(parent_graph_baseline, reseal(changed))
+
+
+@pytest.mark.parametrize("damage", ["governing", "semantic_mask"])
+def test_parent_graph_resealed_projection_cannot_promote_pending_authority_or_boolean_masks(
+        parent_graph_baseline, monkeypatch, damage):
+    changed = deepcopy(parent_graph_baseline["record"])
+    if damage == "governing":
+        changed["governing_definition_use"] = changed["definition_records"][0]["record_cid"]
+    else:
+        changed[damage] = False
+    forbid_parent_graph_replay(monkeypatch)
+    with pytest.raises(ValueError):
+        validate_parent_graph(parent_graph_baseline, reseal(changed))
+
+
+def test_parent_graph_changed_request_pin_refuses_before_operation_owner_loading(
+        parent_graph_baseline, monkeypatch):
+    arguments = deepcopy(parent_graph_baseline["inputs"])
+    arguments["expected_request_sha256"] = "0" * 64
+
+    def unexpected():
+        pytest.fail("malformed original parent input loaded operation owners")
+
+    monkeypatch.setattr(evidence, "_parent_definition_owners", unexpected)
+    with pytest.raises(ValueError):
+        owner.build_parent_norm_definition_graph_v1(parent_graph_baseline["report"],
+            expected_report_sha256=parent_graph_baseline["report_sha256"], **arguments)
+
+
+def test_parent_graph_changed_original_physical_bytes_fail_genuine_replay(
+        parent_graph_baseline, tmp_path):
+    helper = parent_graph_baseline["helper"]
+    definition_helper = helper.fixture(
+        "_parent_graph_changed_physical_fixture", "test_plaintext_definition_review.py")
+    # Only the norm needs a private physical generation. Retain the existing
+    # complete definition populations; their files are never modified here.
+    case = helper._parent_nomination_materialize(definition_helper, tmp_path,
+        definitions=parent_graph_baseline["inputs"]["definitions"])
+    report = helper._parent_nomination_prepare(case)
+    original_path = helper._parent_nomination_parent_path(case, "norm")
+    original = original_path.read_bytes()
+    original_path.write_bytes(original + b"\nchanged original physical source\n")
+    with pytest.raises(ValueError):
+        owner.build_parent_norm_definition_graph_v1(report,
+            expected_report_sha256=evidence.norm_definition_evidence_sha256(report), **case)
+    assert original_path.read_bytes() != original
+
+
+def test_parent_graph_exchange_roundtrip_keeps_external_original_report_and_complete_inputs_required(
+        parent_graph_baseline, tmp_path):
+    pytest.importorskip("pyarrow")
+    from ipfs_datasets_py.logic.autoformal.corpus_graph_exchange import load_graph_bundle
+
+    baseline = parent_graph_baseline
+    raw = canonical_dag_json_bytes(baseline["record"])
+    companion = tmp_path / "parent-candidate-companion.json"
+    companion.write_bytes(raw)
+    report_raw = json.dumps(baseline["report"], ensure_ascii=False, sort_keys=True,
+        separators=(",", ":"), allow_nan=False).encode("utf-8")
+    assert sha(report_raw) == baseline["report_sha256"]
+    (tmp_path / "original-parent-evidence.json").write_bytes(report_raw)
+    output = tmp_path / "parent-graph-bundle"
+    manifest = owner.export_parent_norm_definition_graph_v1(
+        baseline["record"], output, baseline["report"],
+        expected_graph_sha256=baseline["graph_sha256"],
+        expected_report_sha256=baseline["report_sha256"], **baseline["inputs"])
+    loaded = load_graph_bundle(output,
+        expected_manifest_sha256=sha(canonical_dag_json_bytes(manifest)))
+    retained = contracts.load_record_bytes(companion.read_bytes(), expected_sha256=sha(raw))
+    assert retained == baseline["record"] and loaded["snapshot"] == retained["graph"]
+    assert manifest["external_references_verified"] is False
+    assert retained["external_complete_inputs_required"] is True
+    assert not (output / "candidate.json").exists()
