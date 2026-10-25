@@ -79,11 +79,16 @@ existing official extraction profile's 8,000,000-byte limit.
 
 The relational profile uses `legal-corpus-proposed-ast-custody/v2`: `ast_json`
 contains canonical JSON for the complete original request, `ast_sha256` commits
-those bytes, and `ast_cid` commits the same logical AST. Storing that canonical
-text avoids an extra envelope nesting level while all existing byte, node and
-request-depth limits still apply. The other profiles retain their original v1
-`ast` field and identical record construction. Canonical AST text does not claim
-to reproduce the original request file's whitespace or key order.
+those bytes, and `ast_cid` commits the same logical AST. Only the `ast` subtree
+of explicitly named `relational_norm_v1` inputs receives the existing graph
+owner's depth-32 and 4,096-node allowance. Non-AST metadata and all other
+profiles retain the common depth-20 policy. The complete input still shares
+the unchanged 25,000-node and 1 MiB budgets; this does not enlarge any common
+candidate-envelope limit. Restoration first regenerates the full candidate
+against independent original inputs, then verifies canonical AST bytes,
+SHA256 and CID before returning a detached AST. The other profiles retain their
+original v1 `ast` field and identical record construction. Canonical AST text
+does not reproduce the original request file's whitespace or key order.
 
 Use `restore_proposed_graph_ast(candidate, **independently_bound_inputs)` to
 recover either representation. It first regenerates the complete candidate from
@@ -489,3 +494,43 @@ The [actual retained observation](../../../../../docs/autoformalization/evidence
 ## Retained section7346 b(2) public product snapshot integration
 
 The [actual public-snapshot integration](../../../../../docs/autoformalization/evidence/legal-ir-source7346-b2-parent-public-integration-20261025.json) reuses the existing b(2) source occurrence and role. Public product snapshot `f8a73cd849cc7202c08b50f469083d40649eb27d` executes at real `source-public-f8-v01/frozen` mirror paths with public mirror producer hashes; original private `970d590e…` native/orchestration custody remains a separate plane. The owned observation records one explicit parent build, one explicit validation and two binder entries. All837 original ordered record bytes/CIDs match, all16 paired rows remain present, and the cache-row companion remains null. Thirteen parent producer pins identify the public mirror, with a newly bound parent-manifest identity. Actual scientific package origins remain inside the public mirror; private-package execution is zero. No current whole-T deployment or private-orchestration product profile is thereby qualified. Earlier private/c results are not repeated or pooled. Existing source/span/cache identities, unclassified roles, six unavailable context requirements and zero masks remain unchanged. This supplies no typed statutory use, governing source/edition/meaning, definition applicability, model training/quality or graph/Lean corpus admission. Future consumers must still replay their original inputs through the existing owners.
+
+## Qualified relational depth and literal-parent corpus transport
+
+The [original focused depth qualification](../../../../../docs/autoformalization/evidence/legal-ir-source7346-corpus-depth-focused-20261025.json) passed
+**16 authored cases across 13 selected test functions** using the exact existing
+adapter and new owning depth test. No temporary-directory adapter was supplied;
+phase events were not counted. The cases cover both unchanged section-7346
+depth-27 requests, depth-32 ingress/restoration and depth-33 refusal, resealed
+custody substitution, common and non-AST metadata depth-20 limits, aggregate
+node/byte budgets, scalar/key rules, detached recovery and unchanged legacy v1
+identity. The authored official-source fixture tests AST transport; it does not
+establish the real statute's source correspondence. This is a selected,
+source-pinned engineering qualification rather than whole-package or ordinary
+installed-package pytest qualification.
+
+The [separate actual parent-corpus qualification](../../../../../docs/autoformalization/evidence/legal-ir-source7346-parent-corpus-20261025.json)
+reuses the complete original 837-record parent tuple, both original graph byte
+populations and all independent proposal inputs. Seven explicit public entries
+include the four required full parent replays. Both original depth-27 ASTs are
+restored without graph rebuilding or request truncation. Each alternative
+retains a 9-node/8-edge opaque custody snapshot; the existing graph/exchange
+owners genuinely wrote and loaded one aggregate with **16 nodes and 15 edges**.
+Retain the full candidates, original proposals/requests, source reports and
+replay inputs separately: the exchange bundle contains graph envelopes.
+
+Four existing lexical mentions remain opaque inside the preserved proposals,
+within the same one physical `(c)` occurrence. There are zero relationship
+assertions and zero independently projected entity, term-sense or definition
+nodes. Source/edition/meaning, governing definitions, every-use applicability
+and a second distinct typed statutory use remain unresolved. No source review,
+semantic admission, model quality, training/gold eligibility or Lean admission
+follows; authority stays false and masks stay zero. The earlier wire-corpus
+90/270 and current-public 3/9 qualifications retain their exact historical
+source generations and were not rerun or pooled here. This publication performs
+no new product tests, model, training or native Lean execution.
+
+Fresh public-generation source/proposal originals and producer pins are
+required for a future replay. The retained private-run records are original
+observations, not replacement public inputs; no source identity, path or hash
+is aliased, relabelled or resealed to make an old preparation current.
