@@ -1,0 +1,88 @@
+{
+  "authority": false,
+  "cases": 13,
+  "completed": true,
+  "errors": 0,
+  "evaluation_gold_mask": 0,
+  "failed_generations_qualification_credit": 0,
+  "failures": 0,
+  "graph_source": {
+    "bytes": 35170,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+    "sha256": "b7d2f994b923f6db3bcf535561d4064ef686844d2faea560ad30952a580c511e"
+  },
+  "independent_result_review": {
+    "bytes": 27064,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-graphs-01/independent-depth-tests-result-review-v04.json",
+    "sha256": "dc6233cef2b505e9907f1cb07ce6e436f611decd0da72d88941735152d30b98d"
+  },
+  "launch": {
+    "bytes": 9452,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-graphs-01/launch-depth-tests-depth-04-v04.json",
+    "sha256": "7f6aa2b5e2a2a5e010705d53f6901e5020c19d873cdeae52bdd2a71691029720"
+  },
+  "legacy_cases": 3,
+  "new_cases": 10,
+  "owned_temp_factory_adapter": "semantic-graph-depth-parent:numbered_false/v1",
+  "owning_test": {
+    "bytes": 46406,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_semantic_graph.py",
+    "sha256": "c841ff5b924c1278878bdc595e43a63fea1fe7e1dc0c8255268590d359088e84"
+  },
+  "phase_events_not_counted": true,
+  "preserved_failed_closeouts": [
+    {
+      "bytes": 10467,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-graphs-01/depth-tests-v01-storage-closeout/summary.json",
+      "sha256": "77c91cecb4d0b8635bedfa14e88f478a263eec6021eaae3f7627c38d602616f6"
+    },
+    {
+      "bytes": 10636,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-graphs-01/depth-tests-v02-storage-closeout/summary.json",
+      "sha256": "d139a3629054a877e5da83a6e8e3c2167bc52a9d25f34a4347b2a1a4dc087932"
+    }
+  ],
+  "product_or_resource_API_calls_by_this_metadata_assembly": 0,
+  "qualification_scope": "Exact13 selected owning cases; plain assertions/no conftest/declared owned temporary-directory fixture adapter; no whole-package, legal, model or Lean qualification.",
+  "qualified": true,
+  "recorded_at_utc": "2026-10-25T05:36:40.071416+00:00",
+  "request": {
+    "bytes": 47749,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-graphs-01/request-depth-tests-v04.json",
+    "sha256": "f9a43d04076a617e55d0092f75be9de02dfc6c9705462cc94fe4059d0ac8da68"
+  },
+  "root_genuine_owner_reap": {
+    "bytes": 2072,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-graphs-01/root-depth-tests-success-reap-v04.json",
+    "sha256": "60326243c779e2fc8691476949e3c54e3c2c384469a319eff4a9460aca4c8d83"
+  },
+  "schema": "legal-ir-source7346-relational-graph-depth-focused-qualification/v1",
+  "selectors": 8,
+  "skipped": 0,
+  "source_READ": {
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "cooperative": true,
+    "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+    "mode": "read",
+    "schema_version": "autoencoder-source-lease/v1",
+    "waited_seconds": 3.9569102227687836e-05
+  },
+  "source_READ_closed": true,
+  "source_native_storage_closed": true,
+  "test_results": {
+    "bytes": 2632,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-graphs-01/attempt-depth-tests-v04/exports/test-results.xml",
+    "sha256": "5c14e55760b6522913e8e26b796c0b228c4c8f22ea3f5c951a446118ac1eb012"
+  },
+  "training_mask": 0,
+  "unexecuted_test_fix_write_refusal": {
+    "bytes": 1711,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-graphs-01/test-fix-write-admission-refusal-v01.json",
+    "sha256": "43912358970f3c7f5423cad4dcc017f8483f310f6a017be05077a22a78e21784"
+  },
+  "worker_proof": {
+    "bytes": 3902089,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-parent-graphs-01/attempt-depth-tests-v04/exports/test-worker-proof.json",
+    "sha256": "4f52b069cc646c3923d3a8242d99a9abba13c044f52f0ab8d15c5f39f555fad1"
+  }
+}

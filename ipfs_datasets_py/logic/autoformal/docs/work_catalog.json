@@ -1360,7 +1360,7 @@
         "counted-numerical-source-publication-reuse-20261023-01"
       ],
       "id": "source-representation-profile",
-      "notes": "Separate LegalIR4096 declared expected-producer metadata contract. Original 12 lanes, asset IDs and detached components preserved. Tests use exact private candidates and an inert manager; installed bytes match. No historical source receipt authentication, tensor IO/load, physical-store, runtime, publication, training or legal qualification. Separate retained-asset delivery: three original checkpoints are now public and genuinely registered in the selected retained catalog687\u2192690 through the distinct merged Wv2 importer; see native4096-retained-assets-20261020. The existing canonical importer now exposes both explicit APIs with shared registration logic, qualified by 234 controls including three preserved published-ID metadata cases. Schemas, IDs and path-sensitive versus multiset library identity remain distinct; no automatic conversion or real catalog rewrite occurred. Runtime, producer compatibility and active-supervisor integration remain pending. Separate counted28 spec/transfer-plan APIs retain historical79-case/237-phase metadata qualification, including one private observer. Exact declared shapes and row-mean requests are not actual transfer, runtime/source compatibility, learning, legal meaning or Lean authority. The separate numerical owners retain their own historical cohorts; no new execution is claimed by this publication.",
+      "notes": "Separate LegalIR4096 declared expected-producer metadata contract. Original 12 lanes, asset IDs and detached components preserved. Tests use exact private candidates and an inert manager; installed bytes match. No historical source receipt authentication, tensor IO/load, physical-store, runtime, publication, training or legal qualification. Separate retained-asset delivery: three original checkpoints are now public and genuinely registered in the selected retained catalog687→690 through the distinct merged Wv2 importer; see native4096-retained-assets-20261020. The existing canonical importer now exposes both explicit APIs with shared registration logic, qualified by 234 controls including three preserved published-ID metadata cases. Schemas, IDs and path-sensitive versus multiset library identity remain distinct; no automatic conversion or real catalog rewrite occurred. Runtime, producer compatibility and active-supervisor integration remain pending. Separate counted28 spec/transfer-plan APIs retain historical79-case/237-phase metadata qualification, including one private observer. Exact declared shapes and row-mean requests are not actual transfer, runtime/source compatibility, learning, legal meaning or Lean authority. The separate numerical owners retain their own historical cohorts; no new execution is claimed by this publication.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.ir_decoder_profile_inventory",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
@@ -1381,7 +1381,7 @@
         "source4096-reconciliation-20261020-01"
       ],
       "id": "source-representation-registration",
-      "notes": "Separate LegalIR4096 declared expected-producer metadata contract. Original 12 lanes, asset IDs and detached components preserved. Tests use exact private candidates and an inert manager; installed bytes match. No historical source receipt authentication, tensor IO/load, physical-store, runtime, publication, training or legal qualification. Separate retained-asset delivery: three original checkpoints are now public and genuinely registered in the selected retained catalog687\u2192690 through the distinct merged Wv2 importer; see native4096-retained-assets-20261020. The existing canonical importer now exposes both explicit APIs with shared registration logic, qualified by 234 controls including three preserved published-ID metadata cases. Schemas, IDs and path-sensitive versus multiset library identity remain distinct; no automatic conversion or real catalog rewrite occurred. Runtime, producer compatibility and active-supervisor integration remain pending.",
+      "notes": "Separate LegalIR4096 declared expected-producer metadata contract. Original 12 lanes, asset IDs and detached components preserved. Tests use exact private candidates and an inert manager; installed bytes match. No historical source receipt authentication, tensor IO/load, physical-store, runtime, publication, training or legal qualification. Separate retained-asset delivery: three original checkpoints are now public and genuinely registered in the selected retained catalog687→690 through the distinct merged Wv2 importer; see native4096-retained-assets-20261020. The existing canonical importer now exposes both explicit APIs with shared registration logic, qualified by 234 controls including three preserved published-ID metadata cases. Schemas, IDs and path-sensitive versus multiset library identity remain distinct; no automatic conversion or real catalog rewrite occurred. Runtime, producer compatibility and active-supervisor integration remain pending.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.ir_model_manager_import",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py",
@@ -2162,7 +2162,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_training_v2.md",
       "id": "compact-content-generic-training-v2",
-      "notes": "Existing generic authored384 training: 1\u201316 ordered rows, fixed537 codec/512 total IDs, validated v1 initialization, exact named-Adam resume and bounded calls. This navigation record adds no numerical qualification. The separate one-case four-row engineering resume qualification passed with ten physical updates and five unique update positions; source-space compatibility, reviewed statutory targets/context, model quality and legal/graph/Lean admission remain separate.",
+      "notes": "Existing generic authored384 training: 1–16 ordered rows, fixed537 codec/512 total IDs, validated v1 initialization, exact named-Adam resume and bounded calls. This navigation record adds no numerical qualification. The separate one-case four-row engineering resume qualification passed with ten physical updates and five unique update positions; source-space compatibility, reviewed statutory targets/context, model quality and legal/graph/Lean admission remain separate.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_training_v2",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -2983,6 +2983,61 @@
       "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_parent_bound_norm_lake_v1.py",
       "required": true,
       "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "bind_source_occurrence",
+        "bind_scope",
+        "bind_parent_source_occurrence",
+        "bind_parent_scope",
+        "build_graph",
+        "graph_to_ast",
+        "validate_graph"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "source7346-relational-graph-depth-focused-qualified-20261025-01",
+        "source7346-parent-proposed-graphs-qualified-20261025-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_relational_graph_v1.md",
+      "id": "semantic-graph",
+      "notes": "Indexes the existing graph owner once: relational depth32 only, canonical/normative24, unchanged4096-node/1MiB/wire/schema/identity contracts. Original13-case adapted engineering qualification and actual837-parent depth27 graph observation remain separate. No39-phase/defaultpytest/current-public runtime, selected legal meaning/definition/two-use, model/training/gold, graph-corpus or Lean admission.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.legal_semantic_graph",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+      "profile_maximum_depth": {
+        "canonical_rules_v1": 24,
+        "normative_scope_v1": 24,
+        "relational_norm_v1": 32
+      },
+      "required": true,
+      "retained_focused_qualification": {
+        "cases": 13,
+        "current_public_whole_package_runtime_qualified": false,
+        "evidence_id": "source7346-relational-graph-depth-focused-qualified-20261025-01",
+        "legacy_cases": 3,
+        "new_cases": 10,
+        "new_runtime_qualification": false,
+        "owned_temp_factory_adapter": "semantic-graph-depth-parent:numbered_false/v1",
+        "phase_events_not_counted": true,
+        "selectors": 8
+      },
+      "retained_parent_graph_observation": {
+        "alternatives": 2,
+        "cache_rows": 16,
+        "depth_per_graph": 27,
+        "edges_per_graph": 692,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "source7346-parent-proposed-graphs-qualified-20261025-01",
+        "fresh_current_scope_correspondence_qualified": false,
+        "nodes_per_graph": 693,
+        "parent_records": 837,
+        "relationship_assertions": 0,
+        "second_distinct_typed_statutory_use_established": false,
+        "shared_mentions_within_one_c_occurrence": 4,
+        "training_mask": 0
+      },
+      "status": "implementation_present"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3303,7 +3358,7 @@
       "path": "legal-ir-current-definition-graph-20261017-02/pilot-review-handoff.md",
       "required_for_catalog_check": false,
       "root": "artifact_workspace",
-      "scope": "Retained 2024 Title10 \u00a7101 definition alternatives, partial \u00a77213 hypotheses and source-only \u00a77214 second use; no actual reviews, accepted norm/definition use or connected three-dataset binding.",
+      "scope": "Retained 2024 Title10 §101 definition alternatives, partial §7213 hypotheses and source-only §7214 second use; no actual reviews, accepted norm/definition use or connected three-dataset binding.",
       "status": "historical_candidate_pilot_all_reviews_pending"
     },
     {
@@ -3584,7 +3639,7 @@
       "path": "docs/autoformalization/evidence/native4096-retained-assets-20261020.json",
       "required_for_catalog_check": true,
       "root": "datasets_repository",
-      "scope": "Three exact retained checkpoints published at immutable public7f1621e79eef and anonymously byte-verified; genuine retained catalog687\u2192690 with baseline33fields/activity/schema preserved and original closeout. Separate134 importer,94 catalog and42 inert-driver controls retain their exclusions. Actual operation used merged Wv2 source; canonical92-case contract remains distinct. No model-runtime/legal/teacher/proof qualification.",
+      "scope": "Three exact retained checkpoints published at immutable public7f1621e79eef and anonymously byte-verified; genuine retained catalog687→690 with baseline33fields/activity/schema preserved and original closeout. Separate134 importer,94 catalog and42 inert-driver controls retain their exclusions. Actual operation used merged Wv2 source; canonical92-case contract remains distinct. No model-runtime/legal/teacher/proof qualification.",
       "status": "passed_independent_saved_review"
     },
     {
@@ -4214,7 +4269,7 @@
       "path": "docs/autoformalization/evidence/legal-ir-cp128-warmstart-generation-20261022.json",
       "required_for_catalog_check": false,
       "root": "datasets_repository",
-      "scope": "All six saved objective/step states \u00d7 two exposed authored384 rows; Typed completion is 12/12; exact emitted-ID reconstruction including EOS is 0/12; exact canonical compact-content AST reconstruction is 0/12. 800 new generation forwards/8 restores; 4 retained partial-zero cases are not successful original pipelines. No zero rerun, extra scores/scripted controls/Adam/backward/update/reencoding. Numerical-only zero compatibility independently accepted after storage recovery. Legal prose/full norm and statutory/heldout/native-GTE/graph/Lean unmeasured.",
+      "scope": "All six saved objective/step states × two exposed authored384 rows; Typed completion is 12/12; exact emitted-ID reconstruction including EOS is 0/12; exact canonical compact-content AST reconstruction is 0/12. 800 new generation forwards/8 restores; 4 retained partial-zero cases are not successful original pipelines. No zero rerun, extra scores/scripted controls/Adam/backward/update/reencoding. Numerical-only zero compatibility independently accepted after storage recovery. Legal prose/full norm and statutory/heldout/native-GTE/graph/Lean unmeasured.",
       "status": "closed_mixed_custody_authored384_paired_autonomous_generation"
     },
     {
@@ -4644,7 +4699,7 @@
       "path": "docs/autoformalization/evidence/legal-ir-title10-7214-pending-composition-preparation-20261024.json",
       "required_for_catalog_check": true,
       "root": "datasets_repository",
-      "scope": "Retained2024Title10 \u00a77214:163chars/11features/20literal segments;two same-frame modal-scope drafts each98coreAST+1payload+12binders,47nodecapcore with49origin retained. Five data checks/four typed omission refusals;4genuinecoremodules,3initializer bypasses+1fileless;nativecompute/storage/bothREADsclosed. Member\u2192Detail only, opaque purpose, vacuous guards/pronoun/frame/definition unresolved. Earlier0775preconstructorfailure separately preserved/adminREADteardown; no classifier/resource-release qualification. No new production API/model/training/signing/graph/Lean or legal/gold admission; masks0.",
+      "scope": "Retained2024Title10 §7214:163chars/11features/20literal segments;two same-frame modal-scope drafts each98coreAST+1payload+12binders,47nodecapcore with49origin retained. Five data checks/four typed omission refusals;4genuinecoremodules,3initializer bypasses+1fileless;nativecompute/storage/bothREADsclosed. Member→Detail only, opaque purpose, vacuous guards/pronoun/frame/definition unresolved. Earlier0775preconstructorfailure separately preserved/adminREADteardown; no classifier/resource-release qualification. No new production API/model/training/signing/graph/Lean or legal/gold admission; masks0.",
       "status": "five_data_checks_passed_unreviewed_statutory_drafts_no_admission"
     },
     {
@@ -4856,6 +4911,26 @@
       "root": "datasets_repository",
       "scope": "Explicit parent-bound-report consumer delegates unchanged 5c Lake renderer/dataclass/bounds. Whole report retained once in existing JSON; thin manifest binds every context pointer/hash. Accepted retained12 complete cases/36phases remain within failed13wrapper38rawrecords; separate isolated1case/3phases passes under same source. 13distinct complete cases across2attempts,39completecasephases,41rawphase records; no passing13suite.11new+2legacy,20othernewunrun. Both original mode captures independently inspected, each selected original compute/storage/READ closed. Earlier cancellations/KeyError/recovery caller failures preserved. No file transport/native build/many-sort7214 lowering, legal/graph/model/training/corpus authority; masks0.",
       "status": "retained_failed_wrapper_observations_and_isolated_negative_separately_accepted"
+    },
+    {
+      "id": "source7346-relational-graph-depth-focused-qualified-20261025-01",
+      "observed_bytes": 4856,
+      "observed_sha256": "ec18fd7d5ee0070c8552a925a3591e3acf1285f153b8956cd8e640ae9a2101a8",
+      "path": "docs/autoformalization/evidence/legal-ir-source7346-relational-graph-depth-focused-20261025.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original13 cases/eight selectors (10new/3legacy), exactb7/c841 with explicit numbered_false factory proxy; no phase count. Prior failures remain0credit; no new/defaultpytest/current-public runtime, legal/model/training/Lean qualification.",
+      "status": "qualified_original_focused_relational_depth_adapter_profile"
+    },
+    {
+      "id": "source7346-parent-proposed-graphs-qualified-20261025-01",
+      "observed_bytes": 15067,
+      "observed_sha256": "1daf9939c92045b159e7cc8741930d15854b8cf23aad074f411bbdd19b9cf219",
+      "path": "docs/autoformalization/evidence/legal-ir-source7346-parent-proposed-graphs-20261025.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original837-parent/16-cache observation; two unchanged A/B693-node/692-edge/depth27 graphs, four shared lexical mentions in one(c) occurrence, zero assertions. No fresh current scope/correspondence, meaning/edition/definition, second distinct use, entity resolution, graph-corpus/model/training/gold/Lean admission.",
+      "status": "qualified_original_real_parent_proposed_graph_transport"
     }
   ]
 }
