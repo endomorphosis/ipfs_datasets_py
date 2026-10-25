@@ -206,9 +206,10 @@ and link/race custody belong to the external acquirer. The reader checks retaine
 lifecycle consistency without inspecting live PIDs or installed compiler bytes,
 running Lean, rechecking oleans or writing a database.
 
-The existing preservation index still accepts its official-V2 packet profile;
-this direct parent-norm profile has no index adapter yet. Parent-shared and
-incremental packet profiles remain separate. No norm-truth, concrete denotation,
+The original preservation-index APIs retain their official-V2 packet profile.
+Separate [direct parent-norm index siblings](legal_corpus_definition_use_preservation_index_v2.md#opt-in-direct-parent-norm-preservation-index)
+now store and retrieve this 23-file profile as UNKNOWN/CANDIDATE/NONE
+receipt-consistency observations. Parent-shared and incremental profiles remain separate. No norm-truth, concrete denotation,
 statutory source/edition/meaning, model-accuracy, proof-cache, graph/corpus,
 training/gold or unified Lean-corpus admission follows from this readback.
 

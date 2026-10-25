@@ -1,0 +1,198 @@
+{
+  "accepted_execution": false,
+  "accepted_operation_result_bound": false,
+  "accepted_outer_operation": false,
+  "actual_historical_native_packets_replayed": false,
+  "audit_controller": {
+    "bytes": 308,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/index-intake-v01/controller-complete-audit-v01.json",
+    "sha256": "0182214aae40e91152d6cad72e682d1aa952463c0a6db5ae0f7625a0bd699636"
+  },
+  "case_JUnit": {
+    "bytes": 23010,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/index-intake-v01/attempt-pure-v03/exports/tests.xml",
+    "sha256": "e6d2d71bca52b894112e639382fbf942106643f055329330f19ae6d46bbfe866"
+  },
+  "case_collection": {
+    "bytes": 95921,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/index-intake-v01/attempt-pure-v03/exports/test-collection.json",
+    "sha256": "de058b12974905618190ad3ae06eb56cbf2bf84fbf6aec01b137f9890406daa9"
+  },
+  "case_execution_manifest_sha256": "7decf27e1d8f6f918ba764a186831a5699158c94bd6cefd1267fc196d0f0a4f8",
+  "case_execution_original_wrapper_returncode": 1,
+  "case_execution_pytest_returncode": 0,
+  "case_execution_request_sha256": "3a4b5ea3ab657a2a020a2d9bd07ba50f2ebb20c725614e901616aed54bde405c",
+  "case_namespace_scope": {
+    "actual_checked_compile_execution_buffers": 162,
+    "bypassed_initializers_executed": 0,
+    "corrected_genuinely_executed_required_sources": 35,
+    "declared_bypassed_initializers": 8,
+    "declared_containers": 14,
+    "full_package_startup_qualified": false,
+    "observed_containers": 10,
+    "observed_module_aliases": 150,
+    "worker_initial_loader_or_third_party_bytecode_attested": false
+  },
+  "cases": 114,
+  "checked_source_buffer_count": 162,
+  "checked_source_buffers": {
+    "bytes": 5004566,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/index-intake-v01/attempt-pure-v03/exports/checked-source-buffers.json",
+    "sha256": "92f6ff00351f481f047dbd1f656c67bcaf47cdb9cedd57efe9370f5b44ab2457"
+  },
+  "corrected_required_source_count": 35,
+  "corrected_source_audit_passed": true,
+  "durable_storage_verified": false,
+  "errors": 0,
+  "evaluation_gold_mask": 0,
+  "execution_manifest_sha256": "6458332054b1f21dad902af80576d5d11d891073e88b4a9fdb00520ac6c4b2ce",
+  "execution_request_sha256": "70e770091836ed1bc1041852d8bbebb274e57ece2663f016cb899d118fd97594",
+  "failures": 0,
+  "final_denied_module_absence_assertion_executed": false,
+  "frozen_source_files": 207,
+  "independent_result_review": {
+    "bytes": 13525,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/index-intake-v01/independent-result-review-source-audit-v01.json",
+    "sha256": "75cae16aeae7d34f96e819636092e04a4da7dc1b9f8ee80964c285974de39efb"
+  },
+  "limits": {
+    "case_evidence_copied_rewritten_or_original_wrapper_relabelled": false,
+    "final_denied_module_absence_assertion_executed": false,
+    "kernel_containment_or_full_package_startup_qualified": false,
+    "model_Lean_SQL_scope": "None enrolled/none observed in recorded instrumentation; no categorical host/module absence attestation.",
+    "ordinary_fixture_phase_completion_verified_by_later_audit": true,
+    "strict_physical_fixture_finalizers_enrolled": false,
+    "third_party_cached_bytecode_attested": false,
+    "third_party_module_presence_attested": false,
+    "worker_initial_loader_compilation_attested": false
+  },
+  "mapped_existing_backlog_tasks": [
+    "LIR-13",
+    "LIR-14",
+    "LIR-21",
+    "LIR-22"
+  ],
+  "model_or_Lean_execution": false,
+  "model_or_Lean_execution_scope": "None enrolled or observed within captured operation instrumentation; categorical host/module absence remains unattested.",
+  "new_SQL_or_cold_reopen_qualification": false,
+  "new_cases": 68,
+  "new_product_tests_executed_by_reconciliation": 0,
+  "ordinary_fixture_phase_completion_verified": true,
+  "original_case_controller": {
+    "bytes": 309,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/index-intake-v01/controller-complete-pure-v03.json",
+    "sha256": "4af5be5c4d00a51a7c84d50b2d181586fb043fb6fce014d05b302bed8c00fb35"
+  },
+  "original_owner_closeouts": {
+    "audit_bytes_preserved": 5700,
+    "audit_compute_lease_id": "16b5ba6e6f7449f5bb27b5bfde11452f",
+    "audit_files_preserved": 6,
+    "audit_native_compute_released": true,
+    "audit_source_READ_closed": true,
+    "audit_storage_reservation_id": "51e36d0ef8ab4dce841ddf02f4cd7435",
+    "audit_storage_status": "released",
+    "case_bytes_preserved": 5359225,
+    "case_files_preserved": 14,
+    "case_native_compute_released": true,
+    "case_source_READ_closed": true,
+    "case_storage_closeout": {
+      "bytes": 1599,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/index-intake-v01/failed-storage-closeout-pure-v03-v01/summary.json",
+      "sha256": "d4c60a3ae51c9c078a26cc29c356bdbf4e17f9787d888c48f141cba82242e4d9"
+    },
+    "new234_audit_and_original234_case_pins_intact": true,
+    "original17_custody_owners_unchanged": true,
+    "sampled_survivors": 0,
+    "storage_recovery_API_needed_for_successful_audit": false
+  },
+  "original_required_source_count": 37,
+  "original_source_audit_passed": false,
+  "outer_operation_outcome": "unprovided",
+  "owning_test": {
+    "bytes": 51751,
+    "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_index_v2.py",
+    "sha256": "74653f84a1af3c1a4f3e2368968bc36cc706acba6bebd5830ac785ccaa46f7b6"
+  },
+  "passed": true,
+  "phases": 342,
+  "profile": "parent-norm-preservation-index-source-audit-reconciled-controls/v2",
+  "proof_usable": false,
+  "public_current_whole_package_runtime_qualified": false,
+  "public_deployment_scope": {
+    "dependency_source_overlays": [],
+    "fresh_public_generation_original_inputs_required": true,
+    "frozen_case_graph_profile_maximum_depth": 32,
+    "frozen_case_graph_source": {
+      "bytes": 35170,
+      "sha256": "b7d2f994b923f6db3bcf535561d4064ef686844d2faea560ad30952a580c511e"
+    },
+    "graph_path": "ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
+    "immutable_public_base": "691f09ca0ebbec63021c470091ab4a98662263b5",
+    "private_b7_packet_preparation_or_index_entry_reuse_supported": false,
+    "producer_path_or_hash_normalization_or_resealing_allowed": false,
+    "public_dependency_compatibility": {
+      "bytes": 10966,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/index-intake-v01/public-dependency-compatibility-v02.json",
+      "sha256": "dac0bbe11f8466a21ed159158b2b98f146972bd7bf3b578ca814eb5dcf191fea"
+    },
+    "public_graph_maximum_depth": 24,
+    "public_graph_source": {
+      "bytes": 34676,
+      "sha256": "f929572c71536bc61364cccbf274c8f03e0bbc01655d2c6b0a3435d34d1a70c4"
+    },
+    "scope": "Fresh public-generation original inputs otherwise accepted by genuine current owners; graph depth <=24. Private b7 packets, preparations and index entries remain incompatible with public f929 producer pins. No path/hash normalization or resealing. Depth25-32 remains unsupported here.",
+    "static_subset_proof": {
+      "bytes": 10170,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/index-intake-v01/public-graph-subset-compatibility-v01.json",
+      "sha256": "75f4d193e48e636522c4b8bf08a5aaa9af6a8f6ebfc681405f529d2f97c37381"
+    },
+    "whole_public_package_runtime_qualified": false
+  },
+  "qualified": true,
+  "qualified_behavior": [
+    "Opt-in existing-owner projection, write and lookup for retained 23-file parent-norm packet observations.",
+    "All 15 key dimensions remain effective; timestamps are custody-fenced but excluded from the semantic key.",
+    "Live typed entry identity, complete store readback and closing replay protect successful writes, hits and genuine misses.",
+    "UNKNOWN/CANDIDATE/NONE negative observations, zero masks and an unprovided outer-operation outcome remain explicit."
+  ],
+  "receipt_consistency_only": true,
+  "recorded_at_utc": "2026-10-25T06:21:15.688705+00:00",
+  "regression_cases": 46,
+  "schema": "legal-ir-parent-norm-preservation-index-qualification/v2",
+  "scope": "New separately owned source-audit-reconciled v2 qualification of original completed114 authored cases and corrected35-source closure. Originalv03 wrapper remains failed; new metadata operation runs zero product tests. Originalv02 timeout100progressmarks retain zero qualification credit. No statutory meaning, learned accuracy, proof, graph/corpus or training/gold admission.",
+  "selectors": 47,
+  "skips": 0,
+  "source": {
+    "bytes": 54438,
+    "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py",
+    "sha256": "1f440c184667288ea6c78e115de49a53ab8c951d15d4bdd5fc2da830de1ad524"
+  },
+  "source_audit_reconciliation_accepted": true,
+  "source_audit_reconciliation_reason": {
+    "new_product_test_cases_run": 0,
+    "original_required_sources_not_executed": [
+      "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+      "ipfs_datasets_py/logic/ir_core/evidence.py"
+    ],
+    "original_test_result_file_created_or_failure_relabelled": false,
+    "original_wrapper_preserved_failed": true,
+    "reason": "The original index cohort declaration incorrectly retained two unused prior-native test dependencies. All 35 genuinely applicable required sources and all 162 compile/execution source buffers were verified by a separately admitted metadata-only audit. Original pytest exited 0; its wrapper exited 1 before later assertions, which remain unattested.",
+    "timed_out_pure_v02_qualification_credit": 0
+  },
+  "source_audit_result": {
+    "bytes": 2994,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-complete-norm-native-20261024-01/packet-intake-v01/index-intake-v01/attempt-audit-v01/exports/source-audit-result.json",
+    "sha256": "d394c6444a1e994d4c3d26d23fa5162f81e7bdb83249e7382c8e7c382a8c94e2"
+  },
+  "status": "passed",
+  "strict_physical_fixture_finalizers_enrolled": false,
+  "third_party_module_presence_attested": false,
+  "training_mask": 0,
+  "unqualified_authorities": [
+    "US Code source edition or statutory interpretation",
+    "Learned autoformalization fidelity or model accuracy",
+    "Lean compilation or accepted proof execution",
+    "SQL persistence, durability or cold reopen",
+    "Training/gold admission or unified legal corpus release"
+  ]
+}
