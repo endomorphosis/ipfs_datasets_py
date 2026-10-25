@@ -2861,7 +2861,8 @@
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
-        "parent-literal-norm-scope-correspondence-qualified-20261024-01"
+        "parent-literal-norm-scope-correspondence-qualified-20261024-01",
+        "source7346-b2-parent-candidate-qualified-20261025-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_norm_scope_v1.md",
       "id": "source-norm-scope-v1",
@@ -2934,7 +2935,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-25T01:00:02.897351+00:00",
+  "last_updated_at_utc": "2026-10-25T04:17:12.158385+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -4707,6 +4708,16 @@
       "root": "datasets_repository",
       "scope": "123 authored-fixture cases/369 phases:54 new packet controls plus69 selected regressions under199 frozen sources. Receipt consistency only; accepted execution/outer operation false and outcome unprovided. Synthetic historical runtime claims, genuine current parent replay, no actual native23 replay or source/meaning/model/proof-cache/graph/corpus/training authority; masks0.",
       "status": "namespace_scoped_authored_packet_consistency_qualified"
+    },
+    {
+      "id": "source7346-b2-parent-candidate-qualified-20261025-01",
+      "observed_bytes": 13050,
+      "observed_sha256": "ada9049bb81a83541ecec1451444bd0616443830301593807d00306d9a11271e",
+      "path": "docs/autoformalization/evidence/legal-ir-source7346-b2-parent-candidate-20261025.json",
+      "required_for_catalog_check": false,
+      "root": "datasets_repository",
+      "scope": "Existing837-record parent population/16paired rows; two public binder entries select only the b2 segment405:732/UTF8406:735 and its exact lexical anchor645:660/648:663. ExistingROLE companion, cache_row_recordNone. No newspan, pairedcache, typeduse, meaning/edition/definition, model, training/gold, graph or Lean admission; c not requalified.",
+      "status": "qualified_actual_parent_only_candidate_binding_observation"
     }
   ]
 }
