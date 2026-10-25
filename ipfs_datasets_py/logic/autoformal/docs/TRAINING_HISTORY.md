@@ -81,7 +81,26 @@ The [targeted profile review](../../../../docs/autoformalization/evidence/legal-
 
 Predicate-weight1→4 and denominator67→70 are no longer merely proposed mechanics. The [saved counterfactual review](../../../../docs/autoformalization/evidence/legal-ir-cp128-saved-predicate-reweight-20261023.json) changed weights on fixed logits without model updates. The later [predicate-training qualification](../../../../docs/autoformalization/evidence/legal-ir-predicate-training-qualification-20261023.json) separately passed70 cases/210 phases with six physical updates: two unique ordered steps and one resumed replay for each full537/scope_conditional objective, four model restores and exact complete checkpoint/Adam/observation resume. Original successful native/storage/source custody closed; failed invocations retain no qualification credit.
 
-These are exposed authored384 mechanics on the same two fictional rows, with a separate predicate-training checkpoint schema rejected by the old serving runtime. There was no autonomous generation, new statutory source compatibility, held-out quality or learning-gain result. Current public integration is not requalified by reusing the historical receipt. The eight missing reference-score cells for the older sum67 checkpoints remain unrun; later predicate-reference matrices and resumed updates do not fill them.
+These are exposed authored384 mechanics on the same two fictional rows, with a separate predicate-training checkpoint schema rejected by the old serving runtime. There was no autonomous generation, new statutory source compatibility, held-out quality or learning-gain result. Current public integration is not requalified by reusing the historical receipt. The older sum67 cells now have the partial capture observations below; the later predicate-reference matrices and resumed updates retain their separate scope.
+
+## Retained sum67 reference matrices, 2026-10-25
+
+The [capture and dependency record](../../../../docs/autoformalization/evidence/legal-ir-cp128-reference-coverage-observations-20261025.json) retains eight previously unobserved checkpoint/row matrices: eight restores, eight full-reference forwards and unchanged13-tensor/RNG/input/close observations. The numerical wrapper failed after two of four DATA checks because its global read-denial counter was1; all eight per-cell denial deltas were0. Its final executed-source archive is absent. Top-level restore/forward summary fields stayed at their initialized0 after the failure; the actual counters and eight partial observations establish the work. This is a failed pipeline with eight native-qualification cells still open.
+
+Strict original-owner recovery released both failed128-MiB claims while preserving all5/14files. Saved-only analysis combined the eight captures with four original preupdate matrices: **12 descriptive cells,10unique matrices,296424score coordinates and552labels from two exposed fictional rows**. Raw unmasked highest-token target matches remain **0/552**, including **0/84 semantic positions**. These observations neither replay the old four forwards nor change the earlier autonomous-generation results.
+
+For each fixed reference row, the unweighted raw all537 mean target CE fell from state0 to state2:
+
+| Original objective lineage | Row | State2 minus state0 mean CE |
+| --- | ---: | ---: |
+| full537 | 0 | -0.02225786 |
+| full537 | 1 | -0.02178526 |
+| scope_conditional | 0 | -0.00435507 |
+| scope_conditional | 1 | -0.00408074 |
+
+These are teacher-forced arithmetic comparisons on recorded values, not weighted67/scoped training loss or an autonomous/held-out learning result. No optimizer update or new training ran. The primaryc973 source generation and public70db authored23/69 qualification remain distinct.
+
+A separate zero-model dependency probe passed four DATA checks, completed six metadata inspections and archived92current source origins/buffers. It reproduced a denied read of the already-known beartype distribution METADATA file, which the new request had omitted from the earlier successful harness’s support pins. The old wrapper did not record its denied path; the reproduction is consistent with that omission and does not repair old source/native qualification. The probe’s original compute/storage/source custody closed. Reuse the captures with these limits instead of rerunning eight forwards solely to repair orchestration.
 
 ## Earlier responsible-head comparisons: N9–F19
 

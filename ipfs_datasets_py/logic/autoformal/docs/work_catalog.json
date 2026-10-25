@@ -2120,11 +2120,12 @@
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
-        "cp128-reference-score-authored-qualified-20261023-01"
+        "cp128-reference-score-authored-qualified-20261023-01",
+        "cp128-reference-coverage-partial-observations-20261025-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_role_warmstart_runtime_v1.md",
       "id": "compact-role-warmstart-reference-runtime",
-      "notes": "Separate original-row-bound authored384/fixed537 teacher-forced reference diagnostic.23 authored contract cases/69 observed phases passed under original leaf-API metadata qualification; original native lease/storage and source READ closed. Complete raw batch dimension1x46x537, independent checkpoint/policy/context/reference commitments and original row conditioning binding. Old fixed-BOS APIs and prepared constructor/_guard/forward/close source unchanged. No genuine Torch/model restore, numerical13-tensor/RNG exercise, reference matrix, optimizer/training/generation or reconstruction/statutory/graph/Lean gain; eight matched reference cells remain unrun.",
+      "notes": "Public70db source retains its separate23-authored-case/69-phase qualification with no genuine numerical result inherited. The primaryc973 legacy score_reference produced eight full-reference captures in failed2026-10-25v02:8restores/forwards,2of4DATAchecks,one unlocated global read refusal and no final source archive; all per-cell state/RNG/input/close guards passed. Strict original recovery preserved the files. Four old plus eight new observations form a descriptive12cell grid,0/552unmasked target winners, while eight native-qualification cells remain open. A separate zero-model probe passed4DATAchecks and reproduced denied beartypeMETADATA; it does not repair the failed wrapper or qualify public70db. No new training, autonomous accuracy, statutory, graph or Lean authority; masks0.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_compact_content_role_warmstart_reference_runtime_v1",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_warmstart_reference_runtime_v1.py",
@@ -2824,7 +2825,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-24T23:04:55.876364+00:00",
+  "last_updated_at_utc": "2026-10-25T01:00:02.897351+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -4547,6 +4548,16 @@
       "root": "datasets_repository",
       "scope": "Targeted saved-metadata and source-contract review of retained heading-prefixed 7213/7214 captures and already qualified predicate mechanics. No new numerical, model, native validation, test, API refusal or legal review operation.",
       "status": "captures_reusable_as_retained_assets_selected_decoder_contracts_not_admitted_complete_targets_pending"
+    },
+    {
+      "id": "cp128-reference-coverage-partial-observations-20261025-01",
+      "observed_bytes": 38231,
+      "observed_sha256": "74ee7e90d8f874c47e7c31fba7d3a510803924540051406b7d4c217aaa5acd85",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-reference-coverage-observations-20261025.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Eight original sum67 checkpoint-row reference matrices were physically captured under a failed wrapper. Strict storage recovery preserved the files; saved-only arithmetic combines them with four original matrices. A separate successful zero-model dependency probe identifies a denied metadata read. No numerical replay repairs the failed wrapper.",
+      "status": "eight_new_matrices_retained_from_failed_wrapper_descriptive_grid_complete_native_qualification_gap_open"
     }
   ]
 }
