@@ -129,7 +129,7 @@ exact-key storage and retrieval. Reviewed statutory source correspondence,
 broader logic constructors, general translation preservation, measured token
 savings and held-out model convergence remain independent gates.
 
-The retained reader accepts only the official V2 twelve-module, fifteen-theorem, 49-file preservation profile. Parent, shared/aggregate and direct-incremental native receipts have different packet and preparation contracts and remain unsupported here; schema relabeling or a matching hash cannot substitute for a compatible reader.
+The original official-V2 APIs retain their twelve-module, fifteen-theorem, 49-file preservation contract. The separate [direct parent-norm siblings](#opt-in-direct-parent-norm-preservation-index) accept only their explicit 23-file receipt-consistency profile. Shared/aggregate and direct-incremental packets remain unsupported; schema relabeling or a matching hash cannot substitute for the complete matching replay contract.
 
 ## Current primary reconciliation — 153 cases / 459 phases passed
 
@@ -153,3 +153,76 @@ legal proof cache, DuckLake/Quack activation, model/training and Lean admission
 remain unsupported or unqualified as before.
 
 At this publication-preparation cutoff, no new test cohort, historical packet/database replay, native or Lean run, or model execution has been performed. The linked portable evidence records the retained 153-case/459-phase primary composition and its declared reasoning namespace profile separately from the original 68-case packet qualification, original 153-case SQL/index qualification and historical two-packet replays. Those qualifications keep their original source/toolchain scopes. Preserved public companion differences do not establish whole-runtime byte identity with the 126 raw-compile observations/119 module origins or qualify the public reasoning initializer/reexports. Original receipts, packet/database exports and raw execution evidence remain unbundled and unavailable in a clean clone; the portable record supplies their immutable descriptors and scope, rather than substituting fresh runtime evidence.
+
+## Opt-in direct parent-norm preservation index
+
+Reuse `prepare_parent_norm_preservation_index_v1`,
+`write_parent_norm_preservation_index_v1` and
+`lookup_parent_norm_preservation_index_v1` in this same existing owner.
+Their projection schema is `legal-corpus-parent-norm-preservation-index-projection/v1`,
+operation schema is `legal-corpus-parent-norm-preservation-index-operation/v1`,
+and profile is `retained-parent-norm-receipt-consistency-index/v1`.
+The original official-V2 APIs and their historical qualifications retain their
+separate contracts and source generations.
+
+The new siblings take the original immutable 23-file byte packet, complete
+seven-file typed parent preparation, full original correspondence, all nine
+original correspondence-replay fields, and independent full preparation,
+correspondence, raw receipt, bundle, binary and versioned-toolchain commitments.
+They also require an independently trusted SHA256 of the exact current packet
+observation and an explicit stable entry creation time:
+
+```python
+projection = prepare_parent_norm_preservation_index_v1(
+    packet_files, preparation, correspondence,
+    expected_packet_observation_sha256=packet_observation_pin,
+    created_at=creation_time,
+    **packet_arguments,
+)
+```
+
+`packet_arguments` has exactly `expected_preparation_sha256`,
+`expected_correspondence_sha256`, `correspondence_inputs`, `toolchain`,
+`expected_receipt_file_sha256`, `expected_bundle_sha256` and
+`expected_binary_sha256`. Publicly constructed packet/projection results do not
+substitute for genuine original-input replay. Caller-computed hashes are not
+independent provenance.
+
+All fifteen existing unified-key dimensions remain present. Their material
+retains the complete parent-preparation/correspondence commitments, unchanged
+norm, declared theorem assumptions and conditional modules, original parent
+context, review intake, unresolved blockers, semantic-coverage declarations,
+current producer/index/store pins, historical toolchain/binaries, full packet
+inventory and receipt/observation hashes. Context and review-binding values are
+retained observations; selecting them as key material supplies no legal premise
+or resolved meaning. `created_at` changes the full entry identity and is
+custody-fenced, while remaining outside the semantic key.
+
+Every operation retains complete input, callback, owner-path/source, physical
+witness and actual typed-entry custody. A changed input after a genuine reader
+returns, an integrity-valid mutation of the live stored entry, or final
+seal/serialization/result substitution refuses. Writes require the exact stored
+acknowledgment and complete typed readback. Hits require independently expected
+full key and entry digests. Both hits and genuine misses receive complete closing
+packet replay; a genuine miss returns `None`. Exceptions remain visible. A failed
+post-write validation may leave an observational row but yields no successful
+operation receipt; source replay and the caller's backend are not one transaction.
+
+The stored entry is UNKNOWN with CANDIDATE result authority, NONE evidence
+and trust, and negative polarity. `receipt_consistency_only=true`;
+`accepted_execution`, `accepted_outer_operation` and
+`accepted_operation_result_bound` remain false, and
+`outer_operation_outcome="unprovided"`. A consistent retained successful build
+receipt does not provide the missing outer closeout. `proof_usable` and
+`durable_storage_verified` remain false; training and evaluation-gold masks
+remain integer zero.
+
+This profile's authored-fixture qualification uses synthetic retained compiler,
+runtime and artifact claims, genuine current original-parent preparation and
+physical-source replay, and the genuine process-local store. It supplies no new
+SQL or cold-reopen qualification, actual historical native-packet replay, native
+compiler/Lean/model execution or training. Existing SQL, packet and native
+campaigns remain separately attributed. Source/edition/meaning, reviewed
+eligibility, graph/corpus admission and legal proof-cache authority remain open.
+
+The [accepted two-operation index qualification](../../../../../docs/autoformalization/evidence/legal-ir-parent-norm-preservation-index-20261025.json) retains 114 passed original pytest cases / 342 phases (68 new index controls plus 46 selected official-V2 index regressions). Pytest returned0, but the original wrapper returned1 because its terminal audit required37 sources, including two unused prior-native requirements. A separately owned metadata-only audit verified the corrected35-source closure and all162 raw checked source buffers. It executed0 new product tests. The original wrapper remains failed; neither it nor the earlier timeout receives retroactive credit. The new source-audit-reconciled qualification keeps both original case and new audit execution identities, rather than relabeling the original controller. Original packet/native/SQL campaigns retain their separate scopes; masks stay zero. The final denied-module-absence assertion was not run and is not reconstructed; full final third-party module closure remains unprovided. Ordinary342-phase completion with pytest returncode0 does not establish the unenrolled strict physical-fixture-v2 finalizer contract. Recorded blocked-import/operation observations and the zero model/Lean counter concern the enrolled tested operations, without host/startup, third-party bytecode, kernel or whole-package attestation.
