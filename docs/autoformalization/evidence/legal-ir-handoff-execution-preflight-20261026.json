@@ -1,0 +1,296 @@
+{
+  "api": "prepare_handoff_execution_packet_v1",
+  "artifact_report": {
+    "bytes": 14929,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-handoff-v01/execution-packet-preflight-v01/validation-01/attempt/exports/unit-results.json",
+    "sha256": "7cc1bd0c3bf8201f90be51d6ad1d791b2954798baf154511e05fc129eda23e0b"
+  },
+  "audit": {
+    "denied": [],
+    "forbidden_imports": [],
+    "reads": 4,
+    "writes": 1
+  },
+  "authority": {
+    "admitted": false,
+    "dispatch_authorized": false,
+    "evaluation_gold": false,
+    "rearm_authorized": false,
+    "task_or_goal_completion_authority": false,
+    "training": false
+  },
+  "capacity": {
+    "child_process_slots": 4,
+    "cpu_slots": 1,
+    "memory_mb": 1024,
+    "storage_bytes": 67108864,
+    "timeout_seconds": 180
+  },
+  "cases": [
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_all_four_existing_handoff_aliases_and_widths_are_metadata_only",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_complete_metadata_is_detached_and_never_execution_authority",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_distinct_source_and_checkpoint_provenance_remain_preparable",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_argv_preserves_repeated_arguments_and_malformed_roles_block",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exhausted_history_requires_original_owner_review_disposition_never_rearm",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_no_callable_or_nonfinite_metadata_is_invoked_or_accepted",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_target_or_target_derived_context_cannot_be_inference_input",
+      "status": "passed"
+    }
+  ],
+  "default_module_package_integration_qualified": false,
+  "entry_lines": [
+    44
+  ],
+  "errors": [],
+  "failures": [],
+  "function_entries": 59,
+  "function_source_sha256": "f6c91bf694e40f809638f0916dd9522afbf6ab93a879175c1e01a6a5d46f9a0a",
+  "id": "legal-ir-handoff-execution-preflight-qualified-20261026-01",
+  "methods_run": 11,
+  "native_closeout": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/supervisor-handoff-v01/execution-packet-preflight-v01/validation-01/closeout.json",
+    "sha256": "b708ee543200093846ab97135c50958fb0c6379eaa56abda32b5d087461db8d6"
+  },
+  "native_returncode": 0,
+  "native_task_contract_identity_issued": false,
+  "new_task_population_created": false,
+  "original_tasks_rewritten_or_rearmed": false,
+  "owner": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+  "owner_source_sha256": "a5c3ee87f7e5443cb9708c97632f4d69b7e0c351f3c9b8f8e1c80ca633c592fc",
+  "owning_test": "tests/unit/logic/test_supervisor_handoff_execution_packet.py",
+  "profile": "canonical-supervisor-handoff-pure-function-ast/v1",
+  "qualification_errors": [],
+  "reconstruction_or_learning_quality_measured": false,
+  "request_sha256": "ea949013d3524c87b8a9e61a0ae90786a6c480ffdebd5fc8c70bd33a48f06cc2",
+  "review_findings_fixed": [
+    "same declared target/review/derived bytes cannot be relabelled inference through path/order/false override",
+    "test controller preserves original owned closure guards",
+    "worker persists partial case/subcase/log/entry observations before success decisions",
+    "worker normalizes opened paths before cooperative file-fence checks"
+  ],
+  "schema": "legal-ir-handoff-execution-preflight-evidence/v1",
+  "scope": "One pure JSON-metadata preparation API in the existing supervisor_loop owner, limited to LIR-9001 through 9004. Frozen selected-function AST qualification: 11 methods / 44 subcases / 59 actual function entries. Source/resource custody closed. No eager default package integration, native task-contract/CID validation, current authenticated task readback, hash authenticity, dispatch/rearm, model/database/Lean execution or legal/training/gold authority.",
+  "skipped": [],
+  "source_and_resource_custody_closed": true,
+  "source_pin_count": 21,
+  "subcases": [
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_all_four_existing_handoff_aliases_and_widths_are_metadata_only (alias='LIR-9001', width=8)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_all_four_existing_handoff_aliases_and_widths_are_metadata_only (alias='LIR-9002', width=384)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_all_four_existing_handoff_aliases_and_widths_are_metadata_only (alias='LIR-9003', width=768)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_all_four_existing_handoff_aliases_and_widths_are_metadata_only (alias='LIR-9004', width=4096)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (value=0)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (value=-1)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (value=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (value='unbounded')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (value=None)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='inputs')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='argv')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='cwd')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='outputs')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='code_allowlist')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='test_allowlist')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='exclusive_keys')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='verifier')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_budgets_and_independent_acceptance_are_explicit (missing='directive_ids')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target', alias=False, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target', alias=False, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target', alias=True, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target', alias=True, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='review', alias=False, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='review', alias=False, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='review', alias=True, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='review', alias=True, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target_derived_source', alias=False, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target_derived_source', alias=False, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target_derived_source', alias=True, reversed=False)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_cross_input_target_content_cannot_be_laundered_by_role_or_path (role='target_derived_source', alias=True, reversed=True)",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='task_alias')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='task_cid')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='goal_cid')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='plan_cid')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='repository_tree_id')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_exact_identity_revision_and_dependency_bindings_are_required (key='revision')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled (key='source_dimension')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled (key='schema_version')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled (key='decoder_task')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled (key='actual_bottleneck_dimension')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_profile_dimensions_schema_and_decoder_task_cannot_be_relabelled (key='sidecars')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_target_or_target_derived_context_cannot_be_inference_input (role='target')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_target_or_target_derived_context_cannot_be_inference_input (role='context')",
+      "status": "passed"
+    },
+    {
+      "id": "_frozen_handoff_execution_packet_tests.HandoffExecutionPacketTests.test_target_or_target_derived_context_cannot_be_inference_input (role='representation')",
+      "status": "passed"
+    }
+  ],
+  "subcases_run": 44,
+  "test_source_sha256": "6cc6ff70f30a56b7e47f81d8f2c8253f264c7050b0777c02ab565edfa79cefa0",
+  "unexecuted_initial_candidates": [
+    "source-freeze-v01.json",
+    "controls/run-plan-v01.json",
+    "controls/run-plan-v02.json"
+  ]
+}

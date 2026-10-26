@@ -35,9 +35,24 @@
     "closure_policy_requires_native_revision_binding": true,
     "desired_objective": "Entire pinned US Code: source-grounded complete legal IR, scoped graphs and a coherent Lean4 corpus",
     "execution_authorized_by_this_file": false,
+    "execution_packet_preflight": {
+      "api": "prepare_handoff_execution_packet_v1",
+      "native_scope_or_dispatch_authority": false,
+      "owner": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
+      "preparation_only": true,
+      "preview_schema": "legal-ir-supervisor-handoff-execution-packet-preview/v1",
+      "qualification_evidence_id": "legal-ir-handoff-execution-preflight-qualified-20261026-01",
+      "qualification_profile": "selected_function_ast_only",
+      "scope_task_aliases": [
+        "LIR-9001",
+        "LIR-9002",
+        "LIR-9003",
+        "LIR-9004"
+      ]
+    },
     "expansion_milestones": [
       "reviewed norm/governing definition/two distinct operative uses",
-      "20\u201340 connected provisions",
+      "20–40 connected provisions",
       "bounded dependency components over every pinned occurrence"
     ],
     "historical_attempt_rearming_authorized": false,
@@ -2342,7 +2357,7 @@
     },
     {
       "acceptance_criteria": [
-        "Approximately20\u201340 provisions cover actual definitions and users within a bounded profile.",
+        "Approximately20–40 provisions cover actual definitions and users within a bounded profile.",
         "Semantic dependency clusters, near duplicates and amendments have declared split handling."
       ],
       "actual_pilot_selection_qualified": false,
@@ -2406,7 +2421,7 @@
           "sha256": "61a870668a9cd7dfcfbd5f418e49569029ddf024f2fb7df7eca7de431495434b"
         },
         "minimal_profile_decision_sequence": [
-          "Review source/edition/roles/applicability and exact \u00a7101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
+          "Review source/edition/roles/applicability and exact §101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
           "Select one bounded reviewed term/body/sense and an actual reviewed use in scope, or explicitly record that no use witness is yet available.",
           "Decide whether a scoped multi-occurrence means-only candidate can use existing typed owners; otherwise add only the reviewed constructor and applicability support the chosen case needs.",
           "Keep includes/excludes, construction, anaphora and unresolved references as first-class pending contributions until their meanings and attachments are independently reviewed.",
@@ -2836,7 +2851,7 @@
           "sha256": "61a870668a9cd7dfcfbd5f418e49569029ddf024f2fb7df7eca7de431495434b"
         },
         "minimal_profile_decision_sequence": [
-          "Review source/edition/roles/applicability and exact \u00a7101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
+          "Review source/edition/roles/applicability and exact §101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
           "Select one bounded reviewed term/body/sense and an actual reviewed use in scope, or explicitly record that no use witness is yet available.",
           "Decide whether a scoped multi-occurrence means-only candidate can use existing typed owners; otherwise add only the reviewed constructor and applicability support the chosen case needs.",
           "Keep includes/excludes, construction, anaphora and unresolved references as first-class pending contributions until their meanings and attachments are independently reviewed.",
@@ -4410,7 +4425,7 @@
           "sha256": "61a870668a9cd7dfcfbd5f418e49569029ddf024f2fb7df7eca7de431495434b"
         },
         "minimal_profile_decision_sequence": [
-          "Review source/edition/roles/applicability and exact \u00a7101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
+          "Review source/edition/roles/applicability and exact §101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
           "Select one bounded reviewed term/body/sense and an actual reviewed use in scope, or explicitly record that no use witness is yet available.",
           "Decide whether a scoped multi-occurrence means-only candidate can use existing typed owners; otherwise add only the reviewed constructor and applicability support the chosen case needs.",
           "Keep includes/excludes, construction, anaphora and unresolved references as first-class pending contributions until their meanings and attachments are independently reviewed.",
@@ -5720,7 +5735,7 @@
           "sha256": "61a870668a9cd7dfcfbd5f418e49569029ddf024f2fb7df7eca7de431495434b"
         },
         "minimal_profile_decision_sequence": [
-          "Review source/edition/roles/applicability and exact \u00a7101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
+          "Review source/edition/roles/applicability and exact §101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
           "Select one bounded reviewed term/body/sense and an actual reviewed use in scope, or explicitly record that no use witness is yet available.",
           "Decide whether a scoped multi-occurrence means-only candidate can use existing typed owners; otherwise add only the reviewed constructor and applicability support the chosen case needs.",
           "Keep includes/excludes, construction, anaphora and unresolved references as first-class pending contributions until their meanings and attachments are independently reviewed.",
@@ -7032,7 +7047,7 @@
           "sha256": "61a870668a9cd7dfcfbd5f418e49569029ddf024f2fb7df7eca7de431495434b"
         },
         "minimal_profile_decision_sequence": [
-          "Review source/edition/roles/applicability and exact \u00a7101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
+          "Review source/edition/roles/applicability and exact §101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
           "Select one bounded reviewed term/body/sense and an actual reviewed use in scope, or explicitly record that no use witness is yet available.",
           "Decide whether a scoped multi-occurrence means-only candidate can use existing typed owners; otherwise add only the reviewed constructor and applicability support the chosen case needs.",
           "Keep includes/excludes, construction, anaphora and unresolved references as first-class pending contributions until their meanings and attachments are independently reviewed.",
@@ -8122,7 +8137,7 @@
         "0a219c86e29e3adcd8c067f6c6e7bb456929584d"
       ],
       "implementation_receipt": "artifacts/legal-corpus-definition-resolution-20261014-01/implementation-receipt.json",
-      "implemented_scope": "Exact caller-selected section-local definition/category binding is represented by composition-scoped symbols and a validated USES_DEFINITION edge; graph records preserve open context and the full declared native AST. Added declared-partition lookup wrapper delegating existing scoped LegalIR symbol resolver with exact externally pinned table/query bytes and versioned matching policy. Records resolved/unresolved/ambiguous/unavailable outcomes, conservative complete searched-route table commitments, known-empty versus unavailable content and strict contradiction refusal for selected kind/document/scope. Existing reverse dependency owner reopens positive/negative lookup descendants for new competitors or newly available definitions while unsearched partitions preserve lookup identity. Retained40:3318\u21923301 missing target stays unavailable; no semantic binding edge, statutory applicability or review authority is invented.",
+      "implemented_scope": "Exact caller-selected section-local definition/category binding is represented by composition-scoped symbols and a validated USES_DEFINITION edge; graph records preserve open context and the full declared native AST. Added declared-partition lookup wrapper delegating existing scoped LegalIR symbol resolver with exact externally pinned table/query bytes and versioned matching policy. Records resolved/unresolved/ambiguous/unavailable outcomes, conservative complete searched-route table commitments, known-empty versus unavailable content and strict contradiction refusal for selected kind/document/scope. Existing reverse dependency owner reopens positive/negative lookup descendants for new competitors or newly available definitions while unsearched partitions preserve lookup identity. Retained40:3318→3301 missing target stays unavailable; no semantic binding edge, statutory applicability or review authority is invented.",
       "latest_lookup_contract_commit": "0a219c86e29e3adcd8c067f6c6e7bb456929584d",
       "latest_lookup_contract_receipt": "artifacts/legal-corpus-definition-resolution-20261014-01/implementation-receipt.json",
       "lookup_dependency_profile": "complete_supplied_tables_conservative_not_exact_search_trace",
@@ -16365,7 +16380,7 @@
       "id": "LIR-17",
       "next_actions": [
         " The saved-only eight-trained-case/800-position selector audit docs/autoformalization/evidence/legal-ir-cp128-saved-selector-audit-20261023.json records grammar replacing raw top1 at800/800 positions,0 scope winner overrides,8 budget winner overrides,632 final singleton choices and168 real postbudget branches; raw-score changes did not change recorded eligible winners. Reuse these traces before another full generation/fit. Require target-choice rank/margin and modality/ordered-argument progress at source-sensitive branches, plus a context-fixed conditioning control before attributing row insensitivity to the latent. First close reviewed complete real-law targets, governing definition/two distinct physical uses and independently permitted source context; keep all unknown meaning/native-space/eligibility masks0 and preserve the partial-zero failures.",
-        "Reuse the saved predicate-only1\u21924/67\u219270 arithmetic and scope-limited completed four-row regression. The latter has one case/three phases,10 updates,12 GRU forwards and1,074 equal BOS coordinates; absent planned preflight/execution-control files remain absent. Neither supplies autonomous/statutory gain. Fill only the eight missing matched reference cells through a separately qualified consumer, then compare conditioning policies on reviewed complete targets with fixed common metrics and source/definition-grouped splits.",
+        "Reuse the saved predicate-only1→4/67→70 arithmetic and scope-limited completed four-row regression. The latter has one case/three phases,10 updates,12 GRU forwards and1,074 equal BOS coordinates; absent planned preflight/execution-control files remain absent. Neither supplies autonomous/statutory gain. Fill only the eight missing matched reference cells through a separately qualified consumer, then compare conditioning policies on reviewed complete targets with fixed common metrics and source/definition-grouped splits.",
         "Reuse the separately qualified pure forced-singleton policy (41 authored cases/123 phases; bounded local feasibility only) and the explicit persistent v2 consumer. The separate [accepted consumer qualification](https://github.com/endomorphosis/ipfs_datasets_py/blob/main/docs/autoformalization/evidence/legal-ir-compact-persistent-forced-lookahead-generation-20261023.json) passed2 cases/6 phases and retained4 calls across2 exposed authored source rows and both conditioning modes, with unchanged weights/inputs,100-ID cap and horizon8. All4 outputs blocked: typed candidates, exact token-ID matches and exact compact-content matches remain0/4. Emitted lengths are31/31 for every_step and49/49 for first_step. Actual work was162 GRU forwards including2 independent BOS references,160 selections,6 model constructions/12 state installations and zero training/optimizer work. All4 outputs were durable before reference comparison; original source/native/storage custody closed. This delays the retained dead end without establishing a valid completion, conditioning winner or reconstruction gain. The pure portable's earlier combined-bundle-pending flag remains a historical cutoff; this accepted consumer and joint source selection supersede that queue state without changing the pure qualification scope. Preserve failed observer attempts and every old policy/profile/source/weight/context. The original pre-v3 next step was to qualify a bounded branch-aware completion witness or beam with the same retained weights, contexts and100-ID cap before more fitting or a cap raise; the accepted v3 consumer now supersedes that implementation/comparison step, while the original branches/horizons remain unknown. Keep reviewed complete source/context/AST targets, source/definition-grouped evaluation, native compatibility, four-width task/schema checkpoints and new-schema batch/graph admission as separate gates.",
         "Reuse the separate pure v3 `find_completion_witness` owner after its own accepted qualification: The [accepted pure-v3 qualification](https://github.com/endomorphosis/ipfs_datasets_py/blob/main/docs/autoformalization/evidence/legal-ir-compact-branch-completion-witness-20261023.json) passed 41 authored cases / 123 phases, including a genuine branching-positive fixture and an independently closed finite negative tree. Both bounded BOS diagnostics remain UNKNOWN: one predicate used 24 inspections with 43 unresolved frontier roots; two predicates used 32 with 57. Neither produced a typed witness, and the default 256-inspection BOS query remains unrun. Original source/native/storage custody closed, with 12 retained files / 730,289 bytes. The source census has 27 module entries representing 25 unique physical origins (two initializer aliases), 4 namespaces and 26 checked compile-buffer/exec-filename sources; code-object identity and full public-package/environment behavior remain unqualified. WITNESS is a typed syntactic certificate, DEAD_END is exhaustive relative to the original policy, and every cutoff remains UNKNOWN. It changes no mask, selector, model profile, checkpoint or retained inputs. The numerical v2 cohort remains0/4 typed/exact IR. Select further ordering or runtime integration from actual bounded diagnostics; separately qualify any new consumer with fixed retained weights/contexts/100-ID cap and explicit cumulative search/forward budgets. Do not use a witness as a learned target or model-generated suffix. Preserve reviewed source/definition/distinct-use targets, grouped evaluation and graph/Lean gates. Per-query caps establish no full-generation affordability. Require a cumulative grammar-work budget and an explicit witness-backed selection/carried-suffix policy: retain UNKNOWN choices and separate proof tokens from model tokens. Share pure witnesses across widths only on exact IR family/schema/version/codec/context/prefix/budget/pinned-source identity, without merging model inventories or checkpoints. No cache/registry implementation is included.",
         "Reuse the published legal_compact_content_persistent_runtime_v3 source SHA256 9c19f559f15e4e612f911af1e116643a383bc5617c756b05df88eb85015e2a5b and its accepted four-call outputs under the exact retained checkpoints, contexts and codec, 32 inspections per decision, 1,024 per generation and 100-new-ID settings. The incremental runtime and fixed-weight comparison are complete; no implementation or repeated cohort is pending because the owner was previously unpublished. Preserve the separate pure selector/core and genuine consumer scopes and every blocked/exhausted output. Next separately scoped work is cost profiling, per-call independent durable observations or reviewed complete source/context/AST targets with independently permitted conditioning and grouped evaluation. Keep native-space compatibility, four-width task/schema checkpoints and downstream source/graph/Lean admission as separate gates; no fit or cap raise follows from the unchanged 0/4 result.",
@@ -17710,7 +17725,7 @@
         },
         "summary": "No headline count/geometry error found. The six-tensor325-active clean-F15 proposal is a coherent bounded hypothesis, not a demonstrated repair. Full co-error distributions remain primary-derived; exact new mask/target provenance, loss math, guarded gradients/parity and fixed success/comparator policy remain prerequisites. Execution readiness is not asserted."
       },
-      "source_sampling_precondition": "Pure whole-source sampler and134canonical\u00a7101paragraphinputs are implemented; original9literalunits and20rowcache remain separate. Obtain actual source/meaning decisions and eligible targets before statutory training/evaluation.",
+      "source_sampling_precondition": "Pure whole-source sampler and134canonical§101paragraphinputs are implemented; original9literalunits and20rowcache remain separate. Obtain actual source/meaning decisions and eligible targets before statutory training/evaluation.",
       "status": "in_progress",
       "supervisor_execution": {
         "execution_authorized_by_this_file": false,
