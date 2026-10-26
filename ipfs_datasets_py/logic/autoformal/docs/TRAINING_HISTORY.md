@@ -106,6 +106,31 @@ A separate zero-model dependency probe passed four DATA checks, completed six me
 
 The selected [retained-training review](../../../../docs/autoformalization/evidence/legal-ir-comprehensive-reuse-review-20261023.json) reuses completed N9–F19 scoring and independent recounts. N11 improved TRAIN153→154/168 and N12 regressed to153/168. F17 and F18 retained154/168, below their155/168 promotion floor; fresh DEV/TEST exactness remained0/36. These authored task/readout experiments disabled latent conditioning, so they neither measure embedding benefit nor rank the four source widths. Their completed scoring and saved selector/predicate diagnostics must not be reassigned as new experiments.
 
+### Conditions full-span margin kernel, 2026-10-26
+
+The [focused qualification](../../../../docs/autoformalization/evidence/legal-ir-conditions-fullspan-margin-kernel-20261026.json) passed **36 cases: 29 scalar/guard and seven supplied-logit Torch cases**, with zero failures, errors or skips. Original source READ, compute and storage custody closed. This qualifies loss mechanics and synthetic logit gradients; no decoder, checkpoint or optimizer was constructed and no training or legal-accuracy measurement ran.
+
+Reuse the opt-in `logic/legal_ir/conditions_fullspan_margin_v1.py` profile. It selects the highest float32 start-plus-end score over every valid unpadded conditions span except exact gold, resolving exact ties by earliest row-major coordinate. Selection is detached; the selected wrong and gold scores are recomputed with gradients for `relu((1 + wrong) - gold)`. The mean includes every batch row. Absent conditions and empty negative domains contribute connected zero; padding and reversed spans cannot be candidates. Fixed coefficients are 0 and 0.25. Raw arithmetic overflow is rejected before ReLU. Existing CE, teacher KL, model partition and label admission remain the caller's responsibility.
+
+The old `structured_span_objective.py` and its tests remain byte-for-byte unchanged. A retained private continuation hashes that complete source file; appending this new loss there would invalidate its checkpoint dependency identity. The adjacent profile is not imported or registered by any default runtime, and no old checkpoint pins are rewritten.
+
+For a future F18-derived training profile, supply only the already-computed conditions row 3 heads and explicit training geometry:
+
+```python
+margin = conditions_fullspan_margin_from_logits(
+    torch, output["start"][:, 3, :], output["end"][:, 3, :],
+    conditions_targets, weight=0.25,
+)
+loss = unchanged_f18_weighted_ce + unchanged_f15_masked_kl
+loss = loss + margin["weighted_loss"]
+```
+
+Each target is exactly `{"token_count": T, "present": bool, "span": (left, right)}`; absent spans use `(-100, -100)`. This API validates supplied geometry, not source meaning. Its scalar reference rounds pair and hinge operations to float32, then uses a binary64 reference mean; backend reduction parity is a tolerance comparison rather than a general bitwise proof.
+
+Next qualify the separate four-tensor F18 conditions profile, preserving all 42 donor states, 38 frozen tensors and 650 inactive scalars with a fresh four-tensor Adam. Then run matched coefficient 0 and 0.25 arms with identical freezing, data, F15 teacher/masks, schedule and 32-update budgets. Include all 72 gold-present TRAIN rows, preserve the original weighted CE/KL association, freeze outputs before scoring, and compare raw/joint complete IR plus casewise retention and all 32 permissions. Completed F17/F18/F19 diagnostics must not be rerun as pending work. The historical strict promotion criteria and known losses remain separate from any narrow parent-relative engineering gain.
+
+The kernel takes logits and imposes no latent width. This does not make 8D, 384D, 768D and 4096D producers or checkpoints interchangeable. Matched native conditioning and reviewed statutory meaning remain separate tasks. The original LIR-17 record carries these follow-up subgoals; no replacement queue or new trained weights are created.
+
 ## Additional completed compact/gated/journal comparisons
 
 Paths in this table are relative to the surrounding development workspace. The named receipts retain historical training results. The separate bounded gated-state and saved-prefix replay below does not repeat those updates; other historical profiles retain their original replay status.
