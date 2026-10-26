@@ -286,3 +286,33 @@ the original 24-task board are preserved.
 Reuse the opt-in `prepare_parent_lexical_occurrence_projection_v1` and `validate_parent_lexical_occurrence_projection_v1` in the [existing corpus adapter](guides/legal_corpus_proposed_graph_adapter.md#explicit-retained-lexical-occurrences). The [original 41-case qualification](../../../../docs/autoformalization/evidence/legal-ir-source7346-lexical-focused-20261025.json) covers 21 new lexical cases, 16 retained depth regressions and four graph regressions. The [separate actual operation](../../../../docs/autoformalization/evidence/legal-ir-source7346-lexical-corpus-20261025.json) reuses the unchanged 837-record parent and both graph/AST alternatives, preserving prior opaque candidate bytes/CIDs while exposing the same four previously derived physical mentions. Two 13-node/16-edge snapshots form a genuinely written/read 20-node/27-edge aggregate with six shared physical nodes and five shared edges. This extends occurrence custody; all four mentions still belong to one physical(c) span, with no denoted entity, term-sense, governing definition or second distinct typed statutory use established.
 
 The exact source/test and literal receipts retain their frozen original qualifications; current-public dependency review is static and supplies no new runtime, model/training or Lean result. Original source/native/storage controls closed, and the earlier unadmitted metadata generation retains zero credit. Reuse the existing source/meaning review and semantic graph owners to obtain explicitly supplied endpoints and governing applicability before admission. Source/edition/meaning, definition and distinct-use decisions remain unresolved; authority stays false and training/gold masks remain integer zero. Preserve historical opaque-corpus, graph, correspondence and nomination-graph generations separately.
+
+## Lexical input and result closing custody
+
+Reuse the existing lexical projection APIs and [their closing-custody contract](guides/legal_corpus_proposed_graph_adapter.md#closing-lexical-input-and-result-custody).
+Original and detached occurrence lists and offered records now remain fenced
+through genuine parent replay, projection/sealing and serializer completion;
+actual returned bodies receive a final check through the existing pure JSON
+owner. Schemas, signatures, CID/projection construction and false authority with
+integer-zero masks retain their existing contracts. Primary failures keep their
+original exception object and record secondary custody failures as notes.
+
+The [two-case original-source defect observation](../../../../docs/autoformalization/evidence/legal-ir-source7346-lexical-closing-red-20261026.json)
+retains both expected failures and the separate native-wrapper predicate failure,
+with zero passing-test credit and no retained worker proof or red guard/buffer/
+model/Lean counters. Its original one-call recovery and closed storage evidence
+remain separately recorded. The [separate fresh
+35-case qualification](../../../../docs/autoformalization/evidence/legal-ir-source7346-lexical-closing-green-20261026.json)
+contains 21 retained lexical cases and 14 new drift/failure controls. The first
+successor attempt failed two unchanged diagnostic-contract checks, retaining 33
+passing observations with no worker proof or cohort qualification. Its captures
+and original cleanup remain separate; those 33 observations are never pooled
+into the fresh diagnostic-fixed result. Preserve the
+earlier 41-case campaign and 837-record actual corpus operation in their frozen
+generations; these counts are never pooled and no new actual statutory-data,
+model/training or Lean operation is claimed. The four mentions still belong to
+one physical(c) span, and entity/definition endpoints, governing source/edition,
+legal meaning, a second distinct typed use, semantic graph and Lean admission
+remain unresolved. Existing norm/definition nomination graphs retain their own
+opaque source references and ordered typed uses; no new cross-graph semantic
+join or governing-definition choice is introduced.
