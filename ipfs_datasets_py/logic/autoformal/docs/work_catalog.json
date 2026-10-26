@@ -1455,7 +1455,9 @@
         "validate_proposed_graph_candidate",
         "validate_parent_proposed_graph_candidate",
         "export_proposed_graph_candidate",
-        "restore_proposed_graph_ast"
+        "restore_proposed_graph_ast",
+        "prepare_parent_lexical_occurrence_projection_v1",
+        "validate_parent_lexical_occurrence_projection_v1"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
@@ -1465,7 +1467,9 @@
         "uscode-hf-wire-coordinate-graph-corpus-public-integration-qualified-20261024-01",
         "wire-corpus-focused-compatibility-20261024-01",
         "source7346-corpus-depth-focused-qualified-20261025-01",
-        "source7346-parent-corpus-qualified-20261025-01"
+        "source7346-parent-corpus-qualified-20261025-01",
+        "source7346-lexical-focused-qualified-20261025-01",
+        "source7346-parent-lexical-projection-qualified-20261025-01"
       ],
       "focused_public_dependency_integration": {
         "cases": 3,
@@ -1497,7 +1501,63 @@
         "training_mask": 0
       },
       "id": "coordinate-corpus-custody",
-      "notes": "Existing corpus adapter; additive graph-v2/original-eligibility-v3 proposal custody/export, not another graph implementation. Complete slots, ordered ASTs and independent commitments retained. No source crosswalk, entity meanings, complete norm, gold, models or Lean admission. Relational AST depth 32/4096 input custody and AST_JSONv2 restoration retain non-AST metadata/common/legacy depth 20 and shared 25,000-node/1 MiB budgets. Separate 16-case focused qualification and actual 837-parent opaque exchange preserve full ASTs; source/legal review, semantic projection, training/gold and Lean gates remain unresolved.",
+      "lexical_occurrence_projection": {
+        "Lean_corpus_admitted": false,
+        "accepted_entity_resolution": false,
+        "actual_internal_entry_counts": null,
+        "aggregate_edges": 27,
+        "aggregate_nodes": 20,
+        "alternative_edges": 16,
+        "alternative_nodes": 13,
+        "alternatives": 2,
+        "authority": false,
+        "companion_schema": "legal-corpus-parent-lexical-occurrence-projection/v1",
+        "default_pytest_qualified": false,
+        "depth_regression_cases": 16,
+        "evaluation_gold_mask": 0,
+        "evidence_ids": [
+          "source7346-lexical-focused-qualified-20261025-01",
+          "source7346-parent-lexical-projection-qualified-20261025-01"
+        ],
+        "explicit_public_entries": 7,
+        "focused_cases": 41,
+        "governing_definition_use": null,
+        "governing_edition": null,
+        "governing_source": null,
+        "graph_regression_cases": 4,
+        "independent_semantic_entity_term_definition_nodes": 0,
+        "model_widths_executed": [],
+        "new_derived_occurrences": 0,
+        "new_owning_cases": 21,
+        "new_runtime_qualification_by_publication": false,
+        "old_opaque_candidates_canonical_bytes_and_CIDs_preserved": true,
+        "original_graph_bytes_and_complete_ASTs_preserved": true,
+        "original_parent_records": 837,
+        "owning_test": {
+          "bytes": 13087,
+          "path": "tests/unit/logic/autoformal/test_corpus_proposed_graph_adapter_lexical.py",
+          "sha256": "d2d64eb92dc555092e0198356d48d5e6fbd8756a75c355dcfcc0a044f3223cba"
+        },
+        "profile": "relational_norm_v1",
+        "public_whole_package_runtime_qualified": false,
+        "relationship_assertions": 0,
+        "retained_derived_occurrences": 4,
+        "scope": "Additive lexical occurrence custody only, using four already retained mentions in one physical(c) span. Preserve original opaque candidate bytes/CIDs and complete raw graphs/ASTs; no entity, term sense, definition, selected source/edition/meaning, second use, semantic admission, new runtime/numerical training or Lean qualification.",
+        "second_distinct_typed_statutory_use_established": false,
+        "selected_legal_meaning": null,
+        "semantic_graph_admitted": false,
+        "shared_physical_edges": 5,
+        "shared_physical_nodes": 6,
+        "source": {
+          "bytes": 88010,
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py",
+          "sha256": "4dc0b9f44ccfa74d091af40d86fdc7ef5c67b9048ddc08426d0b768dd157c199"
+        },
+        "static_required_full_parent_replays": 4,
+        "status": "focused_and_separate_retained_parent_lexical_custody_qualified",
+        "training_mask": 0
+      },
+      "notes": "Existing corpus adapter; additive graph-v2/original-eligibility-v3 proposal custody/export, not another graph implementation. Complete slots, ordered ASTs and independent commitments retained. No source crosswalk, entity meanings, complete norm, gold, models or Lean admission. Relational AST depth 32/4096 input custody and AST_JSONv2 restoration retain non-AST metadata/common/legacy depth 20 and shared 25,000-node/1 MiB budgets. Separate 16-case focused qualification and actual 837-parent opaque exchange preserve full ASTs; source/legal review, semantic projection, training/gold and Lean gates remain unresolved. Opt-in retained-parent lexical occurrence projection preserves prior opaque candidates and exposes four already derived physical mentions across two interpretations. Separate41-case and actual837-parent qualifications retain zero semantic/entity/definition/meaning/training/gold/Lean authority; four mentions in one(c) do not establish a second statutory use.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.corpus_proposed_graph_adapter",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py",
@@ -5219,6 +5279,26 @@
       "root": "datasets_repository",
       "scope": "Two whole current-primary cases, one common scope and two authored alternatives;11 anchors/57targets, nine typed-target references from four lexical head anchors,48other targets as scaffolding, six unresolved issues and source context open. Original private837/16assets reused with20required nested parent replays; false semantic authority and zero masks. No public-runtime, model/training/Lean or semantic-fidelity/reconstruction gain.",
       "status": "qualified_real_parent_partial_authored_correspondence"
+    },
+    {
+      "id": "source7346-lexical-focused-qualified-20261025-01",
+      "observed_bytes": 5745,
+      "observed_sha256": "1ec0eac39051f6c2bce0c9548771b9727f3df9a4947485b8e5a559410b112654",
+      "path": "docs/autoformalization/evidence/legal-ir-source7346-lexical-focused-20261025.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original 41-case cohort only:21 new lexical cases+16 depth+4 graph regressions. No inferred selector/phase total, actual parent operation, current-public runtime, whole-package/default-pytest, numerical training or Lean admission.",
+      "status": "focused_authored_fixture_tests_qualified"
+    },
+    {
+      "id": "source7346-parent-lexical-projection-qualified-20261025-01",
+      "observed_bytes": 14289,
+      "observed_sha256": "541c0427141965f59ebebefcaab0b1eace84cf5b7fb2b9a71d63fc22d7e09dc9",
+      "path": "docs/autoformalization/evidence/legal-ir-source7346-lexical-corpus-20261025.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Separate actual837-parent operation preserves both complete graph/AST populations and old opaque candidates, reuses four already derived occurrences in one physical(c) span, and writes/reads two13node16edge projections as20node27edge aggregate. Source/edition/meaning, entity/definition resolution, second use, semantic/Lean admission remain unresolved; maskszero.",
+      "status": "qualified_real_source_lexical_occurrence_projection"
     }
   ]
 }

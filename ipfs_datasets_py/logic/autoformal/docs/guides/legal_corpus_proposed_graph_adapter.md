@@ -534,3 +534,57 @@ Fresh public-generation source/proposal originals and producer pins are
 required for a future replay. The retained private-run records are original
 observations, not replacement public inputs; no source identity, path or hash
 is aliased, relabelled or resealed to make an old preparation current.
+
+## Explicit retained lexical occurrences
+
+`prepare_parent_lexical_occurrence_projection_v1` adds an explicit lexical
+projection for the parent `relational_norm_v1` route. Supply the original
+proposal bytes, all original parent/proposal inputs, and a nonempty ordered
+`derived_occurrences` list. Its `expected_derived_occurrences_sha256` is SHA256
+of `canonical_dag_json_bytes` of that complete list. Every retained record must
+equal the corresponding independently validated mention selector; missing,
+reordered, duplicate or substituted records refuse. Existing source owners check
+exact source version, containment, Unicode and UTF8 geometry. The population
+must contain only mentions without definition tags, typed AST links or
+relationship assertions. Existing mention and aggregate envelope limits apply.
+
+```python
+projection = corpus.prepare_parent_lexical_occurrence_projection_v1(
+    proposal_bytes, derived_occurrences=retained_occurrences,
+    expected_derived_occurrences_sha256=independent_occurrence_list_sha256,
+    parent_bundle=parent_bundle, **parent_inputs, **proposal_inputs,
+)
+corpus.validate_parent_lexical_occurrence_projection_v1(
+    projection, proposal_bytes, derived_occurrences=retained_occurrences,
+    expected_derived_occurrences_sha256=independent_occurrence_list_sha256,
+    parent_bundle=parent_bundle, **parent_inputs, **proposal_inputs,
+)
+```
+
+The `legal-corpus-parent-lexical-occurrence-projection/v1` companion retains
+the unchanged opaque result as `base_candidate`, the supplied occurrences,
+semantic-ID mappings and an extended candidate graph. Each physical occurrence
+uses its retained record CID as node content and stable identity. Shared nodes
+carry no interpretation-specific provenance. `MENTIONS` edges retain proposal
+and input evidence plus declaration order; `DERIVED_FROM` edges bind each child
+to the original parent occurrence. Competing proposals share identical physical
+nodes while retaining separate custody.
+
+Validation regenerates the whole companion through fresh original-parent
+replay and compares canonical bytes, including exact JSON scalar types. Existing
+opaque APIs and candidate CIDs remain unchanged. Export `graph` through the
+existing graph exchange; retain the projection, base candidate, source records
+and independent inputs separately. Restore the AST from `base_candidate` through
+the existing restoration API and originals.
+
+These literal occurrences supply no denotation, term sense, entity-cache
+endpoint, definition, legal role or selected meaning. Authority, verification,
+admission and formalization remain false; training and gold masks remain integer
+zero. Source edition, context, definition applicability and distinct-use
+decisions remain unresolved.
+
+The [original focused qualification](../../../../../docs/autoformalization/evidence/legal-ir-source7346-lexical-focused-20261025.json) passed 41 cases: 21 new lexical controls, 16 depth regressions and four graph regressions. This is a case count; no selector or phase total is inferred here. The [separate retained-source operation](../../../../../docs/autoformalization/evidence/legal-ir-source7346-lexical-corpus-20261025.json) reuses the complete original 837-record parent population, both unchanged graph/AST alternatives and four previously derived occurrence records. Each projection contains 13 nodes and 16 edges. Six physical nodes and five edges are shared in the genuinely written/read 20-node/27-edge aggregate; four of those physical nodes are the retained lexical occurrences. Prior opaque candidate canonical bytes and CIDs remain unchanged.
+
+The four occurrences all belong to one physical(c) span. They establish no second distinct typed statutory use, independent entity/term-sense/definition nodes or semantic relationship assertions. Seven explicit public entries and four statically required full-parent replays retain their separate meanings; internal entry counts were not measured. Original source/native/storage controls closed; earlier unadmitted metadata is preserved with zero qualification credit. The frozen 41-case campaign and actual data operation remain separate from historical opaque-corpus, graph, wire and correspondence qualifications.
+
+Publication preserves the exact qualified adapter/test and literal qualification bytes. Compatibility with public base `f53da5716608117ffa8ad858c799559a6f127af0` is a separate static dependency observation; no new runtime or whole-package/default-pytest qualification follows. No 8D/384D/768D/4096D model, numerical training or Lean build ran in this publication. Source/edition/meaning, governing definitions, entity resolution, semantic graph and Lean corpus admission remain open, with false authority and integer-zero training/gold masks.
