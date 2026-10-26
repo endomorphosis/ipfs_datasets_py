@@ -153,6 +153,8 @@ Reuse `legal_corpus_shared_lake`, `legal_corpus_incremental` and preservation ow
 
 The intended cycle is legal text → complete LegalIR → legal text. Enroll and score its parts separately, using the existing typed IR, compiler/decompiler, codec and runtime owners. `ir_legal_text_roundtrip` already owns detached canonical-rendering and original-byte scoring; reuse it, while qualifying any new learned prose head separately:
 
+The [retained original-text measurement](../../../../docs/autoformalization/evidence/legal-ir-source384-original-text-roundtrip-20261026.json) and [existing guide](../../../../docs/autoencoders/legal_original_text_roundtrip.md) now record one retrospective score of 60 old raw-CE test predictions: 3/60 exact IR, 0/60 exact original UTF-8, 0/60 whitespace-collapsed exact and 0/60 joint exactness. All 60 canonical renderings completed; 3 exact-IR outputs still used different original wording. Keep the old 97/240 varying-path metric separate from the seven new facet counts, including constant empty qualifiers. The empirical same-IR surface ceiling is not a global model bound. No decoder/encoder/checkpoint restore, new training, learned prose head or fresh independent holdout was evaluated; source/native/storage custody closed.
+
 | Task | Required measurement and retained information |
 | --- | --- |
 | Source vector → source vector | Native-space MSE/cosine, producer/transform identity and bypass accounting. This is a representation diagnostic. |

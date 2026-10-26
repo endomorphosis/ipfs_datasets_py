@@ -1,0 +1,2888 @@
+{
+  "accepted_saved_audit": {
+    "bytes": 25563,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/independent-saved-result-audit-v01.json",
+    "sha256": "054a46dec27c86f2921c79c95057cfe25f99d1172a6a98327fbfd86b898cf9ca"
+  },
+  "actual_namespaces": 6,
+  "actual_owner_counts": {
+    "canonical_decompiler": 60,
+    "score": 1
+  },
+  "actual_product_modules": 4,
+  "captured_source_buffers": 42,
+  "controller_closeout": {
+    "bytes": 1354,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/validation-01/closeout.json",
+    "sha256": "f72cf97a602cb974afc96197cf60279b012e9fe26beb4af0f9ff58aa55d03f54"
+  },
+  "convergence_saturation_or_learning_gain_claimed": false,
+  "corpus_cached_gold_embeddings_or_original_source_text_republished": false,
+  "durable_owned_file_count": 13,
+  "evaluation_gold_mask": 0,
+  "full_score_canonical_sha256": "f2f1bb8aa71493c04cf5803b3be3fd44a42c255320a25e46380a1a09b8a8b82e",
+  "independent_blind_prediction_seal": false,
+  "independent_new_holdout_qualified": false,
+  "input_design": {
+    "bytes": 4080,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/input-design-v01.json",
+    "sha256": "fd9974475fb1f704ce1ff65d9c26c10dd6931a618a5d030cf94a40813943ca4f"
+  },
+  "joint_exact_ir_and_original_utf8": 0,
+  "learned_original_prose_head_evaluated": false,
+  "limitations": [
+    "New measurement of historical exposed authored outputs; no new decoder inference or pre-score blind capture.",
+    "Canonical rendering is a deterministic baseline, not a learned prose head or legal-semantic review.",
+    "Source/native/storage closure follows original sampled cooperative process scope, not arbitrary-descendant/kernel attestation."
+  ],
+  "model_encoder_training_or_checkpoint_restore_calls": 0,
+  "namespace_synthesis": true,
+  "native_compute_released": true,
+  "native_request": {
+    "bytes": 29478,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/validation-01/request.json",
+    "sha256": "d522230ca7e78b54b93d0306073a163313cb0aa68d48725aac7324d0c7d64ad1"
+  },
+  "native_result": {
+    "bytes": 771,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/validation-01/attempt/logs/result.json",
+    "sha256": "92fc23d481ef1db45c96a3d9e39935b516cf9e176e9e6ca620d57348cbbc58a1"
+  },
+  "native_terminal": {
+    "bytes": 6351,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/validation-01/native.stdout",
+    "sha256": "1458aaa48e23bc125031908d556f7cdf5ba9e8e70918857fe2ce4ce304e78ede"
+  },
+  "normal_installed_package_runtime_qualified": false,
+  "old_parent_evaluation_metrics": {
+    "exact_ir": 3,
+    "rows": 60,
+    "scope": "Historical four varying semantic paths per row; not the new seven-facet denominator.",
+    "varying_semantic_path_accuracy": 0.4041666666666667,
+    "varying_semantic_path_correct": 97,
+    "varying_semantic_path_count": 240
+  },
+  "old_varying_semantic_paths_and_new_seven_facets_have_different_denominators": true,
+  "original_checkpoint_descriptor_only_not_opened": {
+    "bytes": 614534,
+    "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+    "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+  },
+  "original_corpus_descriptor_only": {
+    "bytes": 529323,
+    "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/test.json",
+    "sha256": "ea7532abc3c2bcc27ce38dc6358a3898250f62e7cb8fd17af723dd1b85d65444"
+  },
+  "original_evaluation_descriptor_only": {
+    "bytes": 806117,
+    "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-evaluation.json",
+    "sha256": "ab97302bea53d0d31ec4e53c17ba6f696e2fe282b4f1cf066536f7b4e51e4d92"
+  },
+  "original_score_report": {
+    "bytes": 87447,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/validation-01/attempt/exports/original-text-score.json",
+    "sha256": "7ba251208ab6b60ef5c3fc6704dd4a30b729935ee359b62c18ae980d699d03f0"
+  },
+  "original_utf8_exact_with_wrong_ir": 0,
+  "owner_entries": {
+    "bytes": 37129,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/validation-01/attempt/exports/owner-entry-observations-finally.json",
+    "sha256": "7a0e831cead43c7538d32a835376a142552037e43cf3357b4038ab243e0bf5ef"
+  },
+  "projection_commitment": {
+    "bytes": 7651,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/validation-01/attempt/exports/projection-commitment.json",
+    "sha256": "3a630f96d1a5230c12805912fb8195dc9486586295705754018916a5aa8e59b9"
+  },
+  "publication_contract": {
+    "bytes": 4738,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/publication-contract-v01.json",
+    "sha256": "9452032c772fc3c5a702967527ac3e077eb8b9902759a1733db728d57c9db0d5"
+  },
+  "qualification_scope": "One retrospective score of the original exposed raw-CE1729 test60 predictions through checked canonical owners; no new model or independent holdout.",
+  "relocation_limits": "Original evidence retains absolute producer/data paths; this portable score object does not requalify a relocated runtime.",
+  "retrospective_post_reference_projection": true,
+  "schema": "legal-ir-source384-original-text-roundtrip-measurement/v1",
+  "score": {
+    "candidate_report_sha256": "04284098879a2544d50671a5264a9f4587c4754109f1d94eb37a40ff93b9b493",
+    "captured_inputs_sha256": "1ed99a1e057e893b15a9c5f22e96156cdd487181252eccd4b14b49a25c59df7f",
+    "checkpoint_loaded_by_scorer": false,
+    "corpus_pin": {
+      "bytes": 529323,
+      "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/test.json",
+      "sha256": "ea7532abc3c2bcc27ce38dc6358a3898250f62e7cb8fd17af723dd1b85d65444"
+    },
+    "counts": {
+      "abstained": 0,
+      "attempted": 60,
+      "decoded": 60,
+      "duplicate": 0,
+      "exact_ir": 3,
+      "exact_original_utf8": 0,
+      "missing": 0,
+      "refused": 0,
+      "rendered": 60,
+      "rendering_refused": 0,
+      "whitespace_collapsed_exact": 0
+    },
+    "coverage": {
+      "duplicate_ids": {},
+      "expected_count": 60,
+      "invalid_id_row_indices": [],
+      "missing_ids": [],
+      "prediction_count": 60,
+      "unexpected_ids": [],
+      "valid": true
+    },
+    "decoder_execution_authenticated": false,
+    "edit_budget": {
+      "maximum_cells": 4000000,
+      "scope": "global character and whitespace-token Levenshtein cells; exhausted distances stay null",
+      "used_cells": 74512
+    },
+    "edit_metrics": {
+      "character_edit": {
+        "attempted_rows": 60,
+        "mean_distance_on_scored_rows": 24.35,
+        "mean_excludes_unrendered_and_budget_exhausted_rows": true,
+        "scored_coverage_fraction": 1.0,
+        "scored_rows": 60
+      },
+      "whitespace_token_edit": {
+        "attempted_rows": 60,
+        "mean_distance_on_scored_rows": 6.066666666666666,
+        "mean_excludes_unrendered_and_budget_exhausted_rows": true,
+        "scored_coverage_fraction": 1.0,
+        "scored_rows": 60
+      }
+    },
+    "embedding_generation_executed": false,
+    "facets": {
+      "action": {
+        "matched": 26,
+        "total": 60
+      },
+      "actor": {
+        "matched": 21,
+        "total": 60
+      },
+      "conditions": {
+        "matched": 60,
+        "total": 60
+      },
+      "exceptions": {
+        "matched": 60,
+        "total": 60
+      },
+      "modality": {
+        "matched": 20,
+        "total": 60
+      },
+      "object": {
+        "matched": 30,
+        "total": 60
+      },
+      "temporal": {
+        "matched": 60,
+        "total": 60
+      }
+    },
+    "independent_holdout_qualified": false,
+    "learned_original_prose_head_evaluated": false,
+    "model_inference_executed_by_scorer": false,
+    "native_grammar_verified": false,
+    "operational_complete": true,
+    "prediction_provenance_valid": true,
+    "producer_execution_authenticated": false,
+    "proof_authority": false,
+    "rates": {
+      "denominator": "all_captured_input_rows",
+      "exact_ir": 0.05,
+      "exact_original_utf8": 0.0,
+      "whitespace_collapsed_exact": 0.0
+    },
+    "renderer_behavior_authenticated": false,
+    "renderer_boundary": "detached_predicted_ir_and_non_source_request_id_only",
+    "renderer_is_caller_supplied": false,
+    "renderer_uses_model": false,
+    "rendering_task": "deterministic_canonical_text",
+    "report_envelope_valid": true,
+    "retained_source_restoration_evaluated": false,
+    "rows": [
+      {
+        "candidate_ir_sha256": "2f1ef82e3635f6f3148615f6fd3417b8d323bc5a0ad48e58c84062292d5d8af4",
+        "embedding_sha256": "74acad6b251d0d57da7ba0ead5991ba8be58b68b66d3c6f16d479e4ab5aa1945",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:0:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1140,
+            "distance": 24,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Treasurer may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "8a3b6b9a042017e92bf3d686dbce60fde6a429d638151c47b1a18ec2721c2221",
+        "split": "test",
+        "target_sha256": "8a6ed9a3f83896211a7eb6c38b702f993ca4d3abbcfe338dda3565934b44c8bc",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "2f1ef82e3635f6f3148615f6fd3417b8d323bc5a0ad48e58c84062292d5d8af4",
+        "embedding_sha256": "8acc5b7a73540ba25e038936765a7f067bc67701c0fadc1a0e7a0a078d912cc3",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:1:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1110,
+            "distance": 21,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Treasurer may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 5,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "5d6e5365868301362c00c93630f365daeebd9b1f5074bddc88d9532d4d671504",
+        "split": "test",
+        "target_sha256": "0d1eb59792ab2fe7fa3efb4faa84079148032450bdb44c49f229c183db2113f0",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "9c985b6c3db29c255c834c8c7c9b0fb75ad2ff6518f972952a947537f0ab1629",
+        "embedding_sha256": "41f04716c4b8fcd83c710cb0aa384c5690aef0b4de1192533ccc128825730cbf",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:2:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1134,
+            "distance": 31,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 28,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "004536aa22331878a55785ec971392ef6305c927e93dec3a3c3e3087829cbaa0",
+        "split": "test",
+        "target_sha256": "a11af15c2050c9d3c6538d976146c4ca5c11b1d7ac10141b4012703269dc1d89",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "f7b770cc43d656c7306b39480194befe5980a7739cd688a40a3fc378c2ab9d56",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:3:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1092,
+            "distance": 21,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 5,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "ab682940159f2717e69643dc09c2ff380b2bd5c04c87a678606e20e4fc436a05",
+        "split": "test",
+        "target_sha256": "fa6a73d66316682ff26c02b50c067aaf47a9f0a7dd26232360cd7b126ea6b39e",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "30e3b4d229d868b3dd95b0076991666d5398a5b93e5f9ea7e99b32aee7fb0618",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:4:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1064,
+            "distance": 18,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 4,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "68b2de5032977082e37efea65a9dfcfec6387087b8e09a2a69a0fa3b4640c3ee",
+        "split": "test",
+        "target_sha256": "e3796bbff40dc5d13096f1a23e2acd33d7c59ca7e6d2cfa8e1af1c34243d404a",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "43329dd6f9f4e589935cde2dbe3f05026a3b303c8c194bc3a13babb753d2b199",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:5:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1204,
+            "distance": 25,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 28,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "d0ef66741c0e983684b2ae97a939336e35d2bfc126b96b0c017cb955ba7b9c44",
+        "split": "test",
+        "target_sha256": "d41aae92faea8e23fda22094277fdec04c6cbeaf9cfb2f05131f3230c78b0366",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "94fd3a465aa1cfef59efc327ee15838734bfc8fdfa2337970241760c8caf4a96",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:0:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1344,
+            "distance": 33,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 8,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "f8bce539ade949f3f47a6c925f40f7a345af22f396108824e129165211930f3b",
+        "split": "test",
+        "target_sha256": "8a6ed9a3f83896211a7eb6c38b702f993ca4d3abbcfe338dda3565934b44c8bc",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "0a036bf97b0a7f5ddae4738346905763a2d5237f70b2c17d1556893131de5f76",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:1:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1316,
+            "distance": 33,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 8,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "1ff8a5b4228f2a6cfdf12a352109c065b68b62f15adf82b47c3ac116eae77f91",
+        "split": "test",
+        "target_sha256": "0d1eb59792ab2fe7fa3efb4faa84079148032450bdb44c49f229c183db2113f0",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "2f1ef82e3635f6f3148615f6fd3417b8d323bc5a0ad48e58c84062292d5d8af4",
+        "embedding_sha256": "d3585e3a7885bd7981cc933d32f4124091e3729cfbd67fbdc9797e7f05e562d9",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:2:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1470,
+            "distance": 33,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Treasurer may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 8,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "8bee8b7584cc81d64bcd245a9f867a74af2e277fe211914eaa5af8649e465fd2",
+        "split": "test",
+        "target_sha256": "a11af15c2050c9d3c6538d976146c4ca5c11b1d7ac10141b4012703269dc1d89",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "d078e247130e8d3ce3a530553e28f65c4ab399fd95098660c20329fcf6c9b4c6",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:3:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1372,
+            "distance": 31,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "ff06b6332729d7173d839ab536a29cb42c65e840bc78089b5a29e7fb3fa9d706",
+        "split": "test",
+        "target_sha256": "fa6a73d66316682ff26c02b50c067aaf47a9f0a7dd26232360cd7b126ea6b39e",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "811f727ee9faa25749f2559e12f507acc256b88fa03362701f0112080b993ad9",
+        "embedding_sha256": "4135aaec320ba16043b7a276365ccedd390692f6b3474ac5ad59d6ac689943db",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:4:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1344,
+            "distance": 25,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may approve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "60b59972976184f7d1774fc0780fc5ef7f1f8a1995561f8d1521b065cdb80215",
+        "split": "test",
+        "target_sha256": "e3796bbff40dc5d13096f1a23e2acd33d7c59ca7e6d2cfa8e1af1c34243d404a",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "2f1ef82e3635f6f3148615f6fd3417b8d323bc5a0ad48e58c84062292d5d8af4",
+        "embedding_sha256": "b543e38eb1ca883caae51c713bac3a7b8f40094052fae6ba7a91ef1b4ecf7cc4",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:0:0",
+        "id": "legal_ir:0:0:5:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1500,
+            "distance": 31,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Treasurer may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "43f7208ef9935cfcf80d710c6a41eb9837627dcb4a6021e5d5e72539ac8d8ded",
+        "split": "test",
+        "target_sha256": "d41aae92faea8e23fda22094277fdec04c6cbeaf9cfb2f05131f3230c78b0366",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "0a723eef6a862b4f81582caf8de751dd2d07d03526ef6a6a77e8abf8bf27a27b",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:0:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1073,
+            "distance": 15,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 5,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "8da8decc2214ad99504e401ab4329b136d25e8b93279ba9c1eff08532abe4cb3",
+        "split": "test",
+        "target_sha256": "3e7d3f5395fdfe4f8c56d4a591c1f400f04e6b19060601e826f30d9df00aba27",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "28b1dde28fbcac94c775b4efea178e1131706b325a2c18467a83d61f588d1041",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:1:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1044,
+            "distance": 12,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 4,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "b1fca82b75d9357f9b7368a7944daa5ca940aeae2092af029f4a585d20f5bf6d",
+        "split": "test",
+        "target_sha256": "c3fd8117f6a9e6d87979ad1968f3346780a94471032ac9f0b36bee8c23056643",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "7d6c5eeb7183c619e50dfe6f0c2271a31e117f9d303dcdce0cdbaa4fb40563df",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:2:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1189,
+            "distance": 19,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 28,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "e393013dbcc2e83e94b04bb13981304643e8bbee082b5bee0c27d03ffac02193",
+        "split": "test",
+        "target_sha256": "ac20fd2c33d73883b3c77f11390f2b501d464dc87b49cdc1095b02b514f5c356",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "eb619d20c7bbb3f8af589020a57e09b5ba7c5a40ccc9c6f33e71ca6c81d2a4e2",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:3:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1102,
+            "distance": 11,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 4,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "d942f786450b941bed4d9fa7cdb1b2da2071debb3cd24f7150141d390de31e29",
+        "split": "test",
+        "target_sha256": "2c495695e5e4c695f5cb8aca8316f4fbe7f693eda8abad28712b2c6b1e5d8d8a",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "2945cdc141f1c3fa7344c1065b4e524bf4db7eb5edad6152c885ca3274388990",
+        "exact_ir": true,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:4:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1073,
+            "distance": 8,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 3,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "825c956b6ef1c3293249553bcec637a326549172c68419c8868c32895409b7ea",
+        "split": "test",
+        "target_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "e0bf30922a87521728c43a4a61b5ddee13d4bcbba1573c7f073e61762f95114c",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:5:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1218,
+            "distance": 15,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 28,
+            "distance": 5,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "360b7fada5dcfd9580e8e99dbca810a87c555278c036729001f7cfbaf7c048ca",
+        "split": "test",
+        "target_sha256": "eb52f1fd828a62dc54134bd03d26285e1ebc03b9328ca0aa2de5a28222702ffa",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "2a68fde59627419b1b353bfa364f15f1c19c0e7c62c6842c6f3ff47aa89c4295",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:0:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1363,
+            "distance": 26,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "58ef5fae2bef6f2d6324031c72f77dd6e19287f2cb81e168dc2a9462aa8db7b0",
+        "split": "test",
+        "target_sha256": "3e7d3f5395fdfe4f8c56d4a591c1f400f04e6b19060601e826f30d9df00aba27",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "a6638aa542009ab2c6f1f2accbb0d7d90b8ee98da4ffe0cb5e24a2dc3412376c",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:1:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1334,
+            "distance": 24,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "fd911e1c153e427554d477a9a9383e7e20dfcdd155fc38e59c90575304323f19",
+        "split": "test",
+        "target_sha256": "c3fd8117f6a9e6d87979ad1968f3346780a94471032ac9f0b36bee8c23056643",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "3cf27966cb1e10e3d5254ca296cd1f0700e4aa6858dd49c5f5a053620cf6f2c6",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:2:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1392,
+            "distance": 27,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "2e71e351e0be8fea137003830006c51f63f0e14b00bedd634560d3fc2fe82582",
+        "split": "test",
+        "target_sha256": "ac20fd2c33d73883b3c77f11390f2b501d464dc87b49cdc1095b02b514f5c356",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "8c2646139476ee56686e35c3185ac5628b7362a36edaa8da72c8cb819f05193e",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:3:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1392,
+            "distance": 22,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "3a29dd53e963b39e811e8b2892e7f3e98201844cbfaee19e2ae8c0ec416e040a",
+        "split": "test",
+        "target_sha256": "2c495695e5e4c695f5cb8aca8316f4fbe7f693eda8abad28712b2c6b1e5d8d8a",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "539ebd1f854c7cd3a93d24a6c0bbac004b729ded2674ca94c30f932f26974b25",
+        "exact_ir": true,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:4:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1363,
+            "distance": 20,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "67230e2f29757353181a7eb4be0ca32306cb921da32700415afceef2e6a32d76",
+        "split": "test",
+        "target_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86",
+        "embedding_sha256": "d385b234d93bc3a714ac06ae91027b9f4287e846b360f636e187c10d905bee0b",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:1:1",
+        "id": "legal_ir:1:1:5:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1421,
+            "distance": 23,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may preserve archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "ce89f0138ae8083afde339260d59584fea089ff859266fda562b6319e54ec2a6",
+        "split": "test",
+        "target_sha256": "eb52f1fd828a62dc54134bd03d26285e1ebc03b9328ca0aa2de5a28222702ffa",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "b6e4f61270a6374f8b7267af6b719536d8f81ad63c31b48a91a37142eeaf5719",
+        "embedding_sha256": "8f92ce3d2181319864fbe577ced25978b8491c4c7bfd69cd44c4ffdbc20a6d03",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:0:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1026,
+            "distance": 20,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may publish archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 5,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "d587b12559747c111f2aa8d03ef12e23fa224c20e4b05762b3a854faaeee60cd",
+        "split": "test",
+        "target_sha256": "276166482ad92fa2c6efde645d20197890105b243a19bbc34e3575c866f844ec",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "b6e4f61270a6374f8b7267af6b719536d8f81ad63c31b48a91a37142eeaf5719",
+        "embedding_sha256": "5c160da877bf538f43cf2a8d1d3709bcf2cd10830c9e7ccbc0ba0899eadcf2e4",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:1:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 999,
+            "distance": 17,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may publish archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 4,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "882845919f5df2975eaea26cddf92781a6d96ca7eb2bc39cf79a4d72eae66103",
+        "split": "test",
+        "target_sha256": "9fa2b1da42418d603e66e210c3f24145b41c5bf0d36b9da5368c4dd9f1000376",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "9c985b6c3db29c255c834c8c7c9b0fb75ad2ff6518f972952a947537f0ab1629",
+        "embedding_sha256": "d579ad5d70945096e434b8599037e950a1e9d1ed219b42768c32e8cec3b10343",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:2:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1134,
+            "distance": 30,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 28,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "a6689d8ac5f2fc83f5c95458b1cdf8d3c65a41250f3a4d1b9ba1bc2654a2b161",
+        "split": "test",
+        "target_sha256": "db4499ef0abdb12327c5029d712c525b4a8475bd41681b0437ba6b5b660953b9",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "b6e4f61270a6374f8b7267af6b719536d8f81ad63c31b48a91a37142eeaf5719",
+        "embedding_sha256": "575e54b4eb2712d5699a7a4441684fc4e30250e24de3582636d3f55fd53916f8",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:3:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1053,
+            "distance": 16,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may publish archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 4,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "22a01aa6e61fb1b06a4d1d2a747e65c04d3236f15bd7f6ecb543d3688e812b37",
+        "split": "test",
+        "target_sha256": "87d638aecf06478c5ce52fcc172790058f93ed08583c8a9db42745f788b57fd5",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "b6e4f61270a6374f8b7267af6b719536d8f81ad63c31b48a91a37142eeaf5719",
+        "embedding_sha256": "0c915d4f07ae8e6c4b0b50ce5b05aa22d88583a891eddb1593d18cf0464d89d4",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:4:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1026,
+            "distance": 13,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may publish archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 3,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "4c408a3784d8b9d9ce367e83266d76846effcfcfdc97f60f2b6441dfb02ac6b6",
+        "split": "test",
+        "target_sha256": "f7b6f70d33755008602f26032259320d13e46429fd51a79b8c633fecb5b8c579",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "9c985b6c3db29c255c834c8c7c9b0fb75ad2ff6518f972952a947537f0ab1629",
+        "embedding_sha256": "85e213183a1cbf98707f3ef174055d253bd0fc1b70e2e0f2018643ab78cfd586",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:5:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1161,
+            "distance": 25,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 28,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "3256bcafc0e389e75ebdfeb0d6ebbaf6ecb1e585a05b3d3511e8530d42bad741",
+        "split": "test",
+        "target_sha256": "0c6f7dd749e9434077820796b1320d6f43502ecd051b19691fd0a25138ad3739",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "b6e4f61270a6374f8b7267af6b719536d8f81ad63c31b48a91a37142eeaf5719",
+        "embedding_sha256": "f1c4c13e3744edd1821500ccad8fda8950871e10b869cb8143eab8df89acc97a",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:0:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1296,
+            "distance": 31,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may publish archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "be6f28a64276ac7676570f38e3bd0c7904d4220c251ce6b2dbb111ed280d0adf",
+        "split": "test",
+        "target_sha256": "276166482ad92fa2c6efde645d20197890105b243a19bbc34e3575c866f844ec",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "b6e4f61270a6374f8b7267af6b719536d8f81ad63c31b48a91a37142eeaf5719",
+        "embedding_sha256": "47243bac4fb3cb9b0589637def545b8b758b4b1259c12132b841dc7b8981c210",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:1:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1269,
+            "distance": 29,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may publish archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "2aaa26cf8e68adf5cc9363362ae60e85d089338a1b6b5a4080047d26ae4b4a1e",
+        "split": "test",
+        "target_sha256": "9fa2b1da42418d603e66e210c3f24145b41c5bf0d36b9da5368c4dd9f1000376",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "9c985b6c3db29c255c834c8c7c9b0fb75ad2ff6518f972952a947537f0ab1629",
+        "embedding_sha256": "af1af57c7bbe3ad9486d9e7c4febe49cffd711e5df2b84b27a5dde108144760c",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:2:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1323,
+            "distance": 37,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 8,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "f98021ef6699e0357c4f0040bd77862878801645fd1f6513c4762321aff7b482",
+        "split": "test",
+        "target_sha256": "db4499ef0abdb12327c5029d712c525b4a8475bd41681b0437ba6b5b660953b9",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "b6e4f61270a6374f8b7267af6b719536d8f81ad63c31b48a91a37142eeaf5719",
+        "embedding_sha256": "7a5604101552cd160dcf23404b1060d3c604f14daf635ca9954e8f26137fff65",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:3:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1323,
+            "distance": 27,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may publish archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "9eec29f540c9254dd1fe5d4e3efe61e1d6e2e9c776b34c0495410f23a48b0a3b",
+        "split": "test",
+        "target_sha256": "87d638aecf06478c5ce52fcc172790058f93ed08583c8a9db42745f788b57fd5",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "b6e4f61270a6374f8b7267af6b719536d8f81ad63c31b48a91a37142eeaf5719",
+        "embedding_sha256": "9705591ff8f889912f9ffccddf81a536a300eeb1d17b3eea07898b97d0494760",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:4:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1296,
+            "distance": 25,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may publish archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "c0f4923837e61a9a1dd2f5b614bcdcab2ebab7ea21b8ecb2859363e7b83d75dc",
+        "split": "test",
+        "target_sha256": "f7b6f70d33755008602f26032259320d13e46429fd51a79b8c633fecb5b8c579",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "9c985b6c3db29c255c834c8c7c9b0fb75ad2ff6518f972952a947537f0ab1629",
+        "embedding_sha256": "c14f6b37a915e4b0ff9b181260211208fdf08e6dc33be424d9bf569a7569eb4d",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:2:2",
+        "id": "legal_ir:2:2:5:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1350,
+            "distance": 33,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "30d592ebeced4abadcd6e467230a7316f14a1cbdbb93b72f717817c22e97f7a0",
+        "split": "test",
+        "target_sha256": "0c6f7dd749e9434077820796b1320d6f43502ecd051b19691fd0a25138ad3739",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "b80adc69887857a4d76697e2c622ca66027c1b8bfd0ae0fbed24b541acee7b50",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:0:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1064,
+            "distance": 26,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "14331abb17c1f443034a19726d4b849df35dec25a10b4d17fdff9edb00ddf43d",
+        "split": "test",
+        "target_sha256": "14094a93688ec18b05febd8f118284369d3be90fe6446d23f39ea220c44f20aa",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "da3be616a74dd87b58aeb647d116f1b1de1b4781a2cf396365172551c40dbba1",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:1:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1036,
+            "distance": 23,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 5,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "2dc6c22141d054027be36fc300147f3b21a9996dfd3d86b59099063245c5b4ad",
+        "split": "test",
+        "target_sha256": "23ed81c1d479462ba84bdace74dca0d74f2d415090b1bc9e72de3bb011f47f39",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "0a1000f70aaa04881005d6b1a753de230f2b940c95e1c39c89415002563be4e9",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:2:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1176,
+            "distance": 29,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 28,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "906b9c1be62adf388bc695d7cf378f6816a693923297c13ada25373239b99693",
+        "split": "test",
+        "target_sha256": "791d617f1f543d6135b1199df514c3861c060820e1e56ab3af60dce2d4bc6d08",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "6983c0b8b3429a45d93441eb3f31e8d0fff0971b6cec44ada8afcd671391427c",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:3:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1092,
+            "distance": 21,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 5,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "f189792c20e49ad47ae540f41631d9983fc8e9c9fc96041638d519b309126c51",
+        "split": "test",
+        "target_sha256": "147b41d81babb65363163e5efee4efa5a78a4e4218d635eb42370e8a8934eb84",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "f1beb6d87c7fc10513a11d95fe0acbb7ffbd6441d11b146b682385cbefa03a2a",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:4:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1064,
+            "distance": 18,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 4,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "2a74a60ae651e12ac6488df62407f963f49b7160e338568d6626988ecb450864",
+        "split": "test",
+        "target_sha256": "2f1ef82e3635f6f3148615f6fd3417b8d323bc5a0ad48e58c84062292d5d8af4",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "92c1e22f61f8ea0d4dfd658f0fa2c139355a4299250e1358a3932997a23f5fa5",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:5:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1204,
+            "distance": 24,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 28,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "d84a795b2087739a69337f3e3014e57a48aa2ce6fa7bbb0d2c972dc9afda91b9",
+        "split": "test",
+        "target_sha256": "78af42d5b7ce3393b8141372543c6593116e9a0c4f248d04826dab53b8c4ce95",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "13abce05dce141163d097dc3d7f8faa7595837f63674caf1a3aec96cd346258d",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:0:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1344,
+            "distance": 34,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 8,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "ed6ff6517b74b95bdd458d4ecb24a5dde3404b9ff2ac600ed9aee27ce894052c",
+        "split": "test",
+        "target_sha256": "14094a93688ec18b05febd8f118284369d3be90fe6446d23f39ea220c44f20aa",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "44888ef862e768404b2d553fc95b0cbbfd7e5da1858cb0a33de19734bc63d47a",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:1:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1316,
+            "distance": 34,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 8,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "4074f4b4b6ee83c098d7b2107f3e8d97d0b1a03c389b1585f5dba8b567ac952c",
+        "split": "test",
+        "target_sha256": "23ed81c1d479462ba84bdace74dca0d74f2d415090b1bc9e72de3bb011f47f39",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "6d7ba3e8a583eff302fb01f3e2fc677bc3291c8b0cfc5522462405c158447270",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:2:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1372,
+            "distance": 36,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 8,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "b58d5633d4c661a9cbb9fd2c7a1cac7c470e990f040c277e3d81cddc5289884e",
+        "split": "test",
+        "target_sha256": "791d617f1f543d6135b1199df514c3861c060820e1e56ab3af60dce2d4bc6d08",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "6fc47fe3681f44594bdb3e3a3ce6d3ceff292cfe3ea5baf818cc7f5827677e86",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:3:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1372,
+            "distance": 31,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "35846c1c783cb47749f35d715752b5f8e69ea2d78a6f0fbf84f684fee1d9a2be",
+        "split": "test",
+        "target_sha256": "147b41d81babb65363163e5efee4efa5a78a4e4218d635eb42370e8a8934eb84",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "faa557a033ff22ba82fe7ef23dcee9fc0e16c4243456a8fe77cb5793f1e09d52",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:4:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1344,
+            "distance": 29,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "ab767688f0bd70d65abcf3e39d1f186089e974ff4c5d67a8eadcd4b20142120b",
+        "split": "test",
+        "target_sha256": "2f1ef82e3635f6f3148615f6fd3417b8d323bc5a0ad48e58c84062292d5d8af4",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "87a62954f0f03b2f2ccaf7ce611c04d5484cf71469394796f29fd31b001b31c3",
+        "embedding_sha256": "c65770915ffd2d28c55a6acc60b0152468110b7974c6b4d5abcbf2687b40a695",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:3:3",
+        "id": "legal_ir:3:3:5:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1400,
+            "distance": 32,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Trustee may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "e1a0d7132d29678450b72c799b4cf3ba5d5256b6775743d5447a7b5dbd44a544",
+        "split": "test",
+        "target_sha256": "78af42d5b7ce3393b8141372543c6593116e9a0c4f248d04826dab53b8c4ce95",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "b6e4f61270a6374f8b7267af6b719536d8f81ad63c31b48a91a37142eeaf5719",
+        "embedding_sha256": "ac8125759745096ff5042f6563f9cad49c4c72190627d86392b6dcbd14838a37",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:0:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 945,
+            "distance": 22,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may publish archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "7e317b8bab0ce888e164c539779b58da3af657d330cd46ae8fdd0826781d8413",
+        "split": "test",
+        "target_sha256": "9a363d6fa526a1b0dbcdd5604a9033fd01838899f583a0c7c151dce2e8dee725",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "b6e4f61270a6374f8b7267af6b719536d8f81ad63c31b48a91a37142eeaf5719",
+        "embedding_sha256": "08d6609d2a74a622b5b3fd01cc975581cc192c18d51c84ef7439b91a507334f2",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:1:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 918,
+            "distance": 19,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may publish archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 5,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "9d37d2e1f84375b36701a3bb9239bf3e7f05a1036b9ef995523cf884cbee34dd",
+        "split": "test",
+        "target_sha256": "a3e98a1e625fb7fd2b7815e43ed2048403ee1f3df5c4573dd6904680fecfa188",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "9c985b6c3db29c255c834c8c7c9b0fb75ad2ff6518f972952a947537f0ab1629",
+        "embedding_sha256": "0262e229ba16551e632fc0bb55bb8a902c3c2ead5e3605e0811ec7c6c24731f5",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:2:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1053,
+            "distance": 25,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 28,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "9e0f8748c1410550f1cadc9c8a389e727e1e765c53509bcae09dabb7e36b8f73",
+        "split": "test",
+        "target_sha256": "b0e0cca8380d03f64812c1fc5405c2cee5d769c39bdc8f0abfeb2dbe36e35b38",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "9c985b6c3db29c255c834c8c7c9b0fb75ad2ff6518f972952a947537f0ab1629",
+        "embedding_sha256": "de9e8e715ae628243ef212726f98b76903e30c9ec2635bcbd306e49a89987f5f",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:3:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 972,
+            "distance": 17,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 5,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "618cbaeff10ce8defd2454afacd8b193a1ad6bdbd2f9f958a5851e352023c10c",
+        "split": "test",
+        "target_sha256": "3c38c90ab4c53e685281b4e6697d516583471aa7534d3187aea1f7f2a9e0d0f0",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "ede3f512dec4ef6255f5db6972c0c12b8caa84f057e739ede522e2a2f80b0ece",
+        "embedding_sha256": "8abd97e5fbf5dc2ceedbbdb7f5dd72d7a50adc14c3e594a77dbc0cb774a8892c",
+        "exact_ir": true,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:4:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 945,
+            "distance": 9,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 24,
+            "distance": 3,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "3622de673f6c99f1592f74083d26247e3e2a9ab94d76dfbd2af3e57ea0040195",
+        "split": "test",
+        "target_sha256": "ede3f512dec4ef6255f5db6972c0c12b8caa84f057e739ede522e2a2f80b0ece",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "ede3f512dec4ef6255f5db6972c0c12b8caa84f057e739ede522e2a2f80b0ece",
+        "embedding_sha256": "84e0af3f65f897a9a9b010201d4f06119e2f7879dc13f7e8a6c88e72cfa58bb7",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:5:0",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1080,
+            "distance": 16,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 28,
+            "distance": 5,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "7832e7a584c60fc60be6431b71143025475c84ca7cdaa59b58b4d91c8c1c5aa6",
+        "split": "test",
+        "target_sha256": "736f41c0f22372f98083eee0a00e9bfb274352d5580d7796918772b2d576925a",
+        "wording_style": 0
+      },
+      {
+        "candidate_ir_sha256": "b6e4f61270a6374f8b7267af6b719536d8f81ad63c31b48a91a37142eeaf5719",
+        "embedding_sha256": "e4ecfeda6cdc75e416c9bf348c16755dab9b4916fb06754f9b2d881a0f57732c",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:0:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1215,
+            "distance": 32,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may publish archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 8,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "3fd369221379e5e084c03793f04b35901be57590db3851dca56f7efaa475cab7",
+        "split": "test",
+        "target_sha256": "9a363d6fa526a1b0dbcdd5604a9033fd01838899f583a0c7c151dce2e8dee725",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "9c985b6c3db29c255c834c8c7c9b0fb75ad2ff6518f972952a947537f0ab1629",
+        "embedding_sha256": "b24018de2ed1cfd64d0c9b0049bbb8048ec8d4a23a8dc184e4864a8bdaa06bcf",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:1:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1188,
+            "distance": 30,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 8,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "dc2d3893aa8859e325689be9c48b98937a25732aac3d8a616913a60fe586a48c",
+        "split": "test",
+        "target_sha256": "a3e98a1e625fb7fd2b7815e43ed2048403ee1f3df5c4573dd6904680fecfa188",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "fb8ab6b85f0d542758cdb3b13f552ea9c0fabb02a219a7a230b5c3aa067759be",
+        "embedding_sha256": "46811b36ac6fd55f6b2dc4fe05bf4490baa27391d5d5328a3a786dc97b1238f0",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": false,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:2:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1380,
+            "distance": 28,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Treasurer may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "0866b716e8b982a68bef71e2d7a4355bf91d203c1e922542baaec9240650e2d6",
+        "split": "test",
+        "target_sha256": "b0e0cca8380d03f64812c1fc5405c2cee5d769c39bdc8f0abfeb2dbe36e35b38",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "9c985b6c3db29c255c834c8c7c9b0fb75ad2ff6518f972952a947537f0ab1629",
+        "embedding_sha256": "10992355df3bc4144846a874dc0e017d810f7820c3c504fa2ef4fd062704f1bc",
+        "exact_ir": false,
+        "facets": {
+          "action": false,
+          "actor": true,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:3:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1242,
+            "distance": 28,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Notary may examine archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 7,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "d9e330e98aa04c733f7af9809ebc2ca6f136da70c49f1f439f022958490f13bb",
+        "split": "test",
+        "target_sha256": "3c38c90ab4c53e685281b4e6697d516583471aa7534d3187aea1f7f2a9e0d0f0",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "fb8ab6b85f0d542758cdb3b13f552ea9c0fabb02a219a7a230b5c3aa067759be",
+        "embedding_sha256": "de12f5e0856ea5247e872655c05b2941ec18b6a615c948c87fa9723a88ec2a28",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": true,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:4:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1350,
+            "distance": 23,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Treasurer may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "25cbf951bc528f6d6ff3803da1eaa74a01cf288c2f15aba4914050f830933726",
+        "split": "test",
+        "target_sha256": "ede3f512dec4ef6255f5db6972c0c12b8caa84f057e739ede522e2a2f80b0ece",
+        "wording_style": 1
+      },
+      {
+        "candidate_ir_sha256": "fb8ab6b85f0d542758cdb3b13f552ea9c0fabb02a219a7a230b5c3aa067759be",
+        "embedding_sha256": "9fdc6785e18e38fee8e2bc45f593e0f3c8b5537ee4bd9fd160435e9a7c18c481",
+        "exact_ir": false,
+        "facets": {
+          "action": true,
+          "actor": false,
+          "conditions": true,
+          "exceptions": true,
+          "modality": false,
+          "object": true,
+          "temporal": true
+        },
+        "group_id": "legal_ir:4:4",
+        "id": "legal_ir:4:4:5:1",
+        "outcome": "decoded",
+        "reason": null,
+        "rendering": {
+          "character_edit": {
+            "cells": 1410,
+            "distance": 24,
+            "status": "scored"
+          },
+          "exact_original_utf8": false,
+          "reason": null,
+          "status": "rendered",
+          "text": "Treasurer may deliver archive.",
+          "whitespace_collapsed_exact": false,
+          "whitespace_token_edit": {
+            "cells": 32,
+            "distance": 6,
+            "status": "scored"
+          }
+        },
+        "source_sha256": "1c2ca3e7a64b5020fd4d5bac8ac3f461fee18d91b67153cd2a0e27893a680cd0",
+        "split": "test",
+        "target_sha256": "736f41c0f22372f98083eee0a00e9bfb274352d5580d7796918772b2d576925a",
+        "wording_style": 1
+      }
+    ],
+    "schema": "legal-original-text-roundtrip-score/v1",
+    "semantic_correctness_qualified": false,
+    "source_embeddings_metadata_sha256": "df3c3ac719eb5679e776b7114b2188bb0a2e4c0d40b8f82b9af6a5feffbcbd28",
+    "surface_information": {
+      "applies_to_learned_surface_or_residual_input": false,
+      "groups": [
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:2:2:5:0",
+            "legal_ir:2:2:5:1"
+          ],
+          "target_sha256": "0c6f7dd749e9434077820796b1320d6f43502ecd051b19691fd0a25138ad3739"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:0:0:1:0",
+            "legal_ir:0:0:1:1"
+          ],
+          "target_sha256": "0d1eb59792ab2fe7fa3efb4faa84079148032450bdb44c49f229c183db2113f0"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:3:3:0:0",
+            "legal_ir:3:3:0:1"
+          ],
+          "target_sha256": "14094a93688ec18b05febd8f118284369d3be90fe6446d23f39ea220c44f20aa"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:3:3:3:0",
+            "legal_ir:3:3:3:1"
+          ],
+          "target_sha256": "147b41d81babb65363163e5efee4efa5a78a4e4218d635eb42370e8a8934eb84"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:3:3:1:0",
+            "legal_ir:3:3:1:1"
+          ],
+          "target_sha256": "23ed81c1d479462ba84bdace74dca0d74f2d415090b1bc9e72de3bb011f47f39"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:2:2:0:0",
+            "legal_ir:2:2:0:1"
+          ],
+          "target_sha256": "276166482ad92fa2c6efde645d20197890105b243a19bbc34e3575c866f844ec"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:1:1:3:0",
+            "legal_ir:1:1:3:1"
+          ],
+          "target_sha256": "2c495695e5e4c695f5cb8aca8316f4fbe7f693eda8abad28712b2c6b1e5d8d8a"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:3:3:4:0",
+            "legal_ir:3:3:4:1"
+          ],
+          "target_sha256": "2f1ef82e3635f6f3148615f6fd3417b8d323bc5a0ad48e58c84062292d5d8af4"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:4:4:3:0",
+            "legal_ir:4:4:3:1"
+          ],
+          "target_sha256": "3c38c90ab4c53e685281b4e6697d516583471aa7534d3187aea1f7f2a9e0d0f0"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:1:1:0:0",
+            "legal_ir:1:1:0:1"
+          ],
+          "target_sha256": "3e7d3f5395fdfe4f8c56d4a591c1f400f04e6b19060601e826f30d9df00aba27"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:4:4:5:0",
+            "legal_ir:4:4:5:1"
+          ],
+          "target_sha256": "736f41c0f22372f98083eee0a00e9bfb274352d5580d7796918772b2d576925a"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:3:3:5:0",
+            "legal_ir:3:3:5:1"
+          ],
+          "target_sha256": "78af42d5b7ce3393b8141372543c6593116e9a0c4f248d04826dab53b8c4ce95"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:3:3:2:0",
+            "legal_ir:3:3:2:1"
+          ],
+          "target_sha256": "791d617f1f543d6135b1199df514c3861c060820e1e56ab3af60dce2d4bc6d08"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:2:2:3:0",
+            "legal_ir:2:2:3:1"
+          ],
+          "target_sha256": "87d638aecf06478c5ce52fcc172790058f93ed08583c8a9db42745f788b57fd5"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:0:0:0:0",
+            "legal_ir:0:0:0:1"
+          ],
+          "target_sha256": "8a6ed9a3f83896211a7eb6c38b702f993ca4d3abbcfe338dda3565934b44c8bc"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:4:4:0:0",
+            "legal_ir:4:4:0:1"
+          ],
+          "target_sha256": "9a363d6fa526a1b0dbcdd5604a9033fd01838899f583a0c7c151dce2e8dee725"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:2:2:1:0",
+            "legal_ir:2:2:1:1"
+          ],
+          "target_sha256": "9fa2b1da42418d603e66e210c3f24145b41c5bf0d36b9da5368c4dd9f1000376"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:0:0:2:0",
+            "legal_ir:0:0:2:1"
+          ],
+          "target_sha256": "a11af15c2050c9d3c6538d976146c4ca5c11b1d7ac10141b4012703269dc1d89"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:4:4:1:0",
+            "legal_ir:4:4:1:1"
+          ],
+          "target_sha256": "a3e98a1e625fb7fd2b7815e43ed2048403ee1f3df5c4573dd6904680fecfa188"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:1:1:2:0",
+            "legal_ir:1:1:2:1"
+          ],
+          "target_sha256": "ac20fd2c33d73883b3c77f11390f2b501d464dc87b49cdc1095b02b514f5c356"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:4:4:2:0",
+            "legal_ir:4:4:2:1"
+          ],
+          "target_sha256": "b0e0cca8380d03f64812c1fc5405c2cee5d769c39bdc8f0abfeb2dbe36e35b38"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:1:1:1:0",
+            "legal_ir:1:1:1:1"
+          ],
+          "target_sha256": "c3fd8117f6a9e6d87979ad1968f3346780a94471032ac9f0b36bee8c23056643"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:0:0:5:0",
+            "legal_ir:0:0:5:1"
+          ],
+          "target_sha256": "d41aae92faea8e23fda22094277fdec04c6cbeaf9cfb2f05131f3230c78b0366"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:1:1:4:0",
+            "legal_ir:1:1:4:1"
+          ],
+          "target_sha256": "d8b25b11e139fb943f42408a708b235376b3980ab114aca9564290e62b722f86"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:2:2:2:0",
+            "legal_ir:2:2:2:1"
+          ],
+          "target_sha256": "db4499ef0abdb12327c5029d712c525b4a8475bd41681b0437ba6b5b660953b9"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:0:0:4:0",
+            "legal_ir:0:0:4:1"
+          ],
+          "target_sha256": "e3796bbff40dc5d13096f1a23e2acd33d7c59ca7e6d2cfa8e1af1c34243d404a"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:1:1:5:0",
+            "legal_ir:1:1:5:1"
+          ],
+          "target_sha256": "eb52f1fd828a62dc54134bd03d26285e1ebc03b9328ca0aa2de5a28222702ffa"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:4:4:4:0",
+            "legal_ir:4:4:4:1"
+          ],
+          "target_sha256": "ede3f512dec4ef6255f5db6972c0c12b8caa84f057e739ede522e2a2f80b0ece"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:2:2:4:0",
+            "legal_ir:2:2:4:1"
+          ],
+          "target_sha256": "f7b6f70d33755008602f26032259320d13e46429fd51a79b8c633fecb5b8c579"
+        },
+        {
+          "distinct_original_wordings": 2,
+          "largest_identical_wording_count": 1,
+          "row_count": 2,
+          "row_ids": [
+            "legal_ir:0:0:3:0",
+            "legal_ir:0:0:3:1"
+          ],
+          "target_sha256": "fa6a73d66316682ff26c02b50c067aaf47a9f0a7dd26232360cd7b126ea6b39e"
+        }
+      ],
+      "is_global_model_limit": false,
+      "scope": "this selected empirical corpus; identical gold semantic IR, one output per IR, no residual/style/source side channel",
+      "semantic_group_count": 30,
+      "semantic_ir_only_single_output_exact_source_ceiling_count": 30,
+      "semantic_ir_only_single_output_exact_source_ceiling_rate": 0.5,
+      "source_row_count": 60
+    },
+    "teacher_forcing_used_for_generation": false,
+    "teacher_qualified": false,
+    "training_executed": false,
+    "valid_evaluation": true
+  },
+  "score_commitment": {
+    "bytes": 610,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/validation-01/attempt/exports/original-text-score-commitment.json",
+    "sha256": "648afa9247ce4cabdb47874e70c6cd098b4ef8669b2c25e452a970a12909ed56"
+  },
+  "semantic_authority": false,
+  "source_proof": {
+    "bytes": 760930,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/comprehensive-plan-review-v01/training/source384-saved-output-score-v01/validation-01/attempt/exports/source-proof-finally.json",
+    "sha256": "87e4997909722915eeb6d25001da22c3fb3ca1b501f126bccc0678469c515d72"
+  },
+  "source_read_closed": true,
+  "storage_closed": true,
+  "storage_final_bytes": 2484439,
+  "teacher_qualified": false,
+  "training_mask": 0
+}
