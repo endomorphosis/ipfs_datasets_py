@@ -3526,6 +3526,27 @@
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
       "required": true,
       "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "conditions_fullspan_margin_reference",
+        "conditions_fullspan_margin_from_logits"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "conditions-fullspan-margin-kernel-qualified-20261026-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
+      "id": "conditions-fullspan-margin-v1",
+      "notes": "Opt-in numerical objective on supplied conditions logits only; preserves old whole-file checkpoint pins. 36 detached mechanics cases, including seven Torch cases; no four-tensor F18 graph, training, statutory accuracy, native-width gain or default promotion.",
+      "owner_module": "ipfs_datasets_py.logic.legal_ir.conditions_fullspan_margin_v1",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/legal_ir/test_conditions_fullspan_margin_v1.py"
+      ],
+      "path": "ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py",
+      "required": true,
+      "status": "implementation_present"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3586,7 +3607,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-26T07:02:31.447465+00:00",
+  "last_updated_at_utc": "2026-10-26T16:21:29.575556+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -5569,6 +5590,16 @@
       "root": "datasets_repository",
       "scope": "Separate C685+two-overlay authored engineering cohort:21cases/63phases/9selectors (20new,one legacy). Both dd72typed alternatives against fictional Cl\u00e9rk parent only; six anchors/111targets each. Full original fixture replay, sorted bindings/equality operands/inverse accounting and original custody closed. Real retained7214 parent bundle/cache join and meaning/applicability remain open; no new native/model/training/graph/corpus/gold admission, masks0.",
       "status": "focused_snapshot_qualified"
+    },
+    {
+      "id": "conditions-fullspan-margin-kernel-qualified-20261026-01",
+      "observed_bytes": 6865,
+      "observed_sha256": "9b799596e0145aa19dffe7aeaacc2060000e2fe59adb2a32bdbaef1692020978",
+      "path": "docs/autoformalization/evidence/legal-ir-conditions-fullspan-margin-kernel-20261026.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "36 synthetic mechanics cases: 29 scalar/guard and seven Torch, with zero failures, errors or skips. Original compute/storage and both source READs closed; old objective/checkpoint pins unchanged. No model/Adam/training/statutory or Lean qualification.",
+      "status": "detached_kernel_mechanics_qualified_training_not_run"
     }
   ]
 }
