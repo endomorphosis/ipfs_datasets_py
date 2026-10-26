@@ -9069,9 +9069,9 @@
     "schema": "legal-ir-programme-engineering-bundle/v1",
     "source_binding": {
       "repository": "ipfs_datasets_py",
-      "public_main_commit": "2a125da37b4189ff06c44780aef1a3e58044fb0c",
+      "public_main_commit": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
       "backlog_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
-      "backlog_sha256": "6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1"
+      "backlog_sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
     },
     "implementation_route": {
       "primary_provider_id": "grok_cli",
@@ -9505,7 +9505,7 @@
         "parent_task_id": "LIR-02",
         "goal_id": "LIR-02.source-review-preparation-v1",
         "title": "Implement source-bound review dossier preparation",
-        "objective": "Satisfy the source review preparation request through the existing source request and handoff owners, implementing only a demonstrated missing interface for the retained full-parent bank/officer alternatives and original norm/use candidates. Bind declared source/span/entity revisions, file and row identities, offsets and coordinate namespaces. Preserve missing edition/context/crosswalk and every-use questions with explicit candidate dispositions; never invent two operative uses. Inspect current owner interfaces first and integrate their qualified exports rather than recreating readers or reviews. Observed public metadata heads USC91ca1838853ac82d7a12dd4ab47d9686f47667f9,span60501f3e920f6c9050cfc452e0d9fcc2b7c184f3,entity79d54378c5d6a89ab56e7a27e0f0ba867e800e19 are discovery only; choose exact compatible artifact and edition through retained manifests/intake without rerunning the completed full census.",
+        "objective": "Satisfy the source review preparation request through the existing source request and handoff owners, implementing only a demonstrated missing interface for the retained full-parent bank/officer alternatives and original norm/use candidates. Bind declared source/span/entity revisions, file and row identities, offsets and coordinate namespaces. Preserve missing edition/context/crosswalk and every-use questions with explicit candidate dispositions; never invent two operative uses. Inspect current owner interfaces first and integrate their qualified exports rather than recreating readers or reviews. Observed public metadata heads USC91ca1838853ac82d7a12dd4ab47d9686f47667f9,span60501f3e920f6c9050cfc452e0d9fcc2b7c184f3,entity79d54378c5d6a89ab56e7a27e0f0ba867e800e19 are discovery only; choose exact compatible artifact and edition through retained manifests/intake without rerunning the completed full census. Reuse the completed selected-parent-coordinate-observation-20261022-01 and its closed generation:130spans,15observations,45matching references across32positions. The exact retained receipt is docs/autoformalization/evidence/legal-ir-selected-parent-coordinates-20261022.json. Do not repeat segmentation, matching, alignment or completed ledger/corpus scans; remaining physical cache/producer binding, edition and meaning questions stay unresolved.",
         "owner_paths": [
           "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
           "ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py"
@@ -9518,7 +9518,8 @@
           "Exact source/edition/context dossier export uses existing owners and authenticates declared identities without guessing missing inputs",
           "Missing crosswalks and unresolved operative uses remain explicit; no legal meaning or review is manufactured",
           "Focused owner tests cover missing/stale revisions, coordinate namespace mismatch and exact deterministic roundtrip",
-          "If an existing qualified API already meets the exact request, return authenticated qualified reuse bound to unchanged public owner/test hashes and the preparation result; do not fabricate code edits or duplicate an exporter"
+          "If an existing qualified API already meets the exact request, return authenticated qualified reuse bound to unchanged public owner/test hashes and the preparation result; do not fabricate code edits or duplicate an exporter",
+          "Reuse the already completed selected-parent coordinate receipt and all ambiguous positions; no repeated segmentation/matching/alignment or completed ledger/corpus census"
         ],
         "result_fields": [
           "source_manifest",
@@ -9528,16 +9529,16 @@
         ],
         "parent_reference": {
           "repository": "ipfs_datasets_py",
-          "revision": "2a125da37b4189ff06c44780aef1a3e58044fb0c",
+          "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
           "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
           "task_id": "LIR-02",
-          "task_sha256": "c5a247ebdea732cf68fb71187cbdd2747b49209de73da18f497b7124c4c11f1d"
+          "task_sha256": "f76d37ed866ab50581aa691ed88840d50f1c47e1c59289b882fc677cfffe5b41"
         },
         "source_binding": {
           "repository": "ipfs_datasets_py",
-          "public_main_commit": "2a125da37b4189ff06c44780aef1a3e58044fb0c",
+          "public_main_commit": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
           "backlog_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
-          "backlog_sha256": "6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1"
+          "backlog_sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
         },
         "source_file_sha256": {
           "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py": "8fccd02c6a596a06f6d3d0105a9bdffb040f11266cd4e835dbff5f74ad066aed",
@@ -9565,9 +9566,12 @@
           "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
           "ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py",
           "tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py",
-          "tests/unit/logic/autoformal/test_legal_source_review_handoff.py"
+          "tests/unit/logic/autoformal/test_legal_source_review_handoff.py",
+          "docs/autoformalization/evidence/legal-ir-selected-parent-coordinates-20261022.json"
         ],
-        "read_only_source_sha256": {}
+        "read_only_source_sha256": {
+          "docs/autoformalization/evidence/legal-ir-selected-parent-coordinates-20261022.json": "8193ce3c85c961eb38d8ded7f1be8b35ccc32410b68a895685052ca4aa47c4a3"
+        }
       },
       {
         "task_id": "LIRAE-LIR07-IR-02",
@@ -9599,16 +9603,16 @@
         ],
         "parent_reference": {
           "repository": "ipfs_datasets_py",
-          "revision": "2a125da37b4189ff06c44780aef1a3e58044fb0c",
+          "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
           "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
           "task_id": "LIR-07",
           "task_sha256": "d2bfcae5296f9dd0ab356bf7dc5a31dd8e2f60b6b4c7290666fd8826a49a2809"
         },
         "source_binding": {
           "repository": "ipfs_datasets_py",
-          "public_main_commit": "2a125da37b4189ff06c44780aef1a3e58044fb0c",
+          "public_main_commit": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
           "backlog_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
-          "backlog_sha256": "6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1"
+          "backlog_sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
         },
         "source_file_sha256": {
           "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py": "23d8d5980330bc8a23e7f8d9d570808f86ffbc29799930895933c8b0e01d6959",
@@ -9670,16 +9674,16 @@
         ],
         "parent_reference": {
           "repository": "ipfs_datasets_py",
-          "revision": "2a125da37b4189ff06c44780aef1a3e58044fb0c",
+          "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
           "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
           "task_id": "LIR-12",
           "task_sha256": "a8a01f70597884aecc2a7e8fc9d34be2cbbd7d6c8131495e23de2da1c81d6fb2"
         },
         "source_binding": {
           "repository": "ipfs_datasets_py",
-          "public_main_commit": "2a125da37b4189ff06c44780aef1a3e58044fb0c",
+          "public_main_commit": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
           "backlog_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
-          "backlog_sha256": "6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1"
+          "backlog_sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
         },
         "source_file_sha256": {
           "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py": "0b2e37c12be512dc890a10dbe4f92bd31daeb86bc3e527591c8fd55332fa2307",
@@ -9741,16 +9745,16 @@
         ],
         "parent_reference": {
           "repository": "ipfs_datasets_py",
-          "revision": "2a125da37b4189ff06c44780aef1a3e58044fb0c",
+          "revision": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
           "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
           "task_id": "LIR-17",
           "task_sha256": "1866c540278ad4270adc7c6b5ee938fec8128a0501cf6388161ce12a5c38a612"
         },
         "source_binding": {
           "repository": "ipfs_datasets_py",
-          "public_main_commit": "2a125da37b4189ff06c44780aef1a3e58044fb0c",
+          "public_main_commit": "eb023a439a23c59acdfaf485c66127f5202ecc8f",
           "backlog_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
-          "backlog_sha256": "6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1"
+          "backlog_sha256": "d1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a"
         },
         "source_file_sha256": {
           "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py": null,

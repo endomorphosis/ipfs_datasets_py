@@ -217,11 +217,11 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 PROGRAMME_ENGINEERING_SCHEMA = "legal-ir-programme-engineering/v1"
-PROGRAMME_PUBLIC_MAIN = '2a125da37b4189ff06c44780aef1a3e58044fb0c'
+PROGRAMME_PUBLIC_MAIN = 'eb023a439a23c59acdfaf485c66127f5202ecc8f'
 PROGRAMME_SOURCE_BINDING = {'repository': 'ipfs_datasets_py',
- 'public_main_commit': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+ 'public_main_commit': 'eb023a439a23c59acdfaf485c66127f5202ecc8f',
  'backlog_path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
- 'backlog_sha256': '6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1'}
+ 'backlog_sha256': 'd1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a'}
 PROGRAMME_ROUTE = {'primary_provider_id': 'grok_cli',
  'primary_model_id': 'grok-4.7',
  'fallback_provider_id': 'codex',
@@ -250,7 +250,16 @@ PROGRAMME_ENGINEERING_SPECS = {'LIRAE-LIR02-SOURCE-01': {'task_id': 'LIRAE-LIR02
                                         'USC91ca1838853ac82d7a12dd4ab47d9686f47667f9,span60501f3e920f6c9050cfc452e0d9fcc2b7c184f3,entity79d54378c5d6a89ab56e7a27e0f0ba867e800e19 '
                                         'are discovery only; choose exact compatible artifact and '
                                         'edition through retained manifests/intake without '
-                                        'rerunning the completed full census.',
+                                        'rerunning the completed full census. Reuse the completed '
+                                        'selected-parent-coordinate-observation-20261022-01 and '
+                                        'its closed generation:130spans,15observations,45matching '
+                                        'references across32positions. The exact retained receipt '
+                                        'is '
+                                        'docs/autoformalization/evidence/legal-ir-selected-parent-coordinates-20261022.json. '
+                                        'Do not repeat segmentation, matching, alignment or '
+                                        'completed ledger/corpus scans; remaining physical '
+                                        'cache/producer binding, edition and meaning questions '
+                                        'stay unresolved.',
                            'owner_paths': ['ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py',
                                            'ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py'],
                            'test_paths': ['tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py',
@@ -269,20 +278,25 @@ PROGRAMME_ENGINEERING_SPECS = {'LIRAE-LIR02-SOURCE-01': {'task_id': 'LIRAE-LIR02
                                                    'exact request, return authenticated qualified '
                                                    'reuse bound to unchanged public owner/test '
                                                    'hashes and the preparation result; do not '
-                                                   'fabricate code edits or duplicate an exporter'],
+                                                   'fabricate code edits or duplicate an exporter',
+                                                   'Reuse the already completed selected-parent '
+                                                   'coordinate receipt and all ambiguous '
+                                                   'positions; no repeated '
+                                                   'segmentation/matching/alignment or completed '
+                                                   'ledger/corpus census'],
                            'result_fields': ['source_manifest',
                                              'candidate_dispositions',
                                              'unresolved_questions',
                                              'reuse_owners'],
                            'parent_reference': {'repository': 'ipfs_datasets_py',
-                                                'revision': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                                'revision': 'eb023a439a23c59acdfaf485c66127f5202ecc8f',
                                                 'path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
                                                 'task_id': 'LIR-02',
-                                                'task_sha256': 'c5a247ebdea732cf68fb71187cbdd2747b49209de73da18f497b7124c4c11f1d'},
+                                                'task_sha256': 'f76d37ed866ab50581aa691ed88840d50f1c47e1c59289b882fc677cfffe5b41'},
                            'source_binding': {'repository': 'ipfs_datasets_py',
-                                              'public_main_commit': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                              'public_main_commit': 'eb023a439a23c59acdfaf485c66127f5202ecc8f',
                                               'backlog_path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
-                                              'backlog_sha256': '6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1'},
+                                              'backlog_sha256': 'd1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a'},
                            'source_file_sha256': {'ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py': '8fccd02c6a596a06f6d3d0105a9bdffb040f11266cd4e835dbff5f74ad066aed',
                                                   'ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py': 'b519e81ec84958ea36934c9201ca7bb8b4eaccf943bd77096c07d05262d9b479',
                                                   'tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py': '830ba4a4c4e29c222ced7522dd9dde0aeb5fb16c766f00145610f5e07165aa02',
@@ -304,8 +318,9 @@ PROGRAMME_ENGINEERING_SPECS = {'LIRAE-LIR02-SOURCE-01': {'task_id': 'LIRAE-LIR02
                            'context_paths': ['ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py',
                                              'ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py',
                                              'tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py',
-                                             'tests/unit/logic/autoformal/test_legal_source_review_handoff.py'],
-                           'read_only_source_sha256': {}},
+                                             'tests/unit/logic/autoformal/test_legal_source_review_handoff.py',
+                                             'docs/autoformalization/evidence/legal-ir-selected-parent-coordinates-20261022.json'],
+                           'read_only_source_sha256': {'docs/autoformalization/evidence/legal-ir-selected-parent-coordinates-20261022.json': '8193ce3c85c961eb38d8ded7f1be8b35ccc32410b68a895685052ca4aa47c4a3'}},
  'LIRAE-LIR07-IR-02': {'task_id': 'LIRAE-LIR07-IR-02',
                        'programme_engineering': 'legal-ir-programme-engineering/v1',
                        'parent_task_id': 'LIR-07',
@@ -345,14 +360,14 @@ PROGRAMME_ENGINEERING_SPECS = {'LIRAE-LIR02-SOURCE-01': {'task_id': 'LIRAE-LIR02
                                          'unresolved_questions',
                                          'reuse_owners'],
                        'parent_reference': {'repository': 'ipfs_datasets_py',
-                                            'revision': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                            'revision': 'eb023a439a23c59acdfaf485c66127f5202ecc8f',
                                             'path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
                                             'task_id': 'LIR-07',
                                             'task_sha256': 'd2bfcae5296f9dd0ab356bf7dc5a31dd8e2f60b6b4c7290666fd8826a49a2809'},
                        'source_binding': {'repository': 'ipfs_datasets_py',
-                                          'public_main_commit': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                          'public_main_commit': 'eb023a439a23c59acdfaf485c66127f5202ecc8f',
                                           'backlog_path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
-                                          'backlog_sha256': '6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1'},
+                                          'backlog_sha256': 'd1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a'},
                        'source_file_sha256': {'ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py': '23d8d5980330bc8a23e7f8d9d570808f86ffbc29799930895933c8b0e01d6959',
                                               'ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py': '2cdf3e8c0734ad8e4226c5df30f737322d8dee0f4e5a3674c3ad4d7c36ac810e',
                                               'tests/unit/logic/autoformal/test_legal_relational_norm_v1.py': '53a500c3828bc569ec2ebfe2148c513068e9e83cb9c006cef8a404a756ea4529',
@@ -415,14 +430,14 @@ PROGRAMME_ENGINEERING_SPECS = {'LIRAE-LIR02-SOURCE-01': {'task_id': 'LIRAE-LIR02
                                            'unresolved_questions',
                                            'reuse_owners'],
                          'parent_reference': {'repository': 'ipfs_datasets_py',
-                                              'revision': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                              'revision': 'eb023a439a23c59acdfaf485c66127f5202ecc8f',
                                               'path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
                                               'task_id': 'LIR-12',
                                               'task_sha256': 'a8a01f70597884aecc2a7e8fc9d34be2cbbd7d6c8131495e23de2da1c81d6fb2'},
                          'source_binding': {'repository': 'ipfs_datasets_py',
-                                            'public_main_commit': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                            'public_main_commit': 'eb023a439a23c59acdfaf485c66127f5202ecc8f',
                                             'backlog_path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
-                                            'backlog_sha256': '6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1'},
+                                            'backlog_sha256': 'd1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a'},
                          'source_file_sha256': {'ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py': '0b2e37c12be512dc890a10dbe4f92bd31daeb86bc3e527591c8fd55332fa2307',
                                                 'ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py': '1f440c184667288ea6c78e115de49a53ab8c951d15d4bdd5fc2da830de1ad524',
                                                 'tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_packet_v2.py': '1386ef25d07f4d420bfb50254d42f7f38f8565817aabf0b3ecdac24002706e91',
@@ -517,14 +532,14 @@ PROGRAMME_ENGINEERING_SPECS = {'LIRAE-LIR02-SOURCE-01': {'task_id': 'LIRAE-LIR02
                                               'unresolved_questions',
                                               'reuse_owners'],
                             'parent_reference': {'repository': 'ipfs_datasets_py',
-                                                 'revision': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                                 'revision': 'eb023a439a23c59acdfaf485c66127f5202ecc8f',
                                                  'path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
                                                  'task_id': 'LIR-17',
                                                  'task_sha256': '1866c540278ad4270adc7c6b5ee938fec8128a0501cf6388161ce12a5c38a612'},
                             'source_binding': {'repository': 'ipfs_datasets_py',
-                                               'public_main_commit': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                               'public_main_commit': 'eb023a439a23c59acdfaf485c66127f5202ecc8f',
                                                'backlog_path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
-                                               'backlog_sha256': '6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1'},
+                                               'backlog_sha256': 'd1f74b427c3a7b27988a1d174f258fa6e867b681178978b90c611f4088ff401a'},
                             'source_file_sha256': {'ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py': None,
                                                    'tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py': None},
                             'implementation_route': {'primary_provider_id': 'grok_cli',
@@ -683,7 +698,7 @@ def _require_programme_source_alignment(root):
         for value, digest in task['read_only_source_sha256'].items():
             path = root / _programme_safe_path(value)
             require(path.is_file() and not path.is_symlink() and sha(path.read_bytes()) == digest,
-                    'read-only F18/kernel context differs: ' + value)
+                    'read-only qualification context differs: ' + value)
     for value in paths:
         relative = _programme_safe_path(value)
         path = root / relative
