@@ -14,6 +14,155 @@
     "scope": "artifact_workspace",
     "sha256": "1d6da785e339d897bce999f3db1d9cbbb3b767be940b7332553289acfff0bf8c"
   },
+  "supervisor_programme": {
+    "checkpoint_identity_axes": [
+      "IR family",
+      "source representation width",
+      "actual bottleneck and sidecars",
+      "schema/version",
+      "decoder task/head",
+      "producer/revision/transform",
+      "codec/input/output context",
+      "checkpoint and optimizer lineage"
+    ],
+    "closure_blockers": [
+      "unaccounted requested occurrences",
+      "unreviewed or unresolved operative meaning/applicability",
+      "unrepresentable or incomplete typed targets",
+      "unclosed graph/dependency scope",
+      "missing required complete-library Lake and preservation evidence"
+    ],
+    "closure_policy_requires_native_revision_binding": true,
+    "desired_objective": "Entire pinned US Code: source-grounded complete legal IR, scoped graphs and a coherent Lean4 corpus",
+    "execution_authorized_by_this_file": false,
+    "expansion_milestones": [
+      "reviewed norm/governing definition/two distinct operative uses",
+      "20\u201340 connected provisions",
+      "bounded dependency components over every pinned occurrence"
+    ],
+    "historical_attempt_rearming_authorized": false,
+    "historical_board_namespace": "legal-ir-span-graph-lean-refinement-20261016",
+    "historical_goal_count": 34,
+    "historical_goal_edges": 33,
+    "historical_plan_root_cid": "baguqeeraiddmy4khowkyv37gwstmexmmku3lecsjtnaekhpqnlwx4vuwrhza",
+    "historical_population_bytes": 589727,
+    "historical_population_sha256": "ae902ebf03aee807ea9518a4b803e9f4a38bd36c3767895abe9c818048f85b89",
+    "historical_repository_tree_id": "baguqeeraj2tqqwsde6kp76rnia3shklmkik46ffs4b4krdy3mlysoswyvptq",
+    "historical_task_count": 64,
+    "historical_task_dependencies": 115,
+    "native_status_or_dispatch_authority": false,
+    "native_store_opened": false,
+    "original_native_task_statuses_or_dependencies_changed": false,
+    "original_parent_count": 24,
+    "root_goal_alias": "LIR-G000",
+    "root_goal_cid": "baguqeera2fn6bqjn3mrwoggbf72brkofuudgl4ihwc6ci4j42xn3awyy4gwq",
+    "schema": "legal-ir-existing-native-programme-links/v1",
+    "task_catalog_guide": "guides/legal_ir_supervisor_task_catalog_20261016.md",
+    "unparented_handoff_and_engineering_task_links": [
+      {
+        "goal_alias": "LIR-G090",
+        "goal_cid": "baguqeeraltwtz3jrjl3jw64ql5gjl652d22gwvwu2haubymvyllwjapwgqzq",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9001",
+        "task_cid": "baguqeeraqk2ln7d3plwfonnyycsxkr5tjrpo7e5uq4p7rhe6vi6btpxsaeyq",
+        "validation_packet_required": true
+      },
+      {
+        "goal_alias": "LIR-G090",
+        "goal_cid": "baguqeeraltwtz3jrjl3jw64ql5gjl652d22gwvwu2haubymvyllwjapwgqzq",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9002",
+        "task_cid": "baguqeeravnaf3ihoavfqthzj2aanoxlw3rny2p6uwjvhu6hlby4yutpllwnq",
+        "validation_packet_required": true
+      },
+      {
+        "goal_alias": "LIR-G090",
+        "goal_cid": "baguqeeraltwtz3jrjl3jw64ql5gjl652d22gwvwu2haubymvyllwjapwgqzq",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9003",
+        "task_cid": "baguqeeralcizvs3mgumflqkishxse6mao6j2chfaopd7zb7bwurew5mlwapq",
+        "validation_packet_required": true
+      },
+      {
+        "goal_alias": "LIR-G090",
+        "goal_cid": "baguqeeraltwtz3jrjl3jw64ql5gjl652d22gwvwu2haubymvyllwjapwgqzq",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9004",
+        "task_cid": "baguqeera5j2okczdszugq3uy5t2kqbpczu3boair2yq2d2nltp5zwqvqslxa",
+        "validation_packet_required": true
+      },
+      {
+        "goal_alias": "LIR-G091",
+        "goal_cid": "baguqeeraif5ptdqzuhhrk2otf2gboh7ddujxpmpa2pq7c43shnvrprocbjqa",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9101",
+        "task_cid": "baguqeeralhmkt6e3mgfyfbegj7yk5fltrzs2sy2j77k32pfyo5usdpinsd6a",
+        "validation_packet_required": true
+      },
+      {
+        "goal_alias": "LIR-G091",
+        "goal_cid": "baguqeeraif5ptdqzuhhrk2otf2gboh7ddujxpmpa2pq7c43shnvrprocbjqa",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9102",
+        "task_cid": "baguqeeralqnvsfwi5a2ynku6jicd3pvvpyn6p4iusd5vtny35oivwpmy53ya",
+        "validation_packet_required": true
+      },
+      {
+        "goal_alias": "LIR-G091",
+        "goal_cid": "baguqeeraif5ptdqzuhhrk2otf2gboh7ddujxpmpa2pq7c43shnvrprocbjqa",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9103",
+        "task_cid": "baguqeeradlkd772qygbtbtdy4ss4nt5j4voyst5rbynaxm7lxl7y7d6ozuxa",
+        "validation_packet_required": true
+      },
+      {
+        "goal_alias": "LIR-G091",
+        "goal_cid": "baguqeeraif5ptdqzuhhrk2otf2gboh7ddujxpmpa2pq7c43shnvrprocbjqa",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9104",
+        "task_cid": "baguqeeracqhn24uby3tdudmubf5v53kbtrcvtgvzol4gklajt6vo3zrltf6q",
+        "validation_packet_required": true
+      },
+      {
+        "goal_alias": "LIR-G091",
+        "goal_cid": "baguqeeraif5ptdqzuhhrk2otf2gboh7ddujxpmpa2pq7c43shnvrprocbjqa",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9105",
+        "task_cid": "baguqeera5cwhzootqamb4iy4fge7paqy3shehczqlb3cniqsgfmh5eb6nr4q",
+        "validation_packet_required": true
+      },
+      {
+        "goal_alias": "LIR-G091",
+        "goal_cid": "baguqeeraif5ptdqzuhhrk2otf2gboh7ddujxpmpa2pq7c43shnvrprocbjqa",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9106",
+        "task_cid": "baguqeerav6aquvmquiiwhqjeempgcc2azmxj2hqea5krucmah5cacgiql4jq",
+        "validation_packet_required": true
+      },
+      {
+        "goal_alias": "LIR-G091",
+        "goal_cid": "baguqeeraif5ptdqzuhhrk2otf2gboh7ddujxpmpa2pq7c43shnvrprocbjqa",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9107",
+        "task_cid": "baguqeeraddzqa6jeyxbbbs3jk355id2sjbpkoolscyzvtzvkhdennnippoya",
+        "validation_packet_required": true
+      },
+      {
+        "goal_alias": "LIR-G091",
+        "goal_cid": "baguqeeraif5ptdqzuhhrk2otf2gboh7ddujxpmpa2pq7c43shnvrprocbjqa",
+        "legacy_parent_task": null,
+        "task_alias": "LIR-9108",
+        "task_cid": "baguqeeraocyeaxzrkzc5okyhwtogy7tmxqpj5eyf62icv22nigcubellyo6a",
+        "validation_packet_required": true
+      }
+    ],
+    "widths": [
+      8,
+      384,
+      768,
+      4096
+    ]
+  },
   "tasks": [
     {
       "acceptance_criteria": [
@@ -66,6 +215,32 @@
         "scope": "92 cases:86 new metadata/inert-manager controls and6 regressions. Original source/compute/storage closed. Exact tested candidates installed; no separate canonical runtime test, native source producer, model, physical DB, publication or Lean qualification."
       },
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G101",
+            "goal_cid": "baguqeerawdzrk72ymyossnu2qifinzljp6s6yqinfgpsfhxm4oehlf5iiizq",
+            "legacy_parent_task": "LIR-01",
+            "task_alias": "LIR-0101",
+            "task_cid": "baguqeeraty5cz3vfxxx5hxcvvg4o6rivtl746eoq3remdluqc3o4gqnob2ua",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G101",
+            "goal_cid": "baguqeerawdzrk72ymyossnu2qifinzljp6s6yqinfgpsfhxm4oehlf5iiizq",
+            "legacy_parent_task": "LIR-01",
+            "task_alias": "LIR-0102",
+            "task_cid": "baguqeerabt7pfpb5p6nuzmftacfjymnruurxqdsitliniynbxcf4na6ueyia",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Preserve baselines and consumer capabilities"
     },
     {
@@ -816,6 +991,32 @@
         "archive reconciliation"
       ],
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G102",
+            "goal_cid": "baguqeeraobbepjdj3mu7o4kauzsq4tggbarnwkvy43keyk5ibjlb4ehcoiya",
+            "legacy_parent_task": "LIR-02",
+            "task_alias": "LIR-0201",
+            "task_cid": "baguqeera26e3j35vveaaqo3rgctapsbxdgnqbkafthbfvgqepfegswt6jkhq",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G102",
+            "goal_cid": "baguqeeraobbepjdj3mu7o4kauzsq4tggbarnwkvy43keyk5ibjlb4ehcoiya",
+            "legacy_parent_task": "LIR-02",
+            "task_alias": "LIR-0202",
+            "task_cid": "baguqeera6fbe2rlq7xbg3xecy6xtdhgwm33gp3tagycux7kzqiyr5ayfjwsa",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Join source identities and declared context"
     },
     {
@@ -852,6 +1053,32 @@
         "paired observation validators"
       ],
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G103",
+            "goal_cid": "baguqeera7qykqctvxtvfzvr6kbxkprmx2q2ksb6frra4jfnmwap5hkyczn2q",
+            "legacy_parent_task": "LIR-03",
+            "task_alias": "LIR-0301",
+            "task_cid": "baguqeerawgvz5op6k2ulctqnblqoqqf7udqavxqvld3a6rck3qc7bbd45kaa",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G103",
+            "goal_cid": "baguqeera7qykqctvxtvfzvr6kbxkprmx2q2ksb6frra4jfnmwap5hkyczn2q",
+            "legacy_parent_task": "LIR-03",
+            "task_alias": "LIR-0302",
+            "task_cid": "baguqeerazdbfbb7dg3al2ehcetflfayvo4bno6uoybajk2u2paxouiv6kvwa",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Define qualification and legacy adapters"
     },
     {
@@ -2081,6 +2308,32 @@
         "schema evolution"
       ],
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G104",
+            "goal_cid": "baguqeeraq74p3rhev2lh6ajdufim6gljxpzsfxin37y7bwk7ncwyjwyrnfaq",
+            "legacy_parent_task": "LIR-04",
+            "task_alias": "LIR-0401",
+            "task_cid": "baguqeerakgz2uei3spyaqoqu4rgmam7ilbjn3xqr5stgioar2ralreubnxrq",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G104",
+            "goal_cid": "baguqeeraq74p3rhev2lh6ajdufim6gljxpzsfxin37y7bwk7ncwyjwyrnfaq",
+            "legacy_parent_task": "LIR-04",
+            "task_alias": "LIR-0402",
+            "task_cid": "baguqeeraunsvtb5mik67j3pn32irrljqendur64hzyrbmqf5ddurkhhehdna",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Specify and validate graph interchange"
     },
     {
@@ -2328,6 +2581,32 @@
         "physical review packets"
       ],
       "status": "proposed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G105",
+            "goal_cid": "baguqeerav7zufgadnq2ooamaenjnvapdsumin4zyuntm6tgiac2kemv4lzrq",
+            "legacy_parent_task": "LIR-05",
+            "task_alias": "LIR-0501",
+            "task_cid": "baguqeeraqp7cy3rfj5l2d4njdwn6zlm53amw7oi77zto3ogummxrs26l5dea",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G105",
+            "goal_cid": "baguqeerav7zufgadnq2ooamaenjnvapdsumin4zyuntm6tgiac2kemv4lzrq",
+            "legacy_parent_task": "LIR-05",
+            "task_alias": "LIR-0502",
+            "task_cid": "baguqeeraudolynbwohxzl73gevyxbqcjq4qswddp7yeozab4itgcugu6staq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Select connected statutory pilot"
     },
     {
@@ -3922,6 +4201,32 @@
         "corpus_source_review_packets"
       ],
       "status": "proposed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G106",
+            "goal_cid": "baguqeeralyvy6xhtliucdjy363vjyabtfkkqnfgndfhl35cvkjtgd3zpafqq",
+            "legacy_parent_task": "LIR-06",
+            "task_alias": "LIR-0601",
+            "task_cid": "baguqeerac6t737q4cfohhukzzd6xqqm3av72or7kdbaght7gs7b33anb5y7a",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G106",
+            "goal_cid": "baguqeeralyvy6xhtliucdjy363vjyabtfkkqnfgndfhl35cvkjtgd3zpafqq",
+            "legacy_parent_task": "LIR-06",
+            "task_alias": "LIR-0602",
+            "task_cid": "baguqeera6d3dg2izadhoapcfs4usb4b2g3bt7mxs6vnx37hsrkf3xs3ktovq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Complete source interpretation reviews"
     },
     {
@@ -5206,6 +5511,32 @@
         "grouped request"
       ],
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G107",
+            "goal_cid": "baguqeera3o6iawy6ztfi5m36etlzmyruvu5bke5xgoxfeutyh7zmvifgpf4q",
+            "legacy_parent_task": "LIR-07",
+            "task_alias": "LIR-0701",
+            "task_cid": "baguqeeraanr6zd5ldabqafmbtoq4ggtha7w2umthkjwbesiucd45uoeuhzra",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G107",
+            "goal_cid": "baguqeera3o6iawy6ztfi5m36etlzmyruvu5bke5xgoxfeutyh7zmvifgpf4q",
+            "legacy_parent_task": "LIR-07",
+            "task_alias": "LIR-0702",
+            "task_cid": "baguqeerapm7wgwftphw642waf6u2zujvlv3icwvcv3x4ri47fmehiojeypaq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Extend typed IR losslessly"
     },
     {
@@ -6489,6 +6820,32 @@
         "definition norm bridge"
       ],
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G108",
+            "goal_cid": "baguqeeraejn2ybr5q7dpkuvruk4lszrh6mhyzvsipcfd5exulfb5dgaydgta",
+            "legacy_parent_task": "LIR-08",
+            "task_alias": "LIR-0801",
+            "task_cid": "baguqeera7nqxba3u5swe6k3rqrffafo3smz4ybnrvfhs625ea75izkmetkyq",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G108",
+            "goal_cid": "baguqeeraejn2ybr5q7dpkuvruk4lszrh6mhyzvsipcfd5exulfb5dgaydgta",
+            "legacy_parent_task": "LIR-08",
+            "task_alias": "LIR-0802",
+            "task_cid": "baguqeerancqrkl4l44zzroncxknyzcl5svkrwomne5rnorzf2tzie2xnfdzq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Create scoped senses and typed assertions"
     },
     {
@@ -7784,6 +8141,32 @@
       ],
       "semantic_definition_binding_verified": false,
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G109",
+            "goal_cid": "baguqeerainyy66vt3wxjaieer7wupvgn47mwq45tuvbrhuqhlrupibo6rvaq",
+            "legacy_parent_task": "LIR-09",
+            "task_alias": "LIR-0901",
+            "task_cid": "baguqeeramluqrrnigoodrmx4iza77ayffiakl4b4b55ajbdqfzfpvgtr3olq",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G109",
+            "goal_cid": "baguqeerainyy66vt3wxjaieer7wupvgn47mwq45tuvbrhuqhlrupibo6rvaq",
+            "legacy_parent_task": "LIR-09",
+            "task_alias": "LIR-0902",
+            "task_cid": "baguqeeraocteg73h4exnkiwsc4ui5vprrxbuodqsp3gfbdvwk67t32y2ajaa",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Resolve definitions and dependency closure"
     },
     {
@@ -7966,6 +8349,32 @@
       ],
       "source_partition_is_reviewed_interpretation": false,
       "status": "proposed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G110",
+            "goal_cid": "baguqeera2lbtzgtns4ptrmfaeoyox43dcxyf65vrkbdh5phenv4tswegfpya",
+            "legacy_parent_task": "LIR-10",
+            "task_alias": "LIR-1001",
+            "task_cid": "baguqeerapmg4gdkm3e63hwq6zumvle7u4iqbjsygtkfdk4kfx65hz3sy24da",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G110",
+            "goal_cid": "baguqeera2lbtzgtns4ptrmfaeoyox43dcxyf65vrkbdh5phenv4tswegfpya",
+            "legacy_parent_task": "LIR-10",
+            "task_alias": "LIR-1002",
+            "task_cid": "baguqeeravgtf5b35tvxypamd7v4cdtkumiegrxi7j7q3qyudl62zf327xzga",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Assemble complete provision interpretations"
     },
     {
@@ -7993,6 +8402,32 @@
         "graph projections"
       ],
       "status": "proposed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G111",
+            "goal_cid": "baguqeerardnjoepzm3jauiy6ja2z2ojy7yq66hliorfg7bnjng7s3glzyqba",
+            "legacy_parent_task": "LIR-11",
+            "task_alias": "LIR-1101",
+            "task_cid": "baguqeeraphy6hj2kj6ilt6w3tjoavuyufdykspzq65zby6xjgrrigskjzvmq",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G111",
+            "goal_cid": "baguqeerardnjoepzm3jauiy6ja2z2ojy7yq66hliorfg7bnjng7s3glzyqba",
+            "legacy_parent_task": "LIR-11",
+            "task_alias": "LIR-1102",
+            "task_cid": "baguqeerad5v4shk6xwnedlcojsob6buoslp5us56zomkylufkjn2gmjxxznq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Publish reconstructable local graph snapshot"
     },
     {
@@ -8028,6 +8463,32 @@
         "definition/norm emitters"
       ],
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G112",
+            "goal_cid": "baguqeera7cqmhji57s737pzvvgxh4njrk4wnrvhc6nmeqoyignazpz3gfoxq",
+            "legacy_parent_task": "LIR-12",
+            "task_alias": "LIR-1201",
+            "task_cid": "baguqeera6rc365iitfpntqbe6mcwuy6cdug2dhjrjjwl33adbq4wlwnlevra",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G112",
+            "goal_cid": "baguqeera7cqmhji57s737pzvvgxh4njrk4wnrvhc6nmeqoyignazpz3gfoxq",
+            "legacy_parent_task": "LIR-12",
+            "task_alias": "LIR-1202",
+            "task_cid": "baguqeerapw5sh7evyzz6hp4loolpkzicksu75gawnnmhpghj3yrzdzllkidq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Define shared Lean interpretation library"
     },
     {
@@ -8791,6 +9252,32 @@
       ],
       "shared_definition_deduplication": true,
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G113",
+            "goal_cid": "baguqeeraxld5tisednrd7adjx4vl7lsejdimfiadml6xtbyb5s2abl72yxsq",
+            "legacy_parent_task": "LIR-13",
+            "task_alias": "LIR-1301",
+            "task_cid": "baguqeeradmec2tb57xd5hpoz4g4vmxuozdms5h3gqfwpipgc7bhldn4idk2a",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G113",
+            "goal_cid": "baguqeeraxld5tisednrd7adjx4vl7lsejdimfiadml6xtbyb5s2abl72yxsq",
+            "legacy_parent_task": "LIR-13",
+            "task_alias": "LIR-1302",
+            "task_cid": "baguqeeravc7xe72jfdvzntxx6vgp6kkenmcj4n6ooad5qwovr6n7lagc6lzq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Generate modular Lean corpus"
     },
     {
@@ -9468,6 +9955,32 @@
         "proof carrying artifacts"
       ],
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G114",
+            "goal_cid": "baguqeera65djbh3poaahaeeh6i55oky7ygqp4cpcbjzw3xhf5z5rddnilreq",
+            "legacy_parent_task": "LIR-14",
+            "task_alias": "LIR-1401",
+            "task_cid": "baguqeeragwwzyhnczgboohh2v5t5bhfuxpy6oi3obuvi4w336gf3censkwta",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G114",
+            "goal_cid": "baguqeera65djbh3poaahaeeh6i55oky7ygqp4cpcbjzw3xhf5z5rddnilreq",
+            "legacy_parent_task": "LIR-14",
+            "task_alias": "LIR-1402",
+            "task_cid": "baguqeera2kham3hrregyl22x5hk5alp6w2ox4zipr5m5sy6eicun2bx2zdrq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Run source-bound corpus builds and obligations"
     },
     {
@@ -9801,6 +10314,32 @@
         "reopen definition dependents"
       ],
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G115",
+            "goal_cid": "baguqeerafg5uwmasvp2qyvw6rrbxuppexvzhuy35nw44av52okworighd5za",
+            "legacy_parent_task": "LIR-15",
+            "task_alias": "LIR-1501",
+            "task_cid": "baguqeeraylypiqxu75jwgybmzzuaynvf5etru5asawsikei6xhkrqwv243ka",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G115",
+            "goal_cid": "baguqeerafg5uwmasvp2qyvw6rrbxuppexvzhuy35nw44av52okworighd5za",
+            "legacy_parent_task": "LIR-15",
+            "task_alias": "LIR-1502",
+            "task_cid": "baguqeerabza345drbzfzeqfk2zbxawz4mxtkdfrxrqiplrhwpprnnzlstera",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Extend incremental invalidation and build keys"
     },
     {
@@ -9842,6 +10381,24 @@
       ],
       "review_receipt": "artifacts/autoencoder-comprehensive-review-20261013/training-evidence-refresh-20261013.json",
       "status": "completed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G116",
+            "goal_cid": "baguqeerapt2ox367nf6dzxe2a2q5n7oto76itndncjbukkulx6z5bprjgczq",
+            "legacy_parent_task": "LIR-16",
+            "task_alias": "LIR-1601",
+            "task_cid": "baguqeeratdt2jmpj3zxkip2tltjulk4cxx735bn6plpvzksdsctpo6ve4jpq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Reconcile temporal attention comparison"
     },
     {
@@ -17127,6 +17684,40 @@
       },
       "source_sampling_precondition": "Pure whole-source sampler and134canonical\u00a7101paragraphinputs are implemented; original9literalunits and20rowcache remain separate. Obtain actual source/meaning decisions and eligible targets before statutory training/evaluation.",
       "status": "in_progress",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G117",
+            "goal_cid": "baguqeeracwmr4pkvtpqmng275ho7f5axxcy42snhgrcifm3hko47nwyaraqq",
+            "legacy_parent_task": "LIR-17",
+            "task_alias": "LIR-1701",
+            "task_cid": "baguqeerakpfgns2jp5m33tiq7eeqpyeh7z3wf5cbzgovcfsptdsnsuvjzrha",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G117",
+            "goal_cid": "baguqeeracwmr4pkvtpqmng275ho7f5axxcy42snhgrcifm3hko47nwyaraqq",
+            "legacy_parent_task": "LIR-17",
+            "task_alias": "LIR-1702",
+            "task_cid": "baguqeerasr6qy6lmzxsxzyieygh7eg2cnxvghdtbhddiczs7siwne7kullsq",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G117",
+            "goal_cid": "baguqeeracwmr4pkvtpqmng275ho7f5axxcy42snhgrcifm3hko47nwyaraqq",
+            "legacy_parent_task": "LIR-17",
+            "task_alias": "LIR-1703",
+            "task_cid": "baguqeerawg5sf3tqw74u73cj54yrjs73yhusqknuhtn5oavfrqsudyarjfoq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Train reviewed relation and binding heads"
     },
     {
@@ -17153,6 +17744,32 @@
         "permission retention gates"
       ],
       "status": "proposed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G118",
+            "goal_cid": "baguqeerazkyx3hc4ku3vq4wnr555trgzgy4ofios4wkyn4i7og7ch77sj5qa",
+            "legacy_parent_task": "LIR-18",
+            "task_alias": "LIR-1801",
+            "task_cid": "baguqeerakpmnd6qn4fgjphunuf4fttuaegnpumi5atcu6r5743rqgtxnsdta",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G118",
+            "goal_cid": "baguqeerazkyx3hc4ku3vq4wnr555trgzgy4ofios4wkyn4i7og7ch77sj5qa",
+            "legacy_parent_task": "LIR-18",
+            "task_alias": "LIR-1802",
+            "task_cid": "baguqeera32ux5vfuliiqtprl3u7z25bmmhx6mjf6aqq4qp6etojefg73xb2a",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Compare context-sensitive modality adaptation"
     },
     {
@@ -17176,6 +17793,56 @@
         "v4 frozen projection"
       ],
       "status": "proposed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G119",
+            "goal_cid": "baguqeera775vgamceiayodne2ypfku2rbpibec2duvxz4fjyoijz7ubkq6xa",
+            "legacy_parent_task": "LIR-19",
+            "task_alias": "LIR-1901",
+            "task_cid": "baguqeeraflx53lkpqxa5uktgfbttmezpkaowwtei4ycvg4dcewmqzf5hyn5q",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G119",
+            "goal_cid": "baguqeera775vgamceiayodne2ypfku2rbpibec2duvxz4fjyoijz7ubkq6xa",
+            "legacy_parent_task": "LIR-19",
+            "task_alias": "LIR-1902",
+            "task_cid": "baguqeeraw5xs6otd4lsdc2tuxz72cqptxfcykroifamgssunefs2b4t7hdya",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G119",
+            "goal_cid": "baguqeera775vgamceiayodne2ypfku2rbpibec2duvxz4fjyoijz7ubkq6xa",
+            "legacy_parent_task": "LIR-19",
+            "task_alias": "LIR-1903",
+            "task_cid": "baguqeeraone4lmdc63uboofyjcnufe7gq4fylazxv4esdnpabi4ewysiqnva",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G119",
+            "goal_cid": "baguqeera775vgamceiayodne2ypfku2rbpibec2duvxz4fjyoijz7ubkq6xa",
+            "legacy_parent_task": "LIR-19",
+            "task_alias": "LIR-1904",
+            "task_cid": "baguqeeraiia7j4ct4e6m744ggtf5rmgfxcjck7qpuwsimiaewgmoscuzcz5a",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G119",
+            "goal_cid": "baguqeera775vgamceiayodne2ypfku2rbpibec2duvxz4fjyoijz7ubkq6xa",
+            "legacy_parent_task": "LIR-19",
+            "task_alias": "LIR-1905",
+            "task_cid": "baguqeeratwggshtt7j3eoxkr3mvyrsqw4m3bxkxrk4bdtprc62julenptpxq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Measure genuine representation benefit"
     },
     {
@@ -17199,6 +17866,32 @@
         "contrastive alignment/relation masks"
       ],
       "status": "proposed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G120",
+            "goal_cid": "baguqeeras4duo5h7zexkzzk3hialvw64ocwilasdourshoewbmrqc4acuaaa",
+            "legacy_parent_task": "LIR-20",
+            "task_alias": "LIR-2001",
+            "task_cid": "baguqeerakmb2bu3nyxxmn65g5doqcpf4w3d4lxuxmhjug2sikhqlhmybggha",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G120",
+            "goal_cid": "baguqeeras4duo5h7zexkzzk3hialvw64ocwilasdourshoewbmrqc4acuaaa",
+            "legacy_parent_task": "LIR-20",
+            "task_alias": "LIR-2002",
+            "task_cid": "baguqeeraltdxktpstux6rv2iug3aaucib47ie537tnaugsx5j77uvi2zhhqq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Evaluate scoped graph context and retrieval"
     },
     {
@@ -17225,6 +17918,32 @@
         "manifest owners"
       ],
       "status": "proposed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G121",
+            "goal_cid": "baguqeera4vzjjc7bixzqo5nkkyjuyjdq6zyunnswrqm23gabldjdgm7cynsa",
+            "legacy_parent_task": "LIR-21",
+            "task_alias": "LIR-2101",
+            "task_cid": "baguqeeraromyte7gpypkzfdmuugkwlazlqbx4c4cdkklawovqyctso2ztftq",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G121",
+            "goal_cid": "baguqeera4vzjjc7bixzqo5nkkyjuyjdq6zyunnswrqm23gabldjdgm7cynsa",
+            "legacy_parent_task": "LIR-21",
+            "task_alias": "LIR-2102",
+            "task_cid": "baguqeerastzc2enyjm65ousek3zw34he32lqonbecxqdixkuv4wbtoc3pcha",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Seal cross-dataset and Lean release"
     },
     {
@@ -17249,6 +17968,32 @@
         "review intake"
       ],
       "status": "proposed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G122",
+            "goal_cid": "baguqeera4hpggawulknnaa2gdywidswnrcawyaasxi4mbb5wxafvq22qynga",
+            "legacy_parent_task": "LIR-22",
+            "task_alias": "LIR-2201",
+            "task_cid": "baguqeeraijsmwpc74b325pzuhdztvekzhodmjc5q2hkcubzv7yfwaia4aqqq",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G122",
+            "goal_cid": "baguqeera4hpggawulknnaa2gdywidswnrcawyaasxi4mbb5wxafvq22qynga",
+            "legacy_parent_task": "LIR-22",
+            "task_alias": "LIR-2202",
+            "task_cid": "baguqeera4zfc3nadrel2jalgqqbalycxmagzn24pq7cet3hp72aox5ohmahq",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Classify repair feedback and admit training evidence"
     },
     {
@@ -17292,6 +18037,32 @@
         "DaemonResourceReservation.finalize"
       ],
       "status": "proposed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G123",
+            "goal_cid": "baguqeeratzcuerrfos3noca6whvkams6ccztxdytds4s2xkqjrlhhi7eaygq",
+            "legacy_parent_task": "LIR-23",
+            "task_alias": "LIR-2301",
+            "task_cid": "baguqeera3o35amhcl4vrhnnr5eql73bpfy43q4etzpa6kmdhgkc3eqocbekq",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G123",
+            "goal_cid": "baguqeeratzcuerrfos3noca6whvkams6ccztxdytds4s2xkqjrlhhi7eaygq",
+            "legacy_parent_task": "LIR-23",
+            "task_alias": "LIR-2302",
+            "task_cid": "baguqeeraatvs5zqbi6d2bjgtg532csjjsbbt3cdlnevp6nn5oebxtsgz52da",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Measure pipeline costs and coverage"
     },
     {
@@ -17317,6 +18088,40 @@
         "review workflow"
       ],
       "status": "proposed",
+      "supervisor_execution": {
+        "execution_authorized_by_this_file": false,
+        "execution_packet_required": true,
+        "historical_attempt_rearming_authorized": false,
+        "live_status_verified": false,
+        "requires_native_revision_and_scope_binding": true,
+        "schema": "legal-ir-existing-native-task-links/v1",
+        "task_links": [
+          {
+            "goal_alias": "LIR-G124",
+            "goal_cid": "baguqeerar6syzdg6jgvxcbocpzvsbztdao6wzzwublqcynvpo2glex7wzicq",
+            "legacy_parent_task": "LIR-24",
+            "task_alias": "LIR-2401",
+            "task_cid": "baguqeeraa522uawqqmux3tel3fhig5yeryrle4f7pshd6bsxb2r6pe2ohg5a",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G124",
+            "goal_cid": "baguqeerar6syzdg6jgvxcbocpzvsbztdao6wzzwublqcynvpo2glex7wzicq",
+            "legacy_parent_task": "LIR-24",
+            "task_alias": "LIR-2402",
+            "task_cid": "baguqeeraanwof6almluu2sevorxmhdmkexk22tvlzp2sq2whdwvhvo4eqm5a",
+            "validation_packet_required": true
+          },
+          {
+            "goal_alias": "LIR-G124",
+            "goal_cid": "baguqeerar6syzdg6jgvxcbocpzvsbztdao6wzzwublqcynvpo2glex7wzicq",
+            "legacy_parent_task": "LIR-24",
+            "task_alias": "LIR-2403",
+            "task_cid": "baguqeera5dvlic5h6b4nvcnocd6asjbv3bn24lvkljupukbtegvqwvr656sa",
+            "validation_packet_required": true
+          }
+        ]
+      },
       "title": "Expand corpus by qualified dependency components"
     }
   ]
