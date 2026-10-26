@@ -255,7 +255,7 @@ def _at(value, path):
     return value
 
 
-def _typed_contexts(relational):
+def _typed_contexts(relational, *, mixed=False):
     """Derive role, binder and ordered ancestry from the replayed existing AST."""
     expression = relational["typed_expression"]
     mapping = relational["structural_mapping"]
@@ -275,25 +275,42 @@ def _typed_contexts(relational):
                     entry["operator"] = parent["operator"]
                 ancestors.append(entry)
                 if parent["kind"] in {"forall", "exists"} and path.startswith(parent_path + "/arguments/0/"):
-                    binders.append({"typed_path": parent_path + "/binders/0",
-                                    "name": node["binders"][0]["name"], "quantifier": parent["kind"]})
+                    binding_row = {"typed_path": parent_path + "/binders/0",
+                                   "name": node["binders"][0]["name"], "quantifier": parent["kind"]}
+                    if mixed:
+                        binding_row["sort"] = node["binders"][0]["sort"]["name"]
+                    binders.append(binding_row)
         binding = None
         argument = None
+        equality_operand = None
         if target["kind"] == "variable":
-            matches = [binder for binder in binders if binder["name"] == value["symbol"]]
+            matches = [binder for binder in binders if binder["name"] == value["symbol"]
+                       and (not mixed or binder["sort"] == target["sort"])]
             _need(len(matches) == 1, "exact governing binder required for variable occurrence")
             binding = matches[0]
             parent_path, index = path.rsplit("/arguments/", 1)
             parent = _at(expression, parent_path)
-            _need(parent["kind"] == "predicate" and index.isdecimal(), "ordered predicate argument required")
-            argument = {"predicate_path": parent_path, "symbol": parent["symbol"],
-                        "index": int(index), "role": roles[parent["symbol"]][int(index)]}
-        contexts.append({"target": target, "ancestry": ancestors, "binding": binding,
-                         "argument": argument})
+            _need(index.isdecimal(), "ordered typed operand index required")
+            if parent["kind"] == "predicate":
+                argument = {"predicate_path": parent_path, "symbol": parent["symbol"],
+                            "index": int(index), "role": roles[parent["symbol"]][int(index)]}
+                if mixed:
+                    argument.update(kind="predicate_argument", sort=target["sort"])
+            else:
+                _need(mixed and parent["kind"] == "equality" and index in {"0", "1"},
+                      "ordered predicate argument or explicit mixed equality operand required")
+                equality_operand = {"equality_path": parent_path, "index": int(index),
+                    "side": "left" if index == "0" else "right", "sort": target["sort"]}
+        context = {"target": target, "ancestry": ancestors, "binding": binding,
+                   "argument": argument}
+        if mixed:
+            context.update(sort=target.get("typed_sort", target.get("sort")),
+                           equality_operand=equality_operand)
+        contexts.append(context)
     return contexts
 
 
-def _join(request, scope, relational):
+def _join(request, scope, relational, *, mixed=False):
     anchors, targets = scope["anchor_mappings"], relational["structural_mapping"]
     _need(len(request["source_rows"]) == len(anchors), "every original source anchor must be accounted for")
     _need(len(request["typed_rows"]) == len(targets), "every typed node and binder must be accounted for")
@@ -332,7 +349,7 @@ def _join(request, scope, relational):
         _need(_same(row["target"], target), "ordered exact typed target differs")
         _need(row["source_paths"] == inverse[target["typed_path"]],
               "typed source paths must equal the exact inverse source mapping")
-    return _typed_contexts(relational)
+    return _typed_contexts(relational, mixed=mixed)
 
 
 def prepare_norm_scope_correspondence_v1(
@@ -456,22 +473,49 @@ def validate_norm_scope_correspondence_v1(report, *args, expected_report_sha256,
 REQUEST_SCHEMA_V2 = "legal-norm-scope-correspondence-request/v2"
 SCHEMA_V2 = "legal-norm-scope-correspondence-report/v2"
 _PARENT_OWNER_PINS = None
+_MIXED_PARENT_OWNER_PINS = None
+MIXED_PARENT_REQUEST_SCHEMA = "legal-mixed-norm-scope-correspondence-request/v1"
+MIXED_PARENT_SCHEMA = "legal-mixed-norm-scope-correspondence-report/v1"
+MIXED_PARENT_PROFILE = "parent-literal-occurrence-authored-mixed-correspondence/v1"
 
 
-def _parent_correspondence_pins(owners):
-    global _PARENT_OWNER_PINS
+def _parent_correspondence_pins(owners, *, mixed=False):
+    global _PARENT_OWNER_PINS, _MIXED_PARENT_OWNER_PINS
     scope, relational = owners
     _need(hashlib.sha256(Path(__file__).read_bytes()).hexdigest() == _SELF_PIN,
           "parent correspondence producer changed since import")
     pins = scope._parent_pins()
-    for path, value in relational._owners()[-1].items():
+    relational_pins = relational._mixed_owners()[-1] if mixed else relational._owners()[-1]
+    for path, value in relational_pins.items():
         _need(path not in pins or pins[path] == value, "inconsistent parent correspondence producers")
         pins[path] = value
     pins[str(Path(__file__).resolve())] = _SELF_PIN
-    if _PARENT_OWNER_PINS is None:
-        _PARENT_OWNER_PINS = dict(pins)
-    _need(pins == _PARENT_OWNER_PINS, "parent correspondence owners changed since first use")
+    if mixed:
+        if _MIXED_PARENT_OWNER_PINS is None:
+            _MIXED_PARENT_OWNER_PINS = dict(pins)
+        expected = _MIXED_PARENT_OWNER_PINS
+    else:
+        if _PARENT_OWNER_PINS is None:
+            _PARENT_OWNER_PINS = dict(pins)
+        expected = _PARENT_OWNER_PINS
+    _need(pins == expected, "parent correspondence owners changed since first use")
     return dict(pins)
+
+
+def _mixed_parent_correspondence_pins(owners):
+    return _parent_correspondence_pins(owners, mixed=True)
+
+
+def _mixed_correspondence_callbacks(scope, relational):
+    callbacks = (_mixed_correspondence_callbacks, _parent_correspondence_snapshot,
+        _mixed_parent_correspondence_pins, _parent_correspondence_pins,
+        _prepare_parent_correspondence, _join, _typed_contexts, _parse, _wire,
+        scope.validate_parent_norm_scope_v1, scope._parent_snapshot,
+        scope._parent_finish, scope._parent_serialized_fence,
+        relational._mixed_parse, relational.validate_mixed_relational_norm_v1)
+    return tuple((function, getattr(function, "__code__", None),
+                  id(getattr(function, "__defaults__", None)),
+                  id(getattr(function, "__kwdefaults__", None))) for function in callbacks)
 
 
 def _parent_correspondence_snapshot(scope_report, relational_report, replay, scope):
@@ -489,20 +533,24 @@ def _parent_correspondence_snapshot(scope_report, relational_report, replay, sco
     return detached, commitments
 
 
-def prepare_norm_scope_correspondence_v2(
+def _prepare_parent_correspondence(
     scope_report, relational_report, mapping_request_raw, *,
     expected_scope_report_sha256, expected_relational_report_sha256,
     expected_mapping_request_sha256, scope_replay_inputs, relational_request_raw,
-    expected_relational_request_sha256,
+    expected_relational_request_sha256, mixed=False,
 ):
-    """Check authored correspondence over exact original parent occurrence scope.
+    """Shared exact parent replay; explicit public siblings select their syntax.
 
     This explicit request/report profile does not accept sampled HTML replay.
     Parent scope and the original null-source relational owner are regenerated
     at opening and closing; this establishes custody and syntax, not meaning.
     """
+    _need(type(mixed) is bool, "explicit parent correspondence syntax profile required")
+    request_schema = MIXED_PARENT_REQUEST_SCHEMA if mixed else REQUEST_SCHEMA_V2
+    report_schema = MIXED_PARENT_SCHEMA if mixed else SCHEMA_V2
+    profile = MIXED_PARENT_PROFILE if mixed else "parent-literal-occurrence-authored-correspondence/v2"
     request = _parse(mapping_request_raw, expected_mapping_request_sha256,
-                     request_schema=REQUEST_SCHEMA_V2)
+                     request_schema=request_schema)
     for value, label in ((expected_scope_report_sha256, "parent scope report"),
                           (expected_relational_report_sha256, "relational report")):
         _sha(value, label)
@@ -524,9 +572,19 @@ def prepare_norm_scope_correspondence_v2(
     _need(type(offered_scope) is dict and offered_scope.get("schema") == scope.PARENT_SCHEMA
           and offered_scope.get("profile") == scope.PARENT_PROFILE,
           "explicit parent literal occurrence scope required for correspondence v2")
-    relational._parse(relational_request_raw, expected_relational_request_sha256)
+    parse_relational = relational._mixed_parse if mixed else relational._parse
+    validate_relational = (relational.validate_mixed_relational_norm_v1 if mixed
+                           else relational.validate_relational_norm_v1)
+    pin_reader = _mixed_parent_correspondence_pins if mixed else _parent_correspondence_pins
+    parse_relational(relational_request_raw, expected_relational_request_sha256)
     request_wire = _wire(request, MAX_REQUEST_BYTES)
-    pins = _parent_correspondence_pins(owners)
+    pins = pin_reader(owners)
+    callbacks = _mixed_correspondence_callbacks(scope, relational) if mixed else None
+    policy = (MIXED_PARENT_REQUEST_SCHEMA, MIXED_PARENT_SCHEMA, MIXED_PARENT_PROFILE,
+              MAX_REQUEST_BYTES, MAX_REPORT_BYTES, MAX_TOTAL_BYTES, _wire(AUTHORITY, 65536))
+    if mixed:
+        _need(AUTHORITY and all(value is False for value in AUTHORITY.values()),
+              "mixed correspondence cannot confer authority")
     replay = snapshot["scope_replay_inputs"]
     opening_validation = opening_relational = None
     opening_validation_wire = opening_relational_wire = None
@@ -543,8 +601,14 @@ def prepare_norm_scope_correspondence_v2(
               "detached parent correspondence inputs changed during preparation")
         _need(_wire(request, MAX_REQUEST_BYTES) == request_wire,
               "parsed parent correspondence request changed during preparation")
-        _need(_parent_correspondence_pins(owners) == pins,
+        _need(pin_reader(owners) == pins,
               "parent correspondence sources changed during preparation")
+        if mixed:
+            _need(_mixed_correspondence_callbacks(scope, relational) == callbacks,
+                  "mixed correspondence operation callbacks changed")
+            _need(policy == (MIXED_PARENT_REQUEST_SCHEMA, MIXED_PARENT_SCHEMA, MIXED_PARENT_PROFILE,
+                  MAX_REQUEST_BYTES, MAX_REPORT_BYTES, MAX_TOTAL_BYTES, _wire(AUTHORITY, 65536)),
+                  "mixed correspondence profile or authority policy changed")
 
     def returned_fence():
         if opening_validation_wire is not None:
@@ -566,7 +630,7 @@ def prepare_norm_scope_correspondence_v2(
 
     def closing_relational():
         if replay_started:
-            closed = relational.validate_relational_norm_v1(snapshot["relational_report"],
+            closed = validate_relational(snapshot["relational_report"],
                 relational_request_raw, expected_request_sha256=expected_relational_request_sha256,
                 expected_report_sha256=expected_relational_report_sha256)
             if opening_relational_wire is not None:
@@ -585,15 +649,15 @@ def prepare_norm_scope_correspondence_v2(
         opening_validation_wire = _wire(opening_validation, MAX_REPORT_BYTES)
         scope_validation = json.loads(opening_validation_wire)
         fence()
-        opening_relational = relational.validate_relational_norm_v1(snapshot["relational_report"],
+        opening_relational = validate_relational(snapshot["relational_report"],
             relational_request_raw, expected_request_sha256=expected_relational_request_sha256,
             expected_report_sha256=expected_relational_report_sha256)
         opening_relational_wire = _wire(opening_relational, MAX_REPORT_BYTES)
         checked = json.loads(opening_relational_wire)
         fence()
-        contexts = _join(request, snapshot["scope_report"], checked)
+        contexts = _join(request, snapshot["scope_report"], checked, mixed=mixed)
         report = {
-            "schema": SCHEMA_V2, "profile": "parent-literal-occurrence-authored-correspondence/v2",
+            "schema": report_schema, "profile": profile,
             "status": "unreviewed_correspondence_transport_checked",
             "request": request, "alternative_id": request["alternative_id"],
             "input_pins": {"scope_report_sha256": expected_scope_report_sha256,
@@ -623,6 +687,10 @@ def prepare_norm_scope_correspondence_v2(
                 "No interpretation selection, meaning review, learned target, graph admission, model, training, solver or Lean execution is supplied.",
             ],
         }
+        if mixed:
+            report.update(semantic_mask=0, consumer_mask=0)
+            report["limitations"].append(
+                "The mixed renderer input is not a native TDFOL AST; no corpus/native dispatch profile or actual build is registered by this correspondence.")
         serialized = _wire(report, MAX_REPORT_BYTES)
         report = json.loads(serialized)
         return report
@@ -634,19 +702,22 @@ def prepare_norm_scope_correspondence_v2(
                               fence, returned_fence, output_fence, fence), primary)
 
 
-def validate_norm_scope_correspondence_v2(report, *args, expected_report_sha256, **kwargs):
-    """Validate only the explicit parent profile against complete original replay."""
+def _validate_parent_correspondence(report, *args, expected_report_sha256, mixed=False, **kwargs):
+    """Validate only the selected explicit parent profile against complete replay."""
+    report_schema = MIXED_PARENT_SCHEMA if mixed else SCHEMA_V2
+    profile = MIXED_PARENT_PROFILE if mixed else "parent-literal-occurrence-authored-correspondence/v2"
+    prepare = prepare_mixed_norm_scope_correspondence_v1 if mixed else prepare_norm_scope_correspondence_v2
     _sha(expected_report_sha256, "parent correspondence report")
     offered = _wire(report, MAX_REPORT_BYTES)
     _need(hashlib.sha256(offered).hexdigest() == expected_report_sha256,
           "independent parent correspondence report pin differs")
-    _need(type(report) is dict and report.get("schema") == SCHEMA_V2
-          and report.get("profile") == "parent-literal-occurrence-authored-correspondence/v2",
+    _need(type(report) is dict and report.get("schema") == report_schema
+          and report.get("profile") == profile,
           "explicit parent correspondence report profile required")
     primary = None
     regenerated = serialized = None
     try:
-        regenerated = prepare_norm_scope_correspondence_v2(*args, **kwargs)
+        regenerated = prepare(*args, **kwargs)
         serialized = _wire(regenerated, MAX_REPORT_BYTES)
         _need(offered == serialized, "parent correspondence report differs from complete original replay")
         return regenerated
@@ -663,6 +734,49 @@ def validate_norm_scope_correspondence_v2(report, *args, expected_report_sha256,
         scope._parent_finish((offered_fence, result_fence), primary)
 
 
+def prepare_norm_scope_correspondence_v2(
+    scope_report, relational_report, mapping_request_raw, *,
+    expected_scope_report_sha256, expected_relational_report_sha256,
+    expected_mapping_request_sha256, scope_replay_inputs, relational_request_raw,
+    expected_relational_request_sha256,
+):
+    """Replay the original parent/Object-only correspondence profile unchanged."""
+    return _prepare_parent_correspondence(scope_report, relational_report, mapping_request_raw,
+        expected_scope_report_sha256=expected_scope_report_sha256,
+        expected_relational_report_sha256=expected_relational_report_sha256,
+        expected_mapping_request_sha256=expected_mapping_request_sha256,
+        scope_replay_inputs=scope_replay_inputs, relational_request_raw=relational_request_raw,
+        expected_relational_request_sha256=expected_relational_request_sha256)
+
+
+def validate_norm_scope_correspondence_v2(report, *args, expected_report_sha256, **kwargs):
+    """Regenerate only the original parent/Object-only correspondence profile."""
+    return _validate_parent_correspondence(report, *args,
+        expected_report_sha256=expected_report_sha256, mixed=False, **kwargs)
+
+
+def prepare_mixed_norm_scope_correspondence_v1(
+    scope_report, relational_report, mapping_request_raw, *,
+    expected_scope_report_sha256, expected_relational_report_sha256,
+    expected_mapping_request_sha256, scope_replay_inputs, relational_request_raw,
+    expected_relational_request_sha256,
+):
+    """Account for exact parent anchors and sorted authored syntax without admission."""
+    return _prepare_parent_correspondence(scope_report, relational_report, mapping_request_raw,
+        expected_scope_report_sha256=expected_scope_report_sha256,
+        expected_relational_report_sha256=expected_relational_report_sha256,
+        expected_mapping_request_sha256=expected_mapping_request_sha256,
+        scope_replay_inputs=scope_replay_inputs, relational_request_raw=relational_request_raw,
+        expected_relational_request_sha256=expected_relational_request_sha256, mixed=True)
+
+
+def validate_mixed_norm_scope_correspondence_v1(report, *args, expected_report_sha256, **kwargs):
+    """Regenerate only the explicit mixed parent profile from full original inputs."""
+    return _validate_parent_correspondence(report, *args,
+        expected_report_sha256=expected_report_sha256, mixed=True, **kwargs)
+
+
 __all__ = ["prepare_norm_scope_correspondence_v1", "norm_scope_correspondence_sha256",
            "validate_norm_scope_correspondence_v1", "prepare_norm_scope_correspondence_v2",
-           "validate_norm_scope_correspondence_v2"]
+           "validate_norm_scope_correspondence_v2", "prepare_mixed_norm_scope_correspondence_v1",
+           "validate_mixed_norm_scope_correspondence_v1"]

@@ -732,3 +732,309 @@ def test_parent_correspondence_v2_secondary_closeout_errors_preserve_primary_err
     assert str(caught.value) == "primary authored correspondence failure"
     assert observed
     assert any("secondary parent custody failure" in note for note in getattr(caught.value,"__notes__",[]))
+
+
+# Mixed syntax uses the exact retained hypotheses, while the physical parent
+# below stays the existing fictional Clérk/café fixture. These tests establish
+# neither a genuine §7214 parent binding nor agreement of fictional/legal text.
+mixed_retained_reports = relational_fixture.mixed_retained_reports
+_MIXED_CORRESPONDENCE_REQUEST = "legal-mixed-norm-scope-correspondence-request/v1"
+_MIXED_CORRESPONDENCE_REPORT = "legal-mixed-norm-scope-correspondence-report/v1"
+_MIXED_CORRESPONDENCE_PROFILE = "parent-literal-occurrence-authored-mixed-correspondence/v1"
+
+
+def _mixed_parent_case(tmp_path, retained, *, alternative=0, source_value=None):
+    source = scope_fixture.parent_case(tmp_path) if source_value is None else source_value
+    scope_report = scope_fixture.parent_prepare(source)
+    scope_args, scope_kwargs = scope_fixture.parent_arguments(source)
+    selected = deepcopy(retained[alternative])
+    fragment = selected["report"]
+    expression = fragment["typed_expression"]
+
+    def targets(kind, *, name=None):
+        result = []
+        for row in fragment["structural_mapping"]:
+            if row["kind"] != kind:
+                continue
+            value = pointer(expression, row["typed_path"])
+            if name is not None and row.get("binder_name", value.get("symbol")) != name:
+                continue
+            result.append(deepcopy(row))
+        return result
+
+    choices = {
+        "/occurrences/0/anchor": targets("binder", name="president") + targets("variable", name="president"),
+        "/occurrences/1/anchor": targets("legacy.deontic/v1"),
+        "/occurrences/2/anchor": targets("predicate", name="Detail"),
+        "/occurrences/3/anchor": targets("binder", name="officer") + targets("variable", name="officer"),
+    }
+    rows = []
+    for anchor in scope_report["anchor_mappings"]:
+        path = anchor["declaration_path"]
+        nominated = choices.get(path, [])
+        disposition = "literal_accounting" if path.startswith("/coverage/") else (
+            "proposed_mapping" if nominated else "unresolved")
+        rows.append(dict(anchor_mapping=deepcopy(anchor), disposition=disposition, targets=nominated,
+            rationale="Fictional physical fixture and retained typed hypothesis; engineering nomination only, no source meaning."))
+    value = dict(source=source, scope_report=scope_report, relational_report=fragment,
+        typed_hypothesis=selected["alternative"], relational_request_raw=selected["request_raw"],
+        scope_replay_inputs=dict(parent_bundle=scope_args[0], scope_request_raw=scope_args[1],
+            scope_declaration_raw=scope_args[2], **scope_kwargs),
+        mapping=dict(schema=_MIXED_CORRESPONDENCE_REQUEST,
+            interpretation_status="authored_unreviewed_correspondence",
+            alternative_id="fictional-parent-mixed-" + str(alternative), source_rows=rows, typed_rows=[],
+            scope_report_sha256=source_scope.parent_norm_scope_report_sha256(scope_report),
+            relational_report_sha256=relational.mixed_relational_norm_report_sha256(fragment)))
+    rebuild_inverse(value)
+    return value
+
+
+def _mixed_parent_arguments(value):
+    raw = wire(value["mapping"])
+    return (value["scope_report"], value["relational_report"], raw), dict(
+        expected_scope_report_sha256=source_scope.parent_norm_scope_report_sha256(value["scope_report"]),
+        expected_relational_report_sha256=relational.mixed_relational_norm_report_sha256(value["relational_report"]),
+        expected_mapping_request_sha256=hashlib.sha256(raw).hexdigest(),
+        scope_replay_inputs=value["scope_replay_inputs"], relational_request_raw=value["relational_request_raw"],
+        expected_relational_request_sha256=hashlib.sha256(value["relational_request_raw"]).hexdigest())
+
+
+def _mixed_parent_prepare(value):
+    args, kwargs = _mixed_parent_arguments(value)
+    return subject.prepare_mixed_norm_scope_correspondence_v1(*args, **kwargs)
+
+
+def _mixed_parent_validate(report, value):
+    args, kwargs = _mixed_parent_arguments(value)
+    return subject.validate_mixed_norm_scope_correspondence_v1(report, *args,
+        expected_report_sha256=subject.norm_scope_correspondence_sha256(report), **kwargs)
+
+
+@pytest.mark.parametrize("alternative", [0, 1], ids=["cap-within-permission", "cap-as-guard"])
+def test_mixed_parent_correspondence_retains_exact_sorted_contexts_and_no_statutory_binding(
+        tmp_path, mixed_retained_reports, alternative):
+    value = _mixed_parent_case(tmp_path, mixed_retained_reports, alternative=alternative)
+    report = _mixed_parent_prepare(value)
+    fragment = value["relational_report"]
+    assert report["schema"] == _MIXED_CORRESPONDENCE_REPORT
+    assert report["profile"] == _MIXED_CORRESPONDENCE_PROFILE
+    assert report["source_scope"] == value["scope_report"]
+    assert report["relational_fragment"] == fragment
+    assert report["request"] == value["mapping"]
+    assert report["retained_unresolved"] == value["scope_report"]["scope_declaration"]["unresolved"]
+    assert report["declared_semantic_coverage"] == "partial"
+    assert value["source"]["request"]["source_text"] == scope_fixture._PARENT_TEXT
+    assert hashlib.sha256(scope_fixture._PARENT_TEXT.encode()).hexdigest() != (
+        "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e")
+    assert report["source_scope"]["parent_source_binding"]["context"]["availability"] == "required_unavailable"
+    assert report["source_bound"] is report["source_translation_performed"] is False
+    assert report["selected_interpretation"] is report["governing_definition_use"] is None
+    assert report["original_signatures_cover_correspondence"] is False
+    assert report["human_reviews"] == report["signatures_constructed"] == report["admissions"] == 0
+    for key in ("semantic_mask", "consumer_mask", "training_mask", "evaluation_gold_mask"):
+        assert type(report[key]) is int and report[key] == 0
+    assert_no_authority(report)
+    assert fragment["source_binding"] is fragment["native_ast"] is None
+    assert fragment["source_bound"] is fragment["native_build_executed"] is False
+    assert fragment["counts"] == dict(nodes=98, extension_payloads=1, quantifiers=12,
+        modal_nodes=1, predicate_occurrences=14, equality_occurrences=6)
+
+    mapping = fragment["structural_mapping"]
+    inventory = report["typed_context_inventory"]
+    assert len(mapping) == len(inventory) == report["counts"]["typed_targets"] == 111
+    assert [row["target"] for row in inventory] == mapping
+    assert [row["target"] for row in report["request"]["typed_rows"]] == mapping
+    assert report["counts"]["source_anchors"] == len(value["scope_report"]["anchor_mappings"])
+    for row in report["request"]["typed_rows"]:
+        expected_paths = [source["anchor_mapping"]["declaration_path"]
+            for source in report["request"]["source_rows"] if row["target"] in source["targets"]]
+        assert row["source_paths"] == expected_paths
+
+    expression = fragment["typed_expression"]
+    binders = {row["binder_name"]: row for row in mapping if row["kind"] == "binder"}
+    assert len(binders) == 12
+    assert binders["event"]["typed_sort"] == "EventFrame"
+    assert binders["time"]["typed_sort"] == "TimeFrame"
+    assert sum(row["typed_sort"] == "Object" for row in binders.values()) == 10
+    roles = {row["symbol"]: row["roles"] for row in fragment["argument_roles"]}
+    equality_operands, predicate_arguments, variables = [], [], []
+    for row in inventory:
+        target = row["target"]
+        assert row["sort"] == target.get("typed_sort", target.get("sort"))
+        assert pointer(fragment["renderer_ast"], target["renderer_path"])
+        if target["kind"] != "variable":
+            assert row["binding"] is row["argument"] is row["equality_operand"] is None
+            continue
+        variables.append(row)
+        variable = pointer(expression, target["typed_path"])
+        binder = binders[variable["symbol"]]
+        quantifier_path = binder["typed_path"].rsplit("/binders/", 1)[0]
+        quantifier = pointer(expression, quantifier_path)
+        assert row["binding"] == dict(typed_path=binder["typed_path"], name=variable["symbol"],
+            quantifier=quantifier["kind"], sort=variable["sort"]["name"])
+        assert target["typed_path"].startswith(quantifier_path + "/arguments/0/")
+        parent_path, index = target["typed_path"].rsplit("/arguments/", 1)
+        parent = pointer(expression, parent_path)
+        if parent["kind"] == "equality":
+            assert row["argument"] is None
+            assert row["equality_operand"] == dict(equality_path=parent_path, index=int(index),
+                side="left" if index == "0" else "right", sort="Object")
+            equality_operands.append(row)
+        else:
+            assert parent["kind"] == "predicate" and row["equality_operand"] is None
+            assert row["argument"] == dict(predicate_path=parent_path, symbol=parent["symbol"],
+                index=int(index), role=roles[parent["symbol"]][int(index)],
+                kind="predicate_argument", sort=variable["sort"]["name"])
+            predicate_arguments.append(row)
+    assert len(variables) == 46 and len(equality_operands) == 12 and len(predicate_arguments) == 34
+    assert {row["argument"]["sort"] for row in predicate_arguments} == {"Object", "EventFrame", "TimeFrame"}
+    cap_path = value["typed_hypothesis"]["original_cap_subtree"]["typed_path"]
+    cap = pointer(expression, cap_path)
+    assert hashlib.sha256(wire(cap)).hexdigest() == relational_fixture._MIXED_CORE_SHA
+    cap_context = next(row for row in inventory if row["target"]["typed_path"] == cap_path)
+    assert [row["operator"] for row in cap_context["ancestry"] if row["kind"] == "legacy.deontic/v1"] == (
+        ["P"] if alternative == 0 else [])
+    assert sum(row["kind"] == "legacy.deontic/v1" for row in mapping) == 1
+    assert _mixed_parent_validate(report, value) == report
+
+    # Preserve this scope's actual mapping and complete returned report for an
+    # independent saved-artifact reader, separate from the7 syntax-only files.
+    observed = tmp_path / "mixed-parent-correspondence"
+    observed.mkdir()
+    for name, payload in (("request.json", wire(value["mapping"])), ("report.json", wire(report))):
+        (observed / name).write_bytes(payload)
+        assert (observed / name).read_bytes() == payload
+
+
+def test_mixed_parent_correspondence_keeps_equal_text_parent_occurrences_distinct(tmp_path, mixed_retained_reports):
+    first = _mixed_parent_case(tmp_path, mixed_retained_reports)
+    source = first["source"]
+    other = dict(source)
+    companion = source["companions"][2]
+    other["arguments"] = source["physical"].binding_arguments(source["original"], companion)
+    other["source"] = source["physical"].bind(source["original"], companion)
+    second = _mixed_parent_case(tmp_path, mixed_retained_reports, source_value=other)
+    left, right = _mixed_parent_prepare(first), _mixed_parent_prepare(second)
+    assert left["relational_fragment"] == right["relational_fragment"]
+    assert left["source_scope"]["scope_request"] == right["source_scope"]["scope_request"]
+    assert left["source_scope"]["source_selector"]["record_cid"] != right["source_scope"]["source_selector"]["record_cid"]
+    assert subject.norm_scope_correspondence_sha256(left) != subject.norm_scope_correspondence_sha256(right)
+
+
+@pytest.mark.parametrize("damage", ["missing_typed", "typed_order", "bad_inverse", "renderer_target", "cross_occurrence", "facet"])
+def test_mixed_parent_correspondence_resealed_mapping_refuses_incomplete_or_false_links(
+        tmp_path, mixed_retained_reports, damage):
+    value = _mixed_parent_case(tmp_path, mixed_retained_reports)
+    if damage == "missing_typed":
+        value["mapping"]["typed_rows"].pop()
+    elif damage == "typed_order":
+        value["mapping"]["typed_rows"][0:2] = value["mapping"]["typed_rows"][1::-1]
+    elif damage == "bad_inverse":
+        row = next(row for row in value["mapping"]["typed_rows"] if row["source_paths"])
+        row.update(disposition="authored_scaffolding", source_paths=[])
+    elif damage == "renderer_target":
+        source_row(value, "/occurrences/2/anchor")["targets"][0]["renderer_path"] = "/root"
+        rebuild_inverse(value)
+    elif damage == "cross_occurrence":
+        value["mapping"]["source_rows"][0]["anchor_mapping"]["parent_selector"]["source_occurrence_cid"] = (
+            value["source"]["companions"][1]["source_occurrence_cid"])
+    else:
+        source_row(value, "/occurrences/2/anchor")["targets"] = [deepcopy(next(
+            row for row in value["relational_report"]["structural_mapping"] if row["kind"] == "binder"))]
+        rebuild_inverse(value)
+    with pytest.raises(ValueError):
+        _mixed_parent_prepare(value)
+
+
+@pytest.mark.parametrize("damage", ["equality_operand", "sorted_binding", "permission_ancestry", "mask_bool"])
+def test_mixed_parent_correspondence_rehashed_output_cannot_forge_derived_context(
+        tmp_path, mixed_retained_reports, damage):
+    value = _mixed_parent_case(tmp_path, mixed_retained_reports)
+    report = _mixed_parent_prepare(value)
+    if damage == "equality_operand":
+        row = next(row for row in report["typed_context_inventory"] if row["equality_operand"])
+        row["equality_operand"]["side"] = "right" if row["equality_operand"]["side"] == "left" else "left"
+    elif damage == "sorted_binding":
+        row = next(row for row in report["typed_context_inventory"]
+            if row["binding"] and row["binding"]["sort"] == "EventFrame")
+        row["binding"]["sort"] = "Object"
+    elif damage == "permission_ancestry":
+        row = next(row for row in report["typed_context_inventory"]
+            if any(ancestor["kind"] == "legacy.deontic/v1" for ancestor in row["ancestry"]))
+        row["ancestry"] = [ancestor for ancestor in row["ancestry"] if ancestor["kind"] != "legacy.deontic/v1"]
+    else:
+        report["training_mask"] = False
+    with pytest.raises(ValueError):
+        _mixed_parent_validate(report, value)
+
+
+@pytest.mark.parametrize("damage", ["mapping_pin", "extra_replay_key"])
+def test_mixed_parent_correspondence_preflight_precedes_operation_loading(
+        tmp_path, mixed_retained_reports, monkeypatch, damage):
+    value = _mixed_parent_case(tmp_path, mixed_retained_reports)
+    args, kwargs = _mixed_parent_arguments(value)
+    if damage == "mapping_pin":
+        kwargs["expected_mapping_request_sha256"] = "0" * 64
+    else:
+        value["scope_replay_inputs"]["loader_callback"] = "not a closed original replay input"
+    def denied(*args, **kwargs):
+        pytest.fail("operation owners loaded before exact mixed preflight")
+    monkeypatch.setattr(source_scope, "_parent_owners", denied)
+    monkeypatch.setattr(relational, "_mixed_owners", denied)
+    with pytest.raises(ValueError):
+        subject.prepare_mixed_norm_scope_correspondence_v1(*args, **kwargs)
+
+
+@pytest.mark.parametrize("damage", ["report_bytes", "parent_file"])
+def test_mixed_parent_correspondence_replays_original_parent_bytes(tmp_path, mixed_retained_reports, damage):
+    value = _mixed_parent_case(tmp_path, mixed_retained_reports)
+    replay = value["scope_replay_inputs"]
+    if damage == "report_bytes":
+        replay["report_bytes"]["parent_text_views"] += b" "
+        replay["expected_report_pins"]["parent_text_views"]["raw_sha256"] = hashlib.sha256(
+            replay["report_bytes"]["parent_text_views"]).hexdigest()
+    else:
+        path = Path(replay["replay_inputs"]["parent_text_views_inputs"]["parent_descriptor"]["local_path"])
+        path.write_bytes(path.read_bytes() + b"changed after physical source preparation")
+    with pytest.raises(ValueError):
+        _mixed_parent_prepare(value)
+
+
+@pytest.mark.parametrize("location", ["caller", "detached"])
+def test_mixed_parent_correspondence_refuses_late_mixed_report_mutation(
+        tmp_path, mixed_retained_reports, monkeypatch, location):
+    value = _mixed_parent_case(tmp_path, mixed_retained_reports)
+    real = relational.validate_mixed_relational_norm_v1
+    observed = []
+    def changed_after_genuine_validation(report, *args, **kwargs):
+        checked = real(report, *args, **kwargs)
+        if not observed:
+            observed.append("genuine_mixed_validation_completed")
+            target = value["relational_report"] if location == "caller" else report
+            target["training_mask"] = False
+        return checked
+    monkeypatch.setattr(relational, "validate_mixed_relational_norm_v1", changed_after_genuine_validation)
+    with pytest.raises(ValueError):
+        _mixed_parent_prepare(value)
+    assert observed == ["genuine_mixed_validation_completed"]
+
+
+def test_mixed_parent_correspondence_keeps_old_and_mixed_profiles_separate(tmp_path, mixed_retained_reports):
+    mixed = _mixed_parent_case(tmp_path, mixed_retained_reports)
+    mixed_report = _mixed_parent_prepare(mixed)
+    old_path = tmp_path / "old-object-profile"
+    old_path.mkdir()
+    old = parent_correspondence_case(old_path)
+    old_report = parent_correspondence_prepare(old)
+    mixed_args, mixed_kwargs = _mixed_parent_arguments(mixed)
+    old_args, old_kwargs = parent_correspondence_arguments(old)
+    with pytest.raises(ValueError):
+        subject.prepare_norm_scope_correspondence_v2(*mixed_args, **mixed_kwargs)
+    with pytest.raises(ValueError):
+        subject.prepare_mixed_norm_scope_correspondence_v1(*old_args, **old_kwargs)
+    with pytest.raises(ValueError):
+        subject.validate_mixed_norm_scope_correspondence_v1(old_report, *mixed_args,
+            expected_report_sha256=subject.norm_scope_correspondence_sha256(old_report), **mixed_kwargs)
+    with pytest.raises(ValueError):
+        subject.validate_norm_scope_correspondence_v2(mixed_report, *old_args,
+            expected_report_sha256=subject.norm_scope_correspondence_sha256(mixed_report), **old_kwargs)

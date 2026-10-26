@@ -85,7 +85,7 @@ correct interpretation nor selects between alternatives. Its `source_bound`
 flag remains false: exact source custody and a proposed correspondence are not
 an independently validated source translation.
 
-The existing fragment still lacks equality/cardinality, extra semantic sorts,
+The original Object-only fragment still lacks equality/cardinality, extra semantic sorts,
 purpose and anaphora. Opaque predicate labels do not implement those constructs.
 The retained statutory examples have open context and meanings; an authored
 fictional example is not their completed interpretation.
@@ -215,3 +215,67 @@ No legal-fidelity or learned accuracy gain is claimed. Meaning review, governing
 edition/context decisions, complete law semantics, training targets and gold
 admission remain unavailable; all authority flags and masks described above
 retain their false/zero values.
+
+
+## Explicit mixed-sort parent correspondence
+
+The same owner adds `prepare_mixed_norm_scope_correspondence_v1` and
+`validate_mixed_norm_scope_correspondence_v1`. This is an explicit sibling of
+the parent-occurrence v2 route; the sampled-HTML v1 and Object-only parent v2
+contracts remain separate. The parent routes share the existing accounting and
+replay core rather than introducing another source, AST or graph owner.
+
+Use request schema `legal-mixed-norm-scope-correspondence-request/v1`, report
+schema `legal-mixed-norm-scope-correspondence-report/v1` and profile
+`parent-literal-occurrence-authored-mixed-correspondence/v1`. The mapping request
+retains the same seven fields, `authored_unreviewed_correspondence` status,
+complete ordered source rows and exact inverse typed rows. The sibling accepts
+only the independently pinned request/report of the existing
+[mixed relational profile](legal_relational_norm_v1.md#explicit-mixed-sort-relational-profile).
+The authored mixed relational request retains `source_binding: null`. The companion retains the separate original parent binding, with `source_bound: false` and no selected meaning or governing definition.
+A legacy Object-only request or report is not interchangeable with this profile.
+
+The preparation arguments are the same as v2 above. Supply the complete original
+parent bundle, the three raw report populations and their independent pins,
+physical replay inputs, selected occurrence/companion identities, original
+scope request/declaration bytes, original mixed relational request bytes and
+full canonical scope/relational report hashes. A source string, cached binding,
+precomputed typed inventory or repaired outer hash cannot replace these inputs.
+`norm_scope_correspondence_sha256` hashes the complete output; the mixed validator
+regenerates it from all original inputs and the independent complete report pin.
+
+`typed_context_inventory` retains every original typed target, ordered Boolean,
+quantifier and O/P/F ancestry, and the governing binder's name, path, quantifier
+and sort. Predicate variable uses carry their declared ordered argument role and
+sort. Equality operands instead retain the exact equality path, operand index,
+left/right side and sort; they do not acquire a predicate role. Object,
+EventFrame and TimeFrame binders remain distinct, and the two authored permission
+placements remain distinct alternatives. Complete source/inverse accounting
+includes binders and modal payloads independently of wrapper nodes. A lexical
+nomination is still an authored claim, not verified word meaning.
+
+The sibling preserves opening and closing original parent/scope and mixed
+relational replay, detached-input commitments, source-producer checks, callback
+and authority-policy fences, serialized-output checks and refusal closeout.
+Changing mapping order, inverse links, occurrence identity, sorted binding,
+equality side or modal ancestry and merely resealing hashes does not authorize
+the change. Existing input/output bounds and namespace-scoped custody limits
+remain; no corpus/native dispatch or compiler operation is registered here.
+
+The [accepted focused observation](../../../../../docs/autoformalization/evidence/legal-ir-mixed-sort-parent-correspondence-20261026.json) records **21 cases / 63 phases / nine selectors** (20 new controls and one legacy compatibility case), with original compute/storage and both source READs closed. The source generation is frozen `c685a11c` plus two exact source/test overlays. Both retained §7214 typed alternatives are exercised only against the existing fictional **Clérk** physical-parent fixture: each saved correspondence retains six source anchors and111 typed targets, including sorted binder and equality-operand context. This is software correspondence qualification; it does not replay the real retained §7214 parent source. The earlier185-case qualification and D13 mixed-renderer pure/compiler specimens retain their separate generations and counts.
+
+The [retained official pilot](../../../../../docs/autoformalization/evidence/legal-ir-retained-official-pilot-20261024.json)
+already provides the separate 2024 Title 10 three-row physical cohort and its
+[unit crosswalk](../../../../../docs/autoformalization/evidence/legal-ir-retained-pilot-source-crosswalk-20261024.json).
+The real §7214 parent bundle, complete parent replay/scope inputs and cache join
+remain missing. The §7346 population of 837 records / 16 paired rows cannot
+supply §7214 source identity. Reuse the existing physical pilot and exact retained
+packet rather than regenerate either population.
+
+`source_bound` and source-translation authority remain false; selected
+interpretation and governing definition use remain null. All authority flags
+remain false and semantic, consumer, training and evaluation-gold masks are
+integer zero. Unresolved source context, meaning, definition applicability and
+legal-as-of decisions remain open. This software correspondence contract adds
+no model, training, numerical, native/Lean build, semantic graph or corpus
+admission qualification.
