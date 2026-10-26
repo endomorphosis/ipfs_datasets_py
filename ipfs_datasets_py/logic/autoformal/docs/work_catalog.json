@@ -3607,7 +3607,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-26T18:23:51.609013+00:00",
+  "last_updated_at_utc": "2026-10-26T22:26:43.516985+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -5610,6 +5610,16 @@
       "root": "datasets_repository",
       "scope": "Reuses existing34-goal/64-task programme and24-record crosswalk; new programme/numerical qualification0. Seven historical training reports and36-case synthetic kernel remain separate. Final52-case/17-selector repair chain (18new,34retained) and scoped CAS/local activation at85e85919/releasecb97 observed healthy/idle/0attempts; no provider-failure or actual stalled-production recovery tested. PR296 protected-main merge refused/pendingCI; PR297closed45-case alternative gets no credit transfer. Historical296cohorts/failures and archivepending remain distinct. No new board, semantic/training/gold or Lean admission.",
       "status": "programme_reuse_review_scoped_fix_qualified_and_locally_activated"
+    },
+    {
+      "id": "selected-parent-coordinate-observation-20261022-01",
+      "observed_bytes": 26420,
+      "observed_sha256": "8193ce3c85c961eb38d8ded7f1be8b35ccc32410b68a895685052ca4aa47c4a3",
+      "path": "docs/autoformalization/evidence/legal-ir-selected-parent-coordinates-20261022.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Two exact retained decoded parent fields2674/2675 (5837 UTF8 bytes), existing inventory plus full replay validator, 130 local sentence spans and all15 historical observations/13 text hashes: 15 matching, 0 unmatched. 45 match references across 32 distinct positions; 3 observations have multiple positions, with no occurrence selected. Every matching emitted sentence position retained. Historical global IDs remain separate; original Parquet custody reused, no raw-HTML/Parquet byte mapping, cache/entity binding, legal meaning, model/training or Lean admission. Original native/storage/source READ closed; zero masks. Publication reuses the original observation; four current product files match statically, with no current control/runtime replay.",
+      "status": "completed_existing_owner_data_operation"
     }
   ]
 }

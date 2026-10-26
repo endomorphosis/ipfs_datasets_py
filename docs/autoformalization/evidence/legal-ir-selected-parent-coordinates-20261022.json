@@ -1,0 +1,579 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "encoder_executed": false,
+    "entity_correspondence_bound": false,
+    "governing_edition_verified": false,
+    "graph_admitted": false,
+    "historical_span_identity_reconstructed": false,
+    "independent_statutory_uses_verified": false,
+    "model_executed": false,
+    "physical_paired_cache_row_bound": false,
+    "proof_authority": false,
+    "source_authority_authenticated": false,
+    "source_meaning_verified": false,
+    "training_executed": false
+  },
+  "canonical_source_changes": false,
+  "captures": {
+    "comparison": {
+      "bytes": 38765,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/attempt-selected-parent-coordinates-v02/pytest/selected-parent-coordinates/comparison.json",
+      "sha256": "1a080544d88251091e19256d6ba291bc91a20a24edfd51a6ae8e4faa4fade554"
+    },
+    "coordinate_report": {
+      "bytes": 120049,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/attempt-selected-parent-coordinates-v02/pytest/selected-parent-coordinates/coordinate-report.json",
+      "sha256": "f938150265a64e1a8d1afbb66385289bb670a2acaa3c93960c1970b0ebd382c3"
+    },
+    "module_origins": {
+      "bytes": 1725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/attempt-selected-parent-coordinates-v02/pytest/selected-parent-coordinates/module-origin-witness.json",
+      "sha256": "41a0be59d765121e8c814d5c5203e758055efeb477fe21b0b59f2b7c3ee86503"
+    },
+    "selected_documents": {
+      "bytes": 6577,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/attempt-selected-parent-coordinates-v02/pytest/selected-parent-coordinates/selected-documents.json",
+      "sha256": "16cfaba5b924ff4bb55f15321ff0fbc68eb47b0134593720fa952a3c90a15aa4"
+    },
+    "worker_completion": {
+      "bytes": 3339,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/attempt-selected-parent-coordinates-v02/pytest/selected-parent-coordinates/completion-observation.json",
+      "sha256": "cb880ac48f35b6b5a2526489fc208a1a01c45ddd0fac6d147eaf044e8a041cfd"
+    }
+  },
+  "completed": true,
+  "data_operations_completed": 1,
+  "evaluation_gold_mask": 0,
+  "execution": {
+    "controller": {
+      "bytes": 451,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/controller-complete-selected-parent-coordinates-v02.json",
+      "sha256": "75b41c6d856c862ba5b74e705290927898167667455ec1957266fdbe0fe26357"
+    },
+    "current_process_absence_used_as_closeout_substitute": false,
+    "durability": {
+      "bytes": 1980,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/attempt-selected-parent-coordinates-v02/logs/validation-durability.json",
+      "sha256": "2eafacfd100664bdbbb41da4615dca60580a212cd13db71f1a752737ee6c2987"
+    },
+    "executed_named_project_modules": 4,
+    "final_attempt_bytes": 174488,
+    "final_ordinary_files": 10,
+    "launch_readback": {
+      "bytes": 7695,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/launch-selected-parent-coordinates-v02.json",
+      "sha256": "6db62d131fbc925b7985ad64a5ccffd79f91ddf3c1e5000fb3ff7287a1251afd"
+    },
+    "native_lease_id": "b9317a8f0a53475a9d48e2c860064d0d",
+    "native_owner": {
+      "birth": "165522644",
+      "pid": 982755
+    },
+    "native_terminal": {
+      "bytes": 5997,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/launch-selected-parent-coordinates-v02.stdout",
+      "sha256": "edd31cd0c0502ca081dd83b1f2b45733ea6a99f1d486efb609045fb3d99f04c8"
+    },
+    "original_native_released": true,
+    "original_observed_live_processes": 0,
+    "original_process_scope": "sampled_birth_bound_descendants",
+    "original_source_READ_closed": true,
+    "original_storage_released": true,
+    "request_source_pins": 31,
+    "reservation_id": "9c0a00b1fe7242aab3048f41000bc42a",
+    "result": {
+      "bytes": 723,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/attempt-selected-parent-coordinates-v02/logs/result.json",
+      "sha256": "55491a94ea92ba1283a38641d8997b01df2ee5a38e293938cf2c8ea7b9aaa0de"
+    },
+    "returncode": 0,
+    "sealed_files_checked": 9
+  },
+  "hash_recipes": {
+    "coordinate_report_file": {
+      "bytes": 120049,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/attempt-selected-parent-coordinates-v02/pytest/selected-parent-coordinates/coordinate-report.json",
+      "sha256": "f938150265a64e1a8d1afbb66385289bb670a2acaa3c93960c1970b0ebd382c3"
+    },
+    "coordinate_report_full_canonical_sha256": "c80d5e63cf08737f5a80053fc57a80598575336e4354e392e05f8f785ae853de",
+    "coordinate_report_internal_seal_without_seal_field": "8922da12d9a19817ca0d1023948c3b4d10536dcd41f9e8a034b3d2fada797724"
+  },
+  "historical_expected_text_basis": "complete text in the separately pinned legacy-batch matched rows, independently rehashed and cross-bound to all fifteen progress identities",
+  "identity_limits": "Historical global span IDs remain external original observations. Current IDs belong to a new two-document supplied-text inventory. All emitted sentence matches are retained without selecting an original occurrence or reconstructing historical global identity.",
+  "input_lineage": {
+    "bytes": 4575,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/input-lineage-v02.json",
+    "sha256": "765bd44d13c9fddd97758f43f4cc4e955408d9d97d3ba946d8aedaa3d7f46a61"
+  },
+  "matching_scope": "all matching complete normalized sentence spans emitted by the unchanged inventory; no arbitrary substring or overlap search",
+  "metadata_preparation_source_custody": {
+    "bytes": 1299,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/metadata-preparation-custody-v02.json",
+    "sha256": "66cf6be2777a341ec659b97234dafd0438f6d0abdceaee3950dd930e1f167bd9"
+  },
+  "no_policy_or_cap_or_root_expansion": true,
+  "operation_executed": true,
+  "prepared_plan": {
+    "bytes": 5743,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/prepared-plan-v02.json",
+    "sha256": "7f5b283a01f0fbc2642fecf68b12ef97d223c3b9c681ea07c06bb00498231907"
+  },
+  "preserved_failed_attempt": {
+    "failed_bytes_preserved": 1100,
+    "failed_files_preserved": 3,
+    "new_native_grants_for_recovery": 0,
+    "observation": {
+      "bytes": 4950,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/observation-summary-v01.json",
+      "sha256": "e6eb2bf075643beb3bfb7ca07fd03fd7e37d93f98900ba0947d96fb3cb641a33"
+    },
+    "operation_executed": false,
+    "original_recovery_actual_postwrite": {
+      "bytes": 7073,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/failed-attempt01-storage-closeout-v01/actual-postwrite-readback.json",
+      "sha256": "6dac4610f55b19a8e073d7e900ba94dec84329696b8ed18ce79b10986d8a651c"
+    },
+    "original_recovery_api_return": {
+      "bytes": 1904,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/failed-attempt01-storage-closeout-v01/api-return.json",
+      "sha256": "81de3989b94856da2627d056d30f6096f6a167863811a6f8eade33ca149e8d26"
+    },
+    "original_recovery_source_READ_closed": true,
+    "original_request_unchanged": true,
+    "original_storage_recovery": {
+      "bytes": 978,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/failed-attempt01-storage-closeout-v01/summary.json",
+      "sha256": "7880ce3b41d2ce11b02c9fdd441855dad91c013ff3631be9f2a08b6cd6a9969d"
+    },
+    "outputs_deleted": false,
+    "storage_released": true,
+    "storage_reservation_id": "7873fd6763504ee987ac87638386ded0",
+    "worker_barrier_released": false
+  },
+  "preserved_metadata_preparation_failure": {
+    "bytes": 1033,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/metadata-preparation-failure-v02.json",
+    "sha256": "05c0b5bc8543ef79cf8a85ce8c17373721d19da662e7d0146682ecd1248b5a5d"
+  },
+  "publication_reconciliation": {
+    "adoption_review": {
+      "bytes": 19435,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/execution-packets-v01/retained-coordinate-adoption-review.json",
+      "sha256": "137c984d86e5dbe84dfe761aba6460200733d34d4c1d21f811e54c5ef1d7f51e"
+    },
+    "candidate_index_roster": {
+      "candidate_index_meaning": "zero-based index into the frozen coordinate-report.spans list",
+      "distinct_positions": 32,
+      "multi_position_observations": 3,
+      "observations": 15,
+      "order": "original comparison.historical_observations list order; retained_row_index is zero-based",
+      "position_references": 45,
+      "rows": [
+        {
+          "candidate_span_indices": [
+            3
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7213",
+            "source_sha256": "b73cd398839cb4abfe40bb2fe8c5faa0f520b9b530fc82e0f7e2e0dcb7d2dd6f",
+            "source_span_id": "uscode-span-03ce6071ff34f15f286989ca6c096d39baab9d38aae54370bdee08d228e30475"
+          },
+          "historical_span_ordinal": 4017,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 0
+        },
+        {
+          "candidate_span_indices": [
+            12
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7213",
+            "source_sha256": "325ac77ef4865ce9fc6822f7bdc4820a271a7c7d5e27c3908080895eed5bb4eb",
+            "source_span_id": "uscode-span-05966c4b7dcb4278c84e4da1ec0976e41f706e9e64b0fc3d6f31dd14205bf07d"
+          },
+          "historical_span_ordinal": 4026,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 1
+        },
+        {
+          "candidate_span_indices": [
+            20
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7213",
+            "source_sha256": "c58ab31e77f97f786bf8e270ada854ecbddb93f9d67bb654eb0e5d1f9549b0f2",
+            "source_span_id": "uscode-span-05ef737adacce66de176a18d473f2f4b580522033c5d361f9c727f02c93af479"
+          },
+          "historical_span_ordinal": 4034,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 2
+        },
+        {
+          "candidate_span_indices": [
+            10,
+            14,
+            29,
+            35,
+            38,
+            41,
+            44
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7213",
+            "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+            "source_span_id": "uscode-span-109c290c2e97ccd742f84d194121182e3b764e42edd126f56db1f3a80fd18368"
+          },
+          "historical_span_ordinal": 4049,
+          "match_count": 7,
+          "multiple_positions": true,
+          "retained_row_index": 3
+        },
+        {
+          "candidate_span_indices": [
+            46
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7214",
+            "source_sha256": "1d1b932916ddd23b221c642bff16f451508fdbc067a5666ee17cb35de1168958",
+            "source_span_id": "uscode-span-029df930804ea3497574fc8f54cfcba7f4bee0058513f9100c2b8e1f3f5b3494"
+          },
+          "historical_span_ordinal": 4060,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 4
+        },
+        {
+          "candidate_span_indices": [
+            52
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7214",
+            "source_sha256": "3da5d2466687eb051a25b02859022797f0d1cffbaa38f96ab6b31e9050073587",
+            "source_span_id": "uscode-span-011ed95a351a6f3180b83c7c7bdc9ee048ba800a139d6f31a392a98e26d4ba52"
+          },
+          "historical_span_ordinal": 4066,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 5
+        },
+        {
+          "candidate_span_indices": [
+            70
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7214",
+            "source_sha256": "2c2f85e1cbd692d429730229723a47c62becd6b56b8e975bb7e58eb3d703a61a",
+            "source_span_id": "uscode-span-0ca4f2f42d7c092e86ed43e6753bae9a968cb2a1ceb41a8169b5b61ff470f331"
+          },
+          "historical_span_ordinal": 4084,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 6
+        },
+        {
+          "candidate_span_indices": [
+            75
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7214",
+            "source_sha256": "7a3ebf4476aaba3a749d0d8f34efcdcc7eb96cbfa80cf2bad50df65b33d316a8",
+            "source_span_id": "uscode-span-13a9d1f45b0eb4d48dbc4b9459901dc0b985c6ae2232569d7b2bc1f387a97c9a"
+          },
+          "historical_span_ordinal": 4089,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 7
+        },
+        {
+          "candidate_span_indices": [
+            80
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7214",
+            "source_sha256": "841bfa9211fdec5dd2689593e258350557d323744c5c83fc655486268b0b2287",
+            "source_span_id": "uscode-span-0f735659aab686bc0e8deff0473080352aa1aa87b6e335147c40d0cab2ffa5bf"
+          },
+          "historical_span_ordinal": 4094,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 8
+        },
+        {
+          "candidate_span_indices": [
+            85
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7214",
+            "source_sha256": "62b8d9ef5c16f03c45688ee617f6c848b048ac1dd954224d080d939e9fec0267",
+            "source_span_id": "uscode-span-11c21e9a90f42a8069cee95dedfeb0f035414f5912177709c254a1f818a46c23"
+          },
+          "historical_span_ordinal": 4099,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 9
+        },
+        {
+          "candidate_span_indices": [
+            92
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7214",
+            "source_sha256": "a9222551c5bdbf5f69efa6593859c924133b3c463fc986bdc1db87b7d16ac16e",
+            "source_span_id": "uscode-span-09a80ec4ae4b8bf91d88725ecb7c23197213eb612aa0b67d082bc29d22791fc1"
+          },
+          "historical_span_ordinal": 4106,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 10
+        },
+        {
+          "candidate_span_indices": [
+            96
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7214",
+            "source_sha256": "8235751346fec4461475ebd3269361080699ce8ef62a77adaf4c0a93785e7bac",
+            "source_span_id": "uscode-span-1609faea2dfb377a3e1e1accdb2cfff89f847a7571542e711e42b46caebaf0c0"
+          },
+          "historical_span_ordinal": 4110,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 11
+        },
+        {
+          "candidate_span_indices": [
+            56,
+            60,
+            64,
+            100,
+            104,
+            107,
+            110,
+            113,
+            116,
+            119,
+            122,
+            125,
+            128
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7214",
+            "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+            "source_span_id": "uscode-span-0c49542f9e2bd5febebeb3a4da426204bee2b2c961d119c63a49c37dd410b422"
+          },
+          "historical_span_ordinal": 4130,
+          "match_count": 13,
+          "multiple_positions": true,
+          "retained_row_index": 12
+        },
+        {
+          "candidate_span_indices": [
+            120
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7214",
+            "source_sha256": "61911af386ce841eaf1990962650dc811bbb8968398acacc76f5d0f43b219410",
+            "source_span_id": "uscode-span-15f3ac25f803cdd300a343b0c2a666a6847ee3a4b0ff4977d6b5cf61ee3957b8"
+          },
+          "historical_span_ordinal": 4134,
+          "match_count": 1,
+          "multiple_positions": false,
+          "retained_row_index": 13
+        },
+        {
+          "candidate_span_indices": [
+            56,
+            60,
+            64,
+            100,
+            104,
+            107,
+            110,
+            113,
+            116,
+            119,
+            122,
+            125,
+            128
+          ],
+          "historical_progress_identity": {
+            "legal_id": "usc:us:10:7214",
+            "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+            "source_span_id": "uscode-span-07c33feb872b699927c7b52e74acdc8e0c010e91aafe5da3d77e1827348885f4"
+          },
+          "historical_span_ordinal": 4142,
+          "match_count": 13,
+          "multiple_positions": true,
+          "retained_row_index": 14
+        }
+      ],
+      "scope": "NAVIGATION ONLY. Extracted from the already frozen comparison; no new search, source selector, occurrence choice, provenance join or historical ID reconstruction."
+    },
+    "consumer_mask": 0,
+    "current_control_or_package_runtime_requalified": false,
+    "evaluation_gold_mask": 0,
+    "native_readiness_review": {
+      "bytes": 10343,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/supervisor-programme-v01/execution-packets-v01/native-readiness-source-review.json",
+      "sha256": "bb0bdee43b16a3494d13eb18ec679af4349e2a96129898c603aef62eb204e714"
+    },
+    "native_task_status_changed": false,
+    "new_data_operations": 0,
+    "new_tests": 0,
+    "original_observation": {
+      "bytes": 11870,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/observation-summary-v02.json",
+      "sha256": "0c599e592a67097bad3a38727056d9290b204328f810433e358791346f3e8b08"
+    },
+    "public_source_comparison": {
+      "all_four_executed_product_files_byte_identical": true,
+      "changed_control_generation_paths": [
+        {
+          "historical": {
+            "bytes": 41756,
+            "sha256": "0a2ee6f66c0b7613dc4b44966c9b991fbda9faf1fbc7eb3aa00c3ac5be9c8238"
+          },
+          "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+          "public": {
+            "bytes": 41515,
+            "sha256": "0cf17951048015d4ce01817c0bfdd74394a161cd5e7999b01a29f18f358e666a"
+          }
+        },
+        {
+          "historical": {
+            "bytes": 15730,
+            "sha256": "dc6ae4f1cd27628a56db13fc656156c1b84df8ff999d4158ff25e70fac89f7a6"
+          },
+          "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+          "public": {
+            "bytes": 1489,
+            "sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31"
+          }
+        },
+        {
+          "historical": {
+            "bytes": 57475,
+            "sha256": "6695f98258e23a1de5b1639142dcd6e1f875f25723d465688e534407a1595f72"
+          },
+          "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py",
+          "public": {
+            "bytes": 36389,
+            "sha256": "1cf169b22c944c878e1e622ce45e5f381ca831aaa40f4b1186082cae2383f429"
+          }
+        },
+        {
+          "historical": {
+            "bytes": 34109,
+            "sha256": "970d590e336a7304ec5c3e6839f865fc39fb8bd14fa178b79f9e2c1f0d3f27eb"
+          },
+          "path": "scripts/ops/legal_ir/run_owned_validation.py",
+          "public": {
+            "bytes": 30982,
+            "sha256": "c7581722b5e1c83f8b03f96a86158e2d95e38d00f222c67c8806dfd56e3b71a2"
+          }
+        }
+      ],
+      "current_public_or_primary_runtime_requalified": false,
+      "executed_product_files": {
+        "ipfs_datasets_py/logic/autoformal/constitution_inventory.py": {
+          "byte_identical_to_captured": true,
+          "bytes": 11156,
+          "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+        },
+        "ipfs_datasets_py/logic/autoformal/legal_parent_parquet_pages.py": {
+          "byte_identical_to_captured": true,
+          "bytes": 71640,
+          "sha256": "fcf2f111f1b95450caf09e818b2298e8080ad53774944b844ac46d729af767c7"
+        },
+        "ipfs_datasets_py/logic/autoformal/legal_parent_text_views.py": {
+          "byte_identical_to_captured": true,
+          "bytes": 13849,
+          "sha256": "94855a18b9ed466a38382715675052f7cb5952c9c672f28c255e376bd28d76cc"
+        },
+        "ipfs_datasets_py/logic/autoformal/uscode_ingest.py": {
+          "byte_identical_to_captured": true,
+          "bytes": 23313,
+          "sha256": "a0d79a7459186c19c3a32cc03405acc3e4a4e0e2b33fc7bae9525be7b5246e92"
+        }
+      },
+      "immutable_main_commit": "2a125da37b4189ff06c44780aef1a3e58044fb0c",
+      "other_paths_byte_identical": 12,
+      "other_unique_declared_namespace_native_paths": 16,
+      "read_method": "Read-only GitHub REST contents API at the selected full SHA; no checkout mutation",
+      "repository": "endomorphosis/ipfs_datasets_py"
+    },
+    "reason": "Correct the published LIR-02 directive that called this completed comparison unexecuted. Reuse the original operation and preserve all repeated candidates.",
+    "recorded_at_utc": "2026-10-26T22:26:43.516985+00:00",
+    "retained_original_members_unchanged": true,
+    "schema": "legal-ir-retained-observation-publication-reconciliation/v1",
+    "semantic_mask": 0,
+    "source_READ": {
+      "canonical_root": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023",
+      "cooperative": true,
+      "lock_path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/workspace/control-plane/source-leases/source.lock",
+      "mode": "read",
+      "schema_version": "autoencoder-source-lease/v1",
+      "waited_seconds": 3.713392652571201e-05
+    },
+    "source_READ_closed": true,
+    "training_mask": 0
+  },
+  "recorded_at_utc": "2026-10-22T02:49:26.910503+00:00",
+  "request": {
+    "bytes": 9718,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/request-selected-parent-coordinates-v02.json",
+    "sha256": "4d4a45dd529ee036525b936806f2ab2d7c38953215a3eb87fb936957720e4bdc"
+  },
+  "result_counts": {
+    "distinct_historical_text_hashes": 13,
+    "emitted_sentence_spans": 130,
+    "exact_decoded_text_utf8_bytes": [
+      1945,
+      3892
+    ],
+    "historical_progress_observations": 15,
+    "match_multiplicities": [
+      1,
+      1,
+      1,
+      7,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      13,
+      1,
+      13
+    ],
+    "matched_observations": 15,
+    "matching_position_references": 45,
+    "observations_with_multiple_matching_positions": 3,
+    "original_physical_row_ordinals": [
+      2674,
+      2675
+    ],
+    "supplied_parent_documents": 2,
+    "total_source_utf8_bytes": 5837,
+    "unique_matching_coordinate_span_indices": 32,
+    "unmatched_observations": 0
+  },
+  "schema": "legal-ir-selected-parent-coordinate-observation/v1",
+  "scope": "Existing supplied-decoded-text coordinate inventory and complete public validator replay over exactly two retained parent fields, compared with fifteen original progress identities and separately retained actual legacy text. Parent Parquet file/row/revision custody is reused from its closed original generation, not re-executed. Coordinates address decoded supplied text only; no Parquet-file offsets, raw-HTML mapping, arbitrary substring search, historical producer identity binding, governing edition/meaning/entity/paired-cache correspondence, independent statutory-use or model/training/graph/Lean authority follows.",
+  "source_capture_manifest": {
+    "bytes": 16147,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-parent-coordinates-20261022-01/source-capture-manifest-v02.json",
+    "sha256": "7e07b3667f25fc604d9888d17ec905933e198efe13a910e48fa3cb9c036bf123"
+  },
+  "status": "closed_original_owned_two_parent_sentence_coordinate_observation",
+  "training_mask": 0,
+  "unit_test_or_model_quality_qualification_claimed": false,
+  "unit_tests_executed": 0
+}
