@@ -3319,6 +3319,26 @@
       "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
       "required": true,
       "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "score_legal_original_text_roundtrip"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "source384-saved-original-text-roundtrip-qualified-20261026-01"
+      ],
+      "guide": "docs/autoencoders/legal_original_text_roundtrip.md",
+      "id": "legal-original-text-roundtrip",
+      "notes": "Index the existing public detached single-rule source384 original-text scorer once. Canonical rendering, semantic IR exactness and original UTF8 are separate; no new model, learned prose head, independent teacher or statutory authority.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/logic/formalization/autoencoder/test_ir_legal_text_roundtrip.py"
+      ],
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+      "required": true,
+      "status": "implementation_present"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3379,7 +3399,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-26T02:06:22.960022+00:00",
+  "last_updated_at_utc": "2026-10-26T03:11:57.366961+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -5312,6 +5332,16 @@
       "root": "datasets_repository",
       "scope": "One retained unselected de-dicto hypothesis over the same 837 records/16 cache rows. Six direct APIs and 61 actual original-function entries, including 12 required nested parent replays. Public f53 leaf modules, explicit synthesized namespaces and initializer bypasses; 13 original M parent paths/pins unchanged. Eleven anchors/57 typed targets, 9 references from 4 lexical heads, 48 scaffolds, 6 meaning/context issues and 15 questions open; false authority/masks 0. Package initialization, installed runtime, semantic fidelity and latent-text reconstruction remain unqualified. No new model/training/embedding/checkpoint/solver/Lean work.",
       "status": "qualified_public_parent_correspondence_dependency_profile"
+    },
+    {
+      "id": "source384-saved-original-text-roundtrip-qualified-20261026-01",
+      "observed_bytes": 100764,
+      "observed_sha256": "3f86fdbf17c022baa7657908c0243b417a53652231348c76c8d554523fa65c14",
+      "path": "docs/autoformalization/evidence/legal-ir-source384-original-text-roundtrip-20261026.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "One score of 60 original raw-CE test predictions: 3/60 exactIR, 0/60 exactUTF8, 0/60 whitespace-collapsed, 0/60 joint. Actual score/decompiler entries and full metric/report commitments retained; source/native/storage closed. Historical post-reference projection, no new model/encoder/training/learned prose head/independent holdout/legal authority. Old varying fields and new seven facets remain distinct.",
+      "status": "qualified_retrospective_saved_prediction_original_text_score"
     }
   ]
 }
