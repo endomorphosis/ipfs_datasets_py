@@ -67,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
                       help="Skip IR larger than this many rows (0 = no cap)")
     p_re.add_argument("--skip-vectors", action="store_true")
     p_re.add_argument("--workers", type=int, default=2,
-                      help="Parallel country workers (default 2 to stay under MemAbort; CUDA encodes are file-locked)")
+                      help="Ceiling for adaptive workers. Memory, disk, and free GPU memory shrink it and back off when the host is full")
     p_re.add_argument("--device", default="cuda")
     p_re.add_argument("--mode", default="auto", choices=["auto", "full", "delta"])
     p_re.add_argument("--all", action="store_true",

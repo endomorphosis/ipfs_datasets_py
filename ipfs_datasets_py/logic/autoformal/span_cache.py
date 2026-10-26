@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import threading
 from dataclasses import dataclass
 from pathlib import Path
@@ -104,6 +105,278 @@ CREATE TABLE IF NOT EXISTS lean_terms (
 
 class SpanCacheError(RuntimeError):
     """The span queue cannot continue without inventing cache authority."""
+
+
+# Coordinate observations share the existing owner and cache_meta storage.
+# They never confer source, training, semantic, or publication authority.
+SOURCE_COORDINATE_REPORT_PREFIX = "source_coordinates:report:"
+SOURCE_COORDINATE_BINDING_PREFIX = "source_coordinates:binding:"
+SOURCE_COORDINATE_BINDING_SCHEMA = "span-cache-source-coordinate-binding/v1"
+SOURCE_COORDINATE_REFERENCE_SCHEMA = "span-cache-source-coordinate-reference/v1"
+MAX_SOURCE_COORDINATE_REPORT_BYTES = 32 * 1024 * 1024
+MAX_SOURCE_COORDINATE_BINDING_BYTES = 4096
+MAX_SOURCE_COORDINATE_REFERENCE_BYTES = 16 * 1024
+MAX_SOURCE_COORDINATE_JSON_NODES = 524288
+_COORDINATE_BINDING_FIELDS = frozenset(("schema", "report_sha256", "span_index",
+    "source_span_id", "source_sha256", "legal_id_sha256"))
+
+
+def _coordinate_pin(value: Any) -> str:
+    if type(value) is not str or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+        raise SpanCacheError("exact lowercase source-coordinate report SHA256 required")
+    return value
+
+
+def _coordinate_wire(value: Any, maximum: int, *, sort_keys: bool = True) -> bytes:
+    """Bound ordinary JSON before allocating serialized coordinate metadata."""
+    pending = [(value, 0)]
+    visited = minimum_bytes = 0
+    node_limit = min(maximum, MAX_SOURCE_COORDINATE_JSON_NODES)
+    while pending:
+        item, depth = pending.pop()
+        visited += 1
+        minimum_bytes += 1
+        if depth > 64 or visited > node_limit:
+            raise SpanCacheError("source-coordinate JSON depth/node bound exceeded")
+        if type(item) in (dict, list):
+            if visited + len(pending) + len(item) > node_limit:
+                raise SpanCacheError("source-coordinate JSON node bound exceeded")
+            if type(item) is dict:
+                for key in item:
+                    if type(key) is not str:
+                        raise SpanCacheError("source-coordinate JSON keys must be strings")
+                    minimum_bytes += len(key)
+                    if minimum_bytes > maximum:
+                        raise SpanCacheError("source-coordinate JSON byte bound exceeded")
+                children = item.values()
+            else:
+                children = item
+            pending.extend((child, depth + 1) for child in children)
+        elif type(item) is str:
+            minimum_bytes += len(item)
+        elif item is not None and type(item) not in (bool, int, float):
+            raise SpanCacheError("ordinary finite source-coordinate JSON required")
+        if minimum_bytes > maximum:
+            raise SpanCacheError("source-coordinate JSON byte bound exceeded")
+    try:
+        raw = json.dumps(value, ensure_ascii=False, sort_keys=sort_keys,
+                         separators=(",", ":"), allow_nan=False).encode("utf-8")
+    except (TypeError, ValueError, UnicodeError, RecursionError) as error:
+        raise SpanCacheError("finite UTF8 source-coordinate JSON required") from error
+    if len(raw) > maximum:
+        raise SpanCacheError("source-coordinate JSON byte bound exceeded")
+    return raw
+
+
+def _coordinate_load(raw: Any, maximum: int) -> Any:
+    """Refuse byte/depth excess before decoding persisted JSON; no repair."""
+    if type(raw) is not str or len(raw) > maximum:
+        raise SpanCacheError("persisted source-coordinate JSON byte bound exceeded")
+    try:
+        if len(raw.encode("utf-8")) > maximum:
+            raise SpanCacheError("persisted source-coordinate JSON byte bound exceeded")
+    except UnicodeError as error:
+        raise SpanCacheError("persisted source-coordinate JSON is not UTF8") from error
+    depth = 0
+    quoted = escaped = False
+    for char in raw:
+        if quoted:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quoted = False
+        elif char == '"':
+            quoted = True
+        elif char in "[{":
+            depth += 1
+            if depth > 64:
+                raise SpanCacheError("persisted source-coordinate JSON depth bound exceeded")
+        elif char in "]}":
+            depth -= 1
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise SpanCacheError("duplicate source-coordinate JSON key")
+            result[key] = value
+        return result
+    def constant(value):
+        raise SpanCacheError("nonfinite source-coordinate JSON constant")
+    try:
+        value = json.loads(raw, object_pairs_hook=pairs, parse_constant=constant)
+    except (ValueError, TypeError, RecursionError) as error:
+        raise SpanCacheError("invalid persisted source-coordinate JSON") from error
+    _coordinate_wire(value, maximum)
+    return value
+
+
+def _coordinate_binding_key(span_id: str, source_sha256: str) -> str:
+    raw = _coordinate_wire({"source_span_id": span_id, "source_sha256": source_sha256},
+                           MAX_SOURCE_COORDINATE_BINDING_BYTES)
+    return SOURCE_COORDINATE_BINDING_PREFIX + hashlib.sha256(raw).hexdigest()
+
+
+def _coordinate_replay(report: Any, expected_report_sha256: str) -> tuple[dict, list[dict]]:
+    """Replay stored supplied text, without asserting independently verified law."""
+    from .uscode_ingest import (SOURCE_COORDINATE_LIMITS, inventory_uscode_documents,
+                                validate_uscode_source_coordinates)
+    _coordinate_pin(expected_report_sha256)
+    fields = {"schema", "profile", "query", "release_id", "limits", "span_identity_schema",
+              "coordinate_origin", "authority", "documents", "spans", "source_coordinates_sha256"}
+    if (type(report) is not dict or set(report) != fields
+            or type(report["documents"]) is not list or type(report["spans"]) is not list
+            or type(report["query"]) is not str or type(report["release_id"]) is not str
+            or type(report["limits"]) is not dict
+            or len(report["documents"]) > SOURCE_COORDINATE_LIMITS["max_documents"]
+            or len(report["spans"]) > SOURCE_COORDINATE_LIMITS["max_spans"]):
+        raise SpanCacheError("closed source-coordinate report required")
+    documents = []
+    for view in report["documents"]:
+        if (type(view) is not dict or type(view.get("source_metadata")) is not dict
+                or "text" in view["source_metadata"] or type(view.get("source_text")) is not str):
+            raise SpanCacheError("source-coordinate report requires exact supplied document views")
+        documents.append({**view["source_metadata"], "text": view["source_text"]})
+    try:
+        validate_uscode_source_coordinates(report, documents,
+            expected_report_sha256=expected_report_sha256, query=report["query"],
+            release_id=report["release_id"], limits=report["limits"])
+        spans = inventory_uscode_documents(documents, query=report["query"],
+                                          release_id=report["release_id"])["spans"]
+    except (ValueError, TypeError, KeyError) as error:
+        raise SpanCacheError("persisted source-coordinate report replay differs") from error
+    return report, spans
+
+
+def _coordinate_reference(report, spans, pin, index):
+    """Construct one observation from an already replayed complete population."""
+    if type(index) is not int or not 0 <= index < len(spans):
+        raise SpanCacheError("source-coordinate provenance span index differs")
+    source, coordinates = spans[index], report["spans"][index]
+    return {"schema": SOURCE_COORDINATE_REFERENCE_SCHEMA, "report_sha256": pin,
+        "span_index": index, "source_span_id": source["source_span_id"],
+        "source_sha256": _sha(source["text"]), "legal_id_sha256": _sha(source["legal_id"]),
+        "coordinates": {key: value for key, value in coordinates.items()
+                        if key not in ("text", "source_text")},
+        "coordinate_origin": report["coordinate_origin"],
+        "authority": {**report["authority"], "qualified": False, "roundtrip_ok": False}}
+
+
+def validate_source_coordinate_rows(report, rows, *, expected_report_sha256: str) -> list[int]:
+    """Replay complete context and validate a bounded, exact occurrence selection.
+
+    This is a pure transport check, with no cache writes or source/meaning
+    authority. References cannot be inferred from normalized-only legacy text.
+    """
+    pin = _coordinate_pin(expected_report_sha256)
+    frozen = _coordinate_load(_coordinate_wire(report, MAX_SOURCE_COORDINATE_REPORT_BYTES,
+        sort_keys=False).decode("utf-8"), MAX_SOURCE_COORDINATE_REPORT_BYTES)
+    frozen, spans = _coordinate_replay(frozen, pin)
+    if type(rows) is not list or len(rows) > MAX_BATCH:
+        raise SpanCacheError("bounded source-coordinate row selection required")
+    indices, seen = [], set()
+    fields = {"source_span_id", "text", "legal_id", "source_provenance_json"}
+    for row in rows:
+        if type(row) is not dict or set(row) != fields or any(type(value) is not str for value in row.values()):
+            raise SpanCacheError("closed source-coordinate source/reference row required")
+        reference = _coordinate_load(row["source_provenance_json"], MAX_SOURCE_COORDINATE_REFERENCE_BYTES)
+        if type(reference) is not dict:
+            raise SpanCacheError("source-coordinate occurrence reference required")
+        index = reference.get("span_index")
+        expected = _coordinate_reference(frozen, spans, pin, index)
+        source = spans[index]
+        canonical = _coordinate_wire(expected, MAX_SOURCE_COORDINATE_REFERENCE_BYTES).decode("utf-8")
+        if (index in seen or row["source_span_id"] != source["source_span_id"]
+                or row["text"] != source["text"] or row["legal_id"] != source["legal_id"]
+                or row["source_provenance_json"] != canonical):
+            raise SpanCacheError("source-coordinate occurrence source or reference differs")
+        seen.add(index)
+        indices.append(index)
+    return indices
+
+
+def write_fresh_source_coordinate_cache(path, report, documents, *, expected_report_sha256,
+                                        query, release_id, limits=None, selected_span_ids=None):
+    """Publish one closed coordinate catalog without opening an existing target.
+
+    Source replay precedes staging. This shared local writer performs no model,
+    network, compiler, publication-service or supervisor operation.
+    """
+    import stat
+    import tempfile
+    from .uscode_ingest import validate_uscode_source_coordinates
+
+    destination = Path(path).absolute()
+    parent = destination.parent
+    if parent.resolve(strict=True) != parent or not destination.name:
+        raise ValueError("coordinate catalog parent must be an existing canonical directory")
+    parent_fd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        def require_absent():
+            for name in (destination.name, destination.name + ".wal"):
+                try:
+                    os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
+                except FileNotFoundError:
+                    continue
+                raise ValueError("source-coordinate ingest requires a fresh catalog and no WAL; no backfill or overwrite")
+        require_absent()
+        frozen = _coordinate_load(_coordinate_wire(report, MAX_SOURCE_COORDINATE_REPORT_BYTES,
+            sort_keys=False).decode("utf-8"), MAX_SOURCE_COORDINATE_REPORT_BYTES)
+        validate_uscode_source_coordinates(frozen, documents, expected_report_sha256=expected_report_sha256,
+            query=query, release_id=release_id, limits=limits)
+        with tempfile.TemporaryDirectory(prefix=".uscode-raw-ingest-", dir=parent) as staging:
+            staged = Path(staging) / "catalog.duckdb"
+            cache = SpanCache(staged)
+            try:
+                inserted = cache.enqueue_source_coordinates(frozen, documents,
+                    expected_report_sha256=expected_report_sha256, query=query, release_id=release_id,
+                    limits=limits, selected_span_ids=selected_span_ids)
+                stats = cache.stats()
+            finally:
+                cache.close()
+            info = staged.lstat()
+            if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                    or Path(str(staged) + ".wal").exists()):
+                raise ValueError("closed staging catalog is not a standalone regular DuckDB file")
+            with staged.open("rb") as stream:
+                os.fsync(stream.fileno())
+            require_absent()
+            os.link(staged, destination.name, dst_dir_fd=parent_fd, follow_symlinks=False)
+            os.fsync(parent_fd)
+        return {"spans_enqueued": inserted, "stats": stats}
+    finally:
+        os.close(parent_fd)
+
+
+def _coordinate_transport_bound(max_bytes: int) -> int:
+    if (type(max_bytes) is not int or max_bytes <= 0
+            or max_bytes > MAX_SOURCE_COORDINATE_REPORT_BYTES):
+        raise SpanCacheError("source-coordinate transport bound must be a positive lower-only integer")
+    return max_bytes
+
+
+
+def load_source_coordinate_report(payload: bytes, *, expected_report_sha256: str,
+                                  max_bytes: int = MAX_SOURCE_COORDINATE_REPORT_BYTES) -> dict[str, Any]:
+    """Validate portable report bytes against an independently supplied report pin.
+
+    This is an offline bytes boundary, with no file, database, model or network
+    operations. The limit is checked before UTF8 decoding. Replay checks exact
+    supplied text and legacy span geometry, not official provenance or meaning.
+    Nested metadata order is retained because legacy IDs may use str(mapping).
+    The report pin is distinct from a digest of the serialized transport bytes.
+    """
+    maximum = _coordinate_transport_bound(max_bytes)
+    pin = _coordinate_pin(expected_report_sha256)
+    if type(payload) is not bytes or len(payload) > maximum:
+        raise SpanCacheError("bounded source-coordinate transport bytes required")
+    try:
+        raw = payload.decode("utf-8")
+    except UnicodeError as error:
+        raise SpanCacheError("source-coordinate transport is not UTF8") from error
+    return _coordinate_replay(_coordinate_load(raw, maximum), pin)[0]
+
 
 
 @dataclass(frozen=True)
@@ -1225,6 +1498,193 @@ class SpanCache:
                 known.add(span_id)
         return writes
 
+    def _source_coordinate_owner(self) -> None:
+        if self._claim_owner_closed or self._claim_owner_identity != (os.getpid(), threading.get_ident()):
+            raise SpanCacheError("foreign or closed source-coordinate catalog owner")
+
+    def read_source_coordinate_report(self, expected_report_sha256: str) -> dict[str, Any]:
+        """Read one independently pinned report and replay exact supplied fields.
+
+        The pin authenticates retained observation bytes, not an official source,
+        legal interpretation, physical Parquet location or training permission.
+        """
+        self._source_coordinate_owner()
+        pin = _coordinate_pin(expected_report_sha256)
+        raw = self._meta(SOURCE_COORDINATE_REPORT_PREFIX + pin)
+        if not raw:
+            raise SpanCacheError("source-coordinate report is unavailable")
+        report = _coordinate_load(raw, MAX_SOURCE_COORDINATE_REPORT_BYTES)
+        return _coordinate_replay(report, pin)[0]
+
+    def _source_coordinate_provenance(self, span_id: str, text: str, legal_id: str,
+                                     report_cache: dict | None = None) -> dict[str, str]:
+        """Read immutable observational metadata for these exact current bytes."""
+        self._source_coordinate_owner()
+        if any(type(value) is not str for value in (span_id, text, legal_id)):
+            raise SpanCacheError("exact source-coordinate span identity/text required")
+        if report_cache is not None and type(report_cache) is not dict:
+            raise SpanCacheError("ephemeral source-coordinate report cache must be a dict")
+        source_sha = _sha(text)
+        raw = self._meta(_coordinate_binding_key(span_id, source_sha))
+        if not raw:
+            return {}
+        binding = _coordinate_load(raw, MAX_SOURCE_COORDINATE_BINDING_BYTES)
+        if (type(binding) is not dict or set(binding) != _COORDINATE_BINDING_FIELDS
+                or binding["schema"] != SOURCE_COORDINATE_BINDING_SCHEMA
+                or binding["source_span_id"] != span_id or binding["source_sha256"] != source_sha
+                or binding["legal_id_sha256"] != _sha(legal_id)
+                or type(binding["span_index"]) is not int or binding["span_index"] < 0):
+            raise SpanCacheError("stored source-coordinate provenance binding differs")
+        current = self._db.execute(
+            "SELECT source_sha256,source_text,coalesce(legal_id,'') FROM span_cache WHERE source_span_id=?",
+            [span_id]).fetchone()
+        if current != (source_sha, text, legal_id):
+            raise SpanCacheError("source-coordinate provenance no longer matches current cached source")
+        pin = _coordinate_pin(binding["report_sha256"])
+        cache = report_cache if report_cache is not None else {}
+        if pin not in cache:
+            stored = self._meta(SOURCE_COORDINATE_REPORT_PREFIX + pin)
+            if not stored:
+                raise SpanCacheError("source-coordinate provenance report is unavailable")
+            cache[pin] = _coordinate_replay(
+                _coordinate_load(stored, MAX_SOURCE_COORDINATE_REPORT_BYTES), pin)
+        report, spans = cache[pin]
+        index = binding["span_index"]
+        if index >= len(spans) or index >= len(report["spans"]):
+            raise SpanCacheError("source-coordinate provenance span index differs")
+        source, coordinates = spans[index], report["spans"][index]
+        if (source["source_span_id"] != span_id or source["text"] != text
+                or source["legal_id"] != legal_id or coordinates["span_text_sha256"] != source_sha
+                or coordinates["source_span_id"] != span_id):
+            raise SpanCacheError("source-coordinate provenance source occurrence differs")
+        reference = _coordinate_reference(report, spans, pin, index)
+        return {"source_provenance_json": _coordinate_wire(
+            reference, MAX_SOURCE_COORDINATE_REFERENCE_BYTES).decode("utf-8")}
+
+    def export_source_coordinates(self, expected_report_sha256: str, *,
+                                  source_span_ids: Sequence[str]) -> dict[str, Any]:
+        """Export one full report once and only the explicitly selected live rows.
+
+        Both pending and sealed observations retain their original report
+        ordinals. Legacy rows and changed current sources cannot acquire refs.
+        This opt-in method leaves legacy ``export_rows`` byte shapes unchanged.
+        """
+        self._source_coordinate_owner()
+        if (type(source_span_ids) not in (list, tuple) or not 1 <= len(source_span_ids) <= MAX_BATCH
+                or any(type(value) is not str or not value for value in source_span_ids)
+                or len(set(source_span_ids)) != len(source_span_ids)):
+            raise SpanCacheError("explicit unique bounded source span selection required")
+        selected = list(source_span_ids)
+        report = self.read_source_coordinate_report(expected_report_sha256)
+        pin = _coordinate_pin(expected_report_sha256)
+        report, spans = _coordinate_replay(report, pin)
+        by_id = {span["source_span_id"]: span for span in spans}
+        if any(span_id not in by_id for span_id in selected):
+            raise SpanCacheError("selected source span is absent from complete coordinate report")
+        replay_cache, rows = {pin: (report, spans)}, []
+        for span_id in selected:
+            span = by_id[span_id]
+            provenance = self._source_coordinate_provenance(span_id, span["text"], span["legal_id"], replay_cache)
+            if "source_provenance_json" not in provenance:
+                raise SpanCacheError("selected span has no existing coordinate binding; no backfill")
+            rows.append({key: span[key] for key in ("source_span_id", "text", "legal_id")}
+                        | provenance)
+        return {"report": report, "report_sha256": pin, "rows": rows}
+
+    def enqueue_source_coordinates(self, report, documents, *, expected_report_sha256: str,
+                                   query: str = "", release_id: str = "", limits=None,
+                                   selected_span_ids: Sequence[str] | None = None) -> int:
+        """Opt in to atomic fresh-span and coordinate observation persistence.
+
+        Legacy rows are never backfilled. Every existing span must already have
+        this exact source/report/occurrence binding. Exact retries insert zero.
+        One full report is retained in the existing cache_meta owner; workers
+        receive bounded references rather than repeated complete documents.
+        An explicit selection inserts only those spans after replaying the
+        complete original population; its original ordinal is never recomputed.
+        """
+        from .uscode_ingest import validate_uscode_source_coordinates
+        self._source_coordinate_owner()
+        pin = _coordinate_pin(expected_report_sha256)
+        # Preserve nested metadata insertion order: legacy coercion may use
+        # str(mapping). Canonical seals remain independent of JSON key order.
+        raw = _coordinate_wire(report, MAX_SOURCE_COORDINATE_REPORT_BYTES, sort_keys=False).decode("utf-8")
+        frozen = _coordinate_load(raw, MAX_SOURCE_COORDINATE_REPORT_BYTES)
+        try:
+            validate_uscode_source_coordinates(frozen, documents,
+                expected_report_sha256=pin, query=query, release_id=release_id, limits=limits)
+        except (ValueError, TypeError, KeyError) as error:
+            raise SpanCacheError("independent source-coordinate input replay differs") from error
+        frozen, spans = _coordinate_replay(frozen, pin)
+        if len(spans) != len(frozen["spans"]):
+            raise SpanCacheError("source-coordinate span population differs")
+        selected = None
+        if selected_span_ids is not None:
+            if (type(selected_span_ids) not in (list, tuple) or not 1 <= len(selected_span_ids) <= MAX_BATCH
+                    or any(type(value) is not str or not value for value in selected_span_ids)
+                    or len(set(selected_span_ids)) != len(selected_span_ids)):
+                raise SpanCacheError("explicit unique bounded source span selection required")
+            selected = set(selected_span_ids)
+            if not selected.issubset({span["source_span_id"] for span in spans}):
+                raise SpanCacheError("selected source span is absent from complete coordinate report")
+        bindings, seen = [], set()
+        selected_spans = []
+        for index, span in enumerate(spans):
+            span_id, text, legal_id = span["source_span_id"], span["text"], span["legal_id"]
+            if not span_id or not text or span_id in seen:
+                raise SpanCacheError("duplicate or empty source-coordinate span identity")
+            seen.add(span_id)
+            if selected is not None and span_id not in selected:
+                continue
+            selected_spans.append(span)
+            binding = {"schema": SOURCE_COORDINATE_BINDING_SCHEMA, "report_sha256": pin,
+                "span_index": index, "source_span_id": span_id, "source_sha256": _sha(text),
+                "legal_id_sha256": _sha(legal_id)}
+            bindings.append((_coordinate_binding_key(span_id, binding["source_sha256"]),
+                             _coordinate_wire(binding, MAX_SOURCE_COORDINATE_BINDING_BYTES).decode("utf-8")))
+        spans = selected_spans
+        self._validate_text_batch(spans)
+        report_key = SOURCE_COORDINATE_REPORT_PREFIX + pin
+        self._db.execute("BEGIN TRANSACTION")
+        try:
+            existing_report = self._meta(report_key)
+            if existing_report and existing_report != raw:
+                raise SpanCacheError("immutable stored source-coordinate report differs")
+            fresh, missing_bindings = [], []
+            report_cache = {}
+            for span, (key, binding) in zip(spans, bindings):
+                current = self._db.execute(
+                    "SELECT source_sha256,source_text,coalesce(legal_id,'') FROM span_cache WHERE source_span_id=?",
+                    [span["source_span_id"]]).fetchone()
+                stored = self._meta(key)
+                if stored and stored != binding:
+                    raise SpanCacheError("immutable source-coordinate provenance occurrence conflicts")
+                if current is not None:
+                    if (current != (_sha(span["text"]), span["text"], span["legal_id"])
+                            or not stored or not existing_report):
+                        raise SpanCacheError("existing source span has no identical source-coordinate provenance; no backfill")
+                    self._source_coordinate_provenance(span["source_span_id"], span["text"],
+                                                       span["legal_id"], report_cache)
+                else:
+                    fresh.append(span)
+                if not stored:
+                    missing_bindings.append((key, binding))
+            # Every refusal above precedes writes; failures below roll back the
+            # spans, one parent report, and all bindings together.
+            inserted = self.enqueue(fresh)
+            if inserted != len(fresh):
+                raise SpanCacheError("source-coordinate fresh span population changed")
+            if not existing_report:
+                self._set_meta(report_key, raw)
+            for key, binding in missing_bindings:
+                self._set_meta(key, binding)
+            self._db.execute("COMMIT")
+        except BaseException:
+            self._db.execute("ROLLBACK")
+            raise
+        return inserted
+
+
     def enqueue(self, spans: Sequence[Mapping[str, Any]]) -> int:
         """Insert exact pending text or refuse before writes. Existing rows stay intact."""
 
@@ -1503,6 +1963,7 @@ class SpanCache:
         a batch, hands text to other processes, then writes the census back.
         """
 
+        self._source_coordinate_owner()
         import uuid
 
         token = uuid.uuid4().hex
@@ -1532,20 +1993,24 @@ class SpanCache:
                 """,
                 [worker_id, token, *ids],
             )
+            report_cache = {}
+            claimed = [
+                {
+                    "claim_token": token,
+                    "claim_worker": worker_id,
+                    "legal_id": str(row[1] or ""),
+                    "source_span_id": str(row[0]),
+                    "text": str(row[2] or ""),
+                    **self._source_coordinate_provenance(str(row[0]), str(row[2] or ""),
+                                                        str(row[1] or ""), report_cache),
+                }
+                for row in rows
+            ]
             self._db.execute("COMMIT")
         except Exception:
             self._db.execute("ROLLBACK")
             raise
-        return [
-            {
-                "claim_token": token,
-                "claim_worker": worker_id,
-                "legal_id": str(row[1] or ""),
-                "source_span_id": str(row[0]),
-                "text": str(row[2] or ""),
-            }
-            for row in rows
-        ]
+        return claimed
 
     def release_claims(self, span_ids: Sequence[str]) -> int:
         """Return claimed spans to pending after a worker failure."""
@@ -1625,6 +2090,7 @@ class SpanCache:
         }
 
     def pending(self, *, limit: int = MAX_BATCH) -> list[dict[str, Any]]:
+        self._source_coordinate_owner()
         rows = self._db.execute(
             """
             SELECT source_span_id, legal_id, source_text, status, reason
@@ -1635,6 +2101,7 @@ class SpanCache:
             """,
             [max(1, min(int(limit), MAX_BATCH))],
         ).fetchall()
+        report_cache = {}
         return [
             {
                 "source_span_id": str(row[0]),
@@ -1642,6 +2109,8 @@ class SpanCache:
                 "text": str(row[2] or ""),
                 "status": str(row[3] or "pending"),
                 "reason": str(row[4] or ""),
+                **self._source_coordinate_provenance(str(row[0]), str(row[2] or ""),
+                                                    str(row[1] or ""), report_cache),
             }
             for row in rows
         ]

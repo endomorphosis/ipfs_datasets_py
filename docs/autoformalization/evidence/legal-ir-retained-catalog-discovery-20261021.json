@@ -1,0 +1,175 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "checkpoint_bytes_authenticated": false,
+    "evaluation_gold_qualified": false,
+    "inference_executed": false,
+    "legal_meaning_verified": false,
+    "model_loaded": false,
+    "model_manager_constructed": false,
+    "proof_authority": false,
+    "registration_performed": false,
+    "runtime_admitted": false,
+    "service_refreshed": false,
+    "source_compatibility_verified": false,
+    "teacher_qualified": false,
+    "training_executed": false
+  },
+  "connection": {
+    "actual_connection_class": "_duckdb.DuckDBPyConnection",
+    "configured_memory_bytes": 1000000000,
+    "configured_owned_spill_bytes": 67108864,
+    "configured_threads": 1,
+    "effective_access_mode": "read_only",
+    "effective_external_access": false,
+    "extension_install_and_autoload": false,
+    "hardening": {
+      "completed": true,
+      "first_sql_after_connect": true,
+      "metadata_sql_before_hardening": false,
+      "statement": "SET enable_external_access = false"
+    },
+    "read_only": true,
+    "scope": "Owned temp/memory/spill and extension controls were initialized at connect; external access was disabled by the fixed first SQL before settings or catalog SQL. External access disabled throughout connect is not claimed."
+  },
+  "custody": {
+    "all_249_source_pins_reverified": true,
+    "current_selected_record_matches_terminal": true,
+    "native_and_selected_storage_released": true,
+    "preserved_bytes": 77589,
+    "preserved_files": 6,
+    "source_READ_closed_after_verified_original_cleanup": true
+  },
+  "evaluation_gold_mask": 0,
+  "historical_declarations_common": {
+    "proof_authority": false,
+    "qualification": "Stored declarations only; this operation did not authenticate checkpoint bytes or observe runtime/source compatibility.",
+    "runtime_ready": false,
+    "teacher_qualified": false,
+    "trained": true
+  },
+  "matched": 4,
+  "not_found": 0,
+  "previous_attempts": {
+    "DATA02": {
+      "note": "Immediate wrapped ValueError does not identify the native cause; no missing-record or writer/configuration inference.",
+      "preserved_bytes": 2930,
+      "preserved_files": 4,
+      "snapshot_or_resolutions": false,
+      "status": "failed_and_closed",
+      "underlying_native_reason": "unknown"
+    },
+    "DATA03": {
+      "native_exception": "_duckdb.PermissionException",
+      "note": "Direct diagnostic is scoped to DATA03; it does not retroactively diagnose DATA02.",
+      "preserved_bytes": 3683,
+      "preserved_files": 4,
+      "safe_signature_code": "temp_directory_change_blocked",
+      "settings_or_catalog_SQL": false,
+      "snapshot_or_resolutions": false,
+      "status": "failed_and_closed"
+    }
+  },
+  "receipt_base": {
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01",
+    "root": "datasets_repository"
+  },
+  "receipts": [
+    {
+      "bytes": 8471,
+      "path": "data-02/independent-failure-closeout-review-v01.json",
+      "sha256": "a717804e237740ad8600aa2debdb22e7832dd060c8e31c3a5fc2f10cd426e3eb"
+    },
+    {
+      "bytes": 8724,
+      "path": "data-03/independent-failure-closeout-review-v01.json",
+      "sha256": "863f7f149838d6d1da0c58f322b9287c07784304fe454c17c651f381fc1df9c0"
+    },
+    {
+      "bytes": 5369,
+      "path": "data-03/failed-catalog01-storage-closeout-v01.json",
+      "sha256": "3051e109ad99dd05141c894a28cba5978f30dc5c886bac65a8aad5baa91d8536"
+    },
+    {
+      "bytes": 13096,
+      "path": "data-04/independent-success-closeout-review-v01.json",
+      "sha256": "3b444c9ba46d322554eb19fb0172686a0204b570f5b5f037f97606a4946f7c96"
+    },
+    {
+      "bytes": 74428,
+      "path": "data-04/attempt-catalog-01/exports/data-result.json",
+      "sha256": "56ce1132a9d8486d353bdfbe47fff236f33143211d1c033747446917e3325561"
+    },
+    {
+      "bytes": 786,
+      "path": "data-04/data-controller-complete-v01.json",
+      "sha256": "1cafff3ae7bc5d49cd58a7ea219b64f31f2461136ad4cac8244258c488f37683"
+    }
+  ],
+  "recorded_at_utc": "2026-10-21",
+  "schema": "legal-ir-retained-catalog-discovery-observation/v1",
+  "scope": "One current retained catalog read using the existing IRPersistentCatalogSource; no new reader, registration, checkpoint load or model execution. Exact four selected 384D/768D CE/zero metadata declarations were found.",
+  "selected_bindings": [
+    {
+      "checkpoint_sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e",
+      "declared_checkpoint_bytes": 2798242,
+      "dimension": 384,
+      "disposition": "matched",
+      "record_id": "ir-model-asset-binding/v1:0ea60eed1f606e655940a8e45c5db151d9686fcb8bb532b94866e6f8947262c8",
+      "role": "normative_wording_zero_selected_semantic_decoder_state"
+    },
+    {
+      "checkpoint_sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266",
+      "declared_checkpoint_bytes": 2797392,
+      "dimension": 384,
+      "disposition": "matched",
+      "record_id": "ir-model-asset-binding/v1:aa588d1669769d996f9626d2693ff5866ce402ca3372574e18e290342c7e4435",
+      "role": "normative_wording_ce_selected_semantic_decoder_state"
+    },
+    {
+      "checkpoint_sha256": "c8beca3ef5ea2d477ebc9a1564c8922404b245098a0b56083197cd6185c3083f",
+      "declared_checkpoint_bytes": 4778674,
+      "dimension": 768,
+      "disposition": "matched",
+      "record_id": "ir-model-asset-binding/v1:958f84ca889bf8c19e39f293e015b5bc54b23f49e751c25304020ab217912b6d",
+      "role": "normative_wording_zero_selected_semantic_decoder_state"
+    },
+    {
+      "checkpoint_sha256": "aa2f75cad0ade34a3965a4f0b71bdc2fe962f5b863b38133927978ea2673aeb3",
+      "declared_checkpoint_bytes": 4779949,
+      "dimension": 768,
+      "disposition": "matched",
+      "record_id": "ir-model-asset-binding/v1:d537d0366d6e846dfb9610ea6b237ccde8ec0389e33ead2c51b511f49cdcaa7a",
+      "role": "normative_wording_ce_selected_semantic_decoder_state"
+    }
+  ],
+  "selector_common": {
+    "dimension_role": "input_embedding",
+    "format_id": null,
+    "ir_family_id": "legal_ir",
+    "profile_id": null,
+    "schema_version": null,
+    "task_id": "semantic_IR_reconstruction"
+  },
+  "snapshot": {
+    "binding_snapshot_revision": "03ddcf03da0c813471545e5150bd614f4c4d43ae1a68e0faf361448dda133ed7",
+    "catalog_revision": "bafkreieto7z3suhacsgvpep4pphcj2jrnblqccje5ibtiow7fbper7ks7u",
+    "ir_binding_count": 690,
+    "load_calls": 1,
+    "resolve_calls": 4
+  },
+  "status": "verified_readonly_metadata_discovery_and_original_closeout",
+  "store": {
+    "observed_bytes": 2980851712,
+    "path": "external/ipfs_accelerate/model_manager.duckdb",
+    "root": "workspace_parent",
+    "witness": "Equal cooperative opening/closing descriptor and path metadata; no full database hash or atomic filesystem snapshot."
+  },
+  "training_mask": 0,
+  "unobserved": [
+    "8D and 4096D current bindings",
+    "current supervisor/service adoption",
+    "checkpoint or companion payload portability and source compatibility",
+    "runtime loading, reconstruction quality, inference, training and Lean"
+  ]
+}

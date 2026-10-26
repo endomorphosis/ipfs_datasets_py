@@ -1,0 +1,243 @@
+{
+  "Adam_restores": 0,
+  "GRU_forwards": 2,
+  "actual_completed_BufferLoader_aliases": 89,
+  "actual_completed_BufferLoader_paths": 89,
+  "actual_counts": {
+    "adam_allocations": 0,
+    "autograd_grad_calls": 0,
+    "backward_calls": 0,
+    "forbidden_calls": 0,
+    "gradient_clip_calls": 0,
+    "gru_completed": 2,
+    "gru_entered": 2,
+    "model_allocations": 2,
+    "model_constructor_completed": 2,
+    "model_forward_completed": 2,
+    "model_forward_entered": 2,
+    "optimizer_base_allocations": 0,
+    "optimizer_updates": 0,
+    "prepared_model_close_calls": 2,
+    "prepared_model_closes_completed": 2,
+    "prepared_model_constructor_calls": 2,
+    "prepared_model_constructor_completed": 2
+  },
+  "all_guarded_source_bodies_qualified": false,
+  "authority": {
+    "Lean_admission": false,
+    "fresh_public_clone_runtime_qualified": false,
+    "full_trajectory_parity": false,
+    "graph_admission": false,
+    "inference_context_permission": false,
+    "native_GTE_conditioning_compatibility": false,
+    "owner_model_task_status_promoted": false,
+    "reconstruction_improvement": false,
+    "statutory_or_heldout_accuracy": false,
+    "third_party_binary_cache_integrity": false,
+    "training_gain": false,
+    "training_gold": false,
+    "whole209_source_qualified": false
+  },
+  "blocked_operations": {
+    "database": 0,
+    "external_write": 0,
+    "network": 0,
+    "payload_read": 0,
+    "process": 0
+  },
+  "case_observations": [
+    {
+      "actual_logit_sha256": "d63e87b664b7b3d74d81d9c79d8b2505ccf946b16d833d98bcdcc32a19aa391f",
+      "compared_logit_coordinates": 537,
+      "exact_saved_logit_parity": true,
+      "exactly_matching_coordinates": 537,
+      "first_mismatching_coordinate_indices": [],
+      "length_one_full_matrix_hash_independently_reconstructed": true,
+      "length_one_full_matrix_sha256": "ce292d161261032ce4e41f128277b31dcfbd345b9a4ae1e80f6c998667273a9f",
+      "max_absolute_difference": 0.0,
+      "mismatching_coordinate_count": 0,
+      "no_longer_prefix_matrix_recomputation_claim": true,
+      "original_report": {
+        "bytes": 12351891,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-budget-pilot-20261019-01-candidate-budget-BOS/exports/case-candidate-budget-BOS-row-0.json",
+        "sha256": "eb04c2cc2ad4fd5e961e83468a106f886dd0bea092ce4b8c2af6ad5473a34aa6"
+      },
+      "reconstruction_denominator_credit": 0,
+      "reference_logit_sha256": "d63e87b664b7b3d74d81d9c79d8b2505ccf946b16d833d98bcdcc32a19aa391f",
+      "report": {
+        "bytes": 1134491,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-score-parity-v01-cp128-BOS-score-parity/exports/case-cp128-BOS-score-parity-row-0.json",
+        "sha256": "e9a107506abc49799e36298a7d3a3f8b4e84b256f1e61746781a7320caffc669"
+      },
+      "row_index": 0,
+      "slot_id": "cp128-BOS-score-parity-row-0"
+    },
+    {
+      "actual_logit_sha256": "a68bab3caf4aada2d4706deaa5791219e8eca90f14d52b0cf3173375c78e23f0",
+      "compared_logit_coordinates": 537,
+      "exact_saved_logit_parity": true,
+      "exactly_matching_coordinates": 537,
+      "first_mismatching_coordinate_indices": [],
+      "length_one_full_matrix_hash_independently_reconstructed": true,
+      "length_one_full_matrix_sha256": "19e4c66d4e834c4ad3da9d06efe5b5523d4d755024bcb4b8cfa861e12924d536",
+      "max_absolute_difference": 0.0,
+      "mismatching_coordinate_count": 0,
+      "no_longer_prefix_matrix_recomputation_claim": true,
+      "original_report": {
+        "bytes": 12351413,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-budget-pilot-20261019-01-candidate-budget-BOS/exports/case-candidate-budget-BOS-row-1.json",
+        "sha256": "8031d8aa807420e7d7242fb1c328af8bd4a8b0abeb935b5f0b9831a0b7db3f4b"
+      },
+      "reconstruction_denominator_credit": 0,
+      "reference_logit_sha256": "a68bab3caf4aada2d4706deaa5791219e8eca90f14d52b0cf3173375c78e23f0",
+      "report": {
+        "bytes": 1134525,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-score-parity-v01-cp128-BOS-score-parity/exports/case-cp128-BOS-score-parity-row-1.json",
+        "sha256": "6e4cdd79235dec58446966be95bfc0b56b09442d62a61b1cb28c68c19d48b10b"
+      },
+      "row_index": 1,
+      "slot_id": "cp128-BOS-score-parity-row-1"
+    }
+  ],
+  "checkpoint": {
+    "canonical_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+    "objective_policy_sha256": "578562275ac7497b52e564028f4dae560b444aca5d0e59275683f5134dfc51ed",
+    "optimizer_state_sha256": "332e7bff0732b5eb15e5339813aa9455533fd711da87d5e76706f9e07f20d746",
+    "progress": {
+      "epochs_completed": 64,
+      "optimizer_steps": 128,
+      "row_cursor": 0
+    },
+    "raw_artifact": {
+      "bytes": 2366578,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-role-source-isolation-20261019-01-train-21/exports/checkpoint-step-128.json",
+      "sha256": "71f410bbc5712f4c1b9e3a2b19472e44b640dbeba491a9308b9bfc5180b9a410"
+    },
+    "weights_sha256": "d4e7c710a8aba4462aab575d9bbfb4278c1870fadaf304f80d0f341af4912c34"
+  },
+  "checkpoint_schema": "legal-compact-role-training-checkpoint/v1",
+  "checkpoint_schema_or_producer_or_Adam_lineage_relabelled": false,
+  "compared_logit_coordinates": 1074,
+  "compared_rows": 2,
+  "coordinates_per_model": 16101,
+  "exactly_matching_logit_coordinates": 1074,
+  "generation_forwards": 0,
+  "historical_failed_runtime_portable": "docs/autoformalization/evidence/legal-ir-cp128-runtime-recipe-20261022.json",
+  "model_restores": 2,
+  "new_training_updates": 0,
+  "oracle_opened_only_after_verified_new_closeout": true,
+  "oracle_was_never_a_numerical_model_input": true,
+  "original_failed_reader_preserved": {
+    "bytes": 2262,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/reader-invocation-v01.json",
+    "sha256": "b94c327c3c873f21351e19630d7f4b48c755d7aa80bd42a2646e08934054f145"
+  },
+  "original_full_closeout": {
+    "bytes": 8492351,
+    "inventory": {
+      "bytes": 5375,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/audit/closed-native-full-inventory-v01.json",
+      "sha256": "39fb56e6ab13e63f6467b2dce98b3bbecd1d422d950dbb50b74e5ca94a308095"
+    },
+    "native_closed": true,
+    "ordinary_files": 17,
+    "payload_hashes_rechecked_by_independent_review_not_this_metadata_builder": true,
+    "source_READ_closed": true,
+    "storage_released": true
+  },
+  "original_native_invocations": 1,
+  "outer_guards": 245,
+  "product_source_guards": 209,
+  "proper_v05_runtime_portable": "docs/autoformalization/evidence/legal-ir-cp128-runtime-preflight-20261022.json",
+  "qualification": "PASSED_TWO_AUTHORED_BOS_SCORE_PARITY",
+  "receipts": [
+    {
+      "bytes": 110778,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/audits/cp128-BOS-score-parity-v02.json",
+      "sha256": "ae36bb31ba9de010a9c37cf3ca1ec2519cdc7d1043f696eeb3ffc092840c718f"
+    },
+    {
+      "bytes": 49117,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/requests/cp128-BOS-score-parity.json",
+      "sha256": "0ed387a23e656410e008b4623be49661b856f2d7c24effbba44323cf047de3ea"
+    },
+    {
+      "bytes": 9933,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/audit/independent-closed-native-operational-review-v01.json",
+      "sha256": "e30592aa6f2c92c72b522ee88f55774917c5bc59bef05fe06c90a78772fb0bca"
+    },
+    {
+      "bytes": 2062,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/reader-invocation-v02.json",
+      "sha256": "83a870d721b689f6416fdac827b5055228fde6ca3427c20ecf9d6a8853402684"
+    },
+    {
+      "bytes": 2262,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/reader-invocation-v01.json",
+      "sha256": "b94c327c3c873f21351e19630d7f4b48c755d7aa80bd42a2646e08934054f145"
+    },
+    {
+      "bytes": 11462,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/audit/independent-score-parity-qualification-review-v02.json",
+      "sha256": "3c4fd315697c134de1b27dff5efc007dfa5512529e7c113884dee34c2b3b03ed"
+    },
+    {
+      "bytes": 5375,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/audit/closed-native-full-inventory-v01.json",
+      "sha256": "39fb56e6ab13e63f6467b2dce98b3bbecd1d422d950dbb50b74e5ca94a308095"
+    },
+    {
+      "bytes": 6141,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/audit/independent-posthoc-saved-reader-v02-review-v01.json",
+      "sha256": "978e78f64b277573b8b72f7400907e8a2cdcaf0aac09f3d7fbdbc7ccae1e7b8d"
+    },
+    {
+      "bytes": 5436,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/runtime-preflight-v04/diagnostic-closeout-and-reuse-v01.json",
+      "sha256": "4e1d8b33b8f8a9bc40d03543a97dc363cbc7b00a81e0d166fbf9adfc5991f738"
+    },
+    {
+      "bytes": 3538,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-publication-preparation-v01.json",
+      "sha256": "3e3d7cab3fb7682987cddd68fdf0c741845eb8a70908c6ffd201f19379984cf2"
+    }
+  ],
+  "reconstruction_denominator": 0,
+  "recorded_at_utc": "2026-10-22T18:53:07.051017+00:00",
+  "remaining_gates": [
+    "Native GTE conditioning/source-model-space compatibility and inference context permission.",
+    "Finite100-new-ID whole-report fit under separate16MiB product/24MiB wrapper/2MiB failure limits.",
+    "Longer/autonomous trajectories and separately measured legal-text or semantic-IR reconstruction.",
+    "Source-held-out statutory meaning, training/gold/graph/Lean admission."
+  ],
+  "schema": "legal-ir-CP128-BOS-score-parity/v1",
+  "scope": "Same dirty primary P; retained original CP128, two exposed authored384D vectors and one BOS prefix per row. No model or numerical rerun for the saved-reader correction.",
+  "successful_posthoc_reader": {
+    "actual_reader": {
+      "bytes": 100794,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/controls/readback_score_parity_v02.py",
+      "sha256": "0748abbae3d2c6c9e97c2927429b590e02a315764f5405511711c64673c9caeb"
+    },
+    "actual_reader_in_original_native_source_pins": false,
+    "change": "Support the existing nested static checkpoint identity record with all five positive joins; retain the original failed reader invocation.",
+    "model_or_product_execution": false,
+    "native_request_or_protocol_changed": false,
+    "new_admission_or_training_authority": false,
+    "numerical_rerun": false,
+    "original_reader_and_six_control_pins_unchanged": true,
+    "original_request_pinned_reader": {
+      "bytes": 96569,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/controls/readback_job.py",
+      "sha256": "373f65ecaeb2535ab9ff3b083d99ca6133f4b4582938a3da596ce2145caa601a"
+    },
+    "retained_failed_reader_invocation": {
+      "bytes": 2262,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-score-parity-v01/reader-invocation-v01.json",
+      "sha256": "b94c327c3c873f21351e19630d7f4b48c755d7aa80bd42a2646e08934054f145"
+    },
+    "schema": "legal-ir-cp128-score-parity-posthoc-reader-provenance/v1"
+  },
+  "tensors_per_model": 13,
+  "two_singleton_full_matrix_hashes_match": true,
+  "v04_history": "Earlier staged-unexecuted cutoff remains immutable; later peer diagnostic executed, failed and closed. Reuse the separate passed v05 runtime observation."
+}

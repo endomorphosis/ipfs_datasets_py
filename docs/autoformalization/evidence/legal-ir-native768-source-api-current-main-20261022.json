@@ -1,0 +1,240 @@
+{
+  "compatibility": {
+    "all15_old_producer_functions_and24_old_test_definitions_retained": true,
+    "existing_fresh_schema": "fresh-bounded-native768-production/v1",
+    "existing_public_cache_acceptance_retained": true,
+    "legacy_bounded_reports_retain_exact_owner_generation": true,
+    "legacy_reports_repinned": false,
+    "public_tmp_plugin_preserved": true,
+    "resource_or_harness_successors_ported": false
+  },
+  "current_live_scientific_claim_authority": "unprovided; the separate135-task operational board is not scientific completion authority",
+  "current_main_qualification": {
+    "cache_controls": 13,
+    "cases_passed": 100,
+    "diagnostic_tensor_operations": true,
+    "excluded_existing_symlink_cases": [
+      "/home/barberb/lift_coding/.worktrees/legal-ir-native768-source-api-20261022/tests/unit/logic/formalization/autoencoder/test_dimension_source_inputs.py::test_native_report_file_authentication[symlink]"
+    ],
+    "native_model_qualification": false,
+    "new_boundary_cases": 27,
+    "old_ordinary_owning_cases": 60,
+    "phases_passed": 300
+  },
+  "diagnostic_headers": {
+    "data_offsets": [
+      0,
+      4
+    ],
+    "names_per_header": 138,
+    "ordinary_header_files": 11,
+    "published_tensors": false,
+    "scalar_dtype": "F32",
+    "scalar_shape": [
+      1
+    ],
+    "total_bytes": 115577,
+    "total_tensor_payload_bytes": 0
+  },
+  "independent_review": {
+    "bytes": 8191,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/independent-review-v01.json",
+    "sha256": "7a59e96acaf9fbd5445c536ddd365c0c163a73a999be38e4ea153da50517c3da"
+  },
+  "limits": {
+    "Lean_or_proof_admitted": false,
+    "actual_encoder_production_calls": 0,
+    "actual_pretrained_weight_load_calls": 0,
+    "decoder_or_training_executed": false,
+    "evaluation_gold_mask": 0,
+    "new_model_or_tensor_runtime_qualification": false,
+    "real_source_vectors_produced": false,
+    "retained_two_sources_reencoded": false,
+    "source_API_publication_or_merge_claimed": false,
+    "source_meaning_or_edition_or_entity_bindings_verified": false,
+    "task_board_or_claim_mutation": false,
+    "training_mask": 0
+  },
+  "origin_proof": {
+    "namespace_initializers_bypassed": 6,
+    "owning_test_modules": 2,
+    "package_initializer_or_hermetic_qualification": false,
+    "private_profile_name": "_gte768_local_profile",
+    "private_spec_profile_modules": 1,
+    "public_project_modules": 14,
+    "raw_compiled_executed_bodies": 17,
+    "source_request_pins_verified": 69
+  },
+  "original_custody": {
+    "actual_canonical_source_roots": [
+      "/home/barberb/lift_coding/external/ipfs_datasets",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-publication-clone-20261021"
+    ],
+    "both_original_source_READ_closed": true,
+    "caps": {
+      "child_process_slots": 4,
+      "cpu_slots": 1,
+      "memory_mb": 4096,
+      "storage_bytes": 134217728,
+      "timeout_seconds": 300
+    },
+    "global_policy_or_four_accounting_roots_changed": false,
+    "live_processes": 0,
+    "native_lease_id": "94f7a17fdbd04126aef7b5b63a8cffe6",
+    "original_native_released": true,
+    "original_storage_released": true,
+    "requested_source_roots": [
+      "/home/barberb/lift_coding/external/ipfs_datasets",
+      "/home/barberb/lift_coding/.worktrees/legal-ir-native768-source-api-20261022"
+    ],
+    "retained_attempt_bytes": 1758147,
+    "retained_ordinary_files": 92,
+    "retained_sealed_files": 91,
+    "rss_bytes": 0,
+    "storage_reservation_id": "dce9ada50879491eb3cea2275c222ec4"
+  },
+  "original_custody_references": {
+    "controller": {
+      "bytes": 826,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/controller-complete-source-api-v01.json",
+      "sha256": "62fff663cd90689989ad3e1f088f2e9044dba12795941d7604b3b74f6fe30d2d"
+    },
+    "durability": {
+      "bytes": 19700,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/attempt-validation-v01/logs/validation-durability.json",
+      "sha256": "ec2513c9f8d705c3fe7e2ea806dd3ea40a4141a88e293b1395b25f7d43c9001c"
+    },
+    "junit": {
+      "bytes": 18675,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/attempt-validation-v01/exports/tests.xml",
+      "sha256": "2a14b96dee9a5b421514221bf8823f9782998588b68975cb71c5764c85322052"
+    },
+    "launch": {
+      "bytes": 7619,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/launch-source-api-v01.json",
+      "sha256": "df8cc6ee3193b3c8a6d64a0245f11d8ba769e9af3ee4317ade21b03d9a6e55e7"
+    },
+    "module_origins": {
+      "bytes": 21927,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/attempt-validation-v01/exports/module-origin-witness.json",
+      "sha256": "1607813134a889139b5307551b8bdf8cdbf6ae05bc1d9604591d1e139c1d0cd5"
+    },
+    "original_execution": {
+      "bytes": 23683,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/attempt-validation-v01/logs/execution.json",
+      "sha256": "c43fd31854dc7e4804c8ee46f5e2be93d0dd242d87e05c5f96a7f33dfef75993"
+    },
+    "original_result": {
+      "bytes": 23361,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/attempt-validation-v01/logs/result.json",
+      "sha256": "a4d30fce0383b4ec87f0860c311f7674f85617fe49a216e64eddeac1bfae4e75"
+    },
+    "request": {
+      "bytes": 40300,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/request-source-api-v01.json",
+      "sha256": "ff915ebc8522c14d05d3177555ba4744a73345a67cf9fdf4377d4b67316fa1c3"
+    },
+    "source_READ": {
+      "bytes": 1268,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/source-READ-source-api-v01.json",
+      "sha256": "9e2012773b68d32c2a219d3b7837338134ce1fa5da3dbfbf06d5257bfdccddc8"
+    },
+    "source_closure": {
+      "bytes": 14535,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/source-closure-v01.json",
+      "sha256": "49c4a9670821f75b8ba5430650f531de2a9c49a683e81e20ce946be211085de6"
+    },
+    "test_observation": {
+      "bytes": 98840,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/attempt-validation-v01/exports/test-observation.json",
+      "sha256": "2b5d8bfcdd6dbf4a53540f143d0605c0c65c5069847e7df2b66f087896f140a2"
+    },
+    "worker_completion": {
+      "bytes": 2966,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/attempt-validation-v01/exports/completion.json",
+      "sha256": "b3c9624f3de9539e9341315691f1a07975f3ab752b3492ac6242f35d10dbe117"
+    }
+  },
+  "public_base": "2c828789cb6f16e887c36839c91ef61b54897f36",
+  "qualification_summary": {
+    "bytes": 10666,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-native768-source-api-current-main-20261022-01/qualification-summary-v01.json",
+    "sha256": "f5104c1125f7e9a4202b173b3a5976a52bd6c645a713c2d6468e438b42be38c2"
+  },
+  "raw_evidence_availability": "This committed file provides portable metadata and exact locators/digests. Raw attempts, runtime witnesses, original source artifacts and numerical captures remain separately retained at their declared local paths and are not bundled by this source publication. Relocation does not requalify numerical execution or physical custody.",
+  "recorded_at_utc": "2026-10-22T05:24:56.017108+00:00",
+  "runtime": {
+    "hermetic_transitive_runtime_attestation": false,
+    "pytest": "8.3.4",
+    "python": "3.12.3",
+    "selective_witnesses": {
+      "torch_C": {
+        "bytes": 263425,
+        "path": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/torch/_C.cpython-312-aarch64-linux-gnu.so",
+        "sha256": "16d9c46a50f690384bc6bbfc2b122885e15fb031efdb2582eab06cf21f46e431"
+      },
+      "torch_distribution_metadata": {
+        "bytes": 30777,
+        "path": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/torch-2.9.1.dist-info/METADATA",
+        "sha256": "a7976fb5ed9044fb2bf421b99d888356a3a180d9e9ddd6ac10a46230bf68fc1a"
+      },
+      "torch_init": {
+        "bytes": 102969,
+        "path": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/torch/__init__.py",
+        "sha256": "3caf7f40140ede2465bde40b9003af10cbbc8f7bcf436fa1de026471daa1b288"
+      },
+      "torch_version": {
+        "bytes": 277,
+        "path": "/home/barberb/lift_coding/.venv/lib/python3.12/site-packages/torch/version.py",
+        "sha256": "1f11d022311106326d68591dacb5f86ba859bb6fa4d05e19b18490a072ce77f6"
+      }
+    },
+    "startup_subprocesses": [],
+    "torch_distribution": "2.9.1",
+    "torch_interop_threads": 1,
+    "torch_module": "2.9.1+cpu",
+    "torch_threads": 1
+  },
+  "schema": "legal-ir-native768-source-api-current-main-evidence/v1",
+  "scope": "Selective two-file source API integration on the current public base, with separate reused native observations; no new source encoder or legal qualification.",
+  "separate_retained_native_source_observation": {
+    "checkpoint_tensors": 138,
+    "experiment_token_limit": 512,
+    "guarded_forward_calls": 4,
+    "historical_profile_token_limit": 8192,
+    "physical_origin_scope": "Two local-derived heading-prefixed7213/7214 inputs; no original paired-cache/entity or official-edition binding.",
+    "production": {
+      "bytes": 68054,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-native768-sources-20261022-01/attempt-native768-v03/pytest/native768/native768-production.json",
+      "sha256": "aa0431944e143872db89ed642c422b4f668ee1b4565973716c4bad0d0aafc1b6"
+    },
+    "qualification": {
+      "bytes": 11703,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-native768-sources-20261022-01/qualification-summary-v03.json",
+      "sha256": "eacef109b1486cb7cd9de7edfa45a708908f1df130cf9f67154f4d1d440bcbf6"
+    },
+    "reencoded_in_this_delivery": false,
+    "source_bytes": 526,
+    "source_utf8_bytes": [
+      284,
+      242
+    ],
+    "token_counts": [
+      71,
+      55
+    ],
+    "vectors": 2
+  },
+  "source_api": "produce_native768_sources",
+  "source_owner": "ipfs_datasets_py.logic.formalization.autoencoder.dimension_source_inputs",
+  "source_postimages": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 32133,
+      "sha256": "ef2f903ec6a820e528030006d31bf92e0c9e5ec31a339c8c6a8afbff854633af"
+    },
+    "tests/unit/logic/formalization/autoencoder/test_dimension_source_inputs.py": {
+      "bytes": 26594,
+      "sha256": "694490c314938a51c2dff4fe6c992330de60d5f89012ebc8331abdcb5b3f690d"
+    }
+  }
+}

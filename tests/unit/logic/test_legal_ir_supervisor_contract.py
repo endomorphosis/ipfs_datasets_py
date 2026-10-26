@@ -390,3 +390,163 @@ def test_corpus_override_authenticates_digest_before_parsing(tmp_path, monkeypat
     monkeypatch.setattr(contract, 'PARQUET_SHA256', '0' * 64)
     with pytest.raises(contract.ContractError, match='digest differs'):
         contract.usc_rows('1', source_parquet=source)
+
+
+# Programme coding preparation extends the existing owner; retained inventory stays frozen.
+def programme_bundle():
+    return json.loads((ROOT / contract.PLAN).read_text())['programme_engineering']
+
+
+def programme_case(tmp_path, monkeypatch):
+    task = deepcopy(programme_bundle()['prepared_tasks'][0])
+    monkeypatch.setattr(contract, '_require_programme_source_alignment',
+                        lambda root: dict(contract.PROGRAMME_SOURCE_BINDING))
+    changes = []
+    for value in (task['owner_paths'][0], task['test_paths'][0]):
+        path = tmp_path / value
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('independently changed owner or test\n')
+        changes.append({'path': value, 'sha256': contract.sha(path.read_bytes())})
+    receipt = {'status': 'implemented', 'parent_reference': task['parent_reference'],
+               'source_binding': contract.PROGRAMME_SOURCE_BINDING,
+               'implementation_route': contract.PROGRAMME_ROUTE, 'code_changes': changes}
+    preparation = {'schema': 'legal-ir-programme-engineering-preparation/v1',
+        'task_id': task['task_id'], 'parent_reference': task['parent_reference'],
+        'source_binding': contract.PROGRAMME_SOURCE_BINDING,
+        'admitted': False, 'formalized': False, 'semantic_review_performed': False,
+        'model_gain_claimed': False, 'training_executed': False,
+        'result': {key: ['unresolved preparation observation'] for key in task['result_fields']}}
+    return task, receipt, preparation
+
+
+def test_programme_bundle_preserves_all_135_records_metadata_and_native_cids():
+    bundle = contract.check_programme_engineering_plan(ROOT)
+    assert bundle['legacy_preservation']['task_count'] == 135
+    assert {task['home_shard'] for task in bundle['prepared_tasks']} == {0, 1, 2, 3}
+    assert len({task['goal_id'] for task in bundle['prepared_tasks']}) == 4
+    native = load_standalone('legal_ir_programme_native_identity', ROOT.parent.parent /
+        'external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/task_sources/task_identity.py')
+    blocks = contract._programme_task_blocks((ROOT / contract.BOARD).read_text())
+    for task_id, block in blocks.items():
+        title = block.splitlines()[0].split(' ', 2)[2]
+        metadata = dict(line[2:].split(':', 1) for line in block.splitlines()[1:]
+                        if line.startswith('- ') and ':' in line)
+        metadata = {key.strip().lower(): value.strip() for key, value in metadata.items()}
+        assert metadata['status'] == 'completed'
+        old_task = next(task for task in json.loads((ROOT / contract.PLAN).read_text())['tasks']
+                        if task['task_id'] == task_id)
+        assert metadata.get('provider role') == old_task.get('provider_role')
+        assert metadata.get('context budget tokens') == (str(old_task['context_budget_tokens'])
+                if 'context_budget_tokens' in old_task else None)
+        identity = native.canonical_task_identity(dict(task_id=task_id, title=title,
+            outputs=metadata['outputs'].split(', '), acceptance=metadata['acceptance'],
+            metadata=metadata), board_namespace='legal-ir-autoencoder-v1')
+        assert identity.canonical_task_cid == bundle['legacy_preservation']['canonical_task_cids'][task_id]
+
+
+def test_programme_entries_are_native_append_compatible_without_writes(monkeypatch):
+    monkeypatch.setattr(contract, '_require_programme_source_alignment',
+                        lambda root: dict(contract.PROGRAMME_SOURCE_BINDING))
+    before = [(ROOT / path).read_bytes() for path in (contract.PLAN, contract.BOARD)]
+    result = contract.prepare_programme_engineering(ROOT)
+    assert result['completion_authority'] is result['mutation_authority'] is False
+    monkeypatch.syspath_prepend(str(ROOT.parent.parent / 'external/ipfs_accelerate'))
+    from ipfs_accelerate_py.agent_supervisor.task_sources.taskboard_store import (
+        TaskboardMaterializationEntry, preview_taskboard_materialization,
+    )
+    entries = [TaskboardMaterializationEntry(**entry) for entry in result['entries']]
+    preview = preview_taskboard_materialization((ROOT / contract.BOARD).read_text(), entries)
+    assert len(preview.entries) == 4
+    assert len(contract._programme_task_blocks(preview.candidate_text)) == 139
+    for task, entry in zip(result['plan_task_additions'], result['entries'], strict=True):
+        assert task['provider_role'] == 'grok-implement' and task['context_budget_tokens'] == 48000
+        assert '- parent goal id: ' + task['parent_task_id'] in entry['rendered_block']
+        assert '- provider role: grok-implement' in entry['rendered_block']
+        assert '- context budget tokens: 48000' in entry['rendered_block']
+        assert task['implementation_route'] == contract.PROGRAMME_ROUTE
+        assert contract.task_contract(task) == contract.programme_engineering_contract(task)
+    assert before == [(ROOT / path).read_bytes() for path in (contract.PLAN, contract.BOARD)]
+
+
+@pytest.mark.parametrize('attack', ['unknown_id', 'parent', 'route', 'zero', 'negative', 'boolean',
+                                    'escape_owner', 'escape_allowed', 'unknown_field'])
+def test_programme_coding_contract_rejects_malformed_or_broadened_authority(attack):
+    task = deepcopy(programme_bundle()['prepared_tasks'][0])
+    if attack == 'unknown_id': task['task_id'] = 'LIRAE-USC-T01'
+    elif attack == 'parent': task['parent_reference']['task_id'] = 'LIR-16'
+    elif attack == 'route': task['implementation_route']['primary_model_id'] = 'unreviewed'
+    elif attack in ('zero', 'negative', 'boolean'):
+        task['context_budget_tokens'] = {'zero': 0, 'negative': -1, 'boolean': True}[attack]
+    elif attack == 'escape_owner': task['owner_paths'][0] = '../outside.py'
+    elif attack == 'escape_allowed': task['allowed_paths'] = ['../outside.py']
+    else: task['implementation command'] = 'unreviewed executable'
+    with pytest.raises(contract.ContractError):
+        contract.programme_engineering_contract(task)
+
+
+@pytest.mark.parametrize('value', ['/tmp/out', '../out', 'owner/../out', './owner',
+                                  'owner//file', 'owner/*.py', 'owner\\file', 'owner\x00file'])
+def test_programme_paths_reject_escape_aliases_and_globs(value):
+    with pytest.raises(contract.ContractError):
+        contract._programme_safe_path(value)
+
+
+@pytest.mark.parametrize('attack', ['old_id', 'old_metadata', 'old_board', 'baseline', 'child_parent'])
+def test_programme_preservation_rejects_changed_legacy_or_parent_binding(tmp_path, attack):
+    plan = json.loads((ROOT / contract.PLAN).read_text())
+    board = (ROOT / contract.BOARD).read_text()
+    if attack == 'old_id': plan['tasks'][0]['task_id'] = 'LIRAE-USC-REUSED'
+    elif attack == 'old_metadata': plan['tasks'][0]['provider_role'] = 'grok-implement'
+    elif attack == 'old_board': board = board.replace('- status: completed', '- status: todo', 1)
+    elif attack == 'baseline': plan['programme_engineering']['legacy_preservation']['task_count'] = 134
+    else: plan['programme_engineering']['prepared_tasks'][0]['parent_reference']['revision'] = 'latest'
+    path = tmp_path / contract.BOARD
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(board)
+    with pytest.raises(contract.ContractError):
+        contract.check_programme_engineering_plan(tmp_path, plan)
+
+
+def test_programme_old_source_snapshot_cannot_materialize_or_enrich(tmp_path, monkeypatch):
+    before = [(ROOT / path).read_bytes() for path in (contract.PLAN, contract.BOARD)]
+    with pytest.raises(contract.ContractError, match='public main must be integrated'):
+        contract._require_programme_source_alignment(tmp_path)
+    def old_snapshot(root):
+        raise contract.ContractError('current public main must be integrated before programme dispatch')
+    monkeypatch.setattr(contract, '_require_programme_source_alignment', old_snapshot)
+    with pytest.raises(contract.ContractError, match='public main must be integrated'):
+        contract.prepare_programme_engineering(ROOT)
+    with pytest.raises(contract.ContractError, match='enrichment is forbidden'):
+        contract.enrich(ROOT)
+    assert before == [(ROOT / path).read_bytes() for path in (contract.PLAN, contract.BOARD)]
+
+
+def test_programme_receipt_authenticates_actual_owner_test_changes(tmp_path, monkeypatch):
+    task, receipt, preparation = programme_case(tmp_path, monkeypatch)
+    assert contract.validate_programme_engineering(tmp_path, task, receipt,
+                                                  {'preparation': raw(preparation)}) is True
+
+
+@pytest.mark.parametrize('attack', ['training', 'review', 'gain', 'parent', 'route', 'no_tests',
+                                    'escape', 'symlink', 'hash', 'empty_result', 'nonfinite', 'artifact'])
+def test_programme_receipt_rejects_forged_completion_or_execution_claims(tmp_path, monkeypatch, attack):
+    task, receipt, preparation = programme_case(tmp_path, monkeypatch)
+    if attack in ('training', 'review', 'gain'):
+        preparation[{'training': 'training_executed', 'review': 'semantic_review_performed',
+                     'gain': 'model_gain_claimed'}[attack]] = True
+    elif attack == 'parent': receipt['parent_reference'] = {'task_id': 'LIR-16'}
+    elif attack == 'route': receipt['implementation_route'] = {'primary_provider_id': 'codex'}
+    elif attack == 'no_tests': receipt['code_changes'].pop()
+    elif attack == 'escape': receipt['code_changes'][0]['path'] = '../outside.py'
+    elif attack == 'symlink':
+        path = tmp_path / receipt['code_changes'][0]['path']
+        target = tmp_path / 'outside.py'
+        target.write_bytes(path.read_bytes())
+        path.unlink(); path.symlink_to(target)
+    elif attack == 'hash': receipt['code_changes'][0]['sha256'] = '0' * 64
+    elif attack == 'empty_result': preparation['result'][task['result_fields'][0]] = []
+    elif attack == 'nonfinite': preparation['result'][task['result_fields'][0]] = float('nan')
+    data = {'preparation': raw(preparation)}
+    if attack == 'artifact': data['asserted-results'] = b'{}'
+    with pytest.raises((contract.ContractError, ValueError)):
+        contract.validate_programme_engineering(tmp_path, task, receipt, data)

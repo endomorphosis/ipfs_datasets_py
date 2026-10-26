@@ -20,21 +20,22 @@ PT = timezone(timedelta(hours=-7))
 
 META = {
     "am": ("endomorphosis/ipfs_armenia_laws", "Armenia", "hy", "ARLIS (arlis.am)", "scrapers/collect_am.py", "am-arlis"),
-    "al": ("endomorphosis/ipfs_albania_laws", "Albania", "sq", "QBZ Fletorja Zyrtare", "scrapers/collect_al.py", "al-qbz-fletore"),
-    "ba": ("endomorphosis/ipfs_bosnia_laws", "Bosnia and Herzegovina", "bs", "Sluzbeni list BiH", "scrapers/collect_ba.py", "ba-sluzbeni-list"),
+    "al": ("endomorphosis/ipfs_albania_laws", "Albania", "sq", "QPZ/QBZ Fletorja Zyrtare PDFs", "scrapers/collect_al.py", "al-qbz-fletore"),
+    "ba": ("endomorphosis/ipfs_bosnia_laws", "Bosnia and Herzegovina", "bs", "Sluzbeni list BiH PdfDownload", "scrapers/collect_ba.py", "ba-sluzbeni-list"),
     "mk": ("endomorphosis/ipfs_northmacedonia_laws", "North Macedonia", "mk", "Sluzben vesnik", "scrapers/collect_mk.py", "mk-slvesnik"),
     "me": ("endomorphosis/ipfs_montenegro_laws", "Montenegro", "sr", "Sluzbeni list Crne Gore", "scrapers/collect_me.py", "me-sluzbeni-list"),
     "md": ("endomorphosis/ipfs_moldova_laws", "Moldova", "ro", "legis.md State Register", "scrapers/collect_md.py", "md-legis"),
-    "ge": ("endomorphosis/ipfs_georgia_laws", "Georgia", "ka", "matsne.gov.ge Legislative Herald", "scrapers/collect_ge.py", "ge-matsne"),
+    "ge": ("endomorphosis/ipfs_georgia_laws", "Georgia", "ka", "matsne.gov.ge PDF download", "scrapers/collect_ge.py", "ge-matsne-pdf"),
     "ec": ("endomorphosis/ipfs_ecuador_laws", "Ecuador", "es", "gob.ec / Registro Oficial", "scrapers/collect_ec.py", "ec-registro-oficial"),
     "bo": ("endomorphosis/ipfs_bolivia_laws", "Bolivia", "es", "Gaceta Oficial de Bolivia", "scrapers/collect_bo.py", "bo-gaceta-oficial"),
     "py": ("endomorphosis/ipfs_paraguay_laws", "Paraguay", "es", "BACN leyes paraguayas", "scrapers/collect_py.py", "py-bacn"),
     "pa": ("endomorphosis/ipfs_panama_laws", "Panama", "es", "Gaceta Oficial de Panama", "scrapers/collect_pa.py", "pa-gaceta-oficial"),
     "dz": ("endomorphosis/ipfs_algeria_laws", "Algeria", "fr", "JORADP Journal Officiel", "scrapers/collect_dz.py", "dz-joradp"),
     "tn": ("endomorphosis/ipfs_tunisia_laws", "Tunisia", "ar", "IORT Journal Officiel", "scrapers/collect_tn.py", "tn-iort"),
+    "gh": ("endomorphosis/ipfs_ghana_laws", "Ghana", "en", "Parliament of Ghana / ir.parliament.gh", "scrapers/collect_gh.py", "ghana-official"),
     "et": ("endomorphosis/ipfs_ethiopia_laws", "Ethiopia", "am", "Federal Negarit Gazette", "scrapers/collect_et.py", "et-negarit"),
-    "tz": ("endomorphosis/ipfs_tanzania_laws", "Tanzania", "en", "Parliament / OAG MIS", "scrapers/collect_tz.py", "tz-bunge"),
-    "rs": ("endomorphosis/ipfs_serbia_laws", "Serbia", "sr", "PIS / Sluzbeni glasnik ELI", "scrapers/collect_rs.py", "rs-pis-slglasnik"),
+    "tz": ("endomorphosis/ipfs_tanzania_laws", "Tanzania", "en", "OAG MIS Acts PDFs", "scrapers/collect_tz.py", "tz-oagmis"),
+    "rs": ("endomorphosis/ipfs_serbia_laws", "Serbia", "sr", "PIS + parlament.gov.rs zakoni PDFs", "scrapers/collect_rs.py", "rs-pis-parlament"),
     "is": ("endomorphosis/ipfs_iceland_laws", "Iceland", "is", "Althingi Lagasafn", "scrapers/collect_is.py", "is-althingi-lagasafn"),
     "xk": ("endomorphosis/ipfs_kosovo_laws", "Kosovo", "sq", "Gazeta Zyrtare GZK", "scrapers/collect_xk.py", "xk-gzk"),
     "uz": ("endomorphosis/ipfs_uzbekistan_laws", "Uzbekistan", "uz", "lex.uz National Database", "scrapers/collect_uz.py", "uz-lex"),
@@ -45,6 +46,30 @@ META = {
     "jm": ("endomorphosis/ipfs_jamaica_laws", "Jamaica", "en", "MOJ Jamaica / Parliament", "scrapers/collect_jm.py", "jm-moj"),
     "ug": ("endomorphosis/ipfs_uganda_laws", "Uganda", "en", "Parliament of Uganda", "scrapers/collect_ug.py", "ug-parliament"),
     "sn": ("endomorphosis/ipfs_senegal_laws", "Senegal", "fr", "Journal Officiel du Senegal", "scrapers/collect_sn.py", "sn-jo"),
+    "cm": ("endomorphosis/ipfs_cameroon_laws", "Cameroon", "fr", "Présidence / Primature Cameroun (prc.cm / spm.gov.cm)", "scrapers/collect_cm.py", "cm-prc-spm"),
+    "mz": ("endomorphosis/ipfs_mozambique_laws", "Mozambique", "pt", "Boletim da República / MIREME / Parlamento", "scrapers/collect_mz.py", "mz-boletim-mireme"),
+    "ao": ("endomorphosis/ipfs_angola_laws", "Angola", "pt", "Diario da Republica / GUE / Portal do Governo", "scrapers/collect_ao.py", "ao-diario-republica"),
+    "az": ("endomorphosis/ipfs_azerbaijan_laws", "Azerbaijan", "az", "e-qanun.az downloadDetailPdf", "scrapers/collect_az.py", "az-eqanun"),
+    "do": ("endomorphosis/ipfs_dominicanrepublic_laws", "Dominican Republic", "es", "Consultoria Juridica / consultoria.gov.do", "scrapers/collect_do.py", "do-consultoria"),
+    "fj": ("endomorphosis/ipfs_fiji_laws", "Fiji", "en", "laws.gov.fj LawsAsMade", "scrapers/collect_fj.py", "fj-laws"),
+    "sv": ("endomorphosis/ipfs_elsalvador_laws", "El Salvador", "es", "Diario Oficial de El Salvador", "scrapers/collect_sv.py", "sv-diario-oficial"),
+    "gt": ("endomorphosis/ipfs_guatemala_laws", "Guatemala", "es", "Congreso de la Republica (congreso.gob.gt)", "scrapers/collect_gt.py", "gt-congreso"),
+    "kh": ("endomorphosis/ipfs_cambodia_laws", "Cambodia", "km", "Ministry of Justice Cambodia (moj.gov.kh)", "scrapers/collect_kh.py", "kh-moj"),
+    "la": ("endomorphosis/ipfs_laos_laws", "Laos", "lo", "Lao Official Gazette", "scrapers/collect_la.py", "la-official-gazette"),
+    "cu": ("endomorphosis/ipfs_cuba_laws", "Cuba", "es", "Gaceta Oficial de Cuba", "scrapers/collect_cu.py", "cu-gaceta-oficial"),
+    "ni": ("endomorphosis/ipfs_nicaragua_laws", "Nicaragua", "es", "Asamblea Nacional legislacion.asamblea.gob.ni", "scrapers/collect_ni.py", "ni-asamblea"),
+    "hn": ("endomorphosis/ipfs_honduras_laws", "Honduras", "es", "TSC / La Gaceta tsc.gob.hn/web/leyes", "scrapers/collect_hn.py", "hn-tsc-gaceta"),
+    "ve": ("endomorphosis/ipfs_venezuela_laws", "Venezuela", "es", "Gaceta Oficial gacetaoficial.gob.ve", "scrapers/collect_ve.py", "ve-gaceta-oficial"),
+    "tt": ("endomorphosis/ipfs_trinidad_laws", "Trinidad and Tobago", "en", "TT Parliament / laws.gov.tt", "scrapers/collect_tt.py", "tt-parliament-laws"),
+    "bn": ("endomorphosis/ipfs_brunei_laws", "Brunei", "en", "AGC Laws of Brunei", "scrapers/collect_bn.py", "bn-agc-laws"),
+    "pg": ("endomorphosis/ipfs_papuanewguinea_laws", "Papua New Guinea", "en", "PNG Parliament uploads/acts", "scrapers/collect_pg.py", "pg-parliament-acts"),
+    "iq": ("endomorphosis/ipfs_iraq_laws", "Iraq", "ar", "Ministry of Justice moj.gov.iq", "scrapers/collect_iq.py", "iq-moj"),
+    "ir": ("endomorphosis/ipfs_iran_laws", "Iran", "fa", "DOTIC dotic.ir", "scrapers/collect_ir.py", "ir-dotic"),
+    "lk": ("endomorphosis/ipfs_srilanka_laws", "Sri Lanka", "en", "documents.gov.lk / parliament.lk", "scrapers/collect_lk.py", "lk-documents-gov"),
+    "lb": ("endomorphosis/ipfs_lebanon_laws", "Lebanon", "ar", "JO pcm.gov.lb Official Gazette", "scrapers/collect_lb.py", "lb-jo-pcm"),
+    "zw": ("endomorphosis/ipfs_zimbabwe_laws", "Zimbabwe", "en", "Parliament of Zimbabwe (parlzim.gov.zw)", "scrapers/collect_zw.py", "zw-parliament-acts"),
+    "na": ("endomorphosis/ipfs_namibia_laws", "Namibia", "en", "Parliament of Namibia / laws.parliament.na / Bank of Namibia", "scrapers/collect_na.py", "na-parliament-bon"),
+    "bw": ("endomorphosis/ipfs_botswana_laws", "Botswana", "en", "gov.bw / Parliament / BURS / statutory agencies", "scrapers/collect_bw.py", "bw-gov-parliament-burs"),
 }
 
 LAW_COLS = [
@@ -73,7 +98,8 @@ def instruments_to_frames(cc: str):
         except Exception:
             continue
         text = rec.get("text") or ""
-        if len(text) < 80:
+        min_txt = int(__import__("os").environ.get("MIN_PACKAGE_TEXT", "80"))
+        if len(text) < min_txt:
             continue
         meta = rec.get("metadata") or {}
         laws.append({

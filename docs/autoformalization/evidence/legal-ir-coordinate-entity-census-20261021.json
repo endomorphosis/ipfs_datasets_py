@@ -1,0 +1,92 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "entity_semantic_bindings_verified": false,
+    "evaluation_gold_qualified": false,
+    "graph_admitted": false,
+    "semantic_review_verified": false,
+    "source_semantics_verified": false,
+    "training_qualified": false
+  },
+  "base_commit": "3623a46f713037b05f33236e7a308959aa206d09",
+  "evaluation_gold_mask": 0,
+  "independent_review": {
+    "bytes": 13247,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-entity-census-20261021-01/independent-qualification-review-v01.json",
+    "sha256": "5787d22a596cf0a64369de1627cf85ee0d60fad924cb6eb5b6c090a2151297f4"
+  },
+  "limits": [
+    "Tiny authored transport/custody fixtures, not a real source-bound statutory norm or semantic endorsement.",
+    "One 16-row detailed census is prepared in module setup for the new companion cases; no entity rows are decoded during companion prepare/replay. The four ported entity-owner regressions prepare their own authored fixtures.",
+    "The historical 1,960,876-row census was not re-censused or rebound by this cohort; original 141-case entity qualification remains separate and was not rerun.",
+    "Final paired closing verification is fresh metadata/path/link/device/inode/size/time witnessing, not another payload hash or row replay; observations are non-atomic.",
+    "All semantic/graph/proof/training/gold authority remains false, masks zero and entity semantic bindings null.",
+    "No models, checkpoints, latent encoders, training/optimizer updates, network/provider calls or native Lean compilation were executed.",
+    "The request-pinned c758 runner is qualified here only through the original normal granted-native census41 path; no fallback was executed. Broader lifecycle59 is not qualified by this census run; its separately retained earlier review is not a current-state claim."
+  ],
+  "original_cleanup": {
+    "compute_released": true,
+    "no_native_fallback_executed": false,
+    "normal_granted_native_path": true,
+    "source_read_closed": true,
+    "storage_released": true,
+    "verification": "original_controller_launch_durability_and_independent_review_not_reconstructed_ownership"
+  },
+  "owner": "ipfs_datasets_py.logic.autoformal.legal_source_span_entity_census_v1",
+  "qualification": {
+    "actual_imported_or_compiled_source_union": 47,
+    "candidate_source_files": 230,
+    "cases": 41,
+    "companion_entity_row_rescans": 0,
+    "historical_141_cases_reexecuted": false,
+    "new_coordinate_companion_cases": 37,
+    "phase_passes": 123,
+    "ported_entity_owner_cases": 4,
+    "request_source_pins": 256,
+    "retained_attempt_bytes": 3939084,
+    "retained_attempt_files": 310,
+    "retained_native_parent_files": 15,
+    "tiny_coordinate_census_module_setup_scans": 1,
+    "tiny_prior_census_rows": 16
+  },
+  "qualification_summary": {
+    "bytes": 11021,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-entity-census-20261021-01/qualification-summary.json",
+    "sha256": "2a4974cc3e7baed0125172bd47ee1f6a751065a56486503e91375f0d405bee6d"
+  },
+  "qualified_manifest": {
+    "bytes": 49807,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-entity-census-20261021-01/manifest-census-04.json",
+    "sha256": "513a9a554b15025fb44b1274e2db8556d92a7e01c00aecbc4197ad579e0e69a2"
+  },
+  "retained_receipt_scope": "local_retained_receipts_not_published_private_payloads",
+  "runner": {
+    "broader_lifecycle59_qualified_by_this_run": false,
+    "census41_normal_granted_path_qualified": true,
+    "retained_earlier_lifecycle59_review_status": "original_finite59_attempt02_closed_failed_incomplete_import_closure_not_qualified",
+    "sha256": "c7581722b5e1c83f8b03f96a86158e2d95e38d00f222c67c8806dfd56e3b71a2"
+  },
+  "schema": "legal-ir-coordinate-entity-census-evidence/v1",
+  "selected_sources": {
+    "ipfs_datasets_py/logic/autoformal/legal_entity_index_intake.py": {
+      "bytes": 30743,
+      "sha256": "bfe93832fab27d8e320a0c33c42bb67c68718bdf5e718f205a471d05282b25d7"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_span_entity_census_v1.py": {
+      "bytes": 38608,
+      "sha256": "1c589c1713fdd946869b69745ab43938df5d85e91c16ae525ef22dfd75824f7e"
+    },
+    "tests/unit/logic/autoformal/test_legal_entity_index_intake.py": {
+      "bytes": 20151,
+      "sha256": "d7da6e1284c3e4ab5937f9b39d12e29af7ca9693f60335031375cb31aa0573ef"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_span_entity_census_v1.py": {
+      "bytes": 42974,
+      "sha256": "404969d22d791e7a2b37fd38a8f223458992dc20ba4e6bab948dedc9af5245ca"
+    }
+  },
+  "source_compatibility_profile": "paired-coordinate-entity-census/v1",
+  "status": "qualified_selected_delivery_not_installed_or_published",
+  "task": "LIR-02",
+  "training_mask": 0
+}

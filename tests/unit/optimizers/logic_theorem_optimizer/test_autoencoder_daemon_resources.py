@@ -31,19 +31,19 @@ def setup(tmp_path, monkeypatch):
     return factory, roots, ledger, scheduler
 
 
-def test_production_storage_cap_is_one_hundred_sixty_gb_without_admission(tmp_path):
+def test_production_storage_cap_is_two_hundred_twenty_gb_without_admission(tmp_path):
     root = tmp_path / "outputs"
     root.mkdir()
     ledger = tmp_path / "disk.json"
     reservation = resources.DaemonResourceReservation(
         ledger, roots=[root], storage_bytes=7, memory_mb=1)
-    assert resources.MAX_STORAGE_BYTES == 160_000_000_000
+    assert resources.MAX_STORAGE_BYTES == 220_000_000_000
     assert resources.MAX_INVENTORY_ENTRIES == 2_000_000
     assert reservation._read() == {
         "schema": resources.SCHEMA, "roots": reservation.root_identities,
-        "limit_bytes": 160_000_000_000, "reservations": {},
+        "limit_bytes": 220_000_000_000, "reservations": {},
     }
-    assert reservation.to_dict()["storage_limit_bytes"] == 160_000_000_000
+    assert reservation.to_dict()["storage_limit_bytes"] == 220_000_000_000
     assert reservation.to_dict()["status"] == "not_entered"
     assert reservation.to_dict()["resource_lease"] is None
     assert not ledger.exists()
@@ -80,11 +80,11 @@ def test_raised_campaign_boundary_still_counts_all_nonreleased_claims(tmp_path, 
     monkeypatch.setattr(resources, "_inventory", lambda roots: {
         "apparent_bytes": 100_203_148_222, "entry_count": 1_359_805,
         "symlink_count": 4_557, "special_file_count": 28})
-    monkeypatch.setattr(resources.shutil, "disk_usage", lambda root: SimpleNamespace(free=80_000_000_000))
-    headroom = 28_331_851_778
+    monkeypatch.setattr(resources.shutil, "disk_usage", lambda root: SimpleNamespace(free=120_000_000_000))
+    headroom = 88_331_851_778
     usage = reservation._account(ledger, additional=headroom)
     assert usage["outstanding_full_reservations_bytes"] == 31_465_000_000
-    assert usage["charged_bytes"] == usage["limit_bytes"] == 160_000_000_000
+    assert usage["charged_bytes"] == usage["limit_bytes"] == 220_000_000_000
     with pytest.raises(resources.DaemonResourceError, match="capacity"):
         reservation._account(ledger, additional=headroom + 1)
     # Accounting headroom never substitutes for physically free storage.
@@ -139,8 +139,8 @@ def test_process_envelope_cannot_exceed_authoritative_scheduler_slots(setup):
         active.release(artifacts_durable=True)
 
 
-@pytest.fixture(params=[50_000_000_000, 60_000_000_000, 62_000_000_000, 75_000_000_000, 80_000_000_000, 85_000_000_000, 87_000_000_000, 90_000_000_000, 145_000_000_000],
-                ids=["fifty-gb", "sixty-gb", "sixty-two-gb", "seventy-five-gb", "eighty-gb", "eighty-five-gb", "eighty-seven-gb", "ninety-gb", "one-hundred-forty-five-gb"])
+@pytest.fixture(params=[50_000_000_000, 60_000_000_000, 62_000_000_000, 75_000_000_000, 80_000_000_000, 85_000_000_000, 87_000_000_000, 90_000_000_000, 145_000_000_000, 160_000_000_000, 200_000_000_000],
+                ids=["fifty-gb", "sixty-gb", "sixty-two-gb", "seventy-five-gb", "eighty-gb", "eighty-five-gb", "eighty-seven-gb", "ninety-gb", "one-hundred-forty-five-gb", "one-hundred-sixty-gb", "two-hundred-gb"])
 def historical_storage_ledger(tmp_path, request):
     previous_limit = request.param
     root = tmp_path / "outputs"
@@ -185,7 +185,7 @@ def test_historical_ledger_fails_closed_without_implicit_migration(historical_st
 def test_explicit_top_level_cap_migration_preserves_history_and_full_accounting(historical_storage_ledger):
     reservation, ledger, historical, raw = historical_storage_ledger
     old_prefix = ('{"limit_bytes":' + str(historical["limit_bytes"]) + ',').encode()
-    new_prefix = b'{"limit_bytes":160000000000,'
+    new_prefix = b'{"limit_bytes":220000000000,'
     assert raw.startswith(old_prefix)
     # Model the explicit one-time edit on a tiny, test-owned fixture. This
     # neither introduces an implicit migration API nor acquires a reservation.
@@ -194,13 +194,13 @@ def test_explicit_top_level_cap_migration_preserves_history_and_full_accounting(
     backup.write_bytes(raw)
     with reservation._locked():
         assert ledger.read_bytes() == raw
-        reservation._write({**historical, "limit_bytes": 160_000_000_000})
+        reservation._write({**historical, "limit_bytes": 220_000_000_000})
     current = reservation._read()
-    assert current == {**historical, "limit_bytes": 160_000_000_000}
+    assert current == {**historical, "limit_bytes": 220_000_000_000}
     assert current["reservations"] == historical["reservations"]
     assert migrated[len(new_prefix):] == raw[len(old_prefix):]
     usage = reservation._account(current, additional=13)
-    assert usage["limit_bytes"] == 160_000_000_000
+    assert usage["limit_bytes"] == 220_000_000_000
     assert usage["observed_apparent_bytes"] == 3
     assert usage["outstanding_full_reservations_bytes"] == 4_000
     assert usage["additional_requested_bytes"] == 13

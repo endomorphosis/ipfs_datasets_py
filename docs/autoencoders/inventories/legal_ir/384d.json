@@ -142,6 +142,228 @@
       "decoder_kind": "sparse core and formula GRU",
       "source_access": "embedding plus parser-derived features",
       "max_decoder_tokens": 64
+    },
+    {
+      "role": "cp128_warmstart_mechanics_full537_step_0",
+      "receipt": {
+        "bytes": 2704855,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/full537-step-0.json",
+        "sha256": "599da742ac6bb76c59ae38ac3274fbe37e8064bfa22be5eb3493baea5916fbf3"
+      },
+      "dimension_role": "input_embedding",
+      "input_width": 384,
+      "owning_ir_family": "legal_ir",
+      "task_id": "structural_reconstruction",
+      "checkpoint_serialization_schema": "legal-compact-role-warmstart-training-checkpoint/v1",
+      "declared_training_profile": "authored-h0-384-fixed537-CP128-fresh-Adam-role-objective/v1",
+      "checkpoint_canonical_sha256": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+      "objective_kind": "full537",
+      "objective_policy_sha256": "0ed591ba2aa4eb4e12fa82766cd1436054438540e64a338ab5177cf77e946c6f",
+      "new_progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 0,
+        "row_cursor": 0
+      },
+      "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+      "replay_aliases": [],
+      "metric_scope": "Two exposed authored384 compact537 fixtures; finite gradient/resume mechanics, no generation or reconstruction-quality experiment.",
+      "source_access": "Original authored conditioning and target-derived contexts; native GTE/context permission unverified.",
+      "runtime_ready": false,
+      "teacher_qualified": false,
+      "proof_authority": false,
+      "qualification": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-qualification-summary-v01.json",
+        "bytes": 20029,
+        "sha256": "c18a690aecd43bdcd342c0dfff662fa3eb169872a5bcff61cfe9d6ed776aa489"
+      }
+    },
+    {
+      "role": "cp128_warmstart_mechanics_full537_step_1",
+      "receipt": {
+        "bytes": 3228182,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/full537-step-1.json",
+        "sha256": "155497cfafe703c7c99b44df7d44a525099655a76000ed6dd75f24fe7f386b25"
+      },
+      "dimension_role": "input_embedding",
+      "input_width": 384,
+      "owning_ir_family": "legal_ir",
+      "task_id": "structural_reconstruction",
+      "checkpoint_serialization_schema": "legal-compact-role-warmstart-training-checkpoint/v1",
+      "declared_training_profile": "authored-h0-384-fixed537-CP128-fresh-Adam-role-objective/v1",
+      "checkpoint_canonical_sha256": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+      "objective_kind": "full537",
+      "objective_policy_sha256": "0ed591ba2aa4eb4e12fa82766cd1436054438540e64a338ab5177cf77e946c6f",
+      "new_progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 1,
+        "row_cursor": 1
+      },
+      "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+      "replay_aliases": [],
+      "metric_scope": "Two exposed authored384 compact537 fixtures; finite gradient/resume mechanics, no generation or reconstruction-quality experiment.",
+      "source_access": "Original authored conditioning and target-derived contexts; native GTE/context permission unverified.",
+      "runtime_ready": false,
+      "teacher_qualified": false,
+      "proof_authority": false,
+      "qualification": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-qualification-summary-v01.json",
+        "bytes": 20029,
+        "sha256": "c18a690aecd43bdcd342c0dfff662fa3eb169872a5bcff61cfe9d6ed776aa489"
+      }
+    },
+    {
+      "role": "cp128_warmstart_mechanics_full537_step_2",
+      "receipt": {
+        "bytes": 3228626,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/full537-step-2.json",
+        "sha256": "fbd3538c7d45471f7f694eb9d7917dc19c9259044466ed6450d3bd3d3a3ba8c1"
+      },
+      "dimension_role": "input_embedding",
+      "input_width": 384,
+      "owning_ir_family": "legal_ir",
+      "task_id": "structural_reconstruction",
+      "checkpoint_serialization_schema": "legal-compact-role-warmstart-training-checkpoint/v1",
+      "declared_training_profile": "authored-h0-384-fixed537-CP128-fresh-Adam-role-objective/v1",
+      "checkpoint_canonical_sha256": "3e1e528d0009b37f7608928f0af4a177f1ba3b43e08ef97e55d95c9de252fd8d",
+      "objective_kind": "full537",
+      "objective_policy_sha256": "0ed591ba2aa4eb4e12fa82766cd1436054438540e64a338ab5177cf77e946c6f",
+      "new_progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 2,
+        "row_cursor": 0
+      },
+      "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+      "replay_aliases": [
+        {
+          "label": "full537-resume-step-2",
+          "file": {
+            "bytes": 3228626,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/full537-resume-step-2.json",
+            "sha256": "fbd3538c7d45471f7f694eb9d7917dc19c9259044466ed6450d3bd3d3a3ba8c1"
+          }
+        }
+      ],
+      "metric_scope": "Two exposed authored384 compact537 fixtures; finite gradient/resume mechanics, no generation or reconstruction-quality experiment.",
+      "source_access": "Original authored conditioning and target-derived contexts; native GTE/context permission unverified.",
+      "runtime_ready": false,
+      "teacher_qualified": false,
+      "proof_authority": false,
+      "qualification": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-qualification-summary-v01.json",
+        "bytes": 20029,
+        "sha256": "c18a690aecd43bdcd342c0dfff662fa3eb169872a5bcff61cfe9d6ed776aa489"
+      }
+    },
+    {
+      "role": "cp128_warmstart_mechanics_scope_conditional_step_0",
+      "receipt": {
+        "bytes": 2704885,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/scope_conditional-step-0.json",
+        "sha256": "5458464a4ebadef9820247d9dd025e255d498c508b3c039c2afdff8e03d7fc23"
+      },
+      "dimension_role": "input_embedding",
+      "input_width": 384,
+      "owning_ir_family": "legal_ir",
+      "task_id": "structural_reconstruction",
+      "checkpoint_serialization_schema": "legal-compact-role-warmstart-training-checkpoint/v1",
+      "declared_training_profile": "authored-h0-384-fixed537-CP128-fresh-Adam-role-objective/v1",
+      "checkpoint_canonical_sha256": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+      "objective_kind": "scope_conditional",
+      "objective_policy_sha256": "701807e4e15652321efe70c29ffa894e6626776ef5df872447cb270ca0dd1c3a",
+      "new_progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 0,
+        "row_cursor": 0
+      },
+      "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+      "replay_aliases": [],
+      "metric_scope": "Two exposed authored384 compact537 fixtures; finite gradient/resume mechanics, no generation or reconstruction-quality experiment.",
+      "source_access": "Original authored conditioning and target-derived contexts; native GTE/context permission unverified.",
+      "runtime_ready": false,
+      "teacher_qualified": false,
+      "proof_authority": false,
+      "qualification": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-qualification-summary-v01.json",
+        "bytes": 20029,
+        "sha256": "c18a690aecd43bdcd342c0dfff662fa3eb169872a5bcff61cfe9d6ed776aa489"
+      }
+    },
+    {
+      "role": "cp128_warmstart_mechanics_scope_conditional_step_1",
+      "receipt": {
+        "bytes": 3052648,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/scope_conditional-step-1.json",
+        "sha256": "2823d625237dda8d51e57a7d370fd0baac45a5e0085482a4aa92fa4a85b8f398"
+      },
+      "dimension_role": "input_embedding",
+      "input_width": 384,
+      "owning_ir_family": "legal_ir",
+      "task_id": "structural_reconstruction",
+      "checkpoint_serialization_schema": "legal-compact-role-warmstart-training-checkpoint/v1",
+      "declared_training_profile": "authored-h0-384-fixed537-CP128-fresh-Adam-role-objective/v1",
+      "checkpoint_canonical_sha256": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+      "objective_kind": "scope_conditional",
+      "objective_policy_sha256": "701807e4e15652321efe70c29ffa894e6626776ef5df872447cb270ca0dd1c3a",
+      "new_progress": {
+        "epochs_completed": 0,
+        "optimizer_steps": 1,
+        "row_cursor": 1
+      },
+      "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+      "replay_aliases": [],
+      "metric_scope": "Two exposed authored384 compact537 fixtures; finite gradient/resume mechanics, no generation or reconstruction-quality experiment.",
+      "source_access": "Original authored conditioning and target-derived contexts; native GTE/context permission unverified.",
+      "runtime_ready": false,
+      "teacher_qualified": false,
+      "proof_authority": false,
+      "qualification": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-qualification-summary-v01.json",
+        "bytes": 20029,
+        "sha256": "c18a690aecd43bdcd342c0dfff662fa3eb169872a5bcff61cfe9d6ed776aa489"
+      }
+    },
+    {
+      "role": "cp128_warmstart_mechanics_scope_conditional_step_2",
+      "receipt": {
+        "bytes": 3053279,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/scope_conditional-step-2.json",
+        "sha256": "9ddb49f81ffd526c43363717813264765e4752ba28fb83ec92f303b0c7c22191"
+      },
+      "dimension_role": "input_embedding",
+      "input_width": 384,
+      "owning_ir_family": "legal_ir",
+      "task_id": "structural_reconstruction",
+      "checkpoint_serialization_schema": "legal-compact-role-warmstart-training-checkpoint/v1",
+      "declared_training_profile": "authored-h0-384-fixed537-CP128-fresh-Adam-role-objective/v1",
+      "checkpoint_canonical_sha256": "afcf33352fd849ca95c70a893ccb7b9e9cf76638fb1a6a75b9402f37db47786a",
+      "objective_kind": "scope_conditional",
+      "objective_policy_sha256": "701807e4e15652321efe70c29ffa894e6626776ef5df872447cb270ca0dd1c3a",
+      "new_progress": {
+        "epochs_completed": 1,
+        "optimizer_steps": 2,
+        "row_cursor": 0
+      },
+      "warmstart_parent_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+      "replay_aliases": [
+        {
+          "label": "scope_conditional-resume-step-2",
+          "file": {
+            "bytes": 3053279,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-warmstart-qualification-v01-cp128-warmstart-mechanics/exports/scope_conditional-resume-step-2.json",
+            "sha256": "9ddb49f81ffd526c43363717813264765e4752ba28fb83ec92f303b0c7c22191"
+          }
+        }
+      ],
+      "metric_scope": "Two exposed authored384 compact537 fixtures; finite gradient/resume mechanics, no generation or reconstruction-quality experiment.",
+      "source_access": "Original authored conditioning and target-derived contexts; native GTE/context permission unverified.",
+      "runtime_ready": false,
+      "teacher_qualified": false,
+      "proof_authority": false,
+      "qualification": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-qualification-summary-v01.json",
+        "bytes": 20029,
+        "sha256": "c18a690aecd43bdcd342c0dfff662fa3eb169872a5bcff61cfe9d6ed776aa489"
+      }
     }
   ],
   "checkpoint_discovery_complete": false,

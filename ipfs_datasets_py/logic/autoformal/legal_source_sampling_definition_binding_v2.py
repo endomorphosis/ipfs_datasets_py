@@ -518,7 +518,60 @@ def validate_definition_binding_v2(
     return expected
 
 
+def prepare_contextual_definition_binding_v2(
+    request_raw, context, responses, sources, attachments, *,
+    expected_request_sha256, expected_definition_bundle_sha256,
+    expected_context_sha256, expected_response_sha256s,
+    expected_attachments_sha256,
+):
+    """Retain context declarations beside an unchanged explicit V2 candidate.
+
+    Supporting-subject citations are related declarations, never reviews of the
+    supporting definition. The complete context packet remains an independently
+    pinned replay dependency instead of being duplicated inside the envelope.
+    """
+    from . import legal_source_sampling_context_definition_binding_v2 as context_owner
+
+    return context_owner.prepare(
+        request_raw, context, responses, sources, attachments,
+        expected_request_sha256=expected_request_sha256,
+        expected_definition_bundle_sha256=expected_definition_bundle_sha256,
+        expected_context_sha256=expected_context_sha256,
+        expected_response_sha256s=expected_response_sha256s,
+        expected_attachments_sha256=expected_attachments_sha256,
+    )
+
+
+def contextual_definition_binding_sha256(result):
+    """Hash the complete distinct contextual binding envelope."""
+    from . import legal_source_sampling_context_definition_binding_v2 as context_owner
+
+    return context_owner.binding_sha256(result)
+
+
+def validate_contextual_definition_binding_v2(
+    result, request_raw, context, responses, sources, attachments, *,
+    expected_binding_sha256, expected_request_sha256,
+    expected_definition_bundle_sha256, expected_context_sha256,
+    expected_response_sha256s, expected_attachments_sha256,
+):
+    """Replay the candidate, whole source population and distinct declarations."""
+    from . import legal_source_sampling_context_definition_binding_v2 as context_owner
+
+    return context_owner.validate(
+        result, request_raw, context, responses, sources, attachments,
+        expected_binding_sha256=expected_binding_sha256,
+        expected_request_sha256=expected_request_sha256,
+        expected_definition_bundle_sha256=expected_definition_bundle_sha256,
+        expected_context_sha256=expected_context_sha256,
+        expected_response_sha256s=expected_response_sha256s,
+        expected_attachments_sha256=expected_attachments_sha256,
+    )
+
+
 __all__ = [
     "prepare_definition_binding_v2", "definition_binding_sha256",
     "validate_definition_binding_v2",
+    "prepare_contextual_definition_binding_v2", "contextual_definition_binding_sha256",
+    "validate_contextual_definition_binding_v2",
 ]

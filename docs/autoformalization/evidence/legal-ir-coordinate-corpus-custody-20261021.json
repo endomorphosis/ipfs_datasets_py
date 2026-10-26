@@ -1,0 +1,98 @@
+{
+  "compatibility": {
+    "closed_gap": "Existing corpus owner now replays original-input graph-v2/eligibility-v3 ancestry, preserves the complete ordered output population and delegates supported candidates to the existing adapter/validator/writer.",
+    "export": "Explicit candidate ordinal, full-population validation, existing real writer/readback, receipt binds corpus/output/candidate/manifest/snapshot lineage; late failure retains artifacts without a qualified receipt.",
+    "missing_inputs": "Complete all-null custody stays unresolved; partial, reordered, changed or foreign custody is refused.",
+    "profile": {
+      "public_APIs": [
+        "coordinate_graph_corpus_originals_sha256",
+        "coordinate_graph_corpus_inputs_sha256",
+        "coordinate_graph_corpus_sha256",
+        "prepare_coordinate_graph_corpus_v1",
+        "validate_coordinate_graph_corpus_v1",
+        "export_coordinate_graph_corpus_output_v1"
+      ],
+      "schema": "legal-coordinate-graph-corpus/v1",
+      "source_compatibility_profile": "original-input-coordinate-graph-v2-corpus-custody/v1",
+      "upstream_eligibility": "original-input v3",
+      "upstream_graph": "legal-coordinate-source-graph-intake/v2"
+    },
+    "source_and_ast": "Exact independent raw/canonical/input/proposal pins; complete physical/reference/coordinate/output identities and ordered AST; no historical fallback."
+  },
+  "delivery": {
+    "base_commit": "2eed195955f10b6a054e1cd61bee8b23fe4646d4",
+    "branch": "agent/legal-ir-coordinate-corpus-custody-20261021",
+    "scope": "Four-path local selected delivery; final commit is bound by the external Git receipt. No push, merge, primary runtime installation or superproject-pointer change is claimed.",
+    "source": {
+      "ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py": {
+        "bytes": 49834,
+        "sha256": "2d977fa6e79bfd01dda1f804d200ba6c4ab79fd81adcc745a8b5534e9eea2b5b"
+      },
+      "ipfs_datasets_py/logic/autoformal/legal_source_span_target_eligibility_v1.py": {
+        "bytes": 55018,
+        "sha256": "7b8327177e97b696b79baeb92af379d562d8aecacdfa9b2f75200724f20697ad"
+      },
+      "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py": {
+        "bytes": 57706,
+        "sha256": "1bb20996372672b67033f56bc844101c824d3371bb22df47158a9432f1ff7145"
+      },
+      "tests/unit/logic/autoformal/test_corpus_proposed_graph_adapter.py": {
+        "bytes": 43290,
+        "sha256": "7c9b86c7682cee57cd656ef502d39e4c0ccb98fbead30440f10295a96e91da20"
+      }
+    }
+  },
+  "limits": {
+    "atomic_snapshot_verified": false,
+    "boundary": "Authored graph-v2/eligibility-v3 candidate custody and existing graph-bundle export only. No independently reviewed source/current-edition correspondence, entity meanings, governing definitions, complete norm or distinct uses, training/gold eligibility, model accuracy, legal authority or Lean admission.",
+    "evaluation_gold_mask": 0,
+    "evidence_portability": "This source/evidence summary travels with Git; referenced original workspace receipts remain retained locally.",
+    "native_generation": "Original request-pinned generation and independently checked retained bodies only; later checkout changes do not inherit this qualification.",
+    "selected_source_occurrence": null,
+    "training_mask": 0
+  },
+  "observed_at_utc": "2026-10-21T02:09:57.296613+00:00",
+  "preservation": {
+    "canonical_owner_definitions": 11,
+    "canonical_owner_prefix_bytes": 18797,
+    "graph_v3_and_census": "Reuse selected parent2eed1959, with prior qualifications retained separately.",
+    "historical_test_definitions": 18,
+    "historical_test_prefix_bytes": 16440,
+    "parent_and_relational_profiles": "Preserved exactly; not newly qualified by this official/coordinate cohort."
+  },
+  "qualification": {
+    "custody": {
+      "group_and_descendant_live_processes": 0,
+      "native_lease_id": "a96d096e50324a69b66cded71afd7ed5",
+      "no_native_fallback_exercised": false,
+      "normal_granted_path_only": true,
+      "original_native_and_storage_released": true,
+      "original_source_READ_closed": true,
+      "retained_attempt_bytes": 4545517,
+      "sealed_files": 364,
+      "sealed_files_plus_durability_receipt": 365,
+      "storage_reservation_id": "fd00f1e125ac4588803566208c276e3e"
+    },
+    "independent_review": {
+      "bytes": 23361,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-corpus-custody-20261021-01/independent-actual-qualification-review-v01.json",
+      "sha256": "0ead74045d3a7844b4e6fb9eb69686061178754238cc106e5387a99342efaa77"
+    },
+    "scope": {
+      "cases": 46,
+      "elapsed_seconds": 103.57163009978831,
+      "function_selectors": 23,
+      "new_coordinate_cases": 43,
+      "passed_phases": 138,
+      "request_source_pins": 256,
+      "runtime_files": 232,
+      "unchanged_official_regressions": 3
+    },
+    "summary": {
+      "bytes": 10123,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-corpus-custody-20261021-01/qualification-summary.json",
+      "sha256": "ba417041c30f258c7221870132c53c7b8ce7b08540bf2c71f1dfcbf0ca86d904"
+    }
+  },
+  "schema": "legal-ir-coordinate-corpus-custody-selected-evidence/v1"
+}

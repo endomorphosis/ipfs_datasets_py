@@ -666,3 +666,693 @@ def test_fake_native_build_requires_every_definition_norm_axiom_and_unchanged_bi
     for flag in shared.FALSE_FLAGS:
         if flag not in {"backend_executed", "lean_compilation_verified"}:
             assert receipt[flag] is False
+
+
+# Parent sharing extends this owner without fabricating legacy norm records.
+# These helpers replay the genuine literal-parent endpoint, lookup, combined
+# review and Lake preparation owners. Authored signatures remain unreviewed
+# engineering fixtures, and this cohort never runs a compiler or model.
+def parent_shared_fixture_module():
+    import importlib.util
+
+    path = Path(__file__).with_name("test_plaintext_definition_use_lake.py")
+    spec = importlib.util.spec_from_file_location("parent_shared_original_lake_fixture", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def parent_shared_family_examples(path, family, *, donor_body_op=None):
+    from types import SimpleNamespace
+
+    from ipfs_datasets_py.logic.autoformal import corpus_definition_use_review_v2 as review
+    from ipfs_datasets_py.logic.autoformal import corpus_parent_occurrence_adapter as parents
+
+    lake = parent_shared_fixture_module()
+    support = lake.support.__wrapped__()
+    source_fixture, endpoints_fixture = support.source, support.data
+    definition = endpoints_fixture.definition
+    original_case = endpoints_fixture.supplied.definition.case
+
+    def three_region_case(parent, *, family="fol", parent_index=0):
+        request, inputs = original_case(parent, family=family, parent_index=parent_index)
+        if donor_body_op is not None and parent_index == 0:
+            # An explicitly different unreviewed interpretation of the same
+            # physical text; regenerate every downstream record normally.
+            assert donor_body_op in ("all", "any")
+            assert request["declaration"]["body"]["op"] == "all"
+            request["declaration"]["body"]["op"] = donor_body_op
+        if parent_index == 2:
+            # Keep region2's genuine source/scope/binding; copy only the same
+            # explicit unreviewed declaration shape used by consumer region1.
+            template, _ = original_case(parent, family=family, parent_index=1)
+            for key in ("head", "body"):
+                request["declaration"][key] = deepcopy(template["declaration"][key])
+            request["declaration"]["declaration_id"] = "authored-consumer-filer-two"
+        return request, inputs
+
+    endpoints_fixture.supplied.definition.case = three_region_case
+    helpers = definition.helper("test_plaintext_graph_custody")
+    original = helpers.helper("test_corpus_parent_occurrence_adapter").case(
+        path, source_text="registered", parent_texts=[definition.TEXT] * 3)
+    bundle = parents.build_parent_occurrence_corpus(**original["arguments"])
+    parent = {"data": original, "bundle": bundle,
+              "records": {row["record_cid"]: row for row in bundle["records"]},
+              "helpers": helpers}
+    endpoints = [source_fixture.endpoint(endpoints_fixture, parent, family=family, index=index)
+                 for index in range(3)]
+    cases = []
+    for index in (1, 2):
+        donor, consumer = deepcopy(endpoints[0]), deepcopy(endpoints[index])
+        body = [row for row in consumer["candidate"]["source_bindings"]
+                if row["role"].startswith("definition_body/")]
+        request = {"schema": source_fixture.owner.PARENT_REQUEST_SCHEMA,
+                   "profile": source_fixture.owner.PARENT_PROFILE,
+                   "interpretation_status": "unreviewed_caller_declaration",
+                   "use_id": "authored-parent-shared-use-" + str(index),
+                   "consumer_symbol": body[0]["symbol"],
+                   "donor_symbol": donor["candidate"]["term_record"]["symbol"],
+                   "body_roles": [row["role"] for row in body],
+                   "donor_partition_id": "donor", "local_partition_id": "local"}
+        case = {"donor": donor, "consumer": consumer, "request": request}
+        case["lookup_inputs"] = source_fixture.lookup_inputs(case)
+        request_raw, kwargs = source_fixture.arguments(case)
+        record = source_fixture.owner.prepare_parent_definition_use_v1(request_raw, **kwargs)
+        raw = canonical_dag_json_bytes(record)
+        component = {"case": case, "record": record, "component_raw": raw,
+                     "expected_component_pin": {
+                         "component_sha256": sha(raw), "component_cid": record["record_cid"],
+                         "graph_cid": record["graph"]["record_cid"],
+                         "joint_ast_sha256": sha(canonical_dag_json_bytes(record["joint_native"]["native_ast"]))},
+                     "use_inputs": {"request_raw": request_raw, **kwargs}}
+        materialized = lake._PARENT.materialize(component)
+        domain = SimpleNamespace(CLAIM_SCHEMA=review.PARENT_CLAIM_SCHEMA,
+                                 ACTION=review.PARENT_ACTION, AUDIENCE=review.PARENT_AUDIENCE)
+        signed = support.signing.signed.__wrapped__(domain, materialized)
+        signed["registry"]["mode"] = signed["policy"]["mode"] = "external_pinned_trust"
+        support.signing.refresh(signed)
+        cases.append(lake.refresh_assessment(support, signed))
+    return {"family": family, "lake": lake, "support": support, "cases": cases}
+
+
+def parent_shared_arguments(cases):
+    return {"component_inputs": [
+                {key: case[key] for key in ("assessment_raw", "expected_assessment_file_sha256", "review_inputs")}
+                for case in cases],
+            "expected_population": [
+                {"component_cid": case["signed"]["component"]["record"]["record_cid"],
+                 "assessment_file_sha256": case["expected_assessment_file_sha256"]}
+                for case in cases],
+            "toolchain": TOOLCHAIN}
+
+
+def parent_shared_definition(manifest, ordinal, role):
+    rows = [row for row in manifest["definition_modules"]
+            if any(item["ordinal"] == ordinal and item["role"] == role
+                   for item in row["contributors"])]
+    assert len(rows) == 1
+    return rows[0]
+
+
+@pytest.fixture(scope="module")
+def parent_shared_examples(tmp_path_factory):
+    result = {}
+    for family in ("fol", "tdfol"):
+        example = parent_shared_family_examples(
+            tmp_path_factory.mktemp("parent-shared-" + family, numbered=False), family)
+        example["arguments"] = parent_shared_arguments(example["cases"])
+        example["preparation"] = shared.prepare_parent_shared_definition_use_corpus_v1(**example["arguments"])
+        result[family] = example
+    return result
+
+
+@pytest.mark.parametrize("family", ["fol", "tdfol"])
+def test_parent_shared_two_distinct_physical_consumers_share_one_complete_donor(
+        parent_shared_examples, family, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as parent_owner
+
+    example = parent_shared_examples[family]
+    cases, preparation = example["cases"], example["preparation"]
+    manifest, files = preparation.to_dict(), dict(preparation.files)
+    endpoints = [case["signed"]["component"]["case"] for case in cases]
+    assert endpoints[0]["donor"]["candidate"] == endpoints[1]["donor"]["candidate"]
+    first, second = [item["consumer"]["candidate"] for item in endpoints]
+    assert first["source_version"]["record_cid"] != second["source_version"]["record_cid"]
+    assert first["definition_record"]["record_cid"] != second["definition_record"]["record_cid"]
+    assert {row["record_cid"] for row in first["source_occurrences"]}.isdisjoint(
+        {row["record_cid"] for row in second["source_occurrences"]})
+    assert type(preparation) is shared.ParentSharedCorpusPreparation
+    assert manifest["schema"] != shared.SCHEMA and manifest["profile"] != shared.PROFILE
+    assert len(manifest["components"]) == 2 and len(manifest["definition_modules"]) == 3
+    donor = parent_shared_definition(manifest, 0, "donor")
+    assert donor == parent_shared_definition(manifest, 1, "donor")
+    assert donor["contributors"] == [
+        {"ordinal": ordinal, "role": "donor", "component_cid": row["component_cid"]}
+        for ordinal, row in enumerate(manifest["components"])]
+    assert parent_shared_definition(manifest, 0, "consumer")["module"] != (
+        parent_shared_definition(manifest, 1, "consumer")["module"])
+    joints = [row["joint_module"] for row in manifest["components"]]
+    assert len(set(joints)) == 2
+    assert manifest["module_imports"]["LegalCorpusParent"] == sorted(joints)
+    assert len(manifest["expected_modules"]) == len(set(manifest["expected_modules"])) == 9
+    assert manifest["expected_modules"][0] == "LegalCorpusParent.Prelude"
+    assert manifest["expected_modules"][-1] == "LegalCorpusParent"
+    seen = set()
+    for module in manifest["expected_modules"]:
+        body = files[module.replace(".", "/") + ".lean"]
+        imports = re.findall(r"^import ([A-Za-z0-9_.]+)$", body, re.M)
+        assert imports == manifest["module_imports"][module] and set(imports) <= seen
+        seen.add(module)
+    for ordinal, case in enumerate(cases):
+        original = parent_owner.prepare_parent_definition_use_corpus_v1(
+            **example["lake"].arguments(case))
+        original_manifest = original.to_dict()
+        row = manifest["components"][ordinal]
+        assert row["original_preparation_cid"] == original_manifest["record_cid"]
+        assert files[row["manifest_file"]] == original.manifest_json
+        assert row["manifest_sha256"] == sha(original.manifest_json.encode())
+        assert files[row["input_bindings_file"]] == dict(original.files)["parent-input-bindings.json"]
+        assert row["input_bindings_sha256"] == sha(files[row["input_bindings_file"]].encode())
+        assert row["review_intake_binding"] == original_manifest["review_intake_binding"]
+        assert row["conditional_theorems"] == original_manifest["conditional_theorems"]
+        assert set(row["original_file_mapping"]) == {name for name, _ in original.files}
+        assert {name for name, mapped in row["original_file_mapping"].items() if mapped is None} == {
+            "lakefile.toml", "LegalCorpusParent.lean"}
+        for original_path, aggregate_path in row["original_file_mapping"].items():
+            if aggregate_path is not None:
+                assert files[aggregate_path] == dict(original.files)[original_path]
+        for role in ("donor", "consumer"):
+            definition = parent_shared_definition(manifest, ordinal, role)
+            fragment = next(item for item in original_manifest["native_fragments"] if item["role"] == role)
+            assert definition["native_fragment"] == fragment["native"]
+            assert definition["module"] == fragment["module"]
+            assert definition["module_sha256"] == sha(files[definition["module_path"]].encode())
+    assert manifest["file_sha256"] == {name: sha(body.encode()) for name, body in files.items()}
+    assert manifest["preparation_only"] is True
+    assert all(manifest[key] is False for key in parent_owner.PARENT_FALSE_FLAGS)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("parent sharing preparation must not run a compiler")
+
+    monkeypatch.setattr(subprocess, "run", forbidden)
+    monkeypatch.setattr(subprocess, "Popen", forbidden)
+    monkeypatch.setattr(native.shared, "_installed_toolchain", forbidden)
+    assert shared.validate_parent_shared_definition_use_corpus_v1(
+        preparation, **example["arguments"]) == preparation
+
+
+@pytest.mark.parametrize("damage", ["missing", "order", "assessment_pin"])
+def test_parent_shared_independent_component_population_is_complete_and_ordered(
+        parent_shared_examples, damage):
+    example = parent_shared_examples["fol"]
+    arguments = deepcopy(example["arguments"])
+    if damage == "missing":
+        arguments["expected_population"].pop()
+    elif damage == "order":
+        arguments["expected_population"].reverse()
+    else:
+        arguments["expected_population"][1]["assessment_file_sha256"] = "0" * 64
+    with pytest.raises(contracts.CorpusContractError):
+        shared.prepare_parent_shared_definition_use_corpus_v1(**arguments)
+
+
+@pytest.mark.parametrize("damage", ["donor_contributor", "component_lineage"])
+def test_parent_shared_resealed_manifest_cannot_drop_a_use_or_rebind_lineage(
+        parent_shared_examples, damage):
+    example = parent_shared_examples["fol"]
+    preparation = example["preparation"]
+    manifest = preparation.to_dict()
+    if damage == "donor_contributor":
+        parent_shared_definition(manifest, 0, "donor")["contributors"].pop()
+    else:
+        manifest["components"][1]["original_preparation_cid"] = manifest["components"][0]["original_preparation_cid"]
+    changed = replace(preparation, manifest_json=canonical_dag_json_bytes(reseal(manifest)).decode())
+    with pytest.raises(contracts.CorpusContractError):
+        shared.validate_parent_shared_definition_use_corpus_v1(changed, **example["arguments"])
+
+
+def test_parent_shared_rehashed_files_cannot_remove_second_joint_import(parent_shared_examples):
+    example = parent_shared_examples["fol"]
+    preparation = example["preparation"]
+    manifest, files = preparation.to_dict(), dict(preparation.files)
+    second = manifest["components"][1]["joint_module"]
+    files["LegalCorpusParent.lean"] = files["LegalCorpusParent.lean"].replace("import " + second + "\n", "")
+    manifest["module_imports"]["LegalCorpusParent"].remove(second)
+    manifest["file_sha256"] = {name: sha(body.encode()) for name, body in files.items()}
+    changed = replace(preparation, files=tuple(sorted(files.items())),
+                      manifest_json=canonical_dag_json_bytes(reseal(manifest)).decode())
+    with pytest.raises(contracts.CorpusContractError):
+        shared.validate_parent_shared_definition_use_corpus_v1(changed, **example["arguments"])
+
+
+def test_parent_shared_aggregate_budget_refuses_before_any_child_replay(parent_shared_examples, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as parent_owner
+
+    arguments = deepcopy(parent_shared_examples["fol"]["arguments"])
+    # Each entry remains below the child whole-input limit; together their
+    # ordinary byte payloads exceed that limit. Their semantic shape is not
+    # offered as valid review data: aggregate accounting must precede replay.
+    payload = b"x" * (parent_owner.MAX_INPUT_BYTES // 2 + 1)
+    for item in arguments["component_inputs"]:
+        item["review_inputs"]["aggregate_budget_probe"] = payload
+    entered = []
+
+    def forbidden(*args, **kwargs):
+        entered.append(True)
+        raise AssertionError("aggregate over-budget input reached a child")
+
+    monkeypatch.setattr(parent_owner, "prepare_parent_definition_use_corpus_v1", forbidden)
+    with pytest.raises(contracts.CorpusContractError):
+        shared.prepare_parent_shared_definition_use_corpus_v1(**arguments)
+    assert entered == []
+
+
+def test_parent_shared_caller_mutation_during_genuine_child_replay_is_not_returned(
+        parent_shared_examples, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as parent_owner
+
+    arguments = deepcopy(parent_shared_examples["fol"]["arguments"])
+    original = parent_owner.prepare_parent_definition_use_corpus_v1
+    entered = []
+
+    def mutate_after_genuine_replay(*args, **kwargs):
+        prepared = original(*args, **kwargs)
+        if not entered:
+            arguments["component_inputs"][1]["review_inputs"]["use_inputs"][
+                "consumer_evidence_inputs"]["context_inputs"][0]["dependency_requests"] = [
+                    {"authored_aggregate_mutation": True}]
+        entered.append(True)
+        return prepared
+
+    monkeypatch.setattr(parent_owner, "prepare_parent_definition_use_corpus_v1", mutate_after_genuine_replay)
+    with pytest.raises(contracts.CorpusContractError):
+        shared.prepare_parent_shared_definition_use_corpus_v1(**arguments)
+    assert entered
+
+
+def test_parent_shared_fresh_blocked_review_keeps_its_outcome_and_no_authority(parent_shared_examples):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as parent_owner
+
+    example = parent_shared_examples["fol"]
+    cases = deepcopy(example["cases"])
+    signed = cases[1]["signed"]
+    signed["registry"]["mode"] = signed["policy"]["mode"] = "synthetic_fixture"
+    example["support"].signing.refresh(signed)
+    cases[1] = example["lake"].refresh_assessment(example["support"], signed)
+    prepared = shared.prepare_parent_shared_definition_use_corpus_v1(**parent_shared_arguments(cases))
+    manifest = prepared.to_dict()
+    evidence = manifest["components"][1]["review_evidence"]
+    assert evidence == {
+        "status": cases[1]["assessment"]["evidence_assessment_status"],
+        "blockers": cases[1]["assessment"]["blockers"],
+        "prerequisites_satisfied_under_selected_trust": False}
+    assert all(manifest[key] is False for key in parent_owner.PARENT_FALSE_FLAGS)
+    assert len(manifest["components"]) == 2 and manifest["preparation_only"] is True
+
+
+def test_parent_shared_offered_mutation_during_genuine_regeneration_is_not_returned(
+        parent_shared_examples, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as parent_owner
+
+    example = parent_shared_examples["fol"]
+    offered = replace(example["preparation"])
+    original = parent_owner.prepare_parent_definition_use_corpus_v1
+    entered = []
+
+    def mutate_after_genuine_regeneration(*args, **kwargs):
+        child = original(*args, **kwargs)
+        if not entered:
+            object.__setattr__(offered, "manifest_json", offered.manifest_json + " ")
+        entered.append(True)
+        return child
+
+    monkeypatch.setattr(parent_owner, "prepare_parent_definition_use_corpus_v1", mutate_after_genuine_regeneration)
+    with pytest.raises(contracts.CorpusContractError):
+        shared.validate_parent_shared_definition_use_corpus_v1(offered, **example["arguments"])
+    assert entered
+
+
+def test_parent_shared_saved_assessment_cannot_hide_a_fresh_key_revocation(parent_shared_examples):
+    example = parent_shared_examples["fol"]
+    cases = deepcopy(example["cases"])
+    signed = cases[1]["signed"]
+    signed["registry"]["keys"][0]["revoked_at_utc"] = example["support"].signing.NOW
+    example["support"].signing.refresh(signed)
+    cases[1]["review_inputs"] = example["lake"].review_arguments(example["support"], signed)
+    # Keep the original assessment bytes: current revocation must reopen this
+    # contributor, even though its graph and independently pinned donor match.
+    with pytest.raises(contracts.CorpusContractError):
+        shared.prepare_parent_shared_definition_use_corpus_v1(**parent_shared_arguments(cases))
+
+
+def test_parent_shared_writer_loader_keep_every_child_manifest_and_binding(
+        parent_shared_examples, tmp_path):
+    example = parent_shared_examples["fol"]
+    preparation = example["preparation"]
+    directory = tmp_path / "parent-shared-project"
+    assert shared.write_parent_shared_definition_use_corpus_v1(
+        preparation, directory, **example["arguments"]) == preparation.to_dict()
+    assert shared.load_parent_shared_definition_use_corpus_v1(
+        directory, expected_manifest_sha256=sha(preparation.manifest_json.encode()),
+        **example["arguments"]) == preparation
+    assert {str(path.relative_to(directory)): path.read_bytes()
+            for path in directory.rglob("*") if path.is_file()} == {
+                **{name: body.encode() for name, body in preparation.files},
+                "corpus-manifest.json": preparation.manifest_json.encode()}
+    with pytest.raises((contracts.CorpusContractError, FileExistsError)):
+        shared.write_parent_shared_definition_use_corpus_v1(
+            preparation, directory, **example["arguments"])
+
+
+@pytest.mark.parametrize("damage", ["missing_binding", "changed_manifest", "extra_file"])
+def test_parent_shared_loader_refuses_incomplete_changed_or_extra_transport(
+        parent_shared_examples, tmp_path, damage):
+    example = parent_shared_examples["fol"]
+    preparation = example["preparation"]
+    directory = tmp_path / "parent-shared-project"
+    shared.write_parent_shared_definition_use_corpus_v1(preparation, directory, **example["arguments"])
+    row = preparation.to_dict()["components"][1]
+    if damage == "missing_binding":
+        (directory / row["input_bindings_file"]).unlink()
+    elif damage == "changed_manifest":
+        (directory / row["manifest_file"]).write_text("{}", encoding="utf-8")
+    else:
+        (directory / "unlisted.lean").write_text("def unrelated : Prop := True\n", encoding="utf-8")
+    with pytest.raises(contracts.CorpusContractError):
+        shared.load_parent_shared_definition_use_corpus_v1(
+            directory, expected_manifest_sha256=sha(preparation.manifest_json.encode()),
+            **example["arguments"])
+
+
+def test_parent_shared_and_legacy_preparation_types_cannot_be_relabelled(parent_shared_examples, small_shared):
+    example = parent_shared_examples["fol"]
+    cases, legacy = small_shared
+    with pytest.raises(contracts.CorpusContractError):
+        shared.validate_parent_shared_definition_use_corpus_v1(legacy, **example["arguments"])
+    with pytest.raises(contracts.CorpusContractError):
+        validate(example["preparation"], cases)
+
+
+@pytest.mark.parametrize("bad_pin", [None, []], ids=["null", "list"])
+def test_parent_shared_malformed_component_pins_refuse_before_native_dispatch(
+        parent_shared_examples, monkeypatch, bad_pin):
+    arguments = deepcopy(parent_shared_examples["fol"]["arguments"])
+    arguments["component_inputs"][0]["review_inputs"]["expected_component_pin"] = bad_pin
+
+    def forbidden():
+        raise AssertionError("malformed parent shared population reached native owners")
+
+    monkeypatch.setattr(shared, "_parent_shared_pins", forbidden)
+    with pytest.raises(contracts.CorpusContractError):
+        shared.prepare_parent_shared_definition_use_corpus_v1(**arguments)
+
+
+def test_parent_shared_repeated_component_keeps_both_contributions_without_extra_modules(
+        parent_shared_examples):
+    example = parent_shared_examples["fol"]
+    arguments = parent_shared_arguments([example["cases"][0], example["cases"][0]])
+    manifest = shared.prepare_parent_shared_definition_use_corpus_v1(**arguments).to_dict()
+    assert len(manifest["components"]) == 2 and len(manifest["expected_modules"]) == 6
+    assert manifest["components"][0]["component_cid"] == manifest["components"][1]["component_cid"]
+    assert manifest["components"][0]["manifest_file"] != manifest["components"][1]["manifest_file"]
+    assert [row["ordinal"] for row in parent_shared_definition(manifest, 0, "donor")["contributors"]] == [0, 1]
+
+
+@pytest.mark.parametrize("operation", ["prepare", "validate"])
+def test_parent_shared_closing_replay_refuses_physical_source_changed_after_opening_children(
+        tmp_path, monkeypatch, operation):
+    """Later child completion cannot leave an earlier physical source stale."""
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as parent_owner
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_native_v2 as parent_native
+    from ipfs_datasets_py.logic.backends import process
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("physical-source preparation control cannot execute or probe a toolchain")
+
+    monkeypatch.setattr(subprocess, "run", forbidden)
+    monkeypatch.setattr(subprocess, "Popen", forbidden)
+    monkeypatch.setattr(native.shared, "_installed_toolchain", forbidden)
+    monkeypatch.setattr(parent_native, "_installed_toolchain", forbidden)
+    monkeypatch.setattr(process.BoundedToolRunner, "run", forbidden)
+    originals = tmp_path / "originals"
+    originals.mkdir()
+    example = parent_shared_family_examples(originals, "fol")
+    arguments = parent_shared_arguments(example["cases"])
+    before = deepcopy(arguments)
+    # Validation's offered project is fully and genuinely prepared before the
+    # mutation observer is installed. The prepare branch needs no offered data.
+    offered = (shared.prepare_parent_shared_definition_use_corpus_v1(**arguments)
+               if operation == "validate" else None)
+    descriptor = arguments["component_inputs"][0]["review_inputs"]["use_inputs"][
+        "donor_evidence_inputs"]["parent_inputs"]["replay_inputs"][
+        "parent_text_views_inputs"]["parent_descriptor"]
+    physical = Path(descriptor["local_path"])
+    assert physical.is_relative_to(originals) and not physical.is_symlink()
+    original_bytes = physical.read_bytes()
+    assert original_bytes and sha(original_bytes) == descriptor["sha256"]
+    original_prepare = parent_owner.prepare_parent_definition_use_corpus_v1
+    attempts, successes = [], []
+    mutated = []
+
+    def prepare_then_change_earlier_source(*args, **kwargs):
+        raw = kwargs["assessment_raw"]
+        attempts.append(raw)
+        result = original_prepare(*args, **kwargs)
+        successes.append(raw)
+        if len(successes) == 2:
+            # Both genuine opening children have now completed. Change only
+            # the earlier child's physical file; every saved pin stays intact.
+            physical.write_bytes(original_bytes + b"\nchanged isolated physical-close fixture")
+            mutated.append(True)
+        return result
+
+    monkeypatch.setattr(parent_owner, "prepare_parent_definition_use_corpus_v1",
+                        prepare_then_change_earlier_source)
+    try:
+        with pytest.raises(ValueError):
+            if operation == "prepare":
+                shared.prepare_parent_shared_definition_use_corpus_v1(**arguments)
+            else:
+                shared.validate_parent_shared_definition_use_corpus_v1(offered, **arguments)
+        first, second = [item["assessment_raw"] for item in arguments["component_inputs"]]
+        assert first != second
+        assert mutated == [True]
+        assert successes == [first, second]
+        assert attempts == [first, second, first]
+        assert physical.read_bytes() != original_bytes
+        assert arguments == before
+    finally:
+        physical.write_bytes(original_bytes)
+    assert physical.read_bytes() == original_bytes
+
+
+@pytest.fixture(scope="module")
+def parent_shared_replay_transport_data(tmp_path_factory):
+    # Exactly one genuine signed FOL component, one original shared preparation
+    # and one export. Its fictional sources and generated test signers establish
+    # public replay custody, without human/statutory review or a native build.
+    lake = parent_shared_fixture_module()
+    with pytest.MonkeyPatch.context() as patch:
+        lake.parent_replay_transport_guards(patch)
+        support = lake.support.__wrapped__()
+
+        def forbidden(*args, **kwargs):
+            pytest.fail("public replay transport must not probe or execute Lean")
+
+        patch.setattr(native.shared, "_installed_toolchain", forbidden)
+        directory = tmp_path_factory.mktemp("parent-shared-replay-originals", numbered=False)
+        data = lake.make_data(support, directory, family="fol")
+        arguments = parent_shared_arguments([data])
+        preparation = shared.prepare_parent_shared_definition_use_corpus_v1(**arguments)
+        manifest = preparation.to_dict()
+        assert len(manifest["expected_modules"]) == 6
+        manifest_pin = sha(preparation.manifest_json.encode("utf-8"))
+        payload = shared.export_parent_shared_replay_inputs_v1(
+            preparation, **arguments, expected_manifest_sha256=manifest_pin)
+        pins = dict(expected_payload_sha256=sha(payload), expected_payload_bytes=len(payload),
+                    expected_input_commitment_sha256=manifest["input_commitment_sha256"],
+                    expected_manifest_sha256=manifest_pin)
+        control = dict(lake=lake, support=support, data=data, arguments=arguments,
+                       preparation=preparation, payload=payload, pins=pins, directory=directory)
+    return control
+
+
+@pytest.fixture
+def parent_shared_replay_transport(parent_shared_replay_transport_data, monkeypatch):
+    control = parent_shared_replay_transport_data
+    control["lake"].parent_replay_transport_guards(monkeypatch)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("public replay transport must not probe or execute Lean")
+
+    monkeypatch.setattr(native.shared, "_installed_toolchain", forbidden)
+    return control
+
+
+def load_parent_shared_replay_fixture(control, **overrides):
+    pins = dict(control["pins"], **overrides)
+    return shared.load_parent_shared_replay_inputs_v1(control["payload"], **pins)
+
+
+def test_parent_shared_replay_preserves_original_public_bytes_and_no_private_keys(
+        parent_shared_replay_transport, monkeypatch):
+    control = parent_shared_replay_transport
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("loading pinned historical bytes cannot replay sources/reviews or load native owners")
+
+    monkeypatch.setattr(shared.parent_owner, "_owners", forbidden)
+    monkeypatch.setattr(shared.parent_owner, "prepare_parent_definition_use_corpus_v1", forbidden)
+    monkeypatch.setattr(control["lake"].review, "validate_parent_definition_use_review_assessment_v1", forbidden)
+    from ipfs_datasets_py.logic.autoformal import legal_parent_parquet_pages
+    monkeypatch.setattr(legal_parent_parquet_pages, "read_selected_parent_rows", forbidden)
+    loaded = load_parent_shared_replay_fixture(control)
+    assert type(loaded) is dict
+    assert set(loaded) == {"component_inputs", "expected_population", "toolchain"}
+    assert loaded == control["arguments"]
+    component, original = loaded["component_inputs"][0], control["arguments"]["component_inputs"][0]
+    assert type(component["assessment_raw"]) is bytes
+    assert component["assessment_raw"] == control["data"]["assessment_raw"]
+    assert component["review_inputs"]["reviews"] == original["review_inputs"]["reviews"]
+    assert component["review_inputs"]["registry"] == original["review_inputs"]["registry"]
+    assert component["review_inputs"]["policy"] == original["review_inputs"]["policy"]
+    assert component["review_inputs"]["at_time_utc"] == original["review_inputs"]["at_time_utc"]
+    serialization = control["support"].signing.serialization
+    for signer in control["data"]["signed"]["signers"]:
+        private = signer.private_key.private_bytes(serialization.Encoding.Raw,
+            serialization.PrivateFormat.Raw, serialization.NoEncryption())
+        assert private not in control["payload"] and private.hex().encode() not in control["payload"]
+    pending = [loaded]
+    while pending:
+        value = pending.pop()
+        assert type(value) in {dict, list, bytes, str, int, float, bool, type(None)}
+        if type(value) is dict:
+            assert not {"signers", "private_key", "private_keys"}.intersection(value)
+            pending.extend(value.values())
+        elif type(value) is list:
+            pending.extend(value)
+    manifest = control["preparation"].to_dict()
+    assert all(manifest[key] is False for key in shared.PARENT_FALSE_FLAGS)
+
+
+def test_parent_shared_replay_loaded_arguments_regenerate_exact_original_project(parent_shared_replay_transport):
+    control = parent_shared_replay_transport
+    loaded = load_parent_shared_replay_fixture(control)
+    prepared = shared.prepare_parent_shared_definition_use_corpus_v1(**loaded)
+    checked = shared.validate_parent_shared_definition_use_corpus_v1(control["preparation"], **loaded)
+    for result in (prepared, checked):
+        assert result.manifest_json == control["preparation"].manifest_json
+        assert result.files == control["preparation"].files
+    assert loaded == control["arguments"]
+
+
+def test_parent_shared_replay_loaded_mutation_cannot_change_retained_arguments(parent_shared_replay_transport):
+    control = parent_shared_replay_transport
+    loaded = load_parent_shared_replay_fixture(control)
+    loaded["component_inputs"][0]["review_inputs"]["at_time_utc"] = "2099-01-01T00:00:00Z"
+    loaded["expected_population"].clear()
+    assert load_parent_shared_replay_fixture(control) == control["arguments"]
+
+
+@pytest.mark.parametrize("binding", ["payload-sha", "payload-length", "input-commitment", "manifest"])
+def test_parent_shared_replay_requires_each_independent_binding(parent_shared_replay_transport, binding):
+    control = parent_shared_replay_transport
+    key = {"payload-sha": "expected_payload_sha256", "payload-length": "expected_payload_bytes",
+           "input-commitment": "expected_input_commitment_sha256", "manifest": "expected_manifest_sha256"}[binding]
+    replacement = len(control["payload"]) + 1 if binding == "payload-length" else "0" * 64
+    with pytest.raises(contracts.CorpusContractError):
+        load_parent_shared_replay_fixture(control, **{key: replacement})
+
+
+@pytest.mark.parametrize("damage", ["envelope-extra", "schema", "inputs-extra", "component-extra", "population-extra"])
+def test_parent_shared_replay_resealed_closed_shape_substitutions_refuse(parent_shared_replay_transport, damage):
+    control = parent_shared_replay_transport
+    envelope = shared.parent_owner.decode_parent_replay_value_v1(
+        control["payload"], expected_payload_sha256=control["pins"]["expected_payload_sha256"])
+    if damage == "envelope-extra":
+        envelope["proof_authority"] = True
+    elif damage == "schema":
+        envelope["schema"] = "unsupported-parent-replay/v0"
+    elif damage == "inputs-extra":
+        envelope["inputs"]["admitted"] = True
+    elif damage == "component-extra":
+        envelope["inputs"]["component_inputs"][0]["toolchain"] = TOOLCHAIN
+    else:
+        envelope["inputs"]["expected_population"][0]["proof_authority"] = True
+    substituted = shared.parent_owner.encode_parent_replay_value_v1(envelope)
+    pins = dict(control["pins"], expected_payload_sha256=sha(substituted), expected_payload_bytes=len(substituted))
+    with pytest.raises(contracts.CorpusContractError):
+        shared.load_parent_shared_replay_inputs_v1(substituted, **pins)
+
+
+def test_parent_shared_replay_recomputes_commitment_after_valid_payload_reseal(parent_shared_replay_transport):
+    control = parent_shared_replay_transport
+    envelope = shared.parent_owner.decode_parent_replay_value_v1(
+        control["payload"], expected_payload_sha256=control["pins"]["expected_payload_sha256"])
+    envelope["inputs"]["toolchain"] = "leanprover/lean4:v4.34.2"
+    substituted = shared.parent_owner.encode_parent_replay_value_v1(envelope)
+    pins = dict(control["pins"], expected_payload_sha256=sha(substituted), expected_payload_bytes=len(substituted))
+    with pytest.raises(contracts.CorpusContractError, match="commitment"):
+        shared.load_parent_shared_replay_inputs_v1(substituted, **pins)
+
+
+def test_parent_shared_replay_historical_load_does_not_authorize_changed_physical_source(parent_shared_replay_transport):
+    control = parent_shared_replay_transport
+    loaded = load_parent_shared_replay_fixture(control)
+    descriptor = loaded["component_inputs"][0]["review_inputs"]["use_inputs"][
+        "donor_evidence_inputs"]["parent_inputs"]["replay_inputs"][
+        "parent_text_views_inputs"]["parent_descriptor"]
+    physical = Path(descriptor["local_path"])
+    assert physical.is_relative_to(control["directory"]) and not physical.is_symlink()
+    original = physical.read_bytes()
+    assert sha(original) == descriptor["sha256"]
+    try:
+        physical.write_bytes(original + b"\nchanged isolated replay-transport fixture")
+        # Loading data is not a current-source validation capability.
+        assert load_parent_shared_replay_fixture(control) == control["arguments"]
+        with pytest.raises(ValueError):
+            shared.prepare_parent_shared_definition_use_corpus_v1(**loaded)
+    finally:
+        physical.write_bytes(original)
+    assert physical.read_bytes() == original
+
+
+def test_parent_shared_replay_saved_trust_cannot_hide_resigned_current_revocation(parent_shared_replay_transport):
+    control = parent_shared_replay_transport
+    loaded = load_parent_shared_replay_fixture(control)
+    signed = deepcopy(control["data"]["signed"])
+    original_reviews = deepcopy(signed["reviews"])
+    signed["registry"]["keys"][0]["revoked_at_utc"] = control["support"].signing.NOW
+    control["support"].signing.refresh(signed)
+    assert all(before["signature"] != after["signature"]
+               for before, after in zip(original_reviews, signed["reviews"], strict=True))
+    loaded["component_inputs"][0]["review_inputs"] = control["lake"].review_arguments(control["support"], signed)
+    assert loaded["component_inputs"][0]["assessment_raw"] == control["data"]["assessment_raw"]
+    with pytest.raises(ValueError, match="combined-use review assessment differs from exact regeneration"):
+        shared.prepare_parent_shared_definition_use_corpus_v1(**loaded)
+    current = control["lake"].refresh_assessment(control["support"], signed)
+    assert current["assessment"]["evidence_assessment_status"] == "rejected"
+    assert all(row["signature_status"] == "valid" for row in current["assessment"]["reviews"])
+    assert any("key_revoked" in row["blockers"] for row in current["assessment"]["reviews"])
+    # Original saved trust is retained historical data, not an ambient grant of
+    # present review validity. Rechecking different current inputs is mandatory.
+    assert load_parent_shared_replay_fixture(control) == control["arguments"]
+
+
+def test_parent_shared_replay_export_requires_exact_manifest_pin_before_child_dispatch(
+        parent_shared_replay_transport, monkeypatch):
+    control = parent_shared_replay_transport
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("mismatched independent project pin must refuse before child replay")
+
+    monkeypatch.setattr(shared.parent_owner, "prepare_parent_definition_use_corpus_v1", forbidden)
+    with pytest.raises(contracts.CorpusContractError, match="manifest"):
+        shared.export_parent_shared_replay_inputs_v1(control["preparation"],
+            **control["arguments"], expected_manifest_sha256="0" * 64)
+
+
+def test_parent_shared_replay_length_requires_exact_positive_integer(parent_shared_replay_transport):
+    with pytest.raises(contracts.CorpusContractError):
+        load_parent_shared_replay_fixture(parent_shared_replay_transport, expected_payload_bytes=True)

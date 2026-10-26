@@ -216,8 +216,484 @@ def inspect_width_prerequisites(task_id):
 def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
+PROGRAMME_ENGINEERING_SCHEMA = "legal-ir-programme-engineering/v1"
+PROGRAMME_PUBLIC_MAIN = '2a125da37b4189ff06c44780aef1a3e58044fb0c'
+PROGRAMME_SOURCE_BINDING = {'repository': 'ipfs_datasets_py',
+ 'public_main_commit': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+ 'backlog_path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
+ 'backlog_sha256': '6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1'}
+PROGRAMME_ROUTE = {'primary_provider_id': 'grok_cli',
+ 'primary_model_id': 'grok-4.7',
+ 'fallback_provider_id': 'codex',
+ 'fallback_model_id': 'gpt-6.1-sol',
+ 'fallback_trigger': 'primary_quota_exhausted',
+ 'fallback_reasoning_effort': 'high'}
+PROGRAMME_LEGACY_BASELINE_SHA256 = '7c02c24b7d551c19bfe579fab3418b4645565c3d6243849e53a9861a3c5951eb'
+PROGRAMME_ENGINEERING_SPECS = {'LIRAE-LIR02-SOURCE-01': {'task_id': 'LIRAE-LIR02-SOURCE-01',
+                           'programme_engineering': 'legal-ir-programme-engineering/v1',
+                           'parent_task_id': 'LIR-02',
+                           'goal_id': 'LIR-02.source-review-preparation-v1',
+                           'title': 'Implement source-bound review dossier preparation',
+                           'objective': 'Extend the existing source request and handoff owners '
+                                        'with one reusable preparation export for the retained '
+                                        'full-parent bank/officer alternatives and original '
+                                        'norm/use candidates. Bind declared source/span/entity '
+                                        'revisions, file and row identities, offsets and '
+                                        'coordinate namespaces. Preserve missing '
+                                        'edition/context/crosswalk and every-use questions with '
+                                        'explicit candidate dispositions; never invent two '
+                                        'operative uses. Inspect current owner interfaces first '
+                                        'and integrate their qualified exports rather than '
+                                        'recreating readers or reviews. Observed public metadata '
+                                        'heads '
+                                        'USC91ca1838853ac82d7a12dd4ab47d9686f47667f9,span60501f3e920f6c9050cfc452e0d9fcc2b7c184f3,entity79d54378c5d6a89ab56e7a27e0f0ba867e800e19 '
+                                        'are discovery only; choose exact compatible artifact and '
+                                        'edition through retained manifests/intake without '
+                                        'rerunning the completed full census.',
+                           'owner_paths': ['ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py',
+                                           'ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py'],
+                           'test_paths': ['tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py',
+                                          'tests/unit/logic/autoformal/test_legal_source_review_handoff.py'],
+                           'acceptance_criteria': ['Exact source/edition/context dossier export '
+                                                   'uses existing owners and authenticates '
+                                                   'declared identities without guessing missing '
+                                                   'inputs',
+                                                   'Missing crosswalks and unresolved operative '
+                                                   'uses remain explicit; no legal meaning or '
+                                                   'review is manufactured',
+                                                   'Focused owner tests cover missing/stale '
+                                                   'revisions, coordinate namespace mismatch and '
+                                                   'exact deterministic roundtrip'],
+                           'result_fields': ['source_manifest',
+                                             'candidate_dispositions',
+                                             'unresolved_questions',
+                                             'reuse_owners'],
+                           'parent_reference': {'repository': 'ipfs_datasets_py',
+                                                'revision': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                                'path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
+                                                'task_id': 'LIR-02',
+                                                'task_sha256': 'c5a247ebdea732cf68fb71187cbdd2747b49209de73da18f497b7124c4c11f1d'},
+                           'source_binding': {'repository': 'ipfs_datasets_py',
+                                              'public_main_commit': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                              'backlog_path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
+                                              'backlog_sha256': '6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1'},
+                           'source_file_sha256': {'ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py': '8fccd02c6a596a06f6d3d0105a9bdffb040f11266cd4e835dbff5f74ad066aed',
+                                                  'ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py': 'b519e81ec84958ea36934c9201ca7bb8b4eaccf943bd77096c07d05262d9b479',
+                                                  'tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py': '830ba4a4c4e29c222ced7522dd9dde0aeb5fb16c766f00145610f5e07165aa02',
+                                                  'tests/unit/logic/autoformal/test_legal_source_review_handoff.py': '55f8c2364989ac12bbf49735023a43897b9a3ba781a10808fcadb8ee2543a586'},
+                           'implementation_route': {'primary_provider_id': 'grok_cli',
+                                                    'primary_model_id': 'grok-4.7',
+                                                    'fallback_provider_id': 'codex',
+                                                    'fallback_model_id': 'gpt-6.1-sol',
+                                                    'fallback_trigger': 'primary_quota_exhausted',
+                                                    'fallback_reasoning_effort': 'high'},
+                           'provider_role': 'grok-implement',
+                           'context_budget_tokens': 48000,
+                           'preparation_path': 'workspace/legal_ir/programme_engineering/lirae-lir02-source-01/preparation.json',
+                           'receipt_path': 'workspace/legal_ir/programme_engineering/lirae-lir02-source-01/receipt.json',
+                           'home_shard': 0},
+ 'LIRAE-LIR07-IR-02': {'task_id': 'LIRAE-LIR07-IR-02',
+                       'programme_engineering': 'legal-ir-programme-engineering/v1',
+                       'parent_task_id': 'LIR-07',
+                       'goal_id': 'LIR-07.typed-ir-interface-preparation-v1',
+                       'title': 'Implement complete candidate IR interface preparation',
+                       'objective': 'Add a reusable preparation census to the existing '
+                                    'relational-norm and native-AST owners for the same selected '
+                                    'complete candidate ASTs. Inventory exact constructors, '
+                                    'vocabulary, binders, ordered roles, codec/projection '
+                                    'identities and output budgets; classify representable, '
+                                    'unsupported and ambiguous inputs without promoting legal '
+                                    'meaning. Emit a minimal missing-interface recipe only for a '
+                                    'demonstrated gap, preserving raw candidate identities and '
+                                    'existing qualified codecs.',
+                       'owner_paths': ['ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py',
+                                       'ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py'],
+                       'test_paths': ['tests/unit/logic/autoformal/test_legal_relational_norm_v1.py',
+                                      'tests/unit/logic/autoformal/test_legal_native_ast_preservation.py'],
+                       'acceptance_criteria': ['Preparation export inventories complete candidate '
+                                               'AST identity, constructors, binders, ordered roles '
+                                               'and codec/output budgets',
+                                               'Unsupported and ambiguous cases are retained '
+                                               'without legal acceptance, dropped roles or '
+                                               'caller-created replacement ASTs',
+                                               'Focused owner tests exercise all declared '
+                                               'dispositions, ordering and lossless serialization '
+                                               'without rerunning a corpus census'],
+                       'result_fields': ['candidate_records',
+                                         'constructor_vocab_census',
+                                         'codec_projection_budget',
+                                         'unresolved_questions',
+                                         'reuse_owners'],
+                       'parent_reference': {'repository': 'ipfs_datasets_py',
+                                            'revision': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                            'path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
+                                            'task_id': 'LIR-07',
+                                            'task_sha256': 'd2bfcae5296f9dd0ab356bf7dc5a31dd8e2f60b6b4c7290666fd8826a49a2809'},
+                       'source_binding': {'repository': 'ipfs_datasets_py',
+                                          'public_main_commit': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                          'backlog_path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
+                                          'backlog_sha256': '6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1'},
+                       'source_file_sha256': {'ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py': '23d8d5980330bc8a23e7f8d9d570808f86ffbc29799930895933c8b0e01d6959',
+                                              'ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py': '2cdf3e8c0734ad8e4226c5df30f737322d8dee0f4e5a3674c3ad4d7c36ac810e',
+                                              'tests/unit/logic/autoformal/test_legal_relational_norm_v1.py': '53a500c3828bc569ec2ebfe2148c513068e9e83cb9c006cef8a404a756ea4529',
+                                              'tests/unit/logic/autoformal/test_legal_native_ast_preservation.py': '74dda3814cd7b27e902a30f5e8fd88ced450df1f726ea65b1ea2c00144709f3b'},
+                       'implementation_route': {'primary_provider_id': 'grok_cli',
+                                                'primary_model_id': 'grok-4.7',
+                                                'fallback_provider_id': 'codex',
+                                                'fallback_model_id': 'gpt-6.1-sol',
+                                                'fallback_trigger': 'primary_quota_exhausted',
+                                                'fallback_reasoning_effort': 'high'},
+                       'provider_role': 'grok-implement',
+                       'context_budget_tokens': 48000,
+                       'preparation_path': 'workspace/legal_ir/programme_engineering/lirae-lir07-ir-02/preparation.json',
+                       'receipt_path': 'workspace/legal_ir/programme_engineering/lirae-lir07-ir-02/receipt.json',
+                       'home_shard': 1},
+ 'LIRAE-LIR12-LEAN-03': {'task_id': 'LIRAE-LIR12-LEAN-03',
+                         'programme_engineering': 'legal-ir-programme-engineering/v1',
+                         'parent_task_id': 'LIR-12',
+                         'goal_id': 'LIR-12.lean-compatibility-preparation-v1',
+                         'title': 'Implement Lean compatibility request preparation',
+                         'objective': 'Extend the existing preservation packet/index owners with a '
+                                      'reusable compatibility-matrix export for selected '
+                                      'AST/profile candidates. Bind parent, direct, conditional, '
+                                      'native and preservation routes to exact '
+                                      'request/import/premise/axiom/artifact closure. Reuse '
+                                      'retained 68/204,23/69,parent-bound32/96+2/6 and29-file '
+                                      'packet/index evidence by authenticated reference. Do not '
+                                      'rerun historical compiler qualifications, introduce axioms, '
+                                      'claim semantic preservation or admit legal statements.',
+                         'owner_paths': ['ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py',
+                                         'ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py'],
+                         'test_paths': ['tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_packet_v2.py',
+                                        'tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_index_v2.py'],
+                         'acceptance_criteria': ['Compatibility request export binds selected '
+                                                 'AST/profile to exact route, imports, premises, '
+                                                 'axioms and artifact closure',
+                                                 'Retained qualification evidence is reused by '
+                                                 'identity and unresolved prerequisites block any '
+                                                 'claim of Lean or legal admission',
+                                                 'Focused packet/index tests cover foreign '
+                                                 'profiles, missing premise/artifact closure and '
+                                                 'stable serialization without invoking a '
+                                                 'compiler'],
+                         'result_fields': ['compatibility_matrix',
+                                           'request_import_premise_axiom_closure',
+                                           'artifact_closure',
+                                           'unresolved_questions',
+                                           'reuse_owners'],
+                         'parent_reference': {'repository': 'ipfs_datasets_py',
+                                              'revision': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                              'path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
+                                              'task_id': 'LIR-12',
+                                              'task_sha256': 'a8a01f70597884aecc2a7e8fc9d34be2cbbd7d6c8131495e23de2da1c81d6fb2'},
+                         'source_binding': {'repository': 'ipfs_datasets_py',
+                                            'public_main_commit': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                            'backlog_path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
+                                            'backlog_sha256': '6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1'},
+                         'source_file_sha256': {'ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py': '0b2e37c12be512dc890a10dbe4f92bd31daeb86bc3e527591c8fd55332fa2307',
+                                                'ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py': '1f440c184667288ea6c78e115de49a53ab8c951d15d4bdd5fc2da830de1ad524',
+                                                'tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_packet_v2.py': '1386ef25d07f4d420bfb50254d42f7f38f8565817aabf0b3ecdac24002706e91',
+                                                'tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_index_v2.py': '74653f84a1af3c1a4f3e2368968bc36cc706acba6bebd5830ac785ccaa46f7b6'},
+                         'implementation_route': {'primary_provider_id': 'grok_cli',
+                                                  'primary_model_id': 'grok-4.7',
+                                                  'fallback_provider_id': 'codex',
+                                                  'fallback_model_id': 'gpt-6.1-sol',
+                                                  'fallback_trigger': 'primary_quota_exhausted',
+                                                  'fallback_reasoning_effort': 'high'},
+                         'provider_role': 'grok-implement',
+                         'context_budget_tokens': 48000,
+                         'preparation_path': 'workspace/legal_ir/programme_engineering/lirae-lir12-lean-03/preparation.json',
+                         'receipt_path': 'workspace/legal_ir/programme_engineering/lirae-lir12-lean-03/receipt.json',
+                         'home_shard': 2},
+ 'LIRAE-LIR17-PROFILE-03': {'task_id': 'LIRAE-LIR17-PROFILE-03',
+                            'programme_engineering': 'legal-ir-programme-engineering/v1',
+                            'parent_task_id': 'LIR-17',
+                            'goal_id': 'LIR-17.conditions-fullspan-training-preparation-v1',
+                            'title': 'Implement frozen full-span training profile preparation',
+                            'objective': 'Extend the existing published '
+                                         'conditions_fullspan_margin_v1 owner with a pure finite '
+                                         'training-recipe/preflight export. Bind original F18/F15 '
+                                         'donor, teacher, source, checkpoint and partition '
+                                         'provenance; declare42 donor tensors,38 frozen '
+                                         'tensors,650 inactive tensors,fresh Adam,matched '
+                                         'margin0/.25 arms,batch12,seed1729,32 updates,all72 cases '
+                                         'present and unchanged CE/KL/full-B normalization. Export '
+                                         'acceptance/control/frozen full-IR casewise scoring '
+                                         'obligations. Reuse the published margin kernel; perform '
+                                         'no fitting, model/encoder execution or checkpoint '
+                                         'mutation before native model/resource admission.',
+                            'owner_paths': ['ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py'],
+                            'test_paths': ['tests/unit/logic/legal_ir/test_conditions_fullspan_margin_v1.py'],
+                            'acceptance_criteria': ['Pure recipe export authenticates '
+                                                    'caller-supplied '
+                                                    'donor/teacher/source/checkpoint/partition '
+                                                    'identities and every finite control',
+                                                    'The published margin kernel and unchanged '
+                                                    'CE/KL/full-B contract remain intact; '
+                                                    'incomplete provenance cannot authorize '
+                                                    'fitting',
+                                                    'Focused tests reject missing provenance, '
+                                                    'wrong arm/partition/tensor counts and '
+                                                    'nonfinite controls without opening a model or '
+                                                    'checkpoint'],
+                            'result_fields': ['provenance',
+                                              'recipe',
+                                              'acceptance_controls',
+                                              'frozen_full_ir_casewise_scoring',
+                                              'unresolved_questions',
+                                              'reuse_owners'],
+                            'parent_reference': {'repository': 'ipfs_datasets_py',
+                                                 'revision': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                                 'path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
+                                                 'task_id': 'LIR-17',
+                                                 'task_sha256': '1866c540278ad4270adc7c6b5ee938fec8128a0501cf6388161ce12a5c38a612'},
+                            'source_binding': {'repository': 'ipfs_datasets_py',
+                                               'public_main_commit': '2a125da37b4189ff06c44780aef1a3e58044fb0c',
+                                               'backlog_path': 'ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json',
+                                               'backlog_sha256': '6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1'},
+                            'source_file_sha256': {'ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py': 'e4f16146cf6f64b16e979e5ee0803a41ee41a8377bfa7833918b0a25dd7d1160',
+                                                   'tests/unit/logic/legal_ir/test_conditions_fullspan_margin_v1.py': '461877c74b2b5661778fc853352db4e90c10f5b8127f9adb457cbf760b70bb27'},
+                            'implementation_route': {'primary_provider_id': 'grok_cli',
+                                                     'primary_model_id': 'grok-4.7',
+                                                     'fallback_provider_id': 'codex',
+                                                     'fallback_model_id': 'gpt-6.1-sol',
+                                                     'fallback_trigger': 'primary_quota_exhausted',
+                                                     'fallback_reasoning_effort': 'high'},
+                            'provider_role': 'grok-implement',
+                            'context_budget_tokens': 48000,
+                            'preparation_path': 'workspace/legal_ir/programme_engineering/lirae-lir17-profile-03/preparation.json',
+                            'receipt_path': 'workspace/legal_ir/programme_engineering/lirae-lir17-profile-03/receipt.json',
+                            'home_shard': 3}}
+
+
+def _programme_json(value):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False,
+                      allow_nan=False).encode()
+
+
+def _programme_safe_path(value):
+    require(type(value) is str and value and '\\' not in value and '\x00' not in value,
+            'programme path must be exact repository-relative text')
+    path = Path(value)
+    require(not path.is_absolute() and value == path.as_posix()
+            and not any(part in ('', '.', '..') for part in value.split('/'))
+            and not any(char in value for char in '*?['), 'unsafe programme path')
+    return path
+
+
+def programme_engineering_contract(task):
+    """One protected model-coding contract; no inventory or semantic authority."""
+    require(type(task) is dict, 'programme task must be an object')
+    task_id = task.get('task_id')
+    require(task_id in PROGRAMME_ENGINEERING_SPECS, 'unknown programme task ID')
+    expected = PROGRAMME_ENGINEERING_SPECS[task_id]
+    for key, value in expected.items():
+        require(task.get(key) == value, 'programme task contract differs: ' + key)
+    for path in [*expected['owner_paths'], *expected['test_paths'],
+                 expected['preparation_path'], expected['receipt_path']]:
+        _programme_safe_path(path)
+    require(type(task.get('context_budget_tokens')) is int
+            and task['context_budget_tokens'] == 48000, 'positive programme context budget required')
+    output_paths = [*expected['owner_paths'], *expected['test_paths'],
+                    expected['preparation_path'], expected['receipt_path']]
+    contract = dict(outputs=output_paths, allowed_paths=output_paths,
+        provider_role='grok-implement', context_budget_tokens=48000,
+        validation_commands=[
+            'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 -m pytest '
+            + ' '.join(expected['test_paths']) + ' -q --tb=line',
+            'IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 ' + SCRIPT
+            + ' --check-task ' + task_id], required_validation_executables=['python3'],
+        receipt_instructions='Write ' + expected['receipt_path'] + ' schema=' + SCHEMA
+            + ' task_kind=programme_engineering status=implemented with exact parent_reference, '
+            'source_binding, implementation_route and code_changes=[{path,sha256}]. Authenticate '
+            + expected['preparation_path'] + ' as the sole preparation artifact. The preparation '
+            'schema is legal-ir-programme-engineering-preparation/v1 with task_id,parent_reference,'
+            'source_binding,admitted=false,formalized=false,semantic_review_performed=false,'
+            'model_gain_claimed=false,training_executed=false and result fields '
+            + ','.join(expected['result_fields']) + '. Change at least one existing owner and one '
+            'owning test relative to the pinned public main; reuse current qualified machinery. '
+            'No model fitting, encoder/compiler/corpus rerun or invented legal review. '
+            'Native proposal, validation and merge alone decide engineering completion.')
+    require(set(task) <= set(expected) | set(contract), 'unknown programme task field')
+    for key, value in contract.items():
+        if key in task:
+            require(task[key] == value, 'programme execution contract differs: ' + key)
+    return contract
+
+
+def _programme_task_blocks(text):
+    found = {}
+    for chunk in re.split(r'(?=^## )', text, flags=re.MULTILINE):
+        match = re.match(r'## (LIRAE-[A-Z0-9-]+)\b', chunk)
+        if match:
+            require(match[1] not in found, 'duplicate board task')
+            found[match[1]] = chunk.rstrip()
+    return found
+
+
+def check_programme_engineering_plan(root, plan=None):
+    """Verify sealed preparation metadata and unchanged retained inventory."""
+    root = Path(root)
+    if plan is None:
+        plan = json.loads((root / PLAN).read_text())
+    bundle = plan.get('programme_engineering')
+    require(type(bundle) is dict and bundle.get('schema') == 'legal-ir-programme-engineering-bundle/v1',
+            'programme engineering bundle required')
+    require(bundle.get('source_binding') == PROGRAMME_SOURCE_BINDING
+            and bundle.get('implementation_route') == PROGRAMME_ROUTE,
+            'programme source/route binding differs')
+    require(bundle.get('dispatch_authorized_by_this_metadata') is False
+            and bundle.get('original_parent_statuses_unchanged') is True,
+            'programme metadata cannot dispatch or complete original parents')
+    baseline = bundle.get('legacy_preservation')
+    require(sha(_programme_json(baseline)) == PROGRAMME_LEGACY_BASELINE_SHA256,
+            'retained legacy baseline differs')
+    old = [task for task in plan['tasks'] if task.get('programme_engineering') is None]
+    require(len(old) == 135 and sha(_programme_json(old)) == baseline['plan_tasks_sha256'],
+            'retained legacy task population or metadata differs')
+    blocks = _programme_task_blocks((root / BOARD).read_text())
+    require(all(task_id in blocks and sha(blocks[task_id].encode()) == digest
+                for task_id, digest in baseline['board_blocks_sha256'].items()),
+            'retained legacy board metadata or identity differs')
+    prepared = bundle.get('prepared_tasks')
+    require(type(prepared) is list and len(prepared) == 4
+            and [t.get('task_id') for t in prepared] == list(PROGRAMME_ENGINEERING_SPECS),
+            'exact four programme preparation tasks required')
+    for task in prepared:
+        programme_engineering_contract(task)
+    active = [task for task in plan['tasks'] if task.get('programme_engineering') is not None]
+    require(len({task.get('task_id') for task in active}) == len(active), 'duplicate programme task')
+    for task in active:
+        contract = programme_engineering_contract(task)
+        require(all(task.get(key) == value for key, value in contract.items()),
+                'active programme task contract differs')
+    return bundle
+
+
+def _require_programme_source_alignment(root):
+    """Refuse dispatch from the deployed historical snapshot or missing context."""
+    import os
+    import subprocess
+    root = Path(root).resolve()
+    environment = os.environ.copy()
+    for key in ('GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE'):
+        environment.pop(key, None)
+    def git(*args):
+        return subprocess.run(['git', '--no-optional-locks', '-C', str(root), *args],
+            capture_output=True, timeout=15, env=environment, check=False)
+    require(git('merge-base', '--is-ancestor', PROGRAMME_PUBLIC_MAIN, 'HEAD').returncode == 0,
+            'current public main must be integrated before programme dispatch')
+    pin = git('show', PROGRAMME_PUBLIC_MAIN + ':' + PROGRAMME_SOURCE_BINDING['backlog_path'])
+    require(pin.returncode == 0 and sha(pin.stdout) == PROGRAMME_SOURCE_BINDING['backlog_sha256'],
+            'original programme backlog pin differs')
+    backlog = json.loads(pin.stdout)
+    parents = {task['id']: task for task in backlog['tasks']}
+    paths = {PROGRAMME_SOURCE_BINDING['backlog_path']}
+    for task in PROGRAMME_ENGINEERING_SPECS.values():
+        reference = task['parent_reference']
+        require(reference['task_id'] in parents and sha(_programme_json(parents[reference['task_id']]))
+                == reference['task_sha256'], 'original parent task reference differs')
+        paths.update(task['owner_paths'] + task['test_paths'])
+    for value in paths:
+        relative = _programme_safe_path(value)
+        path = root / relative
+        require(path.is_file() and not path.is_symlink()
+                and path.resolve().is_relative_to(root), 'canonical programme context unavailable: ' + value)
+    return dict(PROGRAMME_SOURCE_BINDING)
+
+
+def render_programme_engineering_task(task):
+    contract = programme_engineering_contract(task)
+    fields = [('status', 'todo'), ('completion', 'manual'), ('is schedulable', 'true'),
+        ('priority', 'P1'), ('track', 'legal-ir-programme'), ('goal id', task['goal_id']),
+        ('parent goal id', task['parent_task_id']), ('depends on', 'none'),
+        ('board namespace', 'legal-ir-autoencoder-v1'), ('provider role', 'grok-implement'),
+        ('context budget tokens', '48000'), ('objective', task['objective']),
+        ('original parent reference', _programme_json(task['parent_reference']).decode()),
+        ('implementation route', _programme_json(PROGRAMME_ROUTE).decode()),
+        ('context paths', ', '.join([PROGRAMME_SOURCE_BINDING['backlog_path'], *task['owner_paths']])),
+        ('outputs', ', '.join(contract['outputs'])), ('predicted files', ', '.join(contract['outputs'])),
+        ('allowed paths', ', '.join(contract['allowed_paths'])),
+        ('validation', '; '.join(contract['validation_commands'])),
+        ('required validation executables', 'python3'),
+        ('receipt instructions', contract['receipt_instructions']),
+        ('acceptance', '; '.join(task['acceptance_criteria']))]
+    return '## ' + task['task_id'] + ' ' + task['title'] + '\n\n' + '\n'.join(
+        '- ' + key + ': ' + value for key, value in fields) + '\n'
+
+
+def prepare_programme_engineering(root):
+    """Return existing native materialization entries; never write or dispatch."""
+    root = Path(root)
+    plan = json.loads((root / PLAN).read_text())
+    bundle = check_programme_engineering_plan(root, plan)
+    _require_programme_source_alignment(root)
+    require(len(plan['tasks']) == 135, 'programme children already adopted or population differs')
+    additions, entries = [], []
+    for task in bundle['prepared_tasks']:
+        additions.append({**task, **programme_engineering_contract(task)})
+        entries.append(dict(task_id=task['task_id'], goal_id=task['goal_id'],
+                            rendered_block=render_programme_engineering_task(task)))
+    return dict(schema='legal-ir-programme-engineering-materialization/v1',
+        entries=entries, plan_task_additions=additions,
+        base_board_sha256=sha((root / BOARD).read_bytes()),
+        source_binding=PROGRAMME_SOURCE_BINDING, implementation_route=PROGRAMME_ROUTE,
+        completion_authority=False, mutation_authority=False,
+        original_parent_statuses_unchanged=True)
+
+
+def validate_programme_engineering(root, task, receipt, data):
+    """Check authenticated preparation/code deltas; native tests own behavior."""
+    root = Path(root).resolve()
+    programme_engineering_contract(task)
+    _require_programme_source_alignment(root)
+    require(receipt.get('status') == 'implemented', 'programme engineering must be implemented')
+    require(receipt.get('parent_reference') == task['parent_reference']
+            and receipt.get('source_binding') == PROGRAMME_SOURCE_BINDING
+            and receipt.get('implementation_route') == PROGRAMME_ROUTE,
+            'programme receipt identity/route differs')
+    require(set(data) == {'preparation'}, 'one programme preparation artifact required')
+    prepared = payload(data, 'preparation')
+    required = {'schema', 'task_id', 'parent_reference', 'source_binding', 'admitted',
+                'formalized', 'semantic_review_performed', 'model_gain_claimed',
+                'training_executed', 'result'}
+    require(type(prepared) is dict and set(prepared) == required
+            and prepared['schema'] == 'legal-ir-programme-engineering-preparation/v1'
+            and prepared['task_id'] == task['task_id']
+            and prepared['parent_reference'] == task['parent_reference']
+            and prepared['source_binding'] == PROGRAMME_SOURCE_BINDING,
+            'programme preparation identity/schema differs')
+    for key in ('admitted', 'formalized', 'semantic_review_performed',
+                'model_gain_claimed', 'training_executed'):
+        require(prepared[key] is False, 'programme authority/execution claim forbidden: ' + key)
+    _programme_json(prepared)  # Reject nonfinite diagnostic controls before any completion.
+    result = prepared['result']
+    require(type(result) is dict and set(result) == set(task['result_fields'])
+            and all(result[key] not in (None, '', [], {}) for key in task['result_fields']),
+            'complete programme preparation result fields required')
+    changes = receipt.get('code_changes')
+    require(type(changes) is list and changes, 'actual programme code/test changes required')
+    seen = set()
+    for change in changes:
+        require(type(change) is dict and set(change) == {'path', 'sha256'}, 'closed code change required')
+        relative = _programme_safe_path(change['path'])
+        value = relative.as_posix()
+        require(value in task['source_file_sha256'] and value not in seen, 'programme code path outside exact owner/test allowlist')
+        path = root / relative
+        require(path.is_file() and not path.is_symlink() and path.resolve().is_relative_to(root),
+                'programme code path unavailable or escaping')
+        digest = sha(path.read_bytes())
+        require(change['sha256'] == digest and digest != task['source_file_sha256'][value],
+                'programme code change absent or unauthenticated')
+        seen.add(value)
+    require(seen.intersection(task['owner_paths']) and seen.intersection(task['test_paths']),
+            'programme owner and owning test must both change')
+    return True
+
 
 def kind(task_id):
+    if task_id in PROGRAMME_ENGINEERING_SPECS:
+        return 'programme_engineering'
     for prefix, name in (('USC', 'uscode'), ('CONST', 'constitution'), ('WIDTH', 'width'), ('METHOD', 'method')):
         if task_id.startswith('LIRAE-' + prefix + '-'):
             return name
@@ -225,6 +701,8 @@ def kind(task_id):
 
 
 def directory(task_id):
+    if task_id in PROGRAMME_ENGINEERING_SPECS:
+        return Path(PROGRAMME_ENGINEERING_SPECS[task_id]['preparation_path']).parent
     require(re.fullmatch(r'LIRAE-[A-Z0-9-]+', task_id), 'invalid task ID')
     return EVIDENCE / task_id.lower()
 
@@ -443,6 +921,8 @@ def validate_engineering_width(root, task, receipt, data):
 
 
 def task_contract(task):
+    if task.get('programme_engineering') is not None:
+        return programme_engineering_contract(task)
     if task.get('engineering_width_replay') is not None:
         return engineering_task_contract(task)
     task_id = task['task_id']
@@ -510,6 +990,8 @@ def task_contract(task):
 def enrich(root, *, enable_local_inventory=False, enable_local_width_replay=False):
     root = Path(root)
     plan = json.loads((root / PLAN).read_text())
+    require(plan.get('programme_engineering') is None,
+            'programme adoption requires exact native materialization; enrichment is forbidden')
     chunks = re.split(r'(?=^## )', (root / BOARD).read_text(), flags=re.MULTILINE)
     pending = set()
     routing_update = enable_local_inventory or enable_local_width_replay
@@ -557,6 +1039,12 @@ def enrich(root, *, enable_local_inventory=False, enable_local_width_replay=Fals
 def check_board(root):
     root = Path(root)
     plan = json.loads((root / PLAN).read_text())
+    require(not any(task.get('programme_engineering') is not None for task in plan['tasks'])
+            or plan.get('programme_engineering') is not None, 'programme engineering bundle required')
+    if plan.get('programme_engineering') is not None:
+        check_programme_engineering_plan(root, plan)
+        if any(task.get('programme_engineering') is not None for task in plan['tasks']):
+            _require_programme_source_alignment(root)
     found = {}
     for chunk in re.split(r'(?=^## )', (root / BOARD).read_text(), flags=re.MULTILINE):
         match = re.match(r'## (LIRAE-[A-Z0-9-]+)\b', chunk)
@@ -579,6 +1067,11 @@ def check_board(root):
                 require('- ' + label + ': ' + str(contract[key]) in chunk, 'stale local execution metadata for ' + task_id)
         if 'proposal_artifact_envelope' in contract:
             require('- proposal artifact envelope: ' + json.dumps(contract['proposal_artifact_envelope'], separators=(',', ':'), sort_keys=True) in chunk, 'stale artifact envelope for ' + task_id)
+        if task.get('programme_engineering') is not None:
+            for line in render_programme_engineering_task(task).splitlines():
+                if line and not line.startswith('- status:'):
+                    require(chunk.splitlines().count(line) == 1,
+                            'stale programme board contract for ' + task_id)
         if task.get('engineering_width_replay') == ENGINEERING_CONTRACT:
             require('- semantic key: ' + contract['semantic_key'] in chunk, 'stale genuine semantic key')
             require('## ' + task_id + ' ' + task['title'] + '\n' in chunk, 'stale genuine task title')
@@ -806,7 +1299,9 @@ def validate(root, task_id, *, source_parquet=None):
     require(receipt.get('status') in {'inventory', 'implemented'}, 'pending/unavailable work cannot complete')
     false_flags(receipt.get('authority'), family == 'constitution')
     data = read_artifacts(root, task_id, receipt)
-    if family == 'uscode':
+    if family == 'programme_engineering':
+        validate_programme_engineering(root, task, receipt, data)
+    elif family == 'uscode':
         validate_uscode(next(row for row in plan['shards'] if row['task_id'] == task_id), receipt, data, source_parquet=source_parquet)
     elif family == 'constitution':
         validate_constitution(root, task_id, receipt, data)
@@ -837,6 +1332,7 @@ def main(argv=None):
     modes.add_argument('--enable-local-inventory', action='store_true', help='Enable reviewed local inventory only for currently pending US Code shards; completed contracts remain unchanged')
     modes.add_argument('--enable-local-width-replay', action='store_true', help='Enable reviewed frozen replay only for pending384/768 tasks; preserve every other contract')
     modes.add_argument('--enable-engineering-width-v2', action='store_true', help='Select only reviewed genuine spaCy8/Leanstral4096 successor captures; preserve every other task and old contracts as history')
+    modes.add_argument('--prepare-programme-engineering', action='store_true', help='Print four source-aligned native materialization entries and plan additions; write nothing and dispatch nothing')
     modes.add_argument('--check-board', action='store_true')
     modes.add_argument('--check-task', metavar='TASK_ID')
     modes.add_argument('--inspect-width-prerequisites',
@@ -856,6 +1352,8 @@ def main(argv=None):
                     and selections['schema'] == 'legal-ir-genuine-width-selections/v2',
                     'closed genuine capture selection file required')
             result = enable_engineering_width_replay(args.root, selections['selections'])
+        elif args.prepare_programme_engineering:
+            result = prepare_programme_engineering(args.root)
         elif args.inspect_width_prerequisites == 'all':
             result = {
                 'schema': 'legal-ir-width-replay-prerequisite-bundle/v1',

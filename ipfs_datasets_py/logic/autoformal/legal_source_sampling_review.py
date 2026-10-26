@@ -587,7 +587,7 @@ def _declaration_snapshot(value, bounds):
     return _copy(value, bounds["max_response_bytes"])
 
 
-def _checked_declaration(value, bundle, bundle_sha):
+def _checked_declaration(value, bundle, bundle_sha, *, _extra_evidence_refs=()):
     _keys(value, DECLARATION_FIELDS, "reviewer declaration")
     _sha(value["bundle_sha256"], "reviewer-declared complete bundle")
     _need(
@@ -659,6 +659,9 @@ def _checked_declaration(value, bundle, bundle_sha):
     for item in exposure["other_exposure"] or []:
         _text(item, "other exposure", maximum=4096)
     allowed = {_digest(ref) for ref in guide["evidence_refs"]}
+    # Only the separately replayed context profile supplies these scoped refs.
+    # The v1 entry points always retain the original, empty extension.
+    allowed.update(_digest(ref) for ref in _extra_evidence_refs)
     for field, kind, dispositions in (
         ("source_answers", "source", SOURCE_DISPOSITIONS),
         ("meaning_proposals", "meaning", MEANING_DISPOSITIONS),
@@ -918,6 +921,86 @@ def summarize_sampling_review_population(
     )
 
 
+def prepare_sampling_review_context(
+    sources, attachments, *, expected_attachments_sha256, limits=None
+):
+    """Nominate cross-bundle evidence without resolving source or meaning review."""
+    from .legal_source_sampling_review_context import prepare
+
+    return prepare(
+        sources, attachments,
+        expected_attachments_sha256=expected_attachments_sha256, limits=limits,
+    )
+
+
+def sampling_review_context_sha256(packet):
+    """Commit the complete separately versioned context packet."""
+    from .legal_source_sampling_review_context import packet_sha256
+
+    return packet_sha256(packet)
+
+
+def validate_sampling_review_context(
+    packet, sources, attachments, *, expected_context_sha256,
+    expected_attachments_sha256, limits=None,
+):
+    """Replay every complete source bundle and the independently pinned selection."""
+    from .legal_source_sampling_review_context import validate
+
+    return validate(
+        packet, sources, attachments,
+        expected_context_sha256=expected_context_sha256,
+        expected_attachments_sha256=expected_attachments_sha256, limits=limits,
+    )
+
+
+def record_sampling_review_context_response(
+    packet, declaration, sources, attachments, *, expected_context_sha256,
+    expected_declaration_sha256, expected_attachments_sha256, limits=None,
+):
+    """Record an explicit declaration using target-specific attached evidence."""
+    from .legal_source_sampling_review_context import record_response
+
+    return record_response(
+        packet, declaration, sources, attachments,
+        expected_context_sha256=expected_context_sha256,
+        expected_declaration_sha256=expected_declaration_sha256,
+        expected_attachments_sha256=expected_attachments_sha256, limits=limits,
+    )
+
+
+def validate_sampling_review_context_response(
+    response, packet, declaration, sources, attachments, *, expected_response_sha256,
+    expected_context_sha256, expected_declaration_sha256,
+    expected_attachments_sha256, limits=None,
+):
+    """Validate a distinct context response against its original declaration."""
+    from .legal_source_sampling_review_context import validate_response
+
+    return validate_response(
+        response, packet, declaration, sources, attachments,
+        expected_response_sha256=expected_response_sha256,
+        expected_context_sha256=expected_context_sha256,
+        expected_declaration_sha256=expected_declaration_sha256,
+        expected_attachments_sha256=expected_attachments_sha256, limits=limits,
+    )
+
+
+def summarize_sampling_review_context_population(
+    packet, responses, sources, attachments, *, expected_context_sha256,
+    expected_response_sha256s, expected_attachments_sha256, limits=None,
+):
+    """Retain the full source population, including unreviewed supporting subjects."""
+    from .legal_source_sampling_review_context import summarize
+
+    return summarize(
+        packet, responses, sources, attachments,
+        expected_context_sha256=expected_context_sha256,
+        expected_response_sha256s=expected_response_sha256s,
+        expected_attachments_sha256=expected_attachments_sha256, limits=limits,
+    )
+
+
 __all__ = [
     "prepare_sampling_review_bundle",
     "record_sampling_review_response",
@@ -925,4 +1008,10 @@ __all__ = [
     "summarize_sampling_review_population",
     "validate_sampling_review_bundle",
     "validate_sampling_review_response",
+    "prepare_sampling_review_context",
+    "sampling_review_context_sha256",
+    "validate_sampling_review_context",
+    "record_sampling_review_context_response",
+    "validate_sampling_review_context_response",
+    "summarize_sampling_review_context_population",
 ]

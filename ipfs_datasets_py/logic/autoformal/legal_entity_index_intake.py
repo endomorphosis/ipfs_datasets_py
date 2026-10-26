@@ -20,6 +20,7 @@ import tempfile
 from . import meta_ontology
 
 SCHEMA = "legal-materialized-entity-index-census/v1"
+DETAILED_SCHEMA = "legal-materialized-entity-index-census/v2"
 ROW_SCHEMA = "legal-materialized-entity-index-observation/v1"
 FIELDS = ("record_kind", "meta_category", "graph_kind", "label", "legal_id", "node_id",
           "src", "dst", "logic_role", "in_formula", "admitted", "formalized")
@@ -234,16 +235,105 @@ def _counts(counter):
     return [{"value": value, "rows": count} for value, count in sorted(counter.items(), key=lambda item: _wire(item[0]))]
 
 
+def _endpoint_integrity(db):
+    """Distinguish absent values from dangling references, without guessing IDs.
+
+    Edges retain physical multiplicity. Null/empty values both denote missing
+    IDs in this diagnostic; all other strings match exactly, including spaces.
+    Per-endpoint counts can overlap. The four dispositions partition edge rows.
+    Logical-relation metadata is deliberately absent from the edges table.
+    """
+    counts = db.execute("""SELECT coalesce(sum(e.n),0),
+        coalesce(sum(CASE WHEN e.src='' THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN e.dst='' THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN e.src='' AND e.dst='' THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN e.src='' OR e.dst='' THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN e.src<>'' AND s.id IS NULL THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN e.dst<>'' AND d.id IS NULL THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN (e.src<>'' AND s.id IS NULL) OR
+                              (e.dst<>'' AND d.id IS NULL) THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN s.n>1 THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN d.n>1 THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN s.n>1 OR d.n>1 THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN e.src<>'' AND e.dst<>'' AND
+                              (s.id IS NULL OR d.id IS NULL) THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN s.id IS NOT NULL AND d.id IS NOT NULL AND
+                              (s.n>1 OR d.n>1) THEN e.n ELSE 0 END),0),
+        coalesce(sum(CASE WHEN s.n=1 AND d.n=1 THEN e.n ELSE 0 END),0)
+        FROM edges e LEFT JOIN nodes s ON s.id=e.src LEFT JOIN nodes d ON d.id=e.dst""").fetchone()
+    return {
+        "schema": "legal-materialized-entity-endpoint-integrity/v1",
+        "matching_policy": "exact_nonempty_node_id_equality_no_normalization",
+        "record_kind": "edge", "edge_rows": counts[0],
+        "missing_endpoint_values": dict(zip(("source", "target", "both", "either"), counts[1:5])),
+        "nonempty_dangling_references": dict(zip(("source", "target", "either"), counts[5:8])),
+        "ambiguous_declared_references": dict(zip(("source", "target", "either"), counts[8:11])),
+        "exclusive_edge_dispositions": dict(zip(("missing_endpoint_value", "nonempty_dangling_endpoint",
+            "ambiguous_declared_endpoint", "unique_declared_endpoints"), (counts[4], *counts[11:14]))),
+        "endpoint_counts_may_overlap": True,
+        "semantic_identity_verified": False,
+    }
+
+
+def _check_endpoint_integrity(report):
+    """Check accounting identities; only a pinned replay establishes the counts."""
+    details = report.get("endpoint_integrity")
+    shapes = {
+        "missing_endpoint_values": {"source", "target", "both", "either"},
+        "nonempty_dangling_references": {"source", "target", "either"},
+        "ambiguous_declared_references": {"source", "target", "either"},
+        "exclusive_edge_dispositions": {"missing_endpoint_value", "nonempty_dangling_endpoint",
+                                        "ambiguous_declared_endpoint", "unique_declared_endpoints"},
+    }
+    keys = {"schema", "matching_policy", "record_kind", "edge_rows", "endpoint_counts_may_overlap",
+            "semantic_identity_verified", *shapes}
+    _need(type(details) is dict and set(details) == keys, "closed endpoint integrity details required")
+    _need(details["schema"] == "legal-materialized-entity-endpoint-integrity/v1"
+          and details["matching_policy"] == "exact_nonempty_node_id_equality_no_normalization"
+          and details["record_kind"] == "edge" and details["endpoint_counts_may_overlap"] is True
+          and details["semantic_identity_verified"] is False, "endpoint detail semantics or authority differs")
+    _bound(details["edge_rows"], MAX_ROWS, "edge_rows", zero=True)
+    for key, fields in shapes.items():
+        _need(type(details[key]) is dict and set(details[key]) == fields, "closed endpoint counter fields required")
+        _need(all(type(value) is int and 0 <= value <= details["edge_rows"]
+                  for value in details[key].values()), "bounded nonnegative endpoint counts required")
+    _need(details["edge_rows"] <= report["rows"], "edge count exceeds census population")
+    missing = details["missing_endpoint_values"]
+    _need(missing["both"] <= min(missing["source"], missing["target"])
+          and missing["source"] + missing["target"] - missing["both"] == missing["either"],
+          "missing endpoint union counts disagree")
+    for key in ("nonempty_dangling_references", "ambiguous_declared_references"):
+        counts = details[key]
+        _need(max(counts["source"], counts["target"]) <= counts["either"] <= counts["source"] + counts["target"],
+              "endpoint reference union counts disagree")
+    dispositions = details["exclusive_edge_dispositions"]
+    _need(dispositions["missing_endpoint_value"] == missing["either"], "missing endpoint disposition differs")
+    _need(sum(dispositions.values()) == details["edge_rows"], "endpoint dispositions do not cover edge population")
+    _need(dispositions["missing_endpoint_value"] + dispositions["nonempty_dangling_endpoint"] ==
+          report["disposition_counts"]["edge_observation_unresolved_endpoint"], "unresolved endpoint counts disagree")
+    for key, old in (("ambiguous_declared_endpoint", "edge_observation_ambiguous_endpoint"),
+                     ("unique_declared_endpoints", "edge_observation_unique_declared_endpoints")):
+        _need(dispositions[key] == report["disposition_counts"][old], "declared endpoint counts disagree")
+    for side in ("source", "target"):
+        _need(details["missing_endpoint_values"][side] + details["nonempty_dangling_references"][side] ==
+              report["edge_" + side + "_endpoint_missing_rows"], "per-endpoint missing counts disagree")
+
+
 def census_parquet(path, *, expected_file_sha256, expected_rows, max_rows, batch_size,
                    revision=None, max_file_bytes=MAX_FILE_BYTES, max_decoded_bytes=MAX_DECODED_BYTES,
                    max_row_group_bytes=MAX_ROW_GROUP_BYTES, max_batch_bytes=MAX_BATCH_BYTES,
-                   max_row_bytes=MAX_ROW_BYTES, max_scratch_bytes=MAX_SCRATCH_BYTES):
+                   max_row_bytes=MAX_ROW_BYTES, max_scratch_bytes=MAX_SCRATCH_BYTES,
+                   endpoint_details=False):
     """Return a complete, bounded observation census; no row population in RAM.
 
     Temporary on-disk SQLite accounts for duplicate raw rows/declared node IDs
     and endpoint populations. Unknown kinds, nulls and duplicate observations
     are retained in counts and stream custody, never silently filtered.
+
+    endpoint_details=True opts into v2, separating absent ID values from
+    nonempty dangling references. Default v1 reports and their pins stay intact.
     """
+    _need(type(endpoint_details) is bool, "explicit boolean endpoint_details required")
     limits = _options(expected_file_sha256, expected_rows, max_rows, batch_size, revision,
         max_file_bytes, max_decoded_bytes, max_row_group_bytes, max_batch_bytes, max_row_bytes, max_scratch_bytes)
     counters = {key: Counter() for key in ("record_kind", "graph_kind", "meta_category", "logic_role")}
@@ -316,6 +406,10 @@ def census_parquet(path, *, expected_file_sha256, expected_rows, max_rows, batch
                     "population_complete": True, "lossless_rows_retained_in_immutable_source": True,
                     "complete_section_coverage_verified": False, "original_task_acceptance": "preparatory_subset_only",
                     "authority": dict(_FALSE)}
+                if endpoint_details:
+                    report["schema"] = DETAILED_SCHEMA
+                    report["endpoint_integrity"] = _endpoint_integrity(db)
+                    _check_endpoint_integrity(report)
             report["census_sha256"] = _digest(report)
             return report
         except sqlite3.Error as error:
@@ -335,22 +429,25 @@ def validate_census_bindings(report, path, *, expected_census_sha256, expected_f
                             max_rows, batch_size, revision=None, max_file_bytes=MAX_FILE_BYTES,
                             max_decoded_bytes=MAX_DECODED_BYTES, max_row_group_bytes=MAX_ROW_GROUP_BYTES,
                             max_batch_bytes=MAX_BATCH_BYTES, max_row_bytes=MAX_ROW_BYTES,
-                            max_scratch_bytes=MAX_SCRATCH_BYTES):
+                            max_scratch_bytes=MAX_SCRATCH_BYTES, endpoint_details=False):
     """Verify a separately pinned prior census and current immutable file custody.
 
     This rehashes the whole file and checks schema/footer/limits, without decoding
     rows again. An independent expected_census_sha256 is mandatory; a summary's
     self-reported hash cannot substitute for prior full-population replay.
     """
+    _need(type(endpoint_details) is bool, "explicit boolean endpoint_details required")
     limits = _options(expected_file_sha256, expected_rows, max_rows, batch_size, revision,
         max_file_bytes, max_decoded_bytes, max_row_group_bytes, max_batch_bytes, max_row_bytes, max_scratch_bytes)
     _need(type(expected_census_sha256) is str and _SHA.fullmatch(expected_census_sha256),
           "independently retained census SHA256 required")
-    _need(type(report) is dict and set(report) == _CENSUS_KEYS, "closed prior census required")
+    keys = _CENSUS_KEYS | {"endpoint_integrity"} if endpoint_details else _CENSUS_KEYS
+    _need(type(report) is dict and set(report) == keys, "closed prior census required")
     _need(report["census_sha256"] == expected_census_sha256 == _digest(
         {key: value for key, value in report.items() if key != "census_sha256"}),
         "prior census differs from independently pinned identity")
-    _need(report["schema"] == SCHEMA and report["status"] == "complete_observation_census"
+    _need(report["schema"] == (DETAILED_SCHEMA if endpoint_details else SCHEMA)
+          and report["status"] == "complete_observation_census"
           and report["coverage_scope"] == "exact_pinned_parquet_rows_only"
           and report["population_complete"] is True and report["lossless_rows_retained_in_immutable_source"] is True
           and report["complete_section_coverage_verified"] is False
@@ -361,6 +458,8 @@ def validate_census_bindings(report, path, *, expected_census_sha256, expected_f
     _need(type(report["disposition_counts"]) is dict and all(type(value) is int and value >= 0
           for value in report["disposition_counts"].values())
           and sum(report["disposition_counts"].values()) == expected_rows, "prior census dispositions do not cover population")
+    if endpoint_details:
+        _check_endpoint_integrity(report)
     with _source(path, expected_file_sha256, expected_rows, revision, limits) as (_, source):
         _need(_wire(report["source"]) == _wire(source), "prior census source custody differs")
     return {"schema": "legal-materialized-entity-index-bindings-validation/v1",

@@ -1,0 +1,209 @@
+{
+  "base_commit": "8738cbe26b70f265546d0eff45622ce546bfe1be",
+  "evidence_id": "bound4096-public-checkout-contracts-20261022-01",
+  "fresh_checkout_contracts": {
+    "JUnit": {
+      "bytes": 10383,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-bound4096-publication-20261022-01/qualification/run-01/attempt-loader47-v01/exports/tests.xml",
+      "sha256": "5768f77aabc9b50a607b986fdef454bbd5081ca4d48ef9ec9fe156e83e45aa5e"
+    },
+    "base_commit": "8738cbe26b70f265546d0eff45622ce546bfe1be",
+    "cases": 47,
+    "checkout": "/home/barberb/lift_coding/.worktrees/legal-ir-bound4096-publication-20261022",
+    "checkpoint_restores": 0,
+    "expected_case_names": [
+      "test_inference_file_load_needs_no_training_binding_and_keeps_raw_pin_distinct[False]",
+      "test_inference_file_load_needs_no_training_binding_and_keeps_raw_pin_distinct[True]",
+      "test_inference_file_load_refuses_independent_pin_before_numerical_restore[None]",
+      "test_inference_file_load_refuses_independent_pin_before_numerical_restore[True]",
+      "test_inference_file_load_refuses_independent_pin_before_numerical_restore[AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]",
+      "test_inference_file_load_refuses_independent_pin_before_numerical_restore[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]",
+      "test_inference_file_load_refuses_independent_pin_before_numerical_restore[not-a-digest]",
+      "test_inference_file_load_refuses_independent_pin_before_numerical_restore[0000000000000000000000000000000000000000000000000000000000000000]",
+      "test_inference_file_load_refuses_malformed_envelopes_before_numerical_restore[{\"schema\":1,\"schema\":2}]",
+      "test_inference_file_load_refuses_malformed_envelopes_before_numerical_restore[{\"schema\":NaN}]",
+      "test_inference_file_load_refuses_malformed_envelopes_before_numerical_restore[{}{}]",
+      "test_inference_file_load_refuses_malformed_envelopes_before_numerical_restore[[]]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[missing_field]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[extra_field]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[schema]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[lineage]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[authority]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[numerical_implementation]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[width]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[boolean_seed]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[extra_config]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[device]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[context_hash]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[context_dimension]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[parent_authority]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[parent_implementation]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[parent_hash]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[parent_steps]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[inherited_shape]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[initial_hash]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[cursor]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[zero_update_parent]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[population]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[batch_manifest]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[tuning_contract]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[saved_authority]",
+      "test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore[invented_receipt]",
+      "test_inference_file_load_rechecks_in_memory_checkpoint_after_restore[original]",
+      "test_inference_file_load_rechecks_in_memory_checkpoint_after_restore[detached]",
+      "test_inference_file_load_rechecks_pinned_file_after_restore[whitespace]",
+      "test_inference_file_load_rechecks_pinned_file_after_restore[different_checkpoint]",
+      "test_inference_file_load_rechecks_implementation_after_restore",
+      "test_inference_file_load_enforces_existing_file_byte_limit_before_restore",
+      "test_inference_file_load_preserves_numerical_restore_refusal",
+      "test_inference_file_load_does_not_turn_saved_receipt_into_native_decode_authority",
+      "test_inference_file_load_rechecks_state_after_closing_pathlike_callback[original]",
+      "test_inference_file_load_rechecks_state_after_closing_pathlike_callback[detached]"
+    ],
+    "historical_qualification": {
+      "bytes": 4498,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/native4096-inference-load-20261020-01/compatible-cpu-02/qualification-summary-01.json",
+      "sha256": "8acbb4eb9596bff8bd598aa9ca630bd7bac594e8f160941b53f1ed9d25db9542"
+    },
+    "observed_project_imports": 30,
+    "original_controller": {
+      "bytes": 528,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-bound4096-publication-20261022-01/qualification/run-01/controller-complete-loader47-v01.json",
+      "sha256": "1be90f8c23851529a9b6d721608fe3c5f620fda2467425891e8c5fcbf1afe64d"
+    },
+    "owned_execution_elapsed_seconds": 51.294846429955214,
+    "passed": true,
+    "qualification_scope": "Original eleven inert owning selectors on the genuine isolated public checkout; historical three model restores not repeated.",
+    "recorded_at_utc": "2026-10-22T19:34:21.700233+00:00",
+    "request_sha256": "03ff63b414b98eaabb10bf8fdbb4e85579f63551c099bb8943848750bec605d5",
+    "saved_outcome_review": {
+      "bytes": 7168,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-bound4096-publication-20261022-01/qualification/run-01/loader47-saved-outcome-review-v01.json",
+      "sha256": "2e1bed5c9d1ff41be9898fda717499fe3a6de6c668be4a265e2ae82f04dba8c1"
+    },
+    "schema": "legal-ir-bound4096-public-checkout-qualification/v1",
+    "sealed_result": {
+      "bytes": 3257,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-bound4096-publication-20261022-01/qualification/run-01/attempt-loader47-v01/logs/result.json",
+      "sha256": "f42aa5b2c579871dcd5a31f86813b6eb022b1fe688b8b1a8efc90604ecfc8efa"
+    },
+    "selected_checks": [
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py::test_inference_file_load_needs_no_training_binding_and_keeps_raw_pin_distinct",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py::test_inference_file_load_refuses_independent_pin_before_numerical_restore",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py::test_inference_file_load_refuses_malformed_envelopes_before_numerical_restore",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py::test_inference_file_load_rejects_rehashed_header_damage_before_numerical_restore",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py::test_inference_file_load_rechecks_in_memory_checkpoint_after_restore",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py::test_inference_file_load_rechecks_pinned_file_after_restore",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py::test_inference_file_load_rechecks_implementation_after_restore",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py::test_inference_file_load_enforces_existing_file_byte_limit_before_restore",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py::test_inference_file_load_preserves_numerical_restore_refusal",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py::test_inference_file_load_does_not_turn_saved_receipt_into_native_decode_authority",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py::test_inference_file_load_rechecks_state_after_closing_pathlike_callback"
+    ],
+    "selectors": 11,
+    "source_native_storage_closed": true,
+    "source_pins": 143,
+    "training_steps": 0,
+    "worker_observation": {
+      "bytes": 21763,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-bound4096-publication-20261022-01/qualification/run-01/attempt-loader47-v01/exports/loader47-observation.json",
+      "sha256": "f2426443d3a53520f5dec6c29786034e993812d989285b842f2c4c9cf98759f8"
+    }
+  },
+  "historical_model_observation": {
+    "cases": 50,
+    "evidence": {
+      "bytes": 4498,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/native4096-inference-load-20261020-01/compatible-cpu-02/qualification-summary-01.json",
+      "sha256": "8acbb4eb9596bff8bd598aa9ca630bd7bac594e8f160941b53f1ed9d25db9542"
+    },
+    "exact_model_tensors": 69,
+    "inert_contract_cases": 47,
+    "named_moment_validations": 9,
+    "reexecuted": false,
+    "retained_model_restores": 3,
+    "runtime": "Torch2.9.1+cpu"
+  },
+  "implementation_location": "Existing dataset optimizer numerical owners; maintained integration docs in logic/autoformal.",
+  "original_checkpoint_and_failed_attempt_bytes_rewritten": false,
+  "recorded_at_utc": "2026-10-22T19:34:21.700233+00:00",
+  "schema": "legal-ir-bound4096-publication-observation/v1",
+  "scope_limits": [
+    "Other four complete test files and the older training prefix were preserved, not newly executed; their separate historical qualification pointers remain unknown.",
+    "The fresh47 cases substitute numerical restoration and qualify loader contracts, not a fresh model restore or native encoder execution.",
+    "Runtime path selection is the retained CPU recipe, not full source/binary attestation.",
+    "Historical absolute producer/evidence locators retain their original identity and are not made portable by source relocation.",
+    "One separately referenced source4096 reconciliation receipt is absent at the selected public base; eight other local missing metadata refs are published but sparse.",
+    "No new source compatibility, reconstruction quality, reviewed statutory meaning, training/gold graph or Lean qualification."
+  ],
+  "source_and_test_files": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_bound_dimensions.py": {
+      "bytes": 19477,
+      "preimage": "absent",
+      "sha256": "8aa94909be70dcc242bc4a6b5192e9a06cda411746ce1881c74ae4e0840e4258",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_bound_dimensions.py"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_bound_native4096.py": {
+      "bytes": 19829,
+      "preimage": "absent",
+      "sha256": "503b8a8a89f97e6e9d19a3208242c3cfbd7ffdab2140f0ddde386e22c34fb4c3",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_bound_native4096.py"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_context_binding.py": {
+      "bytes": 14488,
+      "preimage": "absent",
+      "sha256": "fae25279355538460ad2f4d81928719f3f7d8816a7329e4db31cb7488db1b0c2",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_context_binding.py"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions_cpu_inference.py": {
+      "bytes": 9547,
+      "preimage": "absent",
+      "sha256": "27e0c40983f3bbf194581cb13b2a6e469fa76ec5beb1ecef1a0a0e4a11078554",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions_cpu_inference.py"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_native4096_binding.py": {
+      "bytes": 11679,
+      "preimage": "absent",
+      "sha256": "015c7b87ed5222bb693fa5c78df444cdd918cba6486c718dd340c237c9f475bf",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_native4096_binding.py"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_native4096_numeric.py": {
+      "bytes": 23742,
+      "preimage": "absent",
+      "sha256": "0abfe54de4ab36fd71df70bb8377a0ceae370baf28799021d3dd79574cfc4607",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_native4096_numeric.py"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_dimensions.py": {
+      "bytes": 28161,
+      "preimage": "absent",
+      "sha256": "152bc54c378746c18d074c4e93ca24793ea83e6f35bda17e6c3bcead2769c639",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_dimensions.py"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py": {
+      "bytes": 60332,
+      "preimage": "absent",
+      "sha256": "f5e28e4f0210c622f6ed2c14fb7e62bd0ec4db2cebc18c464a4da8915c5df98d",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_bound_native4096.py"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_context_binding.py": {
+      "bytes": 13573,
+      "preimage": "absent",
+      "sha256": "6e50bbfe1e310eaac949b135355dcf2ab75f9cb8ebf1edcfe0677ab4b5200b10",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_context_binding.py"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions_cpu_inference.py": {
+      "bytes": 9947,
+      "preimage": "absent",
+      "sha256": "74fdb823562d1c2bd7124aa0d1c1d981eb47809355b4b1fc25db678a5455e8bd",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_dimensions_cpu_inference.py"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_native4096_binding.py": {
+      "bytes": 25590,
+      "preimage": "absent",
+      "sha256": "a13d447d8cc1a93d742330f96efaa6edb99b5245d9c9d2b664c6463f48cc2131",
+      "source": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_native4096_binding.py"
+    }
+  },
+  "training_or_native_encoder_or_Lean_execution": false,
+  "unchanged_shared_dependencies": 24
+}

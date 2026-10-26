@@ -110,6 +110,58 @@ def test_crosswalk_slugs_outside_the_static_catalog_stay_non_indexable() -> None
     assert "papua_new_guinea" in report["alias_keys_are_not_extra_countries"]
 
 
+def test_cid_only_set_matches_full_corpus_entry_cids() -> None:
+    """A CID-set check must not invent a different identity than the publisher."""
+    laws = _laws(
+        {
+            "id": "law-1",
+            "title": "Fixture Act",
+            "text": "Section 1. The first rule applies.\n\nSection 2. The second rule applies.",
+            "jurisdiction": "Fixture",
+            "country": "Fixture",
+            "language": "en",
+            "source_url": "https://example.test/1",
+            "license": "cc0",
+            "eli": "",
+            "identifier": "law-1",
+            "official_identifier": "LAW-1",
+            "source_type": "official",
+            "law_status": "in_force",
+            "metadata_json": "{}",
+        }
+    )
+    articles = _articles(
+        {
+            "id": "art-1",
+            "law_id": "law-1",
+            "title": "Section 1",
+            "text": "The first rule applies to every person in the fixture.",
+            "article_number": "1",
+            "metadata_json": "{}",
+        },
+        {
+            "id": "art-2",
+            "law_id": "law-1",
+            "title": "Section 2",
+            "text": "The second rule applies to every person in the fixture.",
+            "article_number": "2",
+            "metadata_json": "{}",
+        },
+    )
+    meta = _source_meta("rev-a")
+    full, full_report = build_corpus(laws, articles, meta)
+    serial, serial_report = build_corpus(laws, articles, meta, cid_only=True, cid_workers=1)
+    parallel, parallel_report = build_corpus(laws, articles, meta, cid_only=True, cid_workers=2)
+    expected = set(full["entry_cid"].astype(str))
+    assert expected
+    assert set(serial["entry_cid"].astype(str)) == expected
+    assert set(parallel["entry_cid"].astype(str)) == expected
+    assert serial_report["n_out"] == full_report["n_out"] == parallel_report["n_out"]
+    assert serial_report["cid_workers"] == 1
+    assert parallel_report["cid_workers"] == 2
+    assert "body" not in serial.columns
+
+
 def test_catalog_targets_justicedao_and_endomorphosis_source() -> None:
     germany = get_country("germany")
     assert germany["repo"] == "endomorphosis/ipfs_germany_laws"
@@ -313,6 +365,130 @@ def test_reconstruct_empty_parent_from_articles_sparse_coverage() -> None:
     assert laws_out.iloc[0]["body"] == expected
     assert "Tenth body." in laws_out.iloc[0]["body"]
     assert "<p>" not in laws_out.iloc[0]["body"]
+
+
+def test_empty_article_title_is_not_glued_into_the_parent() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.normalize import build_corpus
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.reconstruct import (
+        expected_glue_from_children,
+    )
+
+    laws = _laws(
+        {
+            "id": "law-1",
+            "title": "DNA Evidence Act",
+            "text": "",
+            "jurisdiction": "JM",
+            "country": "Jamaica",
+            "language": "en",
+            "source_url": "https://example.test/dna",
+            "license": "cc0",
+            "eli": "",
+            "identifier": "law-1",
+            "official_identifier": "DNA",
+            "source_type": "official",
+            "law_status": "in_force",
+            "metadata_json": "{}",
+        }
+    )
+    articles = _articles(
+        {
+            "id": "art-body",
+            "law_id": "law-1",
+            "title": "Body",
+            "text": "",
+            "article_number": "body",
+            "metadata_json": "{}",
+        },
+        {
+            "id": "art-1",
+            "law_id": "law-1",
+            "title": "Section 1",
+            "text": "Section one body is long enough to remain a real legal unit in the corpus.",
+            "article_number": "1",
+            "metadata_json": "{}",
+        },
+    )
+    corpus, report = build_corpus(laws, articles, _source_meta("rev-a"))
+    assert report["verification"]["admitted"] is True
+    kids = corpus[corpus["record_type"] == "article"]
+    assert list(kids["source_id"]) == ["art-1"]
+    parent = corpus[corpus["record_type"] == "law"].iloc[0]
+    expected = expected_glue_from_children(
+        [
+            {
+                "id": "art-1",
+                "title": "Section 1",
+                "article_number": "1",
+                "body": kids.iloc[0]["body"],
+            }
+        ]
+    )
+    assert parent["body"] == expected
+    assert "Body" not in parent["body"]
+
+
+def test_boilerplate_only_parent_does_not_block_the_corpus() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.normalize import build_corpus
+
+    notice = "[The inclusion of this page is authorized by L.N. 143A/2021]\n" * 8
+    laws = _laws(
+        {
+            "id": "law-1",
+            "title": "The DNA Evidence Act",
+            "text": notice,
+            "jurisdiction": "JM",
+            "country": "Jamaica",
+            "language": "en",
+            "source_url": "https://example.test/dna",
+            "license": "cc0",
+            "eli": "",
+            "identifier": "law-1",
+            "official_identifier": "DNA",
+            "source_type": "official",
+            "law_status": "in_force",
+            "metadata_json": "{}",
+        },
+        {
+            "id": "law-2",
+            "title": "Real Act",
+            "text": "",
+            "jurisdiction": "JM",
+            "country": "Jamaica",
+            "language": "en",
+            "source_url": "https://example.test/real",
+            "license": "cc0",
+            "eli": "",
+            "identifier": "law-2",
+            "official_identifier": "REAL",
+            "source_type": "official",
+            "law_status": "in_force",
+            "metadata_json": "{}",
+        },
+    )
+    articles = _articles(
+        {
+            "id": "law-1-body",
+            "law_id": "law-1",
+            "title": notice.strip(),
+            "text": notice,
+            "article_number": "body",
+            "metadata_json": "{}",
+        },
+        {
+            "id": "law-2-1",
+            "law_id": "law-2",
+            "title": "Section 1",
+            "text": "Section one body is long enough to remain a real legal unit in the corpus.",
+            "article_number": "1",
+            "metadata_json": "{}",
+        },
+    )
+    corpus, report = build_corpus(laws, articles, _source_meta("rev-a"))
+    assert report["verification"]["admitted"] is True
+    assert report["n_empty_parents_with_articles_not_reconstructed"] == 0
+    assert "law-1" not in set(corpus["instrument_id"])
+    assert "law-2" in set(corpus["instrument_id"])
 
 
 def test_reconstruct_prefix_never_holds_over_cap(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -3542,6 +3718,90 @@ def test_multilingual_heading_syntaxes_and_chrome() -> None:
 
     thai_page = normalize_legal_text("หนา ๔๐")
     assert thai_page == ""
+
+
+def test_all_caps_numbered_clauses_split_and_a_mid_line_number_does_not() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.structure import (
+        split_structured_units,
+    )
+
+    clauses = (
+        "8. CONSIDERATION OF PROPOSALS\n"
+        "(1) Within two months the Minister shall approve the proposals.\n"
+        "9. ADDITIONAL PROPOSALS\n"
+        "(1) The Developer may vary the activities and the Minister shall record them."
+    )
+    assert [unit.number for unit in split_structured_units(clauses, language="en")] == ["8", "9"]
+    person = (
+        "1. A person shall not operate a lodge within a market.\n"
+        "2. The Council may fix the hours for the slaughter of animals."
+    )
+    assert [unit.number for unit in split_structured_units(person, language="en")] == ["1", "2"]
+    dashed = (
+        "39.-(1) A service provider shall not monitor the data which it transmits.\n"
+        "40.-(1) An access provider shall not be liable for providing access."
+    )
+    assert [unit.number for unit in split_structured_units(dashed, language="en")] == ["39", "40"]
+    prose = (
+        "The fee is stated in clause 8. The minister shall keep the register "
+        "and publish it.\n"
+        "A later sentence does not open a new section."
+    )
+    assert split_structured_units(prose, language="en") == []
+
+
+def test_icelandic_grein_does_not_match_the_following_word() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.structure import (
+        check_exclusive_cover,
+        segment_exclusive,
+        split_structured_units,
+    )
+
+    icelandic = (
+        "1. gr. Dómstólar dæma í málum samkvæmt lögum þessum og stjórnarskrá.\n"
+        "2. gr. Þinghöld skulu vera opinber nema lög kveði á um annað."
+    )
+    latvian = (
+        "1. pants Šis likums stājas spēkā visā teritorijā un saista ikvienu personu.\n"
+        "2. pants Ministrs glabā reģistru un publicē to oficiālajā izdevumā."
+    )
+    assert [unit.number for unit in split_structured_units(icelandic, language="is")] == ["1", "2"]
+    assert [unit.number for unit in split_structured_units(latvian, language="lv")] == ["1", "2"]
+    job = (
+        "1. Grupi ligjor 3\n"
+        "mbështetje ligjore\n"
+        "Zyrtar për përpunimin e Profesional 2"
+    )
+    assert split_structured_units(job, language="sq") == []
+    assert all(unit.kind != "article" for unit in segment_exclusive(job, language="sq"))
+    tailor = (
+        "1. pantsuit The tailor shall keep a register of cloth for the shop.\n"
+        "2. pantsuit Buttons stay on the garment and the clerk records them."
+    )
+    assert split_structured_units(tailor, language="lv") == []
+    assert check_exclusive_cover(job, segment_exclusive(job, language="sq"))
+
+
+def test_strip_chrome_lines_stays_fast_on_many_short_lines() -> None:
+    import time
+
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.structure import (
+        strip_chrome_lines,
+    )
+
+    lines = []
+    for i in range(4000):
+        lines.append(f"Article {i} The court applies this Act throughout the territory.")
+        lines.append("")
+        lines.append("iii")
+        lines.append("3 of 5")
+    started = time.perf_counter()
+    cleaned = strip_chrome_lines("\n".join(lines))
+    elapsed = time.perf_counter() - started
+    assert elapsed < 1.0
+    assert "3 of 5" not in cleaned.splitlines()
+    assert "iii" not in cleaned.splitlines()
+    assert "Article 1 The court applies this Act throughout the territory." in cleaned
 
 
 def test_lexicon_article_tokens_round_trip_split() -> None:

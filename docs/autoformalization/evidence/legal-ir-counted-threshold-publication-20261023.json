@@ -1,0 +1,886 @@
+{
+  "canonical_guide": {
+    "bytes": 28877,
+    "path": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_counted_frame_v1.md",
+    "sha256": "bb24b4120da77e46a595ee5f759b0c2f3999979c20e7a8ebee573383ae67e037"
+  },
+  "completion_authority": false,
+  "historical_qualification": {
+    "base170": {
+      "additional_source_definitions": 27,
+      "additional_test_definitions": 29,
+      "corrected_targeted_retry_passes": 1,
+      "distinct_passed_aggregate": 170,
+      "exact_public_source_and_test_byte_prefixes_preserved": true,
+      "failed_first_attempt_and_original_recovery_preserved": true,
+      "fresh170case_run_claimed": false,
+      "independent_aggregate_review": {
+        "bytes": 15529,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-compact-roundtrip-20261022-01/independent-actual-roundtrip-review-01.json",
+        "sha256": "dcdd9ba04373e362bcc605be5c32fd22e8737477a68bfa4b5ab4132678a3f090"
+      },
+      "old_source_definitions_AST_unchanged": 19,
+      "old_source_sha256": "72501580048e73be95638c4d2d291ceaa5e026516b2d09ba8d747d5d356ccc31",
+      "old_test_helpers_definitions_AST_unchanged": 41,
+      "old_test_sha256": "f64884acc049cd6f50d00590fba467910c80ea787ddf7abdc1dde3878eb8dbf9",
+      "original_failures": 1,
+      "original_passes": 169,
+      "product_source_unchanged_between_attempts": true,
+      "qualification": {
+        "bytes": 18524,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-compact-roundtrip-20261022-01/qualification-summary.json",
+        "sha256": "1ce450ac065b4a06b1d068626d4e8d280008f812d53f8b242155c499b2d849db"
+      },
+      "source_installation": {
+        "bytes": 5990,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-compact-roundtrip-20261022-01/source-installation-01.json",
+        "sha256": "a1ce5fffb91dbeec8f6d1b4fe194af8e45a61e8eb89db35fe6e0a8539993dc83"
+      },
+      "test_fixture_repair": {
+        "bytes": 524,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-compact-roundtrip-20261022-01/test-fixture-repair-installation-01.json",
+        "sha256": "1d1d42be364b3a7b12c1a5d1f6a05ee6801b61fc4da79503e678bf4c39249845"
+      }
+    },
+    "distinct_case_bookkeeping_only": {
+      "codec": 81,
+      "distinct_union": 144,
+      "factory": 67,
+      "new144case_run_claimed": false,
+      "overlap": 4
+    },
+    "factory67_and_codec81_separate": [
+      {
+        "actual_compiles": 22,
+        "actual_module_origins": 21,
+        "cases": 67,
+        "import_origins": {
+          "bytes": 7637,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/attempt-counted-threshold-v01/exports/import-origins.json",
+          "sha256": "af761d339d897d7ea80fb60741349bfadbc406c0ca671565f024d0fc2285994e"
+        },
+        "independent_saved_review": {
+          "bytes": 8303,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/independent-qualification-readback-v01.json",
+          "sha256": "e9701090b50c1010741c389ca1a82b9053b58948fd6b6dd94f2a6c6b8be35ddc"
+        },
+        "native_closed": true,
+        "phases": 201,
+        "qualification": {
+          "bytes": 14167,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/qualification-summary-v01.json",
+          "sha256": "6aa650119bfa343261c7879b9ab57490b3212ba6a7ac17b6d862f0fd1a9dcbec"
+        },
+        "source_READ_closed": true,
+        "storage_released": true,
+        "test_collection": {
+          "bytes": 52057,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/attempt-counted-threshold-v01/exports/test-collection.json",
+          "sha256": "17dd3a6f40c9e606b1778f04025e7e8d23838a6a2ce46956437726a2b995f599"
+        },
+        "test_result": {
+          "bytes": 13333,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/attempt-counted-threshold-v01/exports/test-result.json",
+          "sha256": "edc077dc2cd47c3eb637a3ea076551e15b8e2b306cd29ba186700726616736d8"
+        }
+      },
+      {
+        "actual_compiles": 24,
+        "actual_module_origins": 23,
+        "cases": 81,
+        "import_origins": {
+          "bytes": 8396,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/attempt-counted-threshold-codec-v01/exports/import-origins.json",
+          "sha256": "0a22915373bfc614a6ce72cbbabe578df25f9f384b8327069bd242f2bea9064b"
+        },
+        "independent_saved_review": {
+          "bytes": 8545,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/independent-qualification-readback-v01.json",
+          "sha256": "4e954940cf9fa20e283269ed77f34cca2ffdbd4aede4c636e3b06dbe26a009e1"
+        },
+        "native_closed": true,
+        "phases": 243,
+        "qualification": {
+          "bytes": 15471,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/qualification-summary-v01.json",
+          "sha256": "ca7070368c11e764ddba1663fa2243c1e0c07215307b9443ee2a2ebbbfa683e7"
+        },
+        "source_READ_closed": true,
+        "storage_released": true,
+        "test_collection": {
+          "bytes": 63813,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/attempt-counted-threshold-codec-v01/exports/test-collection.json",
+          "sha256": "bd3c99d3c26a02634db4409a0daa313ac9dc414153a4e5a361c647e028d014e0"
+        },
+        "test_result": {
+          "bytes": 16820,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/attempt-counted-threshold-codec-v01/exports/test-result.json",
+          "sha256": "ee33528832fdcb9e05775f81100e642e8784fa878c9634af29ec9915b4284e3d"
+        }
+      }
+    ],
+    "older_adoption109_and_separate_Lean_build": {
+      "bytes": 6898,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-frame-adoption-20261021-01/qualification-summary-v02.json",
+      "sha256": "b3b3c3ae948ac4c38ec81b6d814743a41237d7223ed79f64bdeb9f420afcc086"
+    }
+  },
+  "inherited_public_inputs": [
+    {
+      "bytes": 478,
+      "path": "__init__.py",
+      "sha256": "bd518ec0f37a0a5c4c0b35e7cf36504716a1fe4dbe4f0a803629a965a9fdeeb1"
+    },
+    {
+      "bytes": 56829,
+      "path": "ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    {
+      "bytes": 60251,
+      "path": "ipfs_datasets_py/logic/autoformal/__init__.py",
+      "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+    },
+    {
+      "bytes": 34262,
+      "path": "ipfs_datasets_py/logic/families/namespaces.py",
+      "sha256": "ba097e653158a812d66ead978d6405d61adaa293521305333579b19bd69a432d"
+    },
+    {
+      "bytes": 8980,
+      "path": "ipfs_datasets_py/logic/parsers/__init__.py",
+      "sha256": "e75f0c2ffea0f0706a3d1768a794849e6c013b6647dc59ba331f44797c233386"
+    },
+    {
+      "bytes": 58092,
+      "path": "ipfs_datasets_py/logic/parsers/fol.py",
+      "sha256": "af5e730aa9f92676ff07c8be43e834652a98e6f7a015a04cd8ee0546c2b18e0f"
+    },
+    {
+      "bytes": 8285,
+      "path": "ipfs_datasets_py/logic/syntax_core/__init__.py",
+      "sha256": "20dd418d90360cdb42c64ba8b87bedcdb640228b460ef6c6ae60312365130e81"
+    },
+    {
+      "bytes": 45735,
+      "path": "ipfs_datasets_py/logic/syntax_core/algebra.py",
+      "sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7"
+    },
+    {
+      "bytes": 56966,
+      "path": "ipfs_datasets_py/logic/syntax_core/ast.py",
+      "sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4"
+    },
+    {
+      "bytes": 75291,
+      "path": "ipfs_datasets_py/logic/syntax_core/contracts.py",
+      "sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8"
+    },
+    {
+      "bytes": 10752,
+      "path": "ipfs_datasets_py/logic/syntax_core/diagnostics.py",
+      "sha256": "a291db3c2cea04ae8dd9221a5e5ddbebd419679c02a5a008034e3755e7650d8f"
+    },
+    {
+      "bytes": 27534,
+      "path": "ipfs_datasets_py/logic/syntax_core/lexer.py",
+      "sha256": "f666e9759323508f4e90964c0d71164645af9ce1de60bed778e5f64f7f4a3aea"
+    },
+    {
+      "bytes": 27560,
+      "path": "ipfs_datasets_py/logic/syntax_core/registry.py",
+      "sha256": "eff5ca12d748eff1e9463b737a8243c97d89cac51e1b604fe2c765aed885cb44"
+    },
+    {
+      "bytes": 30488,
+      "path": "ipfs_datasets_py/logic/syntax_core/signatures.py",
+      "sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf"
+    },
+    {
+      "bytes": 5845,
+      "path": "ipfs_datasets_py/router_deps.py",
+      "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+    },
+    {
+      "bytes": 20,
+      "path": "tests/__init__.py",
+      "sha256": "89588b0c2be9d872060e78aa68ccf95f94ca27ea6bcb79a43509d66c296c73ce"
+    },
+    {
+      "bytes": 26,
+      "path": "tests/unit/__init__.py",
+      "sha256": "9d566025eaa21543b52722147774afc45981154f677dcc38078a2632e5b52947"
+    },
+    {
+      "bytes": 35292,
+      "path": "ipfs_datasets_py/ipfs_backend_router.py",
+      "sha256": "d57898ceb7a5be0d8776f81ecb08cf96144afa03f55090d5f33b41baed3e8b0d"
+    },
+    {
+      "bytes": 1489,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+      "sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31"
+    }
+  ],
+  "local_raw_evidence_availability": {
+    "bundled": false,
+    "clone_available": false,
+    "fresh_combined_case_pass_claimed": false,
+    "new_test_or_native_execution_claimed": false,
+    "scope": "Absolute workspace locators identify preserved historical receipts/attempts. Their bytes are not bundled here; published digest-backed summaries do not promise access to raw captures, models, checkpoints or corpus."
+  },
+  "masks": {
+    "evaluation_gold": 0,
+    "training": 0
+  },
+  "public_baseline": "9f1eb48503ef844962bc2cf172e13b57845b7932",
+  "public_dependency_review": {
+    "receipt": {
+      "bytes": 15905,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-publication-20261023-01/independent-public-dependency-review-v02.json",
+      "sha256": "c1ce8379e7634b6a1443023e52d69680c2646d890a1fc18882594945e328518d"
+    },
+    "saved_review": {
+      "append_compatibility": {
+        "base_source_added_definitions": 27,
+        "base_source_all_19_old_definitions_AST_identical": true,
+        "base_source_old_bytes_are_literal_prefix": true,
+        "base_source_old_top_level_assignment_values_AST_identical": true,
+        "base_test_added_definitions": 29,
+        "base_test_all_41_old_test_helper_definitions_AST_identical": true,
+        "base_test_old_bytes_are_literal_prefix": true,
+        "generation_effect": "Dynamic _SELF_PIN/report source hashes change with producer bytes. Old evidence remains historical and must not be rewritten or silently qualified as the new producer."
+      },
+      "basis": {
+        "actual_original_raw_compile_origins": {
+          "bytes": 8396,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/attempt-counted-threshold-codec-v01/exports/import-origins.json",
+          "sha256": "0a22915373bfc614a6ce72cbbabe578df25f9f384b8327069bd242f2bea9064b"
+        },
+        "current_remote_head_claim": false,
+        "immutable_public_base": "d86f166dff0c0ae686dfba1c9a14dda1e204e940",
+        "later_public_docs_only_successor": "9f1eb48503ef844962bc2cf172e13b57845b7932",
+        "later_successor_PR": 1353,
+        "later_successor_changes_product_sources_or_tests": false,
+        "later_successor_merged_at": "2026-10-23T02:13:06Z",
+        "primary_root": "/home/barberb/lift_coding/external/ipfs_datasets"
+      },
+      "compiled_body_comparison": {
+        "absent": [
+          {
+            "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_threshold_v2.py",
+            "primary_and_original_sha256": "9e3c4e42d8cfb5ed851461f6cd2562a71c7d5a2c2b8ccd5ab4fdbcf06e168024"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/autoformal/legal_counted_threshold_codec_v2.py",
+            "primary_and_original_sha256": "94d6d7f722394c5344152303bc1504c545bcf9f2ef2a47b9b2d7f3360a1d0507"
+          },
+          {
+            "path": "tests/unit/logic/autoformal/test_legal_counted_frame_threshold_v2.py",
+            "primary_and_original_sha256": "a666838d99951b9947b2dcf4545f4490fdd721b75d6d4f66eec9e01e995d4865"
+          },
+          {
+            "path": "tests/unit/logic/autoformal/test_legal_counted_threshold_codec_v2.py",
+            "primary_and_original_sha256": "f2952c25147cf0e5adc8383988867c92a7ccc8c89f01a8d3f1b5022724911fcc"
+          }
+        ],
+        "all_24_path_hash_pairs_rechecked_against_original_origin_JSON": true,
+        "all_primary_bodies_match_original_qualification_hashes": true,
+        "different": [
+          {
+            "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_v1.py",
+            "primary_bytes": 48481,
+            "primary_sha256": "df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13",
+            "public_bytes": 22999,
+            "public_git_blob": "d56709a6236cfc0211f92b7d8df5a110fc72e25b",
+            "public_sha256": "72501580048e73be95638c4d2d291ceaa5e026516b2d09ba8d747d5d356ccc31"
+          },
+          {
+            "path": "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py",
+            "primary_bytes": 48768,
+            "primary_sha256": "1a4a552f0fe3dbf265c569ff66a987f5dc55664034dd480c073b0081c2aaf27c",
+            "public_bytes": 23504,
+            "public_git_blob": "6b94950c29e01b20941577a43a93bd1041ec3b26",
+            "public_sha256": "f64884acc049cd6f50d00590fba467910c80ea787ddf7abdc1dde3878eb8dbf9"
+          },
+          {
+            "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+            "primary_sha256": "dc6ae4f1cd27628a56db13fc656156c1b84df8ff999d4158ff25e70fac89f7a6",
+            "public_bytes": 1489,
+            "public_git_blob": "f2e4150c63586c9d994da49a8e73d968ff1eeae6",
+            "public_sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31"
+          }
+        ],
+        "identical": [
+          {
+            "path": "__init__.py",
+            "sha256": "bd518ec0f37a0a5c4c0b35e7cf36504716a1fe4dbe4f0a803629a965a9fdeeb1"
+          },
+          {
+            "path": "ipfs_datasets_py/__init__.py",
+            "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/autoformal/__init__.py",
+            "sha256": "9e8b39edd2c9885be6d8eb3765bdf9d93aa5071ccd17f3ebaead3c1c5a191a71"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/families/namespaces.py",
+            "sha256": "ba097e653158a812d66ead978d6405d61adaa293521305333579b19bd69a432d"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/parsers/__init__.py",
+            "sha256": "e75f0c2ffea0f0706a3d1768a794849e6c013b6647dc59ba331f44797c233386"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/parsers/fol.py",
+            "sha256": "af5e730aa9f92676ff07c8be43e834652a98e6f7a015a04cd8ee0546c2b18e0f"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/syntax_core/__init__.py",
+            "sha256": "20dd418d90360cdb42c64ba8b87bedcdb640228b460ef6c6ae60312365130e81"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/syntax_core/algebra.py",
+            "sha256": "d3587e2270943167ebef226e03cbd70cfc8888d936647670a21cfa514240e6b7"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/syntax_core/ast.py",
+            "sha256": "4709513f18ab270858fe9595d88a847ddc52092606c52c7802947abed1ab9ac4"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/syntax_core/contracts.py",
+            "sha256": "ce6d49e05ca2b09a84a3125ed6ad4c4aae4adf2c5943d3a4fd4eeeb057b444a8"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/syntax_core/diagnostics.py",
+            "sha256": "a291db3c2cea04ae8dd9221a5e5ddbebd419679c02a5a008034e3755e7650d8f"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/syntax_core/lexer.py",
+            "sha256": "f666e9759323508f4e90964c0d71164645af9ce1de60bed778e5f64f7f4a3aea"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/syntax_core/registry.py",
+            "sha256": "eff5ca12d748eff1e9463b737a8243c97d89cac51e1b604fe2c765aed885cb44"
+          },
+          {
+            "path": "ipfs_datasets_py/logic/syntax_core/signatures.py",
+            "sha256": "49dd4fb0096661a05a15f056eb57248349e2b4e0b02e83239f36db36788c75bf"
+          },
+          {
+            "path": "ipfs_datasets_py/router_deps.py",
+            "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c"
+          },
+          {
+            "path": "tests/__init__.py",
+            "sha256": "89588b0c2be9d872060e78aa68ccf95f94ca27ea6bcb79a43509d66c296c73ce"
+          },
+          {
+            "path": "tests/unit/__init__.py",
+            "sha256": "9d566025eaa21543b52722147774afc45981154f677dcc38078a2632e5b52947"
+          }
+        ],
+        "original_raw_compile_body_count": 24,
+        "public_absent_count": 4,
+        "public_different_count": 3,
+        "public_identical_count": 17
+      },
+      "completed": true,
+      "concurrent_publication_preservation": {
+        "PR": 1353,
+        "files": [
+          "docs/autoformalization/evidence/legal-ir-cp128-saved-selector-audit-20261023.json",
+          "docs/autoformalization/evidence/legal-ir-cp128-warmstart-source-sensitivity-20261023.json",
+          "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+          "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md",
+          "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_role_warmstart_runtime_v1.md",
+          "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_role_warmstart_training_v1.md",
+          "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json"
+        ],
+        "head": "5d2de48a47e29e26f8f032ec81f0ccbe9ab66c8e",
+        "instruction": "Refresh actual selected publication base and preserve all peer documentation/task/catalog changes; no source/test delta was present in this PR.",
+        "merge": "9f1eb48503ef844962bc2cf172e13b57845b7932"
+      },
+      "corrects_preserved_v01": {
+        "bytes": 15098,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-publication-20261023-01/independent-public-dependency-review-v01.json",
+        "reason": "Three path labels were normalized incorrectly while transcribing retained observations. Exact source hashes, Git blobs, counts and conclusions were unchanged. This v02 is authoritative. The original origin JSON and exact filename lookup confirm corrected paths.",
+        "sha256": "eb000faffede5f3b7f96b8274a131f71b49c40c50fb1652fc62a04c8acd30c51"
+      },
+      "dependency_and_API_boundary": {
+        "cap_free_context_sha256": "50424a78f7bd5b489de16fe1f4eb4ec38fb7d853b48d1b3b358429dc657ecb85",
+        "codec_fixed_factory_sha256": "9e3c4e42d8cfb5ed851461f6cd2562a71c7d5a2c2b8ccd5ab4fdbcf06e168024",
+        "codec_modules_guard_line": 41,
+        "codec_pin_line": 23,
+        "codec_test_oracle": "Local JSONDecoder lexical oracle.",
+        "factory_fixed_base_sha256": "df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13",
+        "factory_origin_guard_line": 30,
+        "factory_pin_line": 20,
+        "factory_test_oracles": "AST-copied independent finite/truth test oracles; no runtime import of an older test helper.",
+        "product_dependencies": "Typed syntax_core constructors, FOL parser, families namespaces, base/factory/codec source fences. No join or numerical dependency is introduced.",
+        "required_source_bundle": [
+          "legal_counted_frame_v1.py",
+          "legal_counted_frame_threshold_v2.py",
+          "legal_counted_threshold_codec_v2.py"
+        ],
+        "required_test_bundle": [
+          "test_legal_counted_frame_v1.py",
+          "test_legal_counted_frame_threshold_v2.py",
+          "test_legal_counted_threshold_codec_v2.py"
+        ],
+        "scope": "Symbolic three-form counted transport only; no new grammar/model/Lean or legal authority; authority false and masks zero."
+      },
+      "observation_method": {
+        "bounded_path_label_verification_after_v01": true,
+        "immutable_public_git_blobs": true,
+        "native_or_model_calls": false,
+        "new_tests_run": false,
+        "no_additional_queries_while_writing": true,
+        "resource_or_DB_probes": false,
+        "saved_origin_json_and_exact_source_bytes": true,
+        "source_or_Git_mutation": false,
+        "stdlib_AST_comparisons": true
+      },
+      "passed": true,
+      "purpose": "Freeze retained bounded read-only source/API/reverse-consumer observations for historical qualification reuse; no new test or runtime qualification.",
+      "pytest_helper_reconciliation": {
+        "both_request_schema": "owned-validation-request/v1",
+        "fresh_public_pytest_pass_claimed": false,
+        "ordinary_tail_statement_count": 7,
+        "ordinary_tmp_path_tail_AST_identical": true,
+        "ordinary_tmp_path_tail_literal_bytes_identical": true,
+        "physical_fixture_flag_absent": true,
+        "physical_fixture_profile_field_absent": true,
+        "physical_profile_helpers_not_ported": true,
+        "primary_tail_starts_line": 307,
+        "profile_static_path": "Primary _load_profile line114 returns None without flag and paired environment; flag default is False at line252.",
+        "public_plugin_preserved": true,
+        "public_tail_starts_line": 23,
+        "request_observations": [
+          {
+            "bytes": 44887,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/request-counted-threshold-v01.json",
+            "sha256": "ad1b164622afc7d65dc9b4f0fa9095679d868a49786c5035073535c80053ea54"
+          },
+          {
+            "bytes": 46313,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/request-counted-threshold-codec-v01.json",
+            "sha256": "6c0060d63e8cbcfaa96533e9a2808a9880d9bff51af07ca829aee026b0db766d"
+          }
+        ],
+        "strengthened_provenance_attribution": "counted_owner_review independently traced the actual request-pinned validation_run_resources6695f982 and runner970d590: _physical_profile starts None; only v2 configures it; environment removes both physical profile variables and adds them only for non-None profile; runner passes that clean environment to execvpe. This is saved-request/pinned-control-flow inference, not a dedicated environment snapshot or new execution.",
+        "whole_original_request_closure_identical": false
+      },
+      "recorded_at_utc": "2026-10-23T02:25:32.000944+00:00",
+      "reuse_conclusion": {
+        "fresh_all_source_administration_qualification_claimed": false,
+        "historical_exact_product_source_qualification_reuse_supported": true,
+        "limitations": [
+          "Current public main may advance after retained observations.",
+          "The reverse-consumer audit covers the named exact public counterparts, not every repository caller.",
+          "Original successful physical-profile absence is inferred from actual requests and pinned native environment control flow; there is no dedicated saved environment snapshot.",
+          "Historical 170 base evidence is not represented here as a fresh all170 pass; counted_owner_review owns that exact aggregate custody review.",
+          "Guide prose about join/review/numerical consumers requires a public-delivery boundary rather than blindly copying primary-only claims."
+        ],
+        "new_scientific_or_legal_qualification_claimed": false,
+        "original_failed_evidence_rewritten": false,
+        "whole_runtime_or_resource_closure_identity_claimed": false
+      },
+      "schema": "legal-ir-counted-threshold-independent-public-dependency-review/v2",
+      "selected_reverse_public_counterparts": {
+        "correction": "Dynamic counted._owners logic observed in primary typed-norm join is absent from its public counterpart. It must not be described as delivered publicly by this three-module bundle.",
+        "fixed_pin_blocker_in_selected_scope": false,
+        "primary_only_additions_not_ported": [
+          "counted join branch",
+          "compact decoder counted owner spec",
+          "decoder-profile counted owner pin",
+          "cell-target counted prefix pin",
+          "counted content head"
+        ],
+        "rows": [
+          {
+            "contains_counted_frame_reference": false,
+            "contains_new_df917_pin": false,
+            "contains_old_725015_pin": false,
+            "path": "ipfs_datasets_py/logic/autoformal/legal_source_typed_norm_join_v1.py",
+            "public_git_blob": "605430c7c2b6b3424cc6ee17a726451aa9475a05",
+            "public_sha256": "92d0c1a46b86b9cdecdc42477f67e6a2141481379498f8ebd90369f9d3b65f11"
+          },
+          {
+            "contains_counted_frame_reference": false,
+            "contains_new_df917_pin": false,
+            "contains_old_725015_pin": false,
+            "path": "ipfs_datasets_py/logic/autoformal/legal_compact_decoder_example_v1.py",
+            "public_git_blob": "d7a5b0c9414589aa87c9b76f533ef9f9c7b9aca5",
+            "public_sha256": "5de4bf91a3f93e405606f4c042f342d52736ad7588586005a84493feaf7b76a0"
+          },
+          {
+            "contains_counted_frame_reference": false,
+            "contains_new_df917_pin": false,
+            "contains_old_725015_pin": false,
+            "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
+            "public_git_blob": "0854745b8dd3dfeca979966990f4dfda5b39c5a5",
+            "public_sha256": "cd94b586f369517e6b3507995f9eea1b0589cce769c11afe6676285b0161811a"
+          },
+          {
+            "contains_counted_frame_reference": false,
+            "contains_new_df917_pin": false,
+            "contains_old_725015_pin": false,
+            "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_target_compatibility.py",
+            "public_git_blob": "72872409b14051bae95ac73d0d73f74d876f0bf5",
+            "public_sha256": "db645d0046f150f5decde9f28eaa20d4318c4e84a896fac106e5ed03c50bade5"
+          }
+        ],
+        "scope": "Four existing public counterparts selected from primary counted-frame reverse references; not a global absence claim."
+      },
+      "spec_only_availability_probe": {
+        "bytes": 35292,
+        "counted_as_compiled_body": false,
+        "path": "ipfs_datasets_py/ipfs_backend_router.py",
+        "public_equals_primary": true,
+        "public_git_blob": "99e0217a261e86fdc38298ea181960bedafbd9b5",
+        "required_even_with_minimal_imports": true,
+        "root_initializer_find_spec_line": 549,
+        "sha256": "d57898ceb7a5be0d8776f81ecb08cf96144afa03f55090d5f33b41baed3e8b0d"
+      }
+    }
+  },
+  "public_prefix_conservation": [
+    {
+      "after": {
+        "bytes": 48481,
+        "sha256": "df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13"
+      },
+      "appended_definitions": 27,
+      "before": {
+        "bytes": 22999,
+        "sha256": "72501580048e73be95638c4d2d291ceaa5e026516b2d09ba8d747d5d356ccc31"
+      },
+      "literal_original_byte_prefix_retained": true,
+      "original_definitions_AST_unchanged": 19,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_v1.py"
+    },
+    {
+      "after": {
+        "bytes": 48768,
+        "sha256": "1a4a552f0fe3dbf265c569ff66a987f5dc55664034dd480c073b0081c2aaf27c"
+      },
+      "appended_definitions": 29,
+      "before": {
+        "bytes": 23504,
+        "sha256": "f64884acc049cd6f50d00590fba467910c80ea787ddf7abdc1dde3878eb8dbf9"
+      },
+      "literal_original_byte_prefix_retained": true,
+      "original_definitions_AST_unchanged": 41,
+      "path": "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py"
+    }
+  ],
+  "publication_boundaries": {
+    "counted_source_join_unsigned_review_or_numerical_consumers_delivered": false,
+    "historical_request_resource_and_full_runtime_generation_identity_claimed": false,
+    "model_head_trainer_encoder_or_generation_loop_delivered": false,
+    "new_scientific_task_claim_or_status_change": false,
+    "public_legacy_guide_unchanged": {
+      "bytes": 5576,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-counted-threshold-publication-20261023/docs/autoencoders/legal_counted_frame_v1.md",
+      "sha256": "565cbe4db68b1af183464534caf75b31b87511cc4209e8c179a64bf697fd7ca1"
+    },
+    "public_pytest_helper_unchanged": {
+      "bytes": 1489,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-counted-threshold-publication-20261023/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_pytest.py",
+      "sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31"
+    },
+    "source_edition_meaning_governing_definition_or_two_distinct_uses_supplied": false,
+    "training_gold_graph_corpus_or_Lean_admission": false
+  },
+  "recorded_at_utc": "2026-10-23T02:33:11.073400+00:00",
+  "schema": "legal-ir-counted-threshold-symbolic-publication-evidence/v1",
+  "scope": "Three existing symbolic owners only: fixed-three typed fragment with compact content/lexical transport, authored three-limit factory, and finite threshold codec/prefix. Exact historical product-source qualification is reused; this preparation executes no new tests, native builds or numerical work.",
+  "source_qualification_reuse": {
+    "receipt": {
+      "bytes": 15313,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-publication-20261023-01/source-qualification-reuse-review-v01.json",
+      "sha256": "a311b4a95515c600b54dda6bf8209e596d53e921d996560526fe29dbabfa8bf6"
+    },
+    "saved_review": {
+      "authority_limits": {
+        "graph_or_Lean_admitted": false,
+        "permitted_inference_context_verified": false,
+        "reviewed_statutory_targets": false,
+        "source_meaning_verified": false,
+        "source_selection_verified": false,
+        "training_or_gold_qualified": false
+      },
+      "base_append": {
+        "additional_source_definitions": 27,
+        "additional_test_definitions": 29,
+        "corrected_targeted_retry_passes": 1,
+        "distinct_passed_aggregate": 170,
+        "exact_public_source_and_test_byte_prefixes_preserved": true,
+        "failed_first_attempt_and_original_recovery_preserved": true,
+        "fresh170case_run_claimed": false,
+        "independent_aggregate_review": {
+          "bytes": 15529,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-compact-roundtrip-20261022-01/independent-actual-roundtrip-review-01.json",
+          "sha256": "dcdd9ba04373e362bcc605be5c32fd22e8737477a68bfa4b5ab4132678a3f090"
+        },
+        "old_source_definitions_AST_unchanged": 19,
+        "old_source_sha256": "72501580048e73be95638c4d2d291ceaa5e026516b2d09ba8d747d5d356ccc31",
+        "old_test_helpers_definitions_AST_unchanged": 41,
+        "old_test_sha256": "f64884acc049cd6f50d00590fba467910c80ea787ddf7abdc1dde3878eb8dbf9",
+        "original_failures": 1,
+        "original_passes": 169,
+        "product_source_unchanged_between_attempts": true,
+        "qualification": {
+          "bytes": 18524,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-compact-roundtrip-20261022-01/qualification-summary.json",
+          "sha256": "1ce450ac065b4a06b1d068626d4e8d280008f812d53f8b242155c499b2d849db"
+        },
+        "source_installation": {
+          "bytes": 5990,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-compact-roundtrip-20261022-01/source-installation-01.json",
+          "sha256": "a1ce5fffb91dbeec8f6d1b4fe194af8e45a61e8eb89db35fe6e0a8539993dc83"
+        },
+        "test_fixture_repair": {
+          "bytes": 524,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-compact-roundtrip-20261022-01/test-fixture-repair-installation-01.json",
+          "sha256": "1d1d42be364b3a7b12c1a5d1f6a05ee6801b61fc4da79503e678bf4c39249845"
+        }
+      },
+      "blocked_separate_numerical_scope": "Seeded head/transfer/numerical view depend on inventory8cdb while public retains a different inventory generation; keep that dependency-complete publication separate.",
+      "case_bookkeeping": {
+        "codec": 81,
+        "distinct_union": 144,
+        "factory": 67,
+        "new144case_run_claimed": false,
+        "overlap": 4
+      },
+      "completed": true,
+      "independent_public_dependency_review": {
+        "bytes": 15905,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-publication-20261023-01/independent-public-dependency-review-v02.json",
+        "sha256": "c1ce8379e7634b6a1443023e52d69680c2646d890a1fc18882594945e328518d"
+      },
+      "ordinary_fixture_reconciliation": {
+        "copy_old_primary_plugin_or_resource_profiles": false,
+        "dedicated_environment_snapshot_claimed": false,
+        "historical_plugin_sha256": "dc6ae4f1cd27628a56db13fc656156c1b84df8ff999d4158ff25e70fac89f7a6",
+        "ordinary_tmp_path_tail_AST_exactly_equal": true,
+        "original_actual_request_source_bindings": [
+          {
+            "physical_fixture_profile_absent": true,
+            "recorded_original_owner_and_worker_source_pins": {
+              "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py": "6695f98258e23a1de5b1639142dcd6e1f875f25723d465688e534407a1595f72",
+              "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py": "970d590e336a7304ec5c3e6839f865fc39fb8bd14fa178b79f9e2c1f0d3f27eb",
+              "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-target-eligibility-20261020-01/controls/eligibility_validate_v01.py": "2c8dda6a9c8d68a4cc5bcc1f158f2e60cf2a4517645d4aff2c3c97347e0ca30f"
+            },
+            "request": {
+              "bytes": 44887,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/request-counted-threshold-v01.json",
+              "sha256": "ad1b164622afc7d65dc9b4f0fa9095679d868a49786c5035073535c80053ea54"
+            },
+            "schema": "owned-validation-request/v1"
+          },
+          {
+            "physical_fixture_profile_absent": true,
+            "recorded_original_owner_and_worker_source_pins": {
+              "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py": "6695f98258e23a1de5b1639142dcd6e1f875f25723d465688e534407a1595f72",
+              "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py": "970d590e336a7304ec5c3e6839f865fc39fb8bd14fa178b79f9e2c1f0d3f27eb",
+              "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-target-eligibility-20261020-01/controls/eligibility_validate_v01.py": "2c8dda6a9c8d68a4cc5bcc1f158f2e60cf2a4517645d4aff2c3c97347e0ca30f"
+            },
+            "request": {
+              "bytes": 46313,
+              "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/request-counted-threshold-codec-v01.json",
+              "sha256": "6c0060d63e8cbcfaa96533e9a2808a9880d9bff51af07ca829aee026b0db766d"
+            },
+            "schema": "owned-validation-request/v1"
+          }
+        ],
+        "physical_v2_profile_executed": false,
+        "proof": "Both successful actual requests use schema v1 and omit physical_fixture_profile. Their pinned original validation owner initializes _physical_profile=None and configures it only for v2. Its environment() explicitly removes both physical request environment variables, restoring them only for non-None profile; the pinned actual runner uses that environment and the child execvpe carries it unchanged. The pinned registered pytest worker supplies no --owned-physical-fixtures flag; defaultFalse plus actual successful configure reaches the ordinary tmp_path tail.",
+        "public_plugin_bytes": 1489,
+        "public_plugin_sha256": "cef7fd00277c38ac55ce80ae0e6234eeda36559ab56a9de4e0954d0590327d31",
+        "whole_historical_request_or_native_closure_byte_identity_claimed": false
+      },
+      "packaging_conditions": [
+        "Read the fresh public catalog; preserve all44 existing owners/107 evidence rows and all BACKLOG records, including newer PR1353 metadata.",
+        "Publish exact three product modules and their three owning tests. Add no seeded-head, transfer, numerical-view, optimizer, trainer or generation consumer.",
+        "Use the selected symbolic guide prefix only as a baseline. Exclude its trailing numerical-view section and correct primary-only join/review/native-history prose so it is not presented as a delivered public consumer. Preserve the old docs/autoencoders guide bytes.",
+        "Create one portable evidence bundle for the existing three owners. Preserve original raw local receipt pointers with explicit unpublished/unavailable status; do not promise copied attempts/models/corpus.",
+        "Reuse base170 aggregate and separate67/81 receipts, with their original request/source/native/storage generations and failures. No fresh public combined67/81 or144-case/native/Lean qualification is claimed."
+      ],
+      "passed": true,
+      "public_base": "9f1eb48503ef844962bc2cf172e13b57845b7932",
+      "public_baseline_catalog": {
+        "bytes": 182916,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-publication-20261023-01/baseline-public-catalog-9f1.json",
+        "sha256": "8132f3e30cf0950555fea7b68ac7dfb05176e722c7e56ffd90df2a6470444584"
+      },
+      "public_baseline_components": 44,
+      "public_baseline_evidence": 107,
+      "public_closure": {
+        "absent_new_paths": 4,
+        "actual_prior_compiled_paths": 24,
+        "different_paths": 3,
+        "different_paths_explained": [
+          "additive base source",
+          "additive base owning test",
+          "administrative pytest fixture owner"
+        ],
+        "namespace_scope": "Historical metadata worker bypasses logic package initializer and transports genuine fileless families namespace; this is not package-wide/hermetic import qualification.",
+        "public_identical_paths": 17,
+        "public_reverse_fixed_pin_consumers_blocking_append": 0,
+        "spec_only_router_witness": "ipfs_datasets_py/ipfs_backend_router.py",
+        "typed_AST_parser_family_and_root_initializers_unchanged": true
+      },
+      "public_source_comparison_base": "d86f166dff0c0ae686dfba1c9a14dda1e204e940",
+      "qualification_reuse_eligible": true,
+      "recommended_next_action": "Root may authorize isolated current-main publication preparation of these exact six code/test files and reviewed symbolic documentation after composing this review with the independent public dependency review. No old qualified run repetition is needed for the explicitly reconciled ordinary-fixture delta.",
+      "required_code_paths": 6,
+      "required_product_modules": 3,
+      "reviewer_actions": {
+        "new_evidence_files": 1,
+        "new_tests_native_models_source_leases_or_resource_queries": 0,
+        "read_only_public_metadata_queries": 2,
+        "source_code_Git_or_PR_mutations": 0
+      },
+      "schema": "legal-ir-counted-threshold-source-qualification-reuse-review/v1",
+      "scope": "Existing exact symbolic base append, three-limit factory and finite codec/prefix only; no new tests/native/models or source/meaning qualification.",
+      "source_test_bundle": [
+        {
+          "bytes": 48481,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_counted_frame_v1.py",
+          "sha256": "df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13"
+        },
+        {
+          "bytes": 48768,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_counted_frame_v1.py",
+          "sha256": "1a4a552f0fe3dbf265c569ff66a987f5dc55664034dd480c073b0081c2aaf27c"
+        },
+        {
+          "bytes": 14085,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_counted_frame_threshold_v2.py",
+          "sha256": "9e3c4e42d8cfb5ed851461f6cd2562a71c7d5a2c2b8ccd5ab4fdbcf06e168024"
+        },
+        {
+          "bytes": 24668,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_counted_frame_threshold_v2.py",
+          "sha256": "a666838d99951b9947b2dcf4545f4490fdd721b75d6d4f66eec9e01e995d4865"
+        },
+        {
+          "bytes": 17913,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_counted_threshold_codec_v2.py",
+          "sha256": "94d6d7f722394c5344152303bc1504c545bcf9f2ef2a47b9b2d7f3360a1d0507"
+        },
+        {
+          "bytes": 31554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_counted_threshold_codec_v2.py",
+          "sha256": "f2952c25147cf0e5adc8383988867c92a7ccc8c89f01a8d3f1b5022724911fcc"
+        }
+      ],
+      "threshold_cohorts": [
+        {
+          "actual_compiles": 22,
+          "actual_module_origins": 21,
+          "cases": 67,
+          "import_origins": {
+            "bytes": 7637,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/attempt-counted-threshold-v01/exports/import-origins.json",
+            "sha256": "af761d339d897d7ea80fb60741349bfadbc406c0ca671565f024d0fc2285994e"
+          },
+          "independent_saved_review": {
+            "bytes": 8303,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/independent-qualification-readback-v01.json",
+            "sha256": "e9701090b50c1010741c389ca1a82b9053b58948fd6b6dd94f2a6c6b8be35ddc"
+          },
+          "native_closed": true,
+          "phases": 201,
+          "qualification": {
+            "bytes": 14167,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/qualification-summary-v01.json",
+            "sha256": "6aa650119bfa343261c7879b9ab57490b3212ba6a7ac17b6d862f0fd1a9dcbec"
+          },
+          "source_READ_closed": true,
+          "storage_released": true,
+          "test_collection": {
+            "bytes": 52057,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/attempt-counted-threshold-v01/exports/test-collection.json",
+            "sha256": "17dd3a6f40c9e606b1778f04025e7e8d23838a6a2ce46956437726a2b995f599"
+          },
+          "test_result": {
+            "bytes": 13333,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-language-20261022-01/attempt-counted-threshold-v01/exports/test-result.json",
+            "sha256": "edc077dc2cd47c3eb637a3ea076551e15b8e2b306cd29ba186700726616736d8"
+          }
+        },
+        {
+          "actual_compiles": 24,
+          "actual_module_origins": 23,
+          "cases": 81,
+          "import_origins": {
+            "bytes": 8396,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/attempt-counted-threshold-codec-v01/exports/import-origins.json",
+            "sha256": "0a22915373bfc614a6ce72cbbabe578df25f9f384b8327069bd242f2bea9064b"
+          },
+          "independent_saved_review": {
+            "bytes": 8545,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/independent-qualification-readback-v01.json",
+            "sha256": "4e954940cf9fa20e283269ed77f34cca2ffdbd4aede4c636e3b06dbe26a009e1"
+          },
+          "native_closed": true,
+          "phases": 243,
+          "qualification": {
+            "bytes": 15471,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/qualification-summary-v01.json",
+            "sha256": "ca7070368c11e764ddba1663fa2243c1e0c07215307b9443ee2a2ebbbfa683e7"
+          },
+          "source_READ_closed": true,
+          "storage_released": true,
+          "test_collection": {
+            "bytes": 63813,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/attempt-counted-threshold-codec-v01/exports/test-collection.json",
+            "sha256": "bd3c99d3c26a02634db4409a0daa313ac9dc414153a4e5a361c647e028d014e0"
+          },
+          "test_result": {
+            "bytes": 16820,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-counted-threshold-codec-20261022-01/attempt-counted-threshold-codec-v01/exports/test-result.json",
+            "sha256": "ee33528832fdcb9e05775f81100e642e8784fa878c9634af29ec9915b4284e3d"
+          }
+        }
+      ]
+    }
+  },
+  "source_test_postimages": [
+    {
+      "bytes": 14085,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_threshold_v2.py",
+      "sha256": "9e3c4e42d8cfb5ed851461f6cd2562a71c7d5a2c2b8ccd5ab4fdbcf06e168024"
+    },
+    {
+      "bytes": 48481,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_v1.py",
+      "sha256": "df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13"
+    },
+    {
+      "bytes": 17913,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_counted_threshold_codec_v2.py",
+      "sha256": "94d6d7f722394c5344152303bc1504c545bcf9f2ef2a47b9b2d7f3360a1d0507"
+    },
+    {
+      "bytes": 24668,
+      "path": "tests/unit/logic/autoformal/test_legal_counted_frame_threshold_v2.py",
+      "sha256": "a666838d99951b9947b2dcf4545f4490fdd721b75d6d4f66eec9e01e995d4865"
+    },
+    {
+      "bytes": 48768,
+      "path": "tests/unit/logic/autoformal/test_legal_counted_frame_v1.py",
+      "sha256": "1a4a552f0fe3dbf265c569ff66a987f5dc55664034dd480c073b0081c2aaf27c"
+    },
+    {
+      "bytes": 31554,
+      "path": "tests/unit/logic/autoformal/test_legal_counted_threshold_codec_v2.py",
+      "sha256": "f2952c25147cf0e5adc8383988867c92a7ccc8c89f01a8d3f1b5022724911fcc"
+    }
+  ]
+}

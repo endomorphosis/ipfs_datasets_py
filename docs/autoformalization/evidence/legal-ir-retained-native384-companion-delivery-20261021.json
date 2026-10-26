@@ -1,0 +1,219 @@
+{
+  "authority": {
+    "model_quality_qualified": false,
+    "proof_authority": false,
+    "runtime_admitted": false,
+    "service_adopted": false,
+    "source_meaning_verified": false,
+    "source_relocation_qualified": false,
+    "target_representability_verified": false,
+    "teacher_qualified": false,
+    "training_eligible": false
+  },
+  "evaluation_gold_mask": 0,
+  "independent_T_attempt": {
+    "disposition": "refused",
+    "necessary_metadata_difference": "Nine absolute producer_files keys use P in the saved cache and T in a fresh T rebuild; all nine code content hashes match. No exclusive-cause claim.",
+    "operation": "DATA05 no-forward preparation in public checkout T",
+    "prepare_calls": 1,
+    "preserved_attempt_bytes": 231728,
+    "preserved_attempt_files": 6,
+    "reason": "cache differs from freshly verified original requests/receipts",
+    "saved_cache_or_receipts_modified": false,
+    "source_native_storage_custody_closed": true,
+    "v03_portability_drafts_executed": false
+  },
+  "intermediate_remote_observation": {
+    "anonymous_metadata_GETs": 1,
+    "file_metadata_rows": 6471,
+    "operation": "DATA07 before the successful later attempt",
+    "planned_paths_absent": 9,
+    "planned_paths_present": 0,
+    "reported_revision": "c9cce4586dd96518088662fb12831173e98e36cc",
+    "same_as_first_attempt_initial_revision": true,
+    "scope": "Bounded current path presence at the observed head; not proof of global rollback, unreferenced-object absence or the later publication state.",
+    "source_native_storage_custody_closed": true
+  },
+  "limits": [
+    "Publishing these exact companions supplies immutable asset locators; original absolute-path fences and independent checkpoint/source contracts still apply. Fresh-checkout source relocation is not qualified.",
+    "The peer complete targets remain null. Mechanical source/checkpoint consistency does not establish target representability, statutory meaning, inference quality or reconstruction accuracy.",
+    "The public change publishes evidence and navigation only; no newer dirty primary source, component owner or model implementation is copied.",
+    "ModelManager metadata discovery remains its separate DATA04 observation. No manager/service refresh, new registration, live supervisor adoption or other-width runtime qualification was performed by these operations."
+  ],
+  "preflight_reuse": {
+    "checkpoint_sha256": {
+      "normative-wording-ce": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266",
+      "normative-wording-zero": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+    },
+    "complete_runtime_io_contract": false,
+    "complete_targets_supplied": 0,
+    "matched_opening_and_closing_per_arm": true,
+    "native384_receipt_sha256": "609a3695aec77d1b815667d15d7eb326d0940eb13f61c1e998bb8a6b390e856a",
+    "pending_targets_per_arm": 2,
+    "source_generation": "canonical primary P; recorded separately from public-checkout T",
+    "source_native_storage_custody_closed": true,
+    "source_occurrences": 2,
+    "source_only_preparation_calls": 4,
+    "source_requests_sha256": "c0c064bacdd17734ebac9185a043dfc6fdb2732c610c1a34d7d6841e56fc526a",
+    "source_sha256": [
+      "71ca988bfb6fe414997fb329fadae6df2cfde5ed97f19135ef63ad94e468bb66",
+      "0953781d7433ecf37084fd81539db173849d9e14a85b0a9786787ec3b292226c"
+    ]
+  },
+  "prior_publication_attempt": {
+    "commit_returned": false,
+    "commit_started": true,
+    "disposition": "failed",
+    "http_status": 401,
+    "operation": "DATA06 first attempt",
+    "preserved_attempt_bytes": 25505432,
+    "preserved_attempt_files": 15,
+    "scope": "Preserved historical failure; does not establish invalid credentials. The later separately admitted attempt used an explicit read-only existing-login lookup under owned cache isolation, with no credential refresh or authentication-store write.",
+    "source_native_storage_custody_closed": true,
+    "successful_revision": null
+  },
+  "publication": {
+    "anonymous_full_byte_roundtrip_performed": false,
+    "created_paths": 9,
+    "files": [
+      {
+        "bytes": 1510086,
+        "git_blob_sha1": "397faffe69a5cc86b852a069fc08af25a22c4304",
+        "path": "assets/de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f.json",
+        "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+      },
+      {
+        "bytes": 614534,
+        "git_blob_sha1": "d858406bdd268fc4c29f227222a9d3e18cf78be5",
+        "path": "assets/6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61.json",
+        "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+      },
+      {
+        "bytes": 3471450,
+        "git_blob_sha1": "c4a7f94c8f6524655062bea2aefb41c757b57612",
+        "path": "assets/43e03db69c8f2f99664c3382f402940ddd1874cd2cf785f454bb500e31620c79.json",
+        "sha256": "43e03db69c8f2f99664c3382f402940ddd1874cd2cf785f454bb500e31620c79"
+      },
+      {
+        "bytes": 124731,
+        "git_blob_sha1": "8f7db9fdd80eab91c4d3080b4dcad10952f00847",
+        "path": "assets/d68a025f15751a06986916e0559125b492d3611ce2e66a7c3b222e35f5511385.json",
+        "sha256": "d68a025f15751a06986916e0559125b492d3611ce2e66a7c3b222e35f5511385"
+      },
+      {
+        "bytes": 2755053,
+        "git_blob_sha1": "55f425b543453ac57089b59b381956027ceb4414",
+        "path": "assets/44a99cb3fe34022215cb8f485fc525472df6ce5132e75d0c3591b2b7fc745855.json",
+        "sha256": "44a99cb3fe34022215cb8f485fc525472df6ce5132e75d0c3591b2b7fc745855"
+      },
+      {
+        "bytes": 2864122,
+        "git_blob_sha1": "997f64a03757db1cf07d49114cdc6e64c93a0e4e",
+        "path": "assets/f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae.json",
+        "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+      },
+      {
+        "bytes": 6788970,
+        "git_blob_sha1": "c8373a0f736e77eed2c92ab0497dfcef6679fb43",
+        "path": "assets/c8d31b3808408063d6b8e3a1f82cbdaf68bd67099dcdd35b10ba22cd7e59f923.json",
+        "sha256": "c8d31b3808408063d6b8e3a1f82cbdaf68bd67099dcdd35b10ba22cd7e59f923"
+      },
+      {
+        "bytes": 7268615,
+        "git_blob_sha1": "03fb400e09dac322f76b9d0fc8221988b0f7ce16",
+        "path": "assets/6303d75e1bedf3254282da2c4aa025c0580894587c2328fc4b5dc30d3baef312.json",
+        "sha256": "6303d75e1bedf3254282da2c4aa025c0580894587c2328fc4b5dc30d3baef312"
+      },
+      {
+        "bytes": 95663,
+        "git_blob_sha1": "d574469c6ff4058262b43120f5c970e38ef7ba90",
+        "path": "manifest.json",
+        "sha256": "970d40928844e57a4510bd7a6d58f7a9ef4256aab7df599c685bd50c142a3de3"
+      }
+    ],
+    "original_asset_bytes": 25397561,
+    "original_asset_count": 8,
+    "preserved_attempt_bytes": 25540908,
+    "preserved_attempt_files": 18,
+    "public": true,
+    "release_prefix": "releases/retained-normative-companions-20261021-v1",
+    "release_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/tree/be0d0226235144c8d67cb2d1ca35828d5c3a8710/releases/retained-normative-companions-20261021-v1",
+    "repository_id": "Publicus/legal-ir-autoencoder",
+    "reused_paths": 0,
+    "revision": "be0d0226235144c8d67cb2d1ca35828d5c3a8710",
+    "selected_decoder_checkpoints_republished": false,
+    "source_native_storage_custody_closed": true,
+    "training_or_model_execution": false,
+    "verification": "Unchanged original byte-owning publisher compared immutable-commit sizes and Git blob identities. Independent review reconciled saved metadata and source/input endpoints."
+  },
+  "receipt_roots": {
+    "peer": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/decoder-preflight-v01",
+    "programme": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01"
+  },
+  "receipts": [
+    {
+      "bytes": 7190,
+      "path": "review-07/native384-runtime-reuse-reconciliation-v01.json",
+      "root": "programme",
+      "sha256": "de13dcca6c3bf81c83eb83b014ce8c39951fe9dbfd6dcd73898365ce67a66ccc"
+    },
+    {
+      "bytes": 19656,
+      "path": "data-05/independent-refusal-closeout-review-v01.json",
+      "root": "programme",
+      "sha256": "bab7ad9b833d164f4afe3693214745ef5dc9b56afef81ecd2b4f8f9424475880"
+    },
+    {
+      "bytes": 10212,
+      "path": "data-06/independent-failure-closeout-review-v01.json",
+      "root": "programme",
+      "sha256": "1daf7dbcf96b0489b80b9aa8fee3ecf38fbca59288466395a34b3c69c2ba40af"
+    },
+    {
+      "bytes": 13225,
+      "path": "data-07/independent-result-closeout-review-v01.json",
+      "root": "programme",
+      "sha256": "bdb2a88c6eb48a8e6ed6487d1f7c1a91e4396d026e5cf4cbfc8ea8674986c463"
+    },
+    {
+      "bytes": 23744,
+      "path": "data-06/publication-v02/attempt-companions-02/exports/data-result.json",
+      "root": "programme",
+      "sha256": "0670da1a52f04bccf406fa389d8bd49b5065215d425410373d73309a539296ee"
+    },
+    {
+      "bytes": 10232,
+      "path": "data-06/publication-v02/attempt-companions-02/exports/publication-receipt.json",
+      "root": "programme",
+      "sha256": "d2823c46b3277925b5e09ec63262a566ea13db6f121b4723c7e7949f5cd4f716"
+    },
+    {
+      "bytes": 2711,
+      "path": "data-06/publication-v02/data-controller-complete-v02.json",
+      "root": "programme",
+      "sha256": "c40857b88cc60f3f0d50d5e025494b25d9e26721b105cf9f3a4cf4914fcb9491"
+    },
+    {
+      "bytes": 27689,
+      "path": "data-06/publication-v02/independent-success-closeout-review-v02.json",
+      "root": "programme",
+      "sha256": "7c1c7361e66e838b17853a92983cebc02db45d6284f2e2ff8801026481fb0d55"
+    },
+    {
+      "bytes": 17771,
+      "path": "observation-summary-v01.json",
+      "root": "peer",
+      "sha256": "8305757db92888469264214dcfcfaee966a9d937bcb1081ff98f364111ba685b"
+    },
+    {
+      "bytes": 13400,
+      "path": "independent-actual-readback-v01.json",
+      "root": "peer",
+      "sha256": "2c4c3845d83977fdc32f90d05cf20026203db51638a7f55878dfde977d1a3b7d"
+    }
+  ],
+  "recorded_at_utc": "2026-10-21",
+  "schema": "legal-ir-retained-native384-companion-delivery/v1",
+  "status": "published_original_companions_and_reused_closed_preflight_generations",
+  "training_mask": 0
+}

@@ -1,0 +1,101 @@
+{
+  "schema": "legal-ir-coordinate-target-eligibility-delivery-evidence/v1",
+  "recorded_at_utc": "2026-10-20T23:54:40.924357+00:00",
+  "base_commit": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+  "selected_branch": "agent/legal-ir-coordinate-eligibility-20261020",
+  "scope": "Authored engineering fixtures and exact source/coordinate custody; no statutory interpretation or learning/gold admission.",
+  "owner_files": {
+    "ipfs_datasets_py/logic/autoformal/legal_source_span_target_eligibility_v1.py": {
+      "bytes": 39616,
+      "sha256": "c8b9cbe47b3f6ca5709909f34d53730aff594f8218947e17cb0d07f9ea4161f9"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py": {
+      "bytes": 68651,
+      "sha256": "8085a09cca336a2e819a805be3df50419fdd5717b4bb7936e0a6982ed9589b13"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py": {
+      "bytes": 18700,
+      "sha256": "1a44d0245575c8af586e69259a1dffec0d4aa85ac6070566024774aeef8529f2"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_span_target_eligibility_v1.py": {
+      "bytes": 48767,
+      "sha256": "fafb367b0205078088e2fedc35b1d3864869ba944379abfddb884314a426fa96"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py": {
+      "bytes": 24127,
+      "sha256": "640a1db637fd66dd835a5ac69fc2fa13c5c307d269e5dcbd1558c779d9dc7e90"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_source_span_formula_runtime_metadata.py": {
+      "bytes": 5867,
+      "sha256": "c7679dc893032a68feb8b65193b09becf5d66dd76393292820f041f86dee936a"
+    }
+  },
+  "qualification": {
+    "case_counts": {
+      "legacy_eligibility_regressions": 92,
+      "genuine_coordinate_join_replay_controls": 42,
+      "consumer_binding_with_authored_sidecars_and_dummy_callbacks": 103,
+      "runtime_metadata_and_precheckpoint_argument_guards": 12
+    },
+    "passed_cases": 249,
+    "passed_phases": 747,
+    "function_selectors": 79,
+    "candidate_source_files": 230,
+    "native_request_source_pins": 256,
+    "qualification_kind": "immutable_private_source_candidate; Git delivery requires exact owner/test byte parity",
+    "cohort_control": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-target-eligibility-20261020-01/qualification-controller-complete-eligibility-02.json",
+      "bytes": 278,
+      "sha256": "34313290a75b51bb458ff1753288f144d0e5d62342e83caa615bce34c77db086"
+    },
+    "original_owner_terminal": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-target-eligibility-20261020-01/launch-eligibility-02.json",
+      "bytes": 7585,
+      "sha256": "b286673f3b5a5c0349495e28850f49dfd454ebb9432788cf7279973670ea6220"
+    },
+    "test_result": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-target-eligibility-20261020-01/attempt-eligibility-02/exports/test-result.json",
+      "bytes": 74319,
+      "sha256": "58b6ef470f3dba3e6b03239e40e1299b51f586695a69bb06926e2ab8688132dd"
+    },
+    "source_read_released_after_native_cleanup": true,
+    "compute_and_storage_released": true,
+    "final_observed_descendant_processes": 0,
+    "final_observed_rss_bytes": 0
+  },
+  "profile": {
+    "legacy_v1_retains_strict_schema": true,
+    "v2_requires_original_join_opening_and_closing_replay": true,
+    "max_selected_physical_rows": 64,
+    "original_input_aggregate_limit_bytes": 8388608,
+    "source_edition_crosswalk": "unverified_no_independent_crosswalk",
+    "entity_binding": "metadata_only_no_semantic_companions",
+    "all_training_and_gold_masks": 0,
+    "consumer_authorized": false,
+    "model_training_or_Lean_executed": false
+  },
+  "preserved_failure": {
+    "attempt": "eligibility-01",
+    "actual_cases": 249,
+    "passed_cases": 248,
+    "failed_cases": 1,
+    "qualified": false,
+    "reason": "Four neighboring runtime metadata hash witnesses absent from initial source capture; product and test code unchanged in retry.",
+    "original_storage_closeout": {
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-target-eligibility-20261020-01/failed-eligibility-storage-closeout-01-v01.json",
+      "bytes": 146925,
+      "sha256": "837c0fd504c852d62b3ef1d18ccc6ddada87925405c874040e3d71674594b051"
+    },
+    "files_retained": 342,
+    "retained_bytes": 4629207,
+    "storage_promise_released_bytes": 134217728
+  },
+  "evidence_availability": "Receipt paths are relative to the retained local datasets repository. This descriptor does not publish private evidence payloads.",
+  "remaining_qualification": [
+    "actual statutory source edition/context/meaning and every-use applicability",
+    "complete source-bound typed-IR graph bridge and supported full-norm preservation",
+    "checkpoint loading and numerical inference/training",
+    "native Lean/statutory corpus admission",
+    "active-supervisor runtime adoption and remote publication"
+  ]
+}

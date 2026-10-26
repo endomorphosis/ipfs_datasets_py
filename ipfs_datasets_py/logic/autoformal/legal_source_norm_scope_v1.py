@@ -386,5 +386,356 @@ def validate_sampled_norm_scope_v1(
             "masks": dict(expected["masks"]), "model_calls": 0, "native_processes": 0}
 
 
+
+
+# The original HTML-sampling API and its pin state remain independent. Parent
+# scope is a literal-occurrence custody profile, not a whole-paragraph claim.
+PARENT_SCHEMA = "legal-parent-norm-scope-proposal/v1"
+PARENT_PROFILE = "whole-selected-parent-literal-occurrence-unreviewed-lexical-scope/v1"
+PARENT_ANCHOR_SCHEMA = "legal-parent-norm-scope-anchor/v1"
+MAX_PARENT_INPUT_BYTES = 64 * 1024 * 1024
+_PARENT_PINS = None
+_PARENT_REPORT_KEYS = {"parent_text_views", "cache_parent_occurrences", "parent_sentence_candidates"}
+_PARENT_REPLAY_REQUIRED = {
+    "parent_bundle", "scope_request_raw", "scope_declaration_raw", "expected_manifest_cid",
+    "source_occurrence_cid", "companion_record_cid", "report_bytes", "expected_report_pins",
+    "replay_inputs", "expected_scope_request_sha256", "expected_scope_declaration_sha256",
+}
+_PARENT_LIMITS = {"max_report_bytes": 8 * 1024**2, "max_replay_bytes": 16 * 1024**2,
+                  "max_total_input_bytes": 32 * 1024**2, "max_records": 8192,
+                  "max_collection_bytes": 16 * 1024**2}
+
+
+def _parent_owners():
+    from . import legal_semantic_graph as graph
+    from . import corpus_parent_occurrence_adapter as parent
+    from . import corpus_source
+    from ..legal_ir import canonical_statement_scope as scope
+    from ..legal_ir import canonical_statement_scope_bridge as bridge
+    return graph, parent, corpus_source, scope, bridge
+
+
+def _parent_pins(owners=None):
+    """Trusted parent closure; never interpret caller producer-pin paths."""
+    global _PARENT_PINS
+    owners = _parent_owners() if owners is None else owners
+    _, parent, _, _, _ = owners
+    from ..legal_ir import canonical_contracts
+    _need(hashlib.sha256(Path(__file__).read_bytes()).hexdigest() == _SELF_PIN,
+          "parent norm scope owner changed since import")
+    pins = parent._pins(parent._owners())
+    for module in (*owners, canonical_contracts):
+        path = str(Path(module.__file__).resolve())
+        value = hashlib.sha256(Path(path).read_bytes()).hexdigest()
+        _need(path not in pins or pins[path] == value, "inconsistent parent producer closure")
+        pins[path] = value
+    pins[str(Path(__file__).resolve())] = _SELF_PIN
+    if _PARENT_PINS is None:
+        _PARENT_PINS = dict(pins)
+    _need(pins == _PARENT_PINS, "parent norm scope operation owners changed since first use")
+    return dict(pins)
+
+
+def _parent_snapshot(arguments):
+    """Detach ordinary JSON and original bytes before physical replay imports.
+
+    The complete three-report population stays mandatory. Individual defaults
+    are the unchanged parent owner's limits; the aggregate includes the bundle,
+    reports, replay inputs, independent pins and lexical declarations.
+    """
+    _need(type(arguments) is dict and _PARENT_REPLAY_REQUIRED <= set(arguments)
+          and not (set(arguments) - _PARENT_REPLAY_REQUIRED - {"limits"}),
+          "closed complete parent scope replay arguments required")
+    _load(arguments["scope_request_raw"], arguments["expected_scope_request_sha256"], "scope request")
+    _load(arguments["scope_declaration_raw"], arguments["expected_scope_declaration_sha256"],
+          "scope declaration")
+    for key in ("expected_manifest_cid", "source_occurrence_cid", "companion_record_cid"):
+        value = arguments[key]
+        _need(type(value) is str and 0 < len(value) <= 256 and "\x00" not in value,
+              "bounded explicit parent identity required: " + key)
+    limits = arguments.get("limits")
+    _need(limits is None or type(limits) is dict, "closed lower-only parent limits required")
+    for key, value in (limits or {}).items():
+        _need(key in _PARENT_LIMITS and type(value) is int and 0 < value <= _PARENT_LIMITS[key],
+              "unknown, noninteger or raised parent limit")
+    reports, pins = arguments["report_bytes"], arguments["expected_report_pins"]
+    _need(type(reports) is dict and set(reports) == _PARENT_REPORT_KEYS
+          and type(pins) is dict and set(pins) == _PARENT_REPORT_KEYS,
+          "complete original parent reports and independent pins required")
+    detached, commitments, total = {}, {}, 0
+    for key, value in arguments.items():
+        if key == "report_bytes":
+            detached[key] = {}
+            for name in sorted(_PARENT_REPORT_KEYS):
+                raw = value[name]
+                _need(type(raw) is bytes and 0 < len(raw) <= _PARENT_LIMITS["max_report_bytes"],
+                      "bounded complete original parent report bytes required: " + name)
+                row = pins[name]
+                _need(type(row) is dict and set(row) == {"raw_sha256", "canonical_sha256"},
+                      "closed raw and canonical parent report pins required")
+                for field in row:
+                    _sha(row[field], name + "/" + field)
+                _need(hashlib.sha256(raw).hexdigest() == row["raw_sha256"],
+                      "independent parent report raw pin differs: " + name)
+                detached[key][name] = raw
+                commitments[key + "/" + name] = {
+                    "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw),
+                    "encoding": "original_bytes"}
+                total += len(raw)
+            continue
+        maximum = {"parent_bundle": 16 * 1024**2, "replay_inputs": 16 * 1024**2,
+                   "scope_request_raw": MAX_SCOPE_BYTES,
+                   "scope_declaration_raw": MAX_SCOPE_BYTES}.get(key, MAX_SCOPE_BYTES)
+        if key in {"scope_request_raw", "scope_declaration_raw"}:
+            raw = value
+            detached[key] = value
+        else:
+            raw = _wire(value, maximum)
+            detached[key] = json.loads(raw)
+        commitments[key] = {"sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw),
+                            "encoding": "original_bytes" if type(value) is bytes else "canonical_json"}
+        total += len(raw)
+    _need(total <= MAX_PARENT_INPUT_BYTES, "aggregate complete parent scope input bound exceeded")
+    _need(type(detached["parent_bundle"]) is dict and type(detached["replay_inputs"]) is dict,
+          "ordinary complete parent bundle and physical replay input objects required")
+    return detached, commitments
+
+
+def _parent_finish(checks, primary):
+    """Run every closing check; never replace the original operation error."""
+    failures = []
+    for check in checks:
+        try:
+            check()
+        except BaseException as error:
+            failures.append(error)
+    if primary is not None:
+        for error in failures:
+            primary.add_note("secondary parent custody failure: " + type(error).__name__ + ": " + str(error))
+    elif failures:
+        first, *others = failures
+        for error in others:
+            first.add_note("additional parent custody failure: " + type(error).__name__ + ": " + str(error))
+        raise first
+
+
+def _parent_serialized_fence(value, serialized, maximum, encoder):
+    """Recheck mutable returned JSON after the operation encoder has returned.
+
+    The final direct standard-library encoding also detects mutation performed
+    by an instrumented encoder after it produced otherwise matching bytes.
+    """
+    _need(encoder(value, maximum) == serialized, "serialized parent output changed")
+    try:
+        closing = json.dumps(value, sort_keys=True, separators=(",", ":"),
+                             ensure_ascii=False, allow_nan=False).encode("utf-8")
+    except (ValueError, TypeError, UnicodeError, RecursionError) as error:
+        raise ValueError("serialized parent output no longer ordinary finite JSON") from error
+    _need(closing == serialized, "parent output mutated after final encoding")
+
+
+def _parent_binding(graph, arguments):
+    result = graph.bind_parent_source_occurrence(
+        arguments["parent_bundle"], expected_manifest_cid=arguments["expected_manifest_cid"],
+        source_occurrence_cid=arguments["source_occurrence_cid"],
+        companion_record_cid=arguments["companion_record_cid"], report_bytes=arguments["report_bytes"],
+        expected_report_pins=arguments["expected_report_pins"], replay_inputs=arguments["replay_inputs"],
+        limits=arguments.get("limits"))
+    graph._check_parent_source(result)
+    _need(result["parent_manifest_cid"] == arguments["expected_manifest_cid"]
+          and result["selector"]["record_cid"] == arguments["source_occurrence_cid"]
+          and result["companion_record"]["record_cid"] == arguments["companion_record_cid"],
+          "replayed parent selection differs from explicit occurrence and companion")
+    _wire(result, MAX_REPORT_BYTES)
+    return result
+
+
+def prepare_parent_norm_scope_v1(
+    parent_bundle, scope_request_raw, scope_declaration_raw, *, expected_manifest_cid,
+    source_occurrence_cid, companion_record_cid, report_bytes, expected_report_pins,
+    replay_inputs, expected_scope_request_sha256, expected_scope_declaration_sha256, limits=None,
+):
+    """Retain unreviewed lexical scope over one exact original literal occurrence.
+
+    Both opening and closing replay require the full original parent population
+    and physical file/row witnesses. Identity normalization, undeclared edition
+    and all six unavailable context obligations remain unchanged.
+    """
+    arguments = dict(parent_bundle=parent_bundle, scope_request_raw=scope_request_raw,
+        scope_declaration_raw=scope_declaration_raw, expected_manifest_cid=expected_manifest_cid,
+        source_occurrence_cid=source_occurrence_cid, companion_record_cid=companion_record_cid,
+        report_bytes=report_bytes, expected_report_pins=expected_report_pins,
+        replay_inputs=replay_inputs, expected_scope_request_sha256=expected_scope_request_sha256,
+        expected_scope_declaration_sha256=expected_scope_declaration_sha256, limits=limits)
+    detached, commitments = _parent_snapshot(arguments)
+    request = _load(scope_request_raw, expected_scope_request_sha256, "scope request")
+    declaration = _load(scope_declaration_raw, expected_scope_declaration_sha256, "scope declaration")
+    request_wire, declaration_wire = _wire(request, MAX_SCOPE_BYTES), _wire(declaration, MAX_SCOPE_BYTES)
+    owners = _parent_owners()
+    graph, parent, _, scope, bridge = owners
+    pins = _parent_pins(owners)
+    opening = binding = None
+    opening_wire = None
+    result = serialized = None
+    replay_started = False
+    primary = None
+
+    def fence():
+        _need(_parent_snapshot(arguments)[1] == commitments,
+              "original parent scope inputs changed during preparation")
+        _need(_parent_snapshot(detached)[1] == commitments,
+              "detached parent scope replay inputs changed during preparation")
+        _need(_wire(request, MAX_SCOPE_BYTES) == request_wire
+              and _wire(declaration, MAX_SCOPE_BYTES) == declaration_wire,
+              "parsed scope request or declaration changed during preparation")
+        _need(_parent_pins(owners) == pins, "parent scope producer sources changed during preparation")
+
+    def binding_fence():
+        if opening_wire is not None:
+            _need(_wire(opening, MAX_REPORT_BYTES) == opening_wire
+                  and _wire(binding, MAX_REPORT_BYTES) == opening_wire,
+                  "opening parent binding changed during preparation")
+
+    def closing_replay():
+        if replay_started:
+            closed = _parent_binding(graph, detached)
+            if opening_wire is not None:
+                _need(_wire(closed, MAX_REPORT_BYTES) == opening_wire,
+                      "closing original parent replay differs from opening binding")
+
+    def output_fence():
+        if serialized is not None:
+            _parent_serialized_fence(result, serialized, MAX_REPORT_BYTES, _wire)
+
+    try:
+        fence()
+        replay_started = True
+        opening = _parent_binding(graph, detached)
+        opening_wire = _wire(opening, MAX_REPORT_BYTES)
+        binding = json.loads(opening_wire)
+        fence()
+        source = binding["selector"]
+        _need(request.get("source_text") == source["span_text"],
+              "scope source must equal the whole selected original literal occurrence")
+        _need(binding["edition"] == parent.UNDECLARED_EDITION,
+              "parent source edition must remain undeclared")
+        expected_input = hashlib.sha256(request_wire).hexdigest()
+        validation = scope.validate_scope_declaration(request, declaration, expected_input_sha256=expected_input)
+        _literal_accounting(request, declaration)
+        mapped = []
+        for path, anchor in _anchors(declaration):
+            left, right = anchor["start"], anchor["end"]
+            _need(anchor["origin"] == "source" and anchor["offset_unit"] == "unicode_character_half_open"
+                  and type(left) is int and type(right) is int
+                  and 0 <= left < right <= len(source["span_text"])
+                  and anchor["text"] == source["span_text"][left:right],
+                  "exact nonempty source-local anchor required; unavailable context cannot supply one")
+            selection = {
+                "schema": PARENT_ANCHOR_SCHEMA,
+                "source_version_cid": source["source_version_cid"],
+                "source_occurrence_cid": source["record_cid"],
+                "coordinate_system": source["coordinate_system"],
+                "normalization_profile": "identity/v1",
+                "char_start": source["start_char"] + left, "char_end": source["start_char"] + right,
+                "utf8_byte_start": source["start_utf8"] + len(source["span_text"][:left].encode("utf-8")),
+                "utf8_byte_end": source["start_utf8"] + len(source["span_text"][:right].encode("utf-8")),
+                "text": anchor["text"], "text_sha256": hashlib.sha256(anchor["text"].encode("utf-8")).hexdigest(),
+            }
+            mapped.append({"declaration_path": path, "local_anchor": anchor, "parent_selector": selection})
+        bridge_view = bridge.prepare_scope_bridge_view(request, declaration, expected_input_sha256=expected_input)
+        bridge_validation = bridge.validate_scope_bridge_view(bridge_view, request, expected_input_sha256=expected_input)
+        compatibility = scope.assess_flat_profile_compatibility(declaration)
+        _need(all(row["status"] == "unavailable" for row in compatibility["profiles"].values())
+              and compatibility["lowered_ir"] is None,
+              "open parent lexical scope cannot acquire a legacy lowering route")
+        result = {
+            "schema": PARENT_SCHEMA, "profile": PARENT_PROFILE,
+            "status": "unreviewed_parent_literal_scope_transport_retained",
+            "input_pins": {"parent_manifest_cid": expected_manifest_cid,
+                "source_occurrence_cid": source_occurrence_cid, "companion_record_cid": companion_record_cid,
+                "scope_request_raw_sha256": expected_scope_request_sha256,
+                "scope_declaration_raw_sha256": expected_scope_declaration_sha256,
+                "scope_request_canonical_sha256": expected_input, "original_inputs": commitments},
+            "parent_source_binding": binding,
+            "source_selector": source, "source_context_record": binding["context"],
+            "source_records": {"source_version": binding["source_version"], "source_occurrence": source,
+                               "context": binding["context"], "parent_record": binding["parent_record"],
+                               "companion_record": binding["companion_record"],
+                               "cache_row_record": binding["cache_row_record"]},
+            "scope_request": request, "scope_declaration": declaration,
+            "scope_validation": validation, "scope_bridge_view": bridge_view.to_dict(),
+            "scope_bridge_validation": bridge_validation, "flat_compatibility": compatibility,
+            "anchor_mappings": mapped, "literal_accounting_complete": True,
+            "literal_accounting_scope": "whole selected literal occurrence; caller coverage dispositions are not semantic completeness",
+            "declared_semantic_coverage": declaration["coverage"]["declared_status"],
+            "source_region_role_verified": False, "whole_paragraph_verified": False,
+            "whole_law_verified": False, "original_context_preserved": True,
+            "external_context_nominations_applied": False,
+            "formal_norm_ast": None, "lowered_ir": None, "graph": None,
+            "accepted_lookup": None, "governing_definition_use": None,
+            "training_mask": 0, "evaluation_gold_mask": 0, "masks": dict.fromkeys(scope.MASKS, 0),
+            "authority": dict(AUTHORITY), "model_calls": 0, "training_calls": 0, "native_processes": 0,
+            "producer_pins": pins,
+            "limitations": [
+                "The selected original literal occurrence may be a fragment or unclassified region; no paragraph, whole law or governing body is established.",
+                "Exact physical row, field, occurrence and byte custody does not establish authenticity, edition, legal meaning or independently reviewed roles.",
+                "Edition remains undeclared; all six original required-unavailable context obligations remain open and are not an exhaustive dependency inventory.",
+                "Every literal character is accounted for by caller dispositions, including unresolved text; semantic completeness and attachment remain unreviewed.",
+                "No formal norm AST, lowered IR, selected interpretation, graph admission, learned target, review, model or Lean execution is supplied.",
+            ],
+        }
+        result["report_sha256"] = _digest(result)
+        serialized = _wire(result, MAX_REPORT_BYTES)
+        result = json.loads(serialized)
+        return result
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        _parent_finish((fence, binding_fence, closing_replay, fence, binding_fence, output_fence, fence), primary)
+
+
+def parent_norm_scope_report_sha256(report):
+    """Hash the full bounded parent report, including its internal payload seal."""
+    return _digest(report)
+
+
+def validate_parent_norm_scope_v1(report, *args, expected_report_sha256, **kwargs):
+    """Regenerate parent scope against original inputs; no semantic authority."""
+    _sha(expected_report_sha256, "complete parent norm scope report")
+    offered = _wire(report, MAX_REPORT_BYTES)
+    _need(hashlib.sha256(offered).hexdigest() == expected_report_sha256,
+          "independent complete parent norm scope report pin differs")
+    _need(type(report) is dict and report.get("schema") == PARENT_SCHEMA
+          and report.get("profile") == PARENT_PROFILE, "explicit parent literal scope profile required")
+    primary = None
+    result = serialized = None
+    try:
+        expected = prepare_parent_norm_scope_v1(*args, **kwargs)
+        _need(offered == _wire(expected, MAX_REPORT_BYTES),
+              "parent scope report differs from complete original regeneration")
+        result = {"schema": "legal-parent-norm-scope-validation/v1",
+            "status": "validated_parent_literal_scope_transport_only",
+            "report_full_canonical_sha256": expected_report_sha256,
+            "source_occurrence_cid": expected["input_pins"]["source_occurrence_cid"],
+            "literal_accounting_complete": True, "formal_norm_ast": None, "lowered_ir": None,
+            "authority": dict(AUTHORITY), "masks": dict(expected["masks"]),
+            "model_calls": 0, "native_processes": 0}
+        serialized = _wire(result, MAX_REPORT_BYTES)
+        result = json.loads(serialized)
+        return result
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        def offered_fence():
+            _parent_serialized_fence(report, offered, MAX_REPORT_BYTES, _wire)
+        def result_fence():
+            if serialized is not None:
+                _parent_serialized_fence(result, serialized, MAX_REPORT_BYTES, _wire)
+        _parent_finish((offered_fence, result_fence), primary)
+
+
 __all__ = ["prepare_sampled_norm_scope_v1", "validate_sampled_norm_scope_v1",
-           "sampled_norm_scope_report_sha256"]
+           "sampled_norm_scope_report_sha256", "prepare_parent_norm_scope_v1",
+           "validate_parent_norm_scope_v1", "parent_norm_scope_report_sha256"]

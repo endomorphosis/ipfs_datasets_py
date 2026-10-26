@@ -18,6 +18,12 @@ recursive-include ipfs_datasets_py/assurance/schemas *.json
 recursive-include ipfs_datasets_py/assurance/vectors *.json
 recursive-include ipfs_datasets_py/logic/bridge/schemas *.json
 include ipfs_datasets_py/logic/intent_ir/intent_ir.schema.json
+# Ship the canonical navigation payload in sdists as well as wheels.
+include ipfs_datasets_py/logic/autoformal/README.md
+include ipfs_datasets_py/logic/autoformal/docs/*.md
+include ipfs_datasets_py/logic/autoformal/docs/*.json
+include ipfs_datasets_py/logic/autoformal/docs/guides/*.md
+include ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip
 recursive-include ipfs_datasets_py/logic/legal_ir/schemas *.json
 recursive-include ipfs_datasets_py/logic/software_contracts/adversarial_assurance/schemas *.json
 recursive-include ipfs_datasets_py/logic/software_contracts/semantic_governor/schemas *.json

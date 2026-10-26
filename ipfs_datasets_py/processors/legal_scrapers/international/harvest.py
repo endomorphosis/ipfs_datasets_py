@@ -29,6 +29,11 @@ _WORKSPACE_STAGING_RE = re.compile(r'Path\(\s*f?"/workspace/legal_scrapers/stagi
 _BOX_TOKEN_RE = re.compile(r'Path\(\s*"/home/box/\.cache/huggingface/token"\s*\)')
 _WORKSPACE_LITERAL_RE = re.compile(r"/workspace/legal-corpora")
 _WORKSPACE_SCRAPERS_LITERAL_RE = re.compile(r"/workspace/legal_scrapers")
+_BOX_TESSDATA_FILE_RE = re.compile(r'Path\(\s*"/home/box/tessdata/([^"]+)"\s*\)')
+_TESSDATA_DEFAULT = (
+    'os.environ.get("IPFS_DATASETS_TESSDATA", '
+    'str(Path.home() / ".ipfs_datasets" / "tessdata"))'
+)
 
 SHARED_HELPER_FILES = (
     "common.py",
@@ -74,12 +79,27 @@ class HarvestResult:
         return len(self.errors)
 
 
+def _rewrite_tessdata_paths(text: str) -> str:
+    """Point OCR tessdata defaults at an env path instead of the sandbox home."""
+
+    text = text.replace(
+        'os.environ.setdefault("TESSDATA_PREFIX", "/home/box/tessdata")',
+        f'os.environ.setdefault("TESSDATA_PREFIX", {_TESSDATA_DEFAULT})',
+    )
+
+    def _file(match: re.Match[str]) -> str:
+        return f'(Path({_TESSDATA_DEFAULT}) / "{match.group(1)}")'
+
+    return _BOX_TESSDATA_FILE_RE.sub(_file, text)
+
+
 def rewrite_sandbox_source(source: str) -> str:
     """Replace Hugging Face parking-lot sandbox paths with env-configurable roots."""
 
     text = str(source or "")
     if not text:
         return text
+    text = _rewrite_tessdata_paths(text)
 
     def _corpora_path(match: re.Match[str]) -> str:
         suffix = match.group(1) or ""

@@ -140,8 +140,11 @@ def reconstruct_parent(
     sha256_hex,
 ) -> ReconstructResult:
     """Apply the five-way outcome table. ``children`` already normalized."""
+    # Empty bodies are dropped from the corpus. A title-only piece would make
+    # the parent disagree with the glue of the children that remain.
+    kept = [c for c in children if str(c.get("body") or "").strip()]
     ordered = sorted(
-        children,
+        kept,
         key=lambda c: article_sort_key(c.get("article_number") or "", c.get("id") or ""),
     )
     ids = [c.get("id") or "" for c in ordered]

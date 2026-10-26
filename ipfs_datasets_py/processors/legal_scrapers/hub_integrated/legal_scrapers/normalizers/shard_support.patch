@@ -1,0 +1,63 @@
+--- a/ipfs_datasets_py/processors/legal_scrapers/country_laws_ir/normalize.py
++++ b/ipfs_datasets_py/processors/legal_scrapers/country_laws_ir/normalize.py
+@@ -84,6 +84,20 @@
+     return None
+ 
+ 
++def _pick_repo_shards(filenames: set[str], name: str) -> list[str]:
++    """Sharded raw repos: data/<name>-00001.parquet, data/<name>-delta-00001.parquet, ... (sorted)."""
++    import re as _re
++
++    pat = _re.compile(rf"^data/{name}(?:-[\w-]+)?\.parquet$")
++    return sorted(f for f in filenames if pat.match(f))
++
++
++def _read_shards(paths: list[Path]) -> pd.DataFrame:
++    """Concatenate shards (raw repos pin one schema per repo; mixed string/large_string is fine in pandas)."""
++    frames = [pd.read_parquet(p) for p in paths]
++    return pd.concat(frames, ignore_index=True) if len(frames) > 1 else frames[0]
++
++
+ def _resolve_local_parquet(root: Path, name: str, *, required: bool = True) -> Path | None:
+     """Accept either <root>/data/<name>.parquet or <root>/<name>.parquet."""
+     for cand in (root / "data" / f"{name}.parquet", root / f"{name}.parquet"):
+@@ -152,17 +166,30 @@
+     info = dataset_info(repo_id, token=public_token())
+     revision = info.sha
+     filenames = _repo_filenames(info)
+-    laws_file = _pick_repo_file(filenames, "laws") or "data/laws.parquet"
++    laws_file = _pick_repo_file(filenames, "laws")
+     articles_file = _pick_repo_file(filenames, "articles")
+-    laws_path = _download(repo_id, laws_file, cache_dir)
++    laws_shards = [] if laws_file else _pick_repo_shards(filenames, "laws")
++    articles_shards = [] if articles_file else _pick_repo_shards(filenames, "articles")
++    laws_file = laws_file or (None if laws_shards else "data/laws.parquet")
+     articles_path: Path | None = None
+-    if articles_file is not None:
+-        try:
+-            articles_path = _download(repo_id, articles_file, cache_dir)
+-        except EntryNotFoundError:
+-            articles_path = None
+-    laws = pd.read_parquet(laws_path)
+-    articles = pd.read_parquet(articles_path) if articles_path is not None else _empty_articles()
++    if laws_shards:
++        shard_paths = [_download(repo_id, f, cache_dir) for f in laws_shards]
++        laws_path = shard_paths[0]
++        laws = _read_shards(shard_paths)
++    else:
++        laws_path = _download(repo_id, laws_file, cache_dir)
++        laws = pd.read_parquet(laws_path)
++    if articles_shards:
++        a_paths = [_download(repo_id, f, cache_dir) for f in articles_shards]
++        articles_path = a_paths[0]
++        articles = _read_shards(a_paths)
++    else:
++        if articles_file is not None:
++            try:
++                articles_path = _download(repo_id, articles_file, cache_dir)
++            except EntryNotFoundError:
++                articles_path = None
++        articles = pd.read_parquet(articles_path) if articles_path is not None else _empty_articles()
+     validate_laws(laws)
+     validate_articles(articles)
+     meta = {

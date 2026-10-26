@@ -106,6 +106,27 @@ def _is_real_vector(vec: object) -> bool:
     return float(np.linalg.norm(arr)) > 1e-6
 
 
+def encode_lock_path(device: str):
+    """One file lock per CUDA device so two GPUs can encode at the same time."""
+
+    import os
+    from pathlib import Path
+
+    name = str(device or "cpu").strip().lower()
+    if name.startswith("cuda"):
+        index = name.split(":", 1)[1] if ":" in name else "0"
+        filename = f"cuda.encode.{index}.lock" if index.isdigit() else "cuda.encode.0.lock"
+    else:
+        filename = "cpu.encode.lock"
+    root = Path(
+        os.environ.get(
+            "COUNTRY_LAWS_IR_ROOT",
+            str(Path.home() / ".ipfs_datasets" / "country-laws-ir"),
+        )
+    )
+    return root / filename
+
+
 def encode_corpus(
     corpus: pd.DataFrame,
     batch_size: int = 64,
@@ -172,15 +193,10 @@ def encode_corpus(
             return out
 
     lock_fh = None
-    if device.startswith("cuda"):
+    if device.startswith("cuda") or device == "cpu":
         import fcntl
 
-        lock_path = _Path(
-            os.environ.get(
-                "COUNTRY_LAWS_IR_ROOT",
-                str(_Path.home() / ".ipfs_datasets" / "country-laws-ir"),
-            )
-        ) / "cuda.encode.lock"
+        lock_path = encode_lock_path(device)
         lock_path.parent.mkdir(parents=True, exist_ok=True)
         lock_fh = open(lock_path, "a", encoding="utf-8")
         fcntl.flock(lock_fh.fileno(), fcntl.LOCK_EX)

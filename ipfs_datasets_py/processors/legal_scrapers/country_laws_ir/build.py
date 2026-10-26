@@ -140,11 +140,18 @@ def _encode_vectors(
             vectors = layout_stub_vectors(corpus, reason=str(vector_blocker))
             return vectors, vector_blocker, vector_report
         vectors = layout_vectors(corpus, embeddings)
-        if int(vector_report.get("n_reused") or 0) and vector_report.get("status") != "reused":
+        n_reused = int(vector_report.get("n_reused") or 0)
+        n_encoded = int(vector_report.get("n_encoded") or 0)
+        n_missing = int(vector_report.get("n_missing") or 0)
+        if n_reused:
+            vectors["stats"]["n_reused"] = n_reused
+        if n_encoded:
+            vectors["stats"]["n_encoded"] = n_encoded
+        # A complete 384-d table is embedded. partial is only a real gap.
+        complete = n_missing == 0 and (n_reused + n_encoded) >= len(corpus) and len(corpus) > 0
+        if not complete:
             vectors["stats"]["status"] = "partial"
-            vectors["stats"]["n_reused"] = int(vector_report.get("n_reused") or 0)
-            vectors["stats"]["n_missing"] = int(vector_report.get("n_missing") or 0)
-            vector_blocker = vector_report.get("reason") or vector_report.get("status")
+            vectors["stats"]["n_missing"] = n_missing
         save_embedding_cache(
             cid_cache_path,
             merge_embedding_maps(prior_by_cid, embeddings_by_cid(corpus, embeddings)),
@@ -272,6 +279,12 @@ def build_country(
     )
     if plan.skip_build:
         _log(f"skip unchanged after normalize {country['slug']}")
+        hub = _publish_unchanged_revision(
+            prior,
+            str(source_meta.get("source_revision") or ""),
+            country["slug"],
+            upload,
+        )
         result = {
             "country": country["slug"],
             "source": repo,
@@ -290,6 +303,8 @@ def build_country(
             "neighbor_via": None,
             "schema_version": "country-laws-ir-graphrag/v1",
         }
+        if hub:
+            result["hub"] = hub
         record_progress({"event": "skipped_unchanged", **{k: v for k, v in result.items() if k != "normalization"}})
         return result
 
@@ -441,10 +456,13 @@ def reindex_from_gaps(
     all_indexable: bool = False,
     device: str = "cuda",
     renormalize: bool = False,
+    corpus_rows: dict[str, int] | None = None,
 ) -> list[dict[str, Any]]:
     """Rebuild country IR. Default is Hub gaps; ``all_indexable`` processes every catalog country.
 
-    Default cap skips huge corpora (Finland, Dominican Republic). Pass
+    ``workers`` is a ceiling. Live memory, disk, and free GPU memory shrink it,
+    and a full host backs off instead of starting another country. Default cap
+    skips huge corpora (Finland, Dominican Republic). Pass
     ``max_corpus_rows=None`` to include them.
     """
     from .catalog import indexable_countries
@@ -470,7 +488,10 @@ def reindex_from_gaps(
             ]
         if limit is not None:
             rows = rows[: int(limit)]
-        slugs = [str(r["slug"]) for r in rows]
+        queued = [(str(r["slug"]), int(r.get("corpus_rows") or 0)) for r in rows]
+    else:
+        known = corpus_rows or {}
+        queued = [(str(slug), int(known.get(str(slug)) or 0)) for slug in slugs]
     kwargs = {
         "upload": upload,
         "mode": mode,
@@ -480,35 +501,150 @@ def reindex_from_gaps(
         "device": device,
         "renormalize": renormalize,
     }
-    n_workers = max(1, int(workers or 1))
-    _log(f"reindex parallel workers={n_workers} countries={len(slugs)} device=cuda")
+    ceiling = max(1, int(workers or 1))
+    _log(f"reindex adaptive ceiling={ceiling} countries={len(queued)} device={device}")
+    return _run_adaptive(queued, kwargs, ceiling)
+
+
+def _run_adaptive(
+    queued: list[tuple[str, int]],
+    kwargs: dict[str, Any],
+    ceiling: int,
+) -> list[dict[str, Any]]:
+    """Start countries only while memory, disk, and a GPU have room."""
+
     import multiprocessing as mp
-    from concurrent.futures import ProcessPoolExecutor, as_completed
+    import time
+    from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
+
+    from .resources import (
+        admission_budget_gib,
+        admit_parallelism,
+        assign_device,
+        backoff_seconds,
+        can_admit,
+        job_slots,
+        probe_host,
+    )
 
     try:
         mp.set_start_method("spawn", force=False)
     except RuntimeError:
         pass
 
-    results = [None] * len(slugs)
-    with ProcessPoolExecutor(max_workers=n_workers, max_tasks_per_child=1) as pool:
-        futs = {
-            pool.submit(_reindex_one_country, (slug, kwargs)): i
-            for i, slug in enumerate(slugs)
-        }
-        for fut in as_completed(futs):
-            idx = futs[fut]
-            slug = slugs[idx]
-            try:
-                results[idx] = fut.result()
-            except Exception as exc:
-                _log(f"FAILED {slug}: {exc}")
-                results[idx] = {"country": slug, "skipped": False, "error": str(exc)}
-    return [r for r in results if r is not None]
+    pending = list(enumerate(queued))
+    inflight: dict[Any, tuple[int, str, str, int]] = {}
+    results: list[dict[str, Any] | None] = [None] * len(queued)
+    pressure = 0
+    last_sig: tuple[Any, ...] | None = None
+    requested = str(kwargs.get("device") or "cuda")
+    with ProcessPoolExecutor(max_workers=ceiling, max_tasks_per_child=1) as pool:
+        while pending or inflight:
+            snap = probe_host()
+            admission = admit_parallelism(snap, ceiling=ceiling)
+            devices = admission.devices
+            if requested == "cpu":
+                devices = ("cpu",) if admission.workers else ()
+            elif requested.startswith("cuda:") and requested not in devices:
+                devices = ()
+            limit = admission.workers if devices else 0
+            signature = (limit, devices, admission.reason)
+            if signature != last_sig:
+                _log(
+                    f"admit workers={limit} devices={list(devices)} reason={admission.reason} "
+                    f"mem={snap.mem_available_gib:.1f}G sched={admission_budget_gib(snap):.1f}G "
+                    f"disk={snap.disk_free_gib:.0f}G "
+                    f"inflight={len(inflight)} pending={len(pending)}"
+                )
+                last_sig = signature
+            used = sum(item[3] for item in inflight.values())
+            started = False
+            while pending and devices:
+                _idx, (_source, rows) = pending[0]
+                cost = job_slots(rows)
+                if not can_admit(used, limit, cost):
+                    break
+                device = assign_device(devices, tuple(item[2] for item in inflight.values()))
+                idx, (source, _rows) = pending.pop(0)
+                held = cost
+                task_kwargs = dict(kwargs)
+                task_kwargs["device"] = device
+                future = pool.submit(_reindex_one_country, (source, task_kwargs))
+                inflight[future] = (idx, source, device, held)
+                used += held
+                started = True
+                _log(f"admit start {source} device={device} slots={cost}")
+            if started:
+                pressure = 0
+            if inflight:
+                done, _pending_futs = wait(
+                    set(inflight), timeout=5.0, return_when=FIRST_COMPLETED
+                )
+                for future in done:
+                    idx, source, _device, _held = inflight.pop(future)
+                    try:
+                        results[idx] = future.result()
+                    except Exception as exc:
+                        _log(f"FAILED {source}: {exc}")
+                        results[idx] = {"country": source, "skipped": False, "error": str(exc)}
+                continue
+            if not pending:
+                break
+            delay = backoff_seconds(admission.backoff_s or 15.0, pressure)
+            pressure += 1
+            _log(f"backoff {delay:.0f}s reason={admission.reason} pressure={pressure}")
+            time.sleep(delay)
+    return [row for row in results if row is not None]
+
+
+def _publish_unchanged_revision(
+    prior,
+    source_revision: str,
+    slug: str,
+    upload: bool,
+) -> dict[str, Any] | None:
+    """Upload the existing pack with the new raw SHA when the rows did not change."""
+
+    if prior is None or not upload:
+        return None
+    from .incremental import stamp_source_revision
+
+    manifest_path = Path(prior.directory) / "manifest.json"
+    if not manifest_path.is_file():
+        return None
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict) or not stamp_source_revision(manifest, source_revision):
+        return None
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    from .upload import upload_release
+
+    hub = upload_release(Path(prior.directory), target_repo(slug))
+    _log(f"uploaded unchanged {hub['url']} source={source_revision}")
+    return hub
+
+
+def _external_build_owns(source: str) -> bool:
+    """True when a build outside this pool already claimed the country."""
+
+    import os
+
+    root = Path(
+        os.environ.get(
+            "COUNTRY_LAWS_IR_ROOT",
+            str(Path.home() / ".ipfs_datasets" / "country-laws-ir"),
+        )
+    )
+    name = str(source).rstrip("/").rsplit("/", 1)[-1]
+    if name.startswith("ipfs_") and name.endswith("_laws"):
+        name = name[len("ipfs_") : -len("_laws")]
+    return (root / "external-builds" / name).is_file()
 
 
 def _reindex_one_country(item: tuple[str, dict[str, Any]]) -> dict[str, Any]:
     slug, kwargs = item
+    if _external_build_owns(slug):
+        _log(f"skip {slug}: external build owns it")
+        return {"country": slug, "skipped": True, "reason": "external"}
     _log(f"reindex start {slug}")
     try:
         return build_country(slug, **kwargs)

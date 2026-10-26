@@ -278,6 +278,67 @@ def validate_forward_observations(report):
         complete_and_bare_encoder_checked=True,**FALSE)
 
 
+def produce_native768_sources(rows, *, expected_source_rows_sha256, manifest_path,
+                              expected_manifest_sha256, model_directory, code_directory,
+                              batch_size=1, max_seconds=MAX_SECONDS):
+    """Encode independently pinned arbitrary sources with the existing CPU512 engine.
+
+    The source hash is ``source_embeddings_768._digest(rows)`` over the closed,
+    ordered ``id``/``source_text`` rows. No split, target, normalization fit or
+    physical SourceSpan is inferred. IDs must be the existing ``source:`` plus
+    SHA256 of exact UTF8 text; physical aliases remain outside this producer.
+    At most64 unique sources and1MiB total UTF8 are accepted. The result is
+    the existing fresh-bounded-native768-production/v1 record, retaining all
+    source/token/mask/forward evidence and the original8192-token producer ID
+    with its stricter512-token experiment limit.
+
+    Caller-owned CPU1 admission, one Torch thread, a dedicated offline process
+    and a hard process deadline are required. Native deadlines are cooperative.
+    The caller freezes the full transitive import/runtime closure and separately
+    verifies physical origins through arbitrary_native_source_cache. This API
+    establishes no legal meaning, training, source authentication or admission.
+    """
+    from . import source_embeddings_768_complete as complete
+    from . import fresh_scalar_source_inputs as fresh
+
+    _require(type(batch_size) is int and 1 <= batch_size <= 16
+        and type(max_seconds) in (int, float) and math.isfinite(max_seconds)
+        and 0 < max_seconds <= MAX_SECONDS, "bounded native768 execution policy required")
+    _require(type(rows) is list and 1 <= len(rows) <= 64,
+        "one to64 arbitrary source rows required")
+    _require(type(expected_source_rows_sha256) is str
+        and core._SHA.fullmatch(expected_source_rows_sha256), "independent source rows SHA256 required")
+    started = time.monotonic()
+    owner = _file_pin(__file__)
+    # The original validator checks every row, UTF8 scalar, ID and byte bound
+    # before local asset admission or any tensor/runtime import.
+    sources = [{key: row[key] for key in ("id", "source_text")}
+        for row in complete.reference._source_rows(deepcopy(rows))]
+    _require(sum(len(row["source_text"].encode("utf-8")) for row in sources) <= 1024**2,
+        "arbitrary native768 source bytes exceed1MiB")
+    _require(all(row["id"] == "source:" + _text_sha(row["source_text"]) for row in sources),
+        "native768 source IDs must equal source: plus exact UTF8 SHA256")
+    _require(complete.reference._digest(sources) == expected_source_rows_sha256,
+        "independent source rows hash differs")
+    config = dict(manifest_path=manifest_path, expected_manifest_sha256=expected_manifest_sha256,
+        model_directory=model_directory, code_directory=code_directory)
+    fresh._asset_config(768, config)
+    deadline = started + max_seconds
+    _deadline(deadline)
+    import torch
+    _require(torch.get_num_threads() == 1,
+        "caller must reserve CPU1 and set torch threads to one")
+    # Reuse the complete loader, bounded forward capture and fresh wire format;
+    # the historical48-row public scalar wrapper is intentionally not invoked.
+    payload = fresh._produce768(dict(source_inputs=sources), config, None, batch_size, deadline)
+    _deadline(deadline)
+    native = payload["native_production"]
+    _require(native["source_rows"] == sources
+        and complete.reference._digest(native["source_rows"]) == expected_source_rows_sha256
+        and _file_pin(__file__) == owner, "arbitrary native768 source or owner changed")
+    return native
+
+
 def produce_missing768(plan, *, manifest_path, expected_manifest_sha256, model_directory, code_directory,
                        batch_size=4, max_seconds=MAX_SECONDS):
     """Locally encode only missing complete sources under a stricter512-token gate."""

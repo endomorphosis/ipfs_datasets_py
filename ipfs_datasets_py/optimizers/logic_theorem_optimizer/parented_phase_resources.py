@@ -142,7 +142,10 @@ class ParentedPhaseResourceReservation(DaemonResourceReservation):
         _need(scheduler is not None and scheduler.state_path == self._admission.state_path,
               "strict phase scheduler identity differs")
         remaining = self._deadline - time.monotonic()
-        _need(remaining > 0, "parented phase deadline expired")
+        operation = host.native_deadlines.resource_operation_deadline()
+        if operation is not None:
+            remaining = min(remaining, host.native_deadlines._operation_clock(operation)-time.monotonic())
+        _need(remaining > 0, "parented phase admission deadline expired")
         return scheduler.acquire(lane, cpu_slots=self.cpu_slots, memory_mb=self.memory_mb,
             child_process_slots=self.child_process_slots, requires_gpu=False,
             parent_lease=self._parent, timeout=remaining, request_id=self._scheduler_request_id())

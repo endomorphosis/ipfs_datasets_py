@@ -1,0 +1,226 @@
+{
+  "base_revision": "e13f0b0587bca73ada7d2872e2b7b044ccd30b4c",
+  "conflicts": [],
+  "fresh_validation": {
+    "cases_passed": 128,
+    "failed_skipped_xfailed": 0,
+    "manifest_sha256": "a9df8957b11b29ece371c680d35803ebb9980b8466fa93c41d698cdedffec364",
+    "original_native_cleanup_verified": true,
+    "recorded_evidence_scope": "Original complete receipts retained externally; this compact record does not redistribute those attempts.",
+    "request_sha256": "8b4c5699d46349280742dbc94606be1f93e212fd0c5d31d0abbefd2906e3c3be",
+    "setup_call_teardown_phases_passed": 384,
+    "source_lease_closed_after_verified_owner_cleanup": true
+  },
+  "observed_at_utc": "2026-10-20T23:35:28.431522+00:00",
+  "qualification": {
+    "Lean_executed": false,
+    "model_executed": false,
+    "source_edition_crosswalk_adopted": false,
+    "statutory_meaning_reviewed": false,
+    "training_executed": false,
+    "training_gold_admitted": false
+  },
+  "schema": "legal-ir-source-coordinate-main-integration/v1",
+  "scope": "Opt-in raw source coordinates, cache/paired/context transport and three-cache metadata join; no legal-meaning or model quality qualification.",
+  "selected_branch_revision": "431c9c7715ba7165dbec27f362410ac7dd23983a",
+  "source_changed_paths": 49,
+  "source_postimages": {
+    "docs/implementation/runbooks/uscode_autoformal_supervisor.md": {
+      "bytes": 62176,
+      "sha256": "8e3d4ece0e6393ff0b583ee8dd31fb98f88c4b23e9010c513272af22341596df"
+    },
+    "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_tokens_v1.md": {
+      "bytes": 6629,
+      "sha256": "33bb4b287a81f280b383593a8be75a0d885714cfeeed10f6e608fcf466e421dd"
+    },
+    "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_content_v1.md": {
+      "bytes": 5395,
+      "sha256": "c3f70f3bddc28479cd9bbb14ba3cce809ec0d6ba1c29d2e60eb97fefcb05733b"
+    },
+    "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_source_context_cache_intake_v1.md": {
+      "bytes": 20008,
+      "sha256": "4fb5a34c301e5373c2b9664a647a3a55843fd36de7402e3536b31e7227c61249"
+    },
+    "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_source_context_inventory_v1.md": {
+      "bytes": 13629,
+      "sha256": "943db49b83c4d956830d5e20583a457e1162b7afd940aeca356af33109893ee0"
+    },
+    "ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_source_context_v1.md": {
+      "bytes": 8580,
+      "sha256": "7d5593014ca1d9e13fb88296ac60d96a95a339cfaee48c06c71433700e3460d1"
+    },
+    "ipfs_datasets_py/logic/autoformal/docs/guides/legal_paired_manifest_inventory_v1.md": {
+      "bytes": 6095,
+      "sha256": "803c164798af3b1d043b5ce64aa37ef345b94488e10a281b6ef7ad1a91a656f3"
+    },
+    "ipfs_datasets_py/logic/autoformal/docs/guides/legal_paired_payload_intake_v1.md": {
+      "bytes": 6731,
+      "sha256": "3e7ecd003bc13e73549c073c652de8100edeeeb4dae789fc1e6a577061c31adf"
+    },
+    "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_span_entity_join_v1.md": {
+      "bytes": 12953,
+      "sha256": "1ca13b6ffcad1f71fad2057637056c7af72a50a7748948057c5d4e26968cb7e1"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_compact_content_v1.py": {
+      "bytes": 30504,
+      "sha256": "de6495ed91d6842071d0892c4410dfb9243fab658eb22d19635a8db599b4b25e"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_compact_source_context_cache_intake_v1.py": {
+      "bytes": 35829,
+      "sha256": "f2e076abc53d4fe012f0895d9acf89256cde7bd05f75b79822cfc24a1ff43d2f"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_compact_source_context_inventory_v1.py": {
+      "bytes": 30820,
+      "sha256": "3b97c3ac87e7c83cf1fe4e63bafceb14b491a658e9679ff0033de5272b3ea243"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_compact_source_context_v1.py": {
+      "bytes": 14556,
+      "sha256": "efaa7e3ccc73d572561569e05d02270625076ac9e5708fea2d62d60f7f294dc2"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_paired_manifest_inventory_v1.py": {
+      "bytes": 17742,
+      "sha256": "f5778bbb6f2fef41a45057ce45ca2f409f0f27647c39e538b21909dd38a1990b"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_paired_payload_intake_v1.py": {
+      "bytes": 13210,
+      "sha256": "46ba5a39dce8d37543b57794fbf0bbbd44b50e25f5cb8ad4bb895f10a65e15fb"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_span_entity_join_v1.py": {
+      "bytes": 28120,
+      "sha256": "c225dd10590d167cda9c7ce2d75ce5c709eb0f8fe0bb1cbf296fa8e71ebb0478"
+    },
+    "ipfs_datasets_py/logic/autoformal/paired_span_census.py": {
+      "bytes": 68639,
+      "sha256": "65a4aa7b5a78ee22f8cb2847a0ee23e56e753defdfc702e332507dd092f75cdb"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_cache.py": {
+      "bytes": 104209,
+      "sha256": "0c25ad7ea4008a90b2bb64627c863b1f880b41421ec9bffa862d0483f9ce62bd"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_cache_claims.py": {
+      "bytes": 29974,
+      "sha256": "5b02acbee66f6174bc2703ac641388bd5a6358cd346967812257b1bc785cba9e"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_cache_feed.py": {
+      "bytes": 44463,
+      "sha256": "60d515f24bec614413021f9efbf4b708e79e0a1f98d408fb686c89023aa40d8a"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_cache_fenced_ingest.py": {
+      "bytes": 27017,
+      "sha256": "613df3439d0b73b977e4f530e1282b17d719504ee3fe1bf5ed3bc6cb8552d86e"
+    },
+    "ipfs_datasets_py/logic/autoformal/uscode_ingest.py": {
+      "bytes": 23313,
+      "sha256": "a0d79a7459186c19c3a32cc03405acc3e4a4e0e2b33fc7bae9525be7b5246e92"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_tokens_v1.py": {
+      "bytes": 24899,
+      "sha256": "145e4598616100c58b01f0e38ffbb378ee2938d091e98834fe2b01f4b348486e"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_eval_splits.py": {
+      "bytes": 57859,
+      "sha256": "495a988ea30679187a8b695f5ec50e2fa24729064ebccc3d623cd90c78240dce"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py": {
+      "bytes": 19887,
+      "sha256": "f52d4392e53cb707979189344dc65a17d66974b9a98cf96bc9b725b7a0242fd7"
+    },
+    "scripts/ops/legal_ir/import_span_cache_exchange.py": {
+      "bytes": 42729,
+      "sha256": "7f6a5228f334f05e61b4697e79c45a1c7e8d40ffbd228fc7f6f0e5a74c87fcae"
+    },
+    "scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py": {
+      "bytes": 42573,
+      "sha256": "ca0d588de8cf23422bbd6e103e3243ea6c5ecd71afc33d191189738d012a0d0c"
+    },
+    "tests/unit/logic/autoformal/test_legal_compact_content_tokens_v1.py": {
+      "bytes": 32096,
+      "sha256": "47e6b066c0a14bb3c34fb7583d408228e32d62ea4cfc19bcbc4584e087971ceb"
+    },
+    "tests/unit/logic/autoformal/test_legal_compact_content_v1.py": {
+      "bytes": 49015,
+      "sha256": "761ae3331c55296084f0ee445a846675ba2035261e5f2b32a0bd713bee224d5e"
+    },
+    "tests/unit/logic/autoformal/test_legal_compact_source_context_cache_intake_v1.py": {
+      "bytes": 25249,
+      "sha256": "0c1aa20a89edc5152d5627a156d48870f58db8c42208d4bd3e905be508fc6e06"
+    },
+    "tests/unit/logic/autoformal/test_legal_compact_source_context_coordinate_intake_v2.py": {
+      "bytes": 14196,
+      "sha256": "063f5e64f0188ead3e8513dc083ba1a1690042770820262540b195e9ce17267c"
+    },
+    "tests/unit/logic/autoformal/test_legal_compact_source_context_inventory_v1.py": {
+      "bytes": 24775,
+      "sha256": "b38bd5e28f89f21abb7812dd1a019177c666adccd227388144137a2d35ec8c00"
+    },
+    "tests/unit/logic/autoformal/test_legal_compact_source_context_v1.py": {
+      "bytes": 19064,
+      "sha256": "12936cfd13b4c19d552ac376e7869ceb31b98bff5a4f8701a4ccd1e1628a4893"
+    },
+    "tests/unit/logic/autoformal/test_legal_paired_coordinate_intake_v2.py": {
+      "bytes": 10455,
+      "sha256": "18c0cf789b2a717bba90849bfb2595255a18838c0f8e009d3970f43c398999d9"
+    },
+    "tests/unit/logic/autoformal/test_legal_paired_manifest_inventory_v1.py": {
+      "bytes": 26562,
+      "sha256": "d87aab6ccc747097475ef6db404eb47594072b40f4de611c48970d56e3d24af9"
+    },
+    "tests/unit/logic/autoformal/test_legal_paired_payload_intake_v1.py": {
+      "bytes": 11913,
+      "sha256": "0d694d0d7d781419df4b5458fc48eec9049c7358ccad4e5c0fa2dc03da0c61e8"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_span_entity_coordinate_join_v2.py": {
+      "bytes": 19239,
+      "sha256": "1861dbc48964549615a25650e76a0c4afbca1cc8150370713d569d48790f90c1"
+    },
+    "tests/unit/logic/autoformal/test_legal_source_span_entity_join_v1.py": {
+      "bytes": 22843,
+      "sha256": "c7d0460c874467f8882ec384fb1de296247b45ee7979631b66aedbaf103cf614"
+    },
+    "tests/unit/logic/autoformal/test_span_cache_coordinate_selection.py": {
+      "bytes": 8401,
+      "sha256": "858e8c8c6bd89e0753b6c33d97587e0289a3c8ddaa95263c5d39bd4759592e8c"
+    },
+    "tests/unit/logic/autoformal/test_span_cache_source_coordinates.py": {
+      "bytes": 15668,
+      "sha256": "a929b2dcc1dbd97dc8d95ad8f917f829d91239a5431cbe980cd48b11e4ae686b"
+    },
+    "tests/unit/logic/autoformal/test_uscode_source_coordinates.py": {
+      "bytes": 12243,
+      "sha256": "a4ac84c83b483fd3764d2fc4df0243c4fb2d1bda5cdfac93d2792e90fddec1eb"
+    },
+    "tests/unit/logic/test_import_span_cache_source_coordinates.py": {
+      "bytes": 7587,
+      "sha256": "b4f9af0d484a58b2b714695337822ec488b8ecad0b8c3e3f10e744bf9f79e2fa"
+    },
+    "tests/unit/logic/test_paired_source_coordinates.py": {
+      "bytes": 14620,
+      "sha256": "92dedfbc091fd064dbf6e754f0af2c7fe51220ef56e16aece7d8a7539e750f7a"
+    },
+    "tests/unit/logic/test_span_cache_coordinate_feed.py": {
+      "bytes": 12440,
+      "sha256": "e8333ffc36be0ba28e30b5a4447fcff49bfe947fb0164f914f33c989b4ca0948"
+    },
+    "tests/unit/logic/test_span_cache_fenced_ingest.py": {
+      "bytes": 32363,
+      "sha256": "6446a7dea5530f34a3df92ec1dc9e6e80f72e0739c64d2989f58e7dc9fe2586b"
+    },
+    "tests/unit/logic/test_span_cache_paired_feed.py": {
+      "bytes": 25786,
+      "sha256": "27b6f785294750a1c881b9fe0e1c6432cc107f4cc7aafffbb3156a1c14c86819"
+    },
+    "tests/unit/logic/test_span_cache_paired_payload.py": {
+      "bytes": 8709,
+      "sha256": "155bb20b5c1f265118653975996346d5fefdbbf3861d29840324deb50e4157d7"
+    },
+    "tests/unit/logic/test_uscode_raw_source_coordinate_ingest.py": {
+      "bytes": 14645,
+      "sha256": "5863213006d2cc4475947c40565cfdfdadb7c23fde7d890d7fa439ea59544848"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_split_membership.py": {
+      "bytes": 9788,
+      "sha256": "edbe8140db1ce6c96a521a67beb5eac397c4a9f093dbea7fa16e7995c44151e0"
+    }
+  },
+  "source_python_files_parsed": 40
+}

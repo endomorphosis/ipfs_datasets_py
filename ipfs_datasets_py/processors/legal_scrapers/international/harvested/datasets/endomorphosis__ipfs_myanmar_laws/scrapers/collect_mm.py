@@ -159,7 +159,7 @@ def fetch_one(item: dict, done: set[str]) -> str:
         log_failure(CC, {"identifier": ident, "source_url": url, "reason": "no_pdf"})
         return "fail"
     import os
-    os.environ.setdefault("TESSDATA_PREFIX", "/home/box/tessdata")
+    os.environ.setdefault("TESSDATA_PREFIX", os.environ.get("IPFS_DATASETS_TESSDATA", str(Path.home() / ".ipfs_datasets" / "tessdata")))
     text = pdf_bytes_to_text(body)
     extract_method = "pdftotext"
     my_chars = sum(1 for c in (text or "") if "က" <= c <= "႟")

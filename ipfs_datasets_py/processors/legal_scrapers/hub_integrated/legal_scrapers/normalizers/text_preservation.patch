@@ -1,0 +1,656 @@
+diff --git a/ipfs_datasets_py/processors/legal_scrapers/country_laws_ir/normalize.py b/ipfs_datasets_py/processors/legal_scrapers/country_laws_ir/normalize.py
+index eabc436..5211a0e 100644
+--- a/ipfs_datasets_py/processors/legal_scrapers/country_laws_ir/normalize.py
++++ b/ipfs_datasets_py/processors/legal_scrapers/country_laws_ir/normalize.py
+@@ -61,6 +61,22 @@ def _s(value: Any) -> str:
+     return normalize_text(value)
+ 
+ 
++def _article_text(row: pd.Series, law: dict[str, Any] | None) -> str:
++    """v3.4.3: an article row's body, normalized with its law row's raw text as parent, so the
++    article copy keeps every line the law row keeps. Without a law row: as _row_get(row, "text")."""
++    if "text" not in row.index:
++        return ""
++    raw = row["text"]
++    parent = None
++    if law is not None:
++        lrow = law.get("row")
++        if lrow is not None and "text" in lrow.index and isinstance(lrow["text"], str) and lrow["text"]:
++            parent = lrow["text"]
++    if parent is None or raw is None or (isinstance(raw, float) and pd.isna(raw)):
++        return normalize_text(raw)
++    return normalize_legal_text(raw, parent=parent)
++
++
+ def _download(repo_id: str, filename: str, cache_dir: Path) -> Path:
+     configure_hf()
+     path = hf_hub_download(
+@@ -244,9 +260,19 @@ def _entry_cid(record: dict[str, Any]) -> str:
+     return cid_of_json(identity)
+ 
+ 
++# Identifier columns are copied verbatim (stripped), never run through the legal-text
++# normalizer: it drops URL-only "lines", which emptied source_url on every row.
++_VERBATIM_COLUMNS = frozenset({"source_url"})
++
++
+ def _row_get(row: pd.Series, col: str, default: str = "") -> str:
+     if col not in row.index:
+         return default
++    if col in _VERBATIM_COLUMNS:
++        value = row[col]
++        if value is None or (not isinstance(value, str) and pd.isna(value)):
++            return ""
++        return str(value).strip()
+     return _s(row[col])
+ 
+ 
+@@ -625,7 +651,7 @@ def build_corpus(
+                     "id": _row_get(row, "id"),
+                     "title": _row_get(row, "title"),
+                     "article_number": _row_get(row, "article_number"),
+-                    "body": _row_get(row, "text"),
++                    "body": _article_text(row, law_map.get(lid)),
+                     "row": row,
+                 }
+             )
+@@ -757,7 +783,7 @@ def build_corpus(
+         for _, row in articles.iterrows():
+             source_id = _row_get(row, "id")
+             instrument_id = _row_get(row, "law_id")
+-            body = _row_get(row, "text")
++            body = _article_text(row, law_map.get(instrument_id))
+             article_title = _row_get(row, "title")
+             article_number = _row_get(row, "article_number")
+             if not body:
+diff --git a/ipfs_datasets_py/processors/legal_scrapers/country_laws_ir/structure.py b/ipfs_datasets_py/processors/legal_scrapers/country_laws_ir/structure.py
+index 8e75a1f..226ee70 100644
+--- a/ipfs_datasets_py/processors/legal_scrapers/country_laws_ir/structure.py
++++ b/ipfs_datasets_py/processors/legal_scrapers/country_laws_ir/structure.py
+@@ -25,10 +25,23 @@ import os
+ from pathlib import Path
+ import re
+ import unicodedata
++from functools import lru_cache
+ from typing import Any
+ 
+ _WS_RE = re.compile(r"\s+", re.UNICODE)
+-_HAS_TAG_RE = re.compile(r"</?[a-zA-Z][^>]*>")
++# Only real HTML tags (known names): OCR junk such as '<B.Jl(}{.' is text, not markup.
++_HAS_TAG_RE = re.compile(
++    r"(?i)</?(?:a|abbr|b|big|blockquote|body|br|caption|center|code|col|colgroup|dd|del|div|dl|dt|em|"
++    r"font|h[1-6]|head|hr|html|i|img|ins|li|link|meta|nav|noscript|ol|p|pre|s|script|small|span|strike|"
++    r"strong|style|sub|sup|svg|table|tbody|td|tfoot|th|thead|title|tr|tt|u|ul)(?:\s[^<>]*)?/?>"
++)
++
++
++def legacy_strip() -> bool:
++    """COUNTRY_LAWS_IR_LEGACY_STRIP=1 restores the pre-v3 lossy rules (site-chrome keyword lines,
++    roman page letters, numero fold, leading '©', doubled years, stray '!'). Off by default:
++    stored text keeps those characters (text_preservation v3)."""
++    return os.environ.get("COUNTRY_LAWS_IR_LEGACY_STRIP", "") == "1"
+ 
+ # 1:1 map so match offsets stay aligned with the stored body. re.I does not
+ # treat É as E; gazettes use Décision, Ordonnance, Điều, Člen, etc.
+@@ -900,15 +913,28 @@ _KY_ART_RE = re.compile(r"[0-9]+\s*-?\s*берене", re.IGNORECASE)
+ _BE_ART_RE = re.compile(r"Артыкул\s*[0-9]+", re.IGNORECASE)
+ 
+ # "A R T Í C U L O 86" / "C A P I T U L O I" → ARTÍCULO 86 / CAPITULO I
++# v3.2: one line only (spaces/tabs between the letters, never a line break), capital letters only,
++# and only when the closed-up word is a heading keyword below; 'M / C / R / D' map labels, 'r a t i l'
++# and 'G A T S E' stay as written.
+ _SPACED_KEYWORD_RE = re.compile(
+-    r"(?iu)\b((?:[A-ZÁÉÍÓÚÜÑÀÈÌÒÙÂÊÎÔÛÄËÏÖÜÃÕÇ]\s+){3,}"
+-    r"[A-ZÁÉÍÓÚÜÑÀÈÌÒÙÂÊÎÔÛÄËÏÖÜÃÕÇ])\b"
+-    r"(?=\s*[.:\-–—]?\s*[0-9IVXLCDM])"
++    r"(?u)(?<![^\W\d_])((?:[A-ZÁÉÍÓÚÜÑÀÈÌÒÙÂÊÎÔÛÄËÏÖÜÃÕÇ][ \t]+){3,}"
++    r"[A-ZÁÉÍÓÚÜÑÀÈÌÒÙÂÊÎÔÛÄËÏÖÜÃÕÇ])(?![^\W\d_])"
++    r"(?=[ \t]*[.:\-–—]?[ \t]*[0-9IVXLCDM])"
+ )
++_SPACED_KEYWORDS = frozenset({
++    "ARTICLE", "ARTICULO", "ARTIGO", "ARTICOLO", "ARTIKEL", "ARTICLES", "ARTICULOS", "CAPITULO", "CAPITOLO",
++    "CHAPITRE", "CHAPTER", "KAPITEL", "TITULO", "TITRE", "TITLE", "TITOLO", "SECCION", "SECTION", "SEZIONE",
++    "SCHEDULE", "ANNEX", "ANNEXE", "ANEXO", "ALLEGATO", "ANHANG", "APPENDIX", "PART", "PARTIE", "PARTE",
++    "LIVRE", "LIBRO", "BOOK", "PARAGRAPH", "PARAGRAF", "PARAGRAPHE", "ABSCHNITT", "TEIL", "HOOFDSTUK",
++    "AFDELING", "CLANOK", "HLAVA", "ODDIEL", "CAST", "ARTYKUL", "ROZDZIAL", "CLEN", "CLANAK", "GLAVA",
++    "KAPITOLA", "FEJEZET", "CIKK", "PYKALA", "LUKU", "DECRETO", "DECRET", "ORDONNANCE", "LOI", "LEY",
++})
+ 
+ 
+ def _squeeze_spaced_keyword(match: re.Match[str]) -> str:
+-    return re.sub(r"\s+", "", match.group(1))
++    word = re.sub(r"[ \t]+", "", match.group(1))
++    plain = unicodedata.normalize("NFKD", word).encode("ascii", "ignore").decode().upper()
++    return word if plain in _SPACED_KEYWORDS else match.group(0)
+ 
+ 
+ _ZW_RE = re.compile(
+@@ -1090,21 +1116,262 @@ def learned_line_pattern() -> re.Pattern[str] | None:
+     return compiled
+ 
+ 
+-def strip_chrome_lines(text: str) -> str:
+-    """Drop gazette-site chrome lines. Never invents replacement legal text."""
++# Text preservation: lines that are never chrome, whatever the chrome patterns say.
++# URL / web-address / e-mail lines and dates are legal content (contact points, in-force
++# dates); punctuation-only lines (bullets, rules) carry no chrome. A lone number or year
++# that continues a date/number wrapped from the previous line ('d. 01-06-' + '2024',
++# '§ 3' + 'nr.23.') is content, not a page stamp.
++_KEEP_URLISH_RE = re.compile(r"(?i)(?:https?://|\bwww\.|[\w.+-]+@[\w-]+\.[\w.-]+)")
++_KEEP_DATE_RE = re.compile(r"\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b|\b\d{4}-\d{2}-\d{2}\b")
++_KEEP_PUNCT_ONLY_RE = re.compile(r"[^\w\s]+")
++_KEEP_NUMBERISH_RE = re.compile(r"(?i)(?:nr\.?\s*)?\d{1,4}(?:[./-]\d{1,4})*[.,]?")
++_KEEP_CONT_PREV_RE = re.compile(r"(?i)(?:\d[-./]?|\b(?:d|den|nr|no|stk|af|kl|pr)\.?|§)\s*$")
++
++
++# A lone number is a page stamp only when the line before it ends a sentence
++# ('... 2026.' / '...;' / '...:)' ) or the number fits a run of page numbers in the
++# document (... 6, 7, 8 ...). After a word ('udgangen af juni' + '2026',
++# 'efter' + '1997', 'Bilag' + '4') it continues the sentence and is content.
++_SENTENCE_END_RE = re.compile(r"[.!?;][)\]}\"'»”’]*\s*$")  # v3.2: ':' introduces a value, not a page break
++
++
++def _ends_sentence(line: str) -> bool:
++    return bool(_SENTENCE_END_RE.search(line) and re.search(r"\w", line))
++_LONE_NUMBER_RE = re.compile(r"\d{1,4}")
++# '§ 4 Definitioner ........' + '5': a table-of-contents page reference, kept as content.
++_DOT_LEADER_END_RE = re.compile(r"(?:\.{2,}|…)\s*$")
++
++
++def _enumeration_numbers(lines: list[str]) -> set[int]:
++    """Lone numbers n that follow a lone n-1 within 12 non-blank lines.
++
++    That is an enumeration (figure / list markers '1' ... '2' ...), not a page run:
++    printed pages are longer than 12 lines. Such numbers are content.
++    """
++    nonblank = [i for i, ln in enumerate(lines) if ln.strip()]
++    pos = {i: k for k, i in enumerate(nonblank)}
++    cand = [(i, int(ln.strip())) for i, ln in enumerate(lines) if _LONE_NUMBER_RE.fullmatch(ln.strip())]
++    return {
++        i
++        for k, (i, n) in enumerate(cand)
++        if k and cand[k - 1][1] == n - 1 and pos[i] - pos[cand[k - 1][0]] <= 12
++    }
++
++
++def _page_run_numbers(lines: list[str]) -> set[int]:
++    """Line indexes of lone numbers that sit in a run of page numbers.
++
++    Lone-number lines are taken in document order; one is in a run when the lone
++    number just before it or just after it is 1 or 2 pages away (n-2 <= prev < n,
++    n < next <= n+2), so '... 7 ... 8 ...' or a footer run with one gap.
++    """
++    nonblank = [i for i, ln in enumerate(lines) if ln.strip()]
++    pos = {i: k for k, i in enumerate(nonblank)}
++    cand = [(i, int(ln.strip())) for i, ln in enumerate(lines) if _LONE_NUMBER_RE.fullmatch(ln.strip())]
++    run: set[int] = set()
++    enum = _enumeration_numbers(lines)
++
++    def near(a: tuple[int, int], b: tuple[int, int]) -> bool:  # b is 1-2 pages after a, page-like distance
++        d = b[1] - a[1]
++        return 1 <= d <= 2 and 0 < pos[b[0]] - pos[a[0]] <= _MAX_PAGE_LINES * d
++
++    for k, (i, n) in enumerate(cand):
++        if i in enum:
++            continue
++        if (k > 0 and near(cand[k - 1], cand[k])) or (k + 1 < len(cand) and near(cand[k], cand[k + 1])):
++            run.add(i)
++    return run
++
++
++_MAX_PAGE_LINES = 150  # v3.2: a printed page holds at most this many non-blank lines
++
++
++def _table_cell_numbers(lines: list[str]) -> set[int]:
++    """v3.1/3.2: a lone number whose previous or next non-blank line is also a lone number is a
++    table or figure cell ('1' / '1' / '1' staff counts), not a page stamp."""
++    nonblank = [i for i, ln in enumerate(lines) if ln.strip()]
++    lone = {i for i in nonblank if _LONE_NUMBER_RE.fullmatch(lines[i].strip())}
++    return {i for k, i in enumerate(nonblank) if i in lone and (
++        (k > 0 and nonblank[k - 1] in lone) or (k + 1 < len(nonblank) and nonblank[k + 1] in lone))}
++
++
++_COLUMN_GAP = 12  # v3.4: lone numbers at most this many non-blank lines apart form one column
++_MIN_PAGE_LINES = 5  # v3.4.1: a printed page holds at least this many non-blank lines
++# v3.4.2: the line before ends in a page word ('............Σελ.' + '26': a table-of-contents page reference)
++_PAGE_WORD_END_RE = re.compile(r"(?:\bΣελ\.|\bσελ\.|\bΣελίδα|\bpp?\.|\bS\.|\bSeite|\bstr\.|\bpage)\s*$")
++# v3.4.2: ... or contains a dot leader anywhere ('..' or '…')
++_DOT_LEADER_ANY_RE = re.compile(r"\.{2,}|…")
++# v3.4.1: a footnote reference: a lower-case word of 3+ letters or a closing mark directly followed by
++# the number ('renvoyé1.', 'alcooliques1 et', '»2'), the number not followed by a letter or digit;
++# a mark after a digit is a decimal or list separator ('0,90 m'), not a reference.
++_FOOTNOTE_REF_RE = re.compile(r"([^\W\d_]{3,}|(?<!\d)[»”\"),;:!?])(\d{1,2})(?![^\W_])")
++# v3.4.1: a footnote line: the number directly followed by a letter ('1ART. 47 bis'), not an ordinal.
++_FOOTNOTE_LINE_RE = re.compile(r"(\d{1,2})(?!(?:er|re|ère|ème|e|è|nd|st|rd|th|o|a|η|ος|ης|ου)\b)[^\W\d_]")
++# v3.4.1: a sign or limit phrase on the line before: the number is the sign's value ('signal C, 14
++# « limitation de vitesse » adapté.' + '70').
++_SIGN_PHRASE_RE = re.compile(
++    r"signal|panneau|limitation|limite|vitesse|km/h|schild|geschwindigkeit|höchst|\bsign\b|\blimit|speed"
++    r"|značk|rýchlos|obmedzen|πινακίδ|σήμα|όριο|ταχύτ",
++    re.IGNORECASE,
++)
++_LIST_NEXT_RE = re.compile(r"(?:[.)\]]|\(?(?:\d{1,3}|[^\W\d_]{1,4})[).](?:\s|$))")
++
++
++def _page_stamp_vetoes(lines: list[str]) -> set[int]:
++    """v3.4 / v3.4.1: line indexes of lone numbers (1-4 digits) that are content, never page stamps.
++
++    Checked on the non-blank lines (k = position, n = value) of the whole text. A lone number is
++    kept when any of these holds:
++      - it is written with a leading 0 ('0', '01');
++      - another lone number is at most _COLUMN_GAP non-blank lines before or after it: a
++        table-of-contents or figure-list page column, a table column or a list (kept whole);
++      - the next non-blank line starts with '.', ')' or ']' or with a list marker
++        ('3) de ...', 'a) ...', '(2) ...', 'iv. ...');
++      - it is not the first non-blank line and the line before does not end a sentence
++        (_ends_sentence): it continues a phrase, an address or a table row
++        ('devant la maison' + '20', 'entamée de' + '3', '4+' + '1');
++      - page numbers only go up (v3.4.1: and never repeat): a lone number with a larger or equal
++        value at most _MAX_PAGE_LINES non-blank lines before it, or a smaller or equal one at most
++        _MAX_PAGE_LINES lines after it;
++      - it is 2-9, not the first or last non-blank line, and no lone n-1 or n-2 is at most
++        _MAX_PAGE_LINES non-blank lines before it: a paragraph number, not page n.
++    v3.4.1 adds:
++      - footnote number: n <= 99 and the text has a matching footnote reference, a lower-case
++        word of 3+ letters or a closing mark directly followed by n ('renvoyé1.', 'alcooliques1'),
++        or a line starting with n directly followed by a letter ('1ART. 47 bis'), not an ordinal;
++      - an unconfirmed 1: n = 1, not the last non-blank line, and no lone 2 at most
++        _MAX_PAGE_LINES non-blank lines after it. 1 is also every text's first footnote number
++        (the reference may sit in another row: an article copy), so page 1 is removed only
++        when the page run goes on or as the last line;
++      - sign or limit value: the line before names a sign or limit (_SIGN_PHRASE_RE: 'signal',
++        'panneau', 'limitation', 'vitesse', 'km/h', ...);
++      - impossible page position: page n cannot end after more than _MAX_PAGE_LINES * n non-blank
++        lines (k >= _MAX_PAGE_LINES * n), and, in a text of at least _MAX_PAGE_LINES non-blank
++        lines, cannot end before _MIN_PAGE_LINES * (n - 1) of them (k < _MIN_PAGE_LINES * (n - 1);
++        '70' at line 249 of 7,171). Shorter texts may be excerpts, so only the first bound applies.
++    v3.4.2 adds:
++      - page reference: it is not the first non-blank line and the line before ends in a page word
++        ('Σελ.', 'σελ.', 'Σελίδα', 'p.', 'pp.', 'S.', 'Seite', 'str.', 'page') or contains a dot
++        leader ('..' or '…') anywhere ('......Σελ.' + '26').
++    """
++    nonblank = [i for i, ln in enumerate(lines) if ln.strip()]
++    lone = [(k, i, int(lines[i].strip())) for k, i in enumerate(nonblank) if _LONE_NUMBER_RE.fullmatch(lines[i].strip())]
++    last = len(nonblank) - 1
++    out: set[int] = set()
++    if not lone:
++        return out
++    footnotes: set[int] = set()  # v3.4.1
++    for ln in lines:
++        for m in _FOOTNOTE_REF_RE.finditer(ln):
++            if not m.group(1)[0].isalpha() or m.group(1).islower():
++                footnotes.add(int(m.group(2)))
++        m = _FOOTNOTE_LINE_RE.match(ln.strip())
++        if m:
++            footnotes.add(int(m.group(1)))
++    for q, (k, i, n) in enumerate(lone):
++        s = lines[i].strip()
++        prev = lines[nonblank[k - 1]].strip() if k else ""
++        nxt = lines[nonblank[k + 1]].strip() if k < last else ""
++        before = [(kk, nn) for kk, _, nn in lone[:q] if k - kk <= _MAX_PAGE_LINES]
++        after = [(kk, nn) for kk, _, nn in lone[q + 1 :] if kk - k <= _MAX_PAGE_LINES]
++        if (
++            s.startswith("0")
++            or any(k - kk <= _COLUMN_GAP for kk, _ in before)
++            or any(kk - k <= _COLUMN_GAP for kk, _ in after)
++            or (nxt and _LIST_NEXT_RE.match(nxt))
++            or (k > 0 and not _ends_sentence(prev))
++            or any(nn >= n for _, nn in before)  # v3.4.1: >= (a page number never repeats)
++            or any(nn <= n for _, nn in after)
++            or (2 <= n <= 9 and 0 < k < last and not any(n - 2 <= nn < n for _, nn in before))
++            or n in footnotes  # v3.4.1: footnote number
++            or (n == 1 and k < last and not any(nn == 2 for _, nn in after))  # v3.4.1: unconfirmed 1
++            or (k > 0 and _SIGN_PHRASE_RE.search(prev))  # v3.4.1: sign or limit value
++            or k >= _MAX_PAGE_LINES * n  # v3.4.1: impossible page position
++            or (last + 1 >= _MAX_PAGE_LINES and k < _MIN_PAGE_LINES * (n - 1))
++            or (k > 0 and (_PAGE_WORD_END_RE.search(prev) or _DOT_LEADER_ANY_RE.search(prev)))  # v3.4.2
++        ):
++            out.add(i)
++    return out
++
++
++def _is_protected_line(stripped: str, prev: str) -> bool:
++    if _KEEP_URLISH_RE.search(stripped) or _KEEP_DATE_RE.search(stripped):
++        return True
++    if _KEEP_PUNCT_ONLY_RE.fullmatch(stripped):
++        return True
++    return bool(_KEEP_NUMBERISH_RE.fullmatch(stripped) and _KEEP_CONT_PREV_RE.search(prev))
++
++
++def strip_chrome_lines(
++    text: str,
++    *,
++    force_keep: set[int] | frozenset[int] | None = None,
++    kept_idx: set[int] | None = None,
++) -> str:
++    """Drop gazette-site chrome lines. Never invents replacement legal text.
++
++    v3.4.3: ``force_keep`` holds raw line indexes that must be kept (an article copy's lines that
++    its parent law row keeps); ``kept_idx``, when given, collects the raw indexes of kept lines.
++    """
+     if not text:
+         return ""
+     raw_lines = text.splitlines()
+     multi = sum(1 for ln in raw_lines if ln.strip()) > 1
+-    learned = learned_line_pattern()
++    # Site-chrome keyword lines, learned patterns and roman page letters are dropped only in
++    # legacy mode; by default only page furniture (page numbers, N/M, 'N of M') goes.
++    legacy = legacy_strip()
++    learned = learned_line_pattern() if legacy else None
++    page_run = _page_run_numbers(raw_lines) if multi else set()
++    enum = _enumeration_numbers(raw_lines) if multi else set()
++    cells = _table_cell_numbers(raw_lines) if multi else set()
++    vetoes = _page_stamp_vetoes(raw_lines) if multi else set()  # v3.4
+     kept = []
++    prev = ""
++    # Paragraph breaks: a run of blank lines becomes exactly one blank line,
++    # emitted before the next kept line (never leading, trailing or doubled;
++    # a dropped chrome line between two blank runs leaves one break).
++    blank = False
++
++    def keep(line: str) -> None:
++        nonlocal blank
++        if blank and kept:
++            kept.append("")
++        blank = False
++        kept.append(line)
++        if kept_idx is not None:
++            kept_idx.add(idx)
++
+     for idx, ln in enumerate(raw_lines):
+         stripped = ln.strip()
+         if not stripped:
++            blank = True
++            continue
++        prev_line, prev = prev, stripped
++        if force_keep and idx in force_keep:
++            keep(ln)  # v3.4.3: the parent law row keeps this line
+             continue
+-        if _CHROME_LINE_RE.match(stripped) or _CHROME_INLINE_RE.search(ln):
++        if _is_protected_line(stripped, prev_line):
++            keep(ln)
+             continue
+-        if learned is not None and learned.match(stripped):
++        if (
++            multi
++            and _LONE_NUMBER_RE.fullmatch(stripped)
++            and (
++                idx in cells  # table / figure cell
++                or idx in vetoes  # v3.4/v3.4.1: column, list, phrase, order, paragraph, footnote, sign or position: content
++                or (int(stripped) >= 1000 and idx not in page_run)  # v3.2: map label / sheet no., not a page
++                or (prev_line and (
++                    idx in enum
++                    or _DOT_LEADER_END_RE.search(prev_line)
++                    or (idx not in page_run and not _ends_sentence(prev_line))
++                ))
++            )
++        ):
++            keep(ln)  # lone number that is content
++            continue
++        if legacy and (_CHROME_LINE_RE.match(stripped) or _CHROME_INLINE_RE.search(ln)):
++            continue
++        if legacy and learned is not None and learned.match(stripped):
+             continue
+         # A lone "2" or "10" is an article number. The same token inside a
+         # longer page is a page stamp.
+@@ -1119,66 +1386,232 @@ def strip_chrome_lines(text: str) -> str:
+             if later.strip():
+                 nxt = later
+                 break
+-        if multi and _is_roman_page_line(stripped, nxt):
++        if legacy and multi and _is_roman_page_line(stripped, nxt):
+             continue
+-        kept.append(ln)
++        keep(ln)
+     return "\n".join(kept).strip()
+ 
+ 
+-_HYPHEN_BREAK_RE = re.compile(r"(?<=[^\W\d_])-[ \t]*\n+[ \t]*([^\W\d_])")
++_HYPHEN_BREAK_RE = re.compile(
++    r"(?<=[^\W\d_])([-\u2010\u2011])([ \t]*\n+[ \t]*)(?![^\W\d_]{1,4}[).](?:\s|$))([^\W\d_]+)"
++)  # v3.2: not before a list marker such as a) / b. / iv)
++_PROSE_MIN_CHARS = 20  # v3.3: a 'prose line' has at least this many characters ...
++_PROSE_MIN_WORDS = 3  # ... and at least this many words of 2+ letters (hyphen fragment included)
++
++
++def _is_prose_line(line: str) -> bool:
++    line = line.strip()
++    return len(line) >= _PROSE_MIN_CHARS and len(re.findall(r"[^\W\d_]{2,}", line)) >= _PROSE_MIN_WORDS
+ 
+ 
+ def _join_hyphen_breaks(text: str) -> str:
+-    """Join a hyphenated word split across lines. Leave a following capital header."""
++    """Join a hyphenated word split across lines. Leave a following capital header.
++
++    Text preservation: the hyphen is kept and only the line break is removed, so no
++    non-whitespace character is lost and suspended compounds ('mad- og restaffald')
++    are not glued into new words ('madog').
++    v3.3: the next word (up to whitespace) must have 2+ letters (a single letter is never joined), and
++    across a blank line the line ending in the hyphen must be a prose line, so OCR'd table
++    cells ('lave-' / 'faciles', '12.0 m-' / 't') stay apart.
++    """
+ 
+     def repl(match: re.Match[str]) -> str:
+-        nxt = match.group(1)
+-        if nxt.isupper():
++        nxt = match.group(3)
++        src = match.string
++        word = re.match(r"\S*", src[match.start(3) :]).group(0)
++        if nxt[0].isupper() or len(re.findall(r"[^\W\d_]", word)) < 2:
+             return match.group(0)
+-        return nxt
++        if match.group(2).count("\n") > 1:
++            prev = src[src.rfind("\n", 0, match.start()) + 1 : match.end(1)]
++            if not _is_prose_line(prev):
++                return match.group(0)
++        return match.group(1) + nxt
+ 
+     return _HYPHEN_BREAK_RE.sub(repl, text)
+ 
+ 
+-def normalize_legal_text(value: Any) -> str:
+-    """NFKC + HTML strip. Keeps newlines so heading detection still works."""
++# Text preservation: stored text is NFC, not NFKC, so '½', 'm³', '…', '´' and the
++# dash characters (– — ‐ −) stay as written. Only the presentation-form blocks that
++# heading and number matching needs are compatibility-folded: full/half-width forms
++# (U+FF00-FFEF) and Arabic/Hebrew presentation forms (U+FB1D-FDFF, U+FE70-FEFF).
++# Search folds (NFKD + case/diacritics) are applied by the BM25 tokenizer only.
++_COMPAT_FOLD_RE = re.compile("[\ufb1d-\ufdff\ufe70-\ufeff\uff00-\uffef]+")
++
++
++def _compat_fold_presentation_forms(text: str) -> str:
++    return _COMPAT_FOLD_RE.sub(lambda m: unicodedata.normalize("NFKC", m.group(0)), text)
++
++
++_PUA_RE = re.compile(r"[\ue000-\uf8ff]+")
++_PUA_BULLET_RE = re.compile(r"(?m)^([ \t]*)([\ue000-\uf8ff]{1,3})(?=[ \t]|$)")
++
++
++def _strip_zero_width(text: str) -> str:
++    """Remove zero-width / format characters (_ZW_RE). v3.4.2: a line made only of soft hyphens
++    (U+00AD, with optional spaces or tabs) is kept exactly as written: it is a bullet glyph of the
++    source, and removing it would turn the line into a paragraph break the raw text does not have."""
++    if "\xad" not in text:
++        return _ZW_RE.sub("", text)
++    return "\n".join(
++        line if line.strip(" \t") and not line.replace("\xad", "").strip(" \t") else _ZW_RE.sub("", line)
++        for line in text.split("\n")
++    )
++
++
++def _strip_private_use(text: str) -> str:
++    """v3.2: keep line-opening private-use bullet glyphs (U+F0B7, U+F0A7, U+F0D8 ...), drop other PUA."""
++    if not _PUA_RE.search(text):
++        return text
++    keep = {m.start(2): m.group(2) for m in _PUA_BULLET_RE.finditer(text)}
++    out, last = [], 0
++    for m in _PUA_RE.finditer(text):
++        out.append(text[last:m.start()])
++        if m.start() in keep and keep[m.start()] == m.group(0):
++            out.append(m.group(0))
++        last = m.end()
++    out.append(text[last:])
++    return "".join(out)
++
++
++_CHAR_REF_RE = re.compile(r"&(?:#[0-9]{1,7}|#[xX][0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});")
++_RULE_LINE_RE = re.compile(r"(?m)^[ \t]*_{3,}(?:[ \t]+_{3,})*[ \t]*(?:\n|$)")
++
++
++def _unescape_char_refs(text: str) -> str:
++    """v3.2: decode only complete character references ('&amp;', '&#8217;'); a bare '&nbsp' or '&copy'
++    without ';' is text and stays."""
++    return _CHAR_REF_RE.sub(lambda m: html_lib.unescape(m.group(0)), text)
++
++
++def _drop_rule_lines(text: str) -> str:
++    """v3.2: a line that is only fill-in rules ('____', '____ ____') goes with its line break, except the
++    first and last non-blank line of the text, which stay (removing them would remove the paragraph break
++    next to them). Inline fill-ins ('NO.______', '/20__', 'de __.__ à __.__') are text and stay."""
++    lines = text.split("\n")
++    nb = [i for i, ln in enumerate(lines) if ln.strip()]
++    if not nb:
++        return text
++    edge = {nb[0], nb[-1]}
++    out = []
++    for i, ln in enumerate(lines):
++        if i not in edge and _RULE_LINE_RE.fullmatch(ln + "\n"):
++            continue
++        out.append(ln)
++    return "\n".join(out)
++
++
++def normalize_legal_text(value: Any, *, parent: Any = None) -> str:
++    """NFC + HTML strip. Keeps newlines so heading detection still works.
++
++    v3.4.3: ``parent`` is the raw text of the law row an article row was copied from. When the
++    article's lines are found as one contiguous block of the parent's lines, every line the parent's
++    chrome cleanup keeps is kept in the article too (the article copy never removes a line its law
++    row keeps). Without a parent, or without a match, the result is exactly the v3.4.2 result.
++    """
+     if value is None:
+         return ""
+-    text = unicodedata.normalize("NFKC", str(value)).replace("\x00", "")
++    text = _pre_chrome_text(value)
++    force = _inherited_keeps(text, parent) if parent is not None else None
++    text = strip_chrome_lines(text, force_keep=force)
++    return _post_chrome_text(text)
++
++
++_MATCH_KEY_RE = re.compile(r"\s+")
++
++
++@lru_cache(maxsize=4)
++def _parent_chrome(parent: str) -> tuple[tuple[str, ...], tuple[int, ...], frozenset[int], dict[str, tuple[int, ...]]]:
++    """v3.4.3: the parent law row's pre-cleanup non-blank lines (whitespace-free keys), their raw
++    indexes, the raw indexes its chrome cleanup keeps, and key -> positions of each key."""
++    pre = _pre_chrome_text(parent)
++    lines = pre.splitlines()
++    kept: set[int] = set()
++    strip_chrome_lines(pre, kept_idx=kept)
++    keys: list[str] = []
++    idx: list[int] = []
++    pos: dict[str, list[int]] = {}
++    for i, ln in enumerate(lines):
++        if ln.strip():
++            k = _MATCH_KEY_RE.sub("", ln)
++            pos.setdefault(k, []).append(len(keys))
++            keys.append(k)
++            idx.append(i)
++    return tuple(keys), tuple(idx), frozenset(kept), {k: tuple(v) for k, v in pos.items()}
++
++
++def _inherited_keeps(text: str, parent: Any) -> frozenset[int] | None:
++    """v3.4.3: raw line indexes of ``text`` (an article copy, before chrome cleanup) whose matching
++    line in the parent law row is kept by the parent's cleanup. The article's non-blank lines must
++    occur as one contiguous run of the parent's non-blank lines (whitespace-insensitive); with several
++    occurrences, a line kept in any of them is kept. No match: None (v3.4.2 behaviour)."""
++    if not parent or not isinstance(parent, str):
++        return None
++    nb = [(i, _MATCH_KEY_RE.sub("", ln)) for i, ln in enumerate(text.splitlines()) if ln.strip()]
++    if len(nb) < 2:
++        return None
++    keys, pidx, pkept, pos = _parent_chrome(parent)
++    akeys = tuple(k for _, k in nb)
++    n = len(akeys)
++    force: set[int] = set()
++    for start in pos.get(akeys[0], ()):
++        if keys[start : start + n] == akeys:
++            for j, (ai, _) in enumerate(nb):
++                if pidx[start + j] in pkept:
++                    force.add(ai)
++    return frozenset(force) if force else None
++
++
++def _pre_chrome_text(value: Any) -> str:
++    """normalize_legal_text up to (not including) the chrome-line cleanup."""
++    text = _compat_fold_presentation_forms(unicodedata.normalize("NFC", str(value))).replace("\x00", "")
+     if text.startswith("ÿþ") or text.startswith("þÿ"):
+         text = text[2:]
+     text = re.sub(r"[\x00-\x08\x0b\x0e-\x1f\x7f]", " ", text)
+     text = text.replace("\ufffd", " ")
+-    text = re.sub(r"[\ue000-\uf8ff]", "", text)
++    text = _strip_private_use(text)
+     text = _repair_latin1_utf8(text)
+     text = re.sub(r"\(cid:\d+\)", " ", text)
+-    text = _ZW_RE.sub("", text).replace("ـ", "")
++    text = _strip_zero_width(text).replace("ـ", "")  # v3.4.2: U+00AD-only lines kept
+     text = _STRIP_MARKS_RE.sub("", text)
+-    text = re.sub(r"[\u2010-\u2015\u2212\ufe58\ufe63\uff0d]", "-", text)
+     text = re.sub(r"[\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]", " ", text)
+     text = text.replace("\u2028", "\n").replace("\u2029", "\n").replace("\f", "\n")
+     text = _join_hyphen_breaks(text)
+-    text = _NUMERO_FOLD_RE.sub("nr. ", text)
+-    text = re.sub(r"المادة\s*-\s*اختر\s*-\s*", "", text)
+-    text = re.sub(r"(?m)^[ \t]*©+\s*", "", text)
+-    text = re.sub(r"\b((?:19|20)\d{2}) \1\b", r"\1", text)
+-    text = re.sub(r"(?<=[A-Za-z])!+(?=\d)", " ", text)
+-    text = re.sub(r":!+", ":", text)
+-    text = re.sub(r"(?m)!+\s*$", "", text)
++    if legacy_strip():
++        # Lossy pre-v3 folds (opt-in): 'No. 7' -> 'nr. 7', leading '©', '2026 2026', stray '!'.
++        text = _NUMERO_FOLD_RE.sub("nr. ", text)
++        text = re.sub(r"المادة\s*-\s*اختر\s*-\s*", "", text)
++        text = re.sub(r"(?m)^[ \t]*©+\s*", "", text)
++        text = re.sub(r"\b((?:19|20)\d{2}) \1\b", r"\1", text)
++        text = re.sub(r"(?<=[A-Za-z])!+(?=\d)", " ", text)
++        text = re.sub(r":!+", ":", text)
++        # Only a stray '!' token at line end (OCR noise); a sentence's own '!' is text.
++        text = re.sub(r"(?m)(?:(?<=\s)|^)!+[ \t]*$", "", text)
+     text = _SPACED_KEYWORD_RE.sub(_squeeze_spaced_keyword, text)
+     text = re.sub(r"(?s)<!--.*?-->", " ", text)
+     text = strip_html(text)
+-    text = html_lib.unescape(text).replace("\xa0", " ")
+-    text = re.sub(r"_{3,}", " ", text)
+-    text = re.sub(r"\.{4,}", " ", text)
+-    text = re.sub(r"(?m)^[ \t]*#{1,6}[ \t]+", "", text)
+-    text = strip_chrome_lines(text)
++    text = _unescape_char_refs(text).replace("\xa0", " ")
++    # A line that is only a fill-in rule goes with its line break (v3: it must not turn into a
++    # blank line, i.e. a paragraph break the raw text does not have). v3.2: inline fill-ins stay.
++    text = _drop_rule_lines(text)
++    if legacy_strip():
++        text = re.sub(r"_{3,}", " ", text)
++        # '## Heading' markdown (opt-in, v3.2): '##' in raw PDF text is text.
++        text = re.sub(r"(?m)^[ \t]*#{1,6}[ \t]+", "", text)
++    return text
++
++
++def _post_chrome_text(text: str) -> str:
++    """normalize_legal_text after the chrome-line cleanup."""
+     text = text.replace("\xa0", " ")
+     text = re.sub(r"~\$\S{0,16}", " ", text)
+-    text = re.sub(r"\*\*([^*]{1,80})\*\*", r"\1", text)
+-    text = re.sub(r"__([^_]{1,80})__", r"\1", text)
++    # Markdown bold only ('**word ...**'); '**)' footnote markers are text.
++    text = re.sub(r"(?<!\S)\*\*(?=\w)([^*\n]{1,80}?)(?<=\S)\*\*(?!\w)", r"\1", text)
++    if legacy_strip():
++        # '__x__' markdown underline (opt-in): fill-in blanks like 'de __.__ à __.__ heures' are text.
++        text = re.sub(r"__([^_]{1,80})__", r"\1", text)
+     text = re.sub(r"'{3}([^']{1,80})'{3}", r"\1", text)
+-    text = re.sub(r"^={2,6}\s*(.+?)\s*={2,6}\s*$", r"\1", text, flags=re.MULTILINE)
++    # '== Heading ==' wiki markup only; a rule line of '=' signs is text (v3.1).
++    text = re.sub(r"^={2,6}[ \t]*([^=\s][^\n]*?)[ \t]*={2,6}[ \t]*$", r"\1", text, flags=re.MULTILINE)
+     text = re.sub(r"[ \t]+", " ", text)
+     text = re.sub(r"\n[ \t]+", "\n", text)
+     text = re.sub(r"[ \t]+\n", "\n", text)

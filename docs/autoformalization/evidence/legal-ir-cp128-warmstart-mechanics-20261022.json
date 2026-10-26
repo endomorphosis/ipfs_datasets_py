@@ -1,0 +1,175 @@
+{
+  "additional_saved_step_replays": 2,
+  "authority": {
+    "Lean_admission": false,
+    "context_permission": false,
+    "convergence_or_saturation": false,
+    "graph_admission": false,
+    "native_GTE_conditioning": false,
+    "other_IR_family_or_width_compatibility": false,
+    "reconstruction_improvement": false,
+    "statutory_or_source_heldout_accuracy": false,
+    "training_gold": false
+  },
+  "both_branches_start_fresh_Adam": true,
+  "complete_weight_sum": 67,
+  "document_fields": {
+    "checkpoint_max_saved_bytes": 3228626,
+    "checkpoint_schema": "legal-compact-role-warmstart-training-checkpoint/v1",
+    "inherited_coordinates": 16101,
+    "inherited_model_tensors": 13,
+    "maximum_analytic_gradient_absolute_error": 7.3417638080108816e-09,
+    "original_native_closed": true,
+    "parent_checkpoint_canonical_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+    "parent_checkpoint_raw_sha256": "71f410bbc5712f4c1b9e3a2b19472e44b640dbeba491a9308b9bfc5180b9a410",
+    "parent_weights_sha256": "d4e7c710a8aba4462aab575d9bbfb4278c1870fadaf304f80d0f341af4912c34",
+    "physical_counts": {
+      "adam_allocations": 4,
+      "autograd_grad_calls": 0,
+      "backward_completed": 6,
+      "backward_entered": 6,
+      "forbidden_calls": 0,
+      "gradient_clip_calls": 6,
+      "gru_completed": 6,
+      "gru_entered": 6,
+      "logits_gradient_hook_calls": 6,
+      "model_allocations": 4,
+      "model_forward_completed": 6,
+      "model_forward_entered": 6,
+      "optimizer_base_allocations": 4,
+      "optimizer_step_completed": 6,
+      "optimizer_step_entered": 6,
+      "refused_nonfinite_logits_calls": 2
+    },
+    "repeated_checkpoint_exact": true,
+    "source_READ_closed": true,
+    "storage_released": true,
+    "summary": {
+      "actual_gru_forward_count": 6,
+      "additional_physical_resume_updates": 2,
+      "backward_calls": 6,
+      "completed_checks": [
+        "contract_guards",
+        "scope_conditional_steps",
+        "scope_conditional_resume",
+        "full537_steps",
+        "full537_resume"
+      ],
+      "create_negative_guards": 3,
+      "generation_performed": false,
+      "legal_or_holdout_accuracy_established": false,
+      "model_allocations": 4,
+      "optimizer_allocations": 4,
+      "optimizer_updates": 6,
+      "pure_negative_guards": 24,
+      "reconstruction_efficacy_measured": false,
+      "refused_nonfinite_logits_calls": 2,
+      "resume_comparisons": 2,
+      "singleton_gradient_contrasts": 78,
+      "source_encoder_authenticated": false,
+      "status": "pass",
+      "training_performed": true,
+      "unique_optimizer_steps_per_arm": 2,
+      "zero_update_paired_logits_equal": true
+    }
+  },
+  "full_norm_LegalIR_semantic_fidelity": null,
+  "full_norm_LegalIR_semantic_fidelity_status": "NOT_MEASURED",
+  "generation_or_reconstruction_quality_experiment_run": false,
+  "historical_parent_updates": 128,
+  "legal_text_byte_reconstruction": null,
+  "legal_text_prose_reconstruction": null,
+  "legal_text_reconstruction_status": "NOT_MEASURED",
+  "longer_learning_campaign_run": false,
+  "objectives": [
+    "scope_conditional",
+    "full537"
+  ],
+  "old_owner_and_old_producer_bytes_unchanged": true,
+  "old_serving_runtime_intentionally_rejects_new_schema": true,
+  "original_CP128_evidence_preserved": [
+    {
+      "id": "cp128-runtime-recipe-observation-20261022-01",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-runtime-recipe-20261022.json",
+      "sha256": "646f8a5f0037f0a0f54b1806f624078233415e0bf63aef86ac7b7bd5eaf10346"
+    },
+    {
+      "id": "cp128-runtime-preflight-20261022-01",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-runtime-preflight-20261022.json",
+      "sha256": "13dd4502f9cb8a582e123c2dd88ac30a9649979b29ab81c4f00af54166ffe8f5"
+    },
+    {
+      "id": "cp128-bos-score-parity-20261022-01",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-bos-score-parity-20261022.json",
+      "sha256": "1f4c380d0366382767d9261ca046cc7106fa9ffea518546d3504bb0f579f60e0"
+    },
+    {
+      "id": "cp128-bos100-reconstruction-diagnostic-20261022-01",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-bos100-reconstruction-20261022.json",
+      "sha256": "47025f53ac648ad4491fc68ba3ab202d5f3d75da2f3c1a1d1c96b381dbfde284"
+    }
+  ],
+  "original_CP128_parent_immutable": true,
+  "original_closed_receipts": [
+    {
+      "bytes": 20029,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-qualification-summary-v01.json",
+      "sha256": "c18a690aecd43bdcd342c0dfff662fa3eb169872a5bcff61cfe9d6ed776aa489"
+    },
+    {
+      "bytes": 13344,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-independent-qualification-review-v01.json",
+      "sha256": "7f6a48cfa6e69ec66e6f439e510bfeb47aa542d427932a6d0c5fa757d2562889"
+    },
+    {
+      "bytes": 8116,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-qualification-v01/audit/closed-native-full-inventory-v01.json",
+      "sha256": "469f4c9198b679b593f723eb04eed043b556a1c52c911b9477a50656b7c0c8a8"
+    },
+    {
+      "bytes": 12557,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-actual-installation-independent-verification-v01.json",
+      "sha256": "1e694babf90115f804a867c084f79b4185efc832e2b5e067ae051efd8df505cf"
+    }
+  ],
+  "owner": {
+    "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_warmstart_training_v1.py",
+    "sha256": "59e5294ed018e95eb2c3aa0ccaef1caf50bb915b58b454316564bc94375db6ba"
+  },
+  "owning_test": {
+    "path": "tests/unit/logic/autoformal/test_legal_compact_content_role_warmstart_training_v1.py",
+    "sha256": "feb7356792326eacb2b72af270c665986d1c56223935d185f899ca2e8f4efba0"
+  },
+  "physical_restores": 4,
+  "physical_updates": 6,
+  "preserved_installation_history": {
+    "actual_postimage_bytes_independently_match_review": true,
+    "corrected_source_raw_capture_checked_against_fixed_expected_SHA": true,
+    "corrected_v02_control": {
+      "bytes": 6257,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/controls/install_cp128_warmstart_source_v02.py",
+      "sha256": "8d5860486c6644ba0879b5e03f62c656159f4d798bc751293e7d28c36d37a886"
+    },
+    "corrected_v02_status": "UNEXECUTED",
+    "no_reinstall_or_numerical_replay_performed": true,
+    "original_closed_v01_receipt": {
+      "bytes": 2271,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-source-installation-v01.json",
+      "sha256": "09bd7a69abedb59e5c5582e294041ed7aefbe12a8ed8c4eb13b74f7c04d3f9c8"
+    },
+    "original_v01_CAS_guard_reclassified_as_corrected": false,
+    "original_v01_candidate_CAS_weakness_preserved": true,
+    "original_v01_control": {
+      "bytes": 5434,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/controls/install_cp128_warmstart_source_v01.py",
+      "sha256": "3158d77333ac82cb6e5a14b2070a77509935703b038d9253d4d5db9b08b74cd7"
+    }
+  },
+  "profile": "authored-h0-384-fixed537-CP128-fresh-Adam-role-objective/v1",
+  "qualified_inference_consumer": false,
+  "recorded_at_utc": "2026-10-22T21:45:06.352640+00:00",
+  "schema": "legal-ir-cp128-warmstart-mechanics-evidence/v1",
+  "status": "COMPLETED_FINITE_AUTHORED_CP128_GRADIENT_AND_RESUME_MECHANICS",
+  "unique_new_steps_per_arm": 2,
+  "weighting": "semantic_priority"
+}

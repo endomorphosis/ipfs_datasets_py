@@ -1,0 +1,98 @@
+{
+  "compatibility": {
+    "carriers": "One exact raw eligibility report plus closed artifact/canonical/byte references to itself and its /join_manifest_raw_utf8 member; no extra parsed eligibility or raw join copy.",
+    "closed_gap": "Existing graph proposal engine now has an explicit graph-v2 profile consuming only original-input eligibility-v3.",
+    "closing": "Genuine upstream validator replay; original/source/callable/runtime/offered-report and detached-result guards; all physical/output references and ordered AST retained.",
+    "eligibility_profile": "original-input-coordinate-target-eligibility/v1",
+    "graph_profile": "original-input-coordinate-source-graph-intake/v1",
+    "historical_v1": "Historical original-input-v2 graph producer/requests/reports remain separate; current retained-row v2 is not accepted by new profile.",
+    "request": "Eleven closed graph fields, including mandatory source_compatibility_profile; no shape-selected upgrade."
+  },
+  "delivery": {
+    "base_commit": "43a937761c936fdb3feb083071b97b47f17dd3eb",
+    "branch": "agent/legal-ir-coordinate-graph-v3-port-20261021",
+    "entity_dependency_commit": "f9253ab4491b7b1cfdbbd09eb0350877ad75e986",
+    "historical_graph_commit": "73841dee310d74f5425130e2b81114e18851ee4a",
+    "scope": "Local isolated selected-source delivery. Finalcommit is bound by the external Git delivery receipt; no push, merge, primary runtime installation or superproject-pointer change is claimed.",
+    "source": {
+      "ipfs_datasets_py/logic/autoformal/legal_entity_index_intake.py": {
+        "bytes": 30743,
+        "sha256": "bfe93832fab27d8e320a0c33c42bb67c68718bdf5e718f205a471d05282b25d7"
+      },
+      "ipfs_datasets_py/logic/autoformal/legal_source_span_target_eligibility_v1.py": {
+        "bytes": 55018,
+        "sha256": "7b8327177e97b696b79baeb92af379d562d8aecacdfa9b2f75200724f20697ad"
+      },
+      "ipfs_datasets_py/logic/autoformal/legal_span_cache_intake.py": {
+        "bytes": 57706,
+        "sha256": "1bb20996372672b67033f56bc844101c824d3371bb22df47158a9432f1ff7145"
+      },
+      "ipfs_datasets_py/logic/autoformal/span_cache.py": {
+        "bytes": 105673,
+        "sha256": "e35f5333fc4776d5b519ec84a38f42715a76ff7b20a776a35b7e01ea9342b068"
+      },
+      "tests/unit/logic/autoformal/test_legal_span_cache_intake.py": {
+        "bytes": 64127,
+        "sha256": "eb474fb0afa640de6b507a87a0eb57fd36fbdf35f4e22ab8c421b3e9063334eb"
+      }
+    }
+  },
+  "limits": {
+    "eight_and_4096_replay": "Existing genuine-vector/producer/reviewed-replay prerequisites remain independent and unfulfilled.",
+    "entity_and_definition_bindings": "Not consumed by this graph profile.",
+    "evaluation_gold_mask": 0,
+    "evidence_portability": "Source identities and this JSON travel with the selected Git delivery. Referenced workspace receipts remain local retained evidence; no remote publication is asserted.",
+    "graph_scope": "Mechanically supported typed_deontic / typed-deontic-rule/v1 outputs become canonical_rules_v1 proposals only. Other outputs remain lossless unresolved occurrences.",
+    "legal_source_and_meaning_reviews": "Not supplied. Independent HTML/source nominations do not establish current-edition coordinate correspondence or legal applicability.",
+    "models_training_Lean_admission": false,
+    "selected_source_occurrence": null,
+    "training_mask": 0
+  },
+  "observed_at_utc": "2026-10-21T01:52:07.418064+00:00",
+  "qualification": {
+    "custody": {
+      "group_and_descendant_live_processes": 0,
+      "group_and_descendant_rss_bytes": 0,
+      "native_lease_id": "8142bb2838284c218a894f6c402857b4",
+      "no_native_fallback_exercised": false,
+      "normal_granted_path_only": true,
+      "original_native_and_storage_released": true,
+      "original_source_READ_closed": true,
+      "sealed_bytes_including_receipt": 4166691,
+      "sealed_files": 328,
+      "sealed_files_plus_durability_receipt": 329,
+      "storage_reservation_id": "446b17eb089843c497650cb547c9fda0"
+    },
+    "independent_review": {
+      "bytes": 7888,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-graph-v3-port-20261021-01/independent-actual-qualification-review-v01.json",
+      "sha256": "16363f70e111a0eda69ae2ce19f63bfc940fb27ef2800b9c3317619e4f136b90"
+    },
+    "scope": {
+      "actual_module_compile_union_paths": 139,
+      "adapted_existing_coordinate_cases": 22,
+      "cases": 43,
+      "function_selectors": 20,
+      "new_contract_cases": 18,
+      "passed_phases": 129,
+      "request_source_pins": 252,
+      "runtime_files": 233,
+      "static_preparation_inputs": 7,
+      "unchanged_legacy_regressions": 3
+    },
+    "summary": {
+      "bytes": 5955,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-graph-v3-port-20261021-01/qualification-summary.json",
+      "sha256": "56b3eb87ca06889d52855cdf2295b9ca99fb62d3153cd3c9ea87cc0f3005740a"
+    }
+  },
+  "reuse": {
+    "entity_census": "Six exactf925 delivery postimages reused; prior41 qualification is separate and not rerun.",
+    "historical_owning_test_cases": 57,
+    "historical_owning_test_function_ASTs": 31,
+    "historical_raw_row_implementation_functions": 16,
+    "prior_training_and_492_case_reconciliation": "Reused as separately scoped prior evidence; no duplicate execution.",
+    "projection_loop": "One existing output-projection loop, AST-identical to73841, shared by explicit graph profiles."
+  },
+  "schema": "legal-ir-coordinate-graph-v3-port-selected-evidence/v1"
+}

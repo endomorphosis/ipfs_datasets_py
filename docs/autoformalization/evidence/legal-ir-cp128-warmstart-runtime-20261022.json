@@ -1,0 +1,103 @@
+{
+  "actual_invocation": {
+    "bytes": 1477,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-cp128-warmstart-runtime-20261022-01/actual-invocation-v01.json",
+    "sha256": "94192cd18b2d9296c29ef5e9a0b87a36864356709c2d8c7020690d6e7d2726eb"
+  },
+  "actual_work": {
+    "Adam_allocations": 0,
+    "BOS_forwards": 4,
+    "GRU_forwards": 4,
+    "backwards": 0,
+    "model_restores": 4,
+    "numerical_autonomous_generation_forwards": 0,
+    "updates": 0
+  },
+  "authored_controls": 20,
+  "checked_saved_score_coordinates": 2148,
+  "checkpoint_or_training_owner_modified": false,
+  "claims": {
+    "Lean_admission": false,
+    "all_six_published_states_scored": false,
+    "graph_admission": false,
+    "heldout_accuracy": false,
+    "native_GTE_compatibility": false,
+    "reconstruction_gain": false,
+    "statutory_meaning": false
+  },
+  "evaluation_gold_mask": 0,
+  "exact_value_equal_score_coordinates": 780,
+  "full_generation_with_real_models_measured": false,
+  "full_inventory": {
+    "bytes": 4757,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-cp128-warmstart-runtime-20261022-01/audit/closed-native-full-inventory-v01.json",
+    "sha256": "8de04f5f7de26c11cd90c15cce454746118ec32ffe38b8e6cbd9e496d5293718"
+  },
+  "maximum_absolute_score_error": 1.1920928955078125e-07,
+  "next_step": "Freeze bounded autonomous reconstruction on the six already-published states before any longer paired fit; preserve100-new-ID selector/context and all failures.",
+  "original_launch": {
+    "bytes": 13470,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-cp128-warmstart-runtime-20261022-01/launches/cp128-warmstart-model-only-bos.json",
+    "sha256": "af1ae8b7a1bd618c351b1103052141716a668d196e23e27481e24b13d66a2a59"
+  },
+  "original_request": {
+    "bytes": 47438,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-cp128-warmstart-runtime-20261022-01/qualification-01.json",
+    "sha256": "83cd2eeedebe88cb3821265fa97e8d6b7b0a6fe4981e26b773530b088afb74b1"
+  },
+  "original_source_native_storage_closed": true,
+  "owner": {
+    "bytes": 20786,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_warmstart_runtime_v1.py",
+    "sha256": "6711203ecbc0b063afaed3a51e35940f61c05cee80f6240f937e0f394e36b771"
+  },
+  "owning_test": {
+    "bytes": 39077,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_compact_content_role_warmstart_runtime_v1.py",
+    "sha256": "fa3066942161fc8d5d284acdb99f40eba3e5150eff609391f6cdacff45453549"
+  },
+  "portability": "Code/docs are canonical; historical absolute producer identities and run artifacts remain explicit retained evidence.",
+  "qualification": {
+    "bytes": 9813,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-cp128-warmstart-runtime-20261022-01/qualification-summary-v01.json",
+    "sha256": "88f056e24e0c882bf8a7b25adcb6d540eea3bfa72ed783a5d402b86e79e75b3c"
+  },
+  "reader_source_READ_closed": true,
+  "recorded_at_utc": "2026-10-22T22:41:42.132992+00:00",
+  "schema": "legal-ir-cp128-warmstart-runtime-evidence/v1",
+  "scope": "Exposed authored384 fixed537 model-only BOS transport and scripted generation controls; no quality or legal admission.",
+  "score_comparison": {
+    "abs_tol": 2e-06,
+    "rel_tol": 2e-06
+  },
+  "sealed_bytes_including_seal": 3863942,
+  "sealed_files_including_seal": 15,
+  "source_pin_count": 235,
+  "tested_states": [
+    {
+      "checkpoint_sha256": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+      "fixture_row_index": 0,
+      "label": "scope_conditional-step-0-row-0",
+      "objective_kind": "scope_conditional"
+    },
+    {
+      "checkpoint_sha256": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+      "fixture_row_index": 0,
+      "label": "full537-step-0-row-0",
+      "objective_kind": "full537"
+    },
+    {
+      "checkpoint_sha256": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+      "fixture_row_index": 1,
+      "label": "scope_conditional-step-1-row-1",
+      "objective_kind": "scope_conditional"
+    },
+    {
+      "checkpoint_sha256": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+      "fixture_row_index": 1,
+      "label": "full537-step-1-row-1",
+      "objective_kind": "full537"
+    }
+  ],
+  "training_mask": 0
+}

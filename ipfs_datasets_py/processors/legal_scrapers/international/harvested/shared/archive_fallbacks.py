@@ -24,8 +24,8 @@ from requests.adapters import HTTPAdapter
 
 log = logging.getLogger("archive_fallbacks")
 
-WAYBACK_CDX = "http://web.archive.org/cdx/search/cdx"
-WAYBACK_WEB = "http://web.archive.org/web"
+WAYBACK_CDX = os.environ.get("WAYBACK_CDX", "https://web.archive.org/cdx/search/cdx")   # tip+30o 23:2x PT Oct 1: port 80 to web.archive.org times out; https OK
+WAYBACK_WEB = os.environ.get("WAYBACK_WEB", "https://web.archive.org/web")
 CC_COLLINFO = "https://index.commoncrawl.org/collinfo.json"
 CC_DATA = "https://data.commoncrawl.org"
 CC_DATA_HOSTS = (
@@ -640,6 +640,703 @@ def get_http(url: str) -> dict:
     }
 
 
+# --- Fetch ladder (serial + parallel race) ---
+# Order (2026-09-15):
+#   PARALLEL_LADDER race: WARC/slice pointer + Wayback CDX/replay + archive.is newest
+#   First successful non-empty body wins; losers abandoned.
+#   Then (serial, only on race miss): live HTTP/bs4 → optional Playwright (allowlist).
+# Cloudflare Browser Rendering / IPWB only when creds/local usable (skipped otherwise).
+
+_last_archive_is = 0.0
+_archive_is_submit_count = 0
+_ARCHIVE_IS_SUBMIT_CAP = int(os.environ.get("ARCHIVE_IS_SUBMIT_CAP", "3") or 3)
+
+# Default Playwright allowlist: known JS-heavy Easy/Hard gazette portals
+_DEFAULT_PLAYWRIGHT_HOSTS = (
+    "gacetaoficialdebolivia.gob.bo",
+    "eqanun.az",
+    "e-qanun.az",
+    "iort.gov.tn",
+    "dotic.ir",
+    "paragraf.rs",
+    "pravno-informacioni-sistem.rs",
+)
+
+
+def _env_truthy(name: str, default: str = "0") -> bool:
+    return os.environ.get(name, default) in ("1", "true", "True", "yes", "YES", "on", "ON")
+
+
+def _sleep_archive_is(delay: float = 2.0) -> None:
+    global _last_archive_is
+    now = time.time()
+    wait = delay - (now - _last_archive_is)
+    if wait > 0:
+        time.sleep(wait)
+    _last_archive_is = time.time()
+
+
+def has_cloudflare_creds() -> bool:
+    """Cloudflare Browser Rendering only when API key present."""
+    tok = (
+        os.environ.get("CLOUDFLARE_API_TOKEN")
+        or os.environ.get("CF_API_TOKEN")
+        or os.environ.get("CLOUDFLARE_BROWSER_RENDERING_TOKEN")
+        or ""
+    ).strip()
+    acct = (
+        os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+        or os.environ.get("CF_ACCOUNT_ID")
+        or ""
+    ).strip()
+    return bool(tok and acct)
+
+
+def has_ipwb_local() -> bool:
+    """IPWB only if local package already usable — never install/start from tip."""
+    if not _env_truthy("TRY_IPWB", "0"):
+        return False
+    try:
+        import ipwb  # noqa: F401
+        return True
+    except Exception:
+        return False
+
+
+def playwright_host_ok(url: str) -> bool:
+    raw = (os.environ.get("PLAYWRIGHT_HOSTS") or "").strip()
+    hosts = [h.strip().lower() for h in raw.split(",") if h.strip()] if raw else list(_DEFAULT_PLAYWRIGHT_HOSTS)
+    try:
+        host = (urlparse(url).hostname or "").lower().lstrip(".")
+    except Exception:
+        return False
+    if not host:
+        return False
+    for h in hosts:
+        if host == h or host.endswith("." + h):
+            return True
+    return False
+
+
+def _body_nonempty(res: Optional[dict], min_text: int = 0) -> bool:
+    if not res or res.get("status") != "success":
+        return False
+    text = res.get("text") or ""
+    content = res.get("content") or b""
+    if isinstance(content, (bytes, bytearray)) and len(content) >= 64:
+        if content[:4] == b"%PDF" or b"%PDF" in content[:8192]:
+            return True
+        if len(text) >= max(min_text, 1) or len(content) >= max(min_text, 256):
+            return True
+    if len(text) >= max(min_text, 1):
+        return True
+    return False
+
+
+def get_wayback_cdx_then_replay(url: str, timestamp: Optional[str] = None, min_text: int = 0) -> dict:
+    """Wayback: use given ts, else CDX newest then id_ replay. Honors global Wayback delay."""
+    ts = timestamp
+    if not ts and not _env_truthy("SKIP_WAYBACK_CDX", "0"):
+        try:
+            hits = search_wayback_machine(url, limit=3, collapse="digest")
+            if hits:
+                ts = hits[0].get("timestamp") or None
+        except Exception as exc:
+            log.info("wayback cdx search fail %s: %s", url[:80], exc)
+    res = get_wayback_content(url, timestamp=ts)
+    if _body_nonempty(res, min_text=min_text):
+        res["method"] = "wayback_cdx_replay" if ts and not timestamp else (res.get("method") or "wayback")
+        if ts:
+            res["capture_timestamp"] = res.get("capture_timestamp") or ts
+        return res
+    return res if res else {"status": "error", "error": "wayback_empty", "original_url": url}
+
+
+def submit_archive_is(url: str, *, wait: bool = False, timeout: int = 45) -> dict:
+    """Sparse archive.is submit (rate-limited + session cap). Prefer newest lookup first."""
+    global _archive_is_submit_count
+    if _archive_is_submit_count >= _ARCHIVE_IS_SUBMIT_CAP:
+        return {"status": "error", "error": "archive_is_submit_cap", "original_url": url}
+    if not _env_truthy("ARCHIVE_IS_SUBMIT_ON_MISS", "0"):
+        return {"status": "error", "error": "archive_is_submit_disabled", "original_url": url}
+    _sleep_archive_is(float(os.environ.get("ARCHIVE_IS_SUBMIT_DELAY", "5") or 5))
+    _archive_is_submit_count += 1
+    try:
+        r = session().post(
+            "https://archive.is/submit/",
+            data={"url": url, "anyway": "1"},
+            timeout=(10, timeout),
+            allow_redirects=True,
+        )
+    except requests.RequestException as exc:
+        return {"status": "error", "error": f"archive_is_submit:{exc}", "original_url": url}
+    if "archive." in (r.url or "") and r.url and "submit" not in (r.url or ""):
+        text = r.text or ""
+        if not is_challenge(text, r.status_code):
+            return {
+                "status": "success",
+                "content": r.content or b"",
+                "text": text,
+                "content_type": r.headers.get("content-type") or "text/html",
+                "archive_url": r.url,
+                "original_url": url,
+                "method": "archive_is_submit",
+                "http_status": r.status_code,
+            }
+    # Non-blocking: return pending; caller may re-hit newest later
+    if not wait:
+        return {"status": "error", "error": "archive_is_submit_pending", "original_url": url, "http_status": r.status_code}
+    time.sleep(3)
+    return get_archive_is_content(url)
+
+
+def get_archive_is_content_ladder(url: str, *, submit_on_miss: Optional[bool] = None) -> dict:
+    """archive.is newest (+ optional sparse submit). Always rate-limited."""
+    _sleep_archive_is(float(os.environ.get("ARCHIVE_IS_DELAY", "2") or 2))
+    res = get_archive_is_content(url)
+    if _body_nonempty(res):
+        return res
+    do_submit = (
+        submit_on_miss
+        if submit_on_miss is not None
+        else _env_truthy("ARCHIVE_IS_SUBMIT_ON_MISS", "0")
+    )
+    if do_submit:
+        sub = submit_archive_is(url, wait=_env_truthy("ARCHIVE_IS_SUBMIT_WAIT", "0"))
+        if _body_nonempty(sub):
+            return sub
+        # One more newest lookup after submit
+        _sleep_archive_is(2.0)
+        res2 = get_archive_is_content(url)
+        if _body_nonempty(res2):
+            res2["method"] = "archive_is_after_submit"
+            return res2
+        return sub if sub.get("error") else res
+    return res
+
+
+def get_http_bs4(url: str) -> dict:
+    """Live HTTP with BeautifulSoup text extraction when available."""
+    res = get_http(url)
+    if res.get("status") != "success":
+        return res
+    text = res.get("text") or ""
+    ctype = (res.get("content_type") or "").lower()
+    if "html" in ctype or (text[:200].lstrip().startswith("<")):
+        try:
+            from bs4 import BeautifulSoup
+
+            soup = BeautifulSoup(text, "html.parser")
+            for tag in soup(["script", "style", "noscript"]):
+                tag.decompose()
+            extracted = " ".join(soup.get_text(" ", strip=True).split())
+            if len(extracted) > len(text) * 0.05 and len(extracted) >= 80:
+                res = dict(res)
+                res["text"] = extracted
+                res["method"] = "http_bs4"
+        except Exception as exc:
+            log.info("bs4 extract skip %s: %s", url[:60], exc)
+    return res
+
+
+def get_playwright_content(url: str, *, timeout_ms: int = 45000) -> dict:
+    """Optional Playwright for allowlisted JS portals. Skip if package/browser missing."""
+    if not playwright_host_ok(url):
+        return {"status": "error", "error": "playwright_host_not_allowlisted", "original_url": url}
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception as exc:
+        return {"status": "error", "error": f"playwright_unavailable:{exc}", "original_url": url}
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            try:
+                page = browser.new_page()
+                page.goto(url, wait_until="networkidle", timeout=timeout_ms)
+                page.wait_for_timeout(1500)
+                html = page.content() or ""
+                content = html.encode("utf-8", "replace")
+            finally:
+                browser.close()
+    except Exception as exc:
+        return {"status": "error", "error": f"playwright:{exc}", "original_url": url}
+    if not html or is_challenge(html, 200):
+        return {"status": "error", "error": "playwright_challenge_or_empty", "original_url": url}
+    text = html
+    try:
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(html, "html.parser")
+        for tag in soup(["script", "style", "noscript"]):
+            tag.decompose()
+        text = " ".join(soup.get_text(" ", strip=True).split())
+    except Exception:
+        pass
+    return {
+        "status": "success",
+        "content": content,
+        "text": text,
+        "content_type": "text/html",
+        "original_url": url,
+        "method": "playwright",
+        "http_status": 200,
+    }
+
+
+def _race_fetch_one(name: str, fn, winner_event: "threading.Event") -> tuple[str, dict]:
+    if winner_event.is_set():
+        return name, {"status": "error", "error": "abandoned_after_winner"}
+    try:
+        res = fn()
+    except Exception as exc:
+        return name, {"status": "error", "error": f"{name}:{exc}"}
+    return name, res if isinstance(res, dict) else {"status": "error", "error": f"{name}:bad_result"}
+
+
+def parse_parallel_ladder_sources() -> list[str]:
+    """Parse PARALLEL_LADDER env into ordered source names.
+
+    PARALLEL_LADDER=1 / true / all → full five-way race.
+    PARALLEL_LADDER=0 / false / serial → empty (caller uses serial path).
+    PARALLEL_LADDER=warc,wayback,archive_is,live,playwright → explicit set.
+    """
+    raw = (os.environ.get("PARALLEL_LADDER", "1") or "1").strip()
+    low = raw.lower()
+    if low in ("0", "false", "no", "off", "serial"):
+        return []
+    all5 = ["warc", "wayback", "archive_is", "live", "playwright"]
+    if low in ("1", "true", "yes", "on", "all", "full"):
+        return all5
+    parts = [x.strip().lower().replace("-", "_") for x in raw.split(",") if x.strip()]
+    alias = {
+        "ais": "archive_is",
+        "archiveis": "archive_is",
+        "ia": "wayback",
+        "wb": "wayback",
+        "http": "live",
+        "http_live": "live",
+        "bs4": "live",
+        "pw": "playwright",
+        "cc": "warc",
+        "common_crawl": "warc",
+    }
+    out: list[str] = []
+    for p in parts:
+        name = alias.get(p, p)
+        if name in all5 and name not in out:
+            out.append(name)
+    return out or all5
+
+
+_playwright_jobs_this_process = 0
+_playwright_lock = None
+
+
+def _get_playwright_lock():
+    global _playwright_lock
+    if _playwright_lock is None:
+        import threading
+        _playwright_lock = threading.Lock()
+    return _playwright_lock
+
+
+def _mem_avail_gi() -> float:
+    try:
+        with open("/proc/meminfo") as f:
+            for line in f:
+                if line.startswith("MemAvailable:"):
+                    return int(line.split()[1]) / 1024 / 1024
+    except Exception:
+        pass
+    return 99.0
+
+
+def _playwright_soft_ok() -> bool:
+    """≤1 Playwright per country job (process); box ≤2 via PLAYWRIGHT_BOX_MAX; Mem≥6Gi."""
+    global _playwright_jobs_this_process
+    if _mem_avail_gi() < float(os.environ.get("PLAYWRIGHT_MIN_MEM_GI", "6") or 6):
+        return False
+    per_job = int(os.environ.get("PLAYWRIGHT_PER_JOB", "1") or 1)
+    if _playwright_jobs_this_process >= per_job:
+        return False
+    # Soft box-wide cap via lockfile count (best-effort, no kill)
+    box_max = int(os.environ.get("PLAYWRIGHT_BOX_MAX", "2") or 2)
+    lock_dir = os.environ.get("PLAYWRIGHT_LOCK_DIR", "/tmp/legal_scrapers_pw_locks")
+    try:
+        os.makedirs(lock_dir, exist_ok=True)
+        active = 0
+        for entry in os.listdir(lock_dir):
+            if not entry.endswith(".pw"):
+                continue
+            path = os.path.join(lock_dir, entry)
+            try:
+                pid = int(entry.split("_", 1)[0])
+                os.kill(pid, 0)
+                active += 1
+            except ProcessLookupError:
+                try:
+                    os.unlink(path)
+                except OSError:
+                    pass
+            except (ValueError, PermissionError, OSError):
+                active += 1  # fail closed for unknown/foreign lock
+        if active >= box_max:
+            return False
+    except Exception:
+        pass
+    return True
+
+
+def _playwright_acquire_slot() -> Optional[str]:
+    """Create a lockfile slot; return path or None."""
+    global _playwright_jobs_this_process
+    if not _playwright_soft_ok():
+        return None
+    with _get_playwright_lock():
+        if not _playwright_soft_ok():
+            return None
+        lock_dir = os.environ.get("PLAYWRIGHT_LOCK_DIR", "/tmp/legal_scrapers_pw_locks")
+        os.makedirs(lock_dir, exist_ok=True)
+        path = os.path.join(lock_dir, f"{os.getpid()}_{int(time.time() * 1000)}.pw")
+        try:
+            with open(path, "w") as f:
+                f.write(str(os.getpid()))
+        except Exception:
+            return None
+        _playwright_jobs_this_process += 1
+        return path
+
+
+def _playwright_release_slot(path: Optional[str]) -> None:
+    if not path:
+        return
+    try:
+        os.unlink(path)
+    except Exception:
+        pass
+
+
+def fetch_ladder_parallel_race(
+    url: str,
+    *,
+    cc_record: Optional[dict] = None,
+    wayback_ts: Optional[str] = None,
+    min_text: int = 150,
+    sources: Optional[list[str]] = None,
+    try_cc: bool = True,
+    try_wayback: bool = True,
+    try_archive_is: bool = True,
+    try_http: bool = True,
+    try_playwright: bool = True,
+) -> dict:
+    """Five-way race: WARC ∥ Wayback ∥ archive.is ∥ live ∥ Playwright.
+
+    First successful non-empty body wins; losers abandoned (cancel futures best-effort).
+    Soft caps: ≤1 Playwright/job, box ≤2, skip PW if MemAvail<6Gi.
+    archive.is submit_on_miss stays sparse (newest lookup races; submit not in race).
+    Shared global Wayback delay via get_wayback_*.
+    """
+    import concurrent.futures
+    import threading
+
+    errors: list[str] = []
+    winner_event = threading.Event()
+    srcs = sources if sources is not None else parse_parallel_ladder_sources()
+    if not srcs:
+        return {"status": "error", "error": "no_parallel_sources", "original_url": url, "ladder": "parallel_race"}
+
+    def _warc_job() -> dict:
+        if winner_event.is_set():
+            return {"status": "error", "error": "abandoned_after_winner"}
+        recs: list[dict] = []
+        if cc_record and (cc_record.get("filename") or cc_record.get("warc_filename")):
+            recs = [cc_record]
+        elif try_cc and _env_truthy("LADDER_CC_SEARCH", "0"):
+            try:
+                recs = search_common_crawl(url, limit=2)
+            except Exception as exc:
+                return {"status": "error", "error": f"common_crawl_search:{exc}"}
+        if not recs:
+            return {"status": "error", "error": "no_warc_pointer"}
+        last = {"status": "error", "error": "warc_miss"}
+        for rec in recs:
+            if winner_event.is_set():
+                return {"status": "error", "error": "abandoned_after_winner"}
+            last = fetch_common_crawl_warc(rec)
+            if _body_nonempty(last, min_text=0):
+                last = dict(last)
+                last["method"] = last.get("method") or "common_crawl_warc"
+                return last
+        return last
+
+    def _wb_job() -> dict:
+        if winner_event.is_set():
+            return {"status": "error", "error": "abandoned_after_winner"}
+        return get_wayback_cdx_then_replay(url, timestamp=wayback_ts, min_text=0)
+
+    def _ais_job() -> dict:
+        if winner_event.is_set():
+            return {"status": "error", "error": "abandoned_after_winner"}
+        # Newest lookup only in race; submit_on_miss stays sparse / out-of-race
+        return get_archive_is_content_ladder(url, submit_on_miss=False)
+
+    def _live_job() -> dict:
+        if winner_event.is_set():
+            return {"status": "error", "error": "abandoned_after_winner"}
+        res = get_http_bs4(url)
+        if res.get("status") == "success":
+            raw = res.get("text") or ""
+            if is_challenge(raw, res.get("http_status") or 200) or is_spa_shell(raw, raw):
+                return {"status": "error", "error": "live_challenge_or_spa", "original_url": url}
+        return res
+
+    def _pw_job() -> dict:
+        if winner_event.is_set():
+            return {"status": "error", "error": "abandoned_after_winner"}
+        if not playwright_host_ok(url):
+            return {"status": "error", "error": "playwright_host_not_allowlisted", "original_url": url}
+        slot = _playwright_acquire_slot()
+        if not slot:
+            return {"status": "error", "error": "playwright_soft_cap", "original_url": url}
+        try:
+            if winner_event.is_set():
+                return {"status": "error", "error": "abandoned_after_winner"}
+            return get_playwright_content(url)
+        finally:
+            _playwright_release_slot(slot)
+
+    tasks: list[tuple[str, Any]] = []
+    if "warc" in srcs and (try_cc or (cc_record and (cc_record.get("filename") or cc_record.get("warc_filename")))):
+        tasks.append(("warc", _warc_job))
+    if "wayback" in srcs and try_wayback and not _env_truthy("SKIP_WAYBACK", "0"):
+        tasks.append(("wayback", _wb_job))
+    if "archive_is" in srcs and try_archive_is and _env_truthy("TRY_ARCHIVE_IS", "1"):
+        tasks.append(("archive_is", _ais_job))
+    if "live" in srcs and try_http:
+        tasks.append(("live", _live_job))
+    # Playwright: include in race when listed; TRY_PLAYWRIGHT default 1 if listed in PARALLEL_LADDER
+    pw_wanted = "playwright" in srcs and (
+        try_playwright or _env_truthy("TRY_PLAYWRIGHT", "1" if "playwright" in srcs else "0")
+    )
+    if pw_wanted:
+        tasks.append(("playwright", _pw_job))
+
+    if not tasks:
+        return {"status": "error", "error": "no_race_tasks", "original_url": url, "ladder": "parallel_race", "sources": srcs}
+
+    winner: Optional[dict] = None
+    max_workers = min(5, len(tasks))
+    ex = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="ladder")
+    futs = {ex.submit(_race_fetch_one, name, fn, winner_event): name for name, fn in tasks}
+    try:
+        for fut in concurrent.futures.as_completed(
+            futs, timeout=float(os.environ.get("LADDER_RACE_TIMEOUT", "90") or 90)
+        ):
+            name = futs[fut]
+            try:
+                _n, res = fut.result()
+            except Exception as exc:
+                errors.append(f"{name}:{exc}")
+                continue
+            if _body_nonempty(res, min_text=0):
+                winner_event.set()
+                winner = dict(res)
+                winner["ladder"] = "parallel_race"
+                winner["ladder_winner"] = name
+                winner["ladder_sources"] = srcs
+                winner["method"] = winner.get("method") or name
+                for other in futs:
+                    if other is not fut and not other.done():
+                        other.cancel()
+                break
+            errors.append(f"{name}:{res.get('error') or 'empty'}")
+    except concurrent.futures.TimeoutError:
+        errors.append("race_timeout")
+        winner_event.set()
+        for other in futs:
+            if not other.done():
+                other.cancel()
+    finally:
+        # Critical: do not wait for in-flight losers. They see winner_event where possible;
+        # already-blocked HTTP calls are abandoned and finish in background.
+        ex.shutdown(wait=False, cancel_futures=True)
+
+    if winner and _body_nonempty(winner, min_text=min_text if min_text else 0):
+        winner["ladder_errors"] = errors
+        return winner
+    if winner and _body_nonempty(winner, min_text=0):
+        winner["ladder_errors"] = errors
+        winner["warning"] = "below_min_text"
+        return winner
+    return {
+        "status": "error",
+        "error": "; ".join(errors) or "parallel_race_miss",
+        "original_url": url,
+        "ladder": "parallel_race",
+        "ladder_sources": srcs,
+        "ladder_errors": errors,
+    }
+
+
+
+def fetch_ladder(
+    url: str,
+    *,
+    cc_record: Optional[dict] = None,
+    wayback_ts: Optional[str] = None,
+    min_text: int = 150,
+    try_cc: Optional[bool] = None,
+    try_wayback: Optional[bool] = None,
+    try_archive_is: Optional[bool] = None,
+    try_http: Optional[bool] = None,
+    try_playwright: Optional[bool] = None,
+    parallel: Optional[bool] = None,
+    sources: Optional[list[str]] = None,
+) -> dict:
+    """Unified fetch ladder for tip climb.
+
+    PARALLEL_LADDER default = warc,wayback,archive_is,live,playwright (five-way race).
+    First good body wins. Soft-cap Playwright; sparse archive.is submit (newest races).
+    PARALLEL_LADDER=0 → serial: WARC → Wayback → archive.is → live → Playwright.
+    Skips: Cloudflare unless creds; IPWB unless local+TRY_IPWB; Brave without key.
+    """
+    if try_cc is None:
+        try_cc = True
+    if try_wayback is None:
+        try_wayback = not _env_truthy("SKIP_WAYBACK", "0")
+    if try_archive_is is None:
+        try_archive_is = _env_truthy("TRY_ARCHIVE_IS", "1")
+    srcs = sources if sources is not None else parse_parallel_ladder_sources()
+    if try_http is None:
+        # Listing live in PARALLEL_LADDER opts into live race even if SKIP_LIVE=1
+        if "live" in srcs:
+            try_http = not _env_truthy("LADDER_SKIP_LIVE", "0")
+        else:
+            try_http = not _env_truthy("SKIP_LIVE", "0")
+    if try_playwright is None:
+        # If playwright listed in PARALLEL_LADDER, default on unless TRY_PLAYWRIGHT=0
+        if "playwright" in srcs:
+            try_playwright = _env_truthy("TRY_PLAYWRIGHT", "1")
+        else:
+            try_playwright = _env_truthy("TRY_PLAYWRIGHT", "0")
+    if parallel is None:
+        parallel = bool(srcs)
+
+    errors: list[str] = []
+    steps: list[str] = []
+
+    if parallel and srcs:
+        steps.append("parallel_race:" + ",".join(srcs))
+        res = fetch_ladder_parallel_race(
+            url,
+            cc_record=cc_record,
+            wayback_ts=wayback_ts,
+            min_text=min_text,
+            sources=srcs,
+            try_cc=try_cc,
+            try_wayback=try_wayback,
+            try_archive_is=try_archive_is,
+            try_http=try_http,
+            try_playwright=try_playwright,
+        )
+        if _body_nonempty(res, min_text=0):
+            res = dict(res)
+            res["ladder_steps"] = steps
+            return res
+        errors.append(f"race:{res.get('error')}")
+        # Sparse submit only after race miss (not inside race)
+        if try_archive_is and _env_truthy("ARCHIVE_IS_SUBMIT_ON_MISS", "0"):
+            steps.append("archive_is_submit")
+            sub = submit_archive_is(url, wait=_env_truthy("ARCHIVE_IS_SUBMIT_WAIT", "0"))
+            if _body_nonempty(sub, min_text=0):
+                sub = dict(sub)
+                sub["ladder"] = "after_race_submit"
+                sub["ladder_steps"] = steps
+                return sub
+            errors.append(f"archive_is_submit:{sub.get('error')}")
+    else:
+        # Serial fallback
+        if try_cc or (cc_record and (cc_record.get("filename") or cc_record.get("warc_filename"))):
+            steps.append("warc")
+            cc_recs: list[dict] = []
+            if cc_record and (cc_record.get("filename") or cc_record.get("warc_filename")):
+                cc_recs = [cc_record]
+            elif try_cc and _env_truthy("LADDER_CC_SEARCH", "0"):
+                try:
+                    cc_recs = search_common_crawl(url, limit=4)
+                except Exception as exc:
+                    errors.append(f"common_crawl:{exc}")
+            for rec in cc_recs:
+                res = fetch_common_crawl_warc(rec)
+                if _body_nonempty(res, min_text=0):
+                    res = dict(res)
+                    res["method"] = res.get("method") or "common_crawl_warc"
+                    res["ladder"] = "serial"
+                    res["ladder_steps"] = steps
+                    return res
+                errors.append(f"common_crawl:{res.get('error')}")
+        if try_wayback:
+            steps.append("wayback")
+            res = get_wayback_cdx_then_replay(url, timestamp=wayback_ts, min_text=0)
+            if _body_nonempty(res, min_text=0):
+                res = dict(res)
+                res["ladder"] = "serial"
+                res["ladder_steps"] = steps
+                return res
+            errors.append(f"wayback:{res.get('error')}")
+        if try_archive_is:
+            steps.append("archive_is")
+            res = get_archive_is_content_ladder(url)
+            if _body_nonempty(res, min_text=0):
+                res = dict(res)
+                res["ladder"] = "serial"
+                res["ladder_steps"] = steps
+                return res
+            errors.append(f"archive_is:{res.get('error')}")
+        if try_http:
+            steps.append("live_http")
+            res = get_http_bs4(url)
+            if _body_nonempty(res, min_text=0):
+                raw = res.get("text") or ""
+                if not is_challenge(raw, res.get("http_status") or 200):
+                    res = dict(res)
+                    res["ladder"] = "serial"
+                    res["ladder_steps"] = steps
+                    return res
+            errors.append(f"http:{res.get('error') or 'empty'}")
+        if try_playwright and playwright_host_ok(url):
+            steps.append("playwright")
+            if _playwright_soft_ok():
+                slot = _playwright_acquire_slot()
+                try:
+                    res = get_playwright_content(url)
+                finally:
+                    _playwright_release_slot(slot)
+                if _body_nonempty(res, min_text=0):
+                    res = dict(res)
+                    res["ladder"] = "serial"
+                    res["ladder_steps"] = steps
+                    return res
+                errors.append(f"playwright:{res.get('error')}")
+            else:
+                errors.append("playwright:soft_cap")
+
+    if has_cloudflare_creds() and _env_truthy("TRY_CLOUDFLARE", "0"):
+        errors.append("cloudflare:no_sync_tip_impl")
+    if has_ipwb_local():
+        errors.append("ipwb:not_wired_in_tip_ladder")
+
+    return {
+        "status": "error",
+        "error": "; ".join(errors) or "ladder_all_failed",
+        "original_url": url,
+        "ladder": "parallel" if (parallel and srcs) else "serial",
+        "ladder_steps": steps,
+        "ladder_errors": errors,
+    }
+
+
+
 def fetch_with_fallbacks(
     url: str,
     *,
@@ -649,40 +1346,21 @@ def fetch_with_fallbacks(
     try_http: bool = True,
     try_cc: bool = True,
 ) -> dict:
-    """Prefer archives: CC WARC -> Wayback replay -> archive.is -> direct HTTP.
+    """Back-compat wrapper → fetch_ladder.
 
-    Brave Search skipped (no API key in this environment).
-    Playwright is attempted by the caller when this returns a SPA shell.
-    Does not run Wayback CDX search; Wayback is replay only.
+    Historical default was serial WARC→Wayback→(optional archive.is)→HTTP.
+    When PARALLEL_LADDER=1 (default for new tip paths), races archive sources first.
+    Pass try_archive_is=True or set TRY_ARCHIVE_IS=1 to include archive.is.
     """
-    errors = []
-    cc_recs: list[dict] = []
-    if cc_record and (cc_record.get("filename") or cc_record.get("warc_filename")):
-        cc_recs = [cc_record]
-    elif try_cc:
-        try:
-            cc_recs = search_common_crawl(url, limit=4)
-        except Exception as exc:
-            errors.append(f"common_crawl:{exc}")
-            cc_recs = []
-    for rec in cc_recs:
-        res = fetch_common_crawl_warc(rec)
-        if res.get("status") == "success" and (res.get("text") or res.get("content")):
-            return res
-        errors.append(f"common_crawl:{res.get('error')}")
-    if wayback_ts or url:
-        res = get_wayback_content(url, timestamp=wayback_ts)
-        if res.get("status") == "success" and (res.get("text") or res.get("content")):
-            return res
-        errors.append(f"wayback:{res.get('error')}")
-    if try_archive_is:
-        res = get_archive_is_content(url)
-        if res.get("status") == "success":
-            return res
-        errors.append(f"archive_is:{res.get('error')}")
-    if try_http:
-        res = get_http(url)
-        if res.get("status") == "success":
-            return res
-        errors.append(f"http:{res.get('error')}")
-    return {"status": "error", "error": "; ".join(errors) or "all_failed", "original_url": url}
+    # Preserve prior call-site semantics for try_archive_is default False unless env set
+    ais = try_archive_is or _env_truthy("TRY_ARCHIVE_IS", "0")
+    return fetch_ladder(
+        url,
+        cc_record=cc_record,
+        wayback_ts=wayback_ts,
+        try_cc=try_cc,
+        try_archive_is=ais,
+        try_http=try_http,
+        # Back-compat callers stay serial unless env explicitly opts into race.
+        parallel=bool(parse_parallel_ladder_sources()) if "PARALLEL_LADDER" in os.environ else False,
+    )

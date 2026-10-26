@@ -493,3 +493,103 @@ def test_historical_evidence_root_cannot_be_a_symlink(owner, tmp_path):
     alias.symlink_to(tmp_path, target_is_directory=True)
     with pytest.raises(RuntimeError, match="symlink"):
         run(owner, second, historical_evidence_roots=[alias])
+
+
+
+@pytest.fixture
+def coordinate_owner(tmp_path):
+    from ipfs_datasets_py.logic.autoformal.uscode_ingest import (
+        inventory_uscode_source_coordinates, uscode_source_coordinates_sha256)
+    documents = [{"legal_id": "fixture:law", "title": "1", "section": "1",
+                  "text": " \tΩ agency shall\r\n retain records.  "}]
+    coordinates = inventory_uscode_source_coordinates(documents)
+    pin = uscode_source_coordinates_sha256(coordinates)
+    cache = SpanCache(tmp_path / "coordinate-owner.duckdb")
+    cache._db.execute("SET threads=1")
+    cache._set_meta("dataset_id", "fixture:corpus")
+    cache.enqueue_source_coordinates(coordinates, documents, expected_report_sha256=pin)
+    span = coordinates["spans"][0]
+    source_manifest = {"schema": ingest.SOURCE_SCHEMA, "corpus_id": "fixture:corpus",
+        "release_id": "fixture-release", "source_revision": REV,
+        "spans": [{"source_span_id": span["source_span_id"], "legal_id": "fixture:law",
+                   "source_sha256": _sha(span["text"]), "expected_binding": None}]}
+    try:
+        yield cache, coordinates, documents, pin, source_manifest
+    finally:
+        cache.close()
+
+
+def test_coordinate_reference_reaches_worker_and_immutable_exchange(coordinate_owner, tmp_path):
+    cache, coordinates, documents, pin, source_manifest = coordinate_owner
+    expected = cache.pending(limit=1)[0]["source_provenance_json"]
+    seen = []
+    def observed(item):
+        seen.append(dict(item))
+        return worker(item)
+    result = run(cache, tmp_path, source_manifest=source_manifest, compile_worker=observed)
+    assert result["processed"] == 1 and result["qualified"] is False
+    assert seen[0]["source_provenance_json"] == expected
+    assert len(expected.encode("utf-8")) < 2048
+    assert documents[0]["text"] not in expected  # shared original remains in the cache report
+    completion = result["completions"][0]
+    retained = json.loads(Path(completion["worker_output"]["path"]).read_text())
+    assert retained["source_provenance_json"] == expected
+    bundle = exchange.load_exchange_bundle(completion["exchange_manifests"][0]["path"])
+    exported = json.loads(bundle["census_rows"][0]["input_json"])
+    assert exported["source_provenance_json"] == expected
+    assert cache.read_source_coordinate_report(expected_report_sha256=pin) == coordinates
+    assert cache.read_source_coordinate_report(expected_report_sha256=pin)["documents"][0]["source_text"] == documents[0]["text"]
+    saved = json.loads(cache._db.execute("SELECT result_json FROM span_claim_results").fetchone()[0])
+    from ipfs_datasets_py.logic.autoformal.span_cache_claims import _LEASE_FIELDS
+    assert set(saved["claim"]) == set(_LEASE_FIELDS)
+    assert "source_provenance_json" not in saved["claim"]
+    assert saved["agrees"] is False
+
+
+def test_owner_coordinate_reference_enriches_an_omitting_worker(coordinate_owner, tmp_path):
+    cache, _, _, _, source_manifest = coordinate_owner
+    expected = cache.pending(limit=1)[0]["source_provenance_json"]
+    def omitted(item):
+        result = worker(item)
+        result.pop("source_provenance_json")
+        result["source_provenance"] = {"source_provenance_json": expected}
+        return result
+    result = run(cache, tmp_path, source_manifest=source_manifest, compile_worker=omitted)
+    retained = json.loads(Path(result["completions"][0]["worker_output"]["path"]).read_text())
+    assert retained["source_provenance_json"] == expected
+    assert retained["source_provenance"]["source_provenance_json"] == expected
+
+
+@pytest.mark.parametrize("location,value", [("top", "{}"), ("top", None), ("nested", "{}"), ("nested", None)])
+def test_coordinate_worker_conflict_is_refused_before_staging(coordinate_owner, tmp_path, location, value):
+    cache, _, _, _, source_manifest = coordinate_owner
+    def altered(item):
+        if location == "top":
+            # In-process pools must not let this overwrite the owner's expectation.
+            item["source_provenance_json"] = value
+        result = worker(item)
+        if location == "nested":
+            result["source_provenance"] = {"source_provenance_json": value}
+        return result
+    def forbidden_stage(rows):
+        pytest.fail("conflicting source coordinates reached staging")
+    with pytest.raises(ingest.FencedIngestError, match="coordinate provenance"):
+        run(cache, tmp_path, source_manifest=source_manifest, compile_worker=altered, stage_exchange=forbidden_stage)
+    assert cache._db.execute("SELECT count(*) FROM span_claim_results").fetchone()[0] == 0
+    assert cache._db.execute("SELECT status FROM span_cache").fetchone()[0] == "pending"
+
+
+def test_worker_cannot_invent_coordinate_provenance_for_legacy_row(owner, tmp_path):
+    with pytest.raises(ingest.FencedIngestError, match="coordinate provenance"):
+        run(owner, tmp_path, compile_worker=lambda item: {**worker(item), "source_provenance_json": "{}"})
+    assert owner._db.execute("SELECT status FROM span_cache").fetchone()[0] == "pending"
+
+
+def test_coordinate_metadata_is_charged_to_source_batch_bound(coordinate_owner, tmp_path, monkeypatch):
+    cache, coordinates, _, _, source_manifest = coordinate_owner
+    monkeypatch.setattr(ingest, "MAX_SOURCE_BATCH_BYTES", len(coordinates["spans"][0]["text"].encode("utf-8"))+1)
+    def forbidden(item):
+        pytest.fail("oversized source/provenance packet reached worker")
+    with pytest.raises(ingest.FencedIngestError, match="byte bound|batch exceeds"):
+        run(cache, tmp_path, source_manifest=source_manifest, compile_worker=forbidden)
+    assert cache._db.execute("SELECT status FROM span_cache").fetchone()[0] == "pending"

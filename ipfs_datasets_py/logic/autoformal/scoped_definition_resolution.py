@@ -108,6 +108,32 @@ _TABLE_FIELDS = {
 }
 
 
+# Parent metadata is declared custody, not authenticated source replay. Consumers
+# separately replay the installed parent-review owner with independent identities.
+PARENT_REGISTRY_SCHEMA = "legal-parent-scoped-definition-lookup-registry/v1"
+PARENT_PARTITION_SCHEMA = "legal-parent-scoped-definition-lookup-partition/v1"
+PARENT_LOOKUP_SCHEMA = "legal-parent-scoped-definition-lookup/v1"
+PARENT_PROFILE = "declared-parent-partition-existing-scoped-symbol-resolution/v1"
+PARENT_UNDECLARED_EDITION = "not_declared_in_source_artifact"
+PARENT_FALSE_FLAGS = {
+    **FALSE_FLAGS, "applicability_verified": False,
+    "governing_edition_verified": False, "parent_source_replay_verified": False,
+}
+_PARENT_CID_FIELDS = {
+    "source_version_cid", "scope_cid", "preparation_cid", "parent_manifest_cid",
+    "root_source_occurrence_cid", "companion_record_cid",
+}
+_PARENT_INPUT_FIELDS = {
+    "partition_id", "release_id", "edition", "document_id", "table_raw",
+    "source_binding_sha256", *_PARENT_CID_FIELDS,
+}
+_PARENT_PARTITION_FIELDS = (_PARENT_INPUT_FIELDS - {"table_raw"}) | {
+    "table_sha256", "table_cid", "table_json", "availability",
+}
+_PARENT_REGISTRY_FIELDS = _REGISTRY_FIELDS | set(PARENT_FALSE_FLAGS)
+_PARENT_LOOKUP_FIELDS = _LOOKUP_FIELDS | set(PARENT_FALSE_FLAGS)
+
+
 def _fail(message):
     raise contracts.CorpusContractError(message)
 
@@ -132,9 +158,9 @@ def _pins(symbols, dependencies):
     } | {str(Path(__file__).resolve()): _sha(Path(__file__).read_bytes())}
 
 
-def _policy(symbols, pins):
+def _policy(symbols, pins, *, parent=False):
     return {
-        "profile": PROFILE,
+        "profile": PARENT_PROFILE if parent else PROFILE,
         "symbol_table_schema": symbols.LEGAL_IR_SYMBOL_TABLE_SCHEMA_VERSION,
         "normalization_policy": NORMALIZATION_POLICY,
         "resolution_policy": RESOLUTION_POLICY,
@@ -225,8 +251,10 @@ def _table(raw, expected_sha256, document_id, symbols):
     return table, definitions
 
 
-def build_definition_lookup_registry(partition_inputs, expected_population):
+def _build_registry(partition_inputs, expected_population, *, parent=False):
     """Bind exact ordered supplied tables; hashes do not authenticate a registry."""
+    input_fields = _PARENT_INPUT_FIELDS if parent else _INPUT_FIELDS
+    flags = PARENT_FALSE_FLAGS if parent else FALSE_FLAGS
     _sequence(partition_inputs, MAX_PARTITIONS, "partition input", nonempty=True)
     _sequence(expected_population, MAX_PARTITIONS, "expected partition population", nonempty=True)
     if len(partition_inputs) != len(expected_population):
@@ -235,7 +263,7 @@ def build_definition_lookup_registry(partition_inputs, expected_population):
     # Check byte pins before parsing any table or loading the existing owner.
     raw_total, ids = 0, set()
     for item, pin in zip(partition_inputs, expected, strict=True):
-        contracts.require_keys(item, _INPUT_FIELDS, "partition input")
+        contracts.require_keys(item, input_fields, "partition input")
         contracts.require_keys(pin, {"partition_id", "table_sha256"}, "expected partition pin")
         partition_id = contracts.require_text(item["partition_id"], "partition_id", max_bytes=256)
         if partition_id != pin["partition_id"] or partition_id in ids:
@@ -261,11 +289,18 @@ def build_definition_lookup_registry(partition_inputs, expected_population):
         )
         for key in ("release_id", "document_id"):
             contracts.require_text(metadata[key], key, max_bytes=512)
-        contracts.require_int(metadata["edition"], "edition", minimum=1, maximum=9999)
-        for key in ("source_version_cid", "scope_cid", "applicability_cid"):
-            if key == "source_version_cid" and metadata[key] is None and item["table_raw"] is None:
-                continue
-            contracts.require_cid(metadata[key], key, codecs=("dag-json",))
+        if parent:
+            if metadata["edition"] != PARENT_UNDECLARED_EDITION:
+                _fail("parent lookup preserves the undeclared source edition literally")
+            contracts.require_sha256(metadata["source_binding_sha256"], "source_binding_sha256")
+            for key in _PARENT_CID_FIELDS:
+                contracts.require_cid(metadata[key], key, codecs=("dag-json",))
+        else:
+            contracts.require_int(metadata["edition"], "edition", minimum=1, maximum=9999)
+            for key in ("source_version_cid", "scope_cid", "applicability_cid"):
+                if key == "source_version_cid" and metadata[key] is None and item["table_raw"] is None:
+                    continue
+                contracts.require_cid(metadata[key], key, codecs=("dag-json",))
         raw = item["table_raw"]
         if raw is not None:
             table, definitions = _table(raw, pin["table_sha256"], metadata["document_id"], symbols)
@@ -277,7 +312,7 @@ def build_definition_lookup_registry(partition_inputs, expected_population):
         partitions.append(
             contracts.seal_record(
                 {
-                    "schema": PARTITION_SCHEMA,
+                    "schema": PARENT_PARTITION_SCHEMA if parent else PARTITION_SCHEMA,
                     **metadata,
                     "table_sha256": pin["table_sha256"],
                     "table_cid": None if raw is None else cid_for_bytes(raw),
@@ -288,11 +323,11 @@ def build_definition_lookup_registry(partition_inputs, expected_population):
         )
     result = contracts.seal_record(
         {
-            "schema": REGISTRY_SCHEMA,
-            **_policy(symbols, pins),
+            "schema": PARENT_REGISTRY_SCHEMA if parent else REGISTRY_SCHEMA,
+            **_policy(symbols, pins, parent=parent),
             "expected_population": expected,
             "partitions": partitions,
-            **FALSE_FLAGS,
+            **flags,
         }
     )
     if _pins(symbols, dependencies) != pins:
@@ -300,9 +335,11 @@ def build_definition_lookup_registry(partition_inputs, expected_population):
     return result
 
 
-def validate_definition_lookup_registry(registry, expected_registry_cid=None):
+def _validate_registry(registry, expected_registry_cid=None, *, parent=False):
     """Replay its complete byte-bound inputs; optional external CID binds custody."""
-    value = contracts.validate_record(registry, schema=REGISTRY_SCHEMA, fields=_REGISTRY_FIELDS)
+    value = contracts.validate_record(registry,
+        schema=PARENT_REGISTRY_SCHEMA if parent else REGISTRY_SCHEMA,
+        fields=_PARENT_REGISTRY_FIELDS if parent else _REGISTRY_FIELDS)
     if expected_registry_cid is not None and value["record_cid"] != contracts.require_cid(
         expected_registry_cid, "expected_registry_cid", codecs=("dag-json",)
     ):
@@ -311,7 +348,8 @@ def validate_definition_lookup_registry(registry, expected_registry_cid=None):
     inputs = []
     for partition in value["partitions"]:
         row = contracts.validate_record(
-            partition, schema=PARTITION_SCHEMA, fields=_PARTITION_FIELDS
+            partition, schema=PARENT_PARTITION_SCHEMA if parent else PARTITION_SCHEMA,
+            fields=_PARENT_PARTITION_FIELDS if parent else _PARTITION_FIELDS
         )
         table_json = row["table_json"]
         if table_json is not None:
@@ -320,21 +358,21 @@ def validate_definition_lookup_registry(registry, expected_registry_cid=None):
             )
         inputs.append(
             {
-                **{key: row[key] for key in _INPUT_FIELDS - {"table_raw"}},
+                **{key: row[key] for key in (_PARENT_INPUT_FIELDS if parent else _INPUT_FIELDS) - {"table_raw"}},
                 "table_raw": None if table_json is None else table_json.encode("utf-8"),
             }
         )
-    expected = build_definition_lookup_registry(inputs, value["expected_population"])
+    expected = _build_registry(inputs, value["expected_population"], parent=parent)
     if expected != value:
         _fail("registry differs from exact independently byte-pinned replay")
     return expected
 
 
-def resolve_definition_lookup(registry, query_raw, expected_query_sha256):
+def _resolve_lookup(registry, query_raw, expected_query_sha256, *, parent=False):
     """Delegate explicit local/external table resolution, preserving open gaps."""
     query = contracts.load_record_bytes(query_raw, expected_sha256=expected_query_sha256)
     contracts.require_keys(query, _QUERY_FIELDS, "definition lookup query")
-    value = validate_definition_lookup_registry(registry)
+    value = _validate_registry(registry, parent=parent)
     symbols, dependencies = _owners()
     pins = _pins(symbols, dependencies)
     if pins != value["producer_pins"]:
@@ -348,9 +386,13 @@ def resolve_definition_lookup(registry, query_raw, expected_query_sha256):
     if any(key not in by_id for key in route):
         _fail("query route must name supplied explicit partitions")
     partitions = [by_id[key] for key in route]
-    identity = {(row["release_id"], row["edition"], row["applicability_cid"]) for row in partitions}
-    if len(identity) != 1:
-        _fail("query partitions differ in declared release/edition/applicability")
+    if not parent:
+        identity = {(row["release_id"], row["edition"], row["applicability_cid"]) for row in partitions}
+        if len(identity) != 1:
+            _fail("query partitions differ in declared release/edition/applicability")
+    # Parent routes nominate lexical candidates across explicitly supplied source
+    # partitions. Equal unknown editions do not establish governing compatibility.
+    flags = PARENT_FALSE_FLAGS if parent else FALSE_FLAGS
     for key in ("source_occurrence_cid", "interpretation_cid"):
         contracts.require_cid(query[key], key, codecs=("dag-json",))
     try:
@@ -442,8 +484,8 @@ def resolve_definition_lookup(registry, query_raw, expected_query_sha256):
     selected = owner_result["symbol_ids"][0] if available and owner_result["resolved"] else None
     result = contracts.seal_record(
         {
-            "schema": LOOKUP_SCHEMA,
-            **_policy(symbols, pins),
+            "schema": PARENT_LOOKUP_SCHEMA if parent else LOOKUP_SCHEMA,
+            **_policy(symbols, pins, parent=parent),
             "query_json": query_raw.decode("utf-8"),
             "query_sha256": expected_query_sha256,
             "query_cid": cid_for_bytes(query_raw),
@@ -463,7 +505,7 @@ def resolve_definition_lookup(registry, query_raw, expected_query_sha256):
             "selected_symbol_id": selected,
             "binding_scope": BINDING_SCOPE,
             "registry_binding": REGISTRY_BINDING,
-            **FALSE_FLAGS,
+            **flags,
         }
     )
     if _pins(symbols, dependencies) != pins:
@@ -471,9 +513,11 @@ def resolve_definition_lookup(registry, query_raw, expected_query_sha256):
     return result
 
 
-def validate_definition_lookup(lookup, registry, query_raw=None, expected_query_sha256=None):
+def _validate_lookup(lookup, registry, query_raw=None, expected_query_sha256=None, *, parent=False):
     """Regenerate an outcome; consumers separately retain its expected CID."""
-    value = contracts.validate_record(lookup, schema=LOOKUP_SCHEMA, fields=_LOOKUP_FIELDS)
+    value = contracts.validate_record(lookup,
+        schema=PARENT_LOOKUP_SCHEMA if parent else LOOKUP_SCHEMA,
+        fields=_PARENT_LOOKUP_FIELDS if parent else _LOOKUP_FIELDS)
     if query_raw is None:
         contracts.require_text(
             value["query_json"], "query_json", max_bytes=contracts.MAX_RECORD_BYTES
@@ -481,15 +525,15 @@ def validate_definition_lookup(lookup, registry, query_raw=None, expected_query_
         query_raw = value["query_json"].encode("utf-8")
     if expected_query_sha256 is None:
         expected_query_sha256 = value["query_sha256"]
-    expected = resolve_definition_lookup(registry, query_raw, expected_query_sha256)
+    expected = _resolve_lookup(registry, query_raw, expected_query_sha256, parent=parent)
     if value != expected:
         _fail("definition lookup differs from complete query/partition replay")
     return expected
 
 
-def build_definition_lookup_dependencies(registry, lookups, expected_lookup_cids):
+def _build_dependencies(registry, lookups, expected_lookup_cids, *, parent=False):
     """Reuse the existing reverse graph over stable partitions and bound lookups."""
-    value = validate_definition_lookup_registry(registry)
+    value = _validate_registry(registry, parent=parent)
     _sequence(lookups, MAX_LOOKUPS, "lookup", nonempty=True)
     _sequence(expected_lookup_cids, MAX_LOOKUPS, "expected lookup CID", nonempty=True)
     for cid in expected_lookup_cids:
@@ -498,7 +542,7 @@ def build_definition_lookup_dependencies(registry, lookups, expected_lookup_cids
         expected_lookup_cids
     ):
         _fail("complete unique ordered lookup population required")
-    checked = [validate_definition_lookup(row, value) for row in lookups]
+    checked = [_validate_lookup(row, value, parent=parent) for row in lookups]
     if [row["record_cid"] for row in checked] != expected_lookup_cids:
         _fail("lookup membership/order/multiplicity differs from independent CID pins")
     symbols, dependencies = _owners()
@@ -521,8 +565,8 @@ def build_definition_lookup_dependencies(registry, lookups, expected_lookup_cids
 
     def artifact(identity, row):
         pins = {kind: [] for kind in dependencies.PIN_KINDS}
-        pins["policy"] = [{"key": "scoped-definition-lookup-policy", "sha256": policy_sha}] + [
-            {"key": "lookup-owner:" + path, "sha256": digest}
+        pins["policy"] = [{"key": ("parent-" if parent else "") + "scoped-definition-lookup-policy", "sha256": policy_sha}] + [
+            {"key": ("parent-" if parent else "") + "lookup-owner:" + path, "sha256": digest}
             for path, digest in sorted(producer_pins.items())
         ]
         return {
@@ -532,20 +576,21 @@ def build_definition_lookup_dependencies(registry, lookups, expected_lookup_cids
         }
 
     artifacts, edges = [], []
+    prefix = "parent-" if parent else ""
     for row in value["partitions"]:
-        item = artifact("definition-partition:" + row["partition_id"], row)
+        item = artifact(prefix + "definition-partition:" + row["partition_id"], row)
         kind = "context" if row["availability"] == "unavailable" else "definition"
         item["dependency_pins"][kind] = [
-            {"key": "definition-table:" + row["partition_id"], "sha256": row["table_sha256"]}
+            {"key": prefix + "definition-table:" + row["partition_id"], "sha256": row["table_sha256"]}
         ]
         artifacts.append(item)
     for row in checked:
-        identity = "definition-lookup:" + row["record_cid"]
+        identity = prefix + "definition-lookup:" + row["record_cid"]
         artifacts.append(artifact(identity, row))
         edges.extend(
             {
                 "dependent_id": identity,
-                "dependency_id": "definition-partition:" + ref["partition_id"],
+                "dependency_id": prefix + "definition-partition:" + ref["partition_id"],
             }
             for ref in row["partition_refs"]
         )
@@ -558,10 +603,69 @@ def build_definition_lookup_dependencies(registry, lookups, expected_lookup_cids
     return result
 
 
+def build_definition_lookup_registry(partition_inputs, expected_population):
+    """Bind exact ordered official-profile tables without authenticating them."""
+    return _build_registry(partition_inputs, expected_population)
+
+
+def validate_definition_lookup_registry(registry, expected_registry_cid=None):
+    return _validate_registry(registry, expected_registry_cid)
+
+
+def resolve_definition_lookup(registry, query_raw, expected_query_sha256):
+    return _resolve_lookup(registry, query_raw, expected_query_sha256)
+
+
+def validate_definition_lookup(lookup, registry, query_raw=None, expected_query_sha256=None):
+    return _validate_lookup(lookup, registry, query_raw, expected_query_sha256)
+
+
+def build_definition_lookup_dependencies(registry, lookups, expected_lookup_cids):
+    return _build_dependencies(registry, lookups, expected_lookup_cids)
+
+
+def build_parent_definition_lookup_registry_v1(partition_inputs, expected_population):
+    """Bind literal-parent declarations; do not replay or authenticate parents.
+
+    Exact table bytes and ordered populations are retained. The source references
+    must be matched to independently replayed parent preparations by consumers.
+    An unknown edition is retained literally; it never becomes an official year.
+    """
+    return _build_registry(partition_inputs, expected_population, parent=True)
+
+
+def validate_parent_definition_lookup_registry_v1(registry, expected_registry_cid=None):
+    """Regenerate the complete declared registry; optional CID binds its custody."""
+    return _validate_registry(registry, expected_registry_cid, parent=True)
+
+
+def resolve_parent_definition_lookup_v1(registry, query_raw, expected_query_sha256):
+    """Resolve lexical candidates over a declared route, without applicability.
+
+    Different physical release references remain distinct. Matching unknown
+    editions do not authorize a cross-source use or establish shared legal scope.
+    """
+    return _resolve_lookup(registry, query_raw, expected_query_sha256, parent=True)
+
+
+def validate_parent_definition_lookup_v1(lookup, registry, query_raw=None, expected_query_sha256=None):
+    return _validate_lookup(lookup, registry, query_raw, expected_query_sha256, parent=True)
+
+
+def build_parent_definition_lookup_dependencies_v1(registry, lookups, expected_lookup_cids):
+    """Retain complete partition metadata and all explicit route dependencies."""
+    return _build_dependencies(registry, lookups, expected_lookup_cids, parent=True)
+
+
 __all__ = [
     "build_definition_lookup_registry",
     "validate_definition_lookup_registry",
     "resolve_definition_lookup",
     "validate_definition_lookup",
     "build_definition_lookup_dependencies",
+    "build_parent_definition_lookup_registry_v1",
+    "validate_parent_definition_lookup_registry_v1",
+    "resolve_parent_definition_lookup_v1",
+    "validate_parent_definition_lookup_v1",
+    "build_parent_definition_lookup_dependencies_v1",
 ]

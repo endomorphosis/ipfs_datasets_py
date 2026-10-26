@@ -48,7 +48,7 @@ OFFICIAL_HOSTS = (
     "imprentanacional.gob.ve",
 )
 # Prefer Spanish OCR; TESSDATA_PREFIX should include spa.traineddata
-os.environ.setdefault("TESSDATA_PREFIX", "/home/box/tessdata")
+os.environ.setdefault("TESSDATA_PREFIX", os.environ.get("IPFS_DATASETS_TESSDATA", str(Path.home() / ".ipfs_datasets" / "tessdata")))
 
 def is_thin_es(text: str) -> bool:
     """Reject empty/PDF-binary/OCR-noise; do NOT use Arabic-mojibake heuristics on Spanish."""

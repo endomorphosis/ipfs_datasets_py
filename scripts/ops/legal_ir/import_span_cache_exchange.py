@@ -663,16 +663,103 @@ def materialize_import(
     }
 
 
-def _pin_logic() -> dict[str, str]:
+def _pin_source_tree() -> None:
     loaded = sys.modules.get("ipfs_datasets_py")
     expected = ROOT / "ipfs_datasets_py" / "__init__.py"
     if loaded is not None and Path(loaded.__file__).resolve() != expected:
         raise ImportError("a different datasets checkout is already imported")
     sys.path.insert(0, str(ROOT))
     os.environ.setdefault("IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI", "0")
+
+
+def _pin_logic() -> dict[str, str]:
+    _pin_source_tree()
     from ipfs_datasets_py.logic.autoformal.tree_pin import require_workspace_logic_tree
 
     return require_workspace_logic_tree()
+
+
+def _finish_import(receipt_path: Path, receipt: dict) -> int:
+    # Each replay retains a separate receipt; never overwrite an observation.
+    with receipt_path.open("x", encoding="utf-8") as handle:
+        handle.write(json.dumps(receipt, ensure_ascii=True, sort_keys=True, indent=2) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    print(json.dumps(receipt, sort_keys=True))
+    return 0
+
+
+def _import_coordinate_source_cache(args) -> int:
+    """Explicit LOCAL v3 source-only import; no native review task or compiler."""
+    if (args.manifest is None or args.manifest_in_repo is not None
+            or args.paired_repository_root is None or not args.revision
+            or args.materialize or args.database is not None or args.accelerate_root is not None
+            or args.packet_directory is not None or args.staging_directory is not None
+            or args.shard_count != 1 or args.shard_index != 0):
+        raise ImportError("coordinate source-cache import requires a local manifest/root/revision, unsharded source-only mode")
+    for label, value in (("manifest", args.expected_manifest_sha256),
+                         ("complete coordinate report", args.expected_coordinate_report_sha256)):
+        if type(value) is not str or _SHA.fullmatch(value) is None:
+            raise ImportError("independent lowercase SHA256 required for " + label)
+    if (args.max_bytes > DEFAULT_MAX_BYTES or type(args.max_decoded_bytes) is not int
+            or not 1 <= args.max_decoded_bytes <= DEFAULT_MAX_BYTES):
+        raise ImportError("coordinate source-cache inputs are bounded to 64 MiB compressed/decoded")
+    receipt_path = args.output / "import-receipt.json"
+    if receipt_path.exists() or receipt_path.is_symlink():
+        raise ImportError("output already contains an import receipt; preserve the previous observation")
+    _pin_source_tree()
+    from ipfs_datasets_py.logic.autoformal.span_cache_feed import load_paired_payload
+    from ipfs_datasets_py.logic.autoformal.paired_span_census import (
+        COORDINATE_MANIFEST_SCHEMA, validate_paired_source_coordinates,
+    )
+    from ipfs_datasets_py.logic.autoformal.span_cache import write_fresh_source_coordinate_cache
+
+    root, manifest = args.paired_repository_root, args.manifest.absolute()
+    try:
+        manifest_in_repo = manifest.relative_to(root).as_posix()
+    except ValueError as error:
+        raise ImportError("local manifest must retain its exact repository layout") from error
+    loaded = load_paired_payload(manifest, repository_root=root, repository_id=args.repository_id,
+        path_in_repo=manifest_in_repo, expected_manifest_sha256=args.expected_manifest_sha256,
+        max_bytes=args.max_bytes, max_rows=min(args.max_rows,128),
+        max_decoded_bytes=args.max_decoded_bytes)
+    if loaded["manifest"]["schema"] != COORDINATE_MANIFEST_SCHEMA:
+        raise ImportError("source-cache enqueue requires the explicit paired-v3 manifest profile")
+    coordinate = validate_paired_source_coordinates(loaded,
+        expected_report_sha256=args.expected_coordinate_report_sha256)
+    if coordinate is None or not 1 <= len(coordinate["rows"]) <= 128:
+        raise ImportError("one complete coordinate report and 1..128 selected observations required")
+    report, rows = coordinate["report"], coordinate["rows"]
+    documents = [{**view["source_metadata"], "text": view["source_text"]}
+                 for view in report["documents"]]
+    selected = [row["source_span_id"] for row in rows]
+    # Whole-bundle retention and external-pin/reference replay precede opening
+    # any catalog. Compiler/model/status observations remain evidence only.
+    retained = retain_bundle_evidence(manifest_path=manifest,
+        directory=args.output / "evidence", max_bytes=args.max_bytes,
+        expected_sha256={"manifest":args.expected_manifest_sha256,
+            **{kind:value["sha256"] for kind,value in loaded["manifest"]["tables"].items()}},
+        **{kind+"_path":Path(loaded["table_paths"][kind]) for kind in PAIRED_TABLES})
+    result = write_fresh_source_coordinate_cache(args.enqueue_source_cache,report,documents,
+        expected_report_sha256=args.expected_coordinate_report_sha256, query=report["query"],
+        release_id=report["release_id"],limits=report["limits"],selected_span_ids=selected)
+    receipt = {"schema":"uscode-paired-source-cache-import/v1", "fresh_catalog":True,
+        "source_cache":str(args.enqueue_source_cache.absolute()),
+        "source_coordinates_report_sha256":coordinate["report_sha256"],
+        "selected_observation_count":len(rows), "selected_source_span_ids":selected,
+        "selected_span_indices":[json.loads(row["source_provenance_json"])["span_index"] for row in rows],
+        "complete_report_span_count":len(report["spans"]), **result,
+        "origin":{"repository_id":args.repository_id,"revision":args.revision,
+            "revision_evidence":"caller_supplied_acquisition_identity",
+            "manifest_in_repo":manifest_in_repo,"manifest_sha256":args.expected_manifest_sha256,
+            "evidence_bundle":retained,"fingerprint":loaded["manifest"]["fingerprint"],
+            "bundle_schema":COORDINATE_MANIFEST_SCHEMA},
+        "historical_backfill":False,"materialized":False,"native_tasks_written":False,
+        "executed":False,"claimed":False,"admitted":False,"formalized":False,
+        "wrote_compiler":False,"transferred_compiler_status":False,
+        "source_authority_authenticated":False,"legal_meaning_verified":False,
+        "training_authorized":False,"model_executed":False,"remote_io_performed":False}
+    return _finish_import(receipt_path,receipt)
 
 
 def _pin_accelerate(root: Path) -> dict[str, str]:
@@ -708,6 +795,15 @@ def parser() -> argparse.ArgumentParser:
     )
     result.add_argument("--database", type=Path)
     result.add_argument("--accelerate-root", type=Path)
+    result.add_argument("--enqueue-source-cache", type=Path,
+                        help="Opt-in local paired-v3 source enqueue into a NEW catalog; no native review work.")
+    result.add_argument("--paired-repository-root", type=Path,
+                        help="Source-cache mode: exact absolute retained repository-layout root.")
+    result.add_argument("--expected-manifest-sha256")
+    result.add_argument("--expected-coordinate-report-sha256",
+                        help="Source-cache mode: independent complete coordinate report pin.")
+    result.add_argument("--max-decoded-bytes",type=int,default=DEFAULT_MAX_BYTES,
+                        help="Source-cache mode: aggregate decoded input bound, at most 64 MiB.")
     result.add_argument(
         "--packet-directory",
         type=Path,
@@ -751,6 +847,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         raise ImportError("row and byte bounds must be positive")
     if args.revision and not _REVISION.fullmatch(args.revision):
         raise ImportError("revision must be an immutable 40-character commit")
+    if args.enqueue_source_cache is not None:
+        return _import_coordinate_source_cache(args)
+    if (args.paired_repository_root is not None or args.expected_manifest_sha256 is not None
+            or args.expected_coordinate_report_sha256 is not None
+            or args.max_decoded_bytes != DEFAULT_MAX_BYTES):
+        raise ImportError("coordinate source pins/bounds require --enqueue-source-cache")
     if args.materialize and (args.database is None or args.accelerate_root is None):
         raise ImportError("materialization requires --database and --accelerate-root")
     receipt_path = args.output / "import-receipt.json"
@@ -870,13 +972,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
             )
         receipt["database"] = str(args.database.resolve())
-    # Exclusive receipts make each replay a separate retained observation.
-    with receipt_path.open("x", encoding="utf-8") as handle:
-        handle.write(
-            json.dumps(receipt, ensure_ascii=True, sort_keys=True, indent=2) + "\n"
-        )
-    print(json.dumps(receipt, sort_keys=True))
-    return 0
+    return _finish_import(receipt_path,receipt)
 
 
 if __name__ == "__main__":

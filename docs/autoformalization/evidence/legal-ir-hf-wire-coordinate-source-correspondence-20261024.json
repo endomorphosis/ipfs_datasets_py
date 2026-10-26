@@ -1,0 +1,210 @@
+{
+  "IO_timing_qualification_claimed": false,
+  "all_previous_public_signatures_and_generic_parent_implementations_preserved": true,
+  "authority": {
+    "Lean_admitted": false,
+    "evaluation_gold_qualified": false,
+    "graph_admitted": false,
+    "legal_meaning_reviewed": false,
+    "source_authenticated": false,
+    "source_current": false,
+    "training_qualified": false
+  },
+  "cases": 103,
+  "completed": true,
+  "convergence_claimed": false,
+  "counts": {
+    "actually_imported_canonical_helpers": 9,
+    "canonical_helper_inputs": 9,
+    "canonical_metadata_inputs": 5,
+    "canonical_project_inputs": 238,
+    "captured_raw_source_bytes": 5731709,
+    "denied_optional_provider_imports": 0,
+    "durable_progress_records": 310,
+    "executed_product_modules": 132,
+    "frozen_inputs": 3,
+    "legacy_cases": 59,
+    "new_wire_correspondence_cases": 44,
+    "passed_cases": 103,
+    "phase_passes": 309,
+    "retained_bytes": 43594088,
+    "retained_files": 2558,
+    "sealed_files": 2557,
+    "selectors": 42,
+    "source_buffer_files": 145,
+    "source_pins": 250
+  },
+  "descriptor_relative_open_evidence": {
+    "bytes": 1095,
+    "path": "workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-wire-correspondence-20261024-02/exports/descriptor-relative-opens.json",
+    "sha256": "a788c8c7a6040b7726b6bad908a90819006cc99b2157563f1703130578b877b8"
+  },
+  "downstream_adoption": "Explicit local source-correspondence v3 consumes wire graph3/eligibility4/join3. Census, reviewed source correspondence, public dependency adoption and graph/Lean admission remain separate.",
+  "durability": {
+    "bytes": 999723,
+    "path": "workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-wire-correspondence-20261024-02/logs/validation-durability.json",
+    "sha256": "97af599bbc297c1277eb08e4fb1a1c261550298219401150b4809d8ad69319d1"
+  },
+  "evaluation_gold_mask": 0,
+  "fixtures_latent_dimensions": [
+    0
+  ],
+  "full_owning_cases": 180,
+  "full_owning_functions": 57,
+  "graph_profile": "canonical_rules_v1",
+  "graph_source_correspondence": "unverified_unsigned_review_requests_only",
+  "independent_audit": {
+    "bytes": 57258,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/independent-audit-v02.json",
+    "sha256": "0eae2d9ca6f6b4d10a5d6dc8cc4f57ba88c11fb4b9cfbcd423e6064de4d754dc"
+  },
+  "inherited_latent_dimensions": [
+    0,
+    384
+  ],
+  "initial_source_installation": {
+    "bytes": 1361,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/source-installation-v01.json",
+    "sha256": "690695e3abcc3fc52fc4d97ddb104ff83c9e5995cea0dbf1b48df1cca2dde25c"
+  },
+  "input_retention": {
+    "bytes": 109638,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/retained-inputs/native-generation-v01.json",
+    "sha256": "c12a98b786ad3931c532164de9347636400c03382fb21101b3e9879d76aebcae"
+  },
+  "legacy_cases": 59,
+  "limits": [
+    "Declared namespace parent initializer behavior remains unqualified.",
+    "Installed pytest, Arrow, NumPy, CID and stdlib runtime source is not comprehensively attested.",
+    "Pytest input bytes are retained; rewritten test codeobject identity is not asserted.",
+    "This is a saved-output audit, with no product calls, tests, native jobs, database access or recovery calls."
+  ],
+  "manifest": {
+    "bytes": 152405,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/retained-inputs/sha256/20cd8751b19542a38311de1ec6a66f75edd955ff239f7ad7277b57e456f2d59e",
+    "sha256": "20cd8751b19542a38311de1ec6a66f75edd955ff239f7ad7277b57e456f2d59e"
+  },
+  "metadata_profile": "hf-default-parquet-envelope/v1",
+  "mixed_test_layout": "238 canonical project inputs, three frozen sibling tests, nine canonical helper inputs and five canonical metadata fixtures within the250-pin closure; imported helper bodies are listed separately from declared raw inputs.",
+  "model_widths_executed": [],
+  "models_encoders_training_Hub_or_Lean_runs_performed": false,
+  "native_result": {
+    "bytes": 7604,
+    "path": "workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-wire-correspondence-20261024-02/logs/result.json",
+    "sha256": "d6868a21e89e7596c2c64eef1623be85c0debe457f709406f4a3b690124c816e"
+  },
+  "new_cases": 44,
+  "operation_guards": {
+    "database": 0,
+    "external_write": 0,
+    "forbidden_imports": 0,
+    "network": 0,
+    "payload_read": 0,
+    "process": 0
+  },
+  "original_launch_receipt": {
+    "bytes": 10437,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/launch-receipt-v02.json",
+    "sha256": "cbd5cd9e12f38e7e5d658a4d65f8c3d2e62774320c4f941e64636129dd3c237a"
+  },
+  "original_resource_envelope": {
+    "child_process_slots": 2,
+    "cpu_slots": 1,
+    "memory_mb": 2048,
+    "storage_bytes": 134217728,
+    "timeout_seconds": 900
+  },
+  "owning_test": {
+    "bytes": 90667,
+    "path": "tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py",
+    "sha256": "830ba4a4c4e29c222ced7522dd9dde0aeb5fb16c766f00145610f5e07165aa02"
+  },
+  "passed": true,
+  "phase_passes": 309,
+  "preserved_old_owning_cases": 136,
+  "prior_failed_invocations": [
+    {
+      "actual_failed_calls": 27,
+      "actual_passed_calls": 76,
+      "actual_phase_passes": 282,
+      "actual_postwrite_readback": {
+        "bytes": 2066009,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/v01-storage-closeout/actual-postwrite-readback.json",
+        "sha256": "3eb640c0621d17ea8e4c8867f107d4d06d0d905b217f3b5ad2a9f31bbd1124c2"
+      },
+      "api_return": {
+        "bytes": 1005713,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/v01-storage-closeout/api-return.json",
+        "sha256": "171f26f9fd3908ae00e27ab4b585f836c7b4938eed3f4d8ed3b8850e19bd2d5b"
+      },
+      "attempt_version": "01",
+      "launch_receipt": {
+        "bytes": 20905,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/launch-receipt-v01.json",
+        "sha256": "15cac7cdca596806e201e5a001ba238664752fc836a895f06b3c9ee765c52761"
+      },
+      "qualified_cases": 0,
+      "qualified_phase_passes": 0,
+      "retained_file_bytes": 41430559,
+      "retained_files": 2556,
+      "storage_closeout": {
+        "bytes": 1308,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/v01-storage-closeout/summary.json",
+        "sha256": "2162c9bf98a8bd95cb7bf60013ec24df0a452de07be6341ee3a09f8a16f66f35"
+      }
+    }
+  ],
+  "profile": "original-input-wire-coordinate-graph-v3-source-review-request-custody/v1",
+  "qualification_collection_scope": "Only explicit selected functions from frozen correspondence primary;77 other original cases are unselected.",
+  "recorded_at_utc": "2026-10-24T15:11:33.466190+00:00",
+  "report_schema": "legal-source-correspondence-requests/v3",
+  "request": {
+    "bytes": 54683,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/retained-inputs/sha256/87645d665a183967f09d09e16e4970fe400726b38c2b0a199a344c5a3ea339b6",
+    "sha256": "87645d665a183967f09d09e16e4970fe400726b38c2b0a199a344c5a3ea339b6"
+  },
+  "request_schema": "legal-source-correspondence-request/v3",
+  "schema": "legal-ir-wire-coordinate-source-correspondence-local-qualification/v1",
+  "scope": "Authored selected unsigned source-review request custody only. Complete original wire metadata and exact ordered row projections retain genuine source-bank nominations and unresolved questions through closing/final serialization. No source/meaning review, corpus export, model training, numerical convergence or Lean qualification is claimed.",
+  "selected_attempt_version": "02",
+  "selected_original_compute_storage_and_source_READ_closed": true,
+  "source": {
+    "bytes": 76717,
+    "path": "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
+    "sha256": "8fccd02c6a596a06f6d3d0105a9bdffb040f11266cd4e835dbff5f74ad066aed"
+  },
+  "source_capture_index": {
+    "bytes": 98042,
+    "path": "workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-wire-correspondence-20261024-02/exports/executed-source-buffers.json",
+    "sha256": "6eeee5a44b60c69bc5c4c456da24f203d6b0b1229c25eb790f30cbfc03aa0fc1"
+  },
+  "source_edition_and_legal_as_of": "unresolved",
+  "source_installation": {
+    "bytes": 1251,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-correspondence-01/source-installation-v02.json",
+    "sha256": "88a95f425b18d1ccd7f6b6c8139eacf969db8c5ffb6e4e6c28a29b4dc681de6f"
+  },
+  "source_review_completed": false,
+  "status": "focused_authored_fixture_tests_qualified",
+  "test_functions": 42,
+  "training_mask": 0,
+  "unselected_old_cases": 77,
+  "unsigned_source_review": true,
+  "upstream_cohorts_rerun_or_pooled": false,
+  "upstream_corpus_audit": {
+    "bytes": 54442,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-corpus-01/independent-audit-v03.json",
+    "sha256": "b44bf826fd0c109f4a80ea5817cb18838193acb380984a2eb15273cc9a88c731"
+  },
+  "upstream_corpus_qualification": {
+    "bytes": 11343,
+    "path": "docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-graph-corpus-20261024.json",
+    "sha256": "673fe91a4d5b4773080d727527601fcc791e5cee1a1034e6b57b1082c66be1f0"
+  },
+  "upstream_eligibility_profile": "original-input-wire-coordinate-target-eligibility/v1",
+  "upstream_eligibility_schema": "legal-source-span-target-eligibility/v4",
+  "upstream_graph_profile": "original-input-wire-coordinate-source-graph-intake/v1",
+  "upstream_graph_schema": "legal-coordinate-source-graph-intake/v3",
+  "upstream_join_profile": "paired-coordinate-hf-wire-three-cache-join/v1",
+  "upstream_join_schema": "legal-source-span-entity-join-manifest/v3"
+}

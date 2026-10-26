@@ -1,0 +1,176 @@
+"""Finite orchestration entry using existing native CPU and durable disk owners.
+
+This controller grants no training, review, proof, or semantic completion authority.
+Commands and external paths are explicit engineering request metadata. Supervisor
+launches retain custody until the existing current-generation native fence passes.
+"""
+from pathlib import Path
+import hashlib
+import importlib.util
+import json
+import os
+import signal
+import subprocess
+import sys
+import threading
+import time
+
+DATASETS = Path('/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets')
+ACCELERATOR = Path('/home/barberb/lift_coding/external/ipfs_accelerate')
+STATE = Path('/tmp/ipfs-datasets-resource-scheduler-1000.json')
+POLICY = 'f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661'
+ROOT = Path('/home/barberb/lift_coding/external/ipfs_datasets')
+ROOTS = (ROOT/'workspace/test-logs', ROOT/'workspace/todo-queues', ROOT/'docs/implementation/reports/evidence', Path('/tmp/pytest-of-barberb'))
+LEDGER = ROOT/'workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json'
+
+def save(path, value):
+    raw = (json.dumps(value, sort_keys=True, indent=2)+'\n').encode()
+    assert len(raw) <= 1024*1024
+    temporary = path.with_suffix('.tmp')
+    with temporary.open('wb') as stream:
+        os.chmod(temporary, 0o600)
+        stream.write(raw)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, path)
+    fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+def main():
+    request_path = Path(sys.argv[1]).resolve(strict=True)
+    request_raw = request_path.read_bytes()
+    request = json.loads(request_raw)
+    assert request['schema'] == 'legal-ir-native-orchestration-request@1'
+    assert request['purpose'] in {'route_readiness', 'controller_preparation', 'supervisor_preflight', 'supervisor_launch'}
+    duration = request['duration_seconds']
+    assert type(duration) is int and 10 <= duration <= 2400
+    attempt = Path(request['attempt_directory'])
+    assert attempt.is_absolute() and any(root in attempt.parents for root in ROOTS)
+    assert not any(p.is_symlink() for p in (attempt, *attempt.parents))
+    argv = request['command']
+    assert type(argv) is list and argv and all(type(x) is str for x in argv)
+    def guard_sources():
+        assert request_path.read_bytes() == request_raw
+        for name, digest in request['source_sha256'].items():
+            assert hashlib.sha256(Path(name).read_bytes()).hexdigest() == digest
+    guard_sources()
+    os.environ.update(PYTHONDONTWRITEBYTECODE='1', IPFS_DATASETS_PY_MINIMAL_IMPORTS='1',
+                      IPFS_AUTO_INSTALL='false', IPFS_DATASETS_AUTO_INSTALL='false',
+                      OMP_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', MKL_NUM_THREADS='1')
+    sys.path[:0] = [str(DATASETS), str(ACCELERATOR)]
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.existing_resource_scheduler import open_existing_scheduler
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import ResourceLane
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.parented_phase_resources import ParentedPhaseResourceReservation
+    spec = importlib.util.spec_from_file_location('existing_supervisor_launch_owner',
+        ACCELERATOR/'scripts/run_legal_autoformalization_supervisor.py')
+    helpers = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helpers)
+    scheduler = open_existing_scheduler(STATE, POLICY)
+    attempt.mkdir(parents=True, mode=0o700, exist_ok=False)
+    cancelled = threading.Event()
+    for number in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signal.signal(number, lambda _n, _f: cancelled.set())
+    receipt = dict(schema='legal-ir-native-orchestration-receipt@1', purpose=request['purpose'],
+        request_sha256=hashlib.sha256(request_raw).hexdigest(),
+        owner_pid=os.getpid(), status='waiting_for_native_admission',
+        hard_enforcement=False, completion_authority=False)
+    with scheduler.acquire(ResourceLane.ORCHESTRATION, cpu_slots=1, memory_mb=2048,
+                           child_process_slots=4, timeout=1800, cancel_event=cancelled,
+                           request_id=request['name']) as root:
+        with root.acquire_child(lane=ResourceLane.ORCHESTRATION, cpu_slots=1, memory_mb=2048,
+                                child_process_slots=4, timeout=300, cancel_event=cancelled,
+                                request_id=request['name']+':phase') as phase:
+            with ParentedPhaseResourceReservation(LEDGER, roots=ROOTS, attempt_directory=attempt,
+                    parent_lease=phase, storage_bytes=request['storage_bytes'], memory_mb=2048,
+                    cpu_slots=1, child_process_slots=4, scheduler_state_path=STATE,
+                    expected_scheduler_policy_sha256=POLICY, timeout_seconds=duration+300,
+                    ledger_lock_timeout_seconds=60) as disk:
+                for external in request.get('external_charges', []):
+                    path = Path(external['path'])
+                    assert path.is_absolute() and any(p == path or p in path.parents for p in ROOTS)
+                    assert not any(p.is_symlink() for p in (path, *path.parents))
+                    disk.account_external_bytes(hashlib.sha256(str(path).encode()).hexdigest(), external['bytes'])
+                receipt.update(root_lease_id=root.lease_id, phase_lease_id=phase.lease_id,
+                    disk_reservation_id=disk.reservation_id, status='admitted')
+                persist = lambda: save(attempt/'receipt.json', receipt)
+                persist()
+                environment = dict(os.environ)
+                environment.update(helpers.THREAD_ENV)
+                environment.update(TMPDIR=str(attempt), TMP=str(attempt), TEMP=str(attempt))
+                identity = None
+                if request['purpose'] == 'supervisor_launch':
+                    from ipfs_accelerate_py.agent_supervisor.proof.formal_verification_contracts import content_identity
+                    identity = content_identity
+                guard_sources()
+                started = time.time_ns()
+                child = subprocess.Popen(argv, cwd=request['cwd'], env=environment,
+                    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                    start_new_session=True)
+                fence = None
+                output = None
+                deadline = time.monotonic()+duration
+                failure = None
+                try:
+                    disk.check_usage(attempt, child_pid=child.pid)
+                    if request['purpose'] == 'supervisor_launch':
+                        fence = helpers.NativeFenceObserver(Path(request['native_terminal_receipt']),
+                            request['board_namespace'], child, started, identity)
+                    output = threading.Thread(target=helpers.stream_output,
+                        args=(child.stdout, attempt/'child.sanitized.log', receipt), daemon=True)
+                    output.start()
+                    receipt.update(status='running', child_pid=child.pid, child_pgid=child.pid)
+                    persist()
+                    while child.poll() is None:
+                        guard_sources()
+                        if fence is not None:
+                            fence.observe()
+                        if cancelled.is_set() or time.monotonic() >= deadline:
+                            raise TimeoutError('finite orchestration scope ended')
+                        if receipt.get('output_capture_failed'):
+                            raise RuntimeError('sanitized output capture failed')
+                        disk.check_usage(attempt)
+                        time.sleep(.25)
+                except Exception as error:
+                    failure = type(error).__name__
+                finally:
+                    while request['purpose'] == 'supervisor_launch' and fence is None:
+                        # Preserve native custody on an unbound supervisor startup.
+                        if helpers.live_group(child.pid):
+                            os.killpg(child.pid, signal.SIGKILL)
+                        receipt.update(status='resource_held_native_observer_unavailable')
+                        persist()
+                        time.sleep(5)
+                    if fence is not None:
+                        helpers.terminate_group(child, 5, receipt, persist, fence, 180)
+                    else:
+                        # Signal only this owned, attached process group.
+                        for sig, wait in ((signal.SIGTERM, 5), (signal.SIGKILL, 5)):
+                            if helpers.live_group(child.pid):
+                                os.killpg(child.pid, sig)
+                            end = time.monotonic()+wait
+                            while helpers.live_group(child.pid) and time.monotonic() < end:
+                                child.poll()
+                                time.sleep(.1)
+                        child.wait(timeout=5)
+                        assert not helpers.live_group(child.pid)
+                    if output is not None and output.ident is not None:
+                        output.join(timeout=5)
+                        assert not output.is_alive()
+                    if receipt.get('output_capture_failed'):
+                        failure = failure or 'OutputCaptureFailure'
+                receipt.update(status='failed' if failure or child.returncode else 'completed',
+                    child_returncode=child.returncode, failure_type=failure,
+                    owned_group_quiescent=True, ended_at_epoch=time.time())
+                persist()
+                guard_sources()
+                disk.check_usage(attempt, full=True)
+                disk.finalize(attempt, artifacts_durable=True)
+                print(json.dumps(dict(receipt=str(attempt/'receipt.json'), status=receipt['status'],
+                    child_returncode=child.returncode, failure_type=failure, native_finalized=True)), flush=True)
+                return 0 if receipt['status'] == 'completed' else 1
+
+if __name__ == '__main__':
+    raise SystemExit(main())

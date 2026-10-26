@@ -1,0 +1,187 @@
+{
+  "cases": 29,
+  "cohort": {
+    "bytes": 23958,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/owning-test-cohort-v01.json",
+    "sha256": "c88593bed0245af4fddd599e0a5dd896171a71b9b411e6ea8da8353d256e9582"
+  },
+  "completed": true,
+  "conditional_instance_rendered": false,
+  "consumer_mask": 0,
+  "controller_complete": {
+    "bytes": 308,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/controller-complete-pure-v01.json",
+    "sha256": "cd551b1ff0ea578e142e564bdf6dbf7b4495b985fd6bd6972226ad8629f03f43"
+  },
+  "definition_application_verified": false,
+  "evaluation_gold_mask": 0,
+  "existing_module_newly_indexed": true,
+  "full_owning_module_qualified": false,
+  "governing_definition_use": null,
+  "graph_or_Lean_corpus_admitted": false,
+  "independent_result_review": {
+    "bytes": 11043,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/independent-result-review-pure-v01.json",
+    "sha256": "616df11d652f093941d1f164b50a855c96c9da893a872f531be93cd0eea85166"
+  },
+  "launch": {
+    "bytes": 7786,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/launch-pure-v01.json",
+    "sha256": "690a9e13e71d9e306256dfda759ea19c6f36c1e94afe2bd897bcd4c9185d3aa1"
+  },
+  "limits": [
+    "Only the selected29/87/14 pure authored fixture boundary is qualified; old HTML controls and68/204 preparation/23/69 native observations remain separate.",
+    "The nomination report existed only in passed-test memory. Product facts above are assertion-backed observations, not an independently read persisted graph/corpus artifact or CID.",
+    "Original parent/context replay retains unknown source/edition/meaning and every definition alternative; no governing applicability, alias, instance, graph/Lean or model authority is established.",
+    "Scoped namespaces, eight explicit bypassed initializers, sampled process ownership, third-party C I/O and cached bytecode retain their declared limitations.",
+    "Original opaque durability seals were checked by stat/device/inode/size; explicit saved metadata and checked source buffers were independently read without rescanning payload trees."
+  ],
+  "manifest": {
+    "bytes": 116314,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/manifest-pure-v01.json",
+    "sha256": "bdc3bcbeb45cd4bc39bdca062b4540786e9ba4a7f84f080cabd892b92ab2df86"
+  },
+  "model_convergence_proved": false,
+  "no_promotion": {
+    "Lean_execution_performed": false,
+    "conditional_definition_instance_rendered": false,
+    "consumer_mask": 0,
+    "evaluation_gold_mask": 0,
+    "graph_or_Lean_corpus_admitted": false,
+    "model_convergence_proved": false,
+    "model_forwards": 0,
+    "optimizer_steps": 0,
+    "semantic_mask": 0,
+    "shared_context_or_edition_inferred": false,
+    "source_edition_meaning_definition_or_governing_use_adopted": false,
+    "training_mask": 0
+  },
+  "nomination_artifact_independently_read": false,
+  "original_HTML_cases_refreshed": false,
+  "original_closeout": {
+    "compute_lease_released": true,
+    "current_selected_ledger_row_equal_original_closed_record": true,
+    "durable_seals_stat_matched": 44,
+    "native_lease_id": "78fa2bb495514cb292bcb586c9b3f5bf",
+    "native_process_cleanup_proven": true,
+    "opaque_payload_contents_rehashed_by_this_review": false,
+    "reservation_id": "26a8352fd9854deea7ad24d6a7de2c68",
+    "retained_file_bytes": 4386191,
+    "retained_files_including_durability": 45,
+    "retained_reconciliation_API_needed_or_called": false,
+    "source_READ_closed": true,
+    "storage_reservation_released": true
+  },
+  "owning_test": {
+    "bytes": 46006,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_legal_norm_definition_evidence_v1.py",
+    "sha256": "625610bec6073ddd062721b567b4735ed248d611919bd0b818b9550db6ae8f67"
+  },
+  "phases": 87,
+  "product_nomination_report_persisted": false,
+  "product_observation_basis": "Assertions in the actual passed owning test, authenticated through checked compiled/executed source; no separately persisted nomination artifact or CID is claimed.",
+  "qualified": true,
+  "recorded_at_utc": "2026-10-24T23:29:51.053499+00:00",
+  "reports": {
+    "exports/checked-source-buffers.json": {
+      "bytes": 4074733,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/attempt-pure-v01/exports/checked-source-buffers.json",
+      "sha256": "2101f67c8d4ac07819fdfb0e413b12484a544632d3582cc665e1934023594837"
+    },
+    "exports/early-observations.json": {
+      "bytes": 75906,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/attempt-pure-v01/exports/early-observations.json",
+      "sha256": "b2549377a69dabfa2f4a20140b602dd471934649bae898dc2ac156555dac6d30"
+    },
+    "exports/import-origins.json": {
+      "bytes": 62258,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/attempt-pure-v01/exports/import-origins.json",
+      "sha256": "9adec5dd070effb9b023b88e6ccbeb2622d6d5eb276e6c7f9bcb4b1754bc361e"
+    },
+    "exports/test-collection.json": {
+      "bytes": 25769,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/attempt-pure-v01/exports/test-collection.json",
+      "sha256": "3b9a3d61f36c8aa3e71534771d904e62cff703d917a76325abb6bc6d83108058"
+    },
+    "exports/test-result.json": {
+      "bytes": 9537,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/attempt-pure-v01/exports/test-result.json",
+      "sha256": "367cd2a66c2cf0e50cd11e02710bdf70dbcdcca03be250b2ce6acd6f7d3ae918"
+    },
+    "exports/tests.xml": {
+      "bytes": 6366,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/attempt-pure-v01/exports/tests.xml",
+      "sha256": "1ffceac00c7a056f4ef7950126a9b750a14b9abb3a80d09c25d2bc058e80edf5"
+    },
+    "logs/execution.json": {
+      "bytes": 3218,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/attempt-pure-v01/logs/execution.json",
+      "sha256": "d5dd3491a2d0477666804a3a7457fcacf13f709284a2f12f187ab995b3200061"
+    },
+    "logs/result.json": {
+      "bytes": 2939,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/attempt-pure-v01/logs/result.json",
+      "sha256": "da0ac26f3918af3244a84d4ce73301766901fcbe33d5cdd890aebfda81b26348"
+    },
+    "logs/validation-durability.json": {
+      "bytes": 9305,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/attempt-pure-v01/logs/validation-durability.json",
+      "sha256": "0364a80d5671c814c7b439a3d17dad3371d141478db153770e4367b4977864b2"
+    }
+  },
+  "request": {
+    "bytes": 75816,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/parent-norm-definition-evidence-20261024-01/request-pure-v01.json",
+    "sha256": "153cc4495ad7676f6e6dcf461514808af0daf10d5b093e462a5cece1d9a2a050"
+  },
+  "schema": "legal-ir-parent-norm-definition-evidence-qualification/v1",
+  "scope": "Explicit parent authored nomination evidence only; conditional instances, governing use and Lake composition remain separate.",
+  "selected_interpretation": null,
+  "selected_old_HTML_cases": 0,
+  "selectors": 14,
+  "semantic_mask": 0,
+  "source": {
+    "bytes": 50615,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/legal_norm_definition_evidence_v1.py",
+    "sha256": "f83919d11c18ee01759022de39c992486c5b06eb940b1135709e1344c9f793d1"
+  },
+  "source_custody": {
+    "all_eight_declared_bypass_initializers_unexecuted": true,
+    "all_input_pins_rehashed_unchanged": true,
+    "checked_compile_and_executed_buffers": 147,
+    "declared_namespaces": 14,
+    "frozen_and_current_canonical_maps": 195,
+    "full_package_or_entire_owning_modules_qualified": false,
+    "loaded_module_alias_observations": 132,
+    "namespace_observations": 7,
+    "request_pins": 222,
+    "required_genuine_sources": 28,
+    "source_sha256": "f83919d11c18ee01759022de39c992486c5b06eb940b1135709e1344c9f793d1",
+    "test_sha256": "625610bec6073ddd062721b567b4735ed248d611919bd0b818b9550db6ae8f67",
+    "third_party_cached_bytecode_attested": false
+  },
+  "test_assertion_observations": {
+    "all_authority_false_and_governing_selection_null_asserted": true,
+    "all_four_masks_exact_integer_zero_asserted": true,
+    "alternatives": 2,
+    "assertion_source": {
+      "functions": [
+        "test_parent_nomination_genuine_reviews_preserve_complete_norm_and_definition_records",
+        "test_parent_nomination_competing_alternatives_and_repeated_typed_uses_stay_unselected",
+        "_parent_nomination_unqualified"
+      ],
+      "path": "tests/unit/logic/autoformal/test_legal_norm_definition_evidence_v1.py",
+      "sha256": "625610bec6073ddd062721b567b4735ed248d611919bd0b818b9550db6ae8f67"
+    },
+    "call_count_scope": "Observed by passing roundtrip validation assertion with two supplied alternatives, not pooled across the whole cohort.",
+    "complete_norm_definition_records_and_separate_context_populations_asserted": true,
+    "definition_review_validator_calls": 4,
+    "distinct_typed_targets": 3,
+    "links": 6,
+    "nomination_artifact_independently_read": false,
+    "norm_review_validator_calls": 2,
+    "observation_basis": "Actual passed genuine owning-test assertions authenticated through checked compiled/executed source; no separately saved nomination artifact or CID.",
+    "product_nomination_report_persisted": false
+  },
+  "training_mask": 0
+}

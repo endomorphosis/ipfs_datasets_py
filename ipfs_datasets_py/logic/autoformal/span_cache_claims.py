@@ -405,7 +405,9 @@ class SpanCacheClaims:
         with self._transaction() as cx:
             self._current_generation(cx)
             span = self._validate_claim(cx, claim)
-            return dict(claim=claim, text=span["text"], legal_id=span["legal_id"], **_FALSE)
+            provenance = self.cache._source_coordinate_provenance(
+                claim["source_span_id"], span["text"], span["legal_id"])
+            return dict(claim=claim, text=span["text"], legal_id=span["legal_id"], **provenance, **_FALSE)
 
     def complete_claimed_fenced(self, operation_id, rows, *, code_identity, path_hashes):
         """Commit all validated outputs, terms and receipt in one transaction.

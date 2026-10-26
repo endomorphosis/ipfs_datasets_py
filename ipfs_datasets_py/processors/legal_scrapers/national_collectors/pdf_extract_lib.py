@@ -292,6 +292,17 @@ COUNTRY_PATTERNS: dict[str, list[tuple[str, re.Pattern, str]]] = {
         ("fasl", re.compile(r"(?m)^\s*((?:الفصل|الباب)\s+\S+)"), "section"),
         ("article_en", re.compile(r"(?im)^\s*((?:Article|Art\.?)\s+\d+)(?!\d)"), "article"),
     ],
+    "af": [
+        ("mada_mid", re.compile(
+            r"(?im)((?:Article|Art\.?|المادة|ماد[هۀٔة]|مادة)\s*[-–—:．.]?\s*"
+            r"(?:واحده|\(?\s*[0-9۰-۹٠-٩]{1,4}\s*\)?|"
+            r"اولی?|اوله|دوم|دوهمه?|سومم?|چهارم|چارم|جارم|پنجم|ششم|هفتم|هشتم|نهم|دهم|"
+            r"یازدهم|دوازدهم|سیزدهم|چهاردهم|پانزدهم|شانزدهم|هفدهم|هجدهم|نوزدهم|بیستم))"
+        ), "article"),
+        ("mada_line", re.compile(
+            r"(?im)^\s*((?:Article|Art\.?|المادة|ماد[هۀٔة]|مادة)\s*[0-9۰-۹٠-٩]+)"
+        ), "article"),
+    ],
     "ir": [
         ("mada", re.compile(r"(?m)^\s*((?:ماده)\s*(?:واحده|\d+))(?!\d)"), "article"),
         ("mada_prefixed", re.compile(
@@ -309,7 +320,7 @@ COUNTRY_PATTERNS: dict[str, list[tuple[str, re.Pattern, str]]] = {
 
 
 def honest_split(cc: str, text: str, law_id: str, source_url: str) -> tuple[list[dict], str]:
-    if cc in ("tn", "iq", "ir", "dz", "lb", "ma", "eg", "sa", "ae"):
+    if cc in ("tn", "iq", "ir", "af", "dz", "lb", "ma", "eg", "sa", "ae"):
         text_n = normalize_rtl_text(text)
     else:
         text_n = text

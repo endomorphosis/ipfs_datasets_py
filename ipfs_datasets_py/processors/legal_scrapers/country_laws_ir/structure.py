@@ -171,7 +171,7 @@ _HEADING_RE = re.compile(
     r"(?-i:[IVXLCDM]{1,8})(?![A-Za-z])|[A-Za-z](?![A-Za-z])))\)?"
     r"|(?P<section_sym>§+)\s*(?P<section_sym_n>[0-9]+(?:[A-Za-z](?![A-Za-z]))?(?:\s+[A-Za-z](?![A-Za-z]))?(?:\s*\([0-9A-Za-z]+\))?)"
     r"|(?P<section_pre_n>[0-9]+(?:\s*[a-z])?)\s*\.?\s*(?P<section_pre>§)"
-    r"|(?P<grein_n>[0-9]+[a-z]?)\s*\.\s*(?P<grein>gr|pants)\.?"
+    r"|(?P<grein_n>[0-9]+[a-z]?)\s*\.\s*(?P<grein>gr|pants)(?![A-Za-z])\.?"
     r"|(?P<straipsnis_n>[0-9]+[a-z]?)\s*[.]?\s*(?P<straipsnis>straipsnis)"
     r"|(?P<artikulua_n>[0-9]+[a-z]?)\s*[.]?\s*(?P<artikulua>artikulua)"
     r"|(?P<ledd_n>[0-9]+)\s*[.]?\s*(?P<ledd>ledd)"
@@ -200,13 +200,34 @@ _HEADING_RE = re.compile(
     )
 )
 # Commonwealth "1. Short title" — used only when keyword headings are scarce.
+_PAREN_SUBSECTION_RE = re.compile(r"^\(\s*[0-9A-Za-z]{1,6}\s*\)")
 _CW_NUM_RE = re.compile(
-    r"(?m)^[ \t]*(?P<cw_n>[0-9]+[A-Za-z]?)\.?\s+(?:\([0-9A-Za-z]+\)\s+)?(?=[A-Z][a-z]+)"
+    r"(?m)^[ \t]*(?P<cw_n>[0-9]+[A-Za-z]?)\.?\s*[-–—]?\s*"
+    r"(?:\(\s*[0-9A-Za-z]+\s*\)\s+)?"
+    r"(?=[A-Z][a-z]+|[A-Z]{3,}\b|A\s)"
 )
 _MONTH_START_RE = re.compile(
     r"(?i)^(january|february|march|april|may|june|july|august|september|october|november|december|"
     r"janvier|f[eé]vrier|marzo|abril|enero|junio|julio)\b"
 )
+# Malta bye-laws and Zambia Acts put the marginal note before the section number:
+# "Citation. 1." and "Prohibited 33." A dotted number such as "Penalty. 5.1" needs no
+# extra period. Months, chapter citations, and schedule labels are not section notes.
+_MARGINAL_NOTE_RE = re.compile(
+    r"(?m)^(?P<marginal>[A-Z][A-Za-z]{2,40}\.?)\s+"
+    r"(?P<marginal_n>(?:[0-9]+(?:\.[0-9]+){1,3}|[0-9]{1,4}(?=\.(?!\d))))"
+)
+_MARGINAL_STOP = frozenset({
+    "january", "february", "march", "april", "may", "june", "july", "august",
+    "september", "october", "november", "december",
+    "janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout",
+    "septembre", "octobre", "novembre", "decembre",
+    "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
+    "septiembre", "octubre", "noviembre", "diciembre",
+    "cap", "from", "open", "table", "figure", "box", "plate", "page", "item",
+    "act", "ley", "total", "column", "nr", "no", "nos", "pag", "pagina", "data",
+    "saldo", "and", "the", "for",
+})
 _CW_NUM_LANGS = frozenset({"", "en", "hi", "bn", "ne", "ur", "ms", "fil", "sw", "si"})
 _LEXICON_HEADING_RE: re.Pattern[str] | None = None
 _LEXICON_KIND: dict[str, str] = {}
@@ -781,6 +802,9 @@ _AR_BAB_RE = re.compile(
 _AR_FASL_RE = re.compile(
     r"(?m)^[ \t]*الفصل\s+(?:[0-9٠-٩]+|" + _AR_ORD_M + r"|" + _AR_ORD + r")"
 )
+_AR_QISM_RE = re.compile(
+    r"(?m)^[ \t]*القسم\s+(?:[0-9٠-٩]+|" + _AR_ORD_M + r"|" + _AR_ORD + r")"
+)
 _AR_KITAB_RE = re.compile(
     r"(?m)^[ \t]*الكتاب\s+(?:[0-9٠-٩]+|" + _AR_ORD_M + r"|" + _AR_ORD + r")"
 )
@@ -804,6 +828,8 @@ _LO_PART_RE = re.compile(r"ພາກ\s*[0-9໐-໙]+")
 _MY_CHAP_RE = re.compile(r"အခန်း\s*[0-9၀-၉]+")
 _KA_CHAP_RE = re.compile(r"თავი\s+[IVXLCDM0-9]+")
 _HY_CHAP_RE = re.compile(r"Գլուխ\s+[IVXLCDM0-9]+", re.IGNORECASE)
+_HY_BAZHIN_RE = re.compile(r"(?m)^[ \t]*Բաժին\s+[0-9]+", re.IGNORECASE)
+_HY_MAS_RE = re.compile(r"(?m)^[ \t]*Մաս\s+[IVXLCDM0-9]+", re.IGNORECASE)
 _AM_CHAP_RE = re.compile(r"ምዕራፍ\s*[0-9፩-፻]+")
 _HI_CHAP_RE = re.compile(r"अध्याय\s*[0-9०-९]+")
 _BN_CHAP_RE = re.compile(r"অধ্যায়\s*[0-9০-৯]+")
@@ -1097,14 +1123,30 @@ def strip_chrome_lines(text: str) -> str:
     raw_lines = text.splitlines()
     multi = sum(1 for ln in raw_lines if ln.strip()) > 1
     learned = learned_line_pattern()
+    # Index of the next non-empty line. Slicing the tail on every line is
+    # quadratic and stalls multi-megabyte statutes.
+    count = len(raw_lines)
+    next_nonempty = [count] * count
+    nxt_i = count
+    for idx in range(count - 1, -1, -1):
+        next_nonempty[idx] = nxt_i
+        if raw_lines[idx].strip():
+            nxt_i = idx
     kept = []
     for idx, ln in enumerate(raw_lines):
         stripped = ln.strip()
         if not stripped:
             continue
-        if _CHROME_LINE_RE.match(stripped) or _CHROME_INLINE_RE.search(ln):
+        # The chrome expression is superlinear on multi-megabyte lines.
+        # Gazette chrome that it removes is a short line. A longer line is
+        # kept, which does not drop statute text.
+        if len(stripped) <= 400 and (
+            _CHROME_LINE_RE.match(stripped) or _CHROME_INLINE_RE.search(ln)
+        ):
             continue
-        if learned is not None and learned.match(stripped):
+        if len(stripped) > 400 and _CHROME_INLINE_RE.search(stripped[:200]):
+            continue
+        if learned is not None and len(stripped) <= 400 and learned.match(stripped):
             continue
         # A lone "2" or "10" is an article number. The same token inside a
         # longer page is a page stamp.
@@ -1115,10 +1157,9 @@ def strip_chrome_lines(text: str) -> str:
         ):
             continue
         nxt = ""
-        for later in raw_lines[idx + 1 :]:
-            if later.strip():
-                nxt = later
-                break
+        nxt_at = next_nonempty[idx]
+        if nxt_at < count:
+            nxt = raw_lines[nxt_at]
         if multi and _is_roman_page_line(stripped, nxt):
             continue
         kept.append(ln)
@@ -1353,7 +1394,7 @@ def _detected_script_regexes(text: str, language: str) -> list:
     if re.search(r"[\u0600-\u06ff]", text):
         found.extend((
             _AR_ART_RE, _FA_ART_RE, _FA_TAB_RE, _FA_BAND_RE, _FA_FASL_RE, _AR_PARA_RE, _AR_QARAR_RE, _AR_DECREE_RE,
-            _AR_ABJAD_RE, _AR_ANNEX_RE, _AR_BAB_RE, _AR_FASL_RE, _AR_KITAB_RE, _AR_FARA_RE, _UR_CHAP_RE, _UG_ART_RE, _AR_POINT_RE,
+            _AR_ABJAD_RE, _AR_ANNEX_RE, _AR_BAB_RE, _AR_FASL_RE, _AR_QISM_RE, _AR_KITAB_RE, _AR_FARA_RE, _UR_CHAP_RE, _UG_ART_RE, _AR_POINT_RE,
         ))
     if re.search(r"[\u0590-\u05ff]", text):
         found.extend((
@@ -1391,7 +1432,7 @@ def _detected_script_regexes(text: str, language: str) -> list:
     if re.search(r"[\u10a0-\u10ff]", text):
         found.extend((_KA_ART_RE, _KA_AB_RE, _KA_CHAP_RE))
     if re.search(r"[\u0530-\u058f]", text):
-        found.extend((_HY_ART_RE, _HY_AB_RE, _HY_CHAP_RE))
+        found.extend((_HY_ART_RE, _HY_AB_RE, _HY_CHAP_RE, _HY_BAZHIN_RE, _HY_MAS_RE))
     if re.search(r"[\u0400-\u04ff]", text):
         found.extend((_CYR_AB_RE, _RU_TITLE_RE, _RU_CHAP_RE, _SR_PART_RE))
     if re.search(r"[\u0370-\u03ff]", text):
@@ -1702,7 +1743,7 @@ def _script_hit_kind(regex: re.Pattern[str]) -> str:
         _HI_CHAP_RE, _BN_CHAP_RE, _UR_CHAP_RE, _FA_FASL_RE, _NE_CHAP_RE,
     ):
         return "chapter"
-    if regex in (_HE_HELEK_RE, _AR_KITAB_RE, _CJK_BIAN_RE, _KO_PYEON_RE, _LO_PART_RE, _SR_PART_RE):
+    if regex in (_HE_HELEK_RE, _AR_KITAB_RE, _CJK_BIAN_RE, _KO_PYEON_RE, _LO_PART_RE, _SR_PART_RE, _HY_MAS_RE):
         return "part"
     if regex in (
         _HE_SIMAN_RE,
@@ -1713,7 +1754,9 @@ def _script_hit_kind(regex: re.Pattern[str]) -> str:
         _AR_ANNEX_RE,
         _AR_PARA_RE,
         _AR_FASL_RE,
+        _AR_QISM_RE,
         _AR_FARA_RE,
+        _HY_BAZHIN_RE,
         _JA_KOU_RE,
         _ZH_KUAN_RE,
         _KO_HANG_RE,
@@ -1991,8 +2034,24 @@ def _collect_hits(text: str, *, language: str, latin: bool) -> list[_Hit]:
     if latin:
         from .profiles import iso_lang
 
+        for match in _MARGINAL_NOTE_RE.finditer(text):
+            word = _latin_fold(match.group("marginal") or "").casefold().rstrip(".")
+            if not word or word in _MARGINAL_STOP:
+                continue
+            number = _fold_digits_in_number((match.group("marginal_n") or "").strip())
+            if not number:
+                continue
+            line_end = text.find("\n", match.start())
+            if line_end < 0:
+                line_end = len(text)
+            heading = re.sub(r"\s+", " ", text[match.start() : line_end]).strip()[:240]
+            hits.append(_Hit(match.start(), "section", number, heading))
         lang = iso_lang(language)
-        keyword_hits = [h for h in hits if h.kind in {"article", "section"}]
+        keyword_hits = [
+            hit
+            for hit in hits
+            if hit.kind in {"article", "section"} and not _PAREN_SUBSECTION_RE.match(hit.heading.lstrip())
+        ]
         if len(keyword_hits) < MIN_SPLIT_HEADINGS and lang in _CW_NUM_LANGS:
             for match in _CW_NUM_RE.finditer(text):
                 number = (match.group("cw_n") or "").strip()
@@ -2016,7 +2075,25 @@ def _collect_hits(text: str, *, language: str, latin: bool) -> list[_Hit]:
             continue
         seen_starts.add(hit.start)
         merged.append(hit)
-    return merged
+    return _drop_parenthetical_subsections(merged)
+
+
+def _drop_parenthetical_subsections(hits: list[_Hit]) -> list[_Hit]:
+    """Keep ``(1)`` on the parent clause when a real section heading exists."""
+
+    parents = [
+        hit
+        for hit in hits
+        if hit.kind in {"article", "section"}
+        and not _PAREN_SUBSECTION_RE.match(hit.heading.lstrip())
+    ]
+    if not parents:
+        return hits
+    return [
+        hit
+        for hit in hits
+        if not (hit.kind == "section" and _PAREN_SUBSECTION_RE.match(hit.heading.lstrip()))
+    ]
 
 
 def _units_from_hits(text: str, hits: list[_Hit]) -> list[StructureUnit]:

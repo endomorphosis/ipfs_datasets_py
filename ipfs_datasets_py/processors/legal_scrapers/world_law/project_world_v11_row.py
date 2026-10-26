@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from typing import Mapping
 
+from ipfs_datasets_py.processors.legal_scrapers.world_law.document_role import (
+    classify_document_role,
+)
 from ipfs_datasets_py.processors.legal_scrapers.world_law.schema import (
     WORLD_V11_COLUMNS,
     _DROP_POLICIES,
@@ -88,6 +91,18 @@ def project_world_v11_row(
     ):
         provenance[field] = row.get(field)
     provenance["content_complete"] = bool(complete and text is not None)
+    role, reason = classify_document_role(
+        {
+            "title": record.get("title"),
+            "text": record.get("text"),
+            "source_url": record.get("source_url"),
+            "language": record.get("language"),
+            "instrument_type": record.get("instrument_type"),
+            "doc_type": row.get("doc_type"),
+        }
+    )
+    provenance["document_role"] = role
+    provenance["document_role_reason"] = reason
     if set(WORLD_V11_COLUMNS) and "html" in record:
         raise RuntimeError("world projector must not emit html")
     return record

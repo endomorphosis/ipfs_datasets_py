@@ -15,6 +15,7 @@ from pathlib import Path
 from ipfs_datasets_py.utils.cid_utils import canonical_dag_json_bytes
 
 from . import corpus_contracts as contracts
+from . import legal_corpus_definition_use_lake_v2 as parent_owner
 from . import legal_corpus_lake as joint_owner
 
 SCHEMA = "legal-corpus-shared-definition-lake-preparation/v1"
@@ -29,6 +30,38 @@ FIELDS = {
     "producer_pins", "native_producer_pins", "shared_definition_deduplication",
     "external_definition_resolution", "preparation_only", "theorem_assumptions", *FALSE_FLAGS,
 }
+
+# Parent components are donor/consumer/alias/joint projects, not legacy norms.
+PARENT_SCHEMA = "legal-corpus-parent-shared-definition-use-preparation/v1"
+PARENT_PROFILE = "exact-parent-definition-use-module-sharing/v1"
+PARENT_REPLAY_SCHEMA = "legal-corpus-parent-shared-replay-inputs/v1"
+PARENT_REPLAY_PROFILE = "historical-parent-shared-public-replay-inputs/v1"
+PARENT_REPLAY_FIELDS = {
+    "schema", "profile", "manifest_sha256", "input_commitment_sha256", "inputs",
+}
+PARENT_REPLAY_INPUT_FIELDS = ("component_inputs", "expected_population", "toolchain")
+MAX_PARENT_COMPONENTS = 8
+MAX_PARENT_FILES = 6 * MAX_PARENT_COMPONENTS + 4
+PARENT_FALSE_FLAGS = dict(parent_owner.PARENT_FALSE_FLAGS)
+PARENT_FIELDS = {
+    "profile", "toolchain", "population", "input_commitment_sha256", "components",
+    "definition_modules", "module_bindings", "expected_modules", "module_imports",
+    "file_sha256", "producer_pins", "native_producer_pins", "preparation_only",
+    "lean_compilation_status", "proof_status", "theorem_assumptions",
+    "child_file_policy", *PARENT_FALSE_FLAGS,
+}
+
+
+@dataclass(frozen=True)
+class ParentSharedCorpusPreparation:
+    """A bounded parent shared project; preparation confers no build authority."""
+
+    manifest_json: str
+    files: tuple[tuple[str, str], ...]
+
+    def to_dict(self):
+        raw = self.manifest_json.encode("utf-8")
+        return contracts.load_record_bytes(raw, expected_sha256=_sha(raw))
 
 
 @dataclass(frozen=True)
@@ -73,6 +106,377 @@ def _sharing_key(candidate):
         "source_occurrences": [row for row in candidate["source_occurrences"]
                                if row["record_cid"] in origins],
     })
+
+
+def _parent_shared_offered(preparation):
+    if type(preparation) is not ParentSharedCorpusPreparation:
+        _fail("typed parent shared corpus preparation required")
+    text, files = preparation.manifest_json, preparation.files
+    if (type(text) is not str or len(text) > contracts.MAX_RECORD_BYTES
+            or type(files) is not tuple or not 1 <= len(files) <= MAX_PARENT_FILES):
+        _fail("bounded closed parent shared preparation required")
+    pairs = []
+    for pair in files:
+        if (type(pair) is not tuple or len(pair) != 2
+                or any(type(value) is not str for value in pair)):
+            _fail("plain parent shared preparation file pairs required")
+        pairs.append(list(pair))
+    return {"manifest_json": text, "files": pairs}
+
+
+def _parent_shared_capture(original, offered):
+    inputs, population = original["component_inputs"], original["expected_population"]
+    if (type(inputs) is not list or not 1 <= len(inputs) <= MAX_PARENT_COMPONENTS
+            or type(population) is not list or len(population) != len(inputs)):
+        _fail("closed ordered parent shared component population required")
+    for item, pin in zip(inputs, population, strict=True):
+        if (type(item) is not dict or len(item) != 3
+                or any(type(key) is not str for key in item) or set(item) != {
+                "assessment_raw", "expected_assessment_file_sha256", "review_inputs"}
+                or type(pin) is not dict or len(pin) != 2
+                or any(type(key) is not str for key in pin) or set(pin) != {
+                    "component_cid", "assessment_file_sha256"}):
+            _fail("closed parent shared input and independent population pins required")
+        if (type(item["assessment_raw"]) is not bytes
+                or not 0 < len(item["assessment_raw"]) <= contracts.MAX_RECORD_BYTES):
+            _fail("bounded immutable parent shared assessment bytes required")
+    # One expanded budget covers the complete population and offered output,
+    # including aliases repeated across children, before any full-body hash.
+    graph = {**original, "offered": None if offered is None else _parent_shared_offered(offered)}
+    copied = parent_owner._ParentInputBudget().copy(graph)
+    frozen = parent_owner._parent_commitment(copied)
+    base = {key: value for key, value in copied.items() if key != "offered"}
+    commitment = parent_owner._parent_commitment(base)
+    if copied["offered"] is not None:
+        candidate = copied["offered"]
+        if (len(candidate["manifest_json"].encode()) > contracts.MAX_RECORD_BYTES
+                or sum(len(body.encode()) for _, body in candidate["files"])
+                > joint_owner.MAX_PROJECT_BYTES):
+            _fail("offered parent shared project exceeds complete transport bounds")
+    return copied, frozen, commitment
+
+
+def _parent_shared_fence(original, copied, frozen, offered):
+    if _parent_shared_capture(original, offered)[1] != frozen:
+        _fail("caller parent shared inputs or offered preparation changed")
+    snapshot = parent_owner._ParentInputBudget().copy(copied)
+    if parent_owner._parent_commitment(snapshot) != frozen:
+        _fail("detached parent shared inputs changed")
+
+
+def _parent_shared_operation(original, operation, offered=None):
+    copied, frozen, commitment = _parent_shared_capture(original, offered)
+    failure = None
+    try:
+        result = operation(copied, commitment)
+        _parent_shared_fence(original, copied, frozen, offered)
+        # A later child or transport step may change an earlier child's backing
+        # files without changing its Python input tree. Replay every original
+        # physical source at the successful aggregate boundary as well.
+        for item in copied["component_inputs"]:
+            parent_owner.prepare_parent_definition_use_corpus_v1(
+                **item, toolchain=copied["toolchain"])
+        return result
+    except BaseException as error:
+        failure = error
+        raise
+    finally:
+        try:
+            _parent_shared_fence(original, copied, frozen, offered)
+        except BaseException:
+            if failure is None:
+                raise
+            BaseException.add_note(failure, "A closing parent shared input comparison also failed.")
+
+
+def _parent_shared_pins():
+    return parent_owner._pins(parent_owner._owners()) | {
+        str(Path(__file__).resolve()): _sha(Path(__file__).read_bytes())}
+
+
+def _parent_shared_check_inputs(copied):
+    """Check closed public argument joins before any optional producer load."""
+    toolchain = copied["toolchain"]
+    if (type(toolchain) is not str or len(toolchain) > 128
+            or not parent_owner._TOOLCHAIN.fullmatch(toolchain)):
+        _fail("explicit pinned parent shared Lean toolchain required")
+    # Population joins precede replay, so no missing/extra/reordered child can
+    # be silently erased by module deduplication.
+    for item, pin in zip(copied["component_inputs"], copied["expected_population"], strict=True):
+        contracts.require_cid(pin["component_cid"], "expected parent component CID")
+        contracts.require_sha256(pin["assessment_file_sha256"], "expected assessment file SHA256")
+        review_inputs = item["review_inputs"]
+        component_pin = review_inputs.get("expected_component_pin") if type(review_inputs) is dict else None
+        if (item["expected_assessment_file_sha256"] != pin["assessment_file_sha256"]
+                or type(component_pin) is not dict or component_pin.get("component_cid") != pin["component_cid"]):
+            _fail("ordered parent shared population differs from original inputs")
+        contracts.require_keys(review_inputs, parent_owner.REVIEW_INPUT_FIELDS,
+                               "complete parent shared combined-review inputs")
+
+
+def _parent_shared_prepare(copied, commitment):
+    _parent_shared_check_inputs(copied)
+    toolchain = copied["toolchain"]
+    pins = _parent_shared_pins()
+    namespace = "LegalCorpusParent"
+    files = {
+        "lakefile.toml": 'name = "legal_corpus_parent_shared_definition_use"\nversion = "0.1.0"\n\n[[lean_lib]]\nname = "legal"\nroots = ["LegalCorpusParent"]\n',
+        "lean-toolchain": toolchain + "\n",
+    }
+    imports, fragments, definitions, components = {}, {}, {}, []
+    native_pins = None
+    for ordinal, (item, population) in enumerate(zip(
+            copied["component_inputs"], copied["expected_population"], strict=True)):
+        child = parent_owner.prepare_parent_definition_use_corpus_v1(**item, toolchain=toolchain)
+        manifest, child_files = child.to_dict(), dict(child.files)
+        if manifest["producer_pins"] != {key: value for key, value in pins.items()
+                                         if key != str(Path(__file__).resolve())}:
+            _fail("parent shared child producer closure differs")
+        if native_pins is None:
+            native_pins = manifest["native_producer_pins"]
+        if native_pins != manifest["native_producer_pins"]:
+            _fail("parent shared native producer closure differs")
+        prelude = namespace + "/Prelude.lean"
+        if prelude in files and files[prelude] != child_files[prelude]:
+            _fail("parent shared Prelude differs")
+        files[prelude] = child_files[prelude]
+        imports[namespace + ".Prelude"] = []
+        manifest_file = f"parent-component-{ordinal:04d}.json"
+        binding_file = f"parent-input-bindings-{ordinal:04d}.json"
+        files[manifest_file] = child.manifest_json
+        files[binding_file] = child_files["parent-input-bindings.json"]
+        mapping = {name: (None if name in ("lakefile.toml", namespace + ".lean")
+                          else binding_file if name == "parent-input-bindings.json" else name)
+                   for name in child_files}
+        binding = manifest["review_intake_binding"]
+        if (binding["component_pin"]["component_cid"] != population["component_cid"]
+                or binding["assessment_file_sha256"] != population["assessment_file_sha256"]):
+            _fail("replayed parent shared child differs from population pins")
+        source_rows = {row["role"]: row for row in
+                       manifest["review_source_binding"]["original_definitions"]}
+        joint = None
+        for fragment in manifest["native_fragments"]:
+            role, module = fragment["role"], fragment["module"]
+            path = module.replace(".", "/") + ".lean"
+            body, dependencies = child_files[path], manifest["module_imports"][module]
+            actual = re.findall(r"(?m)^import ([A-Za-z][A-Za-z0-9_.]*)$", body)
+            if actual != dependencies or parent_owner._REFUSED.search(body):
+                _fail("parent shared child module imports or keywords differ")
+            if role in ("donor", "consumer"):
+                identity = {key: value for key, value in source_rows[role].items() if key != "role"}
+            elif role == "alias":
+                identity = {key: manifest["review_source_binding"][key]
+                            for key in ("binding_record", "alias_record", "scope_binding")}
+            else:
+                identity = binding["component_pin"]
+                joint = module
+            fact = {"native": fragment["native"], "source_identity": identity,
+                    "imports": dependencies, "body": body}
+            if module in fragments and fragments[module]["fact"] != fact:
+                _fail("conflicting parent shared module identity, imports or complete bytes")
+            contributor = {"ordinal": ordinal, "role": role,
+                           "component_cid": population["component_cid"]}
+            if module not in fragments:
+                fragments[module] = {"fact": fact, "contributors": []}
+            fragments[module]["contributors"].append(contributor)
+            files[path], imports[module] = body, dependencies
+            if role in ("donor", "consumer"):
+                if module not in definitions:
+                    definitions[module] = {
+                        "module": module, "module_path": path,
+                        "module_sha256": _sha(body.encode()), "source_identity": identity,
+                        "native_fragment": fragment["native"], "contributors": []}
+                definitions[module]["contributors"].append(contributor)
+        components.append({
+            "ordinal": ordinal, **population, "original_preparation_cid": manifest["record_cid"],
+            "manifest_file": manifest_file, "manifest_sha256": _sha(child.manifest_json.encode()),
+            "input_bindings_file": binding_file,
+            "input_bindings_sha256": _sha(files[binding_file].encode()),
+            "original_file_mapping": mapping, "review_intake_binding": binding,
+            "review_evidence": {
+                "status": manifest["review_evidence_status"], "blockers": manifest["review_blockers"],
+                "prerequisites_satisfied_under_selected_trust":
+                    manifest["review_prerequisites_satisfied_under_selected_trust"]},
+            "theorem_assumptions": manifest["theorem_assumptions"],
+            "conditional_theorems": manifest["conditional_theorems"], "joint_module": joint,
+        })
+    imports[namespace] = sorted({row["joint_module"] for row in components})
+    files[namespace + ".lean"] = "".join("import " + name + "\n" for name in imports[namespace])
+    # Stable topological order of the exact union, without renaming fragments.
+    ordered, remaining = [], set(imports)
+    if any(dependency not in imports for values in imports.values() for dependency in values):
+        _fail("parent shared import dependency escapes the closed population")
+    while remaining:
+        ready = sorted(name for name in remaining if set(imports[name]) <= set(ordered))
+        if not ready:
+            _fail("parent shared import dependency cycle")
+        ordered.extend(ready)
+        remaining.difference_update(ready)
+    for module in ordered:
+        body = files[module.replace(".", "/") + ".lean"]
+        if (re.findall(r"(?m)^import ([A-Za-z][A-Za-z0-9_.]*)$", body) != imports[module]
+                or parent_owner._REFUSED.search(body)):
+            _fail("parent shared complete module import/keyword contract differs")
+    if (len(files) > MAX_PARENT_FILES or sum(len(body.encode()) for body in files.values())
+            > joint_owner.MAX_PROJECT_BYTES):
+        _fail("complete parent shared project exceeds transport bounds")
+    if _parent_shared_pins() != pins:
+        _fail("parent shared implementation changed during preparation")
+    manifest = contracts.seal_record({
+        "schema": PARENT_SCHEMA, "profile": PARENT_PROFILE, "toolchain": toolchain,
+        "population": copied["expected_population"], "input_commitment_sha256": commitment,
+        "components": components, "definition_modules": [definitions[key] for key in sorted(definitions)],
+        "module_bindings": [{"module": module, "module_path": module.replace(".", "/") + ".lean",
+            "module_sha256": _sha(fragments[module]["fact"]["body"].encode()),
+            "contributors": fragments[module]["contributors"]} for module in sorted(fragments)],
+        "expected_modules": ordered, "module_imports": imports,
+        "file_sha256": {name: _sha(body.encode()) for name, body in sorted(files.items())},
+        "producer_pins": pins, "native_producer_pins": native_pins,
+        "preparation_only": True, "lean_compilation_status": "not_run", "proof_status": "pending",
+        "child_file_policy": {
+            "retained": "Exact child manifest, input binding, Prelude and fragment bytes.",
+            "replaced": ["lakefile.toml", "LegalCorpusParent.lean"],
+            "mapping": "Each child's original_file_mapping explicitly marks replaced files as null."},
+        "theorem_assumptions": [
+            "Every child's explicit Interpretation, carrier, time, definition and alias premises remain unchanged.",
+            "An aggregate root imports conditional modules; no globally satisfiable interpretation or governing law is established.",
+            "Sharing transfers neither source authenticity, meaning review nor legal authority between contributors.",
+            "This profile prepares files only; native and incremental qualification have not run."],
+        **PARENT_FALSE_FLAGS,
+    })
+    raw = canonical_dag_json_bytes(manifest)
+    # Enforce the existing record transport's byte/node/depth bounds now, not
+    # only when a caller later tries to write or parse this preparation.
+    contracts.load_record_bytes(raw, expected_sha256=_sha(raw))
+    return ParentSharedCorpusPreparation(raw.decode(), tuple(sorted(files.items())))
+
+
+def prepare_parent_shared_definition_use_corpus_v1(component_inputs, *, expected_population, toolchain):
+    """Replay complete parent reviews and share only identical source-bound modules."""
+    original = dict(component_inputs=component_inputs, expected_population=expected_population, toolchain=toolchain)
+    return _parent_shared_operation(original, _parent_shared_prepare)
+
+
+def _parent_shared_validate(copied, commitment):
+    raw = copied["offered"]["manifest_json"].encode()
+    manifest = contracts.load_record_bytes(raw, expected_sha256=_sha(raw))
+    contracts.validate_record(manifest, schema=PARENT_SCHEMA, fields=PARENT_FIELDS)
+    expected = _parent_shared_prepare(copied, commitment)
+    if copied["offered"] != _parent_shared_offered(expected):
+        _fail("parent shared project differs from complete independent regeneration")
+    return expected
+
+
+def validate_parent_shared_definition_use_corpus_v1(
+        preparation, *, component_inputs, expected_population, toolchain):
+    original = dict(component_inputs=component_inputs, expected_population=expected_population, toolchain=toolchain)
+    return _parent_shared_operation(original, _parent_shared_validate, preparation)
+
+
+def _parent_shared_load(directory, expected_manifest_sha256, copied, commitment):
+    expected = _parent_shared_prepare(copied, commitment)
+    files = joint_owner._read_files(directory, {name for name, _ in expected.files}
+        | {joint_owner.MANIFEST_FILE}, maximum_files=MAX_PARENT_FILES)
+    raw = files.pop(joint_owner.MANIFEST_FILE)
+    contracts.load_record_bytes(raw, expected_sha256=expected_manifest_sha256)
+    if (raw != expected.manifest_json.encode()
+            or files != {name: body.encode() for name, body in expected.files}):
+        _fail("parent shared transport differs from complete independent regeneration")
+    return expected
+
+
+def load_parent_shared_definition_use_corpus_v1(
+        directory, *, expected_manifest_sha256, component_inputs, expected_population, toolchain):
+    original = dict(component_inputs=component_inputs, expected_population=expected_population, toolchain=toolchain)
+    return _parent_shared_operation(original, lambda copied, commitment:
+        _parent_shared_load(directory, expected_manifest_sha256, copied, commitment))
+
+
+def write_parent_shared_definition_use_corpus_v1(
+        preparation, directory, *, component_inputs, expected_population, toolchain):
+    original = dict(component_inputs=component_inputs, expected_population=expected_population, toolchain=toolchain)
+    def write(copied, commitment):
+        checked = _parent_shared_validate(copied, commitment)
+        def readback(root, raw):
+            _parent_shared_load(root, _sha(raw), copied, commitment)
+        return joint_owner._write_project(checked, directory, readback=readback,
+                                           maximum_files=MAX_PARENT_FILES)
+    return _parent_shared_operation(original, write, preparation)
+
+
+def export_parent_shared_replay_inputs_v1(
+        preparation, *, component_inputs, expected_population, toolchain,
+        expected_manifest_sha256, max_bytes=parent_owner.MAX_PARENT_REPLAY_BYTES):
+    """Retain complete public replay arguments for an independently pinned project.
+
+    Export replays the original public source/review inputs and the existing
+    complete project regeneration. The typed payload preserves original public
+    signatures, byte bodies, evaluation time and physical-source locators. It
+    copies no physical files and grants no current-trust or build authority.
+    """
+    contracts.require_int(max_bytes, "parent shared replay byte bound", minimum=1,
+                          maximum=parent_owner.MAX_PARENT_REPLAY_BYTES)
+    contracts.require_sha256(expected_manifest_sha256, "expected parent shared manifest SHA256")
+    original = dict(component_inputs=component_inputs,
+                    expected_population=expected_population, toolchain=toolchain)
+
+    def export(copied, commitment):
+        raw = copied["offered"]["manifest_json"].encode("utf-8")
+        if _sha(raw) != expected_manifest_sha256:
+            _fail("parent shared replay manifest differs from independent pin")
+        _parent_shared_validate(copied, commitment)
+        inputs = {key: copied[key] for key in PARENT_REPLAY_INPUT_FIELDS}
+        return parent_owner.encode_parent_replay_value_v1({
+            "schema": PARENT_REPLAY_SCHEMA, "profile": PARENT_REPLAY_PROFILE,
+            "manifest_sha256": expected_manifest_sha256,
+            "input_commitment_sha256": commitment, "inputs": inputs,
+        }, max_bytes=max_bytes)
+
+    return _parent_shared_operation(original, export, preparation)
+
+
+def load_parent_shared_replay_inputs_v1(
+        payload, *, expected_payload_sha256, expected_payload_bytes,
+        expected_input_commitment_sha256, expected_manifest_sha256,
+        max_bytes=parent_owner.MAX_PARENT_REPLAY_BYTES):
+    """Decode pinned historical input data, without source or review validation.
+
+    The result contains only the three detached public preparation arguments.
+    Retain the original physical artifacts at their original locators. Call the
+    unchanged public preparation/validation APIs separately; a saved registry,
+    policy and evaluation time do not establish a later current-trust decision.
+    The manifest pin is SHA256 of the exact preparation manifest bytes, not a
+    native preparation or compilation-receipt identity.
+    """
+    contracts.require_int(max_bytes, "parent shared replay byte bound", minimum=1,
+                          maximum=parent_owner.MAX_PARENT_REPLAY_BYTES)
+    contracts.require_int(expected_payload_bytes, "expected parent shared replay bytes",
+                          minimum=1, maximum=max_bytes)
+    contracts.require_sha256(expected_payload_sha256, "expected parent shared replay SHA256")
+    contracts.require_sha256(expected_input_commitment_sha256,
+                             "expected parent shared input commitment SHA256")
+    contracts.require_sha256(expected_manifest_sha256, "expected parent shared manifest SHA256")
+    if type(payload) is not bytes or len(payload) != expected_payload_bytes:
+        _fail("parent shared replay bytes differ from independent length")
+    envelope = parent_owner.decode_parent_replay_value_v1(payload,
+        expected_payload_sha256=expected_payload_sha256, max_bytes=max_bytes)
+    contracts.require_keys(envelope, PARENT_REPLAY_FIELDS, "parent shared replay envelope")
+    if (envelope["schema"] != PARENT_REPLAY_SCHEMA
+            or envelope["profile"] != PARENT_REPLAY_PROFILE):
+        _fail("parent shared replay schema or profile differs")
+    contracts.require_sha256(envelope["manifest_sha256"], "parent shared replay manifest SHA256")
+    contracts.require_sha256(envelope["input_commitment_sha256"],
+                             "parent shared replay input commitment SHA256")
+    if (envelope["manifest_sha256"] != expected_manifest_sha256
+            or envelope["input_commitment_sha256"] != expected_input_commitment_sha256):
+        _fail("parent shared replay identities differ from independent pins")
+    original = envelope["inputs"]
+    contracts.require_keys(original, PARENT_REPLAY_INPUT_FIELDS, "parent shared replay inputs")
+    copied, _, commitment = _parent_shared_capture(original, None)
+    _parent_shared_check_inputs(copied)
+    if commitment != expected_input_commitment_sha256:
+        _fail("parent shared replay input commitment differs from complete decoded inputs")
+    return {key: copied[key] for key in PARENT_REPLAY_INPUT_FIELDS}
 
 
 def _module(prefix, identity):
@@ -338,4 +742,7 @@ def _write_compiled(directory, artifacts):
 
 
 __all__ = ["SharedCorpusPreparation", "prepare_shared_definition_corpus", "validate_shared_definition_corpus",
-    "write_shared_definition_corpus", "load_shared_definition_corpus", "build_shared_definition_corpus"]
+    "write_shared_definition_corpus", "load_shared_definition_corpus", "build_shared_definition_corpus",
+    "ParentSharedCorpusPreparation", "prepare_parent_shared_definition_use_corpus_v1",
+    "validate_parent_shared_definition_use_corpus_v1", "load_parent_shared_definition_use_corpus_v1",
+    "write_parent_shared_definition_use_corpus_v1"]

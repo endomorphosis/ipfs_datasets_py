@@ -1,0 +1,173 @@
+{
+  "authority": {
+    "complete_statutory_norm_qualified": false,
+    "evaluation_gold_mask": 0,
+    "graph_or_Lean_admitted": false,
+    "independent_legal_review_supplied": false,
+    "model_quality_or_convergence_established": false,
+    "permitted_inference_context_verified": false,
+    "source_edition_or_meaning_adopted": false,
+    "source_to_model_equivalence_verified": false,
+    "training_mask": 0,
+    "training_qualified": false
+  },
+  "case_groups": {
+    "new_companion": 40,
+    "new_head_spec": 52,
+    "old_companion": 59,
+    "old_inventory": 97,
+    "retained_source_observer": 1
+  },
+  "cases": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 249,
+    "skipped": 0
+  },
+  "companion_inventory": {
+    "binders": 6,
+    "counted_correspondence_retained_unchanged": true,
+    "framed_ids": 293,
+    "original_source_example_retained_unchanged": true,
+    "prior_review_obligations_not_reassessed": 35,
+    "provenance_rows": 55,
+    "retained_projection_and_encoding_unchanged": true,
+    "sole_model_input_path": "/source_example/model_input",
+    "source_example_original_label": null,
+    "target_derived_context_is_model_input": false,
+    "typed_nodes": 49,
+    "vocabulary_size": 28
+  },
+  "declared_head_metadata_only": {
+    "checkpoint_compatible": false,
+    "checkpoint_or_tensors_allocated": false,
+    "expected_input_space": "raw_native_gte_small384",
+    "geometry": {
+      "hidden_size": 32,
+      "projection_width": 16,
+      "token_embedding_dim": 16
+    },
+    "input_dimension": 384,
+    "max_total_ids": 512,
+    "parameter_bytes_float32": 124720,
+    "parameter_count": 31180,
+    "permitted_source_only_context": false,
+    "runtime_compatible": false,
+    "tensor_shapes": 13,
+    "tensor_shapes_verified": false,
+    "varied_reviewed_targets_supplied": false,
+    "vocabulary_size": 28
+  },
+  "evidence_id": "counted-decoder-example-head-spec-qualified-20261022-01",
+  "failed_preparation_preserved": {
+    "native_validation_launches": 0,
+    "partial_snapshot_files_retained": 225,
+    "reason": "The original nonempty-file preparer refused one genuine zero-byte test-package initializer. The successor retained a separate original-identity declaration and before/after source-READ checks; no product behavior was relaxed.",
+    "receipt": {
+      "bytes": 1980,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-decoder-example-20261022-01/failed-preparation-01.json",
+      "root": "datasets_repository",
+      "sha256": "bcfe2616b37633137c5d8b79ace5d4749e253eddb029fbba7caa4475eb2c57c7"
+    },
+    "source_READ_closed": true,
+    "status": "failed_unqualified_freeze_only",
+    "tests_executed": 0
+  },
+  "frozen_dependency_identity": {
+    "counted_frame_sha256": "df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13",
+    "counted_join_sha256": "f51377e4c2446d464cd6cbbc97f6838f591e652e50c460e8084771944e937976",
+    "inventory_owner_sha256": "7c71e82502fcf5dea0f182f6894e50e43a6dec744f035723981d1c4592cfcaf0",
+    "inventory_owning_test_sha256": "cdf8783bc42b27339282e80aa5db16295a7d382bfed27045ce3ede76c6ee1572"
+  },
+  "limits": [
+    "The sole input remains the complete unchanged original source_example.model_input; its old label stays null. Counted context, canonical identity, provenance and293 IDs remain separate target-derived label data.",
+    "The13 tensor shapes and31,180 parameters are declarations only. No tensor/checkpoint allocation, numerical forward, optimizer, generation, learned reconstruction or compatible runtime was qualified by this campaign.",
+    "The frozen249 cases include99 companion cases,149 inventory cases and one retained-source observer. The158/170/275-case and native-conditioning campaigns retain independent source generations and are not rerun or pooled.",
+    "The actual observer retains one partial163-character occurrence and35 unresolved review obligations; syntax multiplicity is not genuinely distinct statutory uses or independent evaluation examples.",
+    "Two shared metadata owners appended BOS-preflight APIs after the source READ closed. Their separately pinned static observation supplies no qualification for those newer APIs."
+  ],
+  "new_operations": {
+    "Lean_builds": 0,
+    "canonical_writes": 0,
+    "model_or_encoder_calls": 0,
+    "native_validation": 0,
+    "tests": 0,
+    "training_calls": 0
+  },
+  "original_execution": {
+    "closeout": {
+      "bytes": 2478,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-decoder-example-20261022-01/validation-01/closeout.json",
+      "root": "datasets_repository",
+      "sha256": "a494d14283153da3c9472513baca30a2ab431120e827cbc03faa545188583010"
+    },
+    "junit": {
+      "bytes": 51104,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-decoder-example-20261022-01/validation-01/attempt/exports/tests.xml",
+      "root": "datasets_repository",
+      "sha256": "f0e208d2fe7d0d02e1cc33f8f35e5ffe1fc834bc2b50af4fd40c6455b843dbb9"
+    },
+    "native_released": true,
+    "process_scope": "sampled_birth_bound_descendants",
+    "source_READ_closed": true,
+    "source_pins": 254,
+    "source_snapshot_files": 252,
+    "storage_released": true
+  },
+  "original_qualification": {
+    "bytes": 10426,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-decoder-example-20261022-01/qualification-summary.json",
+    "root": "datasets_repository",
+    "sha256": "fd565709ba4028b46c46fc4f9890f6d7d56dd7b50446175ff1c19e02be029299"
+  },
+  "phase_count_claimed": false,
+  "phase_passes": null,
+  "post_close_dependency_observation": {
+    "bytes": 3529,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-counted-decoder-example-20261022-01/post-close-dependency-static-delta-review-01.json",
+    "root": "datasets_repository",
+    "sha256": "dbf162ec0174fd44c79ea66f4e082b425889c3f229ff6a1b3672a2929bdef51b"
+  },
+  "profile": "source-only-example-with-partial-counted-label/v1",
+  "recorded_at_utc": "2026-10-24T19:29:49.787075+00:00",
+  "retained_source_observer": {
+    "declared_historical_edition": 2024,
+    "edition_current_as_of_verified": false,
+    "embedding_reference": null,
+    "exposure_status": "exposed",
+    "legal_id": "usc:us:10:7214",
+    "prior_review_obligations_not_reassessed": 35,
+    "selected_characters": 163,
+    "source_meaning_verified": false,
+    "split": "unassigned"
+  },
+  "schema": "legal-ir-counted-decoder-example-portable-qualification/v1",
+  "scope": "Portable metadata summary of the original249-case frozen counted companion and metadata head-specification qualification; no current-public test campaign or numerical runtime qualification.",
+  "selected_source_and_owning_test": [
+    {
+      "bytes": 54842,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_compact_decoder_example_v1.py",
+      "sha256": "d62b629d86c241e60cf0ecad41ae09c11883ec83fea22a41deeca4f6507ed604"
+    },
+    {
+      "bytes": 42714,
+      "path": "tests/unit/logic/autoformal/test_legal_compact_decoder_example_v1.py",
+      "sha256": "48b42f095fda58cc6779ff4e34a395059007175df58b1ce05d19ede9704d2043"
+    }
+  ],
+  "separate_275_generation": {
+    "counted249_is_not_reissue_or_pool_of_either275": true,
+    "fresh_current_main_cases": 275,
+    "fresh_current_main_phases": 825,
+    "historical_original_cases": 275,
+    "original_source_and_function_class_AST_prefixes_preserved": true,
+    "owning_test_sha256": "414269560e268ab3ccdbbabf49f3c8a062615a453a3eddc3bfc5c6e1bd269f9f",
+    "receipt": {
+      "bytes": 10638,
+      "path": "docs/autoformalization/evidence/legal-ir-compact-decoder-example-current-main-20261022.json",
+      "root": "datasets_repository",
+      "sha256": "bea7fdc0f1c4145fb3bd18ba2451f62ec3202d33abc60885a1ee754510cb192b"
+    },
+    "source_sha256": "5de4bf91a3f93e405606f4c042f342d52736ad7588586005a84493feaf7b76a0"
+  }
+}

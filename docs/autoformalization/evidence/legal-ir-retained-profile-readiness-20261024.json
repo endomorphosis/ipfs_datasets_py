@@ -1,0 +1,329 @@
+{
+  "Lean_admission": false,
+  "already_completed_predicate_mechanics": {
+    "current_public_runtime_integration_requalified": false,
+    "exact_resume": [
+      {
+        "complete_checkpoint_and_observations_exact": true,
+        "objective_kind": "full537",
+        "resumed_checkpoint_sha256": "83b4bcf17fe98fdfc6d8935c0269946e588af385607ed6518dde6d52276d1813",
+        "sequential_checkpoint_sha256": "83b4bcf17fe98fdfc6d8935c0269946e588af385607ed6518dde6d52276d1813"
+      },
+      {
+        "complete_checkpoint_and_observations_exact": true,
+        "objective_kind": "scope_conditional",
+        "resumed_checkpoint_sha256": "8f303d19e1ce9310026dfd41957bafa1365f05c88e4259dc749466e883a7272c",
+        "sequential_checkpoint_sha256": "8f303d19e1ce9310026dfd41957bafa1365f05c88e4259dc749466e883a7272c"
+      }
+    ],
+    "failed_original_invocations_preserved_not_credited": true,
+    "model_restores": 4,
+    "new_generation_or_learning_gain_proven": false,
+    "normalizations": [
+      "full537",
+      "scope_conditional"
+    ],
+    "old_serving_runtime_accepts_new_schema": false,
+    "original_native_cleanup_proven": true,
+    "original_qualification_cases": 70,
+    "original_qualification_phases": 210,
+    "original_source_READ_closed": true,
+    "original_storage_terminal_status": "released",
+    "physical_saved_step_replays_per_normalization": 1,
+    "physical_updates": 6,
+    "public_qualification": {
+      "bytes": 6391,
+      "path": "docs/autoformalization/evidence/legal-ir-predicate-training-qualification-20261023.json",
+      "revision": "ef7f1ad53813701d411f168ddf35dee2d641dee7",
+      "root": "datasets_repository",
+      "sha256": "736e98e494570a4d99e5cdf67a58eaade1d087755a1f341024dbe2e4813eeddd"
+    },
+    "saved_counterfactual_review": {
+      "bytes": 31821,
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-saved-predicate-reweight-20261023.json",
+      "revision": "ef7f1ad53813701d411f168ddf35dee2d641dee7",
+      "root": "datasets_repository",
+      "sha256": "1b8ff0b1f6c42ef0792b7b2cf9cc62ea8351f9843097e12d94a58d7ee5f184be"
+    },
+    "schema_and_objective_separate_from_legacy_sum67": true,
+    "unique_ordered_steps_per_normalization": 2
+  },
+  "backlog_tasks_closed": [],
+  "direct_metadata_source_pins_verified": [
+    {
+      "bytes": 37249,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    {
+      "bytes": 19527,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/source-native-preparation-v01/existing-decoder-reuse-review-v01.json",
+      "sha256": "a33ca31310d7ae5744d85024dc4c06510998a6b28f70b242e3be1459a62165f5"
+    },
+    {
+      "bytes": 26993,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/source-native-preparation-v01/observation-summary-v01.json",
+      "sha256": "5dfaf4a293a557e76bcc55197d2474258c1d14a65eb589955b6ba63f28440fe1"
+    },
+    {
+      "bytes": 11703,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-native768-sources-20261022-01/qualification-summary-v03.json",
+      "sha256": "eacef109b1486cb7cd9de7edfa45a708908f1df130cf9f67154f4d1d440bcbf6"
+    },
+    {
+      "bytes": 13334,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py",
+      "sha256": "b450bec7518c3528a34c15c9119aefa791273176f871c27c9f4f77acd14df113"
+    },
+    {
+      "bytes": 9228,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/normative_legal_ir_runtime.py",
+      "sha256": "98058fa6479a7be9a4ab599aeffaedef2be764314056d7504a35ca5bafff87d4"
+    },
+    {
+      "bytes": 28040,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    {
+      "bytes": 10795,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/raw384-equivalence.json",
+      "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+    },
+    {
+      "bytes": 41478,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-compact-v2-continuation-20261023/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_predicate_training_v1.py",
+      "sha256": "65458ea546d2384cfae3f57705da0f8d539ada2efef7d4f1a886c325a3ee4860"
+    }
+  ],
+  "evaluation_gold_mask": 0,
+  "legacy_reference_coverage": {
+    "authored_contract_cases": 23,
+    "authored_contract_phases": 69,
+    "original_sum67_missing_checkpoint_row_cells": 8,
+    "owner": "legal_compact_content_role_warmstart_reference_runtime_v1.score_reference",
+    "public_qualified_source_sha256": "70db22133e2eb12235b5d299918b2257fc94c574dce05a797bf4aafb0d5a952e",
+    "remaining_cells_newly_executed": 0,
+    "scope": "Later predicate-sum70 reference parity and six fixture updates retain their own state/objective/row observations; they do not fill the eight legacy matrix cells."
+  },
+  "legal_as_of_civil_date": null,
+  "meaning_or_applicability_review": null,
+  "new_owners": 0,
+  "new_vectors_or_checkpoints_or_training_updates": 0,
+  "payloads_read": {
+    "cache_databases": false,
+    "checkpoints": false,
+    "tensors": false,
+    "vectors": false
+  },
+  "private_reviews": [
+    {
+      "bytes": 22699,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-profile-reuse-v01/review/profile-reuse-review-v01.json",
+      "sha256": "1a8ce4e7c697525a4145608305e26a47bfeb3113691f7a90c3c1926bf62d82db"
+    },
+    {
+      "bytes": 19019,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-profile-reuse-v01/review/reference-readiness-review-v01.json",
+      "sha256": "0a5ed2f55616dec0890f83b2012e70e4794373660a62b3115f67730730b4402b"
+    },
+    {
+      "bytes": 8648,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-profile-reuse-v01/review/predicate-training-history-reconciliation-addendum-v01.json",
+      "sha256": "ca9c7ff19a0835f0eda3d1eead2147d82154014ec235369eb68ecfb50ff2f440"
+    }
+  ],
+  "product_owner_or_API_or_model_profile_changed": false,
+  "raw384_pointer_static_contract_comparison": {
+    "actual_runtime_refusal_executed": false,
+    "batch_and_runtime_predicates_match": false,
+    "checkpoint_refs_not_payloads_read": [
+      {
+        "bytes": 3027735,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/checkpoint-400.json",
+        "sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0"
+      },
+      {
+        "bytes": 2744449,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json",
+        "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+      }
+    ],
+    "consumer": "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_span_runtime",
+    "no_arbitrary_source_or_cross_batch_output_bit_equality_inferred": true,
+    "required_batch_size": 4,
+    "required_torch_version": "2.13.0+cu130",
+    "result": "The retained two-source receipt does not satisfy the inspected fixed raw384 equivalence predicate. Matching width/model/pooling/text alone cannot admit it. No profile guard was relaxed or substituted.",
+    "retained_batch_size": 2,
+    "retained_torch_version": "2.9.1+cpu",
+    "source_predicate_lines": [
+      164,
+      168
+    ]
+  },
+  "recorded_at_utc": "2026-10-24T23:04:55.876364+00:00",
+  "retained_capture_metadata": {
+    "native384": {
+      "cache_original_pin_not_payload_read": {
+        "bytes": 86764,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-source-correspondence-20261021-01/pilot-physical-replay-v01/source-native-preparation-v01/attempt-native384-source-v03/pytest/native384-source/native-preparation/source-cache.json",
+        "sha256": "50afad10a2f1a98ab5166b38fc0ed172b401ef20be7e5c2f045b80eaf97f4295"
+      },
+      "dimension": 384,
+      "execution_profile": {
+        "backend": "sentence-transformers",
+        "batch_size": 2,
+        "cpu_threads": 1,
+        "device": "cpu",
+        "dtype": "float32",
+        "eval_mode": true,
+        "gradient_mode": "inference_mode",
+        "kind": "native",
+        "max_tokens": 512,
+        "normalization": "l2",
+        "pooling": "mean",
+        "seed": 0,
+        "truncation": false
+      },
+      "original_custody": {
+        "all_original_native_leases_released": true,
+        "all_original_source_READs_closed": true,
+        "all_original_storage_reservations_released": true,
+        "both_failed_storage_claims_recovered": true,
+        "direct_ledger_write": false,
+        "failed_evidence_preserved": true,
+        "files_deleted": false,
+        "successful_native_lease_cancelled_flag": true
+      },
+      "runtime_versions": {
+        "python": "3.12.3",
+        "sentence_transformers": "5.4.1",
+        "tokenizers": "0.21.4",
+        "torch": "2.9.1+cpu",
+        "transformers": "4.52.1"
+      },
+      "token_counts": [
+        51,
+        47
+      ],
+      "unique_vectors": 2
+    },
+    "native768": {
+      "dimension": 768,
+      "experiment_token_limit": 512,
+      "normalization": "l2",
+      "original_custody": {
+        "native_released": true,
+        "source_READ_closed": true,
+        "storage_released": true
+      },
+      "pooling": "cls",
+      "source_cache_original_metadata": {
+        "cache": {
+          "bytes": 233592,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-native768-sources-20261022-01/attempt-native768-v03/pytest/native768/native768-source-cache.json",
+          "sha256": "ae428e9e350007484d7564f4e29aca329383428e26ecc5d7a3ac3657518aa97c"
+        },
+        "canonical_prepare_calls": 1,
+        "canonical_validate_calls": 1,
+        "native_producer_source_span_present": false,
+        "original_occurrence_ids": [
+          "uscode-span-27f63eaefdf3309148d7d4444978e3495e11aa20f4eef3e9c5c1764b8e9755bb",
+          "uscode-span-7616d1697e660b6c942bae8832e4aef0c7df16fd1808a5d9df682ed3fa892b1a"
+        ],
+        "original_source_requests": {
+          "bytes": 3373,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-selected-native768-sources-20261022-01/source-inputs-v01.json",
+          "sha256": "a3f6e63aeb20b867d4eb530902210afb5fd2dec6597ad41135f49481ac4a4d75"
+        },
+        "physical_origin_scope": "Exact retained local-derived heading candidates; not official edition or original historical paired-cache membership",
+        "ready_rows": 2,
+        "refused_rows": 0,
+        "source_artifacts": 2,
+        "source_encoder_execution_attested_by_cache": false,
+        "source_occurrences_verified_separately": true
+      },
+      "token_counts": [
+        71,
+        55
+      ],
+      "vectors": 2
+    },
+    "scope": "Original summaries record production and custody. This review verifies summary/source bytes only; cache/vector/checkpoint bodies were not reopened, so current payload availability/integrity and numerical compatibility are not requalified."
+  },
+  "reuse_decisions": [
+    "Reuse retained native384/native768 captures; do not reencode merely to establish availability already recorded by original summaries.",
+    "Do not invoke a known incompatible raw384 profile or a frozen normative32 head for the complete counted target.",
+    "Reuse already implemented predicate objective/training and original qualified mechanics; do not schedule the six-update/resume fixture as new work.",
+    "Select a reviewed complete target and permitted inference context before a task-specific checkpoint/profile migration or matched learning comparison.",
+    "Keep 8D,384D,768D,4096D producer lanes and the completed born-alive eight-vector panel distinct from this two-source384/768 panel."
+  ],
+  "schema": "legal-ir-retained-profile-readiness-metadata-review/v1",
+  "scope": "Targeted saved-metadata and source-contract review of retained heading-prefixed 7213/7214 captures and already qualified predicate mechanics. No new numerical, model, native validation, test, API refusal or legal review operation.",
+  "selected_normative_consumer": {
+    "checkpoint_refs_not_payloads_read": [
+      {
+        "checkpoint": {
+          "bytes": 2798242,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json",
+          "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+        },
+        "dimension": 384,
+        "recipe": "normative-wording-zero"
+      },
+      {
+        "checkpoint": {
+          "bytes": 2797392,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json",
+          "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266"
+        },
+        "dimension": 384,
+        "recipe": "normative-wording-ce"
+      },
+      {
+        "checkpoint": {
+          "bytes": 4778674,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/selected-state.json",
+          "sha256": "c8beca3ef5ea2d477ebc9a1564c8922404b245098a0b56083197cd6185c3083f"
+        },
+        "dimension": 768,
+        "recipe": "normative-wording-zero"
+      },
+      {
+        "checkpoint": {
+          "bytes": 4779949,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/selected-state.json",
+          "sha256": "aa2f75cad0ade34a3965a4f0b71bdc2fe962f5b863b38133927978ea2673aeb3"
+        },
+        "dimension": 768,
+        "recipe": "normative-wording-ce"
+      }
+    ],
+    "codec_vocabulary_size": 32,
+    "complete_counted_target_supported": false,
+    "input_widths": [
+      384,
+      768
+    ],
+    "required_architecture_schema": "ordered-clause-recurrent-source-decoder-development/v1",
+    "required_checkpoint_schema": "private-native-dimension-source-state/v1",
+    "required_transform": {
+      "feature_normalizations": "saved_separate_paragraph_and_clause_stages_once",
+      "independent_paragraph_and_clause_TRAIN_rows_sha256_required": true,
+      "mean_width": "same native dimension",
+      "mode": "center_rms",
+      "must_equal_exact_saved_preprocessing_transform": true,
+      "origin": "training_only",
+      "positive_scale": true,
+      "transform_order": "saved_TRAIN_input_transform_then_zero_pad_to_eight"
+    },
+    "scope": "Inspected named normative and raw384 pointer families only; no claim that all possible consumers are absent.",
+    "task": "frozen normative32 candidate language"
+  },
+  "semantic_graph_admission": false,
+  "source_edition": 2024,
+  "source_repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+  "source_revision": "ef7f1ad53813701d411f168ddf35dee2d641dee7",
+  "status": "captures_reusable_as_retained_assets_selected_decoder_contracts_not_admitted_complete_targets_pending",
+  "training_mask": 0
+}

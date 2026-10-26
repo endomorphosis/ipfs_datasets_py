@@ -5,6 +5,10 @@ Env overrides:
   IR_MEM_ABORT_GIB  MemAvailable abort floor (default 2.5)
   IR_RSS_ABORT_GIB  process RSS hard abort (default 12.0)
   IR_MEM_LOG_EVERY  rows between mem logs when callers pass every_n (default 5000)
+
+Admission may treat ZFS ARC above arc_c_min as schedulable. Warn, shed, and
+MemAbort keep reading raw MemAvailable: the ARC does not shrink instantly,
+and counting it in the abort floor lets a build grow until the OOM killer.
 """
 from __future__ import annotations
 
@@ -19,6 +23,8 @@ DEFAULT_WARN_GIB = 3.5
 DEFAULT_ABORT_AVAIL_GIB = 2.5
 DEFAULT_ABORT_RSS_GIB = 12.0
 DEFAULT_LOG_EVERY = 5000
+_GIB = 1024**3
+ARCSTATS_PATH = Path("/proc/spl/kstat/zfs/arcstats")
 
 # Prefer shedding zero-article / lean collectors first; protect AT+DK until last.
 DEFAULT_SHED_ORDER: list[tuple[str, tuple[str, ...]]] = [
@@ -67,6 +73,12 @@ def log_every() -> int:
 
 
 def mem_available_gib() -> float:
+    """Raw Linux MemAvailable, in GiB.
+
+    This figure does not include the ZFS ARC. Keep using it for warn, shed,
+    and MemAbort. Scheduling headroom is ``schedulable_gib``.
+    """
+
     try:
         for line in Path("/proc/meminfo").read_text().splitlines():
             if line.startswith("MemAvailable:"):
@@ -74,6 +86,59 @@ def mem_available_gib() -> float:
     except Exception:
         pass
     return -1.0
+
+
+def evictable_arc_bytes(size: int, c_min: int) -> int:
+    """ARC bytes the kernel can reclaim by shrinking toward ``c_min``."""
+
+    return max(0, int(size) - int(c_min))
+
+
+def parse_arc_kstat(text: str) -> dict[str, int]:
+    """Parse ``/proc/spl/kstat/zfs/arcstats``. The value is the third field."""
+
+    stats: dict[str, int] = {}
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) < 3 or parts[0] == "name":
+            continue
+        try:
+            stats[parts[0]] = int(parts[2])
+        except ValueError:
+            continue
+    return stats
+
+
+def evictable_arc_gib(stats_text: str | None = None) -> float:
+    """GiB of ZFS ARC above ``c_min``. Zero when arcstats is missing."""
+
+    if stats_text is None:
+        try:
+            stats_text = ARCSTATS_PATH.read_text()
+        except OSError:
+            return 0.0
+    stats = parse_arc_kstat(stats_text)
+    if "size" not in stats or "c_min" not in stats:
+        return 0.0
+    return evictable_arc_bytes(stats["size"], stats["c_min"]) / _GIB
+
+
+def schedulable_gib(
+    available_gib: float | None = None,
+    *,
+    arc_gib: float | None = None,
+) -> float:
+    """MemAvailable plus ZFS ARC that can shrink to ``c_min``.
+
+    Returns -1 when MemAvailable itself cannot be read. Does not replace
+    ``mem_available_gib`` for the abort floor.
+    """
+
+    avail = mem_available_gib() if available_gib is None else float(available_gib)
+    if avail < 0:
+        return -1.0
+    extra = evictable_arc_gib() if arc_gib is None else max(0.0, float(arc_gib))
+    return avail + extra
 
 
 def rss_gib(pid: int | None = None) -> float:

@@ -73,6 +73,118 @@ def owner_must_not_load(monkeypatch):
     monkeypatch.setattr(inventory, "_owners", lambda: pytest.fail("owners loaded before input preflight rejection"))
 
 
+def coordinate_manifest():
+    value = manifest(3)
+    value["coordinate_transport"] = {
+        "schema": "paired-source-coordinate-transport/v1",
+        "report_artifact_sha256": sha(b"exact report artifact"),
+        "report_sha256": sha(b"independently retained complete report"),
+        "index_artifact_sha256": sha(b"exact coordinate index"),
+    }
+    return seal(value)
+
+
+def coordinate_inputs(value=None):
+    value = coordinate_manifest() if value is None else value
+    request, blobs = inputs(value)
+    request["schema"] = inventory.REQUEST_SCHEMA_V2
+    request["manifests"][0]["source_coordinate_report_sha256"] = value["coordinate_transport"]["report_sha256"]
+    return request, blobs
+
+
+def prepare_coordinate(request, blobs):
+    raw = wire(request)
+    return inventory.prepare_paired_manifest_inventory_v2(raw, blobs, expected_request_sha256=sha(raw))
+
+
+def test_v2_metadata_retains_independent_coordinate_declarations_without_reading_tables(monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import span_cache_feed
+    monkeypatch.setattr(span_cache_feed, "_read_regular_snapshot",
+                        lambda *a, **k: pytest.fail("metadata read a table or artifact"))
+    request, blobs = coordinate_inputs()
+    report = prepare_coordinate(request, blobs)
+    assert report["schema"] == inventory.SCHEMA_V2
+    assert set(report["analysis"]["banks"]) == {"paired-v3"}
+    assert report["request"] == request
+    selected = report["manifests"][0]
+    assert selected["raw_utf8"].encode() == blobs[selected["path_in_repo"]]
+    transport = selected["manifest"]["coordinate_transport"]
+    assert selected["source_coordinate_report_sha256"] == transport["report_sha256"]
+    assert transport["report_sha256"] != transport["report_artifact_sha256"]
+    assert all(value is False for value in report["authority"].values())
+    assert report["training_mask"] == report["evaluation_gold_mask"] == 0
+    assert report["metadata_validation"]["table_bytes_read"] is False
+    assert report["metadata_validation"]["Arrow_loaded"] is False
+    assert report["source_join"]["status"] == "unresolved_not_attempted"
+    raw = wire(request)
+    assert inventory.validate_paired_manifest_inventory_v2(wire(report), raw, blobs,
+        expected_request_sha256=sha(raw), expected_report_sha256=inventory.paired_manifest_inventory_sha256(report)) == report
+
+
+def test_legacy_metadata_still_refuses_coordinate_namespace(monkeypatch):
+    request, blobs = coordinate_inputs()
+    request["schema"] = inventory.REQUEST_SCHEMA
+    request["manifests"][0].pop("source_coordinate_report_sha256")
+    owner_must_not_load(monkeypatch)
+    with pytest.raises(ValueError, match="manifest path"):
+        prepare(request, blobs)
+
+
+@pytest.mark.parametrize("version", [1, 2])
+def test_v2_metadata_refuses_legacy_namespaces_before_owner_load(monkeypatch, version):
+    request, blobs = inputs(manifest(version))
+    request["schema"] = inventory.REQUEST_SCHEMA_V2
+    request["manifests"][0]["source_coordinate_report_sha256"] = sha(b"report")
+    owner_must_not_load(monkeypatch)
+    with pytest.raises(ValueError, match="manifest path"):
+        prepare_coordinate(request, blobs)
+
+
+@pytest.mark.parametrize("damage", ["missing", "uppercase", "bool", "short", "extra"])
+def test_v2_metadata_requires_closed_independent_report_pin_before_owners(monkeypatch, damage):
+    request, blobs = coordinate_inputs()
+    entry = request["manifests"][0]
+    if damage == "missing": entry.pop("source_coordinate_report_sha256")
+    elif damage == "uppercase": entry["source_coordinate_report_sha256"] = "A" * 64
+    elif damage == "bool": entry["source_coordinate_report_sha256"] = True
+    elif damage == "short": entry["source_coordinate_report_sha256"] = "a" * 63
+    else: entry["report"] = {}
+    owner_must_not_load(monkeypatch)
+    with pytest.raises(ValueError):
+        prepare_coordinate(request, blobs)
+
+
+@pytest.mark.parametrize("damage", ["missing", "extra", "schema", "report_artifact", "index_artifact", "pin"])
+def test_v2_metadata_rejects_resealed_coordinate_declaration_changes(damage):
+    value = coordinate_manifest()
+    original_pin = value["coordinate_transport"]["report_sha256"]
+    transport = value["coordinate_transport"]
+    if damage == "missing": transport.pop("index_artifact_sha256")
+    elif damage == "extra": transport["authority"] = True
+    elif damage == "schema": transport["schema"] = "other/v1"
+    elif damage == "report_artifact": transport["report_artifact_sha256"] = True
+    elif damage == "index_artifact": transport["index_artifact_sha256"] = "A" * 64
+    else: transport["report_sha256"] = sha(b"different complete report")
+    request, blobs = coordinate_inputs(seal(value))
+    request["manifests"][0]["source_coordinate_report_sha256"] = original_pin
+    with pytest.raises(ValueError):
+        prepare_coordinate(request, blobs)
+
+
+@pytest.mark.parametrize("damage", ["drop", "pin", "bank", "authority"])
+def test_rehashed_v2_metadata_cannot_replace_original_selection(damage):
+    request, blobs = coordinate_inputs()
+    report = prepare_coordinate(request, blobs)
+    if damage == "drop": report["manifests"] = []
+    elif damage == "pin": report["manifests"][0]["source_coordinate_report_sha256"] = sha(b"changed")
+    elif damage == "bank": report["analysis"]["banks"] = {}
+    else: report["authority"]["source_occurrences_bound"] = True
+    raw = wire(request)
+    with pytest.raises(ValueError, match="full authoritative replay"):
+        inventory.validate_paired_manifest_inventory_v2(report, raw, blobs,
+            expected_request_sha256=sha(raw), expected_report_sha256=inventory.paired_manifest_inventory_sha256(report))
+
+
 def test_mixed_versions_exact_raw_custody_and_no_authority():
     request, blobs = inputs(manifest(2), manifest(1))
     before_request, before_blobs = deepcopy(request), dict(blobs)

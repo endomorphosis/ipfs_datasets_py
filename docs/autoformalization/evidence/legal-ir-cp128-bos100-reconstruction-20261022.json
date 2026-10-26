@@ -1,0 +1,891 @@
+{
+  "actual_completed_BufferLoader_aliases": 90,
+  "actual_completed_BufferLoader_paths": 90,
+  "actual_counts": {
+    "adam_allocations": 0,
+    "autograd_grad_calls": 0,
+    "backward_calls": 0,
+    "forbidden_calls": 0,
+    "gradient_clip_calls": 0,
+    "gru_completed": 200,
+    "gru_entered": 200,
+    "model_allocations": 2,
+    "model_constructor_completed": 2,
+    "model_forward_completed": 200,
+    "model_forward_entered": 200,
+    "optimizer_base_allocations": 0,
+    "optimizer_updates": 0,
+    "prepared_model_close_calls": 2,
+    "prepared_model_closes_completed": 2,
+    "prepared_model_constructor_calls": 2,
+    "prepared_model_constructor_completed": 2
+  },
+  "actual_product_and_wrapper_byte_ledgers": [
+    {
+      "canonical_product_bytes": 9190667,
+      "encoding": "product compact sortkeys/ensure_asciifalse; wrapper indent2+LF; no interning/truncation",
+      "failure_encoding": "compact-sortkeys-ensure_asciifalse-LF",
+      "failure_max_bytes": 2097152,
+      "product_max_bytes": 16777216,
+      "row_index": 0,
+      "wrapper_bytes": 19481084,
+      "wrapper_max_bytes": 25165824
+    },
+    {
+      "canonical_product_bytes": 9190266,
+      "encoding": "product compact sortkeys/ensure_asciifalse; wrapper indent2+LF; no interning/truncation",
+      "failure_encoding": "compact-sortkeys-ensure_asciifalse-LF",
+      "failure_max_bytes": 2097152,
+      "product_max_bytes": 16777216,
+      "row_index": 1,
+      "wrapper_bytes": 19480611,
+      "wrapper_max_bytes": 25165824
+    }
+  ],
+  "authority": {
+    "Lean_admission": false,
+    "fresh_public_clone_runtime_qualified": false,
+    "graph_admission": false,
+    "inference_context_permission": false,
+    "model_or_owner_status_promoted": false,
+    "native_GTE_conditioning_compatibility": false,
+    "statutory_or_heldout_accuracy": false,
+    "third_party_binary_cache_integrity": false,
+    "training_gain": false,
+    "training_gold": false,
+    "whole209_source_qualified": false
+  },
+  "blocked_operations": {
+    "database": 0,
+    "external_write": 0,
+    "network": 0,
+    "payload_read": 0,
+    "process": 0
+  },
+  "checkpoint": {
+    "canonical_checkpoint_sha256": "2c6b5201e1223c3c25adc07b11062180fbaf5f46ce3c078c5b96395f8d87225a",
+    "objective_policy_sha256": "578562275ac7497b52e564028f4dae560b444aca5d0e59275683f5134dfc51ed",
+    "optimizer_state_sha256": "332e7bff0732b5eb15e5339813aa9455533fd711da87d5e76706f9e07f20d746",
+    "progress": {
+      "epochs_completed": 64,
+      "optimizer_steps": 128,
+      "row_cursor": 0
+    },
+    "raw_artifact": {
+      "bytes": 2366578,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-role-source-isolation-20261019-01-train-21/exports/checkpoint-step-128.json",
+      "sha256": "71f410bbc5712f4c1b9e3a2b19472e44b640dbeba491a9308b9bfc5180b9a410"
+    },
+    "weights_sha256": "d4e7c710a8aba4462aab575d9bbfb4278c1870fadaf304f80d0f341af4912c34"
+  },
+  "exact_canonical_compact_content_AST_denominator": 2,
+  "exact_token_ID_reconstruction_denominator": 2,
+  "failed_indented_failure_preflight": {
+    "active_rows_bound": 100,
+    "additional_complete_pending_row_overbound": 1,
+    "completed_case_descriptor_bound": 1,
+    "error_message_codepoints_bound": 1000,
+    "exception_type_characters_bound": 128,
+    "failure_max_bytes": 2097152,
+    "finite_number_text_width_bound": 24,
+    "logits_per_observer": 537,
+    "measured_failure_bytes": 2105566,
+    "model_or_product_execution": false,
+    "no_trace_truncation": true,
+    "original_failure_topology_shared": true,
+    "passed": false,
+    "prefix_ids_per_observer_bound": 100,
+    "product_fit_at100_measured": false,
+    "product_max_bytes": 16777216,
+    "schema": "legal-ir-cp128-bos100-failure-serialization-preflight/v1",
+    "wrapper_max_bytes": 25165824
+  },
+  "full_norm_LegalIR_semantic_fidelity": null,
+  "full_norm_LegalIR_semantic_fidelity_status": "NOT_MEASURED",
+  "generation_forwards": 200,
+  "heldout_gold_denominator": 0,
+  "historical_BOS64_comparison": {
+    "cap_difference_is_causal_improvement_evidence": false,
+    "new100_denominator": 2,
+    "old64_denominator": 2,
+    "old64_exact_content_count": 0,
+    "old64_exact_token_ID_count": 0,
+    "old64_typed_complete_count": 2,
+    "old_raw_reports_opened": false,
+    "randomized_causal_control": false,
+    "reader_only_reference_opened_after_verified_new_closeout": true,
+    "retained_audit": {
+      "bytes": 103279,
+      "path": "/home/barberb/lift_coding/artifacts/legal-ir-cp128-budget-pilot-20261019-01/audits/candidate-budget-BOS.json",
+      "sha256": "9b1a15b6ca4ec571a4ec419d9c45c03d99a3d5933fcb9a5562b9b2fabf751dc9"
+    },
+    "rows": [
+      {
+        "error_directions": {
+          "binder_sequence_mismatch": "unchanged",
+          "maximum_node_depth_absolute_error": "worsened",
+          "modality_sequence_mismatch": "worsened",
+          "ordered_predicate_arguments_mismatch": "unchanged",
+          "repeated_argument_occurrences": "unchanged",
+          "universal_binder_count_absolute_error": "unchanged",
+          "universal_binder_count_excess": "unchanged",
+          "universal_binder_count_shortfall": "unchanged",
+          "variable_occurrence_sequence_mismatch": "unchanged"
+        },
+        "incomplete_new_AST_directions_unavailable": false,
+        "new100": {
+          "descriptive_errors": {
+            "binder_sequence_mismatch": 1,
+            "maximum_node_depth_absolute_error": 9,
+            "modality_sequence_mismatch": 1,
+            "ordered_predicate_arguments_mismatch": 1,
+            "repeated_argument_occurrences": 1,
+            "universal_binder_count_absolute_error": 3,
+            "universal_binder_count_excess": 3,
+            "universal_binder_count_shortfall": 0,
+            "variable_occurrence_sequence_mismatch": 1
+          },
+          "emitted_tokens": 100,
+          "exact_canonical_compact_content_AST": false,
+          "exact_token_ID_reconstruction": false,
+          "generated_features": {
+            "binders": [
+              [
+                "forall",
+                0
+              ],
+              [
+                "forall",
+                1
+              ],
+              [
+                "forall",
+                2
+              ],
+              [
+                "forall",
+                3
+              ],
+              [
+                "forall",
+                4
+              ]
+            ],
+            "maximum_node_depth": 13,
+            "modalities": [
+              "P",
+              "P",
+              "P",
+              "P",
+              "P",
+              "P",
+              "P"
+            ],
+            "predicates": [
+              {
+                "ordered_arguments": [
+                  [
+                    "variable",
+                    1
+                  ],
+                  [
+                    "variable",
+                    1
+                  ]
+                ],
+                "symbol": 0
+              }
+            ],
+            "variables": [
+              1,
+              1
+            ]
+          },
+          "report": {
+            "bytes": 19481084,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-bos100-v01-cp128-BOS-v2-100/exports/case-cp128-BOS-v2-100-row-0.json",
+            "sha256": "9ea031c66190ba494477aa7e0b8d9ce01eaae42a9d794beae9415034c52948d3"
+          },
+          "typed_complete": true
+        },
+        "old64": {
+          "descriptive_errors": {
+            "binder_sequence_mismatch": 1,
+            "maximum_node_depth_absolute_error": 3,
+            "modality_sequence_mismatch": 0,
+            "ordered_predicate_arguments_mismatch": 1,
+            "repeated_argument_occurrences": 1,
+            "universal_binder_count_absolute_error": 3,
+            "universal_binder_count_excess": 3,
+            "universal_binder_count_shortfall": 0,
+            "variable_occurrence_sequence_mismatch": 1
+          },
+          "emitted_tokens": 64,
+          "exact_canonical_compact_content_AST": false,
+          "exact_token_ID_reconstruction": false,
+          "generated_features": {
+            "binders": [
+              [
+                "forall",
+                0
+              ],
+              [
+                "forall",
+                1
+              ],
+              [
+                "forall",
+                2
+              ],
+              [
+                "forall",
+                3
+              ],
+              [
+                "forall",
+                4
+              ]
+            ],
+            "maximum_node_depth": 7,
+            "modalities": [
+              "P"
+            ],
+            "predicates": [
+              {
+                "ordered_arguments": [
+                  [
+                    "variable",
+                    1
+                  ],
+                  [
+                    "variable",
+                    1
+                  ]
+                ],
+                "symbol": 0
+              }
+            ],
+            "variables": [
+              1,
+              1
+            ]
+          },
+          "report": {
+            "bytes": 12351891,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-budget-pilot-20261019-01-candidate-budget-BOS/exports/case-candidate-budget-BOS-row-0.json",
+            "sha256": "eb04c2cc2ad4fd5e961e83468a106f886dd0bea092ce4b8c2af6ad5473a34aa6"
+          },
+          "typed_complete": true
+        },
+        "row_index": 0,
+        "target_features": {
+          "binders": [
+            [
+              "forall",
+              0
+            ],
+            [
+              "forall",
+              1
+            ]
+          ],
+          "maximum_node_depth": 4,
+          "modalities": [
+            "P"
+          ],
+          "predicates": [
+            {
+              "ordered_arguments": [
+                [
+                  "variable",
+                  0
+                ],
+                [
+                  "variable",
+                  1
+                ]
+              ],
+              "symbol": 0
+            }
+          ],
+          "variables": [
+            0,
+            1
+          ]
+        }
+      },
+      {
+        "error_directions": {
+          "binder_sequence_mismatch": "unchanged",
+          "maximum_node_depth_absolute_error": "worsened",
+          "modality_sequence_mismatch": "unchanged",
+          "ordered_predicate_arguments_mismatch": "unchanged",
+          "repeated_argument_occurrences": "unchanged",
+          "universal_binder_count_absolute_error": "unchanged",
+          "universal_binder_count_excess": "unchanged",
+          "universal_binder_count_shortfall": "unchanged",
+          "variable_occurrence_sequence_mismatch": "unchanged"
+        },
+        "incomplete_new_AST_directions_unavailable": false,
+        "new100": {
+          "descriptive_errors": {
+            "binder_sequence_mismatch": 1,
+            "maximum_node_depth_absolute_error": 9,
+            "modality_sequence_mismatch": 1,
+            "ordered_predicate_arguments_mismatch": 1,
+            "repeated_argument_occurrences": 1,
+            "universal_binder_count_absolute_error": 3,
+            "universal_binder_count_excess": 3,
+            "universal_binder_count_shortfall": 0,
+            "variable_occurrence_sequence_mismatch": 1
+          },
+          "emitted_tokens": 100,
+          "exact_canonical_compact_content_AST": false,
+          "exact_token_ID_reconstruction": false,
+          "generated_features": {
+            "binders": [
+              [
+                "forall",
+                0
+              ],
+              [
+                "forall",
+                1
+              ],
+              [
+                "forall",
+                2
+              ],
+              [
+                "forall",
+                3
+              ],
+              [
+                "forall",
+                4
+              ]
+            ],
+            "maximum_node_depth": 13,
+            "modalities": [
+              "P",
+              "P",
+              "P",
+              "P",
+              "P",
+              "P",
+              "P"
+            ],
+            "predicates": [
+              {
+                "ordered_arguments": [
+                  [
+                    "variable",
+                    1
+                  ],
+                  [
+                    "variable",
+                    1
+                  ]
+                ],
+                "symbol": 0
+              }
+            ],
+            "variables": [
+              1,
+              1
+            ]
+          },
+          "report": {
+            "bytes": 19480611,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-bos100-v01-cp128-BOS-v2-100/exports/case-cp128-BOS-v2-100-row-1.json",
+            "sha256": "414b2637bd252837b343201adfa441975da0a6ccabf0e9315d3c484f0e5f935e"
+          },
+          "typed_complete": true
+        },
+        "old64": {
+          "descriptive_errors": {
+            "binder_sequence_mismatch": 1,
+            "maximum_node_depth_absolute_error": 3,
+            "modality_sequence_mismatch": 1,
+            "ordered_predicate_arguments_mismatch": 1,
+            "repeated_argument_occurrences": 1,
+            "universal_binder_count_absolute_error": 3,
+            "universal_binder_count_excess": 3,
+            "universal_binder_count_shortfall": 0,
+            "variable_occurrence_sequence_mismatch": 1
+          },
+          "emitted_tokens": 64,
+          "exact_canonical_compact_content_AST": false,
+          "exact_token_ID_reconstruction": false,
+          "generated_features": {
+            "binders": [
+              [
+                "forall",
+                0
+              ],
+              [
+                "forall",
+                1
+              ],
+              [
+                "forall",
+                2
+              ],
+              [
+                "forall",
+                3
+              ],
+              [
+                "forall",
+                4
+              ]
+            ],
+            "maximum_node_depth": 7,
+            "modalities": [
+              "P"
+            ],
+            "predicates": [
+              {
+                "ordered_arguments": [
+                  [
+                    "variable",
+                    1
+                  ],
+                  [
+                    "variable",
+                    1
+                  ]
+                ],
+                "symbol": 0
+              }
+            ],
+            "variables": [
+              1,
+              1
+            ]
+          },
+          "report": {
+            "bytes": 12351413,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-budget-pilot-20261019-01-candidate-budget-BOS/exports/case-candidate-budget-BOS-row-1.json",
+            "sha256": "8031d8aa807420e7d7242fb1c328af8bd4a8b0abeb935b5f0b9831a0b7db3f4b"
+          },
+          "typed_complete": true
+        },
+        "row_index": 1,
+        "target_features": {
+          "binders": [
+            [
+              "forall",
+              0
+            ],
+            [
+              "forall",
+              1
+            ]
+          ],
+          "maximum_node_depth": 4,
+          "modalities": [
+            "O"
+          ],
+          "predicates": [
+            {
+              "ordered_arguments": [
+                [
+                  "variable",
+                  0
+                ],
+                [
+                  "variable",
+                  1
+                ]
+              ],
+              "symbol": 0
+            }
+          ],
+          "variables": [
+            0,
+            1
+          ]
+        }
+      }
+    ],
+    "semantic_equivalence_checked": false,
+    "unchanged_64_prefix_or_trajectory_not_assumed": true
+  },
+  "inference_cases": [
+    {
+      "budget_status_is_completion_witness": false,
+      "call_wall_seconds": 270.24084156006575,
+      "diagnostics": [],
+      "early_budget_refusal": false,
+      "emitted_tokens": 100,
+      "exact_canonical_compact_content_AST": false,
+      "exact_content_reconstruction": false,
+      "exact_reconstruction": false,
+      "exact_token_ID_reconstruction": false,
+      "exhausted_full_allowance": true,
+      "full_norm_LegalIR_semantic_fidelity": null,
+      "generated_canonical_compact_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "generated_features": {
+        "binders": [
+          [
+            "forall",
+            0
+          ],
+          [
+            "forall",
+            1
+          ],
+          [
+            "forall",
+            2
+          ],
+          [
+            "forall",
+            3
+          ],
+          [
+            "forall",
+            4
+          ]
+        ],
+        "maximum_node_depth": 13,
+        "modalities": [
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P"
+        ],
+        "predicates": [
+          {
+            "ordered_arguments": [
+              [
+                "variable",
+                1
+              ],
+              [
+                "variable",
+                1
+              ]
+            ],
+            "symbol": 0
+          }
+        ],
+        "variables": [
+          1,
+          1
+        ]
+      },
+      "incomplete_AST_metrics_available": true,
+      "legal_text_byte_reconstruction": null,
+      "legal_text_prose_reconstruction": null,
+      "observed_forwards": 100,
+      "outcome": "complete",
+      "report": {
+        "bytes": 19481084,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-bos100-v01-cp128-BOS-v2-100/exports/case-cp128-BOS-v2-100-row-0.json",
+        "sha256": "9ea031c66190ba494477aa7e0b8d9ce01eaae42a9d794beae9415034c52948d3"
+      },
+      "row_index": 0,
+      "slot_id": "cp128-BOS-v2-100-row-0",
+      "target_canonical_compact_content_sha256": "1e75c64927666e27de6c25f3a3e9de8ef424b187c6c80cf29bbf8fb585f702aa",
+      "target_features": {
+        "binders": [
+          [
+            "forall",
+            0
+          ],
+          [
+            "forall",
+            1
+          ]
+        ],
+        "maximum_node_depth": 4,
+        "modalities": [
+          "P"
+        ],
+        "predicates": [
+          {
+            "ordered_arguments": [
+              [
+                "variable",
+                0
+              ],
+              [
+                "variable",
+                1
+              ]
+            ],
+            "symbol": 0
+          }
+        ],
+        "variables": [
+          0,
+          1
+        ]
+      },
+      "typed_complete": true,
+      "typed_decoder_result_independently_reexecuted": false
+    },
+    {
+      "budget_status_is_completion_witness": false,
+      "call_wall_seconds": 272.42664102301933,
+      "diagnostics": [],
+      "early_budget_refusal": false,
+      "emitted_tokens": 100,
+      "exact_canonical_compact_content_AST": false,
+      "exact_content_reconstruction": false,
+      "exact_reconstruction": false,
+      "exact_token_ID_reconstruction": false,
+      "exhausted_full_allowance": true,
+      "full_norm_LegalIR_semantic_fidelity": null,
+      "generated_canonical_compact_content_sha256": "1e9dc4e96142d0363b957070c870334a83facd988cf4ae793e771a8baa433fde",
+      "generated_features": {
+        "binders": [
+          [
+            "forall",
+            0
+          ],
+          [
+            "forall",
+            1
+          ],
+          [
+            "forall",
+            2
+          ],
+          [
+            "forall",
+            3
+          ],
+          [
+            "forall",
+            4
+          ]
+        ],
+        "maximum_node_depth": 13,
+        "modalities": [
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P"
+        ],
+        "predicates": [
+          {
+            "ordered_arguments": [
+              [
+                "variable",
+                1
+              ],
+              [
+                "variable",
+                1
+              ]
+            ],
+            "symbol": 0
+          }
+        ],
+        "variables": [
+          1,
+          1
+        ]
+      },
+      "incomplete_AST_metrics_available": true,
+      "legal_text_byte_reconstruction": null,
+      "legal_text_prose_reconstruction": null,
+      "observed_forwards": 100,
+      "outcome": "complete",
+      "report": {
+        "bytes": 19480611,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/cp128-bos100-v01-cp128-BOS-v2-100/exports/case-cp128-BOS-v2-100-row-1.json",
+        "sha256": "414b2637bd252837b343201adfa441975da0a6ccabf0e9315d3c484f0e5f935e"
+      },
+      "row_index": 1,
+      "slot_id": "cp128-BOS-v2-100-row-1",
+      "target_canonical_compact_content_sha256": "8a3680cbda8e1fccfccde4158e08292a24b811123b20cae33bac4527a9f600b3",
+      "target_features": {
+        "binders": [
+          [
+            "forall",
+            0
+          ],
+          [
+            "forall",
+            1
+          ]
+        ],
+        "maximum_node_depth": 4,
+        "modalities": [
+          "O"
+        ],
+        "predicates": [
+          {
+            "ordered_arguments": [
+              [
+                "variable",
+                0
+              ],
+              [
+                "variable",
+                1
+              ]
+            ],
+            "symbol": 0
+          }
+        ],
+        "variables": [
+          0,
+          1
+        ]
+      },
+      "typed_complete": true,
+      "typed_decoder_result_independently_reexecuted": false
+    }
+  ],
+  "legal_text_byte_reconstruction": null,
+  "legal_text_prose_reconstruction": null,
+  "legal_text_reconstruction_status": "NOT_MEASURED",
+  "metrics": {
+    "canonical_compact_content_AST_exact": 0,
+    "denominator": 2,
+    "token_ID_exact": 0,
+    "typed_complete": 2
+  },
+  "new_training_updates": 0,
+  "original_CP128_evidence_preserved": [
+    {
+      "id": "cp128-runtime-recipe-observation-20261022-01",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-runtime-recipe-20261022.json",
+      "sha256": "646f8a5f0037f0a0f54b1806f624078233415e0bf63aef86ac7b7bd5eaf10346"
+    },
+    {
+      "id": "cp128-runtime-preflight-20261022-01",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-runtime-preflight-20261022.json",
+      "sha256": "13dd4502f9cb8a582e123c2dd88ac30a9649979b29ab81c4f00af54166ffe8f5"
+    },
+    {
+      "id": "cp128-bos-score-parity-20261022-01",
+      "path": "docs/autoformalization/evidence/legal-ir-cp128-bos-score-parity-20261022.json",
+      "sha256": "1f4c380d0366382767d9261ca046cc7106fa9ffea518546d3504bb0f579f60e0"
+    }
+  ],
+  "original_full_closeout": {
+    "bytes": 45212123,
+    "inventory": {
+      "bytes": 5311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/audit/closed-native-full-inventory-v01.json",
+      "sha256": "9656fc87cc398f9e69fd5b4c240b8a548b7194fc3a65ad8c7f71739a61dc4a1d"
+    },
+    "native_closed": true,
+    "ordinary_files": 17,
+    "payload_hashes_rechecked_by_independent_review_not_this_builder": true,
+    "source_READ_closed": true,
+    "storage_released": true
+  },
+  "outer_guards": 248,
+  "product_source_guards": 209,
+  "proposed_quality_next_gate": {
+    "completed_scope_and_weighted_campaigns_not_repeated": true,
+    "current_role_full537_CE_is_no_grad_diagnostic": true,
+    "existing_scope_weighted_constructors_hard_bind98_and_cannot_drop_in_CP128": true,
+    "no_training_or_legal_or_native_GTE_gain_claimed": true,
+    "original_Adam_history_preserved_without_relabelling": true,
+    "original_two_authored_rows_vectors_contexts_and_537_codec_preserved": true,
+    "proposal": "Versioned CP128 thirteen-tensor warm start through the existing full537 cross-entropy kernel, unchanged semantic-priority weight sum67, fresh Adam and a matched scope_conditional/fresh-Adam control.",
+    "reference": {
+      "bytes": 19815,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-existing-quality-objective-contract-audit-v01.json",
+      "sha256": "eaeb8ac23937806bb2229fd4f2b1b32b3ca2867a3022a7a8416913ac1ea72b3f"
+    },
+    "status": "PROPOSED_NOT_IMPLEMENTED_OR_TRAINED"
+  },
+  "receipts": [
+    {
+      "bytes": 129767,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/audits/cp128-BOS-v2-100.json",
+      "sha256": "79ba198d5e2107e875eed64eb762e50d0921587ca808e3bd4d337965d6422b89"
+    },
+    {
+      "bytes": 13542,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/audit/independent-BOS100-qualification-review-v01.json",
+      "sha256": "1288ac530b42c436713aaeab20ba30e5d5f4d52d3ee69b42f9465679be62dce8"
+    },
+    {
+      "bytes": 5311,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/audit/closed-native-full-inventory-v01.json",
+      "sha256": "9656fc87cc398f9e69fd5b4c240b8a548b7194fc3a65ad8c7f71739a61dc4a1d"
+    },
+    {
+      "bytes": 9589,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/audit/independent-closed-native-operational-review-v01.json",
+      "sha256": "29ef252603e7e34eb5c504506dc04a3f027beaf626660925a78b99868a83a478"
+    },
+    {
+      "bytes": 2708,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/reader-invocation-v01.json",
+      "sha256": "ea8f8fd2b4d13d64f8bded364d18f1200c61a91cee2080a092e463766f29e7ed"
+    },
+    {
+      "bytes": 49768,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/requests/cp128-BOS-v2-100.json",
+      "sha256": "29d833982b35b5d9e1643b0077ae9d1a1a0b3958dd28047a828181c61b2201d0"
+    },
+    {
+      "bytes": 148593,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/protocol.json",
+      "sha256": "8cb4954813b6faa9b1674bbe79ba80f40a2ca35e695ed6995dd898f64c21a1fa"
+    },
+    {
+      "bytes": 694,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/audit/failure-serialization-preflight-v01.json",
+      "sha256": "2ce3d275a0698402cc103336cdfbf880fb30fde5721f1aaf8cfee70fca5665f3"
+    },
+    {
+      "bytes": 756,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/audit/failure-serialization-preflight-v02.json",
+      "sha256": "454e4000c57558909eeb46a4f523c70852ad5854e8f76b52a71f000400097dc2"
+    },
+    {
+      "bytes": 19815,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-existing-quality-objective-contract-audit-v01.json",
+      "sha256": "eaeb8ac23937806bb2229fd4f2b1b32b3ca2867a3022a7a8416913ac1ea72b3f"
+    },
+    {
+      "bytes": 7584,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-bos100-v01/control-assembly-v02.json",
+      "sha256": "7fe3d79b37ebe6484aadb4cc2c3fe98b4cbf98ffaa2c462ab6141617220c5276"
+    }
+  ],
+  "recorded_at_utc": "2026-10-22T19:47:17.260521+00:00",
+  "schema": "legal-ir-CP128-BOS100-reconstruction-diagnostic/v1",
+  "scope": "Original legal compact-content role checkpoint/v1 and two exposed authored384D inputs; fixed537 codec. No reencoding or training.",
+  "selected_compact_failure_preflight": {
+    "active_rows_bound": 100,
+    "additional_complete_pending_row_overbound": 1,
+    "completed_case_descriptor_bound": 1,
+    "error_message_codepoints_bound": 1000,
+    "exception_type_characters_bound": 128,
+    "failure_encoding": "compact-sortkeys-ensure_asciifalse-LF",
+    "failure_max_bytes": 2097152,
+    "finite_number_text_width_bound": 24,
+    "logits_per_observer": 537,
+    "measured_failure_bytes": 1507823,
+    "model_or_product_execution": false,
+    "no_trace_truncation": true,
+    "original_failure_topology_shared": true,
+    "passed": true,
+    "prefix_ids_per_observer_bound": 100,
+    "product_fit_at100_measured": false,
+    "product_max_bytes": 16777216,
+    "schema": "legal-ir-cp128-bos100-failure-serialization-preflight/v2",
+    "wrapper_max_bytes": 25165824
+  },
+  "status": "COMPLETED_BOUNDED_AUTHORED_FIXTURE_DIAGNOSTIC",
+  "statutory_gold_denominator": 0
+}

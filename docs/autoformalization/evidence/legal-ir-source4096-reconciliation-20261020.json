@@ -1,0 +1,71 @@
+{
+  "authority": {
+    "Lean_admission": false,
+    "actual_database_persistence_qualified": false,
+    "checkpoint_compatible": false,
+    "model_loaded": false,
+    "native_producer_execution_authenticated": false,
+    "new_training": false,
+    "remote_publication": false,
+    "runtime_ready": false,
+    "statutory_meaning": false,
+    "vectors_verified": false
+  },
+  "candidate_files": {
+    "ir_model_manager_import.py": {
+      "bytes": 43980,
+      "sha256": "71b8e01cae1153081cb5df456800d8d907a092bf09f169af1fcb83b90eace163"
+    },
+    "test_ir_model_manager_import.py": {
+      "bytes": 68509,
+      "sha256": "d3d6a3df48cd21a54a5a63556657d1745a0dae0a23776b31c664549d17c03514"
+    }
+  },
+  "canonical_installed": false,
+  "cases": 234,
+  "durability": {
+    "bytes": 183438,
+    "path": "workspace/test-logs/federal-corpus-audits/source4096-reconciliation-20261020-01/run-01/logs/validation-durability.json",
+    "sha256": "a6fc1b3256666ad1b3ac283e5d35f23ae7a23ead94a8d8fe8d5c730c18a84497"
+  },
+  "durable_bytes": 1171464,
+  "durable_files": 842,
+  "errors": 0,
+  "existing_regressions": 190,
+  "failures": 0,
+  "junit": {
+    "bytes": 31282,
+    "path": "workspace/test-logs/federal-corpus-audits/source4096-reconciliation-20261020-01/run-01/exports/tests.xml",
+    "sha256": "5d640120d58f9bb90edf6b28af7ff1403c7399990ff05ad986cb53ef62615912"
+  },
+  "native_terminal": {
+    "bytes": 5648,
+    "path": "workspace/test-logs/federal-corpus-audits/source4096-reconciliation-20261020-01/native.stdout.txt",
+    "sha256": "84634799dd2be6d448c8dd6ae5ddb76a2750c04463c0ec69bae0d3e9e6470bc8"
+  },
+  "new_cases": 44,
+  "passed": 234,
+  "population": {
+    "current_importer_regressions": 144,
+    "excluded_legacy_filesystem_controls": 3,
+    "merged_public_v2_regressions": 46,
+    "reconciliation_controls": 41,
+    "retained_published_ID_metadata_controls": 3
+  },
+  "recorded_at_utc": "2026-10-20T21:53:47.555475+00:00",
+  "request": {
+    "bytes": 53266,
+    "path": "workspace/test-logs/federal-corpus-audits/source4096-reconciliation-20261020-01/validation-request-01.json",
+    "sha256": "5d4a2d1bd3ae80b644426941e0ebe46b1822f22763272ad2636f31e60a1ecb89"
+  },
+  "schema": "legal-ir-source4096-reconciliation-qualification/v1",
+  "scope": "Both explicit source metadata contracts through shared inert-manager registration; three retained published ID declarations recomputed without payload reads; no new native, real DB, model or publication qualification",
+  "skipped": 0,
+  "source_compute_storage_released": true,
+  "source_controller": {
+    "bytes": 1540,
+    "path": "workspace/test-logs/federal-corpus-audits/source4096-reconciliation-20261020-01/source-controller-launch.json",
+    "sha256": "edd214aaf17332d318813dd2093126e3b47941bdec45fad44cf990d061f51b08"
+  },
+  "status": "qualified_private_candidates"
+}

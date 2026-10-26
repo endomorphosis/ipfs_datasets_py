@@ -94,7 +94,7 @@ class CapacityDiagnosticsTests(unittest.TestCase):
         return namespace['report_capacity_refusal'], sink
 
     def test_cap_constant_is_unchanged(self):
-        self.assertEqual(self.cap, 160_000_000_000)
+        self.assertEqual(self.cap, 220_000_000_000)
 
     def test_global_only_refusal(self):
         error, _ = self.failure(self.cap - 100)

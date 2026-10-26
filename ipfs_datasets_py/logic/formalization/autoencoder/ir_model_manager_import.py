@@ -14,6 +14,13 @@ Sequential endpoint fences are cooperative observations, not an atomic snapshot.
 
 Detached source-token and off-matrix components use a separate identity schema.
 Their internal feature/hidden widths do not create an 8D/384D/768D lane binding.
+LegalIR4096 source representations use a separate, pinned expected-producer
+profile; registration does not authenticate that producer's native execution.
+
+The separate v2 entrypoint also reads the already published historical
+source/span declaration contract. Its record IDs and path-sensitive native
+library declarations remain distinct from the independent expected-producer
+profile above. Neither schema is converted into the other.
 """
 from __future__ import annotations
 
@@ -23,7 +30,7 @@ from enum import Enum
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import stat
 
@@ -32,6 +39,24 @@ SCHEMA = "ir-model-manager-import-plan/v1"
 RESULT_SCHEMA = "ir-model-manager-import-result/v1"
 PUBLICATION_SCHEMA = "ir-model-hub-publication-receipt/v1"
 COMPONENT_BINDING_SCHEMA = "ir-decoder-component-binding/v1"
+SOURCE_REPRESENTATION_BINDING_SCHEMA = "ir-source-representation-asset-binding/v1"
+SCHEMA_V2 = "ir-model-manager-import-plan/v2"
+RESULT_SCHEMA_V2 = "ir-model-manager-import-result/v2"
+SOURCE_BINDING_SCHEMA = "ir-source-representation-binding/v2"
+SOURCE_PROFILE_SCHEMA = "ir-native4096-source-profile/v1"
+_SOURCE_FIELDS = {"schema", "expected_producer", "pooling", "normalization", "attention",
+    "context_tokens", "sequences", "source_text_required", "evidence_pins", "evidence_scope",
+    "ordinary_receipt_is_capability"}
+_PRODUCER_FIELDS = {"profile", "model_sha256", "worker_sha256", "worker_source_sha256",
+    "owner_source_sha256", "vocabulary_owner_source_sha256", "library_sha256"}
+_SOURCE_PROFILES = {"leanstral4096:cpu1:last:l2:single-sequence:tokens512:lazy-mmap:v2",
+    "leanstral4096:cpu1:last:l2:single-sequence:tokens512:layer-reclaim:v3"}
+_SOURCE_CHECKPOINT_SCHEMAS = {"native-4096-source-span-checkpoint/v1",
+    "bound-native4096-source-span-checkpoint/v1"}
+_SOURCE_TASK = "source_text_and_representation_to_legal_ir"
+_SOURCE_ARCHITECTURE = "utf8-byte-bidirectional-gru-native-4096-film-spans/v1"
+_SOURCE_FALSE = {"native_execution_verified_by_importer": False,
+    "source_compatibility_verified": False, "live_native_capability_restored": False}
 MAX_REFERENCE_BYTES = 512 * 1024 * 1024
 MAX_MANIFEST_BYTES = 8 * 1024 * 1024
 MAX_MODELS = 256
@@ -207,6 +232,91 @@ def ir_model_component_record_id(ir_family_id, dimension_role, role, checkpoint_
     return "ir-model-component-binding/v1:" + hashlib.sha256(_raw(identity)).hexdigest()
 
 
+def ir_model_source_representation_record_id(role, checkpoint_sha256, source_representation_profile_id):
+    """Name a LegalIR4096 source asset, binding its expected-producer profile."""
+    _require(type(checkpoint_sha256) is str and _HEX.fullmatch(checkpoint_sha256),
+             "checkpoint SHA256 required")
+    _require(type(source_representation_profile_id) is str
+             and source_representation_profile_id.startswith("ir-source-representation-profile/v1:")
+             and _HEX.fullmatch(source_representation_profile_id.split(":", 1)[1]),
+             "versioned source-representation profile ID required")
+    identity = {"asset_binding_schema": SOURCE_REPRESENTATION_BINDING_SCHEMA,
+        "ir_family_id": "legal_ir", "dimension": 4096, "dimension_role": "input_embedding",
+        "role": _text(role, "declared role", 256), "checkpoint_sha256": checkpoint_sha256,
+        "source_representation_profile_id": source_representation_profile_id}
+    return SOURCE_REPRESENTATION_BINDING_SCHEMA + ":" + hashlib.sha256(_raw(identity)).hexdigest()
+
+
+def _source_representation(value):
+    """Validate historical declarations without importing the live owner.
+
+    Evidence files are authenticated by the import plan's ordinary pin fences.
+    No serialized declaration can recreate native execution or a live handle.
+    Locator paths are excluded from the logical evidence identity.
+    """
+    value = _detached(value)
+    _require(type(value) is dict and set(value) == _SOURCE_FIELDS,
+             "closed native4096 source representation declaration required")
+    _require(value["schema"] == SOURCE_PROFILE_SCHEMA and value["pooling"] == "last"
+             and value["normalization"] == "l2" and value["attention"] == "causal"
+             and type(value["context_tokens"]) is int and value["context_tokens"] == 512
+             and type(value["sequences"]) is int and value["sequences"] == 1
+             and value["source_text_required"] is True,
+             "preserved source-text plus native4096 input profile required")
+    _require(value["evidence_scope"] == "pinned_historical_metadata_only"
+             and value["ordinary_receipt_is_capability"] is False,
+             "historical metadata cannot grant native capability")
+    producer = value["expected_producer"]
+    _require(type(producer) is dict and set(producer) == _PRODUCER_FIELDS,
+             "closed existing native producer declaration required")
+    _require(type(producer["profile"]) is str and producer["profile"] in _SOURCE_PROFILES,
+             "explicit preserved native producer profile required")
+    for key in _PRODUCER_FIELDS - {"profile", "library_sha256"}:
+        _require(type(producer[key]) is str and _HEX.fullmatch(producer[key]),
+                 "native producer SHA256 required: " + key)
+    libraries = producer["library_sha256"]
+    _require(type(libraries) is dict and 1 <= len(libraries) <= 63,
+             "bounded explicit native library declarations required")
+    for path, digest in libraries.items():
+        name = PurePosixPath(path)
+        _text(path, "native library path")
+        _require(name.is_absolute() and name.as_posix() == path and ".." not in name.parts,
+                 "canonical absolute native library declaration path required")
+        _require(type(digest) is str and _HEX.fullmatch(digest), "native library SHA256 required")
+    pins = value["evidence_pins"]
+    _require(type(pins) is list and 1 <= len(pins) <= 8,
+             "one to eight explicit historical evidence pins required")
+    pins = [_pin(pin, MAX_MANIFEST_BYTES) for pin in pins]
+    _require(len({pin["path"] for pin in pins}) == len(pins), "unique native evidence paths required")
+    content = [{"bytes": pin["bytes"], "sha256": pin["sha256"]} for pin in pins]
+    _require(len({_raw(item) for item in content}) == len(content), "unique native evidence contents required")
+    logical = {**value, "evidence_pins": sorted(content, key=_raw)}
+    return logical, pins
+
+
+def ir_model_source_record_id_v2(ir_family_id, dimension_role, role, checkpoint_sha256, *,
+                                 schema_version, task_id, source_representation):
+    """Name an explicit LegalIR4096 source/span asset, not a runtime profile.
+
+    This validates metadata only. The importer separately authenticates pinned
+    bytes; neither this helper nor that authentication proves native execution.
+    """
+    _require(type(ir_family_id) is str and ir_family_id == "legal_ir"
+             and type(dimension_role) is str and dimension_role == "source_input_representation_width",
+             "explicit LegalIR4096 source-input representation role required")
+    _require(type(schema_version) is str and schema_version in _SOURCE_CHECKPOINT_SCHEMAS
+             and type(task_id) is str and task_id == _SOURCE_TASK, "supported source/span checkpoint task required")
+    _require(type(checkpoint_sha256) is str and _HEX.fullmatch(checkpoint_sha256),
+             "checkpoint SHA256 required")
+    logical, _ = _source_representation(source_representation)
+    identity = {"asset_binding_schema": SOURCE_BINDING_SCHEMA, "ir_family_id": ir_family_id,
+        "dimension": 4096, "dimension_role": dimension_role,
+        "role": _text(role, "declared role", 256), "checkpoint_sha256": checkpoint_sha256,
+        "schema_version": schema_version, "task_id": task_id,
+        "source_representation": logical}
+    return "ir-model-source-binding/v2:" + hashlib.sha256(_raw(identity)).hexdigest()
+
+
 def _io(value):
     _require(type(value) is dict and {"name", "data_type"} <= set(value)
              and set(value) <= {"name", "data_type", "shape", "dtype", "description", "optional"},
@@ -221,7 +331,7 @@ def _io(value):
         _require(type(value["optional"]) is bool, "IO optional must be boolean")
 
 
-def _metadata(value, checkpoint):
+def _metadata(value, checkpoint, *, max_reference_bytes=MAX_REFERENCE_BYTES, source_v2=False):
     _require(type(value) is dict and _REQUIRED_MODEL_FIELDS <= set(value) and set(value) <= _MODEL_FIELDS,
              "closed genuine ModelMetadata fields required; serving_config is forbidden")
     for key in ("model_id", "model_name", "architecture"):
@@ -242,7 +352,67 @@ def _metadata(value, checkpoint):
     _require(family in {"codebase_ir", "security_ir", "legal_ir", "intent_ir", "ui_ux_ir"}, "known IR family required")
     dimension = identity["dimension"]
     component = identity.get("asset_binding_schema") == COMPONENT_BINDING_SCHEMA
-    if component:
+    source_representation = identity.get("asset_binding_schema") == SOURCE_REPRESENTATION_BINDING_SCHEMA
+    source = identity.get("asset_binding_schema") == SOURCE_BINDING_SCHEMA
+    if not source:
+        _require("source_representation" not in identity,
+                 "historical source declaration requires its explicit v2 asset binding schema")
+    if not source_representation:
+        _require(not ({"source_representation_profile_id", "source_representation_profile_pin"} & set(identity)),
+                 "source-representation profile requires its explicit asset binding schema")
+        _require(not (type(identity.get("asset_binding_schema")) is str
+                 and identity["asset_binding_schema"].startswith("ir-source-representation-")
+                 and not source),
+                 "unknown source-representation binding schema")
+        for name in ("profile_id", "format_id"):
+            _require(not (type(identity[name]) is str
+                     and identity[name].startswith(("ir-source-representation-profile/",
+                         "ir-native4096-source-profile/"))),
+                     "source-representation profile cannot be used as a decoder profile/format")
+    if source:
+        _require(source_v2 is True, "native4096 binding requires the explicit v2 importer")
+        _require(set(identity) == _IDENTITY_FIELDS | {"asset_binding_schema", "source_representation"},
+                 "closed source-representation checkpoint identity required")
+        _require(family == "legal_ir" and type(dimension) is int and dimension == 4096
+                 and identity["dimension_role"] == "source_input_representation_width",
+                 "explicit LegalIR4096 source width required; bottleneck claims are unsupported")
+        _require(identity["profile_id"] is None and identity["format_id"] is None,
+                 "metadata source binding cannot invent a qualified decoder format/profile")
+        _require(config.get("complete_runtime_io_contract") is False
+                 and all(config.get(key) is False for key in _SOURCE_FALSE),
+                 "native runtime/source qualification must remain explicitly false")
+        _require(value["architecture"] == _SOURCE_ARCHITECTURE
+                 and value["model_type"] == "decoder_only", "preserved source/span decoder architecture required")
+        _require(value["inputs"] == [{"name": "source_text", "data_type": "text", "dtype": "utf8"},
+                 {"name": "source_representation", "data_type": "embeddings", "shape": [4096], "dtype": "float32"}]
+                 and value["outputs"] == [{"name": "legal_ir", "data_type": "text", "dtype": "utf8"}],
+                 "exact declared source-text plus4096 representation IO required")
+    elif source_representation:
+        _require(set(identity) == _IDENTITY_FIELDS | {"asset_binding_schema",
+                 "source_representation_profile_id", "source_representation_profile_pin"},
+                 "closed source-representation checkpoint identity required")
+        _require(family == "legal_ir" and type(dimension) is int and dimension == 4096
+                 and identity["dimension_role"] == "input_embedding",
+                 "source representation requires exact legal_ir4096 input_embedding identity")
+        _require(identity["profile_id"] is None and identity["format_id"] is None,
+                 "source representation cannot claim a decoder format/profile")
+        _require(config.get("complete_runtime_io_contract") is False,
+                 "source representation runtime IO qualification must remain false")
+        _require(any(spec["data_type"] == "embeddings" and spec.get("shape") in ([4096], [-1, 4096])
+                 and spec.get("dtype") == "float32" for spec in value["inputs"]),
+                 "source representation requires explicit float32 4096-wide embeddings input")
+        profile_pin = _pin(identity.get("source_representation_profile_pin"),
+                           min(max_reference_bytes, MAX_MANIFEST_BYTES))
+        # Load only this versioned metadata validator, after byte-pinned JSON parsing.
+        from .ir_decoder_profile_inventory import (DecoderProfileInventoryError,
+            validate_ir_source_representation_profile)
+        try:
+            profile = validate_ir_source_representation_profile(_json(profile_pin))
+        except DecoderProfileInventoryError as error:
+            raise ModelManagerImportError("invalid source-representation profile") from error
+        _require(identity.get("source_representation_profile_id") == profile["profile_id"],
+                 "source-representation profile ID differs from pinned profile")
+    elif component:
         _require(dimension is None and identity["dimension_role"] in ("source_tokens", "unbound_component"),
                  "detached component requires null external dimension and explicit component role")
         _require("external_lane_binding" in identity and identity["external_lane_binding"] is None,
@@ -273,7 +443,16 @@ def _metadata(value, checkpoint):
     _require((original["sha256"], original["bytes"]) == (checkpoint["sha256"], checkpoint["bytes"]),
              "original checkpoint identity differs")
     record_id = identity["record_id"]
-    if component:
+    if source:
+        expected = ir_model_source_record_id_v2(family, identity["dimension_role"], identity["role"],
+            checkpoint["sha256"], schema_version=identity["schema_version"], task_id=identity["task_id"],
+            source_representation=identity["source_representation"])
+        _require(record_id == expected, "deterministic source representation record_id required")
+    elif source_representation:
+        _require(record_id == ir_model_source_representation_record_id(identity["role"],
+                 checkpoint["sha256"], identity["source_representation_profile_id"]),
+                 "deterministic source-representation record_id required")
+    elif component:
         _require(record_id == ir_model_component_record_id(family, identity["dimension_role"],
                  identity["role"], checkpoint["sha256"]), "deterministic detached component record_id required")
     elif record_id.startswith("ir-decoder-checkpoint-record/v1:"):
@@ -284,6 +463,10 @@ def _metadata(value, checkpoint):
         _require(record_id == ir_model_asset_record_id(family, dimension, identity["dimension_role"],
                  identity["role"], checkpoint["sha256"]), "deterministic concrete asset record_id required")
     return original
+
+
+def _metadata_v2(value, checkpoint, *, max_reference_bytes=MAX_REFERENCE_BYTES):
+    return _metadata(value, checkpoint, max_reference_bytes=max_reference_bytes, source_v2=True)
 
 
 def _publication(pin, maximum):
@@ -324,7 +507,7 @@ def _publication(pin, maximum):
     return receipt, pins
 
 
-def _prepare(manifest_pin, release_receipts, maximum):
+def _prepare(manifest_pin, release_receipts, maximum, *, schema=SCHEMA, metadata_validator=_metadata):
     _require(type(maximum) is int and 0 < maximum <= MAX_REFERENCE_BYTES, "reference byte cap required")
     manifest = _pin(_detached(manifest_pin), min(maximum, MAX_MANIFEST_BYTES))
     _require(type(release_receipts) in (list, tuple) and 1 <= len(release_receipts) <= MAX_MODELS,
@@ -332,7 +515,7 @@ def _prepare(manifest_pin, release_receipts, maximum):
     releases = [_pin(_detached(pin), min(maximum, MAX_MANIFEST_BYTES)) for pin in release_receipts]
     _require(len({pin["path"] for pin in releases}) == len(releases), "unique publication receipt paths required")
     plan = _json(manifest)
-    _require(type(plan) is dict and set(plan) == {"schema", "models"} and plan["schema"] == SCHEMA,
+    _require(type(plan) is dict and set(plan) == {"schema", "models"} and plan["schema"] == schema,
              "closed import plan schema required")
     _require(type(plan["models"]) is list and 1 <= len(plan["models"]) <= MAX_MODELS, "bounded explicit model list required")
     pins = [manifest, *releases]
@@ -346,7 +529,14 @@ def _prepare(manifest_pin, release_receipts, maximum):
         _require(type(record) is dict and set(record) == {"model_metadata", "checkpoint_pin", "release"},
                  "closed model/checkpoint/release record required")
         checkpoint = _pin(record["checkpoint_pin"], maximum)
-        original = _metadata(record["model_metadata"], checkpoint)
+        original = metadata_validator(record["model_metadata"], checkpoint, max_reference_bytes=maximum)
+        identity = record["model_metadata"]["huggingface_config"]["ir_checkpoint"]
+        if identity.get("asset_binding_schema") == SOURCE_REPRESENTATION_BINDING_SCHEMA:
+            pins.append(_pin(identity["source_representation_profile_pin"],
+                             min(maximum, MAX_MANIFEST_BYTES)))
+        if identity.get("asset_binding_schema") == SOURCE_BINDING_SCHEMA:
+            _, evidence = _source_representation(identity["source_representation"])
+            pins.extend(_pin(pin, min(maximum, MAX_MANIFEST_BYTES)) for pin in evidence)
         model_id = record["model_metadata"]["model_id"]
         _require(model_id not in ids, "duplicate model_id forbidden")
         ids.add(model_id)
@@ -460,6 +650,23 @@ def import_ir_model_manager_records(manifest_pin, *, release_receipts, manager, 
     retain partial outcomes; KeyboardInterrupt/SystemExit propagate unchanged.
     """
     plan, pins, manifest, releases = _prepare(manifest_pin, release_receipts, max_reference_bytes)
+    return _import_prepared(plan, pins, manifest, releases, manager, readback, metadata_factory, RESULT_SCHEMA)
+
+
+def import_ir_model_manager_records_v2(manifest_pin, *, release_receipts, manager, readback,
+                                       metadata_factory=None, max_reference_bytes=MAX_REFERENCE_BYTES):
+    """Register explicit source4096 metadata alongside unchanged legacy records.
+
+    Historical native evidence is byte-checked, never executed or converted into
+    a live capability. The separate twelve-cell inventory and runtime contracts
+    are unchanged. Genuine persistence still belongs to the selected driver.
+    """
+    plan, pins, manifest, releases = _prepare(manifest_pin, release_receipts, max_reference_bytes,
+        schema=SCHEMA_V2, metadata_validator=_metadata_v2)
+    return _import_prepared(plan, pins, manifest, releases, manager, readback, metadata_factory, RESULT_SCHEMA_V2)
+
+
+def _import_prepared(plan, pins, manifest, releases, manager, readback, metadata_factory, result_schema):
     _require(callable(getattr(manager, "get_model", None)) and callable(getattr(manager, "add_model", None)),
              "genuine manager get_model/add_model API required")
     _require(callable(readback), "explicit fresh persisted readback callable required")
@@ -507,7 +714,7 @@ def import_ir_model_manager_records(manifest_pin, *, release_receipts, manager, 
             outcome["persisted_metadata_matched"] = True
             outcome["status"] = "already_present_verified" if existing is not None else "registered_verified"
             _fence(pins)
-        return _detached({"schema": RESULT_SCHEMA, "manifest_receipt": manifest,
+        return _detached({"schema": result_schema, "manifest_receipt": manifest,
             "publication_receipts": releases, "outcomes": outcomes, "completed": True,
             "registered_count": sum(item["status"] == "registered_verified" for item in outcomes),
             "already_present_count": sum(item["status"] == "already_present_verified" for item in outcomes),
@@ -515,7 +722,8 @@ def import_ir_model_manager_records(manifest_pin, *, release_receipts, manager, 
             "readback_semantics": "Explicit driver-owned reopened-storage callable; adapter verifies returned fields, not its implementation.",
             "authority": {"registration_metadata_verified": True, "remote_independently_verified_by_adapter": False,
                 "active_process_refreshed": False, "runtime_ready": False, "teacher_qualified": False,
-                "proof_authority": False, "model_numerically_loaded": False, "model_quality_qualified": False}})
+                "proof_authority": False, "model_numerically_loaded": False, "model_quality_qualified": False,
+                **(_SOURCE_FALSE if result_schema == RESULT_SCHEMA_V2 else {})}})
     except Exception as error:
         if isinstance(error, ModelManagerImportError):
             raise ModelManagerImportError(str(error), outcomes=outcomes) from error
@@ -523,4 +731,5 @@ def import_ir_model_manager_records(manifest_pin, *, release_receipts, manager, 
 
 
 __all__ = ["ModelManagerImportError", "ir_model_asset_record_id", "ir_model_component_record_id",
-           "import_ir_model_manager_records"]
+           "ir_model_source_representation_record_id", "import_ir_model_manager_records",
+           "ir_model_source_record_id_v2", "import_ir_model_manager_records_v2"]

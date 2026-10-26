@@ -30,6 +30,10 @@ SCHEMA = "uscode-paired-span-census/v2"
 MANIFEST_SCHEMA = "uscode-paired-span-bundle/v2"
 LEGACY_SCHEMA = "uscode-paired-span-census/v1"
 LEGACY_MANIFEST_SCHEMA = "uscode-paired-span-bundle/v1"
+COORDINATE_MANIFEST_SCHEMA = "uscode-paired-span-bundle/v3"
+COORDINATE_REPO_PREFIX = "autoformal/uscode/paired-v3"
+COORDINATE_TRANSPORT_SCHEMA = "paired-source-coordinate-transport/v1"
+COORDINATE_INDEX_SCHEMA = "paired-source-coordinate-index/v1"
 REPOSITORY = "justicedao/uscode-autoformal-span-cache"
 REPO_PREFIX = "autoformal/uscode/paired-v2"
 LEGACY_REPO_PREFIX = "autoformal/uscode/paired-v1"
@@ -277,6 +281,95 @@ def decode_artifact(artifact: Mapping, *, max_bytes: int = MAX_BYTES) -> bytes:
     return raw
 
 
+def validate_paired_source_coordinates(bundle: Mapping, *, expected_report_sha256=None):
+    """Replay explicit occurrence transport without granting source authority.
+
+    The optional caller pin is independent of the bundle's internal integrity
+    links. V1/v2 observations without transport cannot acquire coordinates here.
+    """
+    transport = bundle.get("coordinate_transport")
+    artifacts = bundle.get("artifacts", [])
+    coordinate_kinds = {"source_coordinate_report", "source_coordinate_index"}
+    if transport is None:
+        if (expected_report_sha256 is not None or "coordinate_transport" in bundle
+                or any(row.get("kind") in coordinate_kinds for row in artifacts)
+                or _mapping(bundle.get("manifest")).get("schema") == COORDINATE_MANIFEST_SCHEMA):
+            raise PairedCensusError("explicit coordinate transport is required")
+        return None
+    fields = {"schema", "report_artifact_sha256", "report_sha256", "index_artifact_sha256"}
+    if (type(transport) is not dict or set(transport) != fields
+            or transport["schema"] != COORDINATE_TRANSPORT_SCHEMA
+            or bundle.get("schema_version") != SCHEMA
+            or any(type(transport[key]) is not str or re.fullmatch(r"[0-9a-f]{64}", transport[key]) is None
+                   for key in fields - {"schema"})):
+        raise PairedCensusError("closed coordinate transport identity required")
+    manifest = bundle.get("manifest")
+    if manifest is not None and (manifest.get("schema") != COORDINATE_MANIFEST_SCHEMA
+            or manifest.get("coordinate_transport") != transport):
+        raise PairedCensusError("coordinate transport differs from its versioned manifest")
+    if expected_report_sha256 is not None and expected_report_sha256 != transport["report_sha256"]:
+        raise PairedCensusError("independent coordinate report pin differs")
+    if type(artifacts) is not list or any(type(row) is not dict for row in artifacts):
+        raise PairedCensusError("ordinary coordinate artifact rows required")
+    by_hash = {row.get("artifact_sha256"): row for row in artifacts}
+    if len(by_hash) != len(artifacts):
+        raise PairedCensusError("duplicate coordinate artifact identity")
+    if any(sum(row.get("kind") == kind for row in artifacts) != 1 for kind in coordinate_kinds):
+        raise PairedCensusError("one complete coordinate report and index required")
+    from .span_cache import SpanCacheError, _coordinate_load, validate_source_coordinate_rows
+    decoded = {}
+    for name, kind in (("report", "source_coordinate_report"), ("index", "source_coordinate_index")):
+        reference = transport[name + "_artifact_sha256"]
+        if reference not in by_hash or by_hash[reference].get("kind") != kind:
+            raise PairedCensusError("missing coordinate " + name + " artifact")
+        try:
+            decoded[name] = _coordinate_load(
+                decode_artifact(by_hash[reference]).decode("utf-8"), MAX_ARTIFACT_BYTES)
+        except (SpanCacheError, ValueError, TypeError, UnicodeError) as error:
+            raise PairedCensusError("invalid coordinate " + name + " artifact") from error
+    index, spans = decoded["index"], bundle.get("paired_spans")
+    if (type(index) is not dict or set(index) != {"schema", "observations"}
+            or index["schema"] != COORDINATE_INDEX_SCHEMA or type(index["observations"]) is not dict
+            or type(spans) is not list or not 1 <= len(spans) <= MAX_ROWS):
+        raise PairedCensusError("closed nonempty coordinate occurrence index required")
+    identities = [row["observation_id"] for row in spans]
+    if len(set(identities)) != len(spans) or set(index["observations"]) != set(identities):
+        raise PairedCensusError("coordinate index must cover exactly the paired observations")
+    rows = [{"source_span_id": row["source"]["span_id"], "text": row["source"]["text"],
+             "legal_id": row["source"]["legal_id"],
+             "source_provenance_json": index["observations"][row["observation_id"]]} for row in spans]
+    try:
+        validate_source_coordinate_rows(decoded["report"], rows,
+            expected_report_sha256=transport["report_sha256"])
+    except (SpanCacheError, ValueError, TypeError, KeyError) as error:
+        raise PairedCensusError("complete source-coordinate occurrence replay differs") from error
+    if any(row["source"]["revision"] != decoded["report"]["release_id"] for row in spans):
+        raise PairedCensusError("paired source revision differs from the replayed report release")
+    return {"report": decoded["report"], "report_sha256": transport["report_sha256"], "rows": rows}
+
+
+def _attach_source_coordinates(bundle, report, pin, rows, artifacts):
+    from .span_cache import SpanCacheError, validate_source_coordinate_rows
+    try:
+        validate_source_coordinate_rows(report, rows, expected_report_sha256=pin)
+        # Source metadata insertion order participates in legacy span identity.
+        # This artifact digest and the owner's canonical complete-report pin
+        # are distinct links and are deliberately not assumed to be equal.
+        raw = json.dumps(report, ensure_ascii=False, sort_keys=False,
+                         separators=(",", ":"), allow_nan=False).encode("utf-8")
+    except (SpanCacheError, ValueError, TypeError, KeyError, UnicodeError) as error:
+        raise PairedCensusError("complete source-coordinate occurrence replay differs") from error
+    report_ref = artifacts.add(report, "source_coordinate_report", exact=raw)
+    index = {"schema": COORDINATE_INDEX_SCHEMA,
+             "observations": {span["observation_id"]: row["source_provenance_json"]
+                              for span, row in zip(bundle["paired_spans"], rows)}}
+    index_ref = artifacts.add(index, "source_coordinate_index")
+    bundle["coordinate_transport"] = {"schema": COORDINATE_TRANSPORT_SCHEMA,
+        "report_artifact_sha256": report_ref, "report_sha256": pin, "index_artifact_sha256": index_ref}
+    bundle["artifacts"] = list(artifacts.rows.values())
+    validate_paired_source_coordinates(bundle, expected_report_sha256=pin)
+
+
 def _status(compiler: Mapping) -> str:
     return str(compiler.get("compiler_status") or compiler.get("status") or "not_observed")
 
@@ -358,6 +451,8 @@ def build_paired_census(
     code_identity: str = "unrecorded", model_identity: str = "unrecorded",
     max_rows: int = MAX_ROWS, max_bytes: int = MAX_BYTES,
     original_receipt: Mapping | None = None, release_id: str = "ipfs-uscode-5016b86a",
+    source_coordinate_report: Mapping | None = None,
+    expected_source_coordinate_report_sha256: str | None = None,
 ) -> dict:
     """Build bounded tables from runner ``exchange_rows`` or raw legacy rows.
 
@@ -371,10 +466,13 @@ def build_paired_census(
         raise PairedCensusError("positive row and byte bounds required")
     if any(not isinstance(x, str) or not x.strip() for x in (repository_id, agent_id, code_identity, model_identity)):
         raise PairedCensusError("repository, agent and producer identities required")
+    coordinate_opt_in = source_coordinate_report is not None or expected_source_coordinate_report_sha256 is not None
+    if coordinate_opt_in and (source_coordinate_report is None or expected_source_coordinate_report_sha256 is None):
+        raise PairedCensusError("coordinate report and independent complete-report pin are both required")
     artifacts = _Artifacts(max_bytes)
     receipt_ref = artifacts.add(original_receipt, "original_producer_receipt") if original_receipt is not None else None
     receipt_rows = {row.get("source_span_id"): index for index, row in enumerate(original_receipt.get("rows", []))} if original_receipt is not None else {}
-    paired, goals, spans = [], {}, {}
+    paired, goals, spans, coordinate_rows = [], {}, {}, []
     retained_size = 0
     for original in observations:
         if len(paired) >= max_rows or not isinstance(original, Mapping):
@@ -511,6 +609,11 @@ def build_paired_census(
         row["observation_id"] = _sha(_json(row))
         paired.append(row)
         spans[span_id] = row
+        if coordinate_opt_in:
+            if type(original.get("source_provenance_json")) is not str:
+                raise PairedCensusError("each coordinate observation requires its existing source provenance reference")
+            coordinate_rows.append({"source_span_id": span_id, "text": text,
+                "legal_id": row["source"]["legal_id"], "source_provenance_json": original["source_provenance_json"]})
         retained_size += len(_json(row))
         if retained_size + artifacts.decoded_bytes > max_bytes:
             raise PairedCensusError("bundle decoded bytes exceed bound")
@@ -595,10 +698,18 @@ def build_paired_census(
             span["goal_ids"].append(identifier)
     if sum(len(_json(row)) for row in paired) + sum(len(_json(row)) for row in goals.values()) + artifacts.decoded_bytes > max_bytes:
         raise PairedCensusError("bundle decoded bytes exceed bound")
-    return {"schema_version": SCHEMA, "repository_id": repository_id, "agent_id": agent_id,
+    bundle = {"schema_version": SCHEMA, "repository_id": repository_id, "agent_id": agent_id,
             "paired_spans": paired, "goals": list(goals.values()), "artifacts": list(artifacts.rows.values()),
             "original_receipt_artifact_sha256": receipt_ref,
             "admitted": False, "formalized": False, "enqueued": False}
+    if coordinate_opt_in:
+        if not 1 <= len(paired) <= MAX_ROWS:
+            raise PairedCensusError("coordinate transport requires one to 128 paired observations")
+        _attach_source_coordinates(bundle, source_coordinate_report,
+            expected_source_coordinate_report_sha256, coordinate_rows, artifacts)
+        if sum(len(_json(row)) for row in paired + bundle["goals"]) + artifacts.decoded_bytes > max_bytes:
+            raise PairedCensusError("bundle decoded bytes exceed bound")
+    return bundle
 
 
 def arrow_schemas(version: str = SCHEMA) -> dict:
@@ -663,18 +774,23 @@ def write_paired_census_bundle(bundle: Mapping, directory: str | Path) -> dict:
         raise PairedCensusError("unsupported paired census schema")
     if _sha(Path(__file__).read_bytes()) != EXPORTER_SOURCE_SHA256:
         raise PairedCensusError("paired exporter source changed after import; reload before export")
+    coordinates = validate_paired_source_coordinates(bundle)
+    prefix = COORDINATE_REPO_PREFIX if coordinates is not None else REPO_PREFIX
     root = Path(directory)
     root.mkdir(parents=True, exist_ok=True)
     agent = re.sub(r"[^a-zA-Z0-9_-]", "-", str(bundle.get("agent_id") or "paired-census"))[:64]
     # A table can be byte-identical across different batches (especially empty
     # goals). Give each complete bundle its own local/remote paths so eviction
     # of one verified publication cannot remove another batch's pending table.
-    bundle_key = _sha(_json({
+    key_inputs = {
         "schema_version": bundle["schema_version"], "repository_id": bundle["repository_id"],
         "agent_id": bundle["agent_id"], "paired_spans": bundle["paired_spans"], "goals": bundle["goals"],
         "artifacts": [{k: v for k, v in row.items() if k != "payload"} for row in bundle["artifacts"]],
         "original_receipt_artifact_sha256": bundle.get("original_receipt_artifact_sha256"),
-    }))
+    }
+    if coordinates is not None:
+        key_inputs["coordinate_transport"] = bundle["coordinate_transport"]
+    bundle_key = _sha(_json(key_inputs))
     schemas, entries = arrow_schemas(), {}
     for name in TABLE_NAMES:
         rows = bundle[name]
@@ -687,16 +803,19 @@ def write_paired_census_bundle(bundle: Mapping, directory: str | Path) -> dict:
         filename = f"{name}-{bundle_key}-{digest}.parquet"
         path = root / filename
         _write_immutable(path, raw)
-        entries[name] = {"path": str(path), "path_in_repo": f"{REPO_PREFIX}/{name}/{agent}/{filename}",
+        entries[name] = {"path": str(path), "path_in_repo": f"{prefix}/{name}/{agent}/{filename}",
                          "filename": filename, "sha256": digest, "bytes": len(raw), "row_count": len(rows)}
-    manifest = {"schema": MANIFEST_SCHEMA, "repository_id": bundle["repository_id"], "agent_id": bundle["agent_id"],
+    manifest = {"schema": COORDINATE_MANIFEST_SCHEMA if coordinates is not None else MANIFEST_SCHEMA,
+                "repository_id": bundle["repository_id"], "agent_id": bundle["agent_id"],
                 "exporter_sha256": EXPORTER_SOURCE_SHA256,
                 "tables": {name: {k: v for k, v in entry.items() if k != "path"} for name, entry in entries.items()},
                 "original_receipt_artifact_sha256": bundle.get("original_receipt_artifact_sha256"),
                 "admitted": False, "formalized": False, "enqueued": False}
+    if coordinates is not None:
+        manifest["coordinate_transport"] = bundle["coordinate_transport"]
     fingerprint = _sha(_json(manifest))
     filename = f"manifest-{fingerprint}.json"
-    manifest.update(fingerprint=fingerprint, path_in_repo=f"{REPO_PREFIX}/manifests/{agent}/{filename}")
+    manifest.update(fingerprint=fingerprint, path_in_repo=f"{prefix}/manifests/{agent}/{filename}")
     raw = _json(manifest)
     path = root / filename
     _write_immutable(path, raw)
@@ -714,10 +833,13 @@ def load_paired_census_bundle(manifest_path: str | Path, *, max_bytes: int = MAX
         raise PairedCensusError("manifest must be a bounded regular file")
     manifest_raw = path.read_bytes()
     manifest = json.loads(manifest_raw)
-    if manifest.get("schema") not in {MANIFEST_SCHEMA, LEGACY_MANIFEST_SCHEMA} or set(manifest.get("tables", {})) != set(TABLE_NAMES):
+    if manifest.get("schema") not in {MANIFEST_SCHEMA, LEGACY_MANIFEST_SCHEMA, COORDINATE_MANIFEST_SCHEMA} or set(manifest.get("tables", {})) != set(TABLE_NAMES):
         raise PairedCensusError("unsupported manifest schema or tables")
     version = LEGACY_SCHEMA if manifest["schema"] == LEGACY_MANIFEST_SCHEMA else SCHEMA
-    repo_prefix = LEGACY_REPO_PREFIX if version == LEGACY_SCHEMA else REPO_PREFIX
+    repo_prefix = (COORDINATE_REPO_PREFIX if manifest["schema"] == COORDINATE_MANIFEST_SCHEMA
+                   else LEGACY_REPO_PREFIX if version == LEGACY_SCHEMA else REPO_PREFIX)
+    if (manifest["schema"] == COORDINATE_MANIFEST_SCHEMA) is not ("coordinate_transport" in manifest):
+        raise PairedCensusError("coordinate transport requires its explicit versioned manifest")
     if "exporter_sha256" in manifest and re.fullmatch(r"[0-9a-f]{64}", str(manifest["exporter_sha256"])) is None:
         raise PairedCensusError("invalid exporter source identity")
     if manifest.get("fingerprint") != _sha(_json({k: v for k, v in manifest.items() if k not in {"fingerprint", "path_in_repo"}})):
@@ -874,11 +996,16 @@ def load_paired_census_bundle(manifest_path: str | Path, *, max_bytes: int = MAX
             observed = identities[span["source"]["span_id"]]
             if observed.get("text") != span["source"]["text"]:
                 raise PairedCensusError("original receipt source text differs")
-    return {"schema_version": version, "repository_id": manifest["repository_id"], "agent_id": manifest["agent_id"],
+    loaded = {"schema_version": version, "repository_id": manifest["repository_id"], "agent_id": manifest["agent_id"],
             **tables, "manifest": manifest, "original_receipt": original_receipt, "portable_goal_rows": portable_goals,
             "table_paths": table_paths, "manifest_sha256": _sha(manifest_raw),
             "admitted": False, "formalized": False, "enqueued": False}
-
+    if manifest["schema"] == COORDINATE_MANIFEST_SCHEMA:
+        loaded["coordinate_transport"] = manifest["coordinate_transport"]
+    coordinates = validate_paired_source_coordinates(loaded)
+    if coordinates is not None:
+        loaded["source_coordinates"] = coordinates
+    return loaded
 
 def project_constitution_inventory(shard: Mapping[str, Any]) -> dict[str, Any]:
     """Project spans already taken from the constitution inventory. No admission and no roundtrip_ok."""
@@ -944,3 +1071,4 @@ def article_1_span_inventory(source: str | Mapping[str, Any]) -> dict[str, Any]:
     from .constitution_inventory import inventory_article_1
 
     return project_constitution_inventory(inventory_article_1(source))
+

@@ -1,0 +1,1300 @@
+{
+  "documents": [
+    {
+      "bytes": 15551,
+      "git_blob": "c155bec4a8899f10c9916d30f86aef88fa34394e",
+      "path": "docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 15551,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+        "sha256": "ee8cb120795ce9ee8c696d952169da5544c34e3ae4f2f6adeeacc58701532fa6"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "ee8cb120795ce9ee8c696d952169da5544c34e3ae4f2f6adeeacc58701532fa6"
+    },
+    {
+      "bytes": 6691,
+      "git_blob": "cd2346ed22e597230d1302cb009126404d2868be",
+      "path": "docs/autoencoders/corpus_definition_review.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 6691,
+            "kind": "pre_migration_document",
+            "member": "objects/322f1be6ee07d4cadf5149ef50767538fa07e630b8b45a8bdb55c7a3ce672c3b",
+            "path": "docs/autoformalization/corpus_definition_review.md",
+            "scope": "datasets_repository",
+            "sha256": "322f1be6ee07d4cadf5149ef50767538fa07e630b8b45a8bdb55c7a3ce672c3b"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/corpus_definition_review.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "322f1be6ee07d4cadf5149ef50767538fa07e630b8b45a8bdb55c7a3ce672c3b"
+    },
+    {
+      "bytes": 8388,
+      "git_blob": "5929d06335e54b632a313fd5a07032fe7cf25760",
+      "path": "docs/autoencoders/corpus_definition_review_v2.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 8388,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/corpus_definition_review_v2.md",
+        "sha256": "69859fc8ac970a36ad9f493d0c44acf460eb8a156b2da9c983397f29f6c6bc4d"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/corpus_definition_review_v2.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "69859fc8ac970a36ad9f493d0c44acf460eb8a156b2da9c983397f29f6c6bc4d"
+    },
+    {
+      "bytes": 9243,
+      "git_blob": "7ac676283fe14e85c4709feb4d79eb8c964c385e",
+      "path": "docs/autoencoders/corpus_definition_use_review_v2.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 9243,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/corpus_definition_use_review_v2.md",
+        "sha256": "44706e2b8a6efc89023ad12d80024afc762b6a28bae7abeddf9d3822cb6e78bc"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/corpus_definition_use_review_v2.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "44706e2b8a6efc89023ad12d80024afc762b6a28bae7abeddf9d3822cb6e78bc"
+    },
+    {
+      "bytes": 9577,
+      "git_blob": "4a032f274da614f3070f9f8401230da78216f864",
+      "path": "docs/autoencoders/corpus_definition_use_v2.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 9577,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/corpus_definition_use_v2.md",
+        "sha256": "4d7ed9e181bf6cd5975dbbf980dfbb13911e86276a0ed86fd4b5c3aaa5d41dfc"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/corpus_definition_use_v2.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "4d7ed9e181bf6cd5975dbbf980dfbb13911e86276a0ed86fd4b5c3aaa5d41dfc"
+    },
+    {
+      "bytes": 7970,
+      "git_blob": "1e051978fb1fdd220ace54cbb34bb56e3bbfcf45",
+      "path": "docs/autoencoders/corpus_parent_alignment_adapter.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 7970,
+            "kind": "pre_migration_document",
+            "member": "objects/1cea5bc0f91a0ebe86c2a315161f11870539e3bc9d31a072ce29fa875fd946df",
+            "path": "docs/autoformalization/corpus_parent_alignment_adapter.md",
+            "scope": "datasets_repository",
+            "sha256": "1cea5bc0f91a0ebe86c2a315161f11870539e3bc9d31a072ce29fa875fd946df"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/corpus_parent_alignment_adapter.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "1cea5bc0f91a0ebe86c2a315161f11870539e3bc9d31a072ce29fa875fd946df"
+    },
+    {
+      "bytes": 7457,
+      "git_blob": "92b471a574062a55e802be72188e29037735cd34",
+      "path": "docs/autoencoders/corpus_parent_occurrence_adapter.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 7457,
+            "kind": "pre_migration_document",
+            "member": "objects/4b5e2b766bf17bb2894a17e323c3d3f8d2b3583e6c123f57a05bd8350a80049c",
+            "path": "docs/autoformalization/corpus_parent_occurrence_adapter.md",
+            "scope": "datasets_repository",
+            "sha256": "4b5e2b766bf17bb2894a17e323c3d3f8d2b3583e6c123f57a05bd8350a80049c"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/corpus_parent_occurrence_adapter.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "4b5e2b766bf17bb2894a17e323c3d3f8d2b3583e6c123f57a05bd8350a80049c"
+    },
+    {
+      "bytes": 7363,
+      "git_blob": "48e0fabc3626dfcc92d86601b9d7fd6cf1a1003a",
+      "path": "docs/autoencoders/corpus_source_review.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 7363,
+            "kind": "pre_migration_document",
+            "member": "objects/67538cf91c4cf4211d2fdacebb211e78aa0795b9535aaa6fd2baf8ce6443cda1",
+            "path": "docs/autoformalization/corpus_source_review.md",
+            "scope": "datasets_repository",
+            "sha256": "67538cf91c4cf4211d2fdacebb211e78aa0795b9535aaa6fd2baf8ce6443cda1"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/corpus_source_review.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "67538cf91c4cf4211d2fdacebb211e78aa0795b9535aaa6fd2baf8ce6443cda1"
+    },
+    {
+      "bytes": 8443,
+      "git_blob": "09510ed55efbdb8482cc6f8ffd76b6e6bb720342",
+      "path": "docs/autoencoders/corpus_source_review_packets.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 8443,
+            "kind": "pre_migration_document",
+            "member": "objects/3265768bf94e54aca0102ff608efdeaf73ca0e41d6b0ad9c0b0cdfdd3a4fa341",
+            "path": "docs/autoformalization/corpus_source_review_packets.md",
+            "scope": "datasets_repository",
+            "sha256": "3265768bf94e54aca0102ff608efdeaf73ca0e41d6b0ad9c0b0cdfdd3a4fa341"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/corpus_source_review_packets.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "3265768bf94e54aca0102ff608efdeaf73ca0e41d6b0ad9c0b0cdfdd3a4fa341"
+    },
+    {
+      "bytes": 73641,
+      "git_blob": "6d5d6772eaac8349ee3817f0575a09685ca9fc58",
+      "path": "docs/autoencoders/four_width_training.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 73641,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/four_width_training.md",
+        "sha256": "6d6322f89d14db005c0b040dcfb5a0bc412d110ac7a3f9293a16471d56c7e675"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/four_width_training.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "6d6322f89d14db005c0b040dcfb5a0bc412d110ac7a3f9293a16471d56c7e675"
+    },
+    {
+      "bytes": 8585,
+      "git_blob": "dd3246c933ca5bb11f7099a621a637e30dc3e9d8",
+      "path": "docs/autoencoders/gte_affine_alignment.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 8585,
+            "kind": "pre_module_migration_document",
+            "member": "objects/2adbcc7e976cf7749d798c1b1283557cd141f60cc93c4f6badaaf99cd1a29a56",
+            "path": "docs/autoformalization/gte_affine_alignment.md",
+            "scope": "datasets_repository",
+            "sha256": "2adbcc7e976cf7749d798c1b1283557cd141f60cc93c4f6badaaf99cd1a29a56"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_affine_alignment.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "2adbcc7e976cf7749d798c1b1283557cd141f60cc93c4f6badaaf99cd1a29a56"
+    },
+    {
+      "bytes": 9003,
+      "git_blob": "224579523db830fd82e0a95db54cb42f6022a5fe",
+      "path": "docs/autoencoders/gte_affine_bridge_preparation.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 9003,
+            "kind": "pre_module_migration_document",
+            "member": "objects/bdda99ce111dfab18b2eba029b3f36af76abdae6caf37d529a39cecc94f7291f",
+            "path": "docs/autoformalization/gte_affine_bridge_preparation.md",
+            "scope": "datasets_repository",
+            "sha256": "bdda99ce111dfab18b2eba029b3f36af76abdae6caf37d529a39cecc94f7291f"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_affine_bridge_preparation.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "bdda99ce111dfab18b2eba029b3f36af76abdae6caf37d529a39cecc94f7291f"
+    },
+    {
+      "bytes": 9616,
+      "git_blob": "40158b8a546bee46c6c77a8fe2a5b4aa65ec3361",
+      "path": "docs/autoencoders/gte_aligned_decoder.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 9616,
+            "kind": "pre_module_migration_document",
+            "member": "objects/53bb6572eb61e1a3b4c8b58a1f20e6b1a7069e13d23b42def09099c9f0248103",
+            "path": "docs/autoformalization/gte_aligned_decoder.md",
+            "scope": "datasets_repository",
+            "sha256": "53bb6572eb61e1a3b4c8b58a1f20e6b1a7069e13d23b42def09099c9f0248103"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_aligned_decoder.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "53bb6572eb61e1a3b4c8b58a1f20e6b1a7069e13d23b42def09099c9f0248103"
+    },
+    {
+      "bytes": 10326,
+      "git_blob": "264793d53d601f38298a43cd246cca36331d8c47",
+      "path": "docs/autoencoders/gte_aligned_interface_training.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 10326,
+            "kind": "pre_module_migration_document",
+            "member": "objects/bd64e6a5af58c3c979d15946824248895680e7fc6b0ccac93c251ee0f47fa3cd",
+            "path": "docs/autoformalization/gte_aligned_interface_training.md",
+            "scope": "datasets_repository",
+            "sha256": "bd64e6a5af58c3c979d15946824248895680e7fc6b0ccac93c251ee0f47fa3cd"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_aligned_interface_training.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "bd64e6a5af58c3c979d15946824248895680e7fc6b0ccac93c251ee0f47fa3cd"
+    },
+    {
+      "bytes": 10680,
+      "git_blob": "735a2c601ed5e5db0f843662fd764f609f331f2e",
+      "path": "docs/autoencoders/gte_decoder_interface_training.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 10680,
+            "kind": "pre_module_migration_document",
+            "member": "objects/64be97830c12a4a6f5ecc039304a5773f9e80ec133aac590d80619675d0df74b",
+            "path": "docs/autoformalization/gte_decoder_interface_training.md",
+            "scope": "datasets_repository",
+            "sha256": "64be97830c12a4a6f5ecc039304a5773f9e80ec133aac590d80619675d0df74b"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_decoder_interface_training.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "64be97830c12a4a6f5ecc039304a5773f9e80ec133aac590d80619675d0df74b"
+    },
+    {
+      "bytes": 10467,
+      "git_blob": "c6423c14e52697a9cd5b493018b70db1de582faa",
+      "path": "docs/autoencoders/gte_decoder_knowledge_transfer.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 10467,
+            "kind": "pre_module_migration_document",
+            "member": "objects/e50f53bf4db5472ab0d42f78021f29051a184cbfbe84f77210519e00097c8026",
+            "path": "docs/autoformalization/gte_decoder_knowledge_transfer.md",
+            "scope": "datasets_repository",
+            "sha256": "e50f53bf4db5472ab0d42f78021f29051a184cbfbe84f77210519e00097c8026"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_decoder_knowledge_transfer.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "e50f53bf4db5472ab0d42f78021f29051a184cbfbe84f77210519e00097c8026"
+    },
+    {
+      "bytes": 11462,
+      "git_blob": "2c4e4f03c18413c5babab45c84016b0369ace2b1",
+      "path": "docs/autoencoders/gte_decoder_native_inputs.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 11462,
+            "kind": "pre_module_migration_document",
+            "member": "objects/749ff921c4aaa887293881994f39a8e8194cbf9d38fb00d1654201dc1af58602",
+            "path": "docs/autoformalization/gte_decoder_native_inputs.md",
+            "scope": "datasets_repository",
+            "sha256": "749ff921c4aaa887293881994f39a8e8194cbf9d38fb00d1654201dc1af58602"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_decoder_native_inputs.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "749ff921c4aaa887293881994f39a8e8194cbf9d38fb00d1654201dc1af58602"
+    },
+    {
+      "bytes": 17437,
+      "git_blob": "b1c046f12bcf683984d34afc1757efb7b229a465",
+      "path": "docs/autoencoders/gte_decoder_reuse.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 17437,
+            "kind": "pre_module_migration_document",
+            "member": "objects/5c21a410b800598a36da87d4d5498ae9d8abf657911faa1e299a9eade06257ff",
+            "path": "docs/autoformalization/gte_decoder_reuse.md",
+            "scope": "datasets_repository",
+            "sha256": "5c21a410b800598a36da87d4d5498ae9d8abf657911faa1e299a9eade06257ff"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_decoder_reuse.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "5c21a410b800598a36da87d4d5498ae9d8abf657911faa1e299a9eade06257ff"
+    },
+    {
+      "bytes": 11232,
+      "git_blob": "bbab183a2f5019a9318ac6b84fbcd997d1c25bcd",
+      "path": "docs/autoencoders/gte_decoder_source_evaluation.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 11232,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/gte_decoder_source_evaluation.md",
+        "sha256": "b930d05e2c7cba60a60747717dfaafcc3acfecb4434a7d4d953cb2a227ad48a2"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_decoder_source_evaluation.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "b930d05e2c7cba60a60747717dfaafcc3acfecb4434a7d4d953cb2a227ad48a2"
+    },
+    {
+      "bytes": 8254,
+      "git_blob": "99e3caf6ff373ea9c8a1e4251785b8ceda5fe8d9",
+      "path": "docs/autoencoders/gte_embedding_reuse.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 8254,
+            "kind": "pre_module_migration_document",
+            "member": "objects/61a15804c94fda04d6180f1c403fd003970ce722452554035a665cd7ffb626bd",
+            "path": "docs/autoformalization/gte_embedding_reuse.md",
+            "scope": "datasets_repository",
+            "sha256": "61a15804c94fda04d6180f1c403fd003970ce722452554035a665cd7ffb626bd"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_embedding_reuse.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "61a15804c94fda04d6180f1c403fd003970ce722452554035a665cd7ffb626bd"
+    },
+    {
+      "bytes": 10355,
+      "git_blob": "2a3273f121a861af96e4038fc494a4f3578b3943",
+      "path": "docs/autoencoders/gte_migration_preparation.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 10355,
+            "kind": "pre_module_migration_document",
+            "member": "objects/0b5be34dedb262258c06709e76157862703a9708a2e005627a4f46145ac13e7d",
+            "path": "docs/autoformalization/gte_migration_preparation.md",
+            "scope": "datasets_repository",
+            "sha256": "0b5be34dedb262258c06709e76157862703a9708a2e005627a4f46145ac13e7d"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_migration_preparation.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "0b5be34dedb262258c06709e76157862703a9708a2e005627a4f46145ac13e7d"
+    },
+    {
+      "bytes": 48025,
+      "git_blob": "4cab30386d51e6faded6939c730c1d9f96c577ac",
+      "path": "docs/autoencoders/gte_multilingual_migration_plan.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 48025,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/gte_multilingual_migration_plan.md",
+        "sha256": "9d7ec5a66a5786223f75412a5bb3d3e97d2e426fd38d5e226afb641ddda36248"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_multilingual_migration_plan.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "9d7ec5a66a5786223f75412a5bb3d3e97d2e426fd38d5e226afb641ddda36248"
+    },
+    {
+      "bytes": 9757,
+      "git_blob": "24065ffa618bf7a84cce40c2f52372f210ae1ffc",
+      "path": "docs/autoencoders/gte_multilingual_preparation.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 9757,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/gte_multilingual_preparation.md",
+        "sha256": "d7281ebee1a31e59965e2e6a5e538c2a99231ce4ce5cb9d28644fccba52c7d96"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_multilingual_preparation.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "d7281ebee1a31e59965e2e6a5e538c2a99231ce4ce5cb9d28644fccba52c7d96"
+    },
+    {
+      "bytes": 9618,
+      "git_blob": "3daae192f58dd240e72747e4b3d9cf53532e121d",
+      "path": "docs/autoencoders/gte_parallel_model_workers.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 9618,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/gte_parallel_model_workers.md",
+        "sha256": "7c0c1730a4fcbc5a511a78d09c388cf699db0d912f0be030d6f390578fd5564a"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/gte_parallel_model_workers.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "7c0c1730a4fcbc5a511a78d09c388cf699db0d912f0be030d6f390578fd5564a"
+    },
+    {
+      "bytes": 7919,
+      "git_blob": "5e066df94a38a99b7b38a293c3ed688737f02f1e",
+      "path": "docs/autoencoders/legacy_linguistic_training.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 7919,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/legacy_linguistic_training.md",
+        "sha256": "13605cd96cbf93d79c330364da34bb1977e5a8ef5e61c4814cb8cb926b661d95"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legacy_linguistic_training.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "13605cd96cbf93d79c330364da34bb1977e5a8ef5e61c4814cb8cb926b661d95"
+    },
+    {
+      "bytes": 24821,
+      "git_blob": "40a64b1a870697c83dbb0d48c12b1c13b9487a75",
+      "path": "docs/autoencoders/legacy_teacher_fidelity.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 24821,
+            "kind": "pre_module_migration_document",
+            "member": "objects/4b3e36ab0826edeba808e59c458c3e6b4e05fb91fab96a9ba252bbafa0e0eeb4",
+            "path": "docs/autoformalization/legacy_teacher_fidelity.md",
+            "scope": "datasets_repository",
+            "sha256": "4b3e36ab0826edeba808e59c458c3e6b4e05fb91fab96a9ba252bbafa0e0eeb4"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legacy_teacher_fidelity.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "4b3e36ab0826edeba808e59c458c3e6b4e05fb91fab96a9ba252bbafa0e0eeb4"
+    },
+    {
+      "bytes": 6380,
+      "git_blob": "96d6912a96c00ff986583b21fba5c5ee1f019722",
+      "path": "docs/autoformalization/legal-joint-readout-retention-20261014.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 6380,
+            "kind": "pre_migration_document",
+            "member": "objects/2b5075d09884853072f6f725123432e46369f8f4ad66320e24bf0493a9d6ff0c",
+            "path": "docs/autoformalization/legal-joint-readout-retention-20261014.md",
+            "scope": "datasets_repository",
+            "sha256": "2b5075d09884853072f6f725123432e46369f8f4ad66320e24bf0493a9d6ff0c"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoformalization/legal-joint-readout-retention-20261014.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "2b5075d09884853072f6f725123432e46369f8f4ad66320e24bf0493a9d6ff0c"
+    },
+    {
+      "bytes": 18685,
+      "git_blob": "29dad59f281984d065644aa7a6013e114db290ab",
+      "path": "docs/autoencoders/legal_architecture_comparison.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 18685,
+            "kind": "pre_module_migration_document",
+            "member": "objects/c3e8803c82639abba98e9be4dc16db7c246a7b1281147120f1b6fa3e11518a7c",
+            "path": "docs/autoformalization/legal_architecture_comparison.md",
+            "scope": "datasets_repository",
+            "sha256": "c3e8803c82639abba98e9be4dc16db7c246a7b1281147120f1b6fa3e11518a7c"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_architecture_comparison.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "c3e8803c82639abba98e9be4dc16db7c246a7b1281147120f1b6fa3e11518a7c"
+    },
+    {
+      "bytes": 16345,
+      "git_blob": "76c380c3b09059644dcaf44a7d38346a2ea1724c",
+      "path": "docs/autoencoders/legal_autoencoder_lineages.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 16345,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/legal_autoencoder_lineages.md",
+        "sha256": "d25a225ed9eb6b6436632fb29da9ff75a5e16a988feff1e9ed8dffc90fef7824"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_autoencoder_lineages.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "d25a225ed9eb6b6436632fb29da9ff75a5e16a988feff1e9ed8dffc90fef7824"
+    },
+    {
+      "bytes": 9012,
+      "git_blob": "81d10051130b458e950b67106990f1c76ea8ee0a",
+      "path": "docs/autoencoders/legal_corpus_contracts.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 9012,
+            "kind": "pre_migration_document",
+            "member": "objects/57f81cb9665a44fee16fc63f50c5a46a116efe60251d2b036ac94a2c5151e45c",
+            "path": "docs/autoformalization/legal_corpus_contracts.md",
+            "scope": "datasets_repository",
+            "sha256": "57f81cb9665a44fee16fc63f50c5a46a116efe60251d2b036ac94a2c5151e45c"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_corpus_contracts.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "57f81cb9665a44fee16fc63f50c5a46a116efe60251d2b036ac94a2c5151e45c"
+    },
+    {
+      "bytes": 8329,
+      "git_blob": "1e1f13ffbefd46c2d592b34d3f9b69021336e78f",
+      "path": "docs/autoencoders/legal_corpus_definition_norm_adapter.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 8329,
+            "kind": "pre_migration_document",
+            "member": "objects/4d8c1a892e99b430dd27d2a0590ae7a02dac19e11e20aecc8c06b19ab5603d7a",
+            "path": "docs/autoformalization/legal_corpus_definition_norm_adapter.md",
+            "scope": "datasets_repository",
+            "sha256": "4d8c1a892e99b430dd27d2a0590ae7a02dac19e11e20aecc8c06b19ab5603d7a"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_corpus_definition_norm_adapter.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "4d8c1a892e99b430dd27d2a0590ae7a02dac19e11e20aecc8c06b19ab5603d7a"
+    },
+    {
+      "bytes": 8773,
+      "git_blob": "d236320fe037baa723f985317e8760626cea4ff5",
+      "path": "docs/autoencoders/legal_corpus_definition_use_lake_v2.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 8773,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/legal_corpus_definition_use_lake_v2.md",
+        "sha256": "59aada044248343ae81583bd88e2ecbab995574fa80017ad72538bc42ec2165c"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_corpus_definition_use_lake_v2.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "59aada044248343ae81583bd88e2ecbab995574fa80017ad72538bc42ec2165c"
+    },
+    {
+      "bytes": 18141,
+      "git_blob": "99f78f20d2abd381678bf9ee41a8576af84202c2",
+      "path": "docs/autoencoders/legal_corpus_definition_use_native_v2.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 18141,
+            "kind": "pre_migration_document",
+            "member": "objects/315446a2c82e79b7594c65aea8da05397bc3f0f9c570a6180eeee2c1d708c05b",
+            "path": "docs/autoencoders/legal_corpus_definition_use_native_v2.md",
+            "scope": "datasets_repository",
+            "sha256": "315446a2c82e79b7594c65aea8da05397bc3f0f9c570a6180eeee2c1d708c05b"
+          },
+          {
+            "bytes": 18141,
+            "kind": "pre_module_migration_document",
+            "member": "objects/315446a2c82e79b7594c65aea8da05397bc3f0f9c570a6180eeee2c1d708c05b",
+            "path": "docs/autoformalization/legal_corpus_definition_use_native_v2.md",
+            "scope": "datasets_repository",
+            "sha256": "315446a2c82e79b7594c65aea8da05397bc3f0f9c570a6180eeee2c1d708c05b"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_corpus_definition_use_native_v2.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "315446a2c82e79b7594c65aea8da05397bc3f0f9c570a6180eeee2c1d708c05b"
+    },
+    {
+      "bytes": 6743,
+      "git_blob": "08ecd050e9cb88a94a27be209fbf55ec66d87a80",
+      "path": "docs/autoencoders/legal_corpus_graph_exchange.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 6743,
+            "kind": "pre_migration_document",
+            "member": "objects/e0ea63497e5d8f6fd6ca62390b6ae86953beb6b58ec6a766cd42626adf966d10",
+            "path": "docs/autoformalization/legal_corpus_graph_exchange.md",
+            "scope": "datasets_repository",
+            "sha256": "e0ea63497e5d8f6fd6ca62390b6ae86953beb6b58ec6a766cd42626adf966d10"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_corpus_graph_exchange.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "e0ea63497e5d8f6fd6ca62390b6ae86953beb6b58ec6a766cd42626adf966d10"
+    },
+    {
+      "bytes": 5240,
+      "git_blob": "4c2848ef1baba231df4856089efe2a0c8fdbc3e2",
+      "path": "docs/autoencoders/legal_corpus_incremental.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 5240,
+            "kind": "pre_migration_document",
+            "member": "objects/7d441d26ae131224274358b3ce5d762f5e51b43384e03aed5f113b08228b23c4",
+            "path": "docs/autoformalization/legal_corpus_incremental.md",
+            "scope": "datasets_repository",
+            "sha256": "7d441d26ae131224274358b3ce5d762f5e51b43384e03aed5f113b08228b23c4"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_corpus_incremental.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "7d441d26ae131224274358b3ce5d762f5e51b43384e03aed5f113b08228b23c4"
+    },
+    {
+      "bytes": 6388,
+      "git_blob": "9dfba85dbe7aa2d24506f4b3e3246a8c96ec49c5",
+      "path": "docs/autoencoders/legal_corpus_lake.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 6388,
+            "kind": "pre_migration_document",
+            "member": "objects/fdf9c16deb0a4efd5822d7b69b6d0ac7a8c385a185bad986f31a4d2bde5febe6",
+            "path": "docs/autoformalization/legal_corpus_lake.md",
+            "scope": "datasets_repository",
+            "sha256": "fdf9c16deb0a4efd5822d7b69b6d0ac7a8c385a185bad986f31a4d2bde5febe6"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_corpus_lake.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "fdf9c16deb0a4efd5822d7b69b6d0ac7a8c385a185bad986f31a4d2bde5febe6"
+    },
+    {
+      "bytes": 4208,
+      "git_blob": "530a6e0b2bb1edd2a8fc3cc700b4512b8cf75b9e",
+      "path": "docs/autoencoders/legal_corpus_legacy_source_join.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 4208,
+            "kind": "pre_migration_document",
+            "member": "objects/1955ad768df2d0e9eb76e86726924e09d0c4a51372e4f696186823b2df0d4ffb",
+            "path": "docs/autoformalization/legal_corpus_legacy_source_join.md",
+            "scope": "datasets_repository",
+            "sha256": "1955ad768df2d0e9eb76e86726924e09d0c4a51372e4f696186823b2df0d4ffb"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_corpus_legacy_source_join.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "1955ad768df2d0e9eb76e86726924e09d0c4a51372e4f696186823b2df0d4ffb"
+    },
+    {
+      "bytes": 6261,
+      "git_blob": "b234999c69960b29a3a6f49da8b944bce64c8f81",
+      "path": "docs/autoencoders/legal_corpus_proposed_graph_adapter.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 6261,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/legal_corpus_proposed_graph_adapter.md",
+        "sha256": "195d7c647ce53fc04d391bee6c24614df45da63af37e18f66eec11ed1032fb12"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_corpus_proposed_graph_adapter.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "195d7c647ce53fc04d391bee6c24614df45da63af37e18f66eec11ed1032fb12"
+    },
+    {
+      "bytes": 5567,
+      "git_blob": "8b95dd2a64400090054396903b2bbbbfcadf3ea0",
+      "path": "docs/autoencoders/legal_corpus_shared_lake.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 5567,
+            "kind": "pre_migration_document",
+            "member": "objects/3749b672d516358c6b0f81d260f6e63dee9583c8251f618de9e591b1d66a140f",
+            "path": "docs/autoformalization/legal_corpus_shared_lake.md",
+            "scope": "datasets_repository",
+            "sha256": "3749b672d516358c6b0f81d260f6e63dee9583c8251f618de9e591b1d66a140f"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_corpus_shared_lake.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "3749b672d516358c6b0f81d260f6e63dee9583c8251f618de9e591b1d66a140f"
+    },
+    {
+      "bytes": 5921,
+      "git_blob": "6aeca3e8a02bd80f40c5d2e075c86bfb662a699f",
+      "path": "docs/autoencoders/legal_corpus_span_adapter.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 5921,
+            "kind": "pre_migration_document",
+            "member": "objects/e16269dca6f2001b1815f798bf582f5812fd745c2a82d0cf5e4daea3a9d6bd93",
+            "path": "docs/autoformalization/legal_corpus_span_adapter.md",
+            "scope": "datasets_repository",
+            "sha256": "e16269dca6f2001b1815f798bf582f5812fd745c2a82d0cf5e4daea3a9d6bd93"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_corpus_span_adapter.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "e16269dca6f2001b1815f798bf582f5812fd745c2a82d0cf5e4daea3a9d6bd93"
+    },
+    {
+      "bytes": 4625,
+      "git_blob": "d583f4a806046514cb4998cea65a16623d48e41f",
+      "path": "docs/autoencoders/legal_paired_manifest_inventory_v1.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 4625,
+            "kind": "pre_migration_document",
+            "member": "objects/3195a4ae58d81ab3d7ef6840a5bd919de99f8320e2e3df5e40b9b0164d8a1547",
+            "path": "docs/autoencoders/legal_paired_manifest_inventory_v1.md",
+            "scope": "datasets_repository",
+            "sha256": "3195a4ae58d81ab3d7ef6840a5bd919de99f8320e2e3df5e40b9b0164d8a1547"
+          },
+          {
+            "bytes": 4625,
+            "kind": "pre_module_migration_document",
+            "member": "objects/3195a4ae58d81ab3d7ef6840a5bd919de99f8320e2e3df5e40b9b0164d8a1547",
+            "path": "docs/autoformalization/legal_paired_manifest_inventory_v1.md",
+            "scope": "datasets_repository",
+            "sha256": "3195a4ae58d81ab3d7ef6840a5bd919de99f8320e2e3df5e40b9b0164d8a1547"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_paired_manifest_inventory_v1.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "3195a4ae58d81ab3d7ef6840a5bd919de99f8320e2e3df5e40b9b0164d8a1547"
+    },
+    {
+      "bytes": 18363,
+      "git_blob": "da97c9cbf54ac2279aca07f17e5b03ed125e0d17",
+      "path": "docs/autoencoders/legal_relational_batch_evaluation_v1.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 18363,
+            "kind": "pre_migration_document",
+            "member": "objects/d1d2f6b2b1500602a58d78821b2d3af6d41b697f7319666ec2b674a79fe16d24",
+            "path": "docs/autoencoders/legal_relational_batch_evaluation_v1.md",
+            "scope": "datasets_repository",
+            "sha256": "d1d2f6b2b1500602a58d78821b2d3af6d41b697f7319666ec2b674a79fe16d24"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_relational_batch_evaluation_v1.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "d1d2f6b2b1500602a58d78821b2d3af6d41b697f7319666ec2b674a79fe16d24"
+    },
+    {
+      "bytes": 12380,
+      "git_blob": "d293180966881972fc5ea1e94e7b5a3a444e9b36",
+      "path": "docs/autoencoders/legal_relational_decoder_target_contract_v1.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 12380,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/legal_relational_decoder_target_contract_v1.md",
+        "sha256": "c7b7c17c130605cc54de1c7417bdbf90fa1c9d57ae52d75e416d35fcbf19cdea"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_relational_decoder_target_contract_v1.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "c7b7c17c130605cc54de1c7417bdbf90fa1c9d57ae52d75e416d35fcbf19cdea"
+    },
+    {
+      "bytes": 4232,
+      "git_blob": "cd102a477a7b2af5d844554320ed16a5afbb46a2",
+      "path": "docs/autoencoders/legal_relational_norm_v1.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 4232,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/legal_relational_norm_v1.md",
+        "sha256": "c702832d0f8f52bf6dca3872589db1d278440e7fbb685fdfdd8916068c430e2b"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_relational_norm_v1.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "c702832d0f8f52bf6dca3872589db1d278440e7fbb685fdfdd8916068c430e2b"
+    },
+    {
+      "bytes": 9608,
+      "git_blob": "8ae1fb4617c33fd32f1c30209f84b3970ee5b80c",
+      "path": "docs/autoencoders/legal_relational_reconstruction_v1.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 9608,
+            "kind": "pre_migration_document",
+            "member": "objects/82761628cc91c3bc8632fbed07ca3bd1796e367e264ec0ee05d14b99c1e0b14f",
+            "path": "docs/autoencoders/legal_relational_reconstruction_v1.md",
+            "scope": "datasets_repository",
+            "sha256": "82761628cc91c3bc8632fbed07ca3bd1796e367e264ec0ee05d14b99c1e0b14f"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_relational_reconstruction_v1.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "82761628cc91c3bc8632fbed07ca3bd1796e367e264ec0ee05d14b99c1e0b14f"
+    },
+    {
+      "bytes": 8013,
+      "git_blob": "95a35f4bddfa3435143a59732f16fbd19f957f3e",
+      "path": "docs/autoencoders/legal_source_definition_v2.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 8013,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/legal_source_definition_v2.md",
+        "sha256": "ca9789194b10e257881928cd556bffa5968bcf318be3793ef4181bf3b205e39b"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_source_definition_v2.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "ca9789194b10e257881928cd556bffa5968bcf318be3793ef4181bf3b205e39b"
+    },
+    {
+      "bytes": 4789,
+      "git_blob": "872a89bf0819f37859fb8d616eb266f9ac03239c",
+      "path": "docs/autoencoders/legal_source_norm_scope_v1.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 4789,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/legal_source_norm_scope_v1.md",
+        "sha256": "8db02a5f561d8e6ba75f6192bed1776ee6526636b8ebd640068734fb0ac4188b"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_source_norm_scope_v1.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "8db02a5f561d8e6ba75f6192bed1776ee6526636b8ebd640068734fb0ac4188b"
+    },
+    {
+      "bytes": 4888,
+      "git_blob": "b65e3f5f2173b5c8f6e3a5c4936a418bbe0ecdb0",
+      "path": "docs/autoencoders/legal_source_sampling.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 4888,
+            "kind": "pre_migration_document",
+            "member": "objects/290a6320bd0522109df593af4fd4a6e0a52b80c375a6cde1511c27c6c5ae0f62",
+            "path": "docs/autoformalization/legal_source_sampling.md",
+            "scope": "datasets_repository",
+            "sha256": "290a6320bd0522109df593af4fd4a6e0a52b80c375a6cde1511c27c6c5ae0f62"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_source_sampling.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "290a6320bd0522109df593af4fd4a6e0a52b80c375a6cde1511c27c6c5ae0f62"
+    },
+    {
+      "bytes": 7973,
+      "git_blob": "2b13514776f0e0f80fbf391d55d55fc69e99b7ec",
+      "path": "docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 7973,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+        "sha256": "585714e88fed858ee3d1a2f6fa7538d91dc01909c800d52547a2b9ad57a7ecce"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_source_sampling_definition_binding_v2.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "585714e88fed858ee3d1a2f6fa7538d91dc01909c800d52547a2b9ad57a7ecce"
+    },
+    {
+      "bytes": 8477,
+      "git_blob": "ed1c20429ed74f43daa9bdc80cd028fd67238dc6",
+      "path": "docs/autoencoders/legal_source_sampling_review.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 8477,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/legal_source_sampling_review.md",
+        "sha256": "034220aa392539c74d350f66d7e44c27846298a9c86576b4c98aa4be15967fcb"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_source_sampling_review.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "034220aa392539c74d350f66d7e44c27846298a9c86576b4c98aa4be15967fcb"
+    },
+    {
+      "bytes": 5322,
+      "git_blob": "9bad4a89e116ed79695f0dd660bbb8be201f5684",
+      "path": "docs/autoencoders/legal_source_typed_norm_join_v1.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 5322,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/legal_source_typed_norm_join_v1.md",
+        "sha256": "c2daa5e5667942c6d4ee2796dd2068177eda1ab487aa44bfadc6da4e6cab94a2"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/legal_source_typed_norm_join_v1.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "c2daa5e5667942c6d4ee2796dd2068177eda1ab487aa44bfadc6da4e6cab94a2"
+    },
+    {
+      "bytes": 6916,
+      "git_blob": "cc643ff7655cea1303b3aa427a3b496923c86397",
+      "path": "docs/autoencoders/normative_cached_legal_ir_runtime.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 6916,
+            "kind": "pre_module_migration_document",
+            "member": "objects/3b556f37bd184d61e4786fa914086ca45b7531f309b2b1c531d06cbc7ee23cc9",
+            "path": "docs/autoformalization/normative_cached_legal_ir_runtime.md",
+            "scope": "datasets_repository",
+            "sha256": "3b556f37bd184d61e4786fa914086ca45b7531f309b2b1c531d06cbc7ee23cc9"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/normative_cached_legal_ir_runtime.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "3b556f37bd184d61e4786fa914086ca45b7531f309b2b1c531d06cbc7ee23cc9"
+    },
+    {
+      "bytes": 6318,
+      "git_blob": "d437735503f477394adfb93aa4f6a7e6b952e712",
+      "path": "docs/autoencoders/normative_legal_ir_runtime.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 6318,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/normative_legal_ir_runtime.md",
+        "sha256": "ef1f8d57493c14acf0fe1559760cde6c2663ed347c8692f37aceee211c4e2508"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/normative_legal_ir_runtime.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "ef1f8d57493c14acf0fe1559760cde6c2663ed347c8692f37aceee211c4e2508"
+    },
+    {
+      "bytes": 7687,
+      "git_blob": "765204ab98bf1b6e3df6580b4fc9fe76062060cd",
+      "path": "docs/autoencoders/normative_wording_retention.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 7687,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/normative_wording_retention.md",
+        "sha256": "d55b4f6e88cf03516ac8d1eca110d4a09079c13946af557f118c200dec3570ec"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/normative_wording_retention.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "d55b4f6e88cf03516ac8d1eca110d4a09079c13946af557f118c200dec3570ec"
+    },
+    {
+      "bytes": 13198,
+      "git_blob": "ef8c592e0aad6a1044b74a26e84dc71ffffde37b",
+      "path": "docs/autoencoders/normative_wording_training.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 13198,
+            "kind": "pre_module_migration_document",
+            "member": "objects/ad19daea21c4bb2bd2ddef48c9c942a5f68edc00b40605553f89daf0ec0beb19",
+            "path": "docs/autoformalization/normative_wording_training.md",
+            "scope": "datasets_repository",
+            "sha256": "ad19daea21c4bb2bd2ddef48c9c942a5f68edc00b40605553f89daf0ec0beb19"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/normative_wording_training.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "ad19daea21c4bb2bd2ddef48c9c942a5f68edc00b40605553f89daf0ec0beb19"
+    },
+    {
+      "bytes": 22430,
+      "git_blob": "3e88e7c81b7e0c0bda3e92e47596df8118579668",
+      "path": "docs/autoencoders/paired_span_census.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 22430,
+            "kind": "pre_migration_document",
+            "member": "objects/55b6f804773afc979bb6f2827040da52597a03e664a31e5fe6c457656b936ea1",
+            "path": "docs/autoencoders/paired_span_census.md",
+            "scope": "datasets_repository",
+            "sha256": "55b6f804773afc979bb6f2827040da52597a03e664a31e5fe6c457656b936ea1"
+          },
+          {
+            "bytes": 22430,
+            "kind": "pre_module_migration_document",
+            "member": "objects/55b6f804773afc979bb6f2827040da52597a03e664a31e5fe6c457656b936ea1",
+            "path": "docs/autoformalization/paired_span_census.md",
+            "scope": "datasets_repository",
+            "sha256": "55b6f804773afc979bb6f2827040da52597a03e664a31e5fe6c457656b936ea1"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/paired_span_census.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "55b6f804773afc979bb6f2827040da52597a03e664a31e5fe6c457656b936ea1"
+    },
+    {
+      "bytes": 9452,
+      "git_blob": "212e6d029dc3eb8ec0659560ef9fe367ce7733c2",
+      "path": "docs/autoencoders/parallel_lineage_execution.md",
+      "preservation": {
+        "archive_path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+        "archive_sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+        "kind": "existing_immutable_module_archive",
+        "matching_original_records": [
+          {
+            "bytes": 9452,
+            "kind": "pre_module_migration_document",
+            "member": "objects/cd55f6d76d492bce8427e72f00c20f2a4faec268202d725b17860184ce270545",
+            "path": "docs/autoformalization/parallel_lineage_execution.md",
+            "scope": "datasets_repository",
+            "sha256": "cd55f6d76d492bce8427e72f00c20f2a4faec268202d725b17860184ce270545"
+          }
+        ]
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/parallel_lineage_execution.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "cd55f6d76d492bce8427e72f00c20f2a4faec268202d725b17860184ce270545"
+    },
+    {
+      "bytes": 36019,
+      "git_blob": "7b894930a7360106cb34d018ce5df05cdf72f726",
+      "path": "docs/autoencoders/reconstruction_training.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 36019,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/reconstruction_training.md",
+        "sha256": "a5c7777c8059505158ee15d339ee3e4994b0796b0fd479d89f7d4d2e89cfe7a8"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/reconstruction_training.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "a5c7777c8059505158ee15d339ee3e4994b0796b0fd479d89f7d4d2e89cfe7a8"
+    },
+    {
+      "bytes": 6010,
+      "git_blob": "34aba0ac0f54c8adf04afc52c67980ec5513ad92",
+      "path": "docs/autoencoders/scoped_definition_resolution.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 6010,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/scoped_definition_resolution.md",
+        "sha256": "1f9706919ec60e6655ea713e82a61c0efaa6775ce503358944dcbd97c92220b6"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/scoped_definition_resolution.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "1f9706919ec60e6655ea713e82a61c0efaa6775ce503358944dcbd97c92220b6"
+    },
+    {
+      "bytes": 12775,
+      "git_blob": "57f818c62b91cdd3362d5e67d60abe4f80cb0b08",
+      "path": "docs/autoencoders/teacher_student_transfer.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 12775,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/teacher_student_transfer.md",
+        "sha256": "e54f9c55da8e7671449c6f2f8e17b9bee4fd7b56e9e0831d80d0c521102874d8"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/teacher_student_transfer.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "e54f9c55da8e7671449c6f2f8e17b9bee4fd7b56e9e0831d80d0c521102874d8"
+    },
+    {
+      "bytes": 6147,
+      "git_blob": "b80d1178a88361017397c04023fbc25d3c41b7aa",
+      "path": "docs/autoformalization/legal-conditions-composition-20261015.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 6147,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoformalization/legal-conditions-composition-20261015.md",
+        "sha256": "014e1487e079beb3d85892c8d6d012ec79048635b2539f5bcd93ae766648aa2b"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoformalization/legal-conditions-composition-20261015.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "014e1487e079beb3d85892c8d6d012ec79048635b2539f5bcd93ae766648aa2b"
+    },
+    {
+      "bytes": 8532,
+      "git_blob": "c4ece8870e7e3b5d5fdbba7e727f1f5c82799902",
+      "path": "docs/autoformalization/legal-modality-conditions-retention-20261015.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 8532,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoformalization/legal-modality-conditions-retention-20261015.md",
+        "sha256": "44f7303d44b9240d9842b9e97d73813b4cb2db66610cca9c9c2e95328eba9c29"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoformalization/legal-modality-conditions-retention-20261015.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "44f7303d44b9240d9842b9e97d73813b4cb2db66610cca9c9c2e95328eba9c29"
+    },
+    {
+      "bytes": 17669,
+      "git_blob": "b96afc37638b56519bdcd5db1a7ee4b9283a22b1",
+      "path": "docs/autoencoders/README.md",
+      "preservation": {
+        "archive_path": "docs/autoformalization/evidence/legacy-public-main.zip",
+        "archive_sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0",
+        "bytes": 17669,
+        "kind": "supplemental_exact_public_main_archive",
+        "member": "documents/docs/autoencoders/README.md",
+        "sha256": "5cbf4417f728cfbd53e9a966c97c3bcc78cb5106077b9ed5cab2f924539b5532"
+      },
+      "public_main_permalink": "https://github.com/endomorphosis/ipfs_datasets_py/blob/4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a/docs/autoencoders/README.md",
+      "public_main_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+      "sha256": "5cbf4417f728cfbd53e9a966c97c3bcc78cb5106077b9ed5cab2f924539b5532"
+    }
+  ],
+  "original_module_archive": {
+    "bytes": 2081718,
+    "path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+    "sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+    "unchanged": true
+  },
+  "purpose": "Immutable historical source bodies and compatibility provenance only; no current task board, implementation owner or semantic qualification.",
+  "schema": "legal-ir-public-main-document-preservation/v1",
+  "scope": "All63 existing public-main legacy entries selected by the installed migration.35 bodies already preserved byte-for-byte in original module archive;28 older public-main variants preserved separately.271 never-public aliases excluded.",
+  "source_repository": "https://github.com/endomorphosis/ipfs_datasets_py",
+  "source_revision": "4e1bda64d50f3bc3ba69878a0d6eafd9bfbe4b9a",
+  "supplemental_archive": {
+    "bytes": 154602,
+    "included_in_five_module_package_rules": false,
+    "kind": "repository_only_exact_markdown_history",
+    "members": 28,
+    "path": "docs/autoformalization/evidence/legacy-public-main.zip",
+    "sha256": "c0a8f9dc403464048d8a719fb9a388534078e98f40631b6a82de8f8eaa9e68b0"
+  }
+}

@@ -711,3 +711,279 @@ reported model-state changes, accepted optimizer updates and compiler gaps are
 separate observations: none is interchangeable with a completed repair or a
 legal proof. Profile stage durations are inclusive and overlap; do not add them
 to estimate wall time. This is a diagnostic report, not a new admission gate.
+
+## Opt-in pinned physical-row enqueue
+
+`scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py` has a separate
+`--source-ingest-profile raw-coordinates-v1` path for a bounded local Parquet
+selection. The default legacy ingest and its historical span IDs are unchanged.
+This profile captures exact decoded source text before the legacy record
+adapter strips whitespace or supplies fallback text. It invokes the existing
+`inventory_uscode_source_coordinates` and `validate_uscode_source_coordinates`
+APIs, then persists the complete report and span bindings through
+`SpanCache.enqueue_source_coordinates`.
+
+Supply independent source pins from the retained source descriptor: the
+lowercase 40-hex repository revision, canonical relative repository path,
+whole-file SHA256 and exact byte count. `--source-release-id` is a required,
+explicit identity for this source selection; the legacy default release ID is
+not reused. A matching local file digest does not authenticate its claimed
+repository revision, establish an official edition or verify legal meaning.
+Hashing an arbitrary replacement and declaring its digest is not source review.
+
+For example, after setting these variables from that descriptor, run from the
+repository root with an approved local Python environment containing PyArrow
+and DuckDB:
+
+```bash
+python scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py \
+  --source-ingest-profile raw-coordinates-v1 \
+  --parquet "$SOURCE_PARQUET" \
+  --source-revision "$SOURCE_REVISION" \
+  --source-path-in-repo "$SOURCE_PATH_IN_REPO" \
+  --expected-source-sha256 "$SOURCE_SHA256" \
+  --expected-source-bytes "$SOURCE_BYTES" \
+  --source-release-id "$SOURCE_RELEASE_ID" \
+  --source-row-offset 0 --limit 8 \
+  --cache "$NEW_CACHE" --enqueue-only --no-resume
+```
+
+`NEW_CACHE` must be absent, with no existing `.wal` sidecar, in an existing
+canonical directory. Existing files, symlinks and catalogs are refused before
+opening a catalog; no historical row is backfilled or assigned a new identity.
+After complete source and coordinate validation, the profile constructs a
+private staging catalog, closes it and publishes it atomically without
+overwriting a racing destination. The emitted `raw_coordinates_enqueued`
+receipt includes the complete report's SHA256. Keep this pin independently
+when subsequently reading the report with
+`SpanCache.read_source_coordinate_report`.
+
+`--source-row-offset` is a zero-based physical Parquet row ordinal, not the
+legacy valid-document skip count. The complete requested selection must exist;
+missing text or CID, whitespace-only text and out-of-range selections fail
+instead of being filtered or replaced by citation text. The retained witness
+binds each physical ordinal to the whole file and revision/path declaration,
+the exact projected law-field metadata and selected-row digest. Exact decoded
+text, including leading/trailing whitespace, CRLF and Unicode, is retained in
+the coordinate report. Span coordinates are half-open Unicode-code-point and
+UTF8 byte ranges within that decoded text. They are not byte positions inside
+the compressed Parquet file or recovered raw HTML.
+
+Span IDs follow the existing inventory API for the complete selected document
+population, including its global span ordinal. This new profile does not
+silently reuse the historical CLI's per-document ordinal reset. Different
+selection windows are separate populations; joining them or retrofitting old
+catalog identities requires an explicit transport/replay contract.
+
+The profile enforces these fixed bounds:
+
+- An explicit `--limit` of 1–128 physical rows; offset and file row count at
+  most 10,000,000; the complete requested range must be present.
+- A regular, nonsymlink local file of at most 1 GiB, held open while its pinned
+  size, SHA256 and unchanged file identity are checked.
+- At most 1 MiB of UTF8 text per row and 8 MiB across the selected rows;
+  projected non-text row metadata is bounded to 48 KiB per row.
+- A Parquet footer of at most 8 MiB, at most 128 schema columns and 8,192 row
+  groups; selected row groups are at most 64 MiB each and 128 MiB in total.
+- The existing coordinate API's complete-report, document metadata and span
+  bounds also apply. These checks do not certify kernel-enforced resource
+  isolation or a full-corpus execution budget.
+
+This enqueue-only profile does not poll remote checkpoints, download sources,
+upload, compile, dispatch workers, train, run Lean or change supervisor state.
+Resume, compiler options, upload options and the separate `fenced-v1` runtime
+are incompatible with it. Custody and geometry observations keep source
+authority, legal meaning, formalization, admission and training authority false.
+
+The first selected landing (`e9fc55927`) passed 116 cases and 348 test phases:
+81 coordinate/cache/full-norm cases and 35 raw-ingest cases, including the
+unchanged legacy record path and refusal to overwrite an existing catalog.
+The new controls are in
+`tests/unit/logic/test_uscode_raw_source_coordinate_ingest.py`. Both cohorts used
+the existing native validation owner, authenticated candidate source imports,
+and verified process cleanup and resource release. Retained requests, JUnit,
+source/import readbacks and sealed results are under
+`workspace/test-logs/federal-corpus-audits/legal-ir-selected-landing-20261020-01/`
+(`attempt-coordinate-fullnorm-05` and `attempt-raw-source-05`). The tested storage
+versions were DuckDB 1.4.3, PyArrow 25.0.1 and NumPy 2.1.3. Package startup
+containers were isolated for these focused checks; this does not qualify a
+wheel installation, a full-corpus run or legal meaning.
+
+## Portable selected source occurrences
+
+An explicit `uscode-paired-span-bundle/v3` manifest carries one complete source
+report and a small occurrence index in the existing artifacts table. The three
+Arrow tables retain their v2 row schemas; observation IDs and goal IDs remain
+the same for matching explicit inputs. Default v1/v2 reading and v2 writing
+remain unchanged; their rows do not acquire inferred
+coordinates. The v3 namespace is `autoformal/uscode/paired-v3`.
+
+Use `cache.export_source_coordinates(report_pin, source_span_ids=selected_ids)`
+to obtain the complete report once and source/reference rows for the selected
+live cache entries. Pass their existing `source_provenance_json` alongside the
+actual source-bound observations to `build_paired_census`, with the explicit
+`source_coordinate_report` and `expected_source_coordinate_report_sha256`
+arguments. Set the producer's `release_id` to the report's declared release;
+this label is not an independently authenticated statutory edition. The writer
+and loader replay the complete original document population and occurrence
+references, including unselected context. Subsetting documents before replay
+would change global span identities and is refused.
+
+The first profile supports one report and 1–128 selected observations per
+bundle. The report artifact is capped at the existing 16 MiB artifact bound,
+within the unchanged 64 MiB aggregate input bound. Its exact serialized-byte
+SHA256, the complete-report pin and the report's embedded content seal are
+distinct commitments. Nested raw metadata insertion order is preserved; none
+of these hashes supplies source authority or legal meaning.
+
+After retaining the complete repository layout locally, import into a new cache:
+
+```bash
+python scripts/ops/legal_ir/import_span_cache_exchange.py \
+  --manifest "$RETAINED_REPOSITORY/$MANIFEST_IN_REPO" \
+  --paired-repository-root "$RETAINED_REPOSITORY" \
+  --repository-id justicedao/uscode-autoformal-span-cache \
+  --revision "$SPAN_CACHE_COMMIT" \
+  --expected-manifest-sha256 "$MANIFEST_SHA256" \
+  --expected-coordinate-report-sha256 "$COMPLETE_REPORT_SHA256" \
+  --enqueue-source-cache "$NEW_CACHE" --output "$IMPORT_RECEIPT_DIRECTORY"
+```
+
+Keep both expected hashes independently from the imported bundle. This local,
+unsharded path retains the exact manifest and tables, validates the complete
+report and all selected references, then uses the same fresh-cache writer as
+raw ingest. Only selected spans become pending; unselected report spans do not
+enter the queue. Original occurrence indices survive. Existing catalogs and
+orphan WAL files are refused, including a racing destination. Compiler/model
+statuses and repair goals remain observations: this operation neither seals
+sources nor materializes supervisor work.
+
+The retained bundle, cache and receipt have separate publication boundaries.
+A later receipt failure may leave retained evidence and a published pending
+catalog; the existing-catalog refusal also applies to that retry.
+
+The durable feed uses the same existing stateless `load_paired_payload` reader.
+V3 record identity additionally binds the report pin and original span index,
+so identical normalized text under another physical context cannot silently
+merge. Complete reports are returned once per pin outside individual records;
+feed acknowledgement remains a separate explicit action.
+
+Focused qualification passed **278 cases / 834 test phases**: 71 coordinate/cache
+and raw-ingest regressions with unchanged executed source, plus 207 paired,
+selection, feed and source-import controls. Requests, JUnit, source/import
+readbacks and native release receipts are retained under
+`workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-paired-transport-20261020-01/`
+(`attempt-regressions-01` and `attempt-transport-03`). The tested storage versions
+were DuckDB 1.4.3, PyArrow 25.0.1 and NumPy 2.1.3. The transport run used genuine
+root, autoformal and deontic initializers with model/provider imports refused;
+other package initializers remained isolated. This qualifies the focused local
+transport, not a wheel installation or optional-provider execution. Training
+data, competent source/meaning review, a source-context graph and a checked Lean
+corpus retain their existing owners and review requirements.
+
+## Source-context intake from portable occurrences
+
+The existing compact source-context cache intake now has an explicit v2 profile
+for the coordinate transport above. Reuse
+`prepare_source_context_cache_intake_v2` and
+`validate_source_context_cache_intake_v2` in
+`logic/autoformal/legal_compact_source_context_cache_intake_v1.py`, with the
+metadata companion's `legal-paired-manifest-inventory-request/v2` request and
+the independently supplied `legal-compact-source-context-cache-bindings/v2`
+association document. The original-bound source inventory remains a separate
+input. The module's current guide documents all arguments and report fields.
+
+This first intake profile admits one paired-v3 manifest and at most 64 declared
+physical rows. It retains the exact complete report once, as an opaque UTF8
+string in the existing payload report, plus each selected occurrence's original
+global span index and canonical provenance reference. Exact artifact-byte,
+complete-report and manifest pins keep their separate roles. Missing, corrupt
+or unsupported bundles preserve all declared row slots and expected pins;
+actual coordinate fields remain unavailable. Unexpected exceptions and changed
+source/file witnesses still refuse the operation.
+
+Coordinate replay does not choose an inventory occurrence. Associations remain
+explicit caller declarations, and equal text is only a consistency observation.
+Cached formal outputs and vectors stay outside source-context construction.
+Inference views remain null, training/evaluation masks remain zero and source,
+meaning, context-permission and Lean authority remain false. The existing v1
+entrypoints retain the legacy paired-v1/v2 profile. Strict current producer pins
+identify a fresh source compatibility generation; old receipt hashes are not
+reissued as its qualification.
+
+The dependency closure reuses the existing compact-content, lexical-context,
+physical-inventory and shared-token owners and their owning tests. It also
+includes the existing split guard's rejection of supplied items that resolve no
+manifest member. No numerical kernel or model profile changed.
+
+Fresh native qualification passed **594 cases / 1,782 test phases**: 385 pure
+owner and split-membership controls, then 209 legacy and coordinate
+metadata/payload/intake controls. Native requests bind 114 and 77 function
+selectors; exact expanded case IDs, all phases and JUnit outcomes are verified
+independently. The historical retained sixteen-row external integration case
+was explicitly excluded, with no skip credit. Evidence, source/import manifests,
+original native cleanup and storage release receipts are retained under
+`workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-context-intake-20261020-01/`
+(`attempt-pure-03`, `attempt-paired-03` and
+`final-independent-qualification-v03.json`).
+
+Two earlier wrapper attempts remain preserved and unqualified: one stopped on
+missing import pins and one rejected a legitimate JUnit evidence property after
+all 385 pytest cases passed. Both unused 128 MiB storage promises were released
+through the existing recovery owner without deleting evidence. The final run
+used the same product/test bytes. This qualification covers authored local
+fixtures and actual storage codecs, with genuine deterministic compiler owners
+and selected package startup isolation. It does not execute numerical engines,
+providers, training or Lean, authenticate legal interpretation, or admit a
+source-context graph or unified Lean corpus.
+
+## Coordinate-bearing source/span/entity join
+
+The existing `legal_source_span_entity_join_v1` owner now exposes the explicit
+`prepare_source_span_entity_join_manifest_v2` and
+`validate_source_span_entity_join_manifest_v2` APIs. They consume the qualified
+paired-v3 coordinate reader, existing five-file source-package metadata intake
+and existing twelve-field entity metadata contract. This port reuses the
+source-package owner and owning tests; it introduces no second join registry,
+entity scanner, graph builder or model path.
+
+Use `legal-source-span-entity-join-request/v2` with the same closed argument
+layout as v1 and a `legal-paired-manifest-inventory-request/v2` paired selection.
+That selection independently pins the complete coordinate report as well as the
+exact manifest bytes. V2 admits one complete bundle and 1–64 declared physical
+rows. Both the report pin and row bounds are checked before source preparation
+or payload-table I/O. The first coordinate profile requires empty legacy joins;
+v1 keeps the historical candidate recipe and paired-v1/v2 selection.
+
+The exact ordered report UTF8 string remains once in the embedded payload
+intake, and each row reference retains its original global span index and
+canonical provenance reference. Equal text does not collapse physical rows or
+select an occurrence in another source namespace. Source-release correspondence
+remains unverified, entity semantics remain unavailable, and graph, training and
+Lean authority remain false. The separate existing entity-census companion is
+not implicitly upgraded to this new join profile.
+
+Bounded original metadata snapshots, selected source pins and physical file
+witnesses are checked at closing. Every closing check is attempted on failure,
+with secondary findings attached to the original exception. The validator also
+checks the offered report after full replay. These are ordered custody checks;
+they do not establish an atomic three-repository snapshot or legal meaning.
+
+Fresh qualification passed **128 cases / 384 test phases**: 45 genuine
+source-package metadata controls, 48 legacy orchestration controls with explicit
+substituted delegates, and 35 genuine coordinate/custody controls. Native
+requests use 51 function selectors and independently verify every expanded case,
+phase and JUnit outcome. All 209 candidate pins and 233 total source pins were
+verified; 45 imported/compiled source files were separately observed. The native
+owner sealed 289 files / 3,686,009 bytes and completed original process,
+resource/storage and source READ release. Evidence is retained under
+`workspace/test-logs/federal-corpus-audits/legal-ir-coordinate-three-cache-join-20261020-01/`
+(`attempt-join-02` and `final-independent-qualification-v02.json`).
+
+The first attempt's 128 pytest passes receive no native qualification credit:
+its wrapper expected one incorrect parameter label. The fresh corrected manifest
+was independently checked before launch, with unchanged product/test bytes.
+All 286 failed-attempt files / 3,650,855 bytes remain retained; only its unused
+128 MiB promise was released through the existing recovery owner. No existing
+entity census was repeated. Model, training, provider/network, statutory
+meaning, graph admission and Lean execution remain separate work.

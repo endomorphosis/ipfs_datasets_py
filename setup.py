@@ -327,6 +327,12 @@ setup(
             "assurance/vectors/*.json",
             "logic/bridge/schemas/*.json",
             "logic/intent_ir/intent_ir.schema.json",
+            # Canonical LegalIR navigation and its bounded migration archive.
+            "logic/autoformal/README.md",
+            "logic/autoformal/docs/*.md",
+            "logic/autoformal/docs/*.json",
+            "logic/autoformal/docs/guides/*.md",
+            "logic/autoformal/docs/history/pre-consolidation.zip",
             "logic/legal_ir/schemas/*.json",
             "logic/software_contracts/adversarial_assurance/schemas/*.json",
             "logic/software_contracts/semantic_governor/schemas/*.json",

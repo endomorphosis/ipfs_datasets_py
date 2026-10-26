@@ -1,0 +1,367 @@
+{
+  "authority": {
+    "Lean_admission": false,
+    "graph_admission": false,
+    "native_GTE_compatibility": false,
+    "reconstruction_improvement": false,
+    "source_or_legal_meaning": false,
+    "task_assignment": false,
+    "task_completion": false,
+    "task_rearm": false,
+    "training_gold": false
+  },
+  "board_only_preview": {
+    "accepted_engineering_rows": 135,
+    "accepted_nonengineering_ids": [],
+    "actual_counts": {
+      "accepted_rows": 135,
+      "conflicts": 1,
+      "quarantined_rows": 0,
+      "rejected_rows": 5,
+      "source_observations": 1
+    },
+    "applied": false,
+    "canonical_task_scope_created": false,
+    "default_conflict_policy": "reject",
+    "executed_control": {
+      "bytes": 13939,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/controls/preview_lirae_legacy_board_import_v02.py",
+      "sha256": "c4dc6aabed91a40174896742ca8679575efbfcd6b05f88b802bff52d241a9b9b"
+    },
+    "existing_apply_scope": "Import provenance bookkeeping only; not typed task creation/admission",
+    "maintained_LIR_tasks": 24,
+    "maintained_backlog_imported_or_mapped": false,
+    "manifest": {
+      "bytes": 1655,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/lirae-legacy-state-import-board-preview-v01/import-manifest-v01.json",
+      "sha256": "a4dde6503b01c743b8d734f120e14d8e95feef6fe6912aca8bfcc147f450f3e5"
+    },
+    "original_board": {
+      "bytes": 456826,
+      "path": "/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/ipfs_datasets_py/logic/autoformal/LIRAE-TODO.md",
+      "sha256": "47bfeead7ae0c673af8f7d3c17a76fd5f8767887d1580829d2ed768f47dac772"
+    },
+    "original_git_HEAD": "627579830ff5bdea01609b58dde08801b2185c0e",
+    "original_preview_error_text": "strict preview reports 5 rejected row(s)",
+    "original_receipt": {
+      "bytes": 566098,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/lirae-legacy-state-import-board-preview-v01/preview-receipt-v01.json",
+      "sha256": "1aa3ec9b6d0f71086404d321850c8b0cd5589716a83cbe4b9a64469f896a610e"
+    },
+    "rejected_ids": [
+      "Goal"
+    ],
+    "selected_history_sources": [],
+    "source_custody": {
+      "ABA_custody_claimed": false,
+      "Q_READ_closed": true,
+      "canonical_A_source_READ_held_during_preview": false,
+      "captured_buffers_executed": true,
+      "closing_A_READ_closed": true,
+      "nested_leases": false,
+      "opening_A_READ_closed": true,
+      "pattern": "sequential_A_capture_Q_frozen_input_A_recapture"
+    },
+    "source_record_count": 140,
+    "strict": true
+  },
+  "deployed_release": "/home/barberb/.local/lib/ipfs-quack-fleet/releases/abaab51bc0aaea7259cbc2789f1786d5479ff9c6",
+  "deployed_source_findings": [
+    {
+      "facts": [
+        "_resolve_database_status_scope refuses zero task rows.",
+        "bind_database_status_scope admits exactly1..512 unique persisted tasks bound to board_namespace/plan_root_cid/repository_tree_id; it adds no task records.",
+        "_issue_status_session_grant requires a previously admitted nonempty status scope.",
+        "Authenticated open_status with no scope returns status_scope_not_admitted. Federation status scope separately requires existing admitted federation/supervisor/subscription rows.",
+        "Creating the bootstrap credential does not bind an empty LIR scope or establish an admitted consumer."
+      ],
+      "lines": [
+        "5630-5639",
+        "5708-5774",
+        "5798-5822",
+        "6665-6701"
+      ],
+      "source": "ipfs_accelerate_py/agent_supervisor/task_sources/typed_state_owner.py",
+      "topic": "Concrete empty-store status blocker"
+    },
+    {
+      "facts": [
+        "status reads saved quack-state-server.status.json.",
+        "ready reads the saved lifecycle/identity and emits live:true without independent live authentication.",
+        "Original in-process server.start calls genuine ready before publishing status, but later CLI projection cannot replace actual authenticated scope admission or live birth checks."
+      ],
+      "lines": [
+        "385-402",
+        "415-440"
+      ],
+      "source": "scripts/ops/agent_supervisor/quack_state_server.py",
+      "topic": "CLI projection is not authenticated status acceptance"
+    },
+    {
+      "facts": [
+        "Defaults use InProcessQuackTransport, native probe_quack_capabilities, current OS process birth and original migration/connection owners; no mocks or injected fake profile are selected.",
+        "allow_experimental isFalse; capability admission requires COMPATIBLE unless separately and explicitly enabled.",
+        "The selected loopback/same-bind configuration permits isolation_receipt_path=None. Distinct container bind requires the original observed isolation receipt; this audit grants no substitute receipt.",
+        "Exclusive OS owner lease precedes capability, schema migration and persistent database connection.",
+        "Authoritative writer remains external-access disabled; real read-only replica must load admitted installed local Quack plus colocated core httpfs, then disable external access/persistent secrets and lock policy.",
+        "An empty native owner still incurs genuine native capability, schema migration, replica and in-process ready work; it is not a metadata-only status operation."
+      ],
+      "lines": [
+        "1047-1165",
+        "3035-3046",
+        "4179-4208",
+        "4211-4216",
+        "4373-4394",
+        "4448-4542",
+        "6773-6885",
+        "6974-7009"
+      ],
+      "source": "ipfs_accelerate_py/agent_supervisor/runtime/quack_state_server.py",
+      "topic": "Unmodified real native defaults and gates"
+    },
+    {
+      "facts": [
+        "Default native probe imports DuckDB, opens a real in-memory connection and inspects/loads only locally installed extensions. Network installation isFalse by default.",
+        "Capability refusal precedes persistent schema migration, but constructorTokenVault and startup can already create directories/lease/status filesystem effects.",
+        "A metadata-only consumer/scope/resource preflight must reject missing admission before constructing the server or invoking the CLI. No smoke launch is justified merely to rediscover this static blocker."
+      ],
+      "lines": [
+        "398-405",
+        "808-830",
+        "849-850",
+        "891-942"
+      ],
+      "source": "ipfs_accelerate_py/agent_supervisor/task_sources/quack_capabilities.py",
+      "topic": "Capability refusal and before-effect preflight"
+    },
+    {
+      "facts": [
+        "Original owner mints Quack material internally through a mode0600 startup file, removes its persisted transport copy and creates a distinct protected typed-status credential. No user-supplied reusable token is required.",
+        "Public status/logs are checked for transport-token absence. No credential file was opened by this review.",
+        "Original stop authenticates exact fence before effects, quiesces gateway/pump, positively observes endpoint and database closure, destroys vault, then releases ownership and publishes stopped status.",
+        "Unknown closure retains authority rather than authorizing a replacement owner. A future concrete control must retain original stop/failed-start cleanup and actual terminal evidence."
+      ],
+      "lines": [
+        "2385-2455",
+        "6924-6927",
+        "6958-6962",
+        "6987-7003",
+        "7014-7026",
+        "7324-7352",
+        "7405-7485"
+      ],
+      "source": "ipfs_accelerate_py/agent_supervisor/runtime/quack_state_server.py",
+      "topic": "Original secret and shutdown custody"
+    }
+  ],
+  "deployed_source_guards_at_audit_cut": {
+    "ipfs_accelerate_py/agent_supervisor/runtime/quack_state_server.py": {
+      "bytes": 403766,
+      "path": "/home/barberb/.local/lib/ipfs-quack-fleet/releases/abaab51bc0aaea7259cbc2789f1786d5479ff9c6/ipfs_accelerate_py/agent_supervisor/runtime/quack_state_server.py",
+      "sha256": "4eba395977ced0791ad0a371940a0233521633bd407b7ed10a83aee68d2a6d0b"
+    },
+    "ipfs_accelerate_py/agent_supervisor/task_sources/quack_capabilities.py": {
+      "bytes": 48289,
+      "path": "/home/barberb/.local/lib/ipfs-quack-fleet/releases/abaab51bc0aaea7259cbc2789f1786d5479ff9c6/ipfs_accelerate_py/agent_supervisor/task_sources/quack_capabilities.py",
+      "sha256": "317e9f3b5c62d5bb3b0a955741e1ba7c40cf0ce2e59062fb71c3e60ed3217081"
+    },
+    "ipfs_accelerate_py/agent_supervisor/task_sources/typed_state_owner.py": {
+      "bytes": 586092,
+      "path": "/home/barberb/.local/lib/ipfs-quack-fleet/releases/abaab51bc0aaea7259cbc2789f1786d5479ff9c6/ipfs_accelerate_py/agent_supervisor/task_sources/typed_state_owner.py",
+      "sha256": "dc5216220358600f59b53e9d7efa2110cadccc8d94b6404448bf16004a9f7ea6"
+    },
+    "scripts/ops/agent_supervisor/quack_state_server.py": {
+      "bytes": 16454,
+      "path": "/home/barberb/.local/lib/ipfs-quack-fleet/releases/abaab51bc0aaea7259cbc2789f1786d5479ff9c6/scripts/ops/agent_supervisor/quack_state_server.py",
+      "sha256": "a92bb8e7ff551d86755e1161982da7e9553a2e93e7f493160e76dcaa6d9f0670"
+    }
+  },
+  "deployment": {
+    "CLI_ready_is_saved_projection": true,
+    "board_namespace": "legal-ir-autoencoder-v1",
+    "empty_bootstrap_supplies_task_authority": false,
+    "explicit_legacy_task_source": true,
+    "four_named_units_active_running_at_observation": true,
+    "observation_time": "2026-10-23T04:57:41.434883+00:00",
+    "owner_or_service_launched_for_this_review": false,
+    "scope_admission_requirement": "Owner binds 1..512 existing persisted task CIDs to board/plan/tree, or a separately admitted federation consumer; prelisting CIDs is not a status-client prerequisite",
+    "selected_authority_mode": "legacy_markdown",
+    "selected_task_source_kind": "legacy-markdown",
+    "typed_LIR_scope_admission_established_by_this_review": false
+  },
+  "optional_local_receipt_root": "datasets_repository",
+  "optional_local_receipts": [
+    {
+      "bytes": 33648,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-existing-authenticated-status-route-discovery-v01.json",
+      "sha256": "abe944f0ba495ef22ed082b919dbeb30d464f48b41b9ce3175af9e5a03e6f810"
+    },
+    {
+      "bytes": 16090,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-existing-native-bootstrap-migration-source-review-v01.json",
+      "sha256": "709b00e8b23dc2922f15ca7f235665262713df6692aec0ef4c3c82e5c5151efb"
+    },
+    {
+      "bytes": 12537,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-deployed-empty-status-bootstrap-independent-source-review-v01.json",
+      "sha256": "4f1de66da59afb7bbacf29113621f77b6a04fc647e9bc530e56ff13c2e248d75"
+    },
+    {
+      "bytes": 11197,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-empty-LIR-owner-status-preflight-refusal-v02.json",
+      "sha256": "981f8454b20f34a9817f0aeb609aee9557142a2af736019bd06fc869716847ae"
+    },
+    {
+      "bytes": 5645,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-missing-reference-score-api-source-audit-v01.json",
+      "sha256": "cff3c82bba35597eedc2bc2fc351c8d6bd95da2b1f306e3889e7d1b067f978aa"
+    },
+    {
+      "bytes": 3557,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-LIR-named-unit-plan-cut-v02.json",
+      "sha256": "6237684cf3bf721cc384781d98c319e05c8ac005af877f89887bd6f15c7b6216"
+    },
+    {
+      "bytes": 5210,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-post1356-qualified-immutable-peer-adoption-v02.json",
+      "sha256": "27f18e4c149385d4c3407996fcb5bfd36fd6caaacdf3410e88d850d193d17376"
+    },
+    {
+      "bytes": 4846,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/lirae-legacy-state-import-board-preview-v01/preview-summary-v01.json",
+      "sha256": "971d796a04be7e90c35a14aa9ad4181b0e27b988de94677718d696ba29977a75"
+    },
+    {
+      "bytes": 6153,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/lirae-legacy-state-import-board-preview-independent-result-review-v01.json",
+      "sha256": "ec206f679ffe060a9fdc1af35c8011e7685f4a26bbc311a09e2f4e54692f6773"
+    }
+  ],
+  "recorded_at_utc": "2026-10-23T05:07:07.823006+00:00",
+  "reference_diagnostic_plan": {
+    "BOS_API_changed": false,
+    "different_last_position_alternative": {
+      "maximum_model_restores": 8,
+      "new_calls": 8,
+      "numerical_forwards": 56,
+      "retained_score_coordinates": 30072,
+      "shape_differs_from_old_46_token_observations": true
+    },
+    "missing_cells": [
+      {
+        "objective_kind": "full537",
+        "progress_step": 0,
+        "row_index": 1
+      },
+      {
+        "objective_kind": "full537",
+        "progress_step": 1,
+        "row_index": 0
+      },
+      {
+        "objective_kind": "full537",
+        "progress_step": 2,
+        "row_index": 0
+      },
+      {
+        "objective_kind": "full537",
+        "progress_step": 2,
+        "row_index": 1
+      },
+      {
+        "objective_kind": "scope_conditional",
+        "progress_step": 0,
+        "row_index": 1
+      },
+      {
+        "objective_kind": "scope_conditional",
+        "progress_step": 1,
+        "row_index": 0
+      },
+      {
+        "objective_kind": "scope_conditional",
+        "progress_step": 2,
+        "row_index": 0
+      },
+      {
+        "objective_kind": "scope_conditional",
+        "progress_step": 2,
+        "row_index": 1
+      }
+    ],
+    "preferred_full_matrix_budget": {
+      "maximum_model_restores": 8,
+      "new_calls": 8,
+      "new_labels": 368,
+      "new_score_coordinates": 197616,
+      "new_semantic_choices": 56,
+      "new_singleton_positions": 312,
+      "no_inherited_bitwise_parity_claim": true,
+      "numerical_forwards": 8,
+      "output_shape_per_call": [
+        1,
+        46,
+        537
+      ],
+      "requires_explicit_new_full_matrix_observation_method": true
+    },
+    "reference_geometry": {
+      "BOS_ID": 1,
+      "EOS_ID": 2,
+      "labels_per_cell": 46,
+      "semantic_target_positions": [
+        9,
+        14,
+        19,
+        21,
+        24,
+        32,
+        38
+      ],
+      "singleton_positions_per_cell": 39,
+      "target_ids_including_BOS_EOS": 47,
+      "teacher_prefix_length": 46,
+      "vocabulary": 537
+    },
+    "required_future_gates": [
+      "exact six-state/raw-canonical-policy identities and eight-cell manifest",
+      "same original authored384 vectors/contexts/reference IDs; no re-encoding",
+      "explicit target-derived reference/context access and separate diagnostic schema/profile",
+      "original prepared restore/state/RNG/source guards and owning tests",
+      "fresh original native/resource admission and serialization preflight",
+      "durable native/source/storage closeout before saved readback"
+    ],
+    "reuse": "Six intact existing checkpoint identities and original authored384 vectors, contexts and reference IDs; no re-encoding or random restart",
+    "source_guards_at_audit_cut": [
+      {
+        "bytes": 20786,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_warmstart_runtime_v1.py",
+        "sha256": "6711203ecbc0b063afaed3a51e35940f61c05cee80f6240f937e0f394e36b771"
+      },
+      {
+        "bytes": 29650,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_trained_runtime_v1.py",
+        "sha256": "42dd29ad96e9ca8c28be071fe63292fca8b0155f7284eeac52c9306bfd921814"
+      },
+      {
+        "bytes": 53267,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_prepared_runtime_v3.py",
+        "sha256": "a7d7cedfa482537ac76a9ccf9a49a79f6108e89268b02ca3b355abcfe774ec1e"
+      },
+      {
+        "bytes": 24974,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_prefix_diagnostics.py",
+        "sha256": "44ee361b1f1bc0ae7074537b88fd4ef735cbfd8729c4e4d4ae10bec1c4479d78"
+      }
+    ],
+    "status": "proposed_not_implemented_or_numerically_qualified"
+  },
+  "remaining_sequence": [
+    "Review the single conflict group and five rejected Goal rows without renaming/filtering the original source, select source-bound history and keep the engineering board separate from the 24-task scientific backlog.",
+    "Qualify the existing typed task-creation/admission route and explicit namespace/plan/tree mapping; provenance import alone cannot populate an admitted task scope.",
+    "For an actual scoped consumer, qualify native capability, OS/source/resource/storage and credential custody through the original owner before controlled worker cutover.",
+    "Refresh current delivery and task ownership, extend the existing numerical owners with a separate reference diagnostic, qualify its owning tests and bounded serialization, then measure the eight missing cells."
+  ],
+  "schema": "legal-ir-supervisor-reference-plan/v1",
+  "scope": "Source/metadata and one original board-only import preview; proposed next measurements, not a new runtime or training qualification"
+}

@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 async def semantic_search(
     query: str,
-    model: str = "sentence-transformers/all-MiniLM-L6-v2",
+    model: str = "thenlper/gte-small",
     top_k: int = 5,
     collection: str = "default",
     filters: Optional[Dict[str, Any]] = None,

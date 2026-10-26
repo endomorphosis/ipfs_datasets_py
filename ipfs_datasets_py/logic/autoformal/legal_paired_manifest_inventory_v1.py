@@ -14,6 +14,8 @@ import re
 
 REQUEST_SCHEMA = "legal-paired-manifest-inventory-request/v1"
 SCHEMA = "legal-paired-manifest-inventory/v1"
+REQUEST_SCHEMA_V2 = "legal-paired-manifest-inventory-request/v2"
+SCHEMA_V2 = "legal-paired-manifest-inventory/v2"
 REPOSITORY = "justicedao/uscode-autoformal-span-cache"
 SELECTION_SCOPE = "explicit_paired_manifest_selection"
 MAX_MANIFESTS = 16
@@ -25,6 +27,7 @@ TABLES = ("paired_spans", "goals", "artifacts")
 _SHA = re.compile(r"[0-9a-f]{64}\Z")
 _REVISION = re.compile(r"[0-9a-f]{40}\Z")
 _PAIRED_PATH = re.compile(r"autoformal/uscode/paired-v([12])/manifests/[A-Za-z0-9_-]+/manifest-[0-9a-f]{64}\.json\Z")
+_COORDINATE_PATH = re.compile(r"autoformal/uscode/paired-v(3)/manifests/[A-Za-z0-9_-]+/manifest-[0-9a-f]{64}\.json\Z")
 _SELF_PIN = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 _OWNER_PINS = None
 AUTHORITY = dict.fromkeys((
@@ -111,7 +114,7 @@ def _read_json(raw, maximum, label):
     return value
 
 
-def _preflight(request_raw, manifest_bytes, expected_request_sha256):
+def _preflight(request_raw, manifest_bytes, expected_request_sha256, *, coordinate=False):
     """Reject untrusted input shapes and pins before importing operation owners."""
     _digest(expected_request_sha256, "request")
     _need(type(request_raw) is bytes and 0 < len(request_raw) <= MAX_REQUEST_BYTES,
@@ -119,7 +122,7 @@ def _preflight(request_raw, manifest_bytes, expected_request_sha256):
     _need(_sha(request_raw) == expected_request_sha256, "request SHA256 mismatch")
     request = _read_json(request_raw, MAX_REQUEST_BYTES, "request")
     _keys(request, {"schema", "repository_id", "revision", "selection_scope", "manifests"}, "request")
-    _need(request["schema"] == REQUEST_SCHEMA and request["repository_id"] == REPOSITORY
+    _need(request["schema"] == (REQUEST_SCHEMA_V2 if coordinate else REQUEST_SCHEMA) and request["repository_id"] == REPOSITORY
           and request["selection_scope"] == SELECTION_SCOPE, "unsupported explicit paired selection")
     _need(type(request["revision"]) is str and _REVISION.fullmatch(request["revision"]),
           "immutable lowercase forty-hex revision required")
@@ -130,9 +133,13 @@ def _preflight(request_raw, manifest_bytes, expected_request_sha256):
     seen, total = set(), 0
     captured = {}
     for entry in request["manifests"]:
-        _keys(entry, {"path_in_repo", "bytes", "sha256"}, "manifest selection")
+        fields = {"path_in_repo", "bytes", "sha256"}
+        if coordinate:
+            fields.add("source_coordinate_report_sha256")
+        _keys(entry, fields, "manifest selection")
         path = entry["path_in_repo"]
-        _need(type(path) is str and len(path) <= 512 and _PAIRED_PATH.fullmatch(path),
+        pattern = _COORDINATE_PATH if coordinate else _PAIRED_PATH
+        _need(type(path) is str and len(path) <= 512 and pattern.fullmatch(path),
               "supported exact paired manifest path required")
         _need(path not in seen, "duplicate selected manifest path")
         seen.add(path)
@@ -141,6 +148,8 @@ def _preflight(request_raw, manifest_bytes, expected_request_sha256):
         total += size
         _need(total <= MAX_MANIFEST_TOTAL_BYTES, "selected manifest total byte bound exceeded")
         _digest(entry["sha256"], "manifest")
+        if coordinate:
+            _digest(entry["source_coordinate_report_sha256"], "source coordinate report")
     _need(set(manifest_bytes) == seen, "manifest byte mapping population differs from exact selection")
     for entry in request["manifests"]:
         raw = manifest_bytes[entry["path_in_repo"]]
@@ -173,8 +182,8 @@ def _empty_counts():
             "distinct_declared_sha256_count": 0}
 
 
-def _analysis(rows):
-    banks = {"paired-v" + str(version): {kind: _empty_counts() for kind in TABLES} for version in (1, 2)}
+def _analysis(rows, versions=(1, 2)):
+    banks = {"paired-v" + str(version): {kind: _empty_counts() for kind in TABLES} for version in versions}
     physical = {}
     hashes = {(bank, kind): set() for bank in banks for kind in TABLES}
     references = []
@@ -208,9 +217,8 @@ def _analysis(rows):
             "declared_rows_are_verified_table_population": False}
 
 
-def prepare_paired_manifest_inventory(request_raw: bytes, manifest_bytes: dict, *, expected_request_sha256):
-    """Validate selected raw metadata and retain its exact, nonexhaustive scope."""
-    request, captured = _preflight(request_raw, manifest_bytes, expected_request_sha256)
+def _prepare(request_raw, manifest_bytes, *, expected_request_sha256, coordinate=False):
+    request, captured = _preflight(request_raw, manifest_bytes, expected_request_sha256, coordinate=coordinate)
     feed, before = _owners()
     rows = []
     for ordinal, selected in enumerate(request["manifests"]):
@@ -220,16 +228,27 @@ def prepare_paired_manifest_inventory(request_raw: bytes, manifest_bytes: dict, 
         _need(value.get("repository_id") == request["repository_id"] and value.get("path_in_repo") == path,
               "manifest repository or exact path differs from request")
         feed._paired_descriptors(value, path)
+        if coordinate:
+            transport = value.get("coordinate_transport")
+            _keys(transport, {"schema", "report_artifact_sha256", "report_sha256", "index_artifact_sha256"},
+                  "coordinate transport metadata")
+            _need(transport["schema"] == "paired-source-coordinate-transport/v1",
+                  "unsupported coordinate transport metadata schema")
+            for key in ("report_artifact_sha256", "report_sha256", "index_artifact_sha256"):
+                _digest(transport[key], "coordinate transport " + key)
+            _need(transport["report_sha256"] == selected["source_coordinate_report_sha256"],
+                  "independent source coordinate report SHA256 differs")
         rows.append({"selection_ordinal": ordinal, **selected,
-                     "bank": "paired-v" + _PAIRED_PATH.fullmatch(path)[1],
+                     "bank": "paired-v" + (_COORDINATE_PATH if coordinate else _PAIRED_PATH).fullmatch(path)[1],
                      "schema": value["schema"], "fingerprint": value["fingerprint"],
                      "producer": value["agent_id"], "raw_utf8": raw.decode("utf-8"), "manifest": value})
-    report = {"schema": SCHEMA, "repository_id": request["repository_id"], "revision": request["revision"],
+    report = {"schema": SCHEMA_V2 if coordinate else SCHEMA, "repository_id": request["repository_id"], "revision": request["revision"],
         "selection_scope": SELECTION_SCOPE, "selection_complete": True,
         "status": "selected_metadata_validated" if rows else "empty_explicit_selection_no_evidence",
         "coverage_scope": "exact_explicitly_selected_manifest_metadata_only",
         "request": request, "request_raw_utf8": request_raw.decode("utf-8"),
-        "request_sha256": expected_request_sha256, "manifests": rows, "analysis": _analysis(rows),
+        "request_sha256": expected_request_sha256, "manifests": rows,
+        "analysis": _analysis(rows, (3,)) if coordinate else _analysis(rows),
         "metadata_validation": {"manifest_bytes_pinned": True, "manifest_content_fingerprints_verified": True,
             "paired_transport_descriptors_verified": True, "descriptor_file_paths_opened": False,
             "table_bytes_read": False, "Arrow_loaded": False, "table_rows_read": False,
@@ -257,23 +276,49 @@ def prepare_paired_manifest_inventory(request_raw: bytes, manifest_bytes: dict, 
     return report
 
 
+def prepare_paired_manifest_inventory(request_raw: bytes, manifest_bytes: dict, *, expected_request_sha256):
+    """Validate selected v1/v2 metadata, retaining the legacy report shape."""
+    return _prepare(request_raw, manifest_bytes, expected_request_sha256=expected_request_sha256)
+
+
+def prepare_paired_manifest_inventory_v2(request_raw: bytes, manifest_bytes: dict, *, expected_request_sha256):
+    """Validate only v3 metadata and independently pinned report declarations.
+
+    No report artifact, Arrow table or source occurrence is read or verified.
+    """
+    return _prepare(request_raw, manifest_bytes, expected_request_sha256=expected_request_sha256, coordinate=True)
+
+
 def paired_manifest_inventory_sha256(report):
     """Hash the complete report without following any offered path or loading owners."""
     return _sha(_wire(report, MAX_REPORT_BYTES))
 
 
-def validate_paired_manifest_inventory(report, request_raw, manifest_bytes, *,
-                                       expected_request_sha256, expected_report_sha256):
-    """Require an independent report pin and complete authoritative regeneration."""
+def _validate(report, request_raw, manifest_bytes, *, expected_request_sha256, expected_report_sha256,
+              coordinate=False):
     _digest(expected_report_sha256, "report")
-    _preflight(request_raw, manifest_bytes, expected_request_sha256)
+    _preflight(request_raw, manifest_bytes, expected_request_sha256, coordinate=coordinate)
     if type(report) is bytes:
         report = _read_json(report, MAX_REPORT_BYTES, "report")
     _need(type(report) is dict, "ordinary report object or exact report JSON bytes required")
     _need(paired_manifest_inventory_sha256(report) == expected_report_sha256, "report SHA256 mismatch")
-    regenerated = prepare_paired_manifest_inventory(request_raw, manifest_bytes,
-        expected_request_sha256=expected_request_sha256)
+    regenerated = _prepare(request_raw, manifest_bytes,
+        expected_request_sha256=expected_request_sha256, coordinate=coordinate)
     offered = _wire(report, MAX_REPORT_BYTES)
     _need(offered == _wire(regenerated, MAX_REPORT_BYTES), "manifest inventory differs from full authoritative replay")
     _need(_owners()[-1] == regenerated["producer_pins"], "manifest inventory owners changed during validation")
     return regenerated
+
+
+def validate_paired_manifest_inventory(report, request_raw, manifest_bytes, *,
+                                       expected_request_sha256, expected_report_sha256):
+    """Require an independent report pin and complete legacy regeneration."""
+    return _validate(report, request_raw, manifest_bytes, expected_request_sha256=expected_request_sha256,
+                     expected_report_sha256=expected_report_sha256)
+
+
+def validate_paired_manifest_inventory_v2(report, request_raw, manifest_bytes, *,
+                                          expected_request_sha256, expected_report_sha256):
+    """Replay the exact v3 metadata selection and its independent report pins."""
+    return _validate(report, request_raw, manifest_bytes, expected_request_sha256=expected_request_sha256,
+                     expected_report_sha256=expected_report_sha256, coordinate=True)

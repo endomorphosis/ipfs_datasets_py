@@ -1,0 +1,841 @@
+{
+  "Lean_admission": false,
+  "backlog_tasks_closed": [],
+  "dependency_reuse_correction": {
+    "future_request_should_preserve_project_and_support_source_pin_closures": true,
+    "inference_limit": "The successful probe reproduces a denied beartype METADATA read in the common import prefix, consistent with the omitted historical support pin. The old wrapper retained only its refusal count; this does not identify its old path directly or backfill its missing archive.",
+    "old_successful_manifest": {
+      "bytes": 98377,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/inputs/prior-predicate-reference-manifest-v04.json",
+      "sha256": "b2afe65851d17f6db497225ff9346e6d62cd15e201c1b8c0894f000768dfbad8"
+    },
+    "omitted_known_support_file": {
+      "bytes": 37095,
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/beartype-0.22.9.dist-info/METADATA",
+      "sha256": "2c035a30fa01d3c5212b5f9ef8f38468d40b771188bf602931b7a36fbd67783a"
+    },
+    "original_manifest_path_preserved": "/tmp/legal-ir-predicate-reference-20261023-01/validation-manifest-v04.json",
+    "original_v02_refusal_path_directly_recovered": false
+  },
+  "documentation_base_revision": "74621da9dcd9b0200486e8b006f8f68f793c552c",
+  "earlier_attempt_v01": {
+    "checkpoint_JSON_inspections": 0,
+    "completed_checks": 0,
+    "controller": {
+      "bytes": 12132,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/controller-complete-reference-v01.json",
+      "sha256": "e7076d96701a497d89d1139c53966a55a6cfc88fe665010d97a5e0d7113a83e8"
+    },
+    "failure": "An unadmitted multiformats lookup JSON read stopped dependency import; later request added exactly the two lookup tables.",
+    "model_restores_or_forwards": 0,
+    "original_native_pipeline_qualified": false,
+    "raw_checkpoint_bytes_hashed": true,
+    "request": {
+      "bytes": 47447,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/request-reference-v01.json",
+      "sha256": "bc842dc827e63e7ffdd36d09da8e7d5ef99629b9cb5fa6e2f4c9742ad86036b2"
+    }
+  },
+  "evaluation_gold_mask": 0,
+  "executed_numerical_owner": {
+    "entry_point": "score_reference",
+    "observed_primary_source_sha256": "c97366d6596e9057491c9535db4173c26775de59156d4a4c4a03dbaf647602e4",
+    "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_compact_content_role_warmstart_reference_runtime_v1.py",
+    "public_source_qualification_inherited": false,
+    "public_source_sha256": "70db22133e2eb12235b5d299918b2257fc94c574dce05a797bf4aafb0d5a952e",
+    "scope": "Existing primary extended owner through unchanged legacy entry point. Exact public70db source remains separate; no source port is performed."
+  },
+  "graph_admission": false,
+  "legal_as_of": null,
+  "meaning_or_applicability_review": null,
+  "new_graph_or_Lean_operations": 0,
+  "new_product_owners_or_APIs_or_checkpoints_or_vectors": 0,
+  "new_training_updates": 0,
+  "numerical_attempt_v02": {
+    "actual_counters": {
+      "autograd_grad_calls": 0,
+      "backwards": 0,
+      "clips": 0,
+      "database": 0,
+      "external_write": 0,
+      "factory_rng_restores": 8,
+      "factory_seed_calls": 8,
+      "forbidden_lifecycle": 0,
+      "generation_calls": 0,
+      "gru_forward_completed": 8,
+      "gru_forward_entered": 8,
+      "model_evals": 8,
+      "model_factory_completed": 8,
+      "model_factory_entered": 8,
+      "model_forward_completed": 8,
+      "model_forward_entered": 8,
+      "module_eval_mode_calls": 56,
+      "module_initializers": 56,
+      "network": 0,
+      "observer_constructor_cleanup_calls": 0,
+      "observer_constructor_cleanup_completed": 0,
+      "optimizer_constructors": 0,
+      "optimizer_steps": 0,
+      "payload_read": 1,
+      "prepared_close_completed": 8,
+      "prepared_close_entered": 8,
+      "prepared_init_completed": 8,
+      "prepared_init_entered": 8,
+      "process": 0,
+      "state_loads": 8,
+      "token_selection_calls": 0,
+      "training_api_calls": 0,
+      "unexpected_api_calls": 0
+    },
+    "actual_restores": 8,
+    "actual_whole_model_and_GRU_forwards": 8,
+    "captures": [
+      {
+        "bytes": 731566,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-reference-coverage-20261025-02/exports/full537-step0-row1-scores.json",
+        "sha256": "3e2e0d5dd5201e6f335c1bf77e53250f1dbfe90284f08c322a2d71961eeffe62"
+      },
+      {
+        "bytes": 731898,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-reference-coverage-20261025-02/exports/full537-step1-row0-scores.json",
+        "sha256": "f8e7780da6544509b071f214b96f125101c9e96e26d9a93499afb3c808c07a0b"
+      },
+      {
+        "bytes": 732038,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-reference-coverage-20261025-02/exports/full537-step2-row0-scores.json",
+        "sha256": "617e0e51abf5ee9a632386373ce36b98cf05f6bdaa0834878fe8f787d5da6c71"
+      },
+      {
+        "bytes": 732058,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-reference-coverage-20261025-02/exports/full537-step2-row1-scores.json",
+        "sha256": "b0f36d1b17f1783cea4bee569dbdd078ac6ba22a8b57864745e04309b230ee4a"
+      },
+      {
+        "bytes": 731576,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-reference-coverage-20261025-02/exports/scope_conditional-step0-row1-scores.json",
+        "sha256": "74511eafcdd02d586c149144d11e492ddec0e6146247149b72182d9a73cd3316"
+      },
+      {
+        "bytes": 731888,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-reference-coverage-20261025-02/exports/scope_conditional-step1-row0-scores.json",
+        "sha256": "31e2258d2cc5811c09ec18219d14f444c764fac8352b3df84888e602833be19f"
+      },
+      {
+        "bytes": 731553,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-reference-coverage-20261025-02/exports/scope_conditional-step2-row0-scores.json",
+        "sha256": "343178765e269259defcd3e032dbcbd307a30675c17683311453f23652eb8e57"
+      },
+      {
+        "bytes": 731869,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-reference-coverage-20261025-02/exports/scope_conditional-step2-row1-scores.json",
+        "sha256": "6afc84d770dac1a570c40dfde4432701635b78be4eecef4e5eb48f4f307d52af"
+      }
+    ],
+    "checks": [
+      {
+        "details": {
+          "checkpoint_identities": 6,
+          "original_missing_cells": 8,
+          "original_rows": 2
+        },
+        "name": "original_checkpoint_and_row_commitments_bound",
+        "passed": true
+      },
+      {
+        "details": {
+          "cells": 8,
+          "full_reference_forwards": 8,
+          "raw_score_coordinates": 197616,
+          "restores": 8
+        },
+        "name": "eight_original_reference_matrices_observed",
+        "passed": true
+      }
+    ],
+    "controller": {
+      "bytes": 12132,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/controller-complete-reference-v02.json",
+      "sha256": "45b5f3c931c2129200d00e99357f47be98791d023f148311f5f32f1f3097e89f"
+    },
+    "executed_source_archive_present": false,
+    "global_unlocated_payload_read_refusals": 1,
+    "native_compute_released": true,
+    "new_labels": 368,
+    "new_raw_matrices": 8,
+    "new_score_coordinates": 197616,
+    "new_training_updates": 0,
+    "ordered_data_checks_completed": 2,
+    "ordered_data_checks_required": 4,
+    "original_native_pipeline_qualified": false,
+    "original_prepared_closes": 8,
+    "original_refusal_path_retained": null,
+    "per_cell_input_state_RNG_and_close_guards_passed": true,
+    "per_cell_payload_read_refusals": 0,
+    "request": {
+      "bytes": 47780,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/request-reference-v02.json",
+      "sha256": "1437bc7255011b7fab09df60e30d58414870ed6210b00805ea3e4dcbb6c8da6f"
+    },
+    "returncode": 1,
+    "source_READs_closed": true,
+    "tensor_inventory_per_cell": 13,
+    "terminal_live_processes": 0,
+    "unfinalized_top_level_summary": {
+      "interpretation": "These initialized fields were not finalized after the failure; actual counters and eight complete partial observations establish the physical work.",
+      "model_restores": 0,
+      "numerical_forwards": 0
+    },
+    "worker_observation": {
+      "bytes": 68331,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-cp128-reference-coverage-20261025-02/exports/worker-observation.json",
+      "sha256": "dabee22c2ca8f46401083060940cbbea61e6ceb16df0d2ddad66208887f4850d"
+    }
+  },
+  "pytest_cases_or_phases_rerun": 0,
+  "recorded_at_utc": "2026-10-25T01:00:02.897351+00:00",
+  "reuse_decisions": [
+    "Reuse the eight saved matrices as explicitly partial observations; do not call them still unrun or give the failed native wrapper success credit.",
+    "Do not repeat eight forwards solely to repair wrapper bookkeeping. Require a named downstream need before another numerical qualification.",
+    "Retain project source and non-project support-data pins when adapting existing requests; exact package metadata is distinct from executable project source.",
+    "Keep historical public authored23/69, primary predicate reference48/144 and predicate training70/210 scopes separate from this capture and diagnostic.",
+    "The next controlled statutory learner still requires reviewed complete targets, independently permitted source/context, profile compatibility and grouped independent evaluation."
+  ],
+  "saved_only_descriptive_analysis": {
+    "arithmetic": "Unweighted mean target cross-entropy over all537 unmasked scores, float64 stable logsumexp of recorded float32 values. This is not weighted67 or scoped training loss.",
+    "cells": [
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.7345877461459326,
+          "mean_target_CE": 5.920509478504625,
+          "mean_target_rank": 124.58695652173913,
+          "minimum_signed_margin": -1.8203814029693604,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 272.34343601121276
+        },
+        "checkpoint_sha256": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+        "full_sequence_logits_sha256": "ee0e24c358aa308c70a20ef5e921b8ed4db9a0c5399f244b063e035542e2a3da",
+        "objective_kind": "full537",
+        "observation_origin": "original_saved_preupdate_training_oracle",
+        "progress_step": 0,
+        "row_id": "fictional-retention",
+        "row_index": 0,
+        "semantic_positions": {
+          "mean_signed_margin": -0.7164572104811668,
+          "mean_target_CE": 5.939780255416678,
+          "mean_target_rank": 148.85714285714286,
+          "minimum_signed_margin": -1.334290087223053,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.578461787916744
+        },
+        "weights_sha256": "d4e7c710a8aba4462aab575d9bbfb4278c1870fadaf304f80d0f341af4912c34"
+      },
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.7435435401680677,
+          "mean_target_CE": 5.93517773992748,
+          "mean_target_rank": 127.43478260869566,
+          "minimum_signed_margin": -1.8203615248203278,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 273.01817603666404
+        },
+        "checkpoint_sha256": "1ef7d777554bea20aa1d77209f55f1eb987598e44a18b737a1d3541e2683ab12",
+        "full_sequence_logits_sha256": "9830fd76be17db94aca65ebfa50ca59dcaac8318338427417a986360c19e015c",
+        "objective_kind": "full537",
+        "observation_origin": "saved_capture_from_FAILED_original_wrapper_not_native_qualified",
+        "progress_step": 0,
+        "row_id": "fictional-inspection",
+        "row_index": 1,
+        "semantic_positions": {
+          "mean_signed_margin": -0.7762673358832087,
+          "mean_target_CE": 5.990645224911812,
+          "mean_target_rank": 163.71428571428572,
+          "minimum_signed_margin": -1.387682944536209,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.934516574382684
+        },
+        "weights_sha256": "d4e7c710a8aba4462aab575d9bbfb4278c1870fadaf304f80d0f341af4912c34"
+      },
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.7280854928995604,
+          "mean_target_CE": 5.909251270408864,
+          "mean_target_rank": 122.1086956521739,
+          "minimum_signed_margin": -1.8156182169914246,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 271.8255584388078
+        },
+        "checkpoint_sha256": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+        "full_sequence_logits_sha256": "1fd6e7cdde09a0224da00ee6989a6f5493671c819d438f1dd04bf6da5a517901",
+        "objective_kind": "full537",
+        "observation_origin": "saved_capture_from_FAILED_original_wrapper_not_native_qualified",
+        "progress_step": 1,
+        "row_id": "fictional-retention",
+        "row_index": 0,
+        "semantic_positions": {
+          "mean_signed_margin": -0.7095389036195618,
+          "mean_target_CE": 5.927543544790111,
+          "mean_target_rank": 147.14285714285714,
+          "minimum_signed_margin": -1.327518917620182,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.492804813530775
+        },
+        "weights_sha256": "3f2a4da3ecf0d74197a7ccfac7c6d68370cc66025ea21c1010a73ecac22ff6d5"
+      },
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.7372673534909668,
+          "mean_target_CE": 5.924348647236479,
+          "mean_target_rank": 125.34782608695652,
+          "minimum_signed_margin": -1.8155926764011383,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 272.520037772878
+        },
+        "checkpoint_sha256": "e69ea83a93cade5898578841b864311cae90643afda5a7eb9a220cb2e6120a11",
+        "full_sequence_logits_sha256": "8bccbcd218767e2dc843afc26cd318960c8f9fdc541eaec3ebd04ba4e0113f2d",
+        "objective_kind": "full537",
+        "observation_origin": "original_saved_preupdate_training_oracle",
+        "progress_step": 1,
+        "row_id": "fictional-inspection",
+        "row_index": 1,
+        "semantic_positions": {
+          "mean_signed_margin": -0.7717555165290833,
+          "mean_target_CE": 5.981018329946173,
+          "mean_target_rank": 162.85714285714286,
+          "minimum_signed_margin": -1.3785375952720642,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.86712830962321
+        },
+        "weights_sha256": "3f2a4da3ecf0d74197a7ccfac7c6d68370cc66025ea21c1010a73ecac22ff6d5"
+      },
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.7213208792407227,
+          "mean_target_CE": 5.8982516185536795,
+          "mean_target_rank": 119.97826086956522,
+          "minimum_signed_margin": -1.8102394342422485,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 271.3195744534693
+        },
+        "checkpoint_sha256": "3e1e528d0009b37f7608928f0af4a177f1ba3b43e08ef97e55d95c9de252fd8d",
+        "full_sequence_logits_sha256": "9b0a706eff98db53e8fe236b8d4180394c3e2ef26937ca61c4b8aaf8d9f2266b",
+        "objective_kind": "full537",
+        "observation_origin": "saved_capture_from_FAILED_original_wrapper_not_native_qualified",
+        "progress_step": 2,
+        "row_id": "fictional-retention",
+        "row_index": 0,
+        "semantic_positions": {
+          "mean_signed_margin": -0.7022691933172089,
+          "mean_target_CE": 5.915741610378165,
+          "mean_target_rank": 145.42857142857142,
+          "minimum_signed_margin": -1.3264664113521576,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.410191272647154
+        },
+        "weights_sha256": "fefc883569ffe9280d80a818ab8bb71b7b76c869f159698ef58b7f11441460eb"
+      },
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.7304502938185697,
+          "mean_target_CE": 5.913392479377424,
+          "mean_target_rank": 122.84782608695652,
+          "minimum_signed_margin": -1.8102064728736877,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 272.0160540513615
+        },
+        "checkpoint_sha256": "3e1e528d0009b37f7608928f0af4a177f1ba3b43e08ef97e55d95c9de252fd8d",
+        "full_sequence_logits_sha256": "d4f80be4dc2117af1858a56030cc061d9d16c6bdb09a98148f2acf19c9f6c96c",
+        "objective_kind": "full537",
+        "observation_origin": "saved_capture_from_FAILED_original_wrapper_not_native_qualified",
+        "progress_step": 2,
+        "row_id": "fictional-inspection",
+        "row_index": 1,
+        "semantic_positions": {
+          "mean_signed_margin": -0.7646783249718803,
+          "mean_target_CE": 5.969647192246008,
+          "mean_target_rank": 160.28571428571428,
+          "minimum_signed_margin": -1.3696116209030151,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.787530345722054
+        },
+        "weights_sha256": "fefc883569ffe9280d80a818ab8bb71b7b76c869f159698ef58b7f11441460eb"
+      },
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.7345877461459326,
+          "mean_target_CE": 5.920509478504625,
+          "mean_target_rank": 124.58695652173913,
+          "minimum_signed_margin": -1.8203814029693604,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 272.34343601121276
+        },
+        "checkpoint_sha256": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+        "full_sequence_logits_sha256": "ee0e24c358aa308c70a20ef5e921b8ed4db9a0c5399f244b063e035542e2a3da",
+        "objective_kind": "scope_conditional",
+        "observation_origin": "original_saved_preupdate_training_oracle",
+        "progress_step": 0,
+        "row_id": "fictional-retention",
+        "row_index": 0,
+        "semantic_positions": {
+          "mean_signed_margin": -0.7164572104811668,
+          "mean_target_CE": 5.939780255416678,
+          "mean_target_rank": 148.85714285714286,
+          "minimum_signed_margin": -1.334290087223053,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.578461787916744
+        },
+        "weights_sha256": "d4e7c710a8aba4462aab575d9bbfb4278c1870fadaf304f80d0f341af4912c34"
+      },
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.7435435401680677,
+          "mean_target_CE": 5.93517773992748,
+          "mean_target_rank": 127.43478260869566,
+          "minimum_signed_margin": -1.8203615248203278,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 273.01817603666404
+        },
+        "checkpoint_sha256": "a6b6b0cd589a74d59598c6984040676baf6f27a24a7b61f0ba0a6a5f38d5f64e",
+        "full_sequence_logits_sha256": "9830fd76be17db94aca65ebfa50ca59dcaac8318338427417a986360c19e015c",
+        "objective_kind": "scope_conditional",
+        "observation_origin": "saved_capture_from_FAILED_original_wrapper_not_native_qualified",
+        "progress_step": 0,
+        "row_id": "fictional-inspection",
+        "row_index": 1,
+        "semantic_positions": {
+          "mean_signed_margin": -0.7762673358832087,
+          "mean_target_CE": 5.990645224911812,
+          "mean_target_rank": 163.71428571428572,
+          "minimum_signed_margin": -1.387682944536209,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.934516574382684
+        },
+        "weights_sha256": "d4e7c710a8aba4462aab575d9bbfb4278c1870fadaf304f80d0f341af4912c34"
+      },
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.7369075110992012,
+          "mean_target_CE": 5.917932627077025,
+          "mean_target_rank": 124.32608695652173,
+          "minimum_signed_margin": -1.8266237378120422,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 272.2249008455432
+        },
+        "checkpoint_sha256": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+        "full_sequence_logits_sha256": "565c09abb6c1c3d4c8c65baa0b08b21ba4a15a862e3d548876cbf3eeae8ec0b8",
+        "objective_kind": "scope_conditional",
+        "observation_origin": "saved_capture_from_FAILED_original_wrapper_not_native_qualified",
+        "progress_step": 1,
+        "row_id": "fictional-retention",
+        "row_index": 0,
+        "semantic_positions": {
+          "mean_signed_margin": -0.7174284522022519,
+          "mean_target_CE": 5.934629510257564,
+          "mean_target_rank": 148.85714285714286,
+          "minimum_signed_margin": -1.3379639759659767,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.54240657180295
+        },
+        "weights_sha256": "222ee93f65e03b6a9653fe252090cb26b4a8a515ffb830f31bbab73357cd608e"
+      },
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.7461868994261908,
+          "mean_target_CE": 5.932977392550969,
+          "mean_target_rank": 127.34782608695652,
+          "minimum_signed_margin": -1.8265967965126038,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 272.91696005734457
+        },
+        "checkpoint_sha256": "9d93601d35dc371ea6895e1deca175b7b41b6279a05400c695edfaa2c8e96116",
+        "full_sequence_logits_sha256": "f106e31bc8a12e78821c360b90d0f0c898cbf3b5a958d249dfa3cdd790e29410",
+        "objective_kind": "scope_conditional",
+        "observation_origin": "original_saved_preupdate_training_oracle",
+        "progress_step": 1,
+        "row_id": "fictional-inspection",
+        "row_index": 1,
+        "semantic_positions": {
+          "mean_signed_margin": -0.7799817802650588,
+          "mean_target_CE": 5.988386270493128,
+          "mean_target_rank": 164.0,
+          "minimum_signed_margin": -1.3894226551055908,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.91870389345189
+        },
+        "weights_sha256": "222ee93f65e03b6a9653fe252090cb26b4a8a515ffb830f31bbab73357cd608e"
+      },
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.7384282028626489,
+          "mean_target_CE": 5.9161544073871,
+          "mean_target_rank": 123.93478260869566,
+          "minimum_signed_margin": -1.831292748451233,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 272.1431027398066
+        },
+        "checkpoint_sha256": "afcf33352fd849ca95c70a893ccb7b9e9cf76638fb1a6a75b9402f37db47786a",
+        "full_sequence_logits_sha256": "b9ce7e9d53a2268f02636f2a02af7a614d74ef8504a686665929fd78fe70a71a",
+        "objective_kind": "scope_conditional",
+        "observation_origin": "saved_capture_from_FAILED_original_wrapper_not_native_qualified",
+        "progress_step": 2,
+        "row_id": "fictional-retention",
+        "row_index": 0,
+        "semantic_positions": {
+          "mean_signed_margin": -0.7171921155282429,
+          "mean_target_CE": 5.930499269234169,
+          "mean_target_rank": 148.57142857142858,
+          "minimum_signed_margin": -1.3429230526089668,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.51349488463919
+        },
+        "weights_sha256": "d4541c1dfab86a7602a10bffde356cf643ed48b8f3be66c0d4c7e3567f1d2630"
+      },
+      {
+        "all_positions": {
+          "mean_signed_margin": -0.747562730198969,
+          "mean_target_CE": 5.931097002494942,
+          "mean_target_rank": 127.0,
+          "minimum_signed_margin": -1.8312573432922363,
+          "positions": 46,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 272.83046211476733
+        },
+        "checkpoint_sha256": "afcf33352fd849ca95c70a893ccb7b9e9cf76638fb1a6a75b9402f37db47786a",
+        "full_sequence_logits_sha256": "2de971b3c966782567791f41dc5b74fa1971913f1d4291bcc8debf201e359109",
+        "objective_kind": "scope_conditional",
+        "observation_origin": "saved_capture_from_FAILED_original_wrapper_not_native_qualified",
+        "progress_step": 2,
+        "row_id": "fictional-inspection",
+        "row_index": 1,
+        "semantic_positions": {
+          "mean_signed_margin": -0.779110600905759,
+          "mean_target_CE": 5.983754789170752,
+          "mean_target_rank": 164.14285714285714,
+          "minimum_signed_margin": -1.3930842876434326,
+          "positions": 7,
+          "raw_target_match_count": 0,
+          "sum_target_CE": 41.886283524195264
+        },
+        "weights_sha256": "d4541c1dfab86a7602a10bffde356cf643ed48b8f3be66c0d4c7e3567f1d2630"
+      }
+    ],
+    "independent_arithmetic_review": {
+      "bytes": 12307,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/review/independent-failed-wrapper-saved-arithmetic-review-v02.json",
+      "sha256": "3283b966ecd8785eae3079391a6b85a7a5d0bbfd1d3ca36256337f5e1094df53"
+    },
+    "invocation": {
+      "bytes": 1836,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/review/partial-analysis-invocation-v01.json",
+      "sha256": "a72542769ca38b2d9f0f6d3b24510e185fdc2ec3188f2f1ef8d89d63e52f21b4"
+    },
+    "label_positions": 552,
+    "legacy_native_qualification_gap_cells": 8,
+    "new_failed_wrapper_captures": 8,
+    "new_model_or_training_or_selector_execution": false,
+    "new_native_qualified_cells": 0,
+    "observed_cells": 12,
+    "old_saved_cells_reused": 4,
+    "original_wrapper_qualification_repaired": false,
+    "other_positions": 468,
+    "raw_highest_token_target_matches": 0,
+    "raw_semantic_position_target_matches": 0,
+    "result": {
+      "bytes": 449060,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/saved-partial-analysis-v01/twelve-cell-failed-wrapper-saved-analysis-v01.json",
+      "sha256": "cbe49adeed22a02ba399bfa17da09e98a678761cba0dfa152d75c70f32335c14"
+    },
+    "score_coordinates": 296424,
+    "semantic_positions": 84,
+    "unique_exposed_authored_sources": 2,
+    "unique_matrix_hashes": 10,
+    "within_fixed_row_state_comparisons": [
+      {
+        "objective_kind": "full537",
+        "row_index": 0,
+        "state0_to_state2_mean_CE_delta": -0.022257859950945758,
+        "state0_to_state2_semantic_mean_CE_delta": -0.024038645038513273
+      },
+      {
+        "objective_kind": "full537",
+        "row_index": 1,
+        "state0_to_state2_mean_CE_delta": -0.021785260550055696,
+        "state0_to_state2_semantic_mean_CE_delta": -0.020998032665803912
+      },
+      {
+        "objective_kind": "scope_conditional",
+        "row_index": 0,
+        "state0_to_state2_mean_CE_delta": -0.004355071117525533,
+        "state0_to_state2_semantic_mean_CE_delta": -0.0092809861825085
+      },
+      {
+        "objective_kind": "scope_conditional",
+        "row_index": 1,
+        "state0_to_state2_mean_CE_delta": -0.00408073743253734,
+        "state0_to_state2_semantic_mean_CE_delta": -0.00689043574105952
+      }
+    ]
+  },
+  "schema": "legal-ir-cp128-retained-reference-coverage-observations/v1",
+  "scope": "Eight original sum67 checkpoint-row reference matrices were physically captured under a failed wrapper. Strict storage recovery preserved the files; saved-only arithmetic combines them with four original matrices. A separate successful zero-model dependency probe identifies a denied metadata read. No numerical replay repairs the failed wrapper.",
+  "status": "eight_new_matrices_retained_from_failed_wrapper_descriptive_grid_complete_native_qualification_gap_open",
+  "strict_original_failure_storage_recoveries": [
+    {
+      "attempt": "v01",
+      "files_deleted": false,
+      "fresh_actual_readback": {
+        "bytes": 2722,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/recovery-v01/final-readback-v01.json",
+        "sha256": "8d3be38b5a3e67704ad4f3046363f2c40b1c89ecd2e1979ef14a210a13ab3fc0"
+      },
+      "original_failed_qualification_changed": false,
+      "original_retained_storage_bytes": 134217728,
+      "preserved_bytes": 8183,
+      "preserved_files": 5,
+      "receipt": {
+        "bytes": 5023,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/recovery-v01/recovery-receipt-v01.json",
+        "sha256": "162c8f51a996a8dfc89b5ebd82488f14c5405f766cdcaf35e35db48cae435b9b"
+      },
+      "storage_now_released": true
+    },
+    {
+      "attempt": "v02",
+      "files_deleted": false,
+      "fresh_actual_readback": {
+        "bytes": 3144,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/recovery-v02/final-readback-v02.json",
+        "sha256": "eab4b0490c91a14c90da2a63424db57ca7b2e6a6f9ad9f0e2e3174b10f7a7efe"
+      },
+      "original_failed_qualification_changed": false,
+      "original_retained_storage_bytes": 134217728,
+      "preserved_bytes": 6010643,
+      "preserved_files": 14,
+      "receipt": {
+        "bytes": 5724,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/recovery-v02/recovery-receipt-v02.json",
+        "sha256": "8dc626d193a21e89311b9c322adacd936008ccec6bbd6f951515abcaefc1c346"
+      },
+      "storage_now_released": true
+    }
+  ],
+  "successful_zero_model_dependency_probe": {
+    "controller": {
+      "bytes": 8487,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/controller-complete-probe-v01.json",
+      "sha256": "21a9f21050af8963bd1234e20ff427b9d7e92595851ede0c2fc35e1e5ce8e9c6"
+    },
+    "current_checked_compile_buffers": 92,
+    "current_product_origins": 92,
+    "denial_is_permission": false,
+    "denied_read": {
+      "flags": 524288,
+      "frames": [
+        {
+          "filename": "/tmp/legal-ir-cp128-reference-coverage-20261025-09/controls/probe_reference_dependencies_v01.py",
+          "function": "audit",
+          "line": 234
+        },
+        {
+          "filename": "/usr/lib/python3.12/pathlib.py",
+          "function": "open",
+          "line": 1015
+        },
+        {
+          "filename": "/usr/lib/python3.12/pathlib.py",
+          "function": "read_text",
+          "line": 1029
+        },
+        {
+          "filename": "/usr/lib/python3.12/importlib/metadata/__init__.py",
+          "function": "read_text",
+          "line": 819
+        },
+        {
+          "filename": "/usr/lib/python3.12/importlib/metadata/__init__.py",
+          "function": "metadata",
+          "line": 444
+        },
+        {
+          "filename": "/usr/lib/python3.12/importlib/metadata/__init__.py",
+          "function": "metadata",
+          "line": 879
+        },
+        {
+          "filename": "/home/barberb/.local/lib/python3.12/site-packages/beartype/meta.py",
+          "function": "<module>",
+          "line": 77
+        },
+        {
+          "filename": "<frozen importlib._bootstrap>",
+          "function": "_call_with_frames_removed",
+          "line": 488
+        },
+        {
+          "filename": "<frozen importlib._bootstrap_external>",
+          "function": "exec_module",
+          "line": 995
+        },
+        {
+          "filename": "<frozen importlib._bootstrap>",
+          "function": "_load_unlocked",
+          "line": 935
+        },
+        {
+          "filename": "<frozen importlib._bootstrap>",
+          "function": "_find_and_load_unlocked",
+          "line": 1331
+        },
+        {
+          "filename": "<frozen importlib._bootstrap>",
+          "function": "_find_and_load",
+          "line": 1360
+        },
+        {
+          "filename": "/home/barberb/.local/lib/python3.12/site-packages/beartype/__init__.py",
+          "function": "_init",
+          "line": 71
+        },
+        {
+          "filename": "/home/barberb/.local/lib/python3.12/site-packages/beartype/__init__.py",
+          "function": "<module>",
+          "line": 150
+        },
+        {
+          "filename": "<frozen importlib._bootstrap>",
+          "function": "_call_with_frames_removed",
+          "line": 488
+        },
+        {
+          "filename": "<frozen importlib._bootstrap_external>",
+          "function": "exec_module",
+          "line": 995
+        },
+        {
+          "filename": "<frozen importlib._bootstrap>",
+          "function": "_load_unlocked",
+          "line": 935
+        },
+        {
+          "filename": "<frozen importlib._bootstrap>",
+          "function": "_find_and_load_unlocked",
+          "line": 1331
+        },
+        {
+          "filename": "<frozen importlib._bootstrap>",
+          "function": "_find_and_load",
+          "line": 1360
+        },
+        {
+          "filename": "<frozen importlib._bootstrap>",
+          "function": "_call_with_frames_removed",
+          "line": 488
+        },
+        {
+          "filename": "<frozen importlib._bootstrap>",
+          "function": "_find_and_load_unlocked",
+          "line": 1310
+        },
+        {
+          "filename": "<frozen importlib._bootstrap>",
+          "function": "_find_and_load",
+          "line": 1360
+        },
+        {
+          "filename": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/__init__.py",
+          "function": "<module>",
+          "line": 28
+        },
+        {
+          "filename": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-planning-review-20261020-01/review-11/cp128-warmstart-qualification-v01/controls/run_training.py",
+          "function": "exec_module",
+          "line": 230
+        }
+      ],
+      "index": 1,
+      "mode": "r",
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/beartype-0.22.9.dist-info/METADATA",
+      "payload_bytes_read": 0,
+      "read_permitted": false
+    },
+    "executed_source_archive": {
+      "bytes": 7076513,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-reference-dependency-probe-20261025-01/exports/executed-source-archive.json",
+      "sha256": "56ab2b9b0112f176e173c2cc726f616816e61951e4c0a0dba8a1ec5e9dd07c8c"
+    },
+    "forwards": 0,
+    "historical_numerical_qualification_repaired": false,
+    "historical_source_archive_recovered": false,
+    "metadata_inspections": 6,
+    "model_restores": 0,
+    "native_compute_released": true,
+    "native_storage_released": true,
+    "observation": {
+      "bytes": 157486,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-reference-dependency-probe-20261025-01/exports/probe-observation.json",
+      "sha256": "e0052d8af180539f37a35e9a9155fa1d0d7ad0318adf3cb555d8678c5cbf271f"
+    },
+    "ordered_data_checks_passed": 4,
+    "original_result": {
+      "bytes": 1007,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-validation-runs/legal-ir-reference-dependency-probe-20261025-01/logs/result.json",
+      "sha256": "619e1d86ea1aa032709234ab37cb95083f5e5509e78b317887a222f2ce8293b7"
+    },
+    "productive_counters": {
+      "RNG_mutations": 0,
+      "autograd_grad_calls": 0,
+      "backwards": 0,
+      "clips": 0,
+      "database": 0,
+      "denied_readonly_open_attempts": 1,
+      "external_write": 0,
+      "generation_calls": 0,
+      "model_factories": 0,
+      "network": 0,
+      "nn_mode_changes": 0,
+      "nn_module_calls": 0,
+      "nn_module_constructors": 0,
+      "nn_state_loads": 0,
+      "optimizer_constructors": 0,
+      "optimizer_steps": 0,
+      "prepared_model_inits": 0,
+      "process": 0,
+      "reference_calls": 0,
+      "tensor_factories": 0,
+      "token_selection_calls": 0,
+      "training_api_calls": 0
+    },
+    "request": {
+      "bytes": 47818,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/cp128-reference-coverage-v01/request-probe-v01.json",
+      "sha256": "45ea5236036b5ffadba8268e9760c50e8d0c20578d5daaa0c070961b8ea5fcb6"
+    },
+    "returncode": 0,
+    "source_READs_closed": true,
+    "terminal_live_processes": 0,
+    "third_party_package_or_binary_attestation": false,
+    "training_updates": 0
+  },
+  "training_mask": 0
+}
