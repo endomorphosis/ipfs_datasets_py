@@ -41,6 +41,182 @@ class SupervisorLoopError(RuntimeError):
     """The autoformal supervisor loop cannot continue without inventing work."""
 
 
+def prepare_handoff_execution_packet_v1(
+    *,
+    programme_links: Mapping[str, Any],
+    current_directives: Mapping[str, Any],
+    current_task_metadata: Mapping[str, Any],
+    execution_envelope: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Prepare a detached 9001–9004 review preview; never claim or admit work.
+
+    Inputs are supplied JSON metadata, not authenticated native readback. A
+    complete envelope still needs the original owners to verify its bytes,
+    current revisions, scope, exhausted-attempt disposition and acceptance.
+    No descriptor is opened, no CID is created and no command is invoked.
+    Profiles keep source width, actual bottleneck, sidecars, schema and task
+    separate. Target-derived material cannot be labelled inference input.
+    """
+    supplied = {}
+    for name, value in (("programme_links", programme_links), ("current_directives", current_directives),
+                        ("current_task_metadata", current_task_metadata), ("execution_envelope", execution_envelope)):
+        if not isinstance(value, Mapping):
+            raise ValueError(f"{name} must be a JSON mapping")
+        try:
+            supplied[name] = json.loads(json.dumps(dict(value), allow_nan=False))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{name} must contain finite JSON data") from exc
+    programme, directives, task, envelope = (supplied[name] for name in
+        ("programme_links", "current_directives", "current_task_metadata", "execution_envelope"))
+    missing: list[str] = []
+
+    def require(condition: bool, reason: str) -> None:
+        if not condition and reason not in missing:
+            missing.append(reason)
+
+    def text(value: Any) -> bool:
+        return isinstance(value, str) and bool(value.strip()) and "\x00" not in value
+
+    def positive(value: Any) -> bool:
+        return type(value) is int and value > 0
+
+    def strings(value: Any, *, empty: bool = False) -> bool:
+        return (isinstance(value, list) and (empty or bool(value))
+                and all(text(item) for item in value) and len(value) == len(set(value)))
+
+    def arguments(value: Any) -> bool:
+        return isinstance(value, list) and 0 < len(value) <= 128 and all(text(item) for item in value)
+
+    def path(value: Any, *, absolute: bool = False) -> bool:
+        return (text(value) and (not absolute or value.startswith("/"))
+                and ".." not in value.split("/") and not any(c in value for c in "*?[]"))
+
+    def descriptor(value: Any) -> bool:
+        return (isinstance(value, dict) and set(value) == {"path", "bytes", "sha256"}
+                and path(value.get("path")) and type(value.get("bytes")) is int and value["bytes"] >= 0
+                and isinstance(value.get("sha256"), str) and len(value["sha256"]) == 64
+                and all(c in "0123456789abcdef" for c in value["sha256"]))
+
+    def dependencies(value: Any) -> bool:
+        return (isinstance(value, list) and all(isinstance(item, dict)
+                and set(item) == {"task_cid", "revision"} and text(item.get("task_cid"))
+                and positive(item.get("revision")) for item in value)
+                and len({item["task_cid"] for item in value}) == len(value))
+
+    alias = envelope.get("task_alias")
+    require(isinstance(alias, str) and alias in {"LIR-9001", "LIR-9002", "LIR-9003", "LIR-9004"}, "unsupported_handoff_task")
+    require(programme.get("schema") == "legal-ir-existing-native-programme-links/v1", "programme_schema_missing")
+    links = programme.get("unparented_handoff_and_engineering_task_links", [])
+    selected = [item for item in links if isinstance(item, dict) and item.get("task_alias") == alias] if isinstance(links, list) else []
+    require(len(selected) == 1, "exact_programme_task_link_required")
+    link = selected[0] if len(selected) == 1 else {}
+    for key in ("task_alias", "task_cid", "goal_cid"):
+        require(text(task.get(key)) and task.get(key) == envelope.get(key) == link.get(key), f"identity_mismatch:{key}")
+    require(link.get("goal_alias") == "LIR-G090", "handoff_goal_mismatch")
+    for key, programme_key in (("plan_cid", "historical_plan_root_cid"), ("repository_tree_id", "historical_repository_tree_id")):
+        require(text(task.get(key)) and task.get(key) == envelope.get(key) == programme.get(programme_key), f"identity_mismatch:{key}")
+    require(positive(task.get("revision")) and task.get("revision") == envelope.get("revision"), "current_revision_binding_required")
+    require(dependencies(task.get("dependencies")) and dependencies(envelope.get("dependencies"))
+            and task.get("dependencies") == envelope.get("dependencies"), "exact_dependency_revisions_required")
+    directive_ids = envelope.get("directive_ids")
+    require(strings(directive_ids), "directive_ids_required")
+    if isinstance(directive_ids, list):
+        for identifier in directive_ids:
+            directive = directives.get(identifier) if isinstance(identifier, str) else None
+            require(isinstance(directive, dict) and directive.get("schema") == "legal-ir-existing-task-directive/v1",
+                    f"current_directive_required:{identifier}")
+    history = task.get("attempt_history")
+    require(isinstance(history, dict), "attempt_history_required")
+    if isinstance(history, dict):
+        require(type(history.get("attempts")) is int and history["attempts"] >= 0
+                and positive(history.get("max_attempts")) and type(history.get("exhausted")) is bool
+                and isinstance(history.get("history"), list), "attempt_history_invalid")
+        spent = history.get("exhausted") is True or (type(history.get("attempts")) is int
+                and positive(history.get("max_attempts")) and history["attempts"] >= history["max_attempts"])
+        if spent:
+            disposition = task.get("original_owner_disposition")
+            require(isinstance(disposition, dict) and disposition.get("task_cid") == task.get("task_cid")
+                    and disposition.get("revision") == task.get("revision")
+                    and disposition.get("action") == "review_preview_only"
+                    and descriptor(disposition.get("receipt")), "exhausted_attempt_original_owner_disposition_required")
+    for flag in ("dispatch", "rearm", "start_workers", "admitted", "native_admission",
+                 "task_completion_authority", "goal_completion_authority"):
+        require(flag not in envelope or envelope[flag] is False, f"authority_request_forbidden:{flag}")
+    profile = envelope.get("profile")
+    profile_keys = {"ir_family", "schema_version", "decoder_task", "source_dimension", "actual_bottleneck_dimension",
+                    "sidecars", "input_token_limit", "output_token_limit"}
+    require(isinstance(profile, dict) and profile_keys <= set(profile), "profile_identity_required")
+    if isinstance(profile, dict):
+        require(profile.get("ir_family") == "legal_ir" and text(profile.get("schema_version"))
+                and text(profile.get("decoder_task")) and type(profile.get("source_dimension")) is int
+                and profile["source_dimension"] in {8, 384, 768, 4096}
+                and positive(profile.get("actual_bottleneck_dimension"))
+                and strings(profile.get("sidecars"), empty=True)
+                and positive(profile.get("input_token_limit")) and positive(profile.get("output_token_limit")), "profile_identity_invalid")
+    inputs = envelope.get("inputs")
+    require(isinstance(inputs, list) and bool(inputs), "role_bound_inputs_required")
+    if isinstance(inputs, list):
+        # A second label/path cannot turn the same committed target bytes into
+        # inference context. Combined files need a separately reviewed selector
+        # contract; a caller's target_derived=False is not such a projection.
+        protected_content = set()
+        for item in inputs:
+            if (isinstance(item, dict) and descriptor(item.get("descriptor"))
+                    and (item.get("role") == "target" or item.get("role") == "review"
+                         or item.get("target_derived") is True)):
+                pin = item["descriptor"]
+                protected_content.add((pin["bytes"], pin["sha256"]))
+        roles = {"source", "context", "representation", "checkpoint", "target", "review", "code", "directives", "prior_evidence"}
+        for index, item in enumerate(inputs):
+            require(isinstance(item, dict), f"input_invalid:{index}")
+            if not isinstance(item, dict):
+                continue
+            role, use = item.get("role"), item.get("use")
+            require(isinstance(role, str) and role in roles and isinstance(use, str)
+                    and use in {"inference", "supervision", "verification", "provenance"}
+                    and descriptor(item.get("descriptor")), f"input_binding_invalid:{index}")
+            if role == "representation" or role == "checkpoint" or "profile" in item:
+                require(item.get("profile") == profile and isinstance(profile, dict), f"input_profile_mismatch:{index}")
+            if "target_derived" in item:
+                require(type(item["target_derived"]) is bool, f"target_derivation_flag_invalid:{index}")
+            if use == "inference":
+                require(role != "target" and role != "review" and item.get("target_derived") is False,
+                        f"target_inference_leak:{index}")
+                pin = item.get("descriptor")
+                require(not descriptor(pin) or (pin["bytes"], pin["sha256"]) not in protected_content,
+                        f"cross_input_target_inference_leak:{index}")
+                if role == "context":
+                    require(descriptor(item.get("permission_evidence")), f"inference_context_permission_required:{index}")
+    require(arguments(envelope.get("argv")), "exact_argv_required")
+    require(path(envelope.get("cwd"), absolute=True), "absolute_cwd_required")
+    for key in ("outputs", "code_allowlist", "test_allowlist"):
+        values = envelope.get(key)
+        require(strings(values, empty=key == "code_allowlist")
+                and all(path(value) for value in values), f"explicit_paths_required:{key}")
+    require(strings(envelope.get("exclusive_keys")), "exclusive_keys_required")
+    budgets = envelope.get("budgets")
+    budget_keys = {"cpu_threads", "memory_mib", "storage_bytes", "max_children", "max_tokens", "deadline_seconds", "max_attempts"}
+    require(isinstance(budgets, dict) and set(budgets) == budget_keys
+            and all(positive(value) for value in budgets.values()), "finite_positive_budgets_required")
+    worker, verifier = envelope.get("worker"), envelope.get("verifier")
+    require(isinstance(worker, dict) and text(worker.get("role")) and text(worker.get("principal")), "worker_role_required")
+    require(isinstance(verifier, dict) and verifier.get("role") == "independent_acceptance"
+            and text(verifier.get("principal")) and isinstance(worker, dict)
+            and verifier.get("principal") != worker.get("principal") and arguments(verifier.get("argv")), "independent_verifier_required")
+    gates = ["original_owner_current_revision_dependencies_and_scope_verification_required",
+             "independent_input_bytes_profile_permissions_and_acceptance_verification_required"]
+    return {
+        "schema": "legal-ir-supervisor-handoff-execution-packet-preview/v1", "scope": "review_preview_only",
+        "metadata_complete": not missing, "metadata_blockers": missing, "independent_verification_gates": gates,
+        "independently_verified": False, "descriptor_hashes_verified": False, "native_status_verified": False,
+        "dispatch_authorized": False, "rearm_authorized": False, "native_admission": False,
+        "workers_started": False, "task_completion_authority": False, "goal_completion_authority": False,
+        "completion_authority": False, "admitted": False, "formalized": False,
+        "training_authorized": False, "semantic_review_verified": False,
+        "supervision_masks": {"training": 0, "evaluation_gold": 0}, "supplied_metadata": supplied,
+    }
+
+
 def progress_log_path(board_path: Any) -> Path | None:
     if board_path is None:
         return None
