@@ -50,6 +50,29 @@ The initial native frontier is **`LIR-9001` only**. The other 63 tasks are phase
 
 Conditional parallel frontiers include `0201/0301/1601` after compatible baseline/handoff work, `9102/9103` after the E1 design, and `1902/1903/1904` after the representation contract. Use the full recorded dependencies. Graph and Lean engineering can proceed alongside reviewed-target preparation where their exact input gates permit it. Do not remove parent dependencies to increase concurrency.
 
+## Current full-corpus execution contract
+
+The maintained goal is the entire pinned US Code population. The initial reviewed component and20–40 connected provisions are gates on expansion. Continue using the34-goal/64-task native hierarchy above and the original24 records in [BACKLOG.json](../BACKLOG.json). Its `supervisor_programme` metadata and per-record `supervisor_execution` crosswalk preserve the historical aliases/CIDs without opening the native database, importing again, changing live status or granting dispatch. The12 handoff/engineering tasks without a24-item parent remain separately linked at the programme level.
+
+The original `LIR-9001`-only frontier is an import-time observation. Reconcile current task revisions, completed work and exhausted attempts before preparing `9001`→`9004`; no guide or JSON crosswalk rearms a historical task. The current `current_programme_directive` in the primary maintained backlog takes precedence over superseded experimental suggestions, but all changes to existing native records use the native revision/CAS route. Preserve original dependencies and apply conditional parallel frontiers only after their actual gates. Reuse completed `LIR-1601` work rather than scheduling it again.
+
+The supervisor must receive a reviewed execution packet for each selected task:
+
+| Packet field | Required binding |
+| --- | --- |
+| Identity | Existing task CID/revision, goal/plan CIDs, original dependency revisions and selected repository tree. |
+| Inputs | Exact source/cache/model/codec/code commitments, edition/coordinate namespaces, complete context and explicit input roles; no target-derived inference context. |
+| Execution | Exact argv/cwd, selected supported job template/provider, output paths, code/test allowlists and exclusive keys. |
+| Limits | Existing source/native/storage owners, finite CPU/memory/storage/process/update/token/deadline/retry envelope and retained failure/cleanup policy. |
+| Acceptance | Independent verifier and role; distinct engineering/source/meaning/representation/graph/Lake/proof/release claims. Missing commands or legal decisions block the relevant stage. |
+| Adoption | Supported task authority plus authenticated namespace/plan/tree/task-scope admission and exact persisted readback. Intake and JSON presence are insufficient. |
+
+Keep existing Grok lane routing and the repair dispatcher's configured model choice. Legacy135-task engineering completion is not34-goal/64-task admission or full-USCode completion. Preserve their separate namespaces and original histories.
+
+Partition expansion by exact occurrence and closed dependency component. Use a stable partition identity binding source revision/edition, physical membership, stage, IR/schema/task/profile and dependency versions. Every requested span receives a durable disposition; account for editorial exclusions, missing context, unsupported constructs, ambiguity and failure. Retain complete typed AST/source witnesses beyond compact term/entity indexes. A source/definition/review/model/toolchain change invalidates affected descendants, and a new competing definition reopens relevant negative lookups.
+
+Only the declared reviewed/admitted subset enters a coherent formal-corpus release. Full-corpus closure remains false while operative meanings, governing-definition applications, complete targets, graph dependencies or required complete-library Lake/preservation evidence remain unresolved. Release manifests bind all three immutable dataset revisions, graph/source maps, model/profile identities, review and proof receipts and the toolchain. Native goal settlement must independently bind this policy to exact revisions; neither a work-count dashboard nor the watchdog supplies it.
+
 ## Native intake and recovery
 
 The existing `logic.autoformal.supervisor_loop.ingest_population()` forwards the reviewed population to `DatabaseTaskSource.materialize()`. The adapter uses the supervisor's own identity primitive and preserves explicit parent CIDs and `goal_parent` edges, CID-resolved task dependencies, mapping-shaped outputs and separate acceptance entries. It does not use the generic taskboard converter that drops hierarchy/output metadata.
