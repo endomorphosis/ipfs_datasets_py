@@ -1275,3 +1275,129 @@ __all__ += ["COORDINATE_CORPUS_SCHEMA", "COORDINATE_CORPUS_PROFILE", "COORDINATE
     "COORDINATE_CORPUS_SCHEMA_V2", "COORDINATE_CORPUS_PROFILE_V2", "COORDINATE_CORPUS_EXPORT_SCHEMA_V2",
     "COORDINATE_CORPUS_METADATA_PROFILE_V2", "prepare_coordinate_graph_corpus_v2",
     "validate_coordinate_graph_corpus_v2", "export_coordinate_graph_corpus_output_v2"]
+
+
+# Explicit lexical-occurrence custody is separate from every opaque candidate.
+PARENT_LEXICAL_PROJECTION_SCHEMA = "legal-corpus-parent-lexical-occurrence-projection/v1"
+PARENT_LEXICAL_PROJECTION_PROFILE = "retained-parent-lexical-occurrences/v1"
+_PARENT_LEXICAL_FIELDS = {
+    "base_candidate", "derived_occurrences_sha256", "derived_occurrences", "mention_bindings",
+    "graph", "projection_profile", "view", "authority", "admitted", "formalized",
+    "source_semantics_verified", "source_authenticity_verified", "external_references_verified",
+    "definition_semantics_encoded", "training_mask", "evaluation_gold_mask",
+}
+
+
+def _parent_lexical_occurrences(value, expected_sha256):
+    """Admit one independently pinned complete ordered occurrence list."""
+    require_sha256(expected_sha256, "expected_derived_occurrences_sha256")
+    if type(value) is not list or not 1 <= len(value) <= proposed.MAX_ENTITIES:
+        _fail("nonempty bounded retained lexical occurrence list required")
+    checked = clone_json(value)
+    if hashlib.sha256(canonical_dag_json_bytes(checked)).hexdigest() != expected_sha256:
+        _fail("retained lexical occurrences differ from independently expected SHA256")
+    # Delegate every existing occurrence envelope rule to its original owner.
+    from . import corpus_source
+    checked = [corpus_source._occurrence_shape(row) for row in checked]
+    if len({row["record_cid"] for row in checked}) != len(checked):
+        _fail("duplicate retained lexical occurrence identity")
+    return checked
+
+
+def _parent_lexical_projection(base, graph, occurrences, occurrences_sha256):
+    """Project validated literal mentions without attaching legal semantics."""
+    if (base["schema"] != PARENT_SCHEMA or graph["profile"] != "relational_norm_v1"
+            or graph["assertions"] or len(graph["entities"]) != len(occurrences)):
+        _fail("complete parent relational lexical-mention population required")
+    entities = graph["entities"]
+    for row, occurrence in zip(entities, occurrences):
+        declaration = row["declaration"]
+        if (declaration["kind"] != "mention" or declaration["definition_kind"] is not None
+                or declaration["ast_path"] is not None):
+            _fail("lexical projection requires mention-only declarations without typed AST links")
+        if canonical_dag_json_bytes(declaration["source_selector"]) != canonical_dag_json_bytes(occurrence):
+            _fail("ordered retained occurrence differs from independently validated mention selector")
+    if len({row["entity_id"] for row in entities}) != len(entities):
+        _fail("duplicate retained semantic mention identity")
+    parent_cid = base["source_occurrence"]["record_cid"]
+    version_cid = base["source_version"]["record_cid"]
+    if any(row["source_version_cid"] != version_cid or row["record_cid"] == parent_cid
+           for row in occurrences):
+        _fail("derived lexical occurrences require distinct children of the same parent source")
+    nodes, edges = list(base["graph"]["nodes"]), list(base["graph"]["edges"])
+    proposals = [node for node in nodes if node["node_type"] == "interpretation"
+                 and node["content_cid"] == base["proposal_record"]["record_cid"]]
+    parents = [node for node in nodes if node["node_type"] == "occurrence"
+               and node["content_cid"] == parent_cid]
+    if len(proposals) != 1 or len(parents) != 1:
+        _fail("unique original proposal and parent occurrence endpoints required")
+    bindings = []
+    existing_stable_ids = {node["stable_id"] for node in nodes}
+    for ordinal, (row, occurrence) in enumerate(zip(entities, occurrences)):
+        cid = occurrence["record_cid"]
+        if cid in existing_stable_ids:
+            _fail("derived lexical occurrence collides with an existing stable node identity")
+        node = build_node(node_type="occurrence", stable_id=cid, content_cid=cid,
+                          source_occurrence_cids=[cid])
+        mention = build_edge(src_cid=proposals[0]["record_cid"], dst_cid=node["record_cid"],
+            relation="MENTIONS", ordinal=ordinal,
+            evidence_cids=[base["input_binding"]["record_cid"], base["proposal_record"]["record_cid"], cid])
+        derived = build_edge(src_cid=node["record_cid"], dst_cid=parents[0]["record_cid"],
+                             relation="DERIVED_FROM", evidence_cids=[cid, parent_cid])
+        nodes.append(node)
+        edges.extend((mention, derived))
+        bindings.append(dict(entity_id=row["entity_id"], entity_key=row["declaration"]["entity_key"],
+            scope_id=graph["scope"]["scope_id"], source_occurrence_cid=cid,
+            occurrence_node_cid=node["record_cid"], mentions_edge_cid=mention["record_cid"],
+            derived_from_edge_cid=derived["record_cid"]))
+        existing_stable_ids.add(cid)
+    return seal_record(dict(schema=PARENT_LEXICAL_PROJECTION_SCHEMA,
+        projection_profile=PARENT_LEXICAL_PROJECTION_PROFILE, base_candidate=base,
+        derived_occurrences_sha256=occurrences_sha256, derived_occurrences=occurrences,
+        mention_bindings=bindings, graph=build_graph_snapshot(nodes, edges), view="candidate",
+        authority=False, admitted=False, formalized=False, source_semantics_verified=False,
+        source_authenticity_verified=False, external_references_verified=False,
+        definition_semantics_encoded=False, training_mask=0, evaluation_gold_mask=0))
+
+
+def prepare_parent_lexical_occurrence_projection_v1(raw, *, derived_occurrences,
+        expected_derived_occurrences_sha256, **parent_validation_inputs):
+    """Project an explicit complete retained mention list after full parent replay.
+
+    ``raw`` and ``parent_validation_inputs`` are the unchanged complete original
+    graph bytes and arguments of :func:`adapt_parent_proposed_graph_bytes`.
+    The separate occurrence pin is SHA256 of ``canonical_dag_json_bytes`` of the
+    entire ordered list; it does not replace any original source/graph input.
+    Existing occurrence records are reused, never rebuilt or selected by labels.
+    Shared physical node bodies carry no interpretation-specific declarations.
+    The returned companion retains the exact opaque base candidate and all
+    unresolved source, context, edition and legal-meaning decisions.
+    """
+    occurrences = _parent_lexical_occurrences(derived_occurrences, expected_derived_occurrences_sha256)
+    base = adapt_parent_proposed_graph_bytes(raw, **parent_validation_inputs)
+    graph = load_record_bytes(raw, expected_sha256=parent_validation_inputs["expected_proposal_sha256"])
+    return _parent_lexical_projection(base, graph, occurrences, expected_derived_occurrences_sha256)
+
+
+def validate_parent_lexical_occurrence_projection_v1(record, raw, *, derived_occurrences,
+        expected_derived_occurrences_sha256, **parent_validation_inputs):
+    """Independently regenerate the complete projection from supplied originals.
+
+    Comparison uses canonical bytes to distinguish JSON booleans from integers.
+    Validation requires a fresh full original-parent replay; the retained base
+    candidate, graph, list hash or self-sealed output cannot replace it.
+    """
+    value = validate_record(record, schema=PARENT_LEXICAL_PROJECTION_SCHEMA,
+                            fields=_PARENT_LEXICAL_FIELDS)
+    expected = prepare_parent_lexical_occurrence_projection_v1(raw,
+        derived_occurrences=derived_occurrences,
+        expected_derived_occurrences_sha256=expected_derived_occurrences_sha256,
+        **parent_validation_inputs)
+    if canonical_dag_json_bytes(value) != canonical_dag_json_bytes(expected):
+        _fail("lexical projection differs from independently regenerated parent/source custody")
+    return value
+
+
+__all__ += ["PARENT_LEXICAL_PROJECTION_SCHEMA", "PARENT_LEXICAL_PROJECTION_PROFILE",
+            "prepare_parent_lexical_occurrence_projection_v1",
+            "validate_parent_lexical_occurrence_projection_v1"]
