@@ -352,3 +352,322 @@ def validate_relational_norm_v1(report, request_raw, *, expected_request_sha256,
     _need(_wire(report, MAX_REPORT_BYTES) == _wire(regenerated, MAX_REPORT_BYTES),
           "relational report differs from complete authoritative replay")
     return regenerated
+
+
+# This explicit mixed profile does not widen the native Object-only contract.
+# Its renderer record is not a serialized TDFOL node or native parser receipt.
+MIXED_REQUEST_SCHEMA = "legal-mixed-relational-norm-request/v1"
+MIXED_SCHEMA = "legal-mixed-relational-norm-report/v1"
+MIXED_PROFILE = "authored-many-sorted-relational-deontic/v1"
+_MIXED_SORTS = ("Object", "EventFrame", "TimeFrame")
+_MIXED_OWNER_PINS = None
+
+
+def _mixed_parse(request_raw, expected_request_sha256):
+    _digest(expected_request_sha256, "mixed relational request")
+    _need(type(request_raw) is bytes and 0 < len(request_raw) <= MAX_REQUEST_BYTES,
+          "bounded exact mixed request bytes required")
+    _need(hashlib.sha256(request_raw).hexdigest() == expected_request_sha256,
+          "mixed request SHA256 mismatch")
+    try:
+        request = json.loads(request_raw.decode("utf-8"), object_pairs_hook=_pairs,
+            parse_constant=lambda _: (_ for _ in ()).throw(ValueError("finite JSON required")))
+    except (ValueError, UnicodeError, RecursionError) as error:
+        raise ValueError("duplicate-free ordinary mixed request JSON required") from error
+    _wire(request, MAX_REQUEST_BYTES)
+    _keys(request, {"schema", "profile", "interpretation_status", "expression",
+                    "argument_roles", "source_binding"}, "mixed request")
+    _need(request["schema"] == MIXED_REQUEST_SCHEMA and request["profile"] == MIXED_PROFILE
+          and request["interpretation_status"] == "authored_unreviewed_declaration"
+          and request["source_binding"] is None,
+          "explicit unreviewed mixed profile with null source binding required")
+    _need(type(request["expression"]) is dict and type(request["argument_roles"]) is list,
+          "mixed TypedExpression and ordered roles required")
+    return request
+
+
+def _mixed_owners():
+    # The typed kernel is authoritative here. No native TDFOL parser can
+    # represent these additional sorts and builtin equality losslessly.
+    from ..syntax_core import ast, contracts, signatures
+    from ..families import namespaces
+    from ..formalization.autoencoder import native_family_lean_emitters as emitter
+    global _MIXED_OWNER_PINS
+    modules = (ast, contracts, signatures, namespaces, emitter)
+    pins = {str(Path(module.__file__).resolve()):
+            hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest() for module in modules}
+    self_path = str(Path(__file__).resolve())
+    _need(hashlib.sha256(Path(__file__).read_bytes()).hexdigest() == _SELF_PIN,
+          "mixed relational producer changed since import")
+    pins[self_path] = _SELF_PIN
+    if _MIXED_OWNER_PINS is None:
+        _MIXED_OWNER_PINS = dict(pins)
+    _need(_MIXED_OWNER_PINS == pins, "mixed relational owners changed since first use")
+    return ast, signatures, emitter, dict(pins)
+
+
+def _mixed_strict_expression(request, ast, signatures):
+    original = request["expression"]
+    try:
+        expression = ast.TypedExpression.from_dict(original)
+    except (ValueError, TypeError, KeyError, RecursionError) as error:
+        raise ValueError("valid exact mixed TypedExpression required") from error
+    _need(_wire(expression.to_dict(), MAX_REQUEST_BYTES) == _wire(original, MAX_REQUEST_BYTES),
+          "mixed TypedExpression must survive exact serialized reconstruction")
+    _need(expression.is_formula and expression.family.value == "tdfol"
+          and expression.profile.value == "tdfol_default"
+          and not expression.metadata and expression.range is None,
+          "unannotated tdfol/tdfol_default mixed formula required")
+    _need(all(identity.version == "1.0.0" for identity in (
+        expression.family, expression.profile, expression.signature.family, expression.signature.profile)),
+        "exact existing mixed namespace versions required")
+    signature = expression.signature
+    _need(not signature.metadata and not signature.features,
+          "mixed signature metadata/features unsupported")
+    expected_sorts = {signatures.BOOL_SORT, *(signatures.LogicSort(name) for name in _MIXED_SORTS)}
+    _need(set(signature.sorts) == expected_sorts and len(signature.sorts) == 4,
+          "exact Bool/Object/EventFrame/TimeFrame sorts required")
+    _need(0 < len(signature.symbols) <= 64, "bounded nonempty mixed predicate signature required")
+    predicates = {}
+    for symbol in signature.symbols:
+        _safe_name(symbol.name)
+        _need(symbol.kind is signatures.SymbolKind.PREDICATE and 1 <= symbol.arity <= 8
+              and symbol.range == signatures.BOOL_SORT and not symbol.metadata
+              and all(sort == signatures.LogicSort(sort.name) and sort.name in _MIXED_SORTS
+                      for sort in symbol.domain),
+              "only variables-only mixed predicate domains supported")
+        predicates[symbol.name] = [sort.name for sort in symbol.domain]
+    rows, roles = request["argument_roles"], {}
+    _need(len(rows) == len(predicates), "mixed roles must cover every declared predicate")
+    for row in rows:
+        _keys(row, {"symbol", "roles"}, "mixed argument role row")
+        name, labels = row["symbol"], row["roles"]
+        _need(type(name) is str and name in predicates and name not in roles,
+              "unique declared mixed predicate role row required")
+        _need(type(labels) is list and len(labels) == len(predicates[name])
+              and all(type(label) is str and _ROLE.fullmatch(label) is not None for label in labels)
+              and len(set(labels)) == len(labels),
+              "ordered distinct bounded mixed argument roles required")
+        roles[name] = list(labels)
+    return expression, predicates, roles
+
+
+def _mixed_lower(expression, predicates, roles, ast, emitter):
+    seen_ids, binders, used = set(), set(), set()
+    mapping = []
+    counts = {"nodes": 0, "extension_payloads": 0, "quantifiers": 0, "modal_nodes": 0,
+              "predicate_occurrences": 0, "equality_occurrences": 0}
+    binary = {"and": "∧", "or": "∨", "implies": "→", "iff": "↔"}
+    modal_kinds = {"O": "obligation", "P": "permission", "F": "forbidden"}
+
+    def identity(node_id):
+        _need(node_id not in seen_ids, "mixed node and extension IDs must be globally unique")
+        seen_ids.add(node_id)
+
+    def visit(node, typed_path, renderer_path, bound, depth):
+        counts["nodes"] += 1
+        _need(counts["nodes"] <= MAX_NODES and depth <= MAX_DEPTH,
+              "mixed relational AST node/depth bound exceeded")
+        identity(node.node_id)
+        _need(not node.metadata and node.range is None and isinstance(node.kind, ast.NodeKind),
+              "mixed node metadata/ranges/open kinds unsupported")
+        kind = node.kind.value
+        mapping_row = {"typed_path": typed_path, "renderer_path": renderer_path,
+            "node_id": node.node_id, "kind": kind, "sort": node.sort.name}
+        mapping.append(mapping_row)
+        if kind == "variable":
+            _safe_name(node.symbol)
+            _need(node.symbol in bound and node.sort.name == bound[node.symbol]
+                  and node.sort.name in _MIXED_SORTS,
+                  "explicitly bound same-sort mixed variable required")
+            return {"node_type": "Variable", "name": node.symbol, "sort": node.sort.name}
+        _need(node.is_formula, "mixed constants/functions/other terms unsupported")
+        if kind == "predicate":
+            _need(node.symbol in predicates and len(node.arguments) == len(predicates[node.symbol])
+                  and all(child.kind is ast.NodeKind.VARIABLE for child in node.arguments)
+                  and [child.sort.name for child in node.arguments] == predicates[node.symbol],
+                  "mixed predicate requires exact ordered sorted variable arguments")
+            used.add(node.symbol)
+            counts["predicate_occurrences"] += 1
+            mapping_row.update(argument_roles=list(roles[node.symbol]),
+                               argument_sorts=list(predicates[node.symbol]))
+            return {"node_type": "AtomicFormula", "name": node.symbol,
+                "arguments": [visit(child, typed_path + "/arguments/" + str(index),
+                    renderer_path + "/arguments/" + str(index), bound, depth + 1)
+                    for index, child in enumerate(node.arguments)]}
+        if kind == "equality":
+            _need(len(node.arguments) == 2
+                  and all(child.kind is ast.NodeKind.VARIABLE for child in node.arguments)
+                  and node.arguments[0].sort == node.arguments[1].sort
+                  and node.arguments[0].sort.name in _MIXED_SORTS,
+                  "builtin mixed equality requires two same-sort bound variables")
+            counts["equality_occurrences"] += 1
+            return {"node_type": "EqualityFormula",
+                "left": visit(node.arguments[0], typed_path + "/arguments/0",
+                              renderer_path + "/left", bound, depth + 1),
+                "right": visit(node.arguments[1], typed_path + "/arguments/1",
+                               renderer_path + "/right", bound, depth + 1)}
+        if kind in binary:
+            _need(len(node.arguments) == 2, "exactly binary mixed connective required")
+            return {"node_type": "BinaryFormula", "operator": {"value": binary[kind]},
+                "left": visit(node.arguments[0], typed_path + "/arguments/0",
+                              renderer_path + "/left", bound, depth + 1),
+                "right": visit(node.arguments[1], typed_path + "/arguments/1",
+                               renderer_path + "/right", bound, depth + 1)}
+        if kind == "not":
+            return {"node_type": "UnaryFormula", "operator": {"value": "¬"},
+                "formula": visit(node.arguments[0], typed_path + "/arguments/0",
+                                 renderer_path + "/formula", bound, depth + 1)}
+        if kind in {"forall", "exists"}:
+            _need(len(node.binders) == 1, "exactly one mixed binder per quantifier required")
+            binder = node.binders[0]
+            _safe_name(binder.name)
+            _need(binder.sort.name in _MIXED_SORTS and binder.name not in bound
+                  and binder.name not in binders and binder.name not in predicates,
+                  "globally distinct nonshadowing mixed binders required")
+            binders.add(binder.name)
+            counts["quantifiers"] += 1
+            mapping.append({"typed_path": typed_path + "/binders/0",
+                "renderer_path": renderer_path + "/variable", "binder_name": binder.name,
+                "kind": "binder", "typed_sort": binder.sort.name, "renderer_sort": binder.sort.name})
+            return {"node_type": "QuantifiedFormula",
+                "quantifier": {"value": "∀" if kind == "forall" else "∃"},
+                "variable": {"node_type": "Variable", "name": binder.name, "sort": binder.sort.name},
+                "formula": visit(node.arguments[0], typed_path + "/arguments/0",
+                    renderer_path + "/formula", {**bound, binder.name: binder.sort.name}, depth + 1)}
+        if kind == "extension":
+            extension = node.extension
+            _need(extension is not None and not node.binders and not node.arguments and not node.symbol,
+                  "closed mixed modal extension required")
+            identity(extension.node_id)
+            _need(extension.family.value == "tdfol" and extension.profile.value == "tdfol_default"
+                  and extension.family.version == extension.profile.version == "1.0.0"
+                  and extension.payload_schema == "legacy.deontic/v1"
+                  and not extension.metadata and extension.range is None
+                  and len(extension.children) == 1 and extension.children[0].is_formula,
+                  "exact legacy mixed deontic extension required")
+            payload = dict(extension.payload)
+            _keys(payload, {"kind", "letter", "resolution", "schema_version"}, "mixed deontic payload")
+            letter = payload["letter"]
+            _need(type(letter) is str and letter in modal_kinds
+                  and payload == {"kind": modal_kinds[letter], "letter": letter,
+                      "resolution": "deontic", "schema_version": "legacy.deontic/v1"}
+                  and set(extension.features) == {"legacy." + modal_kinds[letter], "legacy.classic_letter"},
+                  "exact O/P/F mixed payload and features required")
+            counts["extension_payloads"] += 1
+            counts["modal_nodes"] += 1
+            mapping.append({"typed_path": typed_path + "/extension", "renderer_path": renderer_path,
+                "node_id": extension.node_id, "kind": "legacy.deontic/v1", "operator": letter, "sort": "Bool"})
+            return {"node_type": "DeonticFormula", "operator": {"value": letter},
+                "agent": None, "context": None,
+                "formula": visit(extension.children[0], typed_path + "/extension/children/0",
+                                 renderer_path + "/formula", bound, depth + 1)}
+        raise ValueError("unsupported mixed relational node: " + kind)
+
+    root = visit(expression.root, "/root", "/root", {}, 0)
+    _need(used == set(predicates), "every declared mixed predicate must be used")
+    _need(counts["quantifiers"] > 0 and not expression.root.free_variable_names(),
+          "closed explicitly quantified mixed formula required")
+    return {"schema": emitter.SORTED_RELATIONAL_AST_SCHEMA,
+            "profile": emitter.SORTED_RELATIONAL_PROFILE, "root": root}, mapping, counts
+
+
+def _mixed_callbacks(ast, emitter):
+    callbacks = (_mixed_parse, _mixed_owners, _mixed_strict_expression, _mixed_lower,
+        _mixed_callbacks, prepare_mixed_relational_norm_v1,
+        ast.TypedExpression.from_dict, ast.TypedExpression.to_dict, ast.elaborate,
+        emitter.sorted_relational_document, emitter._sorted_relational_wire,
+        emitter.SortedFormulaRenderer.formula, emitter.SortedFormulaRenderer.term,
+        emitter.SortedFormulaRenderer._raw_variable, emitter.SortedFormulaRenderer._variable,
+        emitter.FormulaRenderer.formula, emitter.FormulaRenderer.term,
+        emitter.FormulaRenderer.step, emitter.FormulaRenderer.signature, _wire)
+    return tuple((getattr(function, "__func__", function),
+                  getattr(function, "__code__", None), id(getattr(function, "__defaults__", None)),
+                  id(getattr(function, "__kwdefaults__", None))) for function in callbacks)
+
+
+def prepare_mixed_relational_norm_v1(request_raw, *, expected_request_sha256):
+    """Lower one strict authored mixed formula; execute no native backend."""
+    request = _mixed_parse(request_raw, expected_request_sha256)
+    original_wire = _wire(request, MAX_REQUEST_BYTES)
+    ast, signatures, emitter, pins = _mixed_owners()
+    callbacks = _mixed_callbacks(ast, emitter)
+    policy = (MIXED_REQUEST_SCHEMA, MIXED_SCHEMA, MIXED_PROFILE, _MIXED_SORTS,
+              MAX_REQUEST_BYTES, MAX_REPORT_BYTES, MAX_NODES, MAX_DEPTH,
+              emitter.SORTED_RELATIONAL_AST_SCHEMA, emitter.SORTED_RELATIONAL_PROFILE,
+              emitter.SORTED_RELATIONAL_CARRIER, emitter.SORTED_RELATIONAL_SORTS)
+    authority = dict(AUTHORITY)
+    _need(authority and all(value is False for value in authority.values()),
+          "mixed preparation cannot confer authority")
+
+    def fence():
+        _need(_wire(request, MAX_REQUEST_BYTES) == original_wire,
+              "mixed parsed request changed during lowering")
+        _need(_mixed_owners()[-1] == pins and _mixed_callbacks(ast, emitter) == callbacks,
+              "mixed source or lowering callbacks changed")
+        _need(AUTHORITY == authority and all(value is False for value in AUTHORITY.values()),
+              "mixed authority policy changed")
+        _need(policy == (MIXED_REQUEST_SCHEMA, MIXED_SCHEMA, MIXED_PROFILE, _MIXED_SORTS,
+              MAX_REQUEST_BYTES, MAX_REPORT_BYTES, MAX_NODES, MAX_DEPTH,
+              emitter.SORTED_RELATIONAL_AST_SCHEMA, emitter.SORTED_RELATIONAL_PROFILE,
+              emitter.SORTED_RELATIONAL_CARRIER, emitter.SORTED_RELATIONAL_SORTS),
+              "mixed lowering profile policy changed")
+
+    fence()
+    expression, predicates, roles = _mixed_strict_expression(request, ast, signatures)
+    typed_wire = _wire(expression.to_dict(), MAX_REQUEST_BYTES)
+    renderer_ast, mapping, counts = _mixed_lower(expression, predicates, roles, ast, emitter)
+    renderer_wire = _wire(renderer_ast, MAX_REQUEST_BYTES)
+    fence()
+    lean_body, details = emitter.sorted_relational_document(renderer_ast, predicate_sorts=predicates)
+    _need(_wire(renderer_ast, MAX_REQUEST_BYTES) == renderer_wire
+          and _wire(expression.to_dict(), MAX_REQUEST_BYTES) == typed_wire,
+          "mixed typed or renderer tree changed during emission")
+    fence()
+    result = {"schema": MIXED_SCHEMA, "profile": MIXED_PROFILE,
+        "status": "authored_unreviewed_mixed_relational_fragment_prepared",
+        "request": request, "request_raw_utf8": request_raw.decode("utf-8"),
+        "request_sha256": expected_request_sha256,
+        "typed_expression": expression.to_dict(),
+        "typed_expression_content_digest": expression.content_digest,
+        "typed_expression_sha256": hashlib.sha256(typed_wire).hexdigest(),
+        "argument_roles": request["argument_roles"], "predicate_sorts": predicates,
+        "structural_mapping": mapping, "counts": counts,
+        "renderer_ast": renderer_ast, "renderer_ast_sha256": hashlib.sha256(renderer_wire).hexdigest(),
+        "lean_body": lean_body, "lowering_details": details, "producer_pins": pins,
+        "source_binding": None, "source_bound": False, "source_translation_performed": False,
+        "native_ast": None, "native_parser_roundtrip": False, "native_build_executed": False,
+        "human_reviews": 0, "signatures_constructed": 0, "admissions": 0,
+        "semantic_mask": 0, "consumer_mask": 0, "training_mask": 0, "evaluation_gold_mask": 0,
+        "selected_interpretation": None, "governing_definition_use": None,
+        "authority": dict(authority),
+        "assumptions": list(details["assumptions"]) + [
+            "The exact authored typed expression and ordered roles are retained; no statutory meaning or applicability is selected.",
+            "The renderer record is not a native TDFOL AST and is not admitted to any existing native dispatch profile.",
+            "Generated Lean text requires separate actual compilation and review before any corpus use.",
+        ]}
+    serialized = _wire(result, MAX_REPORT_BYTES)
+    fence()
+    _need(_wire(result, MAX_REPORT_BYTES) == serialized,
+          "mixed relational report changed after serialization")
+    return json.loads(serialized)
+
+
+def mixed_relational_norm_report_sha256(report):
+    """Hash the complete bounded mixed report with the existing JSON recipe."""
+    return relational_norm_report_sha256(report)
+
+
+def validate_mixed_relational_norm_v1(report, request_raw, *, expected_request_sha256,
+                                     expected_report_sha256):
+    """Require an independent complete report pin and authoritative regeneration."""
+    _digest(expected_report_sha256, "mixed report")
+    original = _wire(report, MAX_REPORT_BYTES)
+    _need(hashlib.sha256(original).hexdigest() == expected_report_sha256,
+          "mixed report SHA256 mismatch")
+    regenerated = prepare_mixed_relational_norm_v1(request_raw,
+        expected_request_sha256=expected_request_sha256)
+    _need(_wire(report, MAX_REPORT_BYTES) == original
+          and _wire(regenerated, MAX_REPORT_BYTES) == original,
+          "mixed report differs from complete authoritative replay")
+    return regenerated

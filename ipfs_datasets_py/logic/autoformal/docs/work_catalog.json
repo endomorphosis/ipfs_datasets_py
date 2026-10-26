@@ -835,7 +835,7 @@
         "parent-bound-norm-native-public-pure-compatibility-20261025-01"
       ],
       "id": "definition-use-native",
-      "notes": "Existing owner contains separate official V2 and parent V1 preparation/build/receipt routes. Original migration compiler fixtures remain synthetic. Two authored FOL/TDFOL parent projects now qualify actual Lean4.34.1 execution and observed custody; pending review and explicit premises remain, without statutory admission or source-to-model equivalence. The separate parent shared-native profile adds four aggregate APIs. Its main cohort qualifies 16 cases (11 new and five existing regressions); a separate actual cohort contains two authored FOL/TDFOL aggregate projects, each with nine modules, 15 executed inputs and six unique conditional theorem observations. Child reviews remain pending in the actual cohort; complete assumptions and contributor lineage survive. No parent incremental cache, source meaning, model, training or statutory admission is qualified. Separate authored complete-norm/bound-definition profile: 42 pure cases/126 phases and two actual Lean4.34.1 cases/six phases. Nine files/six modules preserve the unchanged norm and explicit definition/membership premises; preservation is an alias identity. Namespace-scoped qualification; statutory reviews, source binding and training/gold remain pending. First actual attempt retained separately with its 192-MiB storage reservation. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The existing parent-bound norm/definition native extension adopts source6e6dd821/test02acd69 with unchanged preparer014dc6/renderer5c. Its retained original R32pure/96 and separate R2actual-native/6phase cohorts retain their own 197-source generation and six observed commands (four ordinary probes and two owned builds). The separately accepted current-public4case/12phase pure compatibility check on the completed c59 snapshot contains one genuine membership-mode validation, two synthetic handoffs and a request-pin refusal. The later8b6 graph change has a separate source-only compatibility review; the combined new generation remains unmeasured. It supplies no new actual native execution or global registration. The §7214 mixed lowering remains unimplemented. The explicit parent-nomination graph custody route is indexed under the existing graph adapter and has a separate focused custody qualification; null governing decisions, explicit premises and zero masks remain.",
+      "notes": "Existing owner contains separate official V2 and parent V1 preparation/build/receipt routes. Original migration compiler fixtures remain synthetic. Two authored FOL/TDFOL parent projects now qualify actual Lean4.34.1 execution and observed custody; pending review and explicit premises remain, without statutory admission or source-to-model equivalence. The separate parent shared-native profile adds four aggregate APIs. Its main cohort qualifies 16 cases (11 new and five existing regressions); a separate actual cohort contains two authored FOL/TDFOL aggregate projects, each with nine modules, 15 executed inputs and six unique conditional theorem observations. Child reviews remain pending in the actual cohort; complete assumptions and contributor lineage survive. No parent incremental cache, source meaning, model, training or statutory admission is qualified. Separate authored complete-norm/bound-definition profile: 42 pure cases/126 phases and two actual Lean4.34.1 cases/six phases. Nine files/six modules preserve the unchanged norm and explicit definition/membership premises; preservation is an alias identity. Namespace-scoped qualification; statutory reviews, source binding and training/gold remain pending. First actual attempt retained separately with its 192-MiB storage reservation. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The existing parent-bound norm/definition native extension adopts source6e6dd821/test02acd69 with unchanged preparer014dc6/renderer5c. Its retained original R32pure/96 and separate R2actual-native/6phase cohorts retain their own 197-source generation and six observed commands (four ordinary probes and two owned builds). The separately accepted current-public4case/12phase pure compatibility check on the completed c59 snapshot contains one genuine membership-mode validation, two synthetic handoffs and a request-pin refusal. The later8b6 graph change has a separate source-only compatibility review; the combined new generation remains unmeasured. It supplies no new actual native execution or global registration. The separate §7214 mixed renderer profile is now available with focused pure and compiler qualification; parent-source/corpus native integration and substantive legal review remain pending. The explicit parent-nomination graph custody route is indexed under the existing graph adapter and has a separate focused custody qualification; null governing decisions, explicit premises and zero masks remain.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_native_v2",
       "ownership_role": "existing_single_owner",
       "parent_bound_norm_profile_v1": {
@@ -3305,18 +3305,101 @@
       "apis": [
         "prepare_relational_norm_v1",
         "relational_norm_report_sha256",
-        "validate_relational_norm_v1"
+        "validate_relational_norm_v1",
+        "prepare_mixed_relational_norm_v1",
+        "validate_mixed_relational_norm_v1",
+        "mixed_relational_norm_report_sha256"
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
         "source7346-full-b-partial-candidates-qualified-20261025-01",
-        "source7346-public-parent-correspondence-dependency-qualified-20261026-01"
+        "source7346-public-parent-correspondence-dependency-qualified-20261026-01",
+        "mixed-sort-relational-lowering-20261026-01"
       ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_relational_norm_v1.md",
       "id": "relational-norm-fragment",
-      "notes": "Index the existing relational implementation once. This evidence is a current-primary structural replay of authored partial hypotheses; selected public producer-byte equality is not public runtime or semantic admission.",
+      "mixed_sort_profile_v1": {
+        "candidate_overlays": 3,
+        "consumer_mask": 0,
+        "delivery_base": "81396996d1a765b7578ee7badb696d913bf639a6",
+        "delivery_generation_runtime_qualified": false,
+        "evaluation_gold_mask": 0,
+        "evidence_id": "mixed-sort-relational-lowering-20261026-01",
+        "governing_definition_use": null,
+        "legacy_cases": 1,
+        "native_TDFOL_AST_or_dispatch_registered": false,
+        "native_compilations": 1,
+        "native_version_probes": 1,
+        "new_cases": 20,
+        "owning_test": {
+          "bytes": 48871,
+          "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+          "sha256": "53a500c3828bc569ec2ebfe2148c513068e9e83cb9c006cef8a404a756ea4529"
+        },
+        "profile": "authored-many-sorted-relational-deontic/v1",
+        "pure_cases": 21,
+        "pure_phases": 63,
+        "pure_selectors": 9,
+        "schema": "legal-mixed-relational-norm-report/v1",
+        "selected_interpretation": null,
+        "semantic_mask": 0,
+        "separate_native_cases": 1,
+        "separate_native_phases": 3,
+        "separate_native_selectors": 1,
+        "shared_renderer_component_id": "native-family-lean-renderer",
+        "snapshot_files": 198,
+        "source": {
+          "bytes": 38295,
+          "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+          "sha256": "23d8d5980330bc8a23e7f8d9d570808f86ffbc29799930895933c8b0e01d6959"
+        },
+        "source_or_semantic_graph_admission": false,
+        "status": "focused_snapshot_qualified",
+        "tested_public_base": "f53da5716608117ffa8ad858c799559a6f127af0",
+        "training_mask": 0
+      },
+      "notes": "Index the existing relational implementation once. This evidence is a current-primary structural replay of authored partial hypotheses; selected public producer-byte equality is not public runtime or semantic admission. The separate explicit mixed-sort profile has an accepted frozen-f53-plus-three-overlays 21-case pure cohort and separate one-case/two-command compiler specimen. Earlier partial-source observations retain their own generations. Later 813 adoption is source-reviewed only; null source/meaning choices and four zero masks remain.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_relational_norm_v1",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+      "required": true,
+      "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "FormulaRenderer",
+        "SortedFormulaRenderer",
+        "sorted_relational_document"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "mixed-sort-relational-lowering-20261026-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_relational_norm_v1.md",
+      "id": "native-family-lean-renderer",
+      "mixed_sort_renderer_profile_v1": {
+        "default_dispatch_adoption": false,
+        "delivery_generation_runtime_qualified": false,
+        "evidence_id": "mixed-sort-relational-lowering-20261026-01",
+        "owning_test": {
+          "bytes": 48871,
+          "path": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+          "sha256": "53a500c3828bc569ec2ebfe2148c513068e9e83cb9c006cef8a404a756ea4529"
+        },
+        "profile": "three-sort-variables-deontic-equality/v1",
+        "schema": "sorted-relational-renderer-ast/v1",
+        "source": {
+          "bytes": 39438,
+          "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
+          "sha256": "dab6bbd4e17eef888f4181aab0c6ce3f087a717edc83a55befb7742fd1f598b1"
+        },
+        "status": "focused_snapshot_qualified",
+        "tested_public_base": "f53da5716608117ffa8ad858c799559a6f127af0"
+      },
+      "notes": "Index the pre-existing shared renderer once at its original owner. The explicit sorted subclass retains the unchanged PRELUDE and Boolean/modal branches; only atom arguments use the tagged carrier. The separate selected pure and compiler snapshots qualify this explicit profile, not all native-family dispatch or whole-package integration. No model/training or source/legal/gold authority follows.",
+      "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.native_family_lean_emitters",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
       "required": true,
       "status": "implementation_present"
     }
@@ -3379,7 +3462,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-26T02:06:22.960022+00:00",
+  "last_updated_at_utc": "2026-10-26T03:25:28.992528+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -5312,6 +5395,16 @@
       "root": "datasets_repository",
       "scope": "One retained unselected de-dicto hypothesis over the same 837 records/16 cache rows. Six direct APIs and 61 actual original-function entries, including 12 required nested parent replays. Public f53 leaf modules, explicit synthesized namespaces and initializer bypasses; 13 original M parent paths/pins unchanged. Eleven anchors/57 typed targets, 9 references from 4 lexical heads, 48 scaffolds, 6 meaning/context issues and 15 questions open; false authority/masks 0. Package initialization, installed runtime, semantic fidelity and latent-text reconstruction remain unqualified. No new model/training/embedding/checkpoint/solver/Lean work.",
       "status": "qualified_public_parent_correspondence_dependency_profile"
+    },
+    {
+      "id": "mixed-sort-relational-lowering-20261026-01",
+      "observed_bytes": 37604,
+      "observed_sha256": "9091146eba97817aa5483a4cfa32c6216d48b65c62f20c7e8130cf6cd5315358",
+      "path": "docs/autoformalization/evidence/legal-ir-mixed-sort-relational-lowering-20261026.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Separate frozen-f53-plus-three-overlays cohorts: 21 pure cases/63 phases/9 selectors (20 new, one legacy); one actual Lean4.34.1 case/3 phases/1 selector with one version probe and one compilation. Exact two unselected 98-node/12-binder/111-mapping hypotheses and 47-node core retained; 14 unused-variable compiler warnings remain. Later813 adoption is source-reviewed only. No semantic/corpus/native dispatch registration, model/training/gold or statutory admission.",
+      "status": "focused_snapshot_qualified"
     }
   ]
 }
