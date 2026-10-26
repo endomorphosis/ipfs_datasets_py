@@ -1,0 +1,136 @@
+{
+  "Lean_call_count": null,
+  "Lean_corpus_admitted": false,
+  "accepted_entity_resolution": false,
+  "actual_checked_buffers": null,
+  "actual_compile_execute_count": null,
+  "actual_testcase_failures": [
+    {
+      "classname": "tests.unit.logic.autoformal.test_corpus_proposed_graph_adapter_lexical",
+      "failure_message": "Failed: DID NOT RAISE CorpusContractError",
+      "name": "test_lexical_closing_occurrence_drift_after_genuine_replay[original-parent-replay]"
+    },
+    {
+      "classname": "tests.unit.logic.autoformal.test_corpus_proposed_graph_adapter_lexical",
+      "failure_message": "Failed: DID NOT RAISE CorpusContractError",
+      "name": "test_lexical_closing_offered_record_drift_after_genuine_regeneration[detached-offered-serialization]"
+    }
+  ],
+  "actual_worker_message": "Failed: DID NOT RAISE CorpusContractError",
+  "adapter_source": {
+    "bytes": 88010,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py",
+    "sha256": "4dc0b9f44ccfa74d091af40d86fdc7ef5c67b9048ddc08426d0b768dd157c199"
+  },
+  "authority": false,
+  "cases": 2,
+  "closure_scope": "Original failed-result metadata audit closed source/native custody while storage was retained; the separately admitted one-call original recovery and independent postreview close the retained storage promise. Current native absence does not claim a released historical native row.",
+  "completed": true,
+  "counter_scope": "The worker proof was never emitted. All red operation-guard, actual checked-buffer/compile-execute and model/Lean call counters remain unprovided; no successor/old41 counters are borrowed.",
+  "declared_and_pre_post_source_pins_verified_by_original_metadata_audit": true,
+  "declared_source_pin_count": 231,
+  "errors": 0,
+  "evaluation_gold_mask": 0,
+  "failure_file": {
+    "bytes": 1164,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/red-v01/attempt-focused-tests-v01/logs/failure.json",
+    "sha256": "e4b7d48ebb2cb00a00309f1c6b3ad79cf9f95bee1ef608b6aed95d78f4882a52"
+  },
+  "failures": 2,
+  "governing_definition_use": null,
+  "governing_edition": null,
+  "governing_source": null,
+  "historical_41_case_or_837_qualifications_pooled_or_resealed": false,
+  "independent_failed_result_review": {
+    "bytes": 21513,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/red-v01/independent-failed-red-result-review-v01.json",
+    "sha256": "cad85fb8190562afadec13fa01c69e7f83985e3159245069058838eac878dd0b"
+  },
+  "independent_post_closeout_review": {
+    "bytes": 8121,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/red-v01/red-failed-storage-closeout-v01/post-closeout-review-v01.json",
+    "sha256": "93eda9d69d0f79730fd2b53e46f1628aa0e3c8a8706620e44c892cacb42ff412"
+  },
+  "launch": {
+    "bytes": 14090,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/red-v01/launch-focused-tests-red-01-v01.json",
+    "sha256": "e10a5c243205c66d4e9f4ba80d3afa20850b43b1ddb64e75edaba5b60ff6582f"
+  },
+  "model_call_count": null,
+  "native_current_absence_is_not_released_row_claim": true,
+  "native_lease_id": "62e5830846e747eca6cc1f211e2eac46",
+  "native_wrapper_exit_code": 1,
+  "native_wrapper_successfully_completed": false,
+  "no_red_rerun_or_rewritten_predicate": true,
+  "observed_expected_defects": 2,
+  "operation_guard_counts": null,
+  "original_CLI_stderr": {
+    "bytes": 1256,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/red-v01/attempt-focused-tests-v01/logs/stderr.log",
+    "sha256": "be9b178abe7125a08c415b76dd3e4814f5389b5417aca9074717b5515d939acc"
+  },
+  "original_CLI_stdout": {
+    "bytes": 6539,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/red-v01/attempt-focused-tests-v01/logs/stdout.log",
+    "sha256": "58cbfe3c12b3ab86de6954cec2497fe1f5326c307bece434aea04c0f9648d0be"
+  },
+  "original_recovery_API_calls": 1,
+  "original_storage_recovery": {
+    "bytes": 12073,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/red-v01/red-failed-storage-closeout-v01/summary.json",
+    "sha256": "43c640c1e7f8f7f880adca382db18fea0812b11054dd5023b238e41f9cbb6467"
+  },
+  "outer_exec_genuinely_reaped": true,
+  "outputs_deleted": false,
+  "owning_test": {
+    "bytes": 22169,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/autoformal/test_corpus_proposed_graph_adapter_lexical.py",
+    "sha256": "c76eabaa7f80780032e70c54ab691ed78e410f99d2cb69b3de89f4b46c2b8e99"
+  },
+  "passing_test_qualification_credit": 0,
+  "predeclared_worker_message": "DID NOT RAISE <class 'ipfs_datasets_py.logic.autoformal.corpus_contracts.CorpusContractError'>",
+  "pytest_exit_code": 1,
+  "qualified": false,
+  "recorded_at_utc": "2026-10-26T02:49:23.320593+00:00",
+  "released_storage_promise_bytes": 134217728,
+  "request": {
+    "bytes": 45497,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/red-v01/request-focused-tests-v01.json",
+    "sha256": "6cca266a3c8b4f9a80698e730c3743c81c89ead60242667a76e2160176ea27c8"
+  },
+  "resource_recovery_does_not_qualify_failed_execution": true,
+  "retained_bytes": 23796,
+  "retained_files": 9,
+  "retained_original_file_hashes_and_physical_identities_preserved": true,
+  "retained_raw_checked_buffer_attestation": false,
+  "root_genuine_failed_reap": {
+    "bytes": 2174,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/red-v01/root-red-failed-reap-v01.json",
+    "sha256": "97f5a367a8414669ec774e2362927af4f20f734bab61461cdab7d1a97e2a5559"
+  },
+  "schema": "legal-ir-source7346-lexical-closing-red-observation/v1",
+  "scope": "Narrow failed original-source observation only: both selected tests exposed missing lexical closing refusals, but the native wrapper failed its predeclared XML-message predicate before writing its runtime buffer proof. Expected failures, original wrapper failure and one original-owner retained-storage release remain separate facts; no runtime/test success, numerical, legal or Lean qualification is supplied.",
+  "second_distinct_typed_statutory_use_established": false,
+  "selected_legal_meaning": null,
+  "selected_test_nodes": [
+    "tests/unit/logic/autoformal/test_corpus_proposed_graph_adapter_lexical.py::test_lexical_closing_occurrence_drift_after_genuine_replay[original-parent-replay]",
+    "tests/unit/logic/autoformal/test_corpus_proposed_graph_adapter_lexical.py::test_lexical_closing_offered_record_drift_after_genuine_regeneration[detached-offered-serialization]"
+  ],
+  "semantic_graph_admitted": false,
+  "skipped": 0,
+  "source_READ_closed": true,
+  "source_generation_scope": "Declared request source pin and original pre/post source/physical checks only; no retained actual import/compile-execute buffer attestation. Do not treat this as current canonical source equality after the successor installation.",
+  "source_native_storage_closed": true,
+  "storage_reservation_id": "a67ffa0e422e4154987ff3a078113e88",
+  "storage_status": "released",
+  "summary_author_product_native_test_model_training_Lean_SQL_or_recovery_API_calls": 0,
+  "test_results": {
+    "bytes": 6579,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/source7346-lexical-projection-01/next-definition-alignment-v01/red-v01/attempt-focused-tests-v01/exports/test-results.xml",
+    "sha256": "d3e415fcb346771d2e5ce1e2051c81c2cbe33d730367a7f62f8bb88cec3ad8c6"
+  },
+  "training_mask": 0,
+  "worker_predicate_failure_preserved": true,
+  "worker_proof": null,
+  "worker_proof_absence_preserved": true
+}

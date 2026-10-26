@@ -242,3 +242,207 @@ def test_competing_original_cannot_validate_another_alternative_projection(lexic
     left, right = lexical_case["rows"]
     with pytest.raises(contracts.CorpusContractError, match="independently regenerated"):
         _validate(left["projection"], right, lexical_case["occurrences"])
+
+
+# Closing custody regressions delegate to the genuine existing physical-parent
+# replay and actual serializers. These callbacks only change local caller or
+# detached objects after genuine work; no source fixture or AST is substituted.
+@pytest.mark.parametrize("location,stage", [
+    ("original", "parent-replay"), ("detached", "parent-replay"),
+    ("original", "projection-seal"), ("detached", "projection-seal"),
+], ids=["original-parent-replay", "detached-parent-replay",
+        "original-projection-seal", "detached-projection-seal"])
+def test_lexical_closing_occurrence_drift_after_genuine_replay(lexical_case, monkeypatch, location, stage):
+    row = lexical_case["rows"][0]
+    occurrences = deepcopy(lexical_case["occurrences"])
+    before = canonical_dag_json_bytes(occurrences)
+    pin = _pin(occurrences)
+    detached, calls = [], []
+    genuine_occurrences = adapter._parent_lexical_occurrences
+    genuine_adapt = adapter.adapt_parent_proposed_graph_bytes
+    genuine_seal = adapter.seal_record
+
+    def capture_occurrences(*args, **kwargs):
+        result = genuine_occurrences(*args, **kwargs)
+        detached.append(result)
+        return result
+
+    def change_occurrences():
+        target = occurrences if location == "original" else detached[0]
+        target[0]["span_text"] += " changed after genuine work"
+
+    def replay(*args, **kwargs):
+        result = genuine_adapt(*args, **kwargs)
+        assert result["schema"] == adapter.PARENT_SCHEMA
+        calls.append("parent-replay")
+        if stage == "parent-replay":
+            change_occurrences()
+        return result
+
+    def seal(payload):
+        result = genuine_seal(payload)
+        if payload.get("schema") == adapter.PARENT_LEXICAL_PROJECTION_SCHEMA:
+            calls.append("projection-seal")
+            if stage == "projection-seal":
+                change_occurrences()
+        return result
+
+    monkeypatch.setattr(adapter, "_parent_lexical_occurrences", capture_occurrences)
+    monkeypatch.setattr(adapter, "adapt_parent_proposed_graph_bytes", replay)
+    monkeypatch.setattr(adapter, "seal_record", seal)
+    with pytest.raises(contracts.CorpusContractError):
+        adapter.prepare_parent_lexical_occurrence_projection_v1(row["raw"],
+            derived_occurrences=occurrences, expected_derived_occurrences_sha256=pin, **row["arguments"])
+    assert stage in calls and detached
+    target = occurrences if location == "original" else detached[0]
+    assert canonical_dag_json_bytes(target) != before
+
+
+@pytest.mark.parametrize("location,stage", [
+    ("original", "regeneration"), ("detached", "regeneration"),
+    ("original", "offered-serialization"), ("detached", "offered-serialization"),
+], ids=["original-regeneration", "detached-regeneration",
+        "original-offered-serialization", "detached-offered-serialization"])
+def test_lexical_closing_offered_record_drift_after_genuine_regeneration(
+        lexical_case, monkeypatch, location, stage):
+    row = lexical_case["rows"][0]
+    offered = deepcopy(row["projection"])
+    occurrences = deepcopy(lexical_case["occurrences"])
+    checked, calls = [], []
+    armed = False
+    changed = False
+    genuine_validate = adapter.validate_record
+    genuine_prepare = adapter.prepare_parent_lexical_occurrence_projection_v1
+    genuine_wire = adapter.canonical_dag_json_bytes
+
+    def capture_record(record, **kwargs):
+        result = genuine_validate(record, **kwargs)
+        if kwargs.get("schema") == adapter.PARENT_LEXICAL_PROJECTION_SCHEMA and not checked:
+            checked.append(result)
+        return result
+
+    def change_record():
+        nonlocal changed
+        target = offered if location == "original" else checked[0]
+        target["authority"] = 0
+        assert target["authority"] == False and target["authority"] is not False
+        changed = True
+
+    def regenerate(*args, **kwargs):
+        nonlocal armed
+        result = genuine_prepare(*args, **kwargs)
+        assert result["record_cid"] == row["projection"]["record_cid"]
+        calls.append("regeneration")
+        armed = True
+        if stage == "regeneration":
+            change_record()
+        return result
+
+    def wire(value):
+        result = genuine_wire(value)
+        if (stage == "offered-serialization" and armed and not changed
+                and checked and value is checked[0]):
+            calls.append("offered-serialization")
+            # The old implementation compares these clean returned bytes, then
+            # returns this now-mutated detached object without a closing fence.
+            change_record()
+        return result
+
+    monkeypatch.setattr(adapter, "validate_record", capture_record)
+    monkeypatch.setattr(adapter, "prepare_parent_lexical_occurrence_projection_v1", regenerate)
+    monkeypatch.setattr(adapter, "canonical_dag_json_bytes", wire)
+    with pytest.raises(contracts.CorpusContractError):
+        _validate(offered, row, occurrences)
+    assert stage in calls and changed and checked
+    assert (offered if location == "original" else checked[0])["authority"] is not False
+
+
+@pytest.mark.parametrize("damage", ["authority_type", "record_cid"])
+def test_lexical_closing_final_projection_refuses_post_genuine_seal_mutation(
+        lexical_case, monkeypatch, damage):
+    row = lexical_case["rows"][0]
+    calls = []
+    genuine_seal = adapter.seal_record
+
+    def seal(payload):
+        result = genuine_seal(payload)
+        if payload.get("schema") == adapter.PARENT_LEXICAL_PROJECTION_SCHEMA:
+            calls.append(result["record_cid"])
+            assert result["authority"] is False
+            if damage == "authority_type":
+                result["authority"] = 0
+            else:
+                result["record_cid"] = row["projection"]["base_candidate"]["record_cid"]
+        return result
+
+    monkeypatch.setattr(adapter, "seal_record", seal)
+    with pytest.raises(contracts.CorpusContractError):
+        _prepare(row, deepcopy(lexical_case["occurrences"]))
+    assert calls == [row["projection"]["record_cid"]]
+
+
+@pytest.mark.parametrize("location", ["original_occurrences", "detached_occurrences", "offered_record"])
+def test_lexical_closing_primary_failure_retains_identity_and_secondary_custody(
+        lexical_case, monkeypatch, location):
+    row = lexical_case["rows"][0]
+    occurrences = deepcopy(lexical_case["occurrences"])
+    offered = deepcopy(row["projection"])
+    detached, calls = [], []
+    primary = RuntimeError("explicit failure after genuine lexical replay")
+    genuine_occurrences = adapter._parent_lexical_occurrences
+    genuine_adapt = adapter.adapt_parent_proposed_graph_bytes
+    genuine_prepare = adapter.prepare_parent_lexical_occurrence_projection_v1
+
+    def capture_occurrences(*args, **kwargs):
+        result = genuine_occurrences(*args, **kwargs)
+        detached.append(result)
+        return result
+
+    def replay(*args, **kwargs):
+        result = genuine_adapt(*args, **kwargs)
+        assert result["schema"] == adapter.PARENT_SCHEMA
+        calls.append("parent-replay")
+        target = occurrences if location == "original_occurrences" else detached[0]
+        target[0]["span_text"] += " changed before primary failure"
+        raise primary
+
+    def regenerate(*args, **kwargs):
+        result = genuine_prepare(*args, **kwargs)
+        assert result["record_cid"] == row["projection"]["record_cid"]
+        calls.append("regeneration")
+        offered["authority"] = 0
+        raise primary
+
+    monkeypatch.setattr(adapter, "_parent_lexical_occurrences", capture_occurrences)
+    if location == "offered_record":
+        monkeypatch.setattr(adapter, "prepare_parent_lexical_occurrence_projection_v1", regenerate)
+        operation = lambda: _validate(offered, row, occurrences)
+    else:
+        monkeypatch.setattr(adapter, "adapt_parent_proposed_graph_bytes", replay)
+        operation = lambda: _prepare(row, occurrences)
+    with pytest.raises(RuntimeError) as observed:
+        operation()
+    assert observed.value is primary and calls and detached
+    assert any("custody" in note for note in getattr(primary, "__notes__", ()))
+
+
+def test_lexical_closing_primary_failure_without_drift_is_preserved(lexical_case, monkeypatch):
+    row = lexical_case["rows"][0]
+    occurrences = deepcopy(lexical_case["occurrences"])
+    before = canonical_dag_json_bytes(occurrences)
+    primary = RuntimeError("unchanged-input failure after genuine lexical replay")
+    calls = []
+    genuine_adapt = adapter.adapt_parent_proposed_graph_bytes
+
+    def replay(*args, **kwargs):
+        result = genuine_adapt(*args, **kwargs)
+        assert result["schema"] == adapter.PARENT_SCHEMA
+        calls.append(result["record_cid"])
+        raise primary
+
+    monkeypatch.setattr(adapter, "adapt_parent_proposed_graph_bytes", replay)
+    with pytest.raises(RuntimeError) as observed:
+        _prepare(row, occurrences)
+    assert observed.value is primary and calls == [row["projection"]["base_candidate"]["record_cid"]]
+    assert not getattr(primary, "__notes__", ())
+    assert canonical_dag_json_bytes(occurrences) == before

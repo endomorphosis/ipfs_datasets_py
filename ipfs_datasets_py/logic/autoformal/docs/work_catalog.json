@@ -1469,7 +1469,9 @@
         "source7346-corpus-depth-focused-qualified-20261025-01",
         "source7346-parent-corpus-qualified-20261025-01",
         "source7346-lexical-focused-qualified-20261025-01",
-        "source7346-parent-lexical-projection-qualified-20261025-01"
+        "source7346-parent-lexical-projection-qualified-20261025-01",
+        "source7346-lexical-closing-red-observed-20261026-01",
+        "source7346-lexical-closing-custody-qualified-20261026-01"
       ],
       "focused_public_dependency_integration": {
         "cases": 3,
@@ -1501,6 +1503,70 @@
         "training_mask": 0
       },
       "id": "coordinate-corpus-custody",
+      "lexical_closing_custody": {
+        "Lean_corpus_admitted": false,
+        "accepted_entity_resolution": false,
+        "actual_837_parent_operation_performed": false,
+        "actual_checked_buffers": 164,
+        "actual_compile_execute_count": 171,
+        "actual_product_origins": 126,
+        "authority": false,
+        "common_JSON_depth": 20,
+        "common_JSON_nodes": 25000,
+        "common_record_bytes": 1048576,
+        "default_pytest_qualified": false,
+        "evaluation_gold_mask": 0,
+        "evidence_ids": [
+          "source7346-lexical-closing-red-observed-20261026-01",
+          "source7346-lexical-closing-custody-qualified-20261026-01"
+        ],
+        "existing_public_signatures_and_CID_projection_construction_preserved": true,
+        "existing_pure_JSON_owner": "legal_paired_manifest_inventory_v1._wire",
+        "failed_intermediate_source": {
+          "bytes": 92955,
+          "cases": 35,
+          "cohort_qualification_credit": 0,
+          "observed_failed": 2,
+          "observed_passed": 33,
+          "sha256": "9bb24c6d89ec6df82707e962b2f57b6c2905be56465cedca06cf246d19cf976c",
+          "worker_proof": null
+        },
+        "governing_definition_use": null,
+        "governing_edition": null,
+        "governing_source": null,
+        "green_cases": 35,
+        "historical_41_case_or_837_qualifications_pooled_or_resealed": false,
+        "new_current_public_runtime_qualification": false,
+        "new_drift_cases": 14,
+        "new_logic_families_or_cross_graph_join": false,
+        "new_public_APIs": 0,
+        "owning_test": {
+          "bytes": 22169,
+          "path": "tests/unit/logic/autoformal/test_corpus_proposed_graph_adapter_lexical.py",
+          "sha256": "c76eabaa7f80780032e70c54ab691ed78e410f99d2cb69b3de89f4b46c2b8e99"
+        },
+        "phase_events_not_counted": true,
+        "primary_exception_identity_and_secondary_custody_notes_preserved": true,
+        "public_whole_package_runtime_qualified": false,
+        "red_actual_buffer_compile_guard_and_model_Lean_counters": null,
+        "red_native_wrapper_exit_code": 1,
+        "red_observed_expected_defects": 2,
+        "red_passing_test_qualification_credit": 0,
+        "red_qualified": false,
+        "red_worker_proof": null,
+        "retained_lexical_cases": 21,
+        "scope": "Exactly35 fresh final581-source lexical controls,21retained+14new. Original/detached input and actual result/serializer closing custody only. Red2defect observation and failed9bb33+2 remain unqualified/separate; no pooled41/837, source/meaning/endpoint repair, new model/numerical training or Lean qualification.",
+        "second_distinct_typed_statutory_use_established": false,
+        "selected_legal_meaning": null,
+        "semantic_graph_admitted": false,
+        "source": {
+          "bytes": 92971,
+          "path": "ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py",
+          "sha256": "58115e83df44085bf7a6c83af4edcef76e5796e3bb1913609e1b08e5434d8be7"
+        },
+        "status": "fresh_35_case_closing_custody_qualified",
+        "training_mask": 0
+      },
       "lexical_occurrence_projection": {
         "Lean_corpus_admitted": false,
         "accepted_entity_resolution": false,
@@ -1557,7 +1623,7 @@
         "status": "focused_and_separate_retained_parent_lexical_custody_qualified",
         "training_mask": 0
       },
-      "notes": "Existing corpus adapter; additive graph-v2/original-eligibility-v3 proposal custody/export, not another graph implementation. Complete slots, ordered ASTs and independent commitments retained. No source crosswalk, entity meanings, complete norm, gold, models or Lean admission. Relational AST depth 32/4096 input custody and AST_JSONv2 restoration retain non-AST metadata/common/legacy depth 20 and shared 25,000-node/1 MiB budgets. Separate 16-case focused qualification and actual 837-parent opaque exchange preserve full ASTs; source/legal review, semantic projection, training/gold and Lean gates remain unresolved. Opt-in retained-parent lexical occurrence projection preserves prior opaque candidates and exposes four already derived physical mentions across two interpretations. Separate41-case and actual837-parent qualifications retain zero semantic/entity/definition/meaning/training/gold/Lean authority; four mentions in one(c) do not establish a second statutory use.",
+      "notes": "Existing corpus adapter; additive graph-v2/original-eligibility-v3 proposal custody/export, not another graph implementation. Complete slots, ordered ASTs and independent commitments retained. No source crosswalk, entity meanings, complete norm, gold, models or Lean admission. Relational AST depth 32/4096 input custody and AST_JSONv2 restoration retain non-AST metadata/common/legacy depth 20 and shared 25,000-node/1 MiB budgets. Separate 16-case focused qualification and actual 837-parent opaque exchange preserve full ASTs; source/legal review, semantic projection, training/gold and Lean gates remain unresolved. Opt-in retained-parent lexical occurrence projection preserves prior opaque candidates and exposes four already derived physical mentions across two interpretations. Separate41-case and actual837-parent qualifications retain zero semantic/entity/definition/meaning/training/gold/Lean authority; four mentions in one(c) do not establish a second statutory use. Closing lexical custody retains original/detached inputs and actual returns through replay and serializers using existing pure JSON/closing owners. Separate old-source red2 defect observation has zero passing-test credit; fresh35 owning cases (21retained+14new) retain false authority/zero masks, with no pooled historical41/837, new semantic join, model/training or Lean admission.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.corpus_proposed_graph_adapter",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/corpus_proposed_graph_adapter.py",
@@ -5342,6 +5408,26 @@
       "root": "datasets_repository",
       "scope": "One score of 60 original raw-CE test predictions: 3/60 exactIR, 0/60 exactUTF8, 0/60 whitespace-collapsed, 0/60 joint. Actual score/decompiler entries and full metric/report commitments retained; source/native/storage closed. Historical post-reference projection, no new model/encoder/training/learned prose head/independent holdout/legal authority. Old varying fields and new seven facets remain distinct.",
       "status": "qualified_retrospective_saved_prediction_original_text_score"
+    },
+    {
+      "id": "source7346-lexical-closing-red-observed-20261026-01",
+      "observed_bytes": 8870,
+      "observed_sha256": "168449b7eadc9d8c339e78cdf3480f78e0fd679a5638561790d13b6874e5e605",
+      "path": "docs/autoformalization/evidence/legal-ir-source7346-lexical-closing-red-20261026.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original4dc failed red observation only:2XML DIDNOTRAISE defects, nativewrapper1 beforeworkerproof, qualifiedfalse/0passing-testcredit. Redguard/buffer/compile/modelLean countersunprovided; original one-call128MiB recovery retained9files23796B unchanged. No retroactivequalification.",
+      "status": "failed_original_source_expected_defect_observation"
+    },
+    {
+      "id": "source7346-lexical-closing-custody-qualified-20261026-01",
+      "observed_bytes": 13069,
+      "observed_sha256": "255ca9a3ed9d2969da32a5898c1ade39fd86153614b10c4d03b45cf5d0a1b24d",
+      "path": "docs/autoformalization/evidence/legal-ir-source7346-lexical-closing-green-20261026.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Fresh581/c76 source35cases,21retained+14new;164checkedbuffers126productorigins171compile/exec, actualproofandreap/originalsource-native-storageclosed. Failed9bb35=33pass2regexfail/proofnone0cohort plusold41/837 retainedseparately. No newsource/meaning/entitydefinition/distinct-use/modeltraining/Lean admission.",
+      "status": "fresh_lexical_closing_custody_tests_qualified"
     }
   ]
 }
