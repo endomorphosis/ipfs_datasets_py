@@ -1,5 +1,7 @@
 # Legal autoformalization
 
+The [focused public parent-correspondence check](../../../docs/autoformalization/evidence/legal-ir-source7346-public-parent-correspondence-20261026.json) reuses the existing 837-record/16-row assets and one unselected authored hypothesis. Its explicit namespace profile preserves all 13 original parent producer paths and records package-initializer bypasses. Source meaning, context, training eligibility and learned legal-text reconstruction remain open.
+
 The [full-subsection(b) source-correspondence observation](../../../docs/autoformalization/evidence/legal-ir-source7346-full-b-parent-correspondence-20261025.json) reuses both authored v02 hypotheses and the original 837-record population. Nine typed-target references come from four lexical head anchors in each candidate; 48 other targets remain authored scaffolding. Literal accounting, semantic fidelity and latent-only legal-text reconstruction remain separate; source meaning, context and training eligibility are unresolved.
 
 This module owns the path from source-bound law text and cached spans to scoped term/entity/definition graphs and a checked Lean4 corpus. Start with the [handoff](docs/HANDOFF.md) for what is complete, what remains open and where to make the next change.
