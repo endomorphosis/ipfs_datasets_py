@@ -92,6 +92,20 @@ The [current four-width plan](HANDOFF.md#four-source-widths) and [chronological 
 
 The [public comprehensive reuse review](../../../../docs/autoformalization/evidence/legal-ir-comprehensive-reuse-review-20261023.json) reconciles completed training and identifies the retained training/alignment receipts. Preserve their distinct checkpoint/producer identities and original qualification scopes. Native384/768 saved-vector custody verifiers already exist in the shared numerical package; they execute no encoder and supply no new statutory-meaning qualification.
 
+## Retained loading and reference readiness
+
+The [readiness review](../../../../docs/autoformalization/evidence/legal-ir-training-programme-readiness-20261026.json) reconciles three additional completed local observations. Their case counts and source generations remain separate; this review runs no new models or tests.
+
+| Retained profile | Completed observation | Remaining boundary |
+| --- | --- | --- |
+| Context150 | 38 cases / 114 phases: 36 metadata controls and two CPU restores, each matching all 13 saved tensors. The parent is a lineage anchor, not a third restore. | The qualified private compatibility extension differs from the published two-owner source. Public integration and output replay remain open; no forward, optimizer or training ran in this cohort. |
+| Bound native4096 | 50 cases: 47 inert controls and three CPU restores, 69 exact model tensors and nine named-moment validations without constructing/resuming an optimizer. | Published owner/test bytes match the selected loader; that static equality does not qualify later whole-package runtime, native extraction or teacher quality. No forward or training ran. |
+| Predicate reference, sum70 | 48 cases / 144 phases: four restores and four teacher-forced reference forwards over two exposed authored rows; 98,808 raw coordinates, including the 2,148 first-position subset, use three unique saved oracle matrices. | State/reference parity supplies no generation or learning gain. This is separate from the older sum67 eight-matrix failed-wrapper observations below; their missing qualifications are not repaired by this cohort. |
+
+The Context150 target-free output replay is prepared for two 60-row arms, batch 12 and a 512-token maximum, with 144 pinned source/control files. Neither inference child started: the first attempt met a disk-ledger lock refusal and the second a host-CPU policy refusal. Original source READs closed; native parent/phase and disk scopes were not acquired, and model metrics remain null. Retain the plans and source/profile gates instead of retrying them unchanged or relaxing policy. The old 96→142/240 field change and 2→0/60 exact-target regression remain the measured quality result.
+
+The original384 saved audits already account for 96 paragraphs, 263 role-specific views and 360 clause slots, including 24 same-text cross-role float-bit differences. Two indexed receipt populations with ten inputs supplied no exact text/f32 matches; this is no global cache-absence claim. The prepared successor's 432 physical inputs and 456 role uses remain unvalidated; text deduplication to 239 strings cannot replace that physical evidence. Reuse these audits before proposing fresh captures or fitting.
+
 ## Retained source inputs and completed predicate mechanics
 
 The [targeted profile review](../../../../docs/autoformalization/evidence/legal-ir-retained-profile-readiness-20261024.json) preserves two different questions. Original closed captures already record two native384 and two native768 heading-prefixed §7213/§7214 vectors. The fixed raw384 pointer consumer requires batch4 and Torch2.13.0+cu130; the selected retained384 receipts declare batch2 and Torch2.9.1+cpu. Static source/metadata comparison finds these predicates differ; no decoder refusal was executed. The normative384/768 adapter accepts both widths under saved preprocessing, but its frozen32-token head cannot express the complete counted target. Matching source text or width supplies neither checkpoint compatibility nor complete-target representability.
