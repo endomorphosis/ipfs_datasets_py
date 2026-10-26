@@ -588,3 +588,49 @@ The [original focused qualification](../../../../../docs/autoformalization/evide
 The four occurrences all belong to one physical(c) span. They establish no second distinct typed statutory use, independent entity/term-sense/definition nodes or semantic relationship assertions. Seven explicit public entries and four statically required full-parent replays retain their separate meanings; internal entry counts were not measured. Original source/native/storage controls closed; earlier unadmitted metadata is preserved with zero qualification credit. The frozen 41-case campaign and actual data operation remain separate from historical opaque-corpus, graph, wire and correspondence qualifications.
 
 Publication preserves the exact qualified adapter/test and literal qualification bytes. Compatibility with public base `f53da5716608117ffa8ad858c799559a6f127af0` is a separate static dependency observation; no new runtime or whole-package/default-pytest qualification follows. No 8D/384D/768D/4096D model, numerical training or Lean build ran in this publication. Source/edition/meaning, governing definitions, entity resolution, semantic graph and Lean corpus admission remain open, with false authority and integer-zero training/gold masks.
+
+## Closing lexical input and result custody
+
+The same two lexical APIs now retain the original and detached ordered occurrence
+lists, and validation also retains the original and detached offered record,
+through genuine parent replay, projection, sealing and serialization. They check
+the actual sealed/regenerated objects and finish with the existing pure JSON
+owner independently of the adapter's canonical serializer callback. Plain JSON
+types remain exact: `False` is different from integer `0`. Existing common
+1-MiB, depth-20 and 25,000-node limits remain in force.
+
+The existing `_finish_corpus_custody` owner closes these checks on success and
+failure. A primary exception keeps its original identity; secondary custody
+failures are attached as notes. An input, actual return or serializer mutation
+refuses the operation without returning a qualified result. These are ordered
+custody observations through the declared operations.
+
+The [separate original-source defect observation](../../../../../docs/autoformalization/evidence/legal-ir-source7346-lexical-closing-red-20261026.json)
+exposes two selected old-source defects. Its two expected test failures receive
+zero passing-test qualification credit. The original native wrapper also failed
+its predeclared XML-message predicate before emitting its worker proof; actual
+source-buffer/compile, operation-guard and model/Lean call counters remain
+unprovided. The separate original one-call recovery released the 128-MiB storage
+promise while preserving all nine files and their physical identities. The [fresh successor qualification](../../../../../docs/autoformalization/evidence/legal-ir-source7346-lexical-closing-green-20261026.json)
+passes 35 owning cases: 21 retained lexical cases plus 14 new closing-custody
+controls. The new controls cover original/detached occurrence and offered-record
+mutation after genuine work, post-seal result mutation, primary exception
+identity with secondary custody failures, and unchanged-input failure behavior.
+No selector or phase total is inferred for this publication.
+
+The first successor generation remains a failed 35-case observation: 33 cases
+passed and two retained checks rejected a changed diagnostic message. No worker
+proof was emitted, and those 33 observations receive no cohort qualification or
+pooled credit. The unchanged tests run again only against the diagnostic-fixed
+source, which retains the existing `independently regenerated` refusal phrase.
+Keep that failed generation and its separate original storage closeout intact.
+
+Public function signatures, schemas, the original projection and CID construction,
+physical mention identity, graph geometry and false authority/zero masks retain
+their existing contracts. This cohort is separate from the earlier 41-case
+lexical campaign and retained 837-record actual corpus operation; neither is
+rerun, combined with these counts or promoted to the new source generation.
+Current-public dependency compatibility remains a separate static observation.
+No new entity/term-sense/definition endpoint, selected source/edition/meaning,
+distinct statutory use, logic family, numerical/model training or Lean build is
+supplied. Governing review and semantic graph/Lean admission remain unresolved.

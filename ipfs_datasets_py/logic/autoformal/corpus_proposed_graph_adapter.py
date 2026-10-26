@@ -1360,6 +1360,43 @@ def _parent_lexical_projection(base, graph, occurrences, occurrences_sha256):
         definition_semantics_encoded=False, training_mask=0, evaluation_gold_mask=0))
 
 
+def _parent_lexical_custody_wire(value):
+    """Use the existing pure JSON owner, independent of projection callbacks."""
+    try:
+        return _corpus_wire(value, maximum=contracts.MAX_RECORD_BYTES)
+    except (TypeError, ValueError, RecursionError, OverflowError) as error:
+        raise contracts.CorpusContractError(
+            "parent lexical custody requires bounded ordinary JSON") from error
+
+
+def _parent_lexical_custody_fence(held, *, complete=True):
+    """Check original/detached inputs and actual returns, then pure closing bytes."""
+    if complete:
+        for label, value, frozen, is_record in held:
+            if is_record:
+                checked = contracts.validate_record(value,
+                    schema=PARENT_LEXICAL_PROJECTION_SCHEMA, fields=_PARENT_LEXICAL_FIELDS)
+                if (checked["projection_profile"] != PARENT_LEXICAL_PROJECTION_PROFILE
+                        or checked["view"] != "candidate"
+                        or any(checked[key] is not False for key in (
+                            "authority", "admitted", "formalized", "source_semantics_verified",
+                            "source_authenticity_verified", "external_references_verified",
+                            "definition_semantics_encoded"))
+                        or any(type(checked[key]) is not int or checked[key] != 0 for key in
+                               ("training_mask", "evaluation_gold_mask"))):
+                    _fail("parent lexical custody differs from independently regenerated authority")
+            else:
+                checked = contracts.clone_json(value)
+            if _parent_lexical_custody_wire(checked) != frozen:
+                _fail("parent lexical " + label + " changed during custody")
+    # This final pass has no projection serializer, record validator or replay
+    # callback after it. Reuse the existing ordinary-JSON owner rather than an
+    # injected canonical serializer or a permissive Python equality comparison.
+    for label, value, frozen, _ in held:
+        if _parent_lexical_custody_wire(value) != frozen:
+            _fail("parent lexical " + label + " changed during custody")
+
+
 def prepare_parent_lexical_occurrence_projection_v1(raw, *, derived_occurrences,
         expected_derived_occurrences_sha256, **parent_validation_inputs):
     """Project an explicit complete retained mention list after full parent replay.
@@ -1370,13 +1407,38 @@ def prepare_parent_lexical_occurrence_projection_v1(raw, *, derived_occurrences,
     entire ordered list; it does not replace any original source/graph input.
     Existing occurrence records are reused, never rebuilt or selected by labels.
     Shared physical node bodies carry no interpretation-specific declarations.
-    The returned companion retains the exact opaque base candidate and all
-    unresolved source, context, edition and legal-meaning decisions.
+    Original and detached lexical inputs and the actual sealed result remain
+    unchanged through replay, projection, serialization and closing custody.
+    Source, context, edition and legal-meaning decisions remain unresolved.
     """
     occurrences = _parent_lexical_occurrences(derived_occurrences, expected_derived_occurrences_sha256)
-    base = adapt_parent_proposed_graph_bytes(raw, **parent_validation_inputs)
-    graph = load_record_bytes(raw, expected_sha256=parent_validation_inputs["expected_proposal_sha256"])
-    return _parent_lexical_projection(base, graph, occurrences, expected_derived_occurrences_sha256)
+    frozen = _parent_lexical_custody_wire(occurrences)
+    held = [("original occurrences", derived_occurrences, frozen, False),
+            ("detached occurrences", occurrences, frozen, False)]
+    primary = None
+    try:
+        _parent_lexical_custody_fence(held)
+        base = adapt_parent_proposed_graph_bytes(raw, **parent_validation_inputs)
+        _parent_lexical_custody_fence(held)
+        graph = load_record_bytes(raw, expected_sha256=parent_validation_inputs["expected_proposal_sha256"])
+        _parent_lexical_custody_fence(held)
+        result = _parent_lexical_projection(base, graph, occurrences, expected_derived_occurrences_sha256)
+        result_wire = _parent_lexical_custody_wire(result)
+        held.append(("actual projection", result, result_wire, True))
+        _parent_lexical_custody_fence(held)
+        serialized = canonical_dag_json_bytes(result)
+        _parent_lexical_custody_fence(held)
+        if serialized != result_wire:
+            _fail("parent lexical projection serialization changed during custody")
+        return result
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        _finish_corpus_custody((
+            ("parent lexical inputs and result", lambda: _parent_lexical_custody_fence(held)),
+            ("parent lexical terminal bytes", lambda: _parent_lexical_custody_fence(held, complete=False)),
+        ), primary)
 
 
 def validate_parent_lexical_occurrence_projection_v1(record, raw, *, derived_occurrences,
@@ -1386,16 +1448,44 @@ def validate_parent_lexical_occurrence_projection_v1(record, raw, *, derived_occ
     Comparison uses canonical bytes to distinguish JSON booleans from integers.
     Validation requires a fresh full original-parent replay; the retained base
     candidate, graph, list hash or self-sealed output cannot replace it.
+    Original/detached offered records, lexical inputs and actual regenerated
+    returns stay fenced through both serializers and final pure closing checks.
     """
     value = validate_record(record, schema=PARENT_LEXICAL_PROJECTION_SCHEMA,
                             fields=_PARENT_LEXICAL_FIELDS)
-    expected = prepare_parent_lexical_occurrence_projection_v1(raw,
-        derived_occurrences=derived_occurrences,
-        expected_derived_occurrences_sha256=expected_derived_occurrences_sha256,
-        **parent_validation_inputs)
-    if canonical_dag_json_bytes(value) != canonical_dag_json_bytes(expected):
-        _fail("lexical projection differs from independently regenerated parent/source custody")
-    return value
+    offered_wire = _parent_lexical_custody_wire(value)
+    occurrences = _parent_lexical_occurrences(derived_occurrences, expected_derived_occurrences_sha256)
+    occurrence_wire = _parent_lexical_custody_wire(occurrences)
+    held = [("original offered record", record, offered_wire, True),
+            ("detached offered record", value, offered_wire, True),
+            ("original occurrences", derived_occurrences, occurrence_wire, False),
+            ("detached occurrences", occurrences, occurrence_wire, False)]
+    primary = None
+    try:
+        _parent_lexical_custody_fence(held)
+        expected = prepare_parent_lexical_occurrence_projection_v1(raw,
+            derived_occurrences=occurrences,
+            expected_derived_occurrences_sha256=expected_derived_occurrences_sha256,
+            **parent_validation_inputs)
+        expected_wire = _parent_lexical_custody_wire(expected)
+        held.append(("actual regenerated projection", expected, expected_wire, True))
+        _parent_lexical_custody_fence(held)
+        offered_serialized = canonical_dag_json_bytes(value)
+        _parent_lexical_custody_fence(held)
+        expected_serialized = canonical_dag_json_bytes(expected)
+        _parent_lexical_custody_fence(held)
+        if (offered_serialized != expected_serialized or offered_serialized != offered_wire
+                or expected_serialized != expected_wire):
+            _fail("lexical projection differs from independently regenerated parent/source custody")
+        return value
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        _finish_corpus_custody((
+            ("parent lexical offered inputs and returns", lambda: _parent_lexical_custody_fence(held)),
+            ("parent lexical terminal bytes", lambda: _parent_lexical_custody_fence(held, complete=False)),
+        ), primary)
 
 
 __all__ += ["PARENT_LEXICAL_PROJECTION_SCHEMA", "PARENT_LEXICAL_PROJECTION_PROFILE",
