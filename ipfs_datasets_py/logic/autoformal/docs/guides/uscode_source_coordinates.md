@@ -84,6 +84,14 @@ The [original qualification](../../../../../workspace/test-logs/federal-corpus-a
 
 These are fixture contract tests. They do not qualify original Parquet/HTML provenance transport, historical cache repair, learned reconstruction, statutory meaning, or Lean admission. No model, training or native Lean run was performed.
 
+## Retained two-parent sentence-coordinate observation
+
+The [selected-parent observation](../../../../../docs/autoformalization/evidence/legal-ir-selected-parent-coordinates-20261022.json) records one completed bounded data operation over the exact heading-prefixed parent text fields at original rows 2674/2675: 1,945 and 3,892 UTF-8 bytes. The existing inventory and full-report validator emitted 130 sentence spans and matched all 15 retained progress observations (13 distinct text hashes). All 45 matching references across 32 coordinate positions remain; three observations have 7/13/13 matches. No original occurrence is selected, and current supplied-text span IDs do not reconstruct historical global IDs.
+
+Reuse the complete coordinate/comparison captures and original source/native/storage closeouts. The four witnessed product modules match the current published source by static hashes; that comparison supplies no new runtime, test or model qualification. The earlier failed attempt remains separate. Physical parent custody was reused from its original generation, rather than replayed by this operation.
+
+These heading-prefixed 1,945/3,892-byte fields differ from the later retained-official cohort's normalized 1,912/3,858-byte views below. Keep their source revisions, physical descriptors, query/release identities, coordinates and IDs separate. Sentence equality does not recover the missing legacy producer recipe or bind a physical paired-cache row. Governing edition, meaning, context, entity/graph correspondence, training/gold and Lean admission remain open; all masks and authority remain unchanged. Do not rerun the completed comparison or full ledger/corpus census.
+
 ## Retained 2024 official-source pilot cohort
 
 The [retained-official pilot evidence](../../../../../docs/autoformalization/evidence/legal-ir-retained-official-pilot-20261024.json) records a separately identified local cohort for the complete retained 2024 Title 10 §§101, 7213 and 7214 source documents. DATA1 replayed the exact retained HTML and existing normalized views, then wrote three Parquet rows with eight UTF-8 fields and a report of **1,649 uncompiled source-coordinate spans**. The raw HTML stays separately pinned; the Parquet text field contains the normalized view. DATA1 used Arrow 25.0.1 and NumPy 2.1.3. Its four data checks passed under the existing native owner. The earlier failed DATA1 generation and its separate storage reconciliation retain their original failed status.
