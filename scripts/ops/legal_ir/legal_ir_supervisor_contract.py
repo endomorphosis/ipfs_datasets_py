@@ -461,7 +461,9 @@ PROGRAMME_ENGINEERING_SPECS = {'LIRAE-LIR02-SOURCE-01': {'task_id': 'LIRAE-LIR02
                                          'structured_span_objective. Start from all42 '
                                          'authenticated F18 donor tensors, not F15; F15 remains '
                                          'the masked-KL teacher. Freeze38 tensors including '
-                                         'modality. Select exactly '
+                                         'modality. Derive a new frozen38-tensor seal from the F18 '
+                                         'donor; do not reuse the old F15-origin/frozen36 seal. '
+                                         'Select exactly '
                                          'start.weight[6,64],start.bias[6],end.weight[6,64],end.bias[6],conditions '
                                          'row3 only:130 active scalars in780 stored scalars;650 '
                                          'inactive scalars remain byte-identical. Wire fresh Adam '
@@ -494,7 +496,8 @@ PROGRAMME_ENGINEERING_SPECS = {'LIRAE-LIR02-SOURCE-01': {'task_id': 'LIRAE-LIR02
                                                     'scalars;38other tensors including modality '
                                                     'stay frozen; donor is the '
                                                     'authenticated42tensor F18 state and F15 is '
-                                                    'only the teacher',
+                                                    'only the teacher; derive the new frozen38 '
+                                                    'seal directly from the F18 donor',
                                                     'Meaningful offline synthetic owner tests '
                                                     'reject wrong tensor shapes/row/counts, '
                                                     'nonfinite controls, missing provenance and '

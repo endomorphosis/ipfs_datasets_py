@@ -600,6 +600,7 @@ def test_programme_profile_targets_new_numerical_wiring_and_preserves_checkpoint
     assert all(path not in task['owner_paths'] for path in task['read_only_source_sha256'])
     assert '650 inactive scalars' in task['objective'] and '130 active scalars' in task['objective']
     assert 'all72gold-present TRAIN rows' in task['objective'] and 'conditions row3' in task['objective']
+    assert 'new frozen38-tensor seal from the F18 donor' in task['objective']
     assert 'Start from all42 authenticated F18 donor tensors, not F15' in task['objective']
     assert any(path.endswith('legal_span_modality_conditions_retention.py') for path in task['read_only_source_sha256'])
     assert any(path.endswith('conditions_fullspan_margin_v1.py') for path in task['read_only_source_sha256'])
