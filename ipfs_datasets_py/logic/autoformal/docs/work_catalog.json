@@ -2650,7 +2650,8 @@
       "evidence_ids": [
         "bound-definition-existing-owner-port-20261023-01",
         "parent-literal-norm-scope-correspondence-qualified-20261024-01",
-        "source7346-full-b-parent-correspondence-qualified-20261025-01"
+        "source7346-full-b-parent-correspondence-qualified-20261025-01",
+        "source7346-public-parent-correspondence-dependency-qualified-20261026-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_norm_scope_correspondence_v1.md",
       "id": "norm-scope-correspondence-v1",
@@ -3208,7 +3209,8 @@
         "parent-literal-norm-scope-correspondence-qualified-20261024-01",
         "source7346-b2-parent-candidate-qualified-20261025-01",
         "source7346-b2-parent-public-integration-qualified-20261025-01",
-        "source7346-full-b-parent-correspondence-qualified-20261025-01"
+        "source7346-full-b-parent-correspondence-qualified-20261025-01",
+        "source7346-public-parent-correspondence-dependency-qualified-20261026-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_norm_scope_v1.md",
       "id": "source-norm-scope-v1",
@@ -3307,7 +3309,8 @@
       ],
       "compatibility_dependency": true,
       "evidence_ids": [
-        "source7346-full-b-partial-candidates-qualified-20261025-01"
+        "source7346-full-b-partial-candidates-qualified-20261025-01",
+        "source7346-public-parent-correspondence-dependency-qualified-20261026-01"
       ],
       "id": "relational-norm-fragment",
       "notes": "Index the existing relational implementation once. This evidence is a current-primary structural replay of authored partial hypotheses; selected public producer-byte equality is not public runtime or semantic admission.",
@@ -3376,7 +3379,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-25T22:17:53.517973+00:00",
+  "last_updated_at_utc": "2026-10-26T02:06:22.960022+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -5299,6 +5302,16 @@
       "root": "datasets_repository",
       "scope": "Separate actual837-parent operation preserves both complete graph/AST populations and old opaque candidates, reuses four already derived occurrences in one physical(c) span, and writes/reads two13node16edge projections as20node27edge aggregate. Source/edition/meaning, entity/definition resolution, second use, semantic/Lean admission remain unresolved; maskszero.",
       "status": "qualified_real_source_lexical_occurrence_projection"
+    },
+    {
+      "id": "source7346-public-parent-correspondence-dependency-qualified-20261026-01",
+      "observed_bytes": 1373106,
+      "observed_sha256": "1fdf3544cc9491c47bbf6990e4e0510e16fa27b01c562afae084032c047caf24",
+      "path": "docs/autoformalization/evidence/legal-ir-source7346-public-parent-correspondence-20261026.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "One retained unselected de-dicto hypothesis over the same 837 records/16 cache rows. Six direct APIs and 61 actual original-function entries, including 12 required nested parent replays. Public f53 leaf modules, explicit synthesized namespaces and initializer bypasses; 13 original M parent paths/pins unchanged. Eleven anchors/57 typed targets, 9 references from 4 lexical heads, 48 scaffolds, 6 meaning/context issues and 15 questions open; false authority/masks 0. Package initialization, installed runtime, semantic fidelity and latent-text reconstruction remain unqualified. No new model/training/embedding/checkpoint/solver/Lean work.",
+      "status": "qualified_public_parent_correspondence_dependency_profile"
     }
   ]
 }
