@@ -358,7 +358,11 @@
           "context_budget_tokens": 48000,
           "completion_scope": "engineering_preparation_only",
           "dispatch_authority": "existing protected supervisor plan and current claim/resource admission",
-          "satisfies_parent_semantic_dependencies": false
+          "satisfies_parent_semantic_dependencies": false,
+          "completion_outcomes": {
+            "qualified_reuse": "Authenticated current existing API/owner/test/source identities and exact candidate/request/evidence closure meet the requested preparation contract; preserve the original qualification scope. No code or owning-test change is required merely to complete this child.",
+            "implemented": "Only a demonstrated missing compatible interface justifies a change to its existing owner and meaningful owning tests; no second exporter, graph/codec builder or historical cohort rerun."
+          }
         },
         {
           "task_id": "LIRAE-LIR07-IR-02",
@@ -376,7 +380,11 @@
           "context_budget_tokens": 48000,
           "completion_scope": "engineering_preparation_only",
           "dispatch_authority": "existing protected supervisor plan and current claim/resource admission",
-          "satisfies_parent_semantic_dependencies": false
+          "satisfies_parent_semantic_dependencies": false,
+          "completion_outcomes": {
+            "qualified_reuse": "Authenticated current existing API/owner/test/source identities and exact candidate/request/evidence closure meet the requested preparation contract; preserve the original qualification scope. No code or owning-test change is required merely to complete this child.",
+            "implemented": "Only a demonstrated missing compatible interface justifies a change to its existing owner and meaningful owning tests; no second exporter, graph/codec builder or historical cohort rerun."
+          }
         },
         {
           "task_id": "LIRAE-LIR12-LEAN-03",
@@ -394,20 +402,24 @@
           "context_budget_tokens": 48000,
           "completion_scope": "engineering_preparation_only",
           "dispatch_authority": "existing protected supervisor plan and current claim/resource admission",
-          "satisfies_parent_semantic_dependencies": false
+          "satisfies_parent_semantic_dependencies": false,
+          "completion_outcomes": {
+            "qualified_reuse": "Authenticated current existing API/owner/test/source identities and exact candidate/request/evidence closure meet the requested preparation contract; preserve the original qualification scope. No code or owning-test change is required merely to complete this child.",
+            "implemented": "Only a demonstrated missing compatible interface justifies a change to its existing owner and meaningful owning tests; no second exporter, graph/codec builder or historical cohort rerun."
+          }
         },
         {
           "task_id": "LIRAE-LIR17-PROFILE-03",
           "goal_id": "LIR-17.conditions-fullspan-training-preparation-v1",
           "parent_goal_id": "LIR-17",
           "lane": 3,
-          "role": "numerical_profile_preparation",
+          "role": "conditions_model_optimizer_interface_preparation",
           "outputs": [
-            "Original F18 donor/F15 teacher/checkpoint/source/partition provenance packet",
-            "Separate four-tensor conditions profile and fixed coefficient 0/0.25 comparison recipe",
-            "Finite integration, optimizer-parity, full-IR retention/permission scoring and resource acceptance packet"
+            "Versioned opt-in F18-derived four-tensor model/optimizer wiring in the existing optimizer package with meaningful owning tests",
+            "Exact F18 donor/F15 teacher/source/checkpoint/partition provenance and unchanged kernel/objective source pins",
+            "Finite separately admitted gradient/parity/resume qualification and coefficient 0/0.25 training/scoring/resource contracts"
           ],
-          "acceptance": "Retain all 42 donor tensors, 38 frozen tensors and 650 inactive scalars; fresh ordered four-tensor Adam, seed 1729,batch 12, 32 updates per future arm,all 72 present TRAIN rows,unchanged CE/KL/full-batch normalization. This task performs preparation only: no fitting, model execution, new weights or legal/width promotion.",
+          "acceptance": "Implement the actual open model/optimizer interface, reusing F18 and the published margin kernel rather than adding another recipe/preflight exporter. Copy all 42 authenticated F18 tensors; freeze 38 including modality; select start.weight,start.bias,end.weight,end.bias in that order and train only conditions row 3 (130 active/780 stored/650 inactive scalars). Fresh ordered four-tensor Adam; unchanged CE/F15 KL/full-B normalization and all 72 gold-present TRAIN rows remain eligible. Preserve old F18, margin, structured objective and checkpoint pins. Any genuine model/optimizer validation uses original finite source/resource admission; the matched coefficient 0/0.25, seed 1729, batch 12, 32-update fits require separate admission and produce no statutory/width promotion by default.",
           "provider_role": "grok-implement",
           "context_budget_tokens": 48000,
           "completion_scope": "engineering_preparation_only",
@@ -418,10 +430,10 @@
             "frozen_tensor_count": 38,
             "inactive_scalar_count": 650,
             "trainable_tensors": [
-              "start_weight",
-              "start_bias",
-              "end_weight",
-              "end_bias"
+              "start.weight",
+              "start.bias",
+              "end.weight",
+              "end.bias"
             ],
             "only_trainable_head_row": 3,
             "optimizer": "fresh ordered four-tensor Adam",
@@ -433,12 +445,31 @@
             "seed": 1729,
             "batch_size": 12,
             "gold_present_train_rows": 72,
-            "old_default_objective_source_pins_unchanged": true
+            "old_default_objective_source_pins_unchanged": true,
+            "active_scalar_count": 130,
+            "stored_scalar_count": 780,
+            "frozen_includes_modality": true,
+            "donor": "authenticated F18 final states",
+            "teacher": "F15 masked retention; not an F16/F17 donor combination",
+            "frozen38_identity": "Derive the new frozen38 identity from authenticated F18 states; old F15/F18 frozen36 identities are not reusable as a new partition seal."
+          },
+          "implementation_owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+          "readonly_reuse_owners": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+            "ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py",
+            "ipfs_datasets_py/logic/legal_ir/structured_span_objective.py"
+          ],
+          "owning_test": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py",
+          "readonly_reuse_owner_sha256": {
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823",
+            "ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py": "e4f16146cf6f64b16e979e5ee0803a41ee41a8377bfa7833918b0a25dd7d1160",
+            "ipfs_datasets_py/logic/legal_ir/structured_span_objective.py": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
           }
         }
       ],
       "provider_route": "grok-implement; sealed Grok4.7 to Codex6.1Sol high on primary_quota_exhausted, through the existing protected route",
-      "concurrency_rule": "Existing four strict-shard supervisors, claims, shared merge queue/landing branch and ipfs_accelerate resource admission control dispatch; lane balance does not grant native/model/meaning authority. Root owns actual deployment and publication."
+      "concurrency_rule": "Existing four strict-shard supervisors, claims, shared merge queue/landing branch and ipfs_accelerate resource admission control dispatch; lane balance does not grant native/model/meaning authority. Root owns actual deployment and publication.",
+      "reuse_completion_rule": "The source/IR/Lean children may complete through authenticated qualified reuse with exact candidate/evidence closure. Do not force owner/test changes or new exporters when existing APIs meet the request. The numerical child addresses the demonstrated missing versioned F18 four-tensor model/optimizer wiring; paired fitting is separately admitted."
     },
     "storage_and_release": {
       "canonical_code": "Reusable source/span/review/graph/Lean code stays in external/ipfs_datasets canonical owners; numerical code remains with existing autoencoder/legal_ir/optimizer owners. Supervisor machinery remains with existing external/ipfs_accelerate owners. Product code never imports artifacts/workspace history.",
