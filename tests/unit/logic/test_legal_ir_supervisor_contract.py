@@ -409,7 +409,7 @@ def programme_case(tmp_path, monkeypatch):
         changes.append({'path': value, 'sha256': contract.sha(path.read_bytes())})
     receipt = {'status': 'implemented', 'parent_reference': task['parent_reference'],
                'source_binding': contract.PROGRAMME_SOURCE_BINDING,
-               'implementation_route': contract.PROGRAMME_ROUTE, 'code_changes': changes}
+               'implementation_route': contract.PROGRAMME_ROUTE, 'outcome': 'implemented', 'code_changes': changes}
     preparation = {'schema': 'legal-ir-programme-engineering-preparation/v1',
         'task_id': task['task_id'], 'parent_reference': task['parent_reference'],
         'source_binding': contract.PROGRAMME_SOURCE_BINDING,
@@ -550,3 +550,59 @@ def test_programme_receipt_rejects_forged_completion_or_execution_claims(tmp_pat
     if attack == 'artifact': data['asserted-results'] = b'{}'
     with pytest.raises((contract.ContractError, ValueError)):
         contract.validate_programme_engineering(tmp_path, task, receipt, data)
+
+
+
+def qualified_reuse_case(tmp_path, monkeypatch):
+    import ast
+    import subprocess
+    task, receipt, preparation = programme_case(tmp_path, monkeypatch)
+    for value in task['source_file_sha256']:
+        data = subprocess.run(['git', '-C', str(ROOT), 'show', contract.PROGRAMME_PUBLIC_MAIN + ':' + value],
+                              capture_output=True, check=True).stdout
+        path = tmp_path / value
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    value = task['owner_paths'][0]
+    symbol = next(node.name for node in ast.parse((tmp_path / value).read_bytes()).body
+                  if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and not node.name.startswith('_'))
+    receipt.update(outcome='qualified_reuse', code_changes=[], qualified_reuse={
+        'schema': 'legal-ir-programme-qualified-reuse/v1',
+        'api_bindings': [dict(path=value, symbol=symbol, sha256=task['source_file_sha256'][value])],
+        'test_bindings': [dict(path=path, sha256=task['source_file_sha256'][path]) for path in task['test_paths']],
+        'result_sha256': contract.sha(contract._programme_json(preparation['result']))})
+    return task, receipt, preparation
+
+
+def test_programme_qualified_reuse_accepts_existing_api_without_fabricated_code_changes(tmp_path, monkeypatch):
+    task, receipt, preparation = qualified_reuse_case(tmp_path, monkeypatch)
+    assert contract.validate_programme_engineering(tmp_path, task, receipt, {'preparation': raw(preparation)})
+
+
+@pytest.mark.parametrize('attack', ['symbol', 'source_hash', 'result_hash', 'test_hash', 'code_change', 'changed_owner'])
+def test_programme_qualified_reuse_rejects_unauthenticated_api_or_result(tmp_path, monkeypatch, attack):
+    task, receipt, preparation = qualified_reuse_case(tmp_path, monkeypatch)
+    reuse = receipt['qualified_reuse']
+    if attack == 'symbol': reuse['api_bindings'][0]['symbol'] = 'invented_export'
+    elif attack == 'source_hash': reuse['api_bindings'][0]['sha256'] = '0' * 64
+    elif attack == 'result_hash': reuse['result_sha256'] = '0' * 64
+    elif attack == 'test_hash': reuse['test_bindings'][0]['sha256'] = '0' * 64
+    elif attack == 'code_change': receipt['code_changes'] = [{'path': task['owner_paths'][0], 'sha256': '0' * 64}]
+    else: (tmp_path / task['owner_paths'][0]).write_text('invented implementation')
+    with pytest.raises(contract.ContractError):
+        contract.validate_programme_engineering(tmp_path, task, receipt, {'preparation': raw(preparation)})
+
+
+def test_programme_profile_targets_new_numerical_wiring_and_preserves_checkpoint_owners():
+    task = programme_bundle()['prepared_tasks'][3]
+    assert task['owner_paths'] == ['ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py']
+    assert all(value is None for value in task['source_file_sha256'].values())
+    assert all(path not in task['owner_paths'] for path in task['read_only_source_sha256'])
+    assert '650 inactive scalars' in task['objective'] and '130 active scalars' in task['objective']
+    assert 'all72gold-present TRAIN rows' in task['objective'] and 'conditions row3' in task['objective']
+    assert 'Start from all42 authenticated F18 donor tensors, not F15' in task['objective']
+    assert any(path.endswith('legal_span_modality_conditions_retention.py') for path in task['read_only_source_sha256'])
+    assert any(path.endswith('conditions_fullspan_margin_v1.py') for path in task['read_only_source_sha256'])
+    assert any(path.endswith('structured_span_objective.py') for path in task['read_only_source_sha256'])
+    assert task['completion_scope'] == 'engineering_preparation_only'
+    assert task['satisfies_parent_semantic_dependencies'] is False

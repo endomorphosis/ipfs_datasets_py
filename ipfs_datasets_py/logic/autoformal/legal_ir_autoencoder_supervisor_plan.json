@@ -9505,7 +9505,7 @@
         "parent_task_id": "LIR-02",
         "goal_id": "LIR-02.source-review-preparation-v1",
         "title": "Implement source-bound review dossier preparation",
-        "objective": "Extend the existing source request and handoff owners with one reusable preparation export for the retained full-parent bank/officer alternatives and original norm/use candidates. Bind declared source/span/entity revisions, file and row identities, offsets and coordinate namespaces. Preserve missing edition/context/crosswalk and every-use questions with explicit candidate dispositions; never invent two operative uses. Inspect current owner interfaces first and integrate their qualified exports rather than recreating readers or reviews. Observed public metadata heads USC91ca1838853ac82d7a12dd4ab47d9686f47667f9,span60501f3e920f6c9050cfc452e0d9fcc2b7c184f3,entity79d54378c5d6a89ab56e7a27e0f0ba867e800e19 are discovery only; choose exact compatible artifact and edition through retained manifests/intake without rerunning the completed full census.",
+        "objective": "Satisfy the source review preparation request through the existing source request and handoff owners, implementing only a demonstrated missing interface for the retained full-parent bank/officer alternatives and original norm/use candidates. Bind declared source/span/entity revisions, file and row identities, offsets and coordinate namespaces. Preserve missing edition/context/crosswalk and every-use questions with explicit candidate dispositions; never invent two operative uses. Inspect current owner interfaces first and integrate their qualified exports rather than recreating readers or reviews. Observed public metadata heads USC91ca1838853ac82d7a12dd4ab47d9686f47667f9,span60501f3e920f6c9050cfc452e0d9fcc2b7c184f3,entity79d54378c5d6a89ab56e7a27e0f0ba867e800e19 are discovery only; choose exact compatible artifact and edition through retained manifests/intake without rerunning the completed full census.",
         "owner_paths": [
           "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
           "ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py"
@@ -9517,7 +9517,8 @@
         "acceptance_criteria": [
           "Exact source/edition/context dossier export uses existing owners and authenticates declared identities without guessing missing inputs",
           "Missing crosswalks and unresolved operative uses remain explicit; no legal meaning or review is manufactured",
-          "Focused owner tests cover missing/stale revisions, coordinate namespace mismatch and exact deterministic roundtrip"
+          "Focused owner tests cover missing/stale revisions, coordinate namespace mismatch and exact deterministic roundtrip",
+          "If an existing qualified API already meets the exact request, return authenticated qualified reuse bound to unchanged public owner/test hashes and the preparation result; do not fabricate code edits or duplicate an exporter"
         ],
         "result_fields": [
           "source_manifest",
@@ -9556,7 +9557,17 @@
         "context_budget_tokens": 48000,
         "preparation_path": "workspace/legal_ir/programme_engineering/lirae-lir02-source-01/preparation.json",
         "receipt_path": "workspace/legal_ir/programme_engineering/lirae-lir02-source-01/receipt.json",
-        "home_shard": 0
+        "home_shard": 0,
+        "completion_scope": "engineering_preparation_only",
+        "satisfies_parent_semantic_dependencies": false,
+        "qualified_reuse_allowed": true,
+        "context_paths": [
+          "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
+          "ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py",
+          "tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py",
+          "tests/unit/logic/autoformal/test_legal_source_review_handoff.py"
+        ],
+        "read_only_source_sha256": {}
       },
       {
         "task_id": "LIRAE-LIR07-IR-02",
@@ -9564,7 +9575,7 @@
         "parent_task_id": "LIR-07",
         "goal_id": "LIR-07.typed-ir-interface-preparation-v1",
         "title": "Implement complete candidate IR interface preparation",
-        "objective": "Add a reusable preparation census to the existing relational-norm and native-AST owners for the same selected complete candidate ASTs. Inventory exact constructors, vocabulary, binders, ordered roles, codec/projection identities and output budgets; classify representable, unsupported and ambiguous inputs without promoting legal meaning. Emit a minimal missing-interface recipe only for a demonstrated gap, preserving raw candidate identities and existing qualified codecs.",
+        "objective": "Use the existing relational-norm and native-AST owners to satisfy the preparation census, implementing only a demonstrated missing interface for the same selected complete candidate ASTs. Inventory exact constructors, vocabulary, binders, ordered roles, codec/projection identities and output budgets; classify representable, unsupported and ambiguous inputs without promoting legal meaning. Emit a minimal missing-interface recipe only for a demonstrated gap, preserving raw candidate identities and existing qualified codecs.",
         "owner_paths": [
           "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
           "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py"
@@ -9576,7 +9587,8 @@
         "acceptance_criteria": [
           "Preparation export inventories complete candidate AST identity, constructors, binders, ordered roles and codec/output budgets",
           "Unsupported and ambiguous cases are retained without legal acceptance, dropped roles or caller-created replacement ASTs",
-          "Focused owner tests exercise all declared dispositions, ordering and lossless serialization without rerunning a corpus census"
+          "Focused owner tests exercise all declared dispositions, ordering and lossless serialization without rerunning a corpus census",
+          "If an existing qualified API already meets the exact request, return authenticated qualified reuse bound to unchanged public owner/test hashes and the preparation result; do not fabricate code edits or duplicate an exporter"
         ],
         "result_fields": [
           "candidate_records",
@@ -9616,7 +9628,17 @@
         "context_budget_tokens": 48000,
         "preparation_path": "workspace/legal_ir/programme_engineering/lirae-lir07-ir-02/preparation.json",
         "receipt_path": "workspace/legal_ir/programme_engineering/lirae-lir07-ir-02/receipt.json",
-        "home_shard": 1
+        "home_shard": 1,
+        "completion_scope": "engineering_preparation_only",
+        "satisfies_parent_semantic_dependencies": false,
+        "qualified_reuse_allowed": true,
+        "context_paths": [
+          "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+          "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py",
+          "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+          "tests/unit/logic/autoformal/test_legal_native_ast_preservation.py"
+        ],
+        "read_only_source_sha256": {}
       },
       {
         "task_id": "LIRAE-LIR12-LEAN-03",
@@ -9624,7 +9646,7 @@
         "parent_task_id": "LIR-12",
         "goal_id": "LIR-12.lean-compatibility-preparation-v1",
         "title": "Implement Lean compatibility request preparation",
-        "objective": "Extend the existing preservation packet/index owners with a reusable compatibility-matrix export for selected AST/profile candidates. Bind parent, direct, conditional, native and preservation routes to exact request/import/premise/axiom/artifact closure. Reuse retained 68/204,23/69,parent-bound32/96+2/6 and29-file packet/index evidence by authenticated reference. Do not rerun historical compiler qualifications, introduce axioms, claim semantic preservation or admit legal statements.",
+        "objective": "Use the existing preservation packet/index owners for the compatibility-matrix preparation request, implementing only a demonstrated missing interface for selected AST/profile candidates. Bind parent, direct, conditional, native and preservation routes to exact request/import/premise/axiom/artifact closure. Reuse retained 68/204,23/69,parent-bound32/96+2/6 and29-file packet/index evidence by authenticated reference. Do not rerun historical compiler qualifications, introduce axioms, claim semantic preservation or admit legal statements.",
         "owner_paths": [
           "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
           "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py"
@@ -9636,7 +9658,8 @@
         "acceptance_criteria": [
           "Compatibility request export binds selected AST/profile to exact route, imports, premises, axioms and artifact closure",
           "Retained qualification evidence is reused by identity and unresolved prerequisites block any claim of Lean or legal admission",
-          "Focused packet/index tests cover foreign profiles, missing premise/artifact closure and stable serialization without invoking a compiler"
+          "Focused packet/index tests cover foreign profiles, missing premise/artifact closure and stable serialization without invoking a compiler",
+          "If an existing qualified API already meets the exact request, return authenticated qualified reuse bound to unchanged public owner/test hashes and the preparation result; do not fabricate code edits or duplicate an exporter"
         ],
         "result_fields": [
           "compatibility_matrix",
@@ -9676,29 +9699,41 @@
         "context_budget_tokens": 48000,
         "preparation_path": "workspace/legal_ir/programme_engineering/lirae-lir12-lean-03/preparation.json",
         "receipt_path": "workspace/legal_ir/programme_engineering/lirae-lir12-lean-03/receipt.json",
-        "home_shard": 2
+        "home_shard": 2,
+        "completion_scope": "engineering_preparation_only",
+        "satisfies_parent_semantic_dependencies": false,
+        "qualified_reuse_allowed": true,
+        "context_paths": [
+          "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+          "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_packet_v2.py",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_index_v2.py"
+        ],
+        "read_only_source_sha256": {}
       },
       {
         "task_id": "LIRAE-LIR17-PROFILE-03",
         "programme_engineering": "legal-ir-programme-engineering/v1",
         "parent_task_id": "LIR-17",
         "goal_id": "LIR-17.conditions-fullspan-training-preparation-v1",
-        "title": "Implement frozen full-span training profile preparation",
-        "objective": "Extend the existing published conditions_fullspan_margin_v1 owner with a pure finite training-recipe/preflight export. Bind original F18/F15 donor, teacher, source, checkpoint and partition provenance; declare42 donor tensors,38 frozen tensors,650 inactive tensors,fresh Adam,matched margin0/.25 arms,batch12,seed1729,32 updates,all72 cases present and unchanged CE/KL/full-B normalization. Export acceptance/control/frozen full-IR casewise scoring obligations. Reuse the published margin kernel; perform no fitting, model/encoder execution or checkpoint mutation before native model/resource admission.",
+        "title": "Implement opt-in four-tensor full-span numerical training profile",
+        "objective": "Implement one opt-in versioned numerical/model/optimizer training profile under the existing optimizer package, reusing the original F18 legal_span_modality_conditions_retention owner and published conditions_fullspan_margin_v1 kernel without changing their whole-file identities or structured_span_objective. Start from all42 authenticated F18 donor tensors, not F15; F15 remains the masked-KL teacher. Freeze38 tensors including modality. Select exactly start.weight[6,64],start.bias[6],end.weight[6,64],end.bias[6],conditions row3 only:130 active scalars in780 stored scalars;650 inactive scalars remain byte-identical. Wire fresh Adam with lr.001,betas.9/.999,eps1e-8,weight_decay0,clip5,latent disabled,matched margin0/.25 arms,batch12,seed1729,32updates and all72gold-present TRAIN rows. Preserve CEfullB12/outer8 and KLtemperature1/coefficient1/6B72. Export executable caller-supplied-state model/optimizer configuration and frozen full-IR casewise scoring/preflight. Do not duplicate the already published scalar recipe or margin kernel. No real fitting, encoder execution, historical compiler/census rerun or checkpoint mutation; resource/model fitting admission remains separate. Synthetic unit tests may verify selection, masks, optimizer construction and gradient boundaries without fitting real inputs.",
         "owner_paths": [
-          "ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py"
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py"
         ],
         "test_paths": [
-          "tests/unit/logic/legal_ir/test_conditions_fullspan_margin_v1.py"
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py"
         ],
         "acceptance_criteria": [
-          "Pure recipe export authenticates caller-supplied donor/teacher/source/checkpoint/partition identities and every finite control",
-          "The published margin kernel and unchanged CE/KL/full-B contract remain intact; incomplete provenance cannot authorize fitting",
-          "Focused tests reject missing provenance, wrong arm/partition/tensor counts and nonfinite controls without opening a model or checkpoint"
+          "Opt-in numerical profile composes existing F18 model/state and published margin kernel with an explicit versioned configuration and fresh optimizer wiring; retained F18/F15/kernel/structured-objective files remain unchanged",
+          "Exactly four selected start/end weight and bias tensors update only conditions row3:130active/780stored/650inactive scalars;38other tensors including modality stay frozen; donor is the authenticated42tensor F18 state and F15 is only the teacher",
+          "Meaningful offline synthetic owner tests reject wrong tensor shapes/row/counts, nonfinite controls, missing provenance and wrong TRAIN partition, and verify unchanged CE/KL/full-B and zero/.25arm wiring without fitting real inputs",
+          "Any claimed qualified reuse requires an already existing exact numerical API and authenticated unchanged source/test/result bindings; a metadata recipe alone cannot satisfy this job"
         ],
         "result_fields": [
-          "provenance",
-          "recipe",
+          "state_provenance",
+          "model_optimizer_wiring",
+          "selection_mask_contract",
           "acceptance_controls",
           "frozen_full_ir_casewise_scoring",
           "unresolved_questions",
@@ -9718,8 +9753,8 @@
           "backlog_sha256": "6b355dcf9bebf4e3e34c5f59e5fb3a4cfe4ac14ac652c212eebb422101be82a1"
         },
         "source_file_sha256": {
-          "ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py": "e4f16146cf6f64b16e979e5ee0803a41ee41a8377bfa7833918b0a25dd7d1160",
-          "tests/unit/logic/legal_ir/test_conditions_fullspan_margin_v1.py": "461877c74b2b5661778fc853352db4e90c10f5b8127f9adb457cbf760b70bb27"
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py": null,
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py": null
         },
         "implementation_route": {
           "primary_provider_id": "grok_cli",
@@ -9733,7 +9768,24 @@
         "context_budget_tokens": 48000,
         "preparation_path": "workspace/legal_ir/programme_engineering/lirae-lir17-profile-03/preparation.json",
         "receipt_path": "workspace/legal_ir/programme_engineering/lirae-lir17-profile-03/receipt.json",
-        "home_shard": 3
+        "home_shard": 3,
+        "completion_scope": "engineering_preparation_only",
+        "satisfies_parent_semantic_dependencies": false,
+        "qualified_reuse_allowed": true,
+        "context_paths": [
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+          "ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py",
+          "ipfs_datasets_py/logic/legal_ir/structured_span_objective.py",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_modality_conditions_retention_contracts.py",
+          "tests/unit/logic/legal_ir/test_conditions_fullspan_margin_v1.py"
+        ],
+        "read_only_source_sha256": {
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823",
+          "ipfs_datasets_py/logic/legal_ir/conditions_fullspan_margin_v1.py": "e4f16146cf6f64b16e979e5ee0803a41ee41a8377bfa7833918b0a25dd7d1160",
+          "ipfs_datasets_py/logic/legal_ir/structured_span_objective.py": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_modality_conditions_retention_contracts.py": "3094d9fd2bd7f409a913d4096557e9a342c8c79214c5810f7a6980b33f204c58",
+          "tests/unit/logic/legal_ir/test_conditions_fullspan_margin_v1.py": "461877c74b2b5661778fc853352db4e90c10f5b8127f9adb457cbf760b70bb27"
+        }
       }
     ],
     "dispatch_authorized_by_this_metadata": false,
