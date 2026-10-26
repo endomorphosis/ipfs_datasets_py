@@ -2592,7 +2592,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-LIR17-PROFILE-03 Implement opt-in four-tensor full-span numerical training profile
 
-- status: todo
+- status: completed
 - completion: manual
 - is schedulable: true
 - priority: P1
