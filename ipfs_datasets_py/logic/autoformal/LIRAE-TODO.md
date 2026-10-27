@@ -2639,7 +2639,7 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 
 ## LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01 Validate retained constructor-refusal and lease-timeout lifecycle evidence
 
-- Status: todo
+- Status: completed
 - completion: manual
 - is schedulable: true
 - priority: P1
