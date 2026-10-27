@@ -1,0 +1,106 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "graph_or_corpus_admitted": false,
+    "legal_meaning_reviewed": false,
+    "paired_fit_authorized": false,
+    "source_or_edition_authenticated": false,
+    "statutory_accuracy_qualified": false,
+    "training_gold_qualified": false
+  },
+  "coordinate_observation": {
+    "distinct_positions": 32,
+    "full_parent_rows": [
+      2674,
+      2675
+    ],
+    "historical_observations": 15,
+    "matching_position_references": 45,
+    "multiple_position_observations": 3,
+    "sentence_spans": 130
+  },
+  "current_focused_generation": {
+    "failures": 0,
+    "log_sha256": "8845641146d9956613cc66a50d94e0502ba871bf7f6bc368a6fae2a39a698e75",
+    "old_cases_deselected": 215,
+    "passed": 24,
+    "source_hardening": [
+      "lowered request JSON budgets before receipt roster parsing",
+      "immutable request byte/type bound before hashing",
+      "exact-int receipt counts/order and binder zero"
+    ]
+  },
+  "evaluation_gold_mask": 0,
+  "independent_final_review": {
+    "bytes": 3902,
+    "path": "/tmp/legal-ir-source-dossier-final-domain-review-20261027.json",
+    "sha256": "42cfa67275a81d8bfd5ab3bf21d84e465bf44634b97a6719fdd6bc9daac12175"
+  },
+  "integration_whole_runtime_retested": false,
+  "model_or_compiler_execution": false,
+  "open_gates": [
+    "Missing revisions, governing edition, source/span/entity crosswalk, context, actual operative uses and independent legal review remain unresolved.",
+    "Pinned completed receipt reuse does not authenticate remote/current artifacts or grant fresh source custody, graph/corpus admission, training targets or Lean authority."
+  ],
+  "owning_tests": [
+    {
+      "bytes": 103267,
+      "path": "tests/unit/logic/autoformal/test_legal_source_correspondence_requests_v1.py",
+      "sha256": "59f6bc341f9e805b072347c0b772990e10ab18d38d21f53c856e0ab941aada4c"
+    },
+    {
+      "bytes": 12615,
+      "path": "tests/unit/logic/autoformal/test_legal_source_review_handoff.py",
+      "sha256": "0059e588896ac668a0f8cc9ba8744af478d23c9c160533d1b5e64783da81757e"
+    }
+  ],
+  "preservation": {
+    "expensive_original_test_body_preserved": true,
+    "explicit_ENROLLED_selector_is_not_admission": true,
+    "fresh_original_custody": false,
+    "new_original_data_replay": false,
+    "old_product_function_ASTs_preserved": true,
+    "operative_use_count": 0,
+    "operative_uses": [],
+    "segmentation_matching_alignment_or_census_repeated": false
+  },
+  "qualification_commit": "d90fb1d391d9c6973431df67af2227df7d1834bb",
+  "qualification_public_base": "c8ec1b9f4288614c422e68c2e0e4a8a772c6ab2f",
+  "recorded_at_utc": "2026-10-27",
+  "retained_local_receipt": {
+    "bytes": 8004,
+    "path": "/tmp/legal-ir-source-dossier-port-20261027/receipt.json",
+    "sha256": "72c3626f5e56478d3b719a6ca3a1a65f4e84da6c0a267ad091169de922e077e9"
+  },
+  "retained_native_generation": {
+    "deferred_cases": 1,
+    "duration_seconds": 490.63,
+    "passed_cases": 225,
+    "protected_checker_digest": "8ab5d7e20d9233b6ad9afca607a0973ec71d1e1f1b3d861d520999fb41b730df",
+    "protected_checker_returncode": 0,
+    "result_digest": "5adae9118289d6958615238f957503f4af23727b89d5aa9b2707539531273217",
+    "scope": "e061 source generation; not new current-public custody",
+    "unexecuted_original_custody_qualification": "separate; not supplied by metadata dossier"
+  },
+  "retained_native_source_commit": "e061490f56f21d0f5a36aed4aef30deea82e088d",
+  "reused_public_coordinate_receipt": {
+    "bytes": 26420,
+    "path": "docs/autoformalization/evidence/legal-ir-selected-parent-coordinates-20261022.json",
+    "sha256": "8193ce3c85c961eb38d8ded7f1be8b35ccc32410b68a895685052ca4aa47c4a3"
+  },
+  "schema": "legal-ir-source-dossier-public-qualification-summary/v1",
+  "scope": "Declared source/span/entity/edition/context dossier and pending-review question binding only. Independent receipt bytes are reused without fresh original artifact custody.",
+  "sources": [
+    {
+      "bytes": 103109,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
+      "sha256": "b8d4a674ea191f615db5b8ee02e225cd5bdad61f39a6d0f38c3714c3b04abbab"
+    },
+    {
+      "bytes": 13095,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py",
+      "sha256": "d34365610687da54d0a2d9b76e8140d9ad1d2462b48dd0d74979ec985cda741d"
+    }
+  ],
+  "training_mask": 0
+}

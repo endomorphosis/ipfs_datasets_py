@@ -1804,6 +1804,7 @@
         },
         "current_public_focused_cases": 24,
         "current_public_original_data_replayed": false,
+        "evidence_id": "source-dossier-focused-qualified-20261027-01",
         "fresh_original_custody_qualification": false,
         "graph_or_corpus_admission": false,
         "historical_evidence_requalified": false,
@@ -1820,7 +1821,8 @@
         "coordinate-source-correspondence-selected-20261021",
         "coordinate-source-correspondence-main-integration-20261021",
         "uscode-hf-wire-coordinate-source-correspondence-qualified-20261024-01",
-        "uscode-hf-wire-coordinate-source-correspondence-public-integration-qualified-20261024-01"
+        "uscode-hf-wire-coordinate-source-correspondence-public-integration-qualified-20261024-01",
+        "source-dossier-focused-qualified-20261027-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_correspondence_requests_v1.md",
       "id": "source-correspondence-requests",
@@ -3385,19 +3387,23 @@
       "compatibility_dependency": false,
       "evidence_ids": [
         "source7346-relational-graph-depth-focused-qualified-20261025-01",
-        "source7346-parent-proposed-graphs-qualified-20261025-01"
+        "source7346-parent-proposed-graphs-qualified-20261025-01",
+        "mixed-graph-profile-qualified-20261027-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_relational_graph_v1.md",
       "id": "semantic-graph",
       "mixed_relational_graph_v1": {
+        "actual_installed_Lean_case_deselected": true,
         "existing_ordered_transport_reused": true,
         "final_identity_included_in_output_budget": true,
+        "focused_qualification_evidence_id": "mixed-graph-profile-qualified-20261027-01",
         "historical_evidence_requalified": false,
         "maximum_ast_json_depth": 48,
         "maximum_nodes": 4096,
         "maximum_output_bytes": 2097152,
         "model_or_native_execution": false,
         "profile": "mixed_relational_norm_v1",
+        "pure_cases": 155,
         "review_or_admission_supplied": false,
         "source_scope_commitments_supplied_independently": true,
         "source_semantics_verified": false
@@ -3474,7 +3480,8 @@
       "evidence_ids": [
         "source7346-full-b-partial-candidates-qualified-20261025-01",
         "source7346-public-parent-correspondence-dependency-qualified-20261026-01",
-        "mixed-sort-relational-lowering-20261026-01"
+        "mixed-sort-relational-lowering-20261026-01",
+        "mixed-graph-profile-qualified-20261027-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_relational_norm_v1.md",
       "id": "relational-norm-fragment",
@@ -3624,6 +3631,42 @@
       "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
       "required": true,
       "status": "implementation_present"
+    },
+    {
+      "apis": [
+        "configuration",
+        "donor_provenance",
+        "selection_mask_contract",
+        "frozen38_seal",
+        "wire_optimizer",
+        "compose_objective_for_state",
+        "clip_selected_gradients",
+        "scoring_preflight"
+      ],
+      "compatibility_dependency": true,
+      "evidence_ids": [
+        "f18-conditions-fullspan-genuine-mechanics-20261027-01"
+      ],
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
+      "id": "conditions-fullspan-training-v1",
+      "notes": "Existing optimizer-package opt-in companion reuses immutable F18/F15 CE-KL and published margin owners. Genuine synthetic26 mechanics cover mixed168/72 present, full-batch absent connected-zero, frozen38 including modality, ordered four row3 tensors and130 active/780 stored/650 inactive scalars, byte preservation and in-memory Adam resume. Old25/1 failure and original storage recovery remain separate. Actual trained-donor/source/teacher/mask admission, finite paired fit/scoring, statutory accuracy and actual lake build remain open.",
+      "numerical_qualification": {
+        "cases": 26,
+        "evidence_id": "f18-conditions-fullspan-genuine-mechanics-20261027-01",
+        "model_accuracy_qualified": false,
+        "paired_training_run": false,
+        "source_commit": "e2dec5b7c13c98d49d03ce04904eced3a9eb0387",
+        "synthetic_actual_F18_architecture": true,
+        "trained_donor_authenticated": false
+      },
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_conditions_fullspan_training_v1",
+      "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py"
+      ],
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+      "required": true,
+      "status": "focused_tests_qualified"
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -3684,7 +3727,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-27T00:34:46.410583+00:00",
+  "last_updated_at_utc": "2026-10-27",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -5737,6 +5780,36 @@
       "root": "datasets_repository",
       "scope": "Versioned source port reusing both retained Context150 product owners verbatim through the fixed opt-in retained-context150-source-compatibility/v1 profile. Owning-test portability change reads the same hash-pinned original patch/source oracles from the existing tracked archive with all test-function assertions preserved. Separate public integration check:28 pure metadata/negative-path cases,84 test phases,10 selectors,0 failures/skips/denied effects; no checkpoint assets or numerical/database frameworks. Default loader strictness, original checkpoint schemas/producers and false authority flags preserved; shared source and bridge unchanged. No historical38-case qualification transfer, new restore/forward/optimizer/training/model quality, native dispatch/rearm or statutory authority.",
       "status": "existing_owner_source_port"
+    },
+    {
+      "id": "f18-conditions-fullspan-genuine-mechanics-20261027-01",
+      "observed_bytes": 5904,
+      "observed_sha256": "73fc5fe0a6d254ee6cc8ae6b243374a9a661d2871b93e256d132bb75b954f23f",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-conditions-fullspan-genuine-mechanics-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Original-owned26 genuine synthetic F18/four-head mechanics only; old25/1 failed assertion and separate original retained-storage recovery preserved. No actual donor/paired fit/scoring/statutory or Lean claim.",
+      "status": "focused_tests_qualified"
+    },
+    {
+      "id": "mixed-graph-profile-qualified-20261027-01",
+      "observed_bytes": 4489,
+      "observed_sha256": "e83b2231e85c708dd969fbfc3e34c5dfbf191f64a5fc4d8c97d534a1582394ee",
+      "path": "docs/autoformalization/evidence/legal-ir-mixed-graph-profile-qualification-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "155 pure complete mixed graph/interface controls; one actual Lean case deselected. Explicit mixed-only depth48/final2MiB; old three profile bytes preserved. Fictional source nomination supplies no meaning or corpus admission.",
+      "status": "focused_tests_qualified"
+    },
+    {
+      "id": "source-dossier-focused-qualified-20261027-01",
+      "observed_bytes": 4393,
+      "observed_sha256": "fddf951ecd5a450fbd8b858c230497fd665038e23b4bd029dd39c43564b3e166",
+      "path": "docs/autoformalization/evidence/legal-ir-source-dossier-qualification-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Retained native225+1 deferred and new24 focused dossier/binder controls are separate generations; exact completed coordinate receipt reused without original replay, fresh custody, legal review or admission.",
+      "status": "focused_tests_qualified"
     }
   ]
 }

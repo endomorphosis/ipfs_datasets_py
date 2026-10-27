@@ -1,0 +1,131 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "graph_or_corpus_admitted": false,
+    "legal_meaning_reviewed": false,
+    "paired_fit_authorized": false,
+    "source_or_edition_authenticated": false,
+    "statutory_accuracy_qualified": false,
+    "training_gold_qualified": false
+  },
+  "cases": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 26,
+    "skipped": 0
+  },
+  "checkpoint_payload_loaded": false,
+  "failed_v01_preserved": {
+    "candidate_commit": "c091e3eba92a6633eaab81e9af2067d8457d8a25",
+    "failed": 1,
+    "native_compute_released": true,
+    "passed": 25,
+    "reason": "Test incorrectly required each boundary endpoint gradient to be nonzero; shared wrong/gold endpoints cancel. Test-only paired-boundary oracle corrected; product loss/kernel unchanged.",
+    "source_READ_closed": true,
+    "storage_recovery": {
+      "automatic_expiry": false,
+      "new_test_credit": false,
+      "original_api": "autoencoder_resource_recovery.reconcile_retained_reservation",
+      "original_claim_bytes": 134217728,
+      "outputs_deleted": false,
+      "prior_record_sha256": "3363d03cb74cac5b5952457a5fce52d29eb3e0e945700daf169403caa72b1ba6",
+      "receipt": {
+        "bytes": 3724,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/failed-attempt-original-storage-recovery-v01.json",
+        "sha256": "6dbe469b723def4e7a14d091b36aa255036a7e2dcb299fcb3c361f7580ea6ae7"
+      },
+      "reservation_id": "8c021046a6b94014a38b0b71d8c2aae6",
+      "retained_file_bytes": 18866,
+      "retained_files": 10
+    },
+    "terminal": {
+      "bytes": 9548,
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/owner-genuine-mechanics-v01.stdout",
+      "sha256": "bee32be99ebe14e790d73a72dd6451cb25cb5e240cf0508d5a0089d362c6e3d6"
+    }
+  },
+  "final_observed_live_processes": 0,
+  "integration_base": "6f37ac1e4217e1802792101b3178e5831c6f3d6f",
+  "integration_whole_runtime_retested": false,
+  "junit": {
+    "bytes": 5750,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/attempt-genuine-mechanics-v02/exports/test-results.xml",
+    "sha256": "553653b7c81c5a3a94fb3e19b314bb4afddbb08f4130c2d79da882f0a915ff65"
+  },
+  "native_compute_and_storage_released": true,
+  "native_lease_id": "8b1c31b7a5d44fdb958c7110940dc403",
+  "new_accuracy_claim": false,
+  "open_gates": [
+    "Authenticate the actual retained final F18 donor, full source population, F15 teacher capture and near-complete mask roots under original owners.",
+    "Implement/admit the finite paired coefficient0/0.25 32-update runner and genuine fit-resume control; no real-input update ran here.",
+    "Freeze and score raw/joint complete IR over all168 and retained loss/retention cohorts plus all32 permission decisions.",
+    "Reviewed statutory gold/meaning, independent four-width quality comparison and actual source-bound lake build remain separate."
+  ],
+  "original_request": {
+    "bytes": 11806,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/request-genuine-mechanics-v02.json",
+    "sha256": "2eb1e46b58087fdbcea055bad901afe7c93607e6bb2605caf28c1a0e138cb611"
+  },
+  "original_resource_owner": "scripts/ops/legal_ir/run_owned_validation.py",
+  "original_result": {
+    "bytes": 3102,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/genuine-mechanics-result-v02.json",
+    "sha256": "9073cc8b5c6c1e849c2074353f05f1dea611c4197cea780c7e676808a5f74ebc"
+  },
+  "original_terminal": {
+    "bytes": 6178,
+    "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/owner-genuine-mechanics-v02.stdout",
+    "sha256": "63004c66c0bbe1cd13251edcdb1cccb7d418700b03eb3655c41f8cadf81d5bd1"
+  },
+  "owning_test": {
+    "bytes": 43396,
+    "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py",
+    "sha256": "e187f18bd7daa6f0692d308bdec1a523b7c9385fda0cf6378d7554df1d92b8af"
+  },
+  "paired_training_run": false,
+  "qualification_commit": "e2dec5b7c13c98d49d03ce04904eced3a9eb0387",
+  "qualified_mechanics": {
+    "active_row": 3,
+    "active_scalars": 130,
+    "batch_size": 12,
+    "ce_outer_denominator": 8,
+    "donor_architecture_tensors": 42,
+    "frozen_and_inactive_byte_checks": true,
+    "frozen_tensors_including_modality": 38,
+    "gold_present_train_rows": 72,
+    "inactive_scalars": 650,
+    "kl_denominator": 72,
+    "margin_arms": [
+      0.0,
+      0.25
+    ],
+    "mixed_and_all_absent_connected_zero_full_batch_margin": true,
+    "original_train_rows": 168,
+    "seed": 1729,
+    "selected_tensor_order": [
+      "start.weight",
+      "start.bias",
+      "end.weight",
+      "end.bias"
+    ],
+    "stored_scalars": 780,
+    "synthetic_in_memory_Adam_resume": true,
+    "unchanged_F18_CE_and_F15_KL": true
+  },
+  "recorded_at_utc": "2026-10-27",
+  "reservation_id": "51fb8df64be14117a8bc6b44a5331216",
+  "resources": {
+    "cpus": 1,
+    "memory_mib": 2048,
+    "storage_mib": 128,
+    "timeout_seconds": 300
+  },
+  "schema": "legal-ir-f18-conditions-fullspan-public-qualification-summary/v1",
+  "scope": "Genuine synthetic retained F18 architecture/four-tensor optimizer mechanics only; no trained checkpoint payload, corpus fit or legal-quality qualification.",
+  "source": {
+    "bytes": 37630,
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+    "sha256": "272bb78a430c03721a519eae2bd68f631e18382945f4b2a1a9838662e88784e4"
+  },
+  "source_pins_verified_before_and_after": 35
+}
