@@ -1475,3 +1475,92 @@ def test_lifecycle_builder_never_promotes_subclass_spoof_or_legacy_timeout(priva
             assert observed['storage']['release_authorized'] is False
     finally:
         blocker.release()
+
+
+# These source-only controls call the existing launcher file helpers directly.
+# They create private fixture files and do not invoke main(), native admission,
+# storage reservation, a worker, or a validation subprocess.
+_EMPTY_SOURCE_SHA256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+
+
+def test_source_snapshot_empty_regular_source_accepts_only_its_exact_pin(tmp_path):
+    module, _ = _lifecycle_launcher_module()
+    source = tmp_path / '__init__.py'
+    source.write_bytes(b'')
+    assert module.snapshot(source, allow_empty=True) == b''
+    assert module.source_guard({'source_sha256': {str(source): _EMPTY_SOURCE_SHA256}}) is None
+    with pytest.raises(ValueError, match='validation source changed'):
+        module.source_guard({'source_sha256': {str(source): hashlib.sha256(b'changed').hexdigest()}})
+
+
+def test_source_snapshot_default_and_request_still_refuse_empty_files(tmp_path):
+    module, _ = _lifecycle_launcher_module()
+    path = tmp_path / 'request.json'
+    path.write_bytes(b'')
+    with pytest.raises(ValueError, match='bounded unaliased regular input'):
+        module.snapshot(path)
+    with pytest.raises(ValueError, match='bounded unaliased regular input'):
+        module.request(path, _EMPTY_SOURCE_SHA256)
+
+
+def test_source_snapshot_nonempty_sources_and_requests_keep_exact_bytes_and_hashes(tmp_path):
+    module, _ = _lifecycle_launcher_module()
+    source = tmp_path / 'source.py'
+    raw = b'pass\n'
+    source.write_bytes(raw)
+    assert module.snapshot(source) == module.snapshot(source, allow_empty=True) == raw
+    assert module.source_guard({'source_sha256': {str(source): hashlib.sha256(raw).hexdigest()}}) is None
+    with pytest.raises(ValueError, match='validation source changed'):
+        module.source_guard({'source_sha256': {str(source): _EMPTY_SOURCE_SHA256}})
+    request = tmp_path / 'request.json'
+    request_raw = b'{"schema":"owned-validation-request/v1"}'
+    request.write_bytes(request_raw)
+    assert module.request(request, hashlib.sha256(request_raw).hexdigest()) == (
+        {'schema': 'owned-validation-request/v1'}, request_raw)
+
+
+@pytest.mark.parametrize('allow_empty', [None, 0, 1, '', 'true', [], {}])
+def test_source_snapshot_empty_opt_in_requires_exact_bool(tmp_path, allow_empty):
+    module, _ = _lifecycle_launcher_module()
+    source = tmp_path / '__init__.py'
+    source.write_bytes(b'')
+    with pytest.raises(ValueError, match='exact bool'):
+        module.snapshot(source, allow_empty=allow_empty)
+
+
+@pytest.mark.parametrize('kind', ['symlink', 'hardlink', 'fifo', 'directory', 'parent_symlink', 'missing'])
+def test_source_snapshot_empty_opt_in_keeps_unsafe_file_refusals(tmp_path, kind):
+    module, _ = _lifecycle_launcher_module()
+    source = tmp_path / 'candidate.py'
+    original = tmp_path / 'original.py'
+    original.write_bytes(b'')
+    if kind == 'symlink': source.symlink_to(original)
+    elif kind == 'hardlink': os.link(original, source)
+    elif kind == 'fifo': os.mkfifo(source)
+    elif kind == 'directory': source.mkdir()
+    elif kind == 'parent_symlink':
+        directory = tmp_path / 'real-parent'
+        directory.mkdir()
+        (directory / 'candidate.py').write_bytes(b'')
+        alias = tmp_path / 'aliased-parent'
+        alias.symlink_to(directory, target_is_directory=True)
+        source = alias / 'candidate.py'
+    with pytest.raises((ValueError, OSError)):
+        module.source_guard({'source_sha256': {str(source): _EMPTY_SOURCE_SHA256}})
+
+
+def test_source_snapshot_empty_opt_in_preserves_existing_size_limits(tmp_path):
+    module, _ = _lifecycle_launcher_module()
+    source = tmp_path / 'source.py'
+    source.write_bytes(b'1234')
+    assert module.snapshot(source, maximum=4, allow_empty=True) == b'1234'
+    source.write_bytes(b'12345')
+    with pytest.raises(ValueError, match='bounded unaliased regular input'):
+        module.snapshot(source, maximum=4, allow_empty=True)
+    # A private sparse fixture crosses the unchanged4MiB source limit without
+    # reading or allocating a real source population.
+    with source.open('wb') as stream:
+        stream.seek(4 * 1024 * 1024)
+        stream.write(b'x')
+    with pytest.raises(ValueError, match='bounded unaliased regular input'):
+        module.source_guard({'source_sha256': {str(source): _EMPTY_SOURCE_SHA256}})
