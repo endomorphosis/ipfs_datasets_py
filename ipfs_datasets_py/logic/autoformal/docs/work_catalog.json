@@ -1771,7 +1771,10 @@
         "validate_source_correspondence_requests_v2",
         "prepare_source_correspondence_requests_v3",
         "validate_source_correspondence_requests_v3",
-        "source_correspondence_requests_v3_sha256"
+        "source_correspondence_requests_v3_sha256",
+        "prepare_source_edition_context_dossier",
+        "source_edition_context_dossier_sha256",
+        "validate_source_edition_context_dossier"
       ],
       "compatibility_dependency": false,
       "current_public_wire_coordinate_v3": {
@@ -1794,6 +1797,25 @@
         "status": "focused_current_public_dependency_fixture_qualified",
         "training_mask": 0
       },
+      "declared_source_dossier_v1": {
+        "companion": {
+          "path": "ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py",
+          "symbol": "bind_source_dossier_review_questions"
+        },
+        "current_public_focused_cases": 24,
+        "current_public_original_data_replayed": false,
+        "fresh_original_custody_qualification": false,
+        "graph_or_corpus_admission": false,
+        "historical_evidence_requalified": false,
+        "model_or_compiler_execution": false,
+        "profile": "declared-source-span-entity-review-dossier/v1",
+        "retained_native_generation": "e061490f56f21d0f5a36aed4aef30deea82e088d",
+        "retained_native_original_data_deferred": 1,
+        "retained_native_passed": 225,
+        "retained_native_validation_digest": "5adae9118289d6958615238f957503f4af23727b89d5aa9b2707539531273217",
+        "schema": "legal-source-edition-context-dossier/v1",
+        "source_or_semantic_review": false
+      },
       "evidence_ids": [
         "coordinate-source-correspondence-selected-20261021",
         "coordinate-source-correspondence-main-integration-20261021",
@@ -1802,7 +1824,7 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_source_correspondence_requests_v1.md",
       "id": "source-correspondence-requests",
-      "notes": "Reuse the existing independent-bank v1 owner and explicit graph-v2/original-eligibility-v3 source-review request-custody extension. Complete graph originals and every supplied bank physical reference are replayed; repeated outputs, unsigned questions, missing source receipts and alternatives remain complete and unresolved. Original59 selected cases are a separate generation; current-main compatibility now passed the same59 authored cases under its own complete source/native/storage custody. No source/edition/meaning selection, legal admission, model, training or Lean execution.",
+      "notes": "Reuse the existing independent-bank v1 owner and explicit graph-v2/original-eligibility-v3 source-review request-custody extension. Complete graph originals and every supplied bank physical reference are replayed; repeated outputs, unsigned questions, missing source receipts and alternatives remain complete and unresolved. Original59 selected cases are a separate generation; current-main compatibility now passed the same59 authored cases under its own complete source/native/storage custody. No source/edition/meaning selection, legal admission, model, training or Lean execution. Additive declared source/edition/context dossier consumes independently pinned completed coordinate-receipt bytes without repeating segmentation, matching, alignment or census. Caller identities remain declarations, pending review obligations grant no meaning/custody/operative uses, and the original-data test selector preserves its full assertion body. Retained native 225+1 deferred and current-public 24 focused helper controls are separate generations, without new original-data custody or admission.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_source_correspondence_requests_v1",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
