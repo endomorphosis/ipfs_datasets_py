@@ -117,9 +117,12 @@
     "following_started_attempt": 1,
     "interpretation": "Existing source/runtime-hash-based validation obsolescence policy rearmed the identity; prior attempts and failure events remain retained, not lost history.",
     "observed_at_utc": "2026-10-27T02:37:46.349275+00:00",
-    "policy_correction": "Separate existing-owner policy fix under review; reference pending. Deployment is not claimed.",
+    "policy_correction": "Published in ipfs_accelerate_py PR301, merge2b9e094c4395ea6e93778620c0e0048aeab2e22f. Source-hash-only reset retired; existing exact receipts and bounded verified history enforce minimum consumed counts after quiescence, while approved repairs keep separate authority. Primary adaptation and runtime adoption remain separate observations.",
     "policy_fix_deployed_claimed": false,
+    "policy_fix_pr": "https://github.com/endomorphosis/ipfs_accelerate_py/pull/301",
+    "policy_fix_public_merge": "2b9e094c4395ea6e93778620c0e0048aeab2e22f",
     "previous_recorded_attempt_count": 4,
+    "source_qualification_cases": 125,
     "task_id": "LIRAE-LIR12-LEAN-03"
   },
   "recorded_at_utc": "2026-10-27T03:04:00.815607+00:00",
@@ -127,7 +130,7 @@
   "scope_limits": [
     "Only the new bounded declared-record compatibility frontier on retained8fc; no heavy packet fixture reconstruction enrolled.",
     "No public current-runtime/source-port, full-suite/task-checker, real Lean build, model or semantic qualification.",
-    "Both retained full1800-second owning gates remain failed independently; native LIRAE-LIR12-LEAN-03 remains unfinished."
+    "Both retained full owning-validation attempts (1800seconds each) remain failed independently; native LIRAE-LIR12-LEAN-03 remains unfinished."
   ],
   "source_generation": {
     "complete_import_or_runtime_closure_attested": false,
