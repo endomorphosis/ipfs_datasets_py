@@ -3367,14 +3367,34 @@
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_relational_graph_v1.md",
       "id": "semantic-graph",
-      "notes": "Indexes the existing graph owner once: relational depth32 only, canonical/normative24, unchanged4096-node/1MiB/wire/schema/identity contracts. Original13-case adapted engineering qualification and actual837-parent depth27 graph observation remain separate. No39-phase/defaultpytest/current-public runtime, selected legal meaning/definition/two-use, model/training/gold, graph-corpus or Lean admission.",
+      "mixed_relational_graph_v1": {
+        "existing_ordered_transport_reused": true,
+        "final_identity_included_in_output_budget": true,
+        "historical_evidence_requalified": false,
+        "maximum_ast_json_depth": 48,
+        "maximum_nodes": 4096,
+        "maximum_output_bytes": 2097152,
+        "model_or_native_execution": false,
+        "profile": "mixed_relational_norm_v1",
+        "review_or_admission_supplied": false,
+        "source_scope_commitments_supplied_independently": true,
+        "source_semantics_verified": false
+      },
+      "notes": "Indexes the existing graph owner once: relational depth32 only, canonical/normative24, unchanged4096-node/1MiB/wire/schema/identity contracts. Original13-case adapted engineering qualification and actual837-parent depth27 graph observation remain separate. No39-phase/defaultpytest/current-public runtime, selected legal meaning/definition/two-use, model/training/gold, graph-corpus or Lean admission. Explicit mixed_relational_norm_v1 reuses the existing mixed validator and ordered tree. Only its AST depth 48 and final 2 MiB output allowance are selected; prior profiles/shared defaults and their captured graphs remain unchanged. Complete retained candidates remain unselected and internally source-unbound.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_semantic_graph",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_semantic_graph.py",
       "profile_maximum_depth": {
         "canonical_rules_v1": 24,
+        "mixed_relational_norm_v1": 48,
         "normative_scope_v1": 24,
         "relational_norm_v1": 32
+      },
+      "profile_maximum_output_bytes": {
+        "canonical_rules_v1": 1048576,
+        "mixed_relational_norm_v1": 2097152,
+        "normative_scope_v1": 1048576,
+        "relational_norm_v1": 1048576
       },
       "required": true,
       "retained_focused_qualification": {
@@ -3412,8 +3432,22 @@
         "validate_relational_norm_v1",
         "prepare_mixed_relational_norm_v1",
         "validate_mixed_relational_norm_v1",
-        "mixed_relational_norm_report_sha256"
+        "mixed_relational_norm_report_sha256",
+        "prepare_candidate_ir_interface_v1",
+        "candidate_ir_interface_sha256",
+        "validate_candidate_ir_interface_v1"
       ],
+      "candidate_ir_interface_v1": {
+        "compiler_executed": false,
+        "historical_supervisor_evidence_rewritten": false,
+        "logic_family_completeness_established": false,
+        "maximum_candidates": 8,
+        "maximum_request_bytes": 2097152,
+        "qualification_scope": "bounded_engineering_fixtures_only",
+        "schema": "legal-candidate-ir-interface-request/v1",
+        "source_or_semantic_graph_admission": false,
+        "training_executed": false
+      },
       "compatibility_dependency": true,
       "evidence_ids": [
         "source7346-full-b-partial-candidates-qualified-20261025-01",
@@ -3462,7 +3496,7 @@
         "tested_public_base": "f53da5716608117ffa8ad858c799559a6f127af0",
         "training_mask": 0
       },
-      "notes": "Index the existing relational implementation once. This evidence is a current-primary structural replay of authored partial hypotheses; selected public producer-byte equality is not public runtime or semantic admission. The separate explicit mixed-sort profile has an accepted frozen-f53-plus-three-overlays 21-case pure cohort and separate one-case/two-command compiler specimen. Earlier partial-source observations retain their own generations. Later 813 adoption is source-reviewed only; null source/meaning choices and four zero masks remain.",
+      "notes": "Index the existing relational implementation once. This evidence is a current-primary structural replay of authored partial hypotheses; selected public producer-byte equality is not public runtime or semantic admission. The separate explicit mixed-sort profile has an accepted frozen-f53-plus-three-overlays 21-case pure cohort and separate one-case/two-command compiler specimen. Earlier partial-source observations retain their own generations. Later 813 adoption is source-reviewed only; null source/meaning choices and four zero masks remain. Additive bounded candidate-interface census preserves raw payloads and ordered candidate structure. Dispositions refer only to named codecs; existing Object and opt-in mixed graph profiles are recognized. Earlier frozen producer generations remain separate.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_relational_norm_v1",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",

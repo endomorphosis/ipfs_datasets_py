@@ -89,3 +89,33 @@ target or semantic graph admission is registered. The separate successful compil
 check establishes well-typed declarations and its explicit witnesses. It does not
 prove general preservation or statutory truth. Parent source correspondence,
 conditional corpus integration and substantive review remain separate work.
+
+
+## Bounded candidate interface census
+
+The existing owner also exposes `prepare_candidate_ir_interface_v1`,
+`candidate_ir_interface_sha256` and `validate_candidate_ir_interface_v1`.
+Callers supply exact UTF-8 candidate payloads and independent SHA256 pins for at
+most eight named object-relational, mixed-relational or native-unary-preservation
+codec rows in a bounded 2 MiB request. The result retains raw payloads, complete
+candidate AST commitments, ordered constructors/binders/roles and separate
+projection commitments. Validation regenerates the complete result against
+independent request and report pins.
+
+`representable`, `unsupported` and `ambiguous` refer to the named codec only.
+For example, equality is supported by the mixed codec even when the restricted
+Object-only codec refuses it; an existential refused by the named unary
+preservation profile does not establish that FOL or TDFOL lacks existentials.
+The census does not select, replace or simplify a candidate or claim logic-family
+completeness. Reserved names and formula/AST conflicts remain explicit
+ambiguities. A codec refusal preserves the original raw payload and AST hash.
+
+The capability map names the existing object graph profile and the explicit
+[mixed graph profile](legal_relational_graph_v1.md#explicit-mixed-relational-profile).
+These routes require separate source/scope commitments. The census performs no
+graph projection, source/legal review, corpus census, training, compiler or model
+execution; its masks and authority remain zero/false. The mixed codec's missing
+direct native-TDFOL AST roundtrip is a specific interface boundary. Its existing
+sorted Lean renderer remains available. Earlier frozen supervisor preparation
+reports retain their original producer bytes and observations; the corrected
+capability map does not rewrite or newly qualify that historical evidence.

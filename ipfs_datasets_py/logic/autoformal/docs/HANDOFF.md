@@ -1,5 +1,19 @@
 # Current handoff
 
+**Mixed relational graph preparation, 2026-10-27:** the existing graph owner now
+has an explicit [mixed relational profile](guides/legal_relational_graph_v1.md#explicit-mixed-relational-profile)
+using the existing validator and ordered transport. Its selected depth 48 / 4,096-node /
+2 MiB output contract preserves the three earlier profiles and shared defaults.
+The owning fixtures cover complete roundtrips for both retained §7214 alternatives,
+ordered roles/binders/equality, independent source/scope commitments and exact
+budget refusals. A fictional nominated source does not bind those alternatives to
+statutory meaning. The [candidate interface census](guides/legal_relational_norm_v1.md#bounded-candidate-interface-census)
+now distinguishes named-codec limits from logic-family capability and recognizes
+the pre-existing Object-only graph route. Original completed task evidence remains
+unchanged; this source work grants no review, corpus/graph admission, training/gold,
+model execution, native parser registration or Lean qualification.
+
+
 **Programme and watchdog reconciliation, 2026-10-26:** continue the existing [native `LIR-G000` programme](guides/legal_ir_supervisor_task_catalog_20261016.md), with 34 goals, 64 tasks and all 24 original parent mappings. The [current review](../../../../docs/autoformalization/evidence/legal-ir-programme-watchdog-review-20261026.json) verifies that crosswalk, revisits seven original training metadata reports and records the existing dedicated LegalIR watchdog/repair loop. Use its scoped runtime and retained readback; preserve the shared fleet and original lane-monitor owners. Engineering health and a completed legacy queue do not settle the scientific programme or full-USCode coverage. No new model execution or training follows from this review.
 
 **Conditions full-span margin kernel, 2026-10-26:** [36 focused cases passed](../../../../docs/autoformalization/evidence/legal-ir-conditions-fullspan-margin-kernel-20261026.json), including seven supplied-logit Torch controls. The new opt-in numerical loss preserves old checkpoint-pinned objective bytes and does not change default decoding. Reuse the [kernel and F18 matched-training subgoals](TRAINING_HISTORY.md#conditions-full-span-margin-kernel-2026-10-26); actual four-tensor model integration, paired training and statutory accuracy remain open.
