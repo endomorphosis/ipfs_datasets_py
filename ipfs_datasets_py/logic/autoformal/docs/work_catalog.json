@@ -3655,17 +3655,39 @@
         "clip_selected_gradients",
         "scoring_preflight",
         "engineering_preparation",
-        "frozen38_seal"
+        "frozen38_seal",
+        "checkpoint_policy",
+        "build_checkpoint",
+        "validate_checkpoint",
+        "save_checkpoint",
+        "load_checkpoint",
+        "restore_optimizer",
+        "run_admitted_updates"
       ],
+      "authentic_zero_step_delta": {
+        "bytes": 122251,
+        "evidence_id": "f18-retained-zero-step-delta-roundtrip-20261027-01",
+        "frozen38_sha256": "8562a4a944412a0385b26a88469fd669701573803c0eea3f444190f523414778",
+        "full42_model_state_sha256": "2ed0ccf633f55fac202e2edb95ea9fa6e390b8d99381a05925f4dd5221925883",
+        "initial632_parity": false,
+        "model_forwards": 0,
+        "new_trained_weights": false,
+        "optimizer_updates": 0,
+        "requires_authenticated_donor": true,
+        "sha256": "dfe80d3b4c8d1bafb21e1ccbe15dc401a5e9ef1292c8b3228e391f9f365d1e54",
+        "source_pins_before_after": 55
+      },
       "compatibility_dependency": false,
       "evidence_ids": [
         "conditions-fullspan-existing-owner-adoption-20261027-01",
         "f18-conditions-fullspan-genuine-mechanics-20261027-01",
-        "f18-retained-input-authentication-20261027-01"
+        "f18-retained-input-authentication-20261027-01",
+        "f18-four-tensor-persisted-resume-20261027-01",
+        "f18-retained-zero-step-delta-roundtrip-20261027-01"
       ],
-      "guide": "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
+      "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_span_conditions_fullspan_training_v1.md",
       "id": "conditions-fullspan-f18-four-tensor-training-v1",
-      "notes": "Reuse the original public component identity and prescribed optimizer owner. Original dfd source adoption, its immutable preparation oracle and5 pure/15-phase metadata controls remain a separate generation. Existing optimizer-package opt-in companion reuses immutable F18/F15 CE-KL and published margin owners. Genuine synthetic26 mechanics cover mixed168/72 present, full-batch absent connected-zero, frozen38 including modality, ordered four row3 tensors and130 active/780 stored/650 inactive scalars, byte preservation and in-memory Adam resume. Old25/1 failure and original storage recovery remain separate. Selected physical trained-donor/source-population/teacher/mask authentication now has a separate original-owned closed result; new four-tensor persisted checkpoint/resume, remaining E1 assets/parity, finite paired fit/scoring, statutory accuracy and actual Lake build remain open. The merged owning test restores lazy numerical imports and explicitly compares the original preparation oracle after only the enumerated additive schedule/authentication metadata fields; the final merged generation now has its own fresh original-owned26-case mechanics qualification with36 before/after source pins. Earlier generations remain separate.",
+      "notes": "Reuse the original public component identity and prescribed optimizer owner. Original dfd source adoption, its immutable preparation oracle and5 pure/15-phase metadata controls remain a separate generation. Existing optimizer-package opt-in companion reuses immutable F18/F15 CE-KL and published margin owners. Genuine synthetic26 mechanics cover mixed168/72 present, full-batch absent connected-zero, frozen38 including modality, ordered four row3 tensors and130 active/780 stored/650 inactive scalars, byte preservation and in-memory Adam resume. Old25/1 failure and original storage recovery remain separate. Selected physical trained-donor/source-population/teacher/mask authentication now has a separate original-owned closed result; new four-tensor persisted checkpoint/resume and finite continuation now have the separate 39-case qualification and authentic zero-step delta roundtrip below. Remaining E1 assets/final-F18 initial 632-case parity, finite paired fit/scoring, statutory accuracy and actual Lake build remain open. The merged owning test restores lazy numerical imports and explicitly compares the original preparation oracle after only the enumerated additive schedule/authentication metadata fields; the final merged generation now has its own fresh original-owned26-case mechanics qualification with36 before/after source pins. Earlier generations remain separate.",
       "numerical_qualification": {
         "cases": 26,
         "evidence_id": "f18-conditions-fullspan-genuine-mechanics-20261027-01",
@@ -3693,6 +3715,18 @@
         "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_fullspan_training_v1.py"
       ],
       "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+      "persisted_checkpoint_qualification": {
+        "authentic_paired_fit": false,
+        "cases": 39,
+        "disk_resume_and_manual_owner_equivalence": true,
+        "evidence_id": "f18-four-tensor-persisted-resume-20261027-01",
+        "model_accuracy_qualified": false,
+        "owning_test_sha256": "a7d0278fe57487abbfe1cc67cd73fc6cc3e8f28cc8caa73d6b3378f384ca091e",
+        "phases": 117,
+        "product_source_sha256": "87b9cd547f9fd33b23384a93a290de8d3f2d1a00e2b03dab4d9ef562f0435881",
+        "pytest_seconds": 19.412,
+        "source_pins_before_after": 70
+      },
       "required": true,
       "retained_input_authentication": {
         "absent": 96,
@@ -3766,7 +3800,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-27T05:58:59.152625+00:00",
+  "last_updated_at_utc": "2026-10-27T16:43:33.824011+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -5919,6 +5953,26 @@
       "root": "datasets_repository",
       "scope": "Read-only observation at 15:33 UTC: four owner-reported loaded/current lane identities bind the actual ten-file source snapshot. Existing attempt-floor/strict-journal helpers and the predispatch partition/refusal/selection path match the published correction; older Git HEAD alone was not absence proof. The public closed automatic rearm selector (0/1) selector/guards remain a separate source difference. No new tests, DB/provider operation, deployment, restart, accounting correction, current minimum attempt count or whole-process code attestation. 139 completed engineering cards remain separate from the last accepted 64-blocked scientific programme.",
       "status": "source_and_retained_evidence_review_only"
+    },
+    {
+      "id": "f18-four-tensor-persisted-resume-20261027-01",
+      "observed_bytes": 7381,
+      "observed_sha256": "803ff196f5d4569dd7caec7368599e8d86dcc7a07fb00faa9cb940b7d51131e4",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-four-tensor-persisted-resume-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "39 cases / 117 phases passed in 19.412 seconds on product 87b9cd54 and test a7d0278f. Both objective arms match uninterrupted versus disk-resumed model tensors, named Adam moments and progress, with an independent manual-owner comparison. All 70 selected source pins, three physical refusal cases and original custody closed. Earlier zero-case failures and exact-record storage recovery remain separate. Runtime uses the scoped pinned-libdl contract; no full-package/ABI, authentic fit, 632-case parity, scoring or accuracy qualification.",
+      "status": "focused_numerical_checkpoint_mechanics_qualified"
+    },
+    {
+      "id": "f18-retained-zero-step-delta-roundtrip-20261027-01",
+      "observed_bytes": 6698,
+      "observed_sha256": "ac603f9420123f89471cf8205ca49c7f2b04e72452bc259fdb9cfa88da272bc3",
+      "path": "docs/autoformalization/evidence/legal-ir-f18-retained-zero-step-delta-roundtrip-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Separate original-owned six-asset authentication and zero-step delta persistence/restore. The 122251-byte four-tensor delta requires the authenticated donor and reconstructs the 42-tensor root 2ed0 and frozen 38-tensor root 8562. One original legacy six-tensor restore plus one fresh four-tensor restore ran, with zero forwards, updates or scoring. All 55 selected source pins and original custody closed. No 632-case parity, paired fit, new trained weights, statutory-gold qualification or four-width comparison.",
+      "status": "authentic_donor_zero_step_delta_roundtrip_qualified"
     }
   ]
 }

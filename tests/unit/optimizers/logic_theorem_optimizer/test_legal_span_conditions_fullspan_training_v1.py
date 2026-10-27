@@ -806,3 +806,477 @@ def test_fresh_adam_updates_only_conditions_row_of_the_four_tensors():
     assert wired["configuration"]["model_optimizer_wiring"]["optimizer"]["inherited_moments"] is False
     assert wired["configuration"]["model_optimizer_wiring"]["margin_arms"] == [0.0, 0.25]
     assert wired["configuration"]["model_optimizer_wiring"]["margin_weight"] == 0.0
+
+
+# Persisted continuation controls. These are synthetic, original-owner admitted
+# numerical tests; merely importing/collecting this module loads no checkpoint.
+def _checkpoint_case(*, actual_model=False):
+    state = _synthetic_architecture_state() if actual_model else _state()
+    provenance = _provenance(state)
+    records, _, _, old_weights, _ = _batch(
+        provenance, range(subject.TRAIN_INDEX_COUNT), original_shape=True)
+    manifest = f18.checkpoint_digest({
+        "schema": "synthetic-original-training-examples/v1",
+        "examples": [{"id": row["id"], "source_text": row["source_text"],
+                      "labels": row["labels"]} for row in records],
+    })
+    teacher_rows = []
+    for index, row in enumerate(records):
+        labels, width = row["labels"], len(row["tokens"])
+        gold = {
+            "actor_start": labels["spans"][0][0], "actor_end": labels["spans"][0][1],
+            "modality": labels["modality"],
+            "conditions_start": labels["spans"][3][0] if labels["presence"][3] else None,
+            "conditions_end": labels["spans"][3][1] if labels["presence"][3] else None,
+            "exceptions_presence": int(labels["presence"][4]),
+        }
+        blocks = {}
+        for name in f18.RETENTION_BLOCKS:
+            size = 3 if name == "modality" else 2 if name == "exceptions_presence" else width
+            logits = [0.0] * size
+            if gold[name] is not None:
+                logits[gold[name]] = 1.0
+            blocks[name] = {"logits": logits, "gold_index": gold[name],
+                            "teacher_argmax": gold[name] if gold[name] is not None else 0,
+                            "mask": gold[name] is not None}
+        teacher_rows.append({"id": row["id"], "training_index": index,
+                             "source_sha256": hashlib.sha256(row["source_text"].encode()).hexdigest(),
+                             "token_count": width, "blocks": blocks})
+    teacher = {
+        "schema": "source-authenticated-masked-F15-retention-targets/v1",
+        "blocks": list(f18.RETENTION_BLOCKS), "teacher_capture_sha256": f18.TEACHER_CAPTURE_SHA256,
+        "teacher_model_state_sha256": f18.SOURCE_ACTOR_REFINEMENT_MODEL_SHA256,
+        "training_manifest_sha256": manifest, "rows": teacher_rows,
+        "rows_sha256": f18.checkpoint_digest(teacher_rows), "teacher_model_forwards": 0,
+        "evaluation_references_used": False,
+    }
+    weight_rows = copy.deepcopy(old_weights["rows"])
+    for index, row in enumerate(weight_rows):
+        selected = index in (0, 1)
+        row.update(conditions_only_mask=selected, conditions_facet_weight=2 if selected else 1,
+                   error_fields=["conditions"] if selected else [])
+    mask = [{key: row[key] for key in ("id", "training_index", "conditions_only_mask", "conditions_facet_weight")}
+            for row in weight_rows]
+    weights = {
+        "schema": "source-authenticated-F15-conditions-only-row-weights/v1",
+        "teacher_capture_sha256": f18.TEACHER_CAPTURE_SHA256, "training_manifest_sha256": manifest,
+        "rows": weight_rows, "row_ID_order_sha256": f18.checkpoint_digest([row["id"] for row in weight_rows]),
+        "rows_sha256": f18.checkpoint_digest(weight_rows), "near_complete_mask_sha256": f18.checkpoint_digest(mask),
+        "selected_count": 2, "selected_ids": [weight_rows[index]["id"] for index in (0, 1)],
+        "derived_before_update0": True, "candidate_predictions_used": False, "evaluation_references_used": False,
+    }
+    opaque = lambda label: hashlib.sha256(("synthetic-external-reference:" + label).encode()).hexdigest()
+    bindings = {
+        "schema": subject.BINDINGS_SCHEMA, "donor_checkpoint_sha256": opaque("donor"),
+        "donor_model_state_sha256": f18.checkpoint_digest(state),
+        "donor_provenance_sha256": f18.checkpoint_digest(provenance),
+        "source_parent_checkpoint_sha256": opaque("parent-checkpoint"),
+        "source_parent_model_state_sha256": opaque("parent-model"),
+        "context_contract_sha256": opaque("context"), "training_manifest_sha256": manifest,
+        "prepared_training_records_sha256": f18.checkpoint_digest(records),
+        "teacher_checkpoint_sha256": f18.SOURCE_ACTOR_REFINEMENT_SHA256,
+        "teacher_model_state_sha256": f18.SOURCE_ACTOR_REFINEMENT_MODEL_SHA256,
+        "teacher_capture_sha256": f18.TEACHER_CAPTURE_SHA256,
+        "teacher_training_sha256": f18.checkpoint_digest(teacher),
+        "row_weight_training_sha256": f18.checkpoint_digest(weights),
+        "training_mask_certificate_sha256": opaque("mask-certificate"),
+    }
+    return {"state": state, "provenance": provenance, "records": records,
+            "teacher": teacher, "weights": weights, "expected_bindings": bindings}
+
+
+def _checkpoint_kwargs(case, margin_weight=0.25):
+    return {**case, "margin_weight": margin_weight}
+
+
+def _checkpoint_wire(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()
+
+
+def _checkpoint_manual_updates(torch, case, margin_weight, count):
+    """Independent continuation oracle using the previously qualified owners."""
+    wired = subject.wire_optimizer(torch, case["state"], case["provenance"], margin_weight=margin_weight)
+    progress = {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}
+    batches = []
+    with torch.enable_grad():
+        for _ in range(count):
+            indices = f18.targeted._batch_indices(168, progress, 12, 1729)
+            batch = [case["records"][index] for index in indices]
+            wired["model"].train()
+            wired["optimizer"].zero_grad(set_to_none=True)
+            output = wired["model"](*span._batch(torch, batch))
+            objective = subject.compose_objective_for_state(
+                torch, output, batch, indices, case["teacher"], case["weights"],
+                case["state"], case["provenance"], margin_weight=margin_weight)
+            objective["loss"].backward()
+            subject.clip_selected_gradients(torch, wired["selected"])
+            wired["optimizer"].step()
+            progress = f18.targeted._advance_progress(progress, len(indices), 168)
+            batches.append(list(indices))
+    return wired, progress, batches
+
+
+def _assert_checkpoint_context(torch, rng, grad_mode):
+    assert torch.equal(torch.get_rng_state(), rng)
+    assert torch.is_grad_enabled() is grad_mode
+
+
+def _assert_checkpoint_authority_false(value):
+    for key in ("admitted", "formalized", "promoted", "qualified", "semantic_review_performed", "model_gain_claimed"):
+        assert value[key] is False
+
+
+@pytest.mark.parametrize("grad_enabled", [False, True])
+def test_checkpoint_zero_step_roundtrip_preserves_caller_context(tmp_path, grad_enabled):
+    import torch
+    case = _checkpoint_case()
+    kwargs = _checkpoint_kwargs(case)
+    before = _checkpoint_wire(case)
+    rng = torch.get_rng_state().clone()
+    with torch.set_grad_enabled(grad_enabled):
+        checkpoint = subject.build_checkpoint(**kwargs)
+        assert set(checkpoint["selected_state"]) == set(subject.SELECTED)
+        assert "model_state" not in checkpoint and checkpoint["optimizer_state"]["parameters"] == {}
+        assert checkpoint["progress"] == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}
+        assert checkpoint["parent_checkpoint_sha256"] is None
+        _assert_checkpoint_authority_false(checkpoint["authority"])
+        ref = subject.save_checkpoint(checkpoint, tmp_path / "checkpoint.json", **kwargs)
+        assert ref["sha256"] == hashlib.sha256(Path(ref["path"]).read_bytes()).hexdigest()
+        assert Path(ref["path"]).stat().st_mode & 0o777 == 0o600
+        loaded = subject.load_checkpoint(ref["path"], expected_sha256=ref["sha256"], **kwargs)
+        assert loaded == checkpoint and loaded is not checkpoint
+        restored = subject.restore_optimizer(torch, loaded, **kwargs)
+        assert restored["torch"] is torch and restored["config"] == CONFIG
+        assert restored["config"] is not case["provenance"]["config"]
+        assert restored["model"].training is False and restored["optimizer"].state == {}
+        assert all(parameter.grad is None for parameter in restored["named"].values())
+        assert restored["progress"] == checkpoint["progress"] and restored["optimizer_steps"] == 0
+        assert sum(restored["model"]._actor_forward_accounting.values()) == 0
+        assert sum(restored["model"]._conditions_forward_accounting.values()) == 0
+        _assert_checkpoint_context(torch, rng, grad_enabled)
+        loaded["selected_state"]["start.bias"][3] = 123.0
+        assert checkpoint["selected_state"]["start.bias"][3] == 0.0
+        assert subject.load_checkpoint(ref["path"], expected_sha256=ref["sha256"], **kwargs) == checkpoint
+        bad = copy.deepcopy(kwargs)
+        bad["margin_weight"] = 0.0
+        with pytest.raises(ValueError):
+            subject.restore_optimizer(torch, checkpoint, **bad)
+        _assert_checkpoint_context(torch, rng, grad_enabled)
+    assert _checkpoint_wire(case) == before
+
+
+@pytest.mark.parametrize("margin_weight", [0.0, 0.25])
+def test_persisted_four_tensor_resume_matches_manual_trajectory(tmp_path, margin_weight):
+    import torch
+    case = _checkpoint_case(actual_model=True)
+    kwargs = _checkpoint_kwargs(case, margin_weight)
+    original_case = _checkpoint_wire(case)
+    before = {name: torch.tensor(case["state"][name], dtype=torch.float32) for name in f18.MODEL_PARAMETER_NAMES}
+    manual, progress, batches = _checkpoint_manual_updates(torch, case, margin_weight, 2)
+    checkpoint = subject.build_checkpoint(**kwargs)
+    rng = torch.get_rng_state().clone()
+    with torch.no_grad():
+        uninterrupted, whole_report = subject.run_admitted_updates(
+            checkpoint, torch=torch, **kwargs, max_steps=2, max_seconds=32)
+        first, first_report = subject.run_admitted_updates(
+            checkpoint, torch=torch, **kwargs, max_steps=1, max_seconds=32)
+        ref = subject.save_checkpoint(first, tmp_path / "after-first-step.json", **kwargs)
+        loaded = subject.load_checkpoint(ref["path"], expected_sha256=ref["sha256"], **kwargs)
+        first_restored = subject.restore_optimizer(torch, loaded, **kwargs)
+        _assert_frozen_and_inactive(first_restored, before, steps=1)
+        resumed, second_report = subject.run_admitted_updates(
+            loaded, torch=torch, **kwargs, max_steps=1, max_seconds=32)
+        restored = subject.restore_optimizer(torch, resumed, **kwargs)
+        whole_restored = subject.restore_optimizer(torch, uninterrupted, **kwargs)
+        _assert_checkpoint_context(torch, rng, False)
+    assert resumed["progress"] == uninterrupted["progress"] == progress
+    assert first["parent_checkpoint_sha256"] == subject.checkpoint_digest(checkpoint)
+    assert resumed["parent_checkpoint_sha256"] == subject.checkpoint_digest(first)
+    assert uninterrupted["parent_checkpoint_sha256"] == subject.checkpoint_digest(checkpoint)
+    assert resumed["initial_checkpoint_sha256"] == uninterrupted["initial_checkpoint_sha256"] == checkpoint["initial_checkpoint_sha256"]
+    assert [row["indices"] for row in whole_report["batch_trace"]] == batches
+    saved = whole_report["batch_trace"][0]
+    inputs = saved["conditions_margin_inputs"]
+    assert inputs["pre_update"] is True
+    recounted = margin.conditions_fullspan_margin_reference(
+        inputs["start_logits"], inputs["end_logits"], inputs["targets"], weight=margin_weight)
+    retained = saved["conditions_margin"]
+    for key in ("loss", "weighted_loss"):
+        assert retained[key] == pytest.approx(recounted[key], rel=1e-6, abs=1e-6)
+    for observed, expected in zip(retained["row_diagnostics"], recounted["row_diagnostics"], strict=True):
+        for key in ("present", "wrong_span", "wrong_domain_count"):
+            assert observed[key] == expected[key]
+        assert observed["hinge"] == pytest.approx(expected["hinge"], rel=1e-6, abs=1e-6)
+    details = saved["f18_objective_details"]
+    assert details["total_loss"] == saved["f18_ce_plus_kl"]
+    assert details["weighted_CE"]["batch_denominator"] == 12
+    assert details["retention"]["denominator"] == 72
+    assert [row["indices"] for row in first_report["batch_trace"] + second_report["batch_trace"]] == batches
+    for name in f18.MODEL_PARAMETER_NAMES:
+        assert _same_bytes(manual["named"][name], restored["named"][name])
+        assert _same_bytes(manual["named"][name], whole_restored["named"][name])
+    for name in subject.SELECTED:
+        for key in ("step", "exp_avg", "exp_avg_sq"):
+            expected = manual["optimizer"].state[manual["named"][name]][key]
+            assert _same_bytes(expected, restored["optimizer"].state[restored["named"][name]][key])
+            assert _same_bytes(expected, whole_restored["optimizer"].state[whole_restored["named"][name]][key])
+    assert any(not _same_bytes(restored["named"][name][3], before[name][3]) for name in subject.SELECTED)
+    _assert_frozen_and_inactive(manual, before, steps=2)
+    _assert_frozen_and_inactive(restored, before, steps=2)
+    _assert_frozen_and_inactive(whole_restored, before, steps=2)
+    for report, steps in ((whole_report, 2), (first_report, 1), (second_report, 1)):
+        assert report["optimizer_steps"] == steps and report["all_requested_steps_completed"] is True
+        assert report["teacher_model_forwards"] == 0 and report["tuning_or_evaluation_references_used"] is False
+        assert report["ambient_cpu_rng_preserved"] and report["incoming_grad_mode_preserved"]
+        _assert_checkpoint_authority_false(report)
+    assert _checkpoint_wire(case) == original_case
+
+
+def test_checkpoint_rejects_semantic_tamper_after_one_genuine_step(tmp_path):
+    import torch
+    case = _checkpoint_case(actual_model=True)
+    kwargs = _checkpoint_kwargs(case)
+    checkpoint = subject.build_checkpoint(**kwargs)
+    trained, _ = subject.run_admitted_updates(checkpoint, torch=torch, **kwargs, max_steps=1, max_seconds=32)
+    original = _checkpoint_wire(trained)
+    previous_dtype = torch.get_default_dtype()
+    rng = torch.get_rng_state().clone()
+    grad_mode = torch.is_grad_enabled()
+    try:
+        torch.set_default_dtype(torch.float64)
+        with pytest.raises(ValueError, match="CPU float32"):
+            subject.restore_optimizer(torch, trained, **kwargs)
+        assert torch.get_default_dtype() is torch.float64
+        _assert_checkpoint_context(torch, rng, grad_mode)
+    finally:
+        torch.set_default_dtype(previous_dtype)
+    restored = subject.restore_optimizer(torch, trained, **kwargs)
+    assert restored["torch"] is torch and restored["model"].training is False
+    assert all(parameter.device.type == "cpu" and parameter.dtype is torch.float32
+               for parameter in restored["named"].values())
+    for parameter in restored["selected"]:
+        for value in restored["optimizer"].state[parameter].values():
+            assert value.device.type == "cpu" and value.dtype is torch.float32
+    _assert_checkpoint_context(torch, rng, grad_mode)
+    variants = []
+    def changed(label, mutate):
+        value = copy.deepcopy(trained)
+        mutate(value)
+        variants.append((label, value))
+    changed("lineage", lambda value: value.update(lineage_id="foreign-four-tensor-lineage"))
+    changed("schema", lambda value: value.update(schema=f18.SCHEMA))
+    changed("source", lambda value: value.update(implementation={"schema": "foreign-source-owner/v1"}))
+    changed("selection", lambda value: value.update(selection_sha256="0" * 64))
+    changed("manifest", lambda value: value["input_bindings"].update(training_manifest_sha256="0" * 64))
+    changed("donor", lambda value: value.update(donor_state_sha256="0" * 64))
+    changed("frozen38", lambda value: value.update(source_frozen38_sha256="0" * 64))
+    changed("authority", lambda value: value["authority"].update(qualified=True))
+    changed("parent", lambda value: value.update(parent_checkpoint_sha256=None))
+    changed("origin", lambda value: value.update(initial_checkpoint_sha256="0" * 64))
+    changed("shape", lambda value: value["selected_state"]["start.weight"].pop())
+    changed("scalar", lambda value: value["selected_state"]["start.bias"].__setitem__(3, "foreign"))
+    changed("progress-bool", lambda value: value["progress"].update(optimizer_steps=True))
+    changed("progress-cursor", lambda value: value["progress"].update(row_cursor=0))
+    changed("cumulative-cap", lambda value: value["progress"].update(epochs_completed=2, row_cursor=60, optimizer_steps=33))
+    changed("adam-names", lambda value: value["optimizer_state"]["parameters"].pop("start.weight"))
+    changed("adam-step", lambda value: value["optimizer_state"]["parameters"]["start.bias"].update(step=2))
+    changed("adam-step-bool", lambda value: value["optimizer_state"]["parameters"]["start.bias"].update(step=True))
+    changed("adam-shape", lambda value: value["optimizer_state"]["parameters"]["start.bias"]["exp_avg"].pop())
+    changed("adam-inactive", lambda value: value["optimizer_state"]["parameters"]["start.bias"]["exp_avg"].__setitem__(0, 1.0))
+    changed("adam-variance", lambda value: value["optimizer_state"]["parameters"]["start.bias"]["exp_avg_sq"].__setitem__(3, -1.0))
+    def wrong_arm(value):
+        value["training_policy"]["margin_weight"] = 0.0
+        value["training_policy_sha256"] = subject.checkpoint_digest(value["training_policy"])
+    changed("margin", wrong_arm)
+    def wrong_inactive(value):
+        value["selected_state"]["start.bias"][0] += 1.0
+        reconstructed = {**copy.deepcopy(case["state"]), **copy.deepcopy(value["selected_state"])}
+        value["model_state_sha256"] = subject.checkpoint_digest(reconstructed)
+    changed("inactive650", wrong_inactive)
+    for label, value in variants:
+        raw = _checkpoint_wire(value)
+        path = tmp_path / (label + ".json")
+        path.write_bytes(raw)
+        path.chmod(0o600)
+        with pytest.raises(ValueError):
+            subject.load_checkpoint(path, expected_sha256=hashlib.sha256(raw).hexdigest(), **kwargs)
+    with pytest.raises(ValueError, match="cumulative32"):
+        subject.run_admitted_updates(trained, torch=torch, **kwargs, max_steps=32, max_seconds=32)
+    assert _checkpoint_wire(trained) == original
+
+
+def test_checkpoint_binding_and_prepared_input_mismatches_are_refused():
+    case = _checkpoint_case()
+    kwargs = _checkpoint_kwargs(case)
+    checkpoint = subject.build_checkpoint(**kwargs)
+    for field in subject.BINDING_FIELDS - {"schema"}:
+        offered = copy.deepcopy(kwargs)
+        offered["expected_bindings"][field] = "0" * 64
+        with pytest.raises(ValueError):
+            subject.validate_checkpoint(checkpoint, **offered)
+    for field in ("state", "provenance", "records", "teacher", "weights"):
+        offered = copy.deepcopy(kwargs)
+        if field == "state":
+            offered[field]["modality.bias"][0] += 1.0
+        elif field == "provenance":
+            offered[field]["donor_lineage_id"] = "foreign-lineage"
+        elif field == "records":
+            offered[field].reverse()
+        elif field == "teacher":
+            offered[field]["rows"][0]["blocks"]["actor_start"]["gold_index"] = 1
+            offered[field]["rows_sha256"] = subject.checkpoint_digest(offered[field]["rows"])
+            offered["expected_bindings"]["teacher_training_sha256"] = subject.checkpoint_digest(offered[field])
+        else:
+            offered[field]["rows"][0]["labels_sha256"] = "0" * 64
+            offered[field]["rows_sha256"] = subject.checkpoint_digest(offered[field]["rows"])
+            offered["expected_bindings"]["row_weight_training_sha256"] = subject.checkpoint_digest(offered[field])
+        with pytest.raises(ValueError):
+            subject.validate_checkpoint(checkpoint, **offered)
+
+
+def test_checkpoint_wire_refuses_malformed_json_hash_and_overwrite(tmp_path):
+    case = _checkpoint_case()
+    kwargs = _checkpoint_kwargs(case)
+    checkpoint = subject.build_checkpoint(**kwargs)
+    ref = subject.save_checkpoint(checkpoint, tmp_path / "checkpoint.json", **kwargs)
+    original = Path(ref["path"]).read_bytes()
+    with pytest.raises((ValueError, OSError)):
+        subject.save_checkpoint(checkpoint, ref["path"], **kwargs)
+    assert Path(ref["path"]).read_bytes() == original
+    empty = tmp_path / "empty.json"
+    empty.write_bytes(b"")
+    with pytest.raises(ValueError, match="checkpoint raw hash differs"):
+        subject.load_checkpoint(empty, expected_sha256=hashlib.sha256(b"").hexdigest(), **kwargs)
+    assert subject.MAX_CHECKPOINT_BYTES == 4 * 1024 * 1024
+    oversized = tmp_path / "oversized.json"
+    raw = b"x" * (4 * 1024 * 1024 + 1)
+    oversized.write_bytes(raw)
+    with pytest.raises(ValueError, match="bounded"):
+        subject.load_checkpoint(oversized, expected_sha256=hashlib.sha256(raw).hexdigest(), **kwargs)
+    malformed = [b'{"schema":1,"schema":2}', b'{"schema":NaN}', original[:-1]]
+    for index, raw in enumerate(malformed):
+        path = tmp_path / ("malformed-%d.json" % index)
+        path.write_bytes(raw)
+        with pytest.raises(ValueError):
+            subject.load_checkpoint(path, expected_sha256=hashlib.sha256(raw).hexdigest(), **kwargs)
+    with pytest.raises(ValueError):
+        subject.load_checkpoint(ref["path"], expected_sha256="0" * 64, **kwargs)
+    assert Path(ref["path"]).read_bytes() == original
+
+
+def test_checkpoint_load_refuses_symlink_file(tmp_path):
+    case = _checkpoint_case()
+    kwargs = _checkpoint_kwargs(case)
+    checkpoint = subject.build_checkpoint(**kwargs)
+    ref = subject.save_checkpoint(checkpoint, tmp_path / "checkpoint.json", **kwargs)
+    target, alias = Path(ref["path"]), tmp_path / "checkpoint-link.json"
+    original = target.read_bytes()
+    try:
+        alias.symlink_to(target)
+        with pytest.raises(ValueError):
+            subject.load_checkpoint(alias, expected_sha256=ref["sha256"], **kwargs)
+        assert target.read_bytes() == original
+    finally:
+        alias.unlink(missing_ok=True)
+    assert target.is_file() and target.read_bytes() == original
+
+
+def test_checkpoint_save_refuses_symlink_parent(tmp_path):
+    case = _checkpoint_case()
+    kwargs = _checkpoint_kwargs(case)
+    checkpoint = subject.build_checkpoint(**kwargs)
+    target, alias = tmp_path / "real-parent", tmp_path / "parent-link"
+    target.mkdir()
+    try:
+        alias.symlink_to(target, target_is_directory=True)
+        with pytest.raises((ValueError, OSError)):
+            subject.save_checkpoint(checkpoint, alias / "checkpoint.json", **kwargs)
+        assert not (target / "checkpoint.json").exists()
+    finally:
+        alias.unlink(missing_ok=True)
+    assert target.is_dir()
+
+
+def test_checkpoint_load_refuses_fifo(tmp_path):
+    import os
+    case = _checkpoint_case()
+    kwargs = _checkpoint_kwargs(case)
+    pipe = tmp_path / "checkpoint.pipe"
+    try:
+        os.mkfifo(pipe, 0o600)
+        with pytest.raises(ValueError):
+            subject.load_checkpoint(pipe, expected_sha256="0" * 64, **kwargs)
+    finally:
+        pipe.unlink(missing_ok=True)
+
+
+def test_checkpoint_continuation_refuses_invalid_budget_before_model(monkeypatch):
+    import torch
+    case = _checkpoint_case()
+    kwargs = _checkpoint_kwargs(case)
+    checkpoint = subject.build_checkpoint(**kwargs)
+    def forbidden(*args, **keywords):
+        raise AssertionError("invalid finite controls reached model construction")
+    monkeypatch.setattr(f18, "_model", forbidden)
+    controls = [(True, 32), (-1, 32), (33, 32), (1, True), (1, -1), (1, 33), (1, float("nan"))]
+    for steps, seconds in controls:
+        with pytest.raises(ValueError):
+            subject.run_admitted_updates(checkpoint, torch=torch, **kwargs, max_steps=steps, max_seconds=seconds)
+
+
+def test_checkpoint_zero_budget_uses_detached_input_roots(monkeypatch):
+    import torch
+    case = _checkpoint_case()
+    kwargs = _checkpoint_kwargs(case)
+    checkpoint = subject.build_checkpoint(**kwargs)
+    root = subject.checkpoint_digest(checkpoint)
+    original = copy.deepcopy(checkpoint)
+    genuine = subject._detached
+    observed = []
+    def detached(value):
+        result = genuine(value)
+        if value is checkpoint and not observed:
+            observed.append(True)
+            checkpoint["authority"]["admitted"] = True
+        return result
+    monkeypatch.setattr(subject, "_detached", detached)
+    rng = torch.get_rng_state().clone()
+    try:
+        with torch.no_grad():
+            result, report = subject.run_admitted_updates(checkpoint, torch=torch, **kwargs, max_steps=0, max_seconds=0)
+            _assert_checkpoint_context(torch, rng, False)
+        assert observed == [True] and result == original
+        assert report["input_checkpoint_sha256"] == root and report["checkpoint_sha256"] == root
+        assert report["optimizer_steps"] == 0 and report["batch_trace"] == []
+    finally:
+        checkpoint.clear()
+        checkpoint.update(original)
+    result, report = subject.run_admitted_updates(checkpoint, torch=torch, **kwargs, max_steps=1, max_seconds=0)
+    assert result == original and report["reason"] == "deadline_before_batch"
+    assert report["optimizer_steps"] == 0 and report["training_executed"] is False
+
+
+def test_checkpoint_rng_consumption_is_refused_and_context_restored(monkeypatch):
+    import torch
+    case = _checkpoint_case(actual_model=True)
+    kwargs = _checkpoint_kwargs(case)
+    checkpoint = subject.build_checkpoint(**kwargs)
+    original = _checkpoint_wire(case)
+    genuine = f18._model
+    observed = []
+    def model_with_rng(torch_module, config):
+        model = genuine(torch_module, config)
+        forward = model.forward
+        def changed(*args, **keywords):
+            observed.append(True)
+            torch_module.rand(1)
+            return forward(*args, **keywords)
+        model.forward = changed
+        return model
+    monkeypatch.setattr(f18, "_model", model_with_rng)
+    rng = torch.get_rng_state().clone()
+    with torch.no_grad():
+        with pytest.raises(ValueError, match="RNG"):
+            subject.run_admitted_updates(checkpoint, torch=torch, **kwargs, max_steps=1, max_seconds=32)
+        _assert_checkpoint_context(torch, rng, False)
+    assert observed == [True] and _checkpoint_wire(case) == original
