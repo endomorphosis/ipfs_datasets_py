@@ -1125,3 +1125,268 @@ def test_parent_norm_packet_original_physical_file_drift_after_genuine_replay_re
     finally:
         parent_file.write_bytes(original_bytes)
         assert parent_file.read_bytes() == original_bytes
+
+
+def compatibility_candidates():
+    raw = owner.retained_lean_compatibility_request_bytes()
+    return json.loads(raw.decode())["candidates"]
+
+
+def compatibility_request(candidates):
+    raw = canonical({"schema": owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA, "candidates": candidates})
+    return raw, owner.prepare_lean_compatibility_request_v1(
+        raw, expected_request_sha256=sha(raw))
+
+
+def test_compatibility_request_binds_selected_ast_and_blocks_admission():
+    candidates = compatibility_candidates()
+    raw, report = compatibility_request(candidates)
+    assert [row["route"] for row in report["compatibility_matrix"]] == list(owner.LEAN_COMPATIBILITY_ROUTES)
+    assert [row["candidate_id"] for row in report["compatibility_matrix"]] == [
+        row["candidate_id"] for row in json.loads(raw)["candidates"]]
+    parent, direct, conditional, native, preservation = report["compatibility_matrix"]
+    assert parent["missing_packet_index_profile"] == parent["profile"]
+    assert parent["packet_index_reader"] is None and parent["packet_index_admitted"] is False
+    assert parent["artifact_closure"]["retained_files"] == 29
+    assert parent["evidence"][0]["pure_cases"] == 32 and parent["evidence"][0]["pure_phases"] == 96
+    assert parent["evidence"][0]["actual_native_cases"] == 2 and parent["evidence"][0]["actual_native_phases"] == 6
+    assert parent["evidence"][0]["counts_pooled"] is False
+    assert parent["ast_sha256"] == parent["evidence"][0]["sha256"]
+    assert direct["evidence"][0]["cases"] == 68 and direct["evidence"][0]["phases"] == 204
+    assert direct["artifact_closure"]["packet_files"] == 23
+    assert direct["packet_index_reader"] == "validate_parent_norm_native_packet_v1"
+    assert native["evidence"][0]["cases"] == 23 and native["evidence"][0]["phases"] == 69
+    assert conditional["artifact_closure"] == {"modules": 6, "project_files": 9, "theorems": 3}
+    assert len(preservation["axioms"]) == 15 and len(preservation["imports"]) == 12
+    assert preservation["artifact_closure"]["packet_files"] == 49
+    assert preservation["evidence"][0]["historical_cohort_rerun"] is False
+    closure = report["request_import_premise_axiom_closure"]
+    assert closure["compiler_invoked"] is False
+    assert [(row["route"], row["imports"], row["premises"], row["axioms"]) for row in closure["candidates"]] == [
+        (row["route"], row["imports"], row["premises"], row["axioms"]) for row in report["compatibility_matrix"]]
+    assert report["artifact_closure"]["compiler_invoked"] is False
+    assert all(row["packet_index_admitted"] is False for row in report["artifact_closure"]["rows"])
+    assert all(question["status"] == "unanswered" for question in report["unresolved_questions"])
+    assert {question["id"] for question in report["unresolved_questions"]} >= {
+        "parent_bound_29_file_packet_index_unadmitted", "lean_admission_blocked", "legal_admission_blocked"}
+    assert all(row["lean_admitted"] is False and row["legal_admitted"] is False and row["admitted"] is False
+               and row["formalized"] is False and row["compiler_invoked"] is False and row["introduced_axioms"] == []
+               for row in report["compatibility_matrix"])
+    assert any(item["symbol"] == "not_registered" and item["packet_index_api_registered"] is False
+               for item in report["reuse_owners"])
+
+
+@pytest.mark.parametrize("route", owner.LEAN_COMPATIBILITY_ROUTES)
+def test_compatibility_request_refuses_foreign_profile(route):
+    candidates = [row for row in compatibility_candidates() if row["route"] == route]
+    candidates[0]["profile"] = "foreign-lean-profile/v9"
+    raw = canonical({"schema": owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA, "candidates": candidates})
+    with pytest.raises(ValueError, match="foreign compatibility profile"):
+        owner.prepare_lean_compatibility_request_v1(raw, expected_request_sha256=sha(raw))
+
+
+@pytest.mark.parametrize("route", owner.LEAN_COMPATIBILITY_ROUTES)
+def test_compatibility_request_refuses_missing_premise_or_artifact_closure(route):
+    base = [row for row in compatibility_candidates() if row["route"] == route][0]
+    missing_premise = deepcopy(base)
+    missing_premise["premises"] = missing_premise["premises"][:-1]
+    missing_artifact = deepcopy(base)
+    missing_artifact["artifact_closure"] = dict(missing_artifact["artifact_closure"])
+    missing_artifact["artifact_closure"].pop(next(iter(missing_artifact["artifact_closure"])))
+    for damaged, message in ((missing_premise, "missing premise closure"),
+                             (missing_artifact, "missing artifact closure")):
+        raw = canonical({"schema": owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA, "candidates": [damaged]})
+        with pytest.raises(ValueError, match=message):
+            owner.prepare_lean_compatibility_request_v1(raw, expected_request_sha256=sha(raw))
+
+
+def test_compatibility_request_refuses_new_axioms_and_admission_claims():
+    candidate = [row for row in compatibility_candidates() if row["route"] == "native"][0]
+    axiomed = deepcopy(candidate)
+    axiomed["axioms"] = {"original_norm_preserved": ["sorryAx"]}
+    claimed = deepcopy(candidate)
+    claimed["lean_admitted"] = True
+    for damaged in (axiomed, claimed):
+        raw = canonical({"schema": owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA, "candidates": [damaged]})
+        with pytest.raises(ValueError):
+            owner.prepare_lean_compatibility_request_v1(raw, expected_request_sha256=sha(raw))
+
+
+def test_compatibility_request_serialization_is_stable_and_order_sensitive():
+    left_rows = compatibility_candidates()
+    right_rows = list(reversed(left_rows))
+    left_raw, left = compatibility_request(left_rows)
+    right_raw, right = compatibility_request(right_rows)
+    again_raw, again = compatibility_request(json.loads(left_raw.decode())["candidates"])
+    assert again == left and again_raw == left_raw
+    assert [row["route"] for row in left["compatibility_matrix"]] == [
+        row["route"] for row in left_rows]
+    assert [row["route"] for row in right["compatibility_matrix"]] == [
+        row["route"] for row in right_rows]
+    assert owner.lean_compatibility_request_sha256(left) != owner.lean_compatibility_request_sha256(right)
+    digest = owner.lean_compatibility_request_sha256(left)
+    assert digest == sha(canonical(left))
+    regenerated = owner.validate_lean_compatibility_request_v1(
+        left, left_raw, expected_request_sha256=sha(left_raw), expected_report_sha256=digest)
+    assert regenerated == left
+    damaged = deepcopy(left)
+    damaged["compatibility_matrix"][0]["lean_admitted"] = True
+    with pytest.raises(ValueError):
+        owner.validate_lean_compatibility_request_v1(
+            damaged, left_raw, expected_request_sha256=sha(left_raw),
+            expected_report_sha256=owner.lean_compatibility_request_sha256(damaged))
+
+
+def test_compatibility_request_does_not_invoke_a_compiler_or_packet_owners(monkeypatch):
+    def refuse(*args, **kwargs):
+        raise AssertionError("compiler or packet owner invoked")
+    monkeypatch.setattr(subprocess, "run", refuse)
+    monkeypatch.setattr(subprocess, "Popen", refuse)
+    monkeypatch.setattr(owner, "_owners", refuse)
+    monkeypatch.setattr(owner, "_parent_norm_packet_owners", refuse)
+    raw, report = compatibility_request(compatibility_candidates())
+    assert report["artifact_closure"]["compiler_invoked"] is False
+    assert all(row["compiler_invoked"] is False for row in report["compatibility_matrix"])
+
+
+# Independent public operations must re-enter their original current guards.
+# These controls warm a prior operation, then mutate a real selected witness or
+# a guarded dependency during the next scope. No native compiler is executed.
+@pytest.fixture
+def independent_parent_norm_warm(tmp_path_factory, request):
+    from types import SimpleNamespace
+    # Unnumbered private directories avoid pytest's optional ``current`` symlink.
+    # The original validation owner deliberately rejects aliases in its inventory.
+    tmp_path = tmp_path_factory.mktemp(
+        "independent-parent-" + sha(request.node.nodeid.encode("utf-8"))[:16], numbered=False)
+    lake_fixture = _FIXTURE._FIXTURE
+    helpers = lake_fixture.parent_norm_helpers.__wrapped__()
+    data = lake_fixture._parent_norm_materialize(helpers, tmp_path / "independent-parent")
+    offered = _parent_norm_packet_preparer.prepare_parent_norm_corpus_v1(**data)
+    pin = _parent_norm_packet_preparer.parent_norm_preparation_sha256(offered)
+    warm = _parent_norm_packet_preparer.validate_parent_norm_corpus_v1(
+        offered, expected_preparation_sha256=pin, **data)
+    assert warm == offered and warm is not offered
+    return SimpleNamespace(data=data, offered=offered, warm=warm, pin=pin)
+
+
+def _independent_parent_validate(case):
+    return _parent_norm_packet_preparer.validate_parent_norm_corpus_v1(
+        case.offered, expected_preparation_sha256=case.pin, **case.data)
+
+
+def test_independent_parent_call_rechecks_transitive_producer(
+        independent_parent_norm_warm, parent_norm_packet_no_execution, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_scope_correspondence_v1 as correspondence
+    target = Path(correspondence.__file__).resolve()
+    genuine = Path.read_bytes
+    def changed(path):
+        raw = genuine(path)
+        return raw + b"\n# simulated correspondence producer drift\n" if path.resolve() == target else raw
+    monkeypatch.setattr(Path, "read_bytes", changed)
+    with pytest.raises(ValueError):
+        _independent_parent_validate(independent_parent_norm_warm)
+
+
+def test_independent_parent_call_rechecks_correspondence_callable(
+        independent_parent_norm_warm, parent_norm_packet_no_execution, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_scope_correspondence_v1 as correspondence
+    genuine = correspondence.validate_norm_scope_correspondence_v2
+    observed, unexpected = [], []
+    def forbidden(*args, **kwargs):
+        unexpected.append(True)
+        raise AssertionError("changed correspondence callback must not be invoked")
+    def returned(*args, **kwargs):
+        checked = genuine(*args, **kwargs)
+        observed.append(True)
+        monkeypatch.setattr(correspondence, "prepare_norm_scope_correspondence_v2", forbidden)
+        return checked
+    monkeypatch.setattr(correspondence, "validate_norm_scope_correspondence_v2", returned)
+    with pytest.raises(ValueError):
+        _independent_parent_validate(independent_parent_norm_warm)
+    assert observed == [True] and unexpected == []
+
+
+@pytest.mark.parametrize("change", ["replace_same_bytes", "in_place"])
+def test_independent_parent_call_retains_physical_closing_fence(
+        independent_parent_norm_warm, parent_norm_packet_no_execution, monkeypatch, change):
+    case = independent_parent_norm_warm
+    path = _FIXTURE._FIXTURE._parent_norm_parent_path(case.data)
+    original = path.read_bytes()
+    backup = path.with_name(path.name + ".independent-original")
+    genuine = _parent_norm_packet_preparer._parent_norm_serialized_fence
+    observed = []
+    def changed(preparation, expected_storage):
+        checked = genuine(preparation, expected_storage)
+        if not observed:
+            observed.append(True)
+            if change == "replace_same_bytes":
+                os.replace(path, backup)
+                path.write_bytes(original)
+            else:
+                path.write_bytes(original + b"\nlate independent-scope file drift\n")
+        return checked
+    monkeypatch.setattr(_parent_norm_packet_preparer, "_parent_norm_serialized_fence", changed)
+    try:
+        with pytest.raises(ValueError):
+            _independent_parent_validate(case)
+        assert observed == [True]
+    finally:
+        if backup.exists():
+            os.replace(backup, path)
+        else:
+            path.write_bytes(original)
+        assert path.read_bytes() == original
+
+
+def test_independent_parent_call_does_not_reuse_mutable_prior_return(
+        independent_parent_norm_warm, parent_norm_packet_no_execution):
+    case = independent_parent_norm_warm
+    object.__setattr__(case.warm, "manifest_json", "{}")
+    current = _independent_parent_validate(case)
+    assert current is not case.warm
+    assert _parent_norm_packet_preparer.parent_norm_preparation_sha256(current) == case.pin
+    _FIXTURE._FIXTURE._parent_norm_assert_unsigned(current.to_dict())
+
+
+@pytest.fixture
+def independent_preservation_warm():
+    from types import SimpleNamespace
+    data = _FIXTURE.original_data("fol")
+    warm = _FIXTURE.prepare(data)
+    return SimpleNamespace(data=data, warm=warm, pin=_FIXTURE.owner.preparation_sha256(warm))
+
+
+def test_independent_preservation_call_rechecks_transitive_producer(
+        independent_preservation_warm, no_execution, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_family_routes
+    target = Path(legal_family_routes.__file__).resolve()
+    genuine = Path.read_bytes
+    def changed(path):
+        raw = genuine(path)
+        return raw + b"\n# simulated transitive route producer drift\n" if path.resolve() == target else raw
+    monkeypatch.setattr(Path, "read_bytes", changed)
+    with pytest.raises(ValueError):
+        _FIXTURE.prepare(independent_preservation_warm.data)
+
+
+def test_independent_preservation_call_does_not_reuse_mutable_prior_return(
+        independent_preservation_warm, no_execution):
+    case = independent_preservation_warm
+    object.__setattr__(case.warm, "manifest_json", "{}")
+    current = _FIXTURE.prepare(case.data)
+    assert current is not case.warm
+    assert _FIXTURE.owner.preparation_sha256(current) == case.pin
+    assert current.to_dict()["authority"] and all(
+        value is False for value in current.to_dict()["authority"].values())
+
+
+@pytest.mark.parametrize("route", [[], {}])
+def test_compatibility_request_refuses_unhashable_route_as_value_error(no_execution, route):
+    request = json.loads(owner.retained_lean_compatibility_request_bytes())
+    request["candidates"][0]["route"] = route
+    raw = canonical(request)
+    with pytest.raises(ValueError, match="foreign compatibility route"):
+        owner.prepare_lean_compatibility_request_v1(raw, expected_request_sha256=sha(raw))
+    with pytest.raises(ValueError, match="foreign compatibility route"):
+        owner.lean_compatibility_route_contract(route)

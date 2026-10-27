@@ -1141,3 +1141,380 @@ def validate_parent_norm_native_packet_v1(
 
 
 __all__ += ["validate_parent_norm_native_packet_v1", "parent_norm_packet_sha256"]
+
+
+# Selected AST/profile compatibility request. Existing 49-file and 23-file
+# readers stay the only packet exporters. This binds one caller-selected digest
+# to a retained route and refuses foreign profiles, missing premise closure,
+# missing artifact closure, and new axioms. It does not run a compiler.
+LEAN_COMPATIBILITY_REQUEST_SCHEMA = "legal-corpus-lean-compatibility-request/v1"
+LEAN_COMPATIBILITY_ROUTES = ("parent", "direct", "conditional", "native", "preservation")
+_LEAN_COMPATIBILITY_RESULT_FIELDS = (
+    "compatibility_matrix", "request_import_premise_axiom_closure", "artifact_closure",
+    "unresolved_questions", "reuse_owners",
+)
+_LEAN_COMPATIBILITY_CANDIDATE_FIELDS = (
+    "candidate_id", "route", "profile", "ast_sha256", "imports", "premises", "axioms",
+    "artifact_closure",
+)
+_PARENT_BOUND_PROFILE = "replayed-parent-bound-norm-definition-conditional-native-build/v1"
+_CONDITIONAL_PROFILE = "replayed-v2-definition-use-conditional-project/v1"
+_PRESERVATION_PREPARATION_PROFILE = "replayed-v2-corpus-four-fragment-concrete-preservation/v1"
+_PARENT_INDEX_PROFILE = "retained-parent-norm-receipt-consistency-index/v1"
+_PRESERVATION_INDEX_PROFILE = "retained-corpus-preservation-observation-index/v1"
+_CONDITIONAL_IMPORTS = {
+    "prelude": [], "donor": ["prelude"], "consumer": ["prelude"],
+    "alias": ["donor", "consumer"], "joint": ["donor", "consumer", "alias"], "namespace": ["joint"],
+}
+_PRESERVATION_IMPORTS = {
+    **_CONDITIONAL_IMPORTS,
+    "semantics": ["prelude"],
+    "preservation_donor": ["donor", "semantics"],
+    "preservation_consumer": ["consumer", "semantics"],
+    "preservation_alias": ["alias", "semantics"],
+    "preservation_joint": ["joint", "semantics"],
+    "project": ["namespace", "preservation_donor", "preservation_consumer",
+                "preservation_alias", "preservation_joint"],
+}
+_CONDITIONAL_PREMISES = (
+    "One supplied Interpretation, Entity carrier and Nat evaluation time are shared by all fragments.",
+    "Predicate-to-donor-body equivalence assumes the exact donor definition and explicit alias; neither is proved as a fact.",
+    "Joint assembly assumes the exact donor definition, consumer definition and alias.",
+    "Modular joint equivalence is a generated definitional obligation; native kernel checking has not run.",
+    "No conclusion about the consumer head follows from the donor body without its separate complete Boolean body obligations.",
+)
+_PARENT_PREMISES = (
+    "One arbitrary Entity carrier, Interpretation and fixed Nat time are shared by the exact original norm and definition modules.",
+    "The conditional definition instance assumes hDefinition; deriving its body additionally assumes hMembership at the same supplied entity valuation.",
+    "No existential witness, actual membership, governing applicability, source meaning or norm truth is inferred.",
+    "The complete supplied norm AST and native body are unchanged. The preservation obligation is only a definitional alias identity, not a source-meaning theorem.",
+    "No definition is substituted into a predicate, quantifier or modality of the norm; all original alternatives and nominations remain retained.",
+)
+_CONDITIONAL_AXIOMS = {
+    "consumer_predicate_iff_donor_body": [],
+    "joint_of_components": [],
+    "joint_matches_original": [],
+}
+_PRESERVATION_AXIOMS = {
+    **{"conditional:" + name: [] for name in _CONDITIONAL_AXIOMS},
+    **{"preservation:" + role + ":" + suffix: []
+       for role in ("donor", "consumer", "alias", "joint")
+       for suffix in ("native_value_exact", "native_ast_closed", "denotation_matches_native")},
+}
+_LEAN_COMPATIBILITY_ROUTES = {
+    "parent": {
+        "profile": _PARENT_BOUND_PROFILE,
+        "imports": {
+            "prelude": [], "norm": ["prelude"], "definition": ["prelude"],
+            "occurrence": ["norm", "definition"], "preservation": ["norm", "occurrence"],
+            "namespace": ["preservation"],
+        },
+        "premises": _PARENT_PREMISES,
+        "axioms": {"original_norm_preserved": [], "definition_instance": []},
+        "artifact_closure": {
+            "retained_files": 29, "source_files": 9, "compiled_modules": 6, "modules": 6,
+            "pure_cases": 32, "pure_phases": 96, "actual_native_cases": 2, "actual_native_phases": 6,
+        },
+        "packet_index_reader": None,
+        "missing_packet_index_profile": _PARENT_BOUND_PROFILE,
+    },
+    "direct": {
+        "profile": _PARENT_NORM_PACKET_PREPARATION_PROFILE,
+        "imports": {"prelude": [], "norm": ["prelude"], "preservation": ["norm"], "namespace": ["preservation"]},
+        "premises": (_PARENT_NORM_PACKET_SCOPE,),
+        "axioms": {"original_norm_preserved": []},
+        "artifact_closure": {
+            "packet_files": 23, "compiled_modules": 4, "executed_inputs": 7,
+            "project_including_manifest": 8, "receipt_and_logs": 4, "theorems": 1,
+            "packet_profile": PARENT_NORM_PACKET_PROFILE, "index_profile": _PARENT_INDEX_PROFILE,
+        },
+        "packet_index_reader": "validate_parent_norm_native_packet_v1",
+        "missing_packet_index_profile": None,
+    },
+    "conditional": {
+        "profile": _CONDITIONAL_PROFILE,
+        "imports": _CONDITIONAL_IMPORTS,
+        "premises": _CONDITIONAL_PREMISES,
+        "axioms": _CONDITIONAL_AXIOMS,
+        "artifact_closure": {"project_files": 9, "modules": 6, "theorems": 3},
+        "packet_index_reader": None,
+        "missing_packet_index_profile": None,
+    },
+    "native": {
+        "profile": _PARENT_NORM_PACKET_NATIVE_PROFILE,
+        "imports": {"prelude": [], "norm": ["prelude"], "preservation": ["norm"], "namespace": ["preservation"]},
+        "premises": (
+            _PARENT_NORM_PACKET_SCOPE,
+            "The checked theorem is an unchanged authored formula alias identity, not statutory meaning or norm truth.",
+        ),
+        "axioms": {"original_norm_preserved": []},
+        "artifact_closure": {
+            "compiled_modules": 4, "executed_source_files": 7, "nonempty_oleans": 4, "theorems": 1,
+            "toolchain": "leanprover/lean4:v4.34.1",
+        },
+        "packet_index_reader": None,
+        "missing_packet_index_profile": None,
+    },
+    "preservation": {
+        "profile": PROFILE,
+        "imports": _PRESERVATION_IMPORTS,
+        "premises": (
+            "All four certificates use the original LegalCorpusV2.Interpretation and target the original module formula_0 directly.",
+            "Concrete AST value reconstruction, closedness and denotation do not establish statutory source meaning or the alias premise.",
+            "Python JSON parsing, reification and cryptographic commitments remain outside the kernel theorem.",
+            "All fifteen generated theorem obligations require separate native kernel execution.",
+        ),
+        "axioms": _PRESERVATION_AXIOMS,
+        "artifact_closure": {
+            "packet_files": 49, "project_files": 16, "modules": 12, "theorems": 15,
+            "packet_profile": PROFILE, "index_profile": _PRESERVATION_INDEX_PROFILE,
+            "preparation_profile": _PRESERVATION_PREPARATION_PROFILE,
+        },
+        "packet_index_reader": "validate_definition_use_preservation_packet_v2",
+        "missing_packet_index_profile": None,
+    },
+}
+_LEAN_COMPATIBILITY_EVIDENCE = {
+    "parent": ({
+        "path": "docs/autoformalization/evidence/legal-ir-parent-bound-norm-definition-native-integration-20261025.json",
+        "sha256": "769fbf8717177e2a2c42f6abc7cb54fc95a6342665340d16ffc14dcf6362f655",
+        "schema": "legal-ir-parent-bound-norm-definition-native-integration-qualification/v1",
+        "profile": _PARENT_BOUND_PROFILE,
+        "pure_cases": 32, "pure_phases": 96, "actual_native_cases": 2, "actual_native_phases": 6,
+        "retained_files": 29, "counts_pooled": False,
+    },),
+    "direct": ({
+        "path": "docs/autoformalization/evidence/legal-ir-parent-complete-norm-project-20261024.json",
+        "sha256": "8499e4abcaf01888bdc43be10537f09c7c951ec59a45c481c0d05a8cdff52491",
+        "schema": "legal-ir-parent-complete-norm-project-qualification/v1",
+        "profile": _PARENT_NORM_PACKET_PREPARATION_PROFILE,
+        "cases": 68, "phases": 204, "counts_pooled": False,
+    }, {
+        "path": "docs/autoformalization/evidence/legal-ir-parent-norm-packet-consistency-20261025.json",
+        "sha256": "74b8bd7027eec60bfa87e42ce6039c40d2ab00998f2fb4da58ff00b815c72e8f",
+        "schema": "legal-ir-parent-norm-packet-consistency-qualification/v1",
+        "profile": "parent-norm-packet-consistency-pure-controls/v1",
+        "packet_files": 23, "counts_pooled": False,
+    }, {
+        "path": "docs/autoformalization/evidence/legal-ir-parent-norm-preservation-index-20261025.json",
+        "sha256": "7ef2fc6fac35c7254e818b0af31e82d2840625ab0d7de11bed2fe6b657f6e706",
+        "schema": "legal-ir-parent-norm-preservation-index-qualification/v2",
+        "profile": "parent-norm-preservation-index-source-audit-reconciled-controls/v2",
+        "cases": 114, "phases": 342, "counts_pooled": False,
+    }),
+    "conditional": ({
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+        "schema": "legal-corpus-v2-definition-use-lake-preparation/v1",
+        "profile": _CONDITIONAL_PROFILE,
+        "case_count_rerun": False, "counts_pooled": False,
+    },),
+    "native": ({
+        "path": "docs/autoformalization/evidence/legal-ir-parent-complete-norm-native-20261024.json",
+        "sha256": "a9d416fe89e5d499bf59964a82e0e6aa554ef8e8dade814ef842a8a34ec3e10c",
+        "schema": "legal-ir-parent-complete-norm-native-qualification/v1",
+        "profile": _PARENT_NORM_PACKET_NATIVE_PROFILE,
+        "cases": 23, "phases": 69, "counts_pooled": False,
+    },),
+    "preservation": ({
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+        "symbol": "validate_definition_use_preservation_packet_v2",
+        "profile": PROFILE, "packet_files": 49, "modules": 12, "theorems": 15,
+        "historical_cohort_label": "153/459 official packet/index/store",
+        "historical_cohort_rerun": False, "counts_pooled": False,
+        "label_source_path": "docs/autoformalization/evidence/legal-ir-parent-norm-packet-consistency-20261025.json",
+        "label_source_sha256": "74b8bd7027eec60bfa87e42ce6039c40d2ab00998f2fb4da58ff00b815c72e8f",
+    },),
+}
+_LEAN_COMPATIBILITY_REUSE = (
+    {"path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+     "symbol": "validate_definition_use_preservation_packet_v2", "route": "preservation"},
+    {"path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py",
+     "symbol": "prepare_definition_use_preservation_index_v2", "route": "preservation"},
+    {"path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+     "symbol": "validate_parent_norm_native_packet_v1", "route": "direct"},
+    {"path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_index_v2.py",
+     "symbol": "prepare_parent_norm_preservation_index_v1", "route": "direct"},
+    {"path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_packet_v2.py",
+     "symbol": "not_registered", "route": "parent", "packet_index_api_registered": False,
+     "missing_profile": _PARENT_BOUND_PROFILE},
+)
+
+
+def _lean_public_contract(route):
+    row = _LEAN_COMPATIBILITY_ROUTES[route]
+    return {"profile": row["profile"], "imports": {key: list(value) for key, value in row["imports"].items()},
+            "premises": list(row["premises"]), "axioms": {key: list(value) for key, value in row["axioms"].items()},
+            "artifact_closure": dict(row["artifact_closure"])}
+
+
+def lean_compatibility_route_contract(route):
+    """Return the exact import, premise, axiom, and artifact closure for one route."""
+    _need(type(route) is str and route in _LEAN_COMPATIBILITY_ROUTES, "foreign compatibility route")
+    return json.loads(_wire(_lean_public_contract(route)))
+
+
+def _lean_selection_ast(route):
+    evidence = _LEAN_COMPATIBILITY_EVIDENCE[route][0]
+    if "sha256" in evidence and route in {"parent", "direct", "native"}:
+        return evidence["sha256"]
+    return _sha(_wire(_lean_public_contract(route)))
+
+
+def _lean_candidate(route):
+    contract = _lean_public_contract(route)
+    return {"candidate_id": "retained:" + route, "route": route, "profile": contract["profile"],
+            "ast_sha256": _lean_selection_ast(route), "imports": contract["imports"],
+            "premises": contract["premises"], "axioms": contract["axioms"],
+            "artifact_closure": contract["artifact_closure"]}
+
+
+def retained_lean_compatibility_request_bytes():
+    """Canonical five-route selection. Evidence is referenced, not recompiled."""
+    request = {"schema": LEAN_COMPATIBILITY_REQUEST_SCHEMA,
+               "candidates": [_lean_candidate(route) for route in LEAN_COMPATIBILITY_ROUTES]}
+    return _wire(request)
+
+
+def _lean_exact(value, expected, message):
+    _need(_wire(value) == _wire(expected), message)
+
+
+def _lean_one(candidate, seen_ids, seen_routes):
+    _keys(candidate, _LEAN_COMPATIBILITY_CANDIDATE_FIELDS, "compatibility candidate")
+    identifier, route = candidate["candidate_id"], candidate["route"]
+    _need(type(identifier) is str and re.fullmatch(r"[A-Za-z0-9_.:-]{1,128}", identifier) is not None,
+          "bounded compatibility candidate id required")
+    _need(identifier not in seen_ids, "duplicate compatibility candidate")
+    _need(type(route) is str and route in _LEAN_COMPATIBILITY_ROUTES, "foreign compatibility route")
+    _need(route not in seen_routes, "duplicate compatibility route")
+    seen_ids.add(identifier)
+    seen_routes.add(route)
+    _pin(candidate["ast_sha256"], "selected AST")
+    contract = _LEAN_COMPATIBILITY_ROUTES[route]
+    _need(candidate["profile"] == contract["profile"], "foreign compatibility profile")
+    _need(type(candidate["premises"]) is list and candidate["premises"], "missing premise closure")
+    _lean_exact(candidate["premises"], list(contract["premises"]), "missing premise closure")
+    _need(type(candidate["imports"]) is dict, "import closure differs")
+    _lean_exact(candidate["imports"], {key: list(value) for key, value in contract["imports"].items()},
+                "import closure differs")
+    axioms = candidate["axioms"]
+    _need(type(axioms) is dict, "axiom closure differs")
+    _need(all(type(value) is list and value == [] for value in axioms.values()),
+          "new axioms are not introduced")
+    _lean_exact(axioms, {key: [] for key in contract["axioms"]}, "axiom closure differs")
+    artifact = candidate["artifact_closure"]
+    _need(type(artifact) is dict and artifact, "missing artifact closure")
+    _lean_exact(artifact, dict(contract["artifact_closure"]), "missing artifact closure")
+    evidence = [dict(item) for item in _LEAN_COMPATIBILITY_EVIDENCE[route]]
+    primary = evidence[0]
+    return {
+        "candidate_id": identifier, "route": route, "profile": contract["profile"],
+        "ast_sha256": candidate["ast_sha256"],
+        "ast_sha256_scope": "caller_selected_digest_not_a_parsed_statutory_ast",
+        "ast_sha256_matches_primary_evidence": candidate["ast_sha256"] == primary.get("sha256"),
+        "imports": {key: list(value) for key, value in contract["imports"].items()},
+        "premises": list(contract["premises"]),
+        "axioms": {key: [] for key in contract["axioms"]},
+        "introduced_axioms": [], "artifact_closure": dict(artifact),
+        "packet_index_reader": contract["packet_index_reader"],
+        "packet_index_admitted": False,
+        "missing_packet_index_profile": contract["missing_packet_index_profile"],
+        "evidence": evidence, "compiler_invoked": False, "lean_admitted": False,
+        "legal_admitted": False, "admitted": False, "formalized": False,
+    }
+
+
+def _lean_questions(rows):
+    by_route = {}
+    for row in rows:
+        by_route.setdefault(row["route"], []).append(row["candidate_id"])
+    blocks = ["Lean_admitted", "legal_admitted"]
+    questions = [
+        {"id": "governing_edition_unselected", "status": "unanswered", "blocks": list(blocks),
+         "candidate_ids": [row["candidate_id"] for row in rows]},
+        {"id": "source_meaning_unreviewed", "status": "unanswered", "blocks": list(blocks),
+         "candidate_ids": [row["candidate_id"] for row in rows]},
+        {"id": "definition_applicability_unreviewed", "status": "unanswered", "blocks": list(blocks),
+         "candidate_ids": [row["candidate_id"] for row in rows]},
+        {"id": "explicit_premises_unproved", "status": "unanswered", "blocks": list(blocks),
+         "candidate_ids": [row["candidate_id"] for row in rows]},
+        {"id": "historical_compiler_qualification_not_rerun", "status": "unanswered", "blocks": list(blocks),
+         "candidate_ids": [row["candidate_id"] for row in rows]},
+        {"id": "parent_bound_29_file_packet_index_unadmitted", "status": "unanswered",
+         "blocks": [*blocks, "packet_index_admission"],
+         "candidate_ids": list(by_route.get("parent", [])),
+         "missing_profile": _PARENT_BOUND_PROFILE, "required_retained_files": 29},
+        {"id": "lean_admission_blocked", "status": "unanswered", "blocks": ["Lean_admitted"],
+         "candidate_ids": [row["candidate_id"] for row in rows]},
+        {"id": "legal_admission_blocked", "status": "unanswered", "blocks": ["legal_admitted"],
+         "candidate_ids": [row["candidate_id"] for row in rows]},
+    ]
+    return questions
+
+
+def prepare_lean_compatibility_request_v1(request_raw, *, expected_request_sha256):
+    """Bind selected AST/profile candidates to retained routes without a compiler."""
+    _pin(expected_request_sha256, "compatibility request")
+    _need(type(request_raw) is bytes and 0 < len(request_raw) <= MAX_RECORD_BYTES,
+          "bounded compatibility request required")
+    _need(_sha(request_raw) == expected_request_sha256, "compatibility request SHA256 mismatch")
+    request = _parse(request_raw)
+    _keys(request, ("schema", "candidates"), "compatibility request")
+    _need(request["schema"] == LEAN_COMPATIBILITY_REQUEST_SCHEMA, "compatibility request schema required")
+    candidates = request["candidates"]
+    _need(type(candidates) is list and 1 <= len(candidates) <= len(LEAN_COMPATIBILITY_ROUTES),
+          "focused compatibility candidate bound exceeded")
+    rows, seen_ids, seen_routes = [], set(), set()
+    for candidate in candidates:
+        _need(type(candidate) is dict, "compatibility candidate object required")
+        rows.append(_lean_one(candidate, seen_ids, seen_routes))
+    result = {
+        "compatibility_matrix": rows,
+        "request_import_premise_axiom_closure": {
+            "schema": LEAN_COMPATIBILITY_REQUEST_SCHEMA, "compiler_invoked": False,
+            "candidates": [{"candidate_id": row["candidate_id"], "route": row["route"],
+                            "profile": row["profile"], "ast_sha256": row["ast_sha256"],
+                            "imports": row["imports"], "premises": row["premises"],
+                            "axioms": row["axioms"]} for row in rows],
+        },
+        "artifact_closure": {
+            "compiler_invoked": False,
+            "rows": [{"candidate_id": row["candidate_id"], "route": row["route"],
+                      "profile": row["profile"], "closure": row["artifact_closure"],
+                      "packet_index_reader": row["packet_index_reader"],
+                      "packet_index_admitted": False,
+                      "missing_packet_index_profile": row["missing_packet_index_profile"]}
+                     for row in rows],
+        },
+        "unresolved_questions": _lean_questions(rows),
+        "reuse_owners": [dict(item) for item in _LEAN_COMPATIBILITY_REUSE],
+    }
+    _need(set(result) == set(_LEAN_COMPATIBILITY_RESULT_FIELDS), "closed compatibility result required")
+    _need(all(row["lean_admitted"] is False and row["legal_admitted"] is False for row in rows),
+          "unresolved prerequisites block Lean or legal admission")
+    return json.loads(_wire(result))
+
+
+def lean_compatibility_request_sha256(report):
+    """Hash one complete compatibility export."""
+    _keys(report, _LEAN_COMPATIBILITY_RESULT_FIELDS, "compatibility report")
+    return _sha(_wire(report))
+
+
+def validate_lean_compatibility_request_v1(report, request_raw, *, expected_request_sha256,
+                                           expected_report_sha256):
+    """Require an independent report pin and complete regeneration."""
+    _pin(expected_report_sha256, "compatibility report")
+    _need(lean_compatibility_request_sha256(report) == expected_report_sha256,
+          "compatibility report SHA256 mismatch")
+    original = _wire(report)
+    regenerated = prepare_lean_compatibility_request_v1(
+        request_raw, expected_request_sha256=expected_request_sha256)
+    _need(_wire(regenerated) == original, "compatibility report differs from complete regeneration")
+    return regenerated
+
+
+__all__ += ["LEAN_COMPATIBILITY_REQUEST_SCHEMA", "LEAN_COMPATIBILITY_ROUTES",
+            "lean_compatibility_route_contract", "retained_lean_compatibility_request_bytes",
+            "prepare_lean_compatibility_request_v1", "lean_compatibility_request_sha256",
+            "validate_lean_compatibility_request_v1"]
