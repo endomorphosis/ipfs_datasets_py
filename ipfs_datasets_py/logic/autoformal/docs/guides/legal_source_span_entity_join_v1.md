@@ -267,34 +267,48 @@ five retained HF49 metadata files were reused; no HF loader, release producer,
 model, training or Lean run was repeated. Optional package initializers and the
 whole installed package remain outside this namespace-scoped qualification.
 
-V1/v2 retain their original schemas and legacy intake. Census, eligibility,
-crosswalk, graph and native consumers have not adopted join v3; each needs an
-explicit compatible profile and its own qualification. Selected occurrence
-remains null, current-source correspondence and entity bindings unresolved,
-masks strict integer zero and all authority false. Source/edition/meaning review,
-training/gold, remote publication and graph/Lean admission remain separate.
+V1/v2 retain their original schemas and legacy intake. At this join-only
+qualification cutoff, downstream consumer adoption required separate profiles
+and qualification; the later qualified profiles are listed below. Selected
+occurrence remains null, current-source correspondence and entity bindings
+unresolved, masks strict integer zero and all authority false.
+Source/edition/meaning review, training/gold, remote publication and graph/Lean
+admission remain separate.
 
 The selected `hf-wire-v02` alone supplies this 123-case qualification. The earlier v01 logging failure retains zero case/phase credit and its original 256 MiB retained terminal; a later separately reviewed existing-owner [storage closeout](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/hf-config-compatibility-01/wire-join-v01/v01-storage-closeout/independent-result-review-v01.json) released that promise while preserving all three failure logs (5,763 bytes). Administrative recovery does not turn the failed attempt into validation success.
 
 
 ## Downstream wire profile boundary
 
-The qualified wire-coordinate join is `legal-source-span-entity-join-manifest/v3`, with profile
-`paired-coordinate-hf-wire-three-cache-join/v1`. Its legacy v1/v2 predecessors
-remain separate. The current downstream compatibility is:
+The qualified wire-coordinate join is `legal-source-span-entity-join-manifest/v3`,
+with profile `paired-coordinate-hf-wire-three-cache-join/v1`. Its legacy v1/v2
+predecessors remain separate. Legacy census v2 and eligibility v2/v3 retain their
+join-v2 input and replay contracts; their reports are not relabeled as wire-v3.
+The following explicit downstream profiles are already implemented and have
+separate selected fixture qualifications:
 
-| Consumer | Current accepted join contract | Wire-v3 status |
-| --- | --- | --- |
-| Coordinate entity census v2 | `legal-source-span-entity-join-manifest/v2`, `paired-coordinate-three-cache-join/v1` | Separate explicit integration required |
-| Original-input target eligibility v2/v3 | Original join-v2 inputs and authoritative v2 replay | Separate explicit integration required |
-| Coordinate graph/corpus routes | Their declared eligibility and original-input ancestry | No automatic adoption from join-v3 qualification |
+| Consumer | Report schema | Explicit compatibility profile | Selected qualification |
+| --- | --- | --- | --- |
+| Original-input target eligibility v4 | `legal-source-span-target-eligibility/v4` | `original-input-wire-coordinate-target-eligibility/v1` | [Fixture qualification](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-eligibility-20261024.json) |
+| Coordinate entity census v3 | `legal-source-span-entity-census/v3` | `paired-coordinate-hf-wire-entity-census/v1` | [Fixture qualification](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-entity-census-20261024.json) |
+| Coordinate graph intake v3 | `legal-coordinate-source-graph-intake/v3` | `original-input-wire-coordinate-source-graph-intake/v1` | [Fixture qualification](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-graph-intake-20261024.json) |
+| Coordinate graph/corpus custody v2 | `legal-coordinate-graph-corpus/v2` | `original-input-wire-coordinate-graph-v3-corpus-custody/v1` | [Fixture qualification](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-graph-corpus-20261024.json) |
+| Source correspondence requests v3 | `legal-source-correspondence-requests/v3` | `original-input-wire-coordinate-graph-v3-source-review-request-custody/v1` | [Fixture qualification](../../../../../docs/autoformalization/evidence/legal-ir-hf-wire-coordinate-source-correspondence-20261024.json) |
 
-When selecting that boundary, extend the existing consumer owner with an
-explicit request/report contract, preserve old profiles and replay original
-join inputs at opening and closeout. Keep source/edition correspondence,
-occurrence selection, entity semantics, definition applicability and review
-eligibility unresolved until their actual evidence exists. A wire-compatible
-report alone cannot enable training/gold or graph/Lean admission.
+The [work catalog](../work_catalog.json) also indexes their separate focused
+public dependency integrations. Reuse these existing owners and preserve each
+receipt's source generation and scope; the join-only and later consumer cohorts
+are not pooled. Each profile replays its declared original inputs and retains
+its opening and closing custody checks.
+
+These transport/custody qualifications do not select a source occurrence,
+resolve entity meanings or governing definitions, or enable training/gold or
+semantic graph/Lean admission. Actual release selection and readback belong to
+the existing [LIR-02/LIR-21 release checklist](#release-adoption-checklist--lir-02-and-lir-21):
+bind immutable physical file membership, schemas, counts and source/span/entity
+ancestry, qualify the selected consumer profile, and complete release readback.
+Native execution, source/edition/meaning and eligibility decisions retain their
+separate original-owner admission gates.
 
 The [delivery reconciliation](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/wire-join-01/peer-delivery-reconciliation-v01.json)
 verifies the current 123-case delivery. A concurrently staged ordinary-v3 /
@@ -311,7 +325,7 @@ The measured source base was `ad4c1256`; all 44 selected files remain identical 
 
 The private `dc6ae4f1` pytest plugin is declared qualification orchestration and is not a product/test dependency or a public source port. The namespace profile uses explicit parent containers; optional initializers and whole public-package behavior remain unqualified. The check observed 35 loaded source entries and 28 checked import-compile sources. PyArrow 25.0.1 executed authored fixture work; DuckDB 1.4.3 was imported with zero database connections. Original source/native/resource/storage custody closed with 25 retained files / 281,592 bytes. The early snapshot remains `UNQUALIFIED_OBSERVATION_ONLY`, separate from accepted final gates.
 
-No model, encoder, embedding, law-cache table scan, download or Lean work occurred. This receipt does not requalify the distinct P/private dependency profile. The original failed attempts and original 108/123 scope limits remain intact. Downstream census, original-input eligibility, crosswalk, graph/native adoption and source/meaning/training/gold admission remain separately selected work.
+No model, encoder, embedding, law-cache table scan, download or Lean work occurred. This receipt does not requalify the distinct P/private dependency profile. The original failed attempts and original 108/123 scope limits remain intact. At this three-case integration cutoff, downstream consumer adoption was outside its scope; the later independently qualified profiles are listed above. Actual selected-release/native adoption, source/edition/meaning review and training/gold eligibility remain separate work.
 
 ## Release adoption checklist — LIR-02 and LIR-21
 
