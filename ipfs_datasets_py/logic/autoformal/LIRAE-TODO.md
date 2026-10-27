@@ -2616,3 +2616,43 @@ admitted and formalized stay false. Constitution roundtrip_ok stays false.
 - required validation executables: python3
 - receipt instructions: Write workspace/legal_ir/programme_engineering/lirae-lir17-profile-03/receipt.json schema=legal-ir-supervisor-task-receipt/v1 task_kind=programme_engineering status=implemented with exact parent_reference, source_binding, implementation_route,outcome=implemented|qualified_reuse and code_changes=[{path,sha256}]. Authenticate workspace/legal_ir/programme_engineering/lirae-lir17-profile-03/preparation.json as the sole preparation artifact. The preparation schema is legal-ir-programme-engineering-preparation/v1 with task_id,parent_reference,source_binding,admitted=false,formalized=false,semantic_review_performed=false,model_gain_claimed=false,training_executed=false and result fields state_provenance,model_optimizer_wiring,selection_mask_contract,acceptance_controls,frozen_full_ir_casewise_scoring,unresolved_questions,reuse_owners. For implemented work authenticate actual declared owner/test changes relative to pinned public main. For qualified_reuse declare no code changes and supply qualified_reuse={schema:legal-ir-programme-qualified-reuse/v1,api_bindings:[{path,symbol,sha256}],test_bindings:[{path,sha256}],result_sha256}; bind existing exact APIs, unchanged public owner/test bytes and the preparation result. Do not fabricate changes or duplicate qualified exports. No model fitting, encoder/compiler/corpus rerun or invented legal review. Native proposal, validation and merge alone decide engineering completion.
 - acceptance: Opt-in numerical profile composes existing F18 model/state and published margin kernel with an explicit versioned configuration and fresh optimizer wiring; retained F18/F15/kernel/structured-objective files remain unchanged; Exactly four selected start/end weight and bias tensors update only conditions row3:130active/780stored/650inactive scalars;38other tensors including modality stay frozen; donor is the authenticated42tensor F18 state and F15 is only the teacher; derive the new frozen38 seal directly from the F18 donor; Meaningful offline synthetic owner tests reject wrong tensor shapes/row/counts, nonfinite controls, missing provenance and wrong TRAIN partition, and verify unchanged CE/KL/full-B and zero/.25arm wiring without fitting real inputs; Any claimed qualified reuse requires an already existing exact numerical API and authenticated unchanged source/test/result bindings; a metadata recipe alone cannot satisfy this job
+
+## LIRAE-CONT-OCCURRENCE-VALIDATE-01 Validate retained occurrence-context fixture evidence without rerunning it
+
+- status: todo
+- completion: manual
+- is schedulable: true
+- priority: P1
+- track: legal-ir-programme
+- goal id: LIR-17.receipt-only-continuation-audits-v1
+- parent goal id: LIR-17
+- depends on: none
+- board namespace: legal-ir-autoencoder-v1
+- provider role: deterministic-only
+- context budget tokens: 0
+- outputs: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-occurrence-validate-01/receipt.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-occurrence-validate-01/validation.json
+- allowed paths: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-occurrence-validate-01/receipt.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-occurrence-validate-01/validation.json
+- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-continuation-validation LIRAE-CONT-OCCURRENCE-VALIDATE-01; IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONT-OCCURRENCE-VALIDATE-01
+- required validation executables: python3
+- receipt instructions: Materialize only the exact two continuation receipt outputs from independently qualified pinned candidate/native/storage evidence. This is a fresh metadata and receipt validation; it reruns no tests, model, compiler or training. Use legal-ir-supervisor-task-receipt/v1 task_kind=continuation_validation; all scientific authority flags remain false. Never edit source/protected files, rearm a completed task, or infer scientific completion from this validation.
+- acceptance: Exact pinned positive case/result/source/native/storage evidence and independent verifier commitments validate; no model calls, source edits or scientific authority
+
+## LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01 Validate retained constructor-refusal and lease-timeout lifecycle evidence
+
+- status: todo
+- completion: manual
+- is schedulable: true
+- priority: P1
+- track: legal-ir-programme
+- goal id: LIR-17.receipt-only-continuation-audits-v1
+- parent goal id: LIR-17
+- depends on: none
+- board namespace: legal-ir-autoencoder-v1
+- provider role: deterministic-only
+- context budget tokens: 0
+- outputs: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-validation-lifecycle-validate-01/receipt.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-validation-lifecycle-validate-01/validation.json
+- allowed paths: docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-validation-lifecycle-validate-01/receipt.json, docs/implementation/reports/evidence/legal_ir_autoencoder/lirae-cont-validation-lifecycle-validate-01/validation.json
+- validation: IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --materialize-continuation-validation LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01; IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 PYTHONPATH=. python3 scripts/ops/legal_ir/legal_ir_supervisor_contract.py --check-task LIRAE-CONT-VALIDATION-LIFECYCLE-VALIDATE-01
+- required validation executables: python3
+- receipt instructions: Materialize only the exact two continuation receipt outputs from independently qualified pinned candidate/native/storage evidence. This is a fresh metadata and receipt validation; it reruns no tests, model, compiler or training. Use legal-ir-supervisor-task-receipt/v1 task_kind=continuation_validation; all scientific authority flags remain false. Never edit source/protected files, rearm a completed task, or infer scientific completion from this validation.
+- acceptance: Exact pinned positive case/result/source/native/storage evidence and independent verifier commitments validate; no model calls, source edits or scientific authority
