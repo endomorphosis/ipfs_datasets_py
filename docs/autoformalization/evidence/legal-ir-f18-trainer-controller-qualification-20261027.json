@@ -1,0 +1,294 @@
+{
+  "controller_qualified": true,
+  "draft": false,
+  "evidence_id": "f18-trainer-controller-qualified-20261027-01",
+  "limits": {
+    "checkpoint_or_input_payloads_copied": false,
+    "library_admitted": false,
+    "library_formalized": false,
+    "model_promoted": false,
+    "new_accuracy_gain": false,
+    "profile_numerical_work_qualified_by_this_capsule": false,
+    "statutory_semantics": false,
+    "task_rearm": false
+  },
+  "observed_at_utc": "2026-10-27T21:01:39.166921+00:00",
+  "paired_fit_metrics": "Closed separate fixed-pair result; independent scoring remains open.",
+  "preserved": [
+    "All prior failed/preparation generations and immutable receipts.",
+    "Original24BACKLOG objects,139completed engineeringcards and64scientific task prerequisites.",
+    "Latest peer dual-namespace watchdog and retry-policy notes.",
+    "Unchanged profile56bd and all checkpoint-bound resource/invocation-contract bytes; previous45/632 remain distinct."
+  ],
+  "pure_controls": {
+    "JUnit_seconds": 3.127,
+    "artifacts": {
+      "JUnit": {
+        "bytes": 21618,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/pure-qualification-v01/attempt-v04/exports/test-results.xml",
+        "root": "datasets_repository",
+        "sha256": "5d00cf2d6eb42fbef800166d8a9c2a1cedf111854dbe2e7ca9e291b5a1f69302"
+      },
+      "independent_binding": {
+        "bytes": 3950,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/pure-qualification-v01/supervisor-watchdog-independent-PURE-binding-v04.json",
+        "root": "datasets_repository",
+        "sha256": "b6d95dcdfc329d212b58c30e69ad274c300071c7ae4454468feff423f45498ec"
+      },
+      "original_closeout": {
+        "bytes": 9023,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/pure-qualification-v01/root-source-closeout-v04.json",
+        "root": "datasets_repository",
+        "sha256": "84882e9734468aa40b050348894524f9a60bf5e2838aa375dd0efa24b52a48bd"
+      },
+      "phase_observations": {
+        "bytes": 194926,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/pure-qualification-v01/attempt-v04/exports/phase-observations-v04.json",
+        "root": "datasets_repository",
+        "sha256": "0223c7968cd9343a52a5123d67bdb53a84d7530e00add96b5cafc806e9c1f3ae"
+      },
+      "request": {
+        "bytes": 72569,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/pure-qualification-v01/request-v04.json",
+        "root": "datasets_repository",
+        "sha256": "78b87edfb84ddd10f59fe352d115a9a6f636ecbbc2b3596157fa6d28ebadc840"
+      }
+    },
+    "controller_cases": 74,
+    "errors": 0,
+    "external_process_attempts": [],
+    "failures": 0,
+    "native_source_and_storage_closed": true,
+    "numerical_import_attempts": [],
+    "original_control_seconds": 88.07608417002484,
+    "passed": 105,
+    "passed_phases": 315,
+    "scope": "Pure metadata/fake process and numerical-owner controls; no model or actual training credit.",
+    "skipped": 0,
+    "source_pins_unchanged": 78,
+    "storage_status": "released",
+    "worker_cases": 31
+  },
+  "schema": "legal-ir-bounded-controller-qualification-evidence/v1",
+  "selected_source_generation": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py": "3fcc44ded24e8063d4d108e240edd0b538c40e5c8bf7a8ba2ae5c595e431eba6",
+    "scripts/ops/legal_ir/run_owned_validation.py": "f972640b1c5ce23eb4132656b907508f04283622c35da2c187f9bc957fda0629",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_invocation_worker.py": "4f5c9a020b7dbf685de61c21730f6e0a28920b260dc535a7edec7997f68d8496",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_validation_run_resources.py": "41cf758b69ab0d013659819b8dea5c7dd5037e57565166406c947c1496338fea"
+  },
+  "separate_stages": {
+    "controlled_OS_helpers": {
+      "closeout": {
+        "bytes": 9290,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/native-helper-qualification-v01/root-source-closeout-v02.json",
+        "root": "datasets_repository",
+        "sha256": "e0073e64ba1d90a82866b3ada4b36810689a713ecd6f1dacf04142592c1ff44c"
+      },
+      "elapsed_original_control_seconds": 138.11434545740485,
+      "independent_binding": {
+        "bytes": 4925,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/native-helper-qualification-v01/supervisor-watchdog-independent-native-helper-binding-v02.json",
+        "root": "datasets_repository",
+        "sha256": "37c71c9e624eb57b18059242324021ff9288cfd7b5a427abe6bed968d2771b4f"
+      },
+      "independent_summary": {
+        "JUnit_seconds": 0.723,
+        "all_under_declared3seconds": true,
+        "case_times": [
+          {
+            "JUnit_seconds": 0.081,
+            "name": "test_trainer_native_RUN_gate_and_retained_EOF_stop_only_owned_group"
+          },
+          {
+            "JUnit_seconds": 0.065,
+            "name": "test_trainer_native_bad_RUN_token_refuses_all_work"
+          },
+          {
+            "JUnit_seconds": 0.437,
+            "name": "test_trainer_native_release_deadline_refuses_work_without_rearm"
+          }
+        ],
+        "errors": 0,
+        "exact_frozen_order_and_three_phases_per_case_verified": true,
+        "failures": 0,
+        "passed": 3,
+        "passed_setup_call_teardown_reports": 9,
+        "skipped": 0
+      },
+      "mode": null,
+      "native_source_closed": true,
+      "request": {
+        "bytes": 22300,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/native-helper-qualification-v01/request-v02.json",
+        "root": "datasets_repository",
+        "sha256": "07be2070ba9a854700821510a1e31443bf2fa637527eafc453b7af38b7099d44"
+      },
+      "resource_identity": {
+        "lane": "validation",
+        "workload": "canonical_validation"
+      },
+      "returncode": 0,
+      "source_pin_count": 78,
+      "status": "closed_original_run",
+      "storage_status": "released"
+    },
+    "original_canonical_trainer_probe": {
+      "closeout": {
+        "bytes": 7444,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/native-probe-v01/root-source-closeout-v01.json",
+        "root": "datasets_repository",
+        "sha256": "01369dc381e3ef1c722bb4b208d743209cd84e36ba1784a09eb1ec52bbdee2b6"
+      },
+      "elapsed_original_control_seconds": 146.85402477812022,
+      "independent_binding": {
+        "bytes": 4937,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/native-probe-v01/supervisor-watchdog-independent-public-trainer-probe-binding-v01.json",
+        "root": "datasets_repository",
+        "sha256": "311c754bb8facbbd965a193a888b56d46bc432f570ddf11e2b25a7e081eed282"
+      },
+      "mode": "native_probe",
+      "native_source_closed": true,
+      "observed_probe_zero_fields": {
+        "checkpoint_payloads_opened": 0,
+        "gradient_calls": 0,
+        "model_constructions": 0,
+        "model_forwards": 0,
+        "optimizer_updates": 0
+      },
+      "request": {
+        "bytes": 12561,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/native-probe-v01/request-v01.json",
+        "root": "datasets_repository",
+        "sha256": "4a0f51fd3e8bfc4a618452b259f7c0604df283ff4e2aaa58ed16dc5371fab4db"
+      },
+      "resource_identity": {
+        "lane": "hammer_lean",
+        "workload": "canonical_trainer"
+      },
+      "result_metadata": {
+        "bytes": 300,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/native-probe-v01/attempt-v01/exports/trainer-result.json",
+        "root": "datasets_repository",
+        "sha256": "43977bb8fec6222eed634b499d8a1937f20a6b65382d9aee9be03e8030594571"
+      },
+      "returncode": 0,
+      "source_pin_count": 47,
+      "status": "closed_original_run",
+      "storage_status": "released"
+    },
+    "separate_paired_fit": {
+      "actual_fixed_pair_result": {
+        "capture_fresh4_restore_calls": 2,
+        "capture_source_forwards": 1264,
+        "elapsed_seconds": 52.70402791397646,
+        "fit_fresh4_restore_calls": 2,
+        "legacy6_donor_restore_calls": 1,
+        "model_forwards": 1328,
+        "optimizer_updates": 64,
+        "scoring_performed": false,
+        "teacher_model_forwards": 0,
+        "teacher_model_restores": 0,
+        "training_model_forwards": 64
+      },
+      "candidate_arms": [
+        {
+          "arm": "arm-0",
+          "checkpoint": {
+            "bytes": 133639,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/paired-fit-v01/attempt-v01/exports/f18-paired/arm-0/checkpoint.json",
+            "schema": "conditions-fullspan-f18-four-tensor-checkpoint/v1",
+            "sha256": "d5707c70643538f95ec4a0b1ece2f61dab4e20d9bd8dd0eca5ea5a81baef02b9"
+          },
+          "initial_checkpoint": {
+            "bytes": 122250,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/paired-fit-v01/attempt-v01/exports/f18-paired/arm-0/initial-checkpoint.json",
+            "schema": "conditions-fullspan-f18-four-tensor-checkpoint/v1",
+            "sha256": "966a79bcb1a3e1659eb427628cc174116841e22cb3f3d9074e3b633ce49d7127"
+          },
+          "margin_weight": 0.0,
+          "model_state_sha256": "8974c708f86a2b52bb5df769330fd8994248215119012633ffdb1fac5d4f97cd",
+          "optimizer_updates": 32,
+          "progress": {
+            "epochs_completed": 2,
+            "optimizer_steps": 32,
+            "row_cursor": 48
+          },
+          "report": {
+            "bytes": 2707257,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/paired-fit-v01/attempt-v01/exports/f18-paired/arm-0/training-report.json",
+            "sha256": "9f6049c6b3ffbadf5efa14472d3cabca72e75b122700a6e82785c656120e4970"
+          }
+        },
+        {
+          "arm": "arm-025",
+          "checkpoint": {
+            "bytes": 133618,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/paired-fit-v01/attempt-v01/exports/f18-paired/arm-025/checkpoint.json",
+            "schema": "conditions-fullspan-f18-four-tensor-checkpoint/v1",
+            "sha256": "8db89f121d35aa82440255ff10a631402f868bb9cc02112d94515a762c82e709"
+          },
+          "initial_checkpoint": {
+            "bytes": 122251,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/paired-fit-v01/attempt-v01/exports/f18-paired/arm-025/initial-checkpoint.json",
+            "schema": "conditions-fullspan-f18-four-tensor-checkpoint/v1",
+            "sha256": "a62b8d2a7ebad3d993cefbfb0069f63aa46ab8ec71524ca4bc9b6d9f65a3d4e1"
+          },
+          "margin_weight": 0.25,
+          "model_state_sha256": "06fdf63589cb2b22c8543345caf294bbabba994f04fa92809d5fa9ce5237ec78",
+          "optimizer_updates": 32,
+          "progress": {
+            "epochs_completed": 2,
+            "optimizer_steps": 32,
+            "row_cursor": 48
+          },
+          "report": {
+            "bytes": 2776013,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/paired-fit-v01/attempt-v01/exports/f18-paired/arm-025/training-report.json",
+            "sha256": "0bf05c5929ff5e7e5e04fdafeed46f50bb0e6659d1304d0d245ed33e1f4e1014"
+          }
+        }
+      ],
+      "closeout": {
+        "bytes": 7456,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/paired-fit-v01/root-source-closeout-v01.json",
+        "root": "datasets_repository",
+        "sha256": "d93ee82579e65c6ff4651753e80de048bd4484c55600acdd0b0d334464e2d090"
+      },
+      "elapsed_original_control_seconds": 201.00824115099385,
+      "independent_binding": {
+        "bytes": 8559,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/paired-fit-v01/supervisor-watchdog-independent-paired-fit-metadata-binding-v01.json",
+        "root": "datasets_repository",
+        "sha256": "8c59046568ac5d9b8d8a99798dd89388aa5007c57eb9294804fe64bae70fe607"
+      },
+      "mode": "paired_fit",
+      "native_source_closed": true,
+      "pair_output_freeze": {
+        "bytes": 22619,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/paired-fit-v01/attempt-v01/exports/f18-paired/pair-output-freeze.json",
+        "sha256": "085f16849bcfd1b02434447a39574ea846c32348d2574b648c0099b62fa648bf"
+      },
+      "request": {
+        "bytes": 15244,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/paired-fit-v01/request-v01.json",
+        "root": "datasets_repository",
+        "sha256": "92813738a11e0d370f7b8dff7394306c85a8af678a49630b261b8725cbff416b"
+      },
+      "resource_identity": {
+        "lane": "hammer_lean",
+        "workload": "canonical_trainer"
+      },
+      "result_metadata": {
+        "bytes": 26179,
+        "path": "workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/conditions-batch-compatibility-20261027-01/f18-paired-trainer-binding-v01/paired-fit-v01/attempt-v01/exports/trainer-result.json",
+        "root": "datasets_repository",
+        "sha256": "6ac04964e8fc89b8e0cd123f7b2c0fc15d0f66b2bebb7798168574db08656214"
+      },
+      "returncode": 0,
+      "source_pin_count": 51,
+      "status": "closed_original_run",
+      "storage_status": "released"
+    }
+  },
+  "title": "F18 original trainer controller and separately observed matched margin pair"
+}

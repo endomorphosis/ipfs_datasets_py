@@ -102,9 +102,7 @@ one original six-tensor Adam restore and one fresh four-tensor Adam restore, zer
 forwards or updates, full 42-tensor root `2ed0` and frozen 38-tensor root `8562`.
 The earlier 26-case mechanics cohorts remain distinct. These results supply no
 new trained weights, 632-case parity, paired fitting, scoring or statutory accuracy.
-The later 632-case result below closes that selected initial parity gate. A qualified
-training-purpose binding, matched 0/0.25 arms of 32 updates, complete frozen outputs
-and independent scoring remain next.
+The later 632-case result below closes that selected initial parity gate. The later controller and matched-pair results close the selected binding and fixed-fit gates. Independent full-IR/per-ID retention and all 32 permission decisions remain next.
 
 ## Source-only capture from the four-tensor runtime
 
@@ -144,5 +142,17 @@ qualify the current source generation. All 194,812 head scalars, complete greedy
 rows and joint rows match retained final F18; no training update or label scoring ran.
 Checkpoints remain bound to their exact source generation. The earlier zero-step
 delta and 39-case result retain their older source pins and separate scope.
-Actual matched fitting still needs the original training-purpose controller binding,
-followed by output freezing and separately admitted scoring.
+The original controller and completed matched pair have separate qualification below. Both arms have frozen outputs; independently admitted full-IR, per-ID retention and permission scoring remains open.
+
+
+## Closed original trainer controller
+
+Use scripts/ops/legal_ir/run_owned_validation.py with --trainer-request, --expected-request-sha256 and --resource-ledger for the explicit owned-f18-conditions-training-request/v1 branch. The validation request/default path remains separate. A request never grants admission: the normal selected source tree constructs the unchanged genuine DaemonResourceReservation, bound to its existing scheduler and storage roots.
+
+mode=native_probe requires compute=null and performs zero payload/model/forward/update work after the actual offline READY/RUN gate. mode=paired_fit uses only the fixed original worker entry; it accepts no arbitrary argv, callable or resource factory. compute has exactly input_descriptors, initial_parity, runtime_contract, population_manifest (each a bounded path/bytes/sha256 metadata reference), max_steps_per_arm=32 and max_seconds_per_arm=32 (exact integers). It fixes arms0/.25 and the existing input/policy roots; outer original admission is still required.
+
+The owner retains a real pipe through compute so parent loss revokes the isolated child group. Source/request hashes and heartbeat renewals are polled once per second with forced boundary checks; local process/RSS checks remain faster. This is cooperative isolated-process-group observation, not containment of arbitrary escaped descendants or a kernel quota. Initial and final source hashes, READY identity/network facts, start/release/terminal journal entries and native/group cleanup are recorded. Ambiguous prior starts and incomplete cleanup require original recovery; no automatic retry is granted. Retained failure storage is independent of source/native closure.
+
+Each complete arm saves its four-tensor checkpoint and full training report, restores once for source-only632 capture and writes raw/joint files under exports/f18-paired. The complete pair-output-freeze.json precedes any independent reference scoring. Partial deadlines persist partial artifacts, return nonzero and retain the original claim for explicit recovery. All authority/promotion flags stay false.
+
+The separate original-owned matched pair reports 64 updates and frozen candidate outputs. The next adapter belongs in the existing `formula_generation_metrics.py` owner, reusing `compare_free_running_formulas`; preserve original readouts and defer quality claims until independent post-freeze scoring.

@@ -1,5 +1,13 @@
 # Training and experiment history
 
+## Original F18 trainer controller qualification, 2026-10-27
+
+the [separate controller result](../../../../docs/autoformalization/evidence/legal-ir-f18-trainer-controller-qualification-20261027.json) records 105 pure cases and 315 phases in 3.127 seconds, three separately admitted controlled OS-helper cases, and an actual zero-model canonical-trainer probe. The selected public DaemonResourceReservation supplies hammer_lean/canonical_trainer custody through the genuine offline READY/RUN boundary, retained owner-loss pipe, journal and original cleanup. Validation defaults and all checkpoint-bound profile/resource bytes remain unchanged. These controller scopes supply no actual paired fit, accuracy gain or task completion.
+
+The separate fixed matched coefficients 0 and 0.25 pair reports 32 updates per arm, 64 total, and 1,264 native source captures. Both checkpoint/report sets and all 40 raw/joint files are frozen before independent reference scoring. These are candidate weights; no accuracy gain, promotion, reviewed statutory meaning or scientific-task completion follows.
+
+The original fixed numerical request remains separate from the controller tests and probe. A partial deadline remains partial; preserve artifacts and original recovery. Freeze complete candidate outputs before independent full-IR/per-ID/32-permission scoring.
+
 ## Four-tensor source capture and final-F18 initial parity, 2026-10-27
 
 The [fresh capture cohort](../../../../docs/autoformalization/evidence/legal-ir-f18-source-capture-qualification-20261027.json) passed 45 cases/135 phases in 28.716 seconds on product `56bd0a24` / test `bbed34c8`. It extends the existing profile with capture from one authenticated restored runtime and preserves the complete earlier39-case prefix. Six new cases compare unchanged greedy/head/joint outputs with an independent original readout, verify successive runtime use and native counter deltas, reject target-bearing inputs and changed callables/hooks, and exercise late state/source fences. The counts 35 top-level forwards, 20 synthetic updates and 46 model constructions are source-derived upper bounds. All 73 selected source pins and original source/native/child/storage custody closed. The first 44/1 run remains a failed regex assertion generation; the oversized input was correctly refused.
