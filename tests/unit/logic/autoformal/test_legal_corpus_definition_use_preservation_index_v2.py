@@ -12,6 +12,7 @@ from dataclasses import replace
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -1073,4 +1074,109 @@ def test_parent_norm_index_mutating_returned_dict_does_not_change_projection(
     _parent_index_assert_unaccepted(parent_index_projection.to_dict())
     with pytest.raises((AttributeError, TypeError)):
         parent_index_projection.projection_json = "{}"
+
+
+def test_compatibility_index_names_are_observational_only():
+    for name in (
+        "LEAN_COMPATIBILITY_INDEX_SCHEMA",
+        "LEAN_COMPATIBILITY_INDEX_PROFILE",
+        "prepare_lean_compatibility_index_v1",
+        "lean_compatibility_index_sha256",
+        "validate_lean_compatibility_index_v1",
+    ):
+        assert hasattr(owner, name) and name in owner.__all__
+    assert owner.LEAN_COMPATIBILITY_INDEX_SCHEMA == "legal-lean-compatibility-index-projection/v1"
+    assert owner.LEAN_COMPATIBILITY_INDEX_PROFILE == "retained-lean-compatibility-request-index/v1"
+    assert "write_lean_compatibility_index_v1" not in owner.__all__
+    assert "lookup_lean_compatibility_index_v1" not in owner.__all__
+
+
+def test_compatibility_index_projects_foreign_missing_and_blocked_rows(no_execution, monkeypatch):
+    monkeypatch.setattr(os, "system", lambda *args, **kwargs: pytest.fail("os.system reached"))
+    foreign = _FIXTURE.compatibility_candidate(
+        "parent", candidate_id="foreign_index", profile="replayed-foreign-profile/v9",
+        premises=None, artifact_closure=None,
+    )
+    missing_premise = _FIXTURE.compatibility_candidate(
+        "direct", candidate_id="missing_premise_index", premises=None,
+    )
+    missing_artifact = _FIXTURE.compatibility_candidate(
+        "preservation", candidate_id="missing_artifact_index", artifact_closure=None,
+    )
+    bound = _FIXTURE.compatibility_candidate("conditional", candidate_id="conditional_index")
+    candidates = [foreign, missing_premise, missing_artifact, bound]
+    raw, digest = _FIXTURE.compatibility_request(candidates)
+    projection = owner.prepare_lean_compatibility_index_v1(raw, expected_request_sha256=digest)
+    assert set(projection) == {
+        "schema", "profile", "report_sha256", "key_sha256", "rows", "store_write",
+        "compiler_invoked", "lean_admitted", "legal_admission", "admitted", "formalized",
+        "semantic_preservation_claimed",
+    }
+    assert projection["schema"] == owner.LEAN_COMPATIBILITY_INDEX_SCHEMA
+    assert projection["profile"] == owner.LEAN_COMPATIBILITY_INDEX_PROFILE
+    assert projection["store_write"] is False
+    assert projection["compiler_invoked"] is projection["lean_admitted"] is False
+    assert projection["legal_admission"] is projection["admitted"] is projection["formalized"] is False
+    assert projection["semantic_preservation_claimed"] is False
+    rows = projection["rows"]
+    assert [row["disposition"] for row in rows] == [
+        "foreign_profile", "missing_premise_closure", "missing_artifact_closure", "bound",
+    ]
+    assert rows[0]["route"] is None and rows[0]["retained_evidence_ids"] == []
+    assert rows[0]["closure_bound"] is False and rows[0]["admission_blocked"] is True
+    assert rows[1]["route"] == "direct" and rows[1]["closure_bound"] is False
+    assert "premise_closure_absent" in rows[1]["unresolved_prerequisites"]
+    assert rows[2]["route"] == "preservation" and rows[2]["closure_bound"] is False
+    assert "artifact_closure_absent" in rows[2]["unresolved_prerequisites"]
+    assert rows[3]["route"] == "conditional" and rows[3]["closure_bound"] is True
+    assert rows[3]["admission_blocked"] is True
+    assert "packet_index_reader_absent" in rows[3]["unresolved_prerequisites"]
+    assert rows[3]["retained_evidence_ids"] == [
+        "parent-bound-pure-32-96", "parent-bound-native-2-6", "parent-bound-retained-files-29",
+    ]
+    for row in rows:
+        assert set(row) == {
+            "candidate_id", "profile", "ast_sha256", "ast_kind", "route", "disposition",
+            "closure_bound", "retained_evidence_ids", "unresolved_prerequisites",
+            "admission_blocked", "lean_admitted", "legal_admission", "admitted", "formalized",
+            "compiler_invoked",
+        }
+        assert row["admission_blocked"] is True
+        assert row["lean_admitted"] is row["legal_admission"] is row["admitted"] is False
+        assert row["formalized"] is row["compiler_invoked"] is False
+        assert row["unresolved_prerequisites"]
+        assert row["ast_sha256"] == sha(row["candidate_id"].encode())
+    packet_report = packet_owner.prepare_lean_compatibility_request_v1(
+        raw, expected_request_sha256=digest)
+    assert projection["report_sha256"] == packet_owner.lean_compatibility_request_sha256(packet_report)
+    assert projection["key_sha256"] == sha(canonical(rows))
+    assert [row["candidate_id"] for row in rows] == [
+        row["candidate_id"] for row in packet_report["compatibility_matrix"]
+    ]
+
+
+def test_compatibility_index_serialization_is_stable_and_order_sensitive(no_execution):
+    candidates = [_FIXTURE.compatibility_candidate(route) for route in ("native", "parent")]
+    raw, digest = _FIXTURE.compatibility_request(candidates)
+    projection = owner.prepare_lean_compatibility_index_v1(raw, expected_request_sha256=digest)
+    again = owner.prepare_lean_compatibility_index_v1(raw, expected_request_sha256=digest)
+    assert canonical(again) == canonical(projection)
+    pin = owner.lean_compatibility_index_sha256(projection)
+    assert pin == sha(canonical(projection))
+    checked = owner.validate_lean_compatibility_index_v1(
+        projection, raw, expected_request_sha256=digest, expected_projection_sha256=pin)
+    assert canonical(checked) == canonical(projection)
+    swapped = list(reversed(candidates))
+    other_raw, other_digest = _FIXTURE.compatibility_request(swapped)
+    other = owner.prepare_lean_compatibility_index_v1(other_raw, expected_request_sha256=other_digest)
+    assert other["key_sha256"] != projection["key_sha256"]
+    assert [row["candidate_id"] for row in other["rows"]] == ["parent_selected", "native_selected"]
+    tampered = deepcopy(projection)
+    tampered["lean_admitted"] = True
+    with pytest.raises(ValueError):
+        owner.validate_lean_compatibility_index_v1(
+            tampered, raw, expected_request_sha256=digest,
+            expected_projection_sha256=owner.lean_compatibility_index_sha256(tampered))
+    with pytest.raises(ValueError):
+        owner.prepare_lean_compatibility_index_v1(raw, expected_request_sha256="ab" * 32)
 

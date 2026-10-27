@@ -1125,3 +1125,462 @@ def test_parent_norm_packet_original_physical_file_drift_after_genuine_replay_re
     finally:
         parent_file.write_bytes(original_bytes)
         assert parent_file.read_bytes() == original_bytes
+
+
+# Compatibility preparation is an identity binding. These tests never build Lean.
+_COMPATIBILITY_ROUTES = ("parent", "direct", "conditional", "native", "preservation")
+_PARENT_COMPATIBILITY_PREMISES = (
+    "The complete supplied authored relational AST and native body are unchanged, with O/P/F as separate uninterpreted parameters.",
+    "The preservation theorem is only a definitional alias identity, not a proof of the norm or its source meaning.",
+    "No definition is applied, no membership or governing applicability is inferred, and all source/context/edition issues remain open.",
+)
+_DIRECT_COMPATIBILITY_SCOPE = (
+    "Only original_norm_preserved, a definitional alias identity under explicit "
+    "Entity, Agent, Interpretation and time. No norm truth, source meaning, governing edition, "
+    "definition applicability, graph/corpus admission, model equivalence or convergence claim."
+)
+_DIRECT_BUILD_PASSED_PREMISE = (
+    "A persisted build_passed receipt does not establish accepted execution or an accepted outer operation."
+)
+_NATIVE_IDENTITY_PREMISE = (
+    "The retained 23-case/69-phase native qualification is an identity reference. This request does not rerun it."
+)
+_CONDITIONAL_COMPATIBILITY_PREMISES = (
+    "The complete supplied norm and unary donor use the same arbitrary Entity carrier, Interpretation and fixed formal Nat time.",
+    "hDefinition remains an explicit unverified premise; body mode additionally assumes exact matching hMembership.",
+    "Only conditional definition instances and unchanged original-norm alias identity are prepared; norm truth, actual membership and applicability are not inferred.",
+    "Every parent norm/definition population, unresolved context, alternative and nomination remains retained in the complete original parent-bound report in the project input file.",
+    "No definition substitution, modal rewrite, statutory meaning, civil legal-as-of decision, graph admission or learning target is supplied.",
+)
+_PRESERVATION_COMPATIBILITY_PREMISES = (
+    "One supplied Interpretation, Entity carrier and Nat evaluation time are shared by all fragments.",
+    "Predicate-to-donor-body equivalence assumes the exact donor definition and explicit alias; neither is proved as a fact.",
+    "Joint assembly assumes the exact donor definition, consumer definition and alias.",
+    "Modular joint equivalence is a generated definitional obligation; native kernel checking has not run.",
+    "No conclusion about the consumer head follows from the donor body without its separate complete Boolean body obligations.",
+    "All four certificates use the original LegalCorpusV2.Interpretation and target the original module formula_0 directly.",
+    "Concrete AST value reconstruction, closedness and denotation do not establish statutory source meaning or the alias premise.",
+    "Python JSON parsing, reification and cryptographic commitments remain outside the kernel theorem.",
+    "All fifteen generated theorem obligations require separate native kernel execution.",
+)
+_PARENT_COMPATIBILITY_IMPORTS = (
+    {"role": "prelude", "imports": []},
+    {"role": "norm", "imports": ["prelude"]},
+    {"role": "preservation", "imports": ["norm"]},
+    {"role": "root", "imports": ["preservation"]},
+)
+_CONDITIONAL_COMPATIBILITY_IMPORTS = (
+    {"role": "prelude", "imports": []},
+    {"role": "norm", "imports": ["prelude"]},
+    {"role": "definition", "imports": ["prelude"]},
+    {"role": "occurrence", "imports": ["norm", "definition"]},
+    {"role": "preservation", "imports": ["norm", "occurrence"]},
+    {"role": "root", "imports": ["preservation"]},
+)
+_PRESERVATION_ROLE_NAMES = ("donor", "consumer", "alias", "joint")
+_BASE_UNRESOLVED = (
+    "governing_definition", "source_meaning", "source_edition", "definition_applicability",
+    "legal_review", "compiler_not_rerun",
+)
+
+
+def compatibility_candidate(route, *, candidate_id=None, ast_kind="native_ast", mode=None, **overrides):
+    """Exact selected-AST request row. Overrides may replace a closure with None."""
+    record = owner.lean_compatibility_route(route)
+    closure = owner.lean_compatibility_closure(route, mode=mode)
+    candidate_id = route + "_selected" if candidate_id is None else candidate_id
+    candidate = {
+        "candidate_id": candidate_id,
+        "profile": record["profile"],
+        "ast_sha256": sha(candidate_id.encode()),
+        "ast_kind": ast_kind,
+        "imports": closure["imports"],
+        "premises": closure["premises"],
+        "axioms": closure["axioms"],
+        "artifact_closure": closure["artifact_closure"],
+    }
+    candidate.update(overrides)
+    return candidate
+
+
+def compatibility_request(candidates):
+    raw = canonical({"schema": owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA, "candidates": list(candidates)})
+    return raw, sha(raw)
+
+
+def _compatibility_report(candidates):
+    raw, digest = compatibility_request(candidates)
+    return owner.prepare_lean_compatibility_request_v1(raw, expected_request_sha256=digest), raw, digest
+
+
+def _assert_admission_blocked(row):
+    assert row["unresolved_prerequisites"]
+    assert row["lean_admitted"] is False
+    assert row["legal_admission"] is False
+    assert row["admitted"] is False
+    assert row["formalized"] is False
+    assert row["semantic_preservation_claimed"] is False
+    assert row["compiler_invoked"] is False
+    assert row["selected_ast_replaced"] is False
+
+
+def test_compatibility_public_names_extend_the_packet_owner():
+    for name in (
+        "LEAN_COMPATIBILITY_REQUEST_SCHEMA",
+        "lean_compatibility_routes",
+        "lean_compatibility_route",
+        "lean_compatibility_closure",
+        "prepare_lean_compatibility_request_v1",
+        "lean_compatibility_request_sha256",
+        "validate_lean_compatibility_request_v1",
+    ):
+        assert hasattr(owner, name) and name in owner.__all__
+    assert owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA == "legal-lean-compatibility-request/v1"
+
+
+def test_compatibility_request_binds_selected_ast_to_exact_route_closure(no_execution, monkeypatch):
+    monkeypatch.setattr(os, "system", lambda *args, **kwargs: pytest.fail("os.system reached"))
+    candidates = [
+        compatibility_candidate(route, ast_kind="typed_expression" if route == "preservation" else "native_ast")
+        for route in _COMPATIBILITY_ROUTES
+    ]
+    report, raw, digest = _compatibility_report(candidates)
+    assert set(report) == {
+        "compatibility_matrix", "request_import_premise_axiom_closure", "artifact_closure",
+        "unresolved_questions", "reuse_owners",
+    }
+    rows = report["compatibility_matrix"]
+    assert [row["route"] for row in rows] == list(_COMPATIBILITY_ROUTES)
+    assert [row["candidate_id"] for row in rows] == [row["route"] + "_selected" for row in rows]
+    by_route = {row["route"]: row for row in rows}
+    profiles = {
+        "parent": "replayed-parent-literal-complete-authored-norm-project/v1",
+        "direct": "replayed-retained-parent-literal-complete-authored-norm-native-byte-packet/v1",
+        "conditional": "replayed-parent-bound-norm-definition-conditional-project/v1",
+        "native": "replayed-parent-literal-complete-authored-norm-native-build/v1",
+        "preservation": "replayed-retained-v2-corpus-preservation-byte-packet/v1",
+    }
+    for route, row in by_route.items():
+        assert row["disposition"] == "bound" and row["reason"] == "exact_route_closure"
+        assert row["closure_bound"] is True
+        assert row["profile"] == profiles[route]
+        assert row["ast_sha256"] == sha((route + "_selected").encode())
+        assert row["ast_kind"] == ("typed_expression" if route == "preservation" else "native_ast")
+        _assert_admission_blocked(row)
+        assert list(_BASE_UNRESOLVED) == [item for item in row["unresolved_prerequisites"]
+                                           if item in _BASE_UNRESOLVED]
+
+    parent = by_route["parent"]
+    assert parent["imports"] == [dict(item) for item in _PARENT_COMPATIBILITY_IMPORTS]
+    assert parent["premises"] == list(_PARENT_COMPATIBILITY_PREMISES)
+    assert parent["axioms"]["theorem_count"] == 1
+    assert parent["axioms"]["theorem_roles"] == ["original_norm_preserved"]
+    assert parent["axioms"]["introduced"] is False
+    assert parent["axioms"]["expected_dependencies"] == []
+    assert parent["axioms"]["observed_dependencies"] is None
+    assert parent["axioms"]["retained_empty_observation_required"] is False
+    assert parent["axioms"]["historical_observations_rerun"] is False
+    artifact = parent["artifact_closure"]
+    assert artifact["kind"] == "lake_project"
+    assert artifact["project_files"] == 7 and artifact["modules"] == 4 and artifact["theorems"] == 1
+    assert artifact["packet_files"] is None and artifact["packet_index_supported"] is False
+    assert artifact["compiled_artifacts"] == 0 and artifact["expected_olean_modules"] == 4
+    assert artifact["retained_cases"] == 68 and artifact["retained_phases"] == 204
+    assert artifact["build_eligible"] is False and artifact["compiler_rerun"] is False
+    assert artifact["closure_status"] == "preparation_only"
+    assert parent["retained_evidence_ids"] == ["parent-complete-norm-preparation-68-204"]
+
+    direct = by_route["direct"]
+    assert direct["imports"] == parent["imports"]
+    assert direct["premises"] == [
+        *_PARENT_COMPATIBILITY_PREMISES, _DIRECT_COMPATIBILITY_SCOPE, _DIRECT_BUILD_PASSED_PREMISE,
+    ]
+    assert direct["axioms"]["retained_empty_observation_required"] is True
+    assert direct["axioms"]["theorem_count"] == 1
+    artifact = direct["artifact_closure"]
+    assert artifact["kind"] == "retained_packet"
+    assert (artifact["project_files"], artifact["executed_inputs"], artifact["compiled_artifacts"],
+            artifact["root_files"]) == (8, 7, 4, 4)
+    assert sum((8, 7, 4, 4)) == artifact["packet_files"] == 23
+    assert artifact["modules"] == 4 and artifact["theorems"] == 1
+    assert artifact["packet_index_supported"] is True and artifact["receipt_consistency_only"] is True
+    assert artifact["retained_cases"] == 23 and artifact["retained_phases"] == 69
+    assert artifact["closure_status"] == "retained_packet_identity"
+    assert direct["retained_evidence_ids"] == [
+        "parent-complete-norm-native-23-69", "direct-parent-norm-packet-23",
+    ]
+
+    conditional = by_route["conditional"]
+    assert conditional["imports"] == [dict(item) for item in _CONDITIONAL_COMPATIBILITY_IMPORTS]
+    assert conditional["premises"] == list(_CONDITIONAL_COMPATIBILITY_PREMISES)
+    assert conditional["axioms"]["theorem_count"] == 2
+    assert conditional["axioms"]["required_suffix"] == "original_norm_preserved"
+    assert conditional["axioms"]["retained_empty_observation_required"] is True
+    artifact = conditional["artifact_closure"]
+    assert artifact["kind"] == "parent_bound_project"
+    assert artifact["project_files"] == 9 and artifact["modules"] == 6 and artifact["source_inputs"] == 9
+    assert artifact["mode"] == "instance_only" and artifact["theorems"] == 2
+    assert artifact["retained_files"] == 29 and artifact["compiled_modules"] == 6
+    assert artifact["packet_files"] is None and artifact["packet_index_supported"] is False
+    assert artifact["retained_pure_cases"] == 32 and artifact["retained_pure_phases"] == 96
+    assert artifact["retained_native_cases"] == 2 and artifact["retained_native_phases"] == 6
+    assert artifact["closure_status"] == "retained_29_file_identity_without_packet_index_reader"
+    assert conditional["retained_evidence_ids"] == [
+        "parent-bound-pure-32-96", "parent-bound-native-2-6", "parent-bound-retained-files-29",
+    ]
+    assert conditional["unresolved_prerequisites"][-1] == "packet_index_reader_absent"
+
+    native_row = by_route["native"]
+    assert native_row["imports"] == parent["imports"]
+    assert native_row["premises"] == [*_PARENT_COMPATIBILITY_PREMISES, _NATIVE_IDENTITY_PREMISE]
+    assert native_row["axioms"]["retained_empty_observation_required"] is True
+    artifact = native_row["artifact_closure"]
+    assert artifact["kind"] == "native_build_contract"
+    assert artifact["project_files"] == 7 and artifact["modules"] == 4 and artifact["theorems"] == 1
+    assert artifact["retained_capture_files"] == 23 and artifact["compiled_artifacts"] == 4
+    assert artifact["executed_inputs"] == 7 and artifact["packet_files"] is None
+    assert artifact["packet_index_supported"] is False
+    assert artifact["retained_cases"] == 23 and artifact["retained_phases"] == 69
+    assert artifact["closure_status"] == "historical_identity_not_rerun"
+    assert native_row["retained_evidence_ids"] == ["parent-complete-norm-native-23-69"]
+
+    preservation = by_route["preservation"]
+    roles = list(_PRESERVATION_ROLE_NAMES)
+    assert preservation["imports"] == [
+        {"role": "prelude", "imports": []},
+        {"role": "donor", "imports": ["prelude"]},
+        {"role": "consumer", "imports": ["prelude"]},
+        {"role": "alias", "imports": ["donor", "consumer"]},
+        {"role": "joint", "imports": ["donor", "consumer", "alias"]},
+        {"role": "corpus_root", "imports": ["joint"]},
+        {"role": "semantics", "imports": ["prelude"]},
+        *({"role": "preservation_" + role, "imports": [role, "semantics"]} for role in roles),
+        {"role": "preservation_root", "imports": ["corpus_root", *("preservation_" + role for role in roles)]},
+    ]
+    assert len(preservation["imports"]) == 12
+    assert preservation["premises"] == list(_PRESERVATION_COMPATIBILITY_PREMISES)
+    theorem_roles = ["consumer_predicate_iff_donor_body", "joint_of_components", "joint_matches_original"]
+    theorem_roles.extend(role + "." + suffix for role in roles
+                         for suffix in ("native_value_exact", "native_ast_closed", "denotation_matches_native"))
+    assert preservation["axioms"]["theorem_count"] == 15
+    assert preservation["axioms"]["theorem_roles"] == theorem_roles
+    assert preservation["axioms"]["required_suffix"] == "role_qualified"
+    assert preservation["axioms"]["retained_empty_observation_required"] is True
+    artifact = preservation["artifact_closure"]
+    assert artifact["kind"] == "retained_packet"
+    assert artifact["project_sources"] == 16 and artifact["project_files"] == 17
+    assert artifact["executed_inputs"] == 16 and artifact["compiled_artifacts"] == 12
+    assert artifact["root_files"] == 4 and artifact["packet_files"] == 49
+    assert sum((17, 16, 12, 4)) == 49
+    assert artifact["modules"] == 12 and artifact["theorems"] == 15
+    assert artifact["packet_index_supported"] is True
+    assert artifact["closure_status"] == "retained_packet_identity"
+    assert preservation["retained_evidence_ids"] == ["official-v2-preservation-packet-49"]
+
+    catalog = {item["route"]: item for item in owner.lean_compatibility_routes()}
+    assert catalog["parent"]["namespace"] == catalog["direct"]["namespace"] == catalog["native"]["namespace"] == "LegalCorpusParentNorm"
+    assert catalog["conditional"]["namespace"] == "LegalCorpusBoundNormDefinition"
+    assert catalog["preservation"]["namespace"] == "LegalCorpusV2Preservation"
+    assert catalog["preservation"]["project_profile"] != catalog["preservation"]["profile"]
+    evidence = {item["evidence_id"]: item for item in report["artifact_closure"]["retained_evidence"]}
+    assert evidence["parent-complete-norm-preparation-68-204"]["cases"] == 68
+    assert evidence["parent-complete-norm-preparation-68-204"]["phases"] == 204
+    assert evidence["parent-complete-norm-preparation-68-204"]["owner_symbol"] == "prepare_parent_norm_corpus_v1"
+    assert evidence["parent-complete-norm-native-23-69"]["cases"] == 23
+    assert evidence["parent-complete-norm-native-23-69"]["phases"] == 69
+    assert evidence["parent-complete-norm-native-23-69"]["owner_symbol"] == "validate_parent_norm_native_v1"
+    assert evidence["direct-parent-norm-packet-23"]["retained_files"] == 23
+    assert evidence["parent-bound-pure-32-96"]["cases"] == 32
+    assert evidence["parent-bound-pure-32-96"]["phases"] == 96
+    assert evidence["parent-bound-native-2-6"]["cases"] == 2
+    assert evidence["parent-bound-native-2-6"]["phases"] == 6
+    assert evidence["parent-bound-native-2-6"]["owner_symbol"] == "build_parent_bound_norm_definition_native_v1"
+    assert evidence["parent-bound-retained-files-29"]["retained_files"] == 29
+    assert evidence["parent-bound-retained-files-29"]["owner_symbol"] == "prepare_parent_bound_norm_definition_corpus_v1"
+    assert evidence["official-v2-preservation-packet-49"]["retained_files"] == 49
+    assert all(item["rerun"] is False for item in evidence.values())
+    symbols = [item["symbol"] for item in report["reuse_owners"]]
+    assert symbols == [
+        "prepare_parent_norm_corpus_v1",
+        "validate_parent_norm_native_packet_v1",
+        "prepare_parent_norm_preservation_index_v1",
+        "prepare_parent_bound_norm_definition_corpus_v1",
+        "validate_parent_bound_norm_definition_native_v1",
+        "validate_parent_norm_native_v1",
+        "prepare_definition_use_preservation_v2",
+        "validate_definition_use_preservation_packet_v2",
+        "prepare_definition_use_preservation_index_v2",
+    ]
+    assert "prepare_lean_compatibility_request_v1" not in symbols
+    questions = {item["question_id"]: item["status"] for item in report["unresolved_questions"]}
+    assert questions == {
+        "governing_definition": "unanswered",
+        "source_meaning": "unanswered",
+        "content_derived_module_names": "unanswered",
+        "lean_admission": "blocked",
+        "legal_admission": "blocked",
+        "conditional_packet_index": "unanswered",
+        "training_gold": "unanswered",
+    }
+    assert report["request_import_premise_axiom_closure"]["schema"] == "legal-lean-request-import-premise-axiom-closure/v1"
+    assert report["request_import_premise_axiom_closure"]["compiler_rerun"] is False
+    assert report["request_import_premise_axiom_closure"]["axioms_introduced"] is False
+    assert report["artifact_closure"]["schema"] == "legal-lean-artifact-closure/v1"
+    assert report["artifact_closure"]["compiler_rerun"] is False
+    assert owner.lean_compatibility_request_sha256(report) == sha(canonical(report))
+    checked = owner.validate_lean_compatibility_request_v1(
+        report, raw, expected_request_sha256=digest,
+        expected_report_sha256=owner.lean_compatibility_request_sha256(report))
+    assert canonical(checked) == canonical(report)
+
+
+def test_compatibility_body_mode_binds_three_theorems_without_admission(no_execution):
+    report, _raw, _digest = _compatibility_report([
+        compatibility_candidate("conditional", candidate_id="conditional_body", mode="body_with_membership"),
+    ])
+    row = report["compatibility_matrix"][0]
+    assert row["disposition"] == "bound" and row["closure_bound"] is True
+    assert row["axioms"]["theorem_count"] == 3
+    assert row["artifact_closure"]["mode"] == "body_with_membership"
+    assert row["artifact_closure"]["theorems"] == 3
+    assert row["artifact_closure"]["retained_files"] == 29
+    assert row["artifact_closure"]["packet_index_supported"] is False
+    assert row["artifact_closure"]["packet_files"] is None
+    _assert_admission_blocked(row)
+    assert "packet_index_reader_absent" in row["unresolved_prerequisites"]
+
+
+def test_foreign_profile_precedes_missing_closure_and_blocks_admission(no_execution):
+    foreign = compatibility_candidate(
+        "parent", candidate_id="foreign_profile_case", profile="replayed-foreign-profile/v9",
+        premises=None, artifact_closure=None, imports=None, axioms=None,
+    )
+    report, _raw, _digest = _compatibility_report([foreign])
+    row = report["compatibility_matrix"][0]
+    assert row["disposition"] == "foreign_profile" and row["reason"] == "foreign_profile"
+    assert row["route"] is None and row["retained_evidence_ids"] == []
+    assert row["closure_bound"] is False
+    assert row["imports"] is row["premises"] is row["axioms"] is row["artifact_closure"] is None
+    assert row["profile"] == "replayed-foreign-profile/v9"
+    assert row["ast_sha256"] == sha(b"foreign_profile_case")
+    _assert_admission_blocked(row)
+    assert "premise_closure_absent" not in row["unresolved_prerequisites"]
+
+
+@pytest.mark.parametrize("field,disposition,reason,prerequisite", [
+    ("premises", "missing_premise_closure", "premises_absent", "premise_closure_absent"),
+    ("artifact_closure", "missing_artifact_closure", "artifact_closure_absent", "artifact_closure_absent"),
+    ("imports", "missing_import_closure", "imports_absent", "import_closure_absent"),
+    ("axioms", "missing_axiom_closure", "axioms_absent", "axiom_closure_absent"),
+])
+def test_missing_route_closure_keeps_identity_and_blocks_admission(
+        field, disposition, reason, prerequisite, no_execution):
+    candidate = compatibility_candidate("direct", candidate_id="direct_gap_" + field, **{field: None})
+    report, _raw, _digest = _compatibility_report([candidate])
+    row = report["compatibility_matrix"][0]
+    assert row["disposition"] == disposition and row["reason"] == reason
+    assert row["route"] == "direct" and row["closure_bound"] is False
+    assert row["retained_evidence_ids"] == [
+        "parent-complete-norm-native-23-69", "direct-parent-norm-packet-23",
+    ]
+    assert row["imports"] is row["premises"] is row["axioms"] is row["artifact_closure"] is None
+    assert row["unresolved_prerequisites"] == [*_BASE_UNRESOLVED, prerequisite]
+    _assert_admission_blocked(row)
+
+
+def test_missing_premise_precedes_missing_artifact(no_execution):
+    candidate = compatibility_candidate(
+        "preservation", candidate_id="preservation_two_gaps", premises=None, artifact_closure=None,
+    )
+    report, _raw, _digest = _compatibility_report([candidate])
+    row = report["compatibility_matrix"][0]
+    assert row["disposition"] == "missing_premise_closure"
+    assert row["reason"] == "premises_absent"
+    assert row["route"] == "preservation" and row["closure_bound"] is False
+    assert "premise_closure_absent" in row["unresolved_prerequisites"]
+    assert "artifact_closure_absent" not in row["unresolved_prerequisites"]
+    _assert_admission_blocked(row)
+
+
+def test_closure_mismatch_does_not_admit_or_replace_the_selected_ast(no_execution):
+    parent = compatibility_candidate("parent", candidate_id="parent_premise_drift")
+    parent["premises"] = list(parent["premises"])
+    parent["premises"][0] = parent["premises"][0][:-1] + "X"
+    direct = compatibility_candidate("direct", candidate_id="direct_theorem_count")
+    direct["axioms"] = deepcopy(direct["axioms"])
+    direct["axioms"]["theorem_count"] = 2
+    conditional = compatibility_candidate("conditional", candidate_id="conditional_false_index")
+    conditional["artifact_closure"] = deepcopy(conditional["artifact_closure"])
+    conditional["artifact_closure"]["packet_index_supported"] = True
+    native_row = compatibility_candidate("native", candidate_id="native_unexpected_mode")
+    native_row["artifact_closure"] = deepcopy(native_row["artifact_closure"])
+    native_row["artifact_closure"]["mode"] = "instance_only"
+    invented = compatibility_candidate(
+        "conditional", candidate_id="conditional_invented_mode", mode="body_with_membership")
+    invented["artifact_closure"] = deepcopy(invented["artifact_closure"])
+    invented["artifact_closure"]["mode"] = "invented_mode"
+    cases = (
+        ("parent", parent), ("direct", direct), ("conditional", conditional),
+        ("native", native_row), ("conditional", invented),
+    )
+    report, _raw, _digest = _compatibility_report([candidate for _route, candidate in cases])
+    for (route, candidate), row in zip(cases, report["compatibility_matrix"]):
+        assert row["disposition"] == "closure_mismatch"
+        assert row["reason"] == "closure_differs_from_route"
+        assert row["route"] == route and row["closure_bound"] is False
+        assert row["ast_sha256"] == candidate["ast_sha256"]
+        assert row["imports"] is row["premises"] is row["axioms"] is row["artifact_closure"] is None
+        _assert_admission_blocked(row)
+    assert report["compatibility_matrix"][2]["unresolved_prerequisites"][-1] == "packet_index_reader_absent"
+
+
+def test_compatibility_serialization_is_stable_and_order_sensitive(no_execution):
+    candidates = [compatibility_candidate(route) for route in _COMPATIBILITY_ROUTES]
+    report, raw, digest = _compatibility_report(candidates)
+    again, _raw, _digest = _compatibility_report(candidates)
+    assert canonical(again) == canonical(report)
+    reordered = json.dumps(
+        {"candidates": candidates, "schema": owner.LEAN_COMPATIBILITY_REQUEST_SCHEMA},
+        ensure_ascii=False, allow_nan=False).encode()
+    third = owner.prepare_lean_compatibility_request_v1(reordered, expected_request_sha256=sha(reordered))
+    assert canonical(third) == canonical(report)
+    swapped = list(reversed(candidates))
+    reversed_report, _raw, _digest = _compatibility_report(swapped)
+    assert owner.lean_compatibility_request_sha256(reversed_report) != owner.lean_compatibility_request_sha256(report)
+    assert [row["candidate_id"] for row in reversed_report["compatibility_matrix"]] == [
+        row["candidate_id"] for row in reversed(report["compatibility_matrix"])
+    ]
+    pin = owner.lean_compatibility_request_sha256(report)
+    tampered = deepcopy(report)
+    tampered["compatibility_matrix"][0]["candidate_id"] = "rewritten_candidate"
+    with pytest.raises(ValueError):
+        owner.validate_lean_compatibility_request_v1(
+            tampered, raw, expected_request_sha256=digest, expected_report_sha256=pin)
+    with pytest.raises(ValueError):
+        owner.prepare_lean_compatibility_request_v1(raw, expected_request_sha256="0" * 64)
+    duplicate = raw.replace(b"{", b'{"schema":"legal-lean-compatibility-request/v1",', 1)
+    with pytest.raises(ValueError):
+        owner.prepare_lean_compatibility_request_v1(duplicate, expected_request_sha256=sha(duplicate))
+
+
+def test_compatibility_request_rejects_duplicate_ids_bad_shapes_and_empty_sets(no_execution):
+    with pytest.raises(ValueError):
+        _compatibility_report([
+            compatibility_candidate("parent", candidate_id="same_candidate"),
+            compatibility_candidate("direct", candidate_id="same_candidate"),
+        ])
+    with pytest.raises(ValueError):
+        _compatibility_report([])
+    with pytest.raises(ValueError):
+        _compatibility_report([
+            compatibility_candidate("parent", candidate_id="parent_" + str(index))
+            for index in range(17)
+        ])
+    shaped = compatibility_candidate("native", candidate_id="native_bad_imports")
+    shaped["imports"] = {"role": "prelude", "imports": []}
+    with pytest.raises(ValueError):
+        _compatibility_report([shaped])
+    uppercase = compatibility_candidate("parent", candidate_id="parent_uppercase_ast")
+    uppercase["ast_sha256"] = uppercase["ast_sha256"].upper()
+    with pytest.raises(ValueError):
+        _compatibility_report([uppercase])

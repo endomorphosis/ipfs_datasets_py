@@ -839,3 +839,86 @@ def lookup_parent_norm_preservation_index_v1(
 __all__ += ["PARENT_NORM_INDEX_SCHEMA", "PARENT_NORM_INDEX_OPERATION_SCHEMA", "PARENT_NORM_INDEX_PROFILE",
             "prepare_parent_norm_preservation_index_v1", "write_parent_norm_preservation_index_v1",
             "lookup_parent_norm_preservation_index_v1"]
+
+
+# Observational projection of the packet compatibility export. No store write or compiler.
+LEAN_COMPATIBILITY_INDEX_SCHEMA = "legal-lean-compatibility-index-projection/v1"
+LEAN_COMPATIBILITY_INDEX_PROFILE = "retained-lean-compatibility-request-index/v1"
+_LEAN_INDEX_FIELDS = frozenset({
+    "schema", "profile", "report_sha256", "key_sha256", "rows", "store_write", "compiler_invoked",
+    "lean_admitted", "legal_admission", "admitted", "formalized", "semantic_preservation_claimed",
+})
+_LEAN_INDEX_ROW_FIELDS = frozenset({
+    "candidate_id", "profile", "ast_sha256", "ast_kind", "route", "disposition", "closure_bound",
+    "retained_evidence_ids", "unresolved_prerequisites", "admission_blocked", "lean_admitted",
+    "legal_admission", "admitted", "formalized", "compiler_invoked",
+})
+
+
+def prepare_lean_compatibility_index_v1(request_raw, *, expected_request_sha256):
+    """Project one compatibility report. Do not write storage or invoke a compiler."""
+    from . import legal_corpus_definition_use_preservation_packet_v2 as packet
+    report = packet.prepare_lean_compatibility_request_v1(
+        request_raw, expected_request_sha256=expected_request_sha256)
+    _need(type(report) is dict and set(report) == {
+        "compatibility_matrix", "request_import_premise_axiom_closure", "artifact_closure",
+        "unresolved_questions", "reuse_owners"}, "closed compatibility report required")
+    matrix = report["compatibility_matrix"]
+    _need(type(matrix) is list and matrix, "compatibility matrix required")
+    rows = []
+    for row in matrix:
+        _need(type(row) is dict and row["lean_admitted"] is False and row["legal_admission"] is False
+              and row["admitted"] is False and row["formalized"] is False
+              and row["compiler_invoked"] is False and row["semantic_preservation_claimed"] is False
+              and row["selected_ast_replaced"] is False and row["unresolved_prerequisites"],
+              "unresolved prerequisites block Lean and legal admission")
+        projected = {
+            "candidate_id": row["candidate_id"], "profile": row["profile"],
+            "ast_sha256": row["ast_sha256"], "ast_kind": row["ast_kind"], "route": row["route"],
+            "disposition": row["disposition"], "closure_bound": row["closure_bound"],
+            "retained_evidence_ids": list(row["retained_evidence_ids"]),
+            "unresolved_prerequisites": list(row["unresolved_prerequisites"]),
+            "admission_blocked": True, "lean_admitted": False, "legal_admission": False,
+            "admitted": False, "formalized": False, "compiler_invoked": False,
+        }
+        _need(set(projected) == _LEAN_INDEX_ROW_FIELDS, "closed compatibility index row required")
+        rows.append(projected)
+    projection = {
+        "schema": LEAN_COMPATIBILITY_INDEX_SCHEMA, "profile": LEAN_COMPATIBILITY_INDEX_PROFILE,
+        "report_sha256": packet.lean_compatibility_request_sha256(report),
+        "key_sha256": _sha(_wire(rows)), "rows": rows, "store_write": False,
+        "compiler_invoked": False, "lean_admitted": False, "legal_admission": False,
+        "admitted": False, "formalized": False, "semantic_preservation_claimed": False,
+    }
+    _need(set(projection) == _LEAN_INDEX_FIELDS, "closed compatibility index projection required")
+    return json.loads(_wire(projection))
+
+
+def lean_compatibility_index_sha256(projection):
+    """Hash one compatibility projection without opening a store."""
+    _need(type(projection) is dict and set(projection) == _LEAN_INDEX_FIELDS
+          and projection["schema"] == LEAN_COMPATIBILITY_INDEX_SCHEMA
+          and projection["profile"] == LEAN_COMPATIBILITY_INDEX_PROFILE,
+          "explicit compatibility index projection required")
+    return _sha(_wire(projection))
+
+
+def validate_lean_compatibility_index_v1(projection, request_raw, *, expected_request_sha256,
+                                         expected_projection_sha256):
+    """Require an independent projection pin and complete regeneration."""
+    _need(type(expected_projection_sha256) is str and len(expected_projection_sha256) == 64
+          and all(character in "0123456789abcdef" for character in expected_projection_sha256),
+          "independent compatibility index digest required")
+    _need(lean_compatibility_index_sha256(projection) == expected_projection_sha256,
+          "compatibility index projection SHA256 mismatch")
+    original = _wire(projection)
+    regenerated = prepare_lean_compatibility_index_v1(
+        request_raw, expected_request_sha256=expected_request_sha256)
+    _need(_wire(regenerated) == original,
+          "compatibility index projection differs from complete regeneration")
+    return regenerated
+
+
+__all__ += ["LEAN_COMPATIBILITY_INDEX_SCHEMA", "LEAN_COMPATIBILITY_INDEX_PROFILE",
+            "prepare_lean_compatibility_index_v1", "lean_compatibility_index_sha256",
+            "validate_lean_compatibility_index_v1"]
