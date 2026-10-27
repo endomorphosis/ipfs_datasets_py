@@ -19,12 +19,23 @@ import importlib.util
 from pathlib import Path
 import sys
 import types
+import zipfile
 
 import pytest
 
 ROOT = Path(__file__).absolute().parents[4]
 PREFIX = "ipfs_datasets_py.logic.autoformal.experimental"
-PROPOSALS = ROOT / "docs/autoformalization/proposals/patches"
+HISTORY_ARCHIVE = ROOT / "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip"
+# Original patch objects already live in the tracked history archive.
+# Keep the independent source oracles and every parser/size/hash assertion.
+PATCH_OBJECTS = {
+    'context_initialization.patch': (22937, '7d990e13e0e0e2395d932682fdcdc0cb5878bf64c6027589b905007f83cd6163'),
+    'context_trained.patch': (22697, 'c40802def6e6d50bb66d1df62eb9c1d0c003438219486846df96993251f64270'),
+    'gated_conditioning.patch': (22417, '876a346fdfdce2f1715272e86302bfa21323fffa38d707f8c545ee60649faf3f'),
+    'gated_training_state.patch': (25741, '13ac5bfbf934788ba001b7c0bbf36c18c5a5c6296612e6d0b59f8a1a7fe8255e'),
+    'journal_inference.patch': (35074, '1f7a283109b7638163966270454ddd3e2d8e5d253593ffc27594134ee3ec1bb9'),
+    'journal_session.patch': (40480, 'be7542ca85c1231cc67212edd1e303de956a2ba4c51289f4233a6b714c80ba19'),
+}
 SPECS = {
     "context_initialization": ("projected_context_decoder_v1", "context_initialization.patch", 22244,
         "de68e2ed3975c3ae27c6ed733fec7e1b162ffecc7d5a073280b40411eff3574d",
@@ -47,8 +58,9 @@ SPECS = {
 }
 CHANGED = {
     "context_initialization": {"_raw", "_implementation", "_validate", "_parent",
-        "model_state", "build_from_real_parent", "load_with_real_parent"},
-    "context_trained": {"_raw", "_implementation", "_validate"},
+        "model_state", "build_from_real_parent", "load_with_real_parent", "infer"},
+    "context_trained": {"_raw", "_implementation", "_validate", "_anchors",
+        "_model_interface", "load_trained_with_real_parent", "infer_trained"},
     "gated_conditioning": {"_sources"},
     "gated_training_state": {"_candidate", "_implementation", "_validate", "pack"},
     "journal_session": {"_owners", "_validate"},
@@ -84,7 +96,17 @@ def owners(monkeypatch):
 
 def original_source(key):
     _, patch, size, digest, _ = SPECS[key]
-    raw = (PROPOSALS / patch).read_bytes()
+    object_bytes, object_sha256 = PATCH_OBJECTS[patch]
+    member = "objects/" + object_sha256
+    assert 0 < HISTORY_ARCHIVE.stat().st_size <= 8 * 1024 * 1024
+    with zipfile.ZipFile(HISTORY_ARCHIVE, "r") as archive:
+        assert archive.namelist().count(member) == 1
+        info = archive.getinfo(member)
+        assert info.file_size == object_bytes <= 65536
+        with archive.open(info, "r") as stream:
+            raw = stream.read(65537)
+    assert len(raw) == object_bytes
+    assert hashlib.sha256(raw).hexdigest() == object_sha256
     assert len(raw) <= 65536
     lines = raw.decode().splitlines(keepends=True)
     assert sum(line.startswith("@@ ") for line in lines) == 1
@@ -104,13 +126,20 @@ def test_retained_algorithms_and_constants_are_preserved(key):
     old, new = defs(original), defs(current)
     added = {"source_profile_bridge"} | ({"_require_current_producer"} if key == "gated_training_state" else set())
     if key == "context_initialization":
-        added.add("inspect_parent_source_compatibility")
+        added.update({"inspect_parent_source_compatibility", "_bounded_checkpoint_json",
+            "_parent_core", "_validate_core", "_load_validated_tensors", "_infer_validated",
+            "_profile_mode", "_retained_context150_checkpoint", "_retained_context150_inputs",
+            "_retained_context150_receipt", "inspect_retained_context150_profile", "_model_interface",
+            "load_retained_context150_initial", "infer_retained_context150_initial"})
+    elif key == "context_trained":
+        added.update({"_anchors_core", "_validate_core", "_load_validated_tensors", "_infer_validated",
+                      "_retained_inputs", "load_retained_context150_trained", "infer_retained_context150_trained"})
     assert set(new) == set(old) | added
     for name in set(old) - CHANGED[key]:
         assert ast.dump(old[name]) == ast.dump(new[name]), name
     # These algorithms acquire only an early fixed-source gate. Prove the rest
     # is still the complete retained body, rather than excluding it wholesale.
-    early_only = ({"_parent", "model_state", "build_from_real_parent", "load_with_real_parent"}
+    early_only = ({"model_state", "build_from_real_parent"}
                   if key == "context_initialization" else {"_sources"} if key == "gated_conditioning" else set())
     for name in early_only:
         function = new[name]
@@ -128,10 +157,84 @@ def test_retained_algorithms_and_constants_are_preserved(key):
             and isinstance(node.value.func, ast.Name)
             and node.value.func.id == "_require_current_producer")]
         assert ast.dump(old["pack"]) == ast.dump(function)
+    if key in {"context_initialization", "context_trained"}:
+        # Preserve complete moved numerical bodies, not just selected statements.
+        dump = lambda body: [ast.dump(node) for node in body]
+        def strip_gate(body):
+            return [node for node in body if not (isinstance(node, ast.Expr)
+                and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute)
+                and isinstance(node.value.func.value, ast.Name) and node.value.func.value.id == "_bridge"
+                and node.value.func.attr == "require_shared_source")]
+        names = (("load_with_real_parent", "infer") if key == "context_initialization"
+                 else ("load_trained_with_real_parent", "infer_trained"))
+        for original_name, helper in zip(names, ("_load_validated_tensors", "_infer_validated")):
+            wrapper = strip_gate(new[original_name].body)
+            call = wrapper[-1]
+            assert isinstance(call, ast.Return) and isinstance(call.value, ast.Call)
+            assert isinstance(call.value.func, ast.Name) and call.value.func.id == helper
+            assert ast.dump(new[original_name].args) == ast.dump(old[original_name].args)
+            assert dump(wrapper[:-1] + new[helper].body) == dump(old[original_name].body), original_name
+        # The exact old thirteen-tensor conversion, copied/zero columns and
+        # frozen projection checks remain the complete validator suffix.
+        def tensor_tail(function):
+            indices = [i for i, node in enumerate(function.body) if isinstance(node, ast.Assign)
+                       and any(isinstance(t, ast.Name) and t.id == "shapes" for t in node.targets)]
+            assert len(indices) == 1
+            return function.body[indices[0]:]
+        assert dump(tensor_tail(old["_validate"])) == dump(tensor_tail(new["_validate_core"]))
+        for name in (("_parent", "_validate") if key == "context_initialization" else ("_anchors", "_validate")):
+            wrapper = new[name]
+            assert ast.dump(wrapper.args) == ast.dump(old[name].args)
+            assert len(wrapper.body) == 1 and isinstance(wrapper.body[0], ast.Return)
+            call = wrapper.body[0].value
+            assert isinstance(call, ast.Call) and isinstance(call.func, ast.Name) and call.func.id == name + "_core"
+            assert [ast.unparse(arg) for arg in call.args] == [arg.arg for arg in old[name].args.args]
+            assert len(call.keywords) == 1 and call.keywords[0].arg == "profile"
+            assert isinstance(call.keywords[0].value, ast.Constant) and call.keywords[0].value.value is None
+        if key == "context_initialization":
+            body = deepcopy(new["_parent_core"].body)
+            assert ast.unparse(body[0]) == "_profile_mode(profile)"
+            assert ast.unparse(body[1]) == "_bridge.require_shared_source(source)"
+            assert ast.unparse(body[2]) == ("if profile is not None:\n"
+                "    _retained_context150_checkpoint(source, checkpoint, 'parent', parent_file_sha256)")
+            body = body[3:]
+            branches = [i for i, node in enumerate(body) if isinstance(node, ast.If)
+                        and ast.unparse(node.test) == "profile is None"]
+            assert len(branches) == 1
+            index = branches[0]; assert not body[index].orelse
+            body[index:index + 1] = body[index].body
+            assert dump(body) == dump(old["_parent"].body)
+            trained_original = ast.parse(original_source("context_trained"))
+            interface = next(n for n in trained_original.body if isinstance(n, ast.FunctionDef) and n.name == "_model_interface")
+            class RelocateInterface(ast.NodeTransformer):
+                def visit_Attribute(self, node):
+                    if isinstance(node.value, ast.Name) and node.value.id == "parity_module" and node.attr in {"__name__", "__file__"}:
+                        return ast.Name(id=node.attr, ctx=ast.Load())
+                    return self.generic_visit(node)
+            assert dump(RelocateInterface().visit(interface).body) == dump(new["_model_interface"].body)
+        else:
+            body = deepcopy(new["_anchors_core"].body)
+            assert ast.unparse(body[0]) == "_bridge.require_module('context_initialization', parity_module)"
+            assert ast.unparse(body[1]) == "parity_module._profile_mode(profile)"
+            class RestoreAnchorCalls(ast.NodeTransformer):
+                def visit_Call(self, node):
+                    if isinstance(node.func, ast.Attribute) and node.func.attr in {"_validate_core", "_parent_core"}:
+                        assert isinstance(node.func.value, ast.Name) and node.func.value.id == "parity_module"
+                        assert len(node.keywords) == 1 and node.keywords[0].arg == "profile"
+                        assert ast.unparse(node.keywords[0].value) == "profile"
+                        node.func.attr = node.func.attr.removesuffix("_core"); node.keywords = []
+                    return self.generic_visit(node)
+            assert dump([RestoreAnchorCalls().visit(node) for node in body[2:]]) == dump(old["_anchors"].body)
+            assert dump(new["_model_interface"].body) == dump(ast.parse(
+                "_bridge.require_module('context_initialization', parity_module)\n"
+                "return parity_module._model_interface(torch, model, vocabulary_size)").body)
     assignments = lambda tree: {ast.unparse(node.targets[0]): ast.dump(node.value)
         for node in tree.body if isinstance(node, ast.Assign)}
     a, b = assignments(original), assignments(current)
-    assert set(b) == set(a) | {"_PORTED_SOURCE_SHA256"}
+    extra = {"_PORTED_SOURCE_SHA256"}
+    if key == "context_initialization":
+        extra |= {"_RETAINED_CONTEXT150_PROFILE", "_RETAINED_CONTEXT150_CONSUMER", "_RETAINED_CONTEXT150_PINS"}
+    assert set(b) == set(a) | extra
     for name in a:
         assert a[name] == b[name], name
 
@@ -402,8 +505,8 @@ def source_metadata_only(owners, monkeypatch):
     package initialization. No owner function, implementation recipe or source
     validator is substituted. Python code imports may read canonical package
     or stdlib code plus four genuine CID dependency roots and typing_extensions.
-    Explicit reads allow package .py files, the pinned retained gated proposal
-    and two authenticated CID support tables. Artifact,
+    Explicit reads allow package .py files, the exact tracked history archive
+    used for pinned original source oracles, and two authenticated CID support tables. Artifact,
     workspace, checkpoint and dataset bodies are outside this read boundary.
     """
     package = ROOT / "ipfs_datasets_py"
@@ -419,7 +522,7 @@ def source_metadata_only(owners, monkeypatch):
     real_open, real_io_open, real_os_open = builtins.open, io.open, os.open
     real_code_open = _io.open_code
     stdlib = Path(sys.base_prefix) / "lib" / ("python" + str(sys.version_info.major) + "." + str(sys.version_info.minor))
-    proposal = PROPOSALS / "gated_conditioning.patch"
+    history_archive = HISTORY_ARCHIVE
     # CID production is genuinely reached by the canonical compiler metadata
     # import. Permit its finite pure-Python dependency code, never the enclosing
     # site-packages directory or arbitrary resource files beneath these roots.
@@ -482,7 +585,7 @@ def source_metadata_only(owners, monkeypatch):
                 assert witness(before) == witness(after) and len(raw) == expected_bytes
                 assert hashlib.sha256(raw).hexdigest() == expected_sha256
             else:
-                assert ((package in path.parents and path.suffix == ".py") or path == proposal), \
+                assert ((package in path.parents and path.suffix == ".py") or path == history_archive), \
                     "only declared source/support files may be read; data bodies denied"
             reads.append(path)
         return path
@@ -1171,3 +1274,262 @@ def test_parent_source_preflight_rejects_caller_owner_before_callbacks(owners):
     with pytest.raises(owners["bridge"].SourceProfileBridgeError):
         owners["context_initialization"].inspect_parent_source_compatibility(
             Forbidden(), {}, expected_checkpoint_sha256="0" * 64)
+
+
+# These three historical identities are independent of product profile constants.
+# Physical bytes are authenticated by this enrolled owner; product receipts only
+# record the caller's physical-file declarations and canonical-value checks.
+_RETAINED_CONTEXT150_ASSETS = {
+    "parent": (621716, "36b6b3a5a31ce88748a7ff69f1ab55f16dae79a78bfb635436a7b13a34c9cbf2",
+        "36b6b3a5a31ce88748a7ff69f1ab55f16dae79a78bfb635436a7b13a34c9cbf2",
+        "089e67c808189b469ed76c61ce7a41dd144d1caa35fc9869a29b794053e823d2",
+        "fbde4c60f84b14588060264b92bc435d01f07b4ee49010f16162b9b97908c849"),
+    "initial": (1243523, "10022551f21a66621b114da7ffff7705d39c606e5138cd39a4150d65e69ac12f",
+        "913af280b5dd361c14d37a15362d2dd196713b1ba9afd9319397a9077a5872df",
+        "11fc8b849896a0f8f3588c113e35ed593d2274516c81b9f99a422e23281b878c",
+        "9143fe32552e75aa9c32707883d464a2d54238db9dcea7a002bb564b4670a5f4"),
+    "trained": (1990366, "59df2f43ac4e9c05524100d403f90b901048b1364d57df33c811af648aa409bd",
+        "9f75b3a827ac45a239c66b8a87e942568b8619fd1fee817e0adc450ea93b0f95",
+        "dbc6e73afa9bea81a67c803066d53e35141562f364d72c2aaf2b161f52e1d5a3",
+        "0ed6b90b02d987765cb12c04b8250f19c43aed3a8016c67c68f97edd263d207d"),
+}
+
+
+@pytest.fixture
+def retained_context150_assets():
+    names = ("LEGAL_IR_RETAINED_CONTEXT150_ASSET_MANIFEST",
+             "LEGAL_IR_RETAINED_CONTEXT150_ASSET_MANIFEST_SHA256",
+             "LEGAL_IR_RETAINED_CONTEXT150_EXPORTS",
+             "LEGAL_IR_RETAINED_CONTEXT150_EVIDENCE_ROOT")
+    offered = [os.environ.get(name) for name in names]
+    if not any(offered):
+        pytest.skip("retained Context150 restore requires an admitted frozen asset manifest")
+    assert all(type(value) is str and value for value in offered), "complete Context150 enrollment required"
+    manifest_path, manifest_sha, exports_path, evidence_path = offered
+    raw = _retained_gated_read(manifest_path, Path(manifest_path).lstat().st_size, manifest_sha, 16384)
+    manifest = _retained_gated_json(raw)
+    assert type(manifest) is dict and set(manifest) == {"schema", "checkpoints"}
+    assert manifest["schema"] == "legal-ir-retained-context150-restore-assets/v1"
+    assert type(manifest["checkpoints"]) is dict and set(manifest["checkpoints"]) == set(_RETAINED_CONTEXT150_ASSETS)
+    # Private validation copies have a different Python ROOT. The admitted
+    # owner declares its actual evidence root independently of that source tree.
+    evidence = Path(evidence_path)
+    assert evidence.is_absolute() and evidence.resolve(strict=True) == evidence
+    assert evidence.parts[-3:] == ("workspace", "test-logs", "federal-corpus-audits")
+    evidence_info = evidence.lstat()
+    assert stat.S_ISDIR(evidence_info.st_mode) and evidence_info.st_uid == os.getuid()
+    assert evidence in Path(manifest_path).parents
+    authenticated = {}
+    for role, (size, digest, _, _, _) in _RETAINED_CONTEXT150_ASSETS.items():
+        descriptor = manifest["checkpoints"][role]
+        assert type(descriptor) is dict and set(descriptor) == {"path", "bytes", "sha256"}
+        assert type(descriptor["bytes"]) is int and descriptor["bytes"] == size
+        assert descriptor["sha256"] == digest and evidence in Path(descriptor["path"]).parents
+        authenticated[role] = _retained_gated_read(descriptor["path"], size, digest, 8 * 1024**2)
+    # Parse only after every original file encoding has been authenticated.
+    values = {role: _retained_gated_json(raw) for role, raw in authenticated.items()}
+    exports = Path(exports_path)
+    assert exports.is_absolute() and exports.resolve(strict=True) == exports and evidence in exports.parents
+    info = exports.lstat()
+    assert stat.S_ISDIR(info.st_mode) and stat.S_IMODE(info.st_mode) == 0o700 and info.st_uid == os.getuid()
+    return manifest, manifest_sha, values, exports, (info.st_dev, info.st_ino)
+
+
+@pytest.fixture
+def retained_context150_metadata(retained_context150_assets, source_metadata_only):
+    # Asset enrollment completes before the existing no-framework/no-data fence.
+    owners, reads = source_metadata_only
+    source = importlib.import_module("ipfs_datasets_py.logic.formalization.autoencoder.source_training_v2")
+    return owners, source, retained_context150_assets, reads
+
+
+def _context150_inspect(module, source, values, *, trained=True, hashes=None):
+    identities = {role + "_file_sha256": pin[1] for role, pin in _RETAINED_CONTEXT150_ASSETS.items()}
+    if hashes is not None:
+        identities.update(hashes)
+    if not trained:
+        identities["trained_file_sha256"] = None
+    return module.inspect_retained_context150_profile(source, values["parent"], values["initial"],
+        values["trained"] if trained else None, **identities)
+
+
+@pytest.mark.parametrize("trained", [False, True], ids=["initial", "trained"])
+def test_context150_exact_metadata_is_immutable_and_does_not_qualify_weights(retained_context150_metadata, trained):
+    owners, source, assets, _ = retained_context150_metadata
+    values = assets[2]
+    before = {role: source.digest(value) for role, value in values.items()}
+    raw = _context150_inspect(owners["context_initialization"], source, values, trained=trained)
+    assert type(raw) is bytes and len(raw) < 16384
+    report = _retained_gated_json(raw)
+    assert source._raw(report) == raw
+    assert report["schema"] == "legal-ir-retained-context150-execution-identity/v1"
+    assert report["profile_id"] == "retained-context150-source-compatibility/v1"
+    assert report["operation"] == "metadata_inspection"
+    assert report["current_shared_consumer_recipe_sha256"] == "794903b450b650354c25f70649a460cbe33e21f101f8fc06085769169f73e70a"
+    assert report["checkpoint_identities"] == [{"role": role, "owner_declared_physical_file_sha256": pin[1],
+        "canonical_value_sha256": pin[2], "weights_sha256": pin[3], "historical_producer_recipe_sha256": pin[4]}
+        for role, pin in _RETAINED_CONTEXT150_ASSETS.items() if trained or role != "trained"]
+    for field in ("physical_files_opened_or_authenticated_here", "checkpoint_fields_rewritten", "default_loaders_relaxed",
+                  "weights_checked", "tensor_shapes_checked", "numerical_execution_performed", "checkpoint_load_qualified",
+                  "numerical_equivalence_qualified", "training_performed", "training_history_verified", *source.FALSE):
+        assert report[field] is False
+    assert before == {role: source.digest(value) for role, value in values.items()}
+    report["checkpoint_identities"][0]["weights_sha256"] = "0" * 64
+    assert _context150_inspect(owners["context_initialization"], source, values, trained=trained) == raw
+
+
+@pytest.mark.parametrize("role", ["parent", "initial", "trained"])
+def test_context150_complete_canonical_lineage_rejects_mutations(retained_context150_metadata, role):
+    owners, source, assets, _ = retained_context150_metadata
+    for field, replacement in (("weights_sha256", "0" * 64), ("implementation", {}), ("model_state", {})):
+        values = deepcopy(assets[2]); values[role][field] = replacement
+        with pytest.raises(ValueError, match="canonical checkpoint differs"):
+            _context150_inspect(owners["context_initialization"], source, values)
+
+
+def test_context150_physical_declarations_are_complete_and_distinct_from_canonical(retained_context150_metadata):
+    owners, source, assets, _ = retained_context150_metadata
+    module, values = owners["context_initialization"], assets[2]
+    for role, pin in _RETAINED_CONTEXT150_ASSETS.items():
+        for offered in (None, True, "0" * 64):
+            with pytest.raises(ValueError, match="physical|file identity|SHA256"):
+                _context150_inspect(module, source, values, hashes={role + "_file_sha256": offered})
+        if role != "parent":
+            assert pin[1] != pin[2]
+            with pytest.raises(ValueError, match="file identity differs"):
+                _context150_inspect(module, source, values, hashes={role + "_file_sha256": pin[2]})
+    with pytest.raises(ValueError, match="trained physical identity"):
+        module.inspect_retained_context150_profile(source, values["parent"], values["initial"],
+            parent_file_sha256=_RETAINED_CONTEXT150_ASSETS["parent"][1],
+            initial_file_sha256=_RETAINED_CONTEXT150_ASSETS["initial"][1],
+            trained_file_sha256=_RETAINED_CONTEXT150_ASSETS["trained"][1])
+
+
+def test_context150_consumer_commitment_mismatch_refuses(retained_context150_metadata, monkeypatch):
+    owners, source, assets, _ = retained_context150_metadata
+    # Keep every real source callback intact. A changed expected consumer pin
+    # must reject the actual current recipe, not silently widen compatibility.
+    module = owners["context_initialization"]
+    monkeypatch.setattr(module, "_RETAINED_CONTEXT150_CONSUMER", "0" * 64)
+    with pytest.raises(ValueError, match="current shared-source consumer differs"):
+        _context150_inspect(module, source, assets[2])
+
+
+def test_context150_default_parent_and_initial_validation_remain_strict(retained_context150_metadata):
+    owners, source, assets, _ = retained_context150_metadata
+    class Forbidden:
+        def __getattr__(self, name):
+            raise AssertionError("strict source mismatch must precede tensor access")
+    values, module = assets[2], owners["context_initialization"]
+    for call in (
+        lambda: module._parent(Forbidden(), source, values["parent"], _RETAINED_CONTEXT150_ASSETS["parent"][1]),
+        lambda: module._validate(Forbidden(), source, values["parent"], values["initial"], _RETAINED_CONTEXT150_ASSETS["parent"][1]),
+    ):
+        with pytest.raises(ValueError, match="parent source implementation differs"):
+            call()
+
+
+def test_context150_all_entry_points_require_genuine_source_before_callbacks(owners):
+    class Forbidden:
+        def __getattr__(self, name):
+            raise AssertionError("caller numerical/source callback must not run")
+    projected, trained = owners["context_initialization"], owners["context_trained"]
+    hashes = {role + "_file_sha256": pin[1] for role, pin in _RETAINED_CONTEXT150_ASSETS.items()}
+    initial_hashes = {key: value for key, value in hashes.items() if not key.startswith("trained")}
+    calls = (
+        lambda: projected.inspect_retained_context150_profile(Forbidden(), {}, {}, {}, **hashes),
+        lambda: projected.load_retained_context150_initial(Forbidden(), Forbidden(), {}, {}, **initial_hashes),
+        lambda: projected.infer_retained_context150_initial(Forbidden(), Forbidden(), {}, {}, Forbidden(), [], **initial_hashes),
+        lambda: trained.load_retained_context150_trained(Forbidden(), Forbidden(), projected, {}, {}, {}, **hashes),
+        lambda: trained.infer_retained_context150_trained(Forbidden(), Forbidden(), projected, {}, {}, {}, Forbidden(), [], **hashes),
+    )
+    for call in calls:
+        with pytest.raises(owners["bridge"].SourceProfileBridgeError):
+            call()
+
+
+def test_context150_public_profile_bounds_plain_json_before_digest(source_metadata_only):
+    owners, _ = source_metadata_only
+    source, _ = _source_preflight_parent()
+    for kind in ("cycle", "nonfinite", "object"):
+        parent = {}
+        parent["value"] = parent if kind == "cycle" else float("nan") if kind == "nonfinite" else object()
+        with pytest.raises(ValueError, match="JSON"):
+            _context150_inspect(owners["context_initialization"], source, {"parent": parent, "initial": {}, "trained": {}})
+
+
+@pytest.mark.parametrize("role", ["initial", "trained"])
+def test_retained_context150_cpu_restore_without_forward_or_optimizer(retained_context150_assets, owners, monkeypatch, role):
+    """Restore exact retained states only: no predictions, targets or training."""
+    manifest, manifest_sha, values, exports, identity = retained_context150_assets
+    for name, path in (("ipfs_datasets_py.logic.deontic", ROOT / "ipfs_datasets_py/logic/deontic"),
+                       ("ipfs_datasets_py.logic.deontic.utils", ROOT / "ipfs_datasets_py/logic/deontic/utils")):
+        if name not in sys.modules:
+            namespace = types.ModuleType(name); namespace.__path__ = [str(path)]
+            monkeypatch.setitem(sys.modules, name, namespace)
+    import torch
+    source = importlib.import_module("ipfs_datasets_py.logic.formalization.autoencoder.source_training_v2")
+    projected, trained = owners["context_initialization"], owners["context_trained"]
+    before = {name: source.digest(value) for name, value in values.items()}
+    assert before == {name: pin[2] for name, pin in _RETAINED_CONTEXT150_ASSETS.items()}
+    assert not torch.cuda.is_initialized() and torch.get_default_dtype() == torch.float32
+    previous_threads, rng = torch.get_num_threads(), torch.get_rng_state().clone()
+    counts = {name: 0 for name in ("module_forward", "optimizer", "backward", "grad", "tensor_backward", "generation")}
+    def forbidden(name):
+        def refuse(*args, **kwargs):
+            counts[name] += 1
+            raise AssertionError("restore-only control forbids " + name)
+        return refuse
+    # Each sentinel has a distinct identity; no aliasing of grad/backward APIs.
+    with monkeypatch.context() as guard:
+        guard.setattr(torch.nn.Module, "_call_impl", forbidden("module_forward"))
+        guard.setattr(torch.optim.Optimizer, "__init__", forbidden("optimizer"))
+        guard.setattr(torch.autograd, "backward", forbidden("backward"))
+        guard.setattr(torch.autograd, "grad", forbidden("grad"))
+        guard.setattr(torch.Tensor, "backward", forbidden("tensor_backward"))
+        guard.setattr(projected, "_greedy", forbidden("generation"))
+        hashes = {name + "_file_sha256": pin[1] for name, pin in _RETAINED_CONTEXT150_ASSETS.items()}
+        if role == "initial":
+            with pytest.raises(ValueError, match="parent source implementation differs"):
+                projected.load_with_real_parent(torch, source, values["parent"], values["initial"], parent_file_sha256=hashes["parent_file_sha256"])
+            model, receipt_raw = projected.load_retained_context150_initial(torch, source, values["parent"], values["initial"],
+                parent_file_sha256=hashes["parent_file_sha256"], initial_file_sha256=hashes["initial_file_sha256"])
+        else:
+            with pytest.raises(ValueError, match="parent source implementation differs"):
+                trained.load_trained_with_real_parent(torch, source, projected, values["parent"], values["initial"], values["trained"],
+                    parent_file_sha256=hashes["parent_file_sha256"], initial_file_sha256=hashes["initial_file_sha256"])
+            model, receipt_raw = trained.load_retained_context150_trained(torch, source, projected,
+                values["parent"], values["initial"], values["trained"], **hashes)
+        state, digest = projected.model_state(torch, source, model)
+        assert len(state) == 13 and state == values[role]["model_state"]
+        assert digest == _RETAINED_CONTEXT150_ASSETS[role][3]
+        assert all(tensor.device.type == "cpu" and tensor.dtype == torch.float32 and bool(torch.isfinite(tensor).all())
+                   for tensor in model.state_dict().values())
+        assert all(parameter.grad is None for parameter in model.parameters())
+        assert all(not module.training for module in model.modules())
+        assert tuple(model.decoder.weight_ih_l0.shape) == (96, 400)
+        for name in ("projection_down.weight", "projection_down.bias", "projection_up.weight", "projection_up.bias"):
+            assert state[name] == values["parent"]["model_state"][name]
+        if role == "initial":
+            assert all(row[:16] == parent and row[16:] == [0.0] * 384
+                       for row, parent in zip(state["decoder.weight_ih_l0"], values["parent"]["model_state"]["decoder.weight_ih_l0"]))
+        assert all(value == 0 for value in counts.values())
+        assert torch.equal(rng, torch.get_rng_state()) and torch.get_num_threads() == previous_threads
+        assert not torch.cuda.is_initialized()
+    assert before == {name: source.digest(value) for name, value in values.items()}
+    assert type(receipt_raw) is bytes and len(receipt_raw) < 16384
+    receipt = _retained_gated_json(receipt_raw)
+    assert receipt["operation"] == role + "_checkpoint_restore"
+    assert receipt["details"] == {"actual_weights_sha256": digest}
+    assert receipt["tensor_shapes_checked"] is True and receipt["weights_checked"] is True
+    for field in ("checkpoint_load_qualified", "numerical_equivalence_qualified", "training_performed",
+                  "training_history_verified", "physical_files_opened_or_authenticated_here", *source.FALSE):
+        assert receipt[field] is False
+    _retained_gated_save(exports, identity, "context150-" + role, {
+        "schema": "legal-ir-retained-context150-restore-observation/v1", "role": role,
+        "manifest_sha256": manifest_sha, "independently_authenticated_physical_inputs": manifest["checkpoints"],
+        "product_receipt": receipt, "product_receipt_sha256": hashlib.sha256(receipt_raw).hexdigest(),
+        "actual_weights_sha256": digest, "all_thirteen_tensors_equal": True, "frozen_projection_equal": True,
+        "cpu_rng_unchanged": True, "caller_thread_count_restored": True, "forbidden_call_counts": counts,
+        "raw_logits_compared": False, "inference_performed": False, "optimizer_restored": False,
+        "training_performed": False, "numerical_equivalence_qualified": False, **source.FALSE})

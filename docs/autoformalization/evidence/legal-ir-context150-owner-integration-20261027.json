@@ -1,0 +1,164 @@
+{
+  "schema": "legal-ir-context150-existing-owner-source-integration/v1",
+  "evidence_id": "context150-existing-owner-source-port-20261027-01",
+  "recorded_date_utc": "2026-10-27",
+  "kind": "versioned_source_port_and_pure_metadata_validation",
+  "published_base": "d0aa929f04254fe036bd0b687f2bb54423bb917d",
+  "owners": [
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/experimental/projected_context_decoder_v1.py",
+      "bytes": 43162,
+      "sha256": "39ded06efbf3448c1ece2e8aa9d61b625cd4a771e0ce15be7b29e0c76966781f",
+      "retained_qualified_source_bytes_reused_exactly": true,
+      "added_opt_in_apis": [
+        "inspect_retained_context150_profile",
+        "load_retained_context150_initial",
+        "infer_retained_context150_initial"
+      ]
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/experimental/trained_projected_context_decoder_v1.py",
+      "bytes": 26527,
+      "sha256": "097b75ddf8c8d865475a3d939d5d467f081b8e9adda582209a2801c57cc107cf",
+      "retained_qualified_source_bytes_reused_exactly": true,
+      "added_opt_in_apis": [
+        "load_retained_context150_trained",
+        "infer_retained_context150_trained"
+      ]
+    }
+  ],
+  "owning_test": {
+    "path": "tests/unit/logic/autoformal/test_legal_ir_experimental_profiles_v1.py",
+    "bytes": 93092,
+    "sha256": "1e3356fe459d606c890fa14f64dafb8067ffea56468dd89cbddd574a3c145cbd",
+    "retained_test_preimage_sha256": "2600dade35c2e8da01d63abbf05ac978c7a814766d4fe37bb21b39e7d540f301",
+    "portability_change": "Acquire the six original proposal patches from their fixed content-addressed members in the existing tracked archive, preserving patch parsing, source hashes and every test-function assertion. Replace deleted loose-patch fixture permission with the one exact source archive path."
+  },
+  "source_archive": {
+    "path": "ipfs_datasets_py/logic/autoformal/docs/history/pre-consolidation.zip",
+    "bytes": 2081718,
+    "sha256": "3fa4629ad1c73130641eff27eb2f8adeebc6cfe36f715163a454eb7d9ff4aeae",
+    "new_archive_created": false,
+    "runtime_manifest_scan_or_extraction": false
+  },
+  "unchanged_shared_owners": [
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/experimental/_legacy_source_bridge_v1.py",
+      "sha256": "4ea5daba6f14db3191588806f93c77367c929165e7aab4241a61eb331bfa1b38"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/source_training_v2.py",
+      "sha256": "8de8096e895de9df08ccf5352dfd704806823296821d98b5badf08bb553a52e4"
+    }
+  ],
+  "compatibility": {
+    "profile": "retained-context150-source-compatibility/v1",
+    "default_loaders_remain_strict": true,
+    "default_profile": null,
+    "retained_profile_authentication": [
+      "fixed complete canonical checkpoint values",
+      "fixed producer recipes",
+      "explicit exact physical-file hash declarations",
+      "genuine current shared-source consumer identity before caller callbacks or tensor access"
+    ],
+    "checkpoint_file_authentication_by_this_source_port": false,
+    "authority_flags_remain_false": true,
+    "public_product_imports_from_artifacts_or_workspace": false
+  },
+  "current_validation": {
+    "kind": "pure_metadata_and_negative_path_validation",
+    "selectors": 10,
+    "passed_cases": 28,
+    "passed_phases": 84,
+    "failed": 0,
+    "skipped": 0,
+    "denied_external_effects": 0,
+    "elapsed_seconds": 5.637701206142083,
+    "checkpoint_assets_enrolled": false,
+    "numerical_or_database_frameworks_permitted": false,
+    "ancestor_conftests_and_automatic_plugins_disabled": true,
+    "source_READ_closed": true,
+    "child_reaped": true,
+    "process_group_empty": true,
+    "result": {
+      "bytes": 66100,
+      "sha256": "995f0292363bdddb7d78227b7e382858f2358a82f4d357a6d7327264335e3fed"
+    },
+    "closure": {
+      "bytes": 684,
+      "sha256": "89d2e735e91d33aafaeb494ae007af229b7c2b89233248de48f41e30c4dd1bdb"
+    },
+    "guard_sha256": "1a740122f2222070243d1fab50e3ed164910f0a55664f25dc33a4d27cac1ea1d",
+    "CID_support": {
+      "enrollment_sha256": "e489fffc4421da5ba0a633f167537aa031722a657022e5200fba502432aa1115",
+      "module_roots": [
+        "multiformats",
+        "bases",
+        "typing_validation",
+        "multiformats_config",
+        "typing_extensions"
+      ],
+      "source_files": 46,
+      "support_tables": 2,
+      "source_bytes": 575353,
+      "table_bytes": 94674,
+      "broad_user_site_activation": false,
+      "pip_or_environment_mutation": false,
+      "source_authenticated_before_compile": true,
+      "pyc_trusted": false
+    }
+  },
+  "historical_qualification": {
+    "date": "2026-10-20",
+    "cases": 38,
+    "metadata_cases": 36,
+    "CPU_checkpoint_restore_cases": 2,
+    "restored_tensor_count_each": 13,
+    "forward_generation_optimizer_training": false,
+    "numerical_equivalence_qualified": false,
+    "statutory_or_heldout_quality_qualified": false,
+    "qualification_transferred_to_this_source_port": false,
+    "parent_lineage_anchor_is_third_restore": false
+  },
+  "retained_quality": {
+    "exposed_fixture_rows": 60,
+    "field_denominator": 240,
+    "fields_before": 96,
+    "fields_after": 142,
+    "exact_rows_before": 2,
+    "exact_rows_after": 0,
+    "new_quality_measurement": false
+  },
+  "output_replay": {
+    "rows_per_arm": 60,
+    "arms": [
+      "initial",
+      "trained"
+    ],
+    "status": "not_started_after_two_retained_resource_admission_refusals",
+    "initial_metrics": null,
+    "trained_metrics": null,
+    "native_grant_acquired": false,
+    "new_retry_or_policy_relaxation": false,
+    "source_and_input_rebinding_required_for_any_future_admission": true
+  },
+  "new_execution_counts": {
+    "checkpoint_restores": 0,
+    "forwards": 0,
+    "generation_calls": 0,
+    "optimizer_updates": 0,
+    "training_runs": 0,
+    "native_database_operations": 0,
+    "Lean_runs": 0,
+    "provider_calls": 0
+  },
+  "preserved_failures": [
+    "Initial controller schema check stopped before source WRITE.",
+    "Fresh no-checkout worktree index required explicit population before the three-buffer install; no primary reset occurred.",
+    "Test launch1 stopped before collection on global temporary-file write refusal.",
+    "Test launch2 stopped before collection on pytest /dev/null logging write refusal.",
+    "Test launch3 had28 failures: missing untracked proposal paths and absent isolated CID dependencies; zero denied effects.",
+    "One source-WRITE admission timed out; no lock bypass or file application on that attempt."
+  ],
+  "next_gate": "The versioned source integration closes a public/private source gap only. Reuse the retained output-replay plan with fresh source/input bindings and existing resource owners when capacity is admitted. Preserve UNKNOWN provider outcomes and scientific task attempt limits."
+}
