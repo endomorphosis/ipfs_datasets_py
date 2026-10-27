@@ -3538,11 +3538,12 @@
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
-        "source384-saved-original-text-roundtrip-qualified-20261026-01"
+        "source384-saved-original-text-roundtrip-qualified-20261026-01",
+        "source384-joint-original-text-roundtrip-20261027-01"
       ],
       "guide": "docs/autoencoders/legal_original_text_roundtrip.md",
       "id": "legal-original-text-roundtrip",
-      "notes": "Index the existing public detached single-rule source384 original-text scorer once. Canonical rendering, semantic IR exactness and original UTF8 are separate; no new model, learned prose head, independent teacher or statutory authority.",
+      "notes": "Index the existing public detached single-rule source384 original-text scorer once. Canonical rendering, semantic IR exactness and original UTF8 are separate; no new model, learned prose head, independent teacher or statutory authority. Additive same-row joint and four-cell metrics retain all old fields. Accepted same-input60 replay: IR3, UTF8/joint0, cells0/3/0/57; no new model. Separate owning regression qualification passed68cases/204phases with68scorerentries across67cases in the pinned realpytest/native profile. Six zero-case failures and their separate closeouts remain preserved; no legal/model-quality authority.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -3656,12 +3657,12 @@
         "cases": 26,
         "evidence_id": "f18-conditions-fullspan-genuine-mechanics-20261027-01",
         "model_accuracy_qualified": false,
+        "owning_test_sha256": "799d4b74a06c231c404764a6a2388c25d7758a78ecacfb571ba59092051cccf2",
         "paired_training_run": false,
+        "request_sha256": "4ca3372b5c7ee90bdbbc03bb4234824fed825fc914c89a85ec87f3c3792b9d22",
         "source_commit": "15888d1ac00e8bd6acbd13cb6ac12cdf93a13b5b",
         "synthetic_actual_F18_architecture": true,
-        "trained_donor_authenticated": false,
-        "owning_test_sha256": "799d4b74a06c231c404764a6a2388c25d7758a78ecacfb571ba59092051cccf2",
-        "request_sha256": "4ca3372b5c7ee90bdbbc03bb4234824fed825fc914c89a85ec87f3c3792b9d22"
+        "trained_donor_authenticated": false
       },
       "owner_adoption_generation": {
         "evidence_id": "conditions-fullspan-existing-owner-adoption-20261027-01",
@@ -3741,7 +3742,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-10-27",
+  "last_updated_at_utc": "2026-10-27T03:32:53.466346+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -5834,6 +5835,16 @@
       "root": "datasets_repository",
       "scope": "Existing worker dfd869ec profile, locally merged65765e43 onto legal-ir-plaintext-definition-landing, adopted at its prescribed canonical optimizer owner with product bytes unchanged. Owning-test portability preserves7names/120assertions and the original preparation snapshot; numerical imports and NaN-gradient guard remain in separately admitted numerical tests. Immutable source/preparation oracle; pure-control outcomes live in canonical handoff/history and execution receipts. Existing F18/margin/structured-objective pins unchanged. No original numerical qualification from the retained7-pass report, physical donor authentication, model/gradient/parity/resume/paired-fit qualification, semantic admission or scientific task rearm.",
       "status": "existing_owner_source_adoption"
+    },
+    {
+      "id": "source384-joint-original-text-roundtrip-20261027-01",
+      "observed_bytes": 25823,
+      "observed_sha256": "351e39252d64db94a0f52fdb5c328477779c3ff7641542acd22506a8b241326d",
+      "path": "docs/autoformalization/evidence/legal-ir-source384-joint-original-text-roundtrip-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Additive same-row joint metrics in the existing single-rule384D scorer, accepted replay of the same retained60saved outputs, and separately accepted68-case owning engineering regression qualification. No model, embeddings or saved reconstruction outputs were regenerated.",
+      "status": "accepted_saved_measurement_and_owning_unit_qualification"
     },
     {
       "id": "retained-lean-compatibility-diagnostic-20261027-01",

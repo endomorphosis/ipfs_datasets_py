@@ -31,6 +31,16 @@ measurement = score_legal_original_text_roundtrip(
 | Character edit distance | Mean 24.35; 60/60 rows scored |
 | Whitespace-token edit distance | Mean 6.0666667; 60/60 rows scored |
 
+## Joint IR and original-text metrics
+
+The existing scorer now reports `joint_ir_original_utf8_exact` for each row, in `counts`, and in `rates`. Success requires exact semantic IR and exact original UTF-8 **for the same selected input**. Separate IR and text accuracies cannot establish that both succeeded together. When rendering is unselected, the row/count/rate joint values and `ir_text_joint_counts` are null; unmeasured text is not a failure or a success.
+
+With rendering selected, `ir_text_joint_counts` partitions all captured inputs into `both_exact`, `ir_only_exact`, `text_only_exact` and `neither_exact`, with the same declared denominator and total. Missing, duplicate, invalid or refused predictions remain in that population. A correct IR with refused or different wording is IR-only; a matching surface with wrong IR is text-only. An exhausted edit-distance budget does not change either equality test.
+
+The [accepted same-input replay](../autoformalization/evidence/legal-ir-source384-joint-original-text-roundtrip-20261027.json) scored the same retained 60 saved predictions: 3/60 exact IR, 0/60 literal UTF-8 and 0/60 same-row joint exactness. Its four cells are 0 both, 3 IR-only, 0 text-only and 57 neither. One scorer and 60 canonical-decompiler entries were observed. The whole old score remains equal after stripping only the additive joint count, rate, row flag and table. No encoder, checkpoint restore, decoder, new embedding or training ran; these measurements do not show improved reconstruction or a learned prose head.
+
+The owning regression qualification separately passed 68 cases and 204 ordered setup/call/teardown phases, with 68 scorer entries across 67 cases and no failures, skips or refused effects. It used authored fixtures and the pinned real-pytest profile. Six earlier zero-case attempts and their distinct custody/recovery outcomes remain preserved in the evidence. Reuse the existing scorer and tests rather than replaying a model to recompute these counters.
+
 The original evaluator's 3/60 exact IR and 97/240 varying-semantic-path matches remain historical parent metrics. The new scorer reports modality, actor, action, object, conditions, exceptions and temporal separately. The latter three qualifier slots are constant empty fields in this cohort; their matches must not be pooled with the old varying-field denominator or called improvement. The original owner witnesses record 1 scorer entry and 60 actual canonical-decompiler entries, with zero model, encoder or training calls. Original source, native-compute and storage closure were independently audited.
 
 Every selected input remains in the accuracy denominator. Missing, duplicate, malformed and unexpected output IDs are recorded; duplicates cannot receive credit by selecting a favorable occurrence. Each valid prediction must match its original source hash and declare no teacher forcing or target access. Invalid/incomplete candidates receive zero reconstruction credit. Canonical rendering failures remain per-row failures. Coverage and provenance validity are reported separately from exactness.
