@@ -1,5 +1,11 @@
 # Training and experiment history
 
+## Experimental four-tensor candidate weight publication
+
+The first publication attempt failed during SDK import before a remote commit. Its original API storage recovery released the retained claim while preserving the failed logs. Source review identified user-site SDK shadowing in the launcher; the fresh successor used isolated standard virtual-environment loading (`-I`) and verified its SDK origins before publication. The original admission owner stayed unchanged.
+
+The [immutable HF release](https://huggingface.co/Publicus/legal-ir-autoencoder/tree/270a753c1f439ac106877e825d5f5a3577916510/releases/20261027-f18-four-tensor-conditions-pair-v1) publishes the coefficient 0 and 0.25 candidate deltas from the separately closed 32-update-per-arm experiment. A fresh original publication owner verified all four remote file bytes at commit `270a753c1f439ac106877e825d5f5a3577916510`; the [separate evidence](../../../../docs/autoformalization/evidence/legal-ir-f18-four-tensor-hf-weight-publication-20261027.json) records source, native, process and storage closure. The existing donor at `c9cce4586dd96518088662fb12831173e98e36cc` is required and was not re-uploaded or downloaded for this operation. No checkpoint/model load, forward, gradient, update, scoring or promotion ran during publication. Independent scoring and statutory or four-width accuracy remain unmeasured.
+
 ## Original F18 trainer controller qualification, 2026-10-27
 
 the [separate controller result](../../../../docs/autoformalization/evidence/legal-ir-f18-trainer-controller-qualification-20261027.json) records 105 pure cases and 315 phases in 3.127 seconds, three separately admitted controlled OS-helper cases, and an actual zero-model canonical-trainer probe. The selected public DaemonResourceReservation supplies hammer_lean/canonical_trainer custody through the genuine offline READY/RUN boundary, retained owner-loss pipe, journal and original cleanup. Validation defaults and all checkpoint-bound profile/resource bytes remain unchanged. These controller scopes supply no actual paired fit, accuracy gain or task completion.
