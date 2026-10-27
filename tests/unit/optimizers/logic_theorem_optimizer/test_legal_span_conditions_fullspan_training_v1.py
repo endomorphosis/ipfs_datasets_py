@@ -1,6 +1,8 @@
 """Synthetic controls for the opt-in F18 four-tensor full-span profile.
 
-No historical checkpoint, encoder forward, or real-input fit is opened.
+No historical checkpoint, external encoder, or real-input fit is opened.
+The numerical controls instantiate the actual retained F18 architecture with
+synthetic state, and require a new original-owned numerical admission to run.
 The published margin kernel and F18 CE/KL owners stay the implementations.
 """
 import copy
@@ -63,49 +65,55 @@ def _provenance(state=None, **overrides):
     return subject.donor_provenance(state if state is not None else _state(), **arguments)
 
 
-def _blocks(mask_modality):
+def _blocks(mask_modality, token_count=2):
     known = [math.log(0.5), math.log(0.25), math.log(0.25)]
     return {
-        "actor_start": {"logits": [0.0, 0.0], "gold_index": None, "teacher_argmax": 0, "mask": False},
-        "actor_end": {"logits": [0.0, 0.0], "gold_index": None, "teacher_argmax": 0, "mask": False},
+        "actor_start": {"logits": [0.0] * token_count, "gold_index": None, "teacher_argmax": 0, "mask": False},
+        "actor_end": {"logits": [0.0] * token_count, "gold_index": None, "teacher_argmax": 0, "mask": False},
         "modality": {
             "logits": known if mask_modality else [0.0, 0.0, 0.0],
             "gold_index": 0 if mask_modality else None,
             "teacher_argmax": 0,
             "mask": mask_modality,
         },
-        "conditions_start": {"logits": [0.0, 0.0], "gold_index": None, "teacher_argmax": 0, "mask": False},
-        "conditions_end": {"logits": [0.0, 0.0], "gold_index": None, "teacher_argmax": 0, "mask": False},
+        "conditions_start": {"logits": [0.0] * token_count, "gold_index": None, "teacher_argmax": 0, "mask": False},
+        "conditions_end": {"logits": [0.0] * token_count, "gold_index": None, "teacher_argmax": 0, "mask": False},
         "exceptions_presence": {"logits": [0.0, 0.0], "gold_index": None, "teacher_argmax": 0, "mask": False},
     }
 
 
-def _batch(provenance):
-    import torch
-
-    indices = list(provenance["gold_present_train_indices"][:subject.BATCH_SIZE])
+def _records(provenance, indices, *, original_shape=False):
     population = dict(zip(provenance["gold_present_train_indices"], provenance["gold_present_row_ids"], strict=True))
     records = []
     for index in indices:
-        text = "aa%d bb" % index
+        text = "actor%d acts when ready" % index if original_shape else "aa%d bb" % index
         tokens = span.tokenize_source(text)
+        present = index in population
         labels = {
             "modality": 0,
-            "presence": [True, True, False, True, False, False],
-            "spans": [(0, 0), (0, 0), (-100, -100), (0, 1), (-100, -100), (-100, -100)],
+            "presence": [True, True, False, present, False, False],
+            "spans": [(0, 0), (1, 1) if original_shape else (0, 0), (-100, -100),
+                      ((2, 3) if original_shape else (0, 1)) if present else (-100, -100),
+                      (-100, -100), (-100, -100)],
         }
         records.append({
-            "id": population[index],
-            "partition": "TRAIN",
-            "gold_present": True,
-            "training_index": index,
+            "id": population[index] if present else "synthetic-absent-%03d" % index,
             "source_text": text,
             "tokens": tokens,
             "labels": labels,
+            "latent": [0.0] * CONFIG["latent_dimension"],
         })
+    return records
+
+
+def _batch(provenance, indices=None, *, original_shape=False):
+    import torch
+    indices = (list(provenance["gold_present_train_indices"][:subject.BATCH_SIZE])
+               if indices is None else list(indices))
+    records = _records(provenance, indices, original_shape=original_shape)
     teacher_rows = []
     weight_rows = []
-    record_by_index = {record["training_index"]: record for record in records}
+    record_by_index = dict(zip(indices, records, strict=True))
     for index in range(subject.TRAIN_INDEX_COUNT):
         record = record_by_index.get(index)
         if record is None:
@@ -132,7 +140,7 @@ def _batch(provenance):
             "training_index": index,
             "source_sha256": source_sha,
             "token_count": token_count,
-            "blocks": _blocks(True),
+            "blocks": _blocks(True, token_count),
         })
         projected = [{key: token[key] for key in ("text", "start", "end")} for token in record["tokens"]]
         selected = index == indices[0]
@@ -210,7 +218,21 @@ def test_retained_owners_and_published_kernel_identity_stay_pinned():
     source = Path(subject.__file__).read_text()
     assert "import structured_span_objective" not in source
     assert "def conditions_fullspan_margin" not in source
-    assert json.loads(EVIDENCE.read_text())["retained_preparation"] == subject.engineering_preparation()
+    retained = json.loads(EVIDENCE.read_text())["retained_preparation"]
+    current = subject.engineering_preparation()
+    # The immutable receipt is the original dfd generation. These four explicit
+    # additive metadata changes document the separately qualified correction;
+    # every other preparation field must still match that retained oracle.
+    wiring = current["result"]["model_optimizer_wiring"]
+    assert {key: wiring.pop(key) for key in (
+        "training_row_count", "batch_order_owner", "absent_conditions_margin")} == {
+            "training_row_count": 168,
+            "batch_order_owner": "legal_span_targeted_loss._batch_indices(168, progress, 12, 1729)",
+            "absent_conditions_margin": "connected_zero_in_full_batch_mean",
+        }
+    assert current["result"]["unresolved_questions"].pop(0) == (
+        "Caller-state self-hashes do not independently authenticate the retained final F18 donor or its source/teacher/mask artifact roots; original-owned admission must bind them.")
+    assert current == retained
 
 
 def test_preparation_document_is_closed_and_claims_no_fit():
@@ -418,7 +440,6 @@ def test_scoring_preflight_freezes_caller_ids_and_does_not_score():
 
 def test_zero_and_quarter_arms_keep_full_batch_ce_and_kl():
     import torch
-
     state = _state()
     provenance = copy.deepcopy(_provenance(state))
     records, indices, teacher, weights, output = _batch(provenance)
@@ -461,7 +482,7 @@ def test_zero_and_quarter_arms_keep_full_batch_ce_and_kl():
     _raises("TRAIN partition required", subject.compose_objective_for_state,
             torch, output, dev, indices, teacher, weights, state, provenance, margin_weight=0.0)
     short = records[:-1]
-    _raises("gold-present TRAIN row count required", subject.compose_objective_for_state,
+    _raises("full TRAIN batch row count required", subject.compose_objective_for_state,
             torch, output, short, indices[:-1], teacher, weights, state, provenance, margin_weight=0.25)
     _raises("nonfinite control", subject.compose_objective_for_state,
             torch, output, records, indices, teacher, weights, state, provenance, margin_weight=float("nan"))
@@ -471,9 +492,256 @@ def test_zero_and_quarter_arms_keep_full_batch_ce_and_kl():
             torch, poisoned, records, indices, teacher, weights, state, provenance, margin_weight=0.0)
 
 
+def test_original_f18_record_shape_and_mixed_168_schedule_preserve_all_72_present_rows():
+    provenance = _provenance()
+    population = dict(zip(*_population(), strict=True))
+    seen, present_indices = [], []
+    mixed_batches = 0
+    for step in range(subject.TRAIN_INDEX_COUNT // subject.BATCH_SIZE):
+        progress = {"epochs_completed": 0, "optimizer_steps": step, "row_cursor": step * subject.BATCH_SIZE}
+        indices = f18.targeted._batch_indices(168, progress, 12, 1729)
+        records = _records(provenance, indices, original_shape=True)
+        assert all(set(row) == {"id", "source_text", "tokens", "labels", "latent"} for row in records)
+        # The retained F18 source validator accepts the actual unsidecarred shape.
+        for record in records:
+            f18.targeted._actor_record(record)
+        assert subject._bind_batch(records, indices, population) == records
+        targets = subject._conditions_targets(records)
+        assert len(targets) == 12
+        present_count = sum(target["present"] for target in targets)
+        mixed_batches += 0 < present_count < 12
+        present_indices.extend(index for index, target in zip(indices, targets, strict=True) if target["present"])
+        seen.extend(indices)
+    assert sorted(seen) == list(range(168)) and len(set(seen)) == 168
+    assert sorted(present_indices) == list(range(72))
+    assert mixed_batches > 0
+
+
+@pytest.mark.parametrize("bad_index", [True, 0.5, "0", -1, 168])
+def test_batch_indices_and_optional_sidecars_are_typed(bad_index):
+    provenance = _provenance()
+    population = dict(zip(*_population(), strict=True))
+    indices = list(range(12))
+    records = _records(provenance, indices, original_shape=True)
+    bad = list(indices)
+    bad[0] = bad_index
+    _raises("typed full TRAIN batch indices", subject._bind_batch, records, bad, population)
+    duplicate = [0, *indices[:-1]]
+    _raises("typed full TRAIN batch indices", subject._bind_batch, records, duplicate, population)
+    for key, value, message in (
+        ("partition", "DEV", "TRAIN partition"),
+        ("training_index", True, "TRAIN index annotation"),
+        ("training_index", 1, "TRAIN index annotation"),
+        ("gold_present", 1, "TRAIN presence annotation"),
+        ("gold_present", False, "TRAIN presence annotation"),
+    ):
+        tagged = copy.deepcopy(records)
+        tagged[0][key] = value
+        _raises(message, subject._bind_batch, tagged, indices, population)
+    mislabeled = copy.deepcopy(records)
+    mislabeled[0]["labels"]["presence"][3] = False
+    _raises("gold-present TRAIN membership", subject._bind_batch, mislabeled, indices, population)
+    wrong_id = copy.deepcopy(records)
+    wrong_id[0]["id"] = "unbound-present-id"
+    _raises("gold-present TRAIN membership", subject._bind_batch, wrong_id, indices, population)
+
+
+@pytest.mark.parametrize("coordinates", [(True, 1), (0, 1.5), ("0", 1), (0,), None])
+def test_conditions_targets_reject_boolean_fractional_and_malformed_coordinates(coordinates):
+    record = _records(_provenance(), [0], original_shape=True)[0]
+    record["labels"]["spans"][3] = coordinates
+    _raises("integer conditions target geometry", subject._conditions_targets, [record])
+
+
+@pytest.mark.parametrize("coordinates", [(-100, -100), (-1, 1), (3, 2), (0, 4)])
+def test_present_conditions_targets_reject_sentinel_reversed_and_outside_spans(coordinates):
+    record = _records(_provenance(), [0], original_shape=True)[0]
+    record["labels"]["spans"][3] = coordinates
+    _raises("present conditions span or absent sentinel", subject._conditions_targets, [record])
+
+
+def test_absent_conditions_require_exact_sentinel_and_bounded_token_geometry():
+    record = _records(_provenance(), [72], original_shape=True)[0]
+    assert subject._conditions_targets([record]) == [{"token_count": 4, "present": False, "span": (-100, -100)}]
+    for span_value in ((0, 1), (-100, 0), (-100.0, -100), (False, -100)):
+        bad = copy.deepcopy(record)
+        bad["labels"]["spans"][3] = span_value
+        _raises("conditions", subject._conditions_targets, [bad])
+    for count in (0, subject.MAX_CONDITIONS_TOKENS + 1):
+        bad = copy.deepcopy(record)
+        bad["tokens"] = [record["tokens"][0]] * count
+        _raises("integer conditions target geometry", subject._conditions_targets, [bad])
+    bad = copy.deepcopy(record)
+    bad["labels"]["presence"][3] = 0
+    _raises("conditions row 3", subject._conditions_targets, [bad])
+
+
+def _synthetic_architecture_state():
+    """Actual F18 architecture initialization; no checkpoint or donor payload."""
+    import torch
+    model = f18._model(torch, CONFIG)
+    return {name: value.detach().tolist() for name, value in model.state_dict().items()}
+
+
+def _same_bytes(left, right):
+    import torch
+    return torch.equal(left.detach().contiguous().reshape(-1).view(torch.uint8),
+                       right.detach().contiguous().reshape(-1).view(torch.uint8))
+
+
+def _assert_frozen_and_inactive(wired, before, *, steps):
+    import torch
+    named, optimizer = wired["named"], wired["optimizer"]
+    assert len(subject.FROZEN) == 38 and len(subject.SELECTED) == 4
+    inactive = [0, 1, 2, 4, 5]
+    for name in subject.FROZEN:
+        assert named[name].grad is None
+        assert _same_bytes(named[name], before[name])
+        assert named[name] not in optimizer.state
+    for name in subject.SELECTED:
+        parameter = named[name]
+        assert _same_bytes(parameter[inactive], before[name][inactive])
+        if parameter.grad is not None:
+            assert torch.count_nonzero(parameter.grad[inactive]) == 0
+        if steps:
+            moments = optimizer.state[parameter]
+            assert int(moments["step"]) == steps
+            for key in ("exp_avg", "exp_avg_sq"):
+                assert torch.count_nonzero(moments[key][inactive]) == 0
+
+
+def test_actual_f18_forward_mixed_batch_preserves_ce_kl_and_row3_optimizer_partition():
+    import torch
+    state = _synthetic_architecture_state()
+    provenance = _provenance(state)
+    wired = subject.wire_optimizer(torch, state, provenance, margin_weight=0.25)
+    before = {name: parameter.detach().clone() for name, parameter in wired["named"].items()}
+    indices = [0, 73, 2, 75, 4, 77, 6, 79, 8, 81, 10, 83]
+    records, indices, teacher, weights, _ = _batch(provenance, indices, original_shape=True)
+    output = wired["model"](*span._batch(torch, records))
+    zero = subject.compose_objective_for_state(
+        torch, output, records, indices, teacher, weights, state, provenance, margin_weight=0.0)
+    quarter = subject.compose_objective_for_state(
+        torch, output, records, indices, teacher, weights, state, provenance, margin_weight=0.25)
+    original, details = f18._loss(torch, output, records, indices,
+                                 f18._policy("modality-conditions-retention-ce"), teacher, weights)
+    assert _same_bytes(original, zero["f18_ce_plus_kl"])
+    assert _same_bytes(original, quarter["f18_ce_plus_kl"])
+    assert zero["weighted_CE"] == quarter["weighted_CE"] == details["weighted_CE"]
+    assert zero["retention"] == quarter["retention"] == details["retention"]
+    assert quarter["ce_batch_denominator"] == 12 and quarter["ce_outer_denominator"] == 8
+    assert quarter["kl_denominator"] == 72 and quarter["margin"]["batch_size"] == 12
+    assert quarter["margin"]["present_count"] == 6
+    diagnostics = quarter["margin"]["row_diagnostics"]
+    assert all(row["hinge"] == 0.0 and row["wrong_domain_count"] == 0
+               for row in diagnostics if not row["present"])
+    targets = subject._conditions_targets(records)
+    present_rows = [index for index, target in enumerate(targets) if target["present"]]
+    only_present = margin.conditions_fullspan_margin_from_logits(
+        torch, output["start"][present_rows, 3, :], output["end"][present_rows, 3, :],
+        [targets[index] for index in present_rows], weight=0.25)
+    assert torch.allclose(quarter["margin"]["weighted_loss"], only_present["weighted_loss"] * 0.5)
+    margin_gradients = torch.autograd.grad(quarter["margin"]["weighted_loss"],
+                                         (output["start"], output["end"]), retain_graph=True)
+    # Independently differentiate the detached wrong/gold boundary witnesses.
+    # Shared endpoints cancel; only the endpoint pair must be nonzero jointly.
+    expected_gradients = [torch.zeros_like(output[key]) for key in ("start", "end")]
+    for index, row in enumerate(diagnostics):
+        wrong = row["wrong_span"]
+        if not row["present"] or wrong is None:
+            assert row["hinge"] == 0.0
+            continue
+        gold = targets[index]["span"]
+        starts, ends = output["start"].detach()[index, 3], output["end"].detach()[index, 3]
+        hinge = float((1.0 + (starts[wrong[0]] + ends[wrong[1]]))
+                      - (starts[gold[0]] + ends[gold[1]]))
+        assert row["hinge"] == max(hinge, 0.0)
+        if hinge > 0.0:  # ReLU's zero/negative branch contributes no derivative.
+            for endpoint, expected in enumerate(expected_gradients):
+                expected[index, 3, wrong[endpoint]] += 0.25 / 12
+                expected[index, 3, gold[endpoint]] -= 0.25 / 12
+    for gradient, expected in zip(margin_gradients, expected_gradients, strict=True):
+        assert torch.equal(gradient, expected)
+        assert torch.count_nonzero(gradient[:, [0, 1, 2, 4, 5], :]) == 0
+        assert torch.count_nonzero(gradient[[1, 3, 5, 7, 9, 11], 3, :]) == 0
+    assert sum(int(torch.count_nonzero(gradient[present_rows, 3, :])) for gradient in margin_gradients) > 0
+    quarter["loss"].backward()
+    assert any(torch.count_nonzero(parameter.grad[3]) > 0 for parameter in wired["selected"])
+    _assert_frozen_and_inactive(wired, before, steps=0)
+    subject.clip_selected_gradients(torch, wired["selected"])
+    wired["optimizer"].step()
+    _assert_frozen_and_inactive(wired, before, steps=1)
+    assert any(not _same_bytes(wired["named"][name][3], before[name][3]) for name in subject.SELECTED)
+    assert all(value == 1 for value in wired["model"]._actor_forward_accounting.values())
+    assert all(value == 1 for value in wired["model"]._conditions_forward_accounting.values())
+
+
+def test_actual_f18_all_absent_margin_is_connected_zero_with_full_batch_denominators():
+    import torch
+    state = _synthetic_architecture_state()
+    provenance = _provenance(state)
+    wired = subject.wire_optimizer(torch, state, provenance)
+    records, indices, teacher, weights, _ = _batch(provenance, range(72, 84), original_shape=True)
+    output = wired["model"](*span._batch(torch, records))
+    result = subject.compose_objective_for_state(
+        torch, output, records, indices, teacher, weights, state, provenance, margin_weight=0.25)
+    term = result["margin"]["weighted_loss"]
+    assert term.requires_grad and float(term.detach()) == 0.0
+    assert result["margin"]["present_count"] == 0 and result["margin"]["batch_size"] == 12
+    assert result["weighted_CE"]["batch_denominator"] == 12 and result["retention"]["denominator"] == 72
+    gradients = torch.autograd.grad(term, wired["selected"], retain_graph=True)
+    assert all(torch.count_nonzero(gradient) == 0 for gradient in gradients)
+    result["loss"].backward()
+    assert all(parameter.grad is not None and torch.count_nonzero(parameter.grad) == 0
+               for parameter in wired["selected"])
+    assert all(wired["named"][name].grad is None for name in subject.FROZEN)
+    assert wired["optimizer"].state == {}
+
+
+def test_synthetic_in_memory_adam_resume_matches_uninterrupted_actual_f18_updates():
+    import torch
+    state = _synthetic_architecture_state()
+    provenance = _provenance(state)
+    uninterrupted = subject.wire_optimizer(torch, state, provenance)
+    interrupted = subject.wire_optimizer(torch, state, provenance)
+    before = {name: parameter.detach().clone() for name, parameter in uninterrupted["named"].items()}
+
+    def step(wired, cursor):
+        progress = {"epochs_completed": 0, "optimizer_steps": cursor // 12, "row_cursor": cursor}
+        indices = f18.targeted._batch_indices(168, progress, 12, 1729)
+        records, indices, teacher, weights, _ = _batch(provenance, indices, original_shape=True)
+        wired["optimizer"].zero_grad(set_to_none=True)
+        output = wired["model"](*span._batch(torch, records))
+        result = subject.compose_objective_for_state(
+            torch, output, records, indices, teacher, weights, state, provenance, margin_weight=0.25)
+        result["loss"].backward()
+        subject.clip_selected_gradients(torch, wired["selected"])
+        wired["optimizer"].step()
+
+    step(uninterrupted, 0)
+    step(uninterrupted, 12)
+    step(interrupted, 0)
+    # Only in-memory synthetic state is restored: no checkpoint I/O or claim
+    # about the product's still-unadmitted fit/resume runner is made here.
+    saved_model = copy.deepcopy(interrupted["model"].state_dict())
+    saved_adam = copy.deepcopy(interrupted["optimizer"].state_dict())
+    resumed = subject.wire_optimizer(torch, state, provenance)
+    resumed["model"].load_state_dict(saved_model, strict=True)
+    resumed["optimizer"].load_state_dict(saved_adam)
+    step(resumed, 12)
+    for name in f18.MODEL_PARAMETER_NAMES:
+        assert _same_bytes(uninterrupted["named"][name], resumed["named"][name])
+    for left, right in zip(uninterrupted["selected"], resumed["selected"], strict=True):
+        for key in ("step", "exp_avg", "exp_avg_sq"):
+            assert _same_bytes(uninterrupted["optimizer"].state[left][key], resumed["optimizer"].state[right][key])
+    _assert_frozen_and_inactive(uninterrupted, before, steps=2)
+    _assert_frozen_and_inactive(resumed, before, steps=2)
+    final_state = {name: value.detach().tolist() for name, value in resumed["model"].state_dict().items()}
+    assert subject.frozen38_seal(final_state) == subject.frozen38_seal(state)
+
+
 def test_fresh_adam_updates_only_conditions_row_of_the_four_tensors():
     import torch
-
     parameter = torch.nn.Parameter(torch.zeros(6, dtype=torch.float32))
     parameter.grad = torch.full((6,), float("nan"))
     _raises("nonfinite control", subject.clip_selected_gradients, torch, [parameter])

@@ -671,3 +671,407 @@ def validate_mixed_relational_norm_v1(report, request_raw, *, expected_request_s
           and _wire(regenerated, MAX_REPORT_BYTES) == original,
           "mixed report differs from complete authoritative replay")
     return regenerated
+
+
+# Focused inventory of caller-supplied candidate ASTs. It is not a corpus census
+# and it does not add a graph exporter or a mixed native parser.
+INTERFACE_REQUEST_SCHEMA = "legal-candidate-ir-interface-request/v1"
+INTERFACE_REPORT_SCHEMA = "legal-candidate-ir-interface-report/v1"
+INTERFACE_DISPOSITIONS = ("representable", "unsupported", "ambiguous")
+INTERFACE_CODECS = ("object_relational", "mixed_relational", "native_unary_preservation")
+INTERFACE_MAX_CANDIDATES = 8
+INTERFACE_MAX_BYTES = 2 * 1024 * 1024
+_INVENTORY_MAX_NODES = 8192
+_INVENTORY_MAX_DEPTH = 96
+_CANDIDATE_ID = re.compile(r"[A-Za-z0-9_.:-]{1,128}\Z")
+_OBJECT_CONSTRUCTORS = ("variable", "predicate", "not", "and", "or", "implies", "iff",
+                        "forall", "exists", "extension")
+_MIXED_CONSTRUCTORS = _OBJECT_CONSTRUCTORS + ("equality",)
+_NATIVE_CONSTRUCTORS = ("Predicate", "Variable", "UnaryFormula", "BinaryFormula",
+                        "QuantifiedFormula")
+_RECORD_FIELDS = {
+    "candidate_id", "codec", "disposition", "reason", "payload_sha256", "payload_bytes",
+    "payload_raw_utf8", "candidate_ast_sha256", "candidate_ast_kind", "content_digest",
+    "ordered_constructors", "ordered_binders", "argument_roles", "roles_present",
+    "roles_dropped", "replacement_ast", "codec_projection_sha256",
+    "projection_replaces_candidate", "admitted", "formalized", "legal_acceptance",
+}
+
+
+def _json_copy(value):
+    return json.loads(_wire(value, INTERFACE_MAX_BYTES))
+
+
+def _reserved_identifier(name):
+    return _NAME.fullmatch(name) is not None and (name in _LETTERS or name.lower() in _WORDS)
+
+
+def _walk_typed(node, constructors, binders, names, depth=0):
+    _need(depth <= _INVENTORY_MAX_DEPTH and len(constructors) < _INVENTORY_MAX_NODES,
+          "candidate constructor inventory bound exceeded")
+    if type(node) is not dict:
+        return
+    kind = node.get("kind")
+    if type(kind) is str:
+        constructors.append(kind)
+        if kind in {"predicate", "variable", "constant", "application"} and type(node.get("symbol")) is str:
+            names.append(node["symbol"])
+        if kind in {"forall", "exists", "let"} and type(node.get("binders")) is list:
+            for binder in node["binders"]:
+                if type(binder) is not dict or type(binder.get("name")) is not str:
+                    continue
+                sort = binder.get("sort")
+                sort_name = sort.get("name") if type(sort) is dict and type(sort.get("name")) is str else None
+                binders.append({"name": binder["name"], "sort": sort_name})
+                names.append(binder["name"])
+    if type(node.get("arguments")) is list:
+        for child in node["arguments"]:
+            _walk_typed(child, constructors, binders, names, depth + 1)
+    extension = node.get("extension")
+    if type(extension) is dict and type(extension.get("children")) is list:
+        for child in extension["children"]:
+            _walk_typed(child, constructors, binders, names, depth + 1)
+
+
+def _walk_native(node, constructors, binders, depth=0):
+    _need(depth <= _INVENTORY_MAX_DEPTH and len(constructors) < _INVENTORY_MAX_NODES,
+          "candidate constructor inventory bound exceeded")
+    if type(node) is not dict:
+        return
+    kind = node.get("node_type")
+    if type(kind) is str:
+        constructors.append(kind)
+    if kind == "QuantifiedFormula" and type(node.get("variable")) is dict:
+        variable = node["variable"]
+        if type(variable.get("name")) is str:
+            sort = variable.get("sort")
+            binders.append({"name": variable["name"], "sort": sort if type(sort) is str or sort is None else None})
+    for key in ("variable", "formula", "left", "right"):
+        if key in node:
+            _walk_native(node[key], constructors, binders, depth + 1)
+    if type(node.get("arguments")) is list:
+        for child in node["arguments"]:
+            _walk_native(child, constructors, binders, depth + 1)
+
+
+def _native_formula_ast_conflict(fragment):
+    """True when formula and AST are each complete and disagree. Neither replaces the other."""
+    ast_value = fragment.get("native_ast")
+    formula, family = fragment.get("formula"), fragment.get("family")
+    if type(ast_value) is not dict or type(formula) is not str or family not in {"fol", "tdfol"}:
+        return False
+    from . import legal_native_ast_preservation as native
+    try:
+        native._typed_ast(ast_value)
+    except ValueError:
+        return False
+    try:
+        from . import family_qualification
+        from ..intent_ir.formalize.modal_projections import _ast
+        parsed_ast = _ast(family_qualification._strict_tdfol(formula)[0])
+    except (ValueError, TypeError, KeyError, RecursionError, AttributeError, IndexError):
+        return False
+    return _wire(parsed_ast, INTERFACE_MAX_BYTES) != _wire(ast_value, INTERFACE_MAX_BYTES)
+
+
+def _interface_record(candidate_id, codec, disposition, reason, payload_text, payload_sha,
+                      ast_sha, ast_kind, content_digest, constructors, binders, roles,
+                      projection):
+    _need(disposition in INTERFACE_DISPOSITIONS, "unknown candidate disposition")
+    record = {
+        "candidate_id": candidate_id, "codec": codec, "disposition": disposition, "reason": reason,
+        "payload_sha256": payload_sha, "payload_bytes": len(payload_text.encode("utf-8")),
+        "payload_raw_utf8": payload_text, "candidate_ast_sha256": ast_sha,
+        "candidate_ast_kind": ast_kind, "content_digest": content_digest,
+        "ordered_constructors": constructors, "ordered_binders": binders,
+        "argument_roles": roles, "roles_present": roles is not None, "roles_dropped": False,
+        "replacement_ast": None, "codec_projection_sha256": projection,
+        "projection_replaces_candidate": False, "admitted": False, "formalized": False,
+        "legal_acceptance": False,
+    }
+    _keys(record, _RECORD_FIELDS, "candidate interface record")
+    _need(record["roles_dropped"] is False and record["replacement_ast"] is None
+          and record["projection_replaces_candidate"] is False and record["legal_acceptance"] is False
+          and record["admitted"] is False and record["formalized"] is False,
+          "candidate inventory cannot accept, drop roles, or replace an AST")
+    return record
+
+
+def _codec_projection_budget():
+    from . import legal_native_ast_preservation as native
+    from ..formalization.autoencoder import native_family_lean_emitters as emitter
+    return {
+        "schema": "legal-candidate-codec-projection-budget/v1",
+        "interface_schema": INTERFACE_REQUEST_SCHEMA,
+        "report_schema": INTERFACE_REPORT_SCHEMA,
+        "max_candidates": INTERFACE_MAX_CANDIDATES,
+        "max_request_bytes": INTERFACE_MAX_BYTES,
+        "dispositions": list(INTERFACE_DISPOSITIONS),
+        "corpus_census_executed": False,
+        "training_mask": 0, "evaluation_gold_mask": 0, "source_binding": None,
+        "compatibility_scope": "named_codec_structure_only_not_logic_family_completeness",
+        "logic_family_compatibility": {
+            "object_relational": ["tdfol"],
+            "mixed_relational": ["tdfol"],
+            "native_unary_preservation": ["fol", "tdfol"],
+        },
+        "object_relational": {
+            "request_schema": REQUEST_SCHEMA, "report_schema": SCHEMA, "profile": PROFILE,
+            "logic_family": "tdfol", "logic_profile": "tdfol_default",
+            "modal_extension": "legacy.deontic/v1", "native_family": "deontic_fol",
+            "graph_projection": "relational_norm_v1",
+            "max_request_bytes": MAX_REQUEST_BYTES, "max_report_bytes": MAX_REPORT_BYTES,
+            "max_nodes": MAX_NODES, "max_depth": MAX_DEPTH,
+            "predicate_arity_bounds": [1, 8], "max_predicates": 64,
+            "supported_constructors": list(_OBJECT_CONSTRUCTORS),
+            "output": "native_ast_and_lean_body",
+        },
+        "mixed_relational": {
+            "request_schema": MIXED_REQUEST_SCHEMA, "report_schema": MIXED_SCHEMA,
+            "profile": MIXED_PROFILE, "logic_family": "tdfol", "logic_profile": "tdfol_default",
+            "modal_extension": "legacy.deontic/v1", "sorts": list(_MIXED_SORTS),
+            "renderer_schema": emitter.SORTED_RELATIONAL_AST_SCHEMA,
+            "renderer_profile": emitter.SORTED_RELATIONAL_PROFILE,
+            "native_ast": None, "native_parser": "not_registered_for_this_codec",
+            "graph_projection": "mixed_relational_norm_v1",
+            "max_request_bytes": MAX_REQUEST_BYTES, "max_report_bytes": MAX_REPORT_BYTES,
+            "max_nodes": MAX_NODES, "max_depth": MAX_DEPTH,
+            "predicate_arity_bounds": [1, 8], "max_predicates": 64,
+            "supported_constructors": list(_MIXED_CONSTRUCTORS),
+            "output": "sorted_relational_renderer_ast_and_lean_body",
+        },
+        "native_unary_preservation": {
+            "schema": native.SCHEMA, "profile": native.PROFILE, "input_schema": native.INPUT_SCHEMA,
+            "fragment_schema": "legal-native-family-route/v1", "project_root": native.PROJECT_ROOT,
+            "families": ["fol", "tdfol"], "graph_projection": "not_registered_for_this_codec",
+            "max_record_bytes": native.MAX_RECORD_BYTES,
+            "max_fragment_bytes": native.MAX_FRAGMENT_BYTES,
+            "max_project_bytes": native.MAX_PROJECT_BYTES,
+            "max_preparation_bytes": native.MAX_PREPARATION_BYTES,
+            "max_files": native.MAX_FILES, "max_modules": native.MAX_MODULES,
+            "max_theorems": native.MAX_THEOREMS, "max_ast_nodes": native.MAX_AST_NODES,
+            "max_ast_depth": native.MAX_AST_DEPTH,
+            "supported_constructors": list(_NATIVE_CONSTRUCTORS),
+            "operators": ["¬", "∧", "∨", "→", "↔"], "quantifiers": ["∀"],
+            "output": "seven_file_preservation_project",
+        },
+        "missing_interface_recipe": {
+            "schema": "legal-candidate-ir-missing-interface-recipe/v1",
+            "gap": "mixed_codec_native_tdfol_ast_roundtrip",
+            "implemented": False, "replacement_ast_created": False,
+            "existing_qualified_codecs_preserved": True,
+            "reason": "The mixed codec has no direct native TDFOL AST roundtrip. Its existing sorted Lean renderer and the explicit relational graph profiles are separate supported interfaces; codec refusal does not establish a logic-family gap.",
+            "steps": [
+                "Keep each caller candidate AST and ordered role ledger byte-identical.",
+                "Do not synthesize a native AST, graph record, or replacement typed expression.",
+                "Use existing graph profiles only with separately supplied source/scope commitments; inventory alone creates no graph or admission.",
+                "A direct mixed-codec native AST roundtrip, if required, needs its existing owner and a separate qualification.",
+            ],
+        },
+    }
+
+
+def _interface_result(records):
+    first, seen = [], set()
+    ordered = []
+    for record in records:
+        ordered.append({
+            "candidate_id": record["candidate_id"], "codec": record["codec"],
+            "disposition": record["disposition"],
+            "ordered_constructors": record["ordered_constructors"],
+            "ordered_binders": record["ordered_binders"],
+            "argument_roles": record["argument_roles"],
+        })
+        for kind in record["ordered_constructors"]:
+            if kind not in seen:
+                seen.add(kind)
+                first.append(kind)
+    return {
+        "candidate_records": records,
+        "constructor_vocab_census": {
+            "schema": "legal-candidate-constructor-vocab-census/v1",
+            "corpus_census_executed": False,
+            "ordered_by_candidate": ordered,
+            "first_seen_constructors": first,
+            "supported_constructors": {
+                "object_relational": list(_OBJECT_CONSTRUCTORS),
+                "mixed_relational": list(_MIXED_CONSTRUCTORS),
+                "native_unary_preservation": list(_NATIVE_CONSTRUCTORS),
+            },
+        },
+        "codec_projection_budget": _codec_projection_budget(),
+        "unresolved_questions": [
+            {"question_id": "candidate_selection", "status": "unanswered",
+             "candidate_ids": [record["candidate_id"] for record in records],
+             "detail": "Inventory order is the caller order. No candidate is selected, admitted, or given legal meaning."},
+            {"question_id": "governing_definition", "status": "unanswered",
+             "detail": "No governing definition, edition, or source binding is supplied."},
+            {"question_id": "legal_meaning", "status": "unanswered",
+             "detail": "Constructor, binder, and role inventory is not legal acceptance."},
+            {"question_id": "semantic_graph", "status": "unanswered",
+             "detail": "Object and mixed graph profiles require independent source/scope commitments. This inventory executes no graph and establishes no legal graph admission."},
+            {"question_id": "mixed_native_parser", "status": "unanswered",
+             "detail": "The named mixed codec has no direct native TDFOL AST roundtrip. Existing sorted Lean lowering is available; no programme-wide parser or logic-family absence is inferred."},
+            {"question_id": "training_gold", "status": "unanswered",
+             "detail": "Training and evaluation gold masks remain zero."},
+        ],
+        "reuse_owners": [
+            {"path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+             "symbol": "prepare_relational_norm_v1"},
+            {"path": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+             "symbol": "prepare_mixed_relational_norm_v1"},
+            {"path": "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py",
+             "symbol": "prepare_native_ast_preservation"},
+            {"path": "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
+             "symbol": "sorted_relational_document"},
+        ],
+    }
+
+
+def _classify_relational(codec, payload, payload_raw, payload_text, payload_sha, candidate_id):
+    expression = payload.get("expression")
+    _need(type(expression) is dict and type(expression.get("root")) is dict,
+          "complete candidate typed AST required")
+    constructors, binders, names = [], [], []
+    _walk_typed(expression["root"], constructors, binders, names)
+    roles = payload.get("argument_roles")
+    retained_roles = _json_copy(roles) if type(roles) is list else None
+    ast_sha = hashlib.sha256(_wire(expression, MAX_REQUEST_BYTES)).hexdigest()
+    digest = expression.get("content_digest") if type(expression.get("content_digest")) is str else None
+    if any(_reserved_identifier(name) for name in names):
+        return _interface_record(candidate_id, codec, "ambiguous", "reserved_identifier",
+            payload_text, payload_sha, ast_sha, "typed_expression", digest, constructors, binders,
+            retained_roles, None)
+    try:
+        if codec == "object_relational":
+            prepared = prepare_relational_norm_v1(payload_raw, expected_request_sha256=payload_sha)
+            projection_value = prepared["native_ast"]
+        else:
+            prepared = prepare_mixed_relational_norm_v1(payload_raw, expected_request_sha256=payload_sha)
+            projection_value = prepared["renderer_ast"]
+    except ValueError:
+        return _interface_record(candidate_id, codec, "unsupported", "qualified_codec_refuses",
+            payload_text, payload_sha, ast_sha, "typed_expression", digest, constructors, binders,
+            retained_roles, None)
+    if codec == "mixed_relational":
+        _need(prepared["native_ast"] is None, "mixed codec must not invent a native AST")
+    _need(_wire(prepared["typed_expression"], MAX_REQUEST_BYTES) == _wire(expression, MAX_REQUEST_BYTES),
+          "qualified codec replaced the candidate AST")
+    _need(prepared["argument_roles"] == retained_roles, "qualified codec dropped or reordered roles")
+    projection = hashlib.sha256(_wire(projection_value, MAX_REPORT_BYTES)).hexdigest()
+    _need(projection != ast_sha, "codec projection must stay distinct from the candidate AST")
+    return _interface_record(candidate_id, codec, "representable", "qualified_codec_accepts_original",
+        payload_text, payload_sha, ast_sha, "typed_expression", digest, constructors, binders,
+        retained_roles, projection)
+
+
+def _classify_native(payload, payload_raw, payload_text, payload_sha, candidate_id, toolchain):
+    from . import legal_native_ast_preservation as native
+    _need(type(toolchain) is str and native._TOOLCHAIN.fullmatch(toolchain) is not None,
+          "exact version-pinned Lean toolchain required")
+    ast_value = payload.get("native_ast")
+    _need(type(ast_value) is dict, "complete candidate native AST required")
+    constructors, binders = [], []
+    _walk_native(ast_value, constructors, binders)
+    ast_sha = hashlib.sha256(_wire(ast_value, native.MAX_RECORD_BYTES)).hexdigest()
+    if _native_formula_ast_conflict(payload):
+        return _interface_record(candidate_id, "native_unary_preservation", "ambiguous",
+            "formula_ast_conflict", payload_text, payload_sha, ast_sha, "native_ast", None,
+            constructors, binders, None, None)
+    try:
+        prepared = native.prepare_native_ast_preservation(
+            payload_raw, expected_fragment_file_sha256=payload_sha, toolchain=toolchain)
+    except ValueError:
+        return _interface_record(candidate_id, "native_unary_preservation", "unsupported",
+            "qualified_codec_refuses", payload_text, payload_sha, ast_sha, "native_ast", None,
+            constructors, binders, None, None)
+    _need(hashlib.sha256(_wire(payload["native_ast"], native.MAX_RECORD_BYTES)).hexdigest() == ast_sha,
+          "qualified codec replaced the candidate AST")
+    projection = native.preparation_sha256(prepared)
+    _need(projection != ast_sha, "preservation projection must stay distinct from the candidate AST")
+    return _interface_record(candidate_id, "native_unary_preservation", "representable",
+        "qualified_codec_accepts_original", payload_text, payload_sha, ast_sha, "native_ast", None,
+        constructors, binders, None, projection)
+
+
+def _interface_one(candidate, seen_ids):
+    _keys(candidate, {"candidate_id", "codec", "payload_raw_utf8", "payload_sha256", "toolchain"},
+          "candidate interface row")
+    candidate_id, codec = candidate["candidate_id"], candidate["codec"]
+    _need(type(candidate_id) is str and _CANDIDATE_ID.fullmatch(candidate_id) is not None
+          and candidate_id not in seen_ids, "unique focused candidate id required")
+    seen_ids.add(candidate_id)
+    _need(codec in INTERFACE_CODECS, "unknown candidate codec")
+    payload_text = candidate["payload_raw_utf8"]
+    _need(type(payload_text) is str and payload_text and "\x00" not in payload_text,
+          "exact candidate payload text required")
+    try:
+        payload_raw = payload_text.encode("utf-8")
+    except UnicodeError as error:
+        raise ValueError("exact candidate payload UTF-8 required") from error
+    _digest(candidate["payload_sha256"], "candidate payload")
+    _need(hashlib.sha256(payload_raw).hexdigest() == candidate["payload_sha256"],
+          "candidate payload SHA256 mismatch")
+    _need(0 < len(payload_raw) <= INTERFACE_MAX_BYTES, "bounded candidate payload required")
+    try:
+        payload = json.loads(payload_raw.decode("utf-8"), object_pairs_hook=_pairs,
+            parse_constant=lambda _: (_ for _ in ()).throw(ValueError("finite JSON required")))
+    except (ValueError, UnicodeError, RecursionError) as error:
+        raise ValueError("duplicate-free candidate payload JSON required") from error
+    _wire(payload, INTERFACE_MAX_BYTES)
+    _need(type(payload) is dict, "candidate payload object required")
+    if codec == "native_unary_preservation":
+        return _classify_native(payload, payload_raw, payload_text, candidate["payload_sha256"],
+            candidate_id, candidate["toolchain"])
+    _need(candidate["toolchain"] is None, "toolchain is only part of the native preservation codec")
+    return _classify_relational(codec, payload, payload_raw, payload_text, candidate["payload_sha256"],
+        candidate_id)
+
+
+def prepare_candidate_ir_interface_v1(request_raw, *, expected_request_sha256):
+    """Inventory named codecs, not logic-family completeness; execute no compiler."""
+    _digest(expected_request_sha256, "candidate interface request")
+    _need(type(request_raw) is bytes and 0 < len(request_raw) <= INTERFACE_MAX_BYTES,
+          "bounded candidate interface request required")
+    _need(hashlib.sha256(request_raw).hexdigest() == expected_request_sha256,
+          "candidate interface request SHA256 mismatch")
+    try:
+        request = json.loads(request_raw.decode("utf-8"), object_pairs_hook=_pairs,
+            parse_constant=lambda _: (_ for _ in ()).throw(ValueError("finite JSON required")))
+    except (ValueError, UnicodeError, RecursionError) as error:
+        raise ValueError("duplicate-free candidate interface JSON required") from error
+    _wire(request, INTERFACE_MAX_BYTES)
+    _keys(request, {"schema", "candidates"}, "candidate interface request")
+    _need(request["schema"] == INTERFACE_REQUEST_SCHEMA, "candidate interface schema required")
+    candidates = request["candidates"]
+    _need(type(candidates) is list and 1 <= len(candidates) <= INTERFACE_MAX_CANDIDATES,
+          "focused candidate inventory bound exceeded")
+    records, seen_ids = [], set()
+    for candidate in candidates:
+        records.append(_interface_one(candidate, seen_ids))
+    result = _interface_result(records)
+    _need(set(result) == {
+        "candidate_records", "constructor_vocab_census", "codec_projection_budget",
+        "unresolved_questions", "reuse_owners"}, "closed candidate interface result required")
+    return json.loads(_wire(result, MAX_REPORT_BYTES))
+
+
+def candidate_ir_interface_sha256(report):
+    """Hash the complete inventory without loading a codec."""
+    _keys(report, {"candidate_records", "constructor_vocab_census", "codec_projection_budget",
+                   "unresolved_questions", "reuse_owners"}, "candidate interface report")
+    return hashlib.sha256(_wire(report, MAX_REPORT_BYTES)).hexdigest()
+
+
+def validate_candidate_ir_interface_v1(report, request_raw, *, expected_request_sha256,
+                                       expected_report_sha256):
+    """Require an independent inventory pin and complete regeneration."""
+    _digest(expected_report_sha256, "candidate interface report")
+    _need(candidate_ir_interface_sha256(report) == expected_report_sha256,
+          "candidate interface report SHA256 mismatch")
+    original = _wire(report, MAX_REPORT_BYTES)
+    regenerated = prepare_candidate_ir_interface_v1(
+        request_raw, expected_request_sha256=expected_request_sha256)
+    _need(_wire(regenerated, MAX_REPORT_BYTES) == original,
+          "candidate interface report differs from complete regeneration")
+    return regenerated

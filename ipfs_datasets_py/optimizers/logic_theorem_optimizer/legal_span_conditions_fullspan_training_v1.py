@@ -20,6 +20,7 @@ from pathlib import Path
 import re
 
 from ipfs_datasets_py.logic.legal_ir.conditions_fullspan_margin_v1 import (
+    MAX_TOKENS as MAX_CONDITIONS_TOKENS,
     SCHEMA as MARGIN_SCHEMA,
     conditions_fullspan_margin_from_logits,
 )
@@ -367,6 +368,9 @@ def configuration(state, provenance, *, selection=None, margin_weight=0.25):
             },
             "seed": SEED,
             "batch_size": BATCH_SIZE,
+            "training_row_count": TRAIN_INDEX_COUNT,
+            "batch_order_owner": "legal_span_targeted_loss._batch_indices(168, progress, 12, 1729)",
+            "absent_conditions_margin": "connected_zero_in_full_batch_mean",
             "latent_enabled": False,
             "margin_arms": list(MARGIN_ARMS),
             "margin_schema": MARGIN_SCHEMA,
@@ -477,17 +481,32 @@ def clip_selected_gradients(torch, selected):
 
 def _bind_batch(records, indices, population):
     _require(type(records) is list and type(indices) is list and len(records) == len(indices) == BATCH_SIZE,
-             "gold-present TRAIN row count required")
-    _require(len(set(indices)) == BATCH_SIZE, "gold-present TRAIN row count required")
+             "full TRAIN batch row count required")
+    _require(all(type(index) is int and 0 <= index < TRAIN_INDEX_COUNT for index in indices)
+             and len(set(indices)) == BATCH_SIZE, "typed full TRAIN batch indices required")
     bound = []
     for record, index in zip(records, indices, strict=True):
-        _require(type(record) is dict and type(index) is int and index in population, "TRAIN partition required")
-        _require(record.get("partition") == "TRAIN" and record.get("gold_present") is True
-                 and record.get("id") == population[index] and record.get("training_index") == index,
-                 "TRAIN partition required")
+        _require(type(record) is dict and type(record.get("id")) is str and record["id"],
+                 "TRAIN record identity required")
         labels = record.get("labels")
-        _require(type(labels) is dict and labels.get("presence", (None, None, None, None))[3] is True,
-                 "gold-present TRAIN row count required")
+        presence = labels.get("presence") if type(labels) is dict else None
+        _require(type(presence) in (list, tuple) and len(presence) == 6
+                 and all(type(value) is bool for value in presence), "typed TRAIN presence labels required")
+        present = presence[CONDITIONS_ROW]
+        _require((present and population.get(index) == record["id"])
+                 or (not present and index not in population and record["id"] not in population.values()),
+                 "gold-present TRAIN membership differs")
+        # Original F18 records have no partition/gold_present/training_index
+        # sidecars: indices travel separately, and its immutable teacher/weight
+        # tables bind each selected record. Reject conflicting optional tags.
+        if "partition" in record:
+            _require(record["partition"] == "TRAIN", "TRAIN partition required")
+        if "training_index" in record:
+            _require(type(record["training_index"]) is int and record["training_index"] == index,
+                     "TRAIN index annotation differs")
+        if "gold_present" in record:
+            _require(type(record["gold_present"]) is bool and record["gold_present"] is present,
+                     "TRAIN presence annotation differs")
         bound.append(record)
     return bound
 
@@ -495,12 +514,22 @@ def _bind_batch(records, indices, population):
 def _conditions_targets(records):
     targets = []
     for record in records:
-        labels = record["labels"]
-        count = len(record["tokens"])
-        span = labels["spans"][3]
-        _require(type(count) is int and count >= 1 and type(span) in (list, tuple) and len(span) == 2,
+        _require(type(record) is dict and type(record.get("tokens")) in (list, tuple),
+                 "conditions token geometry required")
+        labels = record.get("labels")
+        presence = labels.get("presence") if type(labels) is dict else None
+        spans = labels.get("spans") if type(labels) is dict else None
+        _require(type(presence) in (list, tuple) and len(presence) == 6
+                 and all(type(value) is bool for value in presence)
+                 and type(spans) in (list, tuple) and len(spans) == 6,
                  "conditions row 3 selection required")
-        targets.append({"token_count": count, "present": True, "span": (int(span[0]), int(span[1]))})
+        count, present, span = len(record["tokens"]), presence[CONDITIONS_ROW], spans[CONDITIONS_ROW]
+        _require(1 <= count <= MAX_CONDITIONS_TOKENS and type(span) in (list, tuple) and len(span) == 2
+                 and all(type(value) is int for value in span), "integer conditions target geometry required")
+        left, right = span
+        _require((0 <= left <= right < count) if present else (left, right) == (-100, -100),
+                 "present conditions span or absent sentinel required")
+        targets.append({"token_count": count, "present": present, "span": (left, right)})
     return targets
 
 
@@ -516,6 +545,7 @@ def compose_objective(torch, output, records, indices, teacher, weights, state, 
     _require(type(provenance) is dict and "_state" not in provenance, "donor provenance required")
     _, _, _, _, population = _validate_provenance(provenance, state)
     _bind_batch(records, indices, population)
+    targets = _conditions_targets(records)
     policy = f18._policy("modality-conditions-retention-ce")
     total, details = f18._loss(torch, output, records, indices, policy, teacher, weights)
     _require(details["weighted_CE"]["batch_denominator"] == BATCH_SIZE
@@ -529,7 +559,7 @@ def compose_objective(torch, output, records, indices, teacher, weights, state, 
              and start.shape[0] == BATCH_SIZE, "conditions row 3 selection required")
     margin = conditions_fullspan_margin_from_logits(
         torch, start[:, CONDITIONS_ROW, :], end[:, CONDITIONS_ROW, :],
-        _conditions_targets(records), weight=margin_weight)
+        targets, weight=margin_weight)
     combined = total + margin["weighted_loss"]
     _require(bool(torch.isfinite(combined)), "nonfinite control")
     return {
@@ -656,6 +686,9 @@ def engineering_preparation():
             "kl_denominator": KL_BLOCKS * BATCH_SIZE,
             "optimizer_steps_executed": 0,
             "structured_objective_invoked": False,
+            "training_row_count": TRAIN_INDEX_COUNT,
+            "batch_order_owner": "legal_span_targeted_loss._batch_indices(168, progress, 12, 1729)",
+            "absent_conditions_margin": "connected_zero_in_full_batch_mean",
         },
         "selection_mask_contract": contract,
         "acceptance_controls": {
@@ -683,6 +716,7 @@ def engineering_preparation():
             "comparators_not_rerun": ["F18", "F15", "N11", "F16", "F17", "F19"],
         },
         "unresolved_questions": [
+            "Caller-state self-hashes do not independently authenticate the retained final F18 donor or its source/teacher/mask artifact roots; original-owned admission must bind them.",
             "Matched coefficient 0 and 0.25 arms still need separate resource admission before the 32-update fit.",
             "Frozen raw and joint complete-IR scoring against retained comparators, casewise retention and the 32 permission decisions is preflight only.",
             "Statutory gold, governing meaning, latent-width comparison and parent LIR-17 semantic dependencies remain unresolved.",
