@@ -23,14 +23,17 @@ import time
 ROOT = Path(__file__).resolve().parents[3]
 
 
-def snapshot(path, maximum=1024*1024):
+def snapshot(path, maximum=1024*1024, *, allow_empty=False):
+    if type(allow_empty) is not bool:
+        raise ValueError('allow_empty must be an exact bool')
+    minimum = 0 if allow_empty else 1
     path = Path(path)
     for parent in (path.parent, *path.parent.parents):
         if not stat.S_ISDIR(parent.lstat().st_mode):
             raise ValueError('input directory is missing or aliased')
     with os.fdopen(os.open(path, os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK), 'rb') as stream:
         before = os.fstat(stream.fileno())
-        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or not 0 < before.st_size <= maximum:
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or not minimum <= before.st_size <= maximum:
             raise ValueError('bounded unaliased regular input required')
         raw = stream.read(maximum+1)
         after = os.fstat(stream.fileno())
@@ -55,7 +58,7 @@ def source_guard(value):
     if type(pins) is not dict or not pins:
         raise ValueError('explicit validation source pins required')
     for path, digest in pins.items():
-        if hashlib.sha256(snapshot(path, 4*1024*1024)).hexdigest() != digest:
+        if hashlib.sha256(snapshot(path, 4*1024*1024, allow_empty=True)).hexdigest() != digest:
             raise ValueError('validation source changed: '+path)
 
 
