@@ -24,6 +24,9 @@ The final merged, freshly original-owned [26-case genuine synthetic mechanics re
 
 The latest accepted native readback records **64 blocked tasks and no runnable scientific frontier**. LIR-9001's two-attempt budget is spent; administrative settlement leaves the provider outcome unknown. Use the existing handoff preview preparer and original-owner disposition before any retry or successor admission. Source, model and graph preparations may proceed under separately admitted scopes. The active minute watchdog observes the separate legacy engineering fleet; healthy operational status does not settle the scientific programme. See [operations](docs/OPERATIONS.md) and the [current evidence](../../../docs/autoformalization/evidence/legal-ir-training-programme-readiness-20261026.json).
 
+The [2026-10-27 runtime retry-policy verification](../../../docs/autoformalization/evidence/legal-ir-runtime-retry-policy-verification-20261027.json) binds the four engineering lanes' owner-reported loaded generation to its actual ten source files and verifies the existing attempt-floor/journal protection before task selection and dispatch. The checkout's older Git HEAD did not prove that this privately adapted protection was absent. This read-only verification performed no deployment, restart, new tests, database access or provider call. The public closed automatic rearm selector (`0`/`1`) and its separate guards remain a source difference; this does not establish full PR301 byte equivalence, whole-process code attestation or an authenticated minimum attempt count. Engineering completion does not settle the 64-task scientific programme.
+
+
 | Need | Canonical document |
 | --- | --- |
 | Continue the work or hand it to another coding agent | [Current status and next work](docs/HANDOFF.md) |

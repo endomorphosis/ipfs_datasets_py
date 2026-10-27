@@ -5909,6 +5909,16 @@
       "root": "datasets_repository",
       "scope": "28 pure cases in 122.70 seconds on the safe four-path source port. Original lake/preservation owners and prior definitions remain unchanged. Independent warm source/callable/physical/detached-return controls passed; 54 selected source pins and original compute/storage/source custody closed. Prior harness failures and exact-record storage recovery stay separate. No transfer of historical 256-case/runtime, compiler, model, semantic or corpus qualification.",
       "status": "focused_pure_compatibility_and_independent_replay_qualified"
+    },
+    {
+      "id": "runtime-retry-policy-verification-20261027-01",
+      "observed_bytes": 10239,
+      "observed_sha256": "522d8f6134f770ce6c5fadbfa81569f466c5a296e19d76c5a24f976398ee2a34",
+      "path": "docs/autoformalization/evidence/legal-ir-runtime-retry-policy-verification-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Read-only observation at 15:33 UTC: four owner-reported loaded/current lane identities bind the actual ten-file source snapshot. Existing attempt-floor/strict-journal helpers and the predispatch partition/refusal/selection path match the published correction; older Git HEAD alone was not absence proof. The public closed automatic rearm selector (0/1) selector/guards remain a separate source difference. No new tests, DB/provider operation, deployment, restart, accounting correction, current minimum attempt count or whole-process code attestation. 139 completed engineering cards remain separate from the last accepted 64-blocked scientific programme.",
+      "status": "source_and_retained_evidence_review_only"
     }
   ]
 }
