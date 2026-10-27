@@ -156,3 +156,19 @@ The owner retains a real pipe through compute so parent loss revokes the isolate
 Each complete arm saves its four-tensor checkpoint and full training report, restores once for source-only632 capture and writes raw/joint files under exports/f18-paired. The complete pair-output-freeze.json precedes any independent reference scoring. Partial deadlines persist partial artifacts, return nonzero and retain the original claim for explicit recovery. All authority/promotion flags stay false.
 
 The separate original-owned matched pair reports 64 updates and frozen candidate outputs. The next adapter belongs in the existing `formula_generation_metrics.py` owner, reusing `compare_free_running_formulas`; preserve original readouts and defer quality claims until independent post-freeze scoring.
+
+
+## Published experimental candidate deltas
+
+The [immutable release](https://huggingface.co/Publicus/legal-ir-autoencoder/tree/270a753c1f439ac106877e825d5f5a3577916510/releases/20261027-f18-four-tensor-conditions-pair-v1) contains two donor-dependent `conditions-fullspan-f18-four-tensor-checkpoint/v1` JSON deltas and a manifest/README. These are experimental unscored candidates, not standalone 42-tensor checkpoints or a promoted default.
+
+| Arm | Margin coefficient | Immutable delta | SHA256 |
+| --- | --- | --- | --- |
+| arm-0 | 0.0 | [133639 bytes](https://huggingface.co/Publicus/legal-ir-autoencoder/resolve/270a753c1f439ac106877e825d5f5a3577916510/releases/20261027-f18-four-tensor-conditions-pair-v1/cells/arm-0/results/checkpoint.json) | `d5707c70643538f95ec4a0b1ece2f61dab4e20d9bd8dd0eca5ea5a81baef02b9` |
+| arm-025 | 0.25 | [133618 bytes](https://huggingface.co/Publicus/legal-ir-autoencoder/resolve/270a753c1f439ac106877e825d5f5a3577916510/releases/20261027-f18-four-tensor-conditions-pair-v1/cells/arm-025/results/checkpoint.json) | `8db89f121d35aa82440255ff10a631402f868bb9cc02112d94515a762c82e709` |
+
+Reuse the existing donor in `Publicus/legal-ir-autoencoder` at `c9cce4586dd96518088662fb12831173e98e36cc`, file `releases/20261015-modality-conditions-retention-v1/cells/modality-conditions-retention-ce/results/cell-checkpoint.json`, SHA256 `90031d084f2d86cf860c5fc95d2dae374dc254adec70bd85a90893f98c5a1555`. Preserve canonical profile SHA256 `56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147` from [the bound source generation](https://github.com/endomorphosis/ipfs_datasets_py/tree/e8b4d34c4534c845a5b052ca6af05e47607feb9f). Load with the existing `load_checkpoint`/`restore_optimizer` APIs and their required independent donor/input bindings.
+
+The [publication receipt](../../../../../docs/autoformalization/evidence/legal-ir-f18-four-tensor-hf-weight-publication-20261027.json) verifies opaque remote file bytes only; no model restore, inference, new training, independent score or legal/Lean qualification ran in this publication scope. Keep all 40 trained raw/joint outputs frozen and use the separate post-freeze scorer before any quality or promotion decision.
+
+For the recorded publication operation, use the pinned virtual-environment SDK through an explicitly isolated Python process (`-I`). This avoids the original launcher's user-site dependency prefix while preserving normal virtual-environment site loading and the original admission boundary. The first import failure and its original storage recovery remain separate evidence; no remote commit was submitted by that failed attempt.
