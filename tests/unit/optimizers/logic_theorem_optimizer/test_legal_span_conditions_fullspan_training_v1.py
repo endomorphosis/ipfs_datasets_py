@@ -626,10 +626,28 @@ def test_actual_f18_forward_mixed_batch_preserves_ce_kl_and_row3_optimizer_parti
     assert torch.allclose(quarter["margin"]["weighted_loss"], only_present["weighted_loss"] * 0.5)
     margin_gradients = torch.autograd.grad(quarter["margin"]["weighted_loss"],
                                          (output["start"], output["end"]), retain_graph=True)
-    for gradient in margin_gradients:
+    # Independently differentiate the detached wrong/gold boundary witnesses.
+    # Shared endpoints cancel; only the endpoint pair must be nonzero jointly.
+    expected_gradients = [torch.zeros_like(output[key]) for key in ("start", "end")]
+    for index, row in enumerate(diagnostics):
+        wrong = row["wrong_span"]
+        if not row["present"] or wrong is None:
+            assert row["hinge"] == 0.0
+            continue
+        gold = targets[index]["span"]
+        starts, ends = output["start"].detach()[index, 3], output["end"].detach()[index, 3]
+        hinge = float((1.0 + (starts[wrong[0]] + ends[wrong[1]]))
+                      - (starts[gold[0]] + ends[gold[1]]))
+        assert row["hinge"] == max(hinge, 0.0)
+        if hinge > 0.0:  # ReLU's zero/negative branch contributes no derivative.
+            for endpoint, expected in enumerate(expected_gradients):
+                expected[index, 3, wrong[endpoint]] += 0.25 / 12
+                expected[index, 3, gold[endpoint]] -= 0.25 / 12
+    for gradient, expected in zip(margin_gradients, expected_gradients, strict=True):
+        assert torch.equal(gradient, expected)
         assert torch.count_nonzero(gradient[:, [0, 1, 2, 4, 5], :]) == 0
         assert torch.count_nonzero(gradient[[1, 3, 5, 7, 9, 11], 3, :]) == 0
-        assert torch.count_nonzero(gradient[present_rows, 3, :]) > 0
+    assert sum(int(torch.count_nonzero(gradient[present_rows, 3, :])) for gradient in margin_gradients) > 0
     quarter["loss"].backward()
     assert any(torch.count_nonzero(parameter.grad[3]) > 0 for parameter in wired["selected"])
     _assert_frozen_and_inactive(wired, before, steps=0)
