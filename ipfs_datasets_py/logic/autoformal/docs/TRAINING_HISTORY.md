@@ -1,5 +1,13 @@
 # Training and experiment history
 
+
+## Retained compatibility diagnostic and F18 asset locations, 2026-10-27
+
+The [15-case/45-phase observation](../../../../docs/autoformalization/evidence/legal-ir-retained-lean-compatibility-diagnostic-20261027.json) covers only the new compatibility frontier on retained `8fc89b20`: 0.65s, 35 selected source pins and original compute/storage/source closure. Fresh original CLI `66a608dc` accepted the exact empty source pin; it did not replay or rewrite the old 141 request. It is neither current-public runtime/source-port qualification nor the unfinished card's full owning-suite/task-checker gate. Both 1800-second full gates remain failed; real Lean, semantic and model qualification are not supplied.
+
+Six retained F18 dependencies are located by path/presence/size in the same capsule. Their payloads were not opened or hashed, and no donor/teacher/source/mask authentication, paired fit or scoring follows. The separate attempt 4→1 incident reflects the existing source-hash-based obsolescence-rearm policy with retained event history; its policy fix is separate and no deployment is claimed here.
+
+
 ## F18 four-tensor mechanics qualification, 2026-10-27
 
 The [new original-owned qualification](../../../../docs/autoformalization/evidence/legal-ir-f18-conditions-fullspan-genuine-mechanics-20261027.json) passed all 26 cases in a fresh run on merged `15888d1a`, product `272bb78a` and owning test `799d4b74`, with all 36 listed source pins verified before and after. The earlier `e2dec5b7` 26-pass generation remains separately preserved. The merged run used the original `970d590e` validation CLI, with 1 CPU, 2 GiB RAM, 128 MiB storage and a 300-second limit. Genuine synthetic initialization of the retained F18 architecture exercises its original batch/CE/KL owners and published full-span margin: 168 mixed TRAIN rows, all 72 present rows, batch12, CE outer8 and KL denominator72. It verifies all-absent connected zeros, conditions row3 in the ordered four start/end weight/bias tensors, 38 frozen tensors including modality, 130 active/780 stored/650 inactive scalars, unchanged bytes and synthetic in-memory Adam continuation. Original compute/storage released and the final observed live-process count was zero. No trained donor/checkpoint payload was loaded or authentic donor/source/teacher/mask root qualified; no real-input fit, scored output or accuracy gain follows.
