@@ -157,6 +157,29 @@ def prepare_source_review_handoff(candidate_context_inventory_report, *,
     return report
 
 
+def bind_source_dossier_review_questions(dossier):
+    """Attach the existing pending obligations to a source dossier.
+
+    This does not replay context, create a review receipt, or decide meaning.
+    A dossier that already claims operative uses or a completed review is refused.
+    """
+    _need(type(dossier) is dict and dossier.get("schema") == "legal-source-edition-context-dossier/v1",
+          "source dossier schema differs")
+    _need(dossier.get("operative_use_count") == 0 and type(dossier.get("operative_uses")) is list
+          and dossier["operative_uses"] == [], "dossier cannot assert operative uses")
+    _need(dossier.get("legal_meaning_manufactured") is False and dossier.get("review_manufactured") is False,
+          "dossier cannot carry manufactured meaning or review")
+    _need(dossier.get("crosswalk_status") in {"missing", "declared_unreviewed"},
+          "crosswalk must stay missing or unreviewed")
+    authority = dossier.get("authority")
+    _need(type(authority) is dict and authority and all(value is False for value in authority.values()),
+          "dossier authority must stay false")
+    return {"schema": "legal-source-dossier-review-questions/v1", "review_obligations": _obligations(),
+            "all_review_obligations_pending": True, "actual_review_receipts_created": False,
+            "legal_role_classification_performed": False, "source_review_completed": False,
+            "authority": dict(AUTHORITY)}
+
+
 def validate_source_review_handoff(report, candidate_context_inventory_report, *, expected_report_sha256, **trusted_inputs):
     contexts.custody._sha(expected_report_sha256)
     _need(source_review_handoff_report_sha256(report) == expected_report_sha256, "independent FULL review handoff differs")
@@ -166,4 +189,4 @@ def validate_source_review_handoff(report, candidate_context_inventory_report, *
 
 
 __all__ = ["SourceReviewHandoffError", "prepare_source_review_handoff", "source_review_handoff_report_sha256",
-    "validate_source_review_handoff"]
+    "bind_source_dossier_review_questions", "validate_source_review_handoff"]

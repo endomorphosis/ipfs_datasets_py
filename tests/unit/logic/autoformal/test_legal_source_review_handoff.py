@@ -151,3 +151,37 @@ def test_nested_replay_guard_runs_before_handoff_or_context_deepcopy(tmp_path, m
     monkeypatch.setattr(owner.contexts, "deepcopy", snapshot)
     with pytest.raises(ValueError): owner.prepare_source_review_handoff(context, **inputs)
     assert calls == []
+
+
+def _dossier_view(**changes):
+    value = {'schema': 'legal-source-edition-context-dossier/v1', 'operative_use_count': 0,
+             'operative_uses': [], 'legal_meaning_manufactured': False, 'review_manufactured': False,
+             'crosswalk_status': 'missing',
+             'authority': {'source_review_completed': False, 'legal_review_completed': False}}
+    value.update(changes)
+    return value
+
+
+def test_dossier_review_questions_stay_pending_and_do_not_replay_handoff(monkeypatch):
+    def refused(*args, **kwargs):
+        raise AssertionError('review handoff replay is not a dossier question binding')
+    monkeypatch.setattr(owner, 'prepare_source_review_handoff', refused)
+    bound = owner.bind_source_dossier_review_questions(_dossier_view())
+    assert [item['kind'] for item in bound['review_obligations']] == list(owner.REVIEW_OBLIGATION_KINDS)
+    assert all(item['status'] == 'pending_independent_review' and item['verified'] is False
+               and item['closed'] is False for item in bound['review_obligations'])
+    assert bound['actual_review_receipts_created'] is False
+    assert bound['legal_role_classification_performed'] is False
+    assert all(value is False for value in bound['authority'].values())
+
+
+@pytest.mark.parametrize('changes', [
+    {'operative_use_count': 2, 'operative_uses': ['first', 'second']},
+    {'review_manufactured': True},
+    {'legal_meaning_manufactured': True},
+    {'crosswalk_status': 'verified'},
+    {'authority': {'source_review_completed': True}},
+])
+def test_dossier_review_binding_refuses_manufactured_meaning_or_uses(changes):
+    with pytest.raises(ValueError):
+        owner.bind_source_dossier_review_questions(_dossier_view(**changes))
