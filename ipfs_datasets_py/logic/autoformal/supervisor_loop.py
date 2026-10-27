@@ -56,6 +56,8 @@ def prepare_handoff_execution_packet_v1(
     No descriptor is opened, no CID is created and no command is invoked.
     Profiles keep source width, actual bottleneck, sidecars, schema and task
     separate. Target-derived material cannot be labelled inference input.
+    Explicit control_metadata_only previews carry no decoder profile, model
+    assets, inference inputs or supervision inputs.
     """
     supplied = {}
     for name, value in (("programme_links", programme_links), ("current_directives", current_directives),
@@ -142,17 +144,24 @@ def prepare_handoff_execution_packet_v1(
     for flag in ("dispatch", "rearm", "start_workers", "admitted", "native_admission",
                  "task_completion_authority", "goal_completion_authority"):
         require(flag not in envelope or envelope[flag] is False, f"authority_request_forbidden:{flag}")
+    execution_kind = envelope.get("execution_kind", "model")
+    require(isinstance(execution_kind, str) and execution_kind in {"model", "control_metadata_only"},
+            "execution_kind_invalid")
+    control_metadata_only = execution_kind == "control_metadata_only"
     profile = envelope.get("profile")
-    profile_keys = {"ir_family", "schema_version", "decoder_task", "source_dimension", "actual_bottleneck_dimension",
-                    "sidecars", "input_token_limit", "output_token_limit"}
-    require(isinstance(profile, dict) and profile_keys <= set(profile), "profile_identity_required")
-    if isinstance(profile, dict):
-        require(profile.get("ir_family") == "legal_ir" and text(profile.get("schema_version"))
-                and text(profile.get("decoder_task")) and type(profile.get("source_dimension")) is int
-                and profile["source_dimension"] in {8, 384, 768, 4096}
-                and positive(profile.get("actual_bottleneck_dimension"))
-                and strings(profile.get("sidecars"), empty=True)
-                and positive(profile.get("input_token_limit")) and positive(profile.get("output_token_limit")), "profile_identity_invalid")
+    if control_metadata_only:
+        require(profile is None, "control_metadata_profile_forbidden")
+    else:
+        profile_keys = {"ir_family", "schema_version", "decoder_task", "source_dimension", "actual_bottleneck_dimension",
+                        "sidecars", "input_token_limit", "output_token_limit"}
+        require(isinstance(profile, dict) and profile_keys <= set(profile), "profile_identity_required")
+        if isinstance(profile, dict):
+            require(profile.get("ir_family") == "legal_ir" and text(profile.get("schema_version"))
+                    and text(profile.get("decoder_task")) and type(profile.get("source_dimension")) is int
+                    and profile["source_dimension"] in {8, 384, 768, 4096}
+                    and positive(profile.get("actual_bottleneck_dimension"))
+                    and strings(profile.get("sidecars"), empty=True)
+                    and positive(profile.get("input_token_limit")) and positive(profile.get("output_token_limit")), "profile_identity_invalid")
     inputs = envelope.get("inputs")
     require(isinstance(inputs, list) and bool(inputs), "role_bound_inputs_required")
     if isinstance(inputs, list):
@@ -175,7 +184,11 @@ def prepare_handoff_execution_packet_v1(
             require(isinstance(role, str) and role in roles and isinstance(use, str)
                     and use in {"inference", "supervision", "verification", "provenance"}
                     and descriptor(item.get("descriptor")), f"input_binding_invalid:{index}")
-            if role == "representation" or role == "checkpoint" or "profile" in item:
+            if control_metadata_only:
+                require(role != "representation" and role != "checkpoint", f"control_metadata_model_asset_forbidden:{index}")
+                require("profile" not in item, f"control_metadata_input_profile_forbidden:{index}")
+                require(use != "inference" and use != "supervision", f"control_metadata_model_use_forbidden:{index}")
+            elif role == "representation" or role == "checkpoint" or "profile" in item:
                 require(item.get("profile") == profile and isinstance(profile, dict), f"input_profile_mismatch:{index}")
             if "target_derived" in item:
                 require(type(item["target_derived"]) is bool, f"target_derivation_flag_invalid:{index}")

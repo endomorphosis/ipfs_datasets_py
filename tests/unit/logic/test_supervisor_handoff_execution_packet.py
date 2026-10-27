@@ -203,5 +203,99 @@ class HandoffExecutionPacketTests(unittest.TestCase):
             prepare(**request)
 
 
+    def test_control_metadata_only_needs_no_decoder_profile_or_model_assets(self):
+        for include_null_profile in (False, True):
+            with self.subTest(null_profile=include_null_profile):
+                request = self.fixture("LIR-9001")
+                envelope = request["execution_envelope"]
+                envelope["execution_kind"] = "control_metadata_only"
+                envelope.pop("profile")
+                if include_null_profile:
+                    envelope["profile"] = None
+                envelope["inputs"] = [
+                    {"role": "code", "use": "verification", "descriptor":
+                        {"path": "/retained/controller.py", "bytes": 41, "sha256": "d" * 64}},
+                    {"role": "prior_evidence", "use": "provenance", "descriptor":
+                        {"path": "/retained/current-task.json", "bytes": 73, "sha256": "e" * 64}},
+                ]
+                before = copy.deepcopy(request)
+                result = prepare(**request)
+                self.assertTrue(result["metadata_complete"], result["metadata_blockers"])
+                self.assertEqual(result["supplied_metadata"], request)
+                self.assertEqual(request, before)
+                for key in ("independently_verified", "descriptor_hashes_verified", "native_status_verified",
+                            "dispatch_authorized", "rearm_authorized", "native_admission", "workers_started",
+                            "task_completion_authority", "goal_completion_authority", "completion_authority",
+                            "admitted", "formalized", "training_authorized", "semantic_review_verified"):
+                    self.assertIs(result[key], False)
+                self.assertEqual(result["supervision_masks"], {"training": 0, "evaluation_gold": 0})
+
+    def test_control_metadata_only_rejects_profiles_model_assets_and_uses(self):
+        cases = (
+            ("nonnull_profile", "control_metadata_profile_forbidden"),
+            ("empty_profile", "control_metadata_profile_forbidden"),
+            ("input_null_profile", "control_metadata_input_profile_forbidden:0"),
+            ("input_model_profile", "control_metadata_input_profile_forbidden:0"),
+            ("representation", "control_metadata_model_asset_forbidden:0"),
+            ("checkpoint", "control_metadata_model_asset_forbidden:0"),
+            ("inference", "control_metadata_model_use_forbidden:0"),
+            ("supervision", "control_metadata_model_use_forbidden:0"),
+            ("model_role_alias", "input_binding_invalid:0"),
+            ("training_use_alias", "input_binding_invalid:0"),
+            ("mixedcase_use_alias", "input_binding_invalid:0"),
+            ("malformed_role", "input_binding_invalid:0"),
+        )
+        for case, blocker in cases:
+            with self.subTest(case=case):
+                request = self.fixture("LIR-9001")
+                envelope = request["execution_envelope"]
+                model_profile = envelope.pop("profile")
+                envelope["execution_kind"] = "control_metadata_only"
+                item = {"role": "code", "use": "verification", "descriptor":
+                    {"path": "/retained/controller.py", "bytes": 41, "sha256": "d" * 64}}
+                envelope["inputs"] = [item]
+                if case == "nonnull_profile":
+                    envelope["profile"] = model_profile
+                elif case == "empty_profile":
+                    envelope["profile"] = {}
+                elif case == "input_null_profile":
+                    item["profile"] = None
+                elif case == "input_model_profile":
+                    item["profile"] = model_profile
+                elif case in ("representation", "checkpoint"):
+                    item["role"] = case
+                elif case in ("inference", "supervision"):
+                    item.update(use=case, target_derived=False)
+                elif case == "model_role_alias":
+                    item["role"] = "model_checkpoint"
+                elif case == "training_use_alias":
+                    item["use"] = "training"
+                elif case == "mixedcase_use_alias":
+                    item["use"] = "Inference"
+                elif case == "malformed_role":
+                    item["role"] = {"invalid": "checkpoint"}
+                result = prepare(**request)
+                self.assertFalse(result["metadata_complete"])
+                self.assertIn(blocker, result["metadata_blockers"])
+                self.assertIs(result["dispatch_authorized"], False)
+                self.assertEqual(result["supervision_masks"], {"training": 0, "evaluation_gold": 0})
+
+    def test_execution_kind_defaults_to_model_and_invalid_kinds_block(self):
+        request = self.fixture()
+        request["execution_envelope"]["execution_kind"] = "model"
+        self.assertTrue(prepare(**request)["metadata_complete"])
+        request["execution_envelope"].pop("profile")
+        self.assertIn("profile_identity_required", prepare(**request)["metadata_blockers"])
+        for kind in ("metadata_only", "control", "", None, True, 7, [], {}, ["model"]):
+            with self.subTest(kind=kind):
+                request = self.fixture()
+                request["execution_envelope"]["execution_kind"] = kind
+                result = prepare(**request)
+                self.assertFalse(result["metadata_complete"])
+                self.assertIn("execution_kind_invalid", result["metadata_blockers"])
+                self.assertIs(result["dispatch_authorized"], False)
+
+
+
 if __name__ == "__main__":
     unittest.main()
