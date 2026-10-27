@@ -1280,3 +1280,208 @@ def test_checkpoint_rng_consumption_is_refused_and_context_restored(monkeypatch)
             subject.run_admitted_updates(checkpoint, torch=torch, **kwargs, max_steps=1, max_seconds=32)
         _assert_checkpoint_context(torch, rng, False)
     assert observed == [True] and _checkpoint_wire(case) == original
+
+
+def _capture_case():
+    import torch
+    case = _checkpoint_case(actual_model=True)
+    kwargs = _checkpoint_kwargs(case)
+    checkpoint = subject.build_checkpoint(**kwargs)
+    runtime = subject.restore_optimizer(torch, checkpoint, **kwargs)
+    rows = [{key: case["records"][index][key] for key in ("id", "source_text", "latent")}
+            for index in (0, 100)]
+    return case, kwargs, checkpoint, runtime, copy.deepcopy(rows)
+
+
+def _manual_capture_original(runtime, rows):
+    """Independent unchanged greedy call with an observational head hook."""
+    captures = []
+    def hook(module, incoming, output):
+        row = rows[len(captures)]
+        tokens = [{key: value[key] for key in ("text", "start", "end")}
+                  for value in span.tokenize_source(row["source_text"])]
+        captures.append({"schema": "joint-source-span-scores/v1", "tokens": tokens,
+            "modality_logits": output["modality"][0].detach().tolist(),
+            "presence_logits": dict(zip(span.OPTIONAL_FIELDS, output["presence"][0].detach().tolist(), strict=True)),
+            "start_logits": dict(zip(span.SPAN_FIELDS, output["start"][0].detach().tolist(), strict=True)),
+            "end_logits": dict(zip(span.SPAN_FIELDS, output["end"][0].detach().tolist(), strict=True))})
+    view = object.__new__(span.SpanLegalFormulaDecoder)
+    view.torch, view.model = runtime["torch"], runtime["model"]
+    view.checkpoint = {"config": copy.deepcopy(runtime["config"])}
+    handle = runtime["model"].register_forward_hook(hook)
+    try:
+        decoded = [span.SpanLegalFormulaDecoder._decode(view, row["source_text"], row["latent"], enabled=True)
+                   for row in rows]
+    finally:
+        handle.remove()
+    return captures, decoded
+
+
+def test_capture_matches_original_readout_and_reuses_runtime():
+    import torch
+    from ipfs_datasets_py.logic.legal_ir import joint_span_selection as joint
+    case, kwargs, checkpoint, runtime, rows = _capture_case()
+    manual = subject.restore_optimizer(torch, checkpoint, **kwargs)
+    scores, decoded = _manual_capture_original(manual, rows)
+    before = _checkpoint_wire(case)
+    rng = torch.get_rng_state().clone()
+    with torch.no_grad():
+        captured = subject.captured_inference(runtime, checkpoint, rows, **kwargs)
+        repeated = subject.captured_inference(runtime, checkpoint, rows[:1], **kwargs)
+        _assert_checkpoint_context(torch, rng, False)
+    assert captured["schema"] == subject.CAPTURE_SCHEMA
+    assert captured["inference"]["rows"] == decoded
+    assert [row["scores"] for row in captured["occurrences"]] == scores
+    for source, actual, expected in zip(rows, captured["occurrences"], scores, strict=True):
+        left = joint.select_joint_spans(source["source_text"], actual["scores"], top_k=8, max_search_nodes=50000)
+        right = joint.select_joint_spans(source["source_text"], expected, top_k=8, max_search_nodes=50000)
+        assert left == right
+    for packet, count in ((captured, 2), (repeated, 1)):
+        assert packet["actual_source_forwards"] == count and packet["extra_capture_forwards"] == 0
+        assert all(value == count for table in packet["forward_counter_deltas"].values() for value in table.values())
+        assert packet["inference"]["model_state_sha256"] == checkpoint["model_state_sha256"]
+        _assert_checkpoint_authority_false(packet)
+        _assert_checkpoint_authority_false(packet["inference"])
+    assert runtime["model_forwards"] == repeated["cumulative_source_forwards"] == 3
+    assert all(value == 3 for value in runtime["model"]._conditions_forward_accounting.values())
+    assert runtime["model"].training is False and not runtime["model"]._forward_hooks
+    assert all(parameter.grad is None for parameter in runtime["named"].values())
+    assert subject.checkpoint_digest(span._pack(runtime["model"], runtime["optimizer"])[0]) == checkpoint["model_state_sha256"]
+    captured["occurrences"][0]["scores"]["modality_logits"][0] += 1.0
+    assert repeated["occurrences"][0]["scores"] == scores[0]
+    assert _checkpoint_wire(case) == before
+
+
+def test_capture_source_only_controls_use_native_counter_deltas():
+    import torch
+    _, kwargs, checkpoint, runtime, rows = _capture_case()
+    rows[0]["latent"], rows[1]["latent"] = [0.25] * 384, [-0.25] * 384
+    original = _checkpoint_wire(rows)
+    rng = torch.get_rng_state().clone()
+    packets = []
+    with torch.no_grad():
+        for control in ("none", "zero", "disabled", "rotate"):
+            packets.append(subject.captured_inference(runtime, checkpoint, rows, control=control, **kwargs))
+            _assert_checkpoint_context(torch, rng, False)
+    for index, packet in enumerate(packets):
+        assert packet["cumulative_source_forwards"] == 2 * (index + 1)
+        assert packet["inference"]["latent_ablation"] == ("none", "zero", "disabled", "rotate")[index]
+        assert [row["scores"] for row in packet["occurrences"]] == [row["scores"] for row in packets[0]["occurrences"]]
+        stripped = [{key: value for key, value in row.items() if key != "latent_sha256"}
+                    for row in packet["inference"]["rows"]]
+        baseline = [{key: value for key, value in row.items() if key != "latent_sha256"}
+                    for row in packets[0]["inference"]["rows"]]
+        assert stripped == baseline
+    assert runtime["model_forwards"] == 8 and _checkpoint_wire(rows) == original
+
+
+def test_capture_rejects_reference_rows_and_controls_before_forward():
+    import torch
+    _, kwargs, checkpoint, runtime, rows = _capture_case()
+    variants = []
+    for key in ("labels", "canonical_ir", "teacher"):
+        offered = copy.deepcopy(rows)
+        offered[0][key] = {}
+        variants.append((offered, "none", "source-only"))
+    variants.extend([(rows * 65, "none", "source-only"), ([], "none", "source-only"),
+                     (rows, "foreign", "control"), (rows[:1], "rotate", "control")])
+    duplicate = copy.deepcopy(rows)
+    duplicate[1]["id"] = duplicate[0]["id"]
+    variants.append((duplicate, "none", "IDs"))
+    for change, match in (("width", "latent"), ("nonfinite", "finite|latent"), ("long", "bounded complete capture source tokens required")):
+        offered = copy.deepcopy(rows)
+        if change == "width": offered[0]["latent"] = [0.0] * 383
+        elif change == "nonfinite": offered[0]["latent"][0] = float("nan")
+        else: offered[0]["source_text"] = "token " * 129
+        variants.append((offered, "none", match))
+    attempts = []
+    def forbidden(module, incoming):
+        attempts.append(type(module).__name__)
+        raise AssertionError("invalid source triple reached a model")
+    # The tested input checks precede even the global-hook refusal. Message
+    # matching prevents a hook-registry error from hiding an input-check gap.
+    handle = torch.nn.modules.module.register_module_forward_pre_hook(forbidden)
+    try:
+        for offered, control, match in variants:
+            with pytest.raises(ValueError, match=match):
+                subject.captured_inference(runtime, checkpoint, offered, control=control, **kwargs)
+    finally:
+        handle.remove()
+    assert attempts == [] and runtime["model_forwards"] == 0
+    assert all(value == 0 for value in runtime["model"]._conditions_forward_accounting.values())
+
+
+def test_capture_rejects_changed_runtime_callable_hooks_and_state(monkeypatch):
+    import torch
+    _, kwargs, checkpoint, runtime, rows = _capture_case()
+    attempts = []
+    def changed(*args, **keywords):
+        attempts.append(True)
+        raise AssertionError("changed callable must never run")
+    for module in (runtime["model"], runtime["model"].start):
+        with monkeypatch.context() as patch:
+            patch.setattr(module, "forward", changed)
+            with pytest.raises(ValueError, match="callable|forward"):
+                subject.captured_inference(runtime, checkpoint, rows, **kwargs)
+    for module in (runtime["model"], runtime["model"].encoder):
+        handle = module.register_forward_pre_hook(changed)
+        try:
+            with pytest.raises(ValueError, match="hook"):
+                subject.captured_inference(runtime, checkpoint, rows, **kwargs)
+        finally:
+            handle.remove()
+    handle = torch.nn.modules.module.register_module_forward_hook(changed)
+    try:
+        with pytest.raises(ValueError, match="global.*hook"):
+            subject.captured_inference(runtime, checkpoint, rows, **kwargs)
+    finally:
+        handle.remove()
+    with monkeypatch.context() as patch:
+        patch.setitem(runtime["config"], "latent_enabled", True)
+        with pytest.raises(ValueError, match="config"):
+            subject.captured_inference(runtime, checkpoint, rows, **kwargs)
+    before = runtime["model"].start.bias.detach().clone()
+    try:
+        with torch.no_grad(): runtime["model"].start.bias[3] += 1.0
+        with pytest.raises(ValueError, match="state"):
+            subject.captured_inference(runtime, checkpoint, rows, **kwargs)
+    finally:
+        with torch.no_grad(): runtime["model"].start.bias.copy_(before)
+    assert attempts == [] and runtime["model_forwards"] == 0
+    assert all(value == 0 for value in runtime["model"]._conditions_forward_accounting.values())
+
+
+@pytest.mark.parametrize("mutation", ["weight", "source"])
+def test_capture_late_mutation_closing_fence_restores_context(monkeypatch, mutation):
+    import torch
+    _, kwargs, checkpoint, runtime, rows = _capture_case()
+    rng = torch.get_rng_state().clone()
+    genuine = subject._detached
+    bias = runtime["model"].start.bias.detach().clone()
+    touched = []
+    with monkeypatch.context() as patch:
+        original_read = Path.read_bytes
+        target = Path(span.__file__).resolve()
+        def source_drift(path):
+            raw = original_read(path)
+            return raw + b"\n# observed late capture source drift\n" if path.resolve() == target else raw
+        def detach_and_mutate(value):
+            detached = genuine(value)
+            if type(value) is dict and value.get("schema") == subject.CAPTURE_SCHEMA and not touched:
+                touched.append(True)
+                if mutation == "weight":
+                    with torch.no_grad(): runtime["model"].start.bias[3] += 1.0
+                else:
+                    patch.setattr(Path, "read_bytes", source_drift)
+            return detached
+        patch.setattr(subject, "_detached", detach_and_mutate)
+        try:
+            with torch.no_grad():
+                with pytest.raises(ValueError, match="state|source|changed"):
+                    subject.captured_inference(runtime, checkpoint, rows[:1], **kwargs)
+                _assert_checkpoint_context(torch, rng, False)
+        finally:
+            with torch.no_grad(): runtime["model"].start.bias.copy_(bias)
+    assert touched == [True] and not runtime["model"]._forward_hooks
+    assert runtime["model"].training is False and runtime["model_forwards"] == 1
+    assert all(value == 1 for value in runtime["model"]._conditions_forward_accounting.values())
