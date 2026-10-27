@@ -1284,3 +1284,466 @@ def validate_source_correspondence_requests_v3(report, request_raw, graph_report
 __all__ += ["prepare_source_correspondence_requests_v2", "validate_source_correspondence_requests_v2",
             "source_correspondence_requests_v2_sha256", "prepare_source_correspondence_requests_v3",
             "validate_source_correspondence_requests_v3", "source_correspondence_requests_v3_sha256"]
+# Declared source/edition/context dossier. Callers supply identities and the
+# completed coordinate receipt. Missing revisions, crosswalks and operative uses
+# stay explicit; this path does not segment, match, align or census.
+DOSSIER_REQUEST_SCHEMA = "legal-source-edition-context-dossier-request/v1"
+DOSSIER_SCHEMA = "legal-source-edition-context-dossier/v1"
+DOSSIER_PROFILE = "declared-source-span-entity-review-dossier/v1"
+DOSSIER_MANIFEST_SCHEMA = "legal-source-edition-context-manifest/v1"
+_DOSSIER_DEFAULT_LIMITS = {"max_request_bytes": 256 * 1024, "max_receipt_bytes": 1024 * 1024,
+    "max_evidence_bytes": 2 * 1024 * 1024, "max_report_bytes": 2 * 1024 * 1024,
+    "max_bindings": 32, "max_offsets": 64, "max_candidates": 64, "max_evidence_pins": 8,
+    "max_json_nodes": 100_000, "max_json_depth": 48, "max_string_bytes": 512 * 1024}
+_DOSSIER_REQUEST = {"schema", "profile", "coordinate_namespace", "closed_generation",
+    "identity_bindings", "offsets", "crosswalk", "edition", "context", "candidates", "evidence_pins"}
+_DOSSIER_COUNT_KEYS = ("emitted_sentence_spans", "historical_progress_observations",
+    "matching_position_references", "unique_matching_coordinate_span_indices",
+    "observations_with_multiple_matching_positions")
+_DOSSIER_GENERATION = {"observation_id", "receipt_schema", *_DOSSIER_COUNT_KEYS}
+_DOSSIER_BINDING = {"binding_id", "role", "status", "repository_id", "declared_revision",
+    "artifact_revision", "path_in_repo", "artifact_sha256", "row_ordinal", "row_sha256"}
+_DOSSIER_ROLES = {"source", "span", "entity", "parent_cache"}
+_DOSSIER_REQUIRED_ROLES = ("source", "span", "entity")
+_DOSSIER_OFFSET = {"offset_id", "namespace", "start", "end", "unit"}
+_DOSSIER_UNITS = {"unicode_character_half_open", "utf8_byte_half_open"}
+_DOSSIER_CANDIDATE = {"candidate_id", "kind", "disposition", "operative_use", "legal_id",
+    "source_occurrence_id", "evidence_pin_id"}
+_DOSSIER_KINDS = {"full_parent_bank", "officer_alternative", "norm_use_candidate"}
+_DOSSIER_DISPOSITIONS = {"unresolved_alternative", "missing_crosswalk", "unresolved_operative_use"}
+_DOSSIER_PIN = {"pin_id", "sha256", "role"}
+_DOSSIER_PIN_ROLE = "unreviewed_candidate_register"
+
+
+def _dossier_limits(value):
+    _need(value is None or type(value) is dict, "closed lower-only dossier limits required")
+    result = dict(_DOSSIER_DEFAULT_LIMITS)
+    for key, bound in (value or {}).items():
+        _need(key in result and type(bound) is int and 0 < bound <= result[key],
+              "unknown, noninteger or raised dossier bound")
+        result[key] = bound
+    return result
+
+
+def _dossier_count(value, label):
+    _need(type(value) is int and 0 <= value <= 1_000_000_000, "plain dossier count required: " + label)
+    return value
+
+
+def _dossier_pairs(items):
+    result = {}
+    for key, value in items:
+        _need(type(key) is str and key not in result, "duplicate dossier JSON key")
+        result[key] = value
+    return result
+
+
+def _dossier_constant(_):
+    raise SourceCorrespondenceRequestsError("nonfinite dossier JSON refused")
+
+
+def _dossier_json(raw, maximum, label, *, canonical=False, bounds=None):
+    _need(type(raw) is bytes and 0 < len(raw) <= maximum, "bounded immutable " + label + " bytes required")
+    try:
+        value = json.loads(raw.decode("utf-8"), object_pairs_hook=_dossier_pairs,
+                           parse_constant=_dossier_constant)
+    except (UnicodeError, ValueError, RecursionError) as error:
+        if isinstance(error, SourceCorrespondenceRequestsError):
+            raise
+        raise SourceCorrespondenceRequestsError("ordinary " + label + " JSON required") from error
+    if canonical:
+        copied, wire = _plain(value, _dossier_limits(None) if bounds is None else bounds, maximum)
+        _need(wire == raw, label + " must be canonical compact JSON without final LF")
+        return copied
+    return value
+
+
+def _dossier_revision(value, label):
+    if value is None:
+        return None
+    _need(type(value) is str and _REVISION.fullmatch(value) is not None,
+          "immutable revision required: " + label)
+    return value
+
+
+def _dossier_path(value):
+    _string(value, "declared path")
+    _need(not value.startswith("/") and "\\" not in value and "\x00" not in value and all(
+          part not in ("", ".", "..") for part in value.split("/")), "relative declared path required")
+
+
+def _dossier_binding(binding, bounds):
+    _keys(binding, _DOSSIER_BINDING, "identity binding")
+    _string(binding["binding_id"], "binding identity")
+    _need(binding["role"] in _DOSSIER_ROLES, "identity role differs")
+    _need(binding["status"] in {"declared", "unresolved"}, "identity status differs")
+    declared = _dossier_revision(binding["declared_revision"], binding["role"] + " declared revision")
+    artifact = _dossier_revision(binding["artifact_revision"], binding["role"] + " artifact revision")
+    if binding["status"] == "declared":
+        _need(declared is not None and artifact is not None,
+              "missing revision for declared identity: " + binding["role"])
+        _need(declared == artifact, "stale revision for declared identity: " + binding["role"])
+        _string(binding["repository_id"], "repository")
+        _dossier_path(binding["path_in_repo"])
+        _digest(binding["artifact_sha256"], "declared artifact")
+        if binding["row_ordinal"] is not None:
+            _integer(binding["row_ordinal"], 2**63 - 1, "declared row ordinal")
+        if binding["row_sha256"] is not None:
+            _digest(binding["row_sha256"], "declared row")
+    else:
+        _need(declared is None and artifact is None,
+              "partial revision is not an unresolved identity; missing side cannot be guessed: " + binding["role"])
+        _need(binding["repository_id"] is None and binding["path_in_repo"] is None
+              and binding["artifact_sha256"] is None and binding["row_ordinal"] is None
+              and binding["row_sha256"] is None,
+              "unresolved identity cannot carry a guessed artifact: " + binding["role"])
+    return dict(binding)
+
+
+def _dossier_request(raw, expected, bounds):
+    _digest(expected, "dossier request")
+    _need(type(raw) is bytes and 0 < len(raw) <= bounds["max_request_bytes"],
+          "bounded immutable dossier request bytes required before hashing")
+    _need(_sha(raw) == expected, "independent dossier request bytes differ")
+    value = _dossier_json(raw, bounds["max_request_bytes"], "dossier request", canonical=True, bounds=bounds)
+    _keys(value, _DOSSIER_REQUEST, "source edition context dossier request")
+    _need(value["schema"] == DOSSIER_REQUEST_SCHEMA and value["profile"] == DOSSIER_PROFILE,
+          "source edition context dossier domain differs")
+    _string(value["coordinate_namespace"], "coordinate namespace")
+    generation = value["closed_generation"]
+    _keys(generation, _DOSSIER_GENERATION, "closed coordinate generation")
+    _string(generation["observation_id"], "coordinate observation")
+    _string(generation["receipt_schema"], "coordinate receipt schema")
+    for key in _DOSSIER_COUNT_KEYS:
+        _dossier_count(generation[key], key)
+    bindings = value["identity_bindings"]
+    _need(type(bindings) is list and 0 < len(bindings) <= bounds["max_bindings"],
+          "complete bounded identity bindings required")
+    seen, roles = set(), []
+    copied = []
+    for binding in bindings:
+        item = _dossier_binding(binding, bounds)
+        _need(item["binding_id"] not in seen, "duplicate identity binding")
+        seen.add(item["binding_id"])
+        _need(item["role"] not in roles, "duplicate identity role")
+        roles.append(item["role"])
+        copied.append(item)
+    for role in _DOSSIER_REQUIRED_ROLES:
+        _need(role in roles, "missing revision for declared identity: " + role)
+    offsets = value["offsets"]
+    _need(type(offsets) is list and len(offsets) <= bounds["max_offsets"], "bounded offset list required")
+    offset_ids = set()
+    offset_copy = []
+    for offset in offsets:
+        _keys(offset, _DOSSIER_OFFSET, "declared offset")
+        _string(offset["offset_id"], "offset identity")
+        _need(offset["offset_id"] not in offset_ids, "duplicate offset identity")
+        offset_ids.add(offset["offset_id"])
+        _need(offset["namespace"] == value["coordinate_namespace"], "coordinate namespace mismatch")
+        _need(offset["unit"] in _DOSSIER_UNITS, "declared offset unit differs")
+        _integer(offset["start"], 2**63 - 1, "offset start")
+        _integer(offset["end"], 2**63 - 1, "offset end")
+        _need(offset["start"] <= offset["end"], "offset end precedes start")
+        offset_copy.append(dict(offset))
+    crosswalk = value["crosswalk"]
+    if crosswalk is None:
+        crosswalk_status = "missing"
+    else:
+        _keys(crosswalk, {"schema", "records"}, "declared crosswalk")
+        _string(crosswalk["schema"], "crosswalk schema")
+        _need(type(crosswalk["records"]) is list and len(crosswalk["records"]) <= bounds["max_candidates"],
+              "bounded declared crosswalk records required")
+        crosswalk_status = "declared_unreviewed"
+    edition = value["edition"]
+    if edition is None:
+        edition_status = "missing"
+    else:
+        _keys(edition, {"label", "governing"}, "declared edition")
+        _string(edition["label"], "edition label")
+        _need(edition["governing"] is False, "governing edition cannot be manufactured")
+        edition_status = "declared_ungoverning"
+    context = value["context"]
+    if context is None:
+        context_status = "missing"
+    else:
+        _need(context == {"availability": "required_unavailable"},
+              "context cannot be closed or guessed")
+        context_status = "required_unavailable"
+    candidates = value["candidates"]
+    _need(type(candidates) is list and len(candidates) <= bounds["max_candidates"],
+          "bounded candidate list required")
+    pins = value["evidence_pins"]
+    _need(type(pins) is list and len(pins) <= bounds["max_evidence_pins"], "bounded evidence pins required")
+    pin_ids = set()
+    pin_copy = []
+    for pin in pins:
+        _keys(pin, _DOSSIER_PIN, "evidence pin")
+        _string(pin["pin_id"], "evidence pin")
+        _need(pin["pin_id"] not in pin_ids, "duplicate evidence pin")
+        pin_ids.add(pin["pin_id"])
+        _digest(pin["sha256"], "evidence pin")
+        _need(pin["role"] == _DOSSIER_PIN_ROLE, "evidence pin cannot assert review or edition")
+        pin_copy.append(dict(pin))
+    candidate_copy = []
+    candidate_ids = set()
+    for candidate in candidates:
+        _keys(candidate, _DOSSIER_CANDIDATE, "source candidate")
+        _string(candidate["candidate_id"], "candidate identity")
+        _need(candidate["candidate_id"] not in candidate_ids, "duplicate candidate identity")
+        candidate_ids.add(candidate["candidate_id"])
+        _need(candidate["kind"] in _DOSSIER_KINDS, "candidate kind differs")
+        _need(candidate["disposition"] in _DOSSIER_DISPOSITIONS, "candidate disposition differs")
+        _need(candidate["operative_use"] is False, "operative use is not reviewed")
+        for key in ("legal_id", "source_occurrence_id"):
+            if candidate[key] is not None:
+                _string(candidate[key], key)
+        if candidate["evidence_pin_id"] is not None:
+            _need(candidate["evidence_pin_id"] in pin_ids, "candidate evidence pin is not declared")
+        candidate_copy.append(dict(candidate))
+    value = dict(value)
+    value["identity_bindings"] = copied
+    value["offsets"] = offset_copy
+    value["candidates"] = candidate_copy
+    value["evidence_pins"] = pin_copy
+    return value, {"crosswalk_status": crosswalk_status, "edition_status": edition_status,
+                   "context_status": context_status}
+
+
+def _dossier_receipt(raw, generation):
+    receipt = _dossier_json(raw, _DOSSIER_DEFAULT_LIMITS["max_receipt_bytes"], "coordinate receipt")
+    _need(type(receipt) is dict, "coordinate receipt object required")
+    _need(receipt.get("schema") == generation["receipt_schema"], "coordinate receipt schema differs")
+    _need(receipt.get("completed") is True, "coordinate receipt is not the completed observation")
+    _need(type(receipt.get("status")) is str and receipt["status"], "coordinate receipt status required")
+    authority = receipt.get("authority")
+    _need(type(authority) is dict and authority and all(value is False for value in authority.values()),
+          "coordinate receipt authority differs")
+    counts = receipt.get("result_counts")
+    _need(type(counts) is dict, "coordinate receipt counts required")
+    compared = {}
+    for key in _DOSSIER_COUNT_KEYS:
+        _dossier_count(counts.get(key), "coordinate receipt " + key)
+        _need(counts.get(key) == generation[key], "coordinate receipt generation differs: " + key)
+        compared[key] = counts[key]
+    ordinals = counts.get("original_physical_row_ordinals")
+    documents = counts.get("supplied_parent_documents")
+    _need(type(ordinals) is list and ordinals and type(documents) is int and documents == len(ordinals),
+          "missing full-parent coordinate population")
+    seen_ordinals = set()
+    for ordinal in ordinals:
+        _integer(ordinal, 2**63 - 1, "full-parent row ordinal")
+        _need(ordinal not in seen_ordinals, "duplicate full-parent row ordinal")
+        seen_ordinals.add(ordinal)
+    reconciliation = receipt.get("publication_reconciliation")
+    _need(type(reconciliation) is dict, "missing coordinate receipt reconciliation")
+    roster = reconciliation.get("candidate_index_roster")
+    _need(type(roster) is dict, "missing coordinate receipt roster")
+    for key in ("observations", "position_references", "distinct_positions", "multi_position_observations"):
+        _dossier_count(roster.get(key), "coordinate receipt roster " + key)
+    _need(roster.get("observations") == generation["historical_progress_observations"]
+          and roster.get("position_references") == generation["matching_position_references"]
+          and roster.get("distinct_positions") == generation["unique_matching_coordinate_span_indices"]
+          and roster.get("multi_position_observations") == generation["observations_with_multiple_matching_positions"],
+          "coordinate receipt roster generation differs")
+    rows = roster.get("rows")
+    _need(type(rows) is list and len(rows) == generation["historical_progress_observations"],
+          "coordinate receipt dropped an observation")
+    slim, ambiguous, indices = [], [], []
+    for ordinal, row in enumerate(rows):
+        _need(type(row) is dict, "coordinate receipt row required")
+        retained = row.get("retained_row_index")
+        _integer(retained, 2**63 - 1, "coordinate receipt retained row index")
+        _need(retained == ordinal, "coordinate receipt observation order differs")
+        multiple = row.get("multiple_positions")
+        match_count = row.get("match_count")
+        positions = row.get("candidate_span_indices")
+        _need(type(multiple) is bool and type(match_count) is int and match_count >= 1
+              and type(positions) is list and len(positions) == match_count
+              and multiple is (match_count > 1), "coordinate receipt position population differs")
+        copied_positions = []
+        for index in positions:
+            _integer(index, 2**63 - 1, "coordinate span index")
+            copied_positions.append(index)
+            indices.append(index)
+        identity = row.get("historical_progress_identity")
+        _need(type(identity) is dict, "missing historical progress identity")
+        for key in ("legal_id", "source_span_id"):
+            _need(type(identity.get(key)) is str and identity[key], "historical progress identity differs")
+        _digest(identity.get("source_sha256"), "historical progress text")
+        _integer(row.get("historical_span_ordinal"), 2**63 - 1, "historical span ordinal")
+        item = {"retained_row_index": retained, "multiple_positions": multiple,
+                "match_count": match_count, "candidate_span_indices": copied_positions,
+                "historical_span_ordinal": row["historical_span_ordinal"],
+                "legal_id": identity["legal_id"], "source_span_id": identity["source_span_id"],
+                "source_sha256": identity["source_sha256"]}
+        slim.append(item)
+        if multiple:
+            ambiguous.append(dict(item))
+    _need(len(ambiguous) == generation["observations_with_multiple_matching_positions"],
+          "coordinate receipt ambiguous positions differ")
+    _need(len(indices) == generation["matching_position_references"]
+          and len(set(indices)) == generation["unique_matching_coordinate_span_indices"],
+          "coordinate receipt position references differ")
+    return {"status": receipt["status"], "counts": compared, "ordinals": list(ordinals),
+            "rows": slim, "ambiguous": ambiguous, "population_sha256": _sha(_wire(slim))}
+
+
+def _dossier_evidence(pins, blobs, bounds):
+    supplied = {} if blobs is None else blobs
+    _need(type(supplied) is dict and set(supplied) == {pin["pin_id"] for pin in pins},
+          "evidence bytes must match declared pins exactly")
+    used = 0
+    checked = []
+    for pin in pins:
+        raw = supplied[pin["pin_id"]]
+        _need(type(raw) is bytes and 0 < len(raw) <= bounds["max_evidence_bytes"] - used,
+              "bounded evidence bytes required")
+        used += len(raw)
+        _need(_sha(raw) == pin["sha256"], "evidence pin bytes differ: " + pin["pin_id"])
+        checked.append({**pin, "bytes": len(raw)})
+    return checked
+
+
+def _dossier_questions(request, status, binding):
+    questions = []
+    for item in request["identity_bindings"]:
+        if item["status"] == "unresolved":
+            questions.append(item["role"] + " revision is unresolved")
+    if status["edition_status"] == "missing":
+        questions.append("governing edition is missing")
+    else:
+        questions.append("declared edition label is not a governing edition")
+    if status["context_status"] == "missing":
+        questions.append("statutory context is missing")
+    else:
+        questions.append("statutory context remains required-unavailable")
+    if status["crosswalk_status"] == "missing":
+        questions.append("source/span/entity crosswalk is missing")
+    else:
+        questions.append("declared crosswalk is unreviewed and creates no source/span/entity join")
+    questions.append("operative uses are unresolved")
+    questions.append("physical cache and producer binding remain unresolved")
+    questions.append("legal meaning and review are not manufactured")
+    for item in binding["review_obligations"]:
+        questions.append("pending review obligation: " + item["kind"])
+    return questions
+
+
+def _dossier_owner_pin(relative):
+    path = _V2Path(__file__).resolve().parents[3] / relative
+    _need(path.is_file() and not path.is_symlink(), "dossier owner file unavailable")
+    return _sha(path.read_bytes())
+
+
+def _pending_review_binding(view):
+    from . import legal_source_review_handoff as handoff
+    return handoff.bind_source_dossier_review_questions(view)
+
+
+def prepare_source_edition_context_dossier(request_raw, *, expected_request_sha256,
+        coordinate_receipt_raw, expected_coordinate_receipt_sha256, evidence_bytes=None, limits=None):
+    """Export declared source, edition and context facts through the current owners.
+
+    The completed coordinate receipt is authenticated by its bytes. Ambiguous
+    positions are copied from that roster. No coordinate inventory, matcher,
+    alignment or corpus census is invoked, and no missing revision or operative
+    use is filled in.
+    """
+    bounds = _dossier_limits(limits)
+    _digest(expected_coordinate_receipt_sha256, "coordinate receipt")
+    _need(type(coordinate_receipt_raw) is bytes and 0 < len(coordinate_receipt_raw) <= bounds["max_receipt_bytes"],
+          "bounded coordinate receipt bytes required")
+    _need(_sha(coordinate_receipt_raw) == expected_coordinate_receipt_sha256,
+          "coordinate receipt bytes differ")
+    request, status = _dossier_request(request_raw, expected_request_sha256, bounds)
+    receipt = _dossier_receipt(coordinate_receipt_raw, request["closed_generation"])
+    evidence = _dossier_evidence(request["evidence_pins"], evidence_bytes, bounds)
+    dispositions = []
+    for ordinal in receipt["ordinals"]:
+        dispositions.append({"candidate_id": "full-parent-row:" + str(ordinal), "kind": "full_parent_bank",
+            "disposition": "unresolved_alternative", "operative_use": False, "selected": False,
+            "row_ordinal": ordinal, "file_revision": None, "legal_id": None,
+            "source_occurrence_id": None, "candidate_span_indices": None})
+    for item in receipt["ambiguous"]:
+        dispositions.append({"candidate_id": "ambiguous-position:" + str(item["retained_row_index"]),
+            "kind": "ambiguous_coordinate_position", "disposition": "retained_ambiguous_position",
+            "operative_use": False, "selected": False, "row_ordinal": None, "file_revision": None,
+            **item, "source_occurrence_id": item["source_span_id"]})
+    for candidate in request["candidates"]:
+        dispositions.append({**candidate, "selected": False, "row_ordinal": None,
+            "file_revision": None, "candidate_span_indices": None})
+    seen = set()
+    for item in dispositions:
+        _need(item["candidate_id"] not in seen, "duplicate candidate disposition")
+        seen.add(item["candidate_id"])
+        _need(item["operative_use"] is False and item["selected"] is False,
+              "operative use is not reviewed")
+    view = {"schema": DOSSIER_SCHEMA, "operative_use_count": 0, "operative_uses": [],
+            "legal_meaning_manufactured": False, "review_manufactured": False,
+            "crosswalk_status": status["crosswalk_status"], "authority": dict(AUTHORITY)}
+    binding = _pending_review_binding(view)
+    _need(_sha(coordinate_receipt_raw) == expected_coordinate_receipt_sha256
+          and _dossier_evidence(request["evidence_pins"], evidence_bytes, bounds) == evidence,
+          "dossier inputs changed during review-question binding")
+    manifest = {"schema": DOSSIER_MANIFEST_SCHEMA,
+        "coordinate_namespace": request["coordinate_namespace"],
+        "coordinate_receipt": {"observation_id": request["closed_generation"]["observation_id"],
+            "schema": request["closed_generation"]["receipt_schema"], "status": receipt["status"],
+            "sha256": expected_coordinate_receipt_sha256, "bytes": len(coordinate_receipt_raw),
+            "completed": True, "result_counts": receipt["counts"],
+            "full_parent_row_ordinals": receipt["ordinals"],
+            "ambiguous_position_count": len(receipt["ambiguous"]),
+            "position_population_sha256": receipt["population_sha256"],
+            "segmentation_repeated": False, "matching_repeated": False, "alignment_repeated": False,
+            "ledger_census_repeated": False, "corpus_census_repeated": False},
+        "identity_bindings": request["identity_bindings"], "offsets": request["offsets"],
+        "offsets_status": "declared" if request["offsets"] else "unresolved_not_supplied",
+        "edition_status": status["edition_status"], "edition": request["edition"],
+        "context_status": status["context_status"], "context": request["context"],
+        "crosswalk_status": status["crosswalk_status"], "crosswalk": request["crosswalk"],
+        "source_span_entity_crosswalk": "missing" if request["crosswalk"] is None else "declared_unreviewed",
+        "evidence_pins": evidence, "governing_edition_selected": False}
+    report = {"schema": DOSSIER_SCHEMA, "profile": DOSSIER_PROFILE,
+        "request_sha256": expected_request_sha256, "source_manifest": manifest,
+        "candidate_dispositions": dispositions, "operative_use_count": 0, "operative_uses": [],
+        "unresolved_questions": _dossier_questions(request, status, binding),
+        "review_question_binding": binding, "legal_meaning_manufactured": False,
+        "review_manufactured": False, "authority": dict(AUTHORITY), "training_mask": 0,
+        "evaluation_gold_mask": 0,
+        "reuse_owners": [
+            {"path": "ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py",
+             "symbol": "prepare_source_edition_context_dossier",
+             "role": "source edition context dossier export",
+             "sha256": _dossier_owner_pin("ipfs_datasets_py/logic/autoformal/legal_source_correspondence_requests_v1.py")},
+            {"path": "ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py",
+             "symbol": "bind_source_dossier_review_questions",
+             "role": "pending review questions without a review receipt",
+             "sha256": _dossier_owner_pin("ipfs_datasets_py/logic/autoformal/legal_source_review_handoff.py")}]}
+    return _plain(report, bounds, bounds["max_report_bytes"])[0]
+
+
+def source_edition_context_dossier_sha256(report, *, limits=None):
+    """Canonical dossier identity. This does not replay the coordinate receipt."""
+    bounds = _dossier_limits(limits)
+    return _sha(_plain(report, bounds, bounds["max_report_bytes"])[1])
+
+
+def validate_source_edition_context_dossier(report, request_raw, *, expected_report_sha256,
+        expected_request_sha256, coordinate_receipt_raw, expected_coordinate_receipt_sha256,
+        evidence_bytes=None, limits=None):
+    """Regenerate the dossier from the same declared inputs and receipt bytes."""
+    bounds = _dossier_limits(limits)
+    _digest(expected_report_sha256, "dossier")
+    checked, raw = _plain(report, bounds, bounds["max_report_bytes"])
+    _need(_sha(raw) == expected_report_sha256, "independent dossier SHA256 differs")
+    expected = prepare_source_edition_context_dossier(request_raw,
+        expected_request_sha256=expected_request_sha256, coordinate_receipt_raw=coordinate_receipt_raw,
+        expected_coordinate_receipt_sha256=expected_coordinate_receipt_sha256,
+        evidence_bytes=evidence_bytes, limits=limits)
+    _need(_plain(expected, bounds, bounds["max_report_bytes"])[1] == raw,
+          "dossier differs from complete declared-input regeneration")
+    return checked
+
+
+__all__ += ["prepare_source_edition_context_dossier", "source_edition_context_dossier_sha256",
+            "validate_source_edition_context_dossier"]
