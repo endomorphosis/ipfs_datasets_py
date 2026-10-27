@@ -12,7 +12,6 @@ import math
 from pathlib import Path
 
 import pytest
-import torch
 
 from ipfs_datasets_py.logic.legal_ir import conditions_fullspan_margin_v1 as margin
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_formula as span
@@ -20,6 +19,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_modal
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_conditions_fullspan_training_v1 as subject
 
 ROOT = Path(__file__).resolve().parents[4]
+EVIDENCE = ROOT / "docs/autoformalization/evidence/legal-ir-conditions-fullspan-owner-adoption-20261027.json"
 CONFIG = {
     "hidden_size": 32,
     "embedding_dim": 8,
@@ -107,6 +107,7 @@ def _records(provenance, indices, *, original_shape=False):
 
 
 def _batch(provenance, indices=None, *, original_shape=False):
+    import torch
     indices = (list(provenance["gold_present_train_indices"][:subject.BATCH_SIZE])
                if indices is None else list(indices))
     records = _records(provenance, indices, original_shape=original_shape)
@@ -217,7 +218,21 @@ def test_retained_owners_and_published_kernel_identity_stay_pinned():
     source = Path(subject.__file__).read_text()
     assert "import structured_span_objective" not in source
     assert "def conditions_fullspan_margin" not in source
-    assert json.loads(json.dumps(subject.engineering_preparation())) == subject.engineering_preparation()
+    retained = json.loads(EVIDENCE.read_text())["retained_preparation"]
+    current = subject.engineering_preparation()
+    # The immutable receipt is the original dfd generation. These four explicit
+    # additive metadata changes document the separately qualified correction;
+    # every other preparation field must still match that retained oracle.
+    wiring = current["result"]["model_optimizer_wiring"]
+    assert {key: wiring.pop(key) for key in (
+        "training_row_count", "batch_order_owner", "absent_conditions_margin")} == {
+            "training_row_count": 168,
+            "batch_order_owner": "legal_span_targeted_loss._batch_indices(168, progress, 12, 1729)",
+            "absent_conditions_margin": "connected_zero_in_full_batch_mean",
+        }
+    assert current["result"]["unresolved_questions"].pop(0) == (
+        "Caller-state self-hashes do not independently authenticate the retained final F18 donor or its source/teacher/mask artifact roots; original-owned admission must bind them.")
+    assert current == retained
 
 
 def test_preparation_document_is_closed_and_claims_no_fit():
@@ -405,9 +420,6 @@ def test_rejects_wrong_shapes_rows_counts_partition_provenance_and_nonfinite_con
     dev_case[3] = dict(dev_case[3])
     dev_case[3]["partition"] = "DEV"
     _raises("TRAIN partition required", subject.scoring_preflight, dev_case, _permissions(), provenance, state)
-    parameter = torch.nn.Parameter(torch.zeros(6, dtype=torch.float32))
-    parameter.grad = torch.full((6,), float("nan"))
-    _raises("nonfinite control", subject.clip_selected_gradients, torch, [parameter])
 
 
 def test_scoring_preflight_freezes_caller_ids_and_does_not_score():
@@ -427,6 +439,7 @@ def test_scoring_preflight_freezes_caller_ids_and_does_not_score():
 
 
 def test_zero_and_quarter_arms_keep_full_batch_ce_and_kl():
+    import torch
     state = _state()
     provenance = copy.deepcopy(_provenance(state))
     records, indices, teacher, weights, output = _batch(provenance)
@@ -565,16 +578,19 @@ def test_absent_conditions_require_exact_sentinel_and_bounded_token_geometry():
 
 def _synthetic_architecture_state():
     """Actual F18 architecture initialization; no checkpoint or donor payload."""
+    import torch
     model = f18._model(torch, CONFIG)
     return {name: value.detach().tolist() for name, value in model.state_dict().items()}
 
 
 def _same_bytes(left, right):
+    import torch
     return torch.equal(left.detach().contiguous().reshape(-1).view(torch.uint8),
                        right.detach().contiguous().reshape(-1).view(torch.uint8))
 
 
 def _assert_frozen_and_inactive(wired, before, *, steps):
+    import torch
     named, optimizer = wired["named"], wired["optimizer"]
     assert len(subject.FROZEN) == 38 and len(subject.SELECTED) == 4
     inactive = [0, 1, 2, 4, 5]
@@ -595,6 +611,7 @@ def _assert_frozen_and_inactive(wired, before, *, steps):
 
 
 def test_actual_f18_forward_mixed_batch_preserves_ce_kl_and_row3_optimizer_partition():
+    import torch
     state = _synthetic_architecture_state()
     provenance = _provenance(state)
     wired = subject.wire_optimizer(torch, state, provenance, margin_weight=0.25)
@@ -660,6 +677,7 @@ def test_actual_f18_forward_mixed_batch_preserves_ce_kl_and_row3_optimizer_parti
 
 
 def test_actual_f18_all_absent_margin_is_connected_zero_with_full_batch_denominators():
+    import torch
     state = _synthetic_architecture_state()
     provenance = _provenance(state)
     wired = subject.wire_optimizer(torch, state, provenance)
@@ -681,6 +699,7 @@ def test_actual_f18_all_absent_margin_is_connected_zero_with_full_batch_denomina
 
 
 def test_synthetic_in_memory_adam_resume_matches_uninterrupted_actual_f18_updates():
+    import torch
     state = _synthetic_architecture_state()
     provenance = _provenance(state)
     uninterrupted = subject.wire_optimizer(torch, state, provenance)
@@ -722,6 +741,11 @@ def test_synthetic_in_memory_adam_resume_matches_uninterrupted_actual_f18_update
 
 
 def test_fresh_adam_updates_only_conditions_row_of_the_four_tensors():
+    import torch
+    parameter = torch.nn.Parameter(torch.zeros(6, dtype=torch.float32))
+    parameter.grad = torch.full((6,), float("nan"))
+    _raises("nonfinite control", subject.clip_selected_gradients, torch, [parameter])
+
     state = _state()
     original_pointer = copy.deepcopy(state["start.weight"])
     original_modality = copy.deepcopy(state["modality.weight"])

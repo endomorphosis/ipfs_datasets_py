@@ -3634,22 +3634,24 @@
     },
     {
       "apis": [
-        "configuration",
         "donor_provenance",
         "selection_mask_contract",
-        "frozen38_seal",
+        "configuration",
         "wire_optimizer",
         "compose_objective_for_state",
         "clip_selected_gradients",
-        "scoring_preflight"
+        "scoring_preflight",
+        "engineering_preparation",
+        "frozen38_seal"
       ],
-      "compatibility_dependency": true,
+      "compatibility_dependency": false,
       "evidence_ids": [
+        "conditions-fullspan-existing-owner-adoption-20261027-01",
         "f18-conditions-fullspan-genuine-mechanics-20261027-01"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
-      "id": "conditions-fullspan-training-v1",
-      "notes": "Existing optimizer-package opt-in companion reuses immutable F18/F15 CE-KL and published margin owners. Genuine synthetic26 mechanics cover mixed168/72 present, full-batch absent connected-zero, frozen38 including modality, ordered four row3 tensors and130 active/780 stored/650 inactive scalars, byte preservation and in-memory Adam resume. Old25/1 failure and original storage recovery remain separate. Actual trained-donor/source/teacher/mask admission, finite paired fit/scoring, statutory accuracy and actual lake build remain open.",
+      "id": "conditions-fullspan-f18-four-tensor-training-v1",
+      "notes": "Reuse the original public component identity and prescribed optimizer owner. Original dfd source adoption, its immutable preparation oracle and5 pure/15-phase metadata controls remain a separate generation. Existing optimizer-package opt-in companion reuses immutable F18/F15 CE-KL and published margin owners. Genuine synthetic26 mechanics cover mixed168/72 present, full-batch absent connected-zero, frozen38 including modality, ordered four row3 tensors and130 active/780 stored/650 inactive scalars, byte preservation and in-memory Adam resume. Old25/1 failure and original storage recovery remain separate. Actual trained-donor/source/teacher/mask admission, finite paired fit/scoring, statutory accuracy and actual lake build remain open. The merged owning test restores lazy numerical imports and explicitly compares the original preparation oracle after only the enumerated additive schedule/authentication metadata fields; its new source hash requires a new original-owned mechanics qualification, without relabelling the retained26 result.",
       "numerical_qualification": {
         "cases": 26,
         "evidence_id": "f18-conditions-fullspan-genuine-mechanics-20261027-01",
@@ -3658,6 +3660,16 @@
         "source_commit": "e2dec5b7c13c98d49d03ce04904eced3a9eb0387",
         "synthetic_actual_F18_architecture": true,
         "trained_donor_authenticated": false
+      },
+      "owner_adoption_generation": {
+        "evidence_id": "conditions-fullspan-existing-owner-adoption-20261027-01",
+        "numerical_frameworks_imported": false,
+        "owning_test_sha256": "80d1e08b5c88a87e81f4df7ce50f05a0add56dc0dd5096df5a1c8dd0da26eb6b",
+        "product_source_sha256": "5a58364c47b14936bf726f6ca14d115607935014ccb8dc00f402e32c267f729a",
+        "public_commit": "7b5cfb016defc52528689fe80df6f8de7bba1dc2",
+        "pure_metadata_cases": 5,
+        "pure_metadata_phases": 15,
+        "retained_worker7_is_original_closed_qualification": false
       },
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_conditions_fullspan_training_v1",
       "ownership_role": "existing_single_owner",
@@ -5810,6 +5822,16 @@
       "root": "datasets_repository",
       "scope": "Retained native225+1 deferred and new24 focused dossier/binder controls are separate generations; exact completed coordinate receipt reused without original replay, fresh custody, legal review or admission.",
       "status": "focused_tests_qualified"
+    },
+    {
+      "id": "conditions-fullspan-existing-owner-adoption-20261027-01",
+      "observed_bytes": 14894,
+      "observed_sha256": "373c0151677b9cfdb9ba51f3c39259b27aaf5e1fb1c777efdbe764bf09933d96",
+      "path": "docs/autoformalization/evidence/legal-ir-conditions-fullspan-owner-adoption-20261027.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "Existing worker dfd869ec profile, locally merged65765e43 onto legal-ir-plaintext-definition-landing, adopted at its prescribed canonical optimizer owner with product bytes unchanged. Owning-test portability preserves7names/120assertions and the original preparation snapshot; numerical imports and NaN-gradient guard remain in separately admitted numerical tests. Immutable source/preparation oracle; pure-control outcomes live in canonical handoff/history and execution receipts. Existing F18/margin/structured-objective pins unchanged. No original numerical qualification from the retained7-pass report, physical donor authentication, model/gradient/parity/resume/paired-fit qualification, semantic admission or scientific task rearm.",
+      "status": "existing_owner_source_adoption"
     }
   ]
 }
