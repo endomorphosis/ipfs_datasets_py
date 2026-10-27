@@ -476,7 +476,13 @@ def physical_source_key(provenance):
             'artifact_sha256', 'artifact_bytes', 'parquet_row_index')}
 
 
+@pytest.mark.skipif(
+    os.environ.get('LEGAL_SOURCE_CORRESPONDENCE_ENROLLED') != '1',
+    reason='retained source correspondence replay requires explicit LEGAL_SOURCE_CORRESPONDENCE_ENROLLED=1 enrollment',
+)
 def test_real_retained_two_banks_sixteen_requests_and_all_150_candidates(tmp_path):
+    # Enrollment is the admission gate. Once it is set, missing inputs or a
+    # mismatched pin are failures; the assertions below are unchanged.
     assert os.environ.get('LEGAL_SOURCE_CORRESPONDENCE_ENROLLED') == '1', 'exact original admission required'
     assert os.environ.get('LEGAL_SOURCE_CORRESPONDENCE_INPUTS') == str(REAL_INPUTS)
     root_ref = {'path': str(REAL_INPUTS), 'bytes': REAL_INPUTS_BYTES, 'sha256': REAL_INPUTS_SHA256}
@@ -1594,3 +1600,170 @@ def test_wire_correspondence_v3_postclosing_serialization_guards_originals_and_d
 def test_wire_correspondence_v3_preserves_unchanged_lower_only_whole_population_caps(wire_correspondence_case, limits):
     with pytest.raises(ValueError):
         _prepare_wire_correspondence(wire_correspondence_case, limits=limits)
+
+
+WORKSPACE = Path(__file__).resolve().parents[4]
+SELECTED_PARENT_RECEIPT = WORKSPACE / 'docs/autoformalization/evidence/legal-ir-selected-parent-coordinates-20261022.json'
+SELECTED_PARENT_RECEIPT_SHA256 = '8193ce3c85c961eb38d8ded7f1be8b35ccc32410b68a895685052ca4aa47c4a3'
+DOSSIER_NAMESPACE = 'decoded_supplied_text'
+
+
+def _binding(role, status='unresolved'):
+    declared = status == 'declared'
+    return {'binding_id': 'binding:' + role, 'role': role, 'status': status,
+            'repository_id': 'fixture:' + role if declared else None,
+            'declared_revision': 'a' * 40 if declared else None,
+            'artifact_revision': 'a' * 40 if declared else None,
+            'path_in_repo': 'fixture/' + role + '.json' if declared else None,
+            'artifact_sha256': sha(role.encode()) if declared else None,
+            'row_ordinal': None, 'row_sha256': None}
+
+
+def _dossier_receipt_body():
+    rows = [
+        {'retained_row_index': 0, 'multiple_positions': False, 'match_count': 1,
+         'candidate_span_indices': [0], 'historical_span_ordinal': 10,
+         'historical_progress_identity': {'legal_id': 'usc:us:10:1', 'source_span_id': 'span-0',
+                                          'source_sha256': sha(b'span-0')}},
+        {'retained_row_index': 1, 'multiple_positions': True, 'match_count': 2,
+         'candidate_span_indices': [2, 5], 'historical_span_ordinal': 11,
+         'historical_progress_identity': {'legal_id': 'usc:us:10:2', 'source_span_id': 'span-1',
+                                          'source_sha256': sha(b'span-1')}},
+    ]
+    return {'schema': 'legal-ir-selected-parent-coordinate-observation/v1', 'completed': True,
+            'status': 'closed_fixture_coordinate_observation',
+            'authority': {'governing_edition_verified': False, 'source_meaning_verified': False,
+                          'independent_statutory_uses_verified': False},
+            'result_counts': {'emitted_sentence_spans': 3, 'historical_progress_observations': 2,
+                              'matching_position_references': 3, 'unique_matching_coordinate_span_indices': 3,
+                              'observations_with_multiple_matching_positions': 1,
+                              'original_physical_row_ordinals': [7], 'supplied_parent_documents': 1},
+            'publication_reconciliation': {'candidate_index_roster': {
+                'observations': 2, 'position_references': 3, 'distinct_positions': 3,
+                'multi_position_observations': 1, 'rows': rows}}}
+
+
+def _dossier_request(receipt, **changes):
+    counts = receipt['result_counts']
+    request = {'schema': owner.DOSSIER_REQUEST_SCHEMA, 'profile': owner.DOSSIER_PROFILE,
+               'coordinate_namespace': DOSSIER_NAMESPACE,
+               'closed_generation': {'observation_id': 'fixture-coordinate-observation',
+                   'receipt_schema': receipt['schema'],
+                   'emitted_sentence_spans': counts['emitted_sentence_spans'],
+                   'historical_progress_observations': counts['historical_progress_observations'],
+                   'matching_position_references': counts['matching_position_references'],
+                   'unique_matching_coordinate_span_indices': counts['unique_matching_coordinate_span_indices'],
+                   'observations_with_multiple_matching_positions': counts['observations_with_multiple_matching_positions']},
+               'identity_bindings': [_binding(role) for role in ('source', 'span', 'entity')],
+               'offsets': [{'offset_id': 'decoded-0', 'namespace': DOSSIER_NAMESPACE, 'start': 0, 'end': 4,
+                            'unit': 'unicode_character_half_open'}],
+               'crosswalk': None, 'edition': None, 'context': None,
+               'candidates': [
+                   {'candidate_id': 'norm-a', 'kind': 'norm_use_candidate', 'disposition': 'unresolved_operative_use',
+                    'operative_use': False, 'legal_id': 'usc:us:10:1', 'source_occurrence_id': 'occ-a',
+                    'evidence_pin_id': None},
+                   {'candidate_id': 'norm-b', 'kind': 'norm_use_candidate', 'disposition': 'unresolved_alternative',
+                    'operative_use': False, 'legal_id': 'usc:us:10:1', 'source_occurrence_id': 'occ-b',
+                    'evidence_pin_id': None}],
+               'evidence_pins': []}
+    request.update(changes)
+    return request
+
+
+def _prepare_dossier(receipt=None, request=None, evidence=None):
+    body = _dossier_receipt_body() if receipt is None else receipt
+    raw_receipt = wire(body) if isinstance(body, dict) else body
+    item = _dossier_request(body if isinstance(body, dict) else json.loads(raw_receipt)) if request is None else request
+    raw = wire(item)
+    report = owner.prepare_source_edition_context_dossier(raw, expected_request_sha256=sha(raw),
+        coordinate_receipt_raw=raw_receipt, expected_coordinate_receipt_sha256=sha(raw_receipt),
+        evidence_bytes=evidence)
+    return report, raw, raw_receipt
+
+
+def test_source_edition_context_dossier_exact_roundtrip():
+    report, raw, receipt = _prepare_dossier()
+    again, _, _ = _prepare_dossier()
+    digest = owner.source_edition_context_dossier_sha256(report)
+    assert digest == owner.source_edition_context_dossier_sha256(again)
+    assert owner.validate_source_edition_context_dossier(report, raw, expected_report_sha256=digest,
+        expected_request_sha256=sha(raw), coordinate_receipt_raw=receipt,
+        expected_coordinate_receipt_sha256=sha(receipt)) == report
+    assert json.loads(wire(report)) == report
+    assert report['operative_use_count'] == 0 and report['operative_uses'] == []
+    assert [row['candidate_id'] for row in report['candidate_dispositions']] == [
+        'full-parent-row:7', 'ambiguous-position:1', 'norm-a', 'norm-b']
+    ambiguous = report['candidate_dispositions'][1]
+    assert ambiguous['candidate_span_indices'] == [2, 5] and ambiguous['selected'] is False
+    assert report['source_manifest']['crosswalk_status'] == 'missing'
+    assert report['source_manifest']['edition_status'] == 'missing'
+    assert report['source_manifest']['coordinate_receipt']['segmentation_repeated'] is False
+    assert report['source_manifest']['coordinate_receipt']['matching_repeated'] is False
+    assert all(value is False for value in report['authority'].values())
+    assert [item['kind'] for item in report['review_question_binding']['review_obligations']] == list(
+        __import__('ipfs_datasets_py.logic.autoformal.legal_source_review_handoff', fromlist=['REVIEW_OBLIGATION_KINDS']).REVIEW_OBLIGATION_KINDS)
+
+
+def test_source_edition_context_dossier_missing_revision_is_not_guessed():
+    receipt = _dossier_receipt_body()
+    request = _dossier_request(receipt)
+    request['identity_bindings'][0]['status'] = 'declared'
+    with pytest.raises(ValueError, match='missing revision'):
+        _prepare_dossier(receipt, request)
+    report, _, _ = _prepare_dossier()
+    rendered = wire(report).decode()
+    assert '91ca1838853ac82d7a12dd4ab47d9686f47667f9' not in rendered
+    assert '60501f3e920f6c9050cfc452e0d9fcc2b7c184f3' not in rendered
+    assert '79d54378c5d6a89ab56e7a27e0f0ba867e800e19' not in rendered
+    assert report['source_manifest']['identity_bindings'][0]['declared_revision'] is None
+
+
+def test_source_edition_context_dossier_stale_revision_is_refused():
+    receipt = _dossier_receipt_body()
+    request = _dossier_request(receipt)
+    request['identity_bindings'][0] = _binding('source', 'declared')
+    request['identity_bindings'][0]['artifact_revision'] = 'b' * 40
+    with pytest.raises(ValueError, match='stale revision'):
+        _prepare_dossier(receipt, request)
+
+
+def test_source_edition_context_dossier_coordinate_namespace_mismatch_is_refused():
+    receipt = _dossier_receipt_body()
+    request = _dossier_request(receipt)
+    request['offsets'][0]['namespace'] = 'parquet_file_byte'
+    with pytest.raises(ValueError, match='coordinate namespace mismatch'):
+        _prepare_dossier(receipt, request)
+
+
+def test_source_edition_context_dossier_reuses_selected_parent_receipt(monkeypatch):
+    import ipfs_datasets_py.logic.autoformal.uscode_ingest as ingest
+    monkeypatch.setattr(ingest, 'inventory_uscode_source_coordinates',
+                        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError('segmentation repeated')))
+    raw_receipt = SELECTED_PARENT_RECEIPT.read_bytes()
+    assert sha(raw_receipt) == SELECTED_PARENT_RECEIPT_SHA256
+    receipt = json.loads(raw_receipt)
+    request = _dossier_request(receipt)
+    request['closed_generation']['observation_id'] = 'selected-parent-coordinate-observation-20261022-01'
+    request['offsets'] = []
+    request['candidates'] = []
+    raw = wire(request)
+    report = owner.prepare_source_edition_context_dossier(raw, expected_request_sha256=sha(raw),
+        coordinate_receipt_raw=raw_receipt, expected_coordinate_receipt_sha256=sha(raw_receipt))
+    digest = owner.source_edition_context_dossier_sha256(report)
+    assert owner.validate_source_edition_context_dossier(json.loads(wire(report)), raw,
+        expected_report_sha256=digest, expected_request_sha256=sha(raw),
+        coordinate_receipt_raw=raw_receipt, expected_coordinate_receipt_sha256=sha(raw_receipt)) == report
+    manifest = report['source_manifest']['coordinate_receipt']
+    assert manifest['result_counts'] == {'emitted_sentence_spans': 130, 'historical_progress_observations': 15,
+        'matching_position_references': 45, 'unique_matching_coordinate_span_indices': 32,
+        'observations_with_multiple_matching_positions': 3}
+    assert manifest['full_parent_row_ordinals'] == [2674, 2675]
+    ambiguous = [row for row in report['candidate_dispositions'] if row['kind'] == 'ambiguous_coordinate_position']
+    assert [(row['retained_row_index'], row['candidate_span_indices'], row['legal_id']) for row in ambiguous] == [
+        (3, [10, 14, 29, 35, 38, 41, 44], 'usc:us:10:7213'),
+        (12, [56, 60, 64, 100, 104, 107, 110, 113, 116, 119, 122, 125, 128], 'usc:us:10:7214'),
+        (14, [56, 60, 64, 100, 104, 107, 110, 113, 116, 119, 122, 125, 128], 'usc:us:10:7214')]
+    assert report['operative_use_count'] == 0
+    assert manifest['alignment_repeated'] is manifest['ledger_census_repeated'] is manifest['corpus_census_repeated'] is False
+    assert 'source/span/entity crosswalk is missing' in report['unresolved_questions']
+    assert 'operative uses are unresolved' in report['unresolved_questions']
